@@ -1,0 +1,24 @@
+# Global
+**/*.DS_Store
+**/*.log
+**/*.git
+
+# General
+bootstrap/cache/*.php
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+tests/
+
+# ignore all dot files
+.*
+_ide_helper.php
+composer.lock
+Dockerfile
+phpunit.xml
+readme.md
+server.php
+release.sh
+
+# Project specific

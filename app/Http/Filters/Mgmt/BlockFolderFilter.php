@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Http\Filters\Mgmt;
+
+use CodersCantina\Filter\ExtendedFilter;
+
+class BlockFolderFilter extends ExtendedFilter
+{
+    protected array $sortableColumns = ['name', 'created_at', 'updated_at'];
+
+    public function name($value)
+    {
+        $this->builder->where('name', 'LIKE', "%{$value}%");
+    }
+
+    public function icon($value)
+    {
+        $this->builder->where('icon', $value);
+    }
+
+    public function color($value)
+    {
+        $this->builder->where('color', $value);
+    }
+
+    public function description($value)
+    {
+        $this->builder->where('description', 'LIKE', "%{$value}%");
+    }
+
+    public function q($value)
+    {
+        $this->builder->where(function ($query) use ($value) {
+            $query->where('name', 'LIKE', "%{$value}%")
+                ->orWhere('description', 'LIKE', "%{$value}%");
+        });
+    }
+
+    public function created_at($value)
+    {
+        $this->applyRangeFilter('created_at', $value);
+    }
+
+    public function updated_at($value)
+    {
+        $this->applyRangeFilter('updated_at', $value);
+    }
+
+    public function blocks_count($value)
+    {
+        $this->builder->has('blocks', '>=', (int) $value);
+    }
+}

@@ -1,0 +1,72 @@
+<?php
+
+namespace App\Http\Resources\Management;
+
+use App\Models\Space\Content;
+use App\Services\Content\AssetHandler;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+/**
+ * @mixin Content
+ */
+class ContentResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'block_id' => $this->block_id,
+            'block' => $this->whenLoaded('block', fn() => [
+                'id' => $this->block->id,
+                'name' => $this->block->name,
+                'icon' => $this->block->icon,
+                'slug' => $this->block->slug,
+            ]),
+            'parent_id' => $this->parent_id,
+            'parent' => $this->whenLoaded('parent', fn() => [
+                'id' => $this->parent->id,
+                'name' => $this->parent->name,
+                'slug' => $this->parent->slug,
+            ]),
+            'name' => $this->name,
+            'children_count' => $this->whenCounted('children', fn() => $this->children_count),
+            'slug' => $this->slug,
+            'full_slug' => $this->full_slug,
+            'language_iso' => $this->language_iso,
+            'i18n_parent_id' => $this->i18n_parent_id,
+            'content' => $this->prepareContent(),
+            'settings' => $this->settings->toArray() ?: new \StdClass(),
+            'current_version_id' => $this->current_version_id,
+            'published_version_id' => $this->published_version_id,
+            'published_at' => $this->published_at?->toIso8601String(),
+            'first_published_at' => $this->first_published_at?->toIso8601String(),
+            'created_at' => $this->created_at?->toIso8601String(),
+            'updated_at' => $this->updated_at?->toIso8601String(),
+            'i18n_parent' => $this->whenLoaded('i18n_parent', fn() => new ContentTranslationResource($this->i18n_parent)
+            ),
+            'i18n_translations' => $this->whenLoaded(
+                'i18n_children',
+                fn() => ContentTranslationResource::collection($this->i18n_children)
+            ),
+            'i18n_siblings' => $this->whenLoaded(
+                'i18n_siblings',
+                fn() => ContentTranslationResource::collection($this->i18n_siblings)
+            ),
+        ];
+    }
+
+    protected function prepareContent()
+    {
+        $content = $this->current_version?->content;
+
+        return $content ? $this->injectData($content) : new \StdClass();
+    }
+
+    protected function injectData(array $content)
+    {
+        $assets = $this->whenLoaded('assets', fn() => $this->assets, $this->current_version?->assets);
+
+        return app(AssetHandler::class)->updateContentAssets($content, $assets);
+    }
+}

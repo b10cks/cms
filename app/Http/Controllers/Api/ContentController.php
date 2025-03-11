@@ -1,0 +1,78 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Filters\Api\ContentFilter;
+use App\Http\Resources\Api\ContentResource;
+use App\Models\Space\Content;
+use App\Models\Space\Redirect;
+use App\Services\Content\LocalizedContentSlugService;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+
+class ContentController
+{
+    protected LocalizedContentSlugService $slugService;
+
+    public function __construct(LocalizedContentSlugService $slugService)
+    {
+        $this->slugService = $slugService;
+    }
+
+    /**
+     * @response AnonymousResourceCollection<LengthAwarePaginator<ContentResource>>
+     */
+    public function index(Request $request): AnonymousResourceCollection
+    {
+        $data = Content::filter(ContentFilter::fromRequest($request))
+            ->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id')
+            ->select(
+                'contents.*',
+                'content_versions.content',
+                'content_versions.relation_ids',
+                'content_versions.asset_ids',
+                'content_versions.link_ids'
+            )
+            ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block', 'relations', 'assets', 'links'])
+            ->paginate(min($request->per_page ?? 20, 500));
+
+        return ContentResource::collection($data);
+    }
+
+    public function show(Request $request, string $slug): ContentResource|\Illuminate\Http\Response
+    {
+        $redirect = Redirect::where('source', '/' . $slug)
+            ->first();
+
+        if ($redirect) {
+            $redirect->trackUsage();
+
+            return response([
+                'redirect' => true,
+                'to' => $redirect->target,
+                'status_code' => $redirect->status_code,
+            ], $redirect->status_code);
+        }
+
+        $query = Content::where('full_slug', '/' . $slug)
+            ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block', 'relations', 'assets', 'links'])
+            ->select(
+                'contents.*',
+                'content_versions.content',
+                'content_versions.relation_ids',
+                'content_versions.asset_ids',
+                'content_versions.link_ids'
+            );
+
+        if ($vid = $request->get('vid')) {
+            $query->leftJoin('content_versions', 'content_versions.content_id', '=', 'contents.id')
+                ->where('content_versions.id', $vid);
+        } elseif ($request->get('version') === 'draft') {
+            $query->leftJoin('content_versions', 'contents.current_version_id', '=', 'content_versions.id');
+        } else {
+            $query->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id');
+        }
+
+        return new ContentResource($query->firstOrFail());
+    }
+}

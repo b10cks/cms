@@ -1,0 +1,47 @@
+<?php
+
+namespace App\Http\Requests\Space;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class CreateSpaceRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true; // Authorization will be handled by policies/middleware
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'name' => 'required|string|max:100',
+            'slug' => 'required|string|max:50|regex:/^[a-z0-9\-]+$/|unique:spaces,slug,NULL,id,team_id,' . $this->input('team_id'),
+            'icon' => 'nullable|string|max:50',
+            'team_id' => 'nullable|string|max:26',
+            'color' => 'nullable|string|max:7|regex:/^#[a-fA-F0-9]{6}$/',
+            'description' => 'nullable|string',
+            'settings' => 'nullable|array',
+        ];
+    }
+
+    /**
+     * Get the error messages for the defined validation rules.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'slug.regex' => 'The slug may only contain lowercase letters, numbers, and hyphens.',
+            'color.regex' => 'The color must be a valid hex color code (e.g., #FF5733).',
+        ];
+    }
+}
