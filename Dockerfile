@@ -24,7 +24,6 @@ COPY config /app/config
 COPY database /app/database
 COPY routes /app/routes
 COPY app /app/app
-COPY .env /app/.env
 COPY public /app/public
 
 WORKDIR /app
