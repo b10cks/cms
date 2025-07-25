@@ -19,7 +19,7 @@ class ContentResource extends JsonResource
             'id' => $this->getRouteKey(),
             'name' => $this->name,
             'slug' => $this->slug,
-            'type' => $this->whenLoaded('block', fn () => $this->block->slug),
+            'block' => $this->whenLoaded('block', fn () => $this->block->slug),
             'parent_id' => $this->parent_id,
             'full_slug' => $this->full_slug,
             'content' => $this->getTransformedContent(),
