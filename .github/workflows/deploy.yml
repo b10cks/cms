@@ -87,39 +87,7 @@ jobs:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
-
-      - name: Verify deployment
-        run: |
-          echo "Deployment completed successfully!"
-          echo "Version: ${{ steps.version.outputs.version }}"
-          echo "Image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:master-${{ steps.version.outputs.version }}"
-
-          # Wait a moment for the service to update
-          sleep 30
-
-          # Get the current running task
-          TASK_ARN=$(aws ecs list-tasks \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --service-name ${{ env.ECS_SERVICE }} \
-            --desired-status RUNNING \
-            --query 'taskArns[0]' \
-            --output text)
-
-          if [ "$TASK_ARN" != "None" ] && [ "$TASK_ARN" != "" ]; then
-            echo "Current running task: $TASK_ARN"
-
-            # Get task definition ARN
-            TASK_DEF_ARN=$(aws ecs describe-tasks \
-              --cluster ${{ env.ECS_CLUSTER }} \
-              --tasks $TASK_ARN \
-              --query 'tasks[0].taskDefinitionArn' \
-              --output text)
-
-            echo "Task definition: $TASK_DEF_ARN"
-          else
-            echo "Warning: Could not retrieve running task information"
-          fi
+          wait-for-service-stability: false
 
       - name: Post deployment notifications
         if: always()
