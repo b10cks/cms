@@ -30,6 +30,6 @@ class StorageFactory
         // Clear any existing disk with this name to ensure fresh config
         LaravelStorage::forgetDisk($storage->id);
 
-        return LaravelStorage::disk('local');
+        return LaravelStorage::disk($storage->id);
     }
 }
