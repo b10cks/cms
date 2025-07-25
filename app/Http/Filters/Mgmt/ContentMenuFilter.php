@@ -49,7 +49,8 @@ class ContentMenuFilter extends ExtendedFilter
         $filters = $this->getFilters();
         // if language_iso is not present, set it to null
         if (!array_key_exists('language_iso', $filters)) {
-            $builder->where('language_iso', data_get($this->space->settings, 'default_language', null));
+            $builder->where('i18n_parent_id', null);
+//            $builder->where('language_iso', data_get($this->space->settings, 'default_language', null));
         }
 
         return $builder;
