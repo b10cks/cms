@@ -7,6 +7,7 @@ use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityRequirement;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
 use PostHog\PostHog;
 
@@ -17,7 +18,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        if (app()->environment('production')) {
+            request()->setTrustedProxies(['*'], Request::HEADER_X_FORWARDED_AWS_ELB);
+            \URL::forceScheme('https');
+        }
     }
 
     /**
