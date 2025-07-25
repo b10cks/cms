@@ -458,24 +458,7 @@ class AssetService
     public function getAssetUrl(Asset $asset): ?string
     {
         try {
-            // Get the storage for this asset
-            $storage = StorageModel::findOrFail($asset->storage_id);
-
-            if (!$storage) {
-                throw new \Exception("Storage not found for asset: {$asset->id}");
-            }
-
-            $filesystem = $this->storageService->getStorage($storage);
-
-            // Check if the file exists
-            if (!$filesystem->exists($asset->path)) {
-                return null;
-            }
-
-            // Get URL if supported by the driver
-            $driverCapabilities = $this->storageService->getDriverCapabilities($storage->driver);
-
-            return $filesystem->url($asset->path);
+            return route('ilum.full_path', ['storage' => $asset->storage_id, 'full_path' => $asset->path]);
         } catch (\Throwable $e) {
             Log::error('Failed to get asset URL', [
                 'asset' => $asset->id,
