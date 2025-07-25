@@ -35,9 +35,11 @@ class AppServiceProvider extends ServiceProvider
                 ]);
             });
 
-        PostHog::init(
-            config('services.posthog.api_key'),
-            config('services.posthog.settings', [])
-        );
+        if (config('services.posthog.api_key')) {
+            PostHog::init(
+                config('services.posthog.api_key'),
+                config('services.posthog.settings', [])
+            );
+        }
     }
 }
