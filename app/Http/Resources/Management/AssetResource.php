@@ -23,7 +23,7 @@ class AssetResource extends JsonResource
             'full_path' => $this->full_path,
             'folder_id' => $this->folder_id,
             'metadata' => $this->metadata,
-            'data' => $this->data ?? new \StdClass(),
+            'data' => $this->data && count($this->data) ? $this->data : new \StdClass(),
             'tags' => $this->tags,
             'url' => app(AssetService::class)->getAssetUrl($this->resource),
             'created_at' => $this->created_at?->toIso8601String(),
