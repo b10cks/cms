@@ -4,6 +4,9 @@ use App\Http\Controllers\Api\ImageController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['ilum'])->group(function () {
+    Route::get('/{storage}/{full_path}', [ImageController::class, 'process'])
+        ->name('full_path');
+
     Route::get('/{storage}/{space}/{assetId}/{name}', [ImageController::class, 'process'])
         ->name('original');
 

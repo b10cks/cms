@@ -32,7 +32,7 @@ class AssetHandler
                 'mime_type',
                 'size',
                 'filename'
-            ]) + $src : $src;
+            ]) + $src + ['url' => $asset->getUrl(),]: $src;
         });
     }
 
