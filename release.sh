@@ -31,30 +31,12 @@ if [[ $local_commit != $remote_commit ]]; then
     fi
 fi
 
-# Get current date in YYYY.MM.DD format
 current_date=$(date +"%Y.%-m.%-d")
 
-# Check if a tag for today already exists
-existing_tags=$(git tag -l "v$current_date*" | sort -V)
+short_hash=$(git rev-parse --short HEAD)
 
-if [[ -z "$existing_tags" ]]; then
-    # No tag exists for today, create the first one
-    new_tag="v$current_date"
-else
-    # Get the latest tag for today
-    latest_tag=$(echo "$existing_tags" | tail -n 1)
+new_tag="v${current_date}-${short_hash}"
 
-    # Extract the suffix if it exists
-    suffix=$(echo "$latest_tag" | grep -oP "(?<=$current_date\.)\d+" || echo "0")
-
-    # Increment the suffix
-    new_suffix=$((suffix + 1))
-
-    # Create the new tag
-    new_tag="v$current_date.$new_suffix"
-fi
-
-# Create and push the new tag
 git tag "$new_tag"
 
 # Push changes if local is ahead of origin
