@@ -3,7 +3,6 @@
 namespace App\Models\Space;
 
 use App\Casts\Content\SchemaCast;
-use App\Casts\Slug;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * 
+ *
  *
  * @property string $id
  * @property string $slug
@@ -77,7 +76,6 @@ class Block extends SpaceModel
     ];
 
     protected $casts = [
-        'slug' => Slug::class,
         'tags' => 'array',
         'editor' => 'array',
         'schema' => SchemaCast::class,
