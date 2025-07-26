@@ -30,7 +30,7 @@ class AcceptHeader
                 $locale,
                 $q ? (float)str_replace('q=', '', $q) : 1,
             ];
-        }, explode(',', $header));
+        }, explode(',', $header ?? ''));
 
         foreach ($locales as $locale) {
             if ($locale = $this->isSupportedLocale($locale[0], $supportedLocales)) {
