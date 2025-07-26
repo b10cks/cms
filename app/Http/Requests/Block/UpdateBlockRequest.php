@@ -36,7 +36,7 @@ class UpdateBlockRequest extends FormRequest
             ],
 
             'description' => 'sometimes|nullable|string',
-            'type' => 'sometimes|string|in:root,nestable,single',
+            'type' => 'sometimes|string|in:root,nestable,single,universal',
             'preview_template' => 'sometimes|nullable|string',
             'schema' => 'sometimes|nullable|array',
             'editor' => 'sometimes|nullable|array',

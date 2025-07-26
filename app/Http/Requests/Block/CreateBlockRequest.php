@@ -33,7 +33,7 @@ class CreateBlockRequest extends FormRequest
             'icon' => 'nullable|string|max:50',
             'color' => 'nullable|string|max:7|regex:/^#[a-fA-F0-9]{6}$/',
             'description' => 'nullable|string',
-            'type' => 'required|string|in:root,nestable,single',
+            'type' => 'required|string|in:root,nestable,single,universal',
             'preview_template' => 'nullable|string',
             'schema' => 'nullable|array',
             'editor' => 'nullable|array',
