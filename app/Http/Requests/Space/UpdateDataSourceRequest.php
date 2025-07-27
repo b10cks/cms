@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests\Space;
 
-use App\Models\Space\DataSource;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateDataSourceRequest extends FormRequest
 {
@@ -35,8 +33,8 @@ class UpdateDataSourceRequest extends FormRequest
                 'string',
                 'max:50',
                 'regex:/^[a-z0-9\-]+$/',
-                Rule::unique(new DataSource()->getConnectionName() . '.data_sources', 'slug')
-                    ->ignore($dataSource),
+//                Rule::unique(new DataSource()->getConnectionName() . '.data_sources', 'slug')
+//                    ->ignore($dataSource),
             ],
             'description' => 'nullable|string',
             'dimensions' => 'sometimes|required|array',
