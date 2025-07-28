@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Management\Space;
+use App\Models\Space\Asset;
 use App\Services\Image\ImageTransformationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ImageController extends Controller
 {
@@ -19,9 +22,28 @@ class ImageController extends Controller
         $this->imageService = $imageService;
     }
 
-    public function process(Request $request, string $storage, string $space, string $assetId, string $name, ?string $transformations = null)
-    {
-        $fullPath = "{$space}/{$assetId}/{$name}";
+    public function process(
+        Request $request,
+        string $storage,
+        Space $space,
+        string $assetId,
+        string $name,
+        ?string $transformations = null
+    ) {
+        $fullPath = "{$space->id}/{$assetId}/{$name}";
+        $asset = Asset::findOrFail($assetId);
+
+        if (\Str::startsWith($asset->mime_type, 'image/') === false) {
+            return Storage::disk()->response(
+                $fullPath,
+                null,
+                [
+                    'Content-Type' => $asset->mime_type,
+                    'Cache-Control' => 'public, max-age=' . self::CACHE_DURATION . ', immutable',
+                    'Pragma' => 'public',
+                ]
+            );
+        }
 
         try {
             $params = $this->parseTransformations($transformations);
@@ -75,7 +97,9 @@ class ImageController extends Controller
         $transformParts = explode(',', $transformations);
 
         foreach ($transformParts as $part) {
-            if (empty($part)) continue;
+            if (empty($part)) {
+                continue;
+            }
 
             // Split by underscore to get key and value
             list($key, $value) = array_pad(explode('_', $part, 2), 2, null);
