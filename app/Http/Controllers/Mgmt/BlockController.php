@@ -25,7 +25,7 @@ class BlockController extends Controller
         $this->authorize('viewAny', [Block::class, $space]);
         $blocks = Block::filter(BlockFilter::fromRequest($request))
             ->with(['folder'])
-            ->paginate();
+            ->paginate(min($request->per_page ?? 20, 1000));
 
         return BlockResource::collection($blocks);
     }
