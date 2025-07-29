@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Mgmt\Content;
 use App\Actions\Content\CreateContent;
 use App\Actions\Content\DeleteContent;
 use App\Actions\Content\UpdateContent;
-use App\Events\Space\ContentUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\ContentFilter;
 use App\Http\Requests\Content\UpsertContentRequest;
@@ -44,7 +43,7 @@ class ContentController extends Controller
 
         $data = $request->validated();
         $content = new Content();
-        $action->execute($data, $content, $request->route('space'),  $request->user());
+        $action->execute($data, $content, $space, $request->user());
 
         if (!$content->save()) {
             Log::error('Failed to create content', ['space_id' => $space->id]);
@@ -76,15 +75,10 @@ class ContentController extends Controller
         $this->authorize('update', [$content, $space]);
 
         $data = $request->validated();
-        $action->execute($data, $content, $request->user());
-
-        if (!$content->save()) {
-            Log::error('Failed to update content', ['content_id' => $content->id, 'space_id' => $space->id]);
-            abort(500, 'Failed to update content');
-        }
+        $action->execute($data, $content, $space, $request->user());
 
         $content->load(['block', 'parent', 'i18n_parent', 'i18n_children', 'i18n_siblings', 'current_version']);
-        broadcast(new ContentUpdated($content, $space));
+//        broadcast(new ContentUpdated($content, $space));
 
         return new ContentResource($content);
     }
@@ -97,7 +91,7 @@ class ContentController extends Controller
         $this->authorize('delete', [$content, $space]);
 
         try {
-            $action->execute($content, auth()->user());
+            $action->execute($content, $space, auth()->user());
             return response()->json(null, 204);
         } catch (\Exception $e) {
             Log::error('Failed to delete content', [

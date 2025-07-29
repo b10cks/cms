@@ -2,6 +2,7 @@
 
 namespace App\Actions\Content;
 
+use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
@@ -9,9 +10,9 @@ use Illuminate\Contracts\Auth\Authenticatable;
 
 class UpdateContent
 {
-    public function execute(array $data, Content $content, Authenticatable|User|null $owner)
+    public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner)
     {
-        \DB::transaction(function () use ($data, $content, $owner) {
+        \DB::transaction(function () use ($data, $content, $space, $owner) {
             $contentData = data_get($data, 'content');
             $message = data_get($data, 'message');
 
@@ -32,6 +33,8 @@ class UpdateContent
                 $content->published_at = null;
             }
             $content->save();
+
+            $space->touch('content_updated_at');
         });
     }
 }

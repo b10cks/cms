@@ -30,6 +30,8 @@ class CreateContent
             ]);
             $content->current_version_id = $version->id;
             $content->save();
+
+            $space->touch('content_updated_at');
         });
     }
 }
