@@ -6,8 +6,11 @@ use App\Http\Controllers\Api\DataEntryController;
 use App\Http\Controllers\Api\DataSourceController;
 use App\Http\Controllers\Api\SpaceController;
 
-Route::get('contents', [ContentController::class, 'index'])->name('contents.index');
+Route::get('contents', [ContentController::class, 'index'])
+    ->middleware('timestamp')
+    ->name('contents.index');
 Route::get('contents/{slug}', [ContentController::class, 'show'])
+    ->middleware('timestamp')
     ->where('slug', '.*')
     ->name('contents.show');
 
