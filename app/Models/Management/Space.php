@@ -12,11 +12,9 @@ use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -31,6 +29,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $description
  * @property array<array-key, mixed>|null $settings
  * @property string|null $team_id
+ * @property \Illuminate\Support\Carbon|null $content_updated_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
@@ -59,6 +58,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereColor($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereContentUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereDeletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereIcon($value)
@@ -100,6 +100,7 @@ class Space extends GlobalModel
     protected $casts = [
         'slug' => Slug::class,
         'settings' => 'array',
+        'content_updated_at' => 'datetime',
     ];
 
     protected function description(): Attribute

@@ -73,6 +73,7 @@ return new class extends Migration {
 
             $table->foreignUlid('team_id')->nullable()->constrained()->nullOnDelete();
 
+            $table->timestamp('content_updated_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
