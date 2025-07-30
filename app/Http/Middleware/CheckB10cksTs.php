@@ -18,7 +18,7 @@ class CheckB10cksTs
             return redirect($url, 301, [
                 'Cache-Control' => 'public, max-age=3600, s-maxage=60',
                 'X-b10cks-version' => config('app.version'),
-            ]);
+            ], app()->environment('production'));
         }
         return $next($request);
     }
