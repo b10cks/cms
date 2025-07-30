@@ -9,10 +9,10 @@ class CheckB10cksTs
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!$request->query('b10cks_ts')) {
+        if (!$request->query('ts')) {
             $space = $request->route('space');
             $params = $request->query();
-            $params['b10cks_ts'] = $space->content_updated_at?->timestamp ?? $space->updated_at->timestamp;
+            $params['ts'] = $space->content_updated_at?->timestamp ?? $space->updated_at->timestamp;
             $url = $request->url() . '?' . http_build_query($params);
 
             return redirect($url, 301, [
