@@ -13,12 +13,12 @@ class CheckB10cksTs
             $space = $request->route('space');
             $params = $request->query();
             $params['ts'] = $space->content_updated_at?->timestamp ?? $space->updated_at->timestamp;
-            $url = $request->url() . '?' . http_build_query($params);
+            $url = $request->path() . '?' . http_build_query($params);
 
             return redirect($url, 301, [
                 'Cache-Control' => 'public, max-age=3600, s-maxage=60',
                 'X-b10cks-version' => config('app.version'),
-            ], true);
+            ], app()->environment('production'));
         }
         return $next($request);
     }
