@@ -25,20 +25,27 @@ class ImageController extends Controller
     public function process(
         Request $request,
         string $storage,
-        Space $space,
+        string $space,
         string $assetId,
         string $name,
         ?string $transformations = null
     ) {
-        $fullPath = "{$space->id}/{$assetId}/{$name}";
-        $asset = Asset::findOrFail($assetId);
+        $fullPath = "{$space}/{$assetId}/{$name}";
+        if ($storage !== 'storage') {
+            $space = Space::findOrFail($space);
+            $request->route()->setParameter('space', $space);
+            $asset = Asset::findOrFail($assetId);
+            $mimetype = $asset->mime_type;
+        } else {
+            $mimetype = Storage::disk()->mimeType($fullPath);
+        }
 
-        if (\Str::startsWith($asset->mime_type, 'image/') === false) {
+        if (\Str::startsWith($mimetype, 'image/') === false) {
             return Storage::disk()->response(
                 $fullPath,
                 null,
                 [
-                    'Content-Type' => $asset->mime_type,
+                    'Content-Type' => $mimetype,
                     'Cache-Control' => 'public, max-age=' . self::CACHE_DURATION . ', immutable',
                     'Pragma' => 'public',
                 ]
@@ -66,8 +73,7 @@ class ImageController extends Controller
                 'Content-Type' => $result['mime'],
                 'Content-Length' => strlen($result['data']),
                 'Cache-Control' => 'public, max-age=' . self::CACHE_DURATION . ', immutable',
-                'Pragma' => 'public',
-//                'Vary' => 'Accept'
+                'Pragma' => 'public'
             ]);
         } catch (\Exception $e) {
             Log::error('Image processing error: ' . $e->getMessage(), [
