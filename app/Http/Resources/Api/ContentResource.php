@@ -15,6 +15,10 @@ class ContentResource extends JsonResource
 {
     public function toArray(Request $request)
     {
+        $this->additional([
+            'ts' => $request->space->ts
+        ]);
+
         return [
             'id' => $this->getRouteKey(),
             'name' => $this->name,

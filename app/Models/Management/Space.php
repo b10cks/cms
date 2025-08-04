@@ -50,6 +50,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read int|null $tokens_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, User> $users
  * @property-read int|null $users_count
+ * @property-read int $ts
  * @method static \Database\Factories\Management\SpaceFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space filter(\CodersCantina\Filter\Filter $filter)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space newModelQuery()
@@ -160,5 +161,10 @@ class Space extends GlobalModel
     {
         return $this->hasMany(SpaceConnection::class, 'space_id', 'id')
             ->where('is_default', true);
+    }
+
+    public function getTsAttribute(): int
+    {
+        return $this->content_updated_at?->getTimestamp() ?? $this->updated_at?->getTimestamp() ?? 0;
     }
 }

@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Filters\Api\ContentFilter;
 use App\Http\Resources\Api\ContentResource;
+use App\Http\Resources\Api\ContentResourceCollection;
 use App\Models\Space\Content;
 use App\Models\Space\Redirect;
 use App\Services\Content\LocalizedContentSlugService;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ContentController
 {
@@ -20,9 +20,9 @@ class ContentController
     }
 
     /**
-     * @response AnonymousResourceCollection<LengthAwarePaginator<ContentResource>>
+     * @response ContentResourceCollection<LengthAwarePaginator<ContentResource>>
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): ContentResourceCollection
     {
         $data = Content::filter(ContentFilter::fromRequest($request))
             ->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id')
@@ -36,7 +36,7 @@ class ContentController
             ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block', 'relations', 'assets', 'links'])
             ->paginate(min($request->per_page ?? 20, 500));
 
-        return ContentResource::collection($data);
+        return new ContentResourceCollection($data);
     }
 
     public function show(Request $request, string $slug): ContentResource|\Illuminate\Http\Response
