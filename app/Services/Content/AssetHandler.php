@@ -47,7 +47,7 @@ class AssetHandler
                 $src = [
                         'url' => $asset->getUrl(),
                         'data' => $data,
-                        'metadata' => \Arr::only($asset->metadata, ['width', 'height']),
+                        'metadata' => \Arr::only($asset->metadata, ['width', 'height', 'thumbnails', 'duration']),
                     ] + $src;
             }
 
