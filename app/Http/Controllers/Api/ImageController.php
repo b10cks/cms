@@ -175,9 +175,9 @@ class ImageController extends Controller
         $operationParams['targetHeight'] ??= $operationParams['height'] / 2;
 
         // Parse focus points for fitfocus
-        if ($gravity && preg_match('/^(\d+)p?_(\d+)p?$/', $gravity, $matches)) {
-            $operationParams['x'] = (int)$matches[1];
-            $operationParams['y'] = (int)$matches[2];
+        if ($gravity && preg_match('/^(\d+(?:\.\d+)?)p?_(\d+(?:\.\d+)?)p?$/', $gravity, $matches)) {
+            $operationParams['x'] = (float)$matches[1];
+            $operationParams['y'] = (float)$matches[2];
         }
 
         // Default operation
@@ -191,7 +191,7 @@ class ImageController extends Controller
                         $operation = 'smartfit';
                     } elseif ($gravity && in_array($gravity, ['center', 'face', 'auto'])) {
                         $operation = 'smartfit';
-                    } elseif ($gravity && preg_match('/^(\d+)p?_(\d+)p?$/', $gravity)) {
+                    } elseif ($gravity && preg_match('/^(\d+(?:\.\d+)?)p?_(\d+(?:\.\d+)?)p?$/', $gravity)) {
                         $operation = 'fitfocus';
                     } else {
                         $operation = 'fit';
