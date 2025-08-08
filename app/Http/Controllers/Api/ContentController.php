@@ -26,13 +26,13 @@ class ContentController
     {
         $data = Content::filter(ContentFilter::fromRequest($request))
             ->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id')
-            ->select(
+            ->select([
                 'contents.*',
                 'content_versions.content',
                 'content_versions.relation_ids',
                 'content_versions.asset_ids',
                 'content_versions.link_ids'
-            )
+            ])
             ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block', 'relations', 'assets', 'links'])
             ->paginate(min($request->per_page ?? 20, 500));
 
@@ -56,13 +56,13 @@ class ContentController
 
         $query = Content::where('full_slug', '/' . $slug)
             ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block', 'relations', 'assets', 'links'])
-            ->select(
+            ->select([
                 'contents.*',
                 'content_versions.content',
                 'content_versions.relation_ids',
                 'content_versions.asset_ids',
                 'content_versions.link_ids'
-            );
+            ]);
 
         $vid = $request->get('vid', 'published');
         if ($vid === 'published') {
