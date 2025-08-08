@@ -7,10 +7,10 @@ use App\Http\Controllers\Api\DataSourceController;
 use App\Http\Controllers\Api\SpaceController;
 
 Route::get('contents', [ContentController::class, 'index'])
-    ->middleware('timestamp')
+    ->middleware('revision')
     ->name('contents.index');
 Route::get('contents/{slug}', [ContentController::class, 'show'])
-    ->middleware('timestamp')
+    ->middleware('revision')
     ->where('slug', '.*')
     ->name('contents.show');
 

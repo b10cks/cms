@@ -10,11 +10,11 @@ class ContentResourceCollection extends ResourceCollection
     public function toArray(Request $request)
     {
         $this->additional([
-            'ts' => $request->space->ts
+            'rv' => $request->space->rv
         ]);
 
-        return $this->collection->map(function ($content) use ($request) {
-            return new ContentResource($content, $request);
+        return $this->collection->map(function ($content) {
+            return new ContentResource($content);
         })->all();
     }
 

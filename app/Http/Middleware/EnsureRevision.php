@@ -5,14 +5,14 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 
-class CheckB10cksTs
+class EnsureRevision
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!$request->query('ts')) {
+        if (!$request->query('rv')) {
             $space = $request->route('space');
             $params = $request->query();
-            $params['ts'] = $space->content_updated_at?->timestamp ?? $space->updated_at->timestamp;
+            $params['rv'] = $space->content_updated_at?->timestamp ?? $space->updated_at->timestamp;
             $url = $request->path() . '?' . http_build_query($params);
 
             return redirect($url, 301, [

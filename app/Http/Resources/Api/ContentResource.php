@@ -16,7 +16,7 @@ class ContentResource extends JsonResource
     public function toArray(Request $request)
     {
         $this->additional([
-            'ts' => $request->space->ts
+            'rv' => $request->space->rv
         ]);
 
         return [
@@ -43,7 +43,7 @@ class ContentResource extends JsonResource
     {
         $content = $this->getContent();
         if (!$content) {
-            return new \StdClass();
+            return new \stdClass();
         }
 
         $this->injectData($content);
