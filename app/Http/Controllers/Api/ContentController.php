@@ -64,7 +64,7 @@ class ContentController
                 'content_versions.link_ids'
             );
 
-        $vid = $request->get('vid');
+        $vid = $request->get('vid', 'published');
         if ($vid === 'published') {
             $query->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id');
         } elseif ($vid === 'draft') {
