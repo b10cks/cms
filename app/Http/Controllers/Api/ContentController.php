@@ -64,13 +64,14 @@ class ContentController
                 'content_versions.link_ids'
             );
 
-        if ($vid = $request->get('vid')) {
-            $query->leftJoin('content_versions', 'content_versions.content_id', '=', 'contents.id')
-                ->where('content_versions.id', $vid);
-        } elseif ($request->get('version') === 'draft') {
+        $vid = $request->get('vid');
+        if ($vid === 'published') {
+            $query->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id');
+        } elseif ($vid === 'draft') {
             $query->leftJoin('content_versions', 'contents.current_version_id', '=', 'content_versions.id');
         } else {
-            $query->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id');
+            $query->leftJoin('content_versions', 'content_versions.content_id', '=', 'contents.id')
+                ->where('content_versions.id', $vid);
         }
 
         return new ContentResource($query->firstOrFail());
