@@ -4,7 +4,6 @@ namespace App\Http\Filters\Api;
 
 use App\Models\Space\Block;
 use CodersCantina\Filter\AdvancedFilter;
-use CodersCantina\Filter\ExtendedFilter;
 
 class ContentFilter extends AdvancedFilter
 {
@@ -31,5 +30,10 @@ class ContentFilter extends AdvancedFilter
     public function content_type($value)
     {
         $this->builder->whereIn('block_id', Block::where('type', $value));
+    }
+
+    public function parent_id($value)
+    {
+        $this->builder->where('parent_id', $value);
     }
 }
