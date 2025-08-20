@@ -166,12 +166,12 @@ class SpaceStatsService
 
         $apiRequests = DB::table('token_executions')
             ->whereIn('token_id', $tokenIds)
-            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereBetween('started_at', [$startDate, $endDate])
             ->count();
 
         $apiSuccessRate = DB::table('token_executions')
             ->whereIn('token_id', $tokenIds)
-            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereBetween('started_at', [$startDate, $endDate])
             ->select(
                 DB::raw('COUNT(*) as total'),
                 DB::raw('SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as successful')
@@ -184,7 +184,7 @@ class SpaceStatsService
 
         $avgResponseTime = DB::table('token_executions')
             ->whereIn('token_id', $tokenIds)
-            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereBetween('started_at', [$startDate, $endDate])
             ->whereNotNull('duration')
             ->avg('duration') ?? 0;
 
@@ -293,7 +293,7 @@ class SpaceStatsService
         $tokenIds = Token::where('space_id', $space->id)->pluck('id')->toArray();
 
         $data = DB::table('token_executions')
-            ->selectRaw("DATE_FORMAT(created_at, ?) as period, COUNT(*) as count", [$dateFormat])
+            ->selectRaw("DATE_FORMAT(started_at, ?) as period, COUNT(*) as count", [$dateFormat])
             ->whereIn('token_id', $tokenIds)
             ->groupBy('period')
             ->pluck('count', 'period')
