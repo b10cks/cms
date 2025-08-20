@@ -236,17 +236,14 @@ return new class extends Migration {
             $table->foreignUlid('token_id')->constrained('tokens')->cascadeOnDelete();
 
             $table->string('status', 20);
-            $table->json('context')->nullable();
-            $table->json('result')->nullable();
             $table->text('error')->nullable();
             $table->float('duration')->nullable();
 
             $table->timestamp('started_at', 3)->nullable();
             $table->timestamp('completed_at', 3)->nullable();
-            $table->timestamp('created_at')->nullable();
 
-            $table->index(['token_id', 'created_at']);
-            $table->index(['status', 'created_at']);
+            $table->index(['token_id', 'started_at']);
+            $table->index(['status', 'started_at']);
         });
 
         // Space Automations

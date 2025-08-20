@@ -26,16 +26,11 @@ class AuthenticateDataApi
         $token = $this->validateToken($plainTextToken, $usageService);
         $request->route()->setParameter('space', $token->space);
 
-        $execution = $usageService->startExecution($token, [
-            'route' => $request->route()->getName(),
-            'method' => $request->method(),
-            'ip' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ], $start);
+        $execution = $usageService->startExecution($token, $start);
 
         try {
             $response = $next($request);
-            $usageService->completeExecution($execution, []);
+            $usageService->completeExecution($execution);
 
             return $response;
         } catch (\Throwable $e) {

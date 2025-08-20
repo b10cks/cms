@@ -12,23 +12,20 @@ use Illuminate\Support\Facades\DB;
 
 class TokenUsageService
 {
-    public function startExecution(Token $token, array $context = [], $start): TokenExecution
+    public function startExecution(Token $token, $start): TokenExecution
     {
         return TokenExecution::create([
             'token_id' => $token->id,
             'status' => 'running',
-            'context' => $context,
             'started_at' => $start,
-            'created_at' => $start,
         ]);
     }
 
-    public function completeExecution(TokenExecution $execution, array $result = []): void
+    public function completeExecution(TokenExecution $execution): void
     {
-        dispatch(fn () => \DB::transaction(function () use ($execution, $result) {
+        dispatch(fn () => \DB::transaction(function () use ($execution) {
             $execution->update([
                 'status' => 'completed',
-                'result' => $result,
                 'completed_at' => now()
             ]);
 
@@ -80,7 +77,7 @@ class TokenUsageService
     {
         return TokenExecution::query()
             ->where('token_id', $token->id)
-            ->orderByDesc('created_at')
+            ->orderByDesc('started_at')
             ->limit($limit)
             ->get();
     }
@@ -103,7 +100,7 @@ class TokenUsageService
 
     protected static function aggregateStats(TokenExecution $execution): void
     {
-        $date = $execution->created_at->startOfDay();
+        $date = $execution->started_at->startOfDay();
 
         foreach (PeriodType::default() as $periodType) {
             $periodDate = match ($periodType) {
@@ -129,17 +126,16 @@ class TokenUsageService
         $query = TokenExecution::query()
             ->where('token_id', $execution->token_id)
             ->whereNotNull('completed_at')
-            ->where('created_at', '>=', $periodDate)
-            ->where('created_at', '<', $periodDate->copy()->add('1 ' . $periodType->toCarbonPeriod()));
+            ->where('started_at', '>=', $periodDate)
+            ->where('started_at', '<', $periodDate->copy()->add('1 ' . $periodType->toCarbonPeriod()));
 
         $stats = [
             'total_executions' => $query->count(),
-            'successful_executions' => (clone $query)->where('status', 'completed')->count(),
+            'successful_executions' => (clone $query)->whereNot('status', 'failed')->count(),
             'failed_executions' => (clone $query)->where('status', 'failed')->count(),
         ];
 
         $avgDuration = (clone $query)
-            ->whereNotNull('started_at')
             ->whereNotNull('completed_at')
             ->select(DB::raw('AVG(duration) as avg_duration'))
             ->first();
