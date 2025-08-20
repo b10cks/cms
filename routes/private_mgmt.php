@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Mgmt\Ai\AvailableModelsController;
 use App\Http\Controllers\Mgmt\Ai\MetaTagsController;
 use App\Http\Controllers\Mgmt\Ai\TranslationController;
 use App\Http\Controllers\Mgmt\AssetController;
@@ -29,6 +30,7 @@ use App\Http\Controllers\Mgmt\User\UserAvatarController;
 use App\Http\Controllers\Mgmt\User\UserController;
 use App\Http\Controllers\Mgmt\User\UserPasswordController;
 use App\Http\Controllers\Mgmt\User\UserSettingsController;
+use App\Http\Controllers\SpaceAiUsageController;
 
 Route::group(['prefix' => 'users'], function () {
     Route::group(['prefix' => 'me'], function () {
@@ -44,6 +46,8 @@ Route::group(['prefix' => 'users'], function () {
 });
 
 Route::group(['prefix' => 'ai'], function () {
+    Route::get('available-models', AvailableModelsController::class)
+        ->name('ai.available-models');
     Route::post('meta-tags', MetaTagsController::class)
         ->name('ai.meta-tags');
     Route::post('translate', TranslationController::class)
@@ -64,6 +68,7 @@ Route::apiResource('spaces', SpaceController::class);
 Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::post('icon', SpaceIconController::class)->name('spaces.icon');
     Route::post('archive', SpaceArchiveController::class)->name('spaces.archive');
+    Route::get('ai-usage', SpaceAiUsageController::class)->name('spaces.ai-usage');
 
     Route::apiResource('blocks', BlockController::class);
     Route::apiResource('block-tags', BlockTagController::class)->parameters([

@@ -11,13 +11,19 @@ class OpenAiService extends AiService
     protected function invokeModel($prompt)
     {
         $start = microtime(true);
+        $estimatedTokens = $this->estimateTokens($prompt);
+
+        $this->checkUsageBeforeInvoke($estimatedTokens);
+
         $result = OpenAI::chat()->create([
-            'model' => 'moonshotai/kimi-k2:free',
+            'model' => $this->getModelIdentifier(),
             'messages' => [
                 ['role' => 'user', 'content' => $prompt],
             ],
         ]);
         $duration = microtime(true) - $start;
+
+        $this->trackUsage($result->usage->promptTokens + $result->usage->completionTokens);
 
         PostHog::capture([
             'distinctId' => auth()->id(),
@@ -28,7 +34,8 @@ class OpenAiService extends AiService
                 '$ai_provider' => 'openai',
                 '$ai_input_tokens' => $result->usage->promptTokens,
                 '$ai_output_tokens' => $result->usage->completionTokens,
-                '$ai_latency' => $duration
+                '$ai_latency' => $duration,
+                'space_id' => $this->space?->id,
             ],
             'timestamp' => now()->toIso8601String(),
         ]);
