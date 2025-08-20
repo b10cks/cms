@@ -12,7 +12,7 @@ class OpenAiService extends AiService
     {
         $start = microtime(true);
         $result = OpenAI::chat()->create([
-            'model' => 'deepseek/deepseek-chat:free',
+            'model' => 'moonshotai/kimi-k2:free',
             'messages' => [
                 ['role' => 'user', 'content' => $prompt],
             ],

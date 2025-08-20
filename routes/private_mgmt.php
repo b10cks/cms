@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Mgmt\Ai\MetaTagsController;
 use App\Http\Controllers\Mgmt\Ai\TranslationController;
 use App\Http\Controllers\Mgmt\AssetController;
 use App\Http\Controllers\Mgmt\AssetFolderController;
@@ -43,6 +44,8 @@ Route::group(['prefix' => 'users'], function () {
 });
 
 Route::group(['prefix' => 'ai'], function () {
+    Route::post('meta-tags', MetaTagsController::class)
+        ->name('ai.meta-tags');
     Route::post('translate', TranslationController::class)
         ->name('ai.translate');
 });
