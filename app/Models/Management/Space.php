@@ -116,7 +116,7 @@ class Space extends GlobalModel
                 return null;
             }
 
-            return \Illuminate\Support\Facades\Storage::disk('public')->url($this->icon);
+            return 'storage/' . $this->icon;
         });
     }
 

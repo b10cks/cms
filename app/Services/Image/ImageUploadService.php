@@ -5,7 +5,6 @@ namespace App\Services\Image;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class ImageUploadService
 {
@@ -23,7 +22,7 @@ class ImageUploadService
         $extension = $file->getClientOriginalExtension();
         $filename = $model->getRouteKey() . '_' . time() . '.' . $extension;
 
-        $path = Storage::disk('public')->putFileAs(
+        $path = Storage::putFileAs(
             $directory,
             $file,
             $filename
@@ -45,23 +44,8 @@ class ImageUploadService
      */
     protected function deleteExistingFile(Model $model, string $attribute): void
     {
-        if ($model->{$attribute} && Storage::disk('public')->exists($model->{$attribute})) {
-            Storage::disk('public')->delete($model->{$attribute});
+        if ($model->{$attribute} && Storage::exists($model->{$attribute})) {
+            Storage::delete($model->{$attribute});
         }
-    }
-
-    /**
-     * Get public URL for the stored file.
-     *
-     * @param string|null $path The file path
-     * @return string|null The public URL or null if path is null
-     */
-    public function getPublicUrl(?string $path): ?string
-    {
-        if (!$path) {
-            return null;
-        }
-
-        return Storage::disk('public')->url($path);
     }
 }

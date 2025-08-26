@@ -26,7 +26,7 @@ class UpdateIconRequest extends FormRequest
                 'required',
                 'file',
                 'image',
-                'mimes:jpeg,png,jpg,gif',
+                'mimes:jpeg,png,jpg,gif,svg',
                 'max:2048',
             ],
         ];
