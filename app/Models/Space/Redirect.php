@@ -4,6 +4,7 @@ namespace App\Models\Space;
 
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  *
@@ -32,6 +33,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
  */
 class Redirect extends SpaceModel
 {
+    use HasFactory;
     use HasUlids;
     use Filterable;
 
