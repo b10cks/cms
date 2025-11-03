@@ -8,7 +8,8 @@ RUN install-php-extensions \
     intl \
     mysqli \
     pdo_mysql \
-    pcntl
+    pcntl \
+    zlib
 
 COPY docker/php.ini /usr/local/etc/php/conf.d/docker-php-override.ini
 COPY docker/etc /etc
