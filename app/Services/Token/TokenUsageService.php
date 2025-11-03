@@ -12,8 +12,17 @@ use Illuminate\Support\Facades\DB;
 
 class TokenUsageService
 {
-    public function startExecution(Token $token, $start): TokenExecution
+    protected static function trackingEnabled(): bool
     {
+        return config('app.track_usage', false);
+    }
+
+    public function startExecution(Token $token, $start): ?TokenExecution
+    {
+        if (!self::trackingEnabled()) {
+            return null;
+        }
+
         return TokenExecution::create([
             'token_id' => $token->id,
             'status' => 'running',
@@ -21,8 +30,12 @@ class TokenUsageService
         ]);
     }
 
-    public function completeExecution(TokenExecution $execution): void
+    public function completeExecution(?TokenExecution $execution): void
     {
+        if (!self::trackingEnabled() || !$execution) {
+            return;
+        }
+
         dispatch(fn () => \DB::transaction(function () use ($execution) {
             $execution->update([
                 'status' => 'completed',
@@ -35,9 +48,13 @@ class TokenUsageService
         )->afterResponse();
     }
 
-    public function failExecution(TokenExecution $execution, \Throwable $error): void
+    public function failExecution(?TokenExecution $execution, \Throwable $error): void
     {
-        dispatch(fn () => \DB::transaction(function () use ($execution, $error) {
+        if (!self::trackingEnabled() || !$execution) {
+            return;
+        }
+
+        dispatch(fn() => \DB::transaction(function () use ($execution, $error) {
             $execution->update([
                 'status' => 'failed',
                 'error' => $error->getMessage(),
@@ -58,6 +75,10 @@ class TokenUsageService
 
     public function getStatistics(Token $token, string $periodType, ?Carbon $startDate = null, ?Carbon $endDate = null): Collection
     {
+        if (!self::trackingEnabled()) {
+            return collect();
+        }
+
         $query = TokenUsageStats::query()
             ->where('token_id', $token->id)
             ->where('period_type', $periodType);
@@ -75,6 +96,10 @@ class TokenUsageService
 
     public function getRecentExecutions(Token $token, int $limit = 50): Collection
     {
+        if (!self::trackingEnabled()) {
+            return collect();
+        }
+
         return TokenExecution::query()
             ->where('token_id', $token->id)
             ->orderByDesc('started_at')
@@ -84,6 +109,10 @@ class TokenUsageService
 
     public function getExecutionTrends(Token $token, PeriodType $periodType = PeriodType::DAILY, int $periods = 30): Collection
     {
+        if (!self::trackingEnabled()) {
+            return collect();
+        }
+
         return TokenUsageStats::query()
             ->where('token_id', $token->id)
             ->where('period_type', $periodType->value)
@@ -94,12 +123,20 @@ class TokenUsageService
 
     protected static function incrementExecutionCount(Token $token): void
     {
+        if (!self::trackingEnabled()) {
+            return;
+        }
+
         $token->increment('execution_count');
         $token->update(['last_used_at' => now()]);
     }
 
     protected static function aggregateStats(TokenExecution $execution): void
     {
+        if (!self::trackingEnabled()) {
+            return;
+        }
+
         $date = $execution->started_at->startOfDay();
 
         foreach (PeriodType::default() as $periodType) {

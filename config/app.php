@@ -157,6 +157,9 @@ return [
         ),
     ],
 
+
+    'track_usage' => env('TRACK_TOKEN_USAGE', false),
+
     /*
     |--------------------------------------------------------------------------
     | Maintenance Mode Driver
