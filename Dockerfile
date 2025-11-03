@@ -15,6 +15,7 @@ COPY docker/php.ini /usr/local/etc/php/conf.d/docker-php-override.ini
 COPY docker/etc /etc
 
 COPY artisan /app/
+COPY composer.json /app/
 COPY vendor /app/vendor
 COPY storage /app/storage
 RUN chown -R 1000:1000 /app/storage
