@@ -7,8 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Management\Space;
 use App\Services\Space\SpaceStatsService;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class SpaceStatsController extends Controller
 {
@@ -27,8 +27,8 @@ class SpaceStatsController extends Controller
 
         // Parse request parameters
         $periodType = $this->getPeriodType($request->input('period', 'daily'));
-        $startDate = $this->parseDate($request->input('start_date'), Carbon::now()->subDays(30));
-        $endDate = $this->parseDate($request->input('end_date'), Carbon::now());
+        $startDate = $this->parseDate($request->input('start_date'), Carbon::now()->subDays(30), 'start');
+        $endDate = $this->parseDate($request->input('end_date'), Carbon::now(), 'end');
 
         $stats = $this->statsService->getDashboardStats($space, [
             'period_type' => $periodType,
@@ -103,14 +103,20 @@ class SpaceStatsController extends Controller
     /**
      * Helper method to parse date from request
      */
-    private function parseDate(?string $date, Carbon $default): Carbon
+    private function parseDate(?string $date, Carbon $default, string $type): Carbon
     {
         if (empty($date)) {
             return $default;
         }
 
         try {
-            return Carbon::parse($date);
+            $date = Carbon::parse($date);
+
+            return match ($type) {
+                'start' => $date->startOfDay(),
+                'end' => $date->endOfDay(),
+                default => $date,
+            };
         } catch (\Exception $e) {
             return $default;
         }
