@@ -5,7 +5,6 @@ namespace App\Models\Management;
 use App\Casts\Slug;
 use App\Http\Resources\Management\SpaceResource;
 use App\Models\Traits\Auditable;
-use App\Models\Traits\BroadcastsModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\User;
 use CodersCantina\Filter\Filterable;
@@ -77,7 +76,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Space extends GlobalModel
 {
     use Auditable;
-    use BroadcastsModelEvents;
+//    use BroadcastsModelEvents;
     use HasFactory;
     use HasPurifiedAttributes;
     use HasUlids;
