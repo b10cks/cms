@@ -54,7 +54,7 @@ jobs:
 
       - name: Build Docker image
         env:
-          IMAGE_TAG: master-${{ steps.version.outputs.version }}
+          IMAGE_TAG: main-${{ steps.version.outputs.version }}
         run: |
           docker build \
             --build-arg APP_VERSION=${{ steps.version.outputs.version }} \
@@ -66,7 +66,7 @@ jobs:
 
       - name: Push Docker image to ECR
         env:
-          IMAGE_TAG: master-${{ steps.version.outputs.version }}
+          IMAGE_TAG: main-${{ steps.version.outputs.version }}
         run: |
           docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
           docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:cache
@@ -83,7 +83,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ env.ECS_TASK_DEFINITION }}
-          image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:master-${{ steps.version.outputs.version }}
+          image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:main-${{ steps.version.outputs.version }}
 
       - name: Deploy to Amazon ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
