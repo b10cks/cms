@@ -17,7 +17,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property float|null $duration
  * @property \Illuminate\Support\Carbon|null $started_at
  * @property \Illuminate\Support\Carbon|null $completed_at
- * @property \Illuminate\Support\Carbon|null $created_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, TokenExecution> $executions
  * @property-read int|null $executions_count
  * @property-read \App\Models\Management\Token $token
@@ -28,7 +27,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TokenExecution newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TokenExecution query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TokenExecution whereCompletedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TokenExecution whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TokenExecution whereDuration($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TokenExecution whereError($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TokenExecution whereId($value)

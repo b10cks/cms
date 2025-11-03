@@ -44,7 +44,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceConnection whereSpaceId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceConnection whereState($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceConnection whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceConnection withTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceConnection withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceConnection withoutTrashed()
  * @mixin \Eloquent
  */

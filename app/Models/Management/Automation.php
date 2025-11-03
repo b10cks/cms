@@ -60,7 +60,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereSpaceId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereTrigger($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation withTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation withoutTrashed()
  * @mixin \Eloquent
  */

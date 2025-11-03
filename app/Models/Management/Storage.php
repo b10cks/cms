@@ -17,8 +17,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * 
- *
  * @property string $id
  * @property string $space_id
  * @property string $state
@@ -59,7 +57,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Storage whereSpaceId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Storage whereState($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Storage whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Storage withTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Storage withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Storage withoutTrashed()
  * @mixin \Eloquent
  */

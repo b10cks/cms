@@ -7,6 +7,36 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property \Illuminate\Support\Carbon $hour_timestamp Start of the hour
+ * @property int $bytes_sent Total bytes sent to clients
+ * @property int $bytes_received Total bytes received from clients
+ * @property int|null $total_bytes Total bytes processed (sent + received)
+ * @property int $request_count Number of traffic requests
+ * @property int $cache_hits
+ * @property int $cache_misses
+ * @property string $space_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Management\Space $space
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceTrafficUsageHourly filter(\CodersCantina\Filter\Filter $filter)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceTrafficUsageHourly newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceTrafficUsageHourly newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceTrafficUsageHourly query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceTrafficUsageHourly whereBytesReceived($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceTrafficUsageHourly whereBytesSent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceTrafficUsageHourly whereCacheHits($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceTrafficUsageHourly whereCacheMisses($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceTrafficUsageHourly whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceTrafficUsageHourly whereHourTimestamp($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceTrafficUsageHourly whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceTrafficUsageHourly whereRequestCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceTrafficUsageHourly whereSpaceId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceTrafficUsageHourly whereTotalBytes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceTrafficUsageHourly whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
 class SpaceTrafficUsageHourly extends GlobalModel
 {
     use Filterable;

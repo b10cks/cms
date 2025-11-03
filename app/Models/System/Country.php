@@ -32,7 +32,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|Country whereNameLocal($value)
  * @method static Builder<static>|Country whereNameTranslation($value)
  * @method static Builder<static>|Country whereUpdatedAt($value)
- * @method static Builder<static>|Country withTrashed()
+ * @method static Builder<static>|Country withTrashed(bool $withTrashed = true)
  * @method static Builder<static>|Country withoutTrashed()
  * @mixin Eloquent
  */

@@ -8,6 +8,30 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $space_id
+ * @property int $max_tokens
+ * @property int $used_tokens
+ * @property \Illuminate\Support\Carbon $valid_to
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read int $remaining_tokens
+ * @property-read \App\Models\Management\Space|null $space
+ * @method static Builder<static>|SpaceAiUsage active()
+ * @method static Builder<static>|SpaceAiUsage forSpace(string $spaceId)
+ * @method static Builder<static>|SpaceAiUsage newModelQuery()
+ * @method static Builder<static>|SpaceAiUsage newQuery()
+ * @method static Builder<static>|SpaceAiUsage query()
+ * @method static Builder<static>|SpaceAiUsage whereCreatedAt($value)
+ * @method static Builder<static>|SpaceAiUsage whereId($value)
+ * @method static Builder<static>|SpaceAiUsage whereMaxTokens($value)
+ * @method static Builder<static>|SpaceAiUsage whereSpaceId($value)
+ * @method static Builder<static>|SpaceAiUsage whereUpdatedAt($value)
+ * @method static Builder<static>|SpaceAiUsage whereUsedTokens($value)
+ * @method static Builder<static>|SpaceAiUsage whereValidTo($value)
+ * @mixin \Eloquent
+ */
 class SpaceAiUsage extends Model
 {
     use HasFactory;

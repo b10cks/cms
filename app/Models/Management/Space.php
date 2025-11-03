@@ -36,6 +36,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read int|null $connections_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Management\SpaceConnection> $defaultConnection
  * @property-read int|null $default_connection_count
+ * @property-read int $rv
  * @property-read mixed $icon_url
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Management\Invite> $invites
  * @property-read int|null $invites_count
@@ -49,7 +50,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read int|null $tokens_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, User> $users
  * @property-read int|null $users_count
- * @property-read int $rv
  * @method static \Database\Factories\Management\SpaceFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space filter(\CodersCantina\Filter\Filter $filter)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space newModelQuery()
@@ -57,8 +57,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereColor($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereContentUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereDeletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereIcon($value)
@@ -69,7 +69,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereState($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereTeamId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Space withTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Space withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space withoutTrashed()
  * @mixin \Eloquent
  */
