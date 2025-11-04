@@ -30,4 +30,25 @@ enum PeriodType: string
             default => null,
         };
     }
+
+    public function toCarbonFormat(): string
+    {
+        return match ($this) {
+            self::DAILY => 'Y-m-d',
+            self::WEEKLY => 'Y-W',
+            self::MONTHLY => 'Y-m',
+            self::YEARLY => 'Y',
+            default => null,
+        };
+    }
+    public function toMysqlDateFormat(): string
+    {
+        return match ($this) {
+            self::DAILY => '%Y-%m-%d',
+            self::WEEKLY => '%Y-%u',
+            self::MONTHLY => '%Y-%m',
+            self::YEARLY => '%Y',
+            default => '%Y-%m-%d',
+        };
+    }
 }
