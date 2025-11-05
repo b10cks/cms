@@ -2,16 +2,15 @@
 
 namespace App\Models\Space;
 
+use App\Models\Traits\HasPurifiedAttributes;
 use CodersCantina\Filter\Filterable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * 
+ *
  *
  * @property string $id
  * @property string $name
@@ -39,8 +38,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class AssetTag extends SpaceModel
 {
     use Filterable;
-    use HasUlids;
     use HasFactory;
+    use HasPurifiedAttributes;
+    use HasUlids;
     use SoftDeletes;
 
     protected $table = 'asset_tags';
@@ -50,4 +50,9 @@ class AssetTag extends SpaceModel
         'icon',
         'color',
     ];
+
+    protected function name(): Attribute
+    {
+        return $this->makePurifiedAttribute('removeAll');
+    }
 }

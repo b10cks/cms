@@ -103,6 +103,11 @@ class Space extends GlobalModel
         'content_updated_at' => 'datetime',
     ];
 
+    protected function name(): Attribute
+    {
+        return $this->makePurifiedAttribute('removeAll');
+    }
+
     protected function description(): Attribute
     {
         return $this->makePurifiedAttribute('rte');

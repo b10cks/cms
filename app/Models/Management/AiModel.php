@@ -2,7 +2,9 @@
 
 namespace App\Models\Management;
 
+use App\Models\Traits\HasPurifiedAttributes;
 use CodersCantina\Filter\Filterable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -46,8 +48,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class AiModel extends Model
 {
-    use HasFactory;
     use Filterable;
+    use HasFactory;
+    use HasPurifiedAttributes;
     use HasUlids;
     use SoftDeletes;
 
@@ -72,6 +75,17 @@ class AiModel extends Model
         'is_active' => 'boolean',
         'settings' => 'array',
     ];
+    
+    protected function name(): Attribute
+    {
+        return $this->makePurifiedAttribute('removeAll');
+    }
+
+    protected function description(): Attribute
+    {
+        return $this->makePurifiedAttribute('removeAll');
+    }
+
 
     public function calculateCost(int $tokenCount, float $baseRate = 0.01): float
     {

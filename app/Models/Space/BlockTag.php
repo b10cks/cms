@@ -2,13 +2,15 @@
 
 namespace App\Models\Space;
 
+use App\Models\Traits\HasPurifiedAttributes;
 use CodersCantina\Filter\Filterable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Staudenmeir\EloquentJsonRelations\HasJsonRelationships;
 use Staudenmeir\EloquentJsonRelations\Relations\HasManyJson;
 
 /**
- * 
+ *
  *
  * @property string $name
  * @property string|null $icon
@@ -31,6 +33,7 @@ use Staudenmeir\EloquentJsonRelations\Relations\HasManyJson;
  */
 class BlockTag extends SpaceModel
 {
+    use HasPurifiedAttributes;
     use Filterable;
     use HasJsonRelationships;
     use HasFactory;
@@ -45,6 +48,11 @@ class BlockTag extends SpaceModel
         'icon',
         'color',
     ];
+
+    protected function name(): Attribute
+    {
+        return $this->makePurifiedAttribute('removeAll');
+    }
 
     public function blocks(): HasManyJson
     {

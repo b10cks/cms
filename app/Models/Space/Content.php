@@ -6,9 +6,11 @@ use App\Casts\Slug;
 use App\Database\HasManyFromArray;
 use App\Database\HasManyFromArrayTrait;
 use App\Jobs\Content\UpdateContentFullSlugsJob;
+use App\Models\Traits\HasPurifiedAttributes;
 use App\Services\Content\ContentSlugService;
 use App\Services\CustomStr;
 use CodersCantina\Filter\Filterable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * 
+ *
  *
  * @property string $id
  * @property string $block_id
@@ -77,9 +79,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Content extends SpaceModel
 {
     use Filterable;
-    use HasManyFromArrayTrait;
-    use HasUlids;
     use HasFactory;
+    use HasManyFromArrayTrait;
+    use HasPurifiedAttributes;
+    use HasUlids;
     use SoftDeletes;
 
     protected $table = 'contents';
@@ -123,8 +126,14 @@ class Content extends SpaceModel
         });
     }
 
+    protected function name(): Attribute
+    {
+        return $this->makePurifiedAttribute('removeAll');
+    }
+
     public function setSlugAttribute($value)
     {
+
         $this->attributes['slug'] = CustomStr::slug($value, '-');
     }
 

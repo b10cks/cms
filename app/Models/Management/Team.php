@@ -92,6 +92,11 @@ class Team extends GlobalModel
         'settings' => 'array',
     ];
 
+    protected function name(): Attribute
+    {
+        return $this->makePurifiedAttribute('removeAll');
+    }
+
     protected function description(): Attribute
     {
         return $this->makePurifiedAttribute('rte');

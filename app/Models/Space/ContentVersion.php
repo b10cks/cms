@@ -3,10 +3,12 @@
 namespace App\Models\Space;
 
 use App\Casts\Content\ContentCast;
+use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\User;
 use App\Services\Content\AssetHandler;
 use App\Services\Content\LinkHandler;
 use CodersCantina\Filter\Filterable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,7 +16,7 @@ use Staudenmeir\EloquentJsonRelations\HasJsonRelationships;
 use Staudenmeir\EloquentJsonRelations\Relations\BelongsToJson;
 
 /**
- * 
+ *
  *
  * @property string $id
  * @property string|null $message
@@ -60,6 +62,7 @@ use Staudenmeir\EloquentJsonRelations\Relations\BelongsToJson;
 class ContentVersion extends SpaceModel
 {
     use HasJsonRelationships;
+    use HasPurifiedAttributes;
     use HasUlids;
     use Filterable;
 
@@ -91,6 +94,11 @@ class ContentVersion extends SpaceModel
             $model->prepareLinksForSave();
             $model->prepareAssetsForSave();
         });
+    }
+
+    protected function message(): Attribute
+    {
+        return $this->makePurifiedAttribute('removeAll');
     }
 
     protected function prepareLinksForSave(): void
