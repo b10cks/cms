@@ -33,7 +33,7 @@ class TeamPolicy
         }
 
         return $user->teams()
-            ->wherePivot('role', 'admin')
+            ->wherePivot('role', ['admin', 'owner'])
             ->where('teams.id', $team->id)
             ->exists();
     }
@@ -45,7 +45,7 @@ class TeamPolicy
         }
 
         return $user->teams()
-            ->wherePivot('role', 'admin')
+            ->wherePivot('role', 'owner')
             ->where('teams.id', $team->id)
             ->exists();
     }
