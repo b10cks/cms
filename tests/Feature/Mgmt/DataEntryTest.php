@@ -46,9 +46,9 @@ class DataEntryTest extends TestCase
         // Create a data source for this space
         $this->dataSource = DataSource::factory()->create([
             'dimensions' => [
-                'en' => 'English',
-                'fr' => 'French',
-                'de' => 'German'
+                ['key' => 'en', 'label' => 'English'],
+                ['key' => 'fr', 'label' => 'French'],
+                ['key' => 'de', 'label' => 'German'],
             ],
             'settings' => [
                 'fallback_dimension' => 'en',

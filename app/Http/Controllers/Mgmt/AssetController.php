@@ -52,7 +52,7 @@ class AssetController extends Controller
             $asset = $assetService->storeAsset(
                 $space,
                 $request->file('file'),
-                $request->json('metadata', new \StdClass),
+                (object)$request->json('metadata', new \StdClass),
                 $request->json('data', new \StdClass),
                 $folder
             );

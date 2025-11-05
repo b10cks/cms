@@ -49,9 +49,9 @@ class DataSourceTest extends TestCase
         $this->actingAs($this->owner);
 
         $dimensions = [
-            'en' => 'English',
-            'fr' => 'French',
-            'de' => 'German'
+            ['key' => 'en', 'label' => 'English'],
+            ['key' => 'fr', 'label' => 'French'],
+            ['key' => 'de', 'label' => 'German']
         ];
 
         $response = $this->postJson(
@@ -72,7 +72,7 @@ class DataSourceTest extends TestCase
         $response->assertStatus(201);
         $response->assertJsonPath('data.name', 'Test Data Source');
         $response->assertJsonPath('data.slug', 'test-data-source');
-        $response->assertJsonPath('data.dimensions.en', 'English');
+        $response->assertJsonPath('data.dimensions.0.label', 'English');
 
         $this->assertDatabaseHas('data_sources', [
             'name' => 'Test Data Source',
@@ -91,7 +91,7 @@ class DataSourceTest extends TestCase
                 'name' => 'Admin Data Source',
                 'slug' => 'admin-data-source',
                 'description' => 'Created by admin',
-                'dimensions' => ['en' => 'English'],
+                'dimensions' => [['key' => 'en', 'label' => 'English']],
                 'is_active' => true
             ]
         );
@@ -110,7 +110,7 @@ class DataSourceTest extends TestCase
                 'name' => 'Editor Data Source',
                 'slug' => 'editor-data-source',
                 'description' => 'Created by editor',
-                'dimensions' => ['en' => 'English'],
+                'dimensions' => [['key' => 'en', 'label' => 'English']],
                 'is_active' => true
             ]
         );
@@ -129,7 +129,7 @@ class DataSourceTest extends TestCase
                 'name' => 'Viewer Data Source',
                 'slug' => 'viewer-data-source',
                 'description' => 'Created by viewer',
-                'dimensions' => ['en' => 'English'],
+                'dimensions' => [['key' => 'en', 'label' => 'English']],
                 'is_active' => true
             ]
         );
@@ -147,12 +147,11 @@ class DataSourceTest extends TestCase
             [
                 'name' => '', // Empty name should fail
                 'slug' => 'test-data-source',
-                'dimensions' => [] // Empty dimensions should fail
             ]
         );
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['name', 'dimensions']);
+        $response->assertJsonValidationErrors(['name']);
     }
 
     #[Test]
@@ -175,7 +174,10 @@ class DataSourceTest extends TestCase
 
         $dataSource = DataSource::factory()->create([
             'name' => 'Test Data Source',
-            'dimensions' => ['en' => 'English', 'fr' => 'French']
+            'dimensions' => [
+                ['key' => 'en', 'label' => 'English'],
+                ['key' => 'fr', 'label' => 'French']
+            ]
         ]);
 
         $response = $this->getJson(route('mgmt.data-sources.show', [
@@ -185,7 +187,7 @@ class DataSourceTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.name', 'Test Data Source');
-        $response->assertJsonPath('data.dimensions.en', 'English');
+        $response->assertJsonPath('data.dimensions.0.label', 'English');
     }
 
     #[Test]
@@ -195,7 +197,7 @@ class DataSourceTest extends TestCase
 
         $dataSource = DataSource::factory()->create([
             'name' => 'Original Name',
-            'dimensions' => ['en' => 'English']
+            'dimensions' => [['key' => 'en', 'label' => 'English']]
         ]);
 
         $response = $this->patchJson(route('mgmt.data-sources.update', [
@@ -203,13 +205,14 @@ class DataSourceTest extends TestCase
             'data_source' => $dataSource->id
         ]), [
             'name' => 'Updated Name',
-            'dimensions' => ['en' => 'English', 'fr' => 'French'],
+            'dimensions' => [['key' => 'en', 'label' => 'English'],
+                ['key' => 'fr', 'label' => 'French']],
             'settings' => ['fallback_dimension' => 'en']
         ]);
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.name', 'Updated Name');
-        $response->assertJsonPath('data.dimensions.fr', 'French');
+        $response->assertJsonPath('data.dimensions.1.label', 'French');
 
         $this->assertDatabaseHas('data_sources', [
             'id' => $dataSource->id,
@@ -283,7 +286,7 @@ class DataSourceTest extends TestCase
             [
                 'name' => 'Another Source',
                 'slug' => 'duplicate-slug',
-                'dimensions' => ['en' => 'English']
+                'dimensions' => [['key' => 'en', 'label' => 'English']]
             ]
         );
 
