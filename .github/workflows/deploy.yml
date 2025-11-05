@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for commit comparison
 
       - name: Extract version from tag
         id: version
@@ -93,9 +95,63 @@ jobs:
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: false
 
-      - name: Post deployment notifications
-        if: always()
+      - name: Get commits since last release
+        id: commits
         run: |
+          # Get the previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            # If no previous tag, get all commits
+            COMMITS=$(git log --pretty=format:"• %s" --no-merges)
+          else
+            # Get commits between previous tag and current
+            COMMITS=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"• %s" --no-merges)
+          fi
+
+          # Escape and format for JSON
+          COMMITS="${COMMITS//'%'/'%25'}"
+          COMMITS="${COMMITS//$'\n'/'%0A'}"
+          COMMITS="${COMMITS//$'\r'/'%0D'}"
+
+          echo "commits=${COMMITS}" >> $GITHUB_OUTPUT
+          echo "previous_tag=${PREVIOUS_TAG:-'Initial Release'}" >> $GITHUB_OUTPUT
+
+      - name: Post deployment notification to Discord
+        if: always()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            COLOR="3066993"  # Green
+            STATUS="✅ Deployment Successful"
+          else
+            COLOR="15158332"  # Red
+            STATUS="❌ Deployment Failed"
+          fi
+
+          COMMITS="${{ steps.commits.outputs.commits }}"
+          COMMITS="${COMMITS//'%0A'/$'\n'}"
+
+          # Truncate if too long (Discord has a 4096 char limit for description)
+          if [ ${#COMMITS} -gt 3800 ]; then
+            COMMITS="${COMMITS:0:3800}\n... (truncated)"
+          fi
+
+          curl -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"$STATUS\",
+                \"description\": \"**Version:** \`${{ steps.version.outputs.version }}\`\n**Cluster:** \`${{ env.ECS_CLUSTER }}\`\n**Service:** \`${{ env.ECS_SERVICE }}\`\n\n**Changes since ${{ steps.commits.outputs.previous_tag }}:**\n${COMMITS}\",
+                \"color\": $COLOR,
+                \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%S.000Z)\",
+                \"footer\": {
+                  \"text\": \"Commit: ${{ steps.version.outputs.short_sha }}\"
+                }
+              }]
+            }" \
+            $DISCORD_WEBHOOK
+
           if [ ${{ job.status }} == 'success' ]; then
             echo "✅ Deployment successful for version ${{ steps.version.outputs.version }}"
           else
