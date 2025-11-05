@@ -24,7 +24,7 @@ return new class extends Migration {
             $table->foreignUlid('space_id')->constrained()->onDelete('cascade');
             $table->timestamps();
 
-            $table->unique(['space_id', 'hour_timestamp'], 'space_hour_unique');
+            $table->unique(['space_id', 'hour_timestamp'], 'space_api_hits_hourly_unique');
             $table->index('hour_timestamp');
         });
 
@@ -43,7 +43,7 @@ return new class extends Migration {
             $table->foreignUlid('space_id')->constrained()->onDelete('cascade');
             $table->timestamps();
 
-            $table->unique(['space_id', 'hour_timestamp'], 'space_hour_unique');
+            $table->unique(['space_id', 'hour_timestamp'], 'space_traffic_usage_hourly_unique');
             $table->index('hour_timestamp');
         });
     }
