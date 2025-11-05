@@ -142,7 +142,7 @@ jobs:
             -d "{
               \"embeds\": [{
                 \"title\": \"$STATUS\",
-                \"description\": \"**Project:** \`cms\`\n**Version:** \`${{ steps.version.outputs.version }}\`\n**Cluster:** \`${{ env.ECS_CLUSTER }}\`\n**Service:** \`${{ env.ECS_SERVICE }}\`\n\n**Changes since ${{ steps.commits.outputs.previous_tag }}:**\n${COMMITS}\",
+                \"description\": \"**Project:** https://github.com/b10cks/cms\n**Version:** \`${{ steps.version.outputs.version }}\`\n**Cluster:** \`${{ env.ECS_CLUSTER }}\`\n**Service:** \`${{ env.ECS_SERVICE }}\`\n\n**Changes since ${{ steps.commits.outputs.previous_tag }}:**\n${COMMITS}\",
                 \"color\": $COLOR,
                 \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%S.000Z)\",
                 \"footer\": {
