@@ -43,6 +43,10 @@ class Handler extends ExceptionHandler
 
     protected function shouldNotRender(\Throwable $e)
     {
+        if (!app()->environment('production')) {
+            return false;
+        }
+
         foreach ($this->dontRender as $type) {
             if ($e instanceof $type) {
                 return true;
