@@ -58,12 +58,15 @@ class SpaceStatsService
 
         $contentByType = Content::select('block_id', DB::raw('count(*) as count'))
             ->whereHas('block')
-            ->with('block:id,name')
+            ->with('block:id,name,color,icon')
             ->groupBy('block_id')
+            ->orderBy('count', 'desc')
             ->get()
             ->map(function ($item) {
                 return [
                     'name' => $item->block->name ?? 'Unknown',
+                    'icon' => $item->block->icon ?? null,
+                    'color' => $item->block->color ?? null,
                     'count' => $item->count
                 ];
             });
