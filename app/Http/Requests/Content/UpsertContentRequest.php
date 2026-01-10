@@ -45,7 +45,7 @@ class UpsertContentRequest extends FormRequest
             'block_id' => [
                 'sometimes',
                 'required',
-                Rule::exists($connectionName . '.contents', 'id')
+                Rule::exists($connectionName . '.blocks', 'id')
             ],
             'parent_id' => [
                 'nullable',
@@ -54,6 +54,8 @@ class UpsertContentRequest extends FormRequest
             ],
             'i18n_parent_id' => [
                 'sometimes',
+                'nullable',
+                'string',
                 Rule::exists($connectionName . '.contents', 'id')
             ],
             'language_iso' => 'sometimes|required|string|size:2,5',
