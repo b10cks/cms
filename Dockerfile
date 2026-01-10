@@ -18,16 +18,16 @@ COPY docker/etc /etc
 WORKDIR /app
 
 COPY artisan /app/
-COPY --chown=1000:1000 bootstrap /app/
-COPY --chown=1000:1000 storage /app/
+COPY --chown=1000:1000 bootstrap /app/bootstrap/
+COPY --chown=1000:1000 storage /app/storage/
 COPY composer.json /app/
-COPY vendor /app/
-COPY public /app/
-COPY resources /app/
-COPY config /app/
-COPY database /app/
-COPY routes /app/
-COPY app /app/
+COPY vendor /app/vendor/
+COPY public /app/public/
+COPY resources /app/resources/
+COPY config /app/config/
+COPY database /app/database/
+COPY routes /app/routes/
+COPY app /app/app
 
 VOLUME /app/storage
 
