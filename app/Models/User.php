@@ -200,4 +200,14 @@ class User extends Authenticatable implements JWTSubject
             return '/storage/' . $this->avatar;
         });
     }
+
+    public function getConnectionName()
+    {
+        return config('database.default', 'default');
+    }
+
+    protected function newBaseQueryBuilder()
+    {
+        return $this->getConnection()->query();
+    }
 }
