@@ -24,6 +24,7 @@ class SpaceResource extends JsonResource
             'settings' => $this->settings,
             'team_id' => $this->team_id,
             'user_count' => $this->whenCounted('users', fn () => $this->users_count),
+            'content_updated_at' => $this->content_updated_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
