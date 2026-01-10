@@ -46,11 +46,15 @@ class SetupSpace extends QueuedJob
             return;
         }
 
+
+        $default = config('filesystems.default');
+        $config = config("filesystems.disks.{$default}");
+
         $storage = $space->storages()->forceCreate([
             'name' => 'Default Storage',
             'slug' => 'default',
             'state' => 'draft',
-            'driver' => 'local',
+            'driver' => $config['driver'],
             'icon' => 'hard-drive',
             'color' => '#4f46e5',
             'is_default' => true,
