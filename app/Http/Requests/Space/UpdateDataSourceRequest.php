@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Space;
 
+use App\Models\Space\DataSource;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateDataSourceRequest extends FormRequest
 {
@@ -23,7 +25,7 @@ class UpdateDataSourceRequest extends FormRequest
      */
     public function rules(): array
     {
-        $dataSource = $this->route('dataSource');
+        $dataSource = $this->route('data_source');
 
         return [
             'name' => 'sometimes|required|string|max:100',
@@ -33,17 +35,17 @@ class UpdateDataSourceRequest extends FormRequest
                 'string',
                 'max:50',
                 'regex:/^[a-z0-9\-]+$/',
-//                Rule::unique(new DataSource()->getConnectionName() . '.data_sources', 'slug')
-//                    ->ignore($dataSource),
+                Rule::unique(new DataSource()->getConnectionName() . '.data_sources', 'slug')
+                    ->ignore($dataSource->id),
             ],
             'description' => 'nullable|string',
-            'dimensions' => 'sometimes|required|array',
+            'dimensions' => 'nullable|array',
             'dimensions.*.key' => 'required|string',
             'dimensions.*.label' => 'required|string',
             'settings' => 'nullable|array',
-            'settings.dimensions_translatable' => 'nullable|integer|min:0',
-            'settings.default_dimension_locale' => 'nullable|string|max:5',
             'settings.cache_ttl' => 'nullable|integer|min:0',
+            'settings.dimensions_translatable' => 'nullable|boolean',
+            'settings.default_dimension_locale' => 'nullable|string|max:5',
             'is_active' => 'boolean',
         ];
     }

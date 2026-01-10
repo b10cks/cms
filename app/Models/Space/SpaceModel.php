@@ -10,4 +10,9 @@ abstract class SpaceModel extends Model
     {
         return app('App\Services\Database\SpaceModelResolver')->getDefaultConnection();
     }
+
+    public function getConnectionName()
+    {
+        return app('App\Services\Database\SpaceModelResolver')->getConnectionName();
+    }
 }

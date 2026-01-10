@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Space;
 
+use App\Models\Space\DataEntry;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateDataEntryRequest extends FormRequest
 {
@@ -33,9 +35,9 @@ class UpdateDataEntryRequest extends FormRequest
                 'string',
                 'max:100',
                 'regex:/^[a-zA-Z0-9._\-]+$/',
-//                Rule::unique( new DataEntry()->getConnectionName() . '.data_entries', 'key')
-//                    ->where('data_source_id', $dataSource->id)
-//                    ->ignore($dataEntry->id),
+                Rule::unique( new DataEntry()->getConnectionName() . '.data_entries', 'key')
+                    ->where('data_source_id', $dataSource->id)
+                    ->ignore($dataEntry->id),
             ],
             'value' => 'sometimes|nullable|string',
             'dimensions' => 'nullable|array',

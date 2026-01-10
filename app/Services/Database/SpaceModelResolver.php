@@ -33,6 +33,11 @@ class SpaceModelResolver implements ConnectionResolverInterface
         return $this->caches[$space->id];
     }
 
+    public function getConnectionName()
+    {
+        return $this->getDefaultConnection()->getName();
+    }
+
     public function setDefaultConnection($name)
     {
 

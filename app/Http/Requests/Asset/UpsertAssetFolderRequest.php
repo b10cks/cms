@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Asset;
 
+use App\Models\Space\AssetFolder;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpsertAssetFolderRequest extends FormRequest
 {
@@ -16,7 +18,7 @@ class UpsertAssetFolderRequest extends FormRequest
             'parent_id' => [
                 'nullable',
                 'string',
-//                Rule::exists(new AssetFolder()->getConnectionName() . '.asset_folders', 'id')
+                Rule::exists(new AssetFolder()->getConnectionName() . '.asset_folders', 'id')
             ],
         ];
     }

@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests\Block;
 
+use App\Models\Space\Block;
+use App\Models\Space\BlockFolder;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateBlockRequest extends FormRequest
 {
@@ -32,7 +35,8 @@ class UpdateBlockRequest extends FormRequest
                 'string',
                 'max:50',
                 'regex:/^[a-z][a-z0-9A-Z]+$/',
-//                Rule::unique(new Block()->getConnectionName() . '.blocks', 'slug')
+                Rule::unique(new Block()->getConnectionName() . '.blocks', 'slug')
+                    ->ignore($block->id),
             ],
 
             'description' => 'sometimes|nullable|string',
@@ -45,7 +49,7 @@ class UpdateBlockRequest extends FormRequest
                 'sometimes',
                 'nullable',
                 'string',
-//                Rule::exists(new BlockFolder()->getConnectionName() . '.block_folders', 'id')
+                Rule::exists(new BlockFolder()->getConnectionName() . '.block_folders', 'id')
             ],
         ];
     }

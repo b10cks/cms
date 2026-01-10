@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\BlockTag;
 
+use App\Models\Space\BlockTag;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpsertBlockTagRequest extends FormRequest
 {
@@ -22,8 +24,7 @@ class UpsertBlockTagRequest extends FormRequest
                 'string',
                 'max:100',
                 'regex:/^[a-zA-Z0-9\s\-_]+$/',
-//                Rule::unique( new BlockTag()->getConnectionName() . '.block_tags', 'name')->ignore($folderId),
-//                Rule::unique('block_tags', 'name')->ignore($ignoreName, 'name'),
+                Rule::unique( new BlockTag()->getConnectionName() . '.block_tags', 'name')->ignore($ignoreName),
             ],
             'icon' => 'nullable|string|max:50',
             'color' => 'nullable|string|max:7|regex:/^#[a-fA-F0-9]{6}$/',
