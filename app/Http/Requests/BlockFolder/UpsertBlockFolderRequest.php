@@ -19,6 +19,7 @@ class UpsertBlockFolderRequest extends FormRequest
         $folderId = $folder ? $folder->id : null;
 
         return [
+            'external_id' => 'nullable|string',
             'name' => [
                 'required',
                 'string',

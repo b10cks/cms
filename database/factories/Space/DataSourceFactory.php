@@ -4,6 +4,7 @@ namespace Database\Factories\Space;
 
 use App\Models\Space\DataSource;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class DataSourceFactory extends Factory
 {
@@ -26,6 +27,7 @@ class DataSourceFactory extends Factory
         }
 
         return [
+            'external_id' => Str::uuid(),
             'name' => $this->faker->words(3, true),
             'slug' => $this->faker->slug(2),
             'description' => $this->faker->paragraph(),

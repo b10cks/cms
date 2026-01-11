@@ -14,6 +14,7 @@ class BlockTagResource extends JsonResource
     {
         return [
             'name' => $this->name,
+            'external_id' => $this->external_id,
             'icon' => $this->icon,
             'color' => $this->color,
             'blocks_count' => $this->whenCounted('blocks'),

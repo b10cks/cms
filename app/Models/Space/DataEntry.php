@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * 
  *
  * @property string $id
+ * @property string|null $external_id
  * @property string $data_source_id
  * @property string $key
  * @property string $value
@@ -49,6 +50,7 @@ class DataEntry extends SpaceModel
     protected $table = 'data_entries';
 
     protected $fillable = [
+        'external_id',
         'key',
         'value',
         'dimensions',

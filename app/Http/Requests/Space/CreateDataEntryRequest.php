@@ -18,6 +18,7 @@ class CreateDataEntryRequest extends FormRequest
         $dataSource = $this->route('data_source');
 
         return [
+            'external_id' => 'nullable|string',
             'key' => [
                 'required',
                 'string',

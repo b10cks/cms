@@ -13,6 +13,7 @@ use Staudenmeir\EloquentJsonRelations\Relations\HasManyJson;
  *
  *
  * @property string $name
+ * @property string|null $external_id
  * @property string|null $icon
  * @property string|null $color
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -45,6 +46,7 @@ class BlockTag extends SpaceModel
 
     protected $fillable = [
         'name',
+        'external_id',
         'icon',
         'color',
     ];

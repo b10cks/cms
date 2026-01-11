@@ -16,6 +16,7 @@ class CreateDataSourceRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'external_id' => 'nullable|string',
             'name' => 'required|string|max:100',
             'slug' => [
                 'required',

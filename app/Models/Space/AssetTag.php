@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  *
  * @property string $id
+ * @property string|null $external_id
  * @property string $name
  * @property string|null $icon
  * @property string|null $color
@@ -46,6 +47,7 @@ class AssetTag extends SpaceModel
     protected $table = 'asset_tags';
 
     protected $fillable = [
+        'external_id',
         'name',
         'icon',
         'color',

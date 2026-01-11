@@ -6,7 +6,7 @@ use CodersCantina\Filter\ExtendedFilter;
 
 class DataSourceFilter extends ExtendedFilter
 {
-    protected array $sortableColumns = ['name', 'slug', 'is_active', 'created_at', 'updated_at'];
+    protected array $sortableColumns = ['name', 'slug', 'external_id', 'is_active', 'created_at', 'updated_at'];
 
     public function name($value)
     {
@@ -16,6 +16,11 @@ class DataSourceFilter extends ExtendedFilter
     public function slug($value)
     {
         $this->builder->where('slug', 'LIKE', "%{$value}%");
+    }
+
+    public function external_id($value)
+    {
+        $this->builder->where('external_id', $value);
     }
 
     public function is_active($value)

@@ -5,6 +5,7 @@ namespace Database\Factories\Space;
 use App\Models\Management\Storage;
 use App\Models\Space\AssetFolder;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class AssetFolderFactory extends Factory
 {
@@ -33,6 +34,7 @@ class AssetFolderFactory extends Factory
         }
 
         return [
+            'external_id' => Str::uuid(),
             'name' => ucfirst($folderName),
             'description' => $this->faker->boolean(70) ? $this->faker->sentence() : null,
             'icon' => $icon,

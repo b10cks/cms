@@ -27,6 +27,7 @@ class UpdateBlockRequest extends FormRequest
         $block = $this->route('block');
 
         return [
+            'external_id' => 'nullable|string',
             'name' => 'sometimes|required|string|max:100',
             'icon' => 'sometimes|nullable|string|max:50',
             'color' => 'sometimes|nullable|string|max:7|regex:/^#[a-fA-F0-9]{6}$/',

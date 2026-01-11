@@ -16,6 +16,7 @@ class AssetResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'external_id' => $this->external_id,
             'filename' => $this->filename,
             'extension' => $this->extension,
             'mime_type' => $this->mime_type,

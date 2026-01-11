@@ -12,6 +12,7 @@ return new class extends Migration {
     {
         Schema::create('asset_folders', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->string('external_id', 36)->nullable();
 
             $table->string('name', 100);
             $table->string('description')->nullable();
@@ -26,6 +27,7 @@ return new class extends Migration {
 
         Schema::create('asset_tags', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->string('external_id', 36)->nullable();
 
             $table->string('name', 100);
             $table->string('icon', 50)->nullable();
@@ -37,6 +39,7 @@ return new class extends Migration {
 
         Schema::create('assets', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->string('external_id', 36)->nullable();
 
             $table->string('filename', 100);
             $table->string('extension', 10)->charset('ascii');
@@ -59,6 +62,7 @@ return new class extends Migration {
 
         Schema::create('block_folders', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->string('external_id', 36)->nullable();
 
             $table->string('name', 100);
             $table->string('icon', 50)->nullable();
@@ -71,6 +75,7 @@ return new class extends Migration {
 
         Schema::create('block_tags', function (Blueprint $table) {
             $table->string('name', 100)->primary();
+            $table->string('external_id', 36)->nullable();
 
             $table->string('icon', 50)->nullable();
             $table->string('color')->nullable()->charset('ascii');
@@ -80,6 +85,7 @@ return new class extends Migration {
 
         Schema::create('blocks', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->string('external_id', 36)->nullable();
 
             $table->string('slug', 50)->charset('ascii');
 
@@ -122,6 +128,7 @@ return new class extends Migration {
 
         Schema::create('contents', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->string('external_id', 36)->nullable();
 
             $table->foreignUlid('block_id');
             $table->foreignUlid('parent_id')->nullable();
@@ -185,6 +192,7 @@ return new class extends Migration {
 
         Schema::create('data_sources', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->string('external_id', 36)->nullable();
 
             $table->string('name', 100);
             $table->string('slug', 50)->charset('ascii');
@@ -201,6 +209,7 @@ return new class extends Migration {
 
         Schema::create('data_entries', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->string('external_id', 36)->nullable();
             $table->foreignUlid('data_source_id')->constrained()->cascadeOnDelete();
 
             $table->string('key', 100)->charset('ascii');

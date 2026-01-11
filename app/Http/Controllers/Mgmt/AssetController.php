@@ -36,6 +36,7 @@ class AssetController extends Controller
     {
         $request->validate([
             'file' => 'required|file|max:' . (config('filesystems.max_upload_size', 100) * 1024),
+            'external_id' => 'nullable|string|max:36',
             'folder_id' => 'nullable',
             'metadata' => 'nullable|array',
             'data' => 'nullable',
@@ -85,6 +86,7 @@ class AssetController extends Controller
     {
         $request->validate([
             'filename' => 'sometimes|string|max:100',
+            'external_id' => 'sometimes|nullable|string|max:36',
             'folder_id' => 'nullable', // |exists:asset_folders,id',
             'metadata' => 'sometimes|nullable|array',
             'data' => 'sometimes|nullable|array',

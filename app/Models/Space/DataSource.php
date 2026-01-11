@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * 
  *
  * @property string $id
+ * @property string|null $external_id
  * @property string $name
  * @property string $slug
  * @property string|null $description
@@ -58,6 +59,7 @@ class DataSource extends SpaceModel
     protected $table = 'data_sources';
 
     protected $fillable = [
+        'external_id',
         'name',
         'slug',
         'description',

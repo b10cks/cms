@@ -6,7 +6,7 @@ use CodersCantina\Filter\ExtendedFilter;
 
 class BlockFilter extends ExtendedFilter
 {
-    protected array $sortableColumns = ['name', 'slug', 'type', 'folder.name', 'created_at', 'updated_at'];
+    protected array $sortableColumns = ['name', 'slug', 'type', 'external_id', 'folder.name', 'created_at', 'updated_at'];
 
     public function name($value)
     {
@@ -16,6 +16,11 @@ class BlockFilter extends ExtendedFilter
     public function slug($value)
     {
         $this->builder->where('slug', 'LIKE', "%{$value}%");
+    }
+
+    public function external_id($value)
+    {
+        $this->builder->where('external_id', $value);
     }
 
     public function folder_id($value)

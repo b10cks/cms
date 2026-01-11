@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * 
  *
  * @property string $id
+ * @property string|null $external_id
  * @property string|null $name
  * @property string|null $description
  * @property string|null $icon
@@ -62,6 +63,7 @@ class AssetFolder extends SpaceModel
     protected $table = 'asset_folders';
 
     protected $fillable = [
+        'external_id',
         'name',
         'description',
         'icon',

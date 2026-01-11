@@ -5,6 +5,7 @@ namespace Database\Factories\Space;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class DataEntryFactory extends Factory
 {
@@ -13,6 +14,7 @@ class DataEntryFactory extends Factory
     public function definition(): array
     {
         return [
+            'external_id' => Str::uuid(),
             'data_source_id' => DataSource::factory(),
             'key' => $this->faker->word(),
             'value' => $this->faker->sentence(),

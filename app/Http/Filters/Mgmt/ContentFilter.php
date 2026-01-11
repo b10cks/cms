@@ -6,7 +6,7 @@ use CodersCantina\Filter\ExtendedFilter;
 
 class ContentFilter extends ExtendedFilter
 {
-    protected array $sortableColumns = ['name', 'slug', 'language_iso', 'published_at', 'created_at', 'updated_at'];
+    protected array $sortableColumns = ['name', 'slug', 'language_iso', 'external_id', 'published_at', 'created_at', 'updated_at'];
 
     public function name($value)
     {
@@ -16,6 +16,11 @@ class ContentFilter extends ExtendedFilter
     public function slug($value)
     {
         $this->builder->where('slug', 'LIKE', "%{$value}%");
+    }
+
+    public function external_id($value)
+    {
+        $this->builder->where('external_id', $value);
     }
 
     public function block_id($value)

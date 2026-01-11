@@ -7,11 +7,16 @@ use CodersCantina\Filter\ExtendedFilter;
 
 class AssetFilter extends AdvancedFilter
 {
-    protected array $sortableColumns = ['filename', 'size', 'extension', 'mime_type', 'created_at', 'updated_at'];
+    protected array $sortableColumns = ['filename', 'size', 'extension', 'mime_type', 'external_id', 'created_at', 'updated_at'];
 
     public function filename($value)
     {
         $this->builder->where('filename', 'LIKE', "%{$value}%");
+    }
+
+    public function external_id($value)
+    {
+        $this->builder->where('external_id', $value);
     }
 
     public function size($value)

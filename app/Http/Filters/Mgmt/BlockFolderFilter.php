@@ -6,11 +6,16 @@ use CodersCantina\Filter\ExtendedFilter;
 
 class BlockFolderFilter extends ExtendedFilter
 {
-    protected array $sortableColumns = ['name', 'created_at', 'updated_at'];
+    protected array $sortableColumns = ['name', 'external_id', 'created_at', 'updated_at'];
 
     public function name($value)
     {
         $this->builder->where('name', 'LIKE', "%{$value}%");
+    }
+
+    public function external_id($value)
+    {
+        $this->builder->where('external_id', $value);
     }
 
     public function icon($value)

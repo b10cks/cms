@@ -6,6 +6,7 @@ use App\Models\Management\Storage;
 use App\Models\Space\Asset;
 use App\Models\Space\AssetFolder;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class AssetFactory extends Factory
 {
@@ -58,6 +59,7 @@ class AssetFactory extends Factory
         $path = 'fake-space-id/fake-asset-id/' . $filename . '.' . $extension;
 
         return [
+            'external_id' => Str::uuid(),
             'filename' => $filename,
             'extension' => $extension,
             'mime_type' => $mimeType,

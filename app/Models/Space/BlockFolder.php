@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  *
  * @property string $id
+ * @property string|null $external_id
  * @property string $name
  * @property string|null $icon
  * @property string|null $color
@@ -49,6 +50,7 @@ class BlockFolder extends SpaceModel
     protected $table = 'block_folders';
 
     protected $fillable = [
+        'external_id',
         'name',
         'icon',
         'color',

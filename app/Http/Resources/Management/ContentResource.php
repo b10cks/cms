@@ -16,6 +16,7 @@ class ContentResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'external_id' => $this->external_id,
             'block_id' => $this->block_id,
             'block' => $this->whenLoaded('block', fn() => [
                 'id' => $this->block->id,

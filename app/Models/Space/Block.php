@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  *
  * @property string $id
+ * @property string|null $external_id
  * @property string $slug
  * @property string $name
  * @property string|null $icon
@@ -65,6 +66,7 @@ class Block extends SpaceModel
     protected $table = 'blocks';
 
     protected $fillable = [
+        'external_id',
         'slug',
         'name',
         'icon',

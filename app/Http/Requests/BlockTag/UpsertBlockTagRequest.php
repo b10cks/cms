@@ -19,6 +19,7 @@ class UpsertBlockTagRequest extends FormRequest
         $ignoreName = $tag ? $tag->name : null;
 
         return [
+            'external_id' => 'nullable|string',
             'name' => [
                 'required',
                 'string',

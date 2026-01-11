@@ -15,6 +15,7 @@ class BlockFolderFactory extends Factory
         $name = $this->faker->words(2, true);
 
         return [
+            'external_id' => Str::uuid(),
             'name' => Str::title($name),
             'description' => $this->faker->optional()->sentence(),
         ];

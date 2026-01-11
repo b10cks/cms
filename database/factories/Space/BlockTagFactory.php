@@ -4,6 +4,7 @@ namespace Database\Factories\Space;
 
 use App\Models\Space\BlockTag;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class BlockTagFactory extends Factory
 {
@@ -12,6 +13,7 @@ class BlockTagFactory extends Factory
     public function definition(): array
     {
         return [
+            'external_id' => Str::uuid(),
             'name' => $this->faker->unique()->words(2, true),
             'icon' => $this->faker->randomElement([
                 'star', 'heart', 'home', 'user', 'settings',

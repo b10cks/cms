@@ -6,7 +6,7 @@ use CodersCantina\Filter\AdvancedFilter;
 
 class DataEntryFilter extends AdvancedFilter
 {
-    protected array $sortableColumns = ['key', 'value', 'created_at', 'updated_at'];
+    protected array $sortableColumns = ['key', 'value', 'external_id', 'created_at', 'updated_at'];
 
     public function q($value)
     {
@@ -14,6 +14,11 @@ class DataEntryFilter extends AdvancedFilter
             $query->where('key', 'LIKE', "%{$value}%")
                 ->orWhere('value', 'LIKE', "%{$value}%");
         });
+    }
+
+    public function external_id($value)
+    {
+        $this->builder->where('external_id', $value);
     }
 
     public function key($value)

@@ -15,6 +15,7 @@ class DataEntryResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'external_id' => $this->external_id,
             'key' => $this->key,
             'value' => $this->value,
             'dimensions' => $this->dimensions,

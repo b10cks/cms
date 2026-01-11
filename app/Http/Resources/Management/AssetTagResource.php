@@ -16,6 +16,7 @@ class AssetTagResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'external_id' => $this->external_id,
             'name' => $this->name,
             'icon' => $this->icon,
             'color' => $this->color,

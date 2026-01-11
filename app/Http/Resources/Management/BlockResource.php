@@ -15,6 +15,7 @@ class BlockResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'external_id' => $this->external_id,
             'name' => $this->name,
             'slug' => $this->slug,
             'icon' => $this->icon,

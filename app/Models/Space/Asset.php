@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  *
  * @property string $id
+ * @property string|null $external_id
  * @property string $filename
  * @property string $extension
  * @property string $mime_type
@@ -66,6 +67,7 @@ class Asset extends SpaceModel
     protected $table = 'assets';
 
     protected $fillable = [
+        'external_id',
         'filename',
         'extension',
         'mime_type',

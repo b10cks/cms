@@ -11,6 +11,11 @@ class AssetTagFilter extends ExtendedFilter
         $this->builder->where('name', 'like', "%$value%");
     }
 
+    public function external_id($value)
+    {
+        $this->builder->where('external_id', $value);
+    }
+
     public function icon($icon)
     {
         $this->builder->where('icon', $icon);

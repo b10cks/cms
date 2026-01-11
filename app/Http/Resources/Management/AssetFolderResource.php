@@ -15,6 +15,7 @@ class AssetFolderResource extends JsonResource
     {
         return [
             'id' => $this->getRouteKey(),
+            'external_id' => $this->external_id,
             'name' => $this->name,
             'icon' => $this->icon,
             'color' => $this->color,
