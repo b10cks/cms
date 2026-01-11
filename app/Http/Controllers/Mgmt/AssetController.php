@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Mgmt;
 
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\AssetFilter;
+use App\Http\Requests\Traits\ExternalIdValidation;
 use App\Http\Resources\Management\AssetResource;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 
 class AssetController extends Controller
 {
+    use ExternalIdValidation;
     /**
      * Display a listing of assets.
      */
@@ -36,7 +38,7 @@ class AssetController extends Controller
     {
         $request->validate([
             'file' => 'required|file|max:' . (config('filesystems.max_upload_size', 100) * 1024),
-            'external_id' => 'nullable|string|max:36',
+            'external_id' => $this->externalIdRule(Asset::class),
             'folder_id' => 'nullable',
             'metadata' => 'nullable|array',
             'data' => 'nullable',
@@ -87,7 +89,7 @@ class AssetController extends Controller
     {
         $request->validate([
             'filename' => 'sometimes|string|max:100',
-            'external_id' => 'sometimes|nullable|string|max:36',
+            'external_id' => $this->externalIdRule(Asset::class, $asset->id),
             'folder_id' => 'nullable', // |exists:asset_folders,id',
             'metadata' => 'sometimes|nullable|array',
             'data' => 'sometimes|nullable|array',
@@ -117,7 +119,7 @@ class AssetController extends Controller
         if ($request->has('data')) {
             $asset->data = $request->data;
         }
-        
+
         if ($request->has('external_id')) {
             $asset->external_id = $request->external_id;
         }
