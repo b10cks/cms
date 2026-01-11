@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  *
  * @property string $id
+ * @property string|null $external_id
  * @property string|null $name
  * @property string|null $description
  * @property array<array-key, mixed>|null $settings
@@ -36,6 +37,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Release whereDeletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Release whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Release whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Release whereExternalId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Release whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Release whereOwnerId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Release wherePublishAt($value)
@@ -57,6 +59,7 @@ class Release extends SpaceModel
     protected $table = 'releases';
 
     protected $casts = [
+        'external_id',
         'commited_at' => 'datetime',
         'publish_at' => 'datetime',
         'published_at' => 'datetime',

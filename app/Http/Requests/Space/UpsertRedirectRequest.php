@@ -19,6 +19,7 @@ class UpsertRedirectRequest extends FormRequest
         }
 
         return [
+            'external_id' => 'sometimes|nullable|string|max:36',
             'source' => ['required', 'string', 'max:255', $uniqueRule],
             'target' => ['required', 'string', 'max:255'],
             'status_code' => ['sometimes', 'required', 'integer', Rule::in([301, 302, 303, 307, 308])],

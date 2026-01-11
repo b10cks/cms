@@ -19,6 +19,7 @@ use Staudenmeir\EloquentJsonRelations\Relations\BelongsToJson;
  *
  *
  * @property string $id
+ * @property string|null $external_id
  * @property string|null $message
  * @property \App\Models\Space\Content|null $content
  * @property array<array-key, mixed>|null $asset_ids
@@ -51,6 +52,7 @@ use Staudenmeir\EloquentJsonRelations\Relations\BelongsToJson;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereCreatedById($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereExternalId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereLinkIds($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereMessage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereParentId($value)
@@ -74,6 +76,7 @@ class ContentVersion extends SpaceModel
     ];
 
     protected $casts = [
+        'external_id',
         'asset_ids' => 'array',
         'content' => ContentCast::class,
         'created_at' => 'datetime',

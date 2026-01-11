@@ -2,16 +2,20 @@
 
 namespace App\Http\Filters\Mgmt;
 
-use CodersCantina\Filter\ExtendedFilter;
-use Illuminate\Http\Request;
+use CodersCantina\Filter\AdvancedFilter;
 
-class ContentVersionFilter extends ExtendedFilter
+class ContentVersionFilter extends AdvancedFilter
 {
     protected array $sortableColumns = ['created_at'];
 
     public function created_at($value)
     {
         $this->applyRangeFilter('created_at', $value);
+    }
+
+    public function external_id($value)
+    {
+        $this->applyDynamicFilter('external_id', $value);
     }
 
     public function created_by($value)

@@ -28,7 +28,7 @@ class UpdateDataSourceRequest extends FormRequest
         $dataSource = $this->route('data_source');
 
         return [
-            'external_id' => 'nullable|string',
+            'external_id' => 'sometimes|nullable|string|max:36',
             'name' => 'sometimes|required|string|max:100',
             'slug' => [
                 'sometimes',

@@ -11,7 +11,7 @@ class UpsertAssetFolderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'external_id' => 'nullable|string',
+            'external_id' => 'sometimes|nullable|string|max:36',
             'name' => 'required|string|max:100',
             'description' => 'nullable|string',
             'icon' => 'nullable|string|max:50',

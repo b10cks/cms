@@ -29,7 +29,7 @@ class UpdateDataEntryRequest extends FormRequest
         $dataEntry = $this->route('entry');
 
         return [
-            'external_id' => 'nullable|string',
+            'external_id' => 'sometimes|nullable|string|max:36',
             'key' => [
                 'sometimes',
                 'required',

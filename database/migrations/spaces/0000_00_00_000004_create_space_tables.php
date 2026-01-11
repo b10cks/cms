@@ -110,6 +110,7 @@ return new class extends Migration {
 
         Schema::create('releases', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->string('external_id', 36)->nullable();
 
             $table->string('name')->nullable();
             $table->text('description')->nullable();
@@ -156,6 +157,7 @@ return new class extends Migration {
 
         Schema::create('content_versions', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->string('external_id', 36)->nullable();
 
             $table->string('message')->nullable();
             $table->jsonb('content')->nullable();
@@ -179,6 +181,7 @@ return new class extends Migration {
 
         Schema::create('redirects', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->string('external_id', 36)->nullable();
 
             $table->string('source');
             $table->string('target');

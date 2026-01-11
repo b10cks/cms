@@ -15,6 +15,7 @@ class RedirectResource extends JsonResource
     {
         return [
             'id' => $this->getRouteKey(),
+            'external_id' => $this->external_id,
             'source' => $this->source,
             'target' => $this->target,
             'status_code' => $this->status_code,

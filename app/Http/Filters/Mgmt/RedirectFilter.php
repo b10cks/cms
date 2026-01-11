@@ -6,11 +6,16 @@ use CodersCantina\Filter\AdvancedFilter;
 
 class RedirectFilter extends AdvancedFilter
 {
-    protected array $sortableColumns = ['source', 'target', 'status_code', 'hits', 'last_used_at', 'created_at', 'updated_at'];
+    protected array $sortableColumns = ['external_id', 'source', 'target', 'status_code', 'hits', 'last_used_at', 'created_at', 'updated_at'];
 
     public function source($value)
     {
         $this->applyDynamicFilter('source', $value);
+    }
+
+    public function external_id($value)
+    {
+        $this->applyDynamicFilter('external_id', $value);
     }
 
     public function target($value)

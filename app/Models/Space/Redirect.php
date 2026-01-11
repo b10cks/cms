@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  *
  *
  * @property string $id
+ * @property string|null $external_id
  * @property string $source
  * @property string $target
  * @property int $status_code
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Redirect whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Redirect whereHits($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Redirect whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Redirect whereExternalId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Redirect whereLastUsedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Redirect whereSource($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Redirect whereStatusCode($value)
@@ -43,6 +45,7 @@ class Redirect extends SpaceModel
     protected $table = 'redirects';
 
     protected $fillable = [
+        'external_id',
         'source',
         'target',
         'status_code',
