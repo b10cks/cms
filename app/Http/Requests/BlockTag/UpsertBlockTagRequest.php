@@ -3,11 +3,14 @@
 namespace App\Http\Requests\BlockTag;
 
 use App\Models\Space\BlockTag;
+use App\Http\Requests\Traits\ExternalIdValidation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpsertBlockTagRequest extends FormRequest
 {
+    use ExternalIdValidation;
+
     public function authorize(): bool
     {
         return true;
@@ -19,7 +22,7 @@ class UpsertBlockTagRequest extends FormRequest
         $ignoreName = $tag ? $tag->name : null;
 
         return [
-            'external_id' => 'sometimes|nullable|string|max:36',
+            'external_id' => $this->externalIdRule(BlockTag::class, $ignoreName),
             'name' => [
                 'required',
                 'string',

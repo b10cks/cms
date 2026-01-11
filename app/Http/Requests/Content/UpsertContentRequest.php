@@ -3,11 +3,14 @@
 namespace App\Http\Requests\Content;
 
 use App\Models\Space\Content;
+use App\Http\Requests\Traits\ExternalIdValidation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpsertContentRequest extends FormRequest
 {
+    use ExternalIdValidation;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -29,7 +32,7 @@ class UpsertContentRequest extends FormRequest
         $connectionName = new Content()->getConnectionName();
 
         return [
-            'external_id' => 'sometimes|nullable|string|max:36',
+            'external_id' => $this->externalIdRule(Content::class, $contentId),
             'name' => 'sometimes|required|string|max:100',
             'slug' => [
                 'sometimes',

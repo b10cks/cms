@@ -3,11 +3,14 @@
 namespace App\Http\Requests\Space;
 
 use App\Models\Space\DataSource;
+use App\Http\Requests\Traits\ExternalIdValidation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateDataSourceRequest extends FormRequest
 {
+    use ExternalIdValidation;
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -28,7 +31,7 @@ class UpdateDataSourceRequest extends FormRequest
         $dataSource = $this->route('data_source');
 
         return [
-            'external_id' => 'sometimes|nullable|string|max:36',
+            'external_id' => $this->externalIdRule(DataSource::class, $dataSource->id),
             'name' => 'sometimes|required|string|max:100',
             'slug' => [
                 'sometimes',

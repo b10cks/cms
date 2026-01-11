@@ -3,15 +3,18 @@
 namespace App\Http\Requests\Asset;
 
 use App\Models\Space\AssetTag;
+use App\Http\Requests\Traits\ExternalIdValidation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpsertAssetTagRequest extends FormRequest
 {
+    use ExternalIdValidation;
+
     public function rules(): array
     {
         return [
-            'external_id' => 'sometimes|nullable|string|max:36',
+            'external_id' => $this->externalIdRule(AssetTag::class),
             'name' => [
                 'required',
                 'string',

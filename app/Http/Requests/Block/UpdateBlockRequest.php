@@ -4,11 +4,14 @@ namespace App\Http\Requests\Block;
 
 use App\Models\Space\Block;
 use App\Models\Space\BlockFolder;
+use App\Http\Requests\Traits\ExternalIdValidation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateBlockRequest extends FormRequest
 {
+    use ExternalIdValidation;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -27,7 +30,7 @@ class UpdateBlockRequest extends FormRequest
         $block = $this->route('block');
 
         return [
-            'external_id' => 'sometimes|nullable|string|max:36',
+            'external_id' => $this->externalIdRule(Block::class, $block->id),
             'name' => 'sometimes|required|string|max:100',
             'icon' => 'sometimes|nullable|string|max:50',
             'color' => 'sometimes|nullable|string|max:7|regex:/^#[a-fA-F0-9]{6}$/',

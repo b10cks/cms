@@ -3,11 +3,14 @@
 namespace App\Http\Requests\Space;
 
 use App\Models\Space\DataSource;
+use App\Http\Requests\Traits\ExternalIdValidation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class CreateDataSourceRequest extends FormRequest
 {
+    use ExternalIdValidation;
+
     public function authorize(): bool
     {
         return true;
@@ -16,7 +19,7 @@ class CreateDataSourceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'external_id' => 'nullable|string',
+            'external_id' => $this->externalIdRule(DataSource::class),
             'name' => 'required|string|max:100',
             'slug' => [
                 'required',

@@ -3,11 +3,14 @@
 namespace App\Http\Requests\Space;
 
 use App\Models\Space\DataEntry;
+use App\Http\Requests\Traits\ExternalIdValidation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateDataEntryRequest extends FormRequest
 {
+    use ExternalIdValidation;
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -29,7 +32,7 @@ class UpdateDataEntryRequest extends FormRequest
         $dataEntry = $this->route('entry');
 
         return [
-            'external_id' => 'sometimes|nullable|string|max:36',
+            'external_id' => $this->externalIdRule(DataEntry::class, $dataEntry->id),
             'key' => [
                 'sometimes',
                 'required',

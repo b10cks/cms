@@ -2,16 +2,19 @@
 
 namespace App\Http\Requests\Asset;
 
+use App\Http\Requests\Traits\ExternalIdValidation;
 use App\Models\Space\AssetFolder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpsertAssetFolderRequest extends FormRequest
 {
+    use ExternalIdValidation;
+
     public function rules(): array
     {
         return [
-            'external_id' => 'sometimes|nullable|string|max:36',
+            'external_id' => $this->externalIdRule(AssetFolder::class),
             'name' => 'required|string|max:100',
             'description' => 'nullable|string',
             'icon' => 'nullable|string|max:50',

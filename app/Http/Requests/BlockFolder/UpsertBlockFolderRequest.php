@@ -3,11 +3,14 @@
 namespace App\Http\Requests\BlockFolder;
 
 use App\Models\Space\BlockFolder;
+use App\Http\Requests\Traits\ExternalIdValidation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpsertBlockFolderRequest extends FormRequest
 {
+    use ExternalIdValidation;
+
     public function authorize(): bool
     {
         return true;
@@ -19,7 +22,7 @@ class UpsertBlockFolderRequest extends FormRequest
         $folderId = $folder ? $folder->id : null;
 
         return [
-            'external_id' => 'sometimes|nullable|string|max:36',
+            'external_id' => $this->externalIdRule(BlockFolder::class, $folderId),
             'name' => [
                 'required',
                 'string',

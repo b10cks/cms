@@ -3,11 +3,14 @@
 namespace App\Http\Requests\Space;
 
 use App\Models\Space\DataEntry;
+use App\Http\Requests\Traits\ExternalIdValidation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class CreateDataEntryRequest extends FormRequest
 {
+    use ExternalIdValidation;
+
     public function authorize(): bool
     {
         return true;
@@ -18,7 +21,7 @@ class CreateDataEntryRequest extends FormRequest
         $dataSource = $this->route('data_source');
 
         return [
-            'external_id' => 'sometimes|nullable|string|max:36',
+            'external_id' => $this->externalIdRule(DataEntry::class),
             'key' => [
                 'required',
                 'string',

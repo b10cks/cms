@@ -4,11 +4,14 @@ namespace App\Http\Requests\Block;
 
 use App\Models\Space\Block;
 use App\Models\Space\BlockFolder;
+use App\Http\Requests\Traits\ExternalIdValidation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class CreateBlockRequest extends FormRequest
 {
+    use ExternalIdValidation;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -25,7 +28,7 @@ class CreateBlockRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'external_id' => 'sometimes|nullable|string|max:36',
+            'external_id' => $this->externalIdRule(Block::class),
             'name' => 'required|string|max:100',
             'slug' => [
                 'required',
