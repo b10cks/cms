@@ -28,7 +28,7 @@ class RouteServiceProvider extends ServiceProvider
     public function boot(): void
     {
         RateLimiter::for('mgmt', function (Request $request) {
-            return Limit::perSecond(10)->by($request->user()?->id ?: $request->ip());
+            return Limit::perMinute(60000)->by($request->user()?->id ?: $request->ip());
         });
 
         RateLimiter::for('api', function (Request $request) {
