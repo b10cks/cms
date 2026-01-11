@@ -55,7 +55,8 @@ class AssetController extends Controller
                 $request->file('file'),
                 (object)$request->json('metadata', new \StdClass),
                 $request->json('data', new \StdClass),
-                $folder
+                $folder,
+                $request->input('external_id')
             );
 
             return new AssetResource($asset);
@@ -115,6 +116,10 @@ class AssetController extends Controller
         // Update tags if provided
         if ($request->has('data')) {
             $asset->data = $request->data;
+        }
+        
+        if ($request->has('external_id')) {
+            $asset->external_id = $request->external_id;
         }
 
         $asset->save();

@@ -22,23 +22,14 @@ class AssetService
     {
     }
 
-    /**
-     * Store an uploaded file as an asset
-     *
-     * @param Space $space
-     * @param UploadedFile $file
-     * @param array $metadata
-     * @param AssetFolder|null $folder
-     * @return Asset
-     * @throws \Exception
-     */
-    public function storeAsset(Space $space, UploadedFile $file, object $metadata, object $data, ?AssetFolder $folder = null): Asset
+    public function storeAsset(Space $space, UploadedFile $file, object $metadata, object $data, ?AssetFolder $folder = null, ?string $externalId = null): Asset
     {
         try {
             $storage = $space->storages()->where('is_default', true)->firstOrFail();
             $filesystem = $this->storageService->getStorage($storage);
 
             $asset = new Asset();
+            $asset->external_id = $externalId;
             $asset->storage_id = $storage->id;
             $asset->data = $data;
 
