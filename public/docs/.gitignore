@@ -1,0 +1,5 @@
+# Generated API documentation files
+*.json
+
+# Keep the index.html viewer
+!index.html
