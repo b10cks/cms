@@ -9,7 +9,6 @@
         "ext-pdo": "*",
         "ext-zlib": "*",
         "coderscantina/laravel-filter": "^1.3",
-        "dedoc/scramble": "^0.12.16",
         "guzzlehttp/guzzle": "^7.9",
         "james-heinrich/getid3": "^1.9",
         "jcupitt/vips": "^2.5",
