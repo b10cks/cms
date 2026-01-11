@@ -18,9 +18,9 @@ trait ExternalIdValidation
      * @param string|null $ignoreId Optional ID to ignore in unique check (for updates)
      * @return array|\Illuminate\Contracts\Validation\ValidationRule|string
      */
-    protected function externalIdRule(string $modelClass, ?string $ignoreId = null)
+    protected function externalIdRule(string $modelClass, ?string $ignoreId = null): array|\Illuminate\Contracts\Validation\ValidationRule|string
     {
-        $headerValue = $this->header('x-enforce-external-id');
+        $headerValue = request()->header('x-enforce-external-id');
 
         if ($headerValue) {
             $model = new $modelClass();
