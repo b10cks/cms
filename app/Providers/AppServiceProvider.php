@@ -31,14 +31,6 @@ class AppServiceProvider extends ServiceProvider
     {
         Model::shouldBeStrict(!$this->app->isProduction());
 
-        Scramble::configure()
-            ->withDocumentTransformers(function (OpenApi $openApi) {
-                $openApi->components->addSecurityScheme('token', SecurityScheme::apiKey('query', 'token'));
-                $openApi->security[] = new SecurityRequirement([
-                    'token' => [],
-                ]);
-            });
-
         if (config('services.posthog.api_key')) {
             PostHog::init(
                 config('services.posthog.api_key'),

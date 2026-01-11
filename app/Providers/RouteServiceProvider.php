@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
@@ -79,15 +81,5 @@ class RouteServiceProvider extends ServiceProvider
                 ->name('ilum.')
                 ->group(base_path('routes/ilum.php'));
         });
-
-        Scramble::registerApi('api', [
-            'info' => ['version' => '1.0'],
-            'api_path' => 'api/v1',
-        ]);
-
-        Scramble::registerApi('mgmt', [
-            'info' => ['version' => '1.0'],
-            'api_path' => 'mgmt/v1',
-        ]);
     }
 }

@@ -23,7 +23,7 @@ class ContentResource extends JsonResource
             'id' => $this->getRouteKey(),
             'name' => $this->name,
             'slug' => $this->slug,
-            'block' => $this->whenLoaded('block', fn () => $this->block->slug),
+            'block' => $this->whenLoaded('block', fn (): string => $this->block->slug),
             'parent_id' => $this->parent_id,
             'full_slug' => $this->full_slug,
             'content' => $this->getTransformedContent(),
@@ -39,7 +39,7 @@ class ContentResource extends JsonResource
         ];
     }
 
-    protected function getTransformedContent()
+    protected function getTransformedContent(): array|\stdClass
     {
         $content = $this->getContent();
         if (!$content) {
