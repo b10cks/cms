@@ -10,7 +10,7 @@ class EnsureRevision
     public function handle(Request $request, Closure $next)
     {
         if (!$request->query('rv')) {
-            $space = $request->route('space');
+            $space = app('currentSpace');
             $params = $request->query();
             $params['rv'] = $space->content_updated_at?->timestamp ?? $space->updated_at->timestamp;
             $url = $request->path() . '?' . http_build_query($params);
@@ -23,4 +23,3 @@ class EnsureRevision
         return $next($request);
     }
 }
-

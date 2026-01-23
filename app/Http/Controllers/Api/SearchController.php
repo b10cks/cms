@@ -24,7 +24,7 @@ class SearchController extends Controller
             'offset' => 'sometimes|integer|min:0',
         ]);
 
-        $space = $request->route('space');
+        $space = app('currentSpace');
 
         if (!$space instanceof Space) {
             abort(404, 'Space not found');

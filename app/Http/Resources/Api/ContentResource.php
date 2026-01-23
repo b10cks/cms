@@ -16,22 +16,22 @@ class ContentResource extends JsonResource
     public function toArray(Request $request)
     {
         $this->additional([
-            'rv' => $request->space->rv
+            'rv' => app('currentSpace')->rv
         ]);
 
         return [
             'id' => $this->getRouteKey(),
             'name' => $this->name,
             'slug' => $this->slug,
-            'block' => $this->whenLoaded('block', fn (): string => $this->block->slug),
+            'block' => $this->whenLoaded('block', fn(): string => $this->block->slug),
             'parent_id' => $this->parent_id,
             'full_slug' => $this->full_slug,
             'content' => $this->getTransformedContent(),
             'language_iso' => $this->language_iso,
             'translations' => $this->handleTranslations(),
-//            'links' => $this->handleLinks(),
-//            'assets' => $this->handleAssets(),
-//            'relations' => $this->handleRelations(),
+            // 'links' => $this->handleLinks(),
+            // 'assets' => $this->handleAssets(),
+            // 'relations' => $this->handleRelations(),
             'published_at' => $this->published_at?->toIso8601String(),
             'first_published_at' => $this->first_published_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
@@ -56,9 +56,11 @@ class ContentResource extends JsonResource
 
     protected function handleTranslations()
     {
-        if (!$this->resource->relationLoaded('i18n_children') ||
+        if (
+            !$this->resource->relationLoaded('i18n_children') ||
             !$this->resource->relationLoaded('i18n_siblings') ||
-            !$this->resource->relationLoaded('i18n_parent')) {
+            !$this->resource->relationLoaded('i18n_parent')
+        ) {
             return [];
         }
 

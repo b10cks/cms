@@ -11,7 +11,7 @@ class LocalizedContentSlugService extends ContentSlugService
 
     public function __construct(?Space $space = null)
     {
-        $this->space = $space ?? request('space');
+        $this->space = $space ?? app('currentSpace');
     }
 
     /**
