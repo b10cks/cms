@@ -21,6 +21,7 @@ use App\Http\Controllers\Mgmt\RedirectResetController;
 use App\Http\Controllers\Mgmt\SpaceArchiveController;
 use App\Http\Controllers\Mgmt\SpaceController;
 use App\Http\Controllers\Mgmt\SpaceIconController;
+use App\Http\Controllers\Mgmt\SpaceSearchController;
 use App\Http\Controllers\Mgmt\SpaceStatsController;
 use App\Http\Controllers\Mgmt\SpaceTokenController;
 use App\Http\Controllers\Mgmt\TeamController;
@@ -69,6 +70,9 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::post('icon', SpaceIconController::class)->name('spaces.icon');
     Route::post('archive', SpaceArchiveController::class)->name('spaces.archive');
     Route::get('ai-usage', SpaceAiUsageController::class)->name('spaces.ai-usage');
+
+    Route::patch('search', [SpaceSearchController::class, 'update'])->name('spaces.search.update');
+    Route::post('search/reindex', [SpaceSearchController::class, 'reindex'])->name('spaces.search.reindex');
 
     Route::apiResource('blocks', BlockController::class);
     Route::apiResource('block-tags', BlockTagController::class)->parameters([

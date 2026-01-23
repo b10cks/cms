@@ -147,10 +147,13 @@ return new class extends Migration {
             $table->foreignUlid('current_version_id');
             $table->foreignUlid('published_version_id')->nullable();
 
+            $table->longText('searchable_content')->nullable();
+
             $table->timestamp('published_at')->nullable();
             $table->timestamp('first_published_at')->nullable();
 
             $table->index(['full_slug']);
+            $table->fullText('searchable_content');
             $table->timestamps();
             $table->softDeletes();
         });

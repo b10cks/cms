@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Mgmt\Content;
 
+use App\Actions\Content\UnpublishContent;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Management\ContentResource;
 use App\Models\Management\Space;
@@ -10,18 +11,14 @@ use Illuminate\Support\Facades\Log;
 
 class ContentUnpublishController extends Controller
 {
-
-    /**
-     * Unpublish the specified content item.
-     */
-    public function __invoke(Space $space, Content $content): ContentResource
+    public function __invoke(Space $space, Content $content, UnpublishContent $action): ContentResource
     {
         $this->authorize('publish', [$content, $space]);
 
-        $content->published_at = null;
-
-        if (!$content->save()) {
-            Log::error('Failed to unpublish content', ['content_id' => $content->id, 'space_id' => $space->id]);
+        try {
+            $action->execute($content, $space);
+        } catch (\Exception $e) {
+            Log::error('Failed to unpublish content', ['content_id' => $content->id, 'space_id' => $space->id, 'error' => $e->getMessage()]);
             abort(500, 'Failed to unpublish content');
         }
 

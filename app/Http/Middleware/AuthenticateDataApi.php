@@ -24,6 +24,7 @@ class AuthenticateDataApi
 
         $usageService = app(abstract: TokenUsageService::class);
         $token = $this->validateToken($plainTextToken, $usageService);
+        app()->offsetSet('currentSpace', $token->space);
         $request->route()->setParameter('space', $token->space);
 
         $execution = $usageService->startExecution($token, $start);
