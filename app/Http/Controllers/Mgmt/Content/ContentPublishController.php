@@ -19,29 +19,10 @@ class ContentPublishController extends Controller
         $data = $request->validated();
         $action->execute($data, $content, $space, $request->user());
 
-//        if (!$content->save()) {
+        //        if (!$content->save()) {
 //            Log::error('Failed to publish content', ['content_id' => $content->id, 'space_id' => $space->id]);
 //            abort(500, 'Failed to publish content');
 //        }
-
-        $content->load(['block', 'parent', 'i18n_parent', 'i18n_children', 'i18n_siblings', 'current_version']);
-
-        return new ContentResource($content);
-    }
-
-    /**
-     * Unpublish the specified content item.
-     */
-    public function unpublish(Space $space, Content $content): ContentResource
-    {
-        $this->authorize('publish', [$content, $space]);
-
-        $content->published_at = null;
-        if (!$content->save()) {
-            Log::error('Failed to unpublish content', ['content_id' => $content->id, 'space_id' => $space->id]);
-            abort(500, 'Failed to unpublish content');
-        }
-        $space->touch('content_updated_at');
 
         $content->load(['block', 'parent', 'i18n_parent', 'i18n_children', 'i18n_siblings', 'current_version']);
 

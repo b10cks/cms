@@ -21,12 +21,12 @@ class SpaceModelResolver implements ConnectionResolverInterface
         }
 
         /** @var Space|null $space */
-        $space = request()->route('space');
-        abort_unless($space, 404, 'Space not found');
+        $space = app()->get('currentSpace');
+        abort_unless(!!$space, 404, 'Space not found');
 
         if (!isset($this->caches[$space->id])) {
             $connection = $space->defaultConnection[0] ?? null;
-            abort_unless($connection, 404, 'Connection not found');
+            abort_unless(!!$connection, 404, 'Connection not found');
             $this->caches[$space->id] = app(ConnectionFactory::class)->make($connection);
         }
 
@@ -35,7 +35,7 @@ class SpaceModelResolver implements ConnectionResolverInterface
 
     public function getConnectionName()
     {
-        return $this->getDefaultConnection()->getName();
+        return $this->getDefaultConnection()?->getName();
     }
 
     public function setDefaultConnection($name)

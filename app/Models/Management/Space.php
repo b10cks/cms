@@ -3,6 +3,7 @@
 namespace App\Models\Management;
 
 use App\Casts\Slug;
+use App\Enums\SearchDriver;
 use App\Http\Resources\Management\SpaceResource;
 use App\Models\Traits\Auditable;
 use App\Models\Traits\HasPurifiedAttributes;
@@ -76,7 +77,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Space extends GlobalModel
 {
     use Auditable;
-//    use BroadcastsModelEvents;
+    //    use BroadcastsModelEvents;
     use HasFactory;
     use HasPurifiedAttributes;
     use HasUlids;
@@ -170,5 +171,12 @@ class Space extends GlobalModel
     public function getRvAttribute(): int
     {
         return $this->content_updated_at?->getTimestamp() ?? $this->updated_at?->getTimestamp() ?? 0;
+    }
+
+    public function getSearchDriver(): SearchDriver
+    {
+        $driverValue = data_get($this->settings, 'search_driver', SearchDriver::MYSQL->value);
+
+        return SearchDriver::from($driverValue);
     }
 }

@@ -33,6 +33,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \App\Models\Space\ContentSettings|null $settings
  * @property string $current_version_id
  * @property string|null $published_version_id
+ * @property string|null $searchable_content
  * @property \Illuminate\Support\Carbon|null $published_at
  * @property \Illuminate\Support\Carbon|null $first_published_at
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -99,6 +100,7 @@ class Content extends SpaceModel
         'i18n_parent_id',
         'settings',
         'published_at',
+        'searchable_content',
     ];
 
     protected $casts = [
@@ -178,7 +180,7 @@ class Content extends SpaceModel
     {
         $result = ($this->relationLoaded('i18n_parent') ? $this->i18n_parent?->getContent() : []) ?? [];
 
-        return array_replace_recursive($result, json_decode($this->content ?? '[]', true));
+        return array_replace_recursive($result, $this->published_version->content ?? []);
     }
 
     public function setPublishedAt($date): void

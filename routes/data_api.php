@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\BlockController;
 use App\Http\Controllers\Api\ContentController;
+use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\DataEntryController;
 use App\Http\Controllers\Api\DataSourceController;
 use App\Http\Controllers\Api\RedirectController;
@@ -11,6 +12,8 @@ use App\Http\Controllers\Api\SpaceController;
 Route::get('contents', [ContentController::class, 'index'])
     ->middleware('revision')
     ->name('contents.index');
+Route::get('search', SearchController::class)
+    ->name('contents.search');
 Route::get('contents/{slug}', [ContentController::class, 'show'])
     ->middleware('revision')
     ->where('slug', '.*')
