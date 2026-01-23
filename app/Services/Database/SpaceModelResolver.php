@@ -21,7 +21,7 @@ class SpaceModelResolver implements ConnectionResolverInterface
         }
 
         /** @var Space|null $space */
-        $space = app()->get('currentSpace');
+        $space = request('space') ?? app()->get('currentSpace');
         abort_unless(!!$space, 404, 'Space not found');
 
         if (!isset($this->caches[$space->id])) {
