@@ -6,6 +6,16 @@ use App\Models\Settings;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Contracts\Database\Eloquent\SerializesCastableAttributes;
 
+/**
+ * @param $region string
+ * @param $defaultLanguage string
+ * @param $languages array
+ * @param $asset_fields array
+ * @param $environments array
+ * @param $visual_editor bool
+ * @param $search_driver string
+ * @param $slug_strategy string
+ */
 class SpaceSettings extends Settings
 {
     protected array $defaults = [
@@ -15,6 +25,7 @@ class SpaceSettings extends Settings
         'asset_fields' => [],
         'environments' => [],
         'visual_editor' => true,
+        'search_driver' => 'mysql',
         'slug_strategy' => 'prepend_translations',
     ];
 
@@ -33,7 +44,7 @@ class SpaceSettings extends Settings
 
     public function getEnabledLanguages(): array
     {
-        return array_map(fn($language): string => $language['iso'], $this->attributes['languages'] ?? [])
+        return array_map(fn($language): string => $language['code'], $this->attributes['languages'] ?? [])
             + [$this->getDefaultLanguage()];
     }
 
