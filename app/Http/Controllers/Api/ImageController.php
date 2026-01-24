@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ImageController extends Controller
 {
-    protected const int CACHE_DURATION = 31536000;
+    protected const int CACHE_DURATION = 31_536_000;
 
     protected ImageTransformationService $imageService;
 
@@ -34,13 +34,14 @@ class ImageController extends Controller
         if ($storage !== 'storage') {
             $space = Space::findOrFail($space);
             $request->route()->setParameter('space', $space);
+            app()->offsetSet('currentSpace', $space);
             $asset = Asset::findOrFail($assetId);
             $mimetype = $asset->mime_type;
         } else {
             $mimetype = Storage::disk()->mimeType($fullPath);
         }
 
-        if (\Str::startsWith($mimetype, 'image/') === false) {
+        if (\str_starts_with($mimetype, 'image/') === false) {
             return Storage::disk()->response(
                 $fullPath,
                 null,
@@ -54,15 +55,14 @@ class ImageController extends Controller
 
         try {
             $params = $this->parseTransformations($transformations);
-
             $format = $request->query('format');
             $quality = $request->query('quality');
 
             if ($quality && is_numeric($quality)) {
-                $params['quality'] = (int)$quality;
+                $params['quality'] = (int) $quality;
             }
 
-            list($operation, $operationParams) = $this->determineOperation($params);
+            [$operation, $operationParams] = $this->determineOperation($params);
             $result = $this->imageService->processImage($storage, $fullPath, $operation, $operationParams, $format);
 
             if (!$result) {
@@ -71,7 +71,7 @@ class ImageController extends Controller
 
             return new Response($result['data'], 200, [
                 'Content-Type' => $result['mime'],
-                'Content-Length' => strlen($result['data']),
+                'Content-Length' => \strlen($result['data']),
                 'Cache-Control' => 'public, max-age=' . self::CACHE_DURATION . ', immutable',
                 'Pragma' => 'public'
             ]);
@@ -100,15 +100,14 @@ class ImageController extends Controller
         }
 
         $params = [];
-        $transformParts = explode(',', $transformations);
+        $transformParts = \explode(',', $transformations);
 
         foreach ($transformParts as $part) {
             if (empty($part)) {
                 continue;
             }
 
-            // Split by underscore to get key and value
-            list($key, $value) = array_pad(explode('_', $part, 2), 2, null);
+            [$key, $value] = \array_pad(\explode('_', $part, 2), 2, null);
 
             if ($key && $value !== null) {
                 $params[$key] = $value;
@@ -126,70 +125,34 @@ class ImageController extends Controller
      */
     protected function determineOperation(array $params): array
     {
-        // Default parameters
-        $operationParams = [];
-
-        // Check for width and height
-        if (isset($params['w'])) {
-            $operationParams['width'] = (int)$params['w'];
-        }
-
-        if (isset($params['h'])) {
-            $operationParams['height'] = (int)$params['h'];
-        }
-
-        // Handle crop mode (c parameter)
         $cropMode = $params['c'] ?? null;
-
-        // Handle gravity/focus (g parameter)
         $gravity = $params['g'] ?? null;
 
-        // Set defaults if width or height not specified
-        $operationParams['width'] ??= 0;
-        $operationParams['height'] ??= 0;
-
-        // Check for x and y for manual cropping
-        if (isset($params['x'])) {
-            $operationParams['x'] = (int)$params['x'];
-        }
-
-        if (isset($params['y'])) {
-            $operationParams['y'] = (int)$params['y'];
-        }
-
-        // Default x and y for manual crop
-        $operationParams['x'] ??= 0;
-        $operationParams['y'] ??= 0;
+        // Default parameters
+        $operationParams = [
+            'width' => isset($params['w']) ? (int) $params['w'] : 0,
+            'height' => isset($params['h']) ? (int) $params['h'] : 0,
+            'x' => isset($params['x']) ? (int) $params['x'] : 0,
+            'y' => isset($params['y']) ? (int) $params['y'] : 0,
+        ];
 
         // Handle target width and height for crop and resize
-        if (isset($params['tw'])) {
-            $operationParams['targetWidth'] = (int)$params['tw'];
-        }
-
-        if (isset($params['th'])) {
-            $operationParams['targetHeight'] = (int)$params['th'];
-        }
-
-        // Set default target dimensions for crop resize
-        $operationParams['targetWidth'] ??= $operationParams['width'] / 2;
-        $operationParams['targetHeight'] ??= $operationParams['height'] / 2;
+        $operationParams['targetWidth'] = isset($params['tw']) ? (int) $params['tw'] : $operationParams['width'] / 2;
+        $operationParams['targetHeight'] = isset($params['th']) ? (int) $params['th'] : $operationParams['height'] / 2;
 
         // Parse focus points for fitfocus
         if ($gravity && preg_match('/^(\d+(?:\.\d+)?)p?_(\d+(?:\.\d+)?)p?$/', $gravity, $matches)) {
-            $operationParams['x'] = (float)$matches[1];
-            $operationParams['y'] = (float)$matches[2];
+            $operationParams['x'] = (float) $matches[1];
+            $operationParams['y'] = (float) $matches[2];
         }
 
-        // Default operation
         $operation = 'original';
-
-        // Determine operation based on parameters
         if ($cropMode) {
             switch ($cropMode) {
                 case 'fill':
                     if ($gravity === 'face') {
                         $operation = 'smartfit';
-                    } elseif ($gravity && in_array($gravity, ['center', 'face', 'auto'])) {
+                    } elseif ($gravity && \in_array($gravity, ['center', 'face', 'auto'])) {
                         $operation = 'smartfit';
                     } elseif ($gravity && preg_match('/^(\d+(?:\.\d+)?)p?_(\d+(?:\.\d+)?)p?$/', $gravity)) {
                         $operation = 'fitfocus';
@@ -203,11 +166,7 @@ class ImageController extends Controller
                     break;
 
                 case 'crop':
-                    if (isset($params['tw']) || isset($params['th'])) {
-                        $operation = 'cropresize';
-                    } else {
-                        $operation = 'crop';
-                    }
+                    $operation = (isset($params['tw']) || isset($params['th'])) ? 'cropresize' : 'crop';
                     break;
 
                 default:

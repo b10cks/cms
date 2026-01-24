@@ -155,7 +155,7 @@ class ImageTransformationManager extends Manager
      */
     protected function determineOutputFormat(?string $requestedFormat, string $imagePath, ImageDriverInterface $driver): string
     {
-        if ($requestedFormat && in_array($requestedFormat, $driver->getSupportedFormats())) {
+        if ($requestedFormat && \in_array($requestedFormat, $driver->getSupportedFormats())) {
             return $requestedFormat;
         }
 
