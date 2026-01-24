@@ -18,18 +18,15 @@ class ContentSlugService
     {
         $oldFullSlug = $content->full_slug;
 
-        if (empty($content->parent_id)) {
-            $content->full_slug = '/' . $content->slug;
-        } else {
+        $content->full_slug = "/{$content->slug}";
+        if (!empty($content->parent_id)) {
             if (!$content->relationLoaded('parent')) {
                 $content->load('parent');
             }
 
-            if ($content->parent) {
-                $content->full_slug = $content->parent->full_slug . '/' . $content->slug;
-            } else {
-                $content->full_slug =  '/' . $content->slug;
-            }
+            $content->full_slug = $content->parent
+                ? "{$content->parent->full_slug}/{$content->slug}"
+                : "/{$content->slug}";
         }
 
         return ($oldFullSlug !== $content->full_slug) ? $oldFullSlug : null;
@@ -62,8 +59,7 @@ class ContentSlugService
             'status_code' => 301,
         ]);
 
-        // Delete potential reverse redirect to prevent loops
-        $reverseRedirect = Redirect::where('source', $newFullSlug)
+        Redirect::where('source', $newFullSlug)
             ->where('target', $oldFullSlug)
             ->delete();
 

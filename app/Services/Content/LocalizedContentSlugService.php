@@ -11,20 +11,15 @@ class LocalizedContentSlugService extends ContentSlugService
 
     public function __construct(?Space $space = null)
     {
-        $this->space = $space ?? app('currentSpace');
+        $this->space = $space ?? request('space') ?? app('currentSpace');
     }
 
-    /**
-     * Update full slug with localization strategy
-     */
     public function updateFullSlug(Content $content): ?string
     {
         $oldFullSlug = $content->full_slug;
 
         $basePath = $this->buildBasePath($content);
-        $localizedPath = $this->applyLocalizationStrategy($basePath, $content->language_iso);
-
-        $content->full_slug = $localizedPath;
+        $content->full_slug = $this->applyLocalizationStrategy($basePath, $content->language_iso);
 
         return ($oldFullSlug !== $content->full_slug) ? $oldFullSlug : null;
     }
@@ -32,7 +27,7 @@ class LocalizedContentSlugService extends ContentSlugService
     protected function buildBasePath(Content $content): string
     {
         if (empty($content->parent_id)) {
-            return '/' . $content->slug;
+            return "/{$content->slug}";
         }
 
         if (!$content->relationLoaded('parent')) {
@@ -41,17 +36,16 @@ class LocalizedContentSlugService extends ContentSlugService
 
         if ($content->parent) {
             $parentBasePath = $this->stripLocaleFromPath($content->parent->full_slug);
-            return $parentBasePath . '/' . $content->slug;
+            return "{$parentBasePath}/{$content->slug}";
         }
 
-        return '/' . $content->slug;
+        return "/{$content->slug}";
     }
 
     protected function applyLocalizationStrategy(string $basePath, string $languageIso): string
     {
-        $settings = $this->space->settings;
-        if ($settings->shouldPrependLocale($languageIso)) {
-            return '/' . $languageIso . $basePath;
+        if ($this->space->settings->shouldPrependLocale($languageIso)) {
+            return "/{$languageIso}{$basePath}";
         }
 
         return $basePath;
@@ -60,7 +54,7 @@ class LocalizedContentSlugService extends ContentSlugService
     protected function stripLocaleFromPath(string $path): string
     {
         $enabledLanguages = $this->space->settings->getEnabledLanguages();
-        $pattern = '/^\/(' . implode('|', array_keys($enabledLanguages)) . ')(?=\/|$)/';
+        $pattern = '/^\/(' . implode('|', $enabledLanguages) . ')(?=\/|$)/';
 
         return preg_replace($pattern, '', $path) ?: '/';
     }
@@ -71,10 +65,9 @@ class LocalizedContentSlugService extends ContentSlugService
         $variations = [];
 
         $variations['current'] = $this->applyLocalizationStrategy($basePath, $content->language_iso);
-
-        $variations['always_prepend'] = '/' . $content->language_iso . $basePath;
+        $variations['always_prepend'] = "/{$content->language_iso}{$basePath}";
         $variations['prepend_translations'] = $content->language_iso !== $this->space->settings->getDefaultLanguage()
-            ? '/' . $content->language_iso . $basePath
+            ? "/{$content->language_iso}{$basePath}"
             : $basePath;
         $variations['never'] = $basePath;
 

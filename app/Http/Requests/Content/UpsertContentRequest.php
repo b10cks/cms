@@ -27,7 +27,8 @@ class UpsertContentRequest extends FormRequest
     public function rules(): array
     {
         $contentId = $this->route('content');
-        $blockId = $this->route('block') ?? $this->input('block_id');
+        $parentId = $this->input('parent_id');
+        $languageIso = $this->input('language_iso');
 
         $connectionName = new Content()->getConnectionName();
 
@@ -40,9 +41,8 @@ class UpsertContentRequest extends FormRequest
                 'string',
                 'max:50',
                 Rule::unique($connectionName . '.contents', 'slug')
-                    ->where(function ($query) {
-                        return $query->where('parent_id', $this->input('parent_id', null));
-                    })
+                    ->when($languageIso, fn($query) => $query->where('language_iso', $languageIso))
+                    ->when($parentId, fn($query) => $query->where('parent_id', $parentId))
                     ->ignore($contentId),
             ],
             'settings' => 'nullable|array',

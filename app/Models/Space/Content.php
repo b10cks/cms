@@ -7,7 +7,7 @@ use App\Database\HasManyFromArray;
 use App\Database\HasManyFromArrayTrait;
 use App\Jobs\Content\UpdateContentFullSlugsJob;
 use App\Models\Traits\HasPurifiedAttributes;
-use App\Services\Content\ContentSlugService;
+use App\Services\Content\LocalizedContentSlugService;
 use App\Services\CustomStr;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -116,7 +116,7 @@ class Content extends SpaceModel
     {
         parent::boot();
         static::saving(function (Content $content) {
-            $slugService = app(ContentSlugService::class);
+            $slugService = app(LocalizedContentSlugService::class);
             $oldFullSlug = $slugService->updateFullSlug($content);
             if (!empty($oldFullSlug)) {
                 $slugService->createRedirect($oldFullSlug, $content->full_slug);
@@ -125,7 +125,7 @@ class Content extends SpaceModel
 
         static::saved(function (Content $content) {
             if ($content->isDirty('slug') || $content->isDirty('parent_id')) {
-                UpdateContentFullSlugsJob::dispatch($content);
+                UpdateContentFullSlugsJob::dispatch($content, request('space') ?? app()->get('currentSpace'));
             }
         });
     }
