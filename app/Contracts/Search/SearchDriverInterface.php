@@ -17,5 +17,5 @@ interface SearchDriverInterface
 
     public function reindexSpace(Space $space): void;
 
-    public function search(Space $space, string $query, int $limit = 20, int $offset = 0): array;
+    public function search(Space $space, string $query, string $language, int $limit = 20, int $offset = 0): array;
 }

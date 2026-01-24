@@ -167,7 +167,7 @@ class OpenSearchDriver implements SearchDriverInterface
         return "space_{$space->id}";
     }
 
-    public function search(Space $space, string $query, int $limit = 20, int $offset = 0): array
+    public function search(Space $space, string $query, string $language, int $limit = 20, int $offset = 0): array
     {
         if (empty(trim($query))) {
             return [
@@ -185,6 +185,7 @@ class OpenSearchDriver implements SearchDriverInterface
                     'size' => $limit,
                     'query' => [
                         'match' => [
+                            'language_iso' => $language,
                             'searchable_content' => [
                                 'query' => $query,
                                 'operator' => 'or'

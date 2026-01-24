@@ -54,9 +54,7 @@ class SearchService
             $this->drivers[$oldDriver->value]->deleteIndex($space);
         }
 
-        $space->settings = ($space->settings ?? []) + [
-            'search_driver' => $newDriver->value
-        ];
+        $space->settings->search_driver = $newDriver->value;
         $space->save();
 
         if ($newDriver->isOpenSearch()) {
@@ -71,10 +69,10 @@ class SearchService
         $driver->reindexSpace($space);
     }
 
-    public function search(Space $space, string $query, int $limit = 20, int $offset = 0): array
+    public function search(Space $space, string $query, string $language, int $limit = 20, int $offset = 0): array
     {
         $driver = $this->getDriver($space);
-        return $driver->search($space, $query, $limit, $offset);
+        return $driver->search($space, $query, $language, $limit, $offset);
     }
 
     protected function getSearchDriver(Space $space): SearchDriver

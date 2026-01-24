@@ -18,23 +18,24 @@ class SearchController extends Controller
 
     public function __invoke(Request $request): JsonResponse
     {
+        /** @var Space $space */
+        $space = app('currentSpace');
         $validated = $request->validate([
             'q' => 'required|string|min:1|max:500',
             'limit' => 'sometimes|integer|min:1|max:100',
             'offset' => 'sometimes|integer|min:0',
+            'language' => 'sometimes|string|min:2|max:5'
         ]);
-
-        $space = app('currentSpace');
-
-        if (!$space instanceof Space) {
-            abort(404, 'Space not found');
-        }
 
         $query = $validated['q'];
         $limit = $validated['limit'] ?? 20;
         $offset = $validated['offset'] ?? 0;
+        $language = $validated['language'] ?? $space->settings->getDefaultLanguage();
+        if (!\in_array($language, $space->settings->getEnabledLanguages())) {
+            $language = $space->settings->getDefaultLanguage();
+        }
 
-        $results = $this->searchService->search($space, $query, $limit, $offset);
+        $results = $this->searchService->search($space, $query, $language, $limit, $offset);
 
         return response()->json([
             'query' => $query,

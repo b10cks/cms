@@ -87,7 +87,7 @@ class MySqlSearchDriver implements SearchDriverInterface
             });
     }
 
-    public function search(Space $space, string $query, int $limit = 20, int $offset = 0): array
+    public function search(Space $space, string $query, string $language, int $limit = 20, int $offset = 0): array
     {
         if (empty(trim($query))) {
             return [
@@ -105,30 +105,30 @@ class MySqlSearchDriver implements SearchDriverInterface
         try {
             $totalQuery = Content::whereNotNull('published_at')
                 ->whereNotNull('searchable_content')
+                ->where('language_iso', $language)
                 ->whereRaw("MATCH(searchable_content) AGAINST(? IN NATURAL LANGUAGE MODE)", [$searchQuery]);
 
             $total = $totalQuery->count();
 
             $results = Content::whereNotNull('published_at')
                 ->whereNotNull('searchable_content')
+                ->where('language_iso', $language)
                 ->whereRaw("MATCH(searchable_content) AGAINST(? IN NATURAL LANGUAGE MODE)", [$searchQuery])
                 ->selectRaw("contents.*, MATCH(searchable_content) AGAINST(? IN NATURAL LANGUAGE MODE) as relevance_score", [$searchQuery])
                 ->orderByDesc('relevance_score')
                 ->skip($offset)
                 ->take($limit)
                 ->get()
-                ->map(function ($content) {
-                    return [
-                        'id' => $content->id,
-                        'name' => $content->name,
-                        'slug' => $content->slug,
-                        'full_slug' => $content->full_slug,
-                        'language_iso' => $content->language_iso,
-                        'block_id' => $content->block_id,
-                        'published_at' => $content->published_at?->toIso8601String(),
-                        'relevance_score' => $content->relevance_score,
-                    ];
-                })
+                ->map(fn($content) => [
+                    'id' => $content->id,
+                    'name' => $content->name,
+                    'slug' => $content->slug,
+                    'full_slug' => $content->full_slug,
+                    'language_iso' => $content->language_iso,
+                    'block_id' => $content->block_id,
+                    'published_at' => $content->published_at?->toIso8601String(),
+                    'relevance_score' => $content->relevance_score,
+                ])
                 ->toArray();
 
             return [
