@@ -20,8 +20,8 @@ class SpaceSettings extends Settings
 
     public function shouldPrependLocale(string $languageIso): bool
     {
-        $strategy = $this['slug_strategy'] ?? 'prepend_translations';
-        $defaultLanguage = $this['default_language'] ?? 'en';
+        $strategy = $this->attributes['slug_strategy'] ?? 'prepend_translations';
+        $defaultLanguage = $this->getDefaultLanguage();
 
         return match ($strategy) {
             'always_prepend' => true,
@@ -29,6 +29,17 @@ class SpaceSettings extends Settings
             'never' => false,
             default => $languageIso !== $defaultLanguage
         };
+    }
+
+    public function getEnabledLanguages(): array
+    {
+        return array_map(fn($language): string => $language['iso'], $this->attributes['languages'] ?? [])
+            + [$this->getDefaultLanguage()];
+    }
+
+    public function getDefaultLanguage(): string
+    {
+        return $this->attributes['default_language'] ?? 'en';
     }
 
     public static function castUsing(array $arguments)

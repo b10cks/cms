@@ -27,7 +27,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $icon
  * @property string|null $color
  * @property string|null $description
- * @property array<array-key, mixed>|null $settings
+ * @property SpaceSettings $settings
  * @property string|null $team_id
  * @property \Illuminate\Support\Carbon|null $content_updated_at
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -100,7 +100,7 @@ class Space extends GlobalModel
 
     protected $casts = [
         'slug' => Slug::class,
-        'settings' => 'array',
+        'settings' => SpaceSettings::class,
         'content_updated_at' => 'datetime',
     ];
 
