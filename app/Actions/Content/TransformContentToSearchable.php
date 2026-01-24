@@ -15,11 +15,6 @@ class TransformContentToSearchable
         }
 
         $textParts = [];
-
-        if ($content->name) {
-            $textParts[] = $content->name;
-        }
-
         $this->extractTextFromStructure($contentData, $textParts);
 
         return implode("\n", array_filter($textParts));

@@ -178,7 +178,12 @@ class Content extends SpaceModel
 
     public function getContent(): array
     {
-        $result = ($this->relationLoaded('i18n_parent') ? $this->i18n_parent?->getContent() : []) ?? [];
+        if ($this->i18n_parent_id) {
+            $this->loadMissing('i18n_parent');
+            $result = $this->i18n_parent?->getContent() ?? [];
+        } else {
+            $result = [];
+        }
 
         return array_replace_recursive($result, $this->published_version->content ?? []);
     }
