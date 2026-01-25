@@ -4,6 +4,8 @@ use App\Http\Controllers\Mgmt\Ai\AvailableModelsController;
 use App\Http\Controllers\Mgmt\Ai\MetaTagsController;
 use App\Http\Controllers\Mgmt\Ai\TranslationController;
 use App\Http\Controllers\Mgmt\AssetController;
+use App\Http\Controllers\Mgmt\AssetDataExportController;
+use App\Http\Controllers\Mgmt\AssetDataImportController;
 use App\Http\Controllers\Mgmt\AssetFolderController;
 use App\Http\Controllers\Mgmt\AssetTagController;
 use App\Http\Controllers\Mgmt\BlockController;
@@ -93,6 +95,11 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::apiResource('asset-folders', AssetFolderController::class);
     Route::apiResource('asset-tags', AssetTagController::class);
     Route::apiResource('assets', AssetController::class);
+
+    Route::post('assets/export', AssetDataExportController::class)
+        ->name('assets.data.export');
+    Route::post('assets/import', AssetDataImportController::class)
+        ->name('assets.data.import');
 
     // Additional content actions
     Route::post('contents/{content}/publish', ContentPublishController::class)
