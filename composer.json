@@ -19,6 +19,7 @@
         "laravel/sanctum": "^4.1",
         "laravel/tinker": "^2.10",
         "league/flysystem-aws-s3-v3": "^3.29",
+        "maatwebsite/excel": "^3.1",
         "mews/purifier": "^3.4",
         "nikic/php-parser": "^5.7",
         "openai-php/laravel": "^0.18.0",
