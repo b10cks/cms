@@ -8,6 +8,7 @@ enum AssetDataFormat: string
     case EXCEL = 'excel';
     case JSON = 'json';
     case XLIFF = 'xliff';
+    case YAML = 'yaml';
 
     public function getExtension(): string
     {
@@ -16,6 +17,7 @@ enum AssetDataFormat: string
             self::EXCEL => 'xlsx',
             self::JSON => 'json',
             self::XLIFF => 'xlf',
+            self::YAML => 'yaml',
         };
     }
 
@@ -26,6 +28,7 @@ enum AssetDataFormat: string
             self::EXCEL => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             self::JSON => 'application/json',
             self::XLIFF => 'application/x-xliff+xml',
+            self::YAML => 'application/x-yaml',
         };
     }
 }

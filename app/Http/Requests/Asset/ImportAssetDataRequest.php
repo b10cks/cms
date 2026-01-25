@@ -41,7 +41,8 @@ class ImportAssetDataRequest extends FormRequest
             'xlsx', 'xls' => AssetDataFormat::EXCEL,
             'json' => AssetDataFormat::JSON,
             'xlf', 'xliff', 'xml' => AssetDataFormat::XLIFF,
-            default => throw new \InvalidArgumentException("Unsupported file format: .{$extension}. Supported formats: csv, xlsx, xls, json, xlf, xliff"),
+            'yaml', 'yml' => AssetDataFormat::YAML,
+            default => throw new \InvalidArgumentException("Unsupported file format: .{$extension}. Supported formats: csv, xlsx, xls, json, xlf, xliff, yaml, yml"),
         };
     }
 }

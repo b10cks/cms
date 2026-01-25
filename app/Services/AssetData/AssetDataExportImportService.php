@@ -12,6 +12,7 @@ use App\Services\AssetData\Drivers\CsvAssetDataDriver;
 use App\Services\AssetData\Drivers\ExcelAssetDataDriver;
 use App\Services\AssetData\Drivers\JsonAssetDataDriver;
 use App\Services\AssetData\Drivers\XliffAssetDataDriver;
+use App\Services\AssetData\Drivers\YamlAssetDataDriver;
 use App\Services\AssetData\Exceptions\InvalidFormatException;
 use App\Services\AssetData\Exceptions\ImportValidationException;
 use CodersCantina\Filter\Filter;
@@ -27,12 +28,14 @@ class AssetDataExportImportService
         ExcelAssetDataDriver $excelDriver,
         JsonAssetDataDriver $jsonDriver,
         XliffAssetDataDriver $xliffDriver,
+        YamlAssetDataDriver $yamlDriver,
     ) {
         $this->drivers = [
             AssetDataFormat::CSV->value => $csvDriver,
             AssetDataFormat::EXCEL->value => $excelDriver,
             AssetDataFormat::JSON->value => $jsonDriver,
             AssetDataFormat::XLIFF->value => $xliffDriver,
+            AssetDataFormat::YAML->value => $yamlDriver,
         ];
     }
 
