@@ -53,7 +53,7 @@ class SpaceSettings extends Settings
         return $this->attributes['default_language'] ?? 'en';
     }
 
-    public static function castUsing(array $arguments)
+    public static function castUsing(array $arguments): CastsAttributes
     {
         return new class implements CastsAttributes, SerializesCastableAttributes {
             public function get($model, string $key, $value, array $attributes)
@@ -61,14 +61,14 @@ class SpaceSettings extends Settings
                 return SpaceSettings::make($value ? json_decode($value, true) : []);
             }
 
-            public function set($model, string $key, $value, array $attributes)
+            public function set($model, string $key, mixed $value, array $attributes)
             {
-                return json_encode($value ?? []);
+                return json_encode($value->toArray());
             }
 
             public function serialize($model, string $key, $value, array $attributes)
             {
-                return json_encode($value);
+                return json_encode($value->toArray());
             }
         };
     }
