@@ -3,11 +3,12 @@
 namespace App\Services\Database;
 
 use App\Models\Management\Space;
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\ConnectionResolverInterface;
 
 class SpaceModelResolver implements ConnectionResolverInterface
 {
-    protected $caches = [];
+    protected ConnectionInterface $cache;
 
     public function connection($name = null)
     {
@@ -20,17 +21,17 @@ class SpaceModelResolver implements ConnectionResolverInterface
             return app('db')->connection();
         }
 
-        /** @var Space|null $space */
-        $space = request('space') ?? app()->get('currentSpace');
-        abort_unless(!!$space, 404, 'Space not found');
+        if (!isset($this->cache)) {
+            /** @var Space|null $space */
+            $space = request('space') ?? app()->get('currentSpace');
+            abort_unless(!!$space, 404, 'Space not found');
 
-        if (!isset($this->caches[$space->id])) {
             $connection = $space->defaultConnection[0] ?? null;
             abort_unless(!!$connection, 404, 'Connection not found');
-            $this->caches[$space->id] = app(ConnectionFactory::class)->make($connection);
+            $this->cache = app(ConnectionFactory::class)->make($connection);
         }
 
-        return $this->caches[$space->id];
+        return $this->cache;
     }
 
     public function getConnectionName()
