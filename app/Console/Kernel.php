@@ -12,8 +12,18 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
-        $schedule->command('cloudfront:ingest-logs')->everyFiveMinutes();
+        $schedule->useCache('database');
+
+        $schedule->command('cloudfront:ingest-logs')
+            ->everyFiveMinutes()
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+        $schedule->command('content:publish-scheduled')
+            ->everyMinute()
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     /**
@@ -21,6 +31,6 @@ class Kernel extends ConsoleKernel
      */
     protected function commands(): void
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
     }
 }

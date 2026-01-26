@@ -29,11 +29,14 @@ use Staudenmeir\EloquentJsonRelations\Relations\BelongsToJson;
  * @property string|null $parent_id
  * @property string|null $release_id
  * @property string|null $created_by_id
+ * @property string|null $published_by_id
  * @property \Illuminate\Support\Carbon|null $published_at
+ * @property \Illuminate\Support\Carbon|null $scheduled_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, ContentVersion> $children
  * @property-read int|null $children_count
  * @property-read User|null $createdBy
+ * @property-read User|null $publishedBy
  * @property-read ContentVersion|null $parent
  * @property-read \App\Models\Space\Release|null $release
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Space\Asset[] $assets
@@ -57,8 +60,11 @@ use Staudenmeir\EloquentJsonRelations\Relations\BelongsToJson;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereMessage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereParentId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion wherePublishedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion wherePublishedById($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereRelationIds($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereReleaseId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereScheduledAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereScheduledById($value)
  * @mixin \Eloquent
  */
 class ContentVersion extends SpaceModel
@@ -72,6 +78,9 @@ class ContentVersion extends SpaceModel
 
     protected $fillable = [
         'content',
+        'scheduled_at',
+        'published_at',
+        'published_by_id',
         'message',
     ];
 
@@ -82,6 +91,7 @@ class ContentVersion extends SpaceModel
         'created_at' => 'datetime',
         'link_ids' => 'array',
         'published_at' => 'datetime',
+        'scheduled_at' => 'datetime',
         'relation_ids' => 'array',
     ];
 
@@ -121,7 +131,12 @@ class ContentVersion extends SpaceModel
         return $this->belongsTo(User::class, 'created_by_id', 'id');
     }
 
-    public function content(): BelongsTo
+    public function publishedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'published_by_id', 'id');
+    }
+
+    public function contentModel(): BelongsTo
     {
         return $this->belongsTo(Content::class, 'content_id', 'id');
     }

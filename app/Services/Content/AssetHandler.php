@@ -3,6 +3,7 @@
 namespace App\Services\Content;
 
 use App\Models\Space\Asset;
+use App\Models\Space\Content;
 use Illuminate\Support\Collection;
 
 class AssetHandler
@@ -32,23 +33,27 @@ class AssetHandler
                 'mime_type',
                 'size',
                 'filename'
-            ]) + $src + ['url' => $asset->getUrl(),]: $src;
+            ]) + $src + ['url' => $asset->getUrl(),] : $src;
         });
     }
 
-    public function replaceContentAssets(array $data, Collection $assets): array
+    public function replaceContentAssets(Content $content, $data, Collection $assets): array
     {
         return $this->replace($data, [
             'type' => 'asset'
-        ], function ($src) use ($assets) {
+        ], function ($src) use ($assets, $content) {
             $asset = $assets->firstWhere('id', $src['id'] ?? null);
             if ($asset) {
-                $data = array_merge($asset['data'] ?? [], $src['data'] ?? []);
+                $assetTranslationFields = $content->i18n_parent ? data_get($asset, "data.fields.{$content->language_iso}", []) : [];
+                $assetFields = $assetTranslationFields + data_get($asset, 'data.fields._default', []);
+                $result = $assetFields + ($src['data'] ?? []);
+                $result['focus'] = data_get($src, 'data.focus', data_get($src, 'data.focus', null));
+
                 $src = [
-                        'url' => $asset->getUrl(),
-                        'data' => $data,
-                        'metadata' => \Arr::only($asset->metadata, ['width', 'height', 'thumbnails', 'duration']),
-                    ] + $src;
+                    'url' => $asset->getUrl(),
+                    'data' => $result,
+                    'metadata' => \Arr::only($asset->metadata, ['width', 'height', 'thumbnails', 'duration']),
+                ] + $src;
             }
 
             return $src;

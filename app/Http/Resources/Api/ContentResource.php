@@ -94,7 +94,14 @@ class ContentResource extends JsonResource
 
     protected function injectData(array &$content)
     {
-        $content = app(LinkHandler::class)->replaceContentLinks($content, $this->resource->links);
-        $content = app(AssetHandler::class)->replaceContentAssets($content, $this->resource->assets);
+        $links = $this->resource->relationLoaded('i18n_parent')
+            ? ($this->resource->i18n_parent->published_version->links ?? collect([]))->merge($this->resource->links)
+            : $this->resource->links;
+        $content = app(LinkHandler::class)->replaceContentLinks($content, $links);
+
+        $assets = $this->resource->relationLoaded('i18n_parent')
+            ? ($this->resource->i18n_parent->published_version->assets ?? collect([]))->merge($this->resource->assets)
+            : $this->resource->assets;
+        $content = app(AssetHandler::class)->replaceContentAssets($this->resource, $content, $assets);
     }
 }

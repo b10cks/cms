@@ -173,13 +173,16 @@ return new class extends Migration {
 
             $table->foreignUlid('release_id')->nullable();
             $table->foreignUlid('created_by_id')->nullable();
+            $table->foreignUlid('published_by_id')->nullable();
 
             $table->timestamp('published_at')->nullable();
+            $table->timestamp('scheduled_at')->nullable();
             $table->timestamp('created_at')->nullable();
 
             $table->index(['content_id']);
             $table->index(['release_id']);
             $table->index(['content_id', 'created_by_id']);
+            $table->index(['scheduled_at', 'published_at']);
         });
 
         Schema::create('redirects', function (Blueprint $table) {
