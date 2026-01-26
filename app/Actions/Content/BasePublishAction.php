@@ -34,7 +34,7 @@ abstract class BasePublishAction
     {
         return [
             'message' => $message,
-            'published_by_id' => $owner?->id ?? null,
+            'published_by_id' => $owner?->id,
         ];
     }
 
@@ -60,7 +60,7 @@ abstract class BasePublishAction
             'content_id' => $content->id,
             'parent_id' => $content->current_version_id,
             'content' => $contentData,
-            'created_by_id' => $owner->id,
+            'created_by_id' => $owner?->id,
         ]);
     }
 
