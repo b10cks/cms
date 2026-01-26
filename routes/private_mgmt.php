@@ -14,6 +14,7 @@ use App\Http\Controllers\Mgmt\BlockTagController;
 use App\Http\Controllers\Mgmt\Content\ContentController;
 use App\Http\Controllers\Mgmt\Content\ContentMenuController;
 use App\Http\Controllers\Mgmt\Content\ContentPublishController;
+use App\Http\Controllers\Mgmt\Content\ContentScheduleController;
 use App\Http\Controllers\Mgmt\Content\ContentUnpublishController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionCurrentController;
@@ -106,6 +107,8 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
         ->name('contents.publish');
     Route::post('contents/{content}/unpublish', ContentUnpublishController::class)
         ->name('contents.unpublish');
+    Route::post('contents/{content}/schedule', ContentScheduleController::class)
+        ->name('contents.schedule');
 
     Route::get('/contents/{content}/versions', [ContentVersionController::class, 'index'])
         ->name('contents.versions.index');

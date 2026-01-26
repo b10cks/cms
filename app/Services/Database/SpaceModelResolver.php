@@ -8,7 +8,7 @@ use Illuminate\Database\ConnectionResolverInterface;
 
 class SpaceModelResolver implements ConnectionResolverInterface
 {
-    protected ConnectionInterface $cache;
+    protected array $cache = [];
 
     public function connection($name = null)
     {
@@ -20,18 +20,18 @@ class SpaceModelResolver implements ConnectionResolverInterface
         if (app()->runningUnitTests()) {
             return app('db')->connection();
         }
+        /** @var Space|null $space */
+        $space = request('space') ?? app()->get('currentSpace');
+        abort_unless(!!$space, 404, 'Space not found');
 
-        if (!isset($this->cache)) {
-            /** @var Space|null $space */
-            $space = request('space') ?? app()->get('currentSpace');
-            abort_unless(!!$space, 404, 'Space not found');
-
+        $id = $space->id;
+        if (!isset($this->cache[$id])) {
             $connection = $space->defaultConnection[0] ?? null;
             abort_unless(!!$connection, 404, 'Connection not found');
-            $this->cache = app(ConnectionFactory::class)->make($connection);
+            $this->cache[$id] = app(ConnectionFactory::class)->make($connection);
         }
 
-        return $this->cache;
+        return $this->cache[$id];
     }
 
     public function getConnectionName()

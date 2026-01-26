@@ -18,7 +18,7 @@ class ContentVersionController extends Controller
     {
         $this->authorize('viewHistory', [$content, $space]);
         $versions = ContentVersion::where('content_id', $content->id)
-            ->with(['createdBy', 'release'])
+            ->with(['createdBy', 'release', 'publishedBy'])
             ->filter(ContentVersionFilter::fromRequest($request))
             ->orderByDesc('created_at')
             ->get();
