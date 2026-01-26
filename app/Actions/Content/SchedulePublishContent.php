@@ -8,11 +8,14 @@ use App\Models\Space\ContentVersion;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\Log;
 
 class SchedulePublishContent extends BasePublishAction
 {
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner): void
     {
+        $content = $this->lockContentForUpdate($content);
+
         \DB::transaction(function () use ($data, $content, $space, $owner) {
             $this->processSchedule($data, $content, $owner);
             $content->save();
@@ -24,11 +27,10 @@ class SchedulePublishContent extends BasePublishAction
         $scheduledAt = Carbon::parse(data_get($data, 'scheduled_at'));
         ['contentData' => $contentData, 'message' => $message] = $this->extractDataFromRequest($data);
 
-        ContentVersion::where('content_id', $content->id)
-            ->whereNotNull('scheduled_at')
-            ->update(['scheduled_at' => null]);
 
+        $this->clearScheduledVersions($content);
         $this->updateContent($data, $content);
+
         $values = $this->buildBaseValues($message, $owner) + [
             'scheduled_at' => $scheduledAt,
         ];

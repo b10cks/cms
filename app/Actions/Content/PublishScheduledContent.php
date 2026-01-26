@@ -18,18 +18,27 @@ class PublishScheduledContent
 
     public function execute(ContentVersion $version, Content $content, Space $space, Authenticatable|User|null $owner): void
     {
-        \DB::transaction(function () use ($version, $content, $space, $owner) {
+        if ($version->published_at !== null) {
+            return;
+        }
+
+        $success = false;
+        \DB::transaction(function () use ($version, $content, $space, $owner, &$success) {
             $version->update([
-                'published_at' => now()
+                'published_at' => now(),
+                'published_by_id' => $owner?->id,
             ]);
 
-            $content->published_at = now();
+            $content->setPublishedAt(now());
             $content->published_version_id = $version->id;
 
             $content->save();
             $space->touch('content_updated_at');
+            $success = true;
         });
 
-        $this->searchService->indexContent($content, $space);
+        if ($success) {
+            $this->searchService->indexContent($content, $space);
+        }
     }
 }

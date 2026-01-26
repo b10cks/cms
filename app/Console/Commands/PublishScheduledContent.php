@@ -2,10 +2,11 @@
 
 namespace App\Console\Commands;
 
-use App\Actions\Content\PublishScheduledContent as Action;
+use App\Actions\Content\PublishScheduledContent as PublishAction;
 use App\Models\Management\Space;
 use App\Models\Space\ContentVersion;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class PublishScheduledContent extends Command
 {
@@ -13,18 +14,20 @@ class PublishScheduledContent extends Command
 
     protected $description = 'Publish scheduled content for one or more spaces';
 
-    public function __construct(
-        protected Action $publishContent
-    ) {
+    protected PublishAction $publishAction;
+
+    public function __construct(PublishAction $publishAction)
+    {
         parent::__construct();
+        $this->publishAction = $publishAction;
     }
 
     public function handle()
     {
+        $startTime = microtime(true);
         $spaceIds = $this->argument('spaceIds');
 
         $query = Space::with('defaultConnection');
-
         $spaces = empty($spaceIds)
             ? $query->get()
             : $query->whereIn('id', $spaceIds)->get();
@@ -35,45 +38,115 @@ class PublishScheduledContent extends Command
         }
 
         $totalPublished = 0;
+        $totalFailed = 0;
+        $spaceResults = [];
+
         foreach ($spaces as $space) {
             try {
-                $published = $this->publishScheduledContentForSpace($space);
-                $totalPublished += $published;
+                $result = $this->publishScheduledContentForSpace($space);
+                $totalPublished += $result['published'];
+                $totalFailed += $result['failed'];
+                $spaceResults[$space->id] = $result;
 
-                if ($published > 0) {
-                    $this->info("Published {$published} scheduled content item(s) for space: {$space->name} ({$space->id})");
+                if ($result['published'] > 0) {
+                    $this->info("Published {$result['published']} scheduled content item(s) for space: {$space->name} ({$space->id})");
+                }
+
+                if ($result['failed'] > 0) {
+                    $this->warn("Failed to publish {$result['failed']} item(s) in space: {$space->name}");
                 }
             } catch (\Exception $e) {
                 $this->error("Error publishing scheduled content for space {$space->name} ({$space->id}): {$e->getMessage()}");
+
+                Log::error('Scheduled content publishing failed for space', [
+                    'space_id' => $space->id,
+                    'space_name' => $space->name,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
+                $totalFailed++;
+                $spaceResults[$space->id] = [
+                    'published' => 0,
+                    'failed' => 1,
+                    'error' => $e->getMessage(),
+                ];
             }
         }
 
-        $this->info("Total published items: {$totalPublished}");
-        return 0;
+        $duration = microtime(true) - $startTime;
+
+        $this->info("========================================");
+        $this->info("Scheduled Content Publishing Summary");
+        $this->info("========================================");
+        $this->info("Total published: {$totalPublished}");
+        $this->info("Total failed: {$totalFailed}");
+        $this->info("Duration: {$duration}s");
+        $this->info("Spaces processed: {$spaces->count()}");
+
+        Log::info('Scheduled content publishing completed', [
+            'total_published' => $totalPublished,
+            'total_failed' => $totalFailed,
+            'duration_seconds' => $duration,
+            'spaces_processed' => $spaces->count(),
+            'space_results' => $spaceResults,
+        ]);
+
+        return $totalFailed > 0 ? 1 : 0;
     }
 
-    private function publishScheduledContentForSpace(Space $space): int
+    protected function publishScheduledContentForSpace(Space $space): array
     {
         app()->offsetSet('currentSpace', $space);
-        $scheduledVersions = ContentVersion::with('contentModel')
-            ->where('scheduled_at', '<=', now())
-            ->whereNull('published_at')
-            ->get();
 
         $published = 0;
-        foreach ($scheduledVersions as $version) {
-            try {
-                $content = $version->contentModel;
-                if (!$content) {
-                    continue;
-                }
-                $this->publishContent->execute($version, $content, $space, null);
-                $published++;
-            } catch (\Exception $e) {
-                $this->warn("Failed to publish scheduled content version {$version->id}: {$e->getMessage()}");
-            }
+        $failed = 0;
+
+        try {
+            ContentVersion::with('contentModel')
+                ->where('scheduled_at', '<=', now())
+                ->whereNull('published_at')
+                ->lazy(200)
+                ->each(function ($version) use ($space, &$published, &$failed) {
+                    try {
+                        $content = $version->contentModel;
+
+                        if (!$content) {
+                            Log::warning('Scheduled content version has no associated content', [
+                                'version_id' => $version->id,
+                                'space_id' => $space->id,
+                            ]);
+                            $failed++;
+                            return;
+                        }
+
+                        $this->publishAction->execute($version, $content, $space, null);
+                        $published++;
+                    } catch (\Exception $e) {
+                        $failed++;
+                        Log::error('Failed to publish scheduled content version', [
+                            'version_id' => $version->id,
+                            'space_id' => $space->id,
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString(),
+                        ]);
+
+                        $this->warn("Failed to publish version {$version->id}: {$e->getMessage()}");
+                    }
+                });
+        } catch (\Exception $e) {
+            Log::error('Error during scheduled content publishing for space', [
+                'space_id' => $space->id,
+                'space_name' => $space->name,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
         }
 
-        return $published;
+        return [
+            'published' => $published,
+            'failed' => $failed,
+        ];
     }
 }

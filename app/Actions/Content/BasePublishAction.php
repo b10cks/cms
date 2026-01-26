@@ -40,14 +40,22 @@ abstract class BasePublishAction
 
     protected function shouldUpdateExistingVersion(?array $contentData, Content $content): bool
     {
-        return $content->current_version?->content == $contentData;
+        return $content->current_version?->content == $contentData
+            && $content->current_version?->published_at === null;
     }
 
     protected function updateExistingVersion(array $values, Content $content): void
     {
-        ContentVersion::where('id', '=', $content->published_version_id)
+        $updated = ContentVersion::where('id', '=', $content->current_version_id)
             ->where('content_id', $content->id)
+            ->whereNull('published_at')
             ->update($values);
+
+        if ($updated === 0) {
+            throw new \Exception(
+                'Cannot update version: it has already been published or does not exist.'
+            );
+        }
     }
 
     protected function createNewVersion(
@@ -67,5 +75,37 @@ abstract class BasePublishAction
     protected function loadPublishedVersion(Content $content): void
     {
         $content->load('published_version');
+    }
+
+    protected function lockContentForUpdate(Content $content): Content
+    {
+        return Content::lockForUpdate()->findOrFail($content->id);
+    }
+
+    protected function clearScheduledVersions(Content $content, ?ContentVersion $exceptVersion = null): void
+    {
+        $query = ContentVersion::where('content_id', $content->id)
+            ->whereNotNull('scheduled_at')
+            ->whereNull('published_at');
+
+        if ($exceptVersion) {
+            $query->where('id', '!=', $exceptVersion->id);
+        }
+
+        $query->update(['scheduled_at' => null]);
+    }
+
+    protected function touchSpace(Space $space, string $column = 'content_updated_at'): void
+    {
+        try {
+            $space->touch($column);
+        } catch (\Exception $e) {
+            \Log::error('Failed to touch space', [
+                'space_id' => $space->id,
+                'column' => $column,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
     }
 }

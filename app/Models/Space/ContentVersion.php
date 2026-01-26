@@ -36,6 +36,7 @@ use Staudenmeir\EloquentJsonRelations\Relations\BelongsToJson;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, ContentVersion> $children
  * @property-read int|null $children_count
  * @property-read User|null $createdBy
+ * @property-read User|null $publishedBy
  * @property-read ContentVersion|null $parent
  * @property-read \App\Models\Space\Release|null $release
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Space\Asset[] $assets
@@ -44,8 +45,6 @@ use Staudenmeir\EloquentJsonRelations\Relations\BelongsToJson;
  * @property-read int|null $links_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Space\Content[] $relations
  * @property-read int|null $relations_count
- * @property-read User|null $publishedBy
- * @property-read User|null $scheduledBy
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion filter(\CodersCantina\Filter\Filter $filter)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion newQuery()
@@ -65,6 +64,7 @@ use Staudenmeir\EloquentJsonRelations\Relations\BelongsToJson;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereRelationIds($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereReleaseId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereScheduledAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereScheduledById($value)
  * @mixin \Eloquent
  */
 class ContentVersion extends SpaceModel

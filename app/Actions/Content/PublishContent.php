@@ -17,13 +17,18 @@ class PublishContent extends BasePublishAction
 
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner): void
     {
-        \DB::transaction(function () use ($data, $content, $space, $owner) {
+        $success = false;
+        \DB::transaction(function () use ($data, $content, $space, $owner, &$success) {
+            $this->clearScheduledVersions($content);
             $this->processPublish($data, $content, $owner);
             $this->finalizePublish($content, $space);
+            $success = true;
         });
 
-        $this->loadPublishedVersion($content);
-        $this->indexContent($content, $space);
+        if ($success) {
+            $this->loadPublishedVersion($content);
+            $this->indexContent($content, $space);
+        }
     }
 
     private function processPublish(array $data, Content $content, Authenticatable|User|null $owner): void
