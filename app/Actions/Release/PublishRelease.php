@@ -21,8 +21,8 @@ class PublishRelease
             return;
         }
 
-        $success = false;
-        \DB::transaction(function () use ($release, $space, $owner, &$success) {
+        $contents = [];
+        \DB::transaction(function () use ($release, $space, $owner, &$contents) {
             $release->update([
                 'published_at' => now(),
             ]);
@@ -47,12 +47,15 @@ class PublishRelease
                 $content->setPublishedAt(now());
                 $content->published_version_id = $version->id;
                 $content->save();
+                $contents[] = $content;
+            }
+        });
 
+        if (\count($contents)) {
+            $space->touch('content_updated_at');
+            foreach ($contents as $content) {
                 $this->searchService->indexContent($content, $space);
             }
-
-            $space->touch('content_updated_at');
-            $success = true;
-        });
+        }
     }
 }
