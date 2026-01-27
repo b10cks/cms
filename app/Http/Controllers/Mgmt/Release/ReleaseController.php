@@ -52,7 +52,7 @@ class ReleaseController extends Controller
      */
     public function show(Space $space, Release $release): ReleaseDetailResource
     {
-        $this->authorize('view', [$space, $release]);
+        $this->authorize('view', [$release, $space]);
 
         $release->load(['versions'])->loadCount(['versions']);
 
