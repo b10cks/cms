@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property array<array-key, mixed>|null $settings
  * @property string|null $owner_id
  * @property \Illuminate\Support\Carbon|null $publish_at
- * @property string|null $committed_at
+ * @property \Illuminate\Support\Carbon|null $committed_at
  * @property \Illuminate\Support\Carbon|null $published_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -59,11 +59,19 @@ class Release extends SpaceModel
     protected $table = 'releases';
 
     protected $casts = [
-        'external_id',
-        'commited_at' => 'datetime',
+        'external_id' => 'string',
+        'committed_at' => 'datetime',
         'publish_at' => 'datetime',
         'published_at' => 'datetime',
         'settings' => 'array',
+    ];
+
+    protected $fillable = [
+        'name',
+        'description',
+        'external_id',
+        'publish_at',
+        'settings',
     ];
 
     protected function name(): Attribute

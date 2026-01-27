@@ -18,6 +18,7 @@ class ContentVersionListResource extends JsonResource
             'external_id' => $this->external_id,
             'message' => $this->message,
             'parent_id' => $this->parent_id,
+            'release_id' => $this->release_id,
             'release' => $this->whenLoaded('release', fn() => new SimpleReleaseResource($this->release)),
             'author' => $this->whenLoaded('createdBy', fn() => new SimpleUserResource($this->createdBy)),
             'publisher' => $this->whenLoaded('publishedBy', fn() => new SimpleUserResource($this->publishedBy)),

@@ -23,6 +23,11 @@ class ContentVersionFilter extends AdvancedFilter
         $this->builder->where('created_by_id', $value);
     }
 
+    public function release_id($value)
+    {
+        $this->builder->where('release_id', $value);
+    }
+
     public function isPublished($value)
     {
         if ($value === 'true' || $value === '1') {
