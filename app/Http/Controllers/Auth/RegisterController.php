@@ -17,16 +17,19 @@ class RegisterController extends Controller
     public function __invoke(RegisterRequest $request, AcceptInvite $acceptInvite): JsonResponse
     {
         try {
+            $isInviteRegistration = $request->filled('invite_id');
+
             $user = User::create([
                 'email' => $request->input('email'),
-                'firstname' => explode(' ', $request->input('name'))[0],
-                'lastname' => implode(' ', array_slice(explode(' ', $request->input('name')), 1)) ?: '',
+                'firstname' => $request->input('firstname'),
+                'lastname' => $request->input('lastname'),
                 'password' => Hash::make($request->input('password')),
                 'language_iso' => app()->getLocale(),
-                'source' => 'manual',
+                'source' => $isInviteRegistration ? 'invite' : 'manual',
+                'email_verified_at' => $isInviteRegistration ? now() : null,
             ]);
 
-            if ($request->filled('invite_id')) {
+            if ($isInviteRegistration) {
                 $invite = Invite::findOrFail($request->input('invite_id'));
 
                 if (!$invite->isPending()) {
