@@ -30,14 +30,19 @@ use App\Http\Controllers\Mgmt\RedirectResetController;
 use App\Http\Controllers\Mgmt\SpaceArchiveController;
 use App\Http\Controllers\Mgmt\SpaceController;
 use App\Http\Controllers\Mgmt\SpaceIconController;
+use App\Http\Controllers\Mgmt\SpaceInviteController;
+use App\Http\Controllers\Mgmt\SpaceInviteResendController;
 use App\Http\Controllers\Mgmt\SpaceSearchController;
 use App\Http\Controllers\Mgmt\SpaceStatsController;
 use App\Http\Controllers\Mgmt\SpaceTokenController;
 use App\Http\Controllers\Mgmt\TeamController;
 use App\Http\Controllers\Mgmt\TeamHierarchyController;
+use App\Http\Controllers\Mgmt\TeamInviteController;
+use App\Http\Controllers\Mgmt\TeamInviteResendController;
 use App\Http\Controllers\Mgmt\TeamUserController;
 use App\Http\Controllers\Mgmt\User\UserAvatarController;
 use App\Http\Controllers\Mgmt\User\UserController;
+use App\Http\Controllers\Mgmt\User\UserInviteController;
 use App\Http\Controllers\Mgmt\User\UserPasswordController;
 use App\Http\Controllers\Mgmt\User\UserSettingsController;
 use App\Http\Controllers\SpaceAiUsageController;
@@ -52,6 +57,12 @@ Route::group(['prefix' => 'users'], function () {
         Route::post('/password', UserPasswordController::class)
             ->middleware(['throttle:crucial'])
             ->name('users.me.password');
+
+        Route::get('/invites', [UserInviteController::class, 'index'])->name('users.me.invites.index');
+        Route::get('/invites/{invite}', [UserInviteController::class, 'show'])->name('users.me.invites.show');
+        Route::post('/invites/{invite}/accept', [UserInviteController::class, 'accept'])
+            ->middleware('throttle:crucial')
+            ->name('users.me.invites.accept');
     });
 });
 
@@ -71,6 +82,11 @@ Route::group(['prefix' => 'teams/{team}'], function () {
     Route::post('users', [TeamUserController::class, 'store'])->name('teams.users.store');
     Route::patch('users/{user}', [TeamUserController::class, 'update'])->name('teams.users.update');
     Route::delete('users/{user}', [TeamUserController::class, 'destroy'])->name('teams.users.destroy');
+
+    Route::get('invites', [TeamInviteController::class, 'index'])->name('teams.invites.index');
+    Route::post('invites', [TeamInviteController::class, 'store'])->name('teams.invites.store');
+    Route::delete('invites/{invite}', [TeamInviteController::class, 'destroy'])->name('teams.invites.destroy');
+    Route::post('invites/{invite}/resend', TeamInviteResendController::class)->name('teams.invites.resend');
 });
 
 
@@ -79,6 +95,11 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::post('icon', SpaceIconController::class)->name('spaces.icon');
     Route::post('archive', SpaceArchiveController::class)->name('spaces.archive');
     Route::get('ai-usage', SpaceAiUsageController::class)->name('spaces.ai-usage');
+
+    Route::get('invites', [SpaceInviteController::class, 'index'])->name('spaces.invites.index');
+    Route::post('invites', [SpaceInviteController::class, 'store'])->name('spaces.invites.store');
+    Route::delete('invites/{invite}', [SpaceInviteController::class, 'destroy'])->name('spaces.invites.destroy');
+    Route::post('invites/{invite}/resend', SpaceInviteResendController::class)->name('spaces.invites.resend');
 
     Route::patch('search', [SpaceSearchController::class, 'update'])->name('spaces.search.update');
     Route::post('search/reindex', [SpaceSearchController::class, 'reindex'])->name('spaces.search.reindex');

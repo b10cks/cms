@@ -154,9 +154,10 @@ return new class extends Migration {
         Schema::create('invites', function (Blueprint $table) {
             $table->ulid('id')->primary();
 
-            $table->foreignUlid('space_id')->constrained()->onDelete('cascade');
-            $table->foreignUlid('team_id')->constrained()->onDelete('cascade');
+            $table->foreignUlid('space_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignUlid('team_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignUlid('invited_by')->constrained('users')->onDelete('cascade');
+            $table->foreignUlid('invitee_id')->nullable()->constrained('users')->onDelete('cascade');
 
             $table->text('message')->nullable();
             $table->string('email');
