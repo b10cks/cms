@@ -7,6 +7,7 @@ use App\Models\Traits\Auditable;
 use App\Models\Traits\BroadcastsModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\User;
+use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -59,8 +60,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Invite extends GlobalModel
 {
     use Auditable;
-    use BroadcastsModelEvents;
+    // use BroadcastsModelEvents;
     use HasFactory;
+    use Filterable;
     use HasPurifiedAttributes;
     use HasUlids;
 

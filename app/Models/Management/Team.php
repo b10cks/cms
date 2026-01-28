@@ -67,7 +67,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Team extends GlobalModel
 {
     use Auditable;
-    use BroadcastsModelEvents;
+    // use BroadcastsModelEvents;
     use Filterable;
     use HasFactory;
     use HasPurifiedAttributes;

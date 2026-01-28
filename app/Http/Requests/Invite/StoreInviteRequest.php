@@ -18,12 +18,15 @@ class StoreInviteRequest extends FormRequest
             'email' => [
                 'required',
                 'email',
-                'max:255'
+                'max:255',
+                Rule::unique('invites', 'email')->where(function ($query) {
+                    return $query->where('space_id', $this->input('space_id'))
+                        ->orWhere('team_id', $this->input('team_id'));
+                }),
             ],
             'role' => [
                 'required',
                 'string',
-                Rule::in(['owner', 'admin', 'editor', 'member', 'viewer']),
             ],
             'space_id' => [
                 'nullable',

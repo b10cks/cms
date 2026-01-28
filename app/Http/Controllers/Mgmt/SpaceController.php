@@ -24,6 +24,11 @@ class SpaceController extends Controller
     {
         $this->authorize('viewAny', Space::class);
         $spaces = Space::filter(SpaceFilter::fromRequest($request))
+            ->when(!auth()->user()->is_root, function ($query) {
+                $query->whereHas('users', function ($query) {
+                    $query->where('id', auth()->id());
+                })->orWhereIn('team_id', auth()->user()->teams()->wherePivotIn('role', ['member', 'admin', 'owner'])->pluck('id'));
+            })
             ->withCount(['users'])
             ->paginate();
 

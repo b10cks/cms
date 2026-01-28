@@ -9,10 +9,9 @@ use Illuminate\Http\JsonResponse;
 
 class PublicInviteController extends Controller
 {
-    public function show(string $token): JsonResponse
+    public function show(Invite $invite): PublicInviteResource|JsonResponse
     {
-        $invite = Invite::where('token', $token)->first();
-
+        $invite->load(['inviter', 'space', 'team']);
         if (!$invite) {
             return response()->json([
                 'message' => 'The invitation was not found'
@@ -21,7 +20,7 @@ class PublicInviteController extends Controller
 
         if ($invite->isExpired()) {
             return response()->json([
-                'message' => 'The invitation has expired'
+                'message' => 'The invitation has expired, please request a new one'
             ], 410);
         }
 
@@ -31,8 +30,6 @@ class PublicInviteController extends Controller
             ], 410);
         }
 
-        return response()->json(new PublicInviteResource(
-            $invite->load(['inviter', 'space', 'team'])
-        ));
+        return new PublicInviteResource($invite);
     }
 }

@@ -20,9 +20,9 @@ class SpaceInviteController extends Controller
     {
         $this->authorize('update', $space);
 
-        $invites = Invite::where('space_id', $space->id)
+        $invites = Invite::filter(InviteFilter::fromRequest($request))
+            ->where('space_id', $space->id)
             ->with(['inviter', 'invitee'])
-            ->filter(InviteFilter::fromRequest($request))
             ->paginate();
 
         return InviteResource::collection($invites);

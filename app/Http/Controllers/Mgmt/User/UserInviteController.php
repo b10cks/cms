@@ -30,36 +30,20 @@ class UserInviteController extends Controller
         return InviteResource::collection($invites);
     }
 
-    public function show(Invite $invite): JsonResponse
+    public function show(Invite $invite): InviteResource|JsonResponse
     {
         $user = auth()->user();
+        abort_if($invite->email !== $user->email && $invite->invitee_id !== $user->id, 403);
 
-        if ($invite->email !== $user->email && $invite->invitee_id !== $user->id) {
-            return response()->json([
-                'message' => 'Unauthorized'
-            ], 403);
-        }
-
-        return response()->json(new InviteResource(
+        return new InviteResource(
             $invite->load(['inviter', 'space', 'team'])
-        ));
+        );
     }
 
-    public function accept(Invite $invite, AcceptInviteRequest $request, AcceptInvite $acceptInvite): JsonResponse
+    public function accept(Invite $invite, AcceptInviteRequest $request, AcceptInvite $acceptInvite): InviteResource|JsonResponse
     {
         $user = auth()->user();
-
-        if ($invite->email !== $user->email && $invite->invitee_id !== $user->id) {
-            return response()->json([
-                'message' => 'Unauthorized'
-            ], 403);
-        }
-
-        if ($request->input('token') !== $invite->token) {
-            return response()->json([
-                'message' => 'Invalid invitation token'
-            ], 422);
-        }
+        abort_if($request->input('token') !== $invite->token, 422);
 
         try {
             if (!$acceptInvite->execute($invite, $user)) {
@@ -68,7 +52,7 @@ class UserInviteController extends Controller
                 ], 422);
             }
 
-            return response()->json(new InviteResource($invite->refresh()->load(['inviter', 'space', 'team'])));
+            return new InviteResource($invite->refresh()->load(['inviter', 'space', 'team']));
         } catch (\Exception $e) {
             Log::error('Failed to accept invite', [
                 'invite_id' => $invite->id,

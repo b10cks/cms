@@ -28,7 +28,11 @@ class InviteToTeamNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $acceptUrl = config('app.frontend_url') . '/invites/accept/' . $this->invite->token;
+        if ($this->invite->invitee_id) {
+            $acceptUrl = config('app.frontend_url') . '/invites/accept/' . $this->invite->id . '?invite_token=' . $this->invite->token;
+        } else {
+            $acceptUrl = config('app.frontend_url') . '/login/signup?invite_id=' . $this->invite->id . '&invite_token=' . $this->invite->token;
+        }
 
         return (new MailMessage())
             ->subject(__('notifications.inviteTeam.subject', ['team' => $this->team->name]))

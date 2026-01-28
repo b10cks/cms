@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Actions\Invite\AcceptInvite;
+use App\Actions\User\CreateUser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Management\Invite;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -14,24 +14,24 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class RegisterController extends Controller
 {
-    public function __invoke(RegisterRequest $request, AcceptInvite $acceptInvite): JsonResponse
+    public function __invoke(RegisterRequest $request, CreateUser $createUser, AcceptInvite $acceptInvite): JsonResponse
     {
         try {
             $isInviteRegistration = $request->filled('invite_id');
+            $invite = ($isInviteRegistration) ? Invite::findOrFail($request->input('invite_id')) : null;
 
-            $user = User::create([
+            $data = [
                 'email' => $request->input('email'),
                 'firstname' => $request->input('firstname'),
                 'lastname' => $request->input('lastname'),
                 'password' => Hash::make($request->input('password')),
                 'language_iso' => app()->getLocale(),
-                'source' => $isInviteRegistration ? 'invite' : 'manual',
-                'email_verified_at' => $isInviteRegistration ? now() : null,
-            ]);
+                'source' => $invite ? 'invite' : 'manual',
+                'email_verified_at' => $invite?->email === $request->input('email') ? now() : null,
+            ];
 
-            if ($isInviteRegistration) {
-                $invite = Invite::findOrFail($request->input('invite_id'));
-
+            $user = $createUser->execute($data);
+            if ($invite) {
                 if (!$invite->isPending()) {
                     Log::warning('Attempt to accept non-pending invite during registration', [
                         'invite_id' => $invite->id,
@@ -42,10 +42,8 @@ class RegisterController extends Controller
                 $acceptInvite->execute($invite, $user);
             }
 
-            $token = JWTAuth::fromUser($user);
-
             return response()->json([
-                'access_token' => $token,
+                'access_token' => JWTAuth::fromUser($user),
                 'token_type' => 'bearer',
                 'expires_in' => auth()->factory()->getTTL() * 60,
                 'user' => [

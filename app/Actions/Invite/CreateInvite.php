@@ -22,7 +22,7 @@ class CreateInvite
             }
         }
 
-        $invite = Invite::create([
+        $invite = Invite::forceCreate([
             'space_id' => $data['space_id'] ?? null,
             'team_id' => $data['team_id'] ?? null,
             'invited_by' => $inviter->id,
