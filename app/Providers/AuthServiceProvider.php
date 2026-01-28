@@ -11,11 +11,13 @@ use App\Models\Space\Content;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
 use App\Models\Space\Redirect;
+use App\Models\Space\Release;
 use App\Policies\BlockPolicy;
 use App\Policies\ContentPolicy;
 use App\Policies\DataEntryPolicy;
 use App\Policies\DataSourcePolicy;
 use App\Policies\RedirectPolicy;
+use App\Policies\ReleasePolicy;
 use App\Policies\SpacePolicy;
 use App\Policies\TeamPolicy;
 use App\Policies\TokenPolicy;
@@ -34,6 +36,7 @@ class AuthServiceProvider extends ServiceProvider
         DataEntry::class => DataEntryPolicy::class,
         DataSource::class => DataSourcePolicy::class,
         Redirect::class => RedirectPolicy::class,
+        Release::class => ReleasePolicy::class,
         Team::class => TeamPolicy::class,
         Token::class => TokenPolicy::class,
         Space::class => SpacePolicy::class,

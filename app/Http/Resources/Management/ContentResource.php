@@ -39,12 +39,16 @@ class ContentResource extends JsonResource
             'content' => $this->prepareContent(),
             'settings' => $this->settings->toArray() ?: new \StdClass(),
             'current_version_id' => $this->current_version_id,
+            'current_version' => $this->whenLoaded('current_version', fn() => new ContentVersionListResource($this->current_version)),
             'published_version_id' => $this->published_version_id,
+            'published_version' => $this->whenLoaded('published_version', fn() => new ContentVersionListResource($this->published_version)),
             'published_at' => $this->published_at?->toIso8601String(),
             'first_published_at' => $this->first_published_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
-            'i18n_parent' => $this->whenLoaded('i18n_parent', fn() => new ContentTranslationResource($this->i18n_parent)
+            'i18n_parent' => $this->whenLoaded(
+                'i18n_parent',
+                fn() => new ContentTranslationResource($this->i18n_parent)
             ),
             'i18n_translations' => $this->whenLoaded(
                 'i18n_children',

@@ -24,6 +24,11 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping()
             ->runInBackground();
+        $schedule->command('releases:publish-scheduled')
+            ->everyMinute()
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     /**

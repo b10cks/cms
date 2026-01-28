@@ -19,6 +19,12 @@ use App\Http\Controllers\Mgmt\Content\ContentUnpublishController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionCurrentController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionPublishController;
+use App\Http\Controllers\Mgmt\Release\ReleaseCancelController;
+use App\Http\Controllers\Mgmt\Release\ReleaseCommitController;
+use App\Http\Controllers\Mgmt\Release\ReleaseController;
+use App\Http\Controllers\Mgmt\Release\ReleasePublishController;
+use App\Http\Controllers\Mgmt\Release\ReleaseVersionAssignController;
+use App\Http\Controllers\Mgmt\Release\ReleaseVersionRemoveController;
 use App\Http\Controllers\Mgmt\RedirectController;
 use App\Http\Controllers\Mgmt\RedirectResetController;
 use App\Http\Controllers\Mgmt\SpaceArchiveController;
@@ -126,4 +132,18 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::apiResource('data-sources', \App\Http\Controllers\Mgmt\DataSourceController::class);
     Route::apiResource('data-sources.entries', \App\Http\Controllers\Mgmt\DataEntryController::class);
 
+    // Release Management
+    Route::apiResource('releases', ReleaseController::class);
+    Route::group(['prefix' => 'releases/{release}'], function () {
+        Route::post('commit', ReleaseCommitController::class)
+            ->name('releases.commit');
+        Route::post('cancel', ReleaseCancelController::class)
+            ->name('releases.cancel');
+        Route::post('publish', ReleasePublishController::class)
+            ->name('releases.publish');
+        Route::post('versions/assign', ReleaseVersionAssignController::class)
+            ->name('releases.versions.assign');
+        Route::delete('versions/remove', ReleaseVersionRemoveController::class)
+            ->name('releases.versions.remove');
+    });
 });
