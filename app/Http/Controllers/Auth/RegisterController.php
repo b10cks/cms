@@ -45,7 +45,9 @@ class RegisterController extends Controller
             $token = JWTAuth::fromUser($user);
 
             return response()->json([
-                'token' => $token,
+                'access_token' => $token,
+                'token_type' => 'bearer',
+                'expires_in' => auth()->factory()->getTTL() * 60,
                 'user' => [
                     'id' => $user->id,
                     'email' => $user->email,
