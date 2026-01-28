@@ -20,15 +20,15 @@ class TeamInviteController extends Controller
     {
         $this->authorize('update', $team);
 
-        $invites = Invite::where('team_id', $team->id)
+        $invites = Invite::filter(InviteFilter::fromRequest($request))
+            ->where('team_id', $team->id)
             ->with(['inviter', 'invitee'])
-            ->filter(InviteFilter::fromRequest($request))
             ->paginate();
 
         return InviteResource::collection($invites);
     }
 
-    public function store(StoreInviteRequest $request, Team $team, CreateInvite $createInvite): JsonResponse
+    public function store(StoreInviteRequest $request, Team $team, CreateInvite $createInvite): JsonResponse|InviteResource
     {
         $this->authorize('update', $team);
 
@@ -44,7 +44,7 @@ class TeamInviteController extends Controller
                 auth()->user()
             );
 
-            return response()->json(new InviteResource($invite), 201);
+            return new InviteResource($invite);
         } catch (\Exception $e) {
             Log::error('Failed to create team invite', [
                 'team_id' => $team->id,

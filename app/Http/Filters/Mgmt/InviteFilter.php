@@ -6,7 +6,7 @@ use CodersCantina\Filter\AdvancedFilter;
 
 class InviteFilter extends AdvancedFilter
 {
-    protected array $sortableColumns = ['email', 'role', 'status', 'created_at', 'expires_at'];
+    protected array $sortableColumns = ['email', 'role', 'created_at', 'expires_at'];
 
     public function email($value)
     {

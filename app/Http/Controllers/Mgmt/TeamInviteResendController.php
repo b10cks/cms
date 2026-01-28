@@ -7,25 +7,20 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Management\InviteResource;
 use App\Models\Management\Invite;
 use App\Models\Management\Team;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Laminas\Diactoros\Response\JsonResponse;
 
 class TeamInviteResendController extends Controller
 {
-    public function __invoke(Team $team, Invite $invite, ResendInvite $resendInvite): JsonResponse
+    public function __invoke(Team $team, Invite $invite, ResendInvite $resendInvite): InviteResource|JsonResponse
     {
         $this->authorize('resend', $invite);
-
-        if ($invite->team_id !== $team->id) {
-            return response()->json([
-                'message' => 'The invite does not belong to this team'
-            ], 404);
-        }
+        abort_if($invite->team_id !== $team->id, 404);
 
         try {
             $invite = $resendInvite->execute($invite);
 
-            return response()->json(new InviteResource($invite));
+            return new InviteResource($invite);
         } catch (\Exception $e) {
             Log::error('Failed to resend team invite', [
                 'invite_id' => $invite->id,

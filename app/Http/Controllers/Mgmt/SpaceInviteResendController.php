@@ -12,20 +12,15 @@ use Illuminate\Support\Facades\Log;
 
 class SpaceInviteResendController extends Controller
 {
-    public function __invoke(Space $space, Invite $invite, ResendInvite $resendInvite): JsonResponse
+    public function __invoke(Space $space, Invite $invite, ResendInvite $resendInvite): InviteResource|JsonResponse
     {
         $this->authorize('resend', $invite);
-
-        if ($invite->space_id !== $space->id) {
-            return response()->json([
-                'message' => 'The invite does not belong to this space'
-            ], 404);
-        }
+        abort_if($invite->space_id !== $space->id, 404);
 
         try {
             $invite = $resendInvite->execute($invite);
 
-            return response()->json(new InviteResource($invite));
+            return new InviteResource($invite);
         } catch (\Exception $e) {
             Log::error('Failed to resend space invite', [
                 'invite_id' => $invite->id,

@@ -28,7 +28,7 @@ class SpaceInviteController extends Controller
         return InviteResource::collection($invites);
     }
 
-    public function store(StoreInviteRequest $request, Space $space, CreateInvite $createInvite): JsonResponse
+    public function store(StoreInviteRequest $request, Space $space, CreateInvite $createInvite): JsonResponse|InviteResource
     {
         $this->authorize('update', $space);
 
@@ -44,7 +44,7 @@ class SpaceInviteController extends Controller
                 auth()->user()
             );
 
-            return response()->json(new InviteResource($invite), 201);
+            return new InviteResource($invite);
         } catch (\Exception $e) {
             Log::error('Failed to create space invite', [
                 'space_id' => $space->id,
