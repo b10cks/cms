@@ -30,6 +30,11 @@ class TeamController extends Controller
         $filter = new TeamFilter($request->all());
 
         $teams = Team::filter($filter)
+            ->when(!auth()->user()->is_root, function ($query) {
+                $query->whereHas('users', function ($query) {
+                    $query->where('id', auth()->id());
+                });
+            })
             ->with(['parent'])
             ->withCount(['users', 'spaces', 'children'])
             ->paginate($request->get('per_page', 20));

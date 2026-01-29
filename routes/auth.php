@@ -1,5 +1,9 @@
 <?php
 
+Route::post('register', \App\Http\Controllers\Auth\RegisterController::class)
+    ->middleware('throttle:login')
+    ->name('register');
+
 Route::post('token', \App\Http\Controllers\Auth\IssueTokenController::class)
     ->middleware('throttle:login')
     ->name('token.login');
