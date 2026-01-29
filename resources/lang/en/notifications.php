@@ -21,4 +21,6 @@ return [
         'intro' => 'Your one-time login code is below. This code will expire in 10 minutes.',
         'outro' => 'If you did not request this code, you can safely ignore this email.',
     ],
+    'inviterFallback' => 'a collaborator',
+    'teamFallback' => 'Team',
 ];

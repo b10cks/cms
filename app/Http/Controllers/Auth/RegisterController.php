@@ -27,7 +27,7 @@ class RegisterController extends Controller
                 'password' => Hash::make($request->input('password')),
                 'language_iso' => app()->getLocale(),
                 'source' => $invite ? 'invite' : 'manual',
-                'email_verified_at' => $invite?->email === $request->input('email') ? now() : null,
+                'email_verified_at' => ($invite && strtolower($invite->email) === strtolower($request->input('email'))) ? now() : null,
             ];
 
             $user = $createUser->execute($data);

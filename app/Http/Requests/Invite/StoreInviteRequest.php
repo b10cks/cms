@@ -14,6 +14,15 @@ class StoreInviteRequest extends FormRequest
 
     public function rules(): array
     {
+        $roleRules = [
+            'required',
+            'string',
+        ];
+        if ($this->input('team_id')) {
+            $roleRules[] = Rule::in(['member', 'admin', 'owner', 'guest', 'space']);
+        }
+        // TODO: When space roles are implemented, validate the role against the space's allowed roles
+
         return [
             'email' => [
                 'required',
