@@ -16,7 +16,8 @@ class CreateUser
             'icon' => 'user',
             'type' => 'personal'
         ]);
-        $team->users()->attach($user);
+        $team->users()
+            ->attach($user, ['role' => 'owner']);
 
         return $user;
     }
