@@ -25,6 +25,7 @@ class AcceptInvite
 
     private function handleInvite(Invite $invite, User $user): void
     {
+        $team = null;
         if ($invite->space_id) {
             $this->attachUserToRelation($invite->space->users(), $user, $invite->role);
             $team = $invite->space->team;
@@ -35,7 +36,9 @@ class AcceptInvite
             $teamRole = $invite->role;
         }
 
-        $this->attachUserToRelation($team->users(), $user, $teamRole);
+        if ($team) {
+            $this->attachUserToRelation($team->users(), $user, $teamRole);
+        }
     }
 
     private function attachUserToRelation(BelongsToMany $relation, User $user, $role)
