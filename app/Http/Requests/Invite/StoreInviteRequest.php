@@ -20,8 +20,12 @@ class StoreInviteRequest extends FormRequest
                 'email',
                 'max:255',
                 Rule::unique('invites', 'email')->where(function ($query) {
-                    return $query->where('space_id', $this->input('space_id'))
-                        ->orWhere('team_id', $this->input('team_id'));
+                    if ($spaceId = $this->input('space_id')) {
+                        return $query->where('space_id', $spaceId);
+                    }
+                    if ($teamId = $this->input('team_id')) {
+                        return $query->where('team_id', $teamId);
+                    }
                 }),
             ],
             'role' => [
