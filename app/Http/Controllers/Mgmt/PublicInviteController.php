@@ -12,11 +12,6 @@ class PublicInviteController extends Controller
     public function show(Invite $invite): PublicInviteResource|JsonResponse
     {
         $invite->load(['inviter', 'space', 'team']);
-        if (!$invite) {
-            return response()->json([
-                'message' => 'The invitation was not found'
-            ], 404);
-        }
 
         if ($invite->isExpired()) {
             return response()->json([
