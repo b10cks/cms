@@ -19,13 +19,9 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping()
             ->runInBackground();
-        $schedule->command('content:publish-scheduled')
-            ->everyMinute()
-            ->onOneServer()
-            ->withoutOverlapping()
-            ->runInBackground();
-        $schedule->command('releases:publish-scheduled')
-            ->everyMinute()
+
+        $schedule->command('queue:requeue-orphaned-publishing')
+            ->dailyAt('01:00')
             ->onOneServer()
             ->withoutOverlapping()
             ->runInBackground();

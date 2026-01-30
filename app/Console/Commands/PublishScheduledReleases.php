@@ -105,7 +105,7 @@ class PublishScheduledReleases extends Command
         try {
             Release::where('published_at', null)
                 ->where('publish_at', '<=', now())
-                ->where('committed_at', null)
+                ->whereNotNull('committed_at')
                 ->lazy(200)
                 ->each(function ($release) use ($space, &$published, &$failed) {
                     try {

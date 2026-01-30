@@ -2,13 +2,12 @@
 
 namespace App\Actions\Content;
 
+use App\Jobs\Content\PublishScheduledContentJob;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
-use App\Models\Space\ContentVersion;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\Log;
 
 class SchedulePublishContent extends BasePublishAction
 {
@@ -17,16 +16,15 @@ class SchedulePublishContent extends BasePublishAction
         $content = $this->lockContentForUpdate($content);
 
         \DB::transaction(function () use ($data, $content, $space, $owner) {
-            $this->processSchedule($data, $content, $owner);
+            $this->processSchedule($data, $content, $owner, $space);
             $content->save();
         });
     }
 
-    private function processSchedule(array $data, Content $content, Authenticatable|User|null $owner): void
+    private function processSchedule(array $data, Content $content, Authenticatable|User|null $owner, Space $space): void
     {
         $scheduledAt = Carbon::parse(data_get($data, 'scheduled_at'));
         ['contentData' => $contentData, 'message' => $message] = $this->extractDataFromRequest($data);
-
 
         $this->clearScheduledVersions($content);
         $this->updateContent($data, $content);
@@ -40,6 +38,13 @@ class SchedulePublishContent extends BasePublishAction
         } else {
             $version = $this->createNewVersion($values, $contentData, $content, $owner);
             $content->current_version_id = $version->id;
+        }
+
+        if ($scheduledAt?->isFuture()) {
+            PublishScheduledContentJob::dispatch(
+                $space->id,
+                $content->current_version_id,
+            )->delay($scheduledAt);
         }
     }
 }
