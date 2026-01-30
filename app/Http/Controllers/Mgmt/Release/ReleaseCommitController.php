@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Mgmt\Release;
 
+use App\Actions\Release\CommitRelease;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Management\ReleaseResource;
 use App\Models\Management\Space;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class ReleaseCommitController extends Controller
 {
-    public function __invoke(Space $space, Release $release): ReleaseResource
+    public function __invoke(Space $space, Release $release, CommitRelease $action): ReleaseResource
     {
         $this->authorize('commit', [$release, $space]);
 
@@ -19,6 +20,7 @@ class ReleaseCommitController extends Controller
             $release->committed_at = now();
             $release->save();
             $release->loadCount(['versions']);
+            $action->execute($release, $space);
 
             return new ReleaseResource($release);
         } catch (\Exception $e) {
