@@ -14,11 +14,11 @@ class CreateSpace
         $data['state'] = 'draft';
 
         $data['settings'] = ($data['settings'] ?? []) + [
-                'asset_fields' => [
-                    ['key' => 'alt', 'label' => 'Alt Text', 'required' => false],
-                    ['key' => 'description', 'label' => 'Description', 'required' => false],
-                ]
-            ];
+            'asset_fields' => [
+                ['key' => 'alt', 'label' => 'Alt Text', 'required' => false],
+                ['key' => 'description', 'label' => 'Description', 'required' => false],
+            ]
+        ];
 
         $space = Space::forceCreate($data);
         $space->users()->attach($owner, ['role' => 'owner']);

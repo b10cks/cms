@@ -10,6 +10,7 @@ use App\Services\Content\LinkHandler;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Staudenmeir\EloquentJsonRelations\HasJsonRelationships;
@@ -72,6 +73,7 @@ class ContentVersion extends SpaceModel
     use HasJsonRelationships;
     use HasPurifiedAttributes;
     use HasUlids;
+    use HasFactory;
     use Filterable;
 
     public $timestamps = false;

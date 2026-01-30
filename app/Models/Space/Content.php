@@ -225,4 +225,9 @@ class Content extends SpaceModel
     {
         return $this->hasManyFromArray(Content::class, 'relation_ids');
     }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class, 'content_id', 'id');
+    }
 }
