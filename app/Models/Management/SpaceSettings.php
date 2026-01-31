@@ -63,12 +63,12 @@ class SpaceSettings extends Settings
 
             public function set($model, string $key, mixed $value, array $attributes)
             {
-                return json_encode($value->toArray());
+                return json_encode(\is_array($value) ? $value : $value->toArray());
             }
 
             public function serialize($model, string $key, $value, array $attributes)
             {
-                return json_encode($value->toArray());
+                return json_encode(\is_array($value) ? $value : $value->toArray());
             }
         };
     }

@@ -11,6 +11,8 @@ use App\Http\Controllers\Mgmt\AssetTagController;
 use App\Http\Controllers\Mgmt\BlockController;
 use App\Http\Controllers\Mgmt\BlockFolderController;
 use App\Http\Controllers\Mgmt\BlockTagController;
+use App\Http\Controllers\Mgmt\Content\CommentController;
+use App\Http\Controllers\Mgmt\Content\CommentReactionController;
 use App\Http\Controllers\Mgmt\Content\ContentController;
 use App\Http\Controllers\Mgmt\Content\ContentMenuController;
 use App\Http\Controllers\Mgmt\Content\ContentPublishController;
@@ -136,6 +138,28 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
         ->name('contents.unpublish');
     Route::post('contents/{content}/schedule', ContentScheduleController::class)
         ->name('contents.schedule');
+
+    Route::group(['prefix' => 'contents/{content}/comments'], function () {
+        // Root comments
+        Route::get('/', [CommentController::class, 'index'])->name('comments.index');
+        Route::post('/', [CommentController::class, 'store'])->name('comments.store');
+
+        Route::group(['prefix' => '{comment}'], function () {
+            // Comment CRUD
+            Route::get('/', [CommentController::class, 'show'])->name('comments.show');
+            Route::patch('/', [CommentController::class, 'update'])->name('comments.update');
+            Route::delete('/', [CommentController::class, 'destroy'])->name('comments.destroy');
+
+            // Comment resolution
+            Route::post('resolve', [CommentController::class, 'resolve'])->name('comments.resolve');
+            Route::delete('resolve', [CommentController::class, 'unresolve'])->name('comments.unresolve');
+
+            // Unified reactions endpoint (works for both comments and replies)
+            Route::get('reactions', [CommentReactionController::class, 'index'])->name('comments.reactions.index');
+            Route::post('reactions', [CommentReactionController::class, 'store'])->name('comments.reactions.store');
+            Route::delete('reactions', [CommentReactionController::class, 'destroy'])->name('comments.reactions.destroy');
+        });
+    });
 
     Route::get('/contents/{content}/versions', [ContentVersionController::class, 'index'])
         ->name('contents.versions.index');

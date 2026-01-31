@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
@@ -153,7 +154,10 @@ return new class extends Migration {
             $table->timestamp('first_published_at')->nullable();
 
             $table->index(['full_slug']);
-            $table->fullText('searchable_content');
+            // Only create fulltext index for MySQL/MariaDB
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->fullText('searchable_content');
+            }
             $table->timestamps();
             $table->softDeletes();
         });
@@ -232,6 +236,48 @@ return new class extends Migration {
             $table->index(['data_source_id', 'key']);
             $table->unique(['data_source_id', 'key']);
         });
+
+        Schema::create('comments', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->string('external_id', 36)->nullable();
+
+            $table->foreignUlid('content_id')->constrained('contents')->onDelete('cascade');
+            $table->foreignUlid('content_version_id')->nullable()->constrained('content_versions')->onDelete('cascade');
+            $table->foreignUlid('parent_id')->nullable()->constrained('comments')->onDelete('cascade');
+            $table->foreignUlid('author_id');
+
+            $table->longText('body');
+            $table->boolean('is_resolved')->storedAs('CASE WHEN resolved_at IS NULL THEN 0 ELSE 1 END');
+
+            $table->string('item_id', 26)->nullable();
+            $table->string('field', 100)->nullable();
+
+            $table->json('position')->nullable();
+            $table->json('mentions_ids')->nullable();
+
+            $table->timestamp('resolved_at')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->index(['content_id', 'is_resolved']);
+            $table->index(['content_id']);
+            $table->index(['parent_id']);
+        });
+
+        Schema::create('comment_reactions', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+
+            $table->foreignUlid('comment_id')->constrained('comments')->onDelete('cascade');
+            $table->foreignUlid('author_id');
+
+            $table->string('emoji', 50)->charset('ascii');
+
+            $table->timestamp('created_at');
+
+            $table->unique(['comment_id', 'author_id', 'emoji'], 'reactions_unique');
+            $table->index(['comment_id']);
+            $table->index(['author_id']);
+        });
     }
 
     /**
@@ -239,6 +285,8 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        Schema::dropIfExists('comment_reactions');
+        Schema::dropIfExists('comments');
         Schema::dropIfExists('data_entries');
         Schema::dropIfExists('data_sources');
         Schema::dropIfExists('redirects');

@@ -204,6 +204,11 @@ class User extends Authenticatable implements JWTSubject
         });
     }
 
+    public function getNameAttribute(): string
+    {
+        return $this->firstname . ' ' . $this->lastname;
+    }
+
     public function getConnectionName()
     {
         return config('database.default', 'default');
