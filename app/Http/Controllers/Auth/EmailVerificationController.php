@@ -1,0 +1,91 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Models\User;
+use App\Notifications\User\VerifyEmailNotification;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\URL;
+
+class EmailVerificationController extends AuthController
+{
+    private const CACHE_PREFIX = 'email_verification:';
+    private const CACHE_TTL = 3600;
+    private const RATE_LIMIT_TTL = 60;
+
+    public function send(): JsonResponse
+    {
+        $user = auth()->user();
+
+        if ($user->email_verified_at) {
+            return response()->json([
+                'message' => __('auth.email_already_verified'),
+            ], 400);
+        }
+
+        $rateLimitKey = self::CACHE_PREFIX . 'rate_limit:' . $user->id;
+        if (Cache::has($rateLimitKey)) {
+            return response()->json([
+                'message' => __('auth.email_verification_rate_limit'),
+                'retry_after' => Cache::get($rateLimitKey) - now()->timestamp,
+            ], 429);
+        }
+
+        $verificationUrl = $this->generateVerificationUrl($user);
+        $user->notify(new VerifyEmailNotification($verificationUrl));
+
+        Cache::put($rateLimitKey, now()->addSeconds(self::RATE_LIMIT_TTL)->timestamp, self::RATE_LIMIT_TTL);
+
+        return response()->json([
+            'message' => __('auth.email_verification_sent'),
+        ]);
+    }
+
+    public function verify(Request $request): JsonResponse
+    {
+        $request->validate([
+            'id' => ['required', 'string'],
+            'hash' => ['required', 'string'],
+        ]);
+
+        $user = User::findOrFail($request->input('id'));
+
+        if ($user->email_verified_at) {
+            return response()->json([
+                'message' => __('auth.email_already_verified'),
+            ], 400);
+        }
+
+        if (!hash_equals(sha1($user->email), $request->input('hash'))) {
+            return response()->json([
+                'message' => __('auth.invalid_verification_link'),
+            ], 403);
+        }
+
+        $user->forceFill([
+            'email_verified_at' => now(),
+        ])->save();
+
+        return response()->json([
+            'message' => __('auth.email_verified'),
+        ]);
+    }
+
+    private function generateVerificationUrl(User $user): string
+    {
+        $cacheKey = self::CACHE_PREFIX . $user->id;
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($user) {
+            return URL::signedRoute(
+                'verification.verify',
+                [
+                    'id' => $user->getRouteKey(),
+                    'hash' => sha1($user->email),
+                ],
+                now()->addMinutes(60)
+            );
+        });
+    }
+}

@@ -116,4 +116,18 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Two-Factor Authentication
+    |--------------------------------------------------------------------------
+    |
+    | These configuration options control the behavior of two-factor
+    | authentication. The grace period defines how long (in minutes)
+    | a user can continue making requests after verifying their 2FA
+    | code before needing to verify again.
+    |
+    */
+
+    '2fa_grace_period' => env('AUTH_2FA_GRACE_PERIOD', 30),
+
 ];

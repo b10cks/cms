@@ -42,3 +42,38 @@ Route::post('one-time-token/create', \App\Http\Controllers\Auth\CreateOneTimeTok
 
 Route::post('one-time-token/login', \App\Http\Controllers\Auth\LoginOneTimeTokenController::class)
     ->name('one-time-token.login');
+
+Route::post('email/verify/send', [\App\Http\Controllers\Auth\EmailVerificationController::class, 'send'])
+    ->middleware(['auth:api', 'throttle:login'])
+    ->name('verification.send');
+
+Route::post('email/verify', [\App\Http\Controllers\Auth\EmailVerificationController::class, 'verify'])
+    ->middleware(['throttle:login'])
+    ->name('verification.verify');
+
+Route::group(['prefix' => '2fa'], function () {
+
+    Route::get('status', \App\Http\Controllers\Auth\TwoFactorStatusController::class)
+        ->middleware(['auth:api'])
+        ->name('2fa.verify');
+
+    Route::post('setup', [\App\Http\Controllers\Auth\TwoFactorSetupController::class, 'start'])
+        ->middleware(['auth:api'])
+        ->name('2fa.setup');
+
+    Route::post('setup/confirm', [\App\Http\Controllers\Auth\TwoFactorSetupController::class, 'confirm'])
+        ->middleware(['auth:api'])
+        ->name('2fa.setup.confirm');
+
+    Route::post('verify', \App\Http\Controllers\Auth\TwoFactorVerifyController::class)
+        ->middleware(['auth:api'])
+        ->name('2fa.verify');
+
+    Route::post('disable', \App\Http\Controllers\Auth\TwoFactorDisableController::class)
+        ->middleware(['auth:api'])
+        ->name('2fa.disable');
+
+    Route::post('backup-codes/regenerate', [\App\Http\Controllers\Auth\TwoFactorBackupCodesController::class, 'regenerate'])
+        ->middleware(['auth:api'])
+        ->name('2fa.backup-codes.regenerate');
+});

@@ -39,6 +39,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property int $login_count
  * @property \Illuminate\Support\Carbon|null $last_login_at
  * @property bool $is_root
+ * @property \Illuminate\Support\Carbon|null $two_factor_enabled_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
@@ -118,6 +119,8 @@ class User extends Authenticatable implements JWTSubject
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_backup_codes',
     ];
 
     /**
@@ -131,7 +134,24 @@ class User extends Authenticatable implements JWTSubject
         'last_login_at' => 'datetime',
         'password' => 'hashed',
         'settings' => UserSettings::class,
+        'two_factor_enabled_at' => 'datetime',
     ];
+
+    protected function twoFactorSecret(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value ? decrypt($value) : null,
+            set: fn($value) => $value ? encrypt($value) : null,
+        );
+    }
+
+    protected function twoFactorBackupCodes(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value ? json_decode(decrypt($value), true) : null,
+            set: fn($value) => $value ? encrypt(json_encode($value)) : null,
+        );
+    }
 
     public function getJWTIdentifier(): string
     {
@@ -193,6 +213,16 @@ class User extends Authenticatable implements JWTSubject
         $this->notify(new ResetPasswordNotification($token));
     }
 
+    public function hasEnabledTwoFactor(): bool
+    {
+        return $this->two_factor_enabled_at !== null;
+    }
+
+    public function hasVerifiedEmail(): bool
+    {
+        return $this->email_verified_at !== null;
+    }
+
     protected function avatarUrl(): Attribute
     {
         return Attribute::get(function () {
@@ -200,7 +230,7 @@ class User extends Authenticatable implements JWTSubject
                 return null;
             }
 
-            return '/storage/' . $this->avatar;
+            return "/storage/{$this->avatar}";
         });
     }
 
