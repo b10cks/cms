@@ -20,6 +20,7 @@ class UpsertAssetTagRequest extends FormRequest
                 'string',
                 'max:100',
                 Rule::unique(new AssetTag()->getConnectionName() . '.asset_tags', 'name')
+                    ->whereNull('deleted_at')
                     ->ignore($this->route('tag'))
             ],
             'icon' => 'nullable|string|max:50',
