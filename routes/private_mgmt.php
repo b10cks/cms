@@ -41,6 +41,7 @@ use App\Http\Controllers\Mgmt\TeamController;
 use App\Http\Controllers\Mgmt\TeamHierarchyController;
 use App\Http\Controllers\Mgmt\TeamInviteController;
 use App\Http\Controllers\Mgmt\TeamInviteResendController;
+use App\Http\Controllers\Mgmt\TeamMemberController;
 use App\Http\Controllers\Mgmt\TeamUserController;
 use App\Http\Controllers\Mgmt\User\UserAvatarController;
 use App\Http\Controllers\Mgmt\User\UserController;
@@ -82,6 +83,10 @@ Route::apiResource('teams', TeamController::class);
 Route::get('teams/hierarchy', TeamHierarchyController::class)->name('teams.hierarchy');
 
 Route::group(['prefix' => 'teams/{team}'], function () {
+    Route::get('members', [TeamMemberController::class, 'index'])->name('teams.members.index');
+    Route::patch('members/{user}', [TeamMemberController::class, 'update'])->name('teams.members.update');
+    Route::delete('members/{user}', [TeamMemberController::class, 'destroy'])->name('teams.members.destroy');
+
     Route::post('users', [TeamUserController::class, 'store'])->name('teams.users.store');
     Route::patch('users/{user}', [TeamUserController::class, 'update'])->name('teams.users.update');
     Route::delete('users/{user}', [TeamUserController::class, 'destroy'])->name('teams.users.destroy');
