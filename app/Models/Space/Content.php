@@ -5,6 +5,8 @@ namespace App\Models\Space;
 use App\Casts\Slug;
 use App\Database\HasManyFromArray;
 use App\Database\HasManyFromArrayTrait;
+use App\Events\Space\ContentDeleted;
+use App\Events\Space\ContentUpdated;
 use App\Jobs\Content\UpdateContentFullSlugsJob;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Services\Content\LocalizedContentSlugService;
@@ -127,6 +129,12 @@ class Content extends SpaceModel
             if ($content->isDirty('slug') || $content->isDirty('parent_id')) {
                 UpdateContentFullSlugsJob::dispatch($content, request('space') ?? app()->get('currentSpace'));
             }
+
+            event(new ContentUpdated($content, request('space') ?? app('currentSpace')));
+        });
+
+        static::softDeleted(function (Content $content) {
+            event(new ContentDeleted($content, request('space') ?? app('currentSpace')));
         });
     }
 
