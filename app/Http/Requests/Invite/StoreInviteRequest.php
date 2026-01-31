@@ -29,7 +29,6 @@ class StoreInviteRequest extends FormRequest
                 'email',
                 'max:255',
                 Rule::unique('invites', 'email')
-                    ->whereNull('deleted_at')
                     ->where(function ($query) {
                         if ($spaceId = $this->input('space_id')) {
                             return $query->where('space_id', $spaceId);
