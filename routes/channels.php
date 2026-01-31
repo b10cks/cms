@@ -1,24 +1,60 @@
 <?php
 
+use App\Models\Management\Space;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
-/*
-|--------------------------------------------------------------------------
-| Broadcast Channels
-|--------------------------------------------------------------------------
-|
-| Here you may register all of the event broadcasting channels that your
-| application supports. The given channel authorization callbacks are
-| used to check if an authenticated user can listen to the channel.
-|
-*/
-
 Broadcast::channel('App.Models.User.{id}', function (User $user, $id) {
-    return (int)$user->id === (int)$id;
+    return (int) $user->id === (int) $id;
 });
 
-Broadcast::channel('spaces.{spaceId}.content', function() {
+Broadcast::channel('spaces.{spaceId}.content', function () {
     return true;
-//    return $user->spaces()->where('id', $spaceId)->exists();
+});
+
+Broadcast::channel('presence-spaces.{spaceId}', function (User $user, string $spaceId) {
+    $space = Space::find($spaceId);
+
+    if (!$space || !$user->spaces()->where('spaces.id', $space->id)->exists()) {
+        return false;
+    }
+
+    return [
+        'id' => $user->id,
+        'firstname' => $user->firstname,
+        'lastname' => $user->lastname,
+        'email' => $user->email,
+        'avatar' => $user->avatar_url,
+        'joined_at' => now()->toIso8601String(),
+    ];
+});
+
+Broadcast::channel('presence-spaces.{space}.content', function (User $user, Space $space) {
+    if (!$space || !$user->spaces()->where('spaces.id', $space->id)->exists()) {
+        return false;
+    }
+
+    return [
+        'id' => $user->id,
+        'firstname' => $user->firstname,
+        'lastname' => $user->lastname,
+        'email' => $user->email,
+        'avatar' => $user->avatar_url,
+        'joined_at' => now()->toIso8601String(),
+    ];
+});
+
+Broadcast::channel('presence-spaces.{space}.content.{contentId}', function (User $user, Space $space, string $contentId) {
+    if (!$space || !$user->spaces()->where('spaces.id', $space->id)->exists()) {
+        return false;
+    }
+
+    return [
+        'id' => $user->id,
+        'firstname' => $user->firstname,
+        'lastname' => $user->lastname,
+        'email' => $user->email,
+        'avatar' => $user->avatar_url,
+        'joined_at' => now()->toIso8601String(),
+    ];
 });

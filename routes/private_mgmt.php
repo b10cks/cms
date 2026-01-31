@@ -47,6 +47,7 @@ use App\Http\Controllers\Mgmt\User\UserController;
 use App\Http\Controllers\Mgmt\User\UserInviteController;
 use App\Http\Controllers\Mgmt\User\UserPasswordController;
 use App\Http\Controllers\Mgmt\User\UserSettingsController;
+use App\Http\Controllers\Mgmt\PresenceController;
 use App\Http\Controllers\SpaceAiUsageController;
 
 Route::group(['prefix' => 'users'], function () {
@@ -121,6 +122,11 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
 
     Route::get('content-menu', ContentMenuController::class);
     Route::get('stats', SpaceStatsController::class);
+
+    Route::post('presence', [PresenceController::class, 'updateSpacePresence'])->name('spaces.presence.update');
+    Route::delete('presence', [PresenceController::class, 'leaveSpacePresence'])->name('spaces.presence.leave');
+    Route::post('contents/{content}/presence', [PresenceController::class, 'updateContentPresence'])->name('spaces.contents.presence.update');
+    Route::delete('contents/{content}/presence', [PresenceController::class, 'leaveContentPresence'])->name('spaces.contents.presence.leave');
 
     Route::apiResource('asset-folders', AssetFolderController::class);
     Route::apiResource('asset-tags', AssetTagController::class);
