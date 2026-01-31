@@ -36,6 +36,7 @@ class CreateBlockRequest extends FormRequest
                 'max:50',
                 'regex:/^[a-z][a-z0-9A-Z]+$/',
                 Rule::unique(new Block()->getConnectionName() . '.blocks', 'slug')
+                    ->whereNull('deleted_at')
             ],
             'icon' => 'nullable|string|max:50',
             'color' => 'nullable|string|max:7|regex:/^#[a-fA-F0-9]{6}$/',
@@ -49,6 +50,7 @@ class CreateBlockRequest extends FormRequest
                 'nullable',
                 'string',
                 Rule::exists(new BlockFolder()->getConnectionName() . '.block_folders', 'id')
+                    ->whereNull('deleted_at')
             ],
         ];
     }

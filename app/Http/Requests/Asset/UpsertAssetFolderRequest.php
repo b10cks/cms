@@ -23,6 +23,7 @@ class UpsertAssetFolderRequest extends FormRequest
                 'nullable',
                 'string',
                 Rule::exists(new AssetFolder()->getConnectionName() . '.asset_folders', 'id')
+                    ->whereNull('deleted_at')
             ],
         ];
     }

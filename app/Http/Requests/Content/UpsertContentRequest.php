@@ -43,6 +43,7 @@ class UpsertContentRequest extends FormRequest
                 Rule::unique($connectionName . '.contents', 'slug')
                     ->when($languageIso, fn($query) => $query->where('language_iso', $languageIso))
                     ->when($parentId, fn($query) => $query->where('parent_id', $parentId))
+                    ->whereNull('deleted_at')
                     ->ignore($contentId),
             ],
             'settings' => 'nullable|array',
@@ -50,17 +51,20 @@ class UpsertContentRequest extends FormRequest
                 'sometimes',
                 'required',
                 Rule::exists($connectionName . '.blocks', 'id')
+                    ->whereNull('deleted_at')
             ],
             'parent_id' => [
                 'nullable',
                 'string',
                 Rule::exists($connectionName . '.contents', 'id')
+                    ->whereNull('deleted_at')
             ],
             'i18n_parent_id' => [
                 'sometimes',
                 'nullable',
                 'string',
                 Rule::exists($connectionName . '.contents', 'id')
+                    ->whereNull('deleted_at')
             ],
             'language_iso' => 'sometimes|required|string|size:2,5',
             'content' => 'nullable|array',

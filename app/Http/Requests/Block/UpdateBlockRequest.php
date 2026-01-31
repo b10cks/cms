@@ -40,6 +40,7 @@ class UpdateBlockRequest extends FormRequest
                 'max:50',
                 'regex:/^[a-z][a-z0-9A-Z]+$/',
                 Rule::unique(new Block()->getConnectionName() . '.blocks', 'slug')
+                    ->whereNull('deleted_at')
                     ->ignore($block->id),
             ],
 
@@ -54,6 +55,7 @@ class UpdateBlockRequest extends FormRequest
                 'nullable',
                 'string',
                 Rule::exists(new BlockFolder()->getConnectionName() . '.block_folders', 'id')
+                    ->whereNull('deleted_at')
             ],
         ];
     }

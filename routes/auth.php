@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Broadcasting\JwtBroadcastController;
+
 Route::post('register', \App\Http\Controllers\Auth\RegisterController::class)
     ->middleware('throttle:login')
     ->name('register');
@@ -18,6 +20,9 @@ Route::post('token/refresh', \App\Http\Controllers\Auth\RefreshTokenController::
 Route::post('impersonate', [\App\Http\Controllers\Auth\ImpersonationController::class, 'store'])
     ->middleware(['auth:api'])
     ->name('impersonate.store');
+
+Route::match(['get', 'post'], '/broadcast', [JwtBroadcastController::class, 'authenticate'])
+    ->middleware(['auth:api']);
 
 Route::delete('impersonate', [\App\Http\Controllers\Auth\ImpersonationController::class, 'destroy'])
     ->middleware(['auth:api'])

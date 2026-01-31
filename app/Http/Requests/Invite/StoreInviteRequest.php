@@ -28,14 +28,16 @@ class StoreInviteRequest extends FormRequest
                 'required',
                 'email',
                 'max:255',
-                Rule::unique('invites', 'email')->where(function ($query) {
-                    if ($spaceId = $this->input('space_id')) {
-                        return $query->where('space_id', $spaceId);
-                    }
-                    if ($teamId = $this->input('team_id')) {
-                        return $query->where('team_id', $teamId);
-                    }
-                }),
+                Rule::unique('invites', 'email')
+                    ->whereNull('deleted_at')
+                    ->where(function ($query) {
+                        if ($spaceId = $this->input('space_id')) {
+                            return $query->where('space_id', $spaceId);
+                        }
+                        if ($teamId = $this->input('team_id')) {
+                            return $query->where('team_id', $teamId);
+                        }
+                    }),
             ],
             'role' => [
                 'required',
