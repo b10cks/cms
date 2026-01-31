@@ -8,7 +8,11 @@ Broadcast::channel('App.Models.User.{id}', function (User $user, $id) {
     return (int) $user->id === (int) $id;
 });
 
-Broadcast::channel('spaces.{spaceId}.content', function () {
+Broadcast::channel('spaces.{space}.content', function (User $user, Space $space) {
+    if (!$space || !$user->spaces()->where('spaces.id', $space->id)->exists()) {
+        return false;
+    }
+
     return true;
 });
 

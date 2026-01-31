@@ -6,8 +6,6 @@ use App\Http\Resources\Management\ContentResource;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use Illuminate\Broadcasting\Channel;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Queue\SerializesModels;
 

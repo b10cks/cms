@@ -41,7 +41,7 @@ class PresenceController
                     'firstname' => $user->firstname,
                     'lastname' => $user->lastname,
                     'email' => $user->email,
-                    'avatar' => $user->avatar,
+                    'avatar' => $user->avatar_url,
                 ],
                 'leave'
             ))->toOthers();
@@ -56,7 +56,7 @@ class PresenceController
                     'firstname' => $user->firstname,
                     'lastname' => $user->lastname,
                     'email' => $user->email,
-                    'avatar' => $user->avatar,
+                    'avatar' => $user->avatar_url,
                 ],
                 'join'
             ))->toOthers();
@@ -85,7 +85,7 @@ class PresenceController
                 'firstname' => $user->firstname,
                 'lastname' => $user->lastname,
                 'email' => $user->email,
-                'avatar' => $user->avatar,
+                'avatar' => $user->avatar_url,
             ],
             'leave'
         ))->toOthers();
