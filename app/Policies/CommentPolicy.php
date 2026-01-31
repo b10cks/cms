@@ -35,18 +35,12 @@ class CommentPolicy
 
     public function update(User $user, Comment $comment, Space $space): bool
     {
-        return ($comment->author_id === $user->id || $user->is_root)
-            && ($user->spaces()
-                ->where('spaces.id', $space->id)
-                ->exists() || $user->is_root);
+        return ($comment->author_id === $user->id || $user->is_root);
     }
 
     public function delete(User $user, Comment $comment, Space $space): bool
     {
-        return ($comment->author_id === $user->id || $user->is_root)
-            && ($user->spaces()
-                ->where('spaces.id', $space->id)
-                ->exists() || $user->is_root);
+        return ($comment->author_id === $user->id || $user->is_root);
     }
 
     public function resolve(User $user, Comment $comment, Space $space): bool
@@ -65,7 +59,15 @@ class CommentPolicy
                 ->exists() || $user->is_root);
     }
 
-    public function deleteReaction(User $user, CommentReaction $reaction, Space $space): bool
+    public function react(User $user, CommentReaction $reaction, Space $space): bool
+    {
+        return ($reaction->author_id === $user->id || $user->is_root)
+            && ($user->spaces()
+                ->where('spaces.id', $space->id)
+                ->exists() || $user->is_root);
+    }
+
+    public function unreact(User $user, CommentReaction $reaction, Space $space): bool
     {
         return ($reaction->author_id === $user->id || $user->is_root)
             && ($user->spaces()

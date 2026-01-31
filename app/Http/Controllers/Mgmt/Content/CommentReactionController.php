@@ -15,9 +15,6 @@ use Illuminate\Support\Facades\Log;
 
 class CommentReactionController extends Controller
 {
-    /**
-     * Get all reactions for a comment (root or reply)
-     */
     public function index(Space $space, Content $content, Comment $comment): ResourceCollection
     {
         $this->authorize('view', [$content, $space]);
@@ -29,12 +26,9 @@ class CommentReactionController extends Controller
         return CommentReactionResource::collection($reactions);
     }
 
-    /**
-     * Add/update a reaction for a comment (root or reply)
-     */
     public function store(Space $space, Content $content, Comment $comment, CreateCommentReactionRequest $request): CommentReactionResource
     {
-        $this->authorize('view', [$content, $space]);
+        $this->authorize('react', [$content, $space]);
 
         $data = $request->validated();
         $data['comment_id'] = $comment->id;
@@ -52,20 +46,10 @@ class CommentReactionController extends Controller
         return new CommentReactionResource($reaction->load('author'));
     }
 
-    /**
-     * Delete a reaction from a comment (root or reply)
-     * Emoji is passed as a query parameter: ?emoji=:+1:
-     */
     public function destroy(Space $space, Content $content, Comment $comment, CreateCommentReactionRequest $request): JsonResponse
     {
-        $this->authorize('view', [$content, $space]);
+        $this->authorize('unreact', [$content, $space]);
         $emoji = $request->input('emoji');
-
-        if (!$emoji) {
-            return response()->json([
-                'message' => 'Emoji query parameter is required',
-            ], 422);
-        }
 
         try {
             CommentReaction::where('comment_id', $comment->id)
