@@ -19,7 +19,8 @@ class InviteToTeamNotification extends Notification implements ShouldQueue
         public Invite $invite,
         public Team $team,
         public User $inviter
-    ) {}
+    ) {
+    }
 
     public function via(object $notifiable): array
     {
@@ -36,12 +37,14 @@ class InviteToTeamNotification extends Notification implements ShouldQueue
 
         return (new MailMessage())
             ->subject(__('notifications.inviteTeam.subject', ['team' => $this->team->name]))
-            ->greeting(' ')
+            ->greeting(__('notifications.greeting'))
             ->line(new HtmlString(__('notifications.inviteTeam.intro', [
                 'inviter' => $this->inviter->display_name,
                 'team' => $this->team->name
             ])))
-            ->when($this->invite->message, fn($mail) =>
+            ->when(
+                $this->invite->message,
+                fn($mail) =>
                 $mail->line(new HtmlString('<blockquote style="border-left: 4px solid #ccc; padding-left: 16px; margin-left: 0;">' . e($this->invite->message) . '</blockquote>'))
             )
             ->line(new HtmlString(__('notifications.inviteTeam.start')))

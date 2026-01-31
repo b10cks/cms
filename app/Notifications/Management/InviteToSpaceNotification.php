@@ -35,7 +35,7 @@ class InviteToSpaceNotification extends Notification implements ShouldQueue
 
         return (new MailMessage())
             ->subject(__('notifications.inviteSpace.subject', ['space' => $this->space->name, 'team' => $this->space->team?->name ?? __('notifications.teamFallback')]))
-            ->greeting(' ')
+            ->greeting(__('notifications.greeting'))
             ->line(new HtmlString(__('notifications.inviteSpace.intro', [
                 'inviter' => $this->inviter?->display_name ?? __('notifications.inviterFallback'),
                 'space' => $this->space->name,
