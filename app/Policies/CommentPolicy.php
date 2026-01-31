@@ -59,19 +59,17 @@ class CommentPolicy
                 ->exists() || $user->is_root);
     }
 
-    public function react(User $user, CommentReaction $reaction, Space $space): bool
+    public function react(User $user, Comment $comment, Space $space): bool
     {
-        return ($reaction->author_id === $user->id || $user->is_root)
-            && ($user->spaces()
-                ->where('spaces.id', $space->id)
-                ->exists() || $user->is_root);
+        return $user->is_root || $user->spaces()
+            ->where('spaces.id', $space->id)
+            ->exists();
     }
 
-    public function unreact(User $user, CommentReaction $reaction, Space $space): bool
+    public function unreact(User $user, Comment $comment, Space $space): bool
     {
-        return ($reaction->author_id === $user->id || $user->is_root)
-            && ($user->spaces()
-                ->where('spaces.id', $space->id)
-                ->exists() || $user->is_root);
+        return $user->is_root || $user->spaces()
+            ->where('spaces.id', $space->id)
+            ->exists();
     }
 }

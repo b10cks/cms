@@ -20,7 +20,7 @@ class CommentReactionController extends Controller
         $this->authorize('view', [$content, $space]);
 
         $reactions = $comment->reactions()
-            ->with('author:id,name,email,avatar')
+            ->with('author')
             ->get();
 
         return CommentReactionResource::collection($reactions);
@@ -28,7 +28,7 @@ class CommentReactionController extends Controller
 
     public function store(Space $space, Content $content, Comment $comment, CreateCommentReactionRequest $request): CommentReactionResource
     {
-        $this->authorize('react', [$content, $space]);
+        $this->authorize('react', [$comment, $space]);
 
         $data = $request->validated();
         $data['comment_id'] = $comment->id;
@@ -48,7 +48,7 @@ class CommentReactionController extends Controller
 
     public function destroy(Space $space, Content $content, Comment $comment, CreateCommentReactionRequest $request): JsonResponse
     {
-        $this->authorize('unreact', [$content, $space]);
+        $this->authorize('unreact', [$comment, $space]);
         $emoji = $request->input('emoji');
 
         try {
