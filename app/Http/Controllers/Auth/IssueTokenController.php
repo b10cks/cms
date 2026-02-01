@@ -31,21 +31,22 @@ class IssueTokenController extends AuthController
         }
 
         $user = auth()->user();
-        $totpCode = $request->header('X-TOTP-Code');
+        if ($user->hasEnabledTwoFactor()) {
+            $totpCode = $request->header('X-TOTP-Code');
+            if (!$totpCode) {
+                return response()->json([
+                    'message' => __('auth.2fa_required'),
+                    'error_code' => 'TOTP_VERIFICATION_REQUIRED',
+                    'requires_2fa' => true,
+                ], 423);
+            }
 
-        if (!$totpCode) {
-            return response()->json([
-                'message' => __('auth.2fa_required'),
-                'error_code' => 'TOTP_VERIFICATION_REQUIRED',
-                'requires_2fa' => true,
-            ], 423);
-        }
-
-        if (!$this->twoFactorService->verifyTotp($user, $totpCode)) {
-            return response()->json([
-                'message' => __('auth.invalid_2fa_code'),
-                'error_code' => 'INVALID_TOTP_CODE',
-            ], 403);
+            if (!$this->twoFactorService->verifyTotp($user, $totpCode)) {
+                return response()->json([
+                    'message' => __('auth.invalid_2fa_code'),
+                    'error_code' => 'INVALID_TOTP_CODE',
+                ], 403);
+            }
         }
 
         if (!$user->email_verified_at) {
