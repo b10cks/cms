@@ -59,7 +59,7 @@ class RouteServiceProvider extends ServiceProvider
                 ->name('auth.')
                 ->group(base_path('routes/auth.php'));
 
-            Route::middleware(['mgmt', 'auth:api'])
+            Route::middleware(['mgmt', 'auth:api', 'verified'])
                 ->prefix('mgmt/v1')
                 ->name('mgmt.')
                 ->group(base_path('routes/private_mgmt.php'));

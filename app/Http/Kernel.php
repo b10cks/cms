@@ -41,7 +41,6 @@ class Kernel extends HttpKernel
         'mgmt' => [
             \Illuminate\Routing\Middleware\ThrottleRequests::class . ':mgmt',
             \App\Http\Middleware\AcceptHeader::class,
-            \App\Http\Middleware\EnsureEmailIsVerified::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
 
@@ -74,7 +73,7 @@ class Kernel extends HttpKernel
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
-        'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
         'revision' => \App\Http\Middleware\EnsureRevision::class,
         '2fa' => \App\Http\Middleware\RequireTotpVerification::class,
         'password' => \App\Http\Middleware\RequirePasswordVerification::class,
