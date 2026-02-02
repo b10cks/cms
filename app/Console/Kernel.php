@@ -25,6 +25,12 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping()
             ->runInBackground();
+
+        $schedule->command('backup:cleanup-expired')
+            ->hourly()
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     /**

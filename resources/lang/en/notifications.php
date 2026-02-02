@@ -54,4 +54,11 @@ return [
     'subCopy' => 'If you cannot click the button, copy and paste the URL below into your browser.',
     'inviterFallback' => 'a collaborator',
     'teamFallback' => 'Team',
+    'backupReady' => [
+        'subject' => 'Your backup for :space is ready',
+        'intro' => 'Your backup <strong>":name"</strong> for the space <strong>:space</strong> has been successfully created and is ready for download.',
+        'passwordNotice' => '<strong>Note:</strong> This backup is password-protected. You will need the password provided by the backup creator to extract the files.',
+        'action' => 'Download Backup',
+        'expires' => 'This download link will expire :expires.',
+    ],
 ];

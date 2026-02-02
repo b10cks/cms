@@ -5,6 +5,7 @@ namespace App\Providers;
 // use Illuminate\Support\Facades\Gate;
 use App\Models\Management\Invite;
 use App\Models\Management\Space;
+use App\Models\Management\SpaceBackup;
 use App\Models\Management\Team;
 use App\Models\Management\Token;
 use App\Models\Space\Block;
@@ -20,6 +21,7 @@ use App\Policies\DataSourcePolicy;
 use App\Policies\InvitePolicy;
 use App\Policies\RedirectPolicy;
 use App\Policies\ReleasePolicy;
+use App\Policies\SpaceBackupPolicy;
 use App\Policies\SpacePolicy;
 use App\Policies\TeamPolicy;
 use App\Policies\TokenPolicy;
@@ -40,6 +42,7 @@ class AuthServiceProvider extends ServiceProvider
         Invite::class => InvitePolicy::class,
         Redirect::class => RedirectPolicy::class,
         Release::class => ReleasePolicy::class,
+        SpaceBackup::class => SpaceBackupPolicy::class,
         Team::class => TeamPolicy::class,
         Token::class => TokenPolicy::class,
         Space::class => SpacePolicy::class,
