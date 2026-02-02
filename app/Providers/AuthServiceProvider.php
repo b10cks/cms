@@ -8,12 +8,16 @@ use App\Models\Management\Space;
 use App\Models\Management\Team;
 use App\Models\Management\Token;
 use App\Models\Space\Block;
+use App\Models\Space\BlockTemplate;
+use App\Models\Space\BlockVersion;
 use App\Models\Space\Content;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
 use App\Models\Space\Redirect;
 use App\Models\Space\Release;
 use App\Policies\BlockPolicy;
+use App\Policies\BlockTemplatePolicy;
+use App\Policies\BlockVersionPolicy;
 use App\Policies\ContentPolicy;
 use App\Policies\DataEntryPolicy;
 use App\Policies\DataSourcePolicy;
@@ -34,6 +38,8 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         Block::class => BlockPolicy::class,
+        BlockTemplate::class => BlockTemplatePolicy::class,
+        BlockVersion::class => BlockVersionPolicy::class,
         Content::class => ContentPolicy::class,
         DataEntry::class => DataEntryPolicy::class,
         DataSource::class => DataSourcePolicy::class,
@@ -48,8 +54,5 @@ class AuthServiceProvider extends ServiceProvider
     /**
      * Register any authentication / authorization services.
      */
-    public function boot(): void
-    {
-
-    }
+    public function boot(): void {}
 }

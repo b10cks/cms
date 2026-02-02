@@ -11,6 +11,8 @@ use App\Http\Controllers\Mgmt\AssetTagController;
 use App\Http\Controllers\Mgmt\BlockController;
 use App\Http\Controllers\Mgmt\BlockFolderController;
 use App\Http\Controllers\Mgmt\BlockTagController;
+use App\Http\Controllers\Mgmt\BlockTemplateController;
+use App\Http\Controllers\Mgmt\BlockVersionController;
 use App\Http\Controllers\Mgmt\Content\CommentController;
 use App\Http\Controllers\Mgmt\Content\CommentReactionController;
 use App\Http\Controllers\Mgmt\Content\ContentController;
@@ -120,6 +122,17 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::apiResource('block-folders', BlockFolderController::class)->parameters([
         'block-folders' => 'folder'
     ]);
+
+    Route::group(['prefix' => 'blocks/{block}'], function () {
+        Route::apiResource('templates', BlockTemplateController::class);
+
+        Route::get('versions', [BlockVersionController::class, 'index'])->name('blocks.versions.index');
+        Route::get('versions/{version}', [BlockVersionController::class, 'show'])->name('blocks.versions.show');
+        Route::patch('versions/{version}', [BlockVersionController::class, 'update'])->name('blocks.versions.update');
+        Route::delete('versions/{version}', [BlockVersionController::class, 'destroy'])->name('blocks.versions.destroy');
+        Route::post('versions/{version}/restore', [BlockVersionController::class, 'restore'])->name('blocks.versions.restore');
+    });
+
     Route::apiResource('contents', ContentController::class);
     Route::apiResource('tokens', SpaceTokenController::class)->only(['index', 'store', 'destroy']);
     Route::apiResource('redirects', RedirectController::class);

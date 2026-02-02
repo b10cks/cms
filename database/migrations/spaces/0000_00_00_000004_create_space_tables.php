@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->string('name', 100);
             $table->string('description')->nullable();
             $table->string('icon', 50)->nullable();
-            $table->string('color')->nullable()->charset('ascii');
+            $table->char('color', 7)->nullable()->charset('ascii');
 
             $table->foreignUlid('parent_id')->nullable();
 
@@ -32,7 +32,7 @@ return new class extends Migration {
 
             $table->string('name', 100);
             $table->string('icon', 50)->nullable();
-            $table->string('color')->nullable()->charset('ascii');
+            $table->char('color', 7)->nullable()->charset('ascii');
 
             $table->timestamps();
             $table->softDeletes();
@@ -67,7 +67,7 @@ return new class extends Migration {
 
             $table->string('name', 100);
             $table->string('icon', 50)->nullable();
-            $table->string('color')->nullable()->charset('ascii');
+            $table->char('color', 7)->nullable()->charset('ascii');
 
             $table->foreignUlid('parent_id')->nullable();
 
@@ -79,7 +79,7 @@ return new class extends Migration {
             $table->string('external_id', 36)->nullable();
 
             $table->string('icon', 50)->nullable();
-            $table->string('color')->nullable()->charset('ascii');
+            $table->char('color', 7)->nullable()->charset('ascii');
 
             $table->timestamps();
         });
@@ -91,8 +91,8 @@ return new class extends Migration {
             $table->string('slug', 50)->charset('ascii');
 
             $table->string('name', 100);
-            $table->string('icon')->nullable();
-            $table->string('color')->nullable();
+            $table->string('icon', 50)->nullable();
+            $table->char('color', 7)->nullable()->charset('ascii');
 
             $table->string('type', 50)->charset('ascii');
 
@@ -107,6 +107,37 @@ return new class extends Migration {
 
             $table->timestamps();
             $table->softDeletes();
+        });
+
+        Schema::create('block_templates', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+
+            $table->string('name', 100);
+            $table->string('icon', 50)->nullable();
+            $table->char('color', 7)->nullable()->charset('ascii');
+            $table->text('description')->nullable();
+            $table->json('content');
+            $table->string('preview_file')->nullable();
+
+            $table->foreignUlid('block_id')->constrained('blocks')->cascadeOnDelete();
+            $table->foreignUlid('created_by_id')->nullable();
+
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::create('block_versions', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->foreignUlid('block_id')->constrained('blocks')->cascadeOnDelete();
+            $table->foreignUlid('parent_id')->nullable()->constrained('block_versions')->nullOnDelete();
+            $table->foreignUlid('created_by_id')->nullable();
+
+            $table->json('data');
+            $table->text('commit_message')->nullable();
+
+            $table->timestamps();
+
+            $table->index(['block_id', 'created_at']);
         });
 
         Schema::create('releases', function (Blueprint $table) {
@@ -293,6 +324,8 @@ return new class extends Migration {
         Schema::dropIfExists('content_versions');
         Schema::dropIfExists('contents');
         Schema::dropIfExists('releases');
+        Schema::dropIfExists('block_versions');
+        Schema::dropIfExists('block_templates');
         Schema::dropIfExists('blocks');
         Schema::dropIfExists('block_tags');
         Schema::dropIfExists('block_folders');

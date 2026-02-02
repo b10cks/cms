@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Mgmt;
 
+use App\Actions\Block\CreateBlockVersion;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\BlockFilter;
 use App\Http\Requests\Block\CreateBlockRequest;
@@ -10,6 +11,7 @@ use App\Http\Resources\Management\BlockResource;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\BlockFolder;
+use Arr;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -25,6 +27,7 @@ class BlockController extends Controller
         $this->authorize('viewAny', [Block::class, $space]);
         $blocks = Block::filter(BlockFilter::fromRequest($request))
             ->with(['folder'])
+            ->withCount(['templates', 'versions'])
             ->paginate(min($request->per_page ?? 20, 1000));
 
         return BlockResource::collection($blocks);
@@ -63,18 +66,20 @@ class BlockController extends Controller
     /**
      * Update the specified block in storage.
      */
-    public function update(Space $space, UpdateBlockRequest $request, Block $block): BlockResource
+    public function update(Space $space, UpdateBlockRequest $request, Block $block, CreateBlockVersion $createVersion): BlockResource
     {
         $this->authorize('update', [$block, $space]);
 
-        $block->fill($request->validated());
+        $commitMessage = $request->input('commit_message');
+        $createVersion->execute($block, $commitMessage, auth()->user());
+
+        $block->fill(Arr::except($request->validated(), 'commit_message'));
 
         if (!$block->save()) {
             Log::error('Failed to update block', ['block_id' => $block->id]);
             abort(500, 'Failed to update block');
         }
 
-        // Handle folder association
         if ($request->has('folder_id')) {
             if (empty($request->folder_id)) {
                 $block->folder()->dissociate();
