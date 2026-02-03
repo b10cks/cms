@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -85,7 +86,7 @@ class Block extends SpaceModel
         'editor' => 'array',
         'schema' => SchemaCast::class,
     ];
-    
+
     protected function name(): Attribute
     {
         return $this->makePurifiedAttribute('removeAll');
@@ -104,6 +105,16 @@ class Block extends SpaceModel
     public function folder(): BelongsTo
     {
         return $this->belongsTo(BlockFolder::class, 'folder_id', 'id');
+    }
+
+    public function templates(): HasMany
+    {
+        return $this->hasMany(BlockTemplate::class, 'block_id', 'id');
+    }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(BlockVersion::class, 'block_id', 'id');
     }
 
 }

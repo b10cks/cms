@@ -57,6 +57,7 @@ class UpdateBlockRequest extends FormRequest
                 Rule::exists(new BlockFolder()->getConnectionName() . '.block_folders', 'id')
                     ->whereNull('deleted_at')
             ],
+            'commit_message' => 'nullable|string|max:500',
         ];
     }
 
