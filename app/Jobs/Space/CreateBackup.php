@@ -73,7 +73,7 @@ class CreateBackup extends QueuedJob
         $command = [
             config('database.dumper.command'),
             '--host=' . escapeshellarg($config['host']),
-            '--port=' . escapeshellarg($config['port']),
+            '--port=' . \intval($config['port']),
             '--user=' . escapeshellarg($config['username']),
             '--password=' . escapeshellarg($config['password']),
             ...config('database.dumper.options'),
