@@ -1,7 +1,7 @@
 FROM dunglas/frankenphp:php8.4-alpine
 
-RUN apk add --no-cache supervisor ffmpeg libheif vips \
-   && install-php-extensions \
+RUN apk add --no-cache supervisor ffmpeg libheif vips mariadb-client \
+    && install-php-extensions \
     bcmath \
     exif \
     ffi \
@@ -10,7 +10,7 @@ RUN apk add --no-cache supervisor ffmpeg libheif vips \
     pdo_mysql \
     pcntl \
     zlib \
-  && rm -rf /var/cache/apk/*
+    && rm -rf /var/cache/apk/*
 
 COPY docker/php.ini /usr/local/etc/php/conf.d/docker-php-override.ini
 COPY docker/etc /etc

@@ -156,6 +156,14 @@ class SpaceBackup extends GlobalModel
         ]);
     }
 
+    public function getDownloadUrl(): string
+    {
+        $expiration = now()->diffInMinutes($this->expires_at);
+
+        return \Storage::disk('transfers')
+            ->temporaryUrl($this->s3_path, now()->addMinutes($expiration));
+    }
+
     public function markAsActive(string $s3Path, int $fileSize, string $checksum): void
     {
         $this->update([

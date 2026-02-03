@@ -48,8 +48,7 @@ class CreateBackup extends QueuedJob
             $checksum = hash_file('sha256', $zipPath);
 
             $this->backup->markAsActive($s3Path, $fileSize, $checksum);
-
-            $this->sendNotifications($s3Path);
+            $this->sendNotifications();
 
             $this->cleanup($zipPath);
 
@@ -61,27 +60,23 @@ class CreateBackup extends QueuedJob
 
     protected function createTempDirectory(): void
     {
-        File::makeDirectory($this->tempPath . '/data', 0755, true);
-        File::makeDirectory($this->tempPath . '/assets', 0755, true);
+        File::makeDirectory("{$this->tempPath}/data", 0755, true);
+        File::makeDirectory("{$this->tempPath}/assets", 0755, true);
     }
 
     protected function backupDatabase($connection): void
     {
         $this->backup->updateProgress(5);
         $config = $connection->config;
-        $dumpFile = $this->tempPath . '/data/database.sql';
+        $dumpFile = "{$this->tempPath}/data/database.sql";
 
         $command = [
-            'mysqldump',
+            config('database.dumper.command'),
             '--host=' . ($config['host'] ?? 'localhost'),
             '--port=' . ($config['port'] ?? 3306),
             '--user=' . ($config['username'] ?? $config['user'] ?? 'root'),
             '--password=' . ($config['password'] ?? ''),
-            '--quick',
-            '--lock-tables=false',
-            '--skip-comments',
-            '--skip-set-charset',
-            '--no-tablespaces',
+            ...config('database.dumper.options'),
             $config['database'] ?? $config['dbname'] ?? $this->space->slug,
         ];
 
@@ -103,7 +98,7 @@ class CreateBackup extends QueuedJob
         $storageService = app(\App\Services\Storage\StorageService::class);
         $filesystem = $storageService->getDefaultStorage($this->space);
 
-        $allFiles = $filesystem->allFiles('/');
+        $allFiles = $filesystem->allFiles("/{$this->space->id}");
         $totalFiles = \count($allFiles);
 
         if ($totalFiles === 0) {
@@ -112,12 +107,12 @@ class CreateBackup extends QueuedJob
         }
 
         $processedFiles = 0;
-        $assetsPath = $this->tempPath . '/assets';
+        $assetsPath = "{$this->tempPath}/assets";
 
         foreach ($allFiles as $file) {
             try {
                 $content = $filesystem->get($file);
-                $targetPath = $assetsPath . '/' . $file;
+                $targetPath = "{$assetsPath}/{$file}";
 
                 File::makeDirectory(dirname($targetPath), 0755, true, true);
                 file_put_contents($targetPath, $content);
@@ -200,19 +195,18 @@ class CreateBackup extends QueuedJob
         return $s3Key;
     }
 
-    protected function sendNotifications(string $s3Path): void
+    protected function sendNotifications(): void
     {
         $recipients = $this->backup->recipients;
 
         foreach ($recipients as $email) {
             try {
-                $signedUrl = $this->generateSignedUrl($s3Path);
 
                 \Illuminate\Support\Facades\Notification::route('mail', $email)
                     ->notify(new BackupReadyNotification(
                         $this->backup,
                         $this->space,
-                        $signedUrl
+                        $this->backup->getDownloadUrl()
                     ));
 
             } catch (\Exception $e) {
@@ -223,15 +217,6 @@ class CreateBackup extends QueuedJob
                 ]);
             }
         }
-    }
-
-    protected function generateSignedUrl(string $s3Path): string
-    {
-        $disk = Storage::disk('transfers');
-
-        $expiration = now()->diffInMinutes($this->backup->expires_at);
-
-        return $disk->temporaryUrl($s3Path, now()->addMinutes($expiration));
     }
 
     protected function cleanup(?string $zipPath = null): void
