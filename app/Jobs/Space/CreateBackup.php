@@ -67,17 +67,17 @@ class CreateBackup extends QueuedJob
     protected function backupDatabase($connection): void
     {
         $this->backup->updateProgress(5);
-        $config = $connection->config;
+        $config = $connection->getConnection()->getConfig();
         $dumpFile = "{$this->tempPath}/data/database.sql";
 
         $command = [
             config('database.dumper.command'),
-            '--host=' . ($config['host'] ?? 'localhost'),
-            '--port=' . ($config['port'] ?? 3306),
-            '--user=' . ($config['username'] ?? $config['user'] ?? 'root'),
-            '--password=' . ($config['password'] ?? ''),
+            '--host=' . escapeshellarg($config['host']),
+            '--port=' . escapeshellarg($config['port']),
+            '--user=' . escapeshellarg($config['username']),
+            '--password=' . escapeshellarg($config['password']),
             ...config('database.dumper.options'),
-            $config['database'] ?? $config['dbname'] ?? $this->space->slug,
+            escapeshellarg($config['database']),
         ];
 
         $process = new Process($command);
