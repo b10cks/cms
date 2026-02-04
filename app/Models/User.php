@@ -10,6 +10,7 @@ use App\Models\User\UserSettings;
 use App\Models\User\UserSocialLink;
 use App\Notifications\User\ResetPasswordNotification;
 use CodersCantina\Filter\Filterable;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -85,7 +86,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutTrashed()
  * @mixin \Eloquent
  */
-class User extends Authenticatable implements JWTSubject
+class User extends Authenticatable implements JWTSubject, HasLocalePreference
 {
     use Filterable;
     use HasApiTokens;
@@ -190,7 +191,7 @@ class User extends Authenticatable implements JWTSubject
 
     protected function displayName(): Attribute
     {
-        return Attribute::get(fn() => $this->firstname . ' ' . $this->lastname);
+        return Attribute::get(fn() => $this->firstname || $this->lastname ? $this->name : $this->email);
     }
 
     public function socialLinks(): HasMany
@@ -200,7 +201,7 @@ class User extends Authenticatable implements JWTSubject
 
     protected function name(): Attribute
     {
-        return Attribute::get(fn() => $this->firstname . ' ' . $this->lastname);
+        return Attribute::get(fn() => "{$this->firstname} {$this->lastname}");
     }
 
     public function getSetting(string $key, $default = null)
@@ -232,11 +233,6 @@ class User extends Authenticatable implements JWTSubject
 
             return "/storage/{$this->avatar}";
         });
-    }
-
-    public function getNameAttribute(): string
-    {
-        return $this->firstname . ' ' . $this->lastname;
     }
 
     public function getConnectionName()

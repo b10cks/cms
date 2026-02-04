@@ -61,10 +61,20 @@ return new class extends Migration {
             $table->integer('created_at');
             $table->integer('finished_at')->nullable();
         });
+
+        Schema::create('notifications', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('type');
+            $table->ulidMorphs('notifiable');
+            $table->json('data');
+            $table->timestamp('read_at')->nullable();
+            $table->timestamps();
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('notifications');
         Schema::dropIfExists('job_batches');
         Schema::dropIfExists('failed_jobs');
         Schema::dropIfExists('jobs');
