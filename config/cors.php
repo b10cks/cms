@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => explode(',', env('ALLOWED_ORIGINS', 'https://app.b10cks.com')),
+    'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [],
 
