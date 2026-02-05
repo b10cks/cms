@@ -82,8 +82,8 @@ Route::group(['prefix' => 'ai'], function () {
         ->name('ai.translate');
 });
 
-Route::apiResource('teams', TeamController::class);
 Route::get('teams/hierarchy', TeamHierarchyController::class)->name('teams.hierarchy');
+Route::apiResource('teams', TeamController::class);
 
 Route::group(['prefix' => 'teams/{team}'], function () {
     Route::get('members', [TeamMemberController::class, 'index'])->name('teams.members.index');
