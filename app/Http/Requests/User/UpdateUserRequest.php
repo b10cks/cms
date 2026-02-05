@@ -11,6 +11,7 @@ class UpdateUserRequest extends FormRequest
         return [
             'firstname' => 'nullable|string',
             'lastname' => 'nullable|string',
+            'settings' => 'nullable|array',
         ];
     }
 }

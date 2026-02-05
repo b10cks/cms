@@ -20,6 +20,15 @@ class ReleaseFilter extends ExtendedFilter
         $this->builder->where('external_id', $value);
     }
 
+    public function scheduled($value): void
+    {
+        if ($value === 'true' || $value === '1') {
+            $this->builder->whereNotNull('publish_at');
+        } elseif ($value === 'false' || $value === '0') {
+            $this->builder->whereNull('publish_at');
+        }
+    }
+
     public function publish_at($value)
     {
         $this->applyRangeFilter('publish_at', $value);
