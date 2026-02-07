@@ -1098,14 +1098,23 @@
       "newPageDescription": "Erstelle einen neuen Content Space, um deine Inhalte zu organisieren.",
       "noCreateAccess": "Du kannst {team} auswählen, aber in diesem Team keine Spaces erstellen.",
       "steps": {
-        "plan": {
-          "title": "Plan",
-          "description": "Wähle den richtigen Plan für den Space",
-          "selectTitle": "Plan auswählen"
+        "blueprint": {
+          "title": "Blueprint",
+          "description": "Wähle ein Blueprint oder starte ohne Vorlage",
+          "selectTitle": "Blueprint auswählen",
+          "selectDescription": "Wähle ein oder mehrere wiederverwendbare Blueprints, gruppiert nach System und Team, oder fahre ohne Blueprint fort.",
+          "selected": "Ausgewähltes Blueprint"
         },
         "details": {
           "title": "Details",
           "description": "Weitere Details für deinen Space"
+        },
+        "plan": {
+          "title": "Plan",
+          "description": "Wähle den richtigen Plan für den Space",
+          "selectTitle": "Plan auswählen",
+          "recommended": "Empfohlen",
+          "recommendedHint": "Empfohlener Plan: {name}"
         }
       },
       "fields": {
@@ -1134,6 +1143,38 @@
           "staging": "Staging",
           "production": "Production"
         }
+      }
+    },
+    "spaceBlueprints": {
+      "createTitle": "Blueprint erstellen",
+      "createDescription": "Speichere ein wiederverwendbares Space-Blueprint und weise es einem Team zu.",
+      "createFromSourceDescription": "Erstelle ein wiederverwendbares Blueprint aus einem bestehenden Space.",
+      "system": "System",
+      "noDescription": "Keine Beschreibung vorhanden.",
+      "emptyOptionTitle": "Ohne Blueprint starten",
+      "emptyOptionDescription": "Erstelle den Space von Grund auf, ohne ein Blueprint anzuwenden.",
+      "sourceSpaceRequired": "Zum Erstellen eines Blueprints muss ein Quell-Space ausgewählt werden.",
+      "fields": {
+        "name": "Blueprint-Name",
+        "team": "Team",
+        "teamDescription": "Wähle das Team aus, dem dieses Blueprint gehören soll.",
+        "teamPlaceholder": "Team auswählen",
+        "systemTeam": "Systemweites Blueprint",
+        "systemTeamDescription": "Dieses Blueprint gehört zu keinem Team und ist systemweit verfügbar.",
+        "description": "Beschreibung",
+        "descriptionPlaceholder": "Beschreibe, wofür dieses Blueprint gedacht ist",
+        "sourceSpace": "Quell-Space"
+      },
+      "snapshot": {
+        "title": "Zu übernehmende Inhalte",
+        "description": "Wähle aus, welche Bereiche aus dem Quell-Space in das Blueprint übernommen werden sollen.",
+        "blocks": "Blocks",
+        "blockFolders": "Block-Ordner",
+        "blockTags": "Block-Tags",
+        "assetFolders": "Asset-Ordner",
+        "assetTags": "Asset-Tags",
+        "dataSources": "Datenquellen",
+        "blockTemplates": "Block-Templates"
       }
     },
     "sort": {
@@ -2330,6 +2371,7 @@
     "spaces": {
       "add": "Neuer Space",
       "select": "Space auswählen",
+      "createBlueprint": "Blueprint erstellen",
       "delete": "Space löschen",
       "edit": "Space bearbeiten",
       "save": "Space speichern",
@@ -2578,6 +2620,10 @@
       "deleteSuccess": "Datenquelle erfolgreich gelöscht",
       "deleteError": "Fehler beim Löschen der Datenquelle: {error}"
     },
+    "spaceBlueprints": {
+      "createSuccess": "Blueprint \"{name}\" erfolgreich erstellt",
+      "createError": "Fehler beim Erstellen des Blueprints: {error}"
+    },
     "redirects": {
       "createSuccess": "Redirect \"{source}\" erfolgreich erstellt",
       "createError": "Fehler beim Erstellen des Redirects: {error}",
@@ -2608,13 +2654,13 @@
     },
     "spaces": {
       "createSuccess": "Space \"{name}\" erfolgreich erstellt",
-      "createError": "Fehler beim Erstellen des Space: {error}",
-      "updateSuccess": "Space \"{name}\" erfolgreich aktualisiert",
-      "updateError": "Fehler beim Aktualisieren des Space: {error}",
-      "deleteSuccess": "Space erfolgreich gelöscht",
-      "deleteError": "Fehler beim Löschen des Space: {error}",
+      "createError": "Fehler beim Erstellen des Spaces: {error}",
       "archiveSuccess": "Space erfolgreich archiviert",
-      "archiveError": "Fehler beim Archivieren des Space: {error}"
+      "archiveError": "Fehler beim Archivieren des Spaces: {error}",
+      "updateSuccess": "Space \"{name}\" erfolgreich aktualisiert",
+      "updateError": "Fehler beim Aktualisieren des Spaces: {error}",
+      "deleteSuccess": "Space erfolgreich gelöscht",
+      "deleteError": "Fehler beim Löschen des Space: {error}"
     },
     "teams": {
       "createSuccess": "Team \"{name}\" erfolgreich erstellt",

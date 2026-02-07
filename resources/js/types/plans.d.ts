@@ -15,5 +15,6 @@ interface PlanResource {
   quotas: PlanQuotas | null
   is_free: boolean
   sort_order: number
+  recommended?: boolean
   contact_url: string | null
 }

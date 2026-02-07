@@ -1113,14 +1113,23 @@
       "newPageDescription": "Create a new content space to organize your content.",
       "noCreateAccess": "You can select {team}, but you do not have permission to create spaces in that team.",
       "steps": {
-        "plan": {
-          "title": "Plan",
-          "description": "Choose the right plan for the space",
-          "selectTitle": "Select a plan"
+        "blueprint": {
+          "title": "Blueprint",
+          "description": "Choose a blueprint or start from scratch",
+          "selectTitle": "Select blueprint",
+          "selectDescription": "Pick one or more reusable blueprints grouped by system and team, or continue without one.",
+          "selected": "Selected blueprint"
         },
         "details": {
           "title": "Details",
           "description": "Provide additional details for your space"
+        },
+        "plan": {
+          "title": "Plan",
+          "description": "Choose the right plan for the space",
+          "selectTitle": "Select a plan",
+          "recommended": "Recommended",
+          "recommendedHint": "Recommended plan: {name}"
         }
       },
       "fields": {
@@ -1149,6 +1158,38 @@
           "staging": "Staging",
           "production": "Production"
         }
+      }
+    },
+    "spaceBlueprints": {
+      "createTitle": "Create blueprint",
+      "createDescription": "Save a reusable space blueprint and assign it to a team.",
+      "createFromSourceDescription": "Create a reusable blueprint from an existing space.",
+      "sourceSpaceRequired": "A source space is required to create a blueprint.",
+      "system": "System",
+      "noDescription": "No description provided.",
+      "emptyOptionTitle": "Start without a blueprint",
+      "emptyOptionDescription": "Create the space from scratch without applying a blueprint.",
+      "fields": {
+        "name": "Blueprint name",
+        "team": "Team",
+        "teamDescription": "Select the team that should own this blueprint.",
+        "teamPlaceholder": "Select a team",
+        "systemTeam": "System-wide blueprint",
+        "systemTeamDescription": "This blueprint will not belong to a team and will be available system-wide.",
+        "description": "Description",
+        "descriptionPlaceholder": "Describe what this blueprint is for",
+        "sourceSpace": "Source space"
+      },
+      "snapshot": {
+        "title": "Include in blueprint",
+        "description": "Choose which parts of the source space should be copied into this blueprint.",
+        "blocks": "Blocks",
+        "blockFolders": "Block folders",
+        "blockTags": "Block tags",
+        "assetFolders": "Asset folders",
+        "assetTags": "Asset tags",
+        "dataSources": "Data sources",
+        "blockTemplates": "Block templates"
       }
     },
     "sort": {
@@ -2373,6 +2414,7 @@
     "spaces": {
       "add": "New space",
       "select": "Select space",
+      "createBlueprint": "Create blueprint",
       "delete": "Delete space",
       "edit": "Edit space",
       "save": "Save space",
@@ -2637,7 +2679,11 @@
       "updateSuccess": "Data source \"{name}\" updated successfully",
       "updateError": "Failed to update data source: {error}",
       "deleteSuccess": "Data source deleted successfully",
-      "deleteError": "Failed to delete data source: {error}"
+      "deleteError": "Failed to delete space: {error}"
+    },
+    "spaceBlueprints": {
+      "createSuccess": "Blueprint \"{name}\" created successfully",
+      "createError": "Failed to create blueprint: {error}"
     },
     "redirects": {
       "createSuccess": "Redirect \"{source}\" created successfully",
@@ -2670,12 +2716,12 @@
     "spaces": {
       "createSuccess": "Space \"{name}\" created successfully",
       "createError": "Failed to create space: {error}",
+      "archiveSuccess": "Space archived successfully",
+      "archiveError": "Failed to archive space: {error}",
       "updateSuccess": "Space \"{name}\" updated successfully",
       "updateError": "Failed to update space: {error}",
       "deleteSuccess": "Space deleted successfully",
-      "deleteError": "Failed to delete space: {error}",
-      "archiveSuccess": "Space archived successfully",
-      "archiveError": "Failed to archive space: {error}"
+      "deleteError": "Failed to delete space: {error}"
     },
     "teams": {
       "createSuccess": "Team \"{name}\" created successfully",

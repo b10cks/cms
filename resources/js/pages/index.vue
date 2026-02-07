@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { SelectTrigger } from 'reka-ui'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import type { SpaceQueryParams } from '~/api/resources/spaces'
@@ -8,6 +8,7 @@ import SpaceIcon from '~/assets/images/space.svg?component'
 import AppHeader from '~/components/AppHeader.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
+import CreateBlueprintDialog from '~/components/space/CreateBlueprintDialog.vue'
 import SpaceActionsMenu from '~/components/space/SpaceActionsMenu.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import SpaceBadgeDialog from '~/components/space/SpaceBadgeDialog.vue'
@@ -28,10 +29,9 @@ const router = useRouter()
 const { selectedTeam } = useGlobalTeam()
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(
-  computed(() => ({
-    ...(selectedTeam.value?.id ? { team_id: selectedTeam.value.id } : {}),
-  }))
+  computed(() => (selectedTeam.value?.id ? { team_id: selectedTeam.value.id } : {}))
 )
+
 const canCreateSpace = computed(() => access.canAccessRoute('spaces-new'))
 
 useSeoMeta({
@@ -79,8 +79,9 @@ const spaceFilter = computed<SpaceQueryParams>(() => {
 
 const { data: spaces } = useSpacesQuery(spaceFilter)
 
-// Track which space has the badge dialog open
 const badgeDialogSpaceId = ref<string | null>(null)
+const blueprintSourceSpace = ref<SpaceResource | null>(null)
+const isCreateBlueprintDialogOpen = ref(false)
 
 const { alert } = useAlertDialog()
 const archiveMutation = useArchiveSpaceMutation()
@@ -91,8 +92,22 @@ const handleArchive = async (space: SpaceResource) => {
     confirmLabel: 'Archive',
     cancelLabel: 'Cancel',
   })
+
   if (confirmed) {
     archiveMutation.mutate(space.id)
+  }
+}
+
+const openCreateBlueprintDialog = (space: SpaceResource) => {
+  blueprintSourceSpace.value = space
+  isCreateBlueprintDialogOpen.value = true
+}
+
+const handleBlueprintDialogOpenChange = (open: boolean) => {
+  isCreateBlueprintDialogOpen.value = open
+
+  if (!open) {
+    blueprintSourceSpace.value = null
   }
 }
 
@@ -191,6 +206,13 @@ const getSpacePlanLabel = (plan: SpacePlanSummary) => {
     </template>
   </AppHeader>
 
+  <CreateBlueprintDialog
+    :open="isCreateBlueprintDialogOpen"
+    :team-id="blueprintSourceSpace?.team_id ?? selectedTeam?.id ?? null"
+    :source-space="blueprintSourceSpace"
+    @update:open="handleBlueprintDialogOpenChange"
+  />
+
   <div class="flex w-full grow bg-background pt-14">
     <aside class="w-56 shrink-0 bg-surface">
       <div class="flex flex-col gap-4 p-3">
@@ -256,7 +278,6 @@ const getSpacePlanLabel = (plan: SpacePlanSummary) => {
                 class="flex flex-col gap-2"
               >
                 <DropdownMenu v-slot="{ open }">
-                  <!-- Thumbnail -->
                   <div
                     :class="{ '-translate-y-2': open }"
                     class="relative grid min-h-36 place-items-center justify-center overflow-clip rounded-lg bg-input p-4 shadow-lg transition-transform duration-500 ease-micro-bounce group-hover:-translate-y-2"
@@ -325,16 +346,13 @@ const getSpacePlanLabel = (plan: SpacePlanSummary) => {
                         :space="space"
                         @archive="handleArchive"
                         @assign-badge="badgeDialogSpaceId = $event.id"
+                        @create-blueprint="openCreateBlueprintDialog"
                       />
                     </div>
                   </div>
                 </DropdownMenu>
               </RouterLink>
 
-              <!--
-                Badge dialog lives OUTSIDE the RouterLink so there is never a button
-                inside an <a>. It is controlled via badgeDialogSpaceId.
-              -->
               <SpaceBadgeDialog
                 :space="space"
                 :open="badgeDialogSpaceId === space.id"

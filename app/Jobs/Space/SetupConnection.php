@@ -2,8 +2,10 @@
 
 namespace App\Jobs\Space;
 
+use App\Actions\Blueprint\ApplySpaceBlueprintData;
 use App\Enums\ConnectionDriver;
 use App\Jobs\QueuedJob;
+use App\Models\Management\SpaceBlueprint;
 use App\Models\Management\SpaceConnection;
 use App\Services\Database\DatabaseConnectionException;
 use App\Services\Database\DatabaseConnectionService;
@@ -17,8 +19,10 @@ class SetupConnection extends QueuedJob
     private const MIN_PASSWORD_LENGTH = 32;
     private const ALLOWED_USERNAME_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
-    public function __construct(public SpaceConnection $spaceConnection)
-    {
+    public function __construct(
+        public SpaceConnection $spaceConnection,
+        public ?string $blueprintId = null
+    ) {
         $this->spaceConnectionService = app(DatabaseConnectionService::class);
     }
 
@@ -47,6 +51,15 @@ class SetupConnection extends QueuedJob
 
         $this->spaceConnection->state = 'live';
         $this->spaceConnection->save();
+
+        $this->spaceConnection->refresh();
+        $this->spaceConnection->space->refresh();
+
+        $this->spaceConnectionService->getConnection($this->spaceConnection);
+
+        $this->applyBlueprintData();
+
+        $this->spaceConnection->refresh();
     }
 
     protected function getDatabaseName(): string
@@ -56,7 +69,6 @@ class SetupConnection extends QueuedJob
 
     protected function sanitizeDatabaseName(string $name): string
     {
-        // Remove any potentially dangerous characters
         return preg_replace('/[^a-zA-Z0-9_]/', '_', $name);
     }
 
@@ -64,7 +76,6 @@ class SetupConnection extends QueuedJob
     {
         $config = $this->spaceConnection->config;
 
-        // If credentials exist, validate them
         if (isset($config['username']) && isset($config['password'])) {
             return [
                 'username' => $config['username'],
@@ -72,7 +83,6 @@ class SetupConnection extends QueuedJob
             ];
         }
 
-        // Generate new secure credentials
         return [
             'username' => $this->generateSecureUsername(),
             'password' => $this->generateSecurePassword()
@@ -111,14 +121,11 @@ class SetupConnection extends QueuedJob
         $username = $credentials['username'];
         $password = $credentials['password'];
 
-        // Escape identifiers and values
         $escapedUsername = $this->escapeIdentifier($username);
         $escapedDatabase = $this->escapeIdentifier($databaseName);
 
         $sql = match ($this->spaceConnection->driver) {
             ConnectionDriver::MYSQL->value => [
-                // For MySQL, we'll handle the password directly in the query since PDO doesn't support
-                // parameter binding in certain DDL statements
                 sprintf(
                     "CREATE USER IF NOT EXISTS %s@'%%' IDENTIFIED BY '%s'",
                     $escapedUsername,
@@ -128,7 +135,6 @@ class SetupConnection extends QueuedJob
                 "FLUSH PRIVILEGES"
             ],
             ConnectionDriver::PGSQL->value => [
-                // For PostgreSQL, we can use parameter binding
                 ["CREATE USER {$escapedUsername} WITH PASSWORD :password", [':password' => $password]],
                 ["GRANT CONNECT ON DATABASE {$escapedDatabase} TO {$escapedUsername}", []],
                 ["GRANT USAGE ON SCHEMA public TO {$escapedUsername}", []],
@@ -142,12 +148,10 @@ class SetupConnection extends QueuedJob
 
         foreach ($sql as $statement) {
             if ($this->spaceConnection->driver === ConnectionDriver::PGSQL->value) {
-                // PostgreSQL style with parameter binding
                 [$query, $params] = $statement;
                 $stmt = $pdo->prepare($query);
                 $stmt->execute($params);
             } else {
-                // MySQL style direct execution
                 $pdo->exec($statement);
             }
         }
@@ -188,7 +192,6 @@ class SetupConnection extends QueuedJob
 
     protected function escapeIdentifier(string $identifier): string
     {
-        // Remove any potentially dangerous characters
         $cleaned = preg_replace('/[^a-zA-Z0-9_]/', '', $identifier);
 
         return match ($this->spaceConnection->driver) {
@@ -196,6 +199,25 @@ class SetupConnection extends QueuedJob
             ConnectionDriver::PGSQL->value => "\"{$cleaned}\"",
             default => $cleaned
         };
+    }
+
+    protected function applyBlueprintData(): void
+    {
+        if (!$this->blueprintId) {
+            return;
+        }
+
+        $blueprint = SpaceBlueprint::query()->whereKey($this->blueprintId)->first();
+        if (!$blueprint) {
+            return;
+        }
+
+        $space = $this->spaceConnection->space()->with(['defaultConnection'])->first();
+        if (!$space) {
+            return;
+        }
+
+        app(ApplySpaceBlueprintData::class)->execute($blueprint, $space);
     }
 
     protected function handleFailure(\Exception $e): void

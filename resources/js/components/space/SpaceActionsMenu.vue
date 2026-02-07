@@ -17,6 +17,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   archive: [space: SpaceResource]
   assignBadge: [space: SpaceResource]
+  createBlueprint: [space: SpaceResource]
 }>()
 
 const router = useRouter()
@@ -30,6 +31,7 @@ const canUpdateSpace = computed(() => access.hasAbility('space.update'))
 const canArchive = computed(() =>
   access.canAccessRoute(getActionAccessRequirement('space.archive'))
 )
+const canCreateBlueprint = computed(() => access.hasAbility('space.update'))
 
 const openSpace = () => {
   router.push({ name: 'space', params: { space: props.space.id } })
@@ -73,13 +75,25 @@ const openSettings = () => {
       <Icon name="lucide:cog" />
       <span>{{ $t('actions.settings') }}</span>
     </DropdownMenuItem>
-    <template v-if="canUpdateSpace">
+
+    <template v-if="canUpdateSpace || canCreateBlueprint">
       <DropdownMenuSeparator />
-      <DropdownMenuItem @select="emit('assignBadge', space)">
+      <DropdownMenuItem
+        v-if="canUpdateSpace"
+        @select="emit('assignBadge', space)"
+      >
         <Icon name="lucide:tag" />
         <span>{{ $t('actions.spaces.assignBadge') }}</span>
       </DropdownMenuItem>
+      <DropdownMenuItem
+        v-if="canCreateBlueprint"
+        @select="emit('createBlueprint', space)"
+      >
+        <Icon name="lucide:sprout" />
+        <span>{{ $t('actions.spaces.createBlueprint') }}</span>
+      </DropdownMenuItem>
     </template>
+
     <template v-if="canArchive">
       <DropdownMenuSeparator />
       <DropdownMenuItem @select="emit('archive', space)">

@@ -17,6 +17,7 @@ use App\Http\Controllers\Mgmt\AssetFolderController;
 use App\Http\Controllers\Mgmt\AssetLinkedContentController;
 use App\Http\Controllers\Mgmt\AssetTagController;
 use App\Http\Controllers\Mgmt\AuthorizationController;
+use App\Http\Controllers\Mgmt\AvailableSpaceBlueprintController;
 use App\Http\Controllers\Mgmt\BackupController;
 use App\Http\Controllers\Mgmt\BlockController;
 use App\Http\Controllers\Mgmt\BlockFolderController;
@@ -49,6 +50,7 @@ use App\Http\Controllers\Mgmt\Release\ReleasePublishController;
 use App\Http\Controllers\Mgmt\Release\ReleaseVersionAssignController;
 use App\Http\Controllers\Mgmt\Release\ReleaseVersionRemoveController;
 use App\Http\Controllers\Mgmt\SpaceArchiveController;
+use App\Http\Controllers\Mgmt\SpaceBlueprintController;
 use App\Http\Controllers\Mgmt\SpaceController;
 use App\Http\Controllers\Mgmt\SpaceIconController;
 use App\Http\Controllers\Mgmt\SpaceInviteController;
@@ -121,6 +123,9 @@ Route::group(['prefix' => 'ai'], function () {
 Route::get('teams/hierarchy', TeamHierarchyController::class)->name('teams.hierarchy');
 Route::apiResource('teams', TeamController::class);
 
+Route::get('space-blueprints', AvailableSpaceBlueprintController::class)
+    ->name('space-blueprints');
+
 Route::group(['prefix' => 'teams/{team}'], function () {
     Route::get('members', [TeamMemberController::class, 'index'])->name('teams.members.index');
     Route::get('users', [TeamMemberController::class, 'index'])->name('teams.users.index');
@@ -135,6 +140,8 @@ Route::group(['prefix' => 'teams/{team}'], function () {
     Route::post('invites', [TeamInviteController::class, 'store'])->name('teams.invites.store');
     Route::delete('invites/{invite}', [TeamInviteController::class, 'destroy'])->name('teams.invites.destroy');
     Route::post('invites/{invite}/resend', TeamInviteResendController::class)->name('teams.invites.resend');
+
+    Route::apiResource('blueprints', SpaceBlueprintController::class);
 
     Route::get('roles/space', [SpaceRoleController::class, 'index'])->name('teams.roles.space.index');
     Route::post('roles/space', [SpaceRoleController::class, 'store'])->name('teams.roles.space.store');

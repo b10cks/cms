@@ -131,6 +131,11 @@ class Team extends GlobalModel
         return $this->hasMany(Space::class);
     }
 
+    public function spaceBlueprints(): HasMany
+    {
+        return $this->hasMany(SpaceBlueprint::class, 'team_id', 'id');
+    }
+
     public function invites(): HasMany
     {
         return $this->hasMany(Invite::class, 'team_id', 'id');

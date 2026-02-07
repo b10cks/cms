@@ -29,6 +29,7 @@ import { ContentVersions } from './resources/content-versions'
 import { Contents } from './resources/contents'
 import { Invites } from './resources/invites'
 import { Migrations } from './resources/migrations'
+import { SpaceBlueprints } from './resources/space-blueprints'
 import { Spaces } from './resources/spaces'
 import { Teams } from './resources/teams'
 
@@ -38,6 +39,7 @@ export class API {
   private readonly _authorization: Authorization
   private readonly _plans: Plans
   private readonly _spaces: Spaces
+  private readonly _spaceBlueprints: SpaceBlueprints
   private readonly _teams: Teams
   private readonly _invites: Invites
   private readonly _users: Users
@@ -55,6 +57,7 @@ export class API {
     this._authorization = new Authorization(this.client)
     this._plans = new Plans(this.client)
     this._spaces = new Spaces(this.client)
+    this._spaceBlueprints = new SpaceBlueprints(this.client)
     this._teams = new Teams(this.client)
     this._invites = new Invites(this.client)
     this._users = new Users(this.client)
@@ -84,6 +87,10 @@ export class API {
 
   public get spaces(): Spaces {
     return this._spaces
+  }
+
+  public get spaceBlueprints(): SpaceBlueprints {
+    return this._spaceBlueprints
   }
 
   public get teams(): Teams {

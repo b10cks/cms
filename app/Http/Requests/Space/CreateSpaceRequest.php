@@ -46,6 +46,12 @@ class CreateSpaceRequest extends FormRequest
             'settings.asset_fields.*.label' => 'required|string|max:100',
             'settings.asset_fields.*.required' => 'required|boolean',
             'plan_id' => 'nullable|string|exists:plans,id',
+            'blueprint_id' => [
+                'nullable',
+                'string',
+                'max:26',
+                Rule::exists('space_blueprints', 'id')->whereNull('deleted_at'),
+            ],
         ];
     }
 
@@ -59,6 +65,7 @@ class CreateSpaceRequest extends FormRequest
         return [
             'slug.regex' => 'The slug may only contain lowercase letters, numbers, and hyphens.',
             'color.regex' => 'The color must be a valid hex color code (e.g., #FF5733).',
+            'blueprint_id.exists' => __('validation.blueprint.invalid'),
         ];
     }
 

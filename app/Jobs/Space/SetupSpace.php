@@ -11,7 +11,8 @@ use Log;
 class SetupSpace extends QueuedJob
 {
     public function __construct(
-        public Space $space
+        public Space $space,
+        public ?string $blueprintId = null
     ) {
     }
 
@@ -39,7 +40,7 @@ class SetupSpace extends QueuedJob
             'is_default' => true,
         ]);
 
-        SetupConnection::dispatchSync($connection);
+        SetupConnection::dispatchSync($connection, $this->blueprintId);
     }
 
     protected function createDefaultStorage(Space $space)
