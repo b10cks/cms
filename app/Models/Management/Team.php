@@ -128,4 +128,15 @@ class Team extends GlobalModel
     {
         return $this->hasMany(Invite::class, 'team_id', 'id');
     }
+
+    public function sharedAssetLibraries(): HasMany
+    {
+        return $this->hasMany(SharedAssetLibrary::class, 'team_id', 'id');
+    }
+
+    public function sharedAssetPermissions(): HasMany
+    {
+        return $this->hasMany(SharedAssetPermission::class, 'accessor_id', 'id')
+            ->where('accessor_type', self::class);
+    }
 }

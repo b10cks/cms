@@ -168,6 +168,17 @@ class Space extends GlobalModel
             ->where('is_default', true);
     }
 
+    public function sharedAssetPermissions(): HasMany
+    {
+        return $this->hasMany(SharedAssetPermission::class, 'accessor_id', 'id')
+            ->where('accessor_type', self::class);
+    }
+
+    public function sharedAssetsAsSource(): HasMany
+    {
+        return $this->hasMany(SharedAsset::class, 'source_space_id', 'id');
+    }
+
     public function getRvAttribute(): int
     {
         return $this->content_updated_at?->getTimestamp() ?? $this->updated_at?->getTimestamp() ?? 0;
