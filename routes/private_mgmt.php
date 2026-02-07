@@ -18,6 +18,8 @@ use App\Http\Controllers\Mgmt\Content\CommentController;
 use App\Http\Controllers\Mgmt\Content\CommentReactionController;
 use App\Http\Controllers\Mgmt\Content\ContentController;
 use App\Http\Controllers\Mgmt\Content\ContentMenuController;
+use App\Http\Controllers\Mgmt\SharedAssetController;
+use App\Http\Controllers\Mgmt\SharedAssetLibraryController;
 use App\Http\Controllers\Mgmt\Content\ContentPublishController;
 use App\Http\Controllers\Mgmt\Content\ContentScheduleController;
 use App\Http\Controllers\Mgmt\Content\ContentUnpublishController;
@@ -98,6 +100,19 @@ Route::group(['prefix' => 'teams/{team}'], function () {
     Route::post('invites', [TeamInviteController::class, 'store'])->name('teams.invites.store');
     Route::delete('invites/{invite}', [TeamInviteController::class, 'destroy'])->name('teams.invites.destroy');
     Route::post('invites/{invite}/resend', TeamInviteResendController::class)->name('teams.invites.resend');
+
+    // Shared Asset Libraries - Team-level asset management
+    Route::apiResource('shared-libraries', SharedAssetLibraryController::class)->parameters([
+        'shared-libraries' => 'library'
+    ]);
+    
+    Route::group(['prefix' => 'shared-libraries/{library}'], function () {
+        Route::get('assets', [SharedAssetController::class, 'index'])->name('shared-libraries.assets.index');
+        Route::post('assets', [SharedAssetController::class, 'store'])->name('shared-libraries.assets.store');
+        Route::get('assets/{sharedAsset}', [SharedAssetController::class, 'show'])->name('shared-libraries.assets.show');
+        Route::patch('assets/{sharedAsset}', [SharedAssetController::class, 'update'])->name('shared-libraries.assets.update');
+        Route::delete('assets/{sharedAsset}', [SharedAssetController::class, 'destroy'])->name('shared-libraries.assets.destroy');
+    });
 });
 
 
@@ -150,6 +165,9 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::apiResource('asset-folders', AssetFolderController::class);
     Route::apiResource('asset-tags', AssetTagController::class);
     Route::apiResource('assets', AssetController::class);
+
+    // Shared Assets - Access to team-level shared assets from space context
+    Route::get('shared-assets', [SharedAssetController::class, 'accessible'])->name('spaces.shared-assets.accessible');
 
     Route::apiResource('backups', BackupController::class);
 
