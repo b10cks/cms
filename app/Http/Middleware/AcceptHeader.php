@@ -17,14 +17,14 @@ class AcceptHeader
      *
      * @param string $header example: de-AT,de;q=0.9,en-US;q=0.8,en;q=0.7
      * @param array $supportedLocales
-     * @param null $fallback
+     * @param null|string $fallback
      *
      * @return null|string
      */
-    protected function findLocale($header, array $supportedLocales, $fallback = null)
+    protected function findLocale($header, array $supportedLocales, ?string $fallback = null)
     {
         $locales = array_map(function ($localeString) {
-            @list($locale, $q) = explode(';', $localeString);
+            @[$locale, $q] = explode(';', $localeString);
 
             return [
                 $locale,
@@ -48,7 +48,7 @@ class AcceptHeader
             return $locale;
         }
 
-        if (in_array($locale, $supportedLocales)) {
+        if (\in_array($locale, $supportedLocales)) {
             return $locale;
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Management\Space;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -10,6 +11,7 @@ class EnsureRevision
     public function handle(Request $request, Closure $next)
     {
         if (!$request->query('rv')) {
+            /** @var Space $space */
             $space = app('currentSpace');
             $params = $request->query();
             $params['rv'] = $space->content_updated_at?->timestamp ?? $space->updated_at->timestamp;
