@@ -15,6 +15,7 @@ class SpaceResource extends JsonResource
         return [
             'id' => $this->getRouteKey(),
             'name' => $this->name,
+            'rv' => $this->rv,
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
     }
