@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Models\User;
 use App\Services\Auth\ImpersonationService;
 use Illuminate\Http\Request;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class ImpersonationController extends AuthController
 {
@@ -19,14 +20,21 @@ class ImpersonationController extends AuthController
         $targetUser = User::findOrFail($request->get('userId'));
         $token = $this->service->impersonate($realUser, $targetUser);
 
-        return $this->responseWithToken($token);
+        return $this->responseWithAccessToken($token);
     }
 
-    public function destroy()
+    public function destroy(Request $request)
     {
-        $this->authorize('impersonate', [User::class, $this->service->getRealUser()]);
-        $token = $this->service->stop();
+        $impersonatedUser = $request->user();
+        $realUserId = $this->service->getRealUserId($impersonatedUser);
+        if (!$realUserId) {
+            throw new AuthorizationException(__('auth.not_impersonating'));
+        }
 
-        return $this->responseWithToken($token);
+        $realUser = $this->service->getRealUser($realUserId);
+        $this->authorize('impersonate', [User::class, $realUser]);
+        $token = $this->service->stop($impersonatedUser, $realUser);
+
+        return $this->responseWithAccessToken($token);
     }
 }

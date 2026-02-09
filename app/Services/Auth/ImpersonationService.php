@@ -6,26 +6,36 @@ use App\Models\User;
 
 class ImpersonationService
 {
-    public const CLAIM_REAL_USER_ID = 'ruid';
+    public const TOKEN_NAME_PREFIX = 'impersonation:';
+    public const REAL_USER_TOKEN_NAME = 'real-user';
 
     public function impersonate(User $realUser, User $impersonatedUser): string
     {
-        return auth()->claims([self::CLAIM_REAL_USER_ID => $realUser->getRouteKey()])
-            ->tokenById($impersonatedUser->getRouteKey());
+        $tokenName = self::TOKEN_NAME_PREFIX . $realUser->getRouteKey();
+
+        return $impersonatedUser->createToken($tokenName, ['*'])->plainTextToken;
     }
 
-    public function stop(): string
+    public function stop(User $impersonatedUser, User $realUser): string
     {
-        return auth()->tokenById($this->getRealUserId());
+        $impersonatedUser->currentAccessToken()?->delete();
+
+        return $realUser->createToken(self::REAL_USER_TOKEN_NAME, ['*'])->plainTextToken;
     }
 
-    public function getRealUserId(): string
+    public function getRealUserId(User $impersonatedUser): ?string
     {
-        return auth()->payload()->get(self::CLAIM_REAL_USER_ID);
+        $tokenName = $impersonatedUser->currentAccessToken()?->name;
+
+        if (!$tokenName || !str_starts_with($tokenName, self::TOKEN_NAME_PREFIX)) {
+            return null;
+        }
+
+        return substr($tokenName, strlen(self::TOKEN_NAME_PREFIX));
     }
 
-    public function getRealUser(): User
+    public function getRealUser(string $realUserId): ?User
     {
-        return User::findByHashId($this->getRealUserId());
+        return User::findByHashId($realUserId) ?? User::find($realUserId);
     }
 }

@@ -17,13 +17,12 @@ abstract class AuthController extends Controller
             ->save();
     }
 
-    protected function responseWithToken(string $token): \Illuminate\Http\JsonResponse
+    protected function responseWithAccessToken(string $token): \Illuminate\Http\JsonResponse
     {
         return response()
             ->json([
                        'access_token' => $token,
                        'token_type' => 'bearer',
-                       'expires_in' => auth()->factory()->getTTL() * 60,
                    ]);
     }
 }

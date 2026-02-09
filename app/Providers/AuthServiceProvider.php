@@ -23,6 +23,7 @@ use App\Policies\ContentPolicy;
 use App\Policies\DataEntryPolicy;
 use App\Policies\DataSourcePolicy;
 use App\Policies\InvitePolicy;
+use App\Policies\PersonalAccessTokenPolicy;
 use App\Policies\RedirectPolicy;
 use App\Policies\ReleasePolicy;
 use App\Policies\SpaceBackupPolicy;
@@ -30,6 +31,7 @@ use App\Policies\SpacePolicy;
 use App\Policies\TeamPolicy;
 use App\Policies\TokenPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -51,6 +53,7 @@ class AuthServiceProvider extends ServiceProvider
         SpaceBackup::class => SpaceBackupPolicy::class,
         Team::class => TeamPolicy::class,
         Token::class => TokenPolicy::class,
+        PersonalAccessToken::class => PersonalAccessTokenPolicy::class,
         Space::class => SpacePolicy::class,
     ];
 

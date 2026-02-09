@@ -21,7 +21,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
-use Tymon\JWTAuth\Contracts\JWTSubject;
 
 /**
  * App\Models\User
@@ -86,7 +85,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutTrashed()
  * @mixin \Eloquent
  */
-class User extends Authenticatable implements JWTSubject, HasLocalePreference
+class User extends Authenticatable implements HasLocalePreference
 {
     use Filterable;
     use HasApiTokens;
@@ -152,16 +151,6 @@ class User extends Authenticatable implements JWTSubject, HasLocalePreference
             get: fn($value) => $value ? json_decode(decrypt($value), true) : null,
             set: fn($value) => $value ? encrypt(json_encode($value)) : null,
         );
-    }
-
-    public function getJWTIdentifier(): string
-    {
-        return $this->getRouteKey();
-    }
-
-    public function getJWTCustomClaims(): array
-    {
-        return [];
     }
 
     public function spaces(): BelongsToMany

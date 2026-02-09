@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class LoginOneTimeTokenController extends AuthController
 {
     public function __invoke(Request $request)
     {
-        auth()->setDefaultDriver('api');
         $request->validate([
             'email' => 'required|email:rfc,filter|exists:users,email',
             'token' => 'required|string|min:6|max:6',
@@ -23,10 +23,48 @@ class LoginOneTimeTokenController extends AuthController
             return response(['message' => __('auth.failed')], 401);
         }
 
-        $token = auth()->tokenById($user->getRouteKey());
+        Auth::guard('web')->login($user);
+
+        if ($user->hasEnabledTwoFactor()) {
+            $totpCode = $request->header('X-TOTP-Code');
+            if (!$totpCode) {
+                $this->logoutSession($request);
+
+                return response()->json([
+                    'message' => __('auth.2fa_required'),
+                    'error_code' => 'TOTP_VERIFICATION_REQUIRED',
+                    'requires_2fa' => true,
+                ], 423);
+            }
+
+            if (!app(\App\Services\Auth\TwoFactorAuthService::class)->verifyTotp($user, $totpCode)) {
+                $this->logoutSession($request);
+
+                return response()->json([
+                    'message' => __('auth.invalid_2fa_code'),
+                    'error_code' => 'INVALID_TOTP_CODE',
+                ], 403);
+            }
+        }
+
         $this->updateUserLogin($user);
         \Cache::delete($cacheKey);
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
 
-        return $this->responseWithToken($token);
+        return response()->json([
+            'message' => __('auth.login_successful'),
+        ]);
+    }
+
+    private function logoutSession(Request $request): void
+    {
+        Auth::guard('web')->logout();
+
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
     }
 }

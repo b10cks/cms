@@ -51,6 +51,7 @@ use App\Http\Controllers\Mgmt\User\UserController;
 use App\Http\Controllers\Mgmt\User\UserInviteController;
 use App\Http\Controllers\Mgmt\User\UserPasswordController;
 use App\Http\Controllers\Mgmt\User\UserSettingsController;
+use App\Http\Controllers\Mgmt\User\UserTokenController;
 use App\Http\Controllers\Mgmt\PresenceController;
 use App\Http\Controllers\SpaceAiUsageController;
 
@@ -64,6 +65,13 @@ Route::group(['prefix' => 'users'], function () {
         Route::post('/password', UserPasswordController::class)
             ->middleware(['throttle:crucial'])
             ->name('users.me.password');
+
+        Route::get('/tokens', [UserTokenController::class, 'index'])
+            ->name('users.me.tokens.index');
+        Route::post('/tokens', [UserTokenController::class, 'store'])
+            ->name('users.me.tokens.store');
+        Route::delete('/tokens/{token}', [UserTokenController::class, 'destroy'])
+            ->name('users.me.tokens.destroy');
 
         Route::get('/invites', [UserInviteController::class, 'index'])->name('users.me.invites.index');
         Route::get('/invites/{invite}', [UserInviteController::class, 'show'])->name('users.me.invites.show');

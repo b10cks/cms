@@ -27,4 +27,8 @@ return [
     'invalid_password' => 'The provided password is incorrect.',
     'unauthenticated' => 'You must be authenticated to access this resource.',
     'cannotImpersonate' => 'You cannot perform this action while impersonating another user.',
+    'not_impersonating' => 'You are not currently impersonating another user.',
+    'login_successful' => 'Login successful.',
+    'registration_successful' => 'Registration successful.',
+    'registration_failed' => 'An error occurred during registration.',
 ];

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Broadcasting\JwtBroadcastController;
+use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
 
 Route::post('register', \App\Http\Controllers\Auth\RegisterController::class)
     ->middleware('throttle:login')
@@ -11,21 +12,18 @@ Route::post('token', \App\Http\Controllers\Auth\IssueTokenController::class)
     ->name('token.login');
 
 Route::delete('token', \App\Http\Controllers\Auth\DeleteTokenController::class)
-    ->middleware(['auth:api'])
+    ->middleware(['auth:sanctum'])
     ->name('token.logout');
 
-Route::post('token/refresh', \App\Http\Controllers\Auth\RefreshTokenController::class)
-    ->name('token.refresh');
-
 Route::post('impersonate', [\App\Http\Controllers\Auth\ImpersonationController::class, 'store'])
-    ->middleware(['auth:api'])
+    ->middleware(['auth:sanctum'])
     ->name('impersonate.store');
 
 Route::match(['get', 'post'], '/broadcast', [JwtBroadcastController::class, 'authenticate'])
-    ->middleware(['auth:api']);
+    ->middleware(['auth:sanctum']);
 
 Route::delete('impersonate', [\App\Http\Controllers\Auth\ImpersonationController::class, 'destroy'])
-    ->middleware(['auth:api'])
+    ->middleware(['auth:sanctum'])
     ->name('impersonate.destroy');
 
 Route::post('password/email', \App\Http\Controllers\Auth\ForgotPasswordController::class)
@@ -44,7 +42,7 @@ Route::post('one-time-token/login', \App\Http\Controllers\Auth\LoginOneTimeToken
     ->name('one-time-token.login');
 
 Route::post('email/verify/send', [\App\Http\Controllers\Auth\EmailVerificationController::class, 'send'])
-    ->middleware(['auth:api', 'throttle:login'])
+    ->middleware(['auth:sanctum', 'throttle:login'])
     ->name('verification.send');
 
 Route::post('email/verify', [\App\Http\Controllers\Auth\EmailVerificationController::class, 'verify'])
@@ -54,26 +52,26 @@ Route::post('email/verify', [\App\Http\Controllers\Auth\EmailVerificationControl
 Route::group(['prefix' => '2fa'], function () {
 
     Route::get('status', \App\Http\Controllers\Auth\TwoFactorStatusController::class)
-        ->middleware(['auth:api'])
+        ->middleware(['auth:sanctum', 'stateful'])
         ->name('2fa.verify');
 
     Route::post('setup', [\App\Http\Controllers\Auth\TwoFactorSetupController::class, 'start'])
-        ->middleware(['auth:api'])
+        ->middleware(['auth:sanctum', 'stateful'])
         ->name('2fa.setup');
 
     Route::post('setup/confirm', [\App\Http\Controllers\Auth\TwoFactorSetupController::class, 'confirm'])
-        ->middleware(['auth:api'])
+        ->middleware(['auth:sanctum', 'stateful'])
         ->name('2fa.setup.confirm');
 
     Route::post('verify', \App\Http\Controllers\Auth\TwoFactorVerifyController::class)
-        ->middleware(['auth:api'])
+        ->middleware(['auth:sanctum', 'stateful'])
         ->name('2fa.verify');
 
     Route::post('disable', \App\Http\Controllers\Auth\TwoFactorDisableController::class)
-        ->middleware(['auth:api'])
+        ->middleware(['auth:sanctum', 'stateful'])
         ->name('2fa.disable');
 
     Route::post('backup-codes/regenerate', [\App\Http\Controllers\Auth\TwoFactorBackupCodesController::class, 'regenerate'])
-        ->middleware(['auth:api'])
+        ->middleware(['auth:sanctum', 'stateful'])
         ->name('2fa.backup-codes.regenerate');
 });

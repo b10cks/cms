@@ -10,10 +10,10 @@ use App\Models\Management\Invite;
 use App\Notifications\User\VerifyEmailNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class RegisterController extends Controller
 {
@@ -52,10 +52,13 @@ class RegisterController extends Controller
                 $this->sendVerificationEmail($user);
             }
 
+            Auth::guard('web')->login($user);
+            if ($request->hasSession()) {
+                $request->session()->regenerate();
+            }
+
             return response()->json([
-                'access_token' => JWTAuth::fromUser($user),
-                'token_type' => 'bearer',
-                'expires_in' => auth()->factory()->getTTL() * 60,
+                'message' => __('auth.registration_successful'),
                 'user' => [
                     'id' => $user->id,
                     'email' => $user->email,
@@ -69,7 +72,7 @@ class RegisterController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'An error occurred during registration'
+                'message' => __('auth.registration_failed'),
             ], 500);
         }
     }

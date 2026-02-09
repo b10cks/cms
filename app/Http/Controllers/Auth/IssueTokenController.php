@@ -7,6 +7,7 @@ use App\Notifications\User\VerifyEmailNotification;
 use App\Services\Auth\TwoFactorAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\URL;
 
@@ -23,17 +24,23 @@ class IssueTokenController extends AuthController
 
     public function __invoke(Request $request): JsonResponse
     {
-        auth()->setDefaultDriver('api');
-        $credentials = request(['email', 'password']);
+        $request->validate([
+            'email' => 'required|email:rfc,filter',
+            'password' => 'required|string',
+        ]);
 
-        if (!$token = auth()->attempt($credentials)) {
+        $credentials = $request->only(['email', 'password']);
+
+        if (!Auth::guard('web')->attempt($credentials, $request->boolean('remember'))) {
             return response()->json(['message' => __('auth.failed')], 401);
         }
 
-        $user = auth()->user();
+        $user = Auth::guard('web')->user();
         if ($user->hasEnabledTwoFactor()) {
             $totpCode = $request->header('X-TOTP-Code');
             if (!$totpCode) {
+                $this->logoutSession($request);
+
                 return response()->json([
                     'message' => __('auth.2fa_required'),
                     'error_code' => 'TOTP_VERIFICATION_REQUIRED',
@@ -42,6 +49,8 @@ class IssueTokenController extends AuthController
             }
 
             if (!$this->twoFactorService->verifyTotp($user, $totpCode)) {
+                $this->logoutSession($request);
+
                 return response()->json([
                     'message' => __('auth.invalid_2fa_code'),
                     'error_code' => 'INVALID_TOTP_CODE',
@@ -51,6 +60,7 @@ class IssueTokenController extends AuthController
 
         if (!$user->email_verified_at) {
             $this->sendVerificationEmail($user);
+            $this->logoutSession($request);
 
             return response()->json([
                 'message' => __('auth.email_not_verified'),
@@ -60,8 +70,13 @@ class IssueTokenController extends AuthController
         }
 
         $this->updateUserLogin($user);
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
 
-        return $this->responseWithToken($token);
+        return response()->json([
+            'message' => __('auth.login_successful'),
+        ]);
     }
 
     private function sendVerificationEmail(User $user): void
@@ -92,5 +107,15 @@ class IssueTokenController extends AuthController
                 now()->addMinutes(60)
             );
         });
+    }
+
+    private function logoutSession(Request $request): void
+    {
+        Auth::guard('web')->logout();
+
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
     }
 }

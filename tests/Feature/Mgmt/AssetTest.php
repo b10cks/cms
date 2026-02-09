@@ -12,6 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage as LaravelStorage;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -27,7 +28,6 @@ class AssetTest extends TestCase
     protected User $user;
     protected Space $space;
     protected Storage $storage;
-    protected string $token;
 
     protected function setUp(): void
     {
@@ -51,8 +51,7 @@ class AssetTest extends TestCase
             'state' => 'live',
         ]);
 
-        // Create an auth token
-        $this->token = auth()->login($this->user);
+        Sanctum::actingAs($this->user);
 
         // Configure the fake disk for testing
         LaravelStorage::fake($this->storage->id);
@@ -65,8 +64,7 @@ class AssetTest extends TestCase
     {
         $file = UploadedFile::fake()->image('test-image.jpg', 1000, 1000);
 
-        $response = $this->withToken($this->token)
-            ->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", [
+        $response = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", [
                 'file' => $file,
                 'metadata' => [
                     'description' => 'Test image description',
@@ -110,8 +108,7 @@ class AssetTest extends TestCase
             'storage_id' => $this->storage->id,
         ]);
 
-        $response = $this->withToken($this->token)
-            ->getJson("/mgmt/v1/spaces/{$this->space->id}/assets");
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets");
 
         $response->assertStatus(200);
         $response->assertJsonCount(5, 'data');
@@ -150,8 +147,7 @@ class AssetTest extends TestCase
         ]);
 
         // Filter for images only
-        $response = $this->withToken($this->token)
-            ->getJson("/mgmt/v1/spaces/{$this->space->id}/assets?mime_type=image/jpeg,image/png");
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets?mime_type=image/jpeg,image/png");
 
         $response->assertStatus(200);
         $response->assertJsonCount(2, 'data');
@@ -181,8 +177,7 @@ class AssetTest extends TestCase
         ]);
 
         // Filter by folder
-        $response = $this->withToken($this->token)
-            ->getJson("/mgmt/v1/spaces/{$this->space->id}/assets?folder={$folder->id}");
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets?folder={$folder->id}");
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
@@ -204,8 +199,7 @@ class AssetTest extends TestCase
         ]);
 
         // Search for "report"
-        $response = $this->withToken($this->token)
-            ->getJson("/mgmt/v1/spaces/{$this->space->id}/assets?q=report");
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets?q=report");
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
@@ -226,8 +220,7 @@ class AssetTest extends TestCase
             ],
         ]);
 
-        $response = $this->withToken($this->token)
-            ->getJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}");
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}");
 
         $response->assertStatus(200);
         $response->assertJson([
@@ -252,8 +245,7 @@ class AssetTest extends TestCase
             ],
         ]);
 
-        $response = $this->withToken($this->token)
-            ->patchJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}", [
+        $response = $this->patchJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}", [
                 'metadata' => [
                     'description' => 'Updated description',
                     'new_field' => 'New value',
@@ -281,8 +273,7 @@ class AssetTest extends TestCase
         // Create the file in the fake storage
         LaravelStorage::disk($this->storage->id)->put('test-path/file.jpg', 'test content');
 
-        $response = $this->withToken($this->token)
-            ->deleteJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}");
+        $response = $this->deleteJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}");
 
         $response->assertStatus(204);
 
@@ -304,8 +295,7 @@ class AssetTest extends TestCase
         ]);
 
         // Request first page with 10 items per page
-        $response = $this->withToken($this->token)
-            ->getJson("/mgmt/v1/spaces/{$this->space->id}/assets?per_page=10");
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets?per_page=10");
 
         $response->assertStatus(200);
         $response->assertJsonCount(10, 'data');
@@ -331,16 +321,14 @@ class AssetTest extends TestCase
         $this->assertEquals(25, $response->json('meta.total'));
 
         // Request second page
-        $response = $this->withToken($this->token)
-            ->getJson("/mgmt/v1/spaces/{$this->space->id}/assets?per_page=10&page=2");
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets?per_page=10&page=2");
 
         $response->assertStatus(200);
         $response->assertJsonCount(10, 'data');
         $this->assertEquals(2, $response->json('meta.current_page'));
 
         // The items should be different on each page
-        $firstPageIds = $this->withToken($this->token)
-            ->getJson("/mgmt/v1/spaces/{$this->space->id}/assets?per_page=10&page=1")
+        $firstPageIds = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets?per_page=10&page=1")
             ->json('data.*.id');
 
         $secondPageIds = $response->json('data.*.id');

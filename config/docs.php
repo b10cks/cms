@@ -31,7 +31,7 @@ return [
             'auth/v1' => [
                 'security' => [],
                 'title' => 'Authentication API v1',
-                'description' => 'Authentication endpoints for issuing and managing tokens',
+                'description' => 'Authentication endpoints for sessions and personal access tokens',
             ],
         ],
     ],
@@ -46,7 +46,7 @@ return [
         'bearerAuth' => [
             'type' => 'http',
             'scheme' => 'bearer',
-            'description' => 'JWT token passed in Authorization header',
+            'description' => 'Sanctum personal access token passed in Authorization header',
         ],
     ],
 

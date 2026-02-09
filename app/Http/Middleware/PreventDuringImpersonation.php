@@ -4,24 +4,25 @@ namespace App\Http\Middleware;
 
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
-use Tymon\JWTAuth\JWTGuard;
+use App\Services\Auth\ImpersonationService;
 
 class PreventDuringImpersonation
 {
     public function handle(Request $request, \Closure $next)
     {
-        /** @var JWTGuard $guard */
-        $guard = app('auth')->guard('api');
+        $user = $request->user();
 
-        if ($guard->check() && $this->isImpersonating($guard->payload())) {
+        if ($user && $this->isImpersonating($user)) {
             throw new AuthorizationException(__('auth.cannotImpersonate'));
         }
 
         return $next($request);
     }
 
-    protected function isImpersonating(\Tymon\JWTAuth\Payload $payload): bool
+    protected function isImpersonating($user): bool
     {
-        return $payload->hasKey('ruid') && $payload->get('sub') != $payload->get('ruid');
+        $tokenName = $user->currentAccessToken()?->name;
+
+        return $tokenName && str_starts_with($tokenName, ImpersonationService::TOKEN_NAME_PREFIX);
     }
 }

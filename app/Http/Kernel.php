@@ -39,6 +39,7 @@ class Kernel extends HttpKernel
         ],
 
         'mgmt' => [
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class . ':mgmt',
             \App\Http\Middleware\AcceptHeader::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
@@ -76,6 +77,7 @@ class Kernel extends HttpKernel
         'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
         'revision' => \App\Http\Middleware\EnsureRevision::class,
         '2fa' => \App\Http\Middleware\RequireTotpVerification::class,
+        'stateful' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         'password' => \App\Http\Middleware\RequirePasswordVerification::class,
     ];
 }

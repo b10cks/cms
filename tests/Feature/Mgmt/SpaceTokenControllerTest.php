@@ -6,6 +6,7 @@ use App\Models\Management\Space;
 use App\Models\Management\Token;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -43,8 +44,9 @@ class SpaceTokenControllerTest extends TestCase
         // Create a token for another space (shouldn't be returned)
         Token::factory()->create();
 
-        $response = $this->actingAs($this->user, 'api')
-            ->getJson($this->baseUrl);
+        Sanctum::actingAs($this->user);
+
+        $response = $this->getJson($this->baseUrl);
 
         $response->assertStatus(200)
             ->assertJsonCount(3, 'data')
@@ -73,8 +75,9 @@ class SpaceTokenControllerTest extends TestCase
             'expires_at' => now()->addYear()->toIso8601String()
         ];
 
-        $response = $this->actingAs($this->user, 'api')
-            ->postJson($this->baseUrl, $tokenData);
+        Sanctum::actingAs($this->user);
+
+        $response = $this->postJson($this->baseUrl, $tokenData);
 
         $response->assertStatus(201)
             ->assertJsonStructure([
@@ -111,8 +114,9 @@ class SpaceTokenControllerTest extends TestCase
             'name' => 'Token to delete'
         ]);
 
-        $response = $this->actingAs($this->user, 'api')
-            ->deleteJson("{$this->baseUrl}/{$token->id}");
+        Sanctum::actingAs($this->user);
+
+        $response = $this->deleteJson("{$this->baseUrl}/{$token->id}");
 
         $response->assertStatus(204);
 
@@ -125,10 +129,11 @@ class SpaceTokenControllerTest extends TestCase
     #[Test]
     public function user_cannot_create_token_with_invalid_data()
     {
-        $response = $this->actingAs($this->user, 'api')
-            ->postJson($this->baseUrl, [
-                'name' => '', // Invalid: empty name
-            ]);
+        Sanctum::actingAs($this->user);
+
+        $response = $this->postJson($this->baseUrl, [
+            'name' => '', // Invalid: empty name
+        ]);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['name']);
@@ -137,12 +142,13 @@ class SpaceTokenControllerTest extends TestCase
     #[Test]
     public function user_cannot_create_token_with_past_expiration_date()
     {
-        $response = $this->actingAs($this->user, 'api')
-            ->postJson($this->baseUrl, [
-                'name' => 'Test Token',
-                'abilities' => ['content:read'],
-                'expires_at' => now()->subDay()->toIso8601String() // Invalid: past date
-            ]);
+        Sanctum::actingAs($this->user);
+
+        $response = $this->postJson($this->baseUrl, [
+            'name' => 'Test Token',
+            'abilities' => ['content:read'],
+            'expires_at' => now()->subDay()->toIso8601String() // Invalid: past date
+        ]);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['expires_at']);
@@ -156,17 +162,19 @@ class SpaceTokenControllerTest extends TestCase
         $this->space->users()->attach($memberUser, ['role' => 'member']);
 
         // Try to list tokens
-        $response = $this->actingAs($memberUser, 'api')
-            ->getJson($this->baseUrl);
+        Sanctum::actingAs($memberUser);
+
+        $response = $this->getJson($this->baseUrl);
 
         $response->assertStatus(403);
 
         // Try to create a token
-        $response = $this->actingAs($memberUser, 'api')
-            ->postJson($this->baseUrl, [
-                'name' => 'Test Token',
-                'abilities' => ['content:read']
-            ]);
+        Sanctum::actingAs($memberUser);
+
+        $response = $this->postJson($this->baseUrl, [
+            'name' => 'Test Token',
+            'abilities' => ['content:read']
+        ]);
 
         $response->assertStatus(403);
     }
@@ -181,8 +189,9 @@ class SpaceTokenControllerTest extends TestCase
         ]);
 
         // Try to delete the token
-        $response = $this->actingAs($this->user, 'api')
-            ->deleteJson("{$this->baseUrl}/{$otherToken->id}");
+        Sanctum::actingAs($this->user);
+
+        $response = $this->deleteJson("{$this->baseUrl}/{$otherToken->id}");
 
         $response->assertStatus(403);
 
@@ -212,8 +221,9 @@ class SpaceTokenControllerTest extends TestCase
         ]);
 
         // Filter by name containing 'Alpha'
-        $response = $this->actingAs($this->user, 'api')
-            ->getJson("{$this->baseUrl}?name=Alpha");
+        Sanctum::actingAs($this->user);
+
+        $response = $this->getJson("{$this->baseUrl}?name=Alpha");
 
         $response->assertStatus(200)
             ->assertJsonCount(2, 'data');
@@ -242,8 +252,9 @@ class SpaceTokenControllerTest extends TestCase
         ]);
 
         // Filter by ability
-        $response = $this->actingAs($this->user, 'api')
-            ->getJson("{$this->baseUrl}?abilities=content:create");
+        Sanctum::actingAs($this->user);
+
+        $response = $this->getJson("{$this->baseUrl}?abilities=content:create");
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data');

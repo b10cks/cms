@@ -9,6 +9,7 @@ use App\Models\Space\AssetFolder;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -24,7 +25,6 @@ class AssetFolderTest extends TestCase
     protected User $user;
     protected Space $space;
     protected Storage $storage;
-    protected string $token;
 
     protected function setUp(): void
     {
@@ -45,8 +45,7 @@ class AssetFolderTest extends TestCase
             'state' => 'live',
         ]);
 
-        // Create an auth token
-        $this->token = auth()->login($this->user);
+        Sanctum::actingAs($this->user);
 
         $this->setUpSpaceTesting($this->space);
     }
@@ -61,8 +60,7 @@ class AssetFolderTest extends TestCase
             'color' => '#4ade80',
         ];
 
-        $response = $this->withToken($this->token)
-            ->postJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders", $folderData);
+        $response = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders", $folderData);
 
         $response->assertStatus(201);
         $response->assertJsonStructure([
@@ -89,8 +87,7 @@ class AssetFolderTest extends TestCase
         // Create a few folders
         AssetFolder::factory()->count(3)->create();
 
-        $response = $this->withToken($this->token)
-            ->getJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders");
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders");
 
         $response->assertStatus(200);
         $response->assertJsonCount(3, 'data');
@@ -124,8 +121,7 @@ class AssetFolderTest extends TestCase
         AssetFolder::factory()->count(3)->create([]);
 
         // Get only the child folders
-        $response = $this->withToken($this->token)
-            ->getJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders?parent_id={$parentFolder->id}");
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders?parent_id={$parentFolder->id}");
 
         $response->assertStatus(200);
         $response->assertJsonCount(2, 'data');
@@ -137,8 +133,7 @@ class AssetFolderTest extends TestCase
         }
 
         // Get only root folders
-        $response = $this->withToken($this->token)
-            ->getJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders?parent_id=null");
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders?parent_id=null");
 
         $response->assertStatus(200);
         $response->assertJsonCount(4, 'data'); // 3 root folders + the parent folder
@@ -160,8 +155,7 @@ class AssetFolderTest extends TestCase
             'color' => '#4ade80',
         ]);
 
-        $response = $this->withToken($this->token)
-            ->getJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders/{$folder->id}");
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders/{$folder->id}");
 
         $response->assertStatus(200);
         $response->assertJson([
@@ -190,8 +184,7 @@ class AssetFolderTest extends TestCase
             'color' => '#f97316',
         ];
 
-        $response = $this->withToken($this->token)
-            ->patchJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders/{$folder->id}", $updateData);
+        $response = $this->patchJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders/{$folder->id}", $updateData);
 
         $response->assertStatus(200);
         $response->assertJson([
@@ -229,8 +222,7 @@ class AssetFolderTest extends TestCase
             'parent_id' => $parentFolder->id,
         ];
 
-        $response = $this->withToken($this->token)
-            ->postJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders", $folderData);
+        $response = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders", $folderData);
 
         $response->assertStatus(201);
         $response->assertJson([
@@ -255,8 +247,7 @@ class AssetFolderTest extends TestCase
             'parent_id' => 'non-existent-id',
         ];
 
-        $response = $this->withToken($this->token)
-            ->postJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders", $folderData);
+        $response = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders", $folderData);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['parent_id']);
@@ -267,8 +258,7 @@ class AssetFolderTest extends TestCase
     {
         $folder = AssetFolder::factory()->create([]);
 
-        $response = $this->withToken($this->token)
-            ->deleteJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders/{$folder->id}");
+        $response = $this->deleteJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders/{$folder->id}");
 
         $response->assertStatus(204);
 
@@ -288,8 +278,7 @@ class AssetFolderTest extends TestCase
             'parent_id' => $parentFolder->id,
         ]);
 
-        $response = $this->withToken($this->token)
-            ->deleteJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders/{$parentFolder->id}");
+        $response = $this->deleteJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders/{$parentFolder->id}");
 
         $response->assertStatus(422);
         $this->assertDatabaseHas('asset_folders', [
@@ -308,8 +297,7 @@ class AssetFolderTest extends TestCase
             'folder_id' => $folder->id,
         ]);
 
-        $response = $this->withToken($this->token)
-            ->deleteJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders/{$folder->id}");
+        $response = $this->deleteJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders/{$folder->id}");
 
         $response->assertStatus(422);
         $this->assertDatabaseHas('asset_folders', [
@@ -330,8 +318,7 @@ class AssetFolderTest extends TestCase
         ]);
 
         // Search for "Marketing"
-        $response = $this->withToken($this->token)
-            ->getJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders?search=Marketing");
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders?search=Marketing");
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
