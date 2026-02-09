@@ -4,11 +4,11 @@ use App\Http\Controllers\Broadcasting\JwtBroadcastController;
 use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
 
 Route::post('register', \App\Http\Controllers\Auth\RegisterController::class)
-    ->middleware('throttle:login')
+    ->middleware(['throttle:login', 'stateful'])
     ->name('register');
 
 Route::post('token', \App\Http\Controllers\Auth\IssueTokenController::class)
-    ->middleware('throttle:login')
+    ->middleware(['throttle:login', 'stateful'])
     ->name('token.login');
 
 Route::delete('token', \App\Http\Controllers\Auth\DeleteTokenController::class)
