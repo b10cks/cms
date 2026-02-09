@@ -4,10 +4,10 @@ namespace App\Http\Middleware;
 
 class CacheDataApi
 {
-    public function handle($request, \Closure $next)
+    public function handle($request, \Closure $next, $maxAge = 3600, $serverMaxAge = 86400)
     {
         return $next($request)
-            ->header('Cache-Control', 'public, max-age=3600, s-maxage=604800')
-            ->header('X-b10cks-version', config('app.version'));
+            ->header('cache-control', "public, max-age=$maxAge, s-maxage=$serverMaxAge")
+            ->header('x-b10cks-version', config('app.version'));
     }
 }

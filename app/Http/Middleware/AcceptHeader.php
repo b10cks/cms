@@ -9,7 +9,7 @@ class AcceptHeader
         $locale = $this->findLocale($request->header('accept-language'), config('app.locales', '*'), 'en');
         app()->setLocale($locale);
 
-        return $next($request)->setVary('Accept-Language');
+        return $next($request)->setVary('accept-language');
     }
 
     /**
@@ -24,11 +24,11 @@ class AcceptHeader
     protected function findLocale($header, array $supportedLocales, $fallback = null)
     {
         $locales = array_map(function ($localeString) {
-            @list ($locale, $q) = explode(';', $localeString);
+            @list($locale, $q) = explode(';', $localeString);
 
             return [
                 $locale,
-                $q ? (float)str_replace('q=', '', $q) : 1,
+                $q ? (float) str_replace('q=', '', $q) : 1,
             ];
         }, explode(',', $header ?? ''));
 

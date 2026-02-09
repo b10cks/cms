@@ -24,7 +24,7 @@ class RequirePasswordVerification
 
     private function handlePasswordVerification(Request $request, Closure $next, $user): Response
     {
-        $password = $request->header('X-Password-Confirmation');
+        $password = $request->header('x-password-confirmation');
 
         if (!$password) {
             return response()->json([

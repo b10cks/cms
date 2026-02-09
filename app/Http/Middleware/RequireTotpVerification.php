@@ -31,7 +31,7 @@ class RequireTotpVerification
             return $next($request);
         }
 
-        $totpCode = $request->header('X-TOTP-Code');
+        $totpCode = $request->header('x-totp-code');
 
         if (!$totpCode) {
             return response()->json([
@@ -55,7 +55,7 @@ class RequireTotpVerification
 
     private function handlePasswordVerification(Request $request, Closure $next, $user): Response
     {
-        $password = $request->header('X-Password-Confirmation');
+        $password = $request->header('x-password-confirmation');
 
         if (!$password) {
             return response()->json([

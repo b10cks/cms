@@ -16,8 +16,8 @@ class EnsureRevision
             $url = $request->path() . '?' . http_build_query($params);
 
             return redirect($url, 301, [
-                'Cache-Control' => 'public, max-age=3600, s-maxage=60',
-                'X-b10cks-version' => config('app.version'),
+                'cache-control' => 'public, max-age=60, s-maxage=10',
+                'x-b10cks-version' => config('app.version'),
             ], app()->environment('production'));
         }
         return $next($request);
