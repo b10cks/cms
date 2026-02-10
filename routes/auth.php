@@ -12,7 +12,7 @@ Route::post('token', \App\Http\Controllers\Auth\IssueTokenController::class)
     ->name('token.login');
 
 Route::delete('token', \App\Http\Controllers\Auth\DeleteTokenController::class)
-    ->middleware(['auth:sanctum'])
+    ->middleware(['auth:sanctum', 'stateful'])
     ->name('token.logout');
 
 Route::post('impersonate', [\App\Http\Controllers\Auth\ImpersonationController::class, 'store'])
@@ -20,7 +20,7 @@ Route::post('impersonate', [\App\Http\Controllers\Auth\ImpersonationController::
     ->name('impersonate.store');
 
 Route::match(['get', 'post'], '/broadcast', [JwtBroadcastController::class, 'authenticate'])
-    ->middleware(['auth:sanctum']);
+    ->middleware(['auth:sanctum', 'stateful']);
 
 Route::delete('impersonate', [\App\Http\Controllers\Auth\ImpersonationController::class, 'destroy'])
     ->middleware(['auth:sanctum'])
