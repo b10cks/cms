@@ -1,7 +1,6 @@
 <?php
 
-use App\Http\Controllers\Broadcasting\JwtBroadcastController;
-use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
+use App\Http\Controllers\Auth\BroadcastController;
 
 Route::post('register', \App\Http\Controllers\Auth\RegisterController::class)
     ->middleware(['throttle:login', 'stateful'])
@@ -19,7 +18,7 @@ Route::post('impersonate', [\App\Http\Controllers\Auth\ImpersonationController::
     ->middleware(['auth:sanctum'])
     ->name('impersonate.store');
 
-Route::match(['get', 'post'], '/broadcast', [JwtBroadcastController::class, 'authenticate'])
+Route::match(['get', 'post'], '/broadcast', BroadcastController::class)
     ->middleware(['auth:sanctum', 'stateful']);
 
 Route::delete('impersonate', [\App\Http\Controllers\Auth\ImpersonationController::class, 'destroy'])
