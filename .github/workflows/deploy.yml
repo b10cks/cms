@@ -14,10 +14,11 @@ env:
   ECS_TASK_DEFINITION: b10cks-cms
 
   PHP_VERSION: '8.4'
+  VITE_S3_BUCKET: ${{ secrets.VITE_S3_BUCKET }}
 
   VITE_APP_FRONTEND_URL: ${{ vars.APP_FRONTEND_URL || 'https://app.b10cks.com/' }}
   VITE_APP_BACKEND_URL: ${{ vars.APP_BACKEND_URL || 'https://api.b10cks.com/' }}
-  VITE_APP_ILUM_BASE_URL: ${{ vars.APP_ILUM_BASE_URL || 'https://api.b10cks.com/ilum' }}
+  VITE_APP_ILUM_BASE_URL: ${{ vars.APP_ILUM_BASE_URL || 'https://api.b10cks.com/ilum/' }}
   VITE_APP_POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://eu.i.posthog.com' }}
   VITE_APP_POSTHOG_KEY: ${{ secrets.POSTHOG_API_KEY || '' }}
   VITE_APP_REVERB_APP_ID: ${{ secrets.REVERB_APP_ID || '' }}
@@ -121,6 +122,12 @@ jobs:
           task-definition: task-definition.json
           container-name: ${{ env.ECS_TASK_DEFINITION }}
           image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:main-${{ steps.version.outputs.version }}
+
+      - name: Sync static assets to S3
+        run: |
+          aws s3 sync public/build/ "s3://${{ env.VITE_S3_BUCKET }}" \
+            --delete \
+            --cache-control "max-age=7776000,s-maxage=604800,public"
 
       - name: Deploy to Amazon ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
