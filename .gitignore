@@ -6,6 +6,7 @@
 /storage/*.key
 /vendor
 /dist
+/dev-dist
 .env
 .env.backup
 .env.production
