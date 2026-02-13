@@ -57,14 +57,4 @@ class LoginOneTimeTokenController extends AuthController
             'message' => __('auth.login_successful'),
         ]);
     }
-
-    private function logoutSession(Request $request): void
-    {
-        Auth::guard('web')->logout();
-
-        if ($request->hasSession()) {
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-        }
-    }
 }

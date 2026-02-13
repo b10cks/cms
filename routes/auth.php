@@ -14,6 +14,10 @@ Route::delete('token', \App\Http\Controllers\Auth\DeleteTokenController::class)
     ->middleware(['auth:sanctum', 'stateful'])
     ->name('token.logout');
 
+Route::post('logout', \App\Http\Controllers\Auth\DeleteTokenController::class)
+    ->middleware(['auth:sanctum', 'stateful'])
+    ->name('logout');
+
 Route::post('impersonate', [\App\Http\Controllers\Auth\ImpersonationController::class, 'store'])
     ->middleware(['auth:sanctum'])
     ->name('impersonate.store');

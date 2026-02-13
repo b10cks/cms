@@ -109,7 +109,7 @@ class IssueTokenController extends AuthController
         });
     }
 
-    private function logoutSession(Request $request): void
+    protected function logoutSession(Request $request): void
     {
         Auth::guard('web')->logout();
 
