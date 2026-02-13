@@ -1,6 +1,6 @@
 import { createApp } from 'vue'
 
-import App from '~/App.vue'
+import App from '~/app.vue'
 import '~/assets/css/main.css'
 import { isClient } from '~/lib/env'
 import { installEcho } from '~/plugins/echo'
