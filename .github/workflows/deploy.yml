@@ -15,6 +15,18 @@ env:
 
   PHP_VERSION: '8.4'
 
+  VITE_APP_FRONTEND_URL: ${{ vars.APP_FRONTEND_URL || 'https://app.b10cks.com/' }}
+  VITE_APP_BACKEND_URL: ${{ vars.APP_BACKEND_URL || 'https://api.b10cks.com/' }}
+  VITE_APP_ILUM_BASE_URL: ${{ vars.APP_ILUM_BASE_URL || 'https://api.b10cks.com/ilum' }}
+  VITE_APP_POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://eu.i.posthog.com' }}
+  VITE_APP_POSTHOG_KEY: ${{ secrets.POSTHOG_API_KEY || '' }}
+  VITE_APP_REVERB_APP_ID: ${{ secrets.REVERB_APP_ID || '' }}
+  VITE_APP_REVERB_APP_KEY: ${{ secrets.REVERB_APP_KEY || '' }}
+  VITE_APP_REVERB_APP_SECRET: ${{ secrets.REVERB_APP_SECRET || '' }}
+  VITE_APP_REVERB_HOST: ${{ secrets.REVERB_HOST || '' }}
+  VITE_APP_REVERB_PORT: ${{ secrets.REVERB_PORT || '' }}
+  VITE_APP_REVERB_SCHEME: ${{ secrets.REVERB_SCHEME || '' }}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -23,7 +35,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for commit comparison
+          fetch-depth: 0 # Fetch all history for commit comparison
 
       - name: Extract version from tag
         id: version
@@ -32,6 +44,11 @@ jobs:
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -49,6 +66,21 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Build frontend
+        run: |
+          export VITE_APP_PUBLIC_VERSION="${{ steps.version.outputs.version }}"
+          bun run build
+        env:
+          NODE_ENV: production
 
       - name: Login to Amazon ECR
         id: login-ecr
