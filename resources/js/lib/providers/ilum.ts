@@ -47,7 +47,7 @@ export default defineProvider({
   ) {
     const { format, quality, ...transformations } = modifiers
     const operations = operationsGenerator(transformations as Record<string, never>)
-    let finalPath = src
+    let finalPath = src.startsWith('/') ? src : `/${src}`
 
     if (operations) {
       finalPath += `/${operations}`
@@ -63,7 +63,7 @@ export default defineProvider({
     }
 
     return {
-      url: baseURL + finalPath,
+      url: (baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL) + finalPath,
     }
   },
 })
