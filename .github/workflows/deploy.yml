@@ -75,6 +75,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-bun-
 
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
       - name: Build frontend
         run: |
           export VITE_APP_PUBLIC_VERSION="${{ steps.version.outputs.version }}"
