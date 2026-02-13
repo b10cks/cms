@@ -203,7 +203,7 @@ const handleDelete = async (block: BlockResource) => {
                   class="cursor-pointer hover:bg-accent"
                 >
                   <TableCell>
-                    <RouterLink :href="`/${spaceId}/blocks/${block.id}`">
+                    <RouterLink :to="{ name: 'space-block', params: { spaceId: spaceId, block: block.id } }">
                       <IconName
                         v-bind="{ name: block.name, color: block.color, icon: block.icon }"
                         class="font-semibold"
