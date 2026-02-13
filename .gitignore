@@ -5,6 +5,7 @@
 /public/storage
 /storage/*.key
 /vendor
+/dist
 .env
 .env.backup
 .env.production
@@ -23,3 +24,6 @@ _ide_helper.php
 **/caddy
 frankenphp
 frankenphp-worker.php
+
+localhost.crt
+localhost.key

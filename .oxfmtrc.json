@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "experimentalSortImports": {},
+  "experimentalTailwindcss": {
+    "stylesheet": "./resources/css/main.css"
+  },
+  "semi": false,
+  "singleAttributePerLine": true,
+  "singleQuote": true,
+  "objectWrap": "preserve",
+  "trailingComma": "es5",
+  "ignorePatterns": []
+}
