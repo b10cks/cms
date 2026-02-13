@@ -72,7 +72,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
@@ -125,7 +125,7 @@ jobs:
 
       - name: Sync static assets to S3
         run: |
-          aws s3 sync public/build/ "s3://${{ env.VITE_S3_BUCKET }}" \
+          aws s3 sync public/build/ "s3://${{ env.VITE_S3_BUCKET }}/build" \
             --delete \
             --cache-control "max-age=7776000,s-maxage=604800,public"
 

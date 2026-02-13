@@ -123,7 +123,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      assetsDir: '_assets',
+      assetsDir: 'assets',
       target: 'esnext',
       minify: 'esbuild',
     },
