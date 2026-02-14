@@ -23,7 +23,7 @@ provide('spaceId', spaceId)
 </script>
 
 <template>
-  <div class="flex min-h-svh w-full flex-col pt-14">
+  <div class="flex min-h-svh flex-col pt-14">
     <AppHeader>
       <template #default>
         <div id="appHeader" />
@@ -32,9 +32,9 @@ provide('spaceId', spaceId)
         <div id="appActions" />
       </template>
     </AppHeader>
-    <div class="flex w-full grow">
+    <div class="flex flex-1">
       <AppSidebar />
-      <main class="flex w-full grow">
+      <main class="flex grow w-[calc(100%-3.5rem)]">
         <slot />
       </main>
     </div>

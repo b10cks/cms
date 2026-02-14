@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { TransitionGroup } from 'vue'
 import Icon from '~/components/Icon.vue'
+import AiContentInteraction from '~/components/ui/AiContentInteraction.vue'
 
 import { useRouteQuery } from '@vueuse/router'
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
@@ -40,6 +42,9 @@ const { data: spaceData } = useSpaceQuery(spaceId.value)
 
 const content = ref<ContentResource | null>(null)
 const originalContentData = ref<any>(null)
+const aiInteractionRef = useTemplateRef('aiInteractionRef')
+
+const showAi = ref(false)
 
 watch(
   originalContent,
@@ -75,7 +80,6 @@ async function guardLeave(to, from, next) {
 onBeforeRouteUpdate(guardLeave)
 onBeforeRouteLeave(guardLeave)
 
-// Browser navigation warning
 onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', handleBeforeUnload)
 })
@@ -140,14 +144,13 @@ const unresolvedCommentsCount = computed(() => {
 })
 
 const tabs = computed((): Tab[] => [
-  { value: 'edit', icon: 'lucide:pencil', label: t('labels.content.tabs.edit') },
-  { value: 'config', icon: 'lucide:wrench', label: t('labels.content.tabs.config') },
-  { value: 'info', icon: 'lucide:badge-info', label: t('labels.content.tabs.info') },
+  { value: 'edit', icon: 'lucide:pencil', label: t('labels.contents.tabs.edit') },
+  { value: 'config', icon: 'lucide:wrench', label: t('labels.contents.tabs.config') },
+  { value: 'info', icon: 'lucide:badge-info', label: t('labels.contents.tabs.info') },
   {
     value: 'comments',
-
     icon: 'lucide:message-square',
-    label: t('labels.content.tabs.comments'),
+    label: t('labels.contents.tabs.comments'),
     badge: {
       content: comments.value?.length,
       show: comments.value?.length > 0,
@@ -255,136 +258,172 @@ provide('resetDirtyState', resetDirtyState)
 </script>
 
 <template>
-  <div class="flex grow">
-    <Preview
-      v-if="showPreview"
-      ref="previewRef"
-      :full-slug="content?.full_slug"
-      :content-id="content?.id"
-      :updated-at="content?.updated_at"
-      :item-id="selectedItemId"
-      :space-id="spaceId"
-      @select-item="(itemId) => (selectedItemId = itemId)"
-      @update-field="updateField"
-    />
-    <TabsRoot
-      v-model="mode"
-      :class="['flex', showPreview ? 'w-2xl' : 'w-full']"
-      orientation="vertical"
+  <Preview
+    v-if="showPreview"
+    ref="previewRef"
+    :full-slug="content?.full_slug"
+    :content-id="content?.id"
+    :updated-at="content?.updated_at"
+    :item-id="selectedItemId"
+    :space-id="spaceId"
+    @select-item="(itemId) => (selectedItemId = itemId)"
+    @update-field="updateField"
+  />
+  <TabsRoot
+    v-model="mode"
+    :class="['flex', showPreview ? 'w-lg' : 'w-full']"
+    orientation="vertical"
+  >
+    <ScrollArea
+      v-if="content"
+      :class="[
+        'grow overflow-y-auto',
+        showPreview ? 'max-h-[calc(100svh-3.5rem)]' : 'h-[calc(100svh-3.5rem)] bg-background',
+      ]"
     >
-      <ScrollArea
-        v-if="content"
-        :class="[
-          'grow overflow-y-auto',
-          showPreview ? 'max-h-[calc(100svh-3.5rem)]' : 'h-[calc(100svh-3.5rem)] bg-background',
-        ]"
+      <TabsContent
+        value="edit"
+        :class="['p-4', showPreview ? '' : 'mx-auto max-w-4xl', showAi ? 'pb-52' : '']"
       >
-        <TabsContent
-          value="edit"
-          :class="['p-4', showPreview ? '' : 'mx-auto max-w-4xl']"
+        <EditorComponent
+          v-model="content.content"
+          :root-id="content.id"
+          :block-id="content.block!.id"
+          :space-id="spaceId"
+          :item-id="selectedItemId"
+          @navigate="handleNavigate"
+          @create-template="handleTemplateTrigger"
+        />
+        <div
+          :class="[showPreview ? 'inset-x-4' : 'w-full max-w-4xl', 'py-4 overflow-clip absolute bottom-0 flex flex-col items-center gap-3 z-10']"
         >
-          <EditorComponent
-            v-model="content.content"
-            :root-id="content.id"
-            :block-id="content.block.id"
-            :space-id="spaceId"
-            :item-id="selectedItemId"
-            @navigate="handleNavigate"
-            @create-template="handleTemplateTrigger"
-          />
-          <Button
-            v-if="hasClipboardItem"
-            title="Clear clipboard"
-            size="xs"
-            variant="ghost"
-            class="absolute bottom-4 left-1/2 z-50 -translate-x-1/2"
-            @click="clearClipboard"
+          <TransitionGroup
+            enter-active-class="transition duration-150 ease-butter"
+            leave-active-class="transition duration-150 ease-butter"
+            enter-from-class="opacity-0 translate-y-full"
+            enter-to-class="opacity-100 translate-y-0"
+            leave-from-class="opacity-100 translate-y-0"
+            leave-to-class="opacity-0 translate-y-full"
           >
-            <Icon name="lucide:trash-2" />
-            <span>{{ t('actions.clearClipboard') }}</span>
-          </Button>
-        </TabsContent>
-        <TabsContent
-          value="info"
-          :class="['p-4', showPreview ? '' : 'mx-auto max-w-3xl']"
-        >
-          <ContentInfo :content="content" />
-        </TabsContent>
-        <TabsContent
-          value="config"
-          :class="['p-4', showPreview ? '' : 'mx-auto max-w-3xl']"
-        >
-          <ContentSettings v-model="content" />
-        </TabsContent>
-        <TabsContent
-          value="comments"
-          :class="['p-4', showPreview ? '' : 'mx-auto max-w-3xl']"
-        >
-          <CommentsSidebar
-            :content-id="content.id"
-            :content-version-id="content.current_version_id || undefined"
-          />
-        </TabsContent>
-      </ScrollArea>
-      <div
-        v-else
-        class="grow"
-      />
-      <TabsList class="flex h-full w-14 shrink-0 flex-col border-l border-l-border p-3 select-none">
-        <div class="flex min-h-0 flex-1 flex-col">
-          <div class="relative flex w-full min-w-0 flex-col gap-2">
-            <SimpleTooltip
-              v-for="tab in tabs"
-              :tooltip="tab.label"
-              :key="tab.value"
-              side="left"
-              class="flex cursor-pointer"
+            <div
+              v-if="hasClipboardItem"
+              key="clearClipboard"
             >
-              <TabsTrigger
-                :value="tab.value"
-                class="relative flex size-8 items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-input data-[state=active]:bg-input data-[state=active]:text-primary data-[state=inactive]:cursor-pointer"
+              <Button
+                title="Clear clipboard"
+                size="xs"
+                variant="ghost"
+                @click="clearClipboard"
               >
-                <Icon
-                  :name="tab.icon"
-                  size="1.25rem"
-                />
-                <Badge
-                  v-if="tab.badge?.show"
-                  :variant="tab.badge.variant"
-                  size="dot"
-                  class="absolute -top-1 -right-1"
-                >
-                  {{ tab.badge.content }}
-                </Badge>
-              </TabsTrigger>
-            </SimpleTooltip>
-          </div>
+                <Icon name="lucide:trash-2" />
+                <span>{{ t('actions.clearClipboard') }}</span>
+              </Button>
+            </div>
+            <AiContentInteraction
+              v-if="showAi"
+              key="ai"
+              ref="aiInteractionRef"
+              v-model:content="content"
+              :space-id="spaceId"
+              :content-id="contentId"
+              class="mx-auto max-w-xl"
+              :placeholder="t('labels.settings.ai.placeholder', 'Ask AI to modify your content...')"
+            />
+          </TransitionGroup>
         </div>
-      </TabsList>
-    </TabsRoot>
-
-    <BlockTemplateCreateDialog
-      :space-id="spaceId"
-      :block-id="template.blockId"
-      :content="template.content"
-      v-model:open="template.isOpen"
+      </TabsContent>
+      <TabsContent
+        value="info"
+        :class="['p-4', showPreview ? '' : 'mx-auto max-w-3xl']"
+      >
+        <ContentInfo :content="content" />
+      </TabsContent>
+      <TabsContent
+        value="config"
+        :class="['p-4', showPreview ? '' : 'mx-auto max-w-3xl']"
+      >
+        <ContentSettings v-model="content" />
+      </TabsContent>
+      <TabsContent
+        value="comments"
+        :class="['p-4', showPreview ? '' : 'mx-auto max-w-3xl']"
+      >
+        <CommentsSidebar
+          :content-id="content.id"
+          :content-version-id="content.current_version_id || undefined"
+        />
+      </TabsContent>
+    </ScrollArea>
+    <div
+      v-else
+      class="grow"
     />
+    <TabsList class="flex h-full w-14 shrink-0 flex-col border-l border-l-border p-3 select-none">
+      <div class="flex min-h-0 flex-1 flex-col">
+        <div class="relative flex w-full min-w-0 flex-col gap-2">
+          <SimpleTooltip
+            v-for="tab in tabs"
+            :tooltip="tab.label"
+            :key="tab.value"
+            side="left"
+            class="flex cursor-pointer"
+          >
+            <TabsTrigger
+              :value="tab.value"
+              class="relative flex size-8 items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-input data-[state=active]:bg-input data-[state=active]:text-primary data-[state=inactive]:cursor-pointer"
+            >
+              <Icon
+                :name="tab.icon"
+                size="1.25rem"
+              />
+              <Badge
+                v-if="tab.badge?.show"
+                :variant="tab.badge.variant"
+                size="dot"
+                class="absolute -top-1 -right-1"
+              >
+                {{ tab.badge.content }}
+              </Badge>
+            </TabsTrigger>
+          </SimpleTooltip>
+        </div>
+      </div>
+      <div>
+        <Button
+          size="toolbar"
+          :variant="showAi ? 'default' : 'ghost'"
+          @click="showAi = !showAi"
+        >
+          <Icon
+            name="lucide:wand"
+            :class="[showAi ? 'text-primary' : 'text-ai', 'transition-colors duration-200 ease-butter ']"
+          />
+        </Button>
+      </div>
+    </TabsList>
+  </TabsRoot>
 
-    <Teleport to="#appHeader">
-      <ContentHeader
-        v-if="content"
-        :content="content"
-        :show-preview-toggle="!isPreviewDisabled"
-      />
-    </Teleport>
+  <BlockTemplateCreateDialog
+    :space-id="spaceId"
+    :block-id="template.blockId"
+    :content="template.content"
+    v-model:open="template.isOpen"
+  />
 
-    <Teleport to="#appHeaderActions">
-      <HeaderActions
-        v-if="content"
-        :content="content"
-        :space-id="spaceId"
-        :is-dirty="isDirty"
-      />
-    </Teleport>
-  </div>
+  <Teleport to="#appHeader">
+    <ContentHeader
+      v-if="content"
+      :content="content"
+      :show-preview-toggle="!isPreviewDisabled"
+    />
+  </Teleport>
+
+  <Teleport to="#appHeaderActions">
+    <HeaderActions
+      v-if="content"
+      :content="content"
+      :space-id="spaceId"
+      :is-dirty="isDirty"
+    />
+  </Teleport>
 </template>

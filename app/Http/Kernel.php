@@ -41,13 +41,13 @@ class Kernel extends HttpKernel
 
         'mgmt' => [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-            \Illuminate\Routing\Middleware\ThrottleRequests::class . ':mgmt',
+            \Illuminate\Routing\Middleware\ThrottleRequests::class.':mgmt',
             \App\Http\Middleware\AcceptHeader::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
 
         'api' => [
-            \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
+            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \App\Http\Middleware\AcceptHeader::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],

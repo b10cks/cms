@@ -908,9 +908,12 @@
         },
         "provider": "Provider",
         "tokenMultiplier": "Token multiplier",
+        "contextWindow": "Context",
         "loadingModels": "Loading available models...",
         "loadingUsage": "Loading usage data...",
-        "noUsageData": "No usage data available"
+        "noUsageData": "No usage data available",
+        "placeholder": "Ask AI to modify your content...",
+        "dropFiles": "Drop files here"
       },
       "members": {
         "title": "Members",
@@ -1460,6 +1463,7 @@
       }
     },
     "saveChanges": "Save Changes",
+    "saving": "Saving...",
     "close": "Close",
     "back": "Back",
     "add": "Add",
@@ -1478,6 +1482,35 @@
     "logout": "Logout",
     "retry": "Retry",
     "clearClipboard": "Clear Clipboard"
+  },
+  "components": {
+    "aiModelSelector": {
+      "selectModel": "Select AI model",
+      "loadError": "Failed to load models",
+      "noModels": "No models available",
+      "favourites": "Favourites",
+      "favouriteError": "Failed to update favourite",
+      "setModelError": "Failed to save model preference",
+      "drivers": {
+        "openai": "OpenAI",
+        "bedrock": "AWS Bedrock",
+        "openrouter": "OpenRouter"
+      }
+    },
+    "aiText": {
+      "streamError": "AI stream error: {error}",
+      "thinking": "Thinking..."
+    },
+    "aiMention": {
+      "content": "Content",
+      "blocks": "Blocks",
+      "noResults": "No matches found",
+      "hint": "Type @ to mention content or blocks"
+    },
+    "aiSettings": {
+      "saveSuccess": "AI settings saved successfully",
+      "saveError": "Failed to save AI settings"
+    }
   },
   "alertDialog": {
     "ok": "OK",
@@ -1587,6 +1620,9 @@
       "setCurrentError": "Failed to set version as current: {error}",
       "publishSuccess": "Version published successfully",
       "publishError": "Failed to publish version: {error}"
+    },
+    "ai": {
+      "interactionError": "AI interaction failed: {error}"
     },
     "dataEntries": {
       "createSuccess": "Data entry \"{key}\" created successfully",

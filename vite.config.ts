@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
-      laravel(['resources/js/main.ts']),
+      laravel({ input: ['resources/js/main.ts'], refresh: true }),
       AutoImport({
         imports: [
           'vue',

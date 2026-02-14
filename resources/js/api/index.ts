@@ -1,3 +1,4 @@
+import { Ai } from '~/api/resources/ai'
 import { BlockFolders } from '~/api/resources/block-folders'
 import { BlockTemplates } from '~/api/resources/block-templates'
 import { BlockVersions } from '~/api/resources/block-versions'
@@ -27,6 +28,7 @@ import { Teams } from './resources/teams'
 
 export class API {
   public client: ApiClient
+  private readonly _ai: Ai
   private readonly _spaces: Spaces
   private readonly _teams: Teams
   private readonly _invites: Invites
@@ -41,6 +43,7 @@ export class API {
     } = {}
   ) {
     this.client = new ApiClient(options)
+    this._ai = new Ai(this.client)
     this._spaces = new Spaces(this.client)
     this._teams = new Teams(this.client)
     this._invites = new Invites(this.client)
@@ -55,6 +58,10 @@ export class API {
 
   public setAuthHandler(handler: any): void {
     this.client.setAuthHandler(handler)
+  }
+
+  public get ai(): Ai {
+    return this._ai
   }
 
   public get spaces(): Spaces {
@@ -83,6 +90,7 @@ export class API {
 
   public forSpace(spaceId: string) {
     return {
+      ai: new Ai(this.client, spaceId),
       assetFolders: new AssetFolders(this.client, spaceId),
       assetTags: new AssetTags(this.client, spaceId),
       assets: new Assets(this.client, spaceId),

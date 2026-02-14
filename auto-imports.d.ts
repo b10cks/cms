@@ -70,6 +70,10 @@ declare global {
   const toValue: typeof import('vue').toValue
   const triggerRef: typeof import('vue').triggerRef
   const unref: typeof import('vue').unref
+  const useAiContent: typeof import('./resources/js/composables/useAiContent').useAiContent
+  const useAiMentions: typeof import('./resources/js/composables/useAiMentions').useAiMentions
+  const useAiModels: typeof import('./resources/js/composables/useAiModels').useAiModels
+  const useAiSettings: typeof import('./resources/js/composables/useAiModels').useAiSettings
   const useAlertDialog: typeof import('./resources/js/composables/useAlertDialog').useAlertDialog
   const useApiClient: typeof import('./resources/js/composables/useApiClient').useApiClient
   const useAssetFolders: typeof import('./resources/js/composables/useAssetFolders').useAssetFolders
@@ -138,6 +142,12 @@ declare global {
   // @ts-ignore
   export type { Component, Slot, Slots, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, ShallowRef, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
+  // @ts-ignore
+  export type { AiStreamEvent, StreamCallbacks } from './resources/js/composables/useAiContent'
+  import('./resources/js/composables/useAiContent')
+  // @ts-ignore
+  export type { AiModel, GroupedModels, SpaceAiSettings } from './resources/js/composables/useAiModels'
+  import('./resources/js/composables/useAiModels')
   // @ts-ignore
   export type { DialogAction, DialogOptions, MessageOptions, ConfirmOptions } from './resources/js/composables/useAlertDialog'
   import('./resources/js/composables/useAlertDialog')
@@ -236,6 +246,10 @@ declare module 'vue' {
     readonly toValue: UnwrapRef<typeof import('vue')['toValue']>
     readonly triggerRef: UnwrapRef<typeof import('vue')['triggerRef']>
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
+    readonly useAiContent: UnwrapRef<typeof import('./resources/js/composables/useAiContent')['useAiContent']>
+    readonly useAiMentions: UnwrapRef<typeof import('./resources/js/composables/useAiMentions')['useAiMentions']>
+    readonly useAiModels: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiModels']>
+    readonly useAiSettings: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiSettings']>
     readonly useAlertDialog: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['useAlertDialog']>
     readonly useApiClient: UnwrapRef<typeof import('./resources/js/composables/useApiClient')['useApiClient']>
     readonly useAssetFolders: UnwrapRef<typeof import('./resources/js/composables/useAssetFolders')['useAssetFolders']>

@@ -4,20 +4,20 @@ import Icon from '~/components/Icon.vue'
 import { toast } from 'vue-sonner'
 import Markdown from '~/components/Markdown.vue'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { PulseDot } from '~/components/ui/pulse-dot'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import type { CommentResource } from '~/types/comments'
 import type {
-  CommentClickEvent,
-  CommentCreateEvent,
-  CommentUpdateEvent,
-  FieldUpdateEvent,
+    CommentClickEvent,
+    CommentCreateEvent,
+    CommentUpdateEvent,
+    FieldUpdateEvent,
 } from '~/utils/preview-bridge'
 import { PreviewBridge } from '~/utils/preview-bridge'
 
@@ -164,14 +164,14 @@ const handleLoad = () => {
 </script>
 
 <template>
-  <div class="flex w-full grow flex-col bg-elevated">
+  <div class="flex flex-1 grow flex-col bg-elevated">
     <div
       :class="[
         'flex grow flex-col bg-secondary',
-        mode === 'mobile' ? 'mx-auto my-4 w-sm overflow-hidden rounded-xl shadow-2xl' : 'w-full',
+        mode === 'mobile' ? 'mx-auto my-4 w-sm overflow-hidden rounded-xl shadow-2xl' : 'grow',
       ]"
     >
-      <div class="flex h-12 w-full items-center gap-3 border-b border-b-input bg-background p-3">
+      <div class="flex h-12 items-center gap-3 border-b border-b-input bg-background p-3">
         <Icon
           name="lucide:refresh-cw"
           :class="['shrink-0 cursor-pointer', src || 'invisible', loading && 'animate-spin']"
@@ -227,12 +227,12 @@ const handleLoad = () => {
         </div>
       </div>
       <iframe
-        v-if="baseSrc"
+        v-if="baseSrc && src"
         ref="iframeRef"
         :key="iframeKey"
         :src="src"
         :title="fullSlug"
-        class="w-full grow bg-white"
+        class="grow bg-white"
         @load="handleLoad()"
       />
       <div

@@ -245,7 +245,7 @@ const initDelete = async (item: ContentResource) => {
           <button
             v-if="item.value.type !== 'single'"
             class="flex transform cursor-pointer items-center hover:text-primary"
-            @click="initCreate(item.value.id)"
+            @click.stop.prevent="initCreate(item.value.id)"
           >
             <Icon name="lucide:plus" />
           </button>
@@ -253,7 +253,7 @@ const initDelete = async (item: ContentResource) => {
             type="button"
             title="Delete item"
             class="flex transform cursor-pointer items-center hover:text-red-500"
-            @click.stop="initDelete(item.value)"
+            @click.stop.prevent="initDelete(item.value)"
           >
             <Icon name="lucide:trash-2" />
           </button>

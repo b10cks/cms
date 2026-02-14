@@ -7,14 +7,15 @@ use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Contracts\Database\Eloquent\SerializesCastableAttributes;
 
 /**
- * @param $region string
- * @param $defaultLanguage string
- * @param $languages array
- * @param $asset_fields array
- * @param $environments array
- * @param $visual_editor bool
- * @param $search_driver string
- * @param $slug_strategy string
+ * @param  $region  string
+ * @param  $defaultLanguage  string
+ * @param  $languages  array
+ * @param  $asset_fields  array
+ * @param  $environments  array
+ * @param  $visual_editor  bool
+ * @param  $search_driver  string
+ * @param  $slug_strategy  string
+ * @param  $ai  array
  */
 class SpaceSettings extends Settings
 {
@@ -27,6 +28,11 @@ class SpaceSettings extends Settings
         'visual_editor' => true,
         'search_driver' => 'mysql',
         'slug_strategy' => 'prepend_translations',
+        'ai' => [
+            'enabled' => true,
+            'model' => null,
+            'favourites' => [],
+        ],
     ];
 
     public function shouldPrependLocale(string $languageIso): bool
@@ -44,7 +50,7 @@ class SpaceSettings extends Settings
 
     public function getEnabledLanguages(): array
     {
-        return array_map(fn($language): string => $language['code'], $this->attributes['languages'] ?? [])
+        return array_map(fn ($language): string => $language['code'], $this->attributes['languages'] ?? [])
             + [$this->getDefaultLanguage()];
     }
 
@@ -55,7 +61,8 @@ class SpaceSettings extends Settings
 
     public static function castUsing(array $arguments): CastsAttributes
     {
-        return new class implements CastsAttributes, SerializesCastableAttributes {
+        return new class implements CastsAttributes, SerializesCastableAttributes
+        {
             public function get($model, string $key, $value, array $attributes)
             {
                 return SpaceSettings::make($value ? json_decode($value, true) : []);

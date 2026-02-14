@@ -906,9 +906,12 @@
         },
         "provider": "Anbieter",
         "tokenMultiplier": "Token-Multiplikator",
+        "contextWindow": "Kontext",
         "loadingModels": "Lade verfügbare Modelle...",
         "loadingUsage": "Lade Nutzungsdaten...",
-        "noUsageData": "Keine Nutzungsdaten verfügbar"
+        "noUsageData": "Keine Nutzungsdaten verfügbar",
+        "placeholder": "Bitte die KI, deinen Content zu bearbeiten...",
+        "dropFiles": "Dateien hier ablegen"
       },
       "members": {
         "title": "Mitglieder",
@@ -1458,6 +1461,7 @@
       }
     },
     "saveChanges": "Änderungen speichern",
+    "saving": "Speichere...",
     "close": "Schließen",
     "back": "Zurück",
     "add": "Hinzufügen",
@@ -1476,6 +1480,35 @@
     "logout": "Abmelden",
     "retry": "Erneut versuchen",
     "clearClipboard": "Zwischenablage löschen"
+  },
+  "components": {
+    "aiModelSelector": {
+      "selectModel": "KI-Modell auswählen",
+      "loadError": "Modelle konnten nicht geladen werden",
+      "noModels": "Keine Modelle verfügbar",
+      "favourites": "Favoriten",
+      "favouriteError": "Favorit konnte nicht aktualisiert werden",
+      "setModelError": "Modell-Präferenz konnte nicht gespeichert werden",
+      "drivers": {
+        "openai": "OpenAI",
+        "bedrock": "AWS Bedrock",
+        "openrouter": "OpenRouter"
+      }
+    },
+    "aiText": {
+      "streamError": "KI-Stream-Fehler: {error}",
+      "thinking": "Denke nach..."
+    },
+    "aiMention": {
+      "content": "Inhalte",
+      "blocks": "Blöcke",
+      "noResults": "Keine Treffer gefunden",
+      "hint": "Tippe @ um Inhalte oder Blöcke zu erwähnen"
+    },
+    "aiSettings": {
+      "saveSuccess": "KI-Einstellungen erfolgreich gespeichert",
+      "saveError": "KI-Einstellungen konnten nicht gespeichert werden"
+    }
   },
   "alertDialog": {
     "ok": "OK",
@@ -1585,6 +1618,9 @@
       "setCurrentError": "Fehler beim Festlegen der Version als aktuell: {error}",
       "publishSuccess": "Version erfolgreich veröffentlicht",
       "publishError": "Fehler beim Veröffentlichen der Version: {error}"
+    },
+    "ai": {
+      "interactionError": "KI-Interaktion fehlgeschlagen: {error}"
     },
     "dataEntries": {
       "createSuccess": "Dateneintrag \"{key}\" erfolgreich erstellt",

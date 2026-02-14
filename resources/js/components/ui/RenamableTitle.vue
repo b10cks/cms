@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onClickOutside } from '@vueuse/core'
-import type { HTMLAttributes } from 'vue'
+import { onClickOutside } from '@vueuse/core';
+import type { HTMLAttributes } from 'vue';
 
 const props = withDefaults(
   defineProps<{
@@ -101,7 +101,7 @@ watch(
     v-else
     type="button"
     :class="props.class"
-    @dblclick.stop="startEdit"
+    @dblclick.stop.prevent="startEdit"
   >
     <slot :name="name">{{ name ?? fallback }}</slot>
   </span>

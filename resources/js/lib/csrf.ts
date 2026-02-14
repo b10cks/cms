@@ -1,10 +1,7 @@
-import { isClient } from '~/lib/env'
 const XSRF_COOKIE_NAME = 'XSRF-TOKEN'
 
-const isClient = typeof window !== 'undefined'
-
 export const getXsrfToken = (): string | null => {
-  if (!isClient) return null
+  if (typeof document === 'undefined') return null
 
   const cookies = document.cookie ? document.cookie.split('; ') : []
   const entry = cookies.find((cookie) => cookie.startsWith(`${XSRF_COOKIE_NAME}=`))
@@ -15,13 +12,28 @@ export const getXsrfToken = (): string | null => {
   }
 
   const value = entry.split('=').slice(1).join('=')
-  return value ? decodeURIComponent(value) : null
+  if (!value) {
+    console.warn('[CSRF] XSRF-TOKEN cookie has no value')
+    return null
+  }
+
+  try {
+    return decodeURIComponent(value)
+  } catch (e) {
+    console.warn('[CSRF] Failed to decode XSRF-TOKEN:', e)
+    return value
+  }
 }
 
 export const getXsrfHeaders = (): Record<string, string> => {
   const token = getXsrfToken()
   if (!token) {
     console.warn('[CSRF] No XSRF token available for request headers')
+    return {}
   }
-  return token ? { 'X-XSRF-TOKEN': token } : {}
+  return { 'X-XSRF-TOKEN': token }
+}
+
+export const hasXsrfToken = (): boolean => {
+  return getXsrfToken() !== null
 }

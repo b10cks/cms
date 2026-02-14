@@ -11,7 +11,6 @@ const { settings } = useSpaceSettings(route.params.space as string)
   <ResizablePanelGroup
     id="content-group-1"
     direction="horizontal"
-    class="flex h-full w-full"
   >
     <ResizablePanel
       id="content-panel-1"

@@ -10,8 +10,6 @@ interface RequestOptions extends RequestInit {
   body?: any
 }
 
-const isClient = typeof window !== 'undefined'
-
 export class ApiClient {
   private readonly baseURL: string
   private readonly defaultHeaders: Record<string, string>
@@ -183,5 +181,9 @@ export class ApiClient {
 
   public delete<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     return this.request<T>(endpoint, { method: 'DELETE', ...options })
+  }
+
+  public getBaseUrl(): string {
+    return this.baseURL
   }
 }

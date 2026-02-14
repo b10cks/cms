@@ -10,6 +10,7 @@ use App\Models\Management\SpaceAiUsage;
 abstract class AiService
 {
     protected ?AiModel $model = null;
+
     protected ?Space $space = null;
 
     public function metaTags($page)
@@ -108,6 +109,11 @@ TXT;
 
     abstract protected function invokeModel($prompt);
 
+    public function generate(string $prompt): ?string
+    {
+        return $this->invokeModel($prompt);
+    }
+
     public function setModel(AiModel $model): self
     {
         $this->model = $model;
@@ -126,7 +132,7 @@ TXT;
     public function setModelFromSpace(Space $space)
     {
         $modelId = data_get($space->settings, 'ai.model', null);
-        $model = $modelId ? AiModel::findOrFail($modelId) : AiModel::active()->where('is_free')->first();
+        $model = $modelId ? AiModel::findOrFail($modelId) : AiModel::where('is_free')->first();
         $this->setModel($model);
 
         return $this;

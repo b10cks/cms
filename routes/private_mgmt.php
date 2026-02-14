@@ -1,7 +1,11 @@
 <?php
 
+use App\Http\Controllers\Mgmt\Ai\AiModelsController;
 use App\Http\Controllers\Mgmt\Ai\AvailableModelsController;
+use App\Http\Controllers\Mgmt\Ai\ContentInteractionController;
+use App\Http\Controllers\Mgmt\Ai\ContentInteractionStreamController;
 use App\Http\Controllers\Mgmt\Ai\MetaTagsController;
+use App\Http\Controllers\Mgmt\Ai\SpaceAiSettingsController;
 use App\Http\Controllers\Mgmt\Ai\TranslationController;
 use App\Http\Controllers\Mgmt\AssetController;
 use App\Http\Controllers\Mgmt\AssetDataExportController;
@@ -24,14 +28,15 @@ use App\Http\Controllers\Mgmt\Content\ContentUnpublishController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionCurrentController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionPublishController;
+use App\Http\Controllers\Mgmt\PresenceController;
+use App\Http\Controllers\Mgmt\RedirectController;
+use App\Http\Controllers\Mgmt\RedirectResetController;
 use App\Http\Controllers\Mgmt\Release\ReleaseCancelController;
 use App\Http\Controllers\Mgmt\Release\ReleaseCommitController;
 use App\Http\Controllers\Mgmt\Release\ReleaseController;
 use App\Http\Controllers\Mgmt\Release\ReleasePublishController;
 use App\Http\Controllers\Mgmt\Release\ReleaseVersionAssignController;
 use App\Http\Controllers\Mgmt\Release\ReleaseVersionRemoveController;
-use App\Http\Controllers\Mgmt\RedirectController;
-use App\Http\Controllers\Mgmt\RedirectResetController;
 use App\Http\Controllers\Mgmt\SpaceArchiveController;
 use App\Http\Controllers\Mgmt\SpaceController;
 use App\Http\Controllers\Mgmt\SpaceIconController;
@@ -52,7 +57,6 @@ use App\Http\Controllers\Mgmt\User\UserInviteController;
 use App\Http\Controllers\Mgmt\User\UserPasswordController;
 use App\Http\Controllers\Mgmt\User\UserSettingsController;
 use App\Http\Controllers\Mgmt\User\UserTokenController;
-use App\Http\Controllers\Mgmt\PresenceController;
 use App\Http\Controllers\SpaceAiUsageController;
 
 Route::group(['prefix' => 'users'], function () {
@@ -84,10 +88,16 @@ Route::group(['prefix' => 'users'], function () {
 Route::group(['prefix' => 'ai'], function () {
     Route::get('available-models', AvailableModelsController::class)
         ->name('ai.available-models');
+    Route::get('models', AiModelsController::class)
+        ->name('ai.models');
     Route::post('meta-tags', MetaTagsController::class)
         ->name('ai.meta-tags');
     Route::post('translate', TranslationController::class)
         ->name('ai.translate');
+    Route::post('content-interaction', ContentInteractionController::class)
+        ->name('ai.content-interaction');
+    Route::post('content-interaction/stream', ContentInteractionStreamController::class)
+        ->name('ai.content-interaction.stream');
 });
 
 Route::get('teams/hierarchy', TeamHierarchyController::class)->name('teams.hierarchy');
@@ -108,12 +118,13 @@ Route::group(['prefix' => 'teams/{team}'], function () {
     Route::post('invites/{invite}/resend', TeamInviteResendController::class)->name('teams.invites.resend');
 });
 
-
 Route::apiResource('spaces', SpaceController::class);
 Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::post('icon', SpaceIconController::class)->name('spaces.icon');
     Route::post('archive', SpaceArchiveController::class)->name('spaces.archive');
     Route::get('ai-usage', SpaceAiUsageController::class)->name('spaces.ai-usage');
+    Route::get('ai-settings', [SpaceAiSettingsController::class, 'show'])->name('spaces.ai-settings.show');
+    Route::patch('ai-settings', [SpaceAiSettingsController::class, 'update'])->name('spaces.ai-settings.update');
 
     Route::get('invites', [SpaceInviteController::class, 'index'])->name('spaces.invites.index');
     Route::post('invites', [SpaceInviteController::class, 'store'])->name('spaces.invites.store');
@@ -125,11 +136,11 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
 
     Route::apiResource('blocks', BlockController::class);
     Route::apiResource('block-tags', BlockTagController::class)->parameters([
-        'block-tags' => 'tag'
+        'block-tags' => 'tag',
     ]);
 
     Route::apiResource('block-folders', BlockFolderController::class)->parameters([
-        'block-folders' => 'folder'
+        'block-folders' => 'folder',
     ]);
 
     Route::group(['prefix' => 'blocks/{block}'], function () {
