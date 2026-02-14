@@ -1,5 +1,7 @@
 <script setup lang="ts">
+
 import ReleasesIcon from '~/assets/images/releases.svg?component'
+import Icon from '~/components/Icon.vue'
 import ReleaseCard from '~/components/releases/ReleaseCard.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
 import { Badge } from '~/components/ui/badge'

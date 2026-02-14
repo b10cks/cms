@@ -1,19 +1,20 @@
 <script setup lang="ts">
+import type { Ref } from 'vue'
 import Icon from '~/components/Icon.vue'
 
 import { useDark, useToggle } from '@vueuse/core'
 import { Avatar } from '~/components/ui/avatar'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
+    DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { Switch } from '~/components/ui/switch'
 import { SimpleTooltip } from '~/components/ui/tooltip'
@@ -26,7 +27,7 @@ const { handleUpdateLanguage } = useUserSettings()
 
 const { user, logout } = useAuth()
 
-const spaceId = inject('spaceId')
+const spaceId = inject<Ref<string | undefined>>('spaceId')
 
 const menu = [
   { icon: 'lucide:home', label: 'Home', route: 'space' },
