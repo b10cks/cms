@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
 
+import { useVModel } from '@vueuse/core'
 import type { HTMLAttributes } from 'vue'
 import { computed } from 'vue'
-import { useVModel } from '@vueuse/core'
-import FormField from './FormField.vue'
-import Input from '../input/Input.vue'
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
-import { Button } from '~/components/ui/button'
 import { toast } from 'vue-sonner'
+import { Button } from '~/components/ui/button'
+import Input from '../input/Input.vue'
+import FormField from './FormField.vue'
 
 type InputActionType = 'clear' | 'copy'
 
@@ -17,10 +16,10 @@ const { $t } = useI18n()
 const props = defineProps<{
   // FormField props
   id?: string
-  label?: string | CleanTranslation
+  label?: string
   required?: boolean
-  tooltip?: string | CleanTranslation
-  description?: string | CleanTranslation
+  tooltip?: string
+  description?: string
   error?: string
   autoFocus?: boolean
   class?: HTMLAttributes['class']

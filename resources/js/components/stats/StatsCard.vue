@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
+import Icon from '~/components/Icon.vue';
 
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 
 defineProps<{
   icon?: string
-  title?: string | CleanTranslation
-  description?: string | CleanTranslation
+  title?: string
+  description?: string
 }>()
 </script>
 

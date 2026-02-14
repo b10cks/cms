@@ -2,7 +2,6 @@
 import Icon from '~/components/Icon.vue'
 
 import { useRouteQuery } from '@vueuse/router'
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
 import BlockTemplateCreateDialog from '~/components/blocks/BlockTemplateCreateDialog.vue'
 import CommentsSidebar from '~/components/comments/CommentsSidebar.vue'
@@ -68,7 +67,7 @@ const previewRef = useTemplateRef('previewRef')
 type Tab = {
   value: string
   icon: string
-  label: string | CleanTranslation
+  label: string
   badge?: { content: string | number; show: boolean; variant: BadgeVariants['variant'] }
 }
 

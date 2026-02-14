@@ -1,16 +1,15 @@
 <script setup lang="ts">
+import type { HTMLAttributes } from 'vue';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '~/components/ui/tooltip/index'
-import type { HTMLAttributes } from 'vue'
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '~/components/ui/tooltip/index';
 
 const props = withDefaults(
   defineProps<{
-    tooltip: string | CleanTranslation
+    tooltip: string
     delayDuration?: number
     side?: 'top' | 'right' | 'bottom' | 'left'
     class?: HTMLAttributes['class']

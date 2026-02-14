@@ -1,44 +1,43 @@
 <script setup lang="ts" generic="T">
 import { useVModel } from '@vueuse/core'
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
 import type { HTMLAttributes } from 'vue'
 import { computed } from 'vue'
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
 } from '~/components/ui/select'
 import FormField from './FormField.vue'
 
 export interface SelectOption<T = unknown> {
   value: T
-  label: string | CleanTranslation
+  label: string
   disabled?: boolean
 }
 
 const props = defineProps<{
   id?: string
-  label?: string | CleanTranslation
+  label?: string
   required?: boolean
-  tooltip?: string | CleanTranslation
-  description?: string | CleanTranslation
+  tooltip?: string
+  description?: string
   error?: string
   class?: HTMLAttributes['class']
   selectClass?: HTMLAttributes['class']
   modelValue?: T
   defaultValue?: T
-  placeholder?: string | CleanTranslation
+  placeholder?: string
   disabled?: boolean
   readonly?: boolean
   name: string
   options: SelectOption<T>[]
   displayFn?: (option: SelectOption<T>) => string
   valueFn?: (option: SelectOption<T>) => T
-  emptyText?: string | CleanTranslation
+  emptyText?: string
 }>()
 
 const emits = defineEmits<{

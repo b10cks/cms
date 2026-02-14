@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
-import ColorSelect from '~/components/ui/ColorSelect.vue'
-import { FormField } from '~/components/ui/form'
-import IconGrid from '~/components/ui/IconGrid.vue'
-import { Input } from '~/components/ui/input'
+import ColorSelect from '~/components/ui/ColorSelect.vue';
+import { FormField } from '~/components/ui/form';
+import IconGrid from '~/components/ui/IconGrid.vue';
+import { Input } from '~/components/ui/input';
 
 const props = defineProps<{
   modelValue: {
@@ -12,9 +11,9 @@ const props = defineProps<{
     name?: string
   }
   disabled?: boolean
-  placeholder?: string | CleanTranslation
-  label?: string | CleanTranslation
-  name?: string | CleanTranslation
+  placeholder?: string
+  label?: string
+  name?: string
 }>()
 
 const emit = defineEmits<{

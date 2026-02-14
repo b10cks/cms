@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
 
 defineProps<{
-  label: CleanTranslation | string
+  label: string
   hideLabel?: boolean
   hasError?: boolean
   required?: boolean

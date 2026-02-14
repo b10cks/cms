@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
-import { CardDescription, CardHeader, CardTitle } from '~/components/ui/card/index'
+import { CardDescription, CardHeader, CardTitle } from '~/components/ui/card/index';
 
 defineProps<{
-  title?: string | CleanTranslation
-  description?: string | CleanTranslation
+  title?: string
+  description?: string
 }>()
 </script>
 

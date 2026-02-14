@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { HTMLAttributes } from 'vue'
 import { runtimeConfig } from '~/lib/runtime-config'
 
 interface IlumModifiers {
@@ -23,7 +24,7 @@ const props = defineProps<{
   quality?: number
   crop?: 'fill' | 'fit' | 'crop'
   gravity?: 'face' | 'center' | 'auto' | string
-  class?: string
+  class?: HTMLAttributes['class']
   loading?: 'lazy' | 'eager'
   decoding?: 'async' | 'auto' | 'sync'
 }>()

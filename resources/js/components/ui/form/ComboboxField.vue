@@ -1,45 +1,44 @@
 <script setup lang="ts" generic="T">
+import { useVModel } from '@vueuse/core'
 import type { HTMLAttributes } from 'vue'
 import { computed, ref } from 'vue'
-import { useVModel } from '@vueuse/core'
-import FormField from './FormField.vue'
 import {
-  Combobox,
-  ComboboxAnchor,
-  ComboboxEmpty,
-  ComboboxGroup,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
+    Combobox,
+    ComboboxAnchor,
+    ComboboxEmpty,
+    ComboboxGroup,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
 } from '~/components/ui/combobox'
 import {
-  TagsInput,
-  TagsInputInput,
-  TagsInputItem,
-  TagsInputItemDelete,
-  TagsInputItemText,
+    TagsInput,
+    TagsInputInput,
+    TagsInputItem,
+    TagsInputItemDelete,
+    TagsInputItemText,
 } from '~/components/ui/tags-input'
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
+import FormField from './FormField.vue'
 
 export interface ComboboxOption<T = unknown> {
   value: T
-  label: string | CleanTranslation
+  label: string
   disabled?: boolean
 }
 
 const props = defineProps<{
   id?: string
-  label?: string | CleanTranslation
+  label?: string
   required?: boolean
-  tooltip?: string | CleanTranslation
-  description?: string | CleanTranslation
+  tooltip?: string
+  description?: string
   error?: string
   class?: HTMLAttributes['class']
   comboboxClass?: HTMLAttributes['class']
 
   modelValue?: T[] | T
   defaultValue?: T[] | T
-  placeholder?: string | CleanTranslation
+  placeholder?: string
   disabled?: boolean
   readonly?: boolean
   name: string
@@ -52,8 +51,8 @@ const props = defineProps<{
   displayFn?: (option: ComboboxOption<T>) => string
   valueFn?: (option: ComboboxOption<T>) => T
 
-  emptyText?: string | CleanTranslation
-  loadingText?: string | CleanTranslation
+  emptyText?: string
+  loadingText?: string
   loading?: boolean
 }>()
 

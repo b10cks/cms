@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { SheetDescription, SheetHeader, SheetTitle } from '~/components/ui/sheet/index'
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
+import { SheetDescription, SheetHeader, SheetTitle } from '~/components/ui/sheet/index';
 
 defineProps<{
-  title?: string | CleanTranslation
-  description?: string | CleanTranslation
+  title?: string
+  description?: string
 }>()
 </script>
 

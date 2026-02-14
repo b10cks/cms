@@ -1,17 +1,16 @@
 <script setup lang="ts">
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
-import { useVModel } from '@vueuse/core'
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
-import type { HTMLAttributes } from 'vue'
-import FormField from './FormField.vue'
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { useVModel } from '@vueuse/core';
+import type { HTMLAttributes } from 'vue';
+import FormField from './FormField.vue';
 
 const props = defineProps<{
   // FormField props
   id?: string
-  label?: string | CleanTranslation
+  label?: string
   required?: boolean
-  tooltip?: string | CleanTranslation
-  description?: string | CleanTranslation
+  tooltip?: string
+  description?: string
   error?: string
   class?: HTMLAttributes['class']
   inputClass?: HTMLAttributes['class']
@@ -69,10 +68,10 @@ const inputProps = computed(() => {
     <template #default="{ id, hasError }">
       <div class="flex justify-center">
         <InputOTP
-          :maxlength="maxlength"
+          :maxlength="maxlength || 6"
           :id="id"
-          v-model="modelValue"
           :class="{ 'border-red-500': hasError }"
+          v-model="modelValue"
         >
           <InputOTPGroup>
             <InputOTPSlot

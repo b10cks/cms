@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { marked } from 'marked'
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
+import { marked } from 'marked';
 
-const props = defineProps<{ content: string | CleanTranslation }>()
+const props = defineProps<{ content: string }>()
 const router = useRouter()
 
 const html = computed(() => {

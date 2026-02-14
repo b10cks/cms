@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import {
-  CategoryScale,
-  Chart as ChartJS,
-  type ChartOptions,
-  Filler,
-  Legend,
-  LinearScale,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
+    CategoryScale,
+    Chart as ChartJS,
+    type ChartOptions,
+    Filler,
+    Legend,
+    LinearScale,
+    LineElement,
+    PointElement,
+    Title,
+    Tooltip,
 } from 'chart.js'
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
 import { Line } from 'vue-chartjs'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 
@@ -33,7 +32,7 @@ interface Dataset {
 }
 
 interface Props {
-  title: string | CleanTranslation
+  title: string
   labels: string[]
   datasets: Dataset[]
   height?: number

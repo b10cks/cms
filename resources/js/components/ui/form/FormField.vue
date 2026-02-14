@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
-import type { HTMLAttributes } from 'vue'
-import Label from '~/components/ui/form/Label.vue'
-import { TooltipIcon } from '~/components/ui/tooltip'
+import type { HTMLAttributes } from 'vue';
+import Label from '~/components/ui/form/Label.vue';
+import { TooltipIcon } from '~/components/ui/tooltip';
 
 const props = defineProps<{
   id?: string
-  label?: string | CleanTranslation
+  label?: string
   required?: boolean
   hideLabel?: boolean
-  tooltip?: string | CleanTranslation
-  description?: string | CleanTranslation
+  tooltip?: string
+  description?: string
   name: string
   error?: string
   class?: HTMLAttributes['class']

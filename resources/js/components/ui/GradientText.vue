@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
 
 const props = defineProps<{
-  content: string | CleanTranslation
+  content: string
   colors?: Array<string>
 }>()
 

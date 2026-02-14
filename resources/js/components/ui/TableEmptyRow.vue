@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { CleanTranslation } from 'nuxt-i18n-micro-types'
-import { TableCell, TableRow } from '~/components/ui/table'
+import { TableCell, TableRow } from '~/components/ui/table';
 
 const { $t } = useI18n()
 
@@ -8,7 +7,7 @@ const props = withDefaults(
   defineProps<{
     colspan?: number
     icon?: string
-    label?: string | CleanTranslation
+    label?: string
   }>(),
   {
     colspan: 3,

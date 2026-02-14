@@ -1,5 +1,4 @@
 import type { PluginsInjections } from 'nuxt-i18n-micro'
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
 import type { Component } from 'vue'
 
 import { createSharedComposable } from '@vueuse/core'
@@ -17,26 +16,26 @@ import {
 type ActionType = 'primary' | 'destructive' | 'cancel' | 'ghost' | 'link'
 export interface DialogAction {
   type: ActionType
-  label: string | CleanTranslation
+  label: string
   click?: () => void
   autoClose?: boolean
 }
 export interface DialogOptions {
-  title?: string | CleanTranslation
-  message: string | CleanTranslation
+  title?: string
+  message: string
   actions: DialogAction[]
 }
 export interface MessageOptions {
-  title?: string | CleanTranslation
+  title?: string
   onClose?: () => void
   cancelButton?: boolean
-  cancelLabel?: string | CleanTranslation
-  okLabel?: string | CleanTranslation
+  cancelLabel?: string
+  okLabel?: string
 }
 export interface ConfirmOptions extends MessageOptions {
   onConfirm?: () => void
   onCancel?: () => void
-  confirmLabel?: string | CleanTranslation
+  confirmLabel?: string
   variant?: ActionType
 }
 interface DialogState {
@@ -199,7 +198,7 @@ const useAlertDialogBase = () => {
       ],
     })
   }
-  const confirm = (message: string | CleanTranslation, options: ConfirmOptions = {}) => {
+  const confirm = (message: string, options: ConfirmOptions = {}) => {
     return new Promise<boolean>((resolve) => {
       dialog({
         title: options.title,

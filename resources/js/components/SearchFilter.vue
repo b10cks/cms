@@ -2,11 +2,10 @@
 import Icon from '~/components/Icon.vue'
 
 import { SplitBadge } from '~/components/ui/badge'
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
 
 interface FilterableItem {
   value: string | number
-  label: string | CleanTranslation
+  label: string
 }
 
 interface FilterableOperator {
@@ -27,12 +26,12 @@ interface FilterableOperator {
     | 'gte'
     | 'in'
     | '!in'
-  label: string | CleanTranslation
+  label: string
 }
 
 interface FilterableField {
   id: string
-  label: string | CleanTranslation
+  label: string
   items?: FilterableItem[]
   operators?: FilterableOperator[]
   datepicker?: {
@@ -394,7 +393,7 @@ const handleInputChange = (e: Event): void => {
   }
 }
 
-const announceToScreenReader = (message: string | CleanTranslation): void => {
+const announceToScreenReader = (message: string): void => {
   const announcer = document.getElementById('sr-announcer')
   if (announcer) {
     announcer.textContent = String(message)

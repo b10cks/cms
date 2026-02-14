@@ -2,27 +2,26 @@
 import Icon from '~/components/Icon.vue'
 
 import { computed, reactive } from 'vue'
+import { Button } from '~/components/ui/button'
 import { FormField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
-import { Button } from '~/components/ui/button'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '~/components/ui/table'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '~/components/ui/select'
-import { Textarea } from '~/components/ui/textarea'
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
 import { Switch } from '~/components/ui/switch'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '~/components/ui/table'
+import { Textarea } from '~/components/ui/textarea'
 
 type InputType =
   | 'text'
@@ -46,9 +45,9 @@ interface SelectOption {
 
 interface ColumnDefinition {
   key: string
-  label: string | CleanTranslation
+  label: string
   type: InputType
-  placeholder?: string | CleanTranslation
+  placeholder?: string
   required?: boolean
   editable?: boolean
   creatable?: boolean
@@ -63,19 +62,19 @@ interface ColumnDefinition {
   validate?: (value: unknown) => boolean | string
   transform?: (value: unknown) => unknown
   defaultValue?: unknown
-  description?: string | CleanTranslation
+  description?: string
 }
 
 interface Props {
   modelValue: Record<string, unknown>[]
   name: string
-  label: string | CleanTranslation
-  description?: string | CleanTranslation
+  label: string
+  description?: string
   columns: ColumnDefinition[]
   disabled?: boolean
   required?: boolean
-  emptyMessage?: string | CleanTranslation
-  addButtonText?: string | CleanTranslation
+  emptyMessage?: string
+  addButtonText?: string
   showAddButton?: boolean
   showRemoveButton?: boolean
   sortable?: boolean

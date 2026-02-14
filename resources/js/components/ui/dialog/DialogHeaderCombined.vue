@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { DialogDescription, DialogHeader, DialogTitle } from '~/components/ui/dialog/index'
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
+import { DialogDescription, DialogHeader, DialogTitle } from '~/components/ui/dialog/index';
 
 defineProps<{
-  title?: string | CleanTranslation
-  description?: string | CleanTranslation
+  title?: string
+  description?: string
 }>()
 </script>
 

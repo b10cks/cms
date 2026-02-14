@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
 
 withDefaults(
   defineProps<{
-    header: CleanTranslation
-    description?: CleanTranslation
+    header: string
+    description?: string
   }>(),
   {
     description: null,

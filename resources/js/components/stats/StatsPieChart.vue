@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ArcElement, Chart as ChartJS, Legend, Tooltip, type ChartOptions } from 'chart.js'
-import type { CleanTranslation } from 'nuxt-i18n-micro-types/src'
 import { Pie } from 'vue-chartjs'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 
@@ -14,7 +13,7 @@ interface PieDataPoint {
 }
 
 interface Props {
-  title: string | CleanTranslation
+  title: string
   data: PieDataPoint[]
   height?: number
 }
