@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import type { HTMLAttributes } from 'vue'
-import { cn } from '@/lib/utils'
-import { Primitive, type PrimitiveProps } from 'reka-ui'
+import { cn } from '@/lib/utils';
+import { Primitive, type PrimitiveProps } from 'reka-ui';
+import type { HTMLAttributes } from 'vue';
 
 const props = withDefaults(defineProps<PrimitiveProps & { class?: HTMLAttributes['class'] }>(), {
   as: 'a',
@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<PrimitiveProps & { class?: HTMLAttributes
   <Primitive
     :as="as"
     :as-child="asChild"
-    :class="cn('transition-colors hover:text-foreground', props.class)"
+    :class="cn('transition-colors hover:text-primary', props.class)"
   >
     <slot />
   </Primitive>

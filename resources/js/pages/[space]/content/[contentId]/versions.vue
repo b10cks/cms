@@ -12,8 +12,8 @@ const spaceId = computed<string>(() => route.params.space as string)
 const contentId = computed<string>(() => route.params.contentId as string)
 
 // Fetch content data for breadcrumbs and title
-const { useContentQuery } = useContent(spaceId.value)
-const { data: content, isLoading: isLoadingContent } = useContentQuery(contentId.value)
+const { useContentQuery } = useContent(spaceId)
+const { data: content, isLoading: isLoadingContent } = useContentQuery(contentId)
 
 // Navigate back to content edit page
 const navigateToContent = () => {

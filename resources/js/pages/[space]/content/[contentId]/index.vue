@@ -281,7 +281,7 @@ provide('resetDirtyState', resetDirtyState)
       >
         <TabsContent
           value="edit"
-          :class="['p-4', showPreview ? '' : 'mx-auto max-w-3xl']"
+          :class="['p-4', showPreview ? '' : 'mx-auto max-w-4xl']"
         >
           <EditorComponent
             v-model="content.content"

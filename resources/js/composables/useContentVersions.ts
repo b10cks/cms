@@ -34,6 +34,7 @@ export function useContentVersions(spaceId: MaybeRef<string>, contentId: MaybeRe
         const response = await versionsAPI.value.get(toValue(versionId))
         return response.data
       },
+      enabled: computed(() => !!versionId),
     })
   }
 

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
 
-import { useRouteQuery } from '@vueuse/router'
 import dayjs from 'dayjs'
 import { RadioGroupItem, RadioGroupRoot } from 'reka-ui'
+import { RouterLink } from 'vue-router'
 import DiffViewer from '~/components/content/DiffViewer.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
 import { Avatar } from '~/components/ui/avatar'
@@ -31,7 +31,8 @@ const { settings } = useSpaceSettings(props.spaceId)
 const searchQuery = ref('')
 const filterOptions = ref({})
 
-const selectedVersionId = useRouteQuery('version', null) as Ref<string | null>
+const contentId = computed(() => props.content.id)
+const selectedVersionId = computed(() => route.query?.versionId || null)
 
 const selectedTab = computed({
   get: () => route.query?.mode || settings.value.content.history.mode,
@@ -52,7 +53,7 @@ const {
   useUpdateVersionMutation,
   useSetCurrentVersionMutation,
   usePublishVersionMutation,
-} = useContentVersions(props.spaceId, props.content.id)
+} = useContentVersions(props.spaceId, contentId)
 
 const { data: versions, isLoading, error } = useContentVersionsQuery()
 
@@ -174,10 +175,6 @@ const getVersionIndentLevel = (versionId: string): number => {
   }
 
   return level
-}
-
-const selectVersion = (version: ContentVersionListResource) => {
-  selectedVersionId.value = version.id
 }
 
 const handleSetAsCurrent = (versionId: string) => {
@@ -360,12 +357,14 @@ const openInTab = () => {
                   <RadioGroupItem
                     v-for="version in groupVersions"
                     :key="version.id"
+                    :as="RouterLink"
+                    :to="{ name: 'space-content-contentId-versions', params: { space: spaceId, contentId: contentId }, query: { versionId: version.id } }"
                     class="group ring-none relative z-10 flex items-center rounded-md px-3 py-1 transition-colors outline-none"
                     :class="{
                       'bg-secondary/50': selectedVersionId === version.id,
                       'cursor-pointer hover:bg-secondary/20': selectedVersionId !== version.id,
                     }"
-                    @select="selectVersion(version)"
+
                   >
                     <div
                       v-if="getVersionIndentLevel(version.id) > 0"
