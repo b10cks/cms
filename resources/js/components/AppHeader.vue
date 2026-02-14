@@ -1,28 +1,29 @@
 <script setup lang="ts">
+import type { Ref } from 'vue'
 import Icon from '~/components/Icon.vue'
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuShortcut,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
+    DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 
 import Logo from '~/assets/logo.svg'
 
 const { useSpacesQuery } = useSpaces()
-const { data: spaces } = useSpacesQuery()
+const { data: spaces } = useSpacesQuery({})
 
 const router = useRouter()
 const route = useRoute()
-const commandOpen = inject('commandOpen')
+const commandOpen = inject<Ref<boolean>>('commandOpen')
 
 const selectedSpaceId = computed({
   get: () => route.params?.space as string | undefined,

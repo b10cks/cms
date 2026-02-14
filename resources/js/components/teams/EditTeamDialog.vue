@@ -113,7 +113,7 @@ const handleOpenChange = (value: boolean) => {
     :open="open"
     @update:open="handleOpenChange"
   >
-    <DialogContent class="sm:max-w-[500px]">
+    <DialogContent class="sm:max-w-lg">
       <DialogHeaderCombined
         :title="$t('labels.teams.editTitle')"
         :description="$t('labels.teams.editDescription')"
@@ -124,10 +124,7 @@ const handleOpenChange = (value: boolean) => {
         @submit.prevent="handleSubmit"
       >
         <IconNameField
-          v-model:name="formData.name"
-          v-model:icon="formData.icon"
-          v-model:color="formData.color"
-          name="team-identity"
+          v-model="formData"
           :label="$t('labels.teams.fields.name')"
           :placeholder="$t('labels.teams.fields.namePlaceholder')"
         />

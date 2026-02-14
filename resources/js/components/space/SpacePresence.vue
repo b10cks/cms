@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { AvatarList } from '~/components/ui/avatar'
-import type { SpaceResource } from '~/types/spaces'
+import { AvatarList } from '~/components/ui/avatar';
 
 const props = defineProps<{
   space: SpaceResource

@@ -3,12 +3,12 @@ import Icon from '~/components/Icon.vue'
 
 import { useMagicKeys } from '@vueuse/core'
 import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
+    CommandDialog,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
 } from '~/components/ui/command'
 
 const route = useRoute()
@@ -17,7 +17,7 @@ const router = useRouter()
 const spaceId = computed<string>(() => route.params.space as string)
 
 const { useSpacesQuery } = useSpaces()
-const { data: spaces } = useSpacesQuery()
+const { data: spaces } = useSpacesQuery({})
 const { useBlocksQuery } = useBlocks(spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 const { useContentMenuQuery } = useContentMenu(spaceId)

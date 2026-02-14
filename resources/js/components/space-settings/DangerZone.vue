@@ -5,15 +5,16 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
+import { Card, CardContent } from '~/components/ui/card'
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeaderCombined,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeaderCombined,
+    DialogTrigger,
 } from '~/components/ui/dialog'
 import { InputField } from '~/components/ui/form'
+import CardHeaderCombined from '../ui/card/CardHeaderCombined.vue'
 
 const props = defineProps<{
   space: SpaceResource
@@ -45,12 +46,11 @@ const confirmDelete = async () => {
 
 <template>
   <Card variant="destructiveOutline">
-    <CardHeader class="text-destructive">
-      <CardTitle>{{ $t('labels.settings.dangerZone.title') }}</CardTitle>
-      <CardDescription class="!text-destructive/80">
-        {{ $t('labels.settings.dangerZone.description') }}
-      </CardDescription>
-    </CardHeader>
+    <CardHeaderCombined
+      :title="$t('labels.settings.dangerZone.title')"
+      :description="$t('labels.settings.dangerZone.description')"
+      class="text-destructive"
+    />
     <CardContent>
       <p class="mb-4 text-sm">
         {{ $t('labels.settings.dangerZone.warning') }}

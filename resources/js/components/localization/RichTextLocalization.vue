@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import TiptapEditor from '~/components/editor/TiptapEditor.vue'
-import { FormField } from '~/components/ui/form'
+import TiptapEditor from '~/components/editor/TiptapEditor.vue';
+import { FormField } from '~/components/ui/form';
 
 const props = defineProps<{
   item: RichTextSchema & { key: string }

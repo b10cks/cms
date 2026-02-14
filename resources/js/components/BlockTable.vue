@@ -2,6 +2,7 @@
 import Icon from '~/components/Icon.vue'
 
 import { useRouteQuery } from '@vueuse/router'
+import { BlockTagResource } from '~/api/resources/block-tags'
 import BlocksIcon from '~/assets/images/blocks.svg?component'
 import CreateBlockDialog from '~/components/blocks/CreateBlockDialog.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
@@ -95,16 +96,16 @@ const possibleFilters = computed(() => [
   },
 ])
 
-const getBlockTags = (tags: string[]) => {
+const getBlockTags = (tags: string[]): BlockTagResource[] => {
   return tags
     .map((tag) => {
       return blockTags.value?.data.find((t) => t.name === tag)
     })
-    .filter((tag) => tag !== null)
+    .filter((tag) => tag !== null && tag !== undefined)
 }
 
 const getBlockFolder = (folderId: string | null) => {
-  return folderId ? blockFolders.value.find((folder) => folder.id === folderId) : null
+  return folderId ? blockFolders.value?.find((folder) => folder.id === folderId) : null
 }
 
 const handleDelete = async (block: BlockResource) => {
@@ -192,13 +193,13 @@ const handleDelete = async (block: BlockResource) => {
                 :colspan="6"
               />
               <TableEmptyRow
-                v-else-if="blocks.meta?.total === 0"
+                v-else-if="blocks?.meta?.total === 0"
                 :icon="BlocksIcon"
                 :colspan="6"
               />
               <template v-else>
                 <TableRow
-                  v-for="block in blocks.data"
+                  v-for="block in blocks?.data"
                   :key="block.id"
                   class="cursor-pointer hover:bg-accent"
                 >

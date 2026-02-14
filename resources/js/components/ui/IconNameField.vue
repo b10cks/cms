@@ -6,9 +6,9 @@ import { Input } from '~/components/ui/input';
 
 const props = defineProps<{
   modelValue: {
-    icon?: string
-    color?: string
-    name?: string
+    icon?: string | null
+    color?: string | null
+    name?: string | null
   }
   disabled?: boolean
   placeholder?: string

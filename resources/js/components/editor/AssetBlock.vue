@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/u
 import Label from '~/components/ui/form/Label.vue'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { useAlertDialog } from '~/composables/useAlertDialog'
+import { AssetResource, AssetValue } from '~/types/assets'
 
 const props = defineProps<{
   item: AssetSchema & { key: string }
@@ -114,8 +115,8 @@ const handleAssetDelete = async () => {
             <NuxtImg
               :src="localValue.full_path"
               :alt="localValue.data?.altText || localValue.filename"
-              width="56"
-              height="56"
+              :width="56"
+              :height="56"
               :modifiers="{ crop: 'fill' }"
               class="h-full w-full object-cover"
             />

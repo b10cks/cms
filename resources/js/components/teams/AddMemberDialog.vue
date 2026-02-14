@@ -3,11 +3,11 @@ import Icon from '~/components/Icon.vue'
 
 import { Button } from '~/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeaderCombined,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeaderCombined,
+    DialogTrigger,
 } from '~/components/ui/dialog'
 import { InputField, SelectField } from '~/components/ui/form'
 import type { AddTeamUserPayload } from '~/types/teams'
@@ -78,7 +78,7 @@ const handleOpenChange = (value: boolean) => {
         </Button>
       </slot>
     </DialogTrigger>
-    <DialogContent class="sm:max-w-[425px]">
+    <DialogContent class="sm:max-w-lg">
       <DialogHeaderCombined
         :title="$t('labels.teamMembers.addTitle')"
         :description="$t('labels.teamMembers.addDescription')"

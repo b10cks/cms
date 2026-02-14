@@ -231,7 +231,7 @@ const handleKeyPress = (event: KeyboardEvent): void => {
           <TableRow>
             <TableHead
               v-if="sortable"
-              class="w-[40px]"
+              class="w-10"
             />
 
             <TableHead
@@ -249,7 +249,7 @@ const handleKeyPress = (event: KeyboardEvent): void => {
 
             <TableHead
               v-if="showRemoveButton"
-              class="w-[50px]"
+              class="w-12"
             />
           </TableRow>
         </TableHeader>

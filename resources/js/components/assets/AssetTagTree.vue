@@ -6,6 +6,7 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import IconGrid from '~/components/ui/IconGrid.vue'
 import { Input } from '~/components/ui/input'
+import { UpsertAssetTagPayload } from '~/types/assets'
 
 const route = useRoute()
 const { useAssetTagsQuery } = useAssetTags(route.params.spaceId as string)
@@ -14,7 +15,7 @@ const { data: tags } = useAssetTagsQuery({
   sort: '+name',
 })
 
-const selectedTagId = defineModel<string>()
+const selectedTagId = defineModel<string | null>()
 
 const showNewTag = ref(false)
 const newTag = ref<UpsertAssetTagPayload>({

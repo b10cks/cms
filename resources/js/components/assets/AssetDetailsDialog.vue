@@ -209,7 +209,7 @@ const onOpenChange = (open: boolean) => {
   >
     <DialogContent
       v-if="asset && assetCopy"
-      class="!max-w-11/12"
+      class="max-w-11/12!"
     >
       <DialogHeader>
         <p
@@ -267,7 +267,7 @@ const onOpenChange = (open: boolean) => {
           </div>
           <div
             v-else
-            class="flex h-[300px] w-full flex-col items-center justify-center gap-4"
+            class="flex h-75 w-full flex-col items-center justify-center gap-4"
           >
             <Icon
               :name="getFileIcon(getFileType(asset.mime_type))"
@@ -348,7 +348,7 @@ const onOpenChange = (open: boolean) => {
                   <dt class="font-semibold">
                     {{ String($t(`labels.assets.metadata.${key}`) || formatKey(key)) }}:
                   </dt>
-                  <dd class="break-words">{{ value }}</dd>
+                  <dd class="wrap-break-word">{{ value }}</dd>
                 </template>
               </dl>
             </div>

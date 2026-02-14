@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { FormField } from '~/components/ui/form'
-import { Textarea } from '~/components/ui/textarea'
+import { FormField } from '~/components/ui/form';
+import { Textarea } from '~/components/ui/textarea';
 
 defineProps<{
   item: TextareaSchema & { key: string }
-  originalValue: string
+  originalValue: string | null
   modelValue: string
   isMachineTranslated?: boolean
 }>()
@@ -30,7 +30,7 @@ const updateValue = (e: Event) => {
       hide-label
     >
       <Textarea
-        :model-value="originalValue"
+        :model-value="originalValue || ''"
         disabled
         rows="4"
         class="resize-none"

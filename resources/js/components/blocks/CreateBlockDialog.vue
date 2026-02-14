@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
-import { Button } from '~/components/ui/button'
-import BlockEdit from '~/components/BlockEdit.vue'
+import BlockEdit from '~/components/BlockEdit.vue';
+import { Button } from '~/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog';
 
 const open = defineModel<boolean>('open')
 
 const props = defineProps<{
   spaceId: string
-  folderId?: string
+  folderId?: string | null
 }>()
 
 const { useCreateBlockMutation } = useBlocks(props.spaceId)
@@ -28,7 +28,7 @@ const handleCreate = async (editBlock: BlockResource) => {
       <DialogHeaderCombined :title="$t('labels.blocks.createBlock')" />
       <BlockEdit
         v-slot="{ editBlock }"
-        :block="{ folder_id: folderId }"
+        :block="{ folder_id: folderId ?? null }"
         :space-id="spaceId"
         slug-editable
         is-create

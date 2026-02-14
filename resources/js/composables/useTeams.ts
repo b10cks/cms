@@ -25,11 +25,10 @@ export function useTeams() {
     return useQuery({
       queryKey: computed(() => queryKeys.teams.list(params)),
       queryFn: async () => {
-        const response = await api.teams.index({
+        return await api.teams.index({
           sort: '+name',
           ...toValue(params),
         })
-        return response.data
       },
       enabled: computed(() => !!toValue(isAuthenticated)),
     })

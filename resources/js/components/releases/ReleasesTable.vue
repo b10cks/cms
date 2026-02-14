@@ -3,25 +3,25 @@ import Icon from '~/components/Icon.vue'
 
 import ReleasesIcon from '~/assets/images/releases.svg?component'
 import ReleaseBadge from '~/components/releases/ReleaseBadge.vue'
-import SearchFilter from '~/components/SearchFilter.vue'
+import SearchFilter, { FilterableField } from '~/components/SearchFilter.vue'
 import { Button } from '~/components/ui/button'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import SortSelect from '~/components/ui/SortSelect.vue'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableSortableHead,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+    TableSortableHead,
 } from '~/components/ui/table'
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
@@ -54,7 +54,7 @@ const releaseStates = computed(() => [
   { value: 'published', label: $t('labels.releases.states.published') },
 ])
 
-const releaseFilters = computed(() => [
+const releaseFilters = computed((): FilterableField[] => [
   {
     id: 'name',
     label: $t('labels.releases.fields.name'),
@@ -105,10 +105,7 @@ const queryParams = computed(() => ({
   direction: sortBy.value.direction,
 }))
 
-const { data: queryData, isLoading: isLoadingReleases } = useReleasesQuery(queryParams)
-
-const releases = computed(() => queryData.value?.data || [])
-const paginationMeta = computed(() => queryData.value?.meta)
+const { data: releases, isLoading: isLoadingReleases } = useReleasesQuery(queryParams)
 
 const isLoading = computed(() => isLoadingReleases.value || props.isLoading)
 
@@ -223,9 +220,9 @@ const handleSort = (column: string) => {
             v-if="isLoading"
             :colspan="5"
           />
-          <template v-else-if="releases && releases.length > 0">
+          <template v-else-if="releases && releases.data.length > 0">
             <TableRow
-              v-for="release in releases"
+              v-for="release in releases.data"
               :key="release.id"
             >
               <TableCell class="font-medium">

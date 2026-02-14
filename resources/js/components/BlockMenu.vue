@@ -12,7 +12,7 @@ const mode = defineModel<'list' | 'tags'>('mode', {
   default: 'list',
 })
 
-const selectedFolder = defineModel<string>('selectedFolder')
+const selectedFolder = defineModel<string|null>('selectedFolder')
 
 const props = defineProps<{
   spaceId: string

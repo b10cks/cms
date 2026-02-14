@@ -39,7 +39,7 @@ const possibleTags = computed(() => {
   }))
 })
 
-const createSlug = (value) => {
+const createSlug = (value: string) => {
   if (!props.slugEditable) return
   editableBlock.value.slug = value
     .replace(/[^a-zA-Z0-9]+/g, ' ')
@@ -60,9 +60,9 @@ const enforceSlugFormat = () => {
   editableBlock.value.slug = editableBlock.value.slug.replace(/[^a-zA-Z0-9_]/g, '')
 }
 
-const handleTypeChange = (type) => {
+const handleTypeChange = (type: 'root' | 'nestable' | 'single' | 'universal') => {
   if (!props.readonly) {
-    editableBlock.value.type = type as 'root' | 'nestable' | 'single' | 'universal'
+    editableBlock.value.type = type
   }
 }
 </script>
@@ -74,7 +74,7 @@ const handleTypeChange = (type) => {
       :label="$t('labels.blocks.fields.name')"
       name="name"
       :disabled="readonly"
-      @update:name="createSlug"
+      @update:name="createSlug($event as string)"
       @update:model-value="Object.assign(editableBlock, $event)"
     />
     <InputField
@@ -110,7 +110,7 @@ const handleTypeChange = (type) => {
               editableBlock.type === type ? 'border-border bg-input' : 'border-border',
             ]"
             tabindex="-1"
-            @click="handleTypeChange(type)"
+            @click="() => handleTypeChange(type)"
           >
             <RadioGroupItem
               :value="type"

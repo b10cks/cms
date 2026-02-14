@@ -3,20 +3,21 @@ import Icon from '~/components/Icon.vue'
 
 import { Button } from '~/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogHeaderCombined,
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogHeaderCombined,
 } from '~/components/ui/dialog'
 import { InputField } from '~/components/ui/form'
+import { UploadFile } from '~/types/assets'
 
 const { formatFileSize, formatDateTime } = useFormat()
 const { getFileIcon } = useFileUtils()
 
 const props = defineProps<{
   file: UploadFile
-  folderId: string | null
+  folderId?: string | null
   spaceId: string
   open: boolean
   onReplace: () => void
@@ -54,14 +55,14 @@ const onOpenChange = (open: boolean) => {
     :open="open"
     @update:open="onOpenChange"
   >
-    <DialogContent class="sm:max-w-[900px]">
+    <DialogContent class="sm:max-w-4xl">
       <DialogHeaderCombined :title="$t('labels.assets.uploadDetails')" />
       <DialogHeader />
       <div class="grid gap-6 py-4 md:grid-cols-2">
         <div class="checkerboard flex flex-col items-center justify-center rounded-xl p-4">
           <div
             v-if="file.type === 'image' && file.preview"
-            class="relative h-[300px] w-full"
+            class="relative h-75 w-full"
           >
             <img
               :src="file.preview"
@@ -71,7 +72,7 @@ const onOpenChange = (open: boolean) => {
           </div>
           <div
             v-else
-            class="flex h-[300px] w-full flex-col items-center justify-center gap-4"
+            class="flex h-75 w-full flex-col items-center justify-center gap-4"
           >
             <Icon
               :name="getFileIcon(localFile.type)"
@@ -95,7 +96,10 @@ const onOpenChange = (open: boolean) => {
             <dd>{{ formatDateTime(localFile.file.lastModified) }}</dd>
           </dl>
 
-          <div class="grid gap-4">
+          <div
+            v-if="localFile?.data"
+            class="grid gap-4"
+          >
             <InputField
               v-model="localFile.data.altText as string"
               :label="String($t('labels.assets.fields.altText'))"

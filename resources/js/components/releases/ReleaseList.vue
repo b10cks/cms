@@ -3,7 +3,7 @@
 import ReleasesIcon from '~/assets/images/releases.svg?component'
 import Icon from '~/components/Icon.vue'
 import ReleaseCard from '~/components/releases/ReleaseCard.vue'
-import SearchFilter from '~/components/SearchFilter.vue'
+import SearchFilter, { FilterableField } from '~/components/SearchFilter.vue'
 import { Badge } from '~/components/ui/badge'
 import type { Release } from '~/types/releases'
 
@@ -34,7 +34,7 @@ const releaseStates = computed(() => [
 ])
 
 const filters = ref<Record<string, unknown>>({})
-const releaseFilters = computed(() => [
+const releaseFilters = computed(() : FilterableField[] => [
   {
     id: 'name',
     label: $t('labels.releases.fields.name'),

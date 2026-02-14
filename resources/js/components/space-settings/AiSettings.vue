@@ -3,21 +3,21 @@ import { toast } from 'vue-sonner'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
 } from '~/components/ui/card'
 import { FormField } from '~/components/ui/form'
 import { Progress } from '~/components/ui/progress'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '~/components/ui/select'
 import { Switch } from '~/components/ui/switch'
 
@@ -213,8 +213,6 @@ const formatTags = (tags: string[]) => {
           {{ $t('labels.settings.ai.featuresDescription') }}
         </p>
       </div>
-
-      <!-- AI Model Selection -->
       <div
         v-if="enableAI"
         class="space-y-4"

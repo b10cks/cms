@@ -3,11 +3,11 @@ import Icon from '~/components/Icon.vue'
 
 import { Button } from '~/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeaderCombined,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeaderCombined,
+    DialogTrigger,
 } from '~/components/ui/dialog'
 import { SelectField, TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
@@ -103,7 +103,7 @@ const handleOpenChange = (value: boolean) => {
         </Button>
       </slot>
     </DialogTrigger>
-    <DialogContent class="sm:max-w-[500px]">
+    <DialogContent class="sm:max-w-lg">
       <DialogHeaderCombined
         :title="$t('labels.teams.createTitle')"
         :description="$t('labels.teams.createDescription')"
@@ -113,10 +113,7 @@ const handleOpenChange = (value: boolean) => {
         @submit.prevent="handleSubmit"
       >
         <IconNameField
-          v-model:name="formData.name"
-          v-model:icon="formData.icon"
-          v-model:color="formData.color"
-          name="team-identity"
+          v-model="formData"
           :label="$t('labels.teams.fields.name')"
           :placeholder="$t('labels.teams.fields.namePlaceholder')"
         />

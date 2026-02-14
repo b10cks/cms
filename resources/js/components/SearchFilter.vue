@@ -29,7 +29,7 @@ interface FilterableOperator {
   label: string
 }
 
-interface FilterableField {
+export interface FilterableField {
   id: string
   label: string
   items?: FilterableItem[]

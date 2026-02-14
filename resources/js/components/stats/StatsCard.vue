@@ -15,6 +15,7 @@ defineProps<{
     <CardHeader class="flex flex-row items-center justify-between">
       <CardTitle class="text-sm">{{ title }}</CardTitle>
       <Icon
+        v-if="icon"
         :name="icon"
         :size="18"
         class="shrink-0 text-muted"

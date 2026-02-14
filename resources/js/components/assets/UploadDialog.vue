@@ -4,6 +4,7 @@ import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { ScrollArea } from '~/components/ui/scroll-area'
+import { UploadFile } from '~/types/assets'
 import UploadDetailsDialog from './UploadDetailsDialog.vue'
 
 const { formatFileSize } = useFormat()
@@ -298,7 +299,7 @@ const retryUpload = async (file: UploadFileWithProgress) => {
     :open="open"
     @update:open="onOpenChange"
   >
-    <DialogContent class="sm:max-w-[700px]">
+    <DialogContent class="sm:max-w-2xl">
       <DialogHeaderCombined
         :title="$t('labels.assets.uploadAssets')"
         :description="$t('labels.assets.uploadDescription')"

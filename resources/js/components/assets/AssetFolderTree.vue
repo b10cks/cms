@@ -6,11 +6,12 @@ import CreateFolderDialog from '~/components/assets/CreateFolderDialog.vue'
 import RenamableTitle from '~/components/ui/RenamableTitle.vue'
 import { Button } from '~/components/ui/button'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
+import { AssetFolderResource } from '~/types/assets'
 
 const props = defineProps<{
   spaceId: string
@@ -30,8 +31,8 @@ const { mutate: updateFolder } = useUpdateAssetFolderMutation()
 
 const { rootFolders, getChildrenOfFolder } = useFolderStructure()
 
-const selectedFolderId = defineModel<string>()
-const parentFolderId = ref(null)
+const selectedFolderId = defineModel<string | null>()
+const parentFolderId = ref<string | null>(null)
 const showCreateFolderDialog = ref(false)
 
 defineEmits<{

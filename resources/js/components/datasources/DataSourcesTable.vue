@@ -206,7 +206,7 @@ const confirmDelete = async () => {
                   </button>
                 </SimpleTooltip>
               </TableCell>
-              <TableCell class="max-w-[300px] truncate">{{
+              <TableCell class="max-w-75 truncate">{{
                 dataSource.description || '-'
               }}</TableCell>
               <TableCell>

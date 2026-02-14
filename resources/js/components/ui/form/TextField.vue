@@ -18,8 +18,8 @@ const props = defineProps<{
 
   // Input props
   autoSize?: boolean | number
-  modelValue?: string | number
-  defaultValue?: string | number
+  modelValue?: string | number | null
+  defaultValue?: string | number | null
   placeholder?: unknown
   disabled?: boolean
   readonly?: boolean
@@ -38,7 +38,7 @@ const modelValue = useVModel(props, 'modelValue', emits, {
 
 const inputProps = computed(() => {
   const {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    //
     id,
     label,
     tooltip,

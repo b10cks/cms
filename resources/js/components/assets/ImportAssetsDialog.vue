@@ -173,7 +173,7 @@ const showSummary = computed(() => importResult.value !== null)
               <Icon
                 v-if="isImporting"
                 name="lucide:loader-2"
-                class="mr-2 animate-spin"
+                class="animate-spin"
               />
               {{ isImporting ? 'Importing...' : 'Import' }}
             </Button>
@@ -188,9 +188,11 @@ const showSummary = computed(() => importResult.value !== null)
           description="Review the results of your import"
         />
 
-        <ScrollArea class="h-[400px] w-full pr-4">
-          <div class="space-y-6 p-4">
-            <!-- Summary Statistics -->
+        <ScrollArea class="h-100 w-full pr-4">
+          <div
+            v-if="importResult"
+            class="space-y-6 p-4"
+          >
             <div class="grid grid-cols-3 gap-4">
               <div class="rounded-lg border p-4">
                 <div class="text-sm font-medium text-gray-600">Successful</div>

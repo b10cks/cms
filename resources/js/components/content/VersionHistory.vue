@@ -31,7 +31,7 @@ const { settings } = useSpaceSettings(props.spaceId)
 const searchQuery = ref('')
 const filterOptions = ref({})
 
-const selectedVersionId = useRouteQuery('version', undefined) as Ref<string | undefined>
+const selectedVersionId = useRouteQuery('version', null) as Ref<string | null>
 
 const selectedTab = computed({
   get: () => route.query?.mode || settings.value.content.history.mode,

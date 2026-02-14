@@ -30,21 +30,14 @@ const queryParams = computed<TeamsQueryParams>(() => ({
 }))
 
 const {
-  useTeamsQuery,
-  useTeamHierarchyQuery,
   useCreateTeamMutation,
   useUpdateTeamMutation,
   useDeleteTeamMutation,
 } = useTeams()
 
-const { data: teamsData, isLoading: isLoadingTeams } = useTeamsQuery(queryParams)
-const { teams } = useGlobalTeam()
-
 const createTeamMutation = useCreateTeamMutation()
 const updateTeamMutation = useUpdateTeamMutation()
 const deleteTeamMutation = useDeleteTeamMutation()
-
-const meta = computed(() => teamsData.value?.meta)
 
 const handleCreateTeam = (payload: CreateTeamPayload) => {
   createTeamMutation.mutate(payload)
@@ -106,7 +99,6 @@ const handleHierarchySelect = (teamId: string) => {
     <aside class="w-sm shrink-0 border-r border-border bg-surface">
       <TeamHierarchyTree
         :title="$t('labels.teams.hierarchyTitle')"
-        :teams="teams"
         @select="handleHierarchySelect"
       />
     </aside>

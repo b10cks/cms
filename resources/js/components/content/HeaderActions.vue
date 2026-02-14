@@ -7,12 +7,12 @@ import { AvatarList } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import SplitButton from '~/components/ui/button/SplitButton.vue'
 import {
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
 } from '~/components/ui/dropdown-menu'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import type { ContentResource } from '~/types/contents'
@@ -121,7 +121,7 @@ const switchVersions = () => {
 }
 
 const assignedRelease = computed(() =>
-  (releases.value.data || []).find((release) => release.id === contentModel.value.releaseId)
+  (releases.value?.data || []).find((release) => release.id === contentModel.value.releaseId)
 )
 
 const isInScheduledRelease = computed(
@@ -131,7 +131,7 @@ const isInScheduledRelease = computed(
 const hasLocalization = computed(() => space.value?.settings?.languages?.length > 0)
 
 const draftReleases = computed(() =>
-  (releases.value.data || []).filter((release) => getReleaseState(release) === 'draft')
+  (releases.value?.data || []).filter((release) => getReleaseState(release) === 'draft')
 )
 
 const canPublishToRelease = computed(
@@ -259,8 +259,6 @@ const handleConfirmAssign = (versionIds: string[]) => {
         </DropdownMenuItem>
       </template>
     </SplitButton>
-
-    <!-- Publish Dialog -->
     <PublishDialog
       :open="publishDialogOpen"
       :content="content"
@@ -270,8 +268,6 @@ const handleConfirmAssign = (versionIds: string[]) => {
       @publish="handlePublish"
       @schedule="handleSchedule"
     />
-
-    <!-- Assign to Release Dialog -->
     <AssignToReleaseDialog
       :open="assignReleaseDialogOpen"
       :release="selectedReleaseForAssign"

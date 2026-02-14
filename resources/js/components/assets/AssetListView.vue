@@ -7,25 +7,26 @@ import type { AssetsQueryParams } from '~/api/resources/assets'
 import SearchFilter from '~/components/SearchFilter.vue'
 import { Button } from '~/components/ui/button'
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { InputField } from '~/components/ui/form'
 import SortSelect from '~/components/ui/SortSelect.vue'
 import { Switch } from '~/components/ui/switch'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableEmpty,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableEmpty,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from '~/components/ui/table'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
+import { AssetResource } from '~/types/assets'
 
 export interface AssetListViewProps {
   spaceId: string
@@ -70,8 +71,8 @@ const { mutate: deleteAsset } = useDeleteAssetMutation()
 const assetFields = computed(() => space.value?.settings?.asset_fields || [])
 const spaceLanguages = computed(() => space.value?.settings?.languages || [])
 
-const folderId = defineModel<string>('folderId')
-const tagId = defineModel<string>('tagId')
+const folderId = defineModel<string | null>('folderId')
+const tagId = defineModel<string | null>('tagId')
 const currentPage = ref(1)
 const perPage = ref(25)
 const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({

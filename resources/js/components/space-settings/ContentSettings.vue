@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
 
 import { ref } from 'vue'
 import { Button } from '~/components/ui/button'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
 } from '~/components/ui/card'
 import { FormField } from '~/components/ui/form'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '~/components/ui/select'
+import IconName from '../ui/IconName.vue'
 
 const { useUpdateSpaceMutation } = useSpaces()
 const { mutate: updateSpace } = useUpdateSpaceMutation()
@@ -65,13 +65,11 @@ const handleSave = () => {
               :key="block.id"
               :value="block.id"
             >
-              <div class="flex items-center gap-2">
-                <Icon
-                  :name="`lucide:${block.icon}`"
-                  :style="{ color: block.color }"
-                />
-                <span>{{ block.name }}</span>
-              </div>
+              <IconName
+                :icon="block.icon"
+                :color="block.color"
+                :name="block.name"
+              />
             </SelectItem>
           </SelectContent>
         </Select>

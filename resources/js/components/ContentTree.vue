@@ -20,7 +20,7 @@ const router = useRouter()
 
 const { alert } = useAlertDialog()
 const { useSpacesQuery } = useSpaces()
-const { data: spaces } = useSpacesQuery()
+const { data: spaces } = useSpacesQuery({})
 const { useContentMenuQuery, getChildren, getRootItems } = useContentMenu(props.spaceId)
 const { useUpdateContentMutation, useDeleteContentMutation } = useContent(props.spaceId)
 
@@ -61,8 +61,7 @@ function handleEditCancel() {
 const handleSelect = (contentId: string) => {
   selectedItemId.value = contentId
   router.push({
-    ...route,
-    name: 'space-content-contentId',
+    name: route.name || 'space-content-contentId',
     hash: '',
     params: {
       space: route.params.space,

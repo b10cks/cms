@@ -11,7 +11,7 @@ const spaceId = computed(() => (route.params?.space as string) || null)
 useSeoMeta({
   titleTemplate: (title) => {
     const parts = [title]
-    if (currentSpace.value?.name) {
+    if (currentSpace?.value?.name) {
       parts.push(currentSpace.value.name)
     }
     parts.push('b10cks')

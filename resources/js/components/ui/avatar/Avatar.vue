@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import NuxtImg from '~/components/NuxtImg.vue'
 
-import type { HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
+import type { HTMLAttributes } from 'vue'
 import type { AvatarVariants } from '.'
 import { avatarVariants } from '.'
 
 const props = defineProps<{
   name: string
-  avatar?: string
+  avatar?: string | null
   size?: AvatarVariants['size']
   class?: HTMLAttributes['class']
 }>()

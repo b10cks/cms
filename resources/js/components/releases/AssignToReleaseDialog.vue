@@ -2,11 +2,11 @@
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
 } from '~/components/ui/dialog'
 import type { ContentVersionListResource } from '~/types/contents'
 import type { Release } from '~/types/releases'
@@ -14,7 +14,7 @@ import type { Release } from '~/types/releases'
 const props = defineProps<{
   open: boolean
   release: Release | null
-  currentVersion: ContentVersionListResource | null
+  currentVersion?: ContentVersionListResource | null
   loading?: boolean
 }>()
 

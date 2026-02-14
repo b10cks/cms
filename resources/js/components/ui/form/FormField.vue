@@ -11,7 +11,7 @@ const props = defineProps<{
   tooltip?: string
   description?: string
   name: string
-  error?: string
+  error?: string |null
   class?: HTMLAttributes['class']
 }>()
 

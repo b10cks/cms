@@ -2,19 +2,19 @@
 import Icon from '~/components/Icon.vue'
 
 import UsersIcon from '~/assets/images/users.svg?component'
-import SearchFilter from '~/components/SearchFilter.vue'
+import SearchFilter, { FilterableField } from '~/components/SearchFilter.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
 import SortSelect from '~/components/ui/SortSelect.vue'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableSortableHead,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+    TableSortableHead,
 } from '~/components/ui/table'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
@@ -60,7 +60,7 @@ const inviteStatusOptions = computed(() => [
   { value: InviteStatus.EXPIRED, label: t('labels.invites.status.expired') },
 ])
 
-const inviteFilters = computed(() => [
+const inviteFilters = computed((): FilterableField[] => [
   {
     id: 'email',
     label: t('labels.invites.filters.email'),
@@ -326,7 +326,7 @@ const handleBulkResend = async () => {
               <TableCell class="w-12">
                 <Checkbox
                   :checked="isInviteSelected(invite)"
-                  @update:checked="(checked) => handleInviteSelect(invite, checked)"
+                  @update:checked="(checked: boolean) => handleInviteSelect(invite, checked)"
                 />
               </TableCell>
 
@@ -355,7 +355,7 @@ const handleBulkResend = async () => {
 
               <TableCell class="hidden sm:table-cell">
                 <SimpleTooltip
-                  v-if="invite.status === InviteStatus.ACCEPTED"
+                  v-if="invite.accepted_at"
                   :tooltip="formatDateTime(invite.accepted_at)"
                 >
                   {{ $t('labels.invites.tooltip.acceptedOn') }}

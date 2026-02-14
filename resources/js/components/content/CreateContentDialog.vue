@@ -6,12 +6,12 @@ import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/com
 import { FormField, InputField } from '~/components/ui/form'
 import IconName from '~/components/ui/IconName.vue'
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
 } from '~/components/ui/select'
 import type { CreateContentPayload } from '~/types/contents'
 
@@ -19,7 +19,7 @@ const open = defineModel<boolean>('open')
 const props = withDefaults(
   defineProps<{
     spaceId: string
-    parentId?: string
+    parentId?: string | null
   }>(),
   {
     parentId: undefined,
@@ -36,7 +36,7 @@ const { useCreateContentMutation } = useContent(props.spaceId)
 const { mutate: createContent } = useCreateContentMutation()
 
 const content = ref<CreateContentPayload>({
-  block_id: null,
+  block_id: '',
   slug: '',
   name: '',
 })
@@ -49,7 +49,7 @@ watch(
   space,
   () => {
     if (!content.value.block_id) {
-      content.value.block_id = space.value?.settings.default_block
+      content.value.block_id = space.value?.settings.default_block || ''
     }
   },
   { immediate: true }

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Button } from '~/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
-import { DateTimeFormField, InputField, TextField } from '~/components/ui/form'
-import type { CreateReleaseRequest, Release } from '~/types/releases'
+import { Button } from '~/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog';
+import { DateTimeFormField, InputField, TextField } from '~/components/ui/form';
+import type { CreateReleaseRequest, Release } from '~/types/releases';
 
 const props = defineProps<{
   open: boolean

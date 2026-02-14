@@ -25,7 +25,7 @@ export interface CreateReleaseRequest {
   settings?: Record<string, any>
   owner_id?: string
   external_id?: string
-  publish_at: string
+  publish_at: string | null
 }
 
 export interface UpdateReleaseRequest {

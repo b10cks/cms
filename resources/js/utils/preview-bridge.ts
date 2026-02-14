@@ -5,7 +5,7 @@ export type ContentUpdateEvent = {
 }
 
 export type SelectUpdateEvent = {
-  selectedItem: string
+  selectedItem: string | null
 }
 
 export type FieldUpdateEvent = {

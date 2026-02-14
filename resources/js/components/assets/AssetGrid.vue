@@ -15,6 +15,7 @@ import { Button } from '~/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '~/components/ui/select'
 import SortSelect from '~/components/ui/SortSelect.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
+import { AssetFolderResource, AssetResource } from '~/types/assets'
 
 export interface AssetGridProps {
   spaceId: string
@@ -129,8 +130,8 @@ const selectedGridSize = computed(() => {
   return gridSizes[settings.value.assets.gridSize] || gridSizes.md
 })
 
-const folderId = defineModel<string>('folderId')
-const tagId = defineModel<string>('tagId')
+const folderId = defineModel<string | null>('folderId')
+const tagId = defineModel<string | null>('tagId')
 const showUploadDialog = ref(false)
 const showCreateFolderDialog = ref(false)
 const currentPage = ref(1)

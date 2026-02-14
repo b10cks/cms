@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { InputField } from '~/components/ui/form'
+import { InputField } from '~/components/ui/form';
 
 defineProps<{
   item: TextSchema & { key: string }
-  originalValue: string
+  originalValue: string | null
   modelValue: string
   isMachineTranslated?: boolean
 }>()
@@ -26,7 +26,7 @@ const updateValue = (e: Event) => {
     <InputField
       :name="`${item.key}-original`"
       :label="item.name || item.key"
-      :model-value="originalValue"
+      :model-value="originalValue || ''"
       :actions="['copy']"
       readonly
       hide-label

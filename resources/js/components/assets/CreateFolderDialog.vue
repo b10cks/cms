@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
 
-import type { Translation } from 'nuxt-i18n-micro-types/src'
-import { ref } from 'vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
+import { UpsertAssetFolderPayload } from '~/types/assets'
 
 const props = defineProps<{
   spaceId: string
@@ -29,7 +28,7 @@ const folder = ref<UpsertAssetFolderPayload>({
 })
 
 const isLoading = ref(false)
-const errorMessage = ref<string | Translation>('')
+const errorMessage = ref<string>('')
 
 const updateOpenState = (value: boolean) => {
   emit('update:open', value)
@@ -76,7 +75,7 @@ watch(
     :open="open"
     @update:open="updateOpenState"
   >
-    <DialogContent class="sm:max-w-[500px]">
+    <DialogContent class="sm:max-w-lg">
       <DialogHeaderCombined
         :title="$t('labels.assetFolders.create')"
         :description="$t('labels.assetFolders.createDescription')"

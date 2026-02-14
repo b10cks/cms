@@ -1,5 +1,5 @@
 import type { BaseQueryParams } from '~/types'
-import type { ContentVersionListResource } from '~/types/contents'
+import type { ContentVersionListResource, ContentVersionResource } from '~/types/contents'
 
 import type { ApiClient } from '../client'
 
@@ -14,7 +14,7 @@ export interface ContentVersionsQueryParams extends BaseQueryParams {
 
 export class ContentVersions extends BaseResource<
   ContentVersionListResource,
-  null,
+  ContentVersionResource,
   null,
   ContentVersionsQueryParams
 > {
