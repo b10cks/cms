@@ -90,7 +90,7 @@ export function useGlobalTeam() {
 
   // Find team by ID in the teams list
   const findTeamById = (teamId: string): TeamResource | undefined => {
-    return teams.value?.find((team) => team.id === teamId)
+    return teams.value?.data.find((team) => team.id === teamId)
   }
 
   // Get team options for select component

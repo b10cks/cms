@@ -3,14 +3,15 @@ import Icon from '~/components/Icon.vue'
 
 import { Badge } from '~/components/ui/badge'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '~/components/ui/select'
 import { cn } from '~/lib/utils'
 import type { TeamResource } from '~/types/teams'
+import IconName from './ui/IconName.vue'
 
 const { selectedTeam, selectedTeamId, isLoading, selectTeam, teams } = useGlobalTeam()
 
@@ -29,12 +30,8 @@ const sizeClasses = {
   lg: 'h-12 text-lg',
 }
 
-const handleSelect = (value: string) => {
-  if (value === 'clear') {
-    selectTeam(null)
-  } else {
-    selectTeam(value)
-  }
+const handleSelect = (value: string | null) => {
+  selectTeam(value)
 }
 
 onMounted(() => {
@@ -44,7 +41,7 @@ onMounted(() => {
 })
 
 const getTeamIcon = (team: Pick<TeamResource, 'icon' | 'type'>) => {
-  return team.icon ? `lucide:${team.icon}` : 'lucide:users'
+  return team.icon ?? 'users'
 }
 
 interface TreeNode {
@@ -53,7 +50,7 @@ interface TreeNode {
 }
 
 const hierarchicalTeams = computed(() => {
-  const list = teams?.value ?? []
+  const list = teams?.value?.data ?? []
   const nodeMap = new Map<string, TreeNode>()
   const roots: TreeNode[] = []
 
@@ -92,7 +89,7 @@ const hierarchicalTeams = computed(() => {
 <template>
   <Select
     aria-label="Team"
-    :model-value="selectedTeamId || undefined"
+    :model-value="selectedTeamId || null"
     :disabled="isLoading"
     @update:model-value="handleSelect"
   >
@@ -112,12 +109,11 @@ const hierarchicalTeams = computed(() => {
           v-else-if="selectedTeam"
           class="flex min-w-0 items-center gap-2 pr-2"
         >
-          <Icon
-            :name="getTeamIcon(selectedTeam)"
-            class="shrink-0"
-            :style="{ color: selectedTeam.color }"
+          <IconName
+            :name="selectedTeam.name"
+            :color="selectedTeam.color"
+            :icon="getTeamIcon(selectedTeam)"
           />
-          <span class="truncate">{{ selectedTeam.name }}</span>
           <Badge
             v-if="selectedTeam.type"
             variant="surface"
@@ -150,16 +146,11 @@ const hierarchicalTeams = computed(() => {
             class="flex min-w-0 items-center gap-2"
             :style="{ paddingLeft: `${item.depth * 16}px` }"
           >
-            <Icon
-              :name="getTeamIcon(item.team)"
-              class="shrink-0"
-              :style="{ color: item.team.color }"
+            <IconName
+              :name="item.team.name"
+              :color="item.team.color"
+              :icon="getTeamIcon(item.team)"
             />
-            <span
-              class="truncate"
-              :style="{ color: item.team.color }"
-              >{{ item.team.name }}
-            </span>
           </div>
           <Badge
             v-if="item.team.type"
@@ -171,7 +162,7 @@ const hierarchicalTeams = computed(() => {
         </div>
       </SelectItem>
       <SelectItem
-        v-if="!(teams && teams.length) && !isLoading"
+        v-if="!(teams && teams.data?.length) && !isLoading"
         value=""
         disabled
         class="text-muted-foreground text-center"
