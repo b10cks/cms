@@ -62,7 +62,7 @@ function generateOperations(modifiers: IlumModifiers): string {
 }
 
 const imageUrl = computed(() => {
-  const baseURL = runtimeConfig.public.ilum.baseURL || ''
+  const baseURL = (runtimeConfig.public.ilum.baseURL || '').replace(/\/$/, '')
   const { format, quality, ...transformations } = {
     width: props.width,
     height: props.height,
@@ -72,7 +72,7 @@ const imageUrl = computed(() => {
     quality: props.quality,
   }
 
-  let finalPath = props.src
+  let finalPath = props.src.startsWith('/') ? props.src : `/${props.src}`
   const ops = generateOperations(transformations as IlumModifiers)
 
   if (ops) {
