@@ -59,9 +59,10 @@ function handleEditCancel() {
 }
 
 const handleSelect = (contentId: string) => {
+  const name = route.name != 'space-content-index' ? route.name : 'space-content-contentId'
   selectedItemId.value = contentId
   router.push({
-    name: route.name || 'space-content-contentId',
+    name,
     hash: '',
     params: {
       space: route.params.space,
