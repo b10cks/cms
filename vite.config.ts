@@ -26,7 +26,14 @@ export default defineConfig(({ mode }) => {
         dirs: ['resources/js/composables', 'resources/js/plugins'],
         vueTemplate: true,
       }),
-      vue(),
+      vue({
+        template: {
+          transformAssetUrls: {
+            base: null,
+            includeAbsolute: false,
+          },
+        },
+      }),
       tailwindcss(),
       svgLoader({
         svgoConfig: {
@@ -103,6 +110,11 @@ export default defineConfig(({ mode }) => {
       https: {
         key: './localhost.key',
         cert: './localhost.crt',
+      },
+      hmr: {
+        host: 'localhost',
+        port: 3000,
+        protocol: 'wss',
       },
       proxy: {
         '/auth': {

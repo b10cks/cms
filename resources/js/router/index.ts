@@ -132,9 +132,13 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/:space/blocks',
     name: 'space-blocks',
-    component: () => import('~/pages/[space]/blocks/index.vue'),
     meta: { layout: 'default' },
     children: [
+      {
+        path: '',
+        name: 'space-blocks-index',
+        component: () => import('~/pages/[space]/blocks/index.vue'),
+      },
       {
         path: ':block',
         name: 'space-block',

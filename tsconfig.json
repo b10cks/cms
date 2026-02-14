@@ -17,11 +17,11 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./*"],
-      "@/*": ["./*"]
+      "~/*": ["resources/js/*"],
+      "@/*": ["resources/js/*"]
     },
     "types": ["vite/client"]
   },
   "include": ["*.ts", "*.vue", "**/*.ts", "**/*.vue", "env.d.ts"],
-  "exclude": ["node_modules", ".nuxt", ".output", "dist"]
+  "exclude": ["node_modules", "build", "dist", "dev-dist"]
 }
