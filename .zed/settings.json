@@ -1,6 +1,6 @@
 {
   "project_name": "b10cks CMS",
-  "language_servers": ["!eslint", "..."],
+  "language_servers": ["!eslint", "!phpactor", "!intelephense", "..."],
   "lsp": {
     "oxlint": {
       "initialization_options": {

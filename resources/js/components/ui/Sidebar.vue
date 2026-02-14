@@ -30,7 +30,7 @@ const spaceId = inject('spaceId')
 
 const menu = [
   { icon: 'lucide:home', label: 'Home', route: 'space' },
-  { icon: 'lucide:feather', label: 'Content', route: 'space-content' },
+  { icon: 'lucide:feather', label: 'Content', route: 'space-content-index' },
   { icon: 'lucide:blocks', label: 'Blocks', route: 'space-blocks-index' },
   { icon: 'lucide:images', label: 'Assets', route: 'space-assets-index' },
   { icon: 'lucide:database-zap', label: 'Data sets', route: 'space-datasources' },

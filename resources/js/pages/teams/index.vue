@@ -7,6 +7,7 @@ import ContentHeader from '~/components/ui/ContentHeader.vue'
 import type { CreateTeamPayload, TeamResource, UpdateTeamPayload } from '~/types/teams'
 
 const { t } = useI18n()
+const router = useRouter()
 
 useSeoMeta({
   title: computed(() => t('labels.teams.pageTitle')),

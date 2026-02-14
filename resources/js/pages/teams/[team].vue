@@ -12,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import type { AddTeamUserPayload, TeamUserQueryParams, UpdateTeamUserPayload } from '~/types/teams'
 
 const route = useRoute()
-const router = useRouter()
 const { t } = useI18n()
 
 const teamId = computed(() => route.params.team as string)
