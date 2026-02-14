@@ -5,8 +5,8 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <title>b10cks</title>
+    <link rel="manifest" href="/build/manifest.webmanifest" />
+    <title>{{ env('APP_NAME') }}</title>
     @vite(['resources/js/main.ts'])
   </head>
   <body>

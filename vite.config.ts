@@ -64,10 +64,13 @@ export default defineConfig(({ mode }) => {
         },
       }),
       VitePWA({
+        buildBase: '/build/',
+        scope: '/',
+        base: '/',
         registerType: 'autoUpdate',
         workbox: {
           navigateFallback: '/',
-          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         },
         devOptions: {
           enabled: true,
@@ -81,6 +84,8 @@ export default defineConfig(({ mode }) => {
           background_color: '#0B0B0F',
           display: 'standalone',
           start_url: '/',
+          scope: '/',
+          id: '/',
           icons: [
             {
               src: '/web-app-manifest-192x192.png',
