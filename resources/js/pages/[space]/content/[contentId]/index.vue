@@ -15,10 +15,12 @@ import { Badge, type BadgeVariants } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { SimpleTooltip } from '~/components/ui/tooltip'
+import { useAlertDialog } from '~/composables/useAlertDialog'
 import { useGlobalClipboard } from '~/composables/useGlobalClipboard'
 import type { ContentResource } from '~/types/contents'
 
 const { t } = useI18n()
+const { alert } = useAlertDialog()
 const route = useRoute()
 const router = useRouter()
 const spaceId = computed<string>(() => route.params.space as string)
@@ -37,15 +39,76 @@ const { useSpaceQuery } = useSpaces()
 const { data: spaceData } = useSpaceQuery(spaceId.value)
 
 const content = ref<ContentResource | null>(null)
+const originalContentData = ref<any>(null)
+
 watch(
   originalContent,
   (newContent) => {
     if (newContent) {
       content.value = JSON.parse(JSON.stringify(newContent))
+      originalContentData.value = JSON.parse(JSON.stringify(newContent.content))
     }
   },
   { immediate: true }
 )
+
+const isDirty = computed(() => {
+  if (!content.value || !originalContentData.value) return false
+  return JSON.stringify(content.value.content) !== JSON.stringify(originalContentData.value)
+})
+
+async function guardLeave(to, from, next) {
+  if (isDirty.value) {
+    const answer = await alert.confirm(
+      t('labels.content.unsavedChanges', 'You have unsaved changes. Are you sure you want to leave?')
+    )
+    if (answer) {
+      next()
+    } else {
+      next(false)
+    }
+  } else {
+    next()
+  }
+}
+
+onBeforeRouteUpdate(guardLeave)
+onBeforeRouteLeave(guardLeave)
+
+// Browser navigation warning
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+})
+
+const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+  if (isDirty.value) {
+    e.preventDefault()
+    e.returnValue = ''
+  }
+}
+
+watch(isDirty, (newValue) => {
+  if (newValue) {
+    window.addEventListener('beforeunload', handleBeforeUnload)
+  } else {
+    window.removeEventListener('beforeunload', handleBeforeUnload)
+  }
+}, { immediate: true })
+
+const resetDirtyState = () => {
+  if (content.value) {
+    originalContentData.value = JSON.parse(JSON.stringify(content.value.content))
+  }
+}
+
+watch(originalContent, (newContent) => {
+  if (newContent && content.value) {
+    const serverContent = JSON.parse(JSON.stringify(newContent.content))
+    if (JSON.stringify(content.value.content) === JSON.stringify(serverContent)) {
+      originalContentData.value = serverContent
+    }
+  }
+})
 
 const selectedItemId = computed({
   get: () => (route.hash ? route.hash.substring(1) : null),
@@ -188,6 +251,7 @@ provide('updateHoverItem', (id: string) => {
     previewRef.value.updateHover(id)
   }
 })
+provide('resetDirtyState', resetDirtyState)
 </script>
 
 <template>
@@ -319,6 +383,7 @@ provide('updateHoverItem', (id: string) => {
         v-if="content"
         :content="content"
         :space-id="spaceId"
+        :is-dirty="isDirty"
       />
     </Teleport>
   </div>

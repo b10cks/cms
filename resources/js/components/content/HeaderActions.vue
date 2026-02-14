@@ -24,7 +24,10 @@ const props = defineProps<{
   spaceId: string
   content: ContentResource
   disabled?: boolean
+  isDirty?: boolean
 }>()
+
+const resetDirtyState = inject<(() => void) | undefined>('resetDirtyState', undefined)
 
 const {
   useCreateContentMutation,
@@ -67,10 +70,12 @@ const save = async () => {
   } else {
     await createContent(props.content)
   }
+  resetDirtyState?.()
 }
 
 const publishDirectly = async () => {
   await publishContent({ id: props.content.id, payload: props.content })
+  resetDirtyState?.()
 }
 
 const publishWithMessage = () => {
@@ -90,6 +95,7 @@ const handlePublish = async (payload: { message?: string; published_at?: string 
   }
   await publishContent({ id: props.content.id, payload: publishPayload })
   publishDialogOpen.value = false
+  resetDirtyState?.()
 }
 
 const handleSchedule = async (payload: { message?: string; scheduled_at?: string | null }) => {
@@ -100,6 +106,7 @@ const handleSchedule = async (payload: { message?: string; scheduled_at?: string
   }
   await scheduleContent({ id: props.content.id, payload: schedulePayload })
   publishDialogOpen.value = false
+  resetDirtyState?.()
 }
 
 const unpublish = async () => {
@@ -193,28 +200,28 @@ const handleConfirmAssign = (versionIds: string[]) => {
       <Icon name="lucide:history" />
     </Button>
     <Button
-      :disabled="disabled"
+      :disabled="disabled || !isDirty"
       @click="save"
       >Save
     </Button>
     <SplitButton
       variant="accent"
       :primary-action="publishDirectly"
-      :disabled="disabled || !contentModel.canPublish"
+      :disabled="disabled || !(contentModel.canPublish || isDirty)"
       :loading="isPublishing || isScheduling"
     >
       <span>{{ $t('actions.content.publish') }}</span>
       <template #menu>
         <DropdownMenuLabel>Publish</DropdownMenuLabel>
         <DropdownMenuItem
-          :disabled="disabled || !contentModel.canPublish"
+          :disabled="disabled || !(contentModel.canPublish || isDirty)"
           @select="publishWithMessage"
         >
           <Icon name="lucide:send" />
           <span>{{ $t('actions.content.publishWithMessage') }}</span>
         </DropdownMenuItem>
         <DropdownMenuItem
-          :disabled="disabled || !contentModel.canPublish || contentModel.isInRelease"
+          :disabled="disabled || !(contentModel.canPublish || isDirty) || contentModel.isInRelease"
           @select="schedulePublish"
         >
           <Icon name="lucide:clock-fading" />

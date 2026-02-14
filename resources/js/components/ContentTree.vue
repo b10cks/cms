@@ -3,6 +3,7 @@ import Icon from '~/components/Icon.vue'
 
 import type { TreeItemToggleEvent } from 'reka-ui'
 import { TreeItem, TreeRoot } from 'reka-ui'
+import { RouterLink } from 'vue-router'
 import CreateContentDialog from '~/components/content/CreateContentDialog.vue'
 import { AvatarList } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
@@ -58,17 +59,17 @@ function handleEditCancel() {
   currentlyEditingId.value = null
 }
 
-const handleSelect = (contentId: string) => {
+const buildLink = (contentId: string) => {
   const name = route.name != 'space-content-index' ? route.name : 'space-content-contentId'
-  selectedItemId.value = contentId
-  router.push({
+
+  return {
     name,
     hash: '',
     params: {
       space: route.params.space,
       contentId,
     },
-  })
+  }
 }
 
 const handleToggle = (e: TreeItemToggleEvent<ContentResource>) => {
@@ -178,13 +179,14 @@ const initDelete = async (item: ContentResource) => {
         :key="item._id"
         :style="{ 'padding-left': `${item.level - 0.5}rem` }"
         v-bind="item.bind"
+        :as="RouterLink"
+        :to="buildLink(item.value.id)"
         :class="[
           'group relative my-0.5 flex items-center gap-2 rounded-md py-1 pr-2 pl-0 outline-none',
           'transition-colors duration-200 hover:bg-border',
           'cursor-pointer font-semibold',
           item.value.id === selectedItemId ? 'bg-border text-primary' : '',
         ]"
-        @select="handleSelect(item.value.id)"
         @toggle="(e) => handleToggle(e)"
       >
         <button
