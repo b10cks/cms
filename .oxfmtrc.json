@@ -1,10 +1,6 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "experimentalSortImports": {},
-  "experimentalTailwindcss": {
-    "stylesheet": "./resources/css/main.css",
-    "functions": ["clsx", "cn", "cva"]
-  },
   "semi": false,
   "singleAttributePerLine": true,
   "singleQuote": true,

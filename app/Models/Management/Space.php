@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -160,6 +161,21 @@ class Space extends GlobalModel
     public function storages(): HasMany
     {
         return $this->hasMany(Storage::class, 'space_id', 'id');
+    }
+
+    public function aiConfigs(): HasMany
+    {
+        return $this->hasMany(SpaceAiConfig::class);
+    }
+
+    public function defaultAiConfig(): HasOne
+    {
+        return $this->hasOne(SpaceAiConfig::class)->where('is_default', true);
+    }
+
+    public function aiKeys(): HasMany
+    {
+        return $this->hasMany(SpaceAiKey::class);
     }
 
     public function defaultConnection(): HasMany

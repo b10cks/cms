@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { InputField } from '~/components/ui/form';
+import { InputField } from '~/components/ui/form'
 
 defineProps<{
   item: TextSchema & { key: string }

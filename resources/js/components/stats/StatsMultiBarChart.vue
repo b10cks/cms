@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import {
-    BarElement,
-    CategoryScale,
-    Chart as ChartJS,
-    type ChartOptions,
-    Legend,
-    LinearScale,
-    Title,
-    Tooltip,
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  type ChartOptions,
+  Legend,
+  LinearScale,
+  Title,
+  Tooltip,
 } from 'chart.js'
 import { Bar } from 'vue-chartjs'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'

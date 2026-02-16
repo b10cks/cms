@@ -2,16 +2,16 @@
 import { deepClone } from '@vue/devtools-shared'
 import { Button } from '~/components/ui/button'
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from '~/components/ui/card'
 import SettingsTable, {
-    type ColumnDefinition,
-    type TableItem,
+  type ColumnDefinition,
+  type TableItem,
 } from '~/components/ui/settings-table.vue'
 
 const { useUpdateSpaceMutation } = useSpaces()

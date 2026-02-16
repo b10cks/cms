@@ -9,13 +9,13 @@ import { Checkbox } from '~/components/ui/checkbox'
 import IconName from '~/components/ui/IconName.vue'
 import SortSelect from '~/components/ui/SortSelect.vue'
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-    TableSortableHead,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableSortableHead,
 } from '~/components/ui/table'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'

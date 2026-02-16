@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { PluginKey } from '@tiptap/pm/state'
+import Placeholder from '@tiptap/extension-placeholder'
 import { StarterKit } from '@tiptap/starter-kit'
 import type { SuggestionProps } from '@tiptap/suggestion'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
@@ -32,11 +33,13 @@ const filteredItems = computed(() => {
   const search = suggestionProps.value.query.toLowerCase()
   return props.mentionItems
     .filter(
-      (item) =>
-        item.label.toLowerCase().includes(search) || item.id.toLowerCase().includes(search)
+      (item) => item.label.toLowerCase().includes(search) || item.id.toLowerCase().includes(search)
     )
     .slice(0, 20)
 })
+
+const contentItems = computed(() => filteredItems.value.filter((i) => i.type === 'content'))
+const blockItems = computed(() => filteredItems.value.filter((i) => i.type === 'block'))
 
 const selectedIndex = ref(0)
 
@@ -52,7 +55,8 @@ const selectItem = (index: number) => {
 }
 
 const upHandler = () => {
-  selectedIndex.value = (selectedIndex.value + filteredItems.value.length - 1) % filteredItems.value.length
+  selectedIndex.value =
+    (selectedIndex.value + filteredItems.value.length - 1) % filteredItems.value.length
 }
 
 const downHandler = () => {
@@ -67,6 +71,11 @@ const editor = useEditor({
   content: modelValue.value,
   extensions: [
     StarterKit.configure(),
+    Placeholder.configure({
+      placeholder: props.placeholder,
+      showOnlyWhenEditable: true,
+      showOnlyCurrent: true,
+    }),
     AiMention.configure({
       suggestion: {
         char: '@',
@@ -116,9 +125,10 @@ const editor = useEditor({
   },
   editorProps: {
     attributes: {
-      class: 'prose max-w-none',
+      class: 'prose max-w-none focus:outline-none',
       'aria-placeholder': props.placeholder,
-      placeholder: props.placeholder,
+      role: 'textbox',
+      'aria-multiline': 'true',
     },
     handleKeyDown: (view, event) => {
       if (event.key === 'Enter' && !event.shiftKey && !suggestionOpen.value) {
@@ -140,6 +150,20 @@ watch(
 )
 
 watch(
+  () => props.placeholder,
+  (newPlaceholder) => {
+    if (editor.value) {
+      const placeholderExt = editor.value.extensionManager.extensions.find(
+        (ext) => ext.name === 'placeholder'
+      )
+      if (placeholderExt) {
+        placeholderExt.options.placeholder = newPlaceholder
+      }
+    }
+  }
+)
+
+watch(
   () => props.disabled,
   (disabled) => {
     if (editor.value) {
@@ -148,6 +172,10 @@ watch(
   },
   { immediate: true }
 )
+
+onBeforeUnmount(() => {
+  editor.value?.destroy()
+})
 
 const clear = () => {
   editor.value?.commands.clearContent()
@@ -180,6 +208,10 @@ const focus = () => {
   editor.value?.commands.focus()
 }
 
+const getGlobalIndex = (item: AiMentionItem): number => {
+  return filteredItems.value.findIndex((i) => i.id === item.id && i.type === item.type)
+}
+
 defineExpose({
   clear,
   getText,
@@ -204,44 +236,57 @@ defineExpose({
         bottom: suggestionProps.clientRect?.()?.height + 'px',
       }"
       class="z-[100] max-h-64 w-56 overflow-auto rounded-md border border-popover-border bg-popover p-1 shadow-md"
+      role="listbox"
+      :aria-label="$t('components.aiMention.suggestions')"
     >
-      <div class="mb-1">
-        <div class="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <div
+        v-if="contentItems.length > 0"
+        class="mb-1"
+      >
+        <div
+          class="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+        >
           {{ $t('components.aiMention.content') }}
         </div>
         <button
-          v-for="(item, index) in filteredItems.filter(i => i.type === 'content')"
-          :key="item.id"
+          v-for="item in contentItems"
+          :key="`content-${item.id}`"
           type="button"
+          role="option"
+          :aria-selected="selectedIndex === getGlobalIndex(item)"
           :class="[
             'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm',
-            selectedIndex === filteredItems.findIndex(i => i.id === item.id && i.type === 'content')
+            selectedIndex === getGlobalIndex(item)
               ? 'bg-accent text-accent-foreground'
               : 'hover:bg-accent/50',
           ]"
-          @click="selectItem(filteredItems.findIndex(i => i.id === item.id && i.type === 'content'))"
-          @mouseenter="selectedIndex = filteredItems.findIndex(i => i.id === item.id && i.type === 'content')"
+          @click="selectItem(getGlobalIndex(item))"
+          @mouseenter="selectedIndex = getGlobalIndex(item)"
         >
           <span class="truncate">{{ item.label }}</span>
         </button>
       </div>
 
-      <div v-if="filteredItems.some(i => i.type === 'block')">
-        <div class="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <div v-if="blockItems.length > 0">
+        <div
+          class="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+        >
           {{ $t('components.aiMention.blocks') }}
         </div>
         <button
-          v-for="(item, index) in filteredItems.filter(i => i.type === 'block')"
-          :key="item.id"
+          v-for="item in blockItems"
+          :key="`block-${item.id}`"
           type="button"
+          role="option"
+          :aria-selected="selectedIndex === getGlobalIndex(item)"
           :class="[
             'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm',
-            selectedIndex === filteredItems.findIndex(i => i.id === item.id && i.type === 'block')
+            selectedIndex === getGlobalIndex(item)
               ? 'bg-accent text-accent-foreground'
               : 'hover:bg-accent/50',
           ]"
-          @click="selectItem(filteredItems.findIndex(i => i.id === item.id && i.type === 'block'))"
-          @mouseenter="selectedIndex = filteredItems.findIndex(i => i.id === item.id && i.type === 'block')"
+          @click="selectItem(getGlobalIndex(item))"
+          @mouseenter="selectedIndex = getGlobalIndex(item)"
         >
           <span class="truncate">{{ item.label }}</span>
         </button>
@@ -249,3 +294,23 @@ defineExpose({
     </div>
   </Teleport>
 </template>
+
+<style scoped>
+:deep(.tiptap-editor) {
+  .tiptap {
+    min-height: 2.5rem;
+  }
+
+  .tiptap p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: hsl(var(--muted-foreground));
+    pointer-events: none;
+    height: 0;
+  }
+
+  .tiptap:focus {
+    outline: none;
+  }
+}
+</style>

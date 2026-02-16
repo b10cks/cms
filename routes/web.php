@@ -48,5 +48,6 @@ Route::get('/{space}/releases', AppController::class)->name('space-releases');
 Route::get('/{space}/redirects', AppController::class)->name('space-redirects');
 Route::get('/{space}/settings', AppController::class)->name('space-settings');
 Route::get('/{space}/settings/configuration', AppController::class)->name('space-settings-configuration');
+Route::get('/{space}/settings/ai', AppController::class)->name('space-settings-ai');
 Route::get('/{space}/settings/people', AppController::class)->name('space-settings-people');
 Route::get('/{space}/settings/backups', AppController::class)->name('space-settings-backups');

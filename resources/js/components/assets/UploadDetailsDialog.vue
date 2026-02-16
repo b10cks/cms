@@ -3,11 +3,11 @@ import Icon from '~/components/Icon.vue'
 
 import { Button } from '~/components/ui/button'
 import {
-    Dialog,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogHeaderCombined,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogHeaderCombined,
 } from '~/components/ui/dialog'
 import { InputField } from '~/components/ui/form'
 import { UploadFile } from '~/types/assets'

@@ -1,22 +1,21 @@
 <script setup lang="ts">
-
 import { ref } from 'vue'
 import { Button } from '~/components/ui/button'
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from '~/components/ui/card'
 import { FormField } from '~/components/ui/form'
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '~/components/ui/select'
 import IconName from '../ui/IconName.vue'
 

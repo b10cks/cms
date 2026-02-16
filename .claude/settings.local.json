@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:openrouter.ai)",
+      "Bash(npx oxlint:*)",
+      "Bash(npx vue-tsc:*)",
+      "Bash(php artisan route:list:*)",
+      "Bash(bun run typecheck:*)"
+    ]
+  }
+}

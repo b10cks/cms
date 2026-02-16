@@ -3,10 +3,10 @@
 // For more documentation on how to configure debug tasks,
 // see: https://zed.dev/docs/debugger
 [
-    {
-        "label": "PHP: Listen to Xdebug",
-        "adapter": "Xdebug",
-        "request": "launch",
-        "port": 9003
-    }
+  {
+    "label": "PHP: Listen to Xdebug",
+    "adapter": "Xdebug",
+    "request": "launch",
+    "port": 9003
+  }
 ]

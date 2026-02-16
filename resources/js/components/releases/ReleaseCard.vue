@@ -4,11 +4,11 @@ import Icon from '~/components/Icon.vue'
 import ReleaseBadge from '~/components/releases/ReleaseBadge.vue'
 import { Button } from '~/components/ui/button'
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import type { Release } from '~/types/releases'
@@ -87,11 +87,9 @@ const handleCancel = () => {
         >
           <Icon name="lucide:layers" />
           <span>{{
-            $t(
-              'labels.releases.fields.versionsCount',
-              release.versions_count,
-              { count: release.versions_count }
-            )
+            $t('labels.releases.fields.versionsCount', release.versions_count, {
+              count: release.versions_count,
+            })
           }}</span>
         </div>
       </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue';
+import Icon from '~/components/Icon.vue'
 
 defineProps<{
   icon?: string | null
@@ -16,8 +16,10 @@ defineProps<{
       :style="{ color }"
       class="mr-1"
     />
-    <span v-else
-    class="size-4 mr-1"></span>
+    <span
+      v-else
+      class="size-4 mr-1"
+    ></span>
     <span>{{ name }}</span>
   </div>
 </template>

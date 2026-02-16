@@ -182,6 +182,12 @@ export const queryKeys = {
     all: () => ['two-factor'] as const,
     status: () => [...queryKeys.twoFactor.all(), 'status'] as const,
   },
+  ai: (spaceId: MaybeRef<string>) => ({
+    config: () => ['ai-config', spaceId] as const,
+    models: () => ['ai-models', spaceId] as const,
+    settings: () => ['ai-settings', spaceId] as const,
+    usage: () => ['spaces', spaceId, 'ai-usage'] as const,
+  }),
   backups: (spaceId: string) => ({
     all: () => ['spaces', spaceId, 'backups'] as const,
     lists: () => [...queryKeys.backups(spaceId).all(), 'list'] as const,

@@ -1,7 +1,9 @@
 <?php
 
 return [
-    'default' => env('AI_DEFAULT_DRIVER', 'openai'),
+    'mode' => env('AI_MODE', 'space'),
+
+    'default' => env('AI_DEFAULT_DRIVER', 'openrouter'),
 
     'drivers' => [
         'openai' => [
@@ -120,9 +122,13 @@ return [
         'openrouter' => [
             'enabled' => env('OPENROUTER_ENABLED', false),
             'api_key' => env('OPENROUTER_API_KEY'),
+            'management_key' => env('OPENROUTER_MANAGEMENT_KEY'),
             'site_url' => env('OPENROUTER_SITE_URL', config('app.url')),
             'site_name' => env('OPENROUTER_SITE_NAME', config('app.name')),
             'models' => [],
+            'provision_demo_keys' => env('OPENROUTER_PROVISION_DEMO_KEYS', true),
+            'demo_key_limit' => env('OPENROUTER_DEMO_KEY_LIMIT', 2.0),
+            'demo_key_expiry_days' => env('OPENROUTER_DEMO_KEY_EXPIRY_DAYS', 30),
         ],
     ],
 

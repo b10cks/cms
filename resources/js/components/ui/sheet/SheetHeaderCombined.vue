@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SheetDescription, SheetHeader, SheetTitle } from '~/components/ui/sheet/index';
+import { SheetDescription, SheetHeader, SheetTitle } from '~/components/ui/sheet/index'
 
 defineProps<{
   title?: string

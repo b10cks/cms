@@ -1,6 +1,8 @@
 import type { MaybeRefOrGetter } from 'vue'
 
-import { useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+
+import type { SpaceAiConfig } from '~/api/resources/ai'
 
 export interface AiModel {
   id: string
@@ -102,6 +104,118 @@ export function useAiSettings(spaceId: MaybeRefOrGetter<string | null>) {
     useAiSettingsQuery,
     toggleFavourite,
     setModel,
+  }
+}
+
+export function useAiConfigs(spaceId: MaybeRefOrGetter<string | null>) {
+  const { client: apiClient } = useApiClient()
+  const queryClient = useQueryClient()
+
+  const useAiConfigsQuery = () => {
+    return useQuery({
+      queryKey: computed(() => ['ai-configs', toValue(spaceId)]),
+      queryFn: async (): Promise<SpaceAiConfig[]> => {
+        const id = toValue(spaceId)
+        if (!id) return []
+
+        const response = await apiClient.get<{ data: SpaceAiConfig[] }>(
+          `/mgmt/v1/spaces/${id}/ai-configs`
+        )
+        return response.data
+      },
+      enabled: computed(() => !!toValue(spaceId)),
+    })
+  }
+
+  const useAiConfigQuery = (configId: MaybeRefOrGetter<string | null>) => {
+    return useQuery({
+      queryKey: computed(() => ['ai-config', toValue(spaceId), toValue(configId)]),
+      queryFn: async (): Promise<SpaceAiConfig | null> => {
+        const id = toValue(spaceId)
+        const cId = toValue(configId)
+        if (!id || !cId) return null
+
+        const response = await apiClient.get<{ data: SpaceAiConfig }>(
+          `/mgmt/v1/spaces/${id}/ai-configs/${cId}`
+        )
+        return response.data
+      },
+      enabled: computed(() => !!toValue(spaceId) && !!toValue(configId)),
+    })
+  }
+
+  const useCreateAiConfigMutation = () => {
+    return useMutation({
+      mutationFn: async (payload: Omit<SpaceAiConfig, 'id' | 'created_at' | 'updated_at'>) => {
+        const id = toValue(spaceId)
+        if (!id) throw new Error('No space ID')
+
+        const response = await apiClient.post<{ data: SpaceAiConfig }>(
+          `/mgmt/v1/spaces/${id}/ai-configs`,
+          payload
+        )
+        return response.data
+      },
+      onSuccess: () => {
+        const id = toValue(spaceId)
+        if (id) {
+          queryClient.invalidateQueries({ queryKey: ['ai-configs', id] })
+        }
+      },
+    })
+  }
+
+  const useUpdateAiConfigMutation = () => {
+    return useMutation({
+      mutationFn: async ({
+        configId,
+        payload,
+      }: {
+        configId: string
+        payload: Partial<SpaceAiConfig>
+      }) => {
+        const id = toValue(spaceId)
+        if (!id) throw new Error('No space ID')
+
+        const response = await apiClient.patch<{ data: SpaceAiConfig }>(
+          `/mgmt/v1/spaces/${id}/ai-configs/${configId}`,
+          payload
+        )
+        return response.data
+      },
+      onSuccess: (data) => {
+        const id = toValue(spaceId)
+        if (id) {
+          queryClient.invalidateQueries({ queryKey: ['ai-configs', id] })
+          queryClient.invalidateQueries({ queryKey: ['ai-config', id, data.id] })
+        }
+      },
+    })
+  }
+
+  const useDeleteAiConfigMutation = () => {
+    return useMutation({
+      mutationFn: async (configId: string) => {
+        const id = toValue(spaceId)
+        if (!id) throw new Error('No space ID')
+
+        await apiClient.delete(`/mgmt/v1/spaces/${id}/ai-configs/${configId}`)
+      },
+      onSuccess: () => {
+        const id = toValue(spaceId)
+        if (id) {
+          queryClient.invalidateQueries({ queryKey: ['ai-configs', id] })
+        }
+      },
+    })
+  }
+
+  return {
+    useAiConfigsQuery,
+    useAiConfigQuery,
+    useCreateAiConfigMutation,
+    useUpdateAiConfigMutation,
+    useDeleteAiConfigMutation,
   }
 }
 

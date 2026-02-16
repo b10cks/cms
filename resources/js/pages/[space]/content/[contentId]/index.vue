@@ -65,7 +65,10 @@ const isDirty = computed(() => {
 async function guardLeave(to, from, next) {
   if (isDirty.value) {
     const answer = await alert.confirm(
-      t('labels.content.unsavedChanges', 'You have unsaved changes. Are you sure you want to leave?')
+      t(
+        'labels.content.unsavedChanges',
+        'You have unsaved changes. Are you sure you want to leave?'
+      )
     )
     if (answer) {
       next()
@@ -91,13 +94,17 @@ const handleBeforeUnload = (e: BeforeUnloadEvent) => {
   }
 }
 
-watch(isDirty, (newValue) => {
-  if (newValue) {
-    window.addEventListener('beforeunload', handleBeforeUnload)
-  } else {
-    window.removeEventListener('beforeunload', handleBeforeUnload)
-  }
-}, { immediate: true })
+watch(
+  isDirty,
+  (newValue) => {
+    if (newValue) {
+      window.addEventListener('beforeunload', handleBeforeUnload)
+    } else {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  },
+  { immediate: true }
+)
 
 const resetDirtyState = () => {
   if (content.value) {
@@ -295,7 +302,10 @@ provide('resetDirtyState', resetDirtyState)
           @create-template="handleTemplateTrigger"
         />
         <div
-          :class="[showPreview ? 'inset-x-4' : 'w-full max-w-4xl', 'py-4 overflow-clip absolute bottom-0 flex flex-col items-center gap-3 z-10']"
+          :class="[
+            showPreview ? 'inset-x-4' : 'w-full max-w-4xl',
+            'py-4 overflow-clip absolute bottom-0 flex flex-col items-center gap-3 z-10',
+          ]"
         >
           <TransitionGroup
             enter-active-class="transition duration-150 ease-butter"
@@ -396,7 +406,10 @@ provide('resetDirtyState', resetDirtyState)
         >
           <Icon
             name="lucide:wand"
-            :class="[showAi ? 'text-primary' : 'text-ai', 'transition-colors duration-200 ease-butter ']"
+            :class="[
+              showAi ? 'text-primary' : 'text-ai',
+              'transition-colors duration-200 ease-butter ',
+            ]"
           />
         </Button>
       </div>

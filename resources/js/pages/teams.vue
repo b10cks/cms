@@ -29,11 +29,7 @@ const queryParams = computed<TeamsQueryParams>(() => ({
   per_page: perPage.value,
 }))
 
-const {
-  useCreateTeamMutation,
-  useUpdateTeamMutation,
-  useDeleteTeamMutation,
-} = useTeams()
+const { useCreateTeamMutation, useUpdateTeamMutation, useDeleteTeamMutation } = useTeams()
 
 const createTeamMutation = useCreateTeamMutation()
 const updateTeamMutation = useUpdateTeamMutation()

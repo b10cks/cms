@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { FormField } from '~/components/ui/form';
-import { Textarea } from '~/components/ui/textarea';
+import { FormField } from '~/components/ui/form'
+import { Textarea } from '~/components/ui/textarea'
 
 defineProps<{
   item: TextareaSchema & { key: string }

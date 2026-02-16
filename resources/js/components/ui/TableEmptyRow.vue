@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { Component } from 'vue';
-import { TableCell, TableRow } from '~/components/ui/table';
+import type { Component } from 'vue'
+import { TableCell, TableRow } from '~/components/ui/table'
 
 const { $t } = useI18n()
 

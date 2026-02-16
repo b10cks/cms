@@ -3,55 +3,30 @@ import { toast } from 'vue-sonner'
 import type { ContentInteractionPayload } from '~/api/resources/ai'
 
 import { getXsrfHeaders, hasXsrfToken } from '~/lib/csrf'
+import { consumeSseStream, type SseCallbacks } from '~/lib/sse'
 
-export interface AiStreamEvent {
-  type: 'status' | 'delta' | 'done' | 'error'
-  message?: string
-  content?: string
-  data?: Record<string, unknown>
-}
-
-export interface StreamCallbacks {
-  onStatus?: (message: string) => void
-  onDelta?: (content: string) => void
-  onDone?: (content: string, data?: Record<string, unknown>) => void
-  onError?: (message: string) => void
-}
+export type { SseCallbacks as StreamCallbacks }
 
 async function fetchCsrfCookie(): Promise<boolean> {
-  if (typeof document === 'undefined') return false
-
   try {
     const response = await fetch('/auth/v1/csrf-cookie', {
       method: 'GET',
       credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-      },
+      headers: { Accept: 'application/json' },
     })
-
-    if (!response.ok) {
-      return false
-    }
-
-    return true
-  } catch (error) {
+    return response.ok
+  } catch {
     return false
   }
 }
 
 async function ensureCsrfToken(): Promise<boolean> {
-  if (hasXsrfToken()) {
-    return true
-  }
+  if (hasXsrfToken()) return true
 
   const success = await fetchCsrfCookie()
-  if (!success) {
-    return false
-  }
+  if (!success) return false
 
   await new Promise((resolve) => setTimeout(resolve, 100))
-
   return hasXsrfToken()
 }
 
@@ -61,7 +36,7 @@ export function useAiContent(spaceId: MaybeRef<string>) {
 
   const streamContentInteraction = async (
     payload: ContentInteractionPayload,
-    callbacks: StreamCallbacks
+    callbacks: SseCallbacks
   ): Promise<void> => {
     const id = toValue(spaceId)
     if (!id) {
@@ -74,7 +49,6 @@ export function useAiContent(spaceId: MaybeRef<string>) {
     abortController.value = new AbortController()
 
     const url = `/mgmt/v1/ai/content-interaction/stream?spaceId=${id}`
-
     const xsrfHeaders = getXsrfHeaders()
 
     if (Object.keys(xsrfHeaders).length === 0) {
@@ -103,9 +77,7 @@ export function useAiContent(spaceId: MaybeRef<string>) {
           const errorJson = JSON.parse(errorText)
           errorMessage = errorJson.message || errorMessage
         } catch {
-          if (errorText) {
-            errorMessage = errorText
-          }
+          if (errorText) errorMessage = errorText
         }
 
         if (response.status === 419) {
@@ -116,101 +88,15 @@ export function useAiContent(spaceId: MaybeRef<string>) {
       }
 
       const reader = response.body?.getReader()
-      if (!reader) {
-        throw new Error('No response body')
-      }
+      if (!reader) throw new Error('No response body')
 
-      const decoder = new TextDecoder()
-      let buffer = ''
-      let receivedDone = false
-
-      while (true) {
-        const { done, value } = await reader.read()
-
-        if (done) {
-          if (buffer.trim()) {
-            const lines = buffer.split('\n')
-            for (const line of lines) {
-              if (line.startsWith(':') || !line.trim()) {
-                continue
-              }
-
-              if (line.startsWith('data: ')) {
-                try {
-                  const event = JSON.parse(line.slice(6)) as AiStreamEvent
-                  switch (event.type) {
-                    case 'status':
-                      callbacks.onStatus?.(event.message ?? '')
-                      break
-                    case 'delta':
-                      callbacks.onDelta?.(event.content ?? '')
-                      break
-                    case 'done':
-                      receivedDone = true
-                      callbacks.onDone?.(event.content ?? '', event.data)
-                      break
-                    case 'error':
-                      callbacks.onError?.(event.message ?? 'Unknown error')
-                      break
-                  }
-                } catch (e) {
-                  console.error('[AI Stream] Failed to parse final SSE event:', line, e)
-                }
-              }
-            }
-          }
-          if (!receivedDone) {
-            console.warn('[AI Stream] Stream ended without done event')
-          }
-          break
-        }
-
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() ?? ''
-
-        for (const line of lines) {
-          if (line.startsWith(':')) {
-            continue
-          }
-
-          if (line.startsWith('data: ')) {
-            try {
-              const event = JSON.parse(line.slice(6)) as AiStreamEvent
-              switch (event.type) {
-                case 'status':
-                  callbacks.onStatus?.(event.message ?? '')
-                  break
-                case 'delta':
-                  callbacks.onDelta?.(event.content ?? '')
-                  break
-                case 'done':
-                  receivedDone = true
-                  console.log('[AI Stream] Done event received, content length:', event.content)
-                  callbacks.onDone?.(event.content ?? '', event.data)
-                  break
-                case 'error':
-                  callbacks.onError?.(event.message ?? 'Unknown error')
-                  break
-              }
-            } catch (e) {
-              console.error('[AI Stream] Failed to parse SSE event:', line, e)
-            }
-          }
-        }
-      }
+      await consumeSseStream(reader, callbacks)
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        return
-      }
+      if (error.name === 'AbortError') return
 
       const errorMessage = error.message || 'Unknown error'
       callbacks.onError?.(errorMessage)
-      toast.error(
-        t('composables.ai.interactionError', {
-          error: errorMessage,
-        }) as string
-      )
+      toast.error(t('composables.ai.interactionError', { error: errorMessage }) as string)
     } finally {
       abortController.value = null
     }

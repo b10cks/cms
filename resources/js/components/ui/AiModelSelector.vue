@@ -3,15 +3,15 @@ import { toast } from 'vue-sonner'
 import Icon from '~/components/Icon.vue'
 import { Badge } from '~/components/ui/badge'
 import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectScrollDownButton,
-    SelectScrollUpButton,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectTrigger,
+  SelectValue,
 } from '~/components/ui/select'
 import { Skeleton } from '~/components/ui/skeleton'
 
@@ -159,9 +159,7 @@ const getModelCostLabel = (model: AiModel): string => {
       </div>
 
       <template v-else-if="groupedModels">
-        <SelectGroup
-          v-if="showFavourites && favouriteModels.length > 0"
-        >
+        <SelectGroup v-if="showFavourites && favouriteModels.length > 0">
           <SelectLabel class="px-2 py-1.5 text-xs font-medium text-muted">
             {{ t('components.aiModelSelector.favourites') }}
           </SelectLabel>
@@ -184,7 +182,8 @@ const getModelCostLabel = (model: AiModel): string => {
         </SelectGroup>
 
         <SelectGroup
-          v-for="(models, driver) in groupedModels" :key="driver"
+          v-for="(models, driver) in groupedModels"
+          :key="driver"
         >
           <SelectLabel class="px-2 py-1.5 text-xs font-medium text-muted">
             {{ getDriverLabel(driver as string) }}
@@ -207,12 +206,16 @@ const getModelCostLabel = (model: AiModel): string => {
                   {{ getModelCostLabel(model) }}
                 </span>
                 <div class="flex gap-2">
-                    <Icon
+                  <Icon
                     v-if="model.supports_vision"
-                    name="lucide:eye" class="h-3 w-3" />
-                    <Icon
+                    name="lucide:eye"
+                    class="h-3 w-3"
+                  />
+                  <Icon
                     v-if="model.supports_tools"
-                    name="lucide:wrench" class="h-3 w-3" />
+                    name="lucide:wrench"
+                    class="h-3 w-3"
+                  />
                 </div>
               </div>
             </div>

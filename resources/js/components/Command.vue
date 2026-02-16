@@ -3,12 +3,12 @@ import Icon from '~/components/Icon.vue'
 
 import { useMagicKeys } from '@vueuse/core'
 import {
-    CommandDialog,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
 } from '~/components/ui/command'
 
 const route = useRoute()

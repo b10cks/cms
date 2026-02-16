@@ -21,7 +21,12 @@ const updatePreviewItem = inject<PreviewUpdateFunction>('updatePreviewItem')
 const aiTextRef = useTemplateRef('aiTextRef')
 const selectedModel = ref<string | null>(null)
 
-const handleSubmit = (resultContent: string, _files: AttachedFile[], model: string | null, _mentions: MentionItem[]) => {
+const handleSubmit = (
+  resultContent: string,
+  _files: AttachedFile[],
+  model: string | null,
+  _mentions: MentionItem[]
+) => {
   if (!content.value) return
 
   selectedModel.value = model

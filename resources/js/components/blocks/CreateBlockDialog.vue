@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import BlockEdit from '~/components/BlockEdit.vue';
-import { Button } from '~/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog';
+import BlockEdit from '~/components/BlockEdit.vue'
+import { Button } from '~/components/ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 
 const open = defineModel<boolean>('open')
 

@@ -3,11 +3,11 @@ import Icon from '~/components/Icon.vue'
 
 import { Badge } from '~/components/ui/badge'
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '~/components/ui/select'
 import { cn } from '~/lib/utils'
 import type { TeamResource } from '~/types/teams'

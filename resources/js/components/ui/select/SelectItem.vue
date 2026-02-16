@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue';
+import Icon from '~/components/Icon.vue'
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'
 import {
-    SelectItem,
-    SelectItemIndicator,
-    type SelectItemProps,
-    SelectItemText,
-    useForwardProps,
-} from 'reka-ui';
-import { computed, type HTMLAttributes } from 'vue';
+  SelectItem,
+  SelectItemIndicator,
+  type SelectItemProps,
+  SelectItemText,
+  useForwardProps,
+} from 'reka-ui'
+import { computed, type HTMLAttributes } from 'vue'
 
 const props = defineProps<SelectItemProps & { class?: HTMLAttributes['class'] }>()
 

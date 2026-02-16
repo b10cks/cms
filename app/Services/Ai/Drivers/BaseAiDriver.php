@@ -27,6 +27,14 @@ abstract class BaseAiDriver implements AiDriverInterface
         protected array $config = []
     ) {}
 
+    public function withApiKey(string $apiKey): static
+    {
+        $clone = clone $this;
+        $clone->config['api_key'] = $apiKey;
+
+        return $clone;
+    }
+
     public function getName(): string
     {
         return $this->name;

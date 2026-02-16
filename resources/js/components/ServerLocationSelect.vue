@@ -51,9 +51,7 @@ const selectedLocation = computed(() =>
           :disabled="location.disabled"
         >
           <div class="flex items-center">
-            <Icon
-              :name="location.icon"
-            />
+            <Icon :name="location.icon" />
             <span>{{ location.name }}</span>
           </div>
         </SelectItem>

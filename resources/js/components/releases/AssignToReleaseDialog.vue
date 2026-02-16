@@ -2,11 +2,11 @@
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from '~/components/ui/dialog'
 import type { ContentVersionListResource } from '~/types/contents'
 import type { Release } from '~/types/releases'

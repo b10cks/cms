@@ -10,13 +10,13 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import SortSelect from '~/components/ui/SortSelect.vue'
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-    TableSortableHead,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableSortableHead,
 } from '~/components/ui/table'
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
@@ -188,9 +188,13 @@ const confirmDelete = async () => {
               :class="{ 'bg-background/50': index % 2 === 0 }"
             >
               <TableCell class="cursor-pointer">
-                <RouterLink :to="{ name: 'space-datasources-dataSourceId', params: { space: spaceId, dataSourceId: dataSource.id } }">{{
-                  dataSource.name
-                }}</RouterLink>
+                <RouterLink
+                  :to="{
+                    name: 'space-datasources-dataSourceId',
+                    params: { space: spaceId, dataSourceId: dataSource.id },
+                  }"
+                  >{{ dataSource.name }}</RouterLink
+                >
               </TableCell>
               <TableCell>
                 <SimpleTooltip
@@ -206,9 +210,7 @@ const confirmDelete = async () => {
                   </button>
                 </SimpleTooltip>
               </TableCell>
-              <TableCell class="max-w-75 truncate">{{
-                dataSource.description || '-'
-              }}</TableCell>
+              <TableCell class="max-w-75 truncate">{{ dataSource.description || '-' }}</TableCell>
               <TableCell>
                 <Badge
                   :variant="dataSource.is_active ? 'success' : 'destructive'"

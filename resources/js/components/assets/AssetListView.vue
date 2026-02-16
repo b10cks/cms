@@ -7,23 +7,23 @@ import type { AssetsQueryParams } from '~/api/resources/assets'
 import SearchFilter from '~/components/SearchFilter.vue'
 import { Button } from '~/components/ui/button'
 import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { InputField } from '~/components/ui/form'
 import SortSelect from '~/components/ui/SortSelect.vue'
 import { Switch } from '~/components/ui/switch'
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableEmpty,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableEmpty,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '~/components/ui/table'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { AssetResource } from '~/types/assets'

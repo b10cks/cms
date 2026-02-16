@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 import ReleasesIcon from '~/assets/images/releases.svg?component'
 import Icon from '~/components/Icon.vue'
 import ReleaseCard from '~/components/releases/ReleaseCard.vue'
@@ -34,7 +33,7 @@ const releaseStates = computed(() => [
 ])
 
 const filters = ref<Record<string, unknown>>({})
-const releaseFilters = computed(() : FilterableField[] => [
+const releaseFilters = computed((): FilterableField[] => [
   {
     id: 'name',
     label: $t('labels.releases.fields.name'),

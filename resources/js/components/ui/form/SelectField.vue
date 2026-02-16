@@ -3,13 +3,13 @@ import { useVModel } from '@vueuse/core'
 import type { HTMLAttributes } from 'vue'
 import { computed } from 'vue'
 import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
 } from '~/components/ui/select'
 import FormField from './FormField.vue'
 

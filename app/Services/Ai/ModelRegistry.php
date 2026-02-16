@@ -3,6 +3,7 @@
 namespace App\Services\Ai;
 
 use App\Models\Management\Space;
+use App\Models\Management\SpaceAiKey;
 use App\Services\Ai\Contracts\AiDriverInterface;
 use App\Services\Ai\Drivers\BedrockDriver;
 use App\Services\Ai\Drivers\OpenAiDriver;
@@ -42,6 +43,31 @@ class ModelRegistry
     public function getDriver(string $name): ?AiDriverInterface
     {
         return $this->drivers[$name] ?? null;
+    }
+
+    public function getDriverForSpace(string $driverName, Space $space): ?AiDriverInterface
+    {
+        $driver = $this->getDriver($driverName);
+
+        if (! $driver) {
+            return null;
+        }
+
+        if (config('ai.mode') !== 'space') {
+            return $driver;
+        }
+
+        $spaceKey = SpaceAiKey::query()
+            ->forSpace($space->id)
+            ->forDriver($driverName)
+            ->active()
+            ->first();
+
+        if ($spaceKey) {
+            return $driver->withApiKey($spaceKey->getDecryptedKey());
+        }
+
+        return $driver;
     }
 
     public function getEnabledDrivers(): array

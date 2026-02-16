@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Icon as IconifyIcon } from '@iconify/vue';
-import type { HTMLAttributes } from 'vue';
+import { Icon as IconifyIcon } from '@iconify/vue'
+import type { HTMLAttributes } from 'vue'
 
 const props = defineProps<{
   name: string

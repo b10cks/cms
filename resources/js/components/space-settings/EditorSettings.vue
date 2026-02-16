@@ -3,12 +3,12 @@ import { deepClone } from '@vue/devtools-shared'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from '~/components/ui/card'
 import { Label } from '~/components/ui/form'
 import SettingsTable, { type ColumnDefinition } from '~/components/ui/settings-table.vue'

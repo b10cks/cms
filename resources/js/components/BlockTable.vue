@@ -12,13 +12,13 @@ import ContentHeader from '~/components/ui/ContentHeader.vue'
 import IconName from '~/components/ui/IconName.vue'
 import SortSelect from '~/components/ui/SortSelect.vue'
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-    TableSortableHead,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableSortableHead,
 } from '~/components/ui/table'
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
@@ -204,7 +204,9 @@ const handleDelete = async (block: BlockResource) => {
                   class="cursor-pointer hover:bg-accent"
                 >
                   <TableCell>
-                    <RouterLink :to="{ name: 'space-block', params: { space: spaceId, block: block.id } }">
+                    <RouterLink
+                      :to="{ name: 'space-block', params: { space: spaceId, block: block.id } }"
+                    >
                       <IconName
                         v-bind="{ name: block.name, color: block.color, icon: block.icon }"
                         class="font-semibold"

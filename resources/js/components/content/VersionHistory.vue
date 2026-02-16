@@ -358,13 +358,16 @@ const openInTab = () => {
                     v-for="version in groupVersions"
                     :key="version.id"
                     :as="RouterLink"
-                    :to="{ name: 'space-content-contentId-versions', params: { space: spaceId, contentId: contentId }, query: { versionId: version.id } }"
+                    :to="{
+                      name: 'space-content-contentId-versions',
+                      params: { space: spaceId, contentId: contentId },
+                      query: { versionId: version.id },
+                    }"
                     class="group ring-none relative z-10 flex items-center rounded-md px-3 py-1 transition-colors outline-none"
                     :class="{
                       'bg-secondary/50': selectedVersionId === version.id,
                       'cursor-pointer hover:bg-secondary/20': selectedVersionId !== version.id,
                     }"
-
                   >
                     <div
                       v-if="getVersionIndentLevel(version.id) > 0"

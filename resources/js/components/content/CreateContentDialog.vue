@@ -6,12 +6,12 @@ import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/com
 import { FormField, InputField } from '~/components/ui/form'
 import IconName from '~/components/ui/IconName.vue'
 import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
 } from '~/components/ui/select'
 import type { CreateContentPayload } from '~/types/contents'
 

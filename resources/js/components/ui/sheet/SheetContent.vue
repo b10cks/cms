@@ -3,14 +3,20 @@ import Icon from '@/components/Icon.vue'
 import { cn } from '@/lib/utils'
 import { reactiveOmit } from '@vueuse/core'
 import type { DialogContentEmits, DialogContentProps } from 'reka-ui'
-import { DialogClose, DialogContent, DialogOverlay, DialogPortal, useForwardPropsEmits, } from 'reka-ui'
+import {
+  DialogClose,
+  DialogContent,
+  DialogOverlay,
+  DialogPortal,
+  useForwardPropsEmits,
+} from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import type { SheetVariants } from '.'
 import { sheetVariants } from '.'
 
 interface SheetContentProps extends DialogContentProps {
-  class?: HTMLAttributes["class"]
-  side?: SheetVariants["side"]
+  class?: HTMLAttributes['class']
+  side?: SheetVariants['side']
 }
 
 defineOptions({
@@ -21,7 +27,7 @@ const props = defineProps<SheetContentProps>()
 
 const emits = defineEmits<DialogContentEmits>()
 
-const delegatedProps = reactiveOmit(props, "class", "side")
+const delegatedProps = reactiveOmit(props, 'class', 'side')
 
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
 </script>
@@ -40,7 +46,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       <DialogClose
         class="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary"
       >
-        <Icon name="lucide:x"/>
+        <Icon name="lucide:x" />
       </DialogClose>
     </DialogContent>
   </DialogPortal>

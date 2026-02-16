@@ -136,10 +136,33 @@ declare global {
 // for type re-export
 declare global {
   // @ts-ignore
-  export type { Component, Slot, Slots, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, ShallowRef, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
+  export type {
+    Component,
+    Slot,
+    Slots,
+    ComponentPublicInstance,
+    ComputedRef,
+    DirectiveBinding,
+    ExtractDefaultPropTypes,
+    ExtractPropTypes,
+    ExtractPublicPropTypes,
+    InjectionKey,
+    PropType,
+    Ref,
+    ShallowRef,
+    MaybeRef,
+    MaybeRefOrGetter,
+    VNode,
+    WritableComputedRef,
+  } from 'vue'
   import('vue')
   // @ts-ignore
-  export type { DialogAction, DialogOptions, MessageOptions, ConfirmOptions } from './composables/useAlertDialog'
+  export type {
+    DialogAction,
+    DialogOptions,
+    MessageOptions,
+    ConfirmOptions,
+  } from './composables/useAlertDialog'
   import('./composables/useAlertDialog')
   // @ts-ignore
   export type { MaybeRefOrComputed } from './composables/useBackups'
@@ -172,131 +195,177 @@ import { UnwrapRef } from 'vue'
 declare module 'vue' {
   interface GlobalComponents {}
   interface ComponentCustomProperties {
-    readonly AlertDialogProvider: UnwrapRef<typeof import('./composables/useAlertDialog')['AlertDialogProvider']>
-    readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
-    readonly computed: UnwrapRef<typeof import('vue')['computed']>
-    readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
-    readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
-    readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
-    readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
-    readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
-    readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
-    readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
-    readonly getCurrentWatcher: UnwrapRef<typeof import('vue')['getCurrentWatcher']>
-    readonly getLocale: UnwrapRef<typeof import('./plugins/i18n')['getLocale']>
-    readonly getPosthog: UnwrapRef<typeof import('./plugins/posthog')['getPosthog']>
-    readonly h: UnwrapRef<typeof import('vue')['h']>
-    readonly i18n: UnwrapRef<typeof import('./plugins/i18n')['i18n']>
-    readonly initAuth: UnwrapRef<typeof import('./plugins/auth')['initAuth']>
-    readonly inject: UnwrapRef<typeof import('vue')['inject']>
-    readonly installChart: UnwrapRef<typeof import('./plugins/chart')['installChart']>
-    readonly installEcho: UnwrapRef<typeof import('./plugins/echo')['installEcho']>
-    readonly installI18n: UnwrapRef<typeof import('./plugins/i18n')['installI18n']>
-    readonly installPosthog: UnwrapRef<typeof import('./plugins/posthog')['installPosthog']>
-    readonly installVueQuery: UnwrapRef<typeof import('./plugins/vue-query')['installVueQuery']>
-    readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
-    readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
-    readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
-    readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
-    readonly isShallow: UnwrapRef<typeof import('vue')['isShallow']>
-    readonly locales: UnwrapRef<typeof import('./plugins/i18n')['locales']>
-    readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
-    readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
-    readonly onActivated: UnwrapRef<typeof import('vue')['onActivated']>
-    readonly onBeforeMount: UnwrapRef<typeof import('vue')['onBeforeMount']>
-    readonly onBeforeRouteLeave: UnwrapRef<typeof import('vue-router')['onBeforeRouteLeave']>
-    readonly onBeforeRouteUpdate: UnwrapRef<typeof import('vue-router')['onBeforeRouteUpdate']>
-    readonly onBeforeUnmount: UnwrapRef<typeof import('vue')['onBeforeUnmount']>
-    readonly onBeforeUpdate: UnwrapRef<typeof import('vue')['onBeforeUpdate']>
-    readonly onDeactivated: UnwrapRef<typeof import('vue')['onDeactivated']>
-    readonly onErrorCaptured: UnwrapRef<typeof import('vue')['onErrorCaptured']>
-    readonly onMounted: UnwrapRef<typeof import('vue')['onMounted']>
-    readonly onRenderTracked: UnwrapRef<typeof import('vue')['onRenderTracked']>
-    readonly onRenderTriggered: UnwrapRef<typeof import('vue')['onRenderTriggered']>
-    readonly onScopeDispose: UnwrapRef<typeof import('vue')['onScopeDispose']>
-    readonly onServerPrefetch: UnwrapRef<typeof import('vue')['onServerPrefetch']>
-    readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
-    readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
-    readonly onWatcherCleanup: UnwrapRef<typeof import('vue')['onWatcherCleanup']>
-    readonly provide: UnwrapRef<typeof import('vue')['provide']>
-    readonly queryClient: UnwrapRef<typeof import('./plugins/vue-query')['queryClient']>
-    readonly queryKeys: UnwrapRef<typeof import('./composables/useQueryClient')['queryKeys']>
-    readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
-    readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
-    readonly ref: UnwrapRef<typeof import('vue')['ref']>
-    readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
-    readonly setAlertDialogDefaultLabels: UnwrapRef<typeof import('./composables/useAlertDialog')['setAlertDialogDefaultLabels']>
-    readonly setLocale: UnwrapRef<typeof import('./plugins/i18n')['setLocale']>
-    readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
-    readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
-    readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
-    readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
-    readonly toRef: UnwrapRef<typeof import('vue')['toRef']>
-    readonly toRefs: UnwrapRef<typeof import('vue')['toRefs']>
-    readonly toValue: UnwrapRef<typeof import('vue')['toValue']>
-    readonly triggerRef: UnwrapRef<typeof import('vue')['triggerRef']>
-    readonly unref: UnwrapRef<typeof import('vue')['unref']>
-    readonly useAlertDialog: UnwrapRef<typeof import('./composables/useAlertDialog')['useAlertDialog']>
-    readonly useApiClient: UnwrapRef<typeof import('./composables/useApiClient')['useApiClient']>
-    readonly useAssetFolders: UnwrapRef<typeof import('./composables/useAssetFolders')['useAssetFolders']>
-    readonly useAssetTags: UnwrapRef<typeof import('./composables/useAssetTags')['useAssetTags']>
-    readonly useAssets: UnwrapRef<typeof import('./composables/useAssets')['useAssets']>
-    readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
-    readonly useAuth: UnwrapRef<typeof import('./composables/useAuth')['useAuth']>
-    readonly useBackups: UnwrapRef<typeof import('./composables/useBackups')['useBackups']>
-    readonly useBlockFolders: UnwrapRef<typeof import('./composables/useBlockFolders')['useBlockFolders']>
-    readonly useBlockTags: UnwrapRef<typeof import('./composables/useBlockTags')['useBlockTags']>
-    readonly useBlockTemplates: UnwrapRef<typeof import('./composables/useBlockTemplates')['useBlockTemplates']>
-    readonly useBlockVersions: UnwrapRef<typeof import('./composables/useBlockVersions')['useBlockVersions']>
-    readonly useBlocks: UnwrapRef<typeof import('./composables/useBlocks')['useBlocks']>
-    readonly useComments: UnwrapRef<typeof import('./composables/useComments')['useComments']>
-    readonly useContent: UnwrapRef<typeof import('./composables/useContent')['useContent']>
-    readonly useContentMenu: UnwrapRef<typeof import('./composables/useContentMenu')['useContentMenu']>
-    readonly useContentMenuPresence: UnwrapRef<typeof import('./composables/useContentMenuPresence')['useContentMenuPresence']>
-    readonly useContentPresence: UnwrapRef<typeof import('./composables/usePresence')['useContentPresence']>
-    readonly useContentTree: UnwrapRef<typeof import('./composables/useContentTree')['useContentTree']>
-    readonly useContentVersions: UnwrapRef<typeof import('./composables/useContentVersions')['useContentVersions']>
-    readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
-    readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
-    readonly useDataEntries: UnwrapRef<typeof import('./composables/useDataEntries')['useDataEntries']>
-    readonly useDataSources: UnwrapRef<typeof import('./composables/useDataSources')['useDataSources']>
-    readonly useEcho: UnwrapRef<typeof import('./composables/useEcho')['useEcho']>
-    readonly useFileUpload: UnwrapRef<typeof import('./composables/useFileUpload')['useFileUpload']>
-    readonly useFileUtils: UnwrapRef<typeof import('./composables/useFileUtils')['default']>
-    readonly useFormat: UnwrapRef<typeof import('./composables/useFormat')['default']>
-    readonly useGlobalClipboard: UnwrapRef<typeof import('./composables/useGlobalClipboard')['useGlobalClipboard']>
-    readonly useGlobalTeam: UnwrapRef<typeof import('./composables/useGlobalTeam')['useGlobalTeam']>
-    readonly useHandlebars: UnwrapRef<typeof import('./composables/useHandlebars')['default']>
-    readonly useI18n: UnwrapRef<typeof import('./plugins/i18n')['useI18n']>
-    readonly useId: UnwrapRef<typeof import('vue')['useId']>
-    readonly useInvites: UnwrapRef<typeof import('./composables/useInvites')['useInvites']>
-    readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
-    readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
-    readonly usePersonalAccessTokens: UnwrapRef<typeof import('./composables/usePersonalAccessTokens')['usePersonalAccessTokens']>
-    readonly usePresence: UnwrapRef<typeof import('./composables/usePresence')['usePresence']>
-    readonly useRedirects: UnwrapRef<typeof import('./composables/useRedirects')['useRedirects']>
-    readonly useReleases: UnwrapRef<typeof import('./composables/useReleases')['useReleases']>
-    readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
-    readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
-    readonly useRuntimeConfig: UnwrapRef<typeof import('~/env')['useRuntimeConfig']>
-    readonly useSeoMeta: UnwrapRef<typeof import('./composables/useSeoMeta')['useSeoMeta']>
-    readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
-    readonly useSpacePresence: UnwrapRef<typeof import('./composables/usePresence')['useSpacePresence']>
-    readonly useSpacePresencePeek: UnwrapRef<typeof import('./composables/useSpacePresencePeek')['useSpacePresencePeek']>
-    readonly useSpaceSettings: UnwrapRef<typeof import('./composables/useSpaceSettings')['default']>
-    readonly useSpaces: UnwrapRef<typeof import('./composables/useSpace')['useSpaces']>
-    readonly useTeams: UnwrapRef<typeof import('./composables/useTeams')['useTeams']>
-    readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
-    readonly useTokens: UnwrapRef<typeof import('./composables/useTokens')['useTokens']>
-    readonly useTone: UnwrapRef<typeof import('./composables/useTone')['useTone']>
-    readonly useTwoFactor: UnwrapRef<typeof import('./composables/useTwoFactor')['useTwoFactor']>
-    readonly useTwoFactorAuth: UnwrapRef<typeof import('./composables/useTwoFactorAuth')['useTwoFactorAuth']>
-    readonly useUlid: UnwrapRef<typeof import('./composables/useUlid')['useUlid']>
-    readonly useUser: UnwrapRef<typeof import('./composables/useUser')['useUser']>
-    readonly useUserSettings: UnwrapRef<typeof import('./composables/useUserSettings')['useUserSettings']>
-    readonly watch: UnwrapRef<typeof import('vue')['watch']>
-    readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
-    readonly watchPostEffect: UnwrapRef<typeof import('vue')['watchPostEffect']>
-    readonly watchSyncEffect: UnwrapRef<typeof import('vue')['watchSyncEffect']>
+    readonly AlertDialogProvider: UnwrapRef<
+      (typeof import('./composables/useAlertDialog'))['AlertDialogProvider']
+    >
+    readonly EffectScope: UnwrapRef<(typeof import('vue'))['EffectScope']>
+    readonly computed: UnwrapRef<(typeof import('vue'))['computed']>
+    readonly createApp: UnwrapRef<(typeof import('vue'))['createApp']>
+    readonly customRef: UnwrapRef<(typeof import('vue'))['customRef']>
+    readonly defineAsyncComponent: UnwrapRef<(typeof import('vue'))['defineAsyncComponent']>
+    readonly defineComponent: UnwrapRef<(typeof import('vue'))['defineComponent']>
+    readonly effectScope: UnwrapRef<(typeof import('vue'))['effectScope']>
+    readonly getCurrentInstance: UnwrapRef<(typeof import('vue'))['getCurrentInstance']>
+    readonly getCurrentScope: UnwrapRef<(typeof import('vue'))['getCurrentScope']>
+    readonly getCurrentWatcher: UnwrapRef<(typeof import('vue'))['getCurrentWatcher']>
+    readonly getLocale: UnwrapRef<(typeof import('./plugins/i18n'))['getLocale']>
+    readonly getPosthog: UnwrapRef<(typeof import('./plugins/posthog'))['getPosthog']>
+    readonly h: UnwrapRef<(typeof import('vue'))['h']>
+    readonly i18n: UnwrapRef<(typeof import('./plugins/i18n'))['i18n']>
+    readonly initAuth: UnwrapRef<(typeof import('./plugins/auth'))['initAuth']>
+    readonly inject: UnwrapRef<(typeof import('vue'))['inject']>
+    readonly installChart: UnwrapRef<(typeof import('./plugins/chart'))['installChart']>
+    readonly installEcho: UnwrapRef<(typeof import('./plugins/echo'))['installEcho']>
+    readonly installI18n: UnwrapRef<(typeof import('./plugins/i18n'))['installI18n']>
+    readonly installPosthog: UnwrapRef<(typeof import('./plugins/posthog'))['installPosthog']>
+    readonly installVueQuery: UnwrapRef<(typeof import('./plugins/vue-query'))['installVueQuery']>
+    readonly isProxy: UnwrapRef<(typeof import('vue'))['isProxy']>
+    readonly isReactive: UnwrapRef<(typeof import('vue'))['isReactive']>
+    readonly isReadonly: UnwrapRef<(typeof import('vue'))['isReadonly']>
+    readonly isRef: UnwrapRef<(typeof import('vue'))['isRef']>
+    readonly isShallow: UnwrapRef<(typeof import('vue'))['isShallow']>
+    readonly locales: UnwrapRef<(typeof import('./plugins/i18n'))['locales']>
+    readonly markRaw: UnwrapRef<(typeof import('vue'))['markRaw']>
+    readonly nextTick: UnwrapRef<(typeof import('vue'))['nextTick']>
+    readonly onActivated: UnwrapRef<(typeof import('vue'))['onActivated']>
+    readonly onBeforeMount: UnwrapRef<(typeof import('vue'))['onBeforeMount']>
+    readonly onBeforeRouteLeave: UnwrapRef<(typeof import('vue-router'))['onBeforeRouteLeave']>
+    readonly onBeforeRouteUpdate: UnwrapRef<(typeof import('vue-router'))['onBeforeRouteUpdate']>
+    readonly onBeforeUnmount: UnwrapRef<(typeof import('vue'))['onBeforeUnmount']>
+    readonly onBeforeUpdate: UnwrapRef<(typeof import('vue'))['onBeforeUpdate']>
+    readonly onDeactivated: UnwrapRef<(typeof import('vue'))['onDeactivated']>
+    readonly onErrorCaptured: UnwrapRef<(typeof import('vue'))['onErrorCaptured']>
+    readonly onMounted: UnwrapRef<(typeof import('vue'))['onMounted']>
+    readonly onRenderTracked: UnwrapRef<(typeof import('vue'))['onRenderTracked']>
+    readonly onRenderTriggered: UnwrapRef<(typeof import('vue'))['onRenderTriggered']>
+    readonly onScopeDispose: UnwrapRef<(typeof import('vue'))['onScopeDispose']>
+    readonly onServerPrefetch: UnwrapRef<(typeof import('vue'))['onServerPrefetch']>
+    readonly onUnmounted: UnwrapRef<(typeof import('vue'))['onUnmounted']>
+    readonly onUpdated: UnwrapRef<(typeof import('vue'))['onUpdated']>
+    readonly onWatcherCleanup: UnwrapRef<(typeof import('vue'))['onWatcherCleanup']>
+    readonly provide: UnwrapRef<(typeof import('vue'))['provide']>
+    readonly queryClient: UnwrapRef<(typeof import('./plugins/vue-query'))['queryClient']>
+    readonly queryKeys: UnwrapRef<(typeof import('./composables/useQueryClient'))['queryKeys']>
+    readonly reactive: UnwrapRef<(typeof import('vue'))['reactive']>
+    readonly readonly: UnwrapRef<(typeof import('vue'))['readonly']>
+    readonly ref: UnwrapRef<(typeof import('vue'))['ref']>
+    readonly resolveComponent: UnwrapRef<(typeof import('vue'))['resolveComponent']>
+    readonly setAlertDialogDefaultLabels: UnwrapRef<
+      (typeof import('./composables/useAlertDialog'))['setAlertDialogDefaultLabels']
+    >
+    readonly setLocale: UnwrapRef<(typeof import('./plugins/i18n'))['setLocale']>
+    readonly shallowReactive: UnwrapRef<(typeof import('vue'))['shallowReactive']>
+    readonly shallowReadonly: UnwrapRef<(typeof import('vue'))['shallowReadonly']>
+    readonly shallowRef: UnwrapRef<(typeof import('vue'))['shallowRef']>
+    readonly toRaw: UnwrapRef<(typeof import('vue'))['toRaw']>
+    readonly toRef: UnwrapRef<(typeof import('vue'))['toRef']>
+    readonly toRefs: UnwrapRef<(typeof import('vue'))['toRefs']>
+    readonly toValue: UnwrapRef<(typeof import('vue'))['toValue']>
+    readonly triggerRef: UnwrapRef<(typeof import('vue'))['triggerRef']>
+    readonly unref: UnwrapRef<(typeof import('vue'))['unref']>
+    readonly useAlertDialog: UnwrapRef<
+      (typeof import('./composables/useAlertDialog'))['useAlertDialog']
+    >
+    readonly useApiClient: UnwrapRef<(typeof import('./composables/useApiClient'))['useApiClient']>
+    readonly useAssetFolders: UnwrapRef<
+      (typeof import('./composables/useAssetFolders'))['useAssetFolders']
+    >
+    readonly useAssetTags: UnwrapRef<(typeof import('./composables/useAssetTags'))['useAssetTags']>
+    readonly useAssets: UnwrapRef<(typeof import('./composables/useAssets'))['useAssets']>
+    readonly useAttrs: UnwrapRef<(typeof import('vue'))['useAttrs']>
+    readonly useAuth: UnwrapRef<(typeof import('./composables/useAuth'))['useAuth']>
+    readonly useBackups: UnwrapRef<(typeof import('./composables/useBackups'))['useBackups']>
+    readonly useBlockFolders: UnwrapRef<
+      (typeof import('./composables/useBlockFolders'))['useBlockFolders']
+    >
+    readonly useBlockTags: UnwrapRef<(typeof import('./composables/useBlockTags'))['useBlockTags']>
+    readonly useBlockTemplates: UnwrapRef<
+      (typeof import('./composables/useBlockTemplates'))['useBlockTemplates']
+    >
+    readonly useBlockVersions: UnwrapRef<
+      (typeof import('./composables/useBlockVersions'))['useBlockVersions']
+    >
+    readonly useBlocks: UnwrapRef<(typeof import('./composables/useBlocks'))['useBlocks']>
+    readonly useComments: UnwrapRef<(typeof import('./composables/useComments'))['useComments']>
+    readonly useContent: UnwrapRef<(typeof import('./composables/useContent'))['useContent']>
+    readonly useContentMenu: UnwrapRef<
+      (typeof import('./composables/useContentMenu'))['useContentMenu']
+    >
+    readonly useContentMenuPresence: UnwrapRef<
+      (typeof import('./composables/useContentMenuPresence'))['useContentMenuPresence']
+    >
+    readonly useContentPresence: UnwrapRef<
+      (typeof import('./composables/usePresence'))['useContentPresence']
+    >
+    readonly useContentTree: UnwrapRef<
+      (typeof import('./composables/useContentTree'))['useContentTree']
+    >
+    readonly useContentVersions: UnwrapRef<
+      (typeof import('./composables/useContentVersions'))['useContentVersions']
+    >
+    readonly useCssModule: UnwrapRef<(typeof import('vue'))['useCssModule']>
+    readonly useCssVars: UnwrapRef<(typeof import('vue'))['useCssVars']>
+    readonly useDataEntries: UnwrapRef<
+      (typeof import('./composables/useDataEntries'))['useDataEntries']
+    >
+    readonly useDataSources: UnwrapRef<
+      (typeof import('./composables/useDataSources'))['useDataSources']
+    >
+    readonly useEcho: UnwrapRef<(typeof import('./composables/useEcho'))['useEcho']>
+    readonly useFileUpload: UnwrapRef<
+      (typeof import('./composables/useFileUpload'))['useFileUpload']
+    >
+    readonly useFileUtils: UnwrapRef<(typeof import('./composables/useFileUtils'))['default']>
+    readonly useFormat: UnwrapRef<(typeof import('./composables/useFormat'))['default']>
+    readonly useGlobalClipboard: UnwrapRef<
+      (typeof import('./composables/useGlobalClipboard'))['useGlobalClipboard']
+    >
+    readonly useGlobalTeam: UnwrapRef<
+      (typeof import('./composables/useGlobalTeam'))['useGlobalTeam']
+    >
+    readonly useHandlebars: UnwrapRef<(typeof import('./composables/useHandlebars'))['default']>
+    readonly useI18n: UnwrapRef<(typeof import('./plugins/i18n'))['useI18n']>
+    readonly useId: UnwrapRef<(typeof import('vue'))['useId']>
+    readonly useInvites: UnwrapRef<(typeof import('./composables/useInvites'))['useInvites']>
+    readonly useLink: UnwrapRef<(typeof import('vue-router'))['useLink']>
+    readonly useModel: UnwrapRef<(typeof import('vue'))['useModel']>
+    readonly usePersonalAccessTokens: UnwrapRef<
+      (typeof import('./composables/usePersonalAccessTokens'))['usePersonalAccessTokens']
+    >
+    readonly usePresence: UnwrapRef<(typeof import('./composables/usePresence'))['usePresence']>
+    readonly useRedirects: UnwrapRef<(typeof import('./composables/useRedirects'))['useRedirects']>
+    readonly useReleases: UnwrapRef<(typeof import('./composables/useReleases'))['useReleases']>
+    readonly useRoute: UnwrapRef<(typeof import('vue-router'))['useRoute']>
+    readonly useRouter: UnwrapRef<(typeof import('vue-router'))['useRouter']>
+    readonly useRuntimeConfig: UnwrapRef<(typeof import('~/env'))['useRuntimeConfig']>
+    readonly useSeoMeta: UnwrapRef<(typeof import('./composables/useSeoMeta'))['useSeoMeta']>
+    readonly useSlots: UnwrapRef<(typeof import('vue'))['useSlots']>
+    readonly useSpacePresence: UnwrapRef<
+      (typeof import('./composables/usePresence'))['useSpacePresence']
+    >
+    readonly useSpacePresencePeek: UnwrapRef<
+      (typeof import('./composables/useSpacePresencePeek'))['useSpacePresencePeek']
+    >
+    readonly useSpaceSettings: UnwrapRef<
+      (typeof import('./composables/useSpaceSettings'))['default']
+    >
+    readonly useSpaces: UnwrapRef<(typeof import('./composables/useSpace'))['useSpaces']>
+    readonly useTeams: UnwrapRef<(typeof import('./composables/useTeams'))['useTeams']>
+    readonly useTemplateRef: UnwrapRef<(typeof import('vue'))['useTemplateRef']>
+    readonly useTokens: UnwrapRef<(typeof import('./composables/useTokens'))['useTokens']>
+    readonly useTone: UnwrapRef<(typeof import('./composables/useTone'))['useTone']>
+    readonly useTwoFactor: UnwrapRef<(typeof import('./composables/useTwoFactor'))['useTwoFactor']>
+    readonly useTwoFactorAuth: UnwrapRef<
+      (typeof import('./composables/useTwoFactorAuth'))['useTwoFactorAuth']
+    >
+    readonly useUlid: UnwrapRef<(typeof import('./composables/useUlid'))['useUlid']>
+    readonly useUser: UnwrapRef<(typeof import('./composables/useUser'))['useUser']>
+    readonly useUserSettings: UnwrapRef<
+      (typeof import('./composables/useUserSettings'))['useUserSettings']
+    >
+    readonly watch: UnwrapRef<(typeof import('vue'))['watch']>
+    readonly watchEffect: UnwrapRef<(typeof import('vue'))['watchEffect']>
+    readonly watchPostEffect: UnwrapRef<(typeof import('vue'))['watchPostEffect']>
+    readonly watchSyncEffect: UnwrapRef<(typeof import('vue'))['watchSyncEffect']>
   }
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DialogDescription, DialogHeader, DialogTitle } from '~/components/ui/dialog/index';
+import { DialogDescription, DialogHeader, DialogTitle } from '~/components/ui/dialog/index'
 
 defineProps<{
   title?: string

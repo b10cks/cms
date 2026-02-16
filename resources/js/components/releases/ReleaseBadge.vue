@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Badge } from '~/components/ui/badge';
-import type { Release } from '~/types/releases';
+import { Badge } from '~/components/ui/badge'
+import type { Release } from '~/types/releases'
 
 const { getReleaseState } = useReleases(inject<string>('spaceId') || '')
 

@@ -4,20 +4,20 @@ import Icon from '~/components/Icon.vue'
 import { toast } from 'vue-sonner'
 import Markdown from '~/components/Markdown.vue'
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { PulseDot } from '~/components/ui/pulse-dot'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import type { CommentResource } from '~/types/comments'
 import type {
-    CommentClickEvent,
-    CommentCreateEvent,
-    CommentUpdateEvent,
-    FieldUpdateEvent,
+  CommentClickEvent,
+  CommentCreateEvent,
+  CommentUpdateEvent,
+  FieldUpdateEvent,
 } from '~/utils/preview-bridge'
 import { PreviewBridge } from '~/utils/preview-bridge'
 
@@ -146,7 +146,9 @@ const updateHover = (itemId: string | null) => {
 }
 
 const copyLink = () => {
-  navigator.clipboard.writeText(src.value).then(() => toast.message(t('notifications.preview.copied') as string))
+  navigator.clipboard
+    .writeText(src.value)
+    .then(() => toast.message(t('notifications.preview.copied') as string))
 }
 
 // Expose the refresh method to parent components

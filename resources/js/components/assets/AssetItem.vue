@@ -4,10 +4,10 @@ import NuxtImg from '~/components/NuxtImg.vue'
 
 import { Checkbox } from '~/components/ui/checkbox'
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import type { AssetResource } from '~/types/assets'
 

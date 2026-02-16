@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AccssTokenSettings from '~/components/space-settings/AccssTokenSettings.vue'
-import AiSettings from '~/components/space-settings/AiSettings.vue'
 import AssetLibrarySettings from '~/components/space-settings/AssetLibrarySettings.vue'
 import EditorSettings from '~/components/space-settings/EditorSettings.vue'
 import I18nSettings from '~/components/space-settings/I18nSettings.vue'
@@ -37,10 +36,6 @@ useSeoMeta({
       :space="space"
     />
     <AssetLibrarySettings
-      v-if="space"
-      :space="space"
-    />
-    <AiSettings
       v-if="space"
       :space="space"
     />

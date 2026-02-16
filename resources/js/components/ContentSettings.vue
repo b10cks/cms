@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { CheckboxField, InputField } from '~/components/ui/form';
-import { ContentResource } from '~/types/contents';
+import { CheckboxField, InputField } from '~/components/ui/form'
+import { ContentResource } from '~/types/contents'
 
 const content = defineModel<ContentResource>()
 </script>

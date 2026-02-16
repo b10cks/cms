@@ -6,20 +6,20 @@ import { Button } from '~/components/ui/button'
 import { FormField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '~/components/ui/select'
 import { Switch } from '~/components/ui/switch'
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '~/components/ui/table'
 import { Textarea } from '~/components/ui/textarea'
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onClickOutside } from '@vueuse/core';
-import type { HTMLAttributes } from 'vue';
+import { onClickOutside } from '@vueuse/core'
+import type { HTMLAttributes } from 'vue'
 
 const props = withDefaults(
   defineProps<{

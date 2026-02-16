@@ -2,8 +2,8 @@
 
 use App\Http\Controllers\Mgmt\Ai\AiModelsController;
 use App\Http\Controllers\Mgmt\Ai\AvailableModelsController;
-use App\Http\Controllers\Mgmt\Ai\ContentInteractionController;
 use App\Http\Controllers\Mgmt\Ai\ContentInteractionStreamController;
+use App\Http\Controllers\Mgmt\Ai\SpaceAiConfigController;
 use App\Http\Controllers\Mgmt\Ai\MetaTagsController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiSettingsController;
 use App\Http\Controllers\Mgmt\Ai\TranslationController;
@@ -94,8 +94,6 @@ Route::group(['prefix' => 'ai'], function () {
         ->name('ai.meta-tags');
     Route::post('translate', TranslationController::class)
         ->name('ai.translate');
-    Route::post('content-interaction', ContentInteractionController::class)
-        ->name('ai.content-interaction');
     Route::post('content-interaction/stream', ContentInteractionStreamController::class)
         ->name('ai.content-interaction.stream');
 });
@@ -125,6 +123,12 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::get('ai-usage', SpaceAiUsageController::class)->name('spaces.ai-usage');
     Route::get('ai-settings', [SpaceAiSettingsController::class, 'show'])->name('spaces.ai-settings.show');
     Route::patch('ai-settings', [SpaceAiSettingsController::class, 'update'])->name('spaces.ai-settings.update');
+
+    Route::get('ai-configs', [SpaceAiConfigController::class, 'index'])->name('spaces.ai-configs.index');
+    Route::post('ai-configs', [SpaceAiConfigController::class, 'store'])->name('spaces.ai-configs.store');
+    Route::get('ai-configs/{aiConfig}', [SpaceAiConfigController::class, 'show'])->name('spaces.ai-configs.show');
+    Route::patch('ai-configs/{aiConfig}', [SpaceAiConfigController::class, 'update'])->name('spaces.ai-configs.update');
+    Route::delete('ai-configs/{aiConfig}', [SpaceAiConfigController::class, 'destroy'])->name('spaces.ai-configs.destroy');
 
     Route::get('invites', [SpaceInviteController::class, 'index'])->name('spaces.invites.index');
     Route::post('invites', [SpaceInviteController::class, 'store'])->name('spaces.invites.store');

@@ -20,6 +20,11 @@ const items: NavItem[] = [
     icon: 'lucide:sliders',
   },
   {
+    title: 'labels.settings.ai.title',
+    name: 'space-settings-ai',
+    icon: 'lucide:sparkles',
+  },
+  {
     title: 'labels.settings.people.title',
     name: 'space-settings-people',
     icon: 'lucide:users',

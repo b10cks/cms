@@ -28,7 +28,7 @@ class ContentInteractionStreamController extends Controller
             'content_id' => 'sometimes|nullable|string',
             'contentId' => 'sometimes|nullable|string',
             'files' => 'sometimes|array',
-            'model' => 'sometimes|nullable|string',
+            'config_id' => 'sometimes|nullable|string',
             'mentions' => 'sometimes|array',
             'mentions.*.type' => 'sometimes|string|in:content,block',
             'mentions.*.id' => 'sometimes|string',
@@ -41,10 +41,18 @@ class ContentInteractionStreamController extends Controller
         $contentId = $request->input('content_id') ?? $request->input('contentId');
         $content = $contentId ? Content::find($contentId) : null;
 
-        if ($model = $request->input('model')) {
-            $ai = $space->settings->ai ?? [];
-            $ai['model'] = $model;
-            $space->settings->ai = $ai;
+        $aiConfig = null;
+
+        if ($configId = $request->input('config_id')) {
+            $aiConfig = $space->aiConfigs()->find($configId);
+
+            if (!$aiConfig) {
+                $aiConfig = $space->defaultAiConfig;
+            }
+        }
+
+        if (!$aiConfig) {
+            $aiConfig = $space->defaultAiConfig;
         }
 
         $prompt = $request->string('prompt');
@@ -59,7 +67,7 @@ class ContentInteractionStreamController extends Controller
         ];
         $files = $request->input('files', []);
 
-        return new StreamedResponse(function () use ($space, $prompt, $context, $files) {
+        return new StreamedResponse(function () use ($space, $prompt, $context, $files, $aiConfig) {
             if (ob_get_level() == 0) {
                 ob_start();
             }
@@ -72,13 +80,8 @@ class ContentInteractionStreamController extends Controller
             flush();
 
             try {
-                foreach ($this->streamService->stream($space, $prompt, $context, $files) as $event) {
+                foreach ($this->streamService->stream($space, $prompt, $context, $files, $aiConfig) as $event) {
                     $now = time();
-
-                    \Log::info('Stream event', [
-                        'type' => $event->type->value,
-                        'content_length' => strlen($event->content ?? ''),
-                    ]);
 
                     if ($now - $lastActivity >= $pingInterval) {
                         echo ": ping\n\n";
@@ -94,14 +97,12 @@ class ContentInteractionStreamController extends Controller
                     $lastActivity = $now;
 
                     if ($event->type->value === 'done' || $event->type->value === 'error') {
-                        \Log::info('Stream ending', ['type' => $event->type->value]);
                         ob_flush();
                         flush();
                         break;
                     }
                 }
             } catch (\Throwable $e) {
-                \Log::error('Stream error', ['error' => $e->getMessage()]);
                 echo 'data: ' . json_encode([
                     'type' => 'error',
                     'message' => $e->getMessage(),

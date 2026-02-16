@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue';
+import Icon from '~/components/Icon.vue'
 
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuRadioGroup,
-    DropdownMenuTrigger,
-} from '~/components/ui/dropdown-menu';
-import IconName from '~/components/ui/IconName.vue';
-import BlockWithTemplatesSubmenu from './BlockWithTemplatesSubmenu.vue';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuTrigger,
+} from '~/components/ui/dropdown-menu'
+import IconName from '~/components/ui/IconName.vue'
+import BlockWithTemplatesSubmenu from './BlockWithTemplatesSubmenu.vue'
 
 const emit = defineEmits<{
   (e: 'select', blockSlug: string, templateId?: string | null): void
@@ -29,20 +29,22 @@ const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 
 const possibleBlocks = computed(() => {
-  return blocks.value?.data.filter((block: BlockResource) => {
-    const isValidType = ['nestable', 'universal'].includes(block.type)
-    const hasValidTag =
-      !props.item.restrict_blocks ||
-      props.item.tag_whitelist?.length === 0 ||
-      !block.tags?.length ||
-      block.tags.some((t) => props.item.tag_whitelist.includes(t))
-    const isWhitelisted =
-      !props.item.restrict_blocks ||
-      props.item.block_whitelist?.length === 0 ||
-      props.item.block_whitelist?.includes(block.slug)
+  return (
+    blocks.value?.data.filter((block: BlockResource) => {
+      const isValidType = ['nestable', 'universal'].includes(block.type)
+      const hasValidTag =
+        !props.item.restrict_blocks ||
+        props.item.tag_whitelist?.length === 0 ||
+        !block.tags?.length ||
+        block.tags.some((t) => props.item.tag_whitelist.includes(t))
+      const isWhitelisted =
+        !props.item.restrict_blocks ||
+        props.item.block_whitelist?.length === 0 ||
+        props.item.block_whitelist?.includes(block.slug)
 
-    return isValidType && hasValidTag && isWhitelisted
-  }) || []
+      return isValidType && hasValidTag && isWhitelisted
+    }) || []
+  )
 })
 
 const select = (blockSlug: string, templateId?: string | null) => {

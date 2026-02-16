@@ -7,11 +7,11 @@ import { toast } from 'vue-sonner'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
 import {
-    Dialog,
-    DialogContent,
-    DialogFooter,
-    DialogHeaderCombined,
-    DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeaderCombined,
+  DialogTrigger,
 } from '~/components/ui/dialog'
 import { InputField } from '~/components/ui/form'
 import CardHeaderCombined from '../ui/card/CardHeaderCombined.vue'

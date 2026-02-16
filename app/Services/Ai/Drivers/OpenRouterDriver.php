@@ -6,7 +6,8 @@ use App\Services\Ai\Dto\AiModelDto;
 use Arr;
 use Generator;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
+use OpenAI;
+use OpenAI\Client;
 
 class OpenRouterDriver extends BaseAiDriver
 {
@@ -14,9 +15,35 @@ class OpenRouterDriver extends BaseAiDriver
 
     protected string $baseUrl = 'https://openrouter.ai/api/v1';
 
+    protected ?Client $client = null;
+
     public function isConfigured(): bool
     {
         return !empty($this->config['api_key']);
+    }
+
+    public function withApiKey(string $apiKey): static
+    {
+        $clone = clone $this;
+        $clone->config['api_key'] = $apiKey;
+        $clone->client = null;
+
+        return $clone;
+    }
+
+    protected function getClient(): Client
+    {
+        if ($this->client === null) {
+            $factory = OpenAI::factory()
+                ->withBaseUri($this->baseUrl)
+                ->withApiKey($this->config['api_key'])
+                ->withHttpHeader('HTTP-Referer', $this->config['site_url'] ?? config('app.url'))
+                ->withHttpHeader('X-Title', $this->config['site_name'] ?? config('app.name'));
+
+            $this->client = $factory->make();
+        }
+
+        return $this->client;
     }
 
     protected function fetchModels(): array
@@ -47,7 +74,7 @@ class OpenRouterDriver extends BaseAiDriver
                     outputCost: $this->parseCost($modelData['pricing']['completion'] ?? '0'),
                     capabilities: $this->determineCapabilities($modelData),
                     supportsStreaming: true,
-                    supportsTools: in_array('tools', $supportedParams),
+                    supportsTools: \in_array('tools', $supportedParams),
                     supportsVision: ($modelData['architecture']['modality'] ?? '') === 'text+image->text',
                 );
             }
@@ -88,6 +115,8 @@ class OpenRouterDriver extends BaseAiDriver
         array $tools = [],
         array $options = []
     ): Generator {
+        $client = $this->getClient();
+
         $params = [
             'model' => $modelId,
             'messages' => $messages,
@@ -106,170 +135,96 @@ class OpenRouterDriver extends BaseAiDriver
             $params['temperature'] = $options['temperature'];
         }
 
-        $postData = json_encode($params);
-        $headers = [
-            'Authorization: Bearer ' . $this->config['api_key'],
-            'Content-Type: application/json',
-            'Accept: text/event-stream',
-            'HTTP-Referer: ' . ($this->config['site_url'] ?? config('app.url')),
-            'X-Title: ' . ($this->config['site_name'] ?? config('app.name')),
-        ];
+        try {
+            $stream = $client->chat()->createStreamed($params);
 
-        set_time_limit(0);
+            $fullContent = '';
+            $toolCalls = [];
+            $reasoningContent = '';
 
-        $ch = curl_init();
-        curl_setopt_array($ch, [
-            CURLOPT_URL => "{$this->baseUrl}/chat/completions",
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $postData,
-            CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 180,
-            CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_ENCODING => '',
-        ]);
+            foreach ($stream as $response) {
+                $delta = $response->choices[0]->delta ?? null;
 
-        $buffer = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
-        curl_close($ch);
+                if (isset($delta->reasoning_content) && !empty($delta->reasoning_content)) {
+                    $reasoningContent .= $delta->reasoning_content;
+                    yield $this->emitStatus($delta->reasoning_content);
+                }
 
-        if ($curlError) {
-            \Log::error('OpenRouter: Curl error', ['error' => $curlError]);
-            yield $this->emitError("Connection error: {$curlError}");
+                if ($delta?->content) {
+                    $fullContent .= $delta->content;
+                    yield $this->emitDelta($delta->content);
+                }
 
-            return;
-        }
+                if ($delta?->toolCalls) {
+                    foreach ($delta->toolCalls as $toolCallDelta) {
+                        $index = $toolCallDelta->index;
 
-        if ($httpCode !== 200) {
-            \Log::error('OpenRouter: HTTP error', ['code' => $httpCode, 'body' => substr($buffer ?? '', 0, 500)]);
-            yield $this->emitError("API error: HTTP {$httpCode}");
+                        if (!isset($toolCalls[$index])) {
+                            $toolCalls[$index] = [
+                                'id' => $toolCallDelta->id ?? ('call_' . uniqid()),
+                                'type' => $toolCallDelta->type ?? 'function',
+                                'function' => [
+                                    'name' => $toolCallDelta->function?->name ?? '',
+                                    'arguments' => '',
+                                ],
+                            ];
+                        }
 
-            return;
-        }
+                        if (!empty($toolCallDelta->id)) {
+                            $toolCalls[$index]['id'] = $toolCallDelta->id;
+                        }
 
-        yield from $this->parseStreamBuffer($buffer, $modelId, $messages, $tools, $options);
-    }
+                        if ($toolCallDelta->function?->name) {
+                            $toolCalls[$index]['function']['name'] = $toolCallDelta->function->name;
+                        }
 
-    protected function parseStreamBuffer(
-        string $buffer,
-        string $modelId,
-        array $messages,
-        array $tools,
-        array $options
-    ): Generator {
-        $lines = explode("\n", $buffer);
-
-        $fullContent = '';
-        $toolCalls = [];
-        $finalFinishReason = null;
-
-        foreach ($lines as $line) {
-            $line = trim($line);
-
-            if (empty($line) || $line === 'data: [DONE]') {
-                continue;
-            }
-
-            if (!Str::startsWith($line, 'data: ')) {
-                continue;
-            }
-
-            $jsonStr = substr($line, 6);
-            $data = json_decode($jsonStr, true);
-
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                continue;
-            }
-
-            if (!isset($data['choices'][0])) {
-                continue;
-            }
-
-            $choice = $data['choices'][0];
-            $delta = $choice['delta'] ?? [];
-            $finishReason = $choice['finish_reason'] ?? null;
-
-            if ($finishReason) {
-                $finalFinishReason = $finishReason;
-            }
-
-            if (isset($delta['content']) && $delta['content'] !== null && $delta['content'] !== '') {
-                $fullContent .= $delta['content'];
-                yield $this->emitDelta($delta['content']);
-            }
-
-            if (isset($delta['tool_calls']) && \is_array($delta['tool_calls'])) {
-                foreach ($delta['tool_calls'] as $toolCallDelta) {
-                    $index = $toolCallDelta['index'] ?? \count($toolCalls);
-
-                    if (!isset($toolCalls[$index])) {
-                        $toolCalls[$index] = [
-                            'id' => $toolCallDelta['id'] ?? ('call_' . uniqid()),
-                            'type' => 'function',
-                            'function' => [
-                                'name' => $toolCallDelta['function']['name'] ?? '',
-                                'arguments' => '',
-                            ],
-                        ];
-                    }
-
-                    if (!empty($toolCallDelta['id'])) {
-                        $toolCalls[$index]['id'] = $toolCallDelta['id'];
-                    }
-
-                    if (!empty($toolCallDelta['function']['name'])) {
-                        $toolCalls[$index]['function']['name'] = $toolCallDelta['function']['name'];
-                    }
-
-                    if (isset($toolCallDelta['function']['arguments'])) {
-                        $toolCalls[$index]['function']['arguments'] .= $toolCallDelta['function']['arguments'];
+                        if ($toolCallDelta->function?->arguments) {
+                            $toolCalls[$index]['function']['arguments'] .= $toolCallDelta->function->arguments;
+                        }
                     }
                 }
-            }
-        }
 
-        if ($finalFinishReason === 'tool_calls' && !empty($toolCalls)) {
-            $toolCalls = array_values($toolCalls);
+                if ($response->choices[0]->finishReason === 'tool_calls' && !empty($toolCalls)) {
+                    $toolCalls = array_values($toolCalls);
 
-            foreach ($toolCalls as $toolCall) {
-                $toolName = $toolCall['function']['name'];
-                $argumentsJson = $toolCall['function']['arguments'];
-                $toolInput = json_decode($argumentsJson, true) ?? [];
+                    foreach ($toolCalls as $toolCall) {
+                        $toolName = $toolCall['function']['name'];
+                        $toolInput = json_decode($toolCall['function']['arguments'], true) ?? [];
 
-                yield $this->emitStatus($this->getHumanStatus($toolName));
+                        yield $this->emitStatus($this->getHumanStatus($toolName));
 
-                try {
-                    $toolResult = $this->callTool($toolName, $toolInput);
+                        try {
+                            $toolResult = $this->callTool($toolName, $toolInput);
 
-                    $messages[] = [
-                        'role' => 'assistant',
-                        'content' => null,
-                        'tool_calls' => [$toolCall],
-                    ];
-                    $messages[] = [
-                        'role' => 'tool',
-                        'tool_call_id' => $toolCall['id'],
-                        'content' => json_encode($toolResult),
-                    ];
-                } catch (\Throwable $e) {
-                    \Log::error('OpenRouter: Tool failed', [
-                        'tool' => $toolName,
-                        'error' => $e->getMessage(),
-                    ]);
-                    yield $this->emitError("Tool '{$toolName}' failed: {$e->getMessage()}");
+                            $messages[] = [
+                                'role' => 'assistant',
+                                'content' => null,
+                                'tool_calls' => [$toolCall],
+                            ];
+                            $messages[] = [
+                                'role' => 'tool',
+                                'tool_call_id' => $toolCall['id'],
+                                'content' => json_encode($toolResult),
+                            ];
+                        } catch (\Throwable $e) {
+                            yield $this->emitError("Tool '{$toolName}' failed: {$e->getMessage()}");
+
+                            return;
+                        }
+                    }
+
+                    $toolCalls = [];
+
+                    yield from $this->stream($modelId, $messages, $tools, $options);
 
                     return;
                 }
             }
 
-            yield from $this->stream($modelId, $messages, $tools, $options);
-
-            return;
+            yield $this->emitDone($fullContent);
+        } catch (\Throwable $e) {
+            yield $this->emitError($e->getMessage());
         }
-
-        yield $this->emitDone($fullContent);
     }
 
     protected function getHeaders(): array

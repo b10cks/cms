@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import ColorSelect from '~/components/ui/ColorSelect.vue';
-import { FormField } from '~/components/ui/form';
-import IconGrid from '~/components/ui/IconGrid.vue';
-import { Input } from '~/components/ui/input';
+import ColorSelect from '~/components/ui/ColorSelect.vue'
+import { FormField } from '~/components/ui/form'
+import IconGrid from '~/components/ui/IconGrid.vue'
+import { Input } from '~/components/ui/input'
 
 const props = defineProps<{
   modelValue: {
