@@ -68,8 +68,7 @@ class ContentResource extends JsonResource
         if ($this->resource->i18n_parent) {
             $alternatives[] = $this->resource->i18n_parent;
         }
-        $alternatives = array_merge($alternatives, $this->resource->i18n_children->all());
-        $alternatives = array_merge($alternatives, $this->resource->i18n_siblings->all());
+        $alternatives = [...$alternatives, ...$this->resource->i18n_children->all(), ...$this->resource->i18n_siblings->all()];
 
         return SimpleContentResource::collection($alternatives);
     }

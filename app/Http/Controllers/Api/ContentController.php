@@ -41,7 +41,7 @@ class ContentController
 
     public function show(Request $request, string $slug): ContentResource|\Illuminate\Http\Response
     {
-        $redirect = Redirect::where('source', '/' . $slug)
+        $redirect = Redirect::where('source', "/$slug")
             ->first();
 
         if ($redirect) {
@@ -54,7 +54,7 @@ class ContentController
             ], $redirect->status_code);
         }
 
-        $query = Content::where('full_slug', '/' . $slug)
+        $query = Content::where('full_slug', "/$slug")
             ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block', 'relations', 'assets', 'links'])
             ->select([
                 'contents.*',
@@ -64,13 +64,13 @@ class ContentController
                 'content_versions.link_ids'
             ]);
 
-        $vid = $request->get('vid', 'published');
+        $vid = $request->input('vid', 'published');
         if ($vid === 'published') {
             $query->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id');
         } elseif ($vid === 'draft') {
             $query->leftJoin('content_versions', 'contents.current_version_id', '=', 'content_versions.id');
         } else {
-            $query->leftJoin('content_versions', 'content_versions.content_id', '=', 'contents.id')
+            $query->leftJoin('content_versions',  'contents.id', '=', 'content_versions.content_id')
                 ->where('content_versions.id', $vid);
         }
 

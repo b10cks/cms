@@ -193,13 +193,13 @@ class Content extends SpaceModel
             $result = [];
         }
 
-        return array_replace_recursive($result, $this->published_version->content ?? []);
+        return array_replace_recursive($result, json_decode($this->content ?? '[]', true));
     }
 
     public function setPublishedAt($date): void
     {
         $this->published_at = $date;
-        if (is_null($this->first_published_at)) {
+        if ($this->first_published_at === null) {
             $this->first_published_at = $date;
         }
     }
