@@ -4,16 +4,14 @@ namespace App\Services\Ai;
 
 use App\Models\Management\Space;
 use App\Services\Ai\Dto\StreamEvent;
-use App\Services\Ai\StreamEventType;
 use App\Services\Ai\Prompts\SystemPromptBuilder;
+use App\Services\Ai\StreamEventType;
 use App\Services\Ai\Tools\GetBlockListTool;
-use App\Services\Ai\Tools\GetBlockSchemasTool;
 use App\Services\Ai\Tools\GetMentionedContentTool;
-use App\Services\Ai\Tools\SearchAssetsTool;
 use Generator;
 use Illuminate\Support\Str;
 
-class AiStreamService
+class ContentTreeAiService
 {
     protected ModelRegistry $registry;
 
@@ -25,8 +23,8 @@ class AiStreamService
     public function stream(
         Space $space,
         string $prompt,
-        array $context = [],
-        array $files = [],
+        array $tree = [],
+        array $mentions = [],
         $aiConfig = null
     ): Generator {
         app()->offsetSet('currentSpace', $space);
@@ -60,7 +58,7 @@ class AiStreamService
 
         $promptBuilder = new SystemPromptBuilder($aiConfig);
 
-        $messages = $this->buildMessages($prompt, $context, $files, $promptBuilder);
+        $messages = $this->buildMessages($prompt, $tree, $mentions, $promptBuilder);
         $toolDefinitions = $driver->getToolDefinitions();
 
         $options = [
@@ -79,9 +77,7 @@ class AiStreamService
     protected function createTools(Space $space): array
     {
         return [
-            (new GetBlockListTool)->setSpace($space)->setTypes(['nestable', 'universal']),
-            (new GetBlockSchemasTool)->setSpace($space),
-            (new SearchAssetsTool)->setSpace($space),
+            (new GetBlockListTool)->setSpace($space)->setTypes(['root', 'universal']),
             (new GetMentionedContentTool)->setSpace($space),
         ];
     }
@@ -117,54 +113,13 @@ class AiStreamService
         return ['openai', $fullId];
     }
 
-    public function generate(
-        Space $space,
-        string $systemPrompt,
-        string $userPrompt,
-        array $options = []
-    ): ?string {
-        $modelId = $this->resolveModelId($space);
-        [$driverName, $modelIdentifier] = $this->parseModelId($modelId);
-
-        $driver = $this->registry->getDriverForSpace($driverName, $space);
-
-        if (! $driver) {
-            return null;
-        }
-
-        $aiConfig = $space->aiConfig;
-        $messages = [
-            ['role' => 'system', 'content' => $systemPrompt],
-            ['role' => 'user', 'content' => $userPrompt],
-        ];
-
-        $defaultOptions = [
-            'max_tokens' => $aiConfig?->max_tokens ?? 4096,
-            'temperature' => (float) ($aiConfig?->temperature ?? 0.7),
-        ];
-
-        $fullContent = '';
-
-        foreach ($driver->stream($modelIdentifier, $messages, [], array_merge($defaultOptions, $options)) as $event) {
-            if ($event->type === StreamEventType::Delta) {
-                $fullContent .= $event->content;
-            } elseif ($event->type === StreamEventType::Done) {
-                return $event->content ?: $fullContent;
-            } elseif ($event->type === StreamEventType::Error) {
-                return null;
-            }
-        }
-
-        return $fullContent ?: null;
-    }
-
     protected function buildMessages(
         string $prompt,
-        array $context,
-        array $files,
+        array $tree,
+        array $mentions,
         SystemPromptBuilder $promptBuilder
     ): array {
-        $systemPrompt = $promptBuilder->forContentInteraction();
+        $systemPrompt = $promptBuilder->forContentTreeGeneration();
 
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
@@ -172,12 +127,17 @@ class AiStreamService
 
         $userContent = $prompt;
 
-        if (! empty($context)) {
-            $userContent .= "\n\n## Context\n" . json_encode($context);
-        }
+        $context = [
+            'tree' => $tree,
+            'mentions' => $mentions,
+        ];
 
-        if (! empty($files)) {
-            $userContent .= "\n\n## Attached Files\n" . json_encode($files, JSON_PRETTY_PRINT);
+        if (! empty($context)) {
+            $userContent .= "\n\n## Current Content Tree\n" . json_encode($tree, JSON_PRETTY_PRINT);
+
+            if (! empty($mentions)) {
+                $userContent .= "\n\n## Mentioned Items\n" . json_encode($mentions, JSON_PRETTY_PRINT);
+            }
         }
 
         $messages[] = ['role' => 'user', 'content' => $userContent];

@@ -1556,6 +1556,23 @@
       "noConfigSelected": "Please select an AI configuration to continue",
       "placeholderSelectConfig": "Select a configuration to start...",
       "placeholderDefault": "Ask {name} to help with your content..."
+    },
+    "contentTreeAi": {
+      "title": "Generate Content Tree with AI",
+      "description": "Describe the structure you want, and AI will help you create or reorganize your content tree.",
+      "currentTree": "Current Structure",
+      "preview": "Preview Changes",
+      "placeholder": "Describe the content structure you need (e.g., \"Create a blog section with categories for Tech, Design, and Business\")...",
+      "generating": "Generating content tree structure...",
+      "applying": "Applying changes to your content...",
+      "parseError": "Failed to parse AI response. Please try again.",
+      "success": "Content tree updated successfully!",
+      "applyError": "Failed to apply changes: {error}",
+      "apply": "Apply Changes",
+      "willCreate": "{count} item will be created | {count} items will be created",
+      "willMove": "{count} item will be moved | {count} items will be moved",
+      "creatingItems": "Creating {count} item... | Creating {count} items...",
+      "movingItems": "Moving {count} item... | Moving {count} items..."
     }
   },
   "alertDialog": {
@@ -1659,7 +1676,9 @@
       "duplicateSuccess": "Content duplicated successfully as \"{name}\"",
       "duplicateError": "Failed to duplicate content: {error}",
       "deleteSuccess": "Content deleted successfully",
-      "deleteError": "Failed to delete content: {error}"
+      "deleteError": "Failed to delete content: {error}",
+      "bulkCreateError": "Failed to create content items: {error}",
+      "moveError": "Failed to move content: {error}"
     },
     "contentVersions": {
       "setCurrentSuccess": "Version set as current successfully",
@@ -1669,6 +1688,9 @@
     },
     "ai": {
       "interactionError": "AI interaction failed: {error}"
+    },
+    "aiContentTree": {
+      "interactionError": "Content tree AI interaction failed: {error}"
     },
     "dataEntries": {
       "createSuccess": "Data entry \"{key}\" created successfully",

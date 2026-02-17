@@ -234,6 +234,63 @@ export function useContent(spaceId: MaybeRef<string>) {
     })
   }
 
+  const useBulkCreateContentMutation = () => {
+    return useMutation({
+      mutationFn: async (payload: {
+        items: Array<{
+          name: string
+          slug: string
+          block_id: string
+          parent_id?: string | null
+          temp_id?: string
+        }>
+      }) => {
+        const response = await spaceAPI.value.contents.bulkCreate(payload)
+        return response.data
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.content.bulkCreateError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
+  const useMoveContentMutation = () => {
+    return useMutation({
+      mutationFn: async ({
+        id,
+        payload,
+      }: {
+        id: string
+        payload: { parent_id?: string | null; position?: number }
+      }) => {
+        const response = await spaceAPI.value.contents.move(id, payload)
+        return response.data
+      },
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.contents(spaceId).detail(data.id),
+        })
+        queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.content.moveError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
   return {
     // Queries
     useContentsQuery,
@@ -248,5 +305,7 @@ export function useContent(spaceId: MaybeRef<string>) {
     useUnpublishContentMutation,
     useDuplicateContentMutation,
     useDeleteContentMutation,
+    useBulkCreateContentMutation,
+    useMoveContentMutation,
   }
 }

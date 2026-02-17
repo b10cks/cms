@@ -9,10 +9,18 @@ use App\Services\Ai\Contracts\AiToolInterface;
 class GetBlockListTool implements AiToolInterface
 {
     protected ?Space $space = null;
+    protected array $types = ['nestable', 'universal'];
 
     public function setSpace(Space $space): self
     {
         $this->space = $space;
+
+        return $this;
+    }
+
+    public function setTypes(array $types): self
+    {
+        $this->types = $types;
 
         return $this;
     }
@@ -57,7 +65,7 @@ class GetBlockListTool implements AiToolInterface
             'input' => $input,
         ]);
 
-        $query = Block::whereIn('type', ['nestable', 'universal']);
+        $query = Block::whereIn('type', $this->types);
 
         if (!empty($input['tag_filter'])) {
             $query->where(function ($q) use ($input) {
@@ -72,6 +80,7 @@ class GetBlockListTool implements AiToolInterface
         \Log::info('GetBlockListTool: Found blocks', ['count' => $blocks->count()]);
 
         return $blocks->map(fn(Block $block) => [
+            'id' => $block->id,
             'slug' => $block->slug,
             'name' => $block->name,
             'description' => $block->description,

@@ -1508,6 +1508,23 @@
     "aiSettings": {
       "saveSuccess": "KI-Einstellungen erfolgreich gespeichert",
       "saveError": "KI-Einstellungen konnten nicht gespeichert werden"
+    },
+    "contentTreeAi": {
+      "title": "Inhaltsbaum mit KI generieren",
+      "description": "Beschreiben Sie die gewünschte Struktur, und die KI hilft Ihnen, Ihren Inhaltsbaum zu erstellen oder neu zu organisieren.",
+      "currentTree": "Aktuelle Struktur",
+      "preview": "Vorschau der Änderungen",
+      "placeholder": "Beschreiben Sie die benötigte Inhaltsstruktur (z.B. \"Erstelle einen Blog-Bereich mit Kategorien für Technik, Design und Business\")...",
+      "generating": "Generiere Inhaltsbaum-Struktur...",
+      "applying": "Wende Änderungen auf Ihre Inhalte an...",
+      "parseError": "KI-Antwort konnte nicht verarbeitet werden. Bitte versuchen Sie es erneut.",
+      "success": "Inhaltsbaum erfolgreich aktualisiert!",
+      "applyError": "Fehler beim Anwenden der Änderungen: {error}",
+      "apply": "Änderungen anwenden",
+      "willCreate": "{count} Element wird erstellt | {count} Elemente werden erstellt",
+      "willMove": "{count} Element wird verschoben | {count} Elemente werden verschoben",
+      "creatingItems": "Erstelle {count} Element... | Erstelle {count} Elemente...",
+      "movingItems": "Verschiebe {count} Element... | Verschiebe {count} Elemente..."
     }
   },
   "alertDialog": {
@@ -1611,7 +1628,9 @@
       "duplicateSuccess": "Inhalt erfolgreich dupliziert als \"{name}\"",
       "duplicateError": "Fehler beim Duplizieren des Inhalts: {error}",
       "deleteSuccess": "Inhalt erfolgreich gelöscht",
-      "deleteError": "Fehler beim Löschen des Inhalts: {error}"
+      "deleteError": "Fehler beim Löschen des Inhalts: {error}",
+      "bulkCreateError": "Fehler beim Erstellen mehrerer Inhalte: {error}",
+      "moveError": "Fehler beim Verschieben des Inhalts: {error}"
     },
     "contentVersions": {
       "setCurrentSuccess": "Version erfolgreich als aktuell festgelegt",
@@ -1621,6 +1640,9 @@
     },
     "ai": {
       "interactionError": "KI-Interaktion fehlgeschlagen: {error}"
+    },
+    "aiContentTree": {
+      "interactionError": "KI-Inhaltsbaum-Interaktion fehlgeschlagen: {error}"
     },
     "dataEntries": {
       "createSuccess": "Dateneintrag \"{key}\" erfolgreich erstellt",

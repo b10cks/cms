@@ -5,6 +5,7 @@ import type { TreeItemToggleEvent } from 'reka-ui'
 import { TreeItem, TreeRoot } from 'reka-ui'
 import { RouterLink } from 'vue-router'
 import CreateContentDialog from '~/components/content/CreateContentDialog.vue'
+import ContentTreeAiDialog from '~/components/content/ContentTreeAiDialog.vue'
 import { AvatarList } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import RenamableTitle from '~/components/ui/RenamableTitle.vue'
@@ -39,6 +40,7 @@ const selectedItemId = ref<string | null>(null)
 const currentlyEditingId = ref<string | null>(null)
 const showCreateDialog = ref(false)
 const createParentId = ref<string | null>(null)
+const showAiDialog = ref(false)
 
 const selectedSpace = computed(() => {
   return spaces.value?.find((space) => space.id === props.spaceId) || null
@@ -167,6 +169,13 @@ const initDelete = async (item: ContentResource) => {
           class="ml-auto"
           variant="ghost"
           size="xs"
+          @click="showAiDialog = true"
+        >
+          <Icon name="lucide:sparkles" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="xs"
           @click="initCreate(null)"
         >
           <Icon name="lucide:plus" />
@@ -265,6 +274,12 @@ const initDelete = async (item: ContentResource) => {
       v-model:open="showCreateDialog"
       :space-id="props.spaceId"
       :parent-id="createParentId"
+    />
+
+    <ContentTreeAiDialog
+      v-model:open="showAiDialog"
+      :space-id="props.spaceId"
+      :tree="rootItems"
     />
   </aside>
 </template>

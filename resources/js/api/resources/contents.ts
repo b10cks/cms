@@ -107,4 +107,38 @@ export class Contents extends BaseResource<
       ? `${this.basePath}/${contentId}/preview?${queryString}`
       : `${this.basePath}/${contentId}/preview`
   }
+
+  /**
+   * Bulk create multiple content items
+   */
+  public async bulkCreate(payload: {
+    items: Array<{
+      name: string
+      slug: string
+      block_id: string
+      parent_id?: string | null
+      temp_id?: string
+    }>
+  }): Promise<ApiResponse<Array<{ temp_id?: string; id: string; name: string; slug: string; parent_id: string | null }>>> {
+    return this.client.post<ApiResponse<Array<{ temp_id?: string; id: string; name: string; slug: string; parent_id: string | null }>>>(
+      `${this.basePath}/bulk-create`,
+      payload
+    )
+  }
+
+  /**
+   * Move a content item to a new parent
+   */
+  public async move(
+    contentId: string,
+    payload: {
+      parent_id?: string | null
+      position?: number
+    }
+  ): Promise<ApiResponse<ContentResource>> {
+    return this.client.post<ApiResponse<ContentResource>>(
+      `${this.basePath}/${contentId}/move`,
+      payload
+    )
+  }
 }

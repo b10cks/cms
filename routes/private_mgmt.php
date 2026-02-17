@@ -3,6 +3,7 @@
 use App\Http\Controllers\Mgmt\Ai\AiModelsController;
 use App\Http\Controllers\Mgmt\Ai\AvailableModelsController;
 use App\Http\Controllers\Mgmt\Ai\ContentInteractionStreamController;
+use App\Http\Controllers\Mgmt\Ai\ContentTreeInteractionStreamController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiConfigController;
 use App\Http\Controllers\Mgmt\Ai\MetaTagsController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiSettingsController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\Mgmt\BlockFolderController;
 use App\Http\Controllers\Mgmt\BlockTagController;
 use App\Http\Controllers\Mgmt\BlockTemplateController;
 use App\Http\Controllers\Mgmt\BlockVersionController;
+use App\Http\Controllers\Mgmt\Content\BulkCreateContentController;
 use App\Http\Controllers\Mgmt\Content\CommentController;
 use App\Http\Controllers\Mgmt\Content\CommentReactionController;
 use App\Http\Controllers\Mgmt\Content\ContentController;
@@ -28,6 +30,7 @@ use App\Http\Controllers\Mgmt\Content\ContentUnpublishController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionCurrentController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionPublishController;
+use App\Http\Controllers\Mgmt\Content\MoveContentController;
 use App\Http\Controllers\Mgmt\PresenceController;
 use App\Http\Controllers\Mgmt\RedirectController;
 use App\Http\Controllers\Mgmt\RedirectResetController;
@@ -96,6 +99,8 @@ Route::group(['prefix' => 'ai'], function () {
         ->name('ai.translate');
     Route::post('content-interaction/stream', ContentInteractionStreamController::class)
         ->name('ai.content-interaction.stream');
+    Route::post('content-tree-interaction/stream', ContentTreeInteractionStreamController::class)
+        ->name('ai.content-tree-interaction.stream');
 });
 
 Route::get('teams/hierarchy', TeamHierarchyController::class)->name('teams.hierarchy');
@@ -158,6 +163,11 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     });
 
     Route::apiResource('contents', ContentController::class);
+    Route::post('contents/bulk-create', BulkCreateContentController::class)
+        ->name('contents.bulk-create');
+    Route::post('contents/{content}/move', MoveContentController::class)
+        ->name('contents.move');
+
     Route::apiResource('tokens', SpaceTokenController::class)->only(['index', 'store', 'destroy']);
     Route::apiResource('redirects', RedirectController::class);
     Route::post('redirects/{redirect}/reset', RedirectResetController::class)->name('redirects.reset');
