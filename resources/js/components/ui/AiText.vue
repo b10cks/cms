@@ -9,7 +9,6 @@ import {
   InputGroupTipTap,
 } from '~/components/ui/input-group'
 import type { StreamCallbacks } from '~/composables/useAiContent'
-import { Alert } from './alert'
 
 import AiConfigSelector from '~/components/ui/AiConfigSelector.vue'
 import { useAiContent } from '~/composables/useAiContent'
@@ -198,6 +197,13 @@ const handleCancel = () => {
   emit('streamEnd')
 }
 
+const configError = computed(() => {
+  if (!selectedConfigId.value && props.showConfigSelector && !isLoadingConfigs.value) {
+    return t('components.aiText.noConfigSelected')
+  }
+  return null
+})
+
 defineExpose({
   clear,
   selectedConfigId,
@@ -206,15 +212,6 @@ defineExpose({
 
 <template>
   <div class="relative w-full space-y-2">
-    <Alert
-      v-if="!selectedConfigId && showConfigSelector && !isLoadingConfigs"
-      icon="lucide:alert-triangle"
-      color="warning"
-      variant="modern"
-      class="rounded"
-    >
-      {{ $t('components.aiText.noConfigSelected') }}
-    </Alert>
     <Transition
       mode="out-in"
       enter-active-class="transition-all duration-300 ease-out"
@@ -257,6 +254,7 @@ defineExpose({
           v-if="showConfigSelector"
           v-model="selectedConfigId"
           :space-id="spaceId"
+          :error="configError"
         />
 
         <InputGroupButton

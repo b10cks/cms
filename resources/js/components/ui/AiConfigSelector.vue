@@ -15,6 +15,7 @@ const modelValue = defineModel<string | null>()
 
 const props = defineProps<{
   spaceId: string
+  error?: string
 }>()
 
 const { useAiConfigsQuery } = useAiConfigs(toRef(props, 'spaceId'))
@@ -42,7 +43,7 @@ watch(
 
 <template>
   <Select v-model="modelValue">
-    <SelectTrigger>
+    <SelectTrigger :class="{ 'border-warning': error }">
       <SelectValue>
         <div
           v-if="selectedConfig"

@@ -2,6 +2,7 @@
 import { TreeItem, TreeRoot } from 'reka-ui'
 import type { MentionItem } from '~/api/resources/ai'
 import Icon from '~/components/Icon.vue'
+import IconName from '~/components/ui/IconName.vue'
 import AiText from '~/components/ui/AiText.vue'
 import { Button } from '~/components/ui/button'
 import {
@@ -384,7 +385,7 @@ const toggleExpanded = (contentId: string, isPreview: boolean = false) => {
                 :key="item._id"
                 :style="{ 'padding-left': `${item.level - 0.5}rem` }"
                 v-bind="item.bind"
-                class="group relative my-0.5 flex items-center gap-2 rounded-md py-1 pr-2 pl-0 outline-none transition-colors duration-200 hover:bg-muted cursor-pointer"
+                class="group relative my-0.5 flex items-center gap-2 rounded-md py-1 pr-2 pl-0 outline-none transition-colors duration-200 hover:bg-border cursor-pointer font-semibold"
                 @toggle="(e) => handleToggle(e)"
               >
                 <button
@@ -402,13 +403,11 @@ const toggleExpanded = (contentId: string, isPreview: boolean = false) => {
                   class="size-3"
                 />
 
-                <Icon
-                  :name="`lucide:${item.value.block?.icon || 'file'}`"
-                  class="shrink-0 size-4"
-                  :style="{ color: item.value.color }"
+                <IconName
+                  :icon="item.value.block?.icon || 'file'"
+                  :color="item.value.color"
+                  :name="item.value.name"
                 />
-
-                <span class="truncate text-sm">{{ item.value.name }}</span>
               </TreeItem>
             </TreeRoot>
           </ScrollArea>

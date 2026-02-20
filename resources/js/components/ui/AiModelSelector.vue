@@ -41,17 +41,13 @@ const props = withDefaults(
 
 const { t } = useI18n()
 const { useModelsQuery } = useAiModels(toRef(props, 'spaceId'))
-const { toggleFavourite, setModel } = useAiSettings(toRef(props, 'spaceId'))
+const { setModel } = useAiSettings(toRef(props, 'spaceId'))
 
 const { data: groupedModels, isLoading, error, refetch } = useModelsQuery()
 
 const flatModels = computed<AiModel[]>(() => {
   if (!groupedModels.value) return []
   return Object.values(groupedModels.value).flat()
-})
-
-const favouriteModels = computed<AiModel[]>(() => {
-  return flatModels.value.filter((m) => m.is_favourite)
 })
 
 const selectedModel = computed<AiModel | null>(() => {
@@ -70,17 +66,6 @@ const handleSelect = async (modelId: string) => {
     }
   }
 }
-
-const handleToggleFavourite = async (model: AiModel, event: Event) => {
-  event.stopPropagation()
-  event.preventDefault()
-  try {
-    await toggleFavourite(model.full_id)
-  } catch {
-    toast.error(t('components.aiModelSelector.favouriteError'))
-  }
-}
-
 const getDriverLabel = (driver: string): string => {
   return t(`components.aiModelSelector.drivers.${driver}`, driver)
 }
@@ -116,21 +101,10 @@ const getModelCostLabel = (model: AiModel): string => {
     <SelectTrigger>
       <SelectValue :placeholder="placeholder">
         <div
-          v-if="selectedModel"
+          v-if="modelValue"
           class="flex items-center gap-2"
         >
-          <span class="truncate">{{ selectedModel.name }}</span>
-          <Badge
-            v-if="selectedModel.is_favourite"
-            variant="secondary"
-            size="xs"
-            class="shrink-0"
-          >
-            <Icon
-              name="lucide:star"
-              class="h-3 w-3 fill-yellow-400 text-yellow-400"
-            />
-          </Badge>
+          <span class="truncate">{{ modelValue }}</span>
         </div>
       </SelectValue>
     </SelectTrigger>
@@ -159,28 +133,6 @@ const getModelCostLabel = (model: AiModel): string => {
       </div>
 
       <template v-else-if="groupedModels">
-        <SelectGroup v-if="showFavourites && favouriteModels.length > 0">
-          <SelectLabel class="px-2 py-1.5 text-xs font-medium text-muted">
-            {{ t('components.aiModelSelector.favourites') }}
-          </SelectLabel>
-          <SelectItem
-            v-for="model in favouriteModels"
-            :key="model.full_id"
-            :value="model.full_id"
-          >
-            <div class="flex w-full items-center gap-2">
-              <span class="flex-1 truncate font-medium">{{ model.name }}</span>
-              <Badge
-                variant="outline"
-                size="xs"
-                class="shrink-0"
-              >
-                {{ formatContextWindow(model.context_window.input) }}
-              </Badge>
-            </div>
-          </SelectItem>
-        </SelectGroup>
-
         <SelectGroup
           v-for="(models, driver) in groupedModels"
           :key="driver"
@@ -205,18 +157,6 @@ const getModelCostLabel = (model: AiModel): string => {
                 >
                   {{ getModelCostLabel(model) }}
                 </span>
-                <div class="flex gap-2">
-                  <Icon
-                    v-if="model.supports_vision"
-                    name="lucide:eye"
-                    class="h-3 w-3"
-                  />
-                  <Icon
-                    v-if="model.supports_tools"
-                    name="lucide:wrench"
-                    class="h-3 w-3"
-                  />
-                </div>
               </div>
             </div>
           </SelectItem>

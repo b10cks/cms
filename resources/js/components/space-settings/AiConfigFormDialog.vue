@@ -13,8 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog'
-import InputField from '~/components/ui/form/InputField.vue'
-import TextField from '~/components/ui/form/TextField.vue'
+import { FormField, InputField, TextField } from '~/components/ui/form'
 import { Switch } from '~/components/ui/switch'
 import AiModelSelector from '~/components/ui/AiModelSelector.vue'
 
@@ -142,26 +141,26 @@ watch(
         <InputField
           v-model="formData.name"
           name="name"
-          :label="$t('labels.settings.ai.configName') + ' *'"
+          :label="$t('labels.settings.ai.configName')"
           :placeholder="$t('labels.settings.ai.configNamePlaceholder')"
           required
         />
 
-        <div class="space-y-2">
-          <label class="text-sm font-medium">
-            {{ $t('labels.settings.ai.selectModel') }} *
-          </label>
+        <FormField
+          name="driver"
+          :label="$t('labels.settings.ai.selectModel')"
+          required
+        >
           <AiModelSelector
             :key="`${formData.driver}:${formData.model}`"
             :model-value="
               formData.driver && formData.model ? `${formData.driver}:${formData.model}` : null
             "
             :space-id="spaceId"
-            :show-favourites="true"
             :show-costs="true"
             @update:model-value="handleModelSelect"
           />
-        </div>
+        </FormField>
 
         <div
           v-if="selectedModel"
