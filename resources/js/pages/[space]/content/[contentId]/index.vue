@@ -208,25 +208,32 @@ const updatePreviewItem = (item: Record<string, unknown>) => {
   }
 }
 
-const findNestedObjectById = (data: unknown[], id: string): Record<string, unknown> | null => {
-  for (const item of data) {
-    if (typeof item === 'object' && item !== null) {
-      const obj = item as Record<string, unknown>
-      if (obj.id === id) return obj
+const findNestedObjectById = (data: unknown, id: string): Record<string, unknown> | null => {
+  if (typeof data !== 'object' || data === null) return null
 
-      for (const key in obj) {
-        if (Object.hasOwn(obj, key) && Array.isArray(obj[key])) {
-          const result = findNestedObjectById(obj[key] as unknown[], id)
-          if (result) return result
-        }
-      }
+  if (Array.isArray(data)) {
+    for (const item of data) {
+      const result = findNestedObjectById(item, id)
+      if (result) return result
+    }
+    return null
+  }
+
+  const obj = data as Record<string, unknown>
+  if (obj.id === id) return obj
+
+  for (const key in obj) {
+    if (Object.hasOwn(obj, key) && typeof obj[key] === 'object' && obj[key] !== null) {
+      const result = findNestedObjectById(obj[key], id)
+      if (result) return result
     }
   }
+
   return null
 }
 
 const updateField = (update: { itemId: string; field: string; value: unknown }) => {
-  if (!content.value?.content || !Array.isArray(content.value.content)) return
+  if (!content.value?.content) return
 
   const target = findNestedObjectById(content.value.content, update.itemId)
   if (target) {
