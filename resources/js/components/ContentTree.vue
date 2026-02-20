@@ -165,21 +165,25 @@ const initDelete = async (item: ContentResource) => {
           class="shrink-0 text-primary"
         />
         <span class="truncate">{{ selectedSpace.name }}</span>
-        <Button
-          class="ml-auto"
-          variant="ghost"
-          size="xs"
-          @click="showAiDialog = true"
-        >
-          <Icon name="lucide:sparkles" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="xs"
-          @click="initCreate(null)"
-        >
-          <Icon name="lucide:plus" />
-        </Button>
+        <div class="ml-auto">
+          <Button
+            variant="ghost"
+            size="toolbar"
+            @click="showAiDialog = true"
+          >
+            <Icon
+              name="lucide:wand"
+              class="text-ai"
+            />
+          </Button>
+          <Button
+            variant="ghost"
+            size="toolbar"
+            @click="initCreate(null)"
+          >
+            <Icon name="lucide:plus" />
+          </Button>
+        </div>
       </div>
 
       <TreeItem
