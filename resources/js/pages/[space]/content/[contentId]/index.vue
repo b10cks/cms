@@ -63,6 +63,10 @@ const isDirty = computed(() => {
 })
 
 async function guardLeave(to, from, next) {
+  if (to && from && to.path === from.path) {
+    return next()
+  }
+
   if (isDirty.value) {
     const answer = await alert.confirm(
       t(
