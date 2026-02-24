@@ -410,6 +410,8 @@
         "slug": "API name",
         "slugOf": "API name: {name}",
         "description": "What does this block do?",
+        "fieldName": "Field Name",
+        "fieldDescription": "What is the purpose of this field?",
         "folder": "Folder",
         "tags": "Tags",
         "tagsPlaceholder": "Assign tags to categorize this block",

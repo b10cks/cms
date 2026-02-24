@@ -295,8 +295,10 @@ provide('resetDirtyState', resetDirtyState)
     <ScrollArea
       v-if="content"
       :class="[
-        'grow overflow-y-auto',
-        showPreview ? 'max-h-[calc(100svh-3.5rem)]' : 'h-[calc(100svh-3.5rem)] bg-background',
+        'grow overflow-y-auto bg-background',
+        showPreview
+          ? 'max-h-[calc(100svh-3.5rem)] border-l border-border'
+          : 'h-[calc(100svh-3.5rem)]',
       ]"
     >
       <TabsContent

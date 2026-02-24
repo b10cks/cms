@@ -135,14 +135,14 @@ const updateValue = (key: string, value: unknown) => {
       />
       <InputField
         :model-value="localItem.name"
-        :label="$t('labels.blocks.fields.name')"
+        :label="$t('labels.blocks.fields.fieldName')"
         name="name"
         :disabled="readonly"
         @update:model-value="(v) => updateValue('name', v)"
       />
       <TextField
         :model-value="localItem.description"
-        :label="$t('labels.blocks.fields.description')"
+        :label="$t('labels.blocks.fields.fieldDescription')"
         name="description"
         :disabled="readonly"
         @update:model-value="(v) => updateValue('description', v)"
