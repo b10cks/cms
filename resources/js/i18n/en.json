@@ -658,7 +658,23 @@
         "slugPlaceholder": "my-awesome-space",
         "location": "Server Location",
         "locationDescription": "Where your content space will be hosted. Can be changed later.",
-        "locationPlaceholder": "Choose a location"
+        "locationPlaceholder": "Choose a location",
+        "badge": "Badge",
+        "badgeDescription": "Optionally mark this space with a badge to indicate its environment or purpose.",
+        "badgePlaceholder": "Select or type a badge…"
+      },
+      "badge": {
+        "assignTitle": "Assign badge",
+        "editTitle": "Edit badge",
+        "description": "Choose a predefined badge or type a custom one for \"{name}\".",
+        "selectPlaceholder": "Select or type a badge…",
+        "hint": "Predefined badges: sandbox, development, staging, production. You may also type any custom label.",
+        "predefined": {
+          "sandbox": "Sandbox",
+          "development": "Development",
+          "staging": "Staging",
+          "production": "Production"
+        }
       }
     },
     "sort": {
@@ -1483,6 +1499,8 @@
       "edit": "Edit space",
       "save": "Save space",
       "switch": "Switch space",
+      "assignBadge": "Assign badge",
+      "editBadge": "Edit badge",
       "new": {
         "select": "select {name}",
         "continueWith": "Continue with {name}"

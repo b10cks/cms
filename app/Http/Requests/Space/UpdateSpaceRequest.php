@@ -36,6 +36,7 @@ class UpdateSpaceRequest extends FormRequest
             ],
             'icon' => 'sometimes|nullable|string|max:50',
             'color' => 'sometimes|nullable|string|max:7|regex:/^#[a-fA-F0-9]{6}$/',
+            'badge' => 'sometimes|nullable|string|max:50',
             'description' => 'sometimes|nullable|string',
             'settings' => 'sometimes|nullable|array',
             'state' => [

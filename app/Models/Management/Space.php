@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $slug
  * @property string|null $icon
  * @property string|null $color
+ * @property string|null $badge
  * @property string|null $description
  * @property SpaceSettings $settings
  * @property string|null $team_id
@@ -95,6 +96,7 @@ class Space extends GlobalModel
         'slug',
         'icon',
         'color',
+        'badge',
         'description',
         'settings',
     ];

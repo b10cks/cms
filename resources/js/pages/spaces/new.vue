@@ -4,27 +4,28 @@ import Icon from '~/components/Icon.vue'
 import { Label } from 'reka-ui'
 import AppHeader from '~/components/AppHeader.vue'
 import ServerLocationSelect from '~/components/ServerLocationSelect.vue'
+import SpaceBadgeSelect from '~/components/space/SpaceBadgeSelect.vue'
 import { Badge, type BadgeVariants } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
 } from '~/components/ui/card'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { InputField } from '~/components/ui/form'
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group'
 import {
-  Stepper,
-  StepperDescription,
-  StepperIndicator,
-  StepperItem,
-  StepperSeparator,
-  StepperTitle,
-  StepperTrigger,
+    Stepper,
+    StepperDescription,
+    StepperIndicator,
+    StepperItem,
+    StepperSeparator,
+    StepperTitle,
+    StepperTrigger,
 } from '~/components/ui/stepper'
 
 const { useCreateSpaceMutation } = useSpaces()
@@ -158,6 +159,7 @@ const selectedPlan = ref<string | undefined>()
 const spaceName = ref('')
 const spaceSlug = ref('')
 const serverLocation = ref('eu')
+const spaceBadge = ref<string | null>(null)
 
 const steps = computed(() => [
   { step: 'plan', icon: 'lucide:land-plot' },
@@ -192,6 +194,7 @@ const handleNext = async () => {
       name: spaceName.value,
       slug: spaceSlug.value,
       team_id: selectedTeam.value?.id,
+      badge: spaceBadge.value || null,
       settings: {
         region: serverLocation.value || 'eu',
       },
@@ -362,6 +365,19 @@ const handleBack = () => {
               required
               :description="$t('labels.spaces.fields.slugDescription')"
             />
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-medium text-primary">
+                {{ $t('labels.spaces.fields.badge') }}
+              </label>
+              <SpaceBadgeSelect
+                v-model="spaceBadge"
+                :placeholder="$t('labels.spaces.fields.badgePlaceholder')"
+                class="w-full"
+              />
+              <p class="text-xs text-muted">
+                {{ $t('labels.spaces.fields.badgeDescription') }}
+              </p>
+            </div>
             <ServerLocationSelect
               v-model="serverLocation"
               disabled

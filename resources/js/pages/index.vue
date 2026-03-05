@@ -8,16 +8,18 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import type { SpaceQueryParams } from '~/api/resources/spaces'
 import AppHeader from '~/components/AppHeader.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
+import SpaceBadge from '~/components/space/SpaceBadge.vue'
+import SpaceBadgeDialog from '~/components/space/SpaceBadgeDialog.vue'
 import TeamSelector from '~/components/TeamSelector.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem } from '~/components/ui/select'
 import { useAlertDialog } from '~/composables/useAlertDialog'
@@ -51,6 +53,7 @@ const sort = computed({
     })
   },
 })
+
 const archived = computed({
   get() {
     return route.query.archived === 'true'
@@ -79,6 +82,9 @@ interface Action {
   label: string
   action?: (space: SpaceResource) => void
 }
+
+// Track which space has the badge dialog open
+const badgeDialogSpaceId = ref<string | null>(null)
 
 const { alert } = useAlertDialog()
 const archiveMutation = useArchiveSpaceMutation()
@@ -125,6 +131,14 @@ const actions: Array<Action | string> = [
     label: $t('actions.settings'),
     action: (s) => {
       router.push({ name: 'space-settings', params: { space: s.id } })
+    },
+  },
+  '-',
+  {
+    icon: 'lucide:tag',
+    label: $t('actions.spaces.assignBadge'),
+    action: (s) => {
+      badgeDialogSpaceId.value = s.id
     },
   },
   '-',
@@ -186,6 +200,7 @@ const formatLastUpdated = (space: SpaceResource) => {
       </div>
     </template>
   </AppHeader>
+
   <div class="flex w-full grow bg-background pt-14">
     <aside class="w-56 shrink-0 bg-surface">
       <div class="flex flex-col gap-4 p-3">
@@ -214,6 +229,7 @@ const formatLastUpdated = (space: SpaceResource) => {
         </div>
       </div>
     </aside>
+
     <main class="content-grid mx-auto">
       <div class="flex flex-col gap-8">
         <ContentHeader :header="(selectedTeam?.name ?? '') + ' ' + $t('labels.spaces.title')">
@@ -234,79 +250,111 @@ const formatLastUpdated = (space: SpaceResource) => {
             </SelectContent>
           </Select>
         </ContentHeader>
+
         <div class="flex gap-8">
           <div class="grid w-full gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            <RouterLink
+            <!-- Outer div per space: not a link, so the badge dialog (which contains a button)
+                 never ends up inside an <a> element -->
+            <div
               v-for="space in teamRelatedSpaces"
               :key="space.id"
-              :to="{ name: 'space', params: { space: space.id } }"
               class="group flex flex-col gap-2"
             >
-              <DropdownMenu v-slot="{ open }">
-                <div
-                  :class="{ '-translate-y-2': open }"
-                  class="relative grid min-h-36 place-items-center justify-center overflow-clip rounded-lg bg-input p-4 shadow-lg transition-transform duration-500 ease-micro-bounce group-hover:-translate-y-2"
-                >
-                  <NuxtImg
-                    v-if="space.icon"
-                    :src="space.icon"
-                    :alt="space.name"
-                    class="absolute inset-0 h-full w-full scale-110 object-cover blur-xl"
-                  />
-                  <NuxtImg
-                    v-if="space.icon"
-                    :src="space.icon"
-                    :alt="space.name"
-                    class="relative z-10 size-16"
-                  />
-                </div>
-                <div class="flex items-center">
-                  <div>
-                    <h4 class="font-semibold text-primary">{{ space.name }}</h4>
-                    <p class="text-sm text-muted">
-                      {{ $t('labels.fields.lastUpdated', { timeAgo: formatLastUpdated(space) }) }}
-                    </p>
+              <RouterLink
+                :to="{ name: 'space', params: { space: space.id } }"
+                class="flex flex-col gap-2"
+              >
+                <DropdownMenu v-slot="{ open }">
+                  <!-- Thumbnail -->
+                  <div
+                    :class="{ '-translate-y-2': open }"
+                    class="relative grid min-h-36 place-items-center justify-center overflow-clip rounded-lg bg-input p-4 shadow-lg transition-transform duration-500 ease-micro-bounce group-hover:-translate-y-2"
+                  >
+                    <NuxtImg
+                      v-if="space.icon"
+                      :src="space.icon"
+                      :alt="space.name"
+                      class="absolute inset-0 h-full w-full scale-110 object-cover blur-xl"
+                    />
+                    <NuxtImg
+                      v-if="space.icon"
+                      :src="space.icon"
+                      :alt="space.name"
+                      class="relative z-10 size-16"
+                    />
+                    <!-- Environment badge overlaid in the bottom-left of the thumbnail -->
+                    <SpaceBadge
+                      v-if="space.badge"
+                      :badge="space.badge"
+                      size="xs"
+                      class="absolute bottom-2 left-2 z-20"
+                    />
                   </div>
-                  <div class="ml-auto grid">
-                    <div
-                      class="grid-area-stack flex items-center gap-2 group-hover:hidden"
-                      :class="[open ? 'hidden' : '']"
-                    >
-                      <Badge size="xs">Free</Badge>
+
+                  <!-- Space meta row -->
+                  <div class="flex items-center">
+                    <div class="min-w-0 flex-1">
+                      <h4 class="truncate font-semibold text-primary">{{ space.name }}</h4>
+                      <p class="text-sm text-muted">
+                        {{ $t('labels.fields.lastUpdated', { timeAgo: formatLastUpdated(space) }) }}
+                      </p>
                     </div>
-                    <DropdownMenuTrigger class="grid-area-stack">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        class="opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                        :class="[open ? 'opacity-100' : '']"
-                        @click.prevent
+
+                    <div class="ml-auto grid shrink-0">
+                      <!-- Plan badge — hidden on hover (replaced by action button) -->
+                      <div
+                        class="grid-area-stack flex items-center gap-2 group-hover:hidden"
+                        :class="[open ? 'hidden' : '']"
                       >
-                        <Icon name="lucide:ellipsis" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      <template
-                        v-for="(action, i) in actions"
-                        :key="`menu-${i}`"
-                      >
-                        <DropdownMenuSeparator v-if="action === '-'" />
-                        <DropdownMenuItem
-                          v-else
-                          @select="action.action ? action.action(space) : () => {}"
+                        <Badge size="xs">Free</Badge>
+                      </div>
+
+                      <!-- Three-dot menu trigger -->
+                      <DropdownMenuTrigger class="grid-area-stack">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          class="opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                          :class="[open ? 'opacity-100' : '']"
+                          @click.prevent
                         >
-                          <Icon
-                            v-if="action.icon"
-                            :name="action.icon"
-                          />
-                          <span>{{ action.label }}</span>
-                        </DropdownMenuItem>
-                      </template>
-                    </DropdownMenuContent>
+                          <Icon name="lucide:ellipsis" />
+                        </Button>
+                      </DropdownMenuTrigger>
+
+                      <DropdownMenuContent align="start">
+                        <template
+                          v-for="(action, i) in actions"
+                          :key="`menu-${i}`"
+                        >
+                          <DropdownMenuSeparator v-if="action === '-'" />
+                          <DropdownMenuItem
+                            v-else
+                            @select="action.action ? action.action(space) : () => {}"
+                          >
+                            <Icon
+                              v-if="action.icon"
+                              :name="action.icon"
+                            />
+                            <span>{{ action.label }}</span>
+                          </DropdownMenuItem>
+                        </template>
+                      </DropdownMenuContent>
+                    </div>
                   </div>
-                </div>
-              </DropdownMenu>
-            </RouterLink>
+                </DropdownMenu>
+              </RouterLink>
+
+              <!--
+                Badge dialog lives OUTSIDE the RouterLink so there is never a button
+                inside an <a>. It is controlled via badgeDialogSpaceId.
+              -->
+              <SpaceBadgeDialog
+                :space="space"
+                :open="badgeDialogSpaceId === space.id"
+                @update:open="(val) => { if (!val) badgeDialogSpaceId = null }"
+              />
+            </div>
           </div>
         </div>
       </div>

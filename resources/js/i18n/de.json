@@ -654,7 +654,23 @@
         "slugPlaceholder": "my-awesome-space",
         "location": "Server Location",
         "locationDescription": "Wo dein Content Space gehostet wird. Kann später geändert werden.",
-        "locationPlaceholder": "us-east-1"
+        "locationPlaceholder": "us-east-1",
+        "badge": "Badge",
+        "badgeDescription": "Markiere diesen Space optional mit einem Badge, um seine Umgebung oder seinen Zweck anzuzeigen.",
+        "badgePlaceholder": "Badge auswählen oder eingeben…"
+      },
+      "badge": {
+        "assignTitle": "Badge zuweisen",
+        "editTitle": "Badge bearbeiten",
+        "description": "Wähle einen vordefinierten Badge oder gib einen eigenen für \"{name}\" ein.",
+        "selectPlaceholder": "Badge auswählen oder eingeben…",
+        "hint": "Vordefinierte Badges: sandbox, development, staging, production. Du kannst auch eine eigene Bezeichnung eingeben.",
+        "predefined": {
+          "sandbox": "Sandbox",
+          "development": "Development",
+          "staging": "Staging",
+          "production": "Production"
+        }
       }
     },
     "sort": {
@@ -1455,6 +1471,8 @@
       "edit": "Space bearbeiten",
       "save": "Space speichern",
       "switch": "Space wechseln",
+      "assignBadge": "Badge zuweisen",
+      "editBadge": "Badge bearbeiten",
       "new": {
         "select": "{name} auswählen",
         "continueWith": "Fortsetzen mit {name}"

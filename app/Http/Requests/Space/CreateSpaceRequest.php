@@ -27,6 +27,7 @@ class CreateSpaceRequest extends FormRequest
             'icon' => 'nullable|string|max:50',
             'team_id' => 'nullable|string|max:26',
             'color' => 'nullable|string|max:7|regex:/^#[a-fA-F0-9]{6}$/',
+            'badge' => 'nullable|string|max:50',
             'description' => 'nullable|string',
             'settings' => 'nullable|array',
         ];

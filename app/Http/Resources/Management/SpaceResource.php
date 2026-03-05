@@ -20,6 +20,7 @@ class SpaceResource extends JsonResource
             'slug' => $this->slug,
             'icon' => $this->icon_url,
             'color' => $this->color,
+            'badge' => $this->badge,
             'description' => $this->description,
             'settings' => $this->settings->toArray(),
             'team_id' => $this->team_id,

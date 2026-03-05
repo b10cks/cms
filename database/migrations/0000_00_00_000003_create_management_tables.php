@@ -67,6 +67,7 @@ return new class extends Migration {
             $table->string('slug', 50)->charset('ascii');
             $table->string('icon', 50)->nullable();
             $table->char('color', 7)->nullable()->charset('ascii');
+            $table->string('badge', 50)->nullable();
             $table->text('description')->nullable();
 
             $table->json('settings')->nullable();

@@ -32,6 +32,7 @@ interface SpaceResource {
   slug: string
   icon: string
   color: string
+  badge?: string | null
   description: string
   team_id?: string | null
   settings: SpaceSettings
@@ -47,6 +48,7 @@ interface CreateSpacePayload {
   team_id?: string | null
   icon?: string | null
   color?: string | null
+  badge?: string | null
   description?: string | null
   settings: SpaceSettings
 }
@@ -56,6 +58,7 @@ interface UpdateSpacePayload {
   slug?: string
   icon?: string | null
   color?: string | null
+  badge?: string | null
   description?: string | null
   settings?: SpaceSettings
 }
