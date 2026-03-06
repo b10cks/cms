@@ -740,6 +740,57 @@
         "createdAt": "Created At"
       }
     },
+    "migrations": {
+      "title": "Migrations",
+      "description": "Migrate content between spaces on this instance",
+      "createTitle": "New Migration",
+      "createDescription": "Push content from this space into another space on this instance",
+      "noMigrations": "No migrations found. Start a new migration to copy content between spaces.",
+      "openMenu": "Open menu",
+      "contentWithoutBlocksWarning": "Migrating content without blocks may cause issues if the target space is missing the required block types.",
+      "states": {
+        "pending": "Pending",
+        "processing": "Processing",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "scope": {
+        "blocks": "Blocks (schemas)",
+        "block_templates": "Block templates",
+        "content": "Content entries",
+        "assets": "Assets (metadata)",
+        "data_sources": "Data sources & entries",
+        "redirects": "Redirects"
+      },
+      "conflictStrategies": {
+        "skip": "Skip existing",
+        "overwrite": "Overwrite",
+        "merge_newer": "Merge (newer wins)"
+      },
+      "conflictStrategyDescriptions": {
+        "skip": "Leave existing records in the target space unchanged. Only missing records are created.",
+        "overwrite": "Replace all matching records in the target space with data from the source.",
+        "merge_newer": "Only overwrite if the source record was updated more recently than the target."
+      },
+      "fields": {
+        "targetSpace": "Target space",
+        "targetSpacePlaceholder": "Select a space...",
+        "targetSpaceHint": "Content will be pushed from this space into the selected space.",
+        "scope": "What to migrate",
+        "scopeHint": "Select the types of content to include in this migration.",
+        "conflictStrategy": "Conflict strategy"
+      },
+      "columns": {
+        "direction": "Direction",
+        "state": "Status",
+        "progress": "Progress",
+        "scope": "Scope",
+        "conflictStrategy": "Strategy",
+        "createdAt": "Created"
+      },
+      "deleteConfirmTitle": "Delete Migration",
+      "deleteConfirmMessage": "Are you sure you want to delete this migration record? This does not undo any content changes."
+    },
     "backups": {
       "title": "Backups",
       "description": "Create and manage space backups to protect your content and data",
@@ -798,6 +849,10 @@
       "backups": {
         "title": "Backups",
         "description": "Create and manage space backups for disaster recovery."
+      },
+      "migrations": {
+        "title": "Migrations",
+        "description": "Migrate content between spaces on this instance."
       },
       "space": {
         "title": "Space",
@@ -1441,6 +1496,10 @@
       "download": "Download Backup",
       "delete": "Delete Backup"
     },
+    "migrations": {
+      "create": "New Migration",
+      "delete": "Delete"
+    },
     "user": {
       "account": "Account"
     },
@@ -1601,6 +1660,12 @@
     "confirm": "Confirm"
   },
   "composables": {
+    "migrations": {
+      "createSuccess": "Migration started successfully",
+      "createError": "Failed to start migration: {error}",
+      "deleteSuccess": "Migration deleted successfully",
+      "deleteError": "Failed to delete migration: {error}"
+    },
     "assetFolders": {
       "createSuccess": "Folder \"{name}\" created successfully",
       "createError": "Failed to create folder: {error}",

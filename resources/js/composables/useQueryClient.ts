@@ -188,6 +188,13 @@ export const queryKeys = {
     settings: () => ['ai-settings', spaceId] as const,
     usage: () => ['spaces', spaceId, 'ai-usage'] as const,
   }),
+  migrations: (spaceId: string) => ({
+    all: () => ['spaces', spaceId, 'migrations'] as const,
+    lists: () => [...queryKeys.migrations(spaceId).all(), 'list'] as const,
+    list: (filters: any = {}) => [...queryKeys.migrations(spaceId).lists(), filters] as const,
+    details: () => [...queryKeys.migrations(spaceId).all(), 'detail'] as const,
+    detail: (id: string) => [...queryKeys.migrations(spaceId).details(), id] as const,
+  }),
   backups: (spaceId: string) => ({
     all: () => ['spaces', spaceId, 'backups'] as const,
     lists: () => [...queryKeys.backups(spaceId).all(), 'list'] as const,

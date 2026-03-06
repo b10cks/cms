@@ -51,3 +51,4 @@ Route::get('/{space}/settings/configuration', AppController::class)->name('space
 Route::get('/{space}/settings/ai', AppController::class)->name('space-settings-ai');
 Route::get('/{space}/settings/people', AppController::class)->name('space-settings-people');
 Route::get('/{space}/settings/backups', AppController::class)->name('space-settings-backups');
+Route::get('/{space}/settings/migrations', AppController::class)->name('space-settings-migrations');

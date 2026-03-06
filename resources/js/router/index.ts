@@ -201,6 +201,11 @@ const routes: RouteRecordRaw[] = [
         name: 'space-settings-backups',
         component: () => import('~/pages/[space]/settings/backups.vue'),
       },
+      {
+        path: 'migrations',
+        name: 'space-settings-migrations',
+        component: () => import('~/pages/[space]/settings/migrations.vue'),
+      },
     ],
   },
   {

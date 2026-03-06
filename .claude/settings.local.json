@@ -6,7 +6,8 @@
       "Bash(npx oxlint:*)",
       "Bash(npx vue-tsc:*)",
       "Bash(php artisan route:list:*)",
-      "Bash(bun run typecheck:*)"
+      "Bash(bun run typecheck:*)",
+      "Bash(ls:*)"
     ]
   }
 }

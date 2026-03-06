@@ -6,6 +6,7 @@ namespace App\Providers;
 use App\Models\Management\Invite;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceBackup;
+use App\Models\Management\SpaceMigration;
 use App\Models\Management\Team;
 use App\Models\Management\Token;
 use App\Models\Space\Block;
@@ -27,6 +28,7 @@ use App\Policies\PersonalAccessTokenPolicy;
 use App\Policies\RedirectPolicy;
 use App\Policies\ReleasePolicy;
 use App\Policies\SpaceBackupPolicy;
+use App\Policies\SpaceMigrationPolicy;
 use App\Policies\SpacePolicy;
 use App\Policies\TeamPolicy;
 use App\Policies\TokenPolicy;
@@ -51,6 +53,7 @@ class AuthServiceProvider extends ServiceProvider
         Redirect::class => RedirectPolicy::class,
         Release::class => ReleasePolicy::class,
         SpaceBackup::class => SpaceBackupPolicy::class,
+        SpaceMigration::class => SpaceMigrationPolicy::class,
         Team::class => TeamPolicy::class,
         Token::class => TokenPolicy::class,
         PersonalAccessToken::class => PersonalAccessTokenPolicy::class,

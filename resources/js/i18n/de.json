@@ -736,6 +736,57 @@
         "createdAt": "Erstellt"
       }
     },
+    "migrations": {
+      "title": "Migrationen",
+      "description": "Inhalte zwischen Spaces auf dieser Instanz migrieren",
+      "createTitle": "Neue Migration",
+      "createDescription": "Inhalte aus diesem Space in einen anderen Space übertragen",
+      "noMigrations": "Keine Migrationen gefunden. Starte eine neue Migration, um Inhalte zwischen Spaces zu kopieren.",
+      "openMenu": "Menü öffnen",
+      "contentWithoutBlocksWarning": "Das Migrieren von Inhalten ohne Blöcke kann Probleme verursachen, wenn der Ziel-Space die erforderlichen Blocktypen nicht enthält.",
+      "states": {
+        "pending": "Ausstehend",
+        "processing": "In Bearbeitung",
+        "completed": "Abgeschlossen",
+        "failed": "Fehlgeschlagen"
+      },
+      "scope": {
+        "blocks": "Blöcke (Schemata)",
+        "block_templates": "Block-Vorlagen",
+        "content": "Inhaltseinträge",
+        "assets": "Assets (Metadaten)",
+        "data_sources": "Datenquellen & Einträge",
+        "redirects": "Weiterleitungen"
+      },
+      "conflictStrategies": {
+        "skip": "Bestehende überspringen",
+        "overwrite": "Überschreiben",
+        "merge_newer": "Zusammenführen (Neueres gewinnt)"
+      },
+      "conflictStrategyDescriptions": {
+        "skip": "Bestehende Einträge im Ziel-Space werden nicht verändert. Nur fehlende Einträge werden erstellt.",
+        "overwrite": "Alle übereinstimmenden Einträge im Ziel-Space werden mit Daten aus dem Quell-Space ersetzt.",
+        "merge_newer": "Nur überschreiben, wenn der Quelleintrag aktueller ist als der Zieleintrag."
+      },
+      "fields": {
+        "targetSpace": "Ziel-Space",
+        "targetSpacePlaceholder": "Space auswählen...",
+        "targetSpaceHint": "Inhalte werden von diesem Space in den ausgewählten Space übertragen.",
+        "scope": "Was migrieren",
+        "scopeHint": "Wähle die Inhaltstypen, die in diese Migration einbezogen werden sollen.",
+        "conflictStrategy": "Konfliktstrategie"
+      },
+      "columns": {
+        "direction": "Richtung",
+        "state": "Status",
+        "progress": "Fortschritt",
+        "scope": "Umfang",
+        "conflictStrategy": "Strategie",
+        "createdAt": "Erstellt"
+      },
+      "deleteConfirmTitle": "Migration löschen",
+      "deleteConfirmMessage": "Bist du sicher, dass du diesen Migrationseintrag löschen möchtest? Dadurch werden keine Inhaltsänderungen rückgängig gemacht."
+    },
     "backups": {
       "title": "Sicherungen",
       "description": "Erstelle und verwalte Space-Sicherungen zum Schutz deiner Inhalte und Daten",
@@ -794,6 +845,10 @@
       "backups": {
         "title": "Sicherungen",
         "description": "Erstelle und verwalte Space-Sicherungen für die Notfallwiederherstellung."
+      },
+      "migrations": {
+        "title": "Migrationen",
+        "description": "Inhalte zwischen Spaces auf dieser Instanz migrieren."
       },
       "space": {
         "title": "Space",
@@ -1413,6 +1468,10 @@
       "download": "Sicherung herunterladen",
       "delete": "Sicherung löschen"
     },
+    "migrations": {
+      "create": "Neue Migration",
+      "delete": "Löschen"
+    },
     "user": {
       "account": "Konto"
     },
@@ -1551,6 +1610,12 @@
     "confirm": "Bestätigen"
   },
   "composables": {
+    "migrations": {
+      "createSuccess": "Migration erfolgreich gestartet",
+      "createError": "Migration konnte nicht gestartet werden: {error}",
+      "deleteSuccess": "Migration erfolgreich gelöscht",
+      "deleteError": "Migration konnte nicht gelöscht werden: {error}"
+    },
     "assetFolders": {
       "createSuccess": "Ordner \"{name}\" erfolgreich erstellt",
       "createError": "Fehler beim Erstellen des Ordners: {error}",

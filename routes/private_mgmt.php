@@ -14,6 +14,7 @@ use App\Http\Controllers\Mgmt\AssetDataImportController;
 use App\Http\Controllers\Mgmt\AssetFolderController;
 use App\Http\Controllers\Mgmt\AssetTagController;
 use App\Http\Controllers\Mgmt\BackupController;
+use App\Http\Controllers\Mgmt\MigrationController;
 use App\Http\Controllers\Mgmt\BlockController;
 use App\Http\Controllers\Mgmt\BlockFolderController;
 use App\Http\Controllers\Mgmt\BlockTagController;
@@ -185,6 +186,7 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::apiResource('assets', AssetController::class);
 
     Route::apiResource('backups', BackupController::class);
+    Route::apiResource('migrations', MigrationController::class)->only(['index', 'show', 'store', 'destroy']);
 
     Route::post('assets/export', AssetDataExportController::class)
         ->name('assets.data.export');

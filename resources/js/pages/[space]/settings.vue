@@ -34,6 +34,11 @@ const items: NavItem[] = [
     name: 'space-settings-backups',
     icon: 'lucide:database-backup',
   },
+  {
+    title: 'labels.settings.migrations.title',
+    name: 'space-settings-migrations',
+    icon: 'lucide:arrow-right-left',
+  },
 ]
 
 const route = useRoute()

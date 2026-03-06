@@ -113,6 +113,7 @@ declare global {
   const useId: typeof import('vue').useId
   const useInvites: typeof import('./resources/js/composables/useInvites').useInvites
   const useLink: typeof import('vue-router').useLink
+  const useMigrations: typeof import('./resources/js/composables/useMigrations').useMigrations
   const useModel: typeof import('vue').useModel
   const usePersonalAccessTokens: typeof import('./resources/js/composables/usePersonalAccessTokens').usePersonalAccessTokens
   const usePresence: typeof import('./resources/js/composables/usePresence').usePresence
@@ -159,9 +160,6 @@ declare global {
   export type { DialogAction, DialogOptions, MessageOptions, ConfirmOptions } from './resources/js/composables/useAlertDialog'
   import('./resources/js/composables/useAlertDialog')
   // @ts-ignore
-  export type { MaybeRefOrComputed } from './resources/js/composables/useBackups'
-  import('./resources/js/composables/useBackups')
-  // @ts-ignore
   export type { ContentPresenceMap } from './resources/js/composables/useContentMenuPresence'
   import('./resources/js/composables/useContentMenuPresence')
   // @ts-ignore
@@ -170,6 +168,9 @@ declare global {
   // @ts-ignore
   export type { ClipboardItem } from './resources/js/composables/useGlobalClipboard'
   import('./resources/js/composables/useGlobalClipboard')
+  // @ts-ignore
+  export type { MaybeRefOrComputed } from './resources/js/composables/useMigrations'
+  import('./resources/js/composables/useMigrations')
   // @ts-ignore
   export type { PresenceUser, PresenceState, UsePresenceOptions } from './resources/js/composables/usePresence'
   import('./resources/js/composables/usePresence')
@@ -295,6 +296,7 @@ declare module 'vue' {
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useInvites: UnwrapRef<typeof import('./resources/js/composables/useInvites')['useInvites']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
+    readonly useMigrations: UnwrapRef<typeof import('./resources/js/composables/useMigrations')['useMigrations']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly usePersonalAccessTokens: UnwrapRef<typeof import('./resources/js/composables/usePersonalAccessTokens')['usePersonalAccessTokens']>
     readonly usePresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['usePresence']>

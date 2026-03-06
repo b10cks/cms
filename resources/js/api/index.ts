@@ -16,6 +16,7 @@ import { AssetFolders } from './resources/asset-folders'
 import { AssetTags } from './resources/asset-tags'
 import { Assets } from './resources/assets'
 import { Backups } from './resources/backups'
+import { Migrations } from './resources/migrations'
 import { BlockTags } from './resources/block-tags'
 import { Blocks } from './resources/blocks'
 import { ContentMenu } from './resources/content-menu'
@@ -95,6 +96,7 @@ export class API {
       assetTags: new AssetTags(this.client, spaceId),
       assets: new Assets(this.client, spaceId),
       backups: new Backups(this.client, spaceId),
+      migrations: new Migrations(this.client, spaceId),
       blocks: new Blocks(this.client, spaceId),
       blockTags: new BlockTags(this.client, spaceId),
       blockFolders: new BlockFolders(this.client, spaceId),
