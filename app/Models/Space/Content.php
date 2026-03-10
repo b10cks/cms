@@ -121,12 +121,14 @@ class Content extends SpaceModel
             $slugService = app(LocalizedContentSlugService::class);
             $oldFullSlug = $slugService->updateFullSlug($content);
             if (!empty($oldFullSlug)) {
-                $slugService->createRedirect($oldFullSlug, $content->full_slug);
+                $redirectSource = $slugService->formatRedirectSlug($oldFullSlug, $content->language_iso);
+                $redirectTarget = $slugService->formatRedirectSlug($content->full_slug, $content->language_iso);
+                $slugService->createRedirect($redirectSource, $redirectTarget);
             }
         });
 
         static::saved(function (Content $content) {
-            if ($content->isDirty('slug') || $content->isDirty('parent_id')) {
+            if ($content->isDirty('slug') || $content->isDirty('parent_id') || $content->isDirty('language_iso')) {
                 UpdateContentFullSlugsJob::dispatch($content, request('space') ?? app()->get('currentSpace'));
             }
 

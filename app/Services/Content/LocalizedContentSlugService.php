@@ -18,8 +18,7 @@ class LocalizedContentSlugService extends ContentSlugService
     {
         $oldFullSlug = $content->full_slug;
 
-        $basePath = $this->buildBasePath($content);
-        $content->full_slug = $this->applyLocalizationStrategy($basePath, $content->language_iso);
+        $content->full_slug = $this->buildBasePath($content);
 
         return ($oldFullSlug !== $content->full_slug) ? $oldFullSlug : null;
     }
@@ -42,13 +41,18 @@ class LocalizedContentSlugService extends ContentSlugService
         return "/{$content->slug}";
     }
 
-    protected function applyLocalizationStrategy(string $basePath, string $languageIso): string
+    public function applyLocalizationStrategy(string $basePath, string $languageIso): string
     {
         if ($this->space->settings->shouldPrependLocale($languageIso)) {
             return "/{$languageIso}{$basePath}";
         }
 
         return $basePath;
+    }
+
+    public function formatRedirectSlug(string $basePath, string $languageIso): string
+    {
+        return $this->applyLocalizationStrategy($basePath, $languageIso);
     }
 
     protected function stripLocaleFromPath(string $path): string
@@ -64,7 +68,7 @@ class LocalizedContentSlugService extends ContentSlugService
         $basePath = $this->buildBasePath($content);
         $variations = [];
 
-        $variations['current'] = $this->applyLocalizationStrategy($basePath, $content->language_iso);
+        $variations['current'] = $basePath;
         $variations['always_prepend'] = "/{$content->language_iso}{$basePath}";
         $variations['prepend_translations'] = $content->language_iso !== $this->space->settings->getDefaultLanguage()
             ? "/{$content->language_iso}{$basePath}"

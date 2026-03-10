@@ -4,7 +4,6 @@ namespace App\Jobs\Content;
 
 use App\Models\Management\Space;
 use App\Models\Space\Content;
-use App\Services\Content\ContentSlugService;
 use App\Services\Content\LocalizedContentSlugService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -42,15 +41,26 @@ class UpdateContentFullSlugsJob implements ShouldQueue
     /**
      * Execute the job.
      *
-     * @param ContentSlugService $slugService
      * @return void
      */
     public function handle(LocalizedContentSlugService $slugService)
     {
         try {
             app()->offsetSet('currentSpace', $this->space);
-            $stats = $slugService->processContentChildren($this->content, true);
-            Log::info("Processed children for content {$this->content->id}: {$stats['updated']} updated, {$stats['redirects_created']} redirects created, {$stats['errors']} errors");
+
+            $content = Content::query()->find($this->content->id);
+
+            if (!$content) {
+                Log::warning("Unable to propagate full slugs because content {$this->content->id} no longer exists");
+
+                return;
+            }
+
+            $stats = $slugService->processContentChildren($content, true);
+
+            Log::info(
+                "Processed children for content {$content->id}: {$stats['updated']} updated, {$stats['redirects_created']} redirects created, {$stats['errors']} errors"
+            );
         } catch (\Exception $e) {
             Log::error("Error processing children for content {$this->content->id}: " . $e->getMessage());
             throw $e;

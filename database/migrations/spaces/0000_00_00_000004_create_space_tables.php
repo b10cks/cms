@@ -184,7 +184,7 @@ return new class extends Migration {
             $table->timestamp('published_at')->nullable();
             $table->timestamp('first_published_at')->nullable();
 
-            $table->index(['full_slug']);
+            $table->index(['full_slug', 'language_iso']);
             // Only create fulltext index for MySQL/MariaDB
             if (DB::getDriverName() !== 'sqlite') {
                 $table->fullText('searchable_content');
