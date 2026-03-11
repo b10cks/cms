@@ -63,6 +63,18 @@ class ContentController
             ], $redirect->status_code);
         }
 
+        $vid = $request->input('vid', 'published');
+        $content = $this->fetchContent($slug, $language, $vid);
+
+        if (!$content && $language !== $space->settings->getDefaultLanguage()) {
+            $content = $this->fetchContent($slug, $space->settings->getDefaultLanguage(), $vid);
+        }
+
+        return new ContentResource($content ?? $this->fetchContent($slug, $language, $vid, true));
+    }
+
+    protected function fetchContent(string $slug, string $language, string $vid, bool $fail = false): ?Content
+    {
         $query = Content::where('full_slug', "/$slug")
             ->where('language_iso', $language)
             ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block', 'relations', 'assets', 'links'])
@@ -74,7 +86,6 @@ class ContentController
                 'content_versions.link_ids'
             ]);
 
-        $vid = $request->input('vid', 'published');
         if ($vid === 'published') {
             $query->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id');
         } elseif ($vid === 'draft') {
@@ -84,34 +95,6 @@ class ContentController
                 ->where('content_versions.id', $vid);
         }
 
-        $content = $query->first();
-
-        if (!$content && $language !== $space->settings->getDefaultLanguage()) {
-            $fallbackLanguage = $space->settings->getDefaultLanguage();
-
-            $fallbackQuery = Content::where('full_slug', "/$slug")
-                ->where('language_iso', $fallbackLanguage)
-                ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block', 'relations', 'assets', 'links'])
-                ->select([
-                    'contents.*',
-                    'content_versions.content',
-                    'content_versions.relation_ids',
-                    'content_versions.asset_ids',
-                    'content_versions.link_ids'
-                ]);
-
-            if ($vid === 'published') {
-                $fallbackQuery->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id');
-            } elseif ($vid === 'draft') {
-                $fallbackQuery->leftJoin('content_versions', 'contents.current_version_id', '=', 'content_versions.id');
-            } else {
-                $fallbackQuery->leftJoin('content_versions', 'contents.id', '=', 'content_versions.content_id')
-                    ->where('content_versions.id', $vid);
-            }
-
-            $content = $fallbackQuery->first();
-        }
-
-        return new ContentResource($content ?? $query->firstOrFail());
+        return $fail ? $query->firstOrFail() : $query->first();
     }
 }
