@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { toast } from 'vue-sonner'
+
+import Icon from '~/components/Icon.vue'
 import Markdown from '~/components/Markdown.vue'
 import {
   DropdownMenu,
@@ -13,6 +13,7 @@ import {
 import { PulseDot } from '~/components/ui/pulse-dot'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import type { CommentResource } from '~/types/comments'
+import { ContentResource } from '~/types/contents'
 import type {
   CommentClickEvent,
   CommentCreateEvent,
@@ -49,14 +50,21 @@ const iframeKey = ref<string>()
 const loading = ref<boolean>(true)
 const isConnected = ref<boolean>(false)
 const mode = ref<'desktop' | 'mobile'>('desktop')
+const content = inject<Ref<ContentResource>>('content')
 let previewBridge: PreviewBridge
 
 const baseSrc = computed(() => {
   const env = settings.value.content.environment
   if (!env?.url) return null
+  const slugStrategy = currentSpace.value?.settings.slug_strategy
+  const needsPrepend =
+    slugStrategy === 'always_prepend' ||
+    (slugStrategy === 'prepend_translations' &&
+      content.value.language_iso !== currentSpace.value?.settings.default_language)
+  const prefix = needsPrepend ? `/${content.value.language_iso}` : ''
 
   const url = env.url.replace(/\/$/, '')
-  return `${url}${props.fullSlug}`
+  return `${url}${prefix}${props.fullSlug}`
 })
 
 const src = computed(() => {
