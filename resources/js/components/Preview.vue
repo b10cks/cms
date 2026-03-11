@@ -50,6 +50,8 @@ const iframeKey = ref<string>()
 const loading = ref<boolean>(true)
 const isConnected = ref<boolean>(false)
 const mode = ref<'desktop' | 'mobile'>('desktop')
+const mobileWidth = ref<number>(384)
+const isResizing = ref<boolean>(false)
 const content = inject<Ref<ContentResource>>('content')
 let previewBridge: PreviewBridge
 
@@ -171,115 +173,190 @@ onBeforeUnmount(() => previewBridge && previewBridge.destroy())
 const handleLoad = () => {
   loading.value = false
 }
+
+const containerRef = ref<HTMLElement | null>(null)
+
+const startResize = () => {
+  isResizing.value = true
+  document.addEventListener('mousemove', handleGlobalMouseMove)
+  document.addEventListener('mouseup', handleGlobalMouseUp)
+}
+
+const stopResize = () => {
+  isResizing.value = false
+  document.removeEventListener('mousemove', handleGlobalMouseMove)
+  document.removeEventListener('mouseup', handleGlobalMouseUp)
+}
+
+const handleGlobalMouseMove = (event: MouseEvent) => {
+  if (!isResizing.value || !containerRef.value || mode.value !== 'mobile') return
+
+  const rect = containerRef.value.getBoundingClientRect()
+  const newWidth = event.clientX - rect.left
+  const minWidth = 320
+
+  if (newWidth >= minWidth) {
+    mobileWidth.value = newWidth
+  }
+}
+
+const handleGlobalMouseUp = () => {
+  stopResize()
+}
+
+const handleMouseMove = (event: MouseEvent) => {
+  if (!isResizing.value || mode.value !== 'mobile') return
+
+  const outerContainer = event.currentTarget as HTMLElement
+  if (!outerContainer) return
+
+  const rect = outerContainer.getBoundingClientRect()
+  const newWidth = event.clientX - rect.left
+  const minWidth = 280
+  const maxWidth = 768
+
+  if (newWidth >= minWidth && newWidth <= maxWidth) {
+    mobileWidth.value = newWidth
+  }
+}
 </script>
 
 <template>
   <div class="flex flex-1 grow flex-col bg-elevated">
     <div
-      :class="[
-        'flex grow flex-col bg-secondary',
-        mode === 'mobile' ? 'mx-auto my-4 w-sm overflow-hidden rounded-xl shadow-2xl' : 'grow',
-      ]"
+      ref="containerRef"
+      :class="['flex grow flex-col relative', mode === 'mobile' ? 'mx-auto my-4' : '']"
+      :style="mode === 'mobile' ? { width: `${mobileWidth}px` } : {}"
     >
-      <div class="flex h-12 items-center gap-3 border-b border-b-input bg-background p-3">
-        <Icon
-          name="lucide:refresh-cw"
-          :class="['shrink-0 cursor-pointer', src || 'invisible', loading && 'animate-spin']"
-          @click="refresh"
-        />
-        <SimpleTooltip :tooltip="$t('labels.preview.liveEdit')">
-          <PulseDot
-            :variant="isConnected ? 'success' : 'default'"
-            :live="isConnected"
-            size="sm"
+      <div
+        :class="[
+          'flex flex-col grow bg-secondary',
+          mode === 'mobile' ? 'rounded-xl shadow-2xl overflow-clip' : '',
+        ]"
+      >
+        <div
+          class="flex h-12 items-center gap-3 rounded-top-x; border-b border-b-border bg-background p-3"
+        >
+          <Icon
+            name="lucide:refresh-cw"
+            :class="['shrink-0 cursor-pointer', src || 'invisible', loading && 'animate-spin']"
+            @click="refresh"
           />
-        </SimpleTooltip>
-        <p class="truncate text-sm">{{ baseSrc || 'about:blank' }}</p>
-        <div class="ml-auto flex items-center gap-3">
-          <SimpleTooltip
-            class="flex"
-            side="bottom"
-            :tooltip="$t('labels.preview.openExternal')"
-          >
-            <button
-              :class="['shrink-0 cursor-pointer', src || 'invisible']"
-              @click="openExternal"
-            >
-              <Icon name="lucide:external-link" />
-            </button>
+          <SimpleTooltip :tooltip="$t('labels.preview.liveEdit')">
+            <PulseDot
+              :variant="isConnected ? 'success' : 'default'"
+              :live="isConnected"
+              size="sm"
+            />
           </SimpleTooltip>
-          <SimpleTooltip
-            class="flex"
-            side="bottom"
-            :tooltip="$t('labels.preview.copyLink')"
-          >
-            <button
-              :class="['shrink-0 cursor-pointer', src || 'invisible']"
-              @click="copyLink"
+          <p class="truncate text-sm">{{ baseSrc || 'about:blank' }}</p>
+          <div class="ml-auto flex items-center gap-3">
+            <SimpleTooltip
+              class="flex"
+              side="bottom"
+              :tooltip="$t('labels.preview.openExternal')"
             >
-              <Icon name="lucide:link" />
-            </button>
-          </SimpleTooltip>
-          <div class="h-6 w-px bg-border" />
-          <SimpleTooltip
-            class="flex"
-            side="bottom"
-            :tooltip="$t('labels.preview.mode')"
-          >
-            <button
-              class="shrink-0 cursor-pointer"
-              @click="mode === 'desktop' ? (mode = 'mobile') : (mode = 'desktop')"
+              <button
+                :class="['shrink-0 cursor-pointer', src || 'invisible']"
+                @click="openExternal"
+              >
+                <Icon name="lucide:external-link" />
+              </button>
+            </SimpleTooltip>
+            <SimpleTooltip
+              class="flex"
+              side="bottom"
+              :tooltip="$t('labels.preview.copyLink')"
             >
-              <Icon name="lucide:monitor-smartphone" />
-            </button>
-          </SimpleTooltip>
-          <DropdownMenu>
-            <DropdownMenuTrigger class="flex">
-              <Icon name="lucide:cog" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuRadioGroup :model-value="settings.content.environment?.url">
-                <DropdownMenuRadioItem
-                  v-for="env in currentSpace?.settings.environments"
-                  :key="env.url"
-                  :value="env.url"
-                  class="grid"
-                  @select="switchEnvironment(env)"
-                >
-                  <span class="font-semibold text-primary">{{ env.name }}</span>
-                  <span class="text-xs text-primary/60">{{ env.url }}</span>
-                </DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              <button
+                :class="['shrink-0 cursor-pointer', src || 'invisible']"
+                @click="copyLink"
+              >
+                <Icon name="lucide:link" />
+              </button>
+            </SimpleTooltip>
+            <div class="h-6 w-px bg-border" />
+            <SimpleTooltip
+              class="flex"
+              side="bottom"
+              :tooltip="$t('labels.preview.mode')"
+            >
+              <button
+                class="shrink-0 cursor-pointer"
+                @click="mode === 'desktop' ? (mode = 'mobile') : (mode = 'desktop')"
+              >
+                <Icon name="lucide:monitor-smartphone" />
+              </button>
+            </SimpleTooltip>
+            <DropdownMenu>
+              <DropdownMenuTrigger class="flex">
+                <Icon name="lucide:cog" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuRadioGroup :model-value="settings.content.environment?.url">
+                  <DropdownMenuRadioItem
+                    v-for="env in currentSpace?.settings.environments"
+                    :key="env.url"
+                    :value="env.url"
+                    class="grid"
+                    @select="switchEnvironment(env)"
+                  >
+                    <span class="font-semibold text-primary">{{ env.name }}</span>
+                    <span class="text-xs text-primary/60">{{ env.url }}</span>
+                  </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        <iframe
+          v-if="baseSrc && src"
+          ref="iframeRef"
+          :key="iframeKey"
+          :src="src"
+          :title="fullSlug"
+          class="grow bg-white"
+          @load="handleLoad()"
+        />
+        <div
+          v-else
+          class="flex grow items-center justify-center"
+        >
+          <Markdown
+            class="mx-auto text-center text-sm text-balance text-muted"
+            :content="
+              currentSpace?.settings.environments?.length > 0
+                ? $t('messages.preview.noContent')
+                : $t('messages.preview.noEnvironments', {
+                    url: $router.resolve({
+                      name: 'space-settings-configuration',
+                      params: { space: currentSpace?.id },
+                    }).href,
+                  })
+            "
+          />
         </div>
       </div>
-      <iframe
-        v-if="baseSrc && src"
-        ref="iframeRef"
-        :key="iframeKey"
-        :src="src"
-        :title="fullSlug"
-        class="grow bg-white"
-        @load="handleLoad()"
-      />
       <div
-        v-else
-        class="flex grow items-center justify-center"
+        v-if="mode === 'mobile'"
+        class="group absolute -right-1 top-0 bottom-0 w-2 cursor-col-resize py-3"
+        @mousedown="startResize"
       >
-        <Markdown
-          class="mx-auto text-center text-sm text-balance text-muted"
-          :content="
-            currentSpace?.settings.environments?.length > 0
-              ? $t('messages.preview.noContent')
-              : $t('messages.preview.noEnvironments', {
-                  url: $router.resolve({
-                    name: 'space-settings-configuration',
-                    params: { space: currentSpace?.id },
-                  }).href,
-                })
-          "
-        />
+        <div
+          class="w-px h-full ml-1 bg-transparent transition-colors"
+          :class="[isResizing ? 'bg-accent!' : 'group-hover:bg-accent']"
+        ></div>
+      </div>
+      <div
+        v-if="mode === 'mobile'"
+        class="absolute -right-4 bottom-0 translate-x-full whitespace-nowrap pointer-events-none"
+      >
+        <div
+          class="text-xs font-semibold text-muted origin-left"
+          :style="{ transform: 'rotate(-90deg)' }"
+        >
+          {{ Math.floor(mobileWidth) }} px
+        </div>
       </div>
     </div>
   </div>
