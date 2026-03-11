@@ -34,6 +34,6 @@ class ContentFilter extends AdvancedFilter
 
     public function parent_id($value)
     {
-        $this->builder->where('contents.parent_id', $value);
+        $this->applyDynamicFilter('contents.parent_id', $value);
     }
 }
