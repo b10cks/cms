@@ -16,13 +16,13 @@ class CreateContent
         \DB::transaction(function () use ($data, $content, $owner, $space) {
             $contentData = data_get($data, 'content');
             if (!\Arr::has($data, 'language_iso')) {
-                $data['language_iso'] = data_get($space->settings, 'default_language.iso', 'en');
+                $data['language_iso'] = $space->settings->getDefaultLanguage();
             }
 
             unset($data['content']);
             $content->fill($data);
 
-            $content->id = strtolower((string)Str::ulid());
+            $content->id = strtolower((string) Str::ulid());
             $version = ContentVersion::forceCreate([
                 'content' => $contentData,
                 'content_id' => $content->id,
