@@ -10,7 +10,7 @@ class ContentResourceCollection extends ResourceCollection
     public function toArray(Request $request)
     {
         $this->additional([
-            'rv' => $request->space->rv
+            'rv' => app('currentSpace')->rv
         ]);
 
         return $this->collection->map(function ($content) {
