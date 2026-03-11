@@ -196,28 +196,46 @@ const handleLoad = () => {
         </SimpleTooltip>
         <p class="truncate text-sm">{{ baseSrc || 'about:blank' }}</p>
         <div class="ml-auto flex items-center gap-3">
-          <icon
-            name="lucide:external-link"
-            :class="['shrink-0 cursor-pointer', src || 'invisible']"
-            @click="openExternal"
-          />
-          <icon
-            name="lucide:link"
-            :class="['shrink-0 cursor-pointer', src || 'invisible']"
-            @click="copyLink"
-          />
-          <div class="h-6 w-px bg-elevated" />
-          <Icon
-            name="lucide:monitor-smartphone"
-            class="shrink-0 cursor-pointer"
-            @click="mode === 'desktop' ? (mode = 'mobile') : (mode = 'desktop')"
-          />
+          <SimpleTooltip
+            class="flex"
+            side="bottom"
+            :tooltip="$t('labels.preview.openExternal')"
+          >
+            <button
+              :class="['shrink-0 cursor-pointer', src || 'invisible']"
+              @click="openExternal"
+            >
+              <Icon name="lucide:external-link" />
+            </button>
+          </SimpleTooltip>
+          <SimpleTooltip
+            class="flex"
+            side="bottom"
+            :tooltip="$t('labels.preview.copyLink')"
+          >
+            <button
+              :class="['shrink-0 cursor-pointer', src || 'invisible']"
+              @click="copyLink"
+            >
+              <Icon name="lucide:link" />
+            </button>
+          </SimpleTooltip>
+          <div class="h-6 w-px bg-border" />
+          <SimpleTooltip
+            class="flex"
+            side="bottom"
+            :tooltip="$t('labels.preview.mode')"
+          >
+            <button
+              class="shrink-0 cursor-pointer"
+              @click="mode === 'desktop' ? (mode = 'mobile') : (mode = 'desktop')"
+            >
+              <Icon name="lucide:monitor-smartphone" />
+            </button>
+          </SimpleTooltip>
           <DropdownMenu>
             <DropdownMenuTrigger class="flex">
-              <Icon
-                name="lucide:cog"
-                class="cursor-pointer"
-              />
+              <Icon name="lucide:cog" />
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuRadioGroup :model-value="settings.content.environment?.url">
