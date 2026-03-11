@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { TransitionGroup } from 'vue'
-import Icon from '~/components/Icon.vue'
-import AiContentInteraction from '~/components/ui/AiContentInteraction.vue'
-
 import { useRouteQuery } from '@vueuse/router'
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
+import { TransitionGroup } from 'vue'
+
 import BlockTemplateCreateDialog from '~/components/blocks/BlockTemplateCreateDialog.vue'
 import CommentsSidebar from '~/components/comments/CommentsSidebar.vue'
 import ContentHeader from '~/components/content/ContentHeader.vue'
@@ -12,7 +10,9 @@ import HeaderActions from '~/components/content/HeaderActions.vue'
 import ContentInfo from '~/components/ContentInfo.vue'
 import ContentSettings from '~/components/ContentSettings.vue'
 import EditorComponent from '~/components/editor/EditorComponent.vue'
+import Icon from '~/components/Icon.vue'
 import Preview from '~/components/Preview.vue'
+import AiContentInteraction from '~/components/ui/AiContentInteraction.vue'
 import { Badge, type BadgeVariants } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { ScrollArea } from '~/components/ui/scroll-area'
@@ -58,8 +58,8 @@ watch(
 )
 
 const isDirty = computed(() => {
-  if (!content.value || !originalContentData.value) return false
-  return JSON.stringify(content.value.content) !== JSON.stringify(originalContentData.value)
+  if (!content.value || !originalContent.value) return false
+  return JSON.stringify(content.value) !== JSON.stringify(originalContent.value)
 })
 
 async function guardLeave(to, from, next) {

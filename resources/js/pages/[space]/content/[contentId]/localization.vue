@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import HeaderActions from '~/components/content/HeaderActions.vue'
+import Icon from '~/components/Icon.vue'
 import FlattenedLocalization from '~/components/localization/FlattendeLocalization.vue'
 import { Input } from '~/components/ui/input'
 import {
@@ -11,11 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { useAlertDialog } from '~/composables/useAlertDialog'
 import type { ContentResource } from '~/types/contents'
 
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
+const { alert } = useAlertDialog()
 const spaceId = computed<string>(() => route.params.space as string)
 const contentId = computed<string>(() => route.params.contentId as string)
 
@@ -112,6 +113,61 @@ const isLoading = computed(
 const getBlockSchemaFn = (blockSlug: string) => {
   return blockSchemaCache.value.get(blockSlug)
 }
+
+const isDirty = computed(() => {
+  if (!translatableContent.value) return false
+  return (
+    JSON.stringify(translatableContent.value) !== JSON.stringify(translatableOriginalContent.value)
+  )
+})
+
+async function guardLeave(to, from, next) {
+  if (to && from && to.path === from.path) {
+    return next()
+  }
+
+  if (isDirty.value) {
+    const answer = await alert.confirm(
+      t(
+        'labels.content.unsavedChanges',
+        'You have unsaved changes. Are you sure you want to leave?'
+      )
+    )
+    if (answer) {
+      next()
+    } else {
+      next(false)
+    }
+  } else {
+    next()
+  }
+}
+
+onBeforeRouteUpdate(guardLeave)
+onBeforeRouteLeave(guardLeave)
+
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+})
+
+const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+  if (isDirty.value) {
+    e.preventDefault()
+    e.returnValue = ''
+  }
+}
+
+watch(
+  isDirty,
+  (newValue) => {
+    if (newValue) {
+      window.addEventListener('beforeunload', handleBeforeUnload)
+    } else {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
@@ -236,6 +292,7 @@ const getBlockSchemaFn = (blockSlug: string) => {
         v-if="translatableContent"
         :content="translatableContent"
         :space-id="spaceId"
+        :is-dirty="isDirty"
       />
     </div>
   </Teleport>
