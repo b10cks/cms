@@ -37,7 +37,7 @@ class AssetHandler
         });
     }
 
-    public function replaceContentAssets(Content $content, $data, Collection $assets): array
+    public function replaceContentAssets(Content|\App\Http\Resources\Api\ContentResource $content, $data, Collection $assets): array
     {
         return $this->replace($data, [
             'type' => 'asset'

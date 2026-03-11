@@ -25,8 +25,7 @@ class ContentController
      */
     public function index(Request $request): ContentResourceCollection
     {
-        $data = Content::filter(ContentFilter::fromRequest($request))
-            ->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id')
+        $query = Content::filter(ContentFilter::fromRequest($request))
             ->select([
                 'contents.*',
                 'content_versions.content',
@@ -34,10 +33,17 @@ class ContentController
                 'content_versions.asset_ids',
                 'content_versions.link_ids'
             ])
-            ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block', 'relations', 'assets', 'links'])
-            ->paginate(min($request->per_page ?? 20, 500));
+            ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block', 'relations', 'assets', 'links']);
 
-        return new ContentResourceCollection($data);
+
+        $vid = $request->input('vid', 'published');
+        if ($vid === 'published') {
+            $query->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id');
+        } elseif ($vid === 'draft') {
+            $query->leftJoin('content_versions', 'contents.current_version_id', '=', 'content_versions.id');
+        }
+
+        return new ContentResourceCollection($query->paginate(min($request->per_page ?? 20, 500)));
     }
 
     public function show(Request $request, string $slug): ContentResource|\Illuminate\Http\Response
