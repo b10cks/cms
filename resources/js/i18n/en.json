@@ -26,10 +26,10 @@
       "invite": "**You're in!**\n\n**{inviter}** just invited you to join **{name}**.",
       "signup": "New here? [Create an account](/login/signup)",
       "login": "Already a member? [Log back in]({url})",
-      "terms": "I agree to b10cks [Terms of Service](https://www.b10cks.com/legal/terms-of-service) and [Privacy Policy](https://www.b10cks.com/legal/privacy-policy)",
+      "terms": "I agree to b10cks [Terms of Service](https://www.b10cks.com/en/legal/terms-of-service) and [Privacy Policy](https://www.b10cks.com/en/legal/privacy-policy)",
       "forgotPassword": "Forgot your password?",
       "marketing": {
-        "demo": "Curious? [Book a demo](https://www.b10cks.com/demo) with us.",
+        "demo": "Curious? [Book a demo](https://www.b10cks.com/en/demo) with us.",
         "header": "Your content, **built for scale**.",
         "description": "* Modular by design with atomic block architecture for seamless content composition\n* User-focused visual editor with Git-like versioning and powerful API-first approach\n* Enterprise features standard for everyone — global CDN delivery without premium pricing\n* **Start free. No credit card needed.**",
         "asFeatured": "As featured on",

@@ -26,10 +26,10 @@
       "invite": "**Du bist dabei!**\n\n**{inviter}** hat dich gerade zu **{name}** eingeladen.",
       "signup": "Neu hier? [Erstelle ein Konto](/login/signup)",
       "login": "Bereits Mitglied? [Melde dich an]({url})",
-      "terms": "Ich akzeptiere die [Nutzungsbedingungen](https://www.b10cks.com/legal/terms-of-service) und die [Datenschutzerklärung](https://www.b10cks.com/legal/privacy-policy) von b10cks",
+      "terms": "Ich akzeptiere die [Nutzungsbedingungen](https://www.b10cks.com/en/legal/terms-of-service) und die [Datenschutzerklärung](https://www.b10cks.com/en/legal/privacy-policy) von b10cks",
       "forgotPassword": "Passwort vergessen?",
       "marketing": {
-        "demo": "Interessiert? [Buche eine Demo](https://www.b10cks.com/demo) mit uns.",
+        "demo": "Interessiert? [Buche eine Demo](https://www.b10cks.com/de/demo) mit uns.",
         "header": "Dein Content, **gebaut für Skalierbarkeit**.",
         "description": "* Modular aufgebaut mit atomarer Block-Architektur für nahtlose Content-Zusammensetzung\n* Benutzerorientierter Visual Editor mit Git-ähnlicher Versionierung und API-First-Ansatz\n* Enterprise-Features für jeden – globales CDN ohne Premium-Preis\n* **Kostenlos starten. Keine Kreditkarte erforderlich.**",
         "asFeatured": "Bekannt von",
