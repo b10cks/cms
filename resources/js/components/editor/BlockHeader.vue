@@ -10,7 +10,7 @@ const props = defineProps<{
 
 const blockTitle = computed(() => {
   if (!props.block) return 'Untitled'
-  return props.block.name || props.block.slug || props.block.key || 'Untitled'
+  return props.block.name || props.block.slug || 'Untitled'
 })
 
 const guessedTitle = computed(() => {
@@ -37,20 +37,26 @@ const guessedTitle = computed(() => {
 </script>
 
 <template>
-  <div
-    :draggable="true"
-    class="grid shrink-0 cursor-ns-resize"
-  >
-    <Icon
-      v-if="block.icon"
-      :name="`lucide:${block.icon}`"
-      :style="{ color: block.color }"
-      class="grid-area-stack group-hover:opacity-0"
-    />
-    <Icon
-      name="lucide:grip-vertical"
-      class="grid-area-stack opacity-0 group-hover:opacity-100"
-    />
+  <div class="flex shrink-0 items-center gap-2">
+    <div
+      :draggable="true"
+      class="flex cursor-ns-resize items-center text-muted-foreground"
+    >
+      <Icon name="lucide:grip-vertical" />
+    </div>
+    <div class="relative flex size-4 items-center justify-center">
+      <Icon
+        v-if="block.icon"
+        :name="`lucide:${block.icon}`"
+        :style="{ color: block.color }"
+        class="shrink-0 transition-opacity group-hover:opacity-0"
+      />
+      <Icon
+        v-else
+        name="lucide:box"
+        class="shrink-0 text-muted-foreground transition-opacity group-hover:opacity-0"
+      />
+    </div>
   </div>
   <div class="grid grow text-left leading-none">
     <h4 class="font-semibold text-primary">{{ guessedTitle }}</h4>
