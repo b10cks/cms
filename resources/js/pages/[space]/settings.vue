@@ -15,6 +15,11 @@ const items: NavItem[] = [
     icon: 'lucide:settings',
   },
   {
+    title: 'labels.settings.subscription.title',
+    name: 'space-settings-subscription',
+    icon: 'lucide:credit-card',
+  },
+  {
     title: 'labels.settings.configuration.title',
     name: 'space-settings-configuration',
     icon: 'lucide:sliders',

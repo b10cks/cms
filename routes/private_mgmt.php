@@ -4,8 +4,8 @@ use App\Http\Controllers\Mgmt\Ai\AiModelsController;
 use App\Http\Controllers\Mgmt\Ai\AvailableModelsController;
 use App\Http\Controllers\Mgmt\Ai\ContentInteractionStreamController;
 use App\Http\Controllers\Mgmt\Ai\ContentTreeInteractionStreamController;
-use App\Http\Controllers\Mgmt\Ai\SpaceAiConfigController;
 use App\Http\Controllers\Mgmt\Ai\MetaTagsController;
+use App\Http\Controllers\Mgmt\Ai\SpaceAiConfigController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiSettingsController;
 use App\Http\Controllers\Mgmt\Ai\TranslationController;
 use App\Http\Controllers\Mgmt\AssetController;
@@ -14,7 +14,6 @@ use App\Http\Controllers\Mgmt\AssetDataImportController;
 use App\Http\Controllers\Mgmt\AssetFolderController;
 use App\Http\Controllers\Mgmt\AssetTagController;
 use App\Http\Controllers\Mgmt\BackupController;
-use App\Http\Controllers\Mgmt\MigrationController;
 use App\Http\Controllers\Mgmt\BlockController;
 use App\Http\Controllers\Mgmt\BlockFolderController;
 use App\Http\Controllers\Mgmt\BlockTagController;
@@ -32,6 +31,7 @@ use App\Http\Controllers\Mgmt\Content\ContentVersionController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionCurrentController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionPublishController;
 use App\Http\Controllers\Mgmt\Content\MoveContentController;
+use App\Http\Controllers\Mgmt\MigrationController;
 use App\Http\Controllers\Mgmt\PresenceController;
 use App\Http\Controllers\Mgmt\RedirectController;
 use App\Http\Controllers\Mgmt\RedirectResetController;
@@ -48,6 +48,7 @@ use App\Http\Controllers\Mgmt\SpaceInviteController;
 use App\Http\Controllers\Mgmt\SpaceInviteResendController;
 use App\Http\Controllers\Mgmt\SpaceSearchController;
 use App\Http\Controllers\Mgmt\SpaceStatsController;
+use App\Http\Controllers\Mgmt\SpaceSubscriptionController;
 use App\Http\Controllers\Mgmt\SpaceTokenController;
 use App\Http\Controllers\Mgmt\TeamController;
 use App\Http\Controllers\Mgmt\TeamHierarchyController;
@@ -187,6 +188,12 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
 
     Route::apiResource('backups', BackupController::class);
     Route::apiResource('migrations', MigrationController::class)->only(['index', 'show', 'store', 'destroy']);
+
+    Route::get('subscriptions', [SpaceSubscriptionController::class, 'index'])->name('spaces.subscriptions.index');
+    Route::get('subscriptions/current', [SpaceSubscriptionController::class, 'current'])->name('spaces.subscriptions.current');
+    Route::post('subscriptions/checkout', [SpaceSubscriptionController::class, 'checkout'])->name('spaces.subscriptions.checkout');
+    Route::post('subscriptions/reinit', [SpaceSubscriptionController::class, 'reinit'])->name('spaces.subscriptions.reinit');
+    Route::post('subscriptions/cancel', [SpaceSubscriptionController::class, 'cancel'])->name('spaces.subscriptions.cancel');
 
     Route::post('assets/export', AssetDataExportController::class)
         ->name('assets.data.export');

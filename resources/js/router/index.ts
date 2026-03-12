@@ -1,5 +1,4 @@
 import type { RouteRecordRaw } from 'vue-router'
-
 import { createRouter, createWebHistory } from 'vue-router'
 
 import { useAuth } from '~/composables/useAuth'
@@ -180,6 +179,11 @@ const routes: RouteRecordRaw[] = [
         path: '',
         name: 'space-settings-index',
         component: () => import('~/pages/[space]/settings/index.vue'),
+      },
+      {
+        path: 'subscription',
+        name: 'space-settings-subscription',
+        component: () => import('~/pages/[space]/settings/subscription.vue'),
       },
       {
         path: 'configuration',

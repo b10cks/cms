@@ -42,12 +42,12 @@ export function useSpaces() {
   const useCreateSpaceMutation = () => {
     return useMutation({
       mutationFn: async (payload: CreateSpacePayload) => {
-        const response = await api.spaces.create(payload)
-        return response.data
+        // Return the full response so callers can access top-level fields like checkout_url
+        return api.spaces.create(payload) as Promise<ApiResponse<SpaceResource> & { checkout_url?: string | null }>
       },
-      onSuccess: (data) => {
+      onSuccess: (response) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.spaces.lists() })
-        toast.success(t('composables.spaces.createSuccess', { name: data.name }) as string)
+        toast.success(t('composables.spaces.createSuccess', { name: response.data.name }) as string)
       },
       onError: (error: Error) => {
         toast.error(

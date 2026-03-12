@@ -51,6 +51,7 @@ interface CreateSpacePayload {
   badge?: string | null
   description?: string | null
   settings: SpaceSettings
+  plan_id?: string | null
 }
 
 interface UpdateSpacePayload {

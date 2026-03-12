@@ -1,4 +1,6 @@
 import { Ai } from '~/api/resources/ai'
+import { Plans } from '~/api/resources/plans'
+import { Subscriptions } from '~/api/resources/subscriptions'
 import { BlockFolders } from '~/api/resources/block-folders'
 import { BlockTemplates } from '~/api/resources/block-templates'
 import { BlockVersions } from '~/api/resources/block-versions'
@@ -30,6 +32,7 @@ import { Teams } from './resources/teams'
 export class API {
   public client: ApiClient
   private readonly _ai: Ai
+  private readonly _plans: Plans
   private readonly _spaces: Spaces
   private readonly _teams: Teams
   private readonly _invites: Invites
@@ -45,6 +48,7 @@ export class API {
   ) {
     this.client = new ApiClient(options)
     this._ai = new Ai(this.client)
+    this._plans = new Plans(this.client)
     this._spaces = new Spaces(this.client)
     this._teams = new Teams(this.client)
     this._invites = new Invites(this.client)
@@ -63,6 +67,10 @@ export class API {
 
   public get ai(): Ai {
     return this._ai
+  }
+
+  public get plans(): Plans {
+    return this._plans
   }
 
   public get spaces(): Spaces {
@@ -110,6 +118,7 @@ export class API {
       releases: new Releases(this.client, spaceId),
       contentVersions: (contentId: string) => new ContentVersions(this.client, spaceId, contentId),
       comments: (contentId: string) => new Comments(this.client, spaceId, contentId),
+      subscriptions: new Subscriptions(this.client, spaceId),
     }
   }
 }

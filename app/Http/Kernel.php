@@ -80,5 +80,6 @@ class Kernel extends HttpKernel
         '2fa' => \App\Http\Middleware\RequireTotpVerification::class,
         'stateful' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         'password' => \App\Http\Middleware\RequirePasswordVerification::class,
+        'webhook.lemonsqueezy' => \App\Http\Middleware\VerifyLemonSqueezyWebhook::class,
     ];
 }

@@ -15,7 +15,7 @@ class DataSourceController
     {
         $entries = DataSource::query()
             ->where('is_active', true)
-//            ->filter(DataSourceFilter::fromRequest(request()))
+            //            ->filter(DataSourceFilter::fromRequest(request()))
             ->paginate(min(request()->per_page ?? 20, 500));
 
         return DataSourceResource::collection($entries);

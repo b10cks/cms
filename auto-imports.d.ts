@@ -116,6 +116,7 @@ declare global {
   const useMigrations: typeof import('./resources/js/composables/useMigrations').useMigrations
   const useModel: typeof import('vue').useModel
   const usePersonalAccessTokens: typeof import('./resources/js/composables/usePersonalAccessTokens').usePersonalAccessTokens
+  const usePlans: typeof import('./resources/js/composables/usePlans').usePlans
   const usePresence: typeof import('./resources/js/composables/usePresence').usePresence
   const useRedirects: typeof import('./resources/js/composables/useRedirects').useRedirects
   const useReleases: typeof import('./resources/js/composables/useReleases').useReleases
@@ -128,6 +129,7 @@ declare global {
   const useSpacePresencePeek: typeof import('./resources/js/composables/useSpacePresencePeek').useSpacePresencePeek
   const useSpaceSettings: typeof import('./resources/js/composables/useSpaceSettings').default
   const useSpaces: typeof import('./resources/js/composables/useSpace').useSpaces
+  const useSubscription: typeof import('./resources/js/composables/useSubscription').useSubscription
   const useTeams: typeof import('./resources/js/composables/useTeams').useTeams
   const useTemplateRef: typeof import('vue').useTemplateRef
   const useTokens: typeof import('./resources/js/composables/useTokens').useTokens
@@ -169,9 +171,6 @@ declare global {
   export type { ClipboardItem } from './resources/js/composables/useGlobalClipboard'
   import('./resources/js/composables/useGlobalClipboard')
   // @ts-ignore
-  export type { MaybeRefOrComputed } from './resources/js/composables/useMigrations'
-  import('./resources/js/composables/useMigrations')
-  // @ts-ignore
   export type { PresenceUser, PresenceState, UsePresenceOptions } from './resources/js/composables/usePresence'
   import('./resources/js/composables/usePresence')
   // @ts-ignore
@@ -180,6 +179,9 @@ declare global {
   // @ts-ignore
   export type { SpacePresenceInfo } from './resources/js/composables/useSpacePresencePeek'
   import('./resources/js/composables/useSpacePresencePeek')
+  // @ts-ignore
+  export type { MaybeRefOrComputed } from './resources/js/composables/useSubscription'
+  import('./resources/js/composables/useSubscription')
   // @ts-ignore
   export type { MessageSchema, LocaleCode } from './resources/js/plugins/i18n'
   import('./resources/js/plugins/i18n')
@@ -299,6 +301,7 @@ declare module 'vue' {
     readonly useMigrations: UnwrapRef<typeof import('./resources/js/composables/useMigrations')['useMigrations']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly usePersonalAccessTokens: UnwrapRef<typeof import('./resources/js/composables/usePersonalAccessTokens')['usePersonalAccessTokens']>
+    readonly usePlans: UnwrapRef<typeof import('./resources/js/composables/usePlans')['usePlans']>
     readonly usePresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['usePresence']>
     readonly useRedirects: UnwrapRef<typeof import('./resources/js/composables/useRedirects')['useRedirects']>
     readonly useReleases: UnwrapRef<typeof import('./resources/js/composables/useReleases')['useReleases']>
@@ -311,6 +314,7 @@ declare module 'vue' {
     readonly useSpacePresencePeek: UnwrapRef<typeof import('./resources/js/composables/useSpacePresencePeek')['useSpacePresencePeek']>
     readonly useSpaceSettings: UnwrapRef<typeof import('./resources/js/composables/useSpaceSettings')['default']>
     readonly useSpaces: UnwrapRef<typeof import('./resources/js/composables/useSpace')['useSpaces']>
+    readonly useSubscription: UnwrapRef<typeof import('./resources/js/composables/useSubscription')['useSubscription']>
     readonly useTeams: UnwrapRef<typeof import('./resources/js/composables/useTeams')['useTeams']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly useTokens: UnwrapRef<typeof import('./resources/js/composables/useTokens')['useTokens']>

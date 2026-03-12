@@ -20,6 +20,8 @@ trait TranslatedAttribute
             )
         );
 
-        return app('translator')->makeReplacements($result, $replacements);
+        return $result;
+
+        // return app('translator')->makeReplacements($result, $replacements);
     }
 }

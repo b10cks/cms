@@ -15,6 +15,7 @@ Route::get('/login/password', AppController::class)->name('login-password');
 // Email verification (special handling)
 Route::get('auth/v1/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
     $request->fulfill();
+
     return redirect(route('login'));
 })->middleware(['signed'])->name('verification.verify');
 
@@ -52,3 +53,4 @@ Route::get('/{space}/settings/ai', AppController::class)->name('space-settings-a
 Route::get('/{space}/settings/people', AppController::class)->name('space-settings-people');
 Route::get('/{space}/settings/backups', AppController::class)->name('space-settings-backups');
 Route::get('/{space}/settings/migrations', AppController::class)->name('space-settings-migrations');
+Route::get('/{space}/settings/subscription', AppController::class)->name('space-settings-subscription');

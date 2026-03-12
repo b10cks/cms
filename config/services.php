@@ -54,8 +54,8 @@ return [
     'posthog' => [
         'api_key' => env('POSTHOG_API_KEY'),
         'settings' => [
-            'host' => env('POSTHOG_HOST', 'https://eu.i.posthog.com')
-        ]
+            'host' => env('POSTHOG_HOST', 'https://eu.i.posthog.com'),
+        ],
     ],
 
     'slack' => [
@@ -70,5 +70,11 @@ return [
         'username' => env('OPENSEARCH_USERNAME'),
         'password' => env('OPENSEARCH_PASSWORD'),
         'verify_ssl' => env('OPENSEARCH_VERIFY_SSL', true),
+    ],
+
+    'lemonsqueezy' => [
+        'api_key' => env('LEMONSQUEEZY_API_KEY'),
+        'store_id' => env('LEMONSQUEEZY_STORE_ID'),
+        'webhook_secret' => env('LEMONSQUEEZY_WEBHOOK_SECRET'),
     ],
 ];

@@ -1,161 +1,47 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { Label } from 'reka-ui'
+
 import AppHeader from '~/components/AppHeader.vue'
+import Icon from '~/components/Icon.vue'
 import ServerLocationSelect from '~/components/ServerLocationSelect.vue'
 import SpaceBadgeSelect from '~/components/space/SpaceBadgeSelect.vue'
-import { Badge, type BadgeVariants } from '~/components/ui/badge'
+import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from '~/components/ui/card'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { InputField } from '~/components/ui/form'
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group'
 import {
-    Stepper,
-    StepperDescription,
-    StepperIndicator,
-    StepperItem,
-    StepperSeparator,
-    StepperTitle,
-    StepperTrigger,
+  Stepper,
+  StepperDescription,
+  StepperIndicator,
+  StepperItem,
+  StepperSeparator,
+  StepperTitle,
+  StepperTrigger,
 } from '~/components/ui/stepper'
 
 const { useCreateSpaceMutation } = useSpaces()
 const { mutate: createSpace, isPending } = useCreateSpaceMutation()
 const { t } = useI18n()
+const { usePlansQuery } = usePlans()
+const { data: plans, isLoading: plansLoading } = usePlansQuery()
 
 useSeoMeta({
   title: computed(() => t('labels.spaces.newPageTitle')),
 })
 
-type Plan = {
-  id: string
-  name: string
-  description: string
-  price: string
-  period: string
-  features: string[]
-  aiFeatures?: string[]
-  badge?: {
-    text: string
-    variant: BadgeVariants['variant']
-  }
-  disabled?: boolean
-  buttonText?: string
-}
-
-// Plan data
-const plans: Plan[] = [
-  {
-    id: 'free',
-    name: 'Free',
-    description: 'For personal projects and landing pages',
-    price: '€0',
-    period: 'per month',
-    features: [
-      '5,000 API requests',
-      '5 GB traffic (fair use)',
-      '500 MB assets storage',
-      'Unlimited blocks, content, users, languages',
-    ],
-    aiFeatures: ['5,000 AI tokens'],
-    badge: null,
-    disabled: false,
-  },
-  {
-    id: 'essential',
-    name: 'Essential',
-    description: 'For small teams',
-    price: '€19',
-    period: 'per month',
-    features: [
-      '100,000 API requests',
-      '50 GB traffic (fair use)',
-      '5 GB assets storage',
-      'Unlimited blocks, content, users, languages',
-    ],
-    aiFeatures: ['100,000 AI tokens'],
-  },
-  {
-    id: 'growth',
-    name: 'Growth',
-    description: 'For growing businesses',
-    price: '€49',
-    period: 'per month',
-    features: [
-      '500,000 API requests',
-      '250 GB traffic (fair use)',
-      '25 GB assets storage',
-      'Unlimited blocks, content, users, languages',
-      'Email support',
-    ],
-    aiFeatures: ['500,000 AI tokens'],
-    badge: { text: 'Coming soon', variant: 'default' },
-    disabled: true,
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    description: 'For professional teams',
-    price: '€99',
-    period: 'per month',
-    features: [
-      '1,500,000 API requests',
-      '500 GB traffic (fair use)',
-      '50 GB assets storage',
-      'Unlimited blocks, content, users, languages',
-      '24-hour technical support',
-    ],
-    aiFeatures: ['1,500,000 AI tokens'],
-    badge: { text: 'Coming soon', variant: 'default' },
-    disabled: true,
-  },
-  {
-    id: 'scale',
-    name: 'Scale',
-    description: 'For large organizations',
-    price: '€249',
-    period: 'per month',
-    features: [
-      '10,000,000 API requests',
-      '1,000 GB traffic (fair use)',
-      '100 GB assets storage',
-      'Unlimited blocks, content, users, languages',
-      'Dedicated account manager',
-    ],
-    aiFeatures: ['10,000,000 AI tokens'],
-    badge: { text: 'Coming soon', variant: 'default' },
-    disabled: true,
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    description: 'Custom solution',
-    price: 'Custom',
-    period: 'pricing',
-    features: [
-      'Custom API requests',
-      'Custom traffic limits',
-      'Custom storage allocation',
-      'SLA guarantees',
-    ],
-    badge: { text: 'Coming soon', variant: 'default' },
-    disabled: true,
-    buttonText: 'Contact Sales',
-  },
-]
-
 // Step wizard state
 const step = ref(1)
-const selectedPlan = ref<string | undefined>()
+const selectedPlanId = ref<string | undefined>()
+const selectedPlan = computed(() => plans.value?.find((p) => p.id === selectedPlanId.value))
 const spaceName = ref('')
 const spaceSlug = ref('')
 const serverLocation = ref('eu')
@@ -166,7 +52,7 @@ const steps = computed(() => [
   {
     step: 'details',
     icon: 'lucide:settings-2',
-    disabled: !selectedPlan.value,
+    disabled: !selectedPlanId.value,
   },
 ])
 
@@ -183,7 +69,7 @@ const handleNameChange = (event) => {
 const { selectedTeam } = useGlobalTeam()
 
 const handleNext = async () => {
-  if (step.value === 1 && !selectedPlan.value) {
+  if (step.value === 1 && (!selectedPlanId.value || selectedPlan.value?.contact_url)) {
     return
   }
 
@@ -195,14 +81,19 @@ const handleNext = async () => {
       slug: spaceSlug.value,
       team_id: selectedTeam.value?.id,
       badge: spaceBadge.value || null,
+      plan_id: selectedPlanId.value,
       settings: {
         region: serverLocation.value || 'eu',
       },
     } as CreateSpacePayload
 
     await createSpace(payload, {
-      onSuccess(data) {
-        router.push({ name: 'space', params: { space: data.id } })
+      onSuccess(response) {
+        if (response.checkout_url) {
+          window.location.href = response.checkout_url
+        } else {
+          router.push({ name: 'space', params: { space: response.data.id } })
+        }
       },
     })
   }
@@ -255,34 +146,49 @@ const handleBack = () => {
           v-if="step === 1"
           class="space-y-6"
         >
-          <h2 class="text-xl font-semibold text-primary">Select a plan</h2>
-          <RadioGroup v-model="selectedPlan">
-            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <h2 class="text-xl font-semibold text-primary">
+            {{ $t('labels.spaces.steps.plan.selectTitle') }}
+          </h2>
+          <div
+            v-if="plansLoading"
+            class="flex items-center justify-center py-12 text-muted"
+          >
+            <Icon
+              name="lucide:loader"
+              class="animate-spin mr-2"
+            />
+            {{ $t('labels.loading') }}
+          </div>
+          <RadioGroup
+            v-else
+            v-model="selectedPlanId"
+          >
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               <Card
                 v-for="plan in plans"
                 :key="plan.id"
                 :class="[
                   'flex flex-col bg-surface',
-                  plan.disabled ? 'opacity-30' : '',
-                  selectedPlan === plan.id ? 'ring ring-ring' : '',
+                  plan.contact_url ? 'opacity-90' : '',
+                  !plan.contact_url && selectedPlanId === plan.id ? 'ring ring-ring' : '',
                 ]"
-                @click="plan.id === selectedPlan ? handleNext() : () => {}"
+                @click="!plan.contact_url && plan.id === selectedPlanId ? handleNext() : () => {}"
               >
                 <CardHeader class="relative pb-2">
-                  <Badge
-                    v-if="plan.badge"
-                    :variant="plan.badge.variant"
-                    class="absolute -top-2 -right-2 rounded-full"
-                  >
-                    {{ plan.badge.text }}
-                  </Badge>
                   <CardTitle class="text-xl text-primary">{{ plan.name }}</CardTitle>
                   <CardDescription>{{ plan.description }}</CardDescription>
                 </CardHeader>
                 <CardContent class="grow">
                   <div class="flex items-baseline gap-2">
-                    <div class="text-3xl font-bold text-primary">{{ plan.price }}</div>
-                    <div class="text-sm text-text-muted">{{ plan.period }}</div>
+                    <div class="text-3xl font-bold text-primary">
+                      {{ plan.contact_url ? $t('labels.plans.onRequest') : plan.is_free ? $t('labels.plans.free') : `€${plan.price}` }}
+                    </div>
+                    <div
+                      v-if="!plan.contact_url"
+                      class="text-sm text-text-muted"
+                    >
+                      {{ $t(`labels.plans.period.${plan.period}`) }}
+                    </div>
                   </div>
                   <ul class="mt-6 grid gap-3">
                     <li
@@ -292,50 +198,52 @@ const handleBack = () => {
                     >
                       <Icon
                         name="lucide:check"
-                        class="mt-1 text-success"
-                      />
-                      <span>{{ feature }}</span>
-                    </li>
-                    <li
-                      v-for="(feature, featureIndex) in plan?.aiFeatures"
-                      :key="featureIndex"
-                      class="item-start flex gap-2"
-                    >
-                      <Icon
-                        name="lucide:sparkles"
-                        size="0.825rem"
-                        class="mt-1 text-ai"
+                        class="mt-1 shrink-0 text-success"
                       />
                       <span>{{ feature }}</span>
                     </li>
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <RadioGroupItem
-                    :id="plan.id"
-                    :value="plan.id"
-                    class="sr-only"
-                    :disabled="plan.disabled"
-                  />
-                  <Label
-                    :for="plan.id"
-                    :class="[
-                      'flex w-full cursor-pointer items-center justify-center rounded-md border py-2 text-sm font-semibold',
-                      selectedPlan === plan.id
-                        ? 'border-accent bg-accent text-accent-foreground'
-                        : 'border-elevated',
-                      plan.disabled ? 'cursor-not-allowed opacity-50' : '',
-                    ]"
+                  <!-- Enterprise / on-request plan: external contact link -->
+                  <a
+                    v-if="plan.contact_url"
+                    :href="plan.contact_url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex w-full items-center justify-center gap-1.5 rounded-md border border-elevated py-2 text-sm font-semibold hover:bg-surface-hover"
                   >
-                    {{
-                      $t(
-                        selectedPlan === plan.id
-                          ? 'actions.spaces.new.continueWith'
-                          : 'actions.spaces.new.select',
-                        plan
-                      )
-                    }}
-                  </Label>
+                    <Icon
+                      name="lucide:external-link"
+                      size="0.875rem"
+                    />
+                    {{ $t('actions.plans.contactUs') }}
+                  </a>
+                  <template v-else>
+                    <RadioGroupItem
+                      :id="plan.id"
+                      :value="plan.id"
+                      class="sr-only"
+                    />
+                    <Label
+                      :for="plan.id"
+                      :class="[
+                        'flex w-full cursor-pointer items-center justify-center rounded-md border py-2 text-sm font-semibold',
+                        selectedPlanId === plan.id
+                          ? 'border-accent bg-accent text-accent-foreground'
+                          : 'border-elevated',
+                      ]"
+                    >
+                      {{
+                        $t(
+                          selectedPlanId === plan.id
+                            ? 'actions.spaces.new.continueWith'
+                            : 'actions.spaces.new.select',
+                          plan
+                        )
+                      }}
+                    </Label>
+                  </template>
                 </CardFooter>
               </Card>
             </div>
@@ -395,7 +303,7 @@ const handleBack = () => {
           <Button
             variant="primary"
             :disabled="
-              (step === 1 && !selectedPlan) ||
+              (step === 1 && (!selectedPlanId || selectedPlan?.contact_url)) ||
               (step === 2 && (!spaceName || !spaceSlug || !serverLocation))
             "
             @click="handleNext"

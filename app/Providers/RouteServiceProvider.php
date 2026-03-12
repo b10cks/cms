@@ -2,9 +2,6 @@
 
 namespace App\Providers;
 
-use Dedoc\Scramble\Scramble;
-use Dedoc\Scramble\Support\Generator\OpenApi;
-use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
@@ -73,6 +70,12 @@ class RouteServiceProvider extends ServiceProvider
                 ->prefix('api/v1')
                 ->name('api.')
                 ->group(base_path('routes/data_api.php'));
+
+            // Webhook endpoints — no auth, signature verified in middleware
+            Route::middleware(['api'])
+                ->prefix('webhooks')
+                ->name('webhooks.')
+                ->group(base_path('routes/webhooks.php'));
 
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));

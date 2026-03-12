@@ -202,4 +202,13 @@ export const queryKeys = {
     details: () => [...queryKeys.backups(spaceId).all(), 'detail'] as const,
     detail: (id: string) => [...queryKeys.backups(spaceId).details(), id] as const,
   }),
+  plans: {
+    all: () => ['plans'] as const,
+    lists: () => [...queryKeys.plans.all(), 'list'] as const,
+  },
+  subscriptions: (spaceId: string) => ({
+    all: () => ['spaces', spaceId, 'subscriptions'] as const,
+    lists: () => [...queryKeys.subscriptions(spaceId).all(), 'list'] as const,
+    current: () => [...queryKeys.subscriptions(spaceId).all(), 'current'] as const,
+  }),
 }

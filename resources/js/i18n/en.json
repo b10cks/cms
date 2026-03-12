@@ -642,7 +642,8 @@
       "steps": {
         "plan": {
           "title": "Plan",
-          "description": "Choose the right plan for the space"
+          "description": "Choose the right plan for the space",
+          "selectTitle": "Select a plan"
         },
         "details": {
           "title": "Details",
@@ -833,6 +834,48 @@
       "bulkDeleteConfirmTitle": "Delete Multiple Backups",
       "bulkDeleteConfirmMessage": "Are you sure you want to delete {count} backups? This action cannot be undone."
     },
+    "plans": {
+      "free": "Free",
+      "unlimited": "Unlimited",
+      "onRequest": "On Request",
+      "contactForPricing": "Contact us for pricing",
+      "period": {
+        "month": "per month",
+        "year": "per year",
+        "forever": "one-time"
+      },
+      "quotas": {
+        "requests": "API Requests",
+        "storage": "Storage",
+        "traffic": "Traffic",
+        "aiCredit": "AI Credits"
+      }
+    },
+    "subscriptions": {
+      "noPlan": "No active subscription. Choose a plan to get started.",
+      "history": "Subscription History",
+      "upgradePlans": "Choose a plan",
+      "cancelTitle": "Cancel Subscription",
+      "cancelDescription": "Your subscription will be cancelled at the end of the current billing period. You will retain access until then.",
+      "accessUntil": "Access until {date}",
+      "renewsAt": "Renews on {date}",
+      "pendingTitle": "Payment pending",
+      "pendingDescription": "Your payment is being processed. Your plan will be activated automatically once the payment is confirmed. This usually takes just a moment.",
+      "pendingBanner": {
+        "message": "Your subscription payment is pending — plan not yet active.",
+        "action": "View subscription"
+      },
+      "status": {
+        "active": "Active",
+        "on_trial": "Trial",
+        "pending": "Pending",
+        "paused": "Paused",
+        "past_due": "Past Due",
+        "unpaid": "Unpaid",
+        "cancelled": "Cancelled",
+        "expired": "Expired"
+      }
+    },
     "settings": {
       "general": {
         "title": "General Settings",
@@ -853,6 +896,10 @@
       "migrations": {
         "title": "Migrations",
         "description": "Migrate content between spaces on this instance."
+      },
+      "subscription": {
+        "title": "Subscription",
+        "description": "Manage your plan, billing and quota usage."
       },
       "space": {
         "title": "Space",
@@ -1500,6 +1547,18 @@
       "create": "New Migration",
       "delete": "Delete"
     },
+    "subscriptions": {
+      "upgrade": "Upgrade Plan",
+      "choosePlan": "Choose Plan",
+      "manageBilling": "Manage Billing",
+      "retryPayment": "Complete Payment",
+      "resubscribe": "Resubscribe",
+      "cancel": "Cancel Subscription",
+      "confirmCancel": "Yes, Cancel"
+    },
+    "plans": {
+      "contactUs": "Contact us"
+    },
     "user": {
       "account": "Account"
     },
@@ -1660,6 +1719,18 @@
     "confirm": "Confirm"
   },
   "composables": {
+    "subscriptions": {
+      "upgradeSuccess": "Plan upgraded successfully",
+      "planChanged": "Plan changed successfully",
+      "checkoutError": "Failed to start checkout: {error}",
+      "pendingAlreadyExists": "A payment for this plan is already pending. Use \"Complete payment\" to resume it.",
+      "pendingConflict": "A payment for another plan is already pending. Complete or cancel it before switching plans.",
+      "reinitSuccess": "Redirecting to payment...",
+      "reinitNoUrl": "Could not retrieve a payment link. Please try again.",
+      "reinitError": "Failed to restart payment: {error}",
+      "cancelSuccess": "Subscription cancelled. Access continues until end of billing period.",
+      "cancelError": "Failed to cancel subscription: {error}"
+    },
     "migrations": {
       "createSuccess": "Migration started successfully",
       "createError": "Failed to start migration: {error}",

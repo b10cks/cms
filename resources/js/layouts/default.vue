@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppHeader from '~/components/AppHeader.vue'
 import AppSidebar from '~/components/AppSidebar.vue'
+import PendingSubscriptionBanner from '~/components/PendingSubscriptionBanner.vue'
 
 const { useCurrentSpaceQuery } = useSpaces()
 const { data: currentSpace } = useCurrentSpaceQuery()
@@ -32,6 +33,10 @@ provide('spaceId', spaceId)
         <div id="appActions" />
       </template>
     </AppHeader>
+    <PendingSubscriptionBanner
+      v-if="spaceId"
+      :space-id="spaceId"
+    />
     <div class="flex flex-1">
       <AppSidebar />
       <main class="flex grow w-[calc(100%-3.5rem)]">

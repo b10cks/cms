@@ -638,7 +638,8 @@
       "steps": {
         "plan": {
           "title": "Plan",
-          "description": "Wähle den richtigen Plan für den Space"
+          "description": "Wähle den richtigen Plan für den Space",
+          "selectTitle": "Plan auswählen"
         },
         "details": {
           "title": "Details",
@@ -829,6 +830,48 @@
       "bulkDeleteConfirmTitle": "Mehrere Sicherungen löschen",
       "bulkDeleteConfirmMessage": "Bist du sicher, dass du {count} Sicherungen löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden."
     },
+    "plans": {
+      "free": "Kostenlos",
+      "unlimited": "Unbegrenzt",
+      "onRequest": "Auf Anfrage",
+      "contactForPricing": "Preis auf Anfrage",
+      "period": {
+        "month": "pro Monat",
+        "year": "pro Jahr",
+        "forever": "einmalig"
+      },
+      "quotas": {
+        "requests": "API-Anfragen",
+        "storage": "Speicher",
+        "traffic": "Datenvolumen",
+        "aiCredit": "KI-Credits"
+      }
+    },
+    "subscriptions": {
+      "noPlan": "Kein aktives Abonnement. Wähle einen Plan aus.",
+      "history": "Abonnementverlauf",
+      "upgradePlans": "Plan auswählen",
+      "cancelTitle": "Abonnement kündigen",
+      "cancelDescription": "Dein Abonnement wird am Ende des aktuellen Abrechnungszeitraums gekündigt. Du behältst bis dahin Zugang.",
+      "accessUntil": "Zugang bis {date}",
+      "renewsAt": "Verlängert am {date}",
+      "pendingTitle": "Zahlung ausstehend",
+      "pendingDescription": "Deine Zahlung wird gerade verarbeitet. Dein Plan wird automatisch aktiviert, sobald die Zahlung bestätigt ist. Das dauert normalerweise nur einen Moment.",
+      "pendingBanner": {
+        "message": "Deine Abonnementzahlung steht aus – Plan noch nicht aktiv.",
+        "action": "Abonnement anzeigen"
+      },
+      "status": {
+        "active": "Aktiv",
+        "on_trial": "Testphase",
+        "pending": "Ausstehend",
+        "paused": "Pausiert",
+        "past_due": "Überfällig",
+        "unpaid": "Unbezahlt",
+        "cancelled": "Gekündigt",
+        "expired": "Abgelaufen"
+      }
+    },
     "settings": {
       "general": {
         "title": "Allgemeine Einstellungen",
@@ -849,6 +892,10 @@
       "migrations": {
         "title": "Migrationen",
         "description": "Inhalte zwischen Spaces auf dieser Instanz migrieren."
+      },
+      "subscription": {
+        "title": "Abonnement",
+        "description": "Plan, Abrechnung und Kontingentnutzung verwalten."
       },
       "space": {
         "title": "Space",
@@ -1472,6 +1519,18 @@
       "create": "Neue Migration",
       "delete": "Löschen"
     },
+    "subscriptions": {
+      "upgrade": "Plan upgraden",
+      "choosePlan": "Plan auswählen",
+      "manageBilling": "Abrechnung verwalten",
+      "retryPayment": "Zahlung abschließen",
+      "resubscribe": "Erneut abonnieren",
+      "cancel": "Abonnement kündigen",
+      "confirmCancel": "Ja, kündigen"
+    },
+    "plans": {
+      "contactUs": "Kontakt aufnehmen"
+    },
     "user": {
       "account": "Konto"
     },
@@ -1610,6 +1669,18 @@
     "confirm": "Bestätigen"
   },
   "composables": {
+    "subscriptions": {
+      "upgradeSuccess": "Plan erfolgreich aktualisiert",
+      "planChanged": "Plan erfolgreich geändert",
+      "checkoutError": "Checkout konnte nicht gestartet werden: {error}",
+      "pendingAlreadyExists": "Eine Zahlung für diesen Plan ist bereits ausstehend. Nutze \"Zahlung abschließen\", um fortzufahren.",
+      "pendingConflict": "Eine Zahlung für einen anderen Plan ist bereits ausstehend. Schließe sie ab oder brich sie ab, bevor du den Plan wechselst.",
+      "reinitSuccess": "Weiterleitung zur Zahlung...",
+      "reinitNoUrl": "Kein Zahlungslink verfügbar. Bitte versuche es erneut.",
+      "reinitError": "Zahlung konnte nicht neu gestartet werden: {error}",
+      "cancelSuccess": "Abonnement gekündigt. Zugang bleibt bis Ende des Abrechnungszeitraums bestehen.",
+      "cancelError": "Abonnement konnte nicht gekündigt werden: {error}"
+    },
     "migrations": {
       "createSuccess": "Migration erfolgreich gestartet",
       "createError": "Migration konnte nicht gestartet werden: {error}",
