@@ -5,7 +5,7 @@ import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
 import { digest } from '~/lib/utils'
-import { InviteStatus } from '~/types/invites'
+import { InviteStatus } from '~/types/invites.d'
 
 const route = useRoute()
 const router = useRouter()
