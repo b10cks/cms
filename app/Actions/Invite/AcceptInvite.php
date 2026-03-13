@@ -7,6 +7,8 @@ use App\Models\User;
 use App\Services\Auth\AuthorizationService;
 use App\Services\Auth\MembershipService;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AcceptInvite
 {
@@ -15,18 +17,26 @@ class AcceptInvite
         private readonly AuthorizationService $authorizationService,
     ) {}
 
-    public function execute(Invite $invite, Authenticatable|User $user): bool
+    public function execute(Invite $invite, Authenticatable|User $user, string $token): Invite
     {
-        if ($invite->isAccepted() || $invite->isExpired()) {
-            return false;
-        }
+        return DB::transaction(function () use ($invite, $user, $token) {
+            /** @var Invite $lockedInvite */
+            $lockedInvite = Invite::query()
+                ->with(['space.team', 'team', 'roleDefinition'])
+                ->lockForUpdate()
+                ->findOrFail($invite->id);
 
-        $invite->accepted_at = now();
-        $invite->invitee_id = $user->id;
-        $invite->save();
-        $this->handleInvite($invite, $user);
+            $this->ensureCanAccept($lockedInvite, $user, $token);
 
-        return true;
+            $lockedInvite->forceFill([
+                'accepted_at' => now(),
+                'invitee_id' => $user->id,
+            ])->save();
+
+            $this->handleInvite($lockedInvite, $user);
+
+            return $lockedInvite->refresh();
+        });
     }
 
     private function handleInvite(Invite $invite, User $user): void
@@ -37,6 +47,33 @@ class AcceptInvite
         } elseif ($invite->team_id) {
             $this->membershipService->assignTeamRole($invite->team, $user, $invite->role);
             $this->authorizationService->invalidateTeamTree($invite->team);
+        }
+    }
+
+    private function ensureCanAccept(Invite $invite, User $user, string $token): void
+    {
+        if (! hash_equals($invite->token, $token)) {
+            throw ValidationException::withMessages([
+                'token' => 'This invitation link is invalid.',
+            ]);
+        }
+
+        if ($invite->isAccepted()) {
+            throw ValidationException::withMessages([
+                'invite' => 'This invitation has already been accepted.',
+            ]);
+        }
+
+        if ($invite->isExpired()) {
+            throw ValidationException::withMessages([
+                'invite' => 'This invitation has expired.',
+            ]);
+        }
+
+        if (strcasecmp($invite->email, $user->email) !== 0) {
+            throw ValidationException::withMessages([
+                'email' => 'You must use the invited email address to accept this invitation.',
+            ]);
         }
     }
 }

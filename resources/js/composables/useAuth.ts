@@ -18,6 +18,7 @@ interface RegisterPayload {
   firstname: string
   lastname: string
   invite_id?: string
+  invite_token?: string
 }
 
 interface AuthResponse {
@@ -165,10 +166,12 @@ export function useAuth() {
         router.push((currentRoute.query.return as string) || '/')
       })
     } catch (err: any) {
+      const parsedError = parseErrorResponse(err)
+
       error.value =
-        err?.response?.status === 409
+        parsedError.status === 409
           ? (t('composables.auth.emailExists') as string)
-          : (t('composables.auth.registerFailed') as string)
+          : (parsedError.message ?? (t('composables.auth.registerFailed') as string))
       return false
     } finally {
       isLoading.value = false

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import type { SpaceQueryParams } from '~/api/resources/spaces'
+import type { ApiResponse } from '~/types'
 
 import { api } from '~/api'
 
@@ -28,14 +29,20 @@ export function useSpaces() {
     })
   }
 
-  const useSpaceQuery = (id: string) => {
+  const useSpaceQuery = (id: MaybeRefOrGetter<string | null | undefined>) => {
     return useQuery({
-      queryKey: queryKeys.spaces.detail(id),
+      queryKey: computed(() => queryKeys.spaces.detail(toValue(id) || '')),
       queryFn: async () => {
-        const response = await api.spaces.get(id)
+        const resolvedId = toValue(id)
+
+        if (!resolvedId) {
+          throw new Error('Space ID is required')
+        }
+
+        const response = await api.spaces.get(resolvedId)
         return response.data
       },
-      enabled: !!id,
+      enabled: computed(() => !!toValue(isAuthenticated) && !!toValue(id)),
     })
   }
 
@@ -128,12 +135,9 @@ export function useSpaces() {
     useSpaceQuery: useSpaceQuery,
     useCurrentSpaceQuery() {
       const route = useRoute()
-      const spaceId = (route.params?.space as string) || null
-      if (!spaceId) {
-        return { data: null }
-      }
+      const spaceId = computed(() => (route.params?.space as string) || null)
 
-      return useSpaceQuery(spaceId as string)
+      return useSpaceQuery(spaceId)
     },
 
     // Mutations

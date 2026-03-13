@@ -5,10 +5,12 @@ import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
 import { digest } from '~/lib/utils'
+import { InviteStatus } from '~/types/invites'
 
 const route = useRoute()
 const router = useRouter()
 const { register } = useAuth()
+const { selectTeam } = useGlobalTeam()
 const { usePublicInviteQuery } = useInvites()
 const { t } = useI18n()
 
@@ -20,6 +22,9 @@ const inviteId = computed(() => route.query.invite_id as string | undefined)
 const inviteToken = computed(() => route.query.invite_token as string | undefined)
 
 const { data: publicInvite, error: inviteError } = usePublicInviteQuery(inviteId)
+const inviteErrorMessage = computed(() => {
+  return (inviteError.value as { data?: { message?: string } } | null)?.data?.message
+})
 
 const formData = ref<{
   firstname: string
@@ -28,6 +33,7 @@ const formData = ref<{
   password: string
   password_confirmation: string
   invite_id?: string
+  invite_token?: string
 }>({
   firstname: '',
   lastname: '',
@@ -35,6 +41,11 @@ const formData = ref<{
   password: '',
   password_confirmation: '',
   invite_id: inviteId.value,
+  invite_token: inviteToken.value,
+})
+
+const hasPendingInvite = computed(() => {
+  return publicInvite.value?.status === InviteStatus.PENDING && !!inviteToken.value
 })
 
 const emailHash = ref<string | undefined>()
@@ -48,7 +59,11 @@ watch(
 
 const loginUrl = computed(
   () =>
-    `/login${inviteId.value ? `?return=/invites/${inviteId.value}?token=${inviteToken.value}` : ''}`
+    `/login${
+      inviteId.value
+        ? `?return=${encodeURIComponent(`/invites/${inviteId.value}?invite_token=${inviteToken.value}`)}`
+        : ''
+    }`
 )
 
 const emailMismatch = computed(() => {
@@ -60,13 +75,24 @@ const emailMismatch = computed(() => {
 })
 
 const handleSignup = async () => {
-  await register({
+  const didRegister = await register({
     ...formData.value,
-    invite_id: formData.value.invite_id || undefined,
+    invite_id: hasPendingInvite.value ? formData.value.invite_id || undefined : undefined,
+    invite_token: hasPendingInvite.value ? formData.value.invite_token || undefined : undefined,
   })
+
+  if (!didRegister) {
+    return
+  }
 
   if (publicInvite.value?.space?.id) {
     router.push(`/${publicInvite.value.space.id}`)
+    return
+  }
+
+  if (publicInvite.value?.team?.id) {
+    selectTeam(publicInvite.value.team.id)
+    router.push(`/teams/${publicInvite.value.team.id}`)
   }
 }
 </script>
@@ -87,7 +113,7 @@ const handleSignup = async () => {
         :content="$t('labels.login.signupDescription')"
       />
       <Alert
-        v-if="publicInvite"
+        v-if="publicInvite && publicInvite.status === InviteStatus.PENDING"
         color="info"
         variant="modern"
         icon="lucide:handshake"
@@ -102,12 +128,28 @@ const handleSignup = async () => {
         />
       </Alert>
       <Alert
+        v-else-if="publicInvite && publicInvite.status === InviteStatus.EXPIRED"
+        color="warning"
+        variant="modern"
+        icon="lucide:clock"
+      >
+        {{ $t('labels.invites.page.expiredDesc') }}
+      </Alert>
+      <Alert
+        v-else-if="publicInvite && publicInvite.status === InviteStatus.ACCEPTED"
+        color="warning"
+        variant="modern"
+        icon="lucide:check-circle"
+      >
+        {{ $t('labels.invites.page.alreadyAcceptedDesc') }}
+      </Alert>
+      <Alert
         v-else-if="inviteError"
         color="warning"
         variant="modern"
         icon="lucide:octagon-x"
       >
-        {{ inviteError.data.message }}
+        {{ inviteErrorMessage }}
       </Alert>
     </div>
     <form

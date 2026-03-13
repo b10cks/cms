@@ -19,6 +19,7 @@ class RegisterRequest extends FormRequest
             'email' => 'required|email|unique:users,email|max:255',
             'password' => 'required|string|min:8|confirmed',
             'invite_id' => 'nullable|string|exists:invites,id',
+            'invite_token' => 'nullable|required_with:invite_id|string',
         ];
     }
 
@@ -36,6 +37,7 @@ class RegisterRequest extends FormRequest
             'password.min' => 'The password must be at least 8 characters.',
             'password.confirmed' => 'The password confirmation does not match.',
             'invite_id.exists' => 'The invitation is invalid.',
+            'invite_token.required_with' => 'The invitation token is required.',
         ];
     }
 }

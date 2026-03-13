@@ -21,6 +21,7 @@ Route::get('auth/v1/email/verify/{id}/{hash}', function (EmailVerificationReques
 
 // Guest routes
 Route::get('/invites/{id}', AppController::class)->name('invite');
+Route::get('/invites/accept/{id}', AppController::class)->name('invite-accept');
 
 // Space creation
 Route::get('/spaces/new', AppController::class)->name('spaces-new');

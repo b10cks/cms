@@ -145,7 +145,8 @@ export const queryKeys = {
   }),
   invites: {
     all: () => ['invites'] as const,
-    public: (token: MaybeRef<string>) => [...queryKeys.invites.all(), 'public', token] as const,
+    public: (inviteId: MaybeRef<string | undefined>) =>
+      [...queryKeys.invites.all(), 'public', inviteId] as const,
     my: () => [...queryKeys.invites.all(), 'my'] as const,
     myLists: () => [...queryKeys.invites.my(), 'list'] as const,
     myList: (filters: any = {}) => [...queryKeys.invites.myLists(), filters] as const,

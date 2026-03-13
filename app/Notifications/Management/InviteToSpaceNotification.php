@@ -19,8 +19,7 @@ class InviteToSpaceNotification extends Notification implements ShouldQueue
         public Invite $invite,
         public Space $space,
         public User $inviter
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -29,29 +28,31 @@ class InviteToSpaceNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $acceptUrl = ($this->invite->invitee_id)
-            ? config('app.frontend_url') . '/invites/accept/' . $this->invite->id . '?invite_token=' . $this->invite->token
-            : config('app.frontend_url') . '/login/signup?invite_id=' . $this->invite->id . '&invite_token=' . $this->invite->token;
+        $acceptUrl = sprintf(
+            '%s/invites/%s?%s',
+            rtrim((string) config('app.frontend_url'), '/'),
+            $this->invite->id,
+            http_build_query(['invite_token' => $this->invite->token])
+        );
 
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject(__('notifications.inviteSpace.subject', ['space' => $this->space->name, 'team' => $this->space->team?->name ?? __('notifications.teamFallback')]))
             ->greeting(__('notifications.greeting'))
             ->line(new HtmlString(__('notifications.inviteSpace.intro', [
                 'inviter' => $this->inviter?->display_name ?? __('notifications.inviterFallback'),
                 'space' => $this->space->name,
                 'team' => $this->space->team?->name ?? __('notifications.teamFallback'),
-                'role' => $this->invite->role
+                'role' => $this->invite->role,
             ])))
             ->when(
                 $this->invite->message,
-                fn($mail) =>
-                $mail->line(new HtmlString('<blockquote style="border-left: 4px solid #ccc; padding-left: 16px; margin-left: 0;">' . e($this->invite->message) . '</blockquote>'))
+                fn ($mail) => $mail->line(new HtmlString('<blockquote style="border-left: 4px solid #ccc; padding-left: 16px; margin-left: 0;">'.e($this->invite->message).'</blockquote>'))
             )
             ->line(new HtmlString(__('notifications.inviteSpace.start')))
             ->action(__('notifications.inviteSpace.action'), $acceptUrl)
             ->salutation(' ')
             ->line(new HtmlString(__('notifications.inviteSpace.outro', [
-                'expires' => $this->invite->expires_at->diffForHumans()
+                'expires' => $this->invite->expires_at->diffForHumans(),
             ])));
     }
 }

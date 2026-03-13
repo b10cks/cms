@@ -32,8 +32,9 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/invites/:id',
     name: 'invite',
+    alias: ['/invites/accept/:id'],
     component: () => import('~/pages/invites/[id].vue'),
-    meta: { guest: true },
+    meta: { public: true },
   },
   {
     path: '/spaces/new',
@@ -253,6 +254,7 @@ router.beforeEach(async (to, _from, next) => {
   const isReady = auth.isReady.value
 
   const isGuestRoute = to.meta.guest === true
+  const isPublicRoute = to.meta.public === true
 
   if (!isReady) {
     next()
@@ -264,7 +266,7 @@ router.beforeEach(async (to, _from, next) => {
     return
   }
 
-  if (!isGuestRoute && !isAuthenticated) {
+  if (!isGuestRoute && !isPublicRoute && !isAuthenticated) {
     next({
       name: 'login',
       query: { return: to.fullPath },

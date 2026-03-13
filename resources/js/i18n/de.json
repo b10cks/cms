@@ -275,9 +275,10 @@
         "expiredDesc": "Bitte kontaktiere den Einladenden, um eine neue Einladung zu erhalten.",
         "alreadyAccepted": "Einladung bereits angenommen",
         "alreadyAcceptedDesc": "Du hast diese Einladung bereits angenommen.",
+        "fromInviter": "{name} hat dich eingeladen.",
         "invitedToJoin": "Du wurdest eingeladen zu",
         "acceptingButton": "Wird angenommen...",
-        "acceptButton": "Einladung angenommen",
+        "acceptButton": "Einladung annehmen",
         "declineButton": "Ablehnen"
       }
     },

@@ -9,15 +9,18 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Management\Invite;
 use App\Notifications\User\VerifyEmailNotification;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Validation\ValidationException;
 
 class RegisterController extends Controller
 {
     private const VERIFICATION_CACHE_PREFIX = 'email_verification:';
+
     private const VERIFICATION_CACHE_TTL = 3600;
 
     public function __invoke(RegisterRequest $request, CreateUser $createUser, AcceptInvite $acceptInvite): JsonResponse
@@ -36,19 +39,21 @@ class RegisterController extends Controller
                 'email_verified_at' => ($invite && strtolower($invite->email) === strtolower($request->input('email'))) ? now() : null,
             ];
 
-            $user = $createUser->execute($data);
-            if ($invite) {
-                if (!$invite->isPending()) {
-                    Log::warning('Attempt to accept non-pending invite during registration', [
-                        'invite_id' => $invite->id,
-                        'user_id' => $user->id,
-                    ]);
+            $user = DB::transaction(function () use ($createUser, $acceptInvite, $data, $invite, $request) {
+                $user = $createUser->execute($data);
+
+                if ($invite) {
+                    $acceptInvite->execute(
+                        $invite,
+                        $user,
+                        $request->string('invite_token')->toString()
+                    );
                 }
 
-                $acceptInvite->execute($invite, $user);
-            }
+                return $user;
+            });
 
-            if (!$user->email_verified_at) {
+            if (! $user->email_verified_at) {
                 $this->sendVerificationEmail($user);
             }
 
@@ -65,6 +70,8 @@ class RegisterController extends Controller
                     'name' => $user->display_name,
                 ],
             ], 201);
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Registration failed', [
                 'email' => $request->input('email'),
@@ -85,7 +92,7 @@ class RegisterController extends Controller
 
     private function generateVerificationUrl($user): string
     {
-        $cacheKey = self::VERIFICATION_CACHE_PREFIX . $user->id;
+        $cacheKey = self::VERIFICATION_CACHE_PREFIX.$user->id;
 
         return Cache::remember($cacheKey, self::VERIFICATION_CACHE_TTL, function () use ($user) {
             return URL::signedRoute(

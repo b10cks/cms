@@ -8,9 +8,11 @@ export enum InviteStatus {
 
 export interface SimpleUser {
   id: string
+  name: string
+  avatar: string | null
+  initials: string
   email: string
-  firstname: string
-  lastname: string
+  created_at: string | null
 }
 
 export interface SimpleSpaceResource {

@@ -21,6 +21,7 @@ const error = ref<string | null>(null)
 const stats = ref<any>(null)
 const period = ref('daily')
 const dateRange = ref('thisMonth')
+let activeRequestId = 0
 
 const dateRangeValues = computed(() => {
   const now = new Date()
@@ -58,21 +59,40 @@ const dateRangeValues = computed(() => {
 })
 
 const fetchDashboardStats = async () => {
+  const requestId = ++activeRequestId
   loading.value = true
   error.value = null
-  const client = api.client
+
+  if (!props.spaceId) {
+    stats.value = null
+    loading.value = false
+    return
+  }
 
   try {
     const { startDate, endDate } = dateRangeValues.value
-    stats.value = await client.get(`/mgmt/v1/spaces/${props.spaceId}/stats`, {
+    const response = await api.client.get(`/mgmt/v1/spaces/${props.spaceId}/stats`, {
       period: period.value,
       start_date: startDate,
       end_date: endDate,
     })
+
+    if (requestId !== activeRequestId) {
+      return
+    }
+
+    stats.value = response
   } catch (err: any) {
+    if (requestId !== activeRequestId) {
+      return
+    }
+
+    stats.value = null
     error.value = err.message
   } finally {
-    loading.value = false
+    if (requestId === activeRequestId) {
+      loading.value = false
+    }
   }
 }
 
@@ -170,13 +190,10 @@ const contentActivityData = computed(() => {
   }
 })
 
-watch([period, dateRange], () => {
+watch([() => props.spaceId, period, dateRange], () => {
+  stats.value = null
   fetchDashboardStats()
-})
-
-onMounted(() => {
-  fetchDashboardStats()
-})
+}, { immediate: true })
 </script>
 
 <template>

@@ -277,6 +277,7 @@
         "expiredDesc": "Please contact the inviter to send you a new invite.",
         "alreadyAccepted": "Invite already accepted",
         "alreadyAcceptedDesc": "You've already accepted this invite.",
+        "fromInviter": "{name} invited you.",
         "invitedToJoin": "You've been invited to join",
         "acceptingButton": "Accepting...",
         "acceptButton": "Accept Invite",

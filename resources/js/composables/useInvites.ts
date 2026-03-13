@@ -11,14 +11,20 @@ export function useInvites() {
   const { t } = useI18n()
   const queryClient = useQueryClient()
 
-  const usePublicInviteQuery = (token: MaybeRef<string>) => {
+  const usePublicInviteQuery = (inviteId: MaybeRef<string | undefined>) => {
     return useQuery({
-      queryKey: computed(() => queryKeys.invites.public(token)),
+      queryKey: computed(() => queryKeys.invites.public(inviteId)),
       queryFn: async () => {
-        const response = await api.invites.getPublicInvite(toValue(token))
+        const resolvedInviteId = toValue(inviteId)
+
+        if (!resolvedInviteId) {
+          throw new Error('Invite ID is required')
+        }
+
+        const response = await api.invites.getPublicInvite(resolvedInviteId)
         return response.data
       },
-      enabled: computed(() => !!toValue(token)),
+      enabled: computed(() => !!toValue(inviteId)),
     })
   }
 
@@ -208,6 +214,10 @@ export function useInvites() {
       },
       onSuccess: (invite) => {
         const targetName = invite.space?.name || invite.team?.name || 'resource'
+        queryClient.invalidateQueries({ queryKey: queryKeys.invites.my() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.teams.all() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.authorization.all() })
         toast.success(t('labels.invites.toast.joined', { name: targetName }) as string)
       },
       onError: (error: Error) => {

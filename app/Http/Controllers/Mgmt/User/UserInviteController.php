@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class UserInviteController extends Controller
 {
@@ -45,16 +46,13 @@ class UserInviteController extends Controller
     public function accept(Invite $invite, AcceptInviteRequest $request, AcceptInvite $acceptInvite): InviteResource|JsonResponse
     {
         $user = auth()->user();
-        abort_if($request->input('token') !== $invite->token, 422);
 
         try {
-            if (! $acceptInvite->execute($invite, $user)) {
-                return response()->json([
-                    'message' => 'The invitation cannot be accepted',
-                ], 422);
-            }
+            $acceptedInvite = $acceptInvite->execute($invite, $user, $request->string('token')->toString());
 
-            return new InviteResource($invite->refresh()->load(['inviter', 'space', 'team', 'roleDefinition']));
+            return new InviteResource($acceptedInvite->loadMissing(['inviter', 'space', 'team', 'roleDefinition']));
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Failed to accept invite', [
                 'invite_id' => $invite->id,

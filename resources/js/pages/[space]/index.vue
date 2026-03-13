@@ -19,7 +19,9 @@ useSeoMeta({
       <div v-if="space">
         <ContentHeader :header="space.name">
           <div class="flex gap-2 items-center">
-            <span>{{ formatDateTime(space.content_updated_at) }}</span>
+            <span>
+              {{ formatDateTime(space.updated_at ?? space.content_updated_at) }}
+            </span>
             <SpaceBadge
               v-if="space.badge"
               :badge="space.badge"

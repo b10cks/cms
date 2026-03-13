@@ -13,6 +13,7 @@ const { t } = useI18n()
 const inviteId = computed(() => route.params.id as string)
 
 const { selectTeam } = useGlobalTeam()
+const { isAuthenticated } = useAuth()
 const { usePublicInviteQuery, useAcceptInviteMutation } = useInvites()
 const { data: invite, isPending, error } = usePublicInviteQuery(inviteId)
 const { mutate: acceptInvite, isPending: isAccepting } = useAcceptInviteMutation()
@@ -21,7 +22,37 @@ useSeoMeta({
   title: computed(() => t('labels.invites.page.title')),
 })
 
-const token = computed(() => route.query.token as string)
+const token = computed(() => {
+  const inviteToken = route.query.invite_token
+  const legacyToken = route.query.token
+
+  if (typeof inviteToken === 'string' && inviteToken.length > 0) {
+    return inviteToken
+  }
+
+  if (typeof legacyToken === 'string' && legacyToken.length > 0) {
+    return legacyToken
+  }
+
+  return ''
+})
+
+const invitePath = computed(() => {
+  const query = token.value ? `?invite_token=${encodeURIComponent(token.value)}` : ''
+  return `/invites/${inviteId.value}${query}`
+})
+
+const loginPath = computed(() => `/login?return=${encodeURIComponent(invitePath.value)}`)
+const signupPath = computed(() => {
+  const params = new URLSearchParams()
+  params.set('invite_id', inviteId.value)
+
+  if (token.value) {
+    params.set('invite_token', token.value)
+  }
+
+  return `/login/signup?${params.toString()}`
+})
 
 const resourceName = computed(() => {
   if (invite.value?.space) {
@@ -34,10 +65,7 @@ const resourceName = computed(() => {
 })
 
 const inviterName = computed(() => {
-  if (invite.value?.inviter) {
-    return `${invite.value.inviter.firstname} ${invite.value.inviter.lastname}`
-  }
-  return 'Someone'
+  return invite.value?.inviter?.name || 'Someone'
 })
 
 const isExpired = computed(() => {
@@ -48,8 +76,14 @@ const isAccepted = computed(() => {
   return invite.value?.status === InviteStatus.ACCEPTED
 })
 
+const isPendingInvite = computed(() => {
+  return invite.value?.status === InviteStatus.PENDING
+})
+
+const hasToken = computed(() => token.value.length > 0)
+
 const handleAccept = () => {
-  if (invite.value?.id) {
+  if (invite.value?.id && token.value) {
     acceptInvite(
       { inviteId: invite.value.id, payload: { token: token.value } },
       {
@@ -58,7 +92,7 @@ const handleAccept = () => {
             router.push(`/${data.space_id}`)
           } else if (data.team_id) {
             selectTeam(data.team_id)
-            router.push('/')
+            router.push(`/teams/${data.team_id}`)
           }
         },
       }
@@ -68,7 +102,7 @@ const handleAccept = () => {
 </script>
 
 <template>
-  <AppHeader>
+  <AppHeader v-if="isAuthenticated">
     <div class="flex items-start">
       <TeamSelector size="sm" />
     </div>
@@ -112,23 +146,40 @@ const handleAccept = () => {
         class="space-y-6"
         @submit.prevent="handleAccept"
       >
-        <div>
-          {{ $t('labels.invites.page.invitedToJoin') }}
-          <span class="font-semibold">{{ resourceName }}</span>
+        <div class="space-y-2">
+          <p class="text-sm text-muted-foreground">
+            {{ $t('labels.invites.page.fromInviter', { name: inviterName }) }}
+          </p>
+          <div>
+            {{ $t('labels.invites.page.invitedToJoin') }}
+            <span class="font-semibold">{{ resourceName }}</span>
+          </div>
         </div>
         <Alert
-          variant="modern"
           v-if="invite.message"
+          variant="modern"
         >
           {{ invite.message }}
         </Alert>
 
-        <div class="space-y-2">
+        <Alert
+          v-if="isPendingInvite && !hasToken"
+          color="destructive"
+          icon="lucide:shield-alert"
+        >
+          <p class="font-semibold">{{ $t('labels.invites.page.invalidOrExpired') }}</p>
+          <p class="mt-1 text-sm">{{ $t('labels.invites.page.invalidOrExpiredDesc') }}</p>
+        </Alert>
+
+        <div
+          v-if="isPendingInvite && isAuthenticated"
+          class="space-y-2"
+        >
           <Button
             type="submit"
             variant="primary"
             class="w-full"
-            :disabled="isAccepting"
+            :disabled="isAccepting || !hasToken"
           >
             <Icon
               v-if="isAccepting"
@@ -149,6 +200,28 @@ const handleAccept = () => {
             @click="router.back()"
           >
             {{ $t('labels.invites.page.declineButton') }}
+          </Button>
+        </div>
+
+        <div
+          v-else-if="isPendingInvite"
+          class="space-y-2"
+        >
+          <Button
+            type="button"
+            variant="primary"
+            class="w-full"
+            @click="router.push(loginPath)"
+          >
+            {{ $t('actions.login') }}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            class="w-full"
+            @click="router.push(signupPath)"
+          >
+            {{ $t('actions.signup') }}
           </Button>
         </div>
       </form>
