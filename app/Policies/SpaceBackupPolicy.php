@@ -5,14 +5,15 @@ namespace App\Policies;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceBackup;
 use App\Models\User;
+use App\Policies\Concerns\AuthorizesWithAbilities;
 
 class SpaceBackupPolicy
 {
+    use AuthorizesWithAbilities;
+
     public function viewAny(User $user, Space $space): bool
     {
-        return $user->spaces()->where('spaces.id', $space->id)->exists()
-            || $user->teams()->where('teams.id', $space->team_id)->exists()
-            || $user->is_root;
+        return $this->canInSpace($user, $space, 'backups.view');
     }
 
     public function view(User $user, SpaceBackup $backup): bool
@@ -22,23 +23,16 @@ class SpaceBackupPolicy
 
     public function create(User $user, Space $space): bool
     {
-        return $this->userHasAccessToSpace($user, $space);
+        return $this->canInSpace($user, $space, 'backups.manage');
     }
 
     public function update(User $user, SpaceBackup $backup): bool
     {
-        return $this->userHasAccessToSpace($user, $backup->space);
+        return $this->canInSpace($user, $backup->space, 'backups.manage');
     }
 
     public function delete(User $user, SpaceBackup $backup): bool
     {
-        return $this->userHasAccessToSpace($user, $backup->space);
-    }
-
-    private function userHasAccessToSpace(User $user, Space $space): bool
-    {
-        return $user->spaces()->where('spaces.id', $space->id)->exists()
-            || $user->teams()->where('teams.id', $space->team_id)->exists()
-            || $user->is_root;
+        return $this->canInSpace($user, $backup->space, 'backups.manage');
     }
 }

@@ -3,6 +3,10 @@ import { toast } from 'vue-sonner'
 
 import type { TeamsQueryParams } from '~/api/resources/teams'
 import type {
+  CreateTeamSpaceRolePayload,
+  UpdateTeamSpaceRolePayload,
+} from '~/types/authorization'
+import type {
   AddTeamUserPayload,
   CreateTeamPayload,
   TeamHierarchyItem,
@@ -59,7 +63,8 @@ export function useTeams() {
   // Team Users Queries
   const useTeamUsersQuery = (
     teamId: MaybeRef<string>,
-    params: MaybeRef<TeamUserQueryParams> = {}
+    params: MaybeRef<TeamUserQueryParams> = {},
+    enabled: MaybeRef<boolean> = true
   ) => {
     return useQuery({
       queryKey: computed(() => queryKeys.teams.users(teamId).list(params)),
@@ -70,6 +75,22 @@ export function useTeams() {
         })
         return response
       },
+      enabled: computed(
+        () => !!toValue(isAuthenticated) && !!toValue(teamId) && !!toValue(enabled)
+      ),
+    })
+  }
+
+  const useTeamSpaceRolesQuery = (teamId: MaybeRef<string>, enabled: MaybeRef<boolean> = true) => {
+    return useQuery({
+      queryKey: computed(() => queryKeys.teams.roles(teamId).space()),
+      queryFn: async () => {
+        const response = await api.teams.getSpaceRoles(toValue(teamId))
+        return response.data
+      },
+      enabled: computed(
+        () => !!toValue(isAuthenticated) && !!toValue(teamId) && !!toValue(enabled)
+      ),
     })
   }
 
@@ -217,6 +238,83 @@ export function useTeams() {
     })
   }
 
+  const useCreateTeamSpaceRoleMutation = () => {
+    return useMutation({
+      mutationFn: async ({
+        teamId,
+        payload,
+      }: {
+        teamId: string
+        payload: CreateTeamSpaceRolePayload
+      }) => {
+        const response = await api.teams.createSpaceRole(teamId, payload)
+        return { teamId, role: response.data }
+      },
+      onSuccess: ({ teamId, role }) => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.teams.roles(teamId).all() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.authorization.all() })
+        toast.success(t('composables.teams.createRoleSuccess', { name: role.name }) as string)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.teams.createRoleError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
+  const useUpdateTeamSpaceRoleMutation = () => {
+    return useMutation({
+      mutationFn: async ({
+        teamId,
+        roleId,
+        payload,
+      }: {
+        teamId: string
+        roleId: string
+        payload: UpdateTeamSpaceRolePayload
+      }) => {
+        const response = await api.teams.updateSpaceRole(teamId, roleId, payload)
+        return { teamId, role: response.data }
+      },
+      onSuccess: ({ teamId, role }) => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.teams.roles(teamId).all() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.authorization.all() })
+        toast.success(t('composables.teams.updateRoleSuccess', { name: role.name }) as string)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.teams.updateRoleError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
+  const useDeleteTeamSpaceRoleMutation = () => {
+    return useMutation({
+      mutationFn: async ({ teamId, roleId }: { teamId: string; roleId: string }) => {
+        await api.teams.deleteSpaceRole(teamId, roleId)
+        return { teamId, roleId }
+      },
+      onSuccess: ({ teamId }) => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.teams.roles(teamId).all() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.authorization.all() })
+        toast.success(t('composables.teams.deleteRoleSuccess') as string)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.teams.deleteRoleError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
   // Utility functions
   const findTeamInHierarchy = (
     hierarchy: MaybeRef<TeamHierarchyItem[] | undefined>,
@@ -312,6 +410,7 @@ export function useTeams() {
 
     // Team User Queries
     useTeamUsersQuery,
+    useTeamSpaceRolesQuery,
 
     // Team Mutations
     useCreateTeamMutation,
@@ -322,6 +421,9 @@ export function useTeams() {
     useAddTeamUserMutation,
     useUpdateTeamUserMutation,
     useRemoveTeamUserMutation,
+    useCreateTeamSpaceRoleMutation,
+    useUpdateTeamSpaceRoleMutation,
+    useDeleteTeamSpaceRoleMutation,
 
     // Utility Functions
     findTeamInHierarchy,

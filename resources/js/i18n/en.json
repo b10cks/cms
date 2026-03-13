@@ -186,7 +186,7 @@
       "sending": "Sending invitation...",
       "fields": {
         "email": "Invite by email",
-        "emailPlaceholder": "name@example.com",
+        "emailPlaceholder": "",
         "message": "Personal Message",
         "messagePlaceholder": "Add a personal note (optional)",
         "expires": "Invitation Expires in",
@@ -1250,7 +1250,11 @@
       "listTitle": "All Teams",
       "hierarchyTitle": "Team Hierarchy",
       "detailTitle": "{name}",
+      "peopleTitle": "People",
+      "peopleDescription": "Invite new collaborators into the team, keep an eye on pending invites, and adjust roles for members who have already joined.",
       "invitesTitle": "Pending Invites",
+      "invitesDescription": "Track what is still waiting for acceptance, resend the right invite, or clean up stale requests.",
+      "inviteAction": "Invite People",
       "create": "Create Team",
       "createTitle": "Create New Team",
       "createDescription": "Set up a new team to organize your users and spaces",
@@ -1260,15 +1264,19 @@
       "saveButton": "Save Changes",
       "backToList": "Back to Teams",
       "memberCount": "{count} members | {count} member | {count} members",
-      "spaceCount": "{count} spaces | {count} member | {count} members",
+      "spaceCount": "{count} spaces | {count} space | {count} spaces",
       "notFound": "Team not found",
       "notFoundDescription": "The team you're looking for doesn't exist or you don't have access to it.",
+      "limitedAccessTitle": "You can see this team, but there is nothing to manage here yet.",
+      "limitedAccessDescription": "Your current team role gives you visibility without member, invite, or role-management access.",
       "empty": "No teams found. Create your first team to get started.",
       "noType": "No type",
       "noParent": "No parent team",
       "tabs": {
+        "people": "People",
         "members": "Members",
-        "invites": "Invites"
+        "invites": "Invites",
+        "roles": "Roles"
       },
       "types": {
         "partner": "Partner",
@@ -1332,6 +1340,7 @@
     },
     "teamMembers": {
       "title": "Team Members",
+      "description": "Everyone who has already accepted their invitation appears here.",
       "add": "Add Member",
       "addTitle": "Add Team Member",
       "addDescription": "Add an existing user to this team",
@@ -1385,6 +1394,135 @@
       "tooltip": {
         "editRole": "Change role",
         "remove": "Remove from team"
+      }
+    },
+    "teamRoles": {
+      "title": "Space Roles",
+      "description": "Shape how collaborators can work inside spaces owned by this team. Built-in roles stay visible for reference, while custom roles can be tailored for this team and its descendants.",
+      "create": "Create Role",
+      "createTitle": "Create Space Role",
+      "createDescription": "Design a reusable space role for this team. It will be available in this team's spaces and all descendant teams.",
+      "createButton": "Create Role",
+      "editTitle": "Edit Space Role",
+      "editDescription": "Refine the role's identity and permissions without disturbing the built-in presets.",
+      "viewTitle": "Role Details",
+      "viewDescription": "Inspect the permissions on this role. Built-in and inherited roles are read-only here.",
+      "saveButton": "Save Changes",
+      "noDescription": "No description yet.",
+      "selectedAbilities": "{count} abilities selected",
+      "selectedResourceAbilities": "{selected} of {total} selected",
+      "resourceCount": "{count} resources",
+      "abilityCount": "{count} abilities",
+      "moreAbilities": "+{count} more",
+      "readOnlyTitle": "This role is read-only in this team.",
+      "readOnlyDescription": "Built-in roles and roles inherited from parent teams can be assigned here, but only roles created on this team can be changed.",
+      "searchPlaceholder": "Search roles by name, key, or ability...",
+      "emptyFiltered": "No roles match your current search or filters.",
+      "neverUpdated": "Not available",
+      "noAbilityMatchesTitle": "No abilities match this search.",
+      "noAbilityMatchesDescription": "Try a broader term or clear the filter to see the full permission set again.",
+      "stats": {
+        "total": "Available roles",
+        "custom": "Custom roles",
+        "locked": "Read-only roles"
+      },
+      "filters": {
+        "type": "Type",
+        "allTypes": "All types"
+      },
+      "sort": {
+        "name": "Role Name",
+        "level": "Level",
+        "updated_at": "Last Updated",
+        "abilities": "Ability Count"
+      },
+      "columns": {
+        "role": "Role",
+        "type": "Type",
+        "level": "Level",
+        "abilities": "Abilities",
+        "updated": "Updated"
+      },
+      "badges": {
+        "system": "System",
+        "custom": "Custom",
+        "inherited": "Inherited",
+        "level": "Level {level}"
+      },
+      "emptyTitle": "No roles are available yet.",
+      "emptyDescription": "Create the first custom role to give your team a sharper, more deliberate permission model inside spaces.",
+      "actions": {
+        "view": "View details",
+        "edit": "Edit role",
+        "delete": "Delete role"
+      },
+      "deleteConfirm": {
+        "title": "Delete Role",
+        "message": "Delete \"{name}\"? Members and invites must stop using it before it can be removed.",
+        "confirmLabel": "Delete role"
+      },
+      "fields": {
+        "name": "Role name",
+        "namePlaceholder": "Translator",
+        "key": "Role key",
+        "keyPlaceholder": "translator",
+        "keyDescription": "Use lowercase letters, numbers, dashes, or underscores.",
+        "description": "Description",
+        "descriptionPlaceholder": "Helps the team understand when to use this role.",
+        "level": "Level",
+        "levelDescription": "Used for sorting and future precedence checks.",
+        "abilities": "Abilities",
+        "abilitiesDescription": "Choose the exact capabilities this role should grant inside a space.",
+        "abilitiesSearchPlaceholder": "Search abilities by name, resource, or key..."
+      },
+      "groups": {
+        "space": "Space access",
+        "people": "People",
+        "billing": "Billing & tokens",
+        "assets": "Assets",
+        "blocks": "Blocks",
+        "content": "Content",
+        "comments": "Comments",
+        "data": "Structured data",
+        "delivery": "Delivery",
+        "operations": "Operations",
+        "ai": "AI"
+      },
+      "abilityTemplates": {
+        "view": "View {resource}",
+        "manage": "Manage {resource}",
+        "create": "Create {resource}",
+        "update": "Edit {resource}",
+        "delete": "Delete {resource}",
+        "archive": "Archive {resource}",
+        "publish": "Publish {resource}",
+        "updateOwn": "Edit own {resource}",
+        "deleteOwn": "Delete own {resource}",
+        "resolveOwn": "Resolve own {resource}",
+        "react": "React to {resource}"
+      },
+      "resources": {
+        "space": "space",
+        "members": "members",
+        "invites": "invites",
+        "billing": "billing",
+        "tokens": "tokens",
+        "assets": "assets",
+        "assetFolders": "asset folders",
+        "assetTags": "asset tags",
+        "blocks": "blocks",
+        "blockTemplates": "block templates",
+        "blockVersions": "block versions",
+        "content": "content",
+        "contentHistory": "content history",
+        "comments": "comments",
+        "dataSources": "data sources",
+        "dataEntries": "data entries",
+        "redirects": "redirects",
+        "releases": "releases",
+        "backups": "backups",
+        "migrations": "migrations",
+        "ai": "AI tools"
       }
     },
     "fields": {
@@ -1514,6 +1652,7 @@
     "deleteSelected": "Delete Selected",
     "move": "Move",
     "clear": "Clear",
+    "selectAll": "Select all",
     "clearSelection": "Clear Selection",
     "rename": "Rename",
     "archive": "Archive",
@@ -1916,7 +2055,13 @@
       "updateUserSuccess": "User role updated to {role}",
       "updateUserError": "Failed to update user role: {error}",
       "removeUserSuccess": "User removed from team",
-      "removeUserError": "Failed to remove user from team: {error}"
+      "removeUserError": "Failed to remove user from team: {error}",
+      "createRoleSuccess": "Role \"{name}\" created successfully",
+      "createRoleError": "Failed to create role: {error}",
+      "updateRoleSuccess": "Role \"{name}\" updated successfully",
+      "updateRoleError": "Failed to update role: {error}",
+      "deleteRoleSuccess": "Role deleted successfully",
+      "deleteRoleError": "Failed to delete role: {error}"
     },
     "tokens": {
       "createSuccess": "Token \"{name}\" created successfully",

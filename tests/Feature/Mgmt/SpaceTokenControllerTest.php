@@ -15,7 +15,9 @@ class SpaceTokenControllerTest extends TestCase
     use RefreshDatabase;
 
     protected User $user;
+
     protected Space $space;
+
     protected string $baseUrl;
 
     protected function setUp(): void
@@ -27,7 +29,7 @@ class SpaceTokenControllerTest extends TestCase
         $this->space = Space::factory()->create();
 
         // Attach the user to the space with owner role
-        $this->space->users()->attach($this->user, ['role' => 'owner']);
+        $this->assignSpaceRole($this->space, $this->user, 'owner');
 
         // Base URL for the token endpoints
         $this->baseUrl = "/mgmt/v1/spaces/{$this->space->id}/tokens";
@@ -38,7 +40,7 @@ class SpaceTokenControllerTest extends TestCase
     {
         // Create tokens for the space
         Token::factory()->count(3)->create([
-            'space_id' => $this->space->id
+            'space_id' => $this->space->id,
         ]);
 
         // Create a token for another space (shouldn't be returned)
@@ -58,11 +60,11 @@ class SpaceTokenControllerTest extends TestCase
                         'abilities',
                         'expires_at',
                         'created_at',
-                        'updated_at'
-                    ]
+                        'updated_at',
+                    ],
                 ],
                 'links',
-                'meta'
+                'meta',
             ]);
     }
 
@@ -72,7 +74,7 @@ class SpaceTokenControllerTest extends TestCase
         $tokenData = [
             'name' => 'Test API Token',
             'abilities' => ['content:read', 'content:create'],
-            'expires_at' => now()->addYear()->toIso8601String()
+            'expires_at' => now()->addYear()->toIso8601String(),
         ];
 
         Sanctum::actingAs($this->user);
@@ -87,14 +89,14 @@ class SpaceTokenControllerTest extends TestCase
                     'abilities',
                     'expires_at',
                     'created_at',
-                    'updated_at'
+                    'updated_at',
                 ],
-                'plain_text_token'
+                'plain_text_token',
             ])
             ->assertJson([
                 'token' => [
                     'name' => $tokenData['name'],
-                ]
+                ],
             ]);
 
         $this->assertStringStartsWith('blx_', $response->json('plain_text_token'));
@@ -111,7 +113,7 @@ class SpaceTokenControllerTest extends TestCase
     {
         $token = Token::factory()->create([
             'space_id' => $this->space->id,
-            'name' => 'Token to delete'
+            'name' => 'Token to delete',
         ]);
 
         Sanctum::actingAs($this->user);
@@ -122,7 +124,7 @@ class SpaceTokenControllerTest extends TestCase
 
         // Verify token is deleted from the database
         $this->assertDatabaseMissing('tokens', [
-            'id' => $token->id
+            'id' => $token->id,
         ]);
     }
 
@@ -147,7 +149,7 @@ class SpaceTokenControllerTest extends TestCase
         $response = $this->postJson($this->baseUrl, [
             'name' => 'Test Token',
             'abilities' => ['content:read'],
-            'expires_at' => now()->subDay()->toIso8601String() // Invalid: past date
+            'expires_at' => now()->subDay()->toIso8601String(), // Invalid: past date
         ]);
 
         $response->assertStatus(422)
@@ -159,7 +161,7 @@ class SpaceTokenControllerTest extends TestCase
     {
         // Create a user with member role
         $memberUser = User::factory()->create();
-        $this->space->users()->attach($memberUser, ['role' => 'member']);
+        $this->assignSpaceRole($this->space, $memberUser, 'member');
 
         // Try to list tokens
         Sanctum::actingAs($memberUser);
@@ -173,7 +175,7 @@ class SpaceTokenControllerTest extends TestCase
 
         $response = $this->postJson($this->baseUrl, [
             'name' => 'Test Token',
-            'abilities' => ['content:read']
+            'abilities' => ['content:read'],
         ]);
 
         $response->assertStatus(403);
@@ -185,7 +187,7 @@ class SpaceTokenControllerTest extends TestCase
         // Create a space and token
         $otherSpace = Space::factory()->create();
         $otherToken = Token::factory()->create([
-            'space_id' => $otherSpace->id
+            'space_id' => $otherSpace->id,
         ]);
 
         // Try to delete the token
@@ -197,7 +199,7 @@ class SpaceTokenControllerTest extends TestCase
 
         // Verify token is still in the database
         $this->assertDatabaseHas('tokens', [
-            'id' => $otherToken->id
+            'id' => $otherToken->id,
         ]);
     }
 
@@ -207,17 +209,17 @@ class SpaceTokenControllerTest extends TestCase
         // Create tokens with specific names
         Token::factory()->create([
             'space_id' => $this->space->id,
-            'name' => 'Alpha Token'
+            'name' => 'Alpha Token',
         ]);
 
         Token::factory()->create([
             'space_id' => $this->space->id,
-            'name' => 'Beta Token'
+            'name' => 'Beta Token',
         ]);
 
         Token::factory()->create([
             'space_id' => $this->space->id,
-            'name' => 'Alpha Prime'
+            'name' => 'Alpha Prime',
         ]);
 
         // Filter by name containing 'Alpha'
@@ -242,13 +244,13 @@ class SpaceTokenControllerTest extends TestCase
         Token::factory()->create([
             'space_id' => $this->space->id,
             'name' => 'Read Token',
-            'abilities' => ['content:read']
+            'abilities' => ['content:read'],
         ]);
 
         Token::factory()->create([
             'space_id' => $this->space->id,
             'name' => 'Full Token',
-            'abilities' => ['content:read', 'content:create', 'content:update', 'content:delete']
+            'abilities' => ['content:read', 'content:create', 'content:update', 'content:delete'],
         ]);
 
         // Filter by ability

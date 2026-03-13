@@ -1222,7 +1222,11 @@
       "listTitle": "Alle Teams",
       "hierarchyTitle": "Team-Hierarchie",
       "detailTitle": "{name}",
+      "peopleTitle": "Personen",
+      "peopleDescription": "Lade neue Mitarbeitende ins Team ein, behalte offene Einladungen im Blick und passe Rollen für bereits beigetretene Personen an.",
       "invitesTitle": "Ausstehende Einladungen",
+      "invitesDescription": "Behalte ausstehende Einladungen im Blick, sende die passende Einladung erneut oder räume veraltete Anfragen auf.",
+      "inviteAction": "Personen einladen",
       "create": "Team erstellen",
       "createTitle": "Neues Team erstellen",
       "createDescription": "Richte ein neues Team ein, um deine Benutzer und Spaces zu organisieren",
@@ -1235,12 +1239,16 @@
       "spaceCount": "{count} Spaces | {count} Space | {count} Spaces",
       "notFound": "Team nicht gefunden",
       "notFoundDescription": "Das gesuchte Team existiert nicht oder du hast keinen Zugriff darauf.",
+      "limitedAccessTitle": "Du kannst dieses Team sehen, aber hier noch nichts verwalten.",
+      "limitedAccessDescription": "Deine aktuelle Team-Rolle erlaubt Sichtbarkeit, aber keinen Zugriff auf Mitglieder, Einladungen oder die Rollenverwaltung.",
       "empty": "Keine Teams gefunden. Erstelle dein erstes Team, um loszulegen.",
       "noType": "Kein Typ",
       "noParent": "Kein übergeordnetes Team",
       "tabs": {
+        "people": "Personen",
         "members": "Mitglieder",
-        "invites": "Einladungen"
+        "invites": "Einladungen",
+        "roles": "Rollen"
       },
       "types": {
         "partner": "Partner",
@@ -1304,6 +1312,7 @@
     },
     "teamMembers": {
       "title": "Team-Mitglieder",
+      "description": "Hier erscheinen alle Personen, die ihre Einladung bereits angenommen haben.",
       "add": "Mitglied hinzufügen",
       "addTitle": "Team-Mitglied hinzufügen",
       "addDescription": "Füge einen bestehenden Benutzer diesem Team hinzu",
@@ -1357,6 +1366,135 @@
       "tooltip": {
         "editRole": "Rolle ändern",
         "remove": "Aus Team entfernen"
+      }
+    },
+    "teamRoles": {
+      "title": "Space-Rollen",
+      "description": "Lege fest, wie Mitarbeitende in den Spaces dieses Teams arbeiten können. Eingebaute Rollen bleiben als Referenz sichtbar, eigene Rollen kannst du für dieses Team und seine Unterteams zuschneiden.",
+      "create": "Rolle erstellen",
+      "createTitle": "Space-Rolle erstellen",
+      "createDescription": "Entwirf eine wiederverwendbare Space-Rolle für dieses Team. Sie steht in den Spaces dieses Teams und aller Unterteams zur Verfügung.",
+      "createButton": "Rolle erstellen",
+      "editTitle": "Space-Rolle bearbeiten",
+      "editDescription": "Schärfe die Rolle nach, ohne die eingebauten Vorgaben anzutasten.",
+      "viewTitle": "Rollendetails",
+      "viewDescription": "Sieh dir die Berechtigungen dieser Rolle an. Eingebaute und geerbte Rollen sind hier schreibgeschützt.",
+      "saveButton": "Änderungen speichern",
+      "noDescription": "Noch keine Beschreibung vorhanden.",
+      "selectedAbilities": "{count} Berechtigungen ausgewählt",
+      "selectedResourceAbilities": "{selected} von {total} ausgewählt",
+      "resourceCount": "{count} Ressourcen",
+      "abilityCount": "{count} Berechtigungen",
+      "moreAbilities": "+{count} weitere",
+      "readOnlyTitle": "Diese Rolle ist in diesem Team schreibgeschützt.",
+      "readOnlyDescription": "Eingebaute Rollen und aus übergeordneten Teams geerbte Rollen kannst du hier zuweisen, aber nur lokal erstellte Rollen ändern.",
+      "searchPlaceholder": "Rollen nach Name, Schlüssel oder Berechtigung durchsuchen...",
+      "emptyFiltered": "Keine Rollen passen zu deiner aktuellen Suche oder dem Filter.",
+      "neverUpdated": "Nicht verfügbar",
+      "noAbilityMatchesTitle": "Für diese Suche wurden keine Berechtigungen gefunden.",
+      "noAbilityMatchesDescription": "Versuche einen allgemeineren Begriff oder lösche den Filter, um wieder alle Rechte zu sehen.",
+      "stats": {
+        "total": "Verfügbare Rollen",
+        "custom": "Eigene Rollen",
+        "locked": "Schreibgeschützte Rollen"
+      },
+      "filters": {
+        "type": "Typ",
+        "allTypes": "Alle Typen"
+      },
+      "sort": {
+        "name": "Rollenname",
+        "level": "Level",
+        "updated_at": "Zuletzt geändert",
+        "abilities": "Anzahl Berechtigungen"
+      },
+      "columns": {
+        "role": "Rolle",
+        "type": "Typ",
+        "level": "Level",
+        "abilities": "Berechtigungen",
+        "updated": "Geändert"
+      },
+      "badges": {
+        "system": "System",
+        "custom": "Eigen",
+        "inherited": "Geerbt",
+        "level": "Level {level}"
+      },
+      "emptyTitle": "Es sind noch keine Rollen verfügbar.",
+      "emptyDescription": "Erstelle die erste eigene Rolle, um das Berechtigungsmodell deiner Spaces feiner abzustimmen.",
+      "actions": {
+        "view": "Details ansehen",
+        "edit": "Rolle bearbeiten",
+        "delete": "Rolle löschen"
+      },
+      "deleteConfirm": {
+        "title": "Rolle löschen",
+        "message": "\"{name}\" löschen? Mitglieder und Einladungen dürfen diese Rolle vorher nicht mehr verwenden.",
+        "confirmLabel": "Rolle löschen"
+      },
+      "fields": {
+        "name": "Rollenname",
+        "namePlaceholder": "Übersetzer",
+        "key": "Rollenschlüssel",
+        "keyPlaceholder": "translator",
+        "keyDescription": "Verwende nur Kleinbuchstaben, Zahlen, Bindestriche oder Unterstriche.",
+        "description": "Beschreibung",
+        "descriptionPlaceholder": "Hilft dem Team zu verstehen, wann diese Rolle sinnvoll ist.",
+        "level": "Level",
+        "levelDescription": "Wird für Sortierung und spätere Vorrangregeln genutzt.",
+        "abilities": "Berechtigungen",
+        "abilitiesDescription": "Wähle exakt aus, was diese Rolle in einem Space erlauben soll.",
+        "abilitiesSearchPlaceholder": "Berechtigungen nach Name, Ressource oder Schlüssel durchsuchen..."
+      },
+      "groups": {
+        "space": "Space-Zugriff",
+        "people": "Personen",
+        "billing": "Abrechnung & Token",
+        "assets": "Assets",
+        "blocks": "Blöcke",
+        "content": "Inhalte",
+        "comments": "Kommentare",
+        "data": "Strukturierte Daten",
+        "delivery": "Auslieferung",
+        "operations": "Betrieb",
+        "ai": "KI"
+      },
+      "abilityTemplates": {
+        "view": "{resource} ansehen",
+        "manage": "{resource} verwalten",
+        "create": "{resource} erstellen",
+        "update": "{resource} bearbeiten",
+        "delete": "{resource} löschen",
+        "archive": "{resource} archivieren",
+        "publish": "{resource} veröffentlichen",
+        "updateOwn": "Eigene {resource} bearbeiten",
+        "deleteOwn": "Eigene {resource} löschen",
+        "resolveOwn": "Eigene {resource} lösen",
+        "react": "Auf {resource} reagieren"
+      },
+      "resources": {
+        "space": "den Space",
+        "members": "Mitglieder",
+        "invites": "Einladungen",
+        "billing": "die Abrechnung",
+        "tokens": "Token",
+        "assets": "Assets",
+        "assetFolders": "Asset-Ordner",
+        "assetTags": "Asset-Tags",
+        "blocks": "Blöcke",
+        "blockTemplates": "Block-Templates",
+        "blockVersions": "Block-Versionen",
+        "content": "Inhalte",
+        "contentHistory": "die Inhaltshistorie",
+        "comments": "Kommentare",
+        "dataSources": "Datenquellen",
+        "dataEntries": "Datensätze",
+        "redirects": "Weiterleitungen",
+        "releases": "Releases",
+        "backups": "Backups",
+        "migrations": "Migrationen",
+        "ai": "KI-Werkzeuge"
       }
     },
     "fields": {
@@ -1486,6 +1624,7 @@
     "deleteSelected": "Ausgewählte löschen",
     "move": "Verschieben",
     "clear": "Löschen",
+    "selectAll": "Alle auswählen",
     "clearSelection": "Auswahl löschen",
     "rename": "Umbenennen",
     "archive": "Archivieren",
@@ -1866,7 +2005,13 @@
       "updateUserSuccess": "Benutzerrolle aktualisiert zu {role}",
       "updateUserError": "Fehler beim Aktualisieren der Benutzerrolle: {error}",
       "removeUserSuccess": "Benutzer aus Team entfernt",
-      "removeUserError": "Fehler beim Entfernen des Benutzers aus Team: {error}"
+      "removeUserError": "Fehler beim Entfernen des Benutzers aus Team: {error}",
+      "createRoleSuccess": "Rolle \"{name}\" erfolgreich erstellt",
+      "createRoleError": "Fehler beim Erstellen der Rolle: {error}",
+      "updateRoleSuccess": "Rolle \"{name}\" erfolgreich aktualisiert",
+      "updateRoleError": "Fehler beim Aktualisieren der Rolle: {error}",
+      "deleteRoleSuccess": "Rolle erfolgreich gelöscht",
+      "deleteRoleError": "Fehler beim Löschen der Rolle: {error}"
     },
     "tokens": {
       "createSuccess": "Token \"{name}\" erfolgreich erstellt",

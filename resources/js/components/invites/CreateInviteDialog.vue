@@ -5,6 +5,7 @@ import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { InputField, SelectField, TextField } from '~/components/ui/form'
 import type { CreateInvitePayload } from '~/types/invites'
+import type { RoleCatalogEntry } from '~/types/authorization'
 
 const open = defineModel<boolean>('open')
 const { t } = useI18n()
@@ -13,6 +14,7 @@ const props = defineProps<{
   spaceId?: string
   teamId?: string
   resourceType: 'space' | 'team'
+  availableRoles?: RoleCatalogEntry[]
 }>()
 
 const { useCreateSpaceInviteMutation, useCreateTeamInviteMutation } = useInvites()
@@ -57,12 +59,10 @@ const handleSendInvite = async () => {
   }
 }
 
-const roles = ['member', 'editor', 'admin', 'owner'] as const
-
 const roleOptions = computed(() =>
-  roles.map((role) => ({
-    label: t(`labels.invites.filters.roles.${role}`),
-    value: role,
+  (props.availableRoles || []).map((role) => ({
+    label: role.name,
+    value: role.key,
   }))
 )
 </script>

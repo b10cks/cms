@@ -58,6 +58,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property-read int|null $teams_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Sanctum\PersonalAccessToken> $tokens
  * @property-read int|null $tokens_count
+ *
  * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User filter(\CodersCantina\Filter\Filter $filter)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
@@ -83,6 +84,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class User extends Authenticatable implements HasLocalePreference
@@ -108,7 +110,7 @@ class User extends Authenticatable implements HasLocalePreference
         'avatar',
         'source',
         'email_verified_at',
-        'language_iso'
+        'language_iso',
     ];
 
     /**
@@ -140,30 +142,30 @@ class User extends Authenticatable implements HasLocalePreference
     protected function twoFactorSecret(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $value ? decrypt($value) : null,
-            set: fn($value) => $value ? encrypt($value) : null,
+            get: fn ($value) => $value ? decrypt($value) : null,
+            set: fn ($value) => $value ? encrypt($value) : null,
         );
     }
 
     protected function twoFactorBackupCodes(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $value ? json_decode(decrypt($value), true) : null,
-            set: fn($value) => $value ? encrypt(json_encode($value)) : null,
+            get: fn ($value) => $value ? json_decode(decrypt($value), true) : null,
+            set: fn ($value) => $value ? encrypt(json_encode($value)) : null,
         );
     }
 
     public function spaces(): BelongsToMany
     {
         return $this->belongsToMany(Space::class, 'space_user')
-            ->withPivot(['role'])
+            ->withPivot(['role_id'])
             ->withTimestamps();
     }
 
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class, 'team_user')
-            ->withPivot(['role'])
+            ->withPivot(['role_id'])
             ->withTimestamps();
     }
 
@@ -174,13 +176,13 @@ class User extends Authenticatable implements HasLocalePreference
 
     protected function initials(): Attribute
     {
-        return Attribute::get(fn() => Str::substr($this->firstname ?? '', 0, 1)
-            . Str::substr($this->lastname ?? '', 0, 1));
+        return Attribute::get(fn () => Str::substr($this->firstname ?? '', 0, 1)
+            .Str::substr($this->lastname ?? '', 0, 1));
     }
 
     protected function displayName(): Attribute
     {
-        return Attribute::get(fn() => $this->firstname || $this->lastname ? $this->name : $this->email);
+        return Attribute::get(fn () => $this->firstname || $this->lastname ? $this->name : $this->email);
     }
 
     public function socialLinks(): HasMany
@@ -190,7 +192,7 @@ class User extends Authenticatable implements HasLocalePreference
 
     protected function name(): Attribute
     {
-        return Attribute::get(fn() => "{$this->firstname} {$this->lastname}");
+        return Attribute::get(fn () => "{$this->firstname} {$this->lastname}");
     }
 
     public function getSetting(string $key, $default = null)
@@ -216,7 +218,7 @@ class User extends Authenticatable implements HasLocalePreference
     protected function avatarUrl(): Attribute
     {
         return Attribute::get(function () {
-            if (!$this->avatar) {
+            if (! $this->avatar) {
                 return null;
             }
 

@@ -1,6 +1,7 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { api } from '~/api'
 import { useAuth } from '~/composables/useAuth'
 
 const routes: RouteRecordRaw[] = [
@@ -54,6 +55,11 @@ const routes: RouteRecordRaw[] = [
       {
         path: ':team',
         name: 'team',
+        component: () => import('~/pages/teams/[team].vue'),
+      },
+      {
+        path: ':team/roles',
+        name: 'team-roles',
         component: () => import('~/pages/teams/[team].vue'),
       },
     ],
@@ -199,6 +205,7 @@ const routes: RouteRecordRaw[] = [
         path: 'people',
         name: 'space-settings-people',
         component: () => import('~/pages/[space]/settings/people.vue'),
+        meta: { requiredAbility: 'space.members.manage' },
       },
       {
         path: 'backups',
@@ -263,6 +270,38 @@ router.beforeEach(async (to, _from, next) => {
       query: { return: to.fullPath },
     })
     return
+  }
+
+  const requiredAbility =
+    typeof to.meta.requiredAbility === 'string' ? to.meta.requiredAbility : null
+
+  if (requiredAbility) {
+    const params: Record<string, string> = {}
+
+    if (typeof to.params.space === 'string') {
+      params.space_id = to.params.space
+    }
+
+    if (typeof to.params.team === 'string') {
+      params.team_id = to.params.team
+    }
+
+    try {
+      const response = await api.authorization.get(params)
+      const abilities = [
+        ...(response.data.team?.abilities || []),
+        ...(response.data.space?.abilities || []),
+      ]
+
+      if (!response.data.is_root && !abilities.includes(requiredAbility)) {
+        next({ name: 'index' })
+        return
+      }
+    } catch (error) {
+      console.error('[Router] Authorization guard failed:', error)
+      next({ name: 'index' })
+      return
+    }
   }
 
   next()

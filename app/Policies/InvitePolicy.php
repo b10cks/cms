@@ -4,12 +4,17 @@ namespace App\Policies;
 
 use App\Models\Management\Invite;
 use App\Models\User;
+use App\Policies\Concerns\AuthorizesWithAbilities;
 
 class InvitePolicy
 {
+    use AuthorizesWithAbilities;
+
     public function viewAny(User $user): bool
     {
-        return $user->is_root || $user->teams()->exists() || $user->spaces()->exists();
+        return $user->is_root
+            || $this->authorization()->accessibleTeamIds($user) !== []
+            || $this->authorization()->accessibleSpaceIds($user) !== [];
     }
 
     public function view(User $user, Invite $invite): bool
@@ -47,17 +52,11 @@ class InvitePolicy
     private function canManageInvite(User $user, Invite $invite): bool
     {
         if ($invite->space_id) {
-            return $user->spaces()
-                ->wherePivotIn('role', ['owner', 'admin'])
-                ->where('spaces.id', $invite->space_id)
-                ->exists();
+            return $this->canInSpace($user, $invite->space, 'space.invites.manage');
         }
 
         if ($invite->team_id) {
-            return $user->teams()
-                ->wherePivotIn('role', ['admin', 'owner'])
-                ->where('teams.id', $invite->team_id)
-                ->exists();
+            return $this->canInTeam($user, $invite->team, 'team.invites.manage');
         }
 
         return false;

@@ -53,6 +53,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read int|null $tokens_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, User> $users
  * @property-read int|null $users_count
+ *
  * @method static \Database\Factories\Management\SpaceFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space filter(\CodersCantina\Filter\Filter $filter)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space newModelQuery()
@@ -74,16 +75,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Space withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class Space extends GlobalModel
 {
     use Auditable;
+
+    use Filterable;
     //    use BroadcastsModelEvents;
     use HasFactory;
     use HasPurifiedAttributes;
     use HasUlids;
-    use Filterable;
     use SoftDeletes;
 
     protected $table = 'spaces';
@@ -120,18 +123,18 @@ class Space extends GlobalModel
     protected function iconUrl(): Attribute
     {
         return Attribute::get(function () {
-            if (!$this->icon) {
+            if (! $this->icon) {
                 return null;
             }
 
-            return 'storage/' . $this->icon;
+            return 'storage/'.$this->icon;
         });
     }
 
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'space_user')
-            ->withPivot(['role'])
+            ->withPivot(['role_id'])
             ->withTimestamps();
     }
 

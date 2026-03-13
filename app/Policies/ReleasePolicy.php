@@ -5,15 +5,17 @@ namespace App\Policies;
 use App\Models\Management\Space;
 use App\Models\Space\Release;
 use App\Models\User;
+use App\Policies\Concerns\AuthorizesWithAbilities;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class ReleasePolicy
 {
+    use AuthorizesWithAbilities;
     use HandlesAuthorization;
 
     public function viewAny(User $user, Space $space): bool
     {
-        return $user->spaces()->where('spaces.id', $space->id)->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'releases.view');
     }
 
     public function view(User $user, Release $release, Space $space): bool
@@ -23,65 +25,41 @@ class ReleasePolicy
 
     public function create(User $user, Space $space): bool
     {
-        return ($user->spaces()
-            ->where('spaces.id', $space->id)
-            ->wherePivotIn('role', ['owner', 'admin', 'editor'])
-            ->exists()) || $user->is_root;
+        return $this->canInSpace($user, $space, 'releases.manage');
     }
 
     public function update(User $user, Release $release, Space $space): bool
     {
-        return ($user->spaces()
-            ->where('spaces.id', $space->id)
-            ->wherePivotIn('role', ['owner', 'admin', 'editor'])
-            ->exists()) || $user->is_root;
+        return $this->canInSpace($user, $space, 'releases.manage');
     }
 
     public function delete(User $user, Release $release, Space $space): bool
     {
-        return ($user->spaces()
-            ->where('spaces.id', $space->id)
-            ->wherePivotIn('role', ['owner', 'admin'])
-            ->exists()) || $user->is_root;
+        return $this->canInSpace($user, $space, 'releases.manage');
     }
 
     public function publish(User $user, Release $release, Space $space): bool
     {
-        return ($user->spaces()
-            ->where('spaces.id', $space->id)
-            ->wherePivotIn('role', ['owner', 'admin'])
-            ->exists()) || $user->is_root;
+        return $this->canInSpace($user, $space, 'releases.publish');
     }
 
     public function commit(User $user, Release $release, Space $space): bool
     {
-        return ($user->spaces()
-            ->where('spaces.id', $space->id)
-            ->wherePivotIn('role', ['owner', 'admin', 'editor'])
-            ->exists()) || $user->is_root;
+        return $this->canInSpace($user, $space, 'releases.manage');
     }
 
     public function cancel(User $user, Release $release, Space $space): bool
     {
-        return ($user->spaces()
-            ->where('spaces.id', $space->id)
-            ->wherePivotIn('role', ['owner', 'admin', 'editor'])
-            ->exists()) || $user->is_root;
+        return $this->canInSpace($user, $space, 'releases.manage');
     }
 
     public function assignVersions(User $user, Release $release, Space $space): bool
     {
-        return ($user->spaces()
-            ->where('spaces.id', $space->id)
-            ->wherePivotIn('role', ['owner', 'admin', 'editor'])
-            ->exists()) || $user->is_root;
+        return $this->canInSpace($user, $space, 'releases.manage');
     }
 
     public function removeVersions(User $user, Release $release, Space $space): bool
     {
-        return ($user->spaces()
-            ->where('spaces.id', $space->id)
-            ->wherePivotIn('role', ['owner', 'admin', 'editor'])
-            ->exists()) || $user->is_root;
+        return $this->canInSpace($user, $space, 'releases.manage');
     }
 }

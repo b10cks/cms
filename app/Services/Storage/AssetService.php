@@ -18,9 +18,7 @@ class AssetService
 {
     public function __construct(
         private readonly StorageService $storageService
-    )
-    {
-    }
+    ) {}
 
     public function storeAsset(Space $space, UploadedFile $file, object $metadata, object $data, ?AssetFolder $folder = null, ?string $externalId = null): Asset
     {
@@ -28,7 +26,7 @@ class AssetService
             $storage = $space->storages()->where('is_default', true)->firstOrFail();
             $filesystem = $this->storageService->getStorage($storage);
 
-            $asset = new Asset();
+            $asset = new Asset;
             $asset->external_id = $externalId;
             $asset->storage_id = $storage->id;
             $asset->data = $data;
@@ -54,7 +52,7 @@ class AssetService
             $asset->path = $relativePath;
 
             $extractedMetadata = $this->extractMetadata($file, $mimeType);
-            $asset->metadata = array_merge($extractedMetadata, (array)$metadata, [
+            $asset->metadata = array_merge($extractedMetadata, (array) $metadata, [
                 'original_filename' => $originalFilename,
             ]);
 
@@ -67,7 +65,7 @@ class AssetService
             if (Str::startsWith($mimeType, 'video/')) {
                 $thumbnailPaths = $this->generateVideoThumbnails($file, $space->id, $asset->id, $sanitizedFilename, $filesystem);
 
-                if (!empty($thumbnailPaths)) {
+                if (! empty($thumbnailPaths)) {
                     $asset->metadata = [...$asset->metadata, 'thumbnails' => $thumbnailPaths];
                 }
             }
@@ -90,20 +88,18 @@ class AssetService
     /**
      * Generate thumbnails for video at multiple positions
      *
-     * @param UploadedFile $file
-     * @param string $spaceId
-     * @param string $assetId
-     * @param string $baseName
-     * @param \League\Flysystem\FilesystemOperator $filesystem
-     * @return array
+     * @param  string  $spaceId
+     * @param  string  $assetId
+     * @param  string  $baseName
+     * @param  \League\Flysystem\FilesystemOperator  $filesystem
      */
     protected function generateVideoThumbnails(UploadedFile $file, $spaceId, $assetId, $baseName, $filesystem): array
     {
         try {
             $thumbnailPaths = [];
-            $tempDir = sys_get_temp_dir() . '/' . uniqid('video_thumbnails_');
+            $tempDir = sys_get_temp_dir().'/'.uniqid('video_thumbnails_');
 
-            if (!file_exists($tempDir)) {
+            if (! file_exists($tempDir)) {
                 mkdir($tempDir, 0777, true);
             }
 
@@ -128,7 +124,7 @@ class AssetService
                 ->format($file->getRealPath())
                 ->get('duration');
 
-            $duration = (float)$duration;
+            $duration = (float) $duration;
 
             // Determine thumbnail positions
             $positions = [
@@ -195,9 +191,6 @@ class AssetService
 
     /**
      * Format duration in seconds to a human-readable string
-     *
-     * @param float $seconds
-     * @return string
      */
     protected function formatDuration(float $seconds): string
     {
@@ -214,9 +207,6 @@ class AssetService
 
     /**
      * Sanitize a filename to make it safe for storage
-     *
-     * @param string $filename
-     * @return string
      */
     protected function sanitizeFilename(string $filename): string
     {
@@ -228,7 +218,7 @@ class AssetService
         $sanitized = substr($sanitized, 0, 80);
 
         if (empty($sanitized)) {
-            $sanitized = 'file_' . Str::random(8);
+            $sanitized = 'file_'.Str::random(8);
         }
 
         return $sanitized;
@@ -236,10 +226,6 @@ class AssetService
 
     /**
      * Extract metadata from a file based on its type
-     *
-     * @param UploadedFile $file
-     * @param string $mimeType
-     * @return array
      */
     protected function extractMetadata(UploadedFile $file, string $mimeType): array
     {
@@ -281,9 +267,6 @@ class AssetService
 
     /**
      * Extract metadata from an image file
-     *
-     * @param UploadedFile $file
-     * @return array
      */
     protected function extractImageMetadata(UploadedFile $file): array
     {
@@ -321,14 +304,11 @@ class AssetService
 
     /**
      * Extract metadata from a video file
-     *
-     * @param UploadedFile $file
-     * @return array
      */
     protected function extractVideoMetadata(UploadedFile $file): array
     {
         // Use getId3 for basic video info extraction
-        $getId3 = new getID3();
+        $getId3 = new getID3;
         $fileInfo = $getId3->analyze($file->getRealPath());
 
         $metadata = [
@@ -349,14 +329,11 @@ class AssetService
 
     /**
      * Extract metadata from an audio file
-     *
-     * @param UploadedFile $file
-     * @return array
      */
     protected function extractAudioMetadata(UploadedFile $file): array
     {
         // Use getId3 for audio info extraction
-        $getId3 = new getID3();
+        $getId3 = new getID3;
         $fileInfo = $getId3->analyze($file->getRealPath());
 
         $metadata = [
@@ -388,9 +365,6 @@ class AssetService
 
     /**
      * Extract metadata from a PDF file
-     *
-     * @param UploadedFile $file
-     * @return array
      */
     protected function extractPdfMetadata(UploadedFile $file): array
     {
@@ -405,9 +379,6 @@ class AssetService
 
     /**
      * Get general file type based on MIME type
-     *
-     * @param string $mimeType
-     * @return string
      */
     protected function getTypeFromMimeType(string $mimeType): string
     {
@@ -442,9 +413,6 @@ class AssetService
 
     /**
      * Get the URL for an asset
-     *
-     * @param Asset $asset
-     * @return string|null
      */
     public function getAssetUrl(Asset $asset): ?string
     {
@@ -467,23 +435,19 @@ class AssetService
 
     /**
      * Get the URL for a video thumbnail
-     *
-     * @param Asset $asset
-     * @param int $index
-     * @return string|null
      */
     public function getVideoThumbnailUrl(Asset $asset, int $index = 0): ?string
     {
         try {
             // Check if the asset has thumbnails
-            if (!isset($asset->metadata['thumbnails']) || empty($asset->metadata['thumbnails'][$index])) {
+            if (! isset($asset->metadata['thumbnails']) || empty($asset->metadata['thumbnails'][$index])) {
                 return null;
             }
 
             // Get the storage for this asset
             $storage = StorageModel::findOrFail($asset->storage_id);
 
-            if (!$storage) {
+            if (! $storage) {
                 throw new \Exception("Storage not found for asset: {$asset->id}");
             }
 
@@ -492,7 +456,7 @@ class AssetService
             $thumbnailPath = $asset->metadata['thumbnails'][$index]['path'];
 
             // Check if the thumbnail exists
-            if (!$filesystem->exists($thumbnailPath)) {
+            if (! $filesystem->exists($thumbnailPath)) {
                 return null;
             }
 
@@ -510,44 +474,62 @@ class AssetService
 
     /**
      * Delete an asset and all related files
-     *
-     * @param Asset $asset
-     * @return bool
      */
     public function deleteAsset(Asset $asset): bool
     {
         try {
             $storage = StorageModel::findOrFail($asset->storage_id);
-            if (!$storage) {
+            if (! $storage) {
                 throw new \Exception("Storage not found for asset: {$asset->id}");
             }
 
             $filesystem = $this->storageService->getStorage($storage);
             $directoryPath = dirname($asset->path);
-            if (!Str::startsWith($directoryPath, "{$storage->space_id}/{$asset->id}")) {
-                throw new \Exception("Invalid asset path: {$asset->path}");
+
+            $files = [];
+            if ($asset->path) {
+                $files[] = $asset->path;
             }
 
-            $files = $filesystem->listContents($directoryPath)
-                ->filter(function ($item) {
-                    return $item['type'] === 'file';
-                })
-                ->map(function ($item) {
-                    return $item['path'];
-                })
-                ->toArray();
-
-            foreach ($files as $file) {
-                $filesystem->delete($file);
+            foreach (($asset->metadata['thumbnails'] ?? []) as $thumbnail) {
+                if (! empty($thumbnail['path'])) {
+                    $files[] = $thumbnail['path'];
+                }
             }
 
-            try {
-                $filesystem->deleteDirectory($directoryPath);
-            } catch (\Throwable $e) {
-                Log::warning('Failed to delete asset directory', [
-                    'directory' => $directoryPath,
-                    'error' => $e->getMessage(),
-                ]);
+            if ($directoryPath !== '.' && $directoryPath !== '' && Str::startsWith($directoryPath, $storage->space_id)) {
+                $files = [
+                    ...$files,
+                    ...$filesystem->listContents($directoryPath)
+                        ->filter(function ($item) {
+                            return method_exists($item, 'isFile')
+                                ? $item->isFile()
+                                : data_get($item, 'type') === 'file';
+                        })
+                        ->map(function ($item) {
+                            return method_exists($item, 'path')
+                                ? $item->path()
+                                : data_get($item, 'path');
+                        })
+                        ->toArray(),
+                ];
+            }
+
+            foreach (array_values(array_unique(array_filter($files))) as $file) {
+                if ($filesystem->fileExists($file)) {
+                    $filesystem->delete($file);
+                }
+            }
+
+            if ($directoryPath !== '.' && $directoryPath !== '' && Str::startsWith($directoryPath, $storage->space_id)) {
+                try {
+                    $filesystem->deleteDirectory($directoryPath);
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to delete asset directory', [
+                        'directory' => $directoryPath,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
 
             return $asset->delete();
@@ -564,9 +546,7 @@ class AssetService
     /**
      * Rename an asset file and update its path.
      *
-     * @param Asset $asset
-     * @param string $newFilename (without extension)
-     * @return bool
+     * @param  string  $newFilename  (without extension)
      */
     public function rename(Asset &$asset, string $newFilename): bool
     {
@@ -577,7 +557,7 @@ class AssetService
             $oldPath = $asset->path;
             $extension = $asset->extension;
             $sanitizedFilename = $this->sanitizeFilename($newFilename);
-            $newBasename = $sanitizedFilename . '.' . $extension;
+            $newBasename = $sanitizedFilename.'.'.$extension;
             $newPath = str_replace(
                 basename($oldPath),
                 $newBasename,
@@ -589,14 +569,17 @@ class AssetService
                 $asset->path = $newPath;
                 $asset->filename = $sanitizedFilename;
                 $asset->save();
+
                 return true;
             }
+
             return false;
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Failed to rename asset', [
                 'asset' => $asset->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }

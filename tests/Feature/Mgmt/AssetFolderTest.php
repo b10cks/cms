@@ -23,7 +23,9 @@ class AssetFolderTest extends TestCase
     use WithFaker;
 
     protected User $user;
+
     protected Space $space;
+
     protected Storage $storage;
 
     protected function setUp(): void
@@ -35,7 +37,7 @@ class AssetFolderTest extends TestCase
         $this->space = Space::factory()->create();
 
         // Associate user with space as owner
-        $this->space->users()->attach($this->user, ['role' => 'owner']);
+        $this->assignSpaceRole($this->space, $this->user, 'owner');
 
         // Create a storage for the space
         $this->storage = Storage::factory()->create([
@@ -73,7 +75,7 @@ class AssetFolderTest extends TestCase
                 'parent_id',
                 'created_at',
                 'updated_at',
-            ]
+            ],
         ]);
 
         $this->assertDatabaseHas('asset_folders', [
@@ -290,7 +292,7 @@ class AssetFolderTest extends TestCase
     public function user_cannot_delete_folder_with_assets()
     {
         // Create a folder
-        $folder = AssetFolder::factory()->create([        ]);
+        $folder = AssetFolder::factory()->create([]);
 
         // Add an asset to the folder
         \App\Models\Space\Asset::factory()->create([

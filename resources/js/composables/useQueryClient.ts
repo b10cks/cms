@@ -49,6 +49,10 @@ export const queryKeys = {
     details: () => [...queryKeys.teams.all(), 'detail'] as const,
     detail: (id: MaybeRef<string>) => [...queryKeys.teams.details(), id] as const,
     hierarchy: () => [...queryKeys.teams.all(), 'hierarchy'] as const,
+    roles: (teamId: MaybeRef<string>) => ({
+      all: () => [...queryKeys.teams.detail(teamId), 'roles'] as const,
+      space: () => [...queryKeys.teams.roles(teamId).all(), 'space'] as const,
+    }),
     users: (teamId: MaybeRef<string>) => ({
       all: () => [...queryKeys.teams.detail(teamId), 'users'] as const,
       lists: () => [...queryKeys.teams.users(teamId).all(), 'list'] as const,
@@ -172,6 +176,10 @@ export const queryKeys = {
   users: {
     all: () => ['users'] as const,
     me: () => [...queryKeys.users.all(), 'me'] as const,
+  },
+  authorization: {
+    all: () => ['authorization'] as const,
+    context: (params: any = {}) => [...queryKeys.authorization.all(), params] as const,
   },
   personalAccessTokens: {
     all: () => ['users', 'me', 'tokens'] as const,

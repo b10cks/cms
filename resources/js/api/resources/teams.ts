@@ -1,13 +1,18 @@
 import type { ApiCollectionResponse, ApiResponse, BaseQueryParams } from '~/types'
 import type {
-  TeamResource,
+  CreateTeamSpaceRolePayload,
+  RoleCatalogEntry,
+  UpdateTeamSpaceRolePayload,
+} from '~/types/authorization'
+import type {
+  AddTeamUserPayload,
   CreateTeamPayload,
   UpdateTeamPayload,
   TeamHierarchyItem,
-  TeamUserResource,
-  AddTeamUserPayload,
-  UpdateTeamUserPayload,
+  TeamResource,
   TeamUserQueryParams,
+  TeamUserResource,
+  UpdateTeamUserPayload,
 } from '~/types/teams'
 
 import { BaseResource } from './base-resource'
@@ -65,5 +70,36 @@ export class Teams extends BaseResource<
       `/mgmt/v1/teams/${teamId}/users`,
       params as Record<string, unknown>
     )
+  }
+
+  public async getSpaceRoles(teamId: string): Promise<ApiCollectionResponse<RoleCatalogEntry>> {
+    return this.client.get<ApiCollectionResponse<RoleCatalogEntry>>(
+      `/mgmt/v1/teams/${teamId}/roles/space`
+    )
+  }
+
+  public async createSpaceRole(
+    teamId: string,
+    payload: CreateTeamSpaceRolePayload
+  ): Promise<ApiResponse<RoleCatalogEntry>> {
+    return this.client.post<ApiResponse<RoleCatalogEntry>>(
+      `/mgmt/v1/teams/${teamId}/roles/space`,
+      payload
+    )
+  }
+
+  public async updateSpaceRole(
+    teamId: string,
+    roleId: string,
+    payload: UpdateTeamSpaceRolePayload
+  ): Promise<ApiResponse<RoleCatalogEntry>> {
+    return this.client.patch<ApiResponse<RoleCatalogEntry>>(
+      `/mgmt/v1/teams/${teamId}/roles/space/${roleId}`,
+      payload
+    )
+  }
+
+  public async deleteSpaceRole(teamId: string, roleId: string): Promise<void> {
+    return this.client.delete(`/mgmt/v1/teams/${teamId}/roles/space/${roleId}`)
   }
 }

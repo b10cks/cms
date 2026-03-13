@@ -29,21 +29,21 @@ class SpaceStatsService
         $endDate = $options['end_date'] ?? Carbon::now();
         $cacheMinutes = $options['cache_minutes'] ?? 10;
 
-//        return Cache::remember(
-//            "space_stats:{$space->id}:{$periodType->value}:{$startDate->timestamp}:{$endDate->timestamp}",
-//            now()->addMinutes($cacheMinutes),
-//            function () use ($space, $periodType, $startDate, $endDate) {
-                return [
-                    'content' => $this->getContentStats($space, $startDate, $endDate),
-                    'assets' => $this->getAssetStats($space, $startDate, $endDate),
-                    'redirects' => $this->getRedirectStats($space, $startDate, $endDate),
-                    'data_sources' => $this->getDataSourceStats($space, $startDate, $endDate),
-                    'user_activity' => $this->getUserActivityStats($space, $startDate, $endDate),
-                    'system' => $this->getSystemStats($space, $startDate, $endDate),
-                    'trends' => $this->getTrendStats($space, $periodType, $startDate, $endDate),
-                ];
-//            }
-//        );
+        //        return Cache::remember(
+        //            "space_stats:{$space->id}:{$periodType->value}:{$startDate->timestamp}:{$endDate->timestamp}",
+        //            now()->addMinutes($cacheMinutes),
+        //            function () use ($space, $periodType, $startDate, $endDate) {
+        return [
+            'content' => $this->getContentStats($space, $startDate, $endDate),
+            'assets' => $this->getAssetStats($space, $startDate, $endDate),
+            'redirects' => $this->getRedirectStats($space, $startDate, $endDate),
+            'data_sources' => $this->getDataSourceStats($space, $startDate, $endDate),
+            'user_activity' => $this->getUserActivityStats($space, $startDate, $endDate),
+            'system' => $this->getSystemStats($space, $startDate, $endDate),
+            'trends' => $this->getTrendStats($space, $periodType, $startDate, $endDate),
+        ];
+        //            }
+        //        );
     }
 
     /**
@@ -67,7 +67,7 @@ class SpaceStatsService
                     'name' => $item->block->name ?? 'Unknown',
                     'icon' => $item->block->icon ?? null,
                     'color' => $item->block->color ?? null,
-                    'count' => $item->count
+                    'count' => $item->count,
                 ];
             });
 
@@ -93,7 +93,7 @@ class SpaceStatsService
                 'total' => $contents,
                 'published' => $published,
                 'draft' => $draft,
-                'blocks' => $blocks
+                'blocks' => $blocks,
             ],
             'by_type' => $contentByType,
             'creation_trend' => $contentCreationTrend,
@@ -113,10 +113,11 @@ class SpaceStatsService
             ->get()
             ->map(function ($item) {
                 $type = $this->categorizeAssetType($item->mime_type);
+
                 return [
                     'mime_type' => $item->mime_type,
                     'category' => $type,
-                    'count' => $item->count
+                    'count' => $item->count,
                 ];
             })
             ->groupBy('category')
@@ -124,7 +125,7 @@ class SpaceStatsService
                 return [
                     'category' => $category,
                     'count' => $items->sum('count'),
-                    'types' => $items->pluck('count', 'mime_type')->toArray()
+                    'types' => $items->pluck('count', 'mime_type')->toArray(),
                 ];
             })
             ->values();
@@ -146,7 +147,7 @@ class SpaceStatsService
                     'filename' => $asset->filename,
                     'size' => $asset->size,
                     'type' => $this->categorizeAssetType($asset->mime_type),
-                    'uploaded_at' => $asset->created_at->diffForHumans()
+                    'uploaded_at' => $asset->created_at->diffForHumans(),
                 ];
             });
 
@@ -163,7 +164,7 @@ class SpaceStatsService
                 return [
                     'date' => $item->date,
                     'count' => $item->count,
-                    'total_size' => (int) $item->total_size
+                    'total_size' => (int) $item->total_size,
                 ];
             })
             ->pluck(null, 'date')
@@ -190,8 +191,8 @@ class SpaceStatsService
     public function getRedirectStats(Space $space, Carbon $startDate, Carbon $endDate): array
     {
         $totalRedirects = Redirect::count();
-//        $activeRedirects = Redirect::where('is_active', true)->count();
-//        $inactiveRedirects = Redirect::where('is_active', false)->count();
+        //        $activeRedirects = Redirect::where('is_active', true)->count();
+        //        $inactiveRedirects = Redirect::where('is_active', false)->count();
 
         $redirectsByStatusCode = Redirect::select('status_code', DB::raw('count(*) as count'))
             ->groupBy('status_code')
@@ -209,7 +210,7 @@ class SpaceStatsService
                     'source' => $redirect->source,
                     'target' => $redirect->target,
                     'status_code' => $redirect->status_code,
-                    'created_at' => $redirect->created_at->diffForHumans()
+                    'created_at' => $redirect->created_at->diffForHumans(),
                 ];
             });
 
@@ -234,15 +235,15 @@ class SpaceStatsService
                     'id' => $redirect->id,
                     'source' => $redirect->source,
                     'target' => $redirect->target,
-                    'hits' => $redirect->hits
+                    'hits' => $redirect->hits,
                 ];
             });
 
         return [
             'count' => [
                 'total' => $totalRedirects,
-//                'active' => $activeRedirects,
-//                'inactive' => $inactiveRedirects,
+                //                'active' => $activeRedirects,
+                //                'inactive' => $inactiveRedirects,
             ],
             'by_status_code' => $redirectsByStatusCode,
             'recent_redirects' => $recentlyCreated,
@@ -259,7 +260,6 @@ class SpaceStatsService
         $totalDataSources = DataSource::count();
         $activeDataSources = DataSource::where('is_active', true)->count();
 
-
         $dataSourcesWithEntryCount = DataSource::withCount('entries')
             ->orderByDesc('entries_count')
             ->limit(10)
@@ -269,7 +269,7 @@ class SpaceStatsService
                     'id' => $dataSource->id,
                     'name' => $dataSource->name,
                     'is_active' => $dataSource->is_active,
-                    'entry_count' => $dataSource->entries_count
+                    'entry_count' => $dataSource->entries_count,
                 ];
             });
 
@@ -283,7 +283,7 @@ class SpaceStatsService
                 return [
                     'data_source_id' => $item->data_source_id,
                     'data_source_name' => $item->dataSource->name ?? 'Unknown',
-                    'count' => $item->count
+                    'count' => $item->count,
                 ];
             });
 
@@ -307,7 +307,7 @@ class SpaceStatsService
                 return [
                     'id' => $entry->id,
                     'data_source' => $entry->dataSource->name ?? 'Unknown',
-                    'created_at' => $entry->created_at->diffForHumans()
+                    'created_at' => $entry->created_at->diffForHumans(),
                 ];
             });
 
@@ -348,18 +348,18 @@ class SpaceStatsService
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'last_login' => $user->last_login_at?->diffForHumans()
+                    'last_login' => $user->last_login_at?->diffForHumans(),
                 ];
             });
 
         $roleDistribution = DB::table('space_user')
+            ->join('roles', 'roles.id', '=', 'space_user.role_id')
             ->where('space_id', $space->id)
-            ->select('role', DB::raw('count(*) as count'))
-            ->groupBy('role')
+            ->select('roles.key', DB::raw('count(*) as count'))
+            ->groupBy('roles.key')
             ->get()
-            ->pluck('count', 'role')
+            ->pluck('count', 'key')
             ->toArray();
-
 
         return [
             'total_users' => $users->count(),
@@ -548,7 +548,7 @@ class SpaceStatsService
                     $item->period => [
                         'count' => (int) $item->count,
                         'total_size' => (int) $item->size,
-                    ]
+                    ],
                 ];
             })
             ->toArray();
@@ -564,7 +564,6 @@ class SpaceStatsService
 
         return $result;
     }
-
 
     /**
      * Get API usage trend for a space
@@ -605,7 +604,7 @@ class SpaceStatsService
                     $item->period => [
                         'total_bytes' => (int) $item->total_bytes,
                         'request_count' => (int) $item->request_count,
-                    ]
+                    ],
                 ];
             })
             ->toArray();
@@ -627,7 +626,7 @@ class SpaceStatsService
      */
     private function categorizeAssetType(?string $mimeType): string
     {
-        if (!$mimeType) {
+        if (! $mimeType) {
             return 'unknown';
         }
 

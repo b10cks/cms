@@ -27,6 +27,7 @@ import {
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type { LaravelMeta } from '~/types'
+import type { RoleCatalogEntry } from '~/types/authorization'
 import type { TeamUserResource } from '~/types/teams'
 import TableEmptyRow from '../ui/TableEmptyRow.vue'
 
@@ -38,14 +39,14 @@ const props = withDefaults(
     currentPage: number
     perPage: number
     sortBy?: { column: string; direction: 'asc' | 'desc' }
-    availableRoles?: string[]
+    availableRoles?: RoleCatalogEntry[]
   }>(),
   {
     sortBy: () => ({
       column: 'firstname',
       direction: 'asc' as const,
     }),
-    availableRoles: () => ['owner', 'admin', 'editor', 'member', 'viewer'],
+    availableRoles: () => [],
   }
 )
 
@@ -88,8 +89,8 @@ const memberFilters = computed(() => [
     label: t('labels.teamMembers.filters.role'),
     operators: [{ value: 'eq' as const, label: t('labels.teamMembers.operators.equals') }],
     items: props.availableRoles.map((role) => ({
-      value: role,
-      label: t(`labels.invites.filters.roles.${role}`),
+      value: role.key,
+      label: role.name,
     })),
   },
 ])
@@ -326,10 +327,10 @@ const getInitials = (firstname: string, lastname: string) => {
                     <SelectContent>
                       <SelectItem
                         v-for="role in availableRoles"
-                        :key="role"
-                        :value="role"
+                        :key="role.key"
+                        :value="role.key"
                       >
-                        {{ $t(`labels.invites.filters.roles.${role}`) }}
+                        {{ role.name }}
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -341,7 +342,7 @@ const getInitials = (firstname: string, lastname: string) => {
                   class="cursor-pointer"
                   @click="editingRole = member.id"
                 >
-                  {{ member.role }}
+                  {{ availableRoles.find((role) => role.key === member.role)?.name || member.role }}
                 </Badge>
               </TableCell>
 

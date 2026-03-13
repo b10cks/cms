@@ -5,10 +5,17 @@ import CreateInviteDialog from '~/components/invites/CreateInviteDialog.vue'
 import SpaceInvitesList from '~/components/invites/SpaceInvitesList.vue'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
+import { useAuthorization } from '~/composables/useAuthorization'
 
 const route = useRoute()
 const { t } = useI18n()
 const spaceId = computed(() => route.params.space as string)
+const { useAuthorizationQuery, useAbility } = useAuthorization()
+const { data: authorization } = useAuthorizationQuery(computed(() => ({ space_id: spaceId.value })))
+const canManagePeople = useAbility(
+  computed(() => 'space.members.manage'),
+  computed(() => ({ space_id: spaceId.value }))
+)
 
 useSeoMeta({
   title: computed(() => t('labels.settings.people.title')),
@@ -38,6 +45,7 @@ const handleResendInvite = (inviteId: string) => {
     >
       <template #actions>
         <Button
+          v-if="canManagePeople"
           variant="primary"
           @click="inviteDialogOpen = true"
         >
@@ -49,12 +57,14 @@ const handleResendInvite = (inviteId: string) => {
 
     <SpaceInvitesList
       :space-id="spaceId"
+      :available-roles="authorization?.roles.space || []"
       @delete="handleDeleteInvite"
       @resend="handleResendInvite"
     />
 
     <CreateInviteDialog
       v-model:open="inviteDialogOpen"
+      :available-roles="authorization?.roles.space || []"
       :space-id="spaceId"
       resource-type="space"
     />

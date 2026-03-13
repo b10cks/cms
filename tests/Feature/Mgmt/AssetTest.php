@@ -26,7 +26,9 @@ class AssetTest extends TestCase
     use WithFaker;
 
     protected User $user;
+
     protected Space $space;
+
     protected Storage $storage;
 
     protected function setUp(): void
@@ -38,7 +40,7 @@ class AssetTest extends TestCase
         $this->space = Space::factory()->create();
 
         // Associate user with space as owner
-        $this->space->users()->attach($this->user, ['role' => 'owner']);
+        $this->assignSpaceRole($this->space, $this->user, 'owner');
 
         // Create a storage for the space
         $this->storage = Storage::factory()->create([
@@ -65,12 +67,12 @@ class AssetTest extends TestCase
         $file = UploadedFile::fake()->image('test-image.jpg', 1000, 1000);
 
         $response = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", [
-                'file' => $file,
-                'metadata' => [
-                    'description' => 'Test image description',
-                    'alt_text' => 'Alt text for image',
-                ],
-            ]);
+            'file' => $file,
+            'metadata' => [
+                'description' => 'Test image description',
+                'alt_text' => 'Alt text for image',
+            ],
+        ]);
 
         $response->assertStatus(201);
         $response->assertJsonStructure([
@@ -88,7 +90,7 @@ class AssetTest extends TestCase
 
         // Assert the file was stored
         $asset = Asset::first();
-//        LaravelStorage::disk($this->storage->id)->assertExists($asset->path);
+        //        LaravelStorage::disk($this->storage->id)->assertExists($asset->path);
 
         // Assert metadata was stored correctly
         $this->assertEquals('Test image description', $asset->metadata['description']);
@@ -246,11 +248,11 @@ class AssetTest extends TestCase
         ]);
 
         $response = $this->patchJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}", [
-                'metadata' => [
-                    'description' => 'Updated description',
-                    'new_field' => 'New value',
-                ],
-            ]);
+            'metadata' => [
+                'description' => 'Updated description',
+                'new_field' => 'New value',
+            ],
+        ]);
 
         $response->assertStatus(200);
 

@@ -24,8 +24,11 @@ class CommentControllerTest extends TestCase
     use WithFaker;
 
     protected User $owner;
+
     protected User $viewer;
+
     protected Space $space;
+
     protected Content $content;
 
     protected function setUp(): void
@@ -38,8 +41,8 @@ class CommentControllerTest extends TestCase
 
         // Create a space and assign users
         $this->space = Space::factory()->create();
-        $this->space->users()->attach($this->owner, ['role' => 'owner']);
-        $this->space->users()->attach($this->viewer, ['role' => 'viewer']);
+        $this->assignSpaceRole($this->space, $this->owner, 'owner');
+        $this->assignSpaceRole($this->space, $this->viewer, 'viewer');
 
         $this->setUpSpaceTesting($this->space);
 
@@ -62,7 +65,7 @@ class CommentControllerTest extends TestCase
         ]);
 
         // Update the version with the correct content_id
-        $this->content->current_version_id = $this->content->versions()->first()->id ?? 
+        $this->content->current_version_id = $this->content->versions()->first()->id ??
             ContentVersion::create(['content_id' => $this->content->id])->id;
         $this->content->save();
     }

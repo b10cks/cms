@@ -9,6 +9,7 @@ use App\Http\Resources\Management\AssetResource;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Models\Space\AssetFolder;
+use App\Services\Auth\AuthorizationService;
 use App\Services\Storage\AssetService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,11 +19,13 @@ use Illuminate\Support\Facades\Log;
 class AssetController extends Controller
 {
     use ExternalIdValidation;
+
     /**
      * Display a listing of assets.
      */
     public function index(Space $space, Request $request): ResourceCollection
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.view'), 403);
         $filter = new AssetFilter($request->all());
 
         $assets = Asset::filter($filter)
@@ -36,8 +39,9 @@ class AssetController extends Controller
      */
     public function store(Space $space, Request $request, AssetService $assetService): AssetResource|JsonResponse
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
         $request->validate([
-            'file' => 'required|file|max:' . (config('filesystems.max_upload_size', 100) * 1024),
+            'file' => 'required|file|max:'.(config('filesystems.max_upload_size', 100) * 1024),
             'external_id' => $this->externalIdRule(Asset::class),
             'folder_id' => 'nullable',
             'metadata' => 'nullable|array',
@@ -55,7 +59,7 @@ class AssetController extends Controller
             $asset = $assetService->storeAsset(
                 $space,
                 $request->file('file'),
-                (object)$request->json('metadata', new \StdClass),
+                (object) $request->json('metadata', new \StdClass),
                 $request->json('data', new \StdClass),
                 $folder,
                 $request->input('external_id')
@@ -69,7 +73,7 @@ class AssetController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Failed to store asset: ' . $e->getMessage()
+                'message' => 'Failed to store asset: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -79,6 +83,8 @@ class AssetController extends Controller
      */
     public function show(Space $space, Asset $asset): AssetResource
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.view'), 403);
+
         return new AssetResource($asset->load('folder'));
     }
 
@@ -87,6 +93,7 @@ class AssetController extends Controller
      */
     public function update(Request $request, Space $space, Asset $asset, AssetService $assetService): AssetResource|JsonResponse
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
         $request->validate([
             'filename' => 'sometimes|string|max:100',
             'external_id' => $this->externalIdRule(Asset::class, $asset->id),
@@ -134,6 +141,7 @@ class AssetController extends Controller
      */
     public function destroy(Space $space, Asset $asset, AssetService $assetService): JsonResponse
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
         try {
             $result = $assetService->deleteAsset($asset);
 
@@ -141,7 +149,7 @@ class AssetController extends Controller
                 return response()->json(null, 204);
             } else {
                 return response()->json([
-                    'message' => 'Failed to delete asset'
+                    'message' => 'Failed to delete asset',
                 ], 500);
             }
         } catch (\Exception $e) {

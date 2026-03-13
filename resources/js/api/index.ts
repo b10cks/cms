@@ -1,4 +1,5 @@
 import { Ai } from '~/api/resources/ai'
+import { Authorization } from '~/api/resources/authorization'
 import { Plans } from '~/api/resources/plans'
 import { Subscriptions } from '~/api/resources/subscriptions'
 import { BlockFolders } from '~/api/resources/block-folders'
@@ -32,6 +33,7 @@ import { Teams } from './resources/teams'
 export class API {
   public client: ApiClient
   private readonly _ai: Ai
+  private readonly _authorization: Authorization
   private readonly _plans: Plans
   private readonly _spaces: Spaces
   private readonly _teams: Teams
@@ -48,6 +50,7 @@ export class API {
   ) {
     this.client = new ApiClient(options)
     this._ai = new Ai(this.client)
+    this._authorization = new Authorization(this.client)
     this._plans = new Plans(this.client)
     this._spaces = new Spaces(this.client)
     this._teams = new Teams(this.client)
@@ -67,6 +70,10 @@ export class API {
 
   public get ai(): Ai {
     return this._ai
+  }
+
+  public get authorization(): Authorization {
+    return this._authorization
   }
 
   public get plans(): Plans {

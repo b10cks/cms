@@ -18,10 +18,15 @@ class DataEntryTest extends TestCase
     use WithFaker;
 
     protected User $owner;
+
     protected User $admin;
+
     protected User $editor;
+
     protected User $viewer;
+
     protected Space $space;
+
     protected DataSource $dataSource;
 
     protected function setUp(): void
@@ -36,10 +41,10 @@ class DataEntryTest extends TestCase
 
         // Create a space and assign users with different roles
         $this->space = Space::factory()->create();
-        $this->space->users()->attach($this->owner, ['role' => 'owner']);
-        $this->space->users()->attach($this->admin, ['role' => 'admin']);
-        $this->space->users()->attach($this->editor, ['role' => 'editor']);
-        $this->space->users()->attach($this->viewer, ['role' => 'viewer']);
+        $this->assignSpaceRole($this->space, $this->owner, 'owner');
+        $this->assignSpaceRole($this->space, $this->admin, 'admin');
+        $this->assignSpaceRole($this->space, $this->editor, 'editor');
+        $this->assignSpaceRole($this->space, $this->viewer, 'viewer');
 
         $this->setUpSpaceTesting($this->space);
 
@@ -52,8 +57,8 @@ class DataEntryTest extends TestCase
             ],
             'settings' => [
                 'fallback_dimension' => 'en',
-                'cache_ttl' => 3600
-            ]
+                'cache_ttl' => 3600,
+            ],
         ]);
     }
 
@@ -65,16 +70,16 @@ class DataEntryTest extends TestCase
         $response = $this->postJson(
             route('mgmt.data-sources.entries.store', [
                 'space' => $this->space->id,
-                'data_source' => $this->dataSource->id
+                'data_source' => $this->dataSource->id,
             ]),
             [
                 'key' => 'welcome_message',
                 'value' => 'Welcome to our site',
                 'dimensions' => [
                     'fr' => 'Bienvenue sur notre site',
-                    'de' => 'Willkommen auf unserer Website'
+                    'de' => 'Willkommen auf unserer Website',
                 ],
-                'is_active' => true
+                'is_active' => true,
             ]
         );
 
@@ -98,14 +103,14 @@ class DataEntryTest extends TestCase
         $response = $this->postJson(
             route('mgmt.data-sources.entries.store', [
                 'space' => $this->space->id,
-                'data_source' => $this->dataSource->id
+                'data_source' => $this->dataSource->id,
             ]),
             [
                 'key' => 'admin_message',
                 'value' => 'Created by admin',
                 'dimensions' => [
-                    'en' => 'Created by admin'
-                ]
+                    'en' => 'Created by admin',
+                ],
             ]
         );
 
@@ -120,14 +125,14 @@ class DataEntryTest extends TestCase
         $response = $this->postJson(
             route('mgmt.data-sources.entries.store', [
                 'space' => $this->space->id,
-                'data_source' => $this->dataSource->id
+                'data_source' => $this->dataSource->id,
             ]),
             [
                 'key' => 'editor_message',
                 'value' => 'Created by editor',
                 'dimensions' => [
-                    'en' => 'Created by editor'
-                ]
+                    'en' => 'Created by editor',
+                ],
             ]
         );
 
@@ -142,14 +147,14 @@ class DataEntryTest extends TestCase
         $response = $this->postJson(
             route('mgmt.data-sources.entries.store', [
                 'space' => $this->space->id,
-                'data_source' => $this->dataSource->id
+                'data_source' => $this->dataSource->id,
             ]),
             [
                 'key' => 'viewer_message',
                 'value' => 'Created by viewer',
                 'dimensions' => [
-                    'en' => 'Created by viewer'
-                ]
+                    'en' => 'Created by viewer',
+                ],
             ]
         );
 
@@ -165,13 +170,13 @@ class DataEntryTest extends TestCase
         $response = $this->postJson(
             route('mgmt.data-sources.entries.store', [
                 'space' => $this->space->id,
-                'data_source' => $this->dataSource->id
+                'data_source' => $this->dataSource->id,
             ]),
             [
                 'value' => 'Test value',
                 'dimensions' => [
-                    'en' => 'English value'
-                ]
+                    'en' => 'English value',
+                ],
             ]
         );
 
@@ -182,14 +187,14 @@ class DataEntryTest extends TestCase
         $response = $this->postJson(
             route('mgmt.data-sources.entries.store', [
                 'space' => $this->space->id,
-                'data_source' => $this->dataSource->id
+                'data_source' => $this->dataSource->id,
             ]),
             [
                 'key' => 'test_key',
                 'value' => 'Test value',
                 'dimensions' => [
-                    'es' => 'Spanish value' // 'es' is not in our data source dimensions
-                ]
+                    'es' => 'Spanish value', // 'es' is not in our data source dimensions
+                ],
             ]
         );
 
@@ -203,12 +208,12 @@ class DataEntryTest extends TestCase
 
         // Create some entries
         DataEntry::factory()->count(5)->create([
-            'data_source_id' => $this->dataSource->id
+            'data_source_id' => $this->dataSource->id,
         ]);
 
         $response = $this->getJson(route('mgmt.data-sources.entries.index', [
             'space' => $this->space->id,
-            'data_source' => $this->dataSource->id
+            'data_source' => $this->dataSource->id,
         ]));
 
         $response->assertStatus(200);
@@ -226,14 +231,14 @@ class DataEntryTest extends TestCase
             'value' => 'Test value',
             'dimensions' => [
                 'fr' => 'Valeur de test',
-                'de' => 'Testwert'
-            ]
+                'de' => 'Testwert',
+            ],
         ]);
 
         $response = $this->getJson(route('mgmt.data-sources.entries.show', [
             'space' => $this->space->id,
             'data_source' => $this->dataSource->id,
-            'entry' => $entry->id
+            'entry' => $entry->id,
         ]));
 
         $response->assertStatus(200);
@@ -252,20 +257,20 @@ class DataEntryTest extends TestCase
             'key' => 'update_test',
             'value' => 'Original value',
             'dimensions' => [
-                'en' => 'Original English'
-            ]
+                'en' => 'Original English',
+            ],
         ]);
 
         $response = $this->patchJson(route('mgmt.data-sources.entries.update', [
             'space' => $this->space->id,
             'data_source' => $this->dataSource->id,
-            'entry' => $entry->id
+            'entry' => $entry->id,
         ]), [
             'value' => 'Updated value',
             'dimensions' => [
                 'en' => 'Updated English',
-                'fr' => 'Updated French'
-            ]
+                'fr' => 'Updated French',
+            ],
         ]);
 
         $response->assertStatus(200);
@@ -274,7 +279,7 @@ class DataEntryTest extends TestCase
 
         $this->assertDatabaseHas('data_entries', [
             'id' => $entry->id,
-            'value' => 'Updated value'
+            'value' => 'Updated value',
         ]);
     }
 
@@ -286,15 +291,15 @@ class DataEntryTest extends TestCase
         $entry = DataEntry::factory()->create([
             'data_source_id' => $this->dataSource->id,
             'key' => 'editor_update_test',
-            'value' => 'Original value'
+            'value' => 'Original value',
         ]);
 
         $response = $this->patchJson(route('mgmt.data-sources.entries.update', [
             'space' => $this->space->id,
             'data_source' => $this->dataSource->id,
-            'entry' => $entry->id
+            'entry' => $entry->id,
         ]), [
-            'value' => 'Updated by editor'
+            'value' => 'Updated by editor',
         ]);
 
         $response->assertStatus(200);
@@ -308,15 +313,15 @@ class DataEntryTest extends TestCase
         $entry = DataEntry::factory()->create([
             'data_source_id' => $this->dataSource->id,
             'key' => 'viewer_update_test',
-            'value' => 'Original value'
+            'value' => 'Original value',
         ]);
 
         $response = $this->patchJson(route('mgmt.data-sources.entries.update', [
             'space' => $this->space->id,
             'data_source' => $this->dataSource->id,
-            'entry' => $entry->id
+            'entry' => $entry->id,
         ]), [
-            'value' => 'Updated by viewer'
+            'value' => 'Updated by viewer',
         ]);
 
         $response->assertStatus(403);
@@ -328,13 +333,13 @@ class DataEntryTest extends TestCase
         $this->actingAs($this->owner);
 
         $entry = DataEntry::factory()->create([
-            'data_source_id' => $this->dataSource->id
+            'data_source_id' => $this->dataSource->id,
         ]);
 
         $response = $this->deleteJson(route('mgmt.data-sources.entries.destroy', [
             'space' => $this->space->id,
             'data_source' => $this->dataSource->id,
-            'entry' => $entry->id
+            'entry' => $entry->id,
         ]));
 
         $response->assertStatus(204);
@@ -347,13 +352,13 @@ class DataEntryTest extends TestCase
         $this->actingAs($this->viewer);
 
         $entry = DataEntry::factory()->create([
-            'data_source_id' => $this->dataSource->id
+            'data_source_id' => $this->dataSource->id,
         ]);
 
         $response = $this->deleteJson(route('mgmt.data-sources.entries.destroy', [
             'space' => $this->space->id,
             'data_source' => $this->dataSource->id,
-            'entry' => $entry->id
+            'entry' => $entry->id,
         ]));
 
         $response->assertStatus(403);
@@ -367,18 +372,18 @@ class DataEntryTest extends TestCase
         // Create an entry
         DataEntry::factory()->create([
             'data_source_id' => $this->dataSource->id,
-            'key' => 'duplicate-key'
+            'key' => 'duplicate-key',
         ]);
 
         // Try to create another with the same key
         $response = $this->postJson(
             route('mgmt.data-sources.entries.store', [
                 'space' => $this->space->id,
-                'data_source' => $this->dataSource->id
+                'data_source' => $this->dataSource->id,
             ]),
             [
                 'key' => 'duplicate-key',
-                'value' => 'Another value'
+                'value' => 'Another value',
             ]
         );
 

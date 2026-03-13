@@ -19,6 +19,7 @@ import {
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { SimpleTooltip } from '~/components/ui/tooltip'
+import type { RoleCatalogEntry } from '~/types/authorization'
 import type { LaravelMeta } from '~/types'
 import type { InviteResource } from '~/types/invites'
 import { InviteStatus } from '~/types/invites.d'
@@ -32,12 +33,14 @@ const props = withDefaults(
     currentPage: number
     perPage: number
     sortBy?: { column: string; direction: 'asc' | 'desc' }
+    availableRoles?: RoleCatalogEntry[]
   }>(),
   {
     sortBy: () => ({
       column: 'created_at',
       direction: 'desc' as const,
     }),
+    availableRoles: () => [],
   }
 )
 
@@ -75,13 +78,10 @@ const inviteFilters = computed((): FilterableField[] => [
     id: 'role',
     label: t('labels.invites.filters.role'),
     operators: [{ value: 'eq' as const, label: t('labels.invites.operators.equals') }],
-    items: [
-      { value: 'owner', label: t('labels.invites.filters.roles.owner') },
-      { value: 'admin', label: t('labels.invites.filters.roles.admin') },
-      { value: 'editor', label: t('labels.invites.filters.roles.editor') },
-      { value: 'member', label: t('labels.invites.filters.roles.member') },
-      { value: 'viewer', label: t('labels.invites.filters.roles.viewer') },
-    ],
+    items: props.availableRoles.map((role) => ({
+        value: role.key,
+        label: role.name,
+      })),
   },
   {
     id: 'status',

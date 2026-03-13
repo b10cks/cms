@@ -11,17 +11,17 @@ class PublicInviteController extends Controller
 {
     public function show(Invite $invite): PublicInviteResource|JsonResponse
     {
-        $invite->load(['inviter', 'space', 'team']);
+        $invite->load(['inviter', 'space', 'team', 'roleDefinition']);
 
         if ($invite->isExpired()) {
             return response()->json([
-                'message' => 'The invitation has expired, please request a new one'
+                'message' => 'The invitation has expired, please request a new one',
             ], 410);
         }
 
         if ($invite->isAccepted()) {
             return response()->json([
-                'message' => 'The invitation has already been accepted'
+                'message' => 'The invitation has already been accepted',
             ], 410);
         }
 

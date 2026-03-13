@@ -6,7 +6,7 @@ use CodersCantina\Filter\AdvancedFilter;
 
 class InviteFilter extends AdvancedFilter
 {
-    protected array $sortableColumns = ['email', 'role', 'created_at', 'expires_at'];
+    protected array $sortableColumns = ['email', 'roles.key', 'created_at', 'expires_at'];
 
     public function email($value)
     {
@@ -15,7 +15,7 @@ class InviteFilter extends AdvancedFilter
 
     public function role($value)
     {
-        $this->applyDynamicFilter('role', $value);
+        $this->applyDynamicFilter('roles.key', $value);
     }
 
     public function status($value)

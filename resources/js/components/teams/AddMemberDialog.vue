@@ -11,9 +11,10 @@ import {
 } from '~/components/ui/dialog'
 import { InputField, SelectField } from '~/components/ui/form'
 import type { AddTeamUserPayload } from '~/types/teams'
+import type { RoleCatalogEntry } from '~/types/authorization'
 
 const props = defineProps<{
-  availableRoles?: string[]
+  availableRoles?: RoleCatalogEntry[]
 }>()
 
 const emit = defineEmits<{
@@ -31,9 +32,9 @@ const formData = ref<AddTeamUserPayload>({
 })
 
 const availableRolesList = computed(() =>
-  (props.availableRoles || ['owner', 'admin', 'editor', 'member', 'viewer']).map((role) => ({
-    value: role,
-    label: t(`labels.invites.filters.roles.${role}`),
+  (props.availableRoles || []).map((role) => ({
+    value: role.key,
+    label: role.name,
   }))
 )
 
