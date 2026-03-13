@@ -11,6 +11,8 @@ use App\Http\Resources\Management\SpaceResource;
 use App\Models\Management\Plan;
 use App\Models\Management\Space;
 use App\Models\Management\Subscription;
+use App\Models\Management\Team;
+use App\Services\Auth\AuthorizationService;
 use App\Services\LemonSqueezy\LemonSqueezyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,11 +27,14 @@ class SpaceController extends Controller
     public function index(Request $request): ResourceCollection
     {
         $this->authorize('viewAny', Space::class);
+        $user = auth()->user();
+        $accessibleSpaceIds = $user->is_root
+            ? []
+            : app(AuthorizationService::class)->accessibleSpaceIds($user);
+
         $spaces = Space::filter(SpaceFilter::fromRequest($request))
-            ->when(! auth()->user()->is_root, function ($query) {
-                $query->whereHas('users', function ($query) {
-                    $query->where('id', auth()->id());
-                })->orWhereIn('team_id', auth()->user()->teams()->wherePivotIn('role', ['member', 'admin', 'owner'])->pluck('id'));
+            ->when(! $user->is_root, function ($query) use ($accessibleSpaceIds) {
+                $query->whereIn('spaces.id', $accessibleSpaceIds);
             })
             ->withCount(['users'])
             ->paginate();
@@ -40,10 +45,17 @@ class SpaceController extends Controller
     /**
      * Store a newly created space in storage.
      */
-    public function store(CreateSpaceRequest $request, CreateSpace $action, LemonSqueezyService $ls): SpaceResource
-    {
-        // $this->authorize('create', Space::class);
+    public function store(
+        CreateSpaceRequest $request,
+        CreateSpace $action,
+        LemonSqueezyService $ls,
+        AuthorizationService $authorizationService,
+    ): SpaceResource {
         $validated = $request->validated();
+        if (! empty($validated['team_id'])) {
+            $team = Team::query()->findOrFail($validated['team_id']);
+            abort_unless($authorizationService->canInTeam(auth()->user(), $team, 'team.spaces.create'), 403);
+        }
         $planId = $validated['plan_id'] ?? null;
         unset($validated['plan_id']);
 
@@ -124,9 +136,13 @@ class SpaceController extends Controller
     /**
      * Update the specified space in storage.
      */
-    public function update(UpdateSpaceRequest $request, Space $space): SpaceResource
-    {
+    public function update(
+        UpdateSpaceRequest $request,
+        Space $space,
+        AuthorizationService $authorizationService,
+    ): SpaceResource {
         $this->authorize('update', $space);
+        $originalTeamId = $space->team_id;
         $space->fill($request->validated());
 
         if (! $space->save()) {
@@ -135,6 +151,15 @@ class SpaceController extends Controller
         }
 
         $space->loadCount(['users']);
+        if ($originalTeamId !== $space->team_id) {
+            if ($originalTeamId) {
+                $authorizationService->invalidateTeamTree(Team::query()->findOrFail($originalTeamId));
+            }
+            if ($space->team_id) {
+                $authorizationService->invalidateTeamTree($space->team()->firstOrFail());
+            }
+        }
+        $authorizationService->invalidateSpace($space);
 
         return new SpaceResource($space);
     }
@@ -142,7 +167,7 @@ class SpaceController extends Controller
     /**
      * Remove the specified space from storage.
      */
-    public function destroy(Space $space): JsonResponse
+    public function destroy(Space $space, AuthorizationService $authorizationService): JsonResponse
     {
         $this->authorize('delete', $space);
         try {
@@ -154,6 +179,7 @@ class SpaceController extends Controller
             }
 
             $space->delete();
+            $authorizationService->invalidateSpace($space);
 
             return response()->json(null, 204);
         } catch (\Exception $e) {

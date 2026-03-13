@@ -3,19 +3,34 @@
 namespace App\Services\Team;
 
 use App\Models\Management\Team;
+use App\Services\Auth\AuthorizationService;
+use App\Services\Auth\MembershipService;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class TeamService
 {
+    public function __construct(
+        private readonly MembershipService $membershipService,
+        private readonly AuthorizationService $authorizationService,
+    ) {}
+
     public function createTeam(array $data): Team
     {
-        return Team::create($data);
+        $team = Team::create($data);
+        $this->authorizationService->invalidateTeamTree($team);
+
+        return $team;
     }
 
     public function updateTeam(Team $team, array $data): Team
     {
+        $originalParentId = $team->parent_id;
         $team->update($data);
+
+        if ($originalParentId !== $team->parent_id) {
+            $this->authorizationService->invalidateTeamTree($team);
+        }
+
         return $team->fresh();
     }
 
@@ -50,22 +65,23 @@ class TeamService
 
     public function attachUser(Team $team, string $userId, ?string $role = null): void
     {
-        $team->users()->syncWithoutDetaching([
-            $userId => ['role' => $role, 'created_at' => now(), 'updated_at' => now()]
-        ]);
+        $this->membershipService->assignTeamRole($team, $userId, $role ?? 'member');
     }
 
     public function detachUser(Team $team, string $userId): void
     {
-        $team->users()->detach($userId);
+        $this->membershipService->removeTeamMembership($team, $userId);
     }
 
     public function updateUserRole(Team $team, string $userId, ?string $role): void
     {
-        $team->users()->updateExistingPivot($userId, [
-            'role' => $role,
-            'updated_at' => now()
-        ]);
+        if (! $role) {
+            $this->membershipService->removeTeamMembership($team, $userId);
+
+            return;
+        }
+
+        $this->membershipService->assignTeamRole($team, $userId, $role);
     }
 
     public function getTeamPath(Team $team): array
@@ -76,7 +92,7 @@ class TeamService
         while ($current) {
             array_unshift($path, [
                 'id' => $current->id,
-                'name' => $current->name
+                'name' => $current->name,
             ]);
             $current = $current->parent;
         }

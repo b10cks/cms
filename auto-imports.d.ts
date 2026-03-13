@@ -85,6 +85,7 @@ declare global {
   const useAssets: typeof import('./resources/js/composables/useAssets').useAssets
   const useAttrs: typeof import('vue').useAttrs
   const useAuth: typeof import('./resources/js/composables/useAuth').useAuth
+  const useAuthorization: typeof import('./resources/js/composables/useAuthorization').useAuthorization
   const useBackups: typeof import('./resources/js/composables/useBackups').useBackups
   const useBlockFolders: typeof import('./resources/js/composables/useBlockFolders').useBlockFolders
   const useBlockTags: typeof import('./resources/js/composables/useBlockTags').useBlockTags
@@ -270,6 +271,7 @@ declare module 'vue' {
     readonly useAssets: UnwrapRef<typeof import('./resources/js/composables/useAssets')['useAssets']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
     readonly useAuth: UnwrapRef<typeof import('./resources/js/composables/useAuth')['useAuth']>
+    readonly useAuthorization: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['useAuthorization']>
     readonly useBackups: UnwrapRef<typeof import('./resources/js/composables/useBackups')['useBackups']>
     readonly useBlockFolders: UnwrapRef<typeof import('./resources/js/composables/useBlockFolders')['useBlockFolders']>
     readonly useBlockTags: UnwrapRef<typeof import('./resources/js/composables/useBlockTags')['useBlockTags']>

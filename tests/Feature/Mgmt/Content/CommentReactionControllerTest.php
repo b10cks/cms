@@ -23,9 +23,13 @@ class CommentReactionControllerTest extends TestCase
     use WithFaker;
 
     protected User $owner;
+
     protected User $viewer;
+
     protected Space $space;
+
     protected Content $content;
+
     protected Comment $rootComment;
 
     protected function setUp(): void
@@ -38,8 +42,8 @@ class CommentReactionControllerTest extends TestCase
 
         // Create a space and assign users
         $this->space = Space::factory()->create();
-        $this->space->users()->attach($this->owner, ['role' => 'owner']);
-        $this->space->users()->attach($this->viewer, ['role' => 'viewer']);
+        $this->assignSpaceRole($this->space, $this->owner, 'owner');
+        $this->assignSpaceRole($this->space, $this->viewer, 'viewer');
 
         $this->setUpSpaceTesting($this->space);
 

@@ -18,17 +18,17 @@ class TeamMemberController extends Controller
 {
     public function index(Request $request, Team $team): ResourceCollection
     {
-        $this->authorize('view', $team);
+        $this->authorize('viewMembers', $team);
 
         $filter = new TeamMemberFilter($request->all());
 
         $members = $team->users()
+            ->leftJoin('roles', 'roles.id', '=', 'team_user.role_id')
             ->when($request->filled('role'), function ($query) use ($request) {
-                $query->wherePivot('role', $request->input('role'));
+                $query->where('roles.key', $request->input('role'));
             })
             ->filter($filter)
-            ->withPivot(['role'])
-            ->with(['teams', 'spaces'])
+            ->select('users.*', 'roles.key as role_key', 'team_user.created_at as joined_at')
             ->paginate($request->get('per_page', 20));
 
         return TeamMemberListResource::collection($members);
@@ -36,46 +36,48 @@ class TeamMemberController extends Controller
 
     public function update(Request $request, Team $team, User $user, UpdateTeamMemberRole $updateRole): Response|JsonResponse
     {
-        $this->authorize('update', $team);
+        $this->authorize('manageMembers', $team);
 
-        if (!$team->users()->where('users.id', $user->id)->exists()) {
+        if (! $team->users()->where('users.id', $user->id)->exists()) {
             return response()->json([
-                'message' => 'User is not a member of this team.'
+                'message' => 'User is not a member of this team.',
             ], 404);
         }
 
         $request->validate([
-            'role' => 'nullable|string|max:50'
+            'role' => 'nullable|string|max:50',
         ]);
 
         try {
             $updateRole->execute($team, $user, $request->role);
+
             return response()->noContent();
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to update member role.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 422);
         }
     }
 
     public function destroy(Team $team, User $user, RemoveTeamMemberAccess $removeAccess): Response|JsonResponse
     {
-        $this->authorize('update', $team);
+        $this->authorize('manageMembers', $team);
 
-        if (!$team->users()->where('users.id', $user->id)->exists()) {
+        if (! $team->users()->where('users.id', $user->id)->exists()) {
             return response()->json([
-                'message' => 'User is not a member of this team.'
+                'message' => 'User is not a member of this team.',
             ], 404);
         }
 
         try {
             $removeAccess->execute($team, $user);
+
             return response()->noContent();
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to remove member access.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 422);
         }
     }

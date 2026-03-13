@@ -4,21 +4,20 @@ namespace App\Policies;
 
 use App\Models\Management\Team;
 use App\Models\User;
+use App\Policies\Concerns\AuthorizesWithAbilities;
 
 class TeamPolicy
 {
+    use AuthorizesWithAbilities;
+
     public function viewAny(User $user): bool
     {
-        return $user->is_root || $user->teams()->exists();
+        return $user->is_root || $this->authorization()->accessibleTeamIds($user) !== [];
     }
 
     public function view(User $user, Team $team): bool
     {
-        if ($user->is_root) {
-            return true;
-        }
-
-        return $user->teams()->whereIn('teams.id', $this->getAccessibleTeamIds($user, $team))->exists();
+        return $this->canInTeam($user, $team, 'team.view');
     }
 
     public function create(User $user): bool
@@ -28,49 +27,36 @@ class TeamPolicy
 
     public function update(User $user, Team $team): bool
     {
-        if ($user->is_root) {
-            return true;
-        }
-
-        return $user->teams()
-            ->wherePivot('role', ['admin', 'owner'])
-            ->where('teams.id', $team->id)
-            ->exists();
+        return $this->canInTeam($user, $team, 'team.update');
     }
 
     public function delete(User $user, Team $team): bool
     {
-        if ($user->is_root) {
-            return true;
-        }
-
-        return $user->teams()
-            ->wherePivot('role', 'owner')
-            ->where('teams.id', $team->id)
-            ->exists();
+        return $this->canInTeam($user, $team, 'team.delete');
     }
 
-    private function getAccessibleTeamIds(User $user, Team $team): array
+    public function viewMembers(User $user, Team $team): bool
     {
-        $accessibleIds = [];
-
-        if ($user->teams()->where('teams.id', $team->id)->exists()) {
-            $accessibleIds[] = $team->id;
-        }
-
-        $this->addChildTeamIds($user, $team, $accessibleIds);
-
-        return $accessibleIds;
+        return $this->canInTeam($user, $team, 'team.members.view');
     }
 
-    private function addChildTeamIds(User $user, Team $team, array &$accessibleIds): void
+    public function manageMembers(User $user, Team $team): bool
     {
-        $childTeams = $team->children;
-        foreach ($childTeams as $child) {
-            if ($user->teams()->where('teams.id', $child->id)->exists()) {
-                $accessibleIds[] = $child->id;
-                $this->addChildTeamIds($user, $child, $accessibleIds);
-            }
-        }
+        return $this->canInTeam($user, $team, 'team.members.manage');
+    }
+
+    public function viewInvites(User $user, Team $team): bool
+    {
+        return $this->canInTeam($user, $team, 'team.invites.view');
+    }
+
+    public function manageInvites(User $user, Team $team): bool
+    {
+        return $this->canInTeam($user, $team, 'team.invites.manage');
+    }
+
+    public function manageSpaceRoles(User $user, Team $team): bool
+    {
+        return $this->canInTeam($user, $team, 'team.members.manage');
     }
 }

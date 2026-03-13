@@ -16,9 +16,7 @@ use Illuminate\Http\Response;
 
 class TeamController extends Controller
 {
-    public function __construct(private TeamService $teamService)
-    {
-    }
+    public function __construct(private TeamService $teamService) {}
 
     /**
      * Display a listing of teams
@@ -28,12 +26,12 @@ class TeamController extends Controller
         $this->authorize('viewAny', Team::class);
 
         $filter = new TeamFilter($request->all());
+        $user = auth()->user();
+        $accessibleTeamIds = app(\App\Services\Auth\AuthorizationService::class)->accessibleTeamIds($user);
 
         $teams = Team::filter($filter)
-            ->when(!auth()->user()->is_root, function ($query) {
-                $query->whereHas('users', function ($query) {
-                    $query->where('id', auth()->id());
-                });
+            ->when(! $user->is_root, function ($query) use ($accessibleTeamIds) {
+                $query->whereIn('teams.id', $accessibleTeamIds);
             })
             ->with(['parent'])
             ->withCount(['users', 'spaces', 'children'])
@@ -59,7 +57,7 @@ class TeamController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to create team.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -94,7 +92,7 @@ class TeamController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to update team.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -108,11 +106,12 @@ class TeamController extends Controller
 
         try {
             $this->teamService->deleteTeam($team);
+
             return response()->noContent();
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to delete team.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 422);
         }
     }

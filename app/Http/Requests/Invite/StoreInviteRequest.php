@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\Invite;
 
+use App\Models\Management\Space;
+use App\Models\Management\Team;
+use App\Services\Auth\RoleService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -14,14 +17,25 @@ class StoreInviteRequest extends FormRequest
 
     public function rules(): array
     {
+        $roleService = app(RoleService::class);
+        $team = $this->route('team');
+        $space = $this->route('space');
+
+        $allowedRoleKeys = [];
+        if ($team instanceof Team) {
+            $allowedRoleKeys = array_map(fn ($role) => $role->key, $roleService->teamCatalog()->all());
+        } elseif ($space instanceof Space) {
+            $allowedRoleKeys = array_map(
+                fn ($role) => $role->key,
+                $roleService->spaceCatalogForTeam($space->team)->all(),
+            );
+        }
+
         $roleRules = [
             'required',
             'string',
+            Rule::in($allowedRoleKeys),
         ];
-        if ($this->input('team_id')) {
-            $roleRules[] = Rule::in(['member', 'admin', 'owner', 'guest', 'space']);
-        }
-        // TODO: When space roles are implemented, validate the role against the space's allowed roles
 
         return [
             'email' => [
@@ -30,28 +44,15 @@ class StoreInviteRequest extends FormRequest
                 'max:255',
                 Rule::unique('invites', 'email')
                     ->where(function ($query) {
-                        if ($spaceId = $this->input('space_id')) {
-                            return $query->where('space_id', $spaceId);
+                        if ($space = $this->route('space')) {
+                            return $query->where('space_id', $space->id);
                         }
-                        if ($teamId = $this->input('team_id')) {
-                            return $query->where('team_id', $teamId);
+                        if ($team = $this->route('team')) {
+                            return $query->where('team_id', $team->id);
                         }
                     }),
             ],
-            'role' => [
-                'required',
-                'string',
-            ],
-            'space_id' => [
-                'nullable',
-                'string',
-                'exists:spaces,id'
-            ],
-            'team_id' => [
-                'nullable',
-                'string',
-                'exists:teams,id'
-            ],
+            'role' => $roleRules,
             'message' => 'nullable|string|max:1000',
             'expires_in_days' => 'nullable|integer|min:1|max:90',
         ];
@@ -59,7 +60,7 @@ class StoreInviteRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if (!$this->filled('expires_in_days')) {
+        if (! $this->filled('expires_in_days')) {
             $this->merge(['expires_in_days' => 7]);
         }
     }
@@ -70,9 +71,7 @@ class StoreInviteRequest extends FormRequest
             'email.required' => 'The email address is required.',
             'email.email' => 'The email address must be valid.',
             'role.required' => 'The role is required.',
-            'role.in' => 'The role must be one of: owner, admin, editor, member, viewer.',
-            'space_id.exists' => 'The selected space does not exist.',
-            'team_id.exists' => 'The selected team does not exist.',
+            'role.in' => 'The selected role is invalid for this invite.',
             'message.max' => 'The message may not be greater than 1000 characters.',
             'expires_in_days.min' => 'The invitation must expire in at least 1 day.',
             'expires_in_days.max' => 'The invitation may not expire in more than 90 days.',

@@ -4,72 +4,60 @@ namespace App\Policies;
 
 use App\Models\Management\Space;
 use App\Models\Space\Comment;
-use App\Models\Space\CommentReaction;
 use App\Models\User;
+use App\Policies\Concerns\AuthorizesWithAbilities;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class CommentPolicy
 {
+    use AuthorizesWithAbilities;
     use HandlesAuthorization;
 
     public function viewAny(User $user, Space $space): bool
     {
-        return $user->spaces()
-            ->where('spaces.id', $space->id)
-            ->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'comments.view');
     }
 
     public function view(User $user, Comment $comment, Space $space): bool
     {
-        return $user->spaces()
-            ->where('spaces.id', $space->id)
-            ->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'comments.view');
     }
 
     public function create(User $user, Space $space): bool
     {
-        return $user->spaces()
-            ->where('spaces.id', $space->id)
-            ->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'comments.create');
     }
 
     public function update(User $user, Comment $comment, Space $space): bool
     {
-        return ($comment->author_id === $user->id || $user->is_root);
+        return $user->is_root
+            || ($comment->author_id === $user->id && $this->canInSpace($user, $space, 'comments.update_own'));
     }
 
     public function delete(User $user, Comment $comment, Space $space): bool
     {
-        return ($comment->author_id === $user->id || $user->is_root);
+        return $user->is_root
+            || ($comment->author_id === $user->id && $this->canInSpace($user, $space, 'comments.delete_own'));
     }
 
     public function resolve(User $user, Comment $comment, Space $space): bool
     {
-        return ($comment->author_id === $user->id || $user->is_root)
-            && ($user->spaces()
-                ->where('spaces.id', $space->id)
-                ->exists() || $user->is_root);
+        return $user->is_root
+            || ($comment->author_id === $user->id && $this->canInSpace($user, $space, 'comments.resolve_own'));
     }
 
     public function unresolve(User $user, Comment $comment, Space $space): bool
     {
-        return ($comment->author_id === $user->id || $user->is_root)
-            && ($user->spaces()
-                ->where('spaces.id', $space->id)
-                ->exists() || $user->is_root);
+        return $this->resolve($user, $comment, $space);
     }
 
     public function react(User $user, Comment $comment, Space $space): bool
     {
-        return $user->is_root || $user->spaces()
-            ->where('spaces.id', $space->id)
-            ->exists();
+        return $this->canInSpace($user, $space, 'comments.react');
     }
 
     public function unreact(User $user, Comment $comment, Space $space): bool
     {
-        return $user->is_root || $user->spaces()
-            ->where('spaces.id', $space->id)
-            ->exists();
+        return $this->canInSpace($user, $space, 'comments.react');
     }
 }

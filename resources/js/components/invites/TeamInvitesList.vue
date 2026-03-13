@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import type { RoleCatalogEntry } from '~/types/authorization'
 import type { InviteQueryParams } from '~/types/invites'
 import InvitesList from './InvitesList.vue'
 
 const props = defineProps<{
   teamId: string
+  availableRoles?: RoleCatalogEntry[]
 }>()
 
 const emit = defineEmits<{
@@ -68,6 +70,7 @@ const handleFiltersUpdate = (filtersValue: Record<string, unknown>) => {
     :current-page="currentPage"
     :per-page="perPage"
     :sort-by="sortBy"
+    :available-roles="availableRoles"
     @delete="handleDelete"
     @resend="handleResend"
     @update:current-page="handleCurrentPageUpdate"

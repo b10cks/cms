@@ -22,7 +22,7 @@ class SpaceSubscriptionController extends Controller
      */
     public function index(Space $space): ResourceCollection
     {
-        $this->authorize('view', $space);
+        $this->authorize('viewBilling', $space);
 
         $subscriptions = Subscription::where('space_id', $space->id)
             ->with('plan')
@@ -37,7 +37,7 @@ class SpaceSubscriptionController extends Controller
      */
     public function current(Space $space): JsonResponse
     {
-        $this->authorize('view', $space);
+        $this->authorize('viewBilling', $space);
 
         // Return active subscription first; fall back to the most recent pending one
         // so the frontend can show a "payment pending" notice.
@@ -68,7 +68,7 @@ class SpaceSubscriptionController extends Controller
      */
     public function checkout(Request $request, Space $space): JsonResponse
     {
-        $this->authorize('update', $space);
+        $this->authorize('manageBilling', $space);
 
         $request->validate([
             'plan_id' => 'required|string|exists:plans,id',
@@ -225,7 +225,7 @@ class SpaceSubscriptionController extends Controller
      */
     public function reinit(Space $space): JsonResponse
     {
-        $this->authorize('update', $space);
+        $this->authorize('manageBilling', $space);
 
         $pending = Subscription::where('space_id', $space->id)
             ->where('status', 'pending')
@@ -278,7 +278,7 @@ class SpaceSubscriptionController extends Controller
      */
     public function cancel(Space $space): JsonResponse
     {
-        $this->authorize('update', $space);
+        $this->authorize('manageBilling', $space);
 
         $subscription = Subscription::where('space_id', $space->id)
             ->active()

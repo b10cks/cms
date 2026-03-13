@@ -5,10 +5,12 @@ namespace App\Policies;
 use App\Models\Management\Space;
 use App\Models\Space\Redirect;
 use App\Models\User;
+use App\Policies\Concerns\AuthorizesWithAbilities;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class RedirectPolicy
 {
+    use AuthorizesWithAbilities;
     use HandlesAuthorization;
 
     /**
@@ -16,10 +18,7 @@ class RedirectPolicy
      */
     public function viewAny(User $user, Space $space): bool
     {
-        // Anyone with access to the space can view redirects
-        return $user->spaces()
-                ->where('spaces.id', $space->id)
-                ->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'redirects.view');
     }
 
     /**
@@ -27,10 +26,7 @@ class RedirectPolicy
      */
     public function view(User $user, Redirect $redirect, Space $space): bool
     {
-        // Anyone with access to the space can view a specific redirect
-        return $user->spaces()
-                ->where('spaces.id', $space->id)
-                ->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'redirects.view');
     }
 
     /**
@@ -38,11 +34,7 @@ class RedirectPolicy
      */
     public function create(User $user, Space $space): bool
     {
-        // Only owners, admins, and editors can create redirects
-        return $user->spaces()
-                ->where('spaces.id', $space->id)
-                ->wherePivotIn('role', ['owner', 'admin', 'editor'])
-                ->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'redirects.manage');
     }
 
     /**
@@ -50,11 +42,7 @@ class RedirectPolicy
      */
     public function update(User $user, Redirect $redirect, Space $space): bool
     {
-        // Only owners, admins, and editors can update redirects
-        return $user->spaces()
-                ->where('spaces.id', $space->id)
-                ->wherePivotIn('role', ['owner', 'admin', 'editor'])
-                ->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'redirects.manage');
     }
 
     /**
@@ -62,10 +50,6 @@ class RedirectPolicy
      */
     public function delete(User $user, Redirect $redirect, Space $space): bool
     {
-        // Only owners, admins, and editors can delete redirects
-        return $user->spaces()
-                ->where('spaces.id', $space->id)
-                ->wherePivotIn('role', ['owner', 'admin', 'editor'])
-                ->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'redirects.manage');
     }
 }

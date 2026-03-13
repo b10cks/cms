@@ -1,8 +1,11 @@
 <?php
 
+use App\Enums\RoleScope;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 return new class extends Migration {
     public function up(): void
@@ -46,15 +49,37 @@ return new class extends Migration {
             $table->softDeletes();
         });
 
+        // Roles
+        Schema::create('roles', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->foreignUlid('team_id')->nullable()->constrained('teams')->cascadeOnDelete();
+            $table->string('scope', 20)->charset('ascii');
+            $table->string('key', 100)->charset('ascii');
+            $table->string('name', 150);
+            $table->text('description')->nullable();
+            $table->integer('level');
+            $table->boolean('is_system')->default(true);
+            $table->json('abilities');
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->unique(['scope', 'team_id', 'key']);
+            $table->index(['scope', 'team_id', 'key']);
+        });
+
+        $this->seedSystemRoles();
+
         // Team User Pivot
         Schema::create('team_user', function (Blueprint $table) {
             $table->foreignUlid('team_id')->constrained()->onDelete('cascade');
             $table->foreignUlid('user_id')->constrained()->onDelete('cascade');
+            $table->foreignUlid('role_id')->constrained('roles')->nullOnDelete();
 
-            $table->string('role', 50)->nullable()->charset('ascii');
             $table->timestamps();
 
             $table->unique(['team_id', 'user_id']);
+            $table->index(['team_id', 'user_id']);
+            $table->index('role_id');
         });
 
         // Spaces
@@ -131,11 +156,13 @@ return new class extends Migration {
         Schema::create('space_user', function (Blueprint $table) {
             $table->foreignUlid('space_id')->constrained()->onDelete('cascade');
             $table->foreignUlid('user_id')->constrained()->onDelete('cascade');
+            $table->foreignUlid('role_id')->constrained('roles')->nullOnDelete();
 
-            $table->string('role', 50)->nullable()->charset('ascii');
             $table->timestamps();
 
             $table->unique(['space_id', 'user_id']);
+            $table->index(['space_id', 'user_id']);
+            $table->index('role_id');
         });
 
         // Permissions
@@ -159,10 +186,10 @@ return new class extends Migration {
             $table->foreignUlid('team_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignUlid('invited_by')->constrained('users')->onDelete('cascade');
             $table->foreignUlid('invitee_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->foreignUlid('role_id')->constrained('roles')->nullOnDelete();
 
             $table->text('message')->nullable();
             $table->string('email');
-            $table->string('role');
             $table->string('token')->unique();
 
             $table->timestamp('expires_at');
@@ -172,6 +199,7 @@ return new class extends Migration {
 
             $table->unique(['space_id', 'email']);
             $table->unique(['team_id', 'email']);
+            $table->index('role_id');
         });
 
         // LemonSqueezy Subscriptions
@@ -323,7 +351,39 @@ return new class extends Migration {
         Schema::dropIfExists('storages');
         Schema::dropIfExists('spaces');
         Schema::dropIfExists('team_user');
+        Schema::dropIfExists('roles');
         Schema::dropIfExists('teams');
         Schema::dropIfExists('audit_logs');
+    }
+
+    private function seedSystemRoles(): void
+    {
+        $now = now();
+
+        foreach (config('authorization.roles') as $scope => $roles) {
+            foreach ($roles as $key => $definition) {
+                DB::table('roles')->updateOrInsert(
+                    [
+                        'scope' => $scope,
+                        'team_id' => null,
+                        'key' => $key,
+                    ],
+                    [
+                        'id' => DB::table('roles')
+                            ->where('scope', $scope)
+                            ->whereNull('team_id')
+                            ->where('key', $key)
+                            ->value('id') ?? (string) Str::ulid(),
+                        'name' => $definition['name'],
+                        'description' => $definition['description'],
+                        'level' => $definition['level'],
+                        'is_system' => true,
+                        'abilities' => json_encode($definition['abilities'], JSON_THROW_ON_ERROR),
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]
+                );
+            }
+        }
     }
 };

@@ -13,6 +13,7 @@ use App\Http\Controllers\Mgmt\AssetDataExportController;
 use App\Http\Controllers\Mgmt\AssetDataImportController;
 use App\Http\Controllers\Mgmt\AssetFolderController;
 use App\Http\Controllers\Mgmt\AssetTagController;
+use App\Http\Controllers\Mgmt\AuthorizationController;
 use App\Http\Controllers\Mgmt\BackupController;
 use App\Http\Controllers\Mgmt\BlockController;
 use App\Http\Controllers\Mgmt\BlockFolderController;
@@ -46,6 +47,7 @@ use App\Http\Controllers\Mgmt\SpaceController;
 use App\Http\Controllers\Mgmt\SpaceIconController;
 use App\Http\Controllers\Mgmt\SpaceInviteController;
 use App\Http\Controllers\Mgmt\SpaceInviteResendController;
+use App\Http\Controllers\Mgmt\SpaceRoleController;
 use App\Http\Controllers\Mgmt\SpaceSearchController;
 use App\Http\Controllers\Mgmt\SpaceStatsController;
 use App\Http\Controllers\Mgmt\SpaceSubscriptionController;
@@ -90,6 +92,8 @@ Route::group(['prefix' => 'users'], function () {
     });
 });
 
+Route::get('authorization', AuthorizationController::class)->name('authorization.show');
+
 Route::group(['prefix' => 'ai'], function () {
     Route::get('available-models', AvailableModelsController::class)
         ->name('ai.available-models');
@@ -110,6 +114,7 @@ Route::apiResource('teams', TeamController::class);
 
 Route::group(['prefix' => 'teams/{team}'], function () {
     Route::get('members', [TeamMemberController::class, 'index'])->name('teams.members.index');
+    Route::get('users', [TeamMemberController::class, 'index'])->name('teams.users.index');
     Route::patch('members/{user}', [TeamMemberController::class, 'update'])->name('teams.members.update');
     Route::delete('members/{user}', [TeamMemberController::class, 'destroy'])->name('teams.members.destroy');
 
@@ -121,6 +126,11 @@ Route::group(['prefix' => 'teams/{team}'], function () {
     Route::post('invites', [TeamInviteController::class, 'store'])->name('teams.invites.store');
     Route::delete('invites/{invite}', [TeamInviteController::class, 'destroy'])->name('teams.invites.destroy');
     Route::post('invites/{invite}/resend', TeamInviteResendController::class)->name('teams.invites.resend');
+
+    Route::get('roles/space', [SpaceRoleController::class, 'index'])->name('teams.roles.space.index');
+    Route::post('roles/space', [SpaceRoleController::class, 'store'])->name('teams.roles.space.store');
+    Route::patch('roles/space/{role}', [SpaceRoleController::class, 'update'])->name('teams.roles.space.update');
+    Route::delete('roles/space/{role}', [SpaceRoleController::class, 'destroy'])->name('teams.roles.space.destroy');
 });
 
 Route::apiResource('spaces', SpaceController::class);

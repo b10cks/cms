@@ -15,15 +15,25 @@ class TeamMemberListResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'user' => [
+                'id' => $this->id,
+                'firstname' => $this->firstname,
+                'lastname' => $this->lastname,
+                'name' => $this->name,
+                'email' => $this->email,
+                'avatar' => $this->avatar_url,
+                'initials' => $this->initials,
+            ],
             'firstname' => $this->firstname,
             'lastname' => $this->lastname,
             'name' => $this->name,
             'email' => $this->email,
             'avatar' => $this->avatar_url,
             'initials' => $this->initials,
-            'role' => $this->whenPivotLoaded('team_user', fn() => $this->pivot->role),
+            'role' => $this->role_key ?? null,
             'is_active' => $this->deleted_at === null,
             'last_login_at' => $this->last_login_at?->toIso8601String(),
+            'joined_at' => $this->joined_at ? \Illuminate\Support\Carbon::parse($this->joined_at)->toIso8601String() : null,
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

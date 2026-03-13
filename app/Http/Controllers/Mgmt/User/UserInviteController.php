@@ -23,7 +23,9 @@ class UserInviteController extends Controller
             $query->where('email', $user->email)
                 ->orWhere('invitee_id', $user->id);
         })
-            ->with(['inviter', 'space', 'team'])
+            ->leftJoin('roles', 'roles.id', '=', 'invites.role_id')
+            ->with(['inviter', 'space', 'team', 'roleDefinition'])
+            ->select('invites.*', 'roles.key as role_key')
             ->filter(InviteFilter::fromRequest($request))
             ->paginate();
 
@@ -36,7 +38,7 @@ class UserInviteController extends Controller
         abort_if($invite->email !== $user->email && $invite->invitee_id !== $user->id, 403);
 
         return new InviteResource(
-            $invite->load(['inviter', 'space', 'team'])
+            $invite->load(['inviter', 'space', 'team', 'roleDefinition'])
         );
     }
 
@@ -46,13 +48,13 @@ class UserInviteController extends Controller
         abort_if($request->input('token') !== $invite->token, 422);
 
         try {
-            if (!$acceptInvite->execute($invite, $user)) {
+            if (! $acceptInvite->execute($invite, $user)) {
                 return response()->json([
-                    'message' => 'The invitation cannot be accepted'
+                    'message' => 'The invitation cannot be accepted',
                 ], 422);
             }
 
-            return new InviteResource($invite->refresh()->load(['inviter', 'space', 'team']));
+            return new InviteResource($invite->refresh()->load(['inviter', 'space', 'team', 'roleDefinition']));
         } catch (\Exception $e) {
             Log::error('Failed to accept invite', [
                 'invite_id' => $invite->id,
@@ -61,7 +63,7 @@ class UserInviteController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'An error occurred while accepting the invite'
+                'message' => 'An error occurred while accepting the invite',
             ], 500);
         }
     }

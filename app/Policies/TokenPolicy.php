@@ -5,10 +5,12 @@ namespace App\Policies;
 use App\Models\Management\Space;
 use App\Models\Management\Token;
 use App\Models\User;
+use App\Policies\Concerns\AuthorizesWithAbilities;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class TokenPolicy
 {
+    use AuthorizesWithAbilities;
     use HandlesAuthorization;
 
     /**
@@ -16,10 +18,7 @@ class TokenPolicy
      */
     public function viewAny(User $user, Space $space): bool
     {
-        return $user->spaces()
-                ->where('spaces.id', $space->id)
-                ->wherePivotIn('role', ['owner', 'admin'])
-                ->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'space.tokens.view');
     }
 
     /**
@@ -27,12 +26,8 @@ class TokenPolicy
      */
     public function view(User $user, Token $token, Space $space): bool
     {
-        return $token->space_id === $space->id && (
-                $user->spaces()
-                    ->where('spaces.id', $space->id)
-                    ->wherePivotIn('role', ['owner', 'admin'])
-                    ->exists() || $user->is_root
-            );
+        return $token->space_id === $space->id
+            && $this->canInSpace($user, $space, 'space.tokens.view');
     }
 
     /**
@@ -40,10 +35,7 @@ class TokenPolicy
      */
     public function create(User $user, Space $space): bool
     {
-        return $user->spaces()
-                ->where('spaces.id', $space->id)
-                ->wherePivotIn('role', ['owner', 'admin'])
-                ->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'space.tokens.manage');
     }
 
     /**
@@ -51,11 +43,7 @@ class TokenPolicy
      */
     public function delete(User $user, Token $token, Space $space): bool
     {
-        return $token->space_id === $space->id && (
-                $user->spaces()
-                    ->where('spaces.id', $space->id)
-                    ->wherePivotIn('role', ['owner', 'admin'])
-                    ->exists() || $user->is_root
-            );
+        return $token->space_id === $space->id
+            && $this->canInSpace($user, $space, 'space.tokens.manage');
     }
 }

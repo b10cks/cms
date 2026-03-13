@@ -18,9 +18,13 @@ class DataSourceTest extends TestCase
     use WithFaker;
 
     protected User $owner;
+
     protected User $admin;
+
     protected User $editor;
+
     protected User $viewer;
+
     protected Space $space;
 
     protected function setUp(): void
@@ -35,10 +39,10 @@ class DataSourceTest extends TestCase
 
         // Create a space and assign users with different roles
         $this->space = Space::factory()->create();
-        $this->space->users()->attach($this->owner, ['role' => 'owner']);
-        $this->space->users()->attach($this->admin, ['role' => 'admin']);
-        $this->space->users()->attach($this->editor, ['role' => 'editor']);
-        $this->space->users()->attach($this->viewer, ['role' => 'viewer']);
+        $this->assignSpaceRole($this->space, $this->owner, 'owner');
+        $this->assignSpaceRole($this->space, $this->admin, 'admin');
+        $this->assignSpaceRole($this->space, $this->editor, 'editor');
+        $this->assignSpaceRole($this->space, $this->viewer, 'viewer');
 
         $this->setUpSpaceTesting($this->space);
     }
@@ -51,7 +55,7 @@ class DataSourceTest extends TestCase
         $dimensions = [
             ['key' => 'en', 'label' => 'English'],
             ['key' => 'fr', 'label' => 'French'],
-            ['key' => 'de', 'label' => 'German']
+            ['key' => 'de', 'label' => 'German'],
         ];
 
         $response = $this->postJson(
@@ -63,9 +67,9 @@ class DataSourceTest extends TestCase
                 'dimensions' => $dimensions,
                 'settings' => [
                     'fallback_dimension' => 'en',
-                    'cache_ttl' => 3600
+                    'cache_ttl' => 3600,
                 ],
-                'is_active' => true
+                'is_active' => true,
             ]
         );
 
@@ -92,7 +96,7 @@ class DataSourceTest extends TestCase
                 'slug' => 'admin-data-source',
                 'description' => 'Created by admin',
                 'dimensions' => [['key' => 'en', 'label' => 'English']],
-                'is_active' => true
+                'is_active' => true,
             ]
         );
 
@@ -111,7 +115,7 @@ class DataSourceTest extends TestCase
                 'slug' => 'editor-data-source',
                 'description' => 'Created by editor',
                 'dimensions' => [['key' => 'en', 'label' => 'English']],
-                'is_active' => true
+                'is_active' => true,
             ]
         );
 
@@ -130,7 +134,7 @@ class DataSourceTest extends TestCase
                 'slug' => 'viewer-data-source',
                 'description' => 'Created by viewer',
                 'dimensions' => [['key' => 'en', 'label' => 'English']],
-                'is_active' => true
+                'is_active' => true,
             ]
         );
 
@@ -176,13 +180,13 @@ class DataSourceTest extends TestCase
             'name' => 'Test Data Source',
             'dimensions' => [
                 ['key' => 'en', 'label' => 'English'],
-                ['key' => 'fr', 'label' => 'French']
-            ]
+                ['key' => 'fr', 'label' => 'French'],
+            ],
         ]);
 
         $response = $this->getJson(route('mgmt.data-sources.show', [
             'space' => $this->space->id,
-            'data_source' => $dataSource->id
+            'data_source' => $dataSource->id,
         ]));
 
         $response->assertStatus(200);
@@ -197,17 +201,17 @@ class DataSourceTest extends TestCase
 
         $dataSource = DataSource::factory()->create([
             'name' => 'Original Name',
-            'dimensions' => [['key' => 'en', 'label' => 'English']]
+            'dimensions' => [['key' => 'en', 'label' => 'English']],
         ]);
 
         $response = $this->patchJson(route('mgmt.data-sources.update', [
             'space' => $this->space->id,
-            'data_source' => $dataSource->id
+            'data_source' => $dataSource->id,
         ]), [
             'name' => 'Updated Name',
             'dimensions' => [['key' => 'en', 'label' => 'English'],
                 ['key' => 'fr', 'label' => 'French']],
-            'settings' => ['fallback_dimension' => 'en']
+            'settings' => ['fallback_dimension' => 'en'],
         ]);
 
         $response->assertStatus(200);
@@ -216,7 +220,7 @@ class DataSourceTest extends TestCase
 
         $this->assertDatabaseHas('data_sources', [
             'id' => $dataSource->id,
-            'name' => 'Updated Name'
+            'name' => 'Updated Name',
         ]);
     }
 
@@ -226,14 +230,14 @@ class DataSourceTest extends TestCase
         $this->actingAs($this->editor);
 
         $dataSource = DataSource::factory()->create([
-            'name' => 'Original Name'
+            'name' => 'Original Name',
         ]);
 
         $response = $this->patchJson(route('mgmt.data-sources.update', [
             'space' => $this->space->id,
-            'data_source' => $dataSource->id
+            'data_source' => $dataSource->id,
         ]), [
-            'name' => 'Updated By Editor'
+            'name' => 'Updated By Editor',
         ]);
 
         $response->assertStatus(403);
@@ -248,7 +252,7 @@ class DataSourceTest extends TestCase
 
         $response = $this->deleteJson(route('mgmt.data-sources.destroy', [
             'space' => $this->space->id,
-            'data_source' => $dataSource->id
+            'data_source' => $dataSource->id,
         ]));
 
         $response->assertStatus(204);
@@ -264,7 +268,7 @@ class DataSourceTest extends TestCase
 
         $response = $this->deleteJson(route('mgmt.data-sources.destroy', [
             'space' => $this->space->id,
-            'data_source' => $dataSource->id
+            'data_source' => $dataSource->id,
         ]));
 
         $response->assertStatus(403);
@@ -277,7 +281,7 @@ class DataSourceTest extends TestCase
 
         // Create a data source
         DataSource::factory()->create([
-            'slug' => 'duplicate-slug'
+            'slug' => 'duplicate-slug',
         ]);
 
         // Try to create another with the same slug
@@ -286,7 +290,7 @@ class DataSourceTest extends TestCase
             [
                 'name' => 'Another Source',
                 'slug' => 'duplicate-slug',
-                'dimensions' => [['key' => 'en', 'label' => 'English']]
+                'dimensions' => [['key' => 'en', 'label' => 'English']],
             ]
         );
 

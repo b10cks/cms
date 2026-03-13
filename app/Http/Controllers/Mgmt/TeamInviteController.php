@@ -18,19 +18,21 @@ class TeamInviteController extends Controller
 {
     public function index(Team $team, Request $request): ResourceCollection
     {
-        $this->authorize('update', $team);
+        $this->authorize('viewInvites', $team);
 
         $invites = Invite::filter(InviteFilter::fromRequest($request))
+            ->leftJoin('roles', 'roles.id', '=', 'invites.role_id')
             ->where('team_id', $team->id)
-            ->with(['inviter', 'invitee'])
+            ->with(['inviter', 'invitee', 'roleDefinition'])
+            ->select('invites.*', 'roles.key as role_key')
             ->paginate();
 
         return InviteResource::collection($invites);
     }
 
-    public function store(StoreInviteRequest $request, Team $team, CreateInvite $createInvite): JsonResponse|InviteResource
+    public function store(StoreInviteRequest $request, Team $team, CreateInvite $createInvite): JsonResponse
     {
-        $this->authorize('update', $team);
+        $this->authorize('manageInvites', $team);
 
         try {
             $invite = $createInvite->execute(
@@ -44,7 +46,9 @@ class TeamInviteController extends Controller
                 auth()->user()
             );
 
-            return new InviteResource($invite);
+            return (new InviteResource($invite->loadMissing(['roleDefinition', 'inviter', 'invitee'])))
+                ->response()
+                ->setStatusCode(201);
         } catch (\Exception $e) {
             Log::error('Failed to create team invite', [
                 'team_id' => $team->id,
@@ -53,7 +57,7 @@ class TeamInviteController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'An error occurred while creating the invite'
+                'message' => 'An error occurred while creating the invite',
             ], 500);
         }
     }
@@ -64,7 +68,7 @@ class TeamInviteController extends Controller
 
         if ($invite->team_id !== $team->id) {
             return response()->json([
-                'message' => 'The invite does not belong to this team'
+                'message' => 'The invite does not belong to this team',
             ], 404);
         }
 
@@ -80,7 +84,7 @@ class TeamInviteController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'An error occurred while revoking the invite'
+                'message' => 'An error occurred while revoking the invite',
             ], 500);
         }
     }

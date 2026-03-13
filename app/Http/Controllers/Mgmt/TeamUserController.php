@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Mgmt;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Management\TeamMemberListResource;
 use App\Models\Management\Team;
+use App\Models\User;
 use App\Services\Team\TeamService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,13 +20,13 @@ class TeamUserController extends Controller
     /**
      * Attach user to team
      */
-    public function store(Request $request, Team $team): Response|JsonResponse
+    public function store(Request $request, Team $team): TeamMemberListResource|JsonResponse
     {
-        $this->authorize('update', $team);
+        $this->authorize('manageMembers', $team);
 
         $request->validate([
             'user_id' => 'required|string|exists:users,id',
-            'role' => 'nullable|string|max:50'
+            'role' => 'nullable|string|max:50',
         ]);
 
         try {
@@ -34,11 +36,11 @@ class TeamUserController extends Controller
                 $request->role
             );
 
-            return response()->noContent();
+            return new TeamMemberListResource($this->loadTeamUser($team, $request->user_id));
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to attach user to team.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -46,21 +48,22 @@ class TeamUserController extends Controller
     /**
      * Update user role in team
      */
-    public function update(Request $request, Team $team, string $userId): Response|JsonResponse
+    public function update(Request $request, Team $team, string $userId): TeamMemberListResource|JsonResponse
     {
-        $this->authorize('update', $team);
+        $this->authorize('manageMembers', $team);
 
         $request->validate([
-            'role' => 'nullable|string|max:50'
+            'role' => 'nullable|string|max:50',
         ]);
 
         try {
             $this->teamService->updateUserRole($team, $userId, $request->role);
-            return response()->noContent();
+
+            return new TeamMemberListResource($this->loadTeamUser($team, $userId));
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to update user role.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 422);
         }
     }
@@ -70,16 +73,26 @@ class TeamUserController extends Controller
      */
     public function destroy(Team $team, string $userId): Response|JsonResponse
     {
-        $this->authorize('update', $team);
+        $this->authorize('manageMembers', $team);
 
         try {
             $this->teamService->detachUser($team, $userId);
+
             return response()->noContent();
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to detach user from team.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 422);
         }
+    }
+
+    private function loadTeamUser(Team $team, string $userId): User
+    {
+        return $team->users()
+            ->leftJoin('roles', 'roles.id', '=', 'team_user.role_id')
+            ->select('users.*', 'roles.key as role_key', 'team_user.created_at as joined_at')
+            ->where('users.id', $userId)
+            ->firstOrFail();
     }
 }

@@ -18,19 +18,21 @@ class SpaceInviteController extends Controller
 {
     public function index(Space $space, Request $request): ResourceCollection
     {
-        $this->authorize('update', $space);
+        $this->authorize('viewInvites', $space);
 
         $invites = Invite::filter(InviteFilter::fromRequest($request))
+            ->leftJoin('roles', 'roles.id', '=', 'invites.role_id')
             ->where('space_id', $space->id)
-            ->with(['inviter', 'invitee'])
+            ->with(['inviter', 'invitee', 'roleDefinition'])
+            ->select('invites.*', 'roles.key as role_key')
             ->paginate();
 
         return InviteResource::collection($invites);
     }
 
-    public function store(StoreInviteRequest $request, Space $space, CreateInvite $createInvite): JsonResponse|InviteResource
+    public function store(StoreInviteRequest $request, Space $space, CreateInvite $createInvite): JsonResponse
     {
-        $this->authorize('update', $space);
+        $this->authorize('manageInvites', $space);
 
         try {
             $invite = $createInvite->execute(
@@ -44,7 +46,9 @@ class SpaceInviteController extends Controller
                 auth()->user()
             );
 
-            return new InviteResource($invite);
+            return (new InviteResource($invite->loadMissing(['roleDefinition', 'inviter', 'invitee'])))
+                ->response()
+                ->setStatusCode(201);
         } catch (\Exception $e) {
             Log::error('Failed to create space invite', [
                 'space_id' => $space->id,
@@ -53,7 +57,7 @@ class SpaceInviteController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'An error occurred while creating the invite'
+                'message' => 'An error occurred while creating the invite',
             ], 500);
         }
     }
@@ -64,7 +68,7 @@ class SpaceInviteController extends Controller
 
         if ($invite->space_id !== $space->id) {
             return response()->json([
-                'message' => 'The invite does not belong to this space'
+                'message' => 'The invite does not belong to this space',
             ], 404);
         }
 
@@ -80,7 +84,7 @@ class SpaceInviteController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'An error occurred while revoking the invite'
+                'message' => 'An error occurred while revoking the invite',
             ], 500);
         }
     }

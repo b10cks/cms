@@ -6,47 +6,36 @@ use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\BlockVersion;
 use App\Models\User;
+use App\Policies\Concerns\AuthorizesWithAbilities;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class BlockVersionPolicy
 {
+    use AuthorizesWithAbilities;
     use HandlesAuthorization;
 
     public function viewAny(User $user, Space $space, Block $block): bool
     {
-        return $user->spaces()
-            ->where('spaces.id', $space->id)
-            ->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'block_versions.view');
     }
 
     public function view(User $user, BlockVersion $version, Space $space): bool
     {
-        return $user->spaces()
-            ->where('spaces.id', $space->id)
-            ->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'block_versions.view');
     }
 
     public function delete(User $user, BlockVersion $version, Space $space): bool
     {
-        return $user->spaces()
-            ->where('spaces.id', $space->id)
-            ->wherePivotIn('role', ['owner', 'admin'])
-            ->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'block_versions.manage');
     }
 
     public function updateCommit(User $user, BlockVersion $version, Space $space): bool
     {
-        return $user->spaces()
-            ->where('spaces.id', $space->id)
-            ->wherePivotIn('role', ['owner', 'admin'])
-            ->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'block_versions.manage');
     }
 
     public function restore(User $user, BlockVersion $version, Space $space): bool
     {
-        return $user->spaces()
-            ->where('spaces.id', $space->id)
-            ->wherePivotIn('role', ['owner', 'admin'])
-            ->exists() || $user->is_root;
+        return $this->canInSpace($user, $space, 'block_versions.manage');
     }
 }

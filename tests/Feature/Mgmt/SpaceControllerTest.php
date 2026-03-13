@@ -16,13 +16,17 @@ use Tests\Traits\SpaceTestingTrait;
 #[CoversClass(SpaceController::class)]
 class SpaceControllerTest extends TestCase
 {
-    use SpaceTestingTrait;
     use LazilyRefreshDatabase;
+    use SpaceTestingTrait;
 
     protected User $user;
+
     protected User $admin;
+
     protected User $owner;
+
     protected User $rootUser;
+
     protected Space $space;
 
     protected function setUp(): void
@@ -39,10 +43,9 @@ class SpaceControllerTest extends TestCase
         $this->space = Space::factory()->withLive()->create();
 
         // Attach users to the space with different roles
-        $this->space->users()->attach($this->user, ['role' => 'member']);
-        $this->space->users()->attach($this->admin, ['role' => 'admin']);
-        $this->space->users()->attach($this->owner, ['role' => 'owner']);
-
+        $this->assignSpaceRole($this->space, $this->user, 'member');
+        $this->assignSpaceRole($this->space, $this->admin, 'admin');
+        $this->assignSpaceRole($this->space, $this->owner, 'owner');
 
         $this->setUpSpaceTesting($this->space);
     }
@@ -54,7 +57,7 @@ class SpaceControllerTest extends TestCase
 
         $spaces = Space::factory()->withLive()->count(3)->create();
         foreach ($spaces as $space) {
-            $space->users()->attach($this->user, ['role' => 'member']);
+            $this->assignSpaceRole($space, $this->user, 'member');
         }
 
         $response = $this->getJson(route('mgmt.spaces.index'));
@@ -65,15 +68,15 @@ class SpaceControllerTest extends TestCase
             'data' => [
                 '*' => [
                     'id', 'name', 'slug', 'icon', 'color', 'description',
-                    'settings', 'user_count', 'created_at', 'updated_at'
-                ]
+                    'settings', 'user_count', 'created_at', 'updated_at',
+                ],
             ],
             'links',
-            'meta'
+            'meta',
         ]);
     }
 
-//    #[Test]
+    //    #[Test]
     public function user_can_create_a_space()
     {
         Queue::fake();
@@ -88,7 +91,7 @@ class SpaceControllerTest extends TestCase
             'settings' => [
                 'timezone' => 'UTC',
                 'default_language' => 'en',
-            ]
+            ],
         ];
 
         $response = $this->postJson(route('mgmt.spaces.store'), $spaceData);
@@ -97,8 +100,8 @@ class SpaceControllerTest extends TestCase
         $response->assertJsonStructure([
             'data' => [
                 'id', 'name', 'slug', 'icon', 'color', 'description',
-                'settings', 'created_at', 'updated_at'
-            ]
+                'settings', 'created_at', 'updated_at',
+            ],
         ]);
 
         $this->assertDatabaseHas('spaces', [
@@ -108,11 +111,7 @@ class SpaceControllerTest extends TestCase
 
         // Check if the user was attached to the space as an owner
         $spaceId = $response->json('data.id');
-        $this->assertDatabaseHas('space_users', [
-            'space_id' => $spaceId,
-            'user_id' => $this->user->id,
-            'role' => 'owner',
-        ]);
+        $this->assertSpaceRole(Space::query()->findOrFail($spaceId), $this->user, 'owner');
     }
 
     #[Test]
@@ -129,7 +128,7 @@ class SpaceControllerTest extends TestCase
         $response->assertJsonValidationErrors(['name', 'slug']);
     }
 
-//    #[Test]
+    //    #[Test]
     public function user_cannot_create_a_space_with_duplicate_slug()
     {
         $this->actingAs($this->user);
@@ -155,15 +154,15 @@ class SpaceControllerTest extends TestCase
         $response->assertJsonStructure([
             'data' => [
                 'id', 'name', 'slug', 'icon', 'color', 'description',
-                'settings', 'user_count', 'created_at', 'updated_at'
-            ]
+                'settings', 'user_count', 'created_at', 'updated_at',
+            ],
         ]);
         $response->assertJson([
             'data' => [
                 'id' => $this->space->id,
                 'name' => $this->space->name,
                 'slug' => $this->space->slug,
-            ]
+            ],
         ]);
     }
 
@@ -195,7 +194,7 @@ class SpaceControllerTest extends TestCase
             'data' => [
                 'name' => 'Updated Space Name',
                 'description' => 'Updated description',
-            ]
+            ],
         ]);
 
         $this->assertDatabaseHas('spaces', [
@@ -237,7 +236,7 @@ class SpaceControllerTest extends TestCase
             'data' => [
                 'name' => 'Root Updated Space',
                 'description' => 'Updated by root user',
-            ]
+            ],
         ]);
     }
 
@@ -303,7 +302,7 @@ class SpaceControllerTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJson([
-            'message' => 'Cannot delete a space that has connections. Please delete all connections first.'
+            'message' => 'Cannot delete a space that has connections. Please delete all connections first.',
         ]);
 
         $this->assertDatabaseHas('spaces', ['id' => $this->space->id]);
@@ -320,9 +319,9 @@ class SpaceControllerTest extends TestCase
         $spaceC = Space::factory()->withLive()->create(['name' => 'Company Gamma']);
 
         // Attach all spaces to the user
-        $spaceA->users()->attach($this->user, ['role' => 'member']);
-        $spaceB->users()->attach($this->user, ['role' => 'member']);
-        $spaceC->users()->attach($this->user, ['role' => 'member']);
+        $this->assignSpaceRole($spaceA, $this->user, 'member');
+        $this->assignSpaceRole($spaceB, $this->user, 'member');
+        $this->assignSpaceRole($spaceC, $this->user, 'member');
 
         // Filter by "Space" in the name
         $response = $this->getJson(route('mgmt.spaces.index', ['name' => 'Space']));
@@ -344,9 +343,9 @@ class SpaceControllerTest extends TestCase
         $spaceC = Space::factory()->withLive()->create(['name' => 'B Space']);
 
         // Attach all spaces to the user
-        $spaceA->users()->attach($this->user, ['role' => 'member']);
-        $spaceB->users()->attach($this->user, ['role' => 'member']);
-        $spaceC->users()->attach($this->user, ['role' => 'member']);
+        $this->assignSpaceRole($spaceA, $this->user, 'member');
+        $this->assignSpaceRole($spaceB, $this->user, 'member');
+        $this->assignSpaceRole($spaceC, $this->user, 'member');
 
         // Sort by name ascending
         $response = $this->getJson(route('mgmt.spaces.index', ['sort' => 'name']));
@@ -357,7 +356,7 @@ class SpaceControllerTest extends TestCase
         // Extract just the space names we created for this test
         $spaceNames = collect($responseData)
             ->pluck('name')
-            ->filter(fn($name) => in_array($name, ['A Space', 'B Space', 'C Space']))
+            ->filter(fn ($name) => in_array($name, ['A Space', 'B Space', 'C Space']))
             ->values()
             ->all();
 
@@ -372,7 +371,7 @@ class SpaceControllerTest extends TestCase
         // Extract just the space names we created for this test
         $spaceNames = collect($responseData)
             ->pluck('name')
-            ->filter(fn($name) => in_array($name, ['A Space', 'B Space', 'C Space']))
+            ->filter(fn ($name) => in_array($name, ['A Space', 'B Space', 'C Space']))
             ->values()
             ->all();
 

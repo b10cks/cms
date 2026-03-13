@@ -11,7 +11,6 @@ use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -41,6 +40,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read int|null $spaces_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, User> $users
  * @property-read int|null $users_count
+ *
  * @method static \Database\Factories\Management\TeamFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Team filter(\CodersCantina\Filter\Filter $filter)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Team newModelQuery()
@@ -62,11 +62,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Team whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Team withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Team withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class Team extends GlobalModel
 {
     use Auditable;
+
     // use BroadcastsModelEvents;
     use Filterable;
     use HasFactory;
@@ -115,8 +117,13 @@ class Team extends GlobalModel
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'team_user')
-            ->withPivot(['role'])
+            ->withPivot(['role_id'])
             ->withTimestamps();
+    }
+
+    public function roles(): HasMany
+    {
+        return $this->hasMany(Role::class, 'team_id', 'id');
     }
 
     public function spaces(): HasMany
