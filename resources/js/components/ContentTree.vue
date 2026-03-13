@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
-import type { TreeItemToggleEvent } from 'reka-ui'
 import { TreeItem, TreeRoot } from 'reka-ui'
 import { RouterLink } from 'vue-router'
-import CreateContentDialog from '~/components/content/CreateContentDialog.vue'
+
 import ContentTreeAiDialog from '~/components/content/ContentTreeAiDialog.vue'
+import CreateContentDialog from '~/components/content/CreateContentDialog.vue'
+import Icon from '~/components/Icon.vue'
+import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import { AvatarList } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import RenamableTitle from '~/components/ui/RenamableTitle.vue'
 import { SimpleTooltip } from '~/components/ui/tooltip'
-import type { ContentResource } from '~/types/contents'
 
 const props = defineProps<{
   title?: string
@@ -74,14 +73,14 @@ const buildLink = (contentId: string) => {
   }
 }
 
-const handleToggle = (e: TreeItemToggleEvent<ContentResource>) => {
-  if (e.detail.originalEvent instanceof PointerEvent) {
+const handleToggle = (e: Event) => {
+  if (e instanceof PointerEvent) {
     e.preventDefault()
   }
 }
 
 const toggleExpanded = (contentId: string) => {
-  const expanded = settings.value.content.expanded || []
+  const expanded = [...(settings.value.content.expanded || [])]
   const index = expanded.indexOf(contentId)
   if (index > -1) {
     expanded.splice(index, 1)
@@ -117,7 +116,7 @@ const initCreate = (parentId: string | null) => {
   showCreateDialog.value = true
 }
 
-const initDelete = async (item: ContentResource) => {
+const initDelete = async (item: { id: string }) => {
   if (!(await alert.confirm('Are you sure you want to delete this item?'))) {
     return
   }
@@ -165,6 +164,11 @@ const initDelete = async (item: ContentResource) => {
           class="shrink-0 text-primary"
         />
         <span class="truncate">{{ selectedSpace.name }}</span>
+        <SpaceBadge
+          v-if="selectedSpace.badge"
+          :badge="selectedSpace.badge"
+          size="xs"
+        />
         <div class="ml-auto">
           <Button
             variant="ghost"
@@ -200,7 +204,7 @@ const initDelete = async (item: ContentResource) => {
           'cursor-pointer font-semibold',
           item.value.id === selectedItemId ? 'bg-border text-primary' : '',
         ]"
-        @toggle="(e) => handleToggle(e)"
+        @toggle="(e) => handleToggle(e as Event)"
       >
         <button
           v-if="item.value.children"

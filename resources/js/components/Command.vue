@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { useMagicKeys } from '@vueuse/core'
+
+import Icon from '~/components/Icon.vue'
+import NuxtImg from '~/components/NuxtImg.vue'
+import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import {
   CommandDialog,
   CommandEmpty,
@@ -95,11 +97,26 @@ const jumpTo = (url: string) => {
           class="flex items-center gap-2"
           @select="jumpTo(`/${space.id}`)"
         >
+          <NuxtImg
+            v-if="space.icon"
+            :src="space.icon"
+            :alt="space.name"
+            :width="20"
+            :height="20"
+            class="size-5 rounded-sm object-cover"
+          />
           <Icon
-            :name="`lucide:${space.icon}`"
-            :style="{ color: space.color }"
+            v-else
+            name="lucide:cuboid"
+            class="text-muted"
           />
           <span>{{ space.name }}</span>
+          <SpaceBadge
+            v-if="space.badge"
+            :badge="space.badge"
+            size="xs"
+            class="ml-auto"
+          />
         </CommandItem>
       </CommandGroup>
     </CommandList>

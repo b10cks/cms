@@ -4,8 +4,8 @@ import { Label } from 'reka-ui'
 import AppHeader from '~/components/AppHeader.vue'
 import Icon from '~/components/Icon.vue'
 import ServerLocationSelect from '~/components/ServerLocationSelect.vue'
+import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import SpaceBadgeSelect from '~/components/space/SpaceBadgeSelect.vue'
-import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
   Card,
@@ -28,6 +28,7 @@ import {
   StepperTrigger,
 } from '~/components/ui/stepper'
 
+const router = useRouter()
 const { useCreateSpaceMutation } = useSpaces()
 const { mutate: createSpace, isPending } = useCreateSpaceMutation()
 const { t } = useI18n()
@@ -57,8 +58,9 @@ const steps = computed(() => [
 ])
 
 // Watch name changes to auto-generate slug
-const handleNameChange = (event) => {
-  const name = event.target.value
+const handleNameChange = (event: Event) => {
+  const target = event.target as HTMLInputElement | null
+  const name = target?.value ?? ''
   spaceName.value = name
   spaceSlug.value = name
     .toLowerCase()
@@ -138,7 +140,7 @@ const handleBack = () => {
             </StepperTrigger>
             <StepperSeparator
               v-if="item.step !== steps[steps.length - 1].step"
-              class="h-px w-[10rem]"
+              class="h-px w-40"
             />
           </StepperItem>
         </Stepper>
@@ -181,7 +183,13 @@ const handleBack = () => {
                 <CardContent class="grow">
                   <div class="flex items-baseline gap-2">
                     <div class="text-3xl font-bold text-primary">
-                      {{ plan.contact_url ? $t('labels.plans.onRequest') : plan.is_free ? $t('labels.plans.free') : `€${plan.price}` }}
+                      {{
+                        plan.contact_url
+                          ? $t('labels.plans.onRequest')
+                          : plan.is_free
+                            ? $t('labels.plans.free')
+                            : `€${plan.price}`
+                      }}
                     </div>
                     <div
                       v-if="!plan.contact_url"
@@ -239,7 +247,7 @@ const handleBack = () => {
                           selectedPlanId === plan.id
                             ? 'actions.spaces.new.continueWith'
                             : 'actions.spaces.new.select',
-                          plan
+                          { name: plan.name }
                         )
                       }}
                     </Label>
@@ -253,7 +261,14 @@ const handleBack = () => {
           v-if="step === 2"
           class="space-y-6"
         >
-          <h2 class="text-xl font-semibold">Space details</h2>
+          <h2 class="flex items-center gap-2 text-xl font-semibold">
+            <span>Space details</span>
+            <SpaceBadge
+              v-if="spaceBadge"
+              :badge="spaceBadge"
+              size="xs"
+            />
+          </h2>
           <div class="space-y-4">
             <InputField
               v-model="spaceName"

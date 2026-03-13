@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import type { Ref } from 'vue'
-import Icon from '~/components/Icon.vue'
 
+import Logo from '~/assets/logo.svg'
+import Icon from '~/components/Icon.vue'
+import NuxtImg from '~/components/NuxtImg.vue'
+import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,8 +18,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
-
-import Logo from '~/assets/logo.svg'
 
 const { useSpacesQuery } = useSpaces()
 const { data: spaces } = useSpacesQuery({})
@@ -105,8 +106,29 @@ const isSpaceSelected = computed(() => !!selectedSpace.value)
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuLabel v-if="selectedSpace">
-              {{ selectedSpace.name }}
+            <DropdownMenuLabel
+              v-if="selectedSpace"
+              class="flex items-center gap-2"
+            >
+              <NuxtImg
+                v-if="selectedSpace.icon"
+                :src="selectedSpace.icon"
+                :alt="selectedSpace.name"
+                :width="20"
+                :height="20"
+                class="size-5 rounded-sm object-cover"
+              />
+              <Icon
+                v-else
+                name="lucide:cuboid"
+                class="text-muted"
+              />
+              <span class="truncate">{{ selectedSpace.name }}</span>
+              <SpaceBadge
+                v-if="selectedSpace.badge"
+                :badge="selectedSpace.badge"
+                size="2xs"
+              />
             </DropdownMenuLabel>
             <DropdownMenuItem
               v-if="isSpaceSelected"
@@ -135,7 +157,26 @@ const isSpaceSelected = computed(() => !!selectedSpace.value)
                   ]"
                   @select="switchSpace(space.id)"
                 >
-                  {{ space.name }}
+                  <NuxtImg
+                    v-if="space.icon"
+                    :src="space.icon"
+                    :alt="space.name"
+                    :width="20"
+                    :height="20"
+                    class="size-5 rounded-sm object-cover"
+                  />
+                  <Icon
+                    v-else
+                    name="lucide:cuboid"
+                    class="text-muted"
+                  />
+                  <span class="truncate">{{ space.name }}</span>
+                  <SpaceBadge
+                    v-if="space.badge"
+                    :badge="space.badge"
+                    size="xs"
+                    class="ml-auto"
+                  />
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem @select="createNewSpace">

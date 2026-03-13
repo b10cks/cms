@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { useClipboard } from '@vueuse/core'
 import { SelectTrigger } from 'reka-ui'
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+
 import type { SpaceQueryParams } from '~/api/resources/spaces'
 import AppHeader from '~/components/AppHeader.vue'
+import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import SpaceBadgeDialog from '~/components/space/SpaceBadgeDialog.vue'
@@ -15,11 +15,11 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem } from '~/components/ui/select'
 import { useAlertDialog } from '~/composables/useAlertDialog'
@@ -232,7 +232,7 @@ const formatLastUpdated = (space: SpaceResource) => {
 
     <main class="content-grid mx-auto">
       <div class="flex flex-col gap-8">
-        <ContentHeader :header="(selectedTeam?.name ?? '') + ' ' + $t('labels.spaces.title')">
+        <ContentHeader :header="$t('labels.spaces.title')">
           <Select v-model="sort">
             <SelectTrigger class="flex items-center gap-2">
               <span class="truncate">
@@ -294,7 +294,14 @@ const formatLastUpdated = (space: SpaceResource) => {
                   <!-- Space meta row -->
                   <div class="flex items-center">
                     <div class="min-w-0 flex-1">
-                      <h4 class="truncate font-semibold text-primary">{{ space.name }}</h4>
+                      <div class="flex items-center gap-2">
+                        <h4 class="truncate font-semibold text-primary">{{ space.name }}</h4>
+                        <SpaceBadge
+                          v-if="space.badge"
+                          :badge="space.badge"
+                          size="xs"
+                        />
+                      </div>
                       <p class="text-sm text-muted">
                         {{ $t('labels.fields.lastUpdated', { timeAgo: formatLastUpdated(space) }) }}
                       </p>
@@ -330,13 +337,17 @@ const formatLastUpdated = (space: SpaceResource) => {
                           <DropdownMenuSeparator v-if="action === '-'" />
                           <DropdownMenuItem
                             v-else
-                            @select="action.action ? action.action(space) : () => {}"
+                            @select="
+                              (action as Action).action
+                                ? (action as Action).action?.(space)
+                                : () => {}
+                            "
                           >
                             <Icon
-                              v-if="action.icon"
-                              :name="action.icon"
+                              v-if="(action as Action).icon"
+                              :name="(action as Action).icon"
                             />
-                            <span>{{ action.label }}</span>
+                            <span>{{ (action as Action).label }}</span>
                           </DropdownMenuItem>
                         </template>
                       </DropdownMenuContent>
@@ -352,7 +363,11 @@ const formatLastUpdated = (space: SpaceResource) => {
               <SpaceBadgeDialog
                 :space="space"
                 :open="badgeDialogSpaceId === space.id"
-                @update:open="(val) => { if (!val) badgeDialogSpaceId = null }"
+                @update:open="
+                  (val) => {
+                    if (!val) badgeDialogSpaceId = null
+                  }
+                "
               />
             </div>
           </div>

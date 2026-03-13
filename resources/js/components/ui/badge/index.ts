@@ -1,5 +1,4 @@
 import type { VariantProps } from 'class-variance-authority'
-
 import { cva } from 'class-variance-authority'
 
 export { default as Badge } from './Badge.vue'
@@ -27,6 +26,7 @@ export const badgeVariants = cva(
       },
       size: {
         dot: 'text-xs px-1 uppercase',
+        '2xs': 'text-[0.5rem] px-1 py-0.5 tracking-widest uppercase',
         xs: 'text-xs px-1.5 py-0.5 uppercase',
         sm: 'text-xs px-2 py-0.5',
         default: 'text-sm px-2.5 py-0.5',

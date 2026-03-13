@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import NuxtImg from '~/components/NuxtImg.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import SpaceDashboard from '~/components/SpaceDashboard.vue'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
@@ -18,7 +19,17 @@ useSeoMeta({
     <div class="content-grid pb-6">
       <div v-if="space">
         <ContentHeader :header="space.name">
-          <div class="flex gap-2 items-center">
+          <template #before-header>
+            <NuxtImg
+              v-if="space.icon"
+              :src="space.icon"
+              :alt="space.name"
+              :width="40"
+              :height="40"
+              class="size-10 rounded-md object-cover"
+            />
+          </template>
+          <div class="flex items-center gap-2">
             <span>
               {{ formatDateTime(space.updated_at ?? space.content_updated_at) }}
             </span>
