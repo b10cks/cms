@@ -174,12 +174,12 @@ const isSpaceSelected = computed(() => !!selectedSpace.value)
                   <SpaceBadge
                     v-if="space.badge"
                     :badge="space.badge"
-                    size="xs"
-                    class="ml-auto"
+                    size="2xs"
                   />
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem @select="createNewSpace">
+                  <Icon name="lucide:plus" />
                   {{ $t('actions.spaces.add') }}
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
