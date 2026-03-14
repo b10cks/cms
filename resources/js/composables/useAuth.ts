@@ -1,15 +1,25 @@
 import { computed, readonly, ref } from 'vue'
 
-import type { ApiResponse } from '~/types'
-import type { User } from '~/types/users'
-
 import { isClient } from '~/lib/env'
 import { useI18n } from '~/plugins/i18n'
 import { router } from '~/router'
+import type { ApiResponse } from '~/types'
+import type { User } from '~/types/users'
 
 interface LoginPayload {
   email: string
   password: string
+}
+
+interface ForgotPasswordPayload {
+  email: string
+}
+
+interface ResetPasswordPayload {
+  email: string
+  token: string
+  password: string
+  password_confirmation: string
 }
 
 interface RegisterPayload {
@@ -152,6 +162,52 @@ export function useAuth() {
     error.value = null
   }
 
+  const forgotPassword = async (payload: ForgotPasswordPayload): Promise<boolean> => {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const { api } = await import('~/api')
+      await ensureCsrfCookie()
+      await api.client.post('/auth/v1/password/email', payload)
+      return true
+    } catch (err: any) {
+      const parsedError = parseErrorResponse(err)
+      error.value = parsedError.message ?? (t('composables.auth.passwordResetLinkFailed') as string)
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const resetPassword = async (payload: ResetPasswordPayload): Promise<boolean> => {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const { api } = await import('~/api')
+      await ensureCsrfCookie()
+      await api.client.post('/auth/v1/password/reset', payload)
+
+      router.push({
+        name: 'login',
+        query: { message: 'password_reset_success' },
+      })
+
+      return true
+    } catch (err: any) {
+      const parsedError = parseErrorResponse(err)
+      error.value =
+        parsedError.message ??
+        (parsedError.status === 422
+          ? (t('composables.auth.passwordResetFailed') as string)
+          : (t('composables.auth.passwordResetFailed') as string))
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   const register = async (payload: RegisterPayload): Promise<boolean> => {
     isLoading.value = true
     error.value = null
@@ -235,6 +291,8 @@ export function useAuth() {
     login,
     verifyTwoFactorAndLogin,
     cancelTwoFactorLogin,
+    forgotPassword,
+    resetPassword,
     register,
     logout,
     handleUnauthorized,

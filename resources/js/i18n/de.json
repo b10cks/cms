@@ -15,6 +15,8 @@
       "pageTitle": "Bei b10cks anmelden",
       "signupPageTitle": "Erstelle dein b10cks-Konto",
       "passwordPageTitle": "Passwort zurücksetzen",
+      "forgotPasswordPageTitle": "Passwort vergessen",
+      "resetPasswordPageTitle": "Neues Passwort festlegen",
       "header": "Willkommen zurück bei b10cks",
       "intro": "Logge dich in dein Konto ein",
       "fields": {
@@ -37,6 +39,11 @@
       "login": "Bereits Mitglied? [Melde dich an]({url})",
       "terms": "Ich akzeptiere die [Nutzungsbedingungen](https://www.b10cks.com/en/legal/terms-of-service) und die [Datenschutzerklärung](https://www.b10cks.com/en/legal/privacy-policy) von b10cks",
       "forgotPassword": "Passwort vergessen?",
+      "passwordResetDescription": "Gib deine E-Mail-Adresse ein und wir schicken dir einen Link zum Zurücksetzen deines Passworts.",
+      "passwordResetSuccess": "Wenn ein Konto mit dieser E-Mail existiert, haben wir einen Link zum Zurücksetzen gesendet.",
+      "resetPasswordDescription": "Lege ein neues Passwort für dein Konto fest.",
+      "backToLogin": "Zurück zur Anmeldung",
+      "rememberPassword": "Passwort wieder eingefallen?",
       "marketing": {
         "demo": "Interessiert? [Buche eine Demo](https://www.b10cks.com/de/demo) mit uns.",
         "header": "Dein Content, **gebaut für Skalierbarkeit**.",
@@ -2043,6 +2050,8 @@
       "loginSessionExpired": "Die Anmeldesitzung ist abgelaufen. Bitte erneut versuchen.",
       "emailExists": "Ein Konto mit dieser E-Mail existiert bereits.",
       "registerFailed": "Registrierung fehlgeschlagen. Bitte erneut versuchen.",
+      "forgotPasswordFailed": "Der Link zum Zurücksetzen konnte nicht gesendet werden. Bitte versuche es erneut.",
+      "resetPasswordFailed": "Das Passwort konnte nicht zurückgesetzt werden. Bitte versuche es erneut.",
       "tokenRefreshFailed": "Sitzung abgelaufen. Bitte melde dich erneut an.",
       "sessionExpired": "Deine Sitzung ist abgelaufen. Lass mich dich erneut anmelden.",
       "failedToLoadUser": "Konnte dein Profil nicht laden. Aktualisiere die Seite?"

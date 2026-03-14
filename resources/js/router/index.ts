@@ -30,6 +30,12 @@ const routes: RouteRecordRaw[] = [
     meta: { layout: 'unauthenticated', guest: true },
   },
   {
+    path: '/login/password/reset',
+    name: 'login-password-reset',
+    component: () => import('~/pages/login/password.vue'),
+    meta: { layout: 'unauthenticated', guest: true },
+  },
+  {
     path: '/invites/:id',
     name: 'invite',
     alias: ['/invites/accept/:id'],

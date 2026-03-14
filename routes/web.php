@@ -11,6 +11,8 @@ Route::get('/', AppController::class)->name('home');
 Route::get('/login', AppController::class)->name('login');
 Route::get('/login/signup', AppController::class)->name('login-signup');
 Route::get('/login/password', AppController::class)->name('login-password');
+Route::get('/login/password/request', AppController::class)->name('password.request');
+Route::get('/login/password/reset', AppController::class)->name('password.reset');
 
 // Email verification (special handling)
 Route::get('auth/v1/email/verify/{id}/{hash}', VerifyEmailController::class)

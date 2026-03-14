@@ -5,6 +5,13 @@ return [
     'password' => 'The provided password is incorrect.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
 
+    // Password Reset
+    'password_reset_link_sent' => 'If an account with that email address exists, we have emailed your password reset link.',
+    'password_reset_successful' => 'Your password has been reset successfully.',
+    'password_reset_failed' => 'We could not reset your password. Please try again.',
+    'invalid_password_reset_token' => 'This password reset token is invalid.',
+    'password_reset_throttled' => 'Please wait before requesting another password reset link.',
+
     // Email Verification
     'email_already_verified' => 'Your email address is already verified.',
     'email_not_verified' => 'Your email address is not verified. A verification email has been sent.',

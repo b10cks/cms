@@ -17,7 +17,7 @@ class PasswordChangedNotification extends Notification
         return (new MailMessage)
             ->subject(__('notifications.passwordChanged.subject'))
             ->line(new HtmlString(__('notifications.passwordChanged.intro', $this->data)))
-            ->line(new HtmlString(__('notifications.passwordChanged.note', ['resetUrl' => route('password.request')])));
+            ->line(new HtmlString(__('notifications.passwordChanged.note', ['resetUrl' => url('/login/password')])));
     }
 
     public function via(): array

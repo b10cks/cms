@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'salutation' => "Möge dein Content fließen und nie im Block-Editor hängen bleiben,\ndas b10cks Team",
     'inviteSpace' => [
         'subject' => 'You\'ve been invited to :space',
         'intro' => '<strong>:inviter</strong> has invited you to collaborate on the <strong>:space</strong> space.',
@@ -20,5 +21,17 @@ return [
         'greeting' => 'Hello',
         'intro' => 'Your one-time login code is below. This code will expire in 10 minutes.',
         'outro' => 'If you did not request this code, you can safely ignore this email.',
+    ],
+    'passwordReset' => [
+        'subject' => 'Passwort zurücksetzen',
+        'intro' => 'Du erhältst diese E-Mail, weil wir eine Anfrage zum Zurücksetzen des Passworts für dein Konto erhalten haben.',
+        'action' => 'Passwort zurücksetzen',
+        'expireNote' => 'Dieser Link zum Zurücksetzen des Passworts läuft in :count Minuten ab.',
+        'note' => 'Falls du keine Zurücksetzung deines Passworts angefordert hast, ist keine weitere Aktion erforderlich.',
+    ],
+    'passwordChanged' => [
+        'subject' => 'Dein Passwort wurde geändert',
+        'intro' => 'Das Passwort für dein Konto wurde am <strong>:date</strong> geändert.<br><br><strong>Browser:</strong> :browser<br><strong>IP-Adresse:</strong> :ip',
+        'note' => 'Falls du diese Änderung nicht vorgenommen hast, solltest du dein Passwort sofort erneut ändern: <a href=":resetUrl">Passwort zurücksetzen</a>',
     ],
 ];
