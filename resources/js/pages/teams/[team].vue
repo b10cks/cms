@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import StopIcon from '~/assets/images/error.svg?component'
 import Icon from '~/components/Icon.vue'
 import CreateInviteDialog from '~/components/invites/CreateInviteDialog.vue'
 import TeamInvitesList from '~/components/invites/TeamInvitesList.vue'
@@ -408,14 +409,11 @@ const navigateBack = () => {
 
       <Card
         v-else
-        variant="outline"
+        variant="surface"
       >
-        <CardContent class="flex flex-col gap-3 px-6 py-8 text-center">
-          <Icon
-            name="lucide:shield-alert"
-            class="mx-auto h-8 w-8 text-muted-foreground"
-          />
-          <h2 class="font-semibold">{{ $t('labels.teams.limitedAccessTitle') }}</h2>
+        <CardContent class="flex flex-col gap-3 py-12! text-center items-center">
+          <StopIcon class="w-32 text-muted" />
+          <h2 class="font-semibold text-primary">{{ $t('labels.teams.limitedAccessTitle') }}</h2>
           <p class="text-muted-foreground mx-auto max-w-2xl text-sm">
             {{ $t('labels.teams.limitedAccessDescription') }}
           </p>

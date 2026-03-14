@@ -1,5 +1,4 @@
 import type { VariantProps } from 'class-variance-authority'
-
 import { cva } from 'class-variance-authority'
 
 export { default as Card } from './Card.vue'
@@ -14,6 +13,7 @@ export const cardVariants = cva('rounded-xl', {
   variants: {
     variant: {
       default: 'bg-card text-card-foreground shadow-soft',
+      surface: 'bg-surface shadow-soft',
       outline: 'border border-border',
       accent: 'bg-accent text-white shadow-soft',
       warning: 'bg-warning-background/20 text-warning shadow-sm',
