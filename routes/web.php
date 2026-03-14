@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\Web\AppController;
-use App\Http\Requests\User\EmailVerificationRequest;
+use App\Http\Controllers\Web\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 // Root
@@ -13,11 +13,9 @@ Route::get('/login/signup', AppController::class)->name('login-signup');
 Route::get('/login/password', AppController::class)->name('login-password');
 
 // Email verification (special handling)
-Route::get('auth/v1/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $request->fulfill();
-
-    return redirect(route('login'));
-})->middleware(['signed'])->name('verification.verify');
+Route::get('auth/v1/email/verify/{id}/{hash}', VerifyEmailController::class)
+    ->middleware(['signed'])
+    ->name('verification.verify');
 
 // Guest routes
 Route::get('/invites/{id}', AppController::class)->name('invite');

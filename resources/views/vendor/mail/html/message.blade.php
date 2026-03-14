@@ -37,9 +37,10 @@ alt="{{ config('app.name') }}"
 {{ trans('notifications.footerImprint') }}
 
 © {{ date('Y') }} {{ trans('notifications.footerCopyright') }}<br>
-<a href="https://www.b10cks.com/legal/imprint" target="_blank">Imprint</a>
- • <a href="https://www.b10cks.com/legal/data-privacy" target="_blank">Data Privacy</a>
- • <a href="https://www.b10cks.com/legal/terms" target="_blank">Terms of Use</a>
+<a href="https://www.b10cks.com/en/legal/imprint" target="_blank">Imprint</a>
+ • <a href="https://www.b10cks.com/en/legal/dpa" target="_blank">Data Privacy Agreement</a>
+ • <a href="https://www.b10cks.com/en/legal/privacy-policy" target="_blank">Privacy Policy</a>
+ • <a href="https://www.b10cks.com/en/legal/terms-of-service" target="_blank">Terms of Use</a>
 
 </x-mail::footer>
 </x-slot:footer>
