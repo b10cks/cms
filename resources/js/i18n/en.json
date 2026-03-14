@@ -2,6 +2,15 @@
   "labels": {
     "loading": "Just a moment...",
     "never": "Never",
+    "notifications": {
+      "url": {
+        "email_verified": "Your email address has been verified successfully.",
+        "payment_success": "Your payment was completed successfully.",
+        "payment_pending": "Your payment is still pending.",
+        "payment_failed": "Your payment failed. Please try again.",
+        "payment_cancelled": "Your payment was cancelled."
+      }
+    },
     "login": {
       "pageTitle": "Sign in to b10cks",
       "signupPageTitle": "Create your b10cks account",

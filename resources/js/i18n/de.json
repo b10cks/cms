@@ -1,5 +1,14 @@
 {
   "labels": {
+    "notifications": {
+      "url": {
+        "email_verified": "Deine E-Mail-Adresse wurde erfolgreich bestätigt.",
+        "payment_success": "Deine Zahlung war erfolgreich.",
+        "payment_pending": "Deine Zahlung wird noch verarbeitet.",
+        "payment_failed": "Deine Zahlung ist fehlgeschlagen.",
+        "payment_cancelled": "Deine Zahlung wurde abgebrochen."
+      }
+    },
     "loading": "Einen Moment bitte...",
     "never": "Nie",
     "login": {

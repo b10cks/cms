@@ -138,6 +138,7 @@ declare global {
   const useTwoFactor: typeof import('./resources/js/composables/useTwoFactor').useTwoFactor
   const useTwoFactorAuth: typeof import('./resources/js/composables/useTwoFactorAuth').useTwoFactorAuth
   const useUlid: typeof import('./resources/js/composables/useUlid').useUlid
+  const useUrlNotifications: typeof import('./resources/js/composables/useUrlNotifications').useUrlNotifications
   const useUser: typeof import('./resources/js/composables/useUser').useUser
   const useUserSettings: typeof import('./resources/js/composables/useUserSettings').useUserSettings
   const watch: typeof import('vue').watch
@@ -324,6 +325,7 @@ declare module 'vue' {
     readonly useTwoFactor: UnwrapRef<typeof import('./resources/js/composables/useTwoFactor')['useTwoFactor']>
     readonly useTwoFactorAuth: UnwrapRef<typeof import('./resources/js/composables/useTwoFactorAuth')['useTwoFactorAuth']>
     readonly useUlid: UnwrapRef<typeof import('./resources/js/composables/useUlid')['useUlid']>
+    readonly useUrlNotifications: UnwrapRef<typeof import('./resources/js/composables/useUrlNotifications')['useUrlNotifications']>
     readonly useUser: UnwrapRef<typeof import('./resources/js/composables/useUser')['useUser']>
     readonly useUserSettings: UnwrapRef<typeof import('./resources/js/composables/useUserSettings')['useUserSettings']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
