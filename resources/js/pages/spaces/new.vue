@@ -68,7 +68,7 @@ const handleNameChange = (event: Event) => {
     .replace(/\s+/g, '-')
 }
 
-const { selectedTeam } = useGlobalTeam()
+const { selectedTeam, hasSelectedTeam, isValidSelection } = useGlobalTeam()
 
 const handleNext = async () => {
   if (step.value === 1 && (!selectedPlanId.value || selectedPlan.value?.contact_url)) {
@@ -78,10 +78,14 @@ const handleNext = async () => {
   if (step.value < 2) {
     step.value++
   } else {
+    if (!selectedTeam.value?.id || !hasSelectedTeam.value || !isValidSelection.value) {
+      return
+    }
+
     const payload = {
       name: spaceName.value,
       slug: spaceSlug.value,
-      team_id: selectedTeam.value?.id,
+      team_id: selectedTeam.value.id,
       badge: spaceBadge.value || null,
       plan_id: selectedPlanId.value,
       settings: {
@@ -319,7 +323,13 @@ const handleBack = () => {
             variant="primary"
             :disabled="
               (step === 1 && (!selectedPlanId || selectedPlan?.contact_url)) ||
-              (step === 2 && (!spaceName || !spaceSlug || !serverLocation))
+              (step === 2 &&
+                (!spaceName ||
+                  !spaceSlug ||
+                  !serverLocation ||
+                  !selectedTeam?.id ||
+                  !hasSelectedTeam ||
+                  !isValidSelection))
             "
             @click="handleNext"
           >

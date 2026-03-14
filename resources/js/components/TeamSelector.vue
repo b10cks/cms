@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
 import { Badge } from '~/components/ui/badge'
 import {
   Select,
@@ -11,6 +10,7 @@ import {
 } from '~/components/ui/select'
 import { cn } from '~/lib/utils'
 import type { TeamResource } from '~/types/teams'
+
 import IconName from './ui/IconName.vue'
 
 const { selectedTeam, selectedTeamId, isLoading, selectTeam, teams } = useGlobalTeam()
@@ -30,15 +30,9 @@ const sizeClasses = {
   lg: 'h-12 text-lg',
 }
 
-const handleSelect = (value: string | null) => {
-  selectTeam(value)
+const handleSelect = (value: unknown) => {
+  selectTeam(typeof value === 'string' ? value : null)
 }
-
-onMounted(() => {
-  if (!selectTeam) {
-    selectTeam(null)
-  }
-})
 
 const getTeamIcon = (team: Pick<TeamResource, 'icon' | 'type'>) => {
   return team.icon ?? 'users'
@@ -89,7 +83,7 @@ const hierarchicalTeams = computed(() => {
 <template>
   <Select
     aria-label="Team"
-    :model-value="selectedTeamId || null"
+    :model-value="selectedTeamId"
     :disabled="isLoading"
     @update:model-value="handleSelect"
   >
