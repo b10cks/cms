@@ -117,14 +117,14 @@ export function useAssetFolders(spaceId: MaybeRef<string>) {
       if (!folders.value) return []
 
       const breadcrumbs: AssetFolderResource[] = []
-      let currentFolder = folders.value.find((f) => f.id === folderId)
+      let currentFolder = folderMap.value.get(folderId)
 
       if (!currentFolder) return []
 
       breadcrumbs.unshift(currentFolder)
 
       while (currentFolder?.parent_id) {
-        const parentFolder = folders.value.find((f) => f.id === currentFolder?.parent_id)
+        const parentFolder = folderMap.value.get(currentFolder.parent_id)
         if (parentFolder) {
           breadcrumbs.unshift(parentFolder)
           currentFolder = parentFolder

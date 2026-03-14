@@ -28,16 +28,22 @@ const props = defineProps<{
 const emit = defineEmits(['update:open', 'update:file'])
 
 const {
-  assetFields,
   ensureAssetFieldData,
+  getEffectiveFields,
   getFieldValue,
   getMissingRequiredFields,
+  isFieldRequiredForLanguage,
   languageTabs,
   setFieldValue,
 } = useAssetRequirements(props.spaceId)
 
 const localFile = ref<UploadFile>(structuredClone(props.file))
 const selectedLanguage = ref('_default')
+const effectiveFields = computed(() => {
+  return getEffectiveFields({
+    folderId: props.folderId ?? localFile.value.folder_id ?? null,
+  })
+})
 
 watch(
   () => props.file,
@@ -49,7 +55,9 @@ watch(
   { immediate: true, deep: true }
 )
 
-const missingRequiredFields = computed(() => getMissingRequiredFields(localFile.value))
+const missingRequiredFields = computed(() =>
+  getMissingRequiredFields(localFile.value, props.folderId ?? localFile.value.folder_id ?? null)
+)
 
 const handleFinish = () => {
   emit('update:file', structuredClone(localFile.value))
@@ -124,7 +132,7 @@ const onOpenChange = (open: boolean) => {
           </dl>
 
           <div
-            v-if="assetFields.length && languageTabs.length > 1"
+            v-if="effectiveFields.length && languageTabs.length > 1"
             class="space-y-3"
           >
             <Tabs
@@ -143,12 +151,12 @@ const onOpenChange = (open: boolean) => {
             </Tabs>
 
             <InputField
-              v-for="field in assetFields"
+              v-for="field in effectiveFields"
               :key="`${selectedLanguage}-${field.key}`"
               :model-value="getFieldValue(localFile, field.key, selectedLanguage)"
               :label="field.label"
               :name="`${field.key}-${selectedLanguage}`"
-              :required="field.required"
+              :required="isFieldRequiredForLanguage(field, selectedLanguage)"
               @update:model-value="
                 (value: string | number) =>
                   setFieldValue(localFile, field.key, selectedLanguage, String(value))
@@ -157,16 +165,16 @@ const onOpenChange = (open: boolean) => {
           </div>
 
           <div
-            v-else-if="assetFields.length"
+            v-else-if="effectiveFields.length"
             class="space-y-3"
           >
             <InputField
-              v-for="field in assetFields"
+              v-for="field in effectiveFields"
               :key="field.key"
               :model-value="getFieldValue(localFile, field.key, '_default')"
               :label="field.label"
               :name="field.key"
-              :required="field.required"
+              :required="isFieldRequiredForLanguage(field, '_default')"
               @update:model-value="
                 (value: string | number) =>
                   setFieldValue(localFile, field.key, '_default', String(value))

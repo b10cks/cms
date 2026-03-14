@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { ScrollArea } from '~/components/ui/scroll-area'
@@ -115,7 +114,7 @@ const showSummary = computed(() => importResult.value !== null)
             <input
               ref="fileInputRef"
               type="file"
-              accept=".json,.csv,.xlsx,.xlf,.xliff"
+              accept=".json,.csv,.xlsx,.xlf,.xliff,.yaml,.yml"
               @change="handleFileChange"
               class="hidden"
             />
@@ -144,7 +143,9 @@ const showSummary = computed(() => importResult.value !== null)
                 >
                   {{ selectedFile.name }}
                 </p>
-                <p class="text-xs text-gray-500">Supported formats: JSON, CSV, Excel, XLIFF</p>
+                <p class="text-xs text-gray-500">
+                  Supported formats: JSON, CSV, Excel, XLIFF, YAML
+                </p>
               </div>
             </div>
           </div>

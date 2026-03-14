@@ -53,6 +53,18 @@ class AssetTest extends TestCase
             'state' => 'live',
         ]);
 
+        $this->space->settings = [
+            ...$this->space->settings->toArray(),
+            'asset_fields' => [
+                ['key' => 'alt', 'label' => 'Alt Text', 'required' => true],
+                ['key' => 'description', 'label' => 'Description', 'required' => false],
+            ],
+            'languages' => [
+                ['code' => 'de', 'name' => 'German'],
+            ],
+        ];
+        $this->space->save();
+
         Sanctum::actingAs($this->user);
 
         // Configure the fake disk for testing
@@ -100,6 +112,57 @@ class AssetTest extends TestCase
         $this->assertEquals('test-image', $asset->filename);
         $this->assertEquals('jpg', $asset->extension);
         $this->assertEquals('image/jpeg', $asset->mime_type);
+    }
+
+    #[Test]
+    public function multipart_upload_decodes_json_field_payloads()
+    {
+        $folder = AssetFolder::factory()->create([
+            'settings' => [
+                'field_overrides' => [
+                    ['key' => 'description', 'enabled' => false],
+                ],
+                'additional_fields' => [
+                    ['key' => 'photographer', 'label' => 'Photographer', 'required' => true],
+                ],
+            ],
+        ]);
+
+        $file = UploadedFile::fake()->image('hero.jpg', 1600, 900);
+
+        $response = $this->post(
+            "/mgmt/v1/spaces/{$this->space->id}/assets",
+            [
+                'file' => $file,
+                'folder_id' => $folder->id,
+                'metadata' => json_encode(['copyright' => 'ACME']),
+                'tags' => json_encode(['hero', 'homepage']),
+                'data' => json_encode([
+                    'fields' => [
+                        '_default' => [
+                            'photographer' => 'Jane Doe',
+                        ],
+                        'de' => [
+                            'photographer' => 'Jane Doe DE',
+                        ],
+                    ],
+                ]),
+            ],
+            [
+                'Accept' => 'application/json',
+            ]
+        );
+
+        $response->assertCreated();
+        $response->assertJsonPath('folder_id', $folder->id);
+        $response->assertJsonPath('folder.id', $folder->id);
+
+        $asset = Asset::query()->firstOrFail();
+
+        $this->assertSame('ACME', $asset->metadata['copyright']);
+        $this->assertSame(['hero', 'homepage'], $asset->tags);
+        $this->assertSame('Jane Doe', $asset->data['fields']['_default']['photographer']);
+        $this->assertSame('Jane Doe DE', $asset->data['fields']['de']['photographer']);
     }
 
     #[Test]
@@ -262,6 +325,120 @@ class AssetTest extends TestCase
         // Check metadata was updated correctly
         $this->assertEquals('Updated description', $asset->metadata['description']);
         $this->assertEquals('New value', $asset->metadata['new_field']);
+    }
+
+    #[Test]
+    public function asset_can_be_moved_back_to_root_folder()
+    {
+        $folder = AssetFolder::factory()->create([]);
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+            'folder_id' => $folder->id,
+        ]);
+
+        $response = $this->patchJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}", [
+            'folder_id' => null,
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('folder_id', null);
+
+        $asset->refresh();
+        $this->assertNull($asset->folder_id);
+    }
+
+    #[Test]
+    public function import_discards_fields_that_are_not_relevant_for_the_asset_folder()
+    {
+        $folder = AssetFolder::factory()->create([
+            'settings' => [
+                'field_overrides' => [
+                    ['key' => 'description', 'enabled' => false],
+                ],
+                'additional_fields' => [
+                    ['key' => 'photographer', 'label' => 'Photographer', 'required' => true],
+                ],
+            ],
+        ]);
+
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+            'folder_id' => $folder->id,
+            'data' => [
+                'fields' => [
+                    '_default' => [
+                        'alt' => 'Original alt',
+                    ],
+                ],
+            ],
+        ]);
+
+        $importFile = UploadedFile::fake()->createWithContent(
+            'asset-import.json',
+            json_encode([
+                'assets' => [
+                    [
+                        'id' => $asset->id,
+                        'description' => 'This should be ignored',
+                        'photographer' => 'Jane Doe',
+                    ],
+                ],
+            ], JSON_THROW_ON_ERROR)
+        );
+
+        $response = $this->post(
+            "/mgmt/v1/spaces/{$this->space->id}/assets/import",
+            ['file' => $importFile],
+            ['Accept' => 'application/json']
+        );
+
+        $response->assertOk();
+        $response->assertJsonPath('ignored_fields.0', 'description');
+
+        $asset->refresh();
+
+        $this->assertSame('Jane Doe', $asset->data['fields']['_default']['photographer']);
+        $this->assertArrayNotHasKey('description', $asset->data['fields']['_default']);
+    }
+
+    #[Test]
+    public function export_only_includes_fields_relevant_to_the_selected_assets()
+    {
+        $folder = AssetFolder::factory()->create([
+            'settings' => [
+                'field_overrides' => [
+                    ['key' => 'description', 'enabled' => false],
+                ],
+                'additional_fields' => [
+                    ['key' => 'photographer', 'label' => 'Photographer', 'required' => true],
+                ],
+            ],
+        ]);
+
+        Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+            'folder_id' => $folder->id,
+            'data' => [
+                'fields' => [
+                    '_default' => [
+                        'alt' => 'Hero alt',
+                        'photographer' => 'Jane Doe',
+                    ],
+                ],
+            ],
+        ]);
+
+        $response = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets/export", [
+            'as' => 'json',
+            'folder' => $folder->id,
+        ]);
+
+        $response->assertOk();
+        $payload = json_decode($response->streamedContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        $this->assertSame(['alt', 'photographer'], array_column($payload['asset_fields'], 'key'));
+        $this->assertArrayNotHasKey('description', $payload['assets'][0]);
+        $this->assertSame('Jane Doe', $payload['assets'][0]['photographer']);
     }
 
     #[Test]

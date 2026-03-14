@@ -8,6 +8,7 @@ use App\Enums\AssetDataFormat;
 use App\Http\Filters\Mgmt\AssetFilter;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
+use App\Services\Asset\AssetMetadataFieldResolver;
 use App\Services\AssetData\Drivers\CsvAssetDataDriver;
 use App\Services\AssetData\Drivers\ExcelAssetDataDriver;
 use App\Services\AssetData\Drivers\JsonAssetDataDriver;
@@ -24,6 +25,7 @@ class AssetDataExportImportService
     protected array $drivers = [];
 
     public function __construct(
+        private readonly AssetMetadataFieldResolver $fieldResolver,
         CsvAssetDataDriver $csvDriver,
         ExcelAssetDataDriver $excelDriver,
         JsonAssetDataDriver $jsonDriver,
@@ -56,6 +58,7 @@ class AssetDataExportImportService
         }
 
         $assets = $query->get();
+        $assetFields = $this->fieldResolver->getUnionFieldsForAssets($space, $assets);
 
         return $driver->export($space, $assets, $assetFields, $languages);
     }
@@ -67,7 +70,7 @@ class AssetDataExportImportService
     ): ImportResult {
         $driver = $this->getDriver($format);
 
-        $assetFields = $space->settings->asset_fields ?? [];
+        $assetFields = $this->fieldResolver->getAllPossibleFields($space);
         $languages = $space->settings->languages ?? [];
 
         $validationErrors = $driver->validate($file, $assetFields, $languages);

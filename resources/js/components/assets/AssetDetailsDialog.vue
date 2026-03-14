@@ -35,10 +35,11 @@ const { useFolderStructure } = useAssetFolders(props.spaceId)
 const { getBreadcrumbs } = useFolderStructure()
 const { getFileType } = useFileUtils()
 const {
-  assetFields,
   languageTabs,
   ensureAssetFieldData,
+  getEffectiveFieldsForTarget,
   getFieldValue: getAssetFieldValue,
+  isFieldRequiredForLanguage,
   setFieldValue: setAssetFieldValue,
 } = useAssetRequirements(props.spaceId)
 
@@ -47,6 +48,9 @@ const imageContainer = ref<HTMLElement | null>(null)
 const imageRef = useTemplateRef('imageRef')
 const isDraggingFocus = ref(false)
 const selectedLanguage = ref<string>('_default')
+const effectiveFields = computed(() => {
+  return getEffectiveFieldsForTarget(assetCopy.value)
+})
 
 watch(
   () => props.asset,
@@ -344,7 +348,7 @@ const onOpenChange = (open: boolean) => {
           </div>
 
           <div
-            v-if="assetFields.length > 0 && languageTabs.length > 1"
+            v-if="effectiveFields.length > 0 && languageTabs.length > 1"
             class="space-y-3"
           >
             <Tabs
@@ -364,27 +368,27 @@ const onOpenChange = (open: boolean) => {
             </Tabs>
             <div class="space-y-3">
               <InputField
-                v-for="field in assetFields"
+                v-for="field in effectiveFields"
                 :key="`${selectedLanguage}-${field.key}`"
                 :model-value="getFieldValue(field.key) as string"
                 :label="String(field.label)"
                 :name="field.key"
-                :required="field.required"
+                :required="isFieldRequiredForLanguage(field, selectedLanguage)"
                 @update:model-value="setFieldValue(field.key, $event)"
               />
             </div>
           </div>
           <div
-            v-else-if="assetFields.length > 0"
+            v-else-if="effectiveFields.length > 0"
             class="space-y-3"
           >
             <InputField
-              v-for="field in assetFields"
+              v-for="field in effectiveFields"
               :key="field.key"
               :model-value="getFieldValue(field.key) as string"
               :label="String(field.label)"
               :name="field.key"
-              :required="field.required"
+              :required="isFieldRequiredForLanguage(field, '_default')"
               @update:model-value="setFieldValue(field.key, $event)"
             />
           </div>

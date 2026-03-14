@@ -6,6 +6,7 @@ use App\Contracts\AssetData\AssetDataDriver;
 use App\DTOs\AssetData\ImportResult;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
+use App\Services\Asset\AssetMetadataFieldResolver;
 use App\Services\AssetData\DataMapper;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
@@ -21,7 +22,8 @@ abstract class BaseAssetDataDriver implements AssetDataDriver
     protected array $errors = [];
 
     public function __construct(
-        protected readonly DataMapper $mapper
+        protected readonly DataMapper $mapper,
+        protected readonly AssetMetadataFieldResolver $fieldResolver,
     ) {
     }
 
@@ -102,11 +104,27 @@ abstract class BaseAssetDataDriver implements AssetDataDriver
                 return;
             }
 
+            $effectiveFields = $this->fieldResolver->getEffectiveFieldsForAsset($space, $asset);
             $oldData = $asset->data ?? [];
-            $fieldsData = $this->mapper->unflattenRow($rowData, $assetFields, $languages);
+            $fieldsData = $this->mapper->unflattenRow($rowData, $effectiveFields, $languages);
+            $validLanguageCodes = array_column($languages, 'code');
 
-            // Merge only the fields node, preserving other data
-            $newData = array_merge($oldData, ['fields' => $fieldsData]);
+            $this->ignoredFields = array_values(array_unique([
+                ...$this->ignoredFields,
+                ...$this->detectIgnoredFields(
+                    array_keys(array_filter(
+                        $rowData,
+                        fn(mixed $value): bool => $value !== null && $value !== ''
+                    )),
+                    array_column($effectiveFields, 'key'),
+                    $validLanguageCodes
+                ),
+            ]));
+
+            $newData = $oldData;
+            if ($fieldsData !== []) {
+                $newData['fields'] = array_replace_recursive($oldData['fields'] ?? [], $fieldsData);
+            }
 
             DB::transaction(function () use ($asset, $rowData, $newData) {
                 if (isset($rowData['filename']) && $rowData['filename'] !== $asset->filename) {
@@ -195,13 +213,16 @@ abstract class BaseAssetDataDriver implements AssetDataDriver
     {
         $changes = [];
 
-        foreach ($newData as $lang => $fields) {
+        $oldFields = $oldData['fields'] ?? [];
+        $newFields = $newData['fields'] ?? [];
+
+        foreach ($newFields as $lang => $fields) {
             if (!is_array($fields)) {
                 continue;
             }
 
             foreach ($fields as $key => $value) {
-                $oldValue = $oldData[$lang][$key] ?? null;
+                $oldValue = $oldFields[$lang][$key] ?? null;
 
                 if ($oldValue !== $value) {
                     $changes[] = [

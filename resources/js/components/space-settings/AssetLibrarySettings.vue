@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { deepClone } from '@vue/devtools-shared'
+
 import { Button } from '~/components/ui/button'
 import {
   Card,
@@ -20,10 +21,11 @@ const { $t } = useI18n()
 
 const props = defineProps<{ space: SpaceResource }>()
 const assetFields = ref(deepClone(props.space.settings.asset_fields ?? []))
-
-const newFieldKey = ref('')
-const newFieldLabel = ref('')
-const newFieldRequired = ref(false)
+const newItemTemplate = {
+  key: '',
+  label: '',
+  required: false,
+}
 
 const defaultFields = ['alt', 'description']
 
@@ -86,6 +88,9 @@ const saveSettings = async () => {
     <CardContent class="space-y-6">
       <div class="space-y-2">
         <h4 class="text-sm font-medium">{{ $t('labels.settings.assetLibrary.metadataFields') }}</h4>
+        <p class="text-xs text-muted-foreground">
+          {{ $t('labels.settings.assetLibrary.requiredHint') }}
+        </p>
         <SettingsTable
           v-model:items="assetFields"
           :columns="columns"

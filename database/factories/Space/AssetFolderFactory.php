@@ -40,6 +40,7 @@ class AssetFolderFactory extends Factory
             'icon' => $icon,
             'color' => $color,
             'parent_id' => null, // By default, no parent
+            'settings' => [],
         ];
     }
 

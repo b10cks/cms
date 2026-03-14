@@ -186,6 +186,20 @@
       "edit": "Ordner bearbeiten",
       "editDescription": "Aktualisiere die Ordnerdetails, ohne den Inhalt zu verändern.",
       "deleteTitle": "Diesen Ordner löschen?",
+      "metadata": {
+        "title": "Metadaten-Regeln für den Ordner",
+        "description": "Steuere, welche Asset-Metadaten-Felder in diesem Ordner gelten. Unterordner erben diese Regeln automatisch.",
+        "enabled": "Aktiv",
+        "fieldBehaviour": "Verhalten geerbter Felder",
+        "requiredHint": "Pflichtfelder gelten nur in der Standardsprache. Übersetzte Werte bleiben optional.",
+        "additionalFields": "Zusätzliche Ordner-Felder",
+        "additionalFieldsDescription": "Füge Felder hinzu, die nur in diesem Ordnerzweig gelten. Unterordner erben sie automatisch.",
+        "noAdditionalFields": "Keine zusätzlichen Ordner-Felder definiert",
+        "noInheritedFields": "Keine geerbten Metadaten-Felder verfügbar",
+        "effectiveFieldCount": "{count} Metadaten-Feld ist in diesem Ordner verfügbar. | {count} Metadaten-Felder sind in diesem Ordner verfügbar.",
+        "customized": "Angepasst",
+        "duplicateKey": "Dieser Feldschlüssel existiert bereits in den geerbten Metadaten."
+      },
       "fields": {
         "icon": "Symbol",
         "color": "Farbe",
@@ -1030,6 +1044,7 @@
         "fieldKeyPlaceholder": "z.B. alt",
         "fieldLabelPlaceholder": "z.B. Alt-Text",
         "required": "Erforderlich",
+        "requiredHint": "Pflichtfelder gelten nur in der Standardsprache. Übersetzte Werte bleiben optional.",
         "addField": "Feld hinzufügen",
         "metadataFields": "Metadaten-Felder",
         "key": "Schlüssel",

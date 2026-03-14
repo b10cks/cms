@@ -4,6 +4,8 @@ namespace App\Services\AssetData\Drivers;
 
 use App\Enums\AssetDataFormat;
 use App\Models\Management\Space;
+use App\Services\Asset\AssetMetadataFieldResolver;
+use App\Services\AssetData\DataMapper;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -23,19 +25,21 @@ class ExcelAssetDataDriver extends BaseAssetDataDriver
         $headers = $this->mapper->getColumnHeaders($assetFields, $languages);
         $filename = $this->generateFilename($space, 'xlsx');
 
-        $export = new class ($assets, $assetFields, $languages, $headers, $this->mapper) implements FromCollection, WithHeadings {
+        $export = new class ($space, $assets, $languages, $headers, $this->mapper, $this->fieldResolver) implements FromCollection, WithHeadings {
             public function __construct(
+            private Space $space,
             private Collection $assets,
-            private array $assetFields,
             private array $languages,
             private array $headers,
-            private $mapper
+            private DataMapper $mapper,
+            private AssetMetadataFieldResolver $fieldResolver,
             ) {}
 
             public function collection(): Collection
             {
                 return $this->assets->map(function ($asset) {
-                    $row = $this->mapper->flattenAsset($asset, $this->assetFields, $this->languages);
+                    $rowFields = $this->fieldResolver->getEffectiveFieldsForAsset($this->space, $asset);
+                    $row = $this->mapper->flattenAsset($asset, $rowFields, $this->languages);
 
                     return array_map(fn($header) => $row[$header] ?? '', $this->headers);
                 });

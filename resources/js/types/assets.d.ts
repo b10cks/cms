@@ -1,3 +1,21 @@
+interface AssetFieldOverride {
+  key: string
+  enabled?: boolean | null
+  required?: boolean | null
+}
+
+interface AssetFolderSettings {
+  field_overrides?: AssetFieldOverride[]
+  additional_fields?: SpaceAssetField[]
+}
+
+interface AssetFolderFieldState extends SpaceAssetField {
+  enabled: boolean
+  custom?: boolean
+  inherited?: boolean
+  source?: 'space' | 'folder'
+}
+
 interface AssetFolderResource {
   id: string
   name: string
@@ -5,6 +23,8 @@ interface AssetFolderResource {
   icon: string | null
   color: string | null
   parent_id: string | null
+  settings: AssetFolderSettings
+  effective_asset_fields?: SpaceAssetField[]
   children_count?: number
   assets_count?: number
   created_at: string
@@ -23,6 +43,7 @@ interface AssetResource {
   metadata: Record<string, unknown>
   data: Record<string, unknown> & { focus?: { x: number; y: number } }
   tags: string[]
+  effective_asset_fields?: SpaceAssetField[]
   url: string
   created_at: string
   updated_at: string
@@ -59,6 +80,7 @@ interface UpsertAssetFolderPayload {
   icon?: string | null
   color?: string | null
   parent_id?: string | null
+  settings?: AssetFolderSettings
 }
 
 interface UpsertAssetTagPayload {

@@ -193,6 +193,20 @@
       "edit": "Edit folder",
       "editDescription": "Update the folder details without changing its contents.",
       "deleteTitle": "Delete this folder?",
+      "metadata": {
+        "title": "Folder Metadata Rules",
+        "description": "Control which asset metadata fields apply inside this folder. Child folders inherit these rules automatically.",
+        "enabled": "Enabled",
+        "fieldBehaviour": "Inherited field behaviour",
+        "requiredHint": "Required fields are only mandatory in the default language. Translated values stay optional.",
+        "additionalFields": "Additional folder fields",
+        "additionalFieldsDescription": "Add fields that only exist for this folder branch. They will be inherited by child folders.",
+        "noAdditionalFields": "No additional folder fields defined",
+        "noInheritedFields": "No inherited metadata fields available",
+        "effectiveFieldCount": "{count} metadata field available in this folder. | {count} metadata fields available in this folder.",
+        "customized": "Customized",
+        "duplicateKey": "This field key already exists in the inherited metadata setup."
+      },
       "fields": {
         "icon": "Icon",
         "color": "Color",
@@ -1040,6 +1054,7 @@
         "fieldKeyPlaceholder": "e.g., alt",
         "fieldLabelPlaceholder": "e.g., Alt Text",
         "required": "Required",
+        "requiredHint": "Required fields apply to the default language only. Translated values remain optional.",
         "addField": "Add Field",
         "metadataFields": "Metadata Fields",
         "key": "Key",

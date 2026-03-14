@@ -39,6 +39,10 @@ class UpdateSpaceRequest extends FormRequest
             'badge' => 'sometimes|nullable|string|max:50',
             'description' => 'sometimes|nullable|string',
             'settings' => 'sometimes|nullable|array',
+            'settings.asset_fields' => 'nullable|array',
+            'settings.asset_fields.*.key' => 'required|string|max:100',
+            'settings.asset_fields.*.label' => 'required|string|max:100',
+            'settings.asset_fields.*.required' => 'required|boolean',
             'state' => [
                 'sometimes',
                 'string',
@@ -58,6 +62,22 @@ class UpdateSpaceRequest extends FormRequest
             'slug.regex' => 'The slug may only contain lowercase letters, numbers, and hyphens.',
             'color.regex' => 'The color must be a valid hex color code (e.g., #FF5733).',
             'state.in' => 'The state must be one of: draft, live, archived, error.',
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function ($validator): void {
+                $fieldKeys = array_filter(array_map(
+                    fn(array $field): ?string => $field['key'] ?? null,
+                    $this->input('settings.asset_fields', [])
+                ));
+
+                if (count($fieldKeys) !== count(array_unique($fieldKeys))) {
+                    $validator->errors()->add('settings.asset_fields', 'Asset field keys must be unique.');
+                }
+            },
         ];
     }
 }

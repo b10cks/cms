@@ -56,7 +56,9 @@ const hasUploadInProgress = computed(() => {
 })
 
 const filesWithMissingRequirements = computed(() => {
-  return files.value.filter((file) => getMissingRequiredFields(file).length > 0)
+  return files.value.filter(
+    (file) => getMissingRequiredFields(file, props.folderId ?? file.folder_id ?? null).length > 0
+  )
 })
 
 // Common function to process files whether from input or dropped

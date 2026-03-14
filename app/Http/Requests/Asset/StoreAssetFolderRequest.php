@@ -19,6 +19,15 @@ class StoreAssetFolderRequest extends FormRequest
             'description' => 'nullable|string',
             'icon' => 'nullable|string|max:50',
             'color' => 'nullable|string|max:7',
+            'settings' => 'nullable|array',
+            'settings.field_overrides' => 'nullable|array',
+            'settings.field_overrides.*.key' => 'required|string|max:100',
+            'settings.field_overrides.*.enabled' => 'nullable|boolean',
+            'settings.field_overrides.*.required' => 'nullable|boolean',
+            'settings.additional_fields' => 'nullable|array',
+            'settings.additional_fields.*.key' => 'required|string|max:100',
+            'settings.additional_fields.*.label' => 'required|string|max:100',
+            'settings.additional_fields.*.required' => 'required|boolean',
             'parent_id' => [
                 'nullable',
                 'string',
@@ -31,5 +40,21 @@ class StoreAssetFolderRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    public function after(): array
+    {
+        return [
+            function ($validator): void {
+                $additionalFieldKeys = array_filter(array_map(
+                    fn(array $field): ?string => $field['key'] ?? null,
+                    $this->input('settings.additional_fields', [])
+                ));
+
+                if (count($additionalFieldKeys) !== count(array_unique($additionalFieldKeys))) {
+                    $validator->errors()->add('settings.additional_fields', 'Additional field keys must be unique within a folder.');
+                }
+            },
+        ];
     }
 }

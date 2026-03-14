@@ -67,12 +67,13 @@ const { settings } = useSpaceSettings(props.spaceId)
 const { useAssetsQuery, useDeleteAssetMutation, useUpdateAssetMutation } = useAssets(props.spaceId)
 const { useFolderStructure } = useAssetFolders(props.spaceId)
 const {
-  assetFields,
   ensureAssetFieldData,
   getFieldValue,
+  getEffectiveFields,
   getMissingRequiredFields,
   getVisibleFields,
   getVisibleLanguages,
+  isFieldRequiredForLanguage,
   isCompliant,
   languageTabs,
   setFieldValue,
@@ -145,11 +146,11 @@ const assets = computed(() => assetResponse.value?.data || [])
 const meta = computed(() => assetResponse.value?.meta)
 
 const visibleFieldsList = computed(() => {
-  return getVisibleFields(settings.value.assets.visibleFields)
+  return getVisibleFields(settings.value.assets.visibleFields, folderId.value)
 })
 
 const visibleLanguageTabs = computed(() => {
-  if (!assetFields.value.length) {
+  if (!availableFields.value.length) {
     return []
   }
 
@@ -157,11 +158,12 @@ const visibleLanguageTabs = computed(() => {
 })
 
 const nonCompliantAssets = computed(() => {
-  return assets.value.filter((asset) => !isCompliant(asset))
+  return assets.value.filter((asset) => !isCompliant(asset, asset.folder_id ?? folderId.value))
 })
 
 const allLanguageCodes = computed(() => languageTabs.value.map((language) => language.code))
-const allFieldKeys = computed(() => assetFields.value.map((field) => field.key))
+const availableFields = computed(() => getEffectiveFields({ folderId: folderId.value }))
+const allFieldKeys = computed(() => availableFields.value.map((field) => field.key))
 
 const pageSizeOptions = [25, 50, 100, 500]
 
@@ -452,7 +454,7 @@ onMounted(async () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuCheckboxItem
-              v-for="field in assetFields"
+              v-for="field in availableFields"
               :key="field.key"
               :model-value="visibleFieldsList.some((item) => item.key === field.key)"
               @select="toggleFieldVisibility(field.key)"
@@ -546,7 +548,7 @@ onMounted(async () => {
               <div class="space-y-2">
                 <div class="flex items-center gap-2">
                   <AssetComplianceIndicator
-                    :issues="getMissingRequiredFields(asset)"
+                    :issues="getMissingRequiredFields(asset, asset.folder_id ?? folderId)"
                     severity="error"
                   />
                   <span class="text-xs text-muted-foreground">
@@ -576,7 +578,7 @@ onMounted(async () => {
                 :name="`${asset.id}-${language.code}-${field.key}`"
                 :model-value="getFieldValue(getEditableAsset(asset), field.key, language.code)"
                 :placeholder="field.label"
-                :required="field.required"
+                :required="isFieldRequiredForLanguage(field, language.code)"
                 @update:model-value="
                   (value: string | number) =>
                     handleGridFieldChange(asset, field.key, language.code, String(value))

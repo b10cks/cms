@@ -47,6 +47,18 @@ class AssetFolderTest extends TestCase
             'state' => 'live',
         ]);
 
+        $this->space->settings = [
+            ...$this->space->settings->toArray(),
+            'asset_fields' => [
+                ['key' => 'alt', 'label' => 'Alt Text', 'required' => false],
+                ['key' => 'description', 'label' => 'Description', 'required' => false],
+            ],
+            'languages' => [
+                ['code' => 'de', 'name' => 'German'],
+            ],
+        ];
+        $this->space->save();
+
         Sanctum::actingAs($this->user);
 
         $this->setUpSpaceTesting($this->space);
@@ -73,6 +85,8 @@ class AssetFolderTest extends TestCase
                 'icon',
                 'color',
                 'parent_id',
+                'settings',
+                'effective_asset_fields',
                 'created_at',
                 'updated_at',
             ],
@@ -101,6 +115,8 @@ class AssetFolderTest extends TestCase
                     'description',
                     'icon',
                     'color',
+                    'settings',
+                    'effective_asset_fields',
                 ],
             ],
         ]);
@@ -204,6 +220,62 @@ class AssetFolderTest extends TestCase
             'name' => 'Updated Folder Name',
             'description' => 'Updated description',
         ]);
+    }
+
+    #[Test]
+    public function user_can_store_folder_metadata_settings()
+    {
+        $response = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders", [
+            'name' => 'Photos',
+            'settings' => [
+                'field_overrides' => [
+                    ['key' => 'description', 'enabled' => false],
+                ],
+                'additional_fields' => [
+                    ['key' => 'photographer', 'label' => 'Photographer', 'required' => true],
+                ],
+            ],
+        ]);
+
+        $response->assertCreated();
+        $response->assertJsonPath('data.settings.additional_fields.0.key', 'photographer');
+        $response->assertJsonPath('data.effective_asset_fields.0.key', 'alt');
+        $this->assertFalse(collect($response->json('data.effective_asset_fields'))->contains(
+            fn(array $field): bool => $field['key'] === 'description'
+        ));
+
+        $folder = AssetFolder::query()->firstOrFail();
+
+        $this->assertSame('photographer', $folder->settings->additional_fields[0]['key']);
+        $this->assertFalse($folder->settings->field_overrides[0]['enabled']);
+    }
+
+    #[Test]
+    public function child_folder_inherits_parent_metadata_settings()
+    {
+        $parentFolder = AssetFolder::factory()->create([
+            'settings' => [
+                'field_overrides' => [
+                    ['key' => 'description', 'enabled' => false],
+                ],
+                'additional_fields' => [
+                    ['key' => 'photographer', 'label' => 'Photographer', 'required' => true],
+                ],
+            ],
+        ]);
+
+        $childFolder = AssetFolder::factory()->create([
+            'parent_id' => $parentFolder->id,
+        ]);
+
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/asset-folders/{$childFolder->id}");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.effective_asset_fields.0.key', 'alt');
+        $response->assertJsonPath('data.effective_asset_fields.1.key', 'photographer');
+        $this->assertFalse(collect($response->json('data.effective_asset_fields'))->contains(
+            fn(array $field): bool => $field['key'] === 'description'
+        ));
     }
 
     #[Test]

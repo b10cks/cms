@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Mgmt;
 
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\AssetFilter;
-use App\Http\Requests\Traits\ExternalIdValidation;
+use App\Http\Requests\Asset\StoreAssetRequest;
+use App\Http\Requests\Asset\UpdateAssetRequest;
 use App\Http\Resources\Management\AssetResource;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
@@ -18,8 +19,6 @@ use Illuminate\Support\Facades\Log;
 
 class AssetController extends Controller
 {
-    use ExternalIdValidation;
-
     /**
      * Display a listing of assets.
      */
@@ -29,6 +28,7 @@ class AssetController extends Controller
         $filter = new AssetFilter($request->all());
 
         $assets = Asset::filter($filter)
+            ->with('folder')
             ->paginate($request->get('per_page', 20));
 
         return AssetResource::collection($assets);
@@ -37,21 +37,18 @@ class AssetController extends Controller
     /**
      * Store a newly created asset.
      */
-    public function store(Space $space, Request $request, AssetService $assetService): AssetResource|JsonResponse
-    {
+    public function store(
+        Space $space,
+        StoreAssetRequest $request,
+        AssetService $assetService
+    ): AssetResource|JsonResponse {
         abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
-        $request->validate([
-            'file' => 'required|file|max:'.(config('filesystems.max_upload_size', 100) * 1024),
-            'external_id' => $this->externalIdRule(Asset::class),
-            'folder_id' => 'nullable',
-            'metadata' => 'nullable|array',
-            'data' => 'nullable',
-        ]);
+        $validated = $request->validated();
 
         // If folder_id provided, check it belongs to this space
         $folder = null;
-        if ($request->has('folder_id')) {
-            $folder = AssetFolder::findOrFail($request->folder_id);
+        if (!empty($validated['folder_id'])) {
+            $folder = AssetFolder::query()->findOrFail($validated['folder_id']);
         }
 
         // Store the asset
@@ -59,13 +56,18 @@ class AssetController extends Controller
             $asset = $assetService->storeAsset(
                 $space,
                 $request->file('file'),
-                (object) $request->json('metadata', new \StdClass),
-                $request->json('data', new \StdClass),
+                (object) ($validated['metadata'] ?? []),
+                (object) ($validated['data'] ?? []),
                 $folder,
-                $request->input('external_id')
+                $validated['external_id'] ?? null
             );
 
-            return new AssetResource($asset);
+            if (array_key_exists('tags', $validated)) {
+                $asset->tags = $validated['tags'] ?? [];
+                $asset->save();
+            }
+
+            return new AssetResource($asset->load('folder'));
         } catch (\Exception $e) {
             Log::error('Failed to store asset', [
                 'space_id' => $space->id,
@@ -73,7 +75,7 @@ class AssetController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Failed to store asset: '.$e->getMessage(),
+                'message' => 'Failed to store asset: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -91,49 +93,45 @@ class AssetController extends Controller
     /**
      * Update the specified asset metadata.
      */
-    public function update(Request $request, Space $space, Asset $asset, AssetService $assetService): AssetResource|JsonResponse
-    {
+    public function update(
+        UpdateAssetRequest $request,
+        Space $space,
+        Asset $asset,
+        AssetService $assetService
+    ): AssetResource|JsonResponse {
         abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
-        $request->validate([
-            'filename' => 'sometimes|string|max:100',
-            'external_id' => $this->externalIdRule(Asset::class, $asset->id),
-            'folder_id' => 'nullable', // |exists:asset_folders,id',
-            'metadata' => 'sometimes|nullable|array',
-            'data' => 'sometimes|nullable|array',
-            'tags' => 'sometimes|nullable|array',
-        ]);
+        $validated = $request->validated();
 
-        if ($request->has('folder_id') && $request->folder_id) {
-            $asset->folder_id = $request->folder_id;
+        if (array_key_exists('folder_id', $validated)) {
+            $asset->folder_id = $validated['folder_id'];
         }
 
-        if ($request->has('filename')) {
-            $assetService->rename($asset, $request->filename);
+        if (array_key_exists('filename', $validated)) {
+            $assetService->rename($asset, $validated['filename']);
         }
 
-        if ($request->has('metadata')) {
+        if (array_key_exists('metadata', $validated)) {
             $asset->metadata = array_merge(
                 $asset->metadata ?? [],
-                $request->metadata
+                $validated['metadata'] ?? []
             );
         }
 
-        if ($request->has('tags')) {
-            $asset->tags = $request->tags;
+        if (array_key_exists('tags', $validated)) {
+            $asset->tags = $validated['tags'] ?? [];
         }
 
-        // Update tags if provided
-        if ($request->has('data')) {
-            $asset->data = $request->data;
+        if (array_key_exists('data', $validated)) {
+            $asset->data = $validated['data'];
         }
 
-        if ($request->has('external_id')) {
-            $asset->external_id = $request->external_id;
+        if (array_key_exists('external_id', $validated)) {
+            $asset->external_id = $validated['external_id'];
         }
 
         $asset->save();
 
-        return new AssetResource($asset);
+        return new AssetResource($asset->load('folder'));
     }
 
     /**

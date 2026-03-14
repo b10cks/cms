@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * 
+ *
  *
  * @property string $id
  * @property string|null $external_id
@@ -70,6 +70,11 @@ class AssetFolder extends SpaceModel
         'color',
         'storage_id',
         'parent_id',
+        'settings',
+    ];
+
+    protected $casts = [
+        'settings' => AssetFolderSettings::class,
     ];
 
     protected function name(): Attribute

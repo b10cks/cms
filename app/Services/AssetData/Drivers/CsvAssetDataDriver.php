@@ -20,13 +20,14 @@ class CsvAssetDataDriver extends BaseAssetDataDriver
         $headers = $this->mapper->getColumnHeaders($assetFields, $languages);
         $filename = $this->generateFilename($space, 'csv');
 
-        return new StreamedResponse(function () use ($assets, $assetFields, $languages, $headers) {
+        return new StreamedResponse(function () use ($space, $assets, $languages, $headers) {
             $handle = fopen('php://output', 'w');
 
             fputcsv($handle, $headers);
 
             foreach ($assets as $asset) {
-                $row = $this->mapper->flattenAsset($asset, $assetFields, $languages);
+                $rowFields = $this->fieldResolver->getEffectiveFieldsForAsset($space, $asset);
+                $row = $this->mapper->flattenAsset($asset, $rowFields, $languages);
                 $orderedRow = array_map(fn($header) => $row[$header] ?? '', $headers);
                 fputcsv($handle, $orderedRow);
             }

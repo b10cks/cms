@@ -2,16 +2,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { useDebounceFn } from '@vueuse/core'
 import { toast } from 'vue-sonner'
 
+import { api } from '~/api'
 import type { AssetsQueryParams } from '~/api/resources/assets'
+import { getXsrfHeaders } from '~/lib/csrf'
 import type {
   AssetResource,
   ExportTypes,
   UpdateAssetPayload,
   UploadAssetPayload,
 } from '~/types/assets'
-
-import { api } from '~/api'
-import { getXsrfHeaders } from '~/lib/csrf'
 
 import { queryKeys } from './useQueryClient'
 
@@ -67,6 +66,9 @@ export function useAssets(spaceId: MaybeRef<string>) {
       }
       if (payload.tags) {
         formData.append('tags', JSON.stringify(payload.tags))
+      }
+      if (payload.metadata) {
+        formData.append('metadata', JSON.stringify(payload.metadata))
       }
       if (payload.data) {
         formData.append('data', JSON.stringify(payload.data))

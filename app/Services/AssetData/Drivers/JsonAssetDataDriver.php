@@ -25,7 +25,11 @@ class JsonAssetDataDriver extends BaseAssetDataDriver
                 'exported_at' => now()->toIso8601String(),
                 'asset_fields' => $assetFields,
                 'languages' => $languages,
-                'assets' => $assets->map(fn($asset) => $this->mapper->flattenAsset($asset, $assetFields, $languages))->values(),
+                'assets' => $assets->map(function ($asset) use ($space, $languages) {
+                    $rowFields = $this->fieldResolver->getEffectiveFieldsForAsset($space, $asset);
+
+                    return $this->mapper->flattenAsset($asset, $rowFields, $languages);
+                })->values(),
             ];
 
             echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);

@@ -32,13 +32,14 @@ class XliffAssetDataDriver extends BaseAssetDataDriver
 
                 foreach ($assets as $asset) {
                     $data = $asset->data ?? [];
+                    $effectiveFields = $this->fieldResolver->getEffectiveFieldsForAsset($space, $asset);
 
-                    foreach ($assetFields as $field) {
+                    foreach ($effectiveFields as $field) {
                         $key = $field['key'];
                         $transUnitId = "{$asset->id}_{$key}";
 
-                        $source = $data['_default'][$key] ?? '';
-                        $target = $data[$langCode][$key] ?? '';
+                        $source = $data['fields']['_default'][$key] ?? '';
+                        $target = $data['fields'][$langCode][$key] ?? '';
 
                         echo "      <trans-unit id=\"{$transUnitId}\">" . PHP_EOL;
                         echo '        <source>' . htmlspecialchars($source, ENT_XML1, 'UTF-8') . '</source>' . PHP_EOL;

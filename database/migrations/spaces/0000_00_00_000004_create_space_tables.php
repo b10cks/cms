@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->string('icon', 50)->nullable();
             $table->char('color', 7)->nullable()->charset('ascii');
 
+            $table->json('settings')->nullable();
             $table->foreignUlid('parent_id')->nullable();
 
             $table->timestamps();
