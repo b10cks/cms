@@ -5,6 +5,7 @@ import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import type { SpaceQueryParams } from '~/api/resources/spaces'
+import SpaceIcon from '~/assets/images/space.svg?component'
 import AppHeader from '~/components/AppHeader.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
@@ -216,7 +217,7 @@ const formatLastUpdated = (space: SpaceResource) => {
             :to="{ name: 'index', query: { ...route.query, archived: undefined } }"
           >
             <Icon name="lucide:layout-grid" />
-            <span>All</span>
+            <span>{{ $t('labels.spaces.sidebar.all') }}</span>
           </RouterLink>
           <RouterLink
             class="flex items-center gap-1 rounded-md p-2 font-medium"
@@ -224,7 +225,7 @@ const formatLastUpdated = (space: SpaceResource) => {
             :to="{ name: 'index', query: { ...route.query, archived: 'true' } }"
           >
             <Icon name="lucide:trash-2" />
-            <span>Archived</span>
+            <span>{{ $t('labels.spaces.sidebar.archived') }}</span>
           </RouterLink>
         </div>
       </div>
@@ -252,9 +253,10 @@ const formatLastUpdated = (space: SpaceResource) => {
         </ContentHeader>
 
         <div class="flex gap-8">
-          <div class="grid w-full gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            <!-- Outer div per space: not a link, so the badge dialog (which contains a button)
-                 never ends up inside an <a> element -->
+          <div
+            v-if="teamRelatedSpaces.length > 0"
+            class="grid w-full gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          >
             <div
               v-for="space in teamRelatedSpaces"
               :key="space.id"
@@ -345,7 +347,7 @@ const formatLastUpdated = (space: SpaceResource) => {
                           >
                             <Icon
                               v-if="(action as Action).icon"
-                              :name="(action as Action).icon"
+                              :name="(action as Action).icon!"
                             />
                             <span>{{ (action as Action).label }}</span>
                           </DropdownMenuItem>
@@ -370,6 +372,29 @@ const formatLastUpdated = (space: SpaceResource) => {
                 "
               />
             </div>
+          </div>
+
+          <div
+            v-else
+            class="flex min-h-96 w-full flex-col items-center justify-center gap-6 text-center"
+          >
+            <SpaceIcon class="w-32 text-muted" />
+            <div class="space-y-2">
+              <h3 class="text-xl font-semibold text-primary">
+                {{ $t('labels.spaces.emptyTitle') }}
+              </h3>
+              <p class="max-w-md text-sm text-muted">
+                {{ $t('labels.spaces.emptyDescription') }}
+              </p>
+            </div>
+            <Button
+              :as="RouterLink"
+              variant="primary"
+              :to="{ name: 'spaces-new' }"
+            >
+              <Icon name="lucide:plus" />
+              <span>{{ $t('actions.spaces.add') }}</span>
+            </Button>
           </div>
         </div>
       </div>

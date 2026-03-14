@@ -108,6 +108,8 @@ const handleNext = async () => {
 const handleBack = () => {
   if (step.value > 1) {
     step.value--
+  } else {
+    router.push('/')
   }
 }
 </script>
@@ -314,7 +316,6 @@ const handleBack = () => {
         <div class="mt-8 flex justify-between">
           <Button
             variant="outline"
-            :disabled="step === 1"
             @click="handleBack"
           >
             {{ $t('actions.back') }}

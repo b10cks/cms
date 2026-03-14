@@ -659,6 +659,13 @@
     },
     "spaces": {
       "title": "Spaces",
+      "sidebar": {
+        "all": "All",
+        "archived": "Archived"
+      },
+      "empty": "No spaces yet.",
+      "emptyTitle": "Create the space where your next project comes to life.",
+      "emptyDescription": "Spaces give your team a home for content, assets, workflows, and structure — all in one place. Start with your first one and build from there.",
       "newPageTitle": "Create a new space",
       "newPageDescription": "Create a new content space to organize your content.",
       "steps": {
@@ -1668,6 +1675,10 @@
   "actions": {
     "open": "Open",
     "toDashboard": "Go to dashboard",
+    "view": {
+      "all": "All",
+      "archived": "Archived"
+    },
     "quickActions": "Quick Actions",
     "saveClose": "Save & Close",
     "save": "Save",

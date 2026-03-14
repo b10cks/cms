@@ -650,6 +650,12 @@
     },
     "spaces": {
       "title": "Spaces",
+      "sidebar": {
+        "all": "Alle",
+        "archived": "Archiviert"
+      },
+      "emptyTitle": "Erstelle den Space, in dem dein nächstes Projekt Gestalt annimmt.",
+      "emptyDescription": "Spaces geben deinem Team ein gemeinsames Zuhause für Inhalte, Assets, Workflows und Struktur. Starte mit deinem ersten Space und baue von dort aus weiter.",
       "newPageTitle": "Erstelle einen neuen Space",
       "newPageDescription": "Erstelle einen neuen Content Space, um deine Inhalte zu organisieren.",
       "steps": {
@@ -1751,6 +1757,10 @@
         "select": "{name} auswählen",
         "continueWith": "Fortsetzen mit {name}"
       }
+    },
+    "view": {
+      "all": "Alle",
+      "archived": "Archiviert"
     },
     "saveChanges": "Änderungen speichern",
     "saving": "Speichere...",
