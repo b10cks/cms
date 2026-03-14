@@ -36,6 +36,9 @@ class SpaceController extends Controller
             ->when(! $user->is_root, function ($query) use ($accessibleSpaceIds) {
                 $query->whereIn('spaces.id', $accessibleSpaceIds);
             })
+            ->with([
+                'subscriptions' => fn ($query) => $query->with('plan')->latest('created_at'),
+            ])
             ->withCount(['users'])
             ->paginate();
 
@@ -119,6 +122,10 @@ class SpaceController extends Controller
             }
         }
 
+        $space->load([
+            'subscriptions' => fn ($query) => $query->with('plan')->latest('created_at'),
+        ]);
+
         return (new SpaceResource($space))->additional(['checkout_url' => $checkoutUrl]);
     }
 
@@ -128,7 +135,11 @@ class SpaceController extends Controller
     public function show(Space $space): SpaceResource
     {
         $this->authorize('view', $space);
-        $space->loadCount(['users']);
+        $space
+            ->loadCount(['users'])
+            ->load([
+                'subscriptions' => fn ($query) => $query->with('plan')->latest('created_at'),
+            ]);
 
         return new SpaceResource($space);
     }
@@ -150,7 +161,11 @@ class SpaceController extends Controller
             abort(500, 'Failed to update space');
         }
 
-        $space->loadCount(['users']);
+        $space
+            ->loadCount(['users'])
+            ->load([
+                'subscriptions' => fn ($query) => $query->with('plan')->latest('created_at'),
+            ]);
         if ($originalTeamId !== $space->team_id) {
             if ($originalTeamId) {
                 $authorizationService->invalidateTeamTree(Team::query()->findOrFail($originalTeamId));

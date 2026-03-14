@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 /**
  * App\Models\Management\Space
@@ -151,6 +152,21 @@ class Space extends GlobalModel
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class, 'space_id', 'id');
+    }
+
+    public function resolveCurrentSubscription(?Collection $subscriptions = null): ?Subscription
+    {
+        $subscriptions ??= $this->relationLoaded('subscriptions')
+            ? $this->subscriptions
+            : $this->subscriptions()->with('plan')->latest('created_at')->get();
+
+        return self::pickCurrentSubscription($subscriptions);
+    }
+
+    public static function pickCurrentSubscription(Collection $subscriptions): ?Subscription
+    {
+        return $subscriptions->first(fn (Subscription $subscription) => $subscription->isActive())
+            ?? $subscriptions->first();
     }
 
     public function invites(): HasMany

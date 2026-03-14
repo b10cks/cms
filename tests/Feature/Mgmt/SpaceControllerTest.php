@@ -3,8 +3,10 @@
 namespace Tests\Feature\Mgmt;
 
 use App\Http\Controllers\Mgmt\SpaceController;
+use App\Models\Management\Plan;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceConnection;
+use App\Models\Management\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -164,6 +166,53 @@ class SpaceControllerTest extends TestCase
                 'slug' => $this->space->slug,
             ],
         ]);
+    }
+
+    #[Test]
+    public function spaces_include_the_current_plan_summary()
+    {
+        $this->actingAs($this->user);
+
+        $plan = Plan::query()->create([
+            'name' => ['en' => 'Scale'],
+            'description' => ['en' => 'Scale plan'],
+            'features' => ['en' => ['Priority support']],
+            'price' => '29.00',
+            'period' => 'month',
+            'quotas' => null,
+            'is_free' => false,
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+
+        Subscription::query()->create([
+            'space_id' => $this->space->id,
+            'plan_id' => $plan->id,
+            'name' => 'Scale',
+            'lemon_squeezy_id' => 'sub_active',
+            'status' => 'active',
+            'variant_id' => 'variant-active',
+            'product_id' => 'product-active',
+            'quantity' => 1,
+        ]);
+
+        Subscription::query()->create([
+            'space_id' => $this->space->id,
+            'plan_id' => $plan->id,
+            'name' => 'Scale',
+            'lemon_squeezy_id' => null,
+            'status' => 'pending',
+            'variant_id' => 'variant-pending',
+            'product_id' => 'product-pending',
+            'quantity' => 1,
+        ]);
+
+        $response = $this->getJson(route('mgmt.spaces.index'));
+
+        $response->assertOk();
+        $response->assertJsonPath('data.0.plan.name', 'Scale');
+        $response->assertJsonPath('data.0.plan.status', 'active');
+        $response->assertJsonPath('data.0.plan.id', $plan->id);
     }
 
     #[Test]

@@ -25,6 +25,12 @@ interface SpaceSettings {
   languages?: SpaceLanguage[]
 }
 
+interface SpacePlanSummary {
+  id: string | null
+  name: string | null
+  status: SubscriptionStatus
+}
+
 interface SpaceResource {
   id: string
   state: string
@@ -35,6 +41,7 @@ interface SpaceResource {
   badge?: string | null
   description: string
   team_id?: string | null
+  plan?: SpacePlanSummary | null
   settings: SpaceSettings
   user_count?: string
   content_updated_at?: string | null

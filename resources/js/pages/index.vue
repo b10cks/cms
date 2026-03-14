@@ -12,7 +12,7 @@ import NuxtImg from '~/components/NuxtImg.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import SpaceBadgeDialog from '~/components/space/SpaceBadgeDialog.vue'
 import TeamSelector from '~/components/TeamSelector.vue'
-import { Badge } from '~/components/ui/badge'
+import { Badge, type BadgeVariants } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import {
@@ -165,6 +165,47 @@ const formatLastUpdated = (space: SpaceResource) => {
 
   return date ? formatRelativeTime(date) : ''
 }
+
+const getSpacePlanBadgeVariant = (status: SpacePlanSummary['status']): BadgeVariants['variant'] => {
+  switch (status) {
+    case 'on_trial':
+      return 'info'
+    case 'pending':
+    case 'paused':
+      return 'warning'
+    case 'past_due':
+    case 'unpaid':
+      return 'destructive'
+    case 'cancelled':
+    case 'expired':
+    case 'active':
+    default:
+      return 'secondary'
+  }
+}
+
+const getSpacePlanIcon = (status: SpacePlanSummary['status']) => {
+  switch (status) {
+    case 'active':
+      return 'lucide:check'
+    case 'on_trial':
+      return 'lucide:flask-conical'
+    case 'paused':
+      return 'lucide:pause'
+    case 'past_due':
+    case 'pending':
+    case 'unpaid':
+      return 'lucide:triangle-alert'
+    case 'cancelled':
+    case 'expired':
+    default:
+      return 'lucide:circle-off'
+  }
+}
+
+const getSpacePlanLabel = (plan: SpacePlanSummary) => {
+  return plan.name ?? $t('labels.plans.free')
+}
 </script>
 
 <template>
@@ -284,25 +325,17 @@ const formatLastUpdated = (space: SpaceResource) => {
                       :alt="space.name"
                       class="relative z-10 size-16"
                     />
-                    <!-- Environment badge overlaid in the bottom-left of the thumbnail -->
                     <SpaceBadge
                       v-if="space.badge"
                       :badge="space.badge"
-                      size="xs"
+                      size="2xs"
                       class="absolute bottom-2 left-2 z-20"
                     />
                   </div>
-
-                  <!-- Space meta row -->
                   <div class="flex items-center">
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
                         <h4 class="truncate font-semibold text-primary">{{ space.name }}</h4>
-                        <SpaceBadge
-                          v-if="space.badge"
-                          :badge="space.badge"
-                          size="xs"
-                        />
                       </div>
                       <p class="text-sm text-muted">
                         {{ $t('labels.fields.lastUpdated', { timeAgo: formatLastUpdated(space) }) }}
@@ -310,15 +343,24 @@ const formatLastUpdated = (space: SpaceResource) => {
                     </div>
 
                     <div class="ml-auto grid shrink-0">
-                      <!-- Plan badge — hidden on hover (replaced by action button) -->
                       <div
                         class="grid-area-stack flex items-center gap-2 group-hover:hidden"
                         :class="[open ? 'hidden' : '']"
                       >
-                        <Badge size="xs">Free</Badge>
+                        <Badge
+                          v-if="space.plan"
+                          size="xs"
+                          :variant="getSpacePlanBadgeVariant(space.plan.status)"
+                        >
+                          <span class="flex items-center gap-1.5">
+                            <Icon
+                              :name="getSpacePlanIcon(space.plan.status)"
+                              size="12"
+                            />
+                            <span>{{ getSpacePlanLabel(space.plan) }}</span>
+                          </span>
+                        </Badge>
                       </div>
-
-                      <!-- Three-dot menu trigger -->
                       <DropdownMenuTrigger class="grid-area-stack">
                         <Button
                           variant="outline"

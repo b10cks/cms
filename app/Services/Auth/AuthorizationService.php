@@ -272,10 +272,10 @@ class AuthorizationService
                 ->groupBy('space_id');
 
             foreach ($spaceIds as $spaceId) {
-                $subscription = $this->pickCurrentSubscription($subscriptions->get($spaceId, collect()));
+                $subscription = Space::pickCurrentSubscription($subscriptions->get($spaceId, collect()));
                 $graph['spaces'][$spaceId]['plan'] = $subscription ? [
                     'id' => $subscription->plan?->id,
-                    'name' => $subscription->plan?->getTranslatedName(),
+                    'name' => $subscription->plan?->getTranslatedName() ?? $subscription->name,
                     'status' => $subscription->status,
                 ] : null;
                 $graph['spaces'][$spaceId]['abilities'] = $this->mergeAbilities(
@@ -336,11 +336,5 @@ class AuthorizationService
         sort($merged);
 
         return $merged;
-    }
-
-    private function pickCurrentSubscription(Collection $subscriptions): ?Subscription
-    {
-        return $subscriptions->first(fn (Subscription $subscription) => $subscription->isActive())
-            ?? $subscriptions->first();
     }
 }
