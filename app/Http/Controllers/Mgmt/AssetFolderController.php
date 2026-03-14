@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Mgmt;
 
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\AssetFolderFilter;
-use App\Http\Requests\Asset\UpsertAssetFolderRequest;
+use App\Http\Requests\Asset\StoreAssetFolderRequest;
+use App\Http\Requests\Asset\UpdateAssetFolderRequest;
 use App\Http\Resources\Management\AssetFolderResource;
 use App\Models\Management\Space;
 use App\Models\Space\AssetFolder;
@@ -34,7 +35,7 @@ class AssetFolderController extends Controller
     /**
      * Store a newly created asset folder.
      */
-    public function store(Space $space, UpsertAssetFolderRequest $request): AssetFolderResource
+    public function store(Space $space, StoreAssetFolderRequest $request): AssetFolderResource
     {
         abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_folders.manage'), 403);
         $assetFolder = new AssetFolder;
@@ -57,12 +58,16 @@ class AssetFolderController extends Controller
     /**
      * Update the specified asset folder.
      */
-    public function update(UpsertAssetFolderRequest $request, Space $space, AssetFolder $assetFolder): AssetFolderResource
+    public function update(UpdateAssetFolderRequest $request, Space $space, AssetFolder $assetFolder): AssetFolderResource|JsonResponse
     {
         abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_folders.manage'), 403);
         // Prevent circular references
         if ($request->has('parent_id') && $request->parent_id === $assetFolder->id) {
             return response()->json(['message' => 'Folder cannot be its own parent'], 422);
+        }
+
+        if ($request->filled('parent_id') && $this->wouldCreateCircularReference($assetFolder, $request->string('parent_id')->value())) {
+            return response()->json(['message' => 'Folder cannot be moved into one of its descendants'], 422);
         }
 
         $assetFolder->fill($request->validated());
@@ -98,5 +103,24 @@ class AssetFolderController extends Controller
                 'message' => 'An error occurred while deleting the folder',
             ], 500);
         }
+    }
+
+    private function wouldCreateCircularReference(AssetFolder $assetFolder, string $parentId): bool
+    {
+        $currentFolder = AssetFolder::query()->find($parentId);
+
+        while ($currentFolder) {
+            if ($currentFolder->id === $assetFolder->id) {
+                return true;
+            }
+
+            if (!$currentFolder->parent_id) {
+                return false;
+            }
+
+            $currentFolder = AssetFolder::query()->find($currentFolder->parent_id);
+        }
+
+        return false;
     }
 }

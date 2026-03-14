@@ -183,6 +183,9 @@
       "title": "Asset-Ordner",
       "create": "Neuer Ordner",
       "createDescription": "Organisiere deine Assets in Ordnern.",
+      "edit": "Ordner bearbeiten",
+      "editDescription": "Aktualisiere die Ordnerdetails, ohne den Inhalt zu verändern.",
+      "deleteTitle": "Diesen Ordner löschen?",
       "fields": {
         "icon": "Symbol",
         "color": "Farbe",
@@ -315,10 +318,18 @@
       "uploadAssets": "Assets hochladen",
       "uploadDetails": "Upload-Details",
       "uploadDescription": "Lade Dateien in deine Asset-Bibliothek hoch. Du kannst mehrere Dateien auf einmal hochladen.",
+      "uploadRequirementsTitle": "Metadaten-Anforderungen bestätigen",
+      "uploadRequirementsSummary": "{count} Datei hat fehlende Pflicht-Metadaten. | {count} Dateien haben fehlende Pflicht-Metadaten.",
+      "uploadRequirementsWarning": "Diese Datei erfüllt die aktuelle Asset-Spezifikation noch nicht vollständig.",
       "dragAndDrop": "Ziehe Dateien hierher oder klicke zum Durchsuchen",
       "browseFiles": "Dateien durchsuchen",
       "addMoreFiles": "Weitere Dateien hinzufügen",
       "fileInformation": "Dateiinformationen",
+      "defaultLanguage": "Standard",
+      "requirementsSummary": "{count} Asset auf dieser Seite hat fehlende Pflicht-Metadaten. | {count} Assets auf dieser Seite haben fehlende Pflicht-Metadaten.",
+      "metadataRequirementsMissing": "Fehlende Pflicht-Metadaten",
+      "folderEmpty": "Dieser Ordner ist leer. Zieh Assets hierher oder lade etwas Neues hoch.",
+      "noAssetsWithTag": "Keine Assets passen zum ausgewählten Tag.",
       "setFocusPoint": "Fokuspunkt setzen",
       "removeFocusPoint": "Fokuspunkt entfernen",
       "fileTypes": {
@@ -358,7 +369,9 @@
       "size": "Größe",
       "createdAt": "Hochgeladen am",
       "updatedAt": "Geändert",
+      "lastModified": "Zuletzt geändert",
       "unknown": "Unbekannt",
+      "uploading": "Wird hochgeladen...",
       "replaceMedia": "Medien ersetzen",
       "finish": "Fertig"
     },
@@ -2072,6 +2085,14 @@
       "noContent": "Kein Inhalt ausgewählt. Wähle einen Inhalt zum Anzeigen aus.",
       "noEnvironments": "Keine Umgebungen verfügbar. [Konfiguriere Umgebungen in den Space-Einstellungen]({url}) um Inhalte anzuzeigen."
     },
-    "deleteTokenConfirm": "Bist du sicher, dass du den Token '{name}' löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden."
+    "deleteTokenConfirm": "Bist du sicher, dass du den Token '{name}' löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "assetFolders": {
+      "deleteConfirmation": "Lösche \"{name}\"? Der Ordner muss vorher leer sein.",
+      "invalidMoveToChild": "Ordner können nicht in sich selbst oder in einen ihrer Unterordner verschoben werden."
+    },
+    "assets": {
+      "deleteConfirmation": "Lösche \"{name}\"? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "uploadRequirementsConfirm": "Einige Dateien haben fehlende Pflicht-Metadaten. Du kannst sie trotzdem hochladen, aber sie bleiben markiert, bis die fehlenden Werte ergänzt wurden."
+    }
   }
 }

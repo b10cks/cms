@@ -207,6 +207,58 @@ class AssetFolderTest extends TestCase
     }
 
     #[Test]
+    public function user_cannot_move_a_folder_into_its_descendant()
+    {
+        $parentFolder = AssetFolder::factory()->create([
+            'name' => 'Parent Folder',
+        ]);
+        $childFolder = AssetFolder::factory()->create([
+            'name' => 'Child Folder',
+            'parent_id' => $parentFolder->id,
+        ]);
+
+        $response = $this->patchJson(
+            "/mgmt/v1/spaces/{$this->space->id}/asset-folders/{$parentFolder->id}",
+            [
+                'name' => $parentFolder->name,
+                'parent_id' => $childFolder->id,
+            ]
+        );
+
+        $response->assertStatus(422);
+        $this->assertDatabaseHas('asset_folders', [
+            'id' => $parentFolder->id,
+            'parent_id' => null,
+        ]);
+    }
+
+    #[Test]
+    public function user_can_move_a_folder_with_a_parent_only_payload()
+    {
+        $parentFolder = AssetFolder::factory()->create([
+            'name' => 'Parent Folder',
+        ]);
+        $childFolder = AssetFolder::factory()->create([
+            'name' => 'Child Folder',
+        ]);
+
+        $response = $this->patchJson(
+            "/mgmt/v1/spaces/{$this->space->id}/asset-folders/{$childFolder->id}",
+            [
+                'parent_id' => $parentFolder->id,
+            ]
+        );
+
+        $response->assertOk();
+        $response->assertJsonPath('data.parent_id', $parentFolder->id);
+
+        $this->assertDatabaseHas('asset_folders', [
+            'id' => $childFolder->id,
+            'parent_id' => $parentFolder->id,
+        ]);
+    }
+
+    #[Test]
     public function user_can_create_nested_folders()
     {
         // Create a parent folder

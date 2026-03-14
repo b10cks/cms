@@ -1,10 +1,17 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
+import { deepClone } from '@vue/devtools-shared'
 import { debounce } from 'perfect-debounce'
 import { toast } from 'vue-sonner'
+
 import type { AssetsQueryParams } from '~/api/resources/assets'
+import AssetComplianceIndicator from '~/components/assets/AssetComplianceIndicator.vue'
+import CreateFolderDialog from '~/components/assets/CreateFolderDialog.vue'
+import UploadDialog from '~/components/assets/UploadDialog.vue'
+import Icon from '~/components/Icon.vue'
+import NuxtImg from '~/components/NuxtImg.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
+import { Alert } from '~/components/ui/alert'
+import { Breadcrumb, BreadcrumbItem } from '~/components/ui/breadcrumb'
 import { Button } from '~/components/ui/button'
 import {
   DropdownMenu,
@@ -26,12 +33,14 @@ import {
   TableRow,
 } from '~/components/ui/table'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
-import { AssetResource } from '~/types/assets'
+import type { AssetResource } from '~/types/assets'
 
 export interface AssetListViewProps {
   spaceId: string
   mode?: 'manage' | 'select'
   multiSelect?: boolean
+  allowUpload?: boolean
+  allowFolderCreation?: boolean
   initialFolderId?: string | null
   initialTagId?: string | null
 }
@@ -39,6 +48,8 @@ export interface AssetListViewProps {
 const props = withDefaults(defineProps<AssetListViewProps>(), {
   mode: 'manage',
   multiSelect: true,
+  allowUpload: true,
+  allowFolderCreation: true,
   initialFolderId: null,
   initialTagId: null,
 })
@@ -53,26 +64,28 @@ const emit = defineEmits<{
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
 const { settings } = useSpaceSettings(props.spaceId)
-const { useSpaceQuery } = useSpaces()
 const { useAssetsQuery, useDeleteAssetMutation, useUpdateAssetMutation } = useAssets(props.spaceId)
-
 const { useFolderStructure } = useAssetFolders(props.spaceId)
-const { getBreadcrumbs, getChildrenOfFolder } = useFolderStructure()
-
-const breadcrumbs = computed(() => {
-  if (!folderId.value) return []
-  return getBreadcrumbs(folderId.value)
-})
-
-const { data: space } = useSpaceQuery(props.spaceId)
-const { mutate: updateAsset } = useUpdateAssetMutation()
-const { mutate: deleteAsset } = useDeleteAssetMutation()
-
-const assetFields = computed(() => space.value?.settings?.asset_fields || [])
-const spaceLanguages = computed(() => space.value?.settings?.languages || [])
+const {
+  assetFields,
+  ensureAssetFieldData,
+  getFieldValue,
+  getMissingRequiredFields,
+  getVisibleFields,
+  getVisibleLanguages,
+  isCompliant,
+  languageTabs,
+  setFieldValue,
+} = useAssetRequirements(props.spaceId)
+const { getBreadcrumbs } = useFolderStructure()
+const { mutateAsync: updateAsset } = useUpdateAssetMutation()
+const { mutateAsync: deleteAsset } = useDeleteAssetMutation()
 
 const folderId = defineModel<string | null>('folderId')
 const tagId = defineModel<string | null>('tagId')
+
+const showUploadDialog = ref(false)
+const folderDialogOpen = ref(false)
 const currentPage = ref(1)
 const perPage = ref(25)
 const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
@@ -82,37 +95,9 @@ const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
 const editingAssetId = ref<string | null>(null)
 const editingAssetData = ref<AssetResource | null>(null)
 const pendingChanges = ref<Set<string>>(new Set())
-const selectedAssets = ref<Map<string, AssetResource>>(new Map())
 const filters = ref<Record<string, unknown>>({})
-const q = ref<string>('')
+const q = ref('')
 
-const assetQueryParams = computed<AssetsQueryParams>(() => {
-  return {
-    ...filters.value,
-    folder: folderId.value ?? undefined,
-    tags: tagId.value ?? undefined,
-    q: q.value ?? undefined,
-    sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
-    page: currentPage.value,
-    per_page: perPage.value,
-  }
-})
-
-const { data: assetResponse, refetch: refetchAssets } = useAssetsQuery(assetQueryParams)
-watch([folderId, tagId], async () => {
-  currentPage.value = 1
-  await refetchAssets()
-})
-
-watch(
-  [currentPage, perPage, sortBy],
-  async () => {
-    await refetchAssets()
-  },
-  { deep: true }
-)
-
-const pageSizeOptions = [25, 50, 100, 500]
 const sortOptions = [
   { value: 'created_at', label: String($t('labels.assets.createdAt')) },
   { value: 'updated_at', label: String($t('labels.assets.updatedAt')) },
@@ -134,133 +119,151 @@ const assetFilters = computed(() => [
   },
 ])
 
-// Computed values
+const assetQueryParams = computed<AssetsQueryParams>(() => {
+  return {
+    ...filters.value,
+    folder: folderId.value ?? undefined,
+    tags: tagId.value ?? undefined,
+    q: q.value || undefined,
+    sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
+    page: currentPage.value,
+    per_page: perPage.value,
+  }
+})
+
+const { data: assetResponse, refetch: refetchAssets } = useAssetsQuery(assetQueryParams)
+
+const breadcrumbs = computed(() => {
+  if (!folderId.value) {
+    return []
+  }
+
+  return getBreadcrumbs(folderId.value)
+})
+
 const assets = computed(() => assetResponse.value?.data || [])
 const meta = computed(() => assetResponse.value?.meta)
 
-const languageTabs = computed(() => {
-  return [
-    { code: '_default', name: 'Default' },
-    ...spaceLanguages.value.map((lang) => ({ code: lang.code, name: lang.name })),
-  ]
+const visibleFieldsList = computed(() => {
+  return getVisibleFields(settings.value.assets.visibleFields)
 })
 
 const visibleLanguageTabs = computed(() => {
-  return languageTabs.value.filter((lang) =>
-    settings.value.assets.visibleLanguages?.includes(lang.code)
-  )
+  if (!assetFields.value.length) {
+    return []
+  }
+
+  return getVisibleLanguages(settings.value.assets.visibleLanguages)
 })
 
-const visibleFieldsList = computed(() => {
-  return assetFields.value.filter((field) =>
-    settings.value.assets.visibleFields?.includes(field.key)
-  )
+const nonCompliantAssets = computed(() => {
+  return assets.value.filter((asset) => !isCompliant(asset))
 })
 
-const getFieldValue = (asset: AssetResource, fieldKey: string, lang: string): string => {
-  if (!asset.data?.fields) return ''
-  const langFields = (asset.data.fields as Record<string, Record<string, unknown>>)[lang] || {}
-  return (langFields[fieldKey] as string) || ''
+const allLanguageCodes = computed(() => languageTabs.value.map((language) => language.code))
+const allFieldKeys = computed(() => assetFields.value.map((field) => field.key))
+
+const pageSizeOptions = [25, 50, 100, 500]
+
+const getEditableAsset = (asset: AssetResource): AssetResource => {
+  if (editingAssetData.value?.id === asset.id) {
+    return editingAssetData.value
+  }
+
+  return asset
 }
 
-const setFieldValue = (asset: AssetResource, fieldKey: string, lang: string, value: string) => {
-  if (!asset.data) asset.data = {}
-  if (!asset.data.fields) asset.data.fields = {}
-  const fields = asset.data.fields as Record<string, Record<string, unknown>>
-  if (!fields[lang]) fields[lang] = {}
-  fields[lang][fieldKey] = value
+const beginEditingAsset = (asset: AssetResource) => {
+  if (editingAssetData.value?.id === asset.id) {
+    return
+  }
+
+  editingAssetId.value = asset.id
+  editingAssetData.value = deepClone(asset)
+  ensureAssetFieldData(editingAssetData.value)
 }
 
 const isAssetEditing = (assetId: string): boolean => {
   return editingAssetId.value === assetId
 }
+
 const hasAssetPendingChanges = (assetId: string): boolean => {
   return pendingChanges.value.has(assetId)
 }
 
-const handleFieldChange = (assetId: string) => {
-  if (editingAssetId.value === assetId) {
-    pendingChanges.value.add(assetId)
-    if (settings.value.assets.autoSave) {
-      autoSaveAsset(assetId)
-    }
+const autoSaveAsset = debounce(async (assetId: string) => {
+  if (!editingAssetData.value || editingAssetData.value.id !== assetId) {
+    return
+  }
+
+  await updateAsset({
+    id: assetId,
+    payload: {
+      filename: editingAssetData.value.filename,
+      data: editingAssetData.value.data,
+    },
+  })
+
+  pendingChanges.value.delete(assetId)
+  await refetchAssets()
+}, 1500)
+
+const markPendingChange = (assetId: string) => {
+  pendingChanges.value.add(assetId)
+
+  if (settings.value.assets.autoSave) {
+    void autoSaveAsset(assetId)
   }
 }
 
-const autoSaveAsset = debounce(async (assetId: string) => {
-  if (!editingAssetData.value || editingAssetData.value.id !== assetId) return
-
-  try {
-    await updateAsset({
-      id: assetId,
-      payload: {
-        data: editingAssetData.value.data,
-      },
-    })
-
-    pendingChanges.value.delete(assetId)
-    await refetchAssets()
-  } catch (error) {
-    toast.error(String($t('messages.assets.saveError')))
-    console.error('Error updating asset:', error)
+const handleGridFieldChange = (
+  asset: AssetResource,
+  fieldKey: string,
+  languageCode: string,
+  value: string
+) => {
+  beginEditingAsset(asset)
+  if (!editingAssetData.value) {
+    return
   }
-}, 1500)
+
+  setFieldValue(editingAssetData.value, fieldKey, languageCode, value)
+  markPendingChange(asset.id)
+}
+
+const handleGridFilenameChange = (asset: AssetResource, value: string) => {
+  beginEditingAsset(asset)
+  if (!editingAssetData.value) {
+    return
+  }
+
+  editingAssetData.value.filename = value
+  markPendingChange(asset.id)
+}
 
 const handleSaveAsset = async (assetId: string) => {
-  const editedAsset = editingAssetData.value
-  if (!editedAsset || editedAsset.id !== assetId) return
-
-  try {
-    await updateAsset({
-      id: assetId,
-      payload: {
-        data: editedAsset.data,
-      },
-    })
-
-    pendingChanges.value.delete(assetId)
-    await refetchAssets()
-  } catch (error) {
-    toast.error(String($t('messages.assets.updateError')))
-    console.error('Error updating asset:', error)
+  if (!editingAssetData.value || editingAssetData.value.id !== assetId) {
+    return
   }
+
+  await updateAsset({
+    id: assetId,
+    payload: {
+      filename: editingAssetData.value.filename,
+      data: editingAssetData.value.data,
+    },
+  })
+
+  pendingChanges.value.delete(assetId)
+  editingAssetId.value = null
+  editingAssetData.value = null
+  await refetchAssets()
 }
 
 const handleDiscardChanges = (assetId: string) => {
   editingAssetId.value = null
   editingAssetData.value = null
   pendingChanges.value.delete(assetId)
-}
-
-const handleGridFieldChange = (
-  asset: AssetResource,
-  fieldKey: string,
-  lang: string,
-  value: string
-) => {
-  if (!isAssetEditing(asset.id)) {
-    editingAssetId.value = asset.id
-    editingAssetData.value = JSON.parse(JSON.stringify(asset))
-  }
-  if (editingAssetData.value) {
-    setFieldValue(editingAssetData.value, fieldKey, lang, value)
-  }
-  pendingChanges.value.add(asset.id)
-
-  if (settings.value.assets.autoSave) {
-    autoSaveAsset(asset.id)
-  }
-}
-
-const handleGridFilenameChange = (asset: AssetResource, value: string) => {
-  if (!isAssetEditing(asset.id)) {
-    editingAssetId.value = asset.id
-    editingAssetData.value = JSON.parse(JSON.stringify(asset))
-  }
-  if (editingAssetData.value) {
-    editingAssetData.value.filename = value
-  }
-  handleFieldChange(asset.id)
 }
 
 const handleAssetDelete = async (asset: AssetResource) => {
@@ -273,47 +276,69 @@ const handleAssetDelete = async (asset: AssetResource) => {
     }
   )
 
-  if (confirmed) {
-    try {
-      await deleteAsset(asset.id)
-      await refetchAssets()
-    } catch (error) {
-      toast.error(String($t('messages.assets.deleteError')))
-      console.error('Error deleting asset:', error)
-    }
+  if (!confirmed) {
+    return
+  }
+
+  try {
+    await deleteAsset(asset.id)
+    await refetchAssets()
+  } catch (error) {
+    toast.error(String($t('composables.assets.deleteError', { error: String(error) })))
+    console.error('Error deleting asset:', error)
   }
 }
 
-// Visibility toggles
-const toggleLanguageVisibility = (langCode: string) => {
-  if (settings.value.assets.visibleLanguages?.includes(langCode)) {
-    settings.value.assets.visibleLanguages = settings.value.assets.visibleLanguages.filter(
-      (code) => code !== langCode
-    )
-  } else {
-    settings.value.assets.visibleLanguages = settings.value.assets.visibleLanguages || []
-    settings.value.assets.visibleLanguages.push(langCode)
+const toggleLanguageVisibility = (languageCode: string) => {
+  const current = settings.value.assets.visibleLanguages?.length
+    ? settings.value.assets.visibleLanguages
+    : allLanguageCodes.value
+
+  if (current.includes(languageCode)) {
+    settings.value.assets.visibleLanguages = current.filter((code) => code !== languageCode)
+    return
   }
+
+  const next = [...current, languageCode]
+  settings.value.assets.visibleLanguages = next.length === allLanguageCodes.value.length ? [] : next
 }
 
 const toggleFieldVisibility = (fieldKey: string) => {
-  if (settings.value.assets.visibleFields?.includes(fieldKey)) {
-    settings.value.assets.visibleFields = settings.value.assets.visibleFields.filter(
-      (key) => key !== fieldKey
-    )
-  } else {
-    settings.value.assets.visibleFields = settings.value.assets.visibleFields || []
-    settings.value.assets.visibleFields.push(fieldKey)
+  const current = settings.value.assets.visibleFields?.length
+    ? settings.value.assets.visibleFields
+    : allFieldKeys.value
+
+  if (current.includes(fieldKey)) {
+    settings.value.assets.visibleFields = current.filter((key) => key !== fieldKey)
+    return
   }
+
+  const next = [...current, fieldKey]
+  settings.value.assets.visibleFields = next.length === allFieldKeys.value.length ? [] : next
 }
+
+watch([folderId, tagId], async () => {
+  currentPage.value = 1
+  await refetchAssets()
+})
+
+watch(
+  [currentPage, perPage, sortBy],
+  async () => {
+    await refetchAssets()
+  },
+  { deep: true }
+)
 
 onMounted(async () => {
   if (props.initialFolderId) {
     folderId.value = props.initialFolderId
   }
+
   if (props.initialTagId) {
     tagId.value = props.initialTagId
   }
+
   await refetchAssets()
 })
 </script>
@@ -357,6 +382,7 @@ onMounted(async () => {
           </BreadcrumbItem>
         </template>
       </Breadcrumb>
+
       <div class="flex items-center gap-2">
         <Button
           v-if="allowUpload"
@@ -368,13 +394,26 @@ onMounted(async () => {
         </Button>
         <Button
           v-if="allowFolderCreation"
-          @click="handleFolderCreate(null)"
+          @click="folderDialogOpen = true"
         >
           <Icon name="lucide:folder-plus" />
           {{ $t('actions.assetFolders.create') }}
         </Button>
       </div>
     </header>
+
+    <Alert
+      v-if="nonCompliantAssets.length"
+      icon="lucide:circle-alert"
+      color="warning"
+    >
+      {{
+        $t('labels.assets.requirementsSummary', {
+          count: nonCompliantAssets.length,
+        })
+      }}
+    </Alert>
+
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-2">
         <DropdownMenu>
@@ -389,19 +428,17 @@ onMounted(async () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <template
-              v-for="lang in languageTabs"
-              :key="lang.code"
+            <DropdownMenuCheckboxItem
+              v-for="language in languageTabs"
+              :key="language.code"
+              :model-value="visibleLanguageTabs.some((item) => item.code === language.code)"
+              @select="toggleLanguageVisibility(language.code)"
             >
-              <DropdownMenuCheckboxItem
-                :model-value="settings.assets.visibleLanguages?.includes(lang.code)"
-                @select="toggleLanguageVisibility(lang.code)"
-              >
-                {{ lang.name }}
-              </DropdownMenuCheckboxItem>
-            </template>
+              {{ language.name }}
+            </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <Button
@@ -414,19 +451,17 @@ onMounted(async () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <template
+            <DropdownMenuCheckboxItem
               v-for="field in assetFields"
               :key="field.key"
+              :model-value="visibleFieldsList.some((item) => item.key === field.key)"
+              @select="toggleFieldVisibility(field.key)"
             >
-              <DropdownMenuCheckboxItem
-                :model-value="settings.assets.visibleFields?.includes(field.key)"
-                @update:model-value="toggleFieldVisibility(field.key)"
-              >
-                {{ field.label }}
-              </DropdownMenuCheckboxItem>
-            </template>
+              {{ field.label }}
+            </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
         <div class="flex items-center gap-2">
           <Switch
             id="autosave"
@@ -434,7 +469,7 @@ onMounted(async () => {
           />
           <label
             for="autosave"
-            class="text-muted-foreground text-sm"
+            class="text-sm text-muted-foreground"
           >
             {{ $t('labels.datasets.autoSave') }}
           </label>
@@ -459,147 +494,151 @@ onMounted(async () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead class="min-w-24"> Thumbnail </TableHead>
-            <TableHead class="min-w-40"> {{ $t('labels.assets.fields.filename') }} </TableHead>
-            <template
-              v-for="lang in visibleLanguageTabs"
-              :key="lang.code"
+            <TableHead class="min-w-24">{{ $t('labels.assets.asset') }}</TableHead>
+            <TableHead class="min-w-40">{{ $t('labels.assets.fields.filename') }}</TableHead>
+            <TableHead
+              v-for="language in visibleLanguageTabs"
+              :key="language.code"
+              class="min-w-64"
             >
-              <TableHead class="min-w-64">{{ lang.name }}</TableHead>
-            </template>
-
+              {{ language.name }}
+            </TableHead>
             <TableHead class="w-24" />
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableEmpty
-            v-if="!assets || assets.length === 0"
+            v-if="!assets.length"
             :colspan="visibleLanguageTabs.length + 3"
           >
             {{ $t('labels.assets.noAssetsFound') }}
           </TableEmpty>
 
-          <template v-else>
-            <TableRow
-              v-for="asset in assets"
-              :key="asset.id"
-              :data-asset-id="asset.id"
-            >
-              <TableCell class="w-24">
-                <div class="checkerboard relative size-20 shrink-0 overflow-hidden rounded-md">
-                  <NuxtImg
-                    v-if="asset.mime_type?.startsWith('image/')"
-                    :src="asset.full_path"
-                    :alt="asset.filename"
-                    width="160"
-                    height="160"
-                    class="h-full w-full object-cover"
+          <TableRow
+            v-for="asset in assets"
+            v-else
+            :key="asset.id"
+          >
+            <TableCell class="w-24">
+              <div class="checkerboard relative size-20 shrink-0 overflow-hidden rounded-md">
+                <NuxtImg
+                  v-if="asset.mime_type?.startsWith('image/')"
+                  :src="asset.full_path"
+                  :alt="asset.filename"
+                  :width="160"
+                  :height="160"
+                  class="h-full w-full object-cover"
+                />
+                <div
+                  v-else
+                  class="flex h-full w-full items-center justify-center"
+                >
+                  <Icon
+                    name="lucide:file"
+                    size="1.5rem"
+                    class="text-muted-foreground"
                   />
-                  <div
-                    v-else
-                    class="flex h-full w-full items-center justify-center"
-                  >
-                    <Icon
-                      name="lucide:file"
-                      size="1.5rem"
-                      class="text-muted-foreground"
-                    />
-                  </div>
                 </div>
-              </TableCell>
-              <TableCell class="text-sm font-medium">
+              </div>
+            </TableCell>
+
+            <TableCell class="text-sm font-medium">
+              <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                  <AssetComplianceIndicator
+                    :issues="getMissingRequiredFields(asset)"
+                    severity="error"
+                  />
+                  <span class="text-xs text-muted-foreground">
+                    {{ asset.extension }} • {{ asset.mime_type }}
+                  </span>
+                </div>
                 <InputField
                   :label="$t('labels.assets.fields.filename')"
-                  :name="`grid-filename-${asset.id}`"
-                  :model-value="
-                    isAssetEditing(asset.id) ? editingAssetData!.filename : asset.filename
+                  :name="`filename-${asset.id}`"
+                  :model-value="getEditableAsset(asset).filename"
+                  @update:model-value="
+                    (value: string | number) => handleGridFilenameChange(asset, String(value))
                   "
-                  @update:model-value="(value: string) => handleGridFilenameChange(asset, value)"
                 />
-              </TableCell>
-              <template
-                v-for="lang in visibleLanguageTabs"
-                :key="`${asset.id}-${lang.code}`"
-              >
-                <TableCell class="space-y-3">
-                  <div
-                    v-for="field in visibleFieldsList"
-                    :key="`grid-${field.key}`"
-                    class="flex flex-col gap-1"
+              </div>
+            </TableCell>
+
+            <TableCell
+              v-for="language in visibleLanguageTabs"
+              :key="`${asset.id}-${language.code}`"
+              class="space-y-3"
+            >
+              <InputField
+                v-for="field in visibleFieldsList"
+                :key="`${asset.id}-${language.code}-${field.key}`"
+                :label="field.label"
+                :name="`${asset.id}-${language.code}-${field.key}`"
+                :model-value="getFieldValue(getEditableAsset(asset), field.key, language.code)"
+                :placeholder="field.label"
+                :required="field.required"
+                @update:model-value="
+                  (value: string | number) =>
+                    handleGridFieldChange(asset, field.key, language.code, String(value))
+                "
+              />
+            </TableCell>
+
+            <TableCell>
+              <div class="flex w-full justify-end gap-1">
+                <template v-if="!settings.assets.autoSave">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    :disabled="!hasAssetPendingChanges(asset.id)"
+                    @click="handleSaveAsset(asset.id)"
                   >
-                    <InputField
-                      :label="field.label"
-                      :name="`grid-${field.key}-${asset.id}-${lang.code}`"
-                      :model-value="
-                        getFieldValue(
-                          isAssetEditing(asset.id) ? editingAssetData! : asset,
-                          field.key,
-                          lang.code
-                        )
-                      "
-                      :placeholder="field.label"
-                      @update:model-value="
-                        (value: string) => handleGridFieldChange(asset, field.key, lang.code, value)
-                      "
+                    <Icon
+                      name="lucide:check"
+                      class="text-green-500"
                     />
-                  </div>
-                </TableCell>
-              </template>
-              <TableCell>
-                <div class="flex w-full justify-end gap-1">
-                  <template v-if="!settings.assets.autoSave">
+                    <span class="sr-only">{{ $t('actions.saveChanges') }}</span>
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    :disabled="!hasAssetPendingChanges(asset.id)"
+                    @click="handleDiscardChanges(asset.id)"
+                  >
+                    <Icon
+                      name="lucide:x"
+                      class="text-red-500"
+                    />
+                    <span class="sr-only">{{ $t('alertDialog.cancel') }}</span>
+                  </Button>
+                </template>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger as-child>
                     <Button
                       size="icon"
-                      variant="outline"
-                      :disabled="!hasAssetPendingChanges(asset.id)"
-                      @click="handleSaveAsset(asset.id)"
+                      variant="ghost"
                     >
                       <Icon
-                        name="lucide:check"
-                        class="text-green-500"
+                        name="lucide:more-vertical"
+                        size="1rem"
                       />
-                      <span class="sr-only">Save</span>
                     </Button>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      :disabled="!hasAssetPendingChanges(asset.id)"
-                      @click="handleDiscardChanges(asset.id)"
-                    >
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem @click="handleAssetDelete(asset)">
                       <Icon
-                        name="lucide:x"
-                        class="text-red-500"
+                        name="lucide:trash-2"
+                        size="1rem"
+                        class="mr-2"
                       />
-                      <span class="sr-only">Cancel</span>
-                    </Button>
-                  </template>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger as-child>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                      >
-                        <Icon
-                          name="lucide:more-vertical"
-                          size="1rem"
-                        />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem @click="handleAssetDelete(asset)">
-                        <Icon
-                          name="lucide:trash-2"
-                          size="1rem"
-                          class="mr-2"
-                        />
-                        {{ $t('actions.delete') }}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </TableCell>
-            </TableRow>
-          </template>
+                      {{ $t('actions.delete') }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </TableCell>
+          </TableRow>
         </TableBody>
       </Table>
     </div>
@@ -612,6 +651,20 @@ onMounted(async () => {
       :page-size-options="pageSizeOptions"
       @update:current-page="currentPage = $event"
       @update:per-page="perPage = $event"
+    />
+
+    <UploadDialog
+      v-if="allowUpload"
+      v-model:open="showUploadDialog"
+      :folder-id="folderId || undefined"
+      :space-id="spaceId"
+    />
+
+    <CreateFolderDialog
+      v-if="allowFolderCreation"
+      v-model:open="folderDialogOpen"
+      :parent-folder-id="folderId || null"
+      :space-id="spaceId"
     />
   </main>
 </template>

@@ -1,15 +1,19 @@
 <script setup lang="ts">
+import AssetComplianceIndicator from '~/components/assets/AssetComplianceIndicator.vue'
 import Icon from '~/components/Icon.vue'
-
+import { Alert, AlertDescription } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { UploadFile } from '~/types/assets'
+
 import UploadDetailsDialog from './UploadDetailsDialog.vue'
 
+const { t } = useI18n()
 const { formatFileSize } = useFormat()
 const { getFileType, getFileIcon } = useFileUtils()
 const ulid = useUlid()
+const { alert } = useAlertDialog()
 
 const props = defineProps<{
   spaceId: string
@@ -28,9 +32,10 @@ interface UploadFileWithProgress extends UploadFile {
 }
 
 const { uploadAsset } = useAssets(props.spaceId)
+const { ensureAssetFieldData, getMissingRequiredFields } = useAssetRequirements(props.spaceId)
 const files = ref<UploadFileWithProgress[]>([])
 const detailsOpen = ref(false)
-const selectedFile = ref<UploadFile | null>(null)
+const selectedFile = ref<UploadFileWithProgress | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const isUploading = ref(false)
 
@@ -48,6 +53,10 @@ watch(
 // Track if any upload is still in progress
 const hasUploadInProgress = computed(() => {
   return files.value.some((file) => file.status === 'uploading')
+})
+
+const filesWithMissingRequirements = computed(() => {
+  return files.value.filter((file) => getMissingRequiredFields(file).length > 0)
 })
 
 // Common function to process files whether from input or dropped
@@ -75,6 +84,7 @@ const handleFilesAdded = (newFilesArray: File[]) => {
     }
   })
 
+  newFiles.forEach((file) => ensureAssetFieldData(file))
   files.value = [...files.value, ...newFiles]
 }
 
@@ -99,8 +109,37 @@ const removeFile = (id: string) => {
 }
 
 const openFileDetails = (file: UploadFileWithProgress) => {
-  selectedFile.value = file
+  selectedFile.value = {
+    ...file,
+    data: structuredClone(file.data || {}),
+    metadata: structuredClone(file.metadata || {}),
+    tags: [...(file.tags || [])],
+  }
   detailsOpen.value = true
+}
+
+const handleFileDetailsSave = (file: UploadFile) => {
+  const currentFile = selectedFile.value
+  if (!currentFile) {
+    return
+  }
+
+  files.value = files.value.map((existingFile) => {
+    if (existingFile.id !== currentFile.id) {
+      return existingFile
+    }
+
+    return {
+      ...existingFile,
+      ...file,
+      progress: existingFile.progress,
+      status: existingFile.status,
+      errorMessage: existingFile.errorMessage,
+    }
+  })
+
+  selectedFile.value =
+    files.value.find((existingFile) => existingFile.id === currentFile.id) || null
 }
 
 const updateFileProgress = (id: string, progress: number) => {
@@ -125,6 +164,17 @@ const updateFileStatus = (
 }
 
 const handleUpload = async () => {
+  if (filesWithMissingRequirements.value.length) {
+    const confirmed = await alert.confirm(String(t('messages.assets.uploadRequirementsConfirm')), {
+      title: String(t('labels.assets.uploadRequirementsTitle')),
+      confirmLabel: String(t('actions.continue')),
+    })
+
+    if (!confirmed) {
+      return
+    }
+  }
+
   isUploading.value = true
 
   // Upload files sequentially to avoid overwhelming the server
@@ -148,10 +198,14 @@ const handleUpload = async () => {
           URL.revokeObjectURL(file.preview)
         }
       } else {
-        updateFileStatus(file.id, 'error', 'Upload failed')
+        updateFileStatus(file.id, 'error', String(t('composables.assets.uploadError')))
       }
     } catch (error) {
-      updateFileStatus(file.id, 'error', error instanceof Error ? error.message : 'Upload failed')
+      updateFileStatus(
+        file.id,
+        'error',
+        error instanceof Error ? error.message : String(t('composables.assets.uploadError'))
+      )
     }
   }
 
@@ -179,6 +233,10 @@ const onOpenChange = (open: boolean) => {
   // Prevent closing if upload is in progress
   if (!open && hasUploadInProgress.value) {
     return
+  }
+
+  if (!open) {
+    selectedFile.value = null
   }
   emit('update:open', open)
 }
@@ -286,10 +344,14 @@ const retryUpload = async (file: UploadFileWithProgress) => {
         URL.revokeObjectURL(file.preview)
       }
     } else {
-      updateFileStatus(file.id, 'error', 'Retry failed')
+      updateFileStatus(file.id, 'error', String(t('composables.assets.uploadError')))
     }
   } catch (error) {
-    updateFileStatus(file.id, 'error', error instanceof Error ? error.message : 'Retry failed')
+    updateFileStatus(
+      file.id,
+      'error',
+      error instanceof Error ? error.message : String(t('composables.assets.uploadError'))
+    )
   }
 }
 </script>
@@ -313,6 +375,22 @@ const retryUpload = async (file: UploadFileWithProgress) => {
           accept="image/*,video/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.*"
           @change="handleFileChange"
         />
+
+        <Alert
+          v-if="filesWithMissingRequirements.length"
+          icon="lucide:triangle-alert"
+          color="warning"
+          class="mb-4"
+        >
+          <AlertDescription>
+            {{
+              $t('labels.assets.uploadRequirementsSummary', {
+                count: filesWithMissingRequirements.length,
+              })
+            }}
+          </AlertDescription>
+        </Alert>
+
         <div
           v-if="files.length === 0"
           class="flex h-64 flex-col items-center justify-center rounded-lg border-2 border-dashed border-elevated/50 p-12 text-center"
@@ -410,13 +488,15 @@ const retryUpload = async (file: UploadFileWithProgress) => {
                       size="2rem"
                       class="mb-1 h-6 w-6"
                     />
-                    <div class="text-xs">{{ file.errorMessage || 'Error' }}</div>
+                    <div class="text-xs">
+                      {{ file.errorMessage || $t('labels.assets.unknown') }}
+                    </div>
                     <Button
                       size="sm"
                       class="mt-2"
                       @click.stop="retryUpload(file)"
                     >
-                      Retry
+                      {{ $t('actions.retry') }}
                     </Button>
                   </div>
                 </div>
@@ -431,8 +511,14 @@ const retryUpload = async (file: UploadFileWithProgress) => {
                 </div>
               </div>
               <div class="p-2">
-                <div class="truncate font-semibold">
-                  {{ file.file.name.split('.').slice(0, -1).join('.') }}
+                <div class="flex items-center gap-2 truncate font-semibold">
+                  <span class="truncate">{{
+                    file.file.name.split('.').slice(0, -1).join('.')
+                  }}</span>
+                  <AssetComplianceIndicator
+                    :issues="getMissingRequiredFields(file)"
+                    severity="warning"
+                  />
                 </div>
                 <div class="text-sm text-muted">
                   {{ file.file.name.split('.').pop()?.toUpperCase() }} •
@@ -449,14 +535,14 @@ const retryUpload = async (file: UploadFileWithProgress) => {
           :disabled="hasUploadInProgress"
           @click="onOpenChange(false)"
         >
-          Cancel
+          {{ $t('alertDialog.cancel') }}
         </Button>
         <div class="flex items-center gap-2">
           <Button
             :disabled="isUploading"
             @click="handleBrowseClick"
           >
-            Add More Files
+            {{ $t('labels.assets.addMoreFiles') }}
           </Button>
           <Button
             variant="primary"
@@ -469,7 +555,9 @@ const retryUpload = async (file: UploadFileWithProgress) => {
               class="animate-spin"
             />
             {{
-              isUploading ? 'Uploading...' : `Upload ${files.length > 0 ? `(${files.length})` : ''}`
+              isUploading
+                ? $t('labels.assets.uploading')
+                : `${$t('actions.assets.upload')} ${files.length > 0 ? `(${files.length})` : ''}`
             }}
           </Button>
         </div>
@@ -484,5 +572,6 @@ const retryUpload = async (file: UploadFileWithProgress) => {
     :on-replace="handleReplaceFile"
     :folder-id="folderId"
     :space-id="spaceId"
+    @update:file="handleFileDetailsSave"
   />
 </template>

@@ -81,6 +81,8 @@ declare global {
   const useAlertDialog: typeof import('./resources/js/composables/useAlertDialog').useAlertDialog
   const useApiClient: typeof import('./resources/js/composables/useApiClient').useApiClient
   const useAssetFolders: typeof import('./resources/js/composables/useAssetFolders').useAssetFolders
+  const useAssetLibraryMoves: typeof import('./resources/js/composables/useAssetLibraryMoves').useAssetLibraryMoves
+  const useAssetRequirements: typeof import('./resources/js/composables/useAssetRequirements').useAssetRequirements
   const useAssetTags: typeof import('./resources/js/composables/useAssetTags').useAssetTags
   const useAssets: typeof import('./resources/js/composables/useAssets').useAssets
   const useAttrs: typeof import('vue').useAttrs
@@ -163,6 +165,9 @@ declare global {
   // @ts-ignore
   export type { DialogAction, DialogOptions, MessageOptions, ConfirmOptions } from './resources/js/composables/useAlertDialog'
   import('./resources/js/composables/useAlertDialog')
+  // @ts-ignore
+  export type { AssetRequirementIssue } from './resources/js/composables/useAssetRequirements'
+  import('./resources/js/composables/useAssetRequirements')
   // @ts-ignore
   export type { ContentPresenceMap } from './resources/js/composables/useContentMenuPresence'
   import('./resources/js/composables/useContentMenuPresence')
@@ -268,6 +273,8 @@ declare module 'vue' {
     readonly useAlertDialog: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['useAlertDialog']>
     readonly useApiClient: UnwrapRef<typeof import('./resources/js/composables/useApiClient')['useApiClient']>
     readonly useAssetFolders: UnwrapRef<typeof import('./resources/js/composables/useAssetFolders')['useAssetFolders']>
+    readonly useAssetLibraryMoves: UnwrapRef<typeof import('./resources/js/composables/useAssetLibraryMoves')['useAssetLibraryMoves']>
+    readonly useAssetRequirements: UnwrapRef<typeof import('./resources/js/composables/useAssetRequirements')['useAssetRequirements']>
     readonly useAssetTags: UnwrapRef<typeof import('./resources/js/composables/useAssetTags')['useAssetTags']>
     readonly useAssets: UnwrapRef<typeof import('./resources/js/composables/useAssets')['useAssets']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>

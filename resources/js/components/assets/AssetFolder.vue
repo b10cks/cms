@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
+import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
+import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 
+import Icon from '~/components/Icon.vue'
 import { Checkbox } from '~/components/ui/checkbox'
 import {
   DropdownMenu,
@@ -8,11 +10,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
+import {
+  createAssetManagerDragData,
+  getAssetManagerDragItems,
+  setAssetManagerDragPreview,
+  type AssetManagerDragItem,
+} from '~/lib/assets/assetDragAndDrop'
+import type { AssetFolderResource } from '~/types/assets'
 
+const { t } = useI18n()
 const props = defineProps<{
   folder: AssetFolderResource
   selected?: boolean
   draggable?: boolean
+  dragItems?: AssetManagerDragItem[]
+  canReceiveDrop?: (items: AssetManagerDragItem[]) => boolean
+  onItemsDrop?: (items: AssetManagerDragItem[]) => void | Promise<void>
 }>()
 
 const emit = defineEmits<{
@@ -20,9 +33,21 @@ const emit = defineEmits<{
   click: [folder: AssetFolderResource]
   create: [folder: AssetFolderResource]
   edit: [folder: AssetFolderResource]
-  move: [folder: AssetFolderResource]
   delete: [folder: AssetFolderResource]
 }>()
+
+const rootElement = ref<HTMLElement | null>(null)
+const isDraggedOver = ref(false)
+const resolvedDragItems = computed(() => {
+  return props.dragItems?.length
+    ? props.dragItems
+    : [{ id: props.folder.id, type: 'folder' as const }]
+})
+const dragPreviewTitle = computed(() => {
+  return resolvedDragItems.value.length > 1
+    ? String(t('labels.selectionCount', { count: resolvedDragItems.value.length }))
+    : props.folder.name
+})
 
 function handleSelect(event: Event) {
   event.stopPropagation()
@@ -47,33 +72,73 @@ function handleKeyDown(event: KeyboardEvent) {
   }
 }
 
-function onDragStart(event: DragEvent) {
-  if (!event.dataTransfer) return
+watchEffect((onCleanup) => {
+  if (!rootElement.value) {
+    return
+  }
 
-  event.dataTransfer.setData(
-    'application/json',
-    JSON.stringify({
-      type: 'folder',
-      id: props.folder.id,
-      selected: props.selected,
+  const cleanup = combine(
+    draggable({
+      element: rootElement.value,
+      canDrag: () => props.draggable !== false,
+      getInitialData: () => {
+        return createAssetManagerDragData(resolvedDragItems.value, {
+          id: props.folder.id,
+          type: 'folder',
+        })
+      },
+      onGenerateDragPreview: ({ nativeSetDragImage }) => {
+        setAssetManagerDragPreview({
+          nativeSetDragImage,
+          count: resolvedDragItems.value.length,
+          title: dragPreviewTitle.value,
+        })
+      },
+    }),
+    dropTargetForElements({
+      element: rootElement.value,
+      canDrop: ({ source }) => {
+        const items = getAssetManagerDragItems(source.data)
+        return props.canReceiveDrop ? props.canReceiveDrop(items) : false
+      },
+      getIsSticky: () => true,
+      onDragEnter: () => {
+        isDraggedOver.value = true
+      },
+      onDragLeave: () => {
+        isDraggedOver.value = false
+      },
+      onDrop: async ({ source }) => {
+        isDraggedOver.value = false
+        const items = getAssetManagerDragItems(source.data)
+
+        if (items.length && props.onItemsDrop) {
+          await props.onItemsDrop(items)
+        }
+      },
     })
   )
 
-  event.dataTransfer.effectAllowed = 'move'
-}
+  onCleanup(() => {
+    isDraggedOver.value = false
+    cleanup()
+  })
+})
 </script>
 
 <template>
   <div
+    ref="rootElement"
     class="group relative flex cursor-pointer items-center gap-2 rounded-md bg-background p-3 transition-all duration-200 focus:bg-input focus:outline-2 focus:outline-offset-2 focus:outline-blue-300"
-    :class="{ 'outline-2 outline-accent': selected }"
+    :class="{
+      'outline-2 outline-accent': selected,
+      'bg-input/70 ring-1 ring-border': isDraggedOver,
+    }"
     :aria-label="folder.name"
     :aria-selected="selected"
     role="option"
     tabindex="0"
-    :draggable="draggable !== false"
     @keydown="handleKeyDown"
-    @dragstart="onDragStart"
   >
     <Checkbox
       :model-value="selected"
@@ -105,19 +170,15 @@ function onDragStart(event: DragEvent) {
       <DropdownMenuContent>
         <DropdownMenuItem @select="handleClick">
           <Icon name="lucide:eye" />
-          <span>View</span>
+          <span>{{ $t('actions.view') }}</span>
         </DropdownMenuItem>
         <DropdownMenuItem @select="$emit('edit', folder)">
           <Icon name="lucide:edit" />
-          <span>Edit</span>
+          <span>{{ $t('actions.edit') }}</span>
         </DropdownMenuItem>
         <DropdownMenuItem @select="$emit('create', folder)">
           <Icon name="lucide:folder-plus" />
-          <span>{{ $t('labels.assets.createFolder') }}</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem @select="$emit('move', folder)">
-          <Icon name="lucide:folder-input" />
-          <span>Move</span>
+          <span>{{ $t('actions.createFolder') }}</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           class="text-destructive"

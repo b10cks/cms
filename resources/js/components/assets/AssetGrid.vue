@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
+import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
+import { toast } from 'vue-sonner'
 
 import type { AssetsQueryParams } from '~/api/resources/assets'
 import AssetsIcon from '~/assets/images/assets.svg?component'
@@ -8,18 +9,21 @@ import AssetFolder from '~/components/assets/AssetFolder.vue'
 import AssetItem from '~/components/assets/AssetItem.vue'
 import CreateFolderDialog from '~/components/assets/CreateFolderDialog.vue'
 import UploadDialog from '~/components/assets/UploadDialog.vue'
+import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
+import { Alert } from '~/components/ui/alert'
 import { Badge } from '~/components/ui/badge'
 import { Breadcrumb, BreadcrumbItem } from '~/components/ui/breadcrumb'
 import { Button } from '~/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '~/components/ui/select'
 import SortSelect from '~/components/ui/SortSelect.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
-import { AssetFolderResource, AssetResource } from '~/types/assets'
+import { getAssetManagerDragItems, type AssetManagerDragItem } from '~/lib/assets/assetDragAndDrop'
+import type { AssetFolderResource, AssetResource } from '~/types/assets'
 
 export interface AssetGridProps {
   spaceId: string
-  mode?: 'manage' | 'select' // 'manage' for full functionality, 'select' for selection only
+  mode?: 'manage' | 'select'
   allowUpload?: boolean
   allowFolderCreation?: boolean
   showFolders?: boolean
@@ -39,11 +43,8 @@ const props = withDefaults(defineProps<AssetGridProps>(), {
 })
 
 const emit = defineEmits<{
-  // For manage mode
   selectionChange: [{ folders: AssetFolderResource[]; assets: AssetResource[] }]
-  // For select mode
   'asset-select': [asset: AssetResource]
-  // Common events
   'folder-change': [folderId: string | null]
   'tag-change': [tagId: string | null]
 }>()
@@ -51,364 +52,50 @@ const emit = defineEmits<{
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
 const { settings } = useSpaceSettings(props.spaceId)
-
-const { useFolderStructure, useDeleteAssetFolderMutation, useUpdateAssetFolderMutation } =
-  useAssetFolders(props.spaceId)
-const { mutate: deleteFolder } = useDeleteAssetFolderMutation()
-const { mutate: updateFolder } = useUpdateAssetFolderMutation()
-const { getBreadcrumbs, getChildrenOfFolder } = useFolderStructure()
-
+const { useFolderStructure, useDeleteAssetFolderMutation } = useAssetFolders(props.spaceId)
 const { useAssetsQuery, useDeleteAssetMutation, useUpdateAssetMutation } = useAssets(props.spaceId)
-const { mutate: updateAsset } = useUpdateAssetMutation()
-const { mutate: deleteAsset } = useDeleteAssetMutation()
-
-onMounted(() => {
-  document.addEventListener('dragstart', (event: DragEvent) => {
-    if (!event.dataTransfer) return
-
-    try {
-      const dragData = JSON.parse(event.dataTransfer.getData('application/json') || '{}')
-
-      if (dragData.selected) {
-        if (dragData.type === 'asset') {
-          const selectedAssetIds = Array.from(selectedAssets.value.keys()).filter(
-            (id) => id !== dragData.id
-          )
-
-          event.dataTransfer.setData(
-            'application/json+selected-assets',
-            JSON.stringify(selectedAssetIds)
-          )
-        } else if (dragData.type === 'folder') {
-          const selectedFolderIds = Array.from(selectedFolders.value.keys()).filter(
-            (id) => id !== dragData.id
-          )
-
-          event.dataTransfer.setData(
-            'application/json+selected-folders',
-            JSON.stringify(selectedFolderIds)
-          )
-        }
-      }
-    } catch (_) {
-      /* empty */
-    }
-  })
-
-  document.addEventListener('dragover', (e: DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-
-    document.body.classList.add('drag-over')
-  })
-
-  document.addEventListener('dragleave', (e: DragEvent) => {
-    if (!e.relatedTarget || e.relatedTarget === document.body) {
-      document.body.classList.remove('drag-over')
-    }
-  })
-
-  document.addEventListener('drop', (e: DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    document.body.classList.remove('drag-over')
-
-    if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-      droppedFiles.value = Array.from(e.dataTransfer.files)
-      showUploadDialog.value = true
-    }
-  })
-})
-
-const gridSizes = {
-  sm: { cls: 'grid-cols-4 xl:grid-cols-6 2xl:grid-cols-12', icon: 'lucide:grid-3x3' },
-  md: { cls: 'grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6', icon: 'lucide:grid-2x2' },
-  lg: { cls: 'grid-cols-2 xl:grid-cols-4', icon: 'lucide:square-square' },
-}
-
-const selectedGridSize = computed(() => {
-  return gridSizes[settings.value.assets.gridSize] || gridSizes.md
-})
+const { getBreadcrumbs, getChildrenOfFolder } = useFolderStructure()
+const { canMoveItems, moveItemsToFolder } = useAssetLibraryMoves(props.spaceId)
+const { getMissingRequiredFields, isCompliant } = useAssetRequirements(props.spaceId)
+const { mutateAsync: updateAsset } = useUpdateAssetMutation()
+const { mutateAsync: deleteAsset } = useDeleteAssetMutation()
+const { mutateAsync: deleteFolder } = useDeleteAssetFolderMutation()
 
 const folderId = defineModel<string | null>('folderId')
 const tagId = defineModel<string | null>('tagId')
+
 const showUploadDialog = ref(false)
-const showCreateFolderDialog = ref(false)
+const droppedFiles = ref<File[]>([])
+const folderDialogOpen = ref(false)
+const dialogParentFolderId = ref<string | null>(null)
+const editingFolder = ref<AssetFolderResource | null>(null)
+const detailAsset = ref<AssetResource | null>(null)
+const rootBreadcrumbRef = ref<HTMLElement | null>(null)
+const isRootDropActive = ref(false)
+const activeFolderId = computed(() => folderId.value ?? null)
 const currentPage = ref(1)
 const perPage = ref(12)
 const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
   column: 'created_at',
   direction: 'desc',
 })
-const droppedFiles = ref<File[]>([])
+const selectedAssets = ref<Map<string, AssetResource>>(new Map())
+const selectedFolders = ref<Map<string, AssetFolderResource>>(new Map())
+const filters = ref<Record<string, unknown>>({})
+const q = ref('')
 
-const imageSize = computed(() => {
-  switch (settings.value.assets.gridSize) {
-    case 'sm':
-      return 129
-    case 'lg':
-      return 436
-    default:
-      return 284
-  }
-})
+const gridSizes = {
+  sm: { cls: 'grid-cols-4 xl:grid-cols-6 2xl:grid-cols-12', icon: 'lucide:grid-3x3' },
+  md: { cls: 'grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6', icon: 'lucide:grid-2x2' },
+  lg: { cls: 'grid-cols-2 xl:grid-cols-4', icon: 'lucide:square-square' },
+} as const
 
-// Define sort options
 const sortOptions = [
   { value: 'created_at', label: $t('labels.assets.createdAt') },
   { value: 'updated_at', label: $t('labels.assets.updatedAt') },
   { value: 'filename', label: $t('labels.assets.fields.filename') },
   { value: 'size', label: $t('labels.assets.size') },
 ]
-
-const detailAsset = ref<AssetResource | null>(null)
-const selectedAssets = ref<Map<string, AssetResource>>(new Map())
-const selectedFolders = ref<Map<string, AssetFolderResource>>(new Map())
-
-const breadcrumbs = computed(() => {
-  if (!folderId.value) return []
-  return getBreadcrumbs(folderId.value)
-})
-
-const folders = computed(() => {
-  if (tagId.value) return []
-  return getChildrenOfFolder(folderId.value)
-})
-
-const hasSelection = computed(() => {
-  return selectedAssets.value.size > 0 || selectedFolders.value.size > 0
-})
-
-const selectionCount = computed(() => {
-  return selectedAssets.value.size + selectedFolders.value.size
-})
-
-const handleAssetView = (asset: AssetResource) => {
-  if (props.mode === 'manage') {
-    detailAsset.value = asset
-  } else {
-    emit('asset-select', asset)
-  }
-}
-
-// Event handlers
-const handleAssetSelect = (asset: AssetResource, selected?: boolean) => {
-  if (props.mode === 'select') {
-    emit('asset-select', asset)
-  } else if (props.mode === 'manage' && typeof selected === 'boolean') {
-    if (selected) {
-      selectedAssets.value.set(asset.id, asset)
-    } else {
-      selectedAssets.value.delete(asset.id)
-    }
-    emitSelectionChange()
-  }
-}
-
-const handleAssetDelete = async (asset: AssetResource) => {
-  const confirmed = await alert.confirm(
-    $t('messages.assets.deleteConfirmation', { name: asset.filename }),
-    {
-      title: $t('labels.assets.deleteTitle'),
-      confirmLabel: $t('actions.delete'),
-      variant: 'destructive',
-    }
-  )
-
-  if (confirmed) {
-    try {
-      await deleteAsset(asset.id)
-      selectedAssets.value.delete(asset.id)
-      emitSelectionChange()
-    } catch (error) {
-      console.error('Error deleting asset:', error)
-    }
-  }
-}
-
-const handleFolderSelect = (folder: AssetFolderResource, selected: boolean) => {
-  if (props.mode === 'manage' && props.multiSelect) {
-    if (selected) {
-      selectedFolders.value.set(folder.id, folder)
-    } else {
-      selectedFolders.value.delete(folder.id)
-    }
-    emitSelectionChange()
-  }
-}
-
-const handleFolderDelete = async (folder: AssetFolderResource) => {
-  const confirmed = await alert.confirm(
-    $t('messages.assetFolders.deleteConfirmation', { name: folder.name }),
-    {
-      title: $t('labels.assetFolders.deleteTitle'),
-      confirmLabel: $t('actions.delete'),
-      variant: 'destructive',
-    }
-  )
-
-  if (confirmed) {
-    try {
-      await deleteFolder(folder.id)
-      selectedFolders.value.delete(folder.id)
-      emitSelectionChange()
-    } catch (error) {
-      console.error('Error deleting folder:', error)
-    }
-  }
-}
-
-const handleFolderClick = (folder: AssetFolderResource) => {
-  folderId.value = folder.id
-  emit('folder-change', folder.id)
-}
-
-const handleFolderCreate = (folder: AssetFolderResource | null) => {
-  showCreateFolderDialog.value = true
-  folderId.value = folder.id || null
-}
-
-// Selection management (manage mode only)
-const deleteSelection = () => {
-  if (props.mode !== 'manage') return
-
-  selectedAssets.value.forEach((asset) => {
-    deleteAsset(asset.id)
-  })
-  selectedAssets.value.clear()
-  emitSelectionChange()
-}
-
-const clearSelection = () => {
-  if (props.mode !== 'manage') return
-
-  selectedAssets.value.clear()
-  selectedFolders.value.clear()
-  emitSelectionChange()
-}
-
-const emitSelectionChange = () => {
-  if (props.mode === 'manage') {
-    emit('selectionChange', {
-      folders: Array.from(selectedFolders.value.values()),
-      assets: Array.from(selectedAssets.value.values()),
-    })
-  }
-}
-
-// Keyboard navigation
-const handleKeyNavigation = (
-  event: KeyboardEvent,
-  items: unknown[],
-  currentIndex: number,
-  selector: string
-) => {
-  if (props.mode !== 'manage') return
-
-  const containerEl = event.currentTarget as HTMLElement
-  const focusableItems = containerEl.querySelectorAll(selector) as NodeListOf<HTMLElement>
-
-  let nextIndex = currentIndex
-
-  if (event.key === 'ArrowRight') {
-    nextIndex = Math.min(currentIndex + 1, items.length - 1)
-  } else if (event.key === 'ArrowLeft') {
-    nextIndex = Math.max(currentIndex - 1, 0)
-  } else if (event.key === 'ArrowDown') {
-    const itemsPerRow = getItemsPerRow(containerEl)
-    nextIndex = Math.min(currentIndex + itemsPerRow, items.length - 1)
-  } else if (event.key === 'ArrowUp') {
-    const itemsPerRow = getItemsPerRow(containerEl)
-    nextIndex = Math.max(currentIndex - itemsPerRow, 0)
-  } else {
-    return
-  }
-
-  if (nextIndex !== currentIndex && focusableItems[nextIndex]) {
-    event.preventDefault()
-    focusableItems[nextIndex].focus()
-  }
-}
-
-const getItemsPerRow = (container: HTMLElement): number => {
-  const containerWidth = container.clientWidth
-  const sampleItem = container.querySelector('[role="option"]') as HTMLElement
-  if (!sampleItem) return 3
-
-  const itemWidth = sampleItem.offsetWidth + parseInt(getComputedStyle(sampleItem).marginLeft) * 2
-  return Math.max(1, Math.floor(containerWidth / itemWidth))
-}
-
-async function saveAsset(asset: AssetResource) {
-  try {
-    // Assuming updateAsset is a function that updates the asset
-    await updateAsset({ id: asset.id, payload: asset })
-    detailAsset.value = null // Close the details dialog
-  } catch (error) {
-    console.error('Error saving asset:', error)
-  }
-}
-
-// Drag and drop operation handler
-async function handleItemsMove(
-  targetFolderId: string,
-  itemsToMove: { type: string; ids: string[] }[]
-) {
-  try {
-    const movePromises = []
-
-    for (const items of itemsToMove) {
-      if (items.type === 'asset') {
-        for (const assetId of items.ids) {
-          movePromises.push(updateAsset({ id: assetId, payload: { folder_id: targetFolderId } }))
-        }
-      } else if (items.type === 'folder') {
-        for (const folderId of items.ids) {
-          if (folderId !== targetFolderId) {
-            movePromises.push(
-              updateFolder({ id: folderId, payload: { parent_id: targetFolderId } })
-            )
-          }
-        }
-      }
-    }
-
-    await Promise.all(movePromises)
-    clearSelection()
-  } catch (error) {
-    console.error('Error moving items:', error)
-  }
-}
-
-const filters = ref<Record<string, unknown>>({})
-const q = ref<string>('')
-
-const assetQueryParams = computed<AssetsQueryParams>(() => {
-  return {
-    ...filters.value,
-    folder: folderId.value ?? undefined,
-    tags: tagId.value ?? undefined,
-    q: q.value ?? undefined,
-    sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
-    page: currentPage.value,
-    per_page: perPage.value || 12,
-  }
-})
-
-const { data: assetResponse, refetch: refetchAssets } = useAssetsQuery(assetQueryParams)
-
-watch([folderId, tagId], async () => {
-  clearSelection()
-  currentPage.value = 1
-})
-
-watch([currentPage, sortBy], async () => {
-  await refetchAssets()
-})
-
-onMounted(async () => {
-  await refetchAssets()
-})
 
 const assetFilters = computed(() => [
   { id: 'extension', label: 'Extension' },
@@ -424,13 +111,370 @@ const assetFilters = computed(() => [
   },
 ])
 
-// Asset item props based on mode
+const assetQueryParams = computed<AssetsQueryParams>(() => {
+  return {
+    ...filters.value,
+    folder: folderId.value ?? undefined,
+    tags: tagId.value ?? undefined,
+    q: q.value || undefined,
+    sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
+    page: currentPage.value,
+    per_page: perPage.value,
+  }
+})
+
+const { data: assetResponse } = useAssetsQuery(assetQueryParams)
+
+const selectedGridSize = computed(() => {
+  const key = settings.value.assets.gridSize as keyof typeof gridSizes
+  return gridSizes[key] || gridSizes.md
+})
+
+const imageSize = computed(() => {
+  switch (settings.value.assets.gridSize) {
+    case 'sm':
+      return 129
+    case 'lg':
+      return 436
+    default:
+      return 284
+  }
+})
+
+const breadcrumbs = computed(() => {
+  if (!folderId.value) {
+    return []
+  }
+
+  return getBreadcrumbs(folderId.value)
+})
+
+const folders = computed(() => {
+  if (tagId.value) {
+    return []
+  }
+
+  return getChildrenOfFolder(activeFolderId.value)
+})
+
+const assets = computed(() => assetResponse.value?.data || [])
+
+const nonCompliantAssets = computed(() => {
+  return assets.value.filter((asset) => !isCompliant(asset))
+})
+
+const hasSelection = computed(() => {
+  return selectedAssets.value.size > 0 || selectedFolders.value.size > 0
+})
+
+const selectionCount = computed(() => {
+  return selectedAssets.value.size + selectedFolders.value.size
+})
+
+const getSelectedDragItems = (): AssetManagerDragItem[] => {
+  return [
+    ...Array.from(selectedFolders.value.keys()).map((id) => ({ id, type: 'folder' as const })),
+    ...Array.from(selectedAssets.value.keys()).map((id) => ({ id, type: 'asset' as const })),
+  ]
+}
+
+const getDragItemsFor = (type: 'asset' | 'folder', id: string): AssetManagerDragItem[] => {
+  const isSelected = type === 'asset' ? selectedAssets.value.has(id) : selectedFolders.value.has(id)
+
+  if (!isSelected || !hasSelection.value) {
+    return [{ id, type }]
+  }
+
+  return getSelectedDragItems()
+}
+
 const assetItemProps = computed(() => {
   return {
     mode: props.mode,
     draggable: props.mode === 'manage',
     showCheckbox: props.mode === 'manage' && props.multiSelect,
   }
+})
+
+const emitSelectionChange = () => {
+  if (props.mode !== 'manage') {
+    return
+  }
+
+  emit('selectionChange', {
+    folders: Array.from(selectedFolders.value.values()),
+    assets: Array.from(selectedAssets.value.values()),
+  })
+}
+
+const clearSelection = () => {
+  if (props.mode !== 'manage') {
+    return
+  }
+
+  selectedAssets.value.clear()
+  selectedFolders.value.clear()
+  emitSelectionChange()
+}
+
+const handleAssetView = (asset: AssetResource) => {
+  if (props.mode === 'select') {
+    emit('asset-select', asset)
+    return
+  }
+
+  detailAsset.value = asset
+}
+
+const handleAssetSelect = (asset: AssetResource, selected?: boolean) => {
+  if (props.mode === 'select') {
+    emit('asset-select', asset)
+    return
+  }
+
+  if (typeof selected !== 'boolean') {
+    return
+  }
+
+  if (selected) {
+    selectedAssets.value.set(asset.id, asset)
+  } else {
+    selectedAssets.value.delete(asset.id)
+  }
+
+  emitSelectionChange()
+}
+
+const handleFolderSelect = (folder: AssetFolderResource, selected: boolean) => {
+  if (props.mode !== 'manage' || !props.multiSelect) {
+    return
+  }
+
+  if (selected) {
+    selectedFolders.value.set(folder.id, folder)
+  } else {
+    selectedFolders.value.delete(folder.id)
+  }
+
+  emitSelectionChange()
+}
+
+const handleFolderClick = (folder: AssetFolderResource) => {
+  folderId.value = folder.id
+  emit('folder-change', folder.id)
+}
+
+const openCreateFolderDialog = (parentId: string | null = activeFolderId.value) => {
+  editingFolder.value = null
+  dialogParentFolderId.value = parentId
+  folderDialogOpen.value = true
+}
+
+const openEditFolderDialog = (folder: AssetFolderResource) => {
+  editingFolder.value = folder
+  dialogParentFolderId.value = folder.parent_id
+  folderDialogOpen.value = true
+}
+
+const handleFolderDelete = async (folder: AssetFolderResource) => {
+  const confirmed = await alert.confirm(
+    $t('messages.assetFolders.deleteConfirmation', { name: folder.name }),
+    {
+      title: $t('labels.assetFolders.deleteTitle'),
+      confirmLabel: $t('actions.delete'),
+      variant: 'destructive',
+    }
+  )
+
+  if (!confirmed) {
+    return
+  }
+
+  await deleteFolder(folder.id)
+  selectedFolders.value.delete(folder.id)
+  emitSelectionChange()
+}
+
+const handleAssetDelete = async (asset: AssetResource) => {
+  const confirmed = await alert.confirm(
+    $t('messages.assets.deleteConfirmation', { name: asset.filename }),
+    {
+      title: $t('labels.assets.deleteTitle'),
+      confirmLabel: $t('actions.delete'),
+      variant: 'destructive',
+    }
+  )
+
+  if (!confirmed) {
+    return
+  }
+
+  await deleteAsset(asset.id)
+  selectedAssets.value.delete(asset.id)
+  emitSelectionChange()
+}
+
+const deleteSelection = async () => {
+  if (props.mode !== 'manage' || !selectedAssets.value.size) {
+    return
+  }
+
+  await Promise.all(Array.from(selectedAssets.value.keys()).map((id) => deleteAsset(id)))
+  clearSelection()
+}
+
+const handleItemsMove = async (targetFolderId: string | null, items: AssetManagerDragItem[]) => {
+  if (!canMoveItems(items, targetFolderId)) {
+    toast.error(String($t('messages.assetFolders.invalidMoveToChild')))
+    return
+  }
+
+  try {
+    await moveItemsToFolder(items, targetFolderId)
+    clearSelection()
+  } catch {
+    toast.error(String($t('messages.assetFolders.invalidMoveToChild')))
+  }
+}
+
+const saveAsset = async (asset: AssetResource) => {
+  await updateAsset({
+    id: asset.id,
+    payload: {
+      filename: asset.filename,
+      folder_id: asset.folder_id,
+      metadata: asset.metadata,
+      data: asset.data,
+      tags: asset.tags,
+    },
+  })
+
+  detailAsset.value = null
+}
+
+const handleKeyNavigation = (
+  event: KeyboardEvent,
+  items: unknown[],
+  currentIndex: number,
+  selector: string
+) => {
+  if (props.mode !== 'manage') {
+    return
+  }
+
+  const containerElement = event.currentTarget as HTMLElement
+  const focusableItems = containerElement.querySelectorAll(selector) as NodeListOf<HTMLElement>
+  let nextIndex = currentIndex
+
+  if (event.key === 'ArrowRight') {
+    nextIndex = Math.min(currentIndex + 1, items.length - 1)
+  } else if (event.key === 'ArrowLeft') {
+    nextIndex = Math.max(currentIndex - 1, 0)
+  } else if (event.key === 'ArrowDown') {
+    nextIndex = Math.min(currentIndex + getItemsPerRow(containerElement), items.length - 1)
+  } else if (event.key === 'ArrowUp') {
+    nextIndex = Math.max(currentIndex - getItemsPerRow(containerElement), 0)
+  } else {
+    return
+  }
+
+  if (nextIndex !== currentIndex && focusableItems[nextIndex]) {
+    event.preventDefault()
+    focusableItems[nextIndex].focus()
+  }
+}
+
+const getItemsPerRow = (container: HTMLElement): number => {
+  const sampleItem = container.querySelector('[role="option"]') as HTMLElement | null
+  if (!sampleItem) {
+    return 3
+  }
+
+  const itemWidth = sampleItem.offsetWidth + parseInt(getComputedStyle(sampleItem).marginLeft) * 2
+  return Math.max(1, Math.floor(container.clientWidth / itemWidth))
+}
+
+const handleDocumentDragOver = (event: DragEvent) => {
+  if (!event.dataTransfer?.types.includes('Files')) {
+    return
+  }
+
+  event.preventDefault()
+  document.body.classList.add('drag-over')
+}
+
+const handleDocumentDragLeave = (event: DragEvent) => {
+  if (!event.dataTransfer?.types.includes('Files')) {
+    return
+  }
+
+  if (!event.relatedTarget || event.relatedTarget === document.body) {
+    document.body.classList.remove('drag-over')
+  }
+}
+
+const handleDocumentDrop = (event: DragEvent) => {
+  if (!event.dataTransfer?.files?.length) {
+    return
+  }
+
+  event.preventDefault()
+  document.body.classList.remove('drag-over')
+  droppedFiles.value = Array.from(event.dataTransfer.files)
+  showUploadDialog.value = true
+}
+
+watch([folderId, tagId], () => {
+  clearSelection()
+  currentPage.value = 1
+})
+
+watch(rootBreadcrumbRef, (element, _, onCleanup) => {
+  if (!element) {
+    return
+  }
+
+  const cleanup = dropTargetForElements({
+    element,
+    canDrop: ({ source }) => canMoveItems(getAssetManagerDragItems(source.data), null),
+    getIsSticky: () => true,
+    onDragEnter: () => {
+      isRootDropActive.value = true
+    },
+    onDragLeave: () => {
+      isRootDropActive.value = false
+    },
+    onDrop: async ({ source }) => {
+      isRootDropActive.value = false
+      await handleItemsMove(null, getAssetManagerDragItems(source.data))
+    },
+  })
+
+  onCleanup(() => {
+    isRootDropActive.value = false
+    cleanup()
+  })
+})
+
+onMounted(() => {
+  if (props.initialFolderId) {
+    folderId.value = props.initialFolderId
+  }
+
+  if (props.initialTagId) {
+    tagId.value = props.initialTagId
+  }
+
+  document.addEventListener('dragover', handleDocumentDragOver)
+  document.addEventListener('dragleave', handleDocumentDragLeave)
+  document.addEventListener('drop', handleDocumentDrop)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('dragover', handleDocumentDragOver)
+  document.removeEventListener('dragleave', handleDocumentDragLeave)
+  document.removeEventListener('drop', handleDocumentDrop)
+  document.body.classList.remove('drag-over')
 })
 </script>
 
@@ -440,7 +484,11 @@ const assetItemProps = computed(() => {
       <Breadcrumb class="flex gap-2">
         <BreadcrumbItem @click="folderId = null">
           <button
-            class="flex cursor-pointer items-center gap-2 hover:text-primary"
+            ref="rootBreadcrumbRef"
+            :class="[
+              'flex cursor-pointer items-center gap-2 rounded-md py-1 transition-colors hover:text-primary',
+              isRootDropActive ? 'bg-input/70 ring-1 ring-border' : '',
+            ]"
             @click="folderId = null"
           >
             <Icon name="lucide:home" />
@@ -473,6 +521,7 @@ const assetItemProps = computed(() => {
           </BreadcrumbItem>
         </template>
       </Breadcrumb>
+
       <div class="flex items-center gap-2">
         <Button
           v-if="allowUpload"
@@ -484,7 +533,7 @@ const assetItemProps = computed(() => {
         </Button>
         <Button
           v-if="allowFolderCreation"
-          @click="handleFolderCreate(null)"
+          @click="openCreateFolderDialog()"
         >
           <Icon name="lucide:folder-plus" />
           {{ $t('actions.assetFolders.create') }}
@@ -492,20 +541,28 @@ const assetItemProps = computed(() => {
       </div>
     </header>
 
+    <Alert
+      v-if="nonCompliantAssets.length"
+      icon="lucide:circle-alert"
+      color="warning"
+    >
+      {{
+        $t('labels.assets.requirementsSummary', {
+          count: nonCompliantAssets.length,
+        })
+      }}
+    </Alert>
+
     <div
       v-if="hasSelection"
       class="flex items-center justify-between gap-4 rounded-lg border border-border bg-surface p-4"
     >
       <div class="flex items-center gap-2">
-        <Badge variant="secondary">{{
-          $t('labels.selectionCount', { count: selectionCount })
-        }}</Badge>
+        <Badge variant="secondary">
+          {{ $t('labels.selectionCount', { count: selectionCount }) }}
+        </Badge>
       </div>
       <div class="flex items-center gap-2">
-        <Button size="sm">
-          <Icon name="lucide:folder-input" />
-          {{ $t('actions.move') }}
-        </Button>
         <Button
           variant="destructive"
           size="sm"
@@ -526,7 +583,7 @@ const assetItemProps = computed(() => {
     </div>
 
     <section
-      v-if="showFolders && folders.length > 0"
+      v-if="showFolders && folders.length"
       class="grid grow gap-6"
     >
       <button @click="settings.assets.gridFolders = !settings.assets.gridFolders">
@@ -535,7 +592,7 @@ const assetItemProps = computed(() => {
             name="lucide:folder"
             size="1.25rem"
           />
-          <span class="font-semibold text-primary">Folders</span>
+          <span class="font-semibold text-primary">{{ $t('labels.assetFolders.title') }}</span>
           <Badge>{{ folders.length }}</Badge>
           <Icon
             name="lucide:chevron-up"
@@ -544,6 +601,7 @@ const assetItemProps = computed(() => {
           />
         </h2>
       </button>
+
       <div
         v-if="settings.assets.gridFolders"
         class="grid grid-cols-3 gap-3 rounded-lg bg-surface p-3 xl:grid-cols-2 2xl:grid-cols-3"
@@ -551,14 +609,15 @@ const assetItemProps = computed(() => {
         aria-label="Folders"
         aria-multiselectable="true"
         @keydown="
-          (e) =>
+          (event) =>
             handleKeyNavigation(
-              e,
+              event,
               folders,
               Array.from(folders).findIndex(
-                (f) =>
-                  (e.target as HTMLElement).closest('[role=option]')?.getAttribute('data-id') ===
-                  f.id
+                (folder) =>
+                  (event.target as HTMLElement)
+                    .closest('[role=option]')
+                    ?.getAttribute('data-id') === folder.id
               ),
               '[role=option]'
             )
@@ -569,12 +628,16 @@ const assetItemProps = computed(() => {
           :key="folder.id"
           :folder="folder"
           :selected="selectedFolders.has(folder.id)"
-          :draggable="true"
-          data-id="folder.id"
+          :draggable="mode === 'manage'"
+          :drag-items="getDragItemsFor('folder', folder.id)"
+          :can-receive-drop="(items) => canMoveItems(items, folder.id)"
+          :on-items-drop="(items) => handleItemsMove(folder.id, items)"
+          :data-id="folder.id"
           @select="handleFolderSelect"
           @click="handleFolderClick"
+          @edit="openEditFolderDialog"
           @delete="handleFolderDelete"
-          @create="handleFolderCreate"
+          @create="(folder) => openCreateFolderDialog(folder.id)"
         />
       </div>
     </section>
@@ -625,7 +688,7 @@ const assetItemProps = computed(() => {
         class="grid flex-1 gap-1"
       >
         <div
-          v-if="assetResponse.data.length === 0"
+          v-if="!assets.length"
           class="flex min-h-[200px] flex-col items-center justify-center rounded-lg bg-surface p-8"
         >
           <AssetsIcon class="mb-4 w-32 text-muted" />
@@ -658,27 +721,30 @@ const assetItemProps = computed(() => {
           aria-label="Assets"
           aria-multiselectable="true"
           @keydown="
-            (e) =>
+            (event) =>
               handleKeyNavigation(
-                e,
-                assetResponse.data,
-                Array.from(assetResponse.data).findIndex(
-                  (a) =>
-                    (e.target as HTMLElement).closest('[role=option]')?.getAttribute('data-id') ===
-                    a.id
+                event,
+                assets,
+                Array.from(assets).findIndex(
+                  (asset) =>
+                    (event.target as HTMLElement)
+                      .closest('[role=option]')
+                      ?.getAttribute('data-id') === asset.id
                 ),
                 '[role=option]'
               )
           "
         >
           <AssetItem
-            v-for="asset in assetResponse?.data"
+            v-for="asset in assets"
             :key="asset.id"
             :asset="asset"
             :selected="mode === 'manage' ? selectedAssets.has(asset.id) : undefined"
             :size="imageSize"
+            :drag-items="getDragItemsFor('asset', asset.id)"
+            :compliance-issues="getMissingRequiredFields(asset)"
+            :data-id="asset.id"
             v-bind="assetItemProps"
-            data-id="asset.id"
             @select="handleAssetSelect"
             @view="handleAssetView"
             @delete="handleAssetDelete"
@@ -686,13 +752,13 @@ const assetItemProps = computed(() => {
         </div>
 
         <TablePaginationFooter
-          v-if="assetResponse?.meta"
+          v-if="assetResponse.meta"
           :meta="assetResponse.meta"
           :current-page="currentPage"
           :per-page="perPage"
           :page-size-options="[12, 24, 48, 96, 120]"
-          @update:current-page="(val) => (currentPage = val)"
-          @update:per-page="(val) => (perPage = val)"
+          @update:current-page="(value) => (currentPage = value)"
+          @update:per-page="(value) => (perPage = value)"
         />
       </div>
     </section>
@@ -700,27 +766,30 @@ const assetItemProps = computed(() => {
     <UploadDialog
       v-if="allowUpload"
       v-model:open="showUploadDialog"
-      :folder-id="folderId"
+      :folder-id="activeFolderId || undefined"
       :space-id="spaceId"
       :initial-files="droppedFiles"
       @update:open="
         (open) => {
-          if (!open) droppedFiles = []
+          if (!open) {
+            droppedFiles = []
+          }
         }
       "
     />
 
     <CreateFolderDialog
       v-if="allowFolderCreation"
-      v-model:open="showCreateFolderDialog"
-      :parent-folder-id="folderId"
+      v-model:open="folderDialogOpen"
+      :folder="editingFolder"
+      :parent-folder-id="dialogParentFolderId"
       :space-id="spaceId"
     />
 
     <AssetDetailsDialog
       v-if="mode === 'manage'"
       v-model:asset="detailAsset"
-      :folder-id="folderId"
+      :folder-id="activeFolderId"
       :space-id="spaceId"
       @update:asset="saveAsset"
       @close="detailAsset = null"

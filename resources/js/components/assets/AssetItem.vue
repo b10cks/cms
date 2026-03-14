@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
+import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
+
+import AssetComplianceIndicator from '~/components/assets/AssetComplianceIndicator.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
-
 import { Checkbox } from '~/components/ui/checkbox'
 import {
   DropdownMenu,
@@ -9,8 +12,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
+import type { AssetRequirementIssue } from '~/composables/useAssetRequirements'
+import {
+  createAssetManagerDragData,
+  setAssetManagerDragPreview,
+  type AssetManagerDragItem,
+} from '~/lib/assets/assetDragAndDrop'
 import type { AssetResource } from '~/types/assets'
 
+const { t } = useI18n()
 const { formatFileSize } = useFormat()
 const { getFileIcon, getFileType } = useFileUtils()
 
@@ -22,6 +32,8 @@ export interface AssetItemProps {
   mode?: 'manage' | 'select'
   showExtension?: boolean
   showCheckbox?: boolean
+  dragItems?: AssetManagerDragItem[]
+  complianceIssues?: AssetRequirementIssue[]
 }
 
 const props = withDefaults(defineProps<AssetItemProps>(), {
@@ -31,19 +43,29 @@ const props = withDefaults(defineProps<AssetItemProps>(), {
   mode: 'manage',
   showExtension: true,
   showCheckbox: true,
+  dragItems: () => [],
+  complianceIssues: () => [],
 })
 
 const emit = defineEmits<{
   select: [asset: AssetResource, selected?: boolean]
   view: [asset: AssetResource]
   delete: [asset: AssetResource]
-  move: [asset: AssetResource]
 }>()
 
 const isSelectMode = computed(() => props.mode === 'select')
 const isManageMode = computed(() => props.mode === 'manage')
 const enableDragAndDrop = computed(() => props.draggable && isManageMode.value)
 const displayCheckbox = computed(() => props.showCheckbox && isManageMode.value)
+const rootElement = ref<HTMLElement | null>(null)
+const resolvedDragItems = computed(() => {
+  return props.dragItems.length ? props.dragItems : [{ id: props.asset.id, type: 'asset' as const }]
+})
+const dragPreviewTitle = computed(() => {
+  return resolvedDragItems.value.length > 1
+    ? String(t('labels.selectionCount', { count: resolvedDragItems.value.length }))
+    : props.asset.filename
+})
 
 function handleSelect(event: Event) {
   event.stopPropagation()
@@ -81,35 +103,44 @@ function handleKeyDown(event: KeyboardEvent) {
   }
 }
 
-// Handle drag functionality
-function onDragStart(event: DragEvent) {
-  if (!event.dataTransfer || !enableDragAndDrop.value) return
+watchEffect((onCleanup) => {
+  if (!rootElement.value) {
+    return
+  }
 
-  // Set the drag data with the asset ID and type
-  event.dataTransfer.setData(
-    'application/json',
-    JSON.stringify({
-      type: 'asset',
-      id: props.asset.id,
-      selected: props.selected,
+  const cleanup = combine(
+    draggable({
+      element: rootElement.value,
+      canDrag: () => enableDragAndDrop.value,
+      getInitialData: () => {
+        return createAssetManagerDragData(resolvedDragItems.value, {
+          id: props.asset.id,
+          type: 'asset',
+        })
+      },
+      onGenerateDragPreview: ({ nativeSetDragImage }) => {
+        setAssetManagerDragPreview({
+          nativeSetDragImage,
+          count: resolvedDragItems.value.length,
+          title: dragPreviewTitle.value,
+        })
+      },
     })
   )
 
-  // Set a drag image/effect
-  event.dataTransfer.effectAllowed = 'move'
-}
+  onCleanup(() => cleanup())
+})
 </script>
 
 <template>
   <div
+    ref="rootElement"
     class="group relative rounded-lg bg-background p-1 shadow-lg transition-all hover:bg-input focus:bg-input focus:outline-2 focus:outline-blue-300"
     :class="{ 'rotate-1 outline-2 outline-accent': selected }"
     :aria-selected="selected"
     role="option"
     tabindex="0"
-    :draggable="enableDragAndDrop"
     @keydown="handleKeyDown"
-    @dragstart="onDragStart"
   >
     <div
       class="checkerboard relative aspect-square cursor-pointer overflow-hidden rounded-t-[0.325rem]"
@@ -147,8 +178,12 @@ function onDragStart(event: DragEvent) {
     </div>
     <div class="flex items-center gap-2 p-2">
       <div class="min-w-0 flex-1">
-        <div class="truncate font-semibold">
-          {{ asset.filename }}
+        <div class="flex items-center gap-2 truncate font-semibold">
+          <span class="truncate">{{ asset.filename }}</span>
+          <AssetComplianceIndicator
+            :issues="complianceIssues"
+            severity="error"
+          />
         </div>
         <div class="text-sm text-muted">
           {{ asset.extension }} • {{ formatFileSize(asset.size) }}
@@ -161,11 +196,7 @@ function onDragStart(event: DragEvent) {
         <DropdownMenuContent>
           <DropdownMenuItem @select="handleView">
             <Icon name="lucide:pencil" />
-            <span>Edit</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem @select="$emit('move', asset)">
-            <Icon name="lucide:folder-input" />
-            <span>Move</span>
+            <span>{{ $t('actions.edit') }}</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             class="text-destructive"

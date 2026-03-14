@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
-import type { AssetFolderResource, UpsertAssetFolderPayload } from '~/types/assets'
-
 import { api } from '~/api'
+import type { AssetFolderResource, UpsertAssetFolderPayload } from '~/types/assets'
 
 import { queryKeys } from './useQueryClient'
 
@@ -100,6 +99,10 @@ export function useAssetFolders(spaceId: MaybeRef<string>) {
   const useFolderStructure = () => {
     const { data: folders, isLoading, error } = useAssetFoldersQuery()
 
+    const folderMap = computed(() => {
+      return new Map((folders.value || []).map((folder) => [folder.id, folder]))
+    })
+
     const rootFolders = computed(() => {
       if (!folders.value) return []
       return folders.value.filter((folder) => !folder.parent_id)
@@ -133,13 +136,29 @@ export function useAssetFolders(spaceId: MaybeRef<string>) {
       return breadcrumbs
     }
 
+    const isDescendantOf = (folderId: string, potentialAncestorId: string): boolean => {
+      let currentFolder = folderMap.value.get(folderId)
+
+      while (currentFolder?.parent_id) {
+        if (currentFolder.parent_id === potentialAncestorId) {
+          return true
+        }
+
+        currentFolder = folderMap.value.get(currentFolder.parent_id)
+      }
+
+      return false
+    }
+
     return {
       folders,
+      folderMap,
       isLoading,
       error,
       rootFolders,
       getChildrenOfFolder,
       getBreadcrumbs,
+      isDescendantOf,
     }
   }
 

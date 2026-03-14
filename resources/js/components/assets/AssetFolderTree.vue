@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
+import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
+import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 import { TreeItem, type TreeItemToggleEvent, TreeRoot } from 'reka-ui'
+import { toast } from 'vue-sonner'
+
 import CreateFolderDialog from '~/components/assets/CreateFolderDialog.vue'
-import RenamableTitle from '~/components/ui/RenamableTitle.vue'
+import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import {
   DropdownMenu,
@@ -11,7 +13,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
-import { AssetFolderResource } from '~/types/assets'
+import RenamableTitle from '~/components/ui/RenamableTitle.vue'
+import {
+  createAssetManagerDragData,
+  getAssetManagerDragItems,
+  setAssetManagerDragPreview,
+} from '~/lib/assets/assetDragAndDrop'
+import type { AssetFolderResource } from '~/types/assets'
 
 const props = defineProps<{
   spaceId: string
@@ -19,124 +27,174 @@ const props = defineProps<{
 
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
-
-const { useFolderStructure, useUpdateAssetFolderMutation, useDeleteAssetFolderMutation } =
-  useAssetFolders(props.spaceId)
-const { useUpdateAssetMutation } = useAssets(props.spaceId)
 const { settings } = useSpaceSettings(props.spaceId)
-
-const { mutate: updateAsset } = useUpdateAssetMutation()
-const { mutate: deleteFolder } = useDeleteAssetFolderMutation()
-const { mutate: updateFolder } = useUpdateAssetFolderMutation()
-
-const { rootFolders, getChildrenOfFolder } = useFolderStructure()
+const { useFolderStructure, useDeleteAssetFolderMutation, useUpdateAssetFolderMutation } =
+  useAssetFolders(props.spaceId)
+const { canMoveItems, moveItemsToFolder } = useAssetLibraryMoves(props.spaceId)
+const { mutateAsync: deleteFolder } = useDeleteAssetFolderMutation()
+const { mutateAsync: updateFolder } = useUpdateAssetFolderMutation()
+const { getChildrenOfFolder, rootFolders } = useFolderStructure()
 
 const selectedFolderId = defineModel<string | null>()
-const parentFolderId = ref<string | null>(null)
-const showCreateFolderDialog = ref(false)
 
-defineEmits<{
-  view: [folder: AssetFolderResource]
-  edit: [folder: AssetFolderResource]
-  move: [folder: AssetFolderResource]
-}>()
-
-const isDraggingOver = ref<string | null>(null)
+const folderDialogOpen = ref(false)
+const dialogParentFolderId = ref<string | null>(null)
+const editingFolder = ref<AssetFolderResource | null>(null)
 const currentlyEditingId = ref<string | null>(null)
+const activeDropTargetId = ref<string | null>(null)
+const isRootDraggedOver = ref(false)
+const treeContainerRef = ref<HTMLElement | null>(null)
+const folderCleanupMap = new Map<string, () => void>()
 
-function handleRename(newName: string, folderId: string) {
-  if (folderId && newName) {
-    updateFolder({ id: folderId, payload: { name: newName } })
+const resolveElement = (value: Element | { $el?: Element } | null): HTMLElement | null => {
+  if (value instanceof HTMLElement) {
+    return value
   }
+
+  if (value && '$el' in value && value.$el instanceof HTMLElement) {
+    return value.$el
+  }
+
+  return null
+}
+
+const clearDropState = () => {
+  activeDropTargetId.value = null
+  isRootDraggedOver.value = false
+}
+
+const handleFolderRename = async (newName: string, folderId: string) => {
+  if (!folderId || !newName) {
+    currentlyEditingId.value = null
+    return
+  }
+
+  await updateFolder({ id: folderId, payload: { name: newName } })
   currentlyEditingId.value = null
 }
 
-function handleEditStart(folderId: string) {
-  currentlyEditingId.value = folderId
+const openCreateFolderDialog = (parentId: string | null = null) => {
+  editingFolder.value = null
+  dialogParentFolderId.value = parentId
+  folderDialogOpen.value = true
 }
 
-function handleEditCancel() {
-  currentlyEditingId.value = null
+const openEditFolderDialog = (folder: AssetFolderResource) => {
+  editingFolder.value = folder
+  dialogParentFolderId.value = folder.parent_id
+  folderDialogOpen.value = true
 }
 
-async function handleDrop(event: DragEvent, targetFolderId: string) {
-  event.preventDefault()
-  if (!event.dataTransfer) return
+const handleItemsMove = async (targetFolderId: string | null, data: Record<string, unknown>) => {
+  const items = getAssetManagerDragItems(data)
 
-  isDraggingOver.value = null
+  if (!items.length) {
+    return
+  }
+
+  if (!canMoveItems(items, targetFolderId)) {
+    toast.error(String($t('messages.assetFolders.invalidMoveToChild')))
+    clearDropState()
+    return
+  }
 
   try {
-    const dragData = JSON.parse(event.dataTransfer.getData('application/json'))
+    await moveItemsToFolder(items, targetFolderId)
+  } catch {
+    toast.error(String($t('messages.assetFolders.invalidMoveToChild')))
+  } finally {
+    clearDropState()
+  }
+}
 
-    if (dragData.type === 'asset') {
-      await updateAsset({ id: dragData.id, payload: { folder_id: targetFolderId } })
-
-      if (dragData.selected) {
-        const selectedAssetsData = JSON.parse(
-          event.dataTransfer.getData('application/json+selected-assets') || '[]'
-        )
-
-        for (const assetId of selectedAssetsData) {
-          if (assetId !== dragData.id) {
-            await updateAsset({ id: assetId, payload: { folder_id: targetFolderId } })
-          }
+const registerFolderInteractions = (folder: AssetFolderResource, element: HTMLElement) => {
+  const cleanup = combine(
+    draggable({
+      element,
+      getInitialData: () =>
+        createAssetManagerDragData([{ id: folder.id, type: 'folder' }], {
+          id: folder.id,
+          type: 'folder',
+        }),
+      onGenerateDragPreview: ({ nativeSetDragImage }) => {
+        setAssetManagerDragPreview({
+          nativeSetDragImage,
+          count: 1,
+          title: folder.name,
+        })
+      },
+    }),
+    dropTargetForElements({
+      element,
+      canDrop: ({ source }) => canMoveItems(getAssetManagerDragItems(source.data), folder.id),
+      getIsSticky: () => true,
+      onDragEnter: () => {
+        activeDropTargetId.value = folder.id
+      },
+      onDragLeave: () => {
+        if (activeDropTargetId.value === folder.id) {
+          activeDropTargetId.value = null
         }
-      }
-    } else if (dragData.type === 'folder') {
-      if (dragData.id !== targetFolderId) {
-        await updateFolder({ id: dragData.id, payload: { parent_id: targetFolderId } })
+      },
+      onDrop: async ({ source }) => {
+        await handleItemsMove(folder.id, source.data)
+      },
+    })
+  )
 
-        if (dragData.selected) {
-          const selectedFoldersData = JSON.parse(
-            event.dataTransfer.getData('application/json+selected-folders') || '[]'
-          )
+  folderCleanupMap.set(folder.id, cleanup)
+}
 
-          for (const folderId of selectedFoldersData) {
-            if (folderId !== dragData.id && folderId !== targetFolderId) {
-              await updateFolder({ id: folderId, payload: { parent_id: targetFolderId } })
-            }
-          }
-        }
-      }
+const setFolderElement = (folder: AssetFolderResource) => {
+  return (value: Element | { $el?: Element } | null) => {
+    folderCleanupMap.get(folder.id)?.()
+    folderCleanupMap.delete(folder.id)
+
+    const element = resolveElement(value)
+    if (!element) {
+      return
     }
-  } catch (error) {
-    console.error('Error handling drop event:', error)
+
+    registerFolderInteractions(folder, element)
   }
 }
 
-function triggerCreateFolderDialog(pid: string | null = null) {
-  parentFolderId.value = pid
-  showCreateFolderDialog.value = true
-}
-
-const handleToggle = (e: TreeItemToggleEvent<AssetFolderResource>) => {
-  if (e.detail.originalEvent instanceof PointerEvent) {
-    e.preventDefault()
+watch(treeContainerRef, (element, _, onCleanup) => {
+  if (!element) {
+    return
   }
-}
 
-const toggleExpanded = (folderId: string) => {
-  const expanded = settings.value.assets.expanded || []
-  const index = expanded.indexOf(folderId)
-  if (index > -1) {
-    expanded.splice(index, 1)
-  } else {
-    expanded.push(folderId)
-  }
-  settings.value.assets.expanded = expanded
-}
+  const cleanup = dropTargetForElements({
+    element,
+    canDrop: ({ source }) => canMoveItems(getAssetManagerDragItems(source.data), null),
+    getIsSticky: () => true,
+    onDragEnter: () => {
+      isRootDraggedOver.value = true
+    },
+    onDragLeave: () => {
+      isRootDraggedOver.value = false
+    },
+    onDropTargetChange: ({ location }) => {
+      const isFolderDropActive = location.current.dropTargets.some(
+        (dropTarget) => dropTarget.element !== element
+      )
+      isRootDraggedOver.value = !isFolderDropActive
+    },
+    onDrop: async ({ source }) => {
+      await handleItemsMove(null, source.data)
+    },
+  })
 
-function handleDragOver(event: DragEvent, folderId: string) {
-  event.preventDefault()
-  if (!event.dataTransfer) return
+  onCleanup(() => {
+    isRootDraggedOver.value = false
+    cleanup()
+  })
+})
 
-  event.dataTransfer.dropEffect = 'move'
-  isDraggingOver.value = folderId
-}
-
-function handleDragLeave() {
-  isDraggingOver.value = null
-}
+onBeforeUnmount(() => {
+  folderCleanupMap.forEach((cleanup) => cleanup())
+  folderCleanupMap.clear()
+})
 
 const handleFolderDelete = async (folder: AssetFolderResource) => {
   const confirmed = await alert.confirm(
@@ -148,140 +206,153 @@ const handleFolderDelete = async (folder: AssetFolderResource) => {
     }
   )
 
-  if (confirmed) {
-    try {
-      await deleteFolder(folder.id)
-    } catch (error) {
-      console.error('Error deleting folder:', error)
-    }
+  if (!confirmed) {
+    return
   }
+
+  await deleteFolder(folder.id)
+}
+
+const handleToggle = (event: TreeItemToggleEvent<AssetFolderResource>) => {
+  if (event.detail.originalEvent instanceof PointerEvent) {
+    event.preventDefault()
+  }
+}
+
+const toggleExpanded = (folderId: string) => {
+  const expanded = settings.value.assets.expanded || []
+  const index = expanded.indexOf(folderId)
+
+  if (index > -1) {
+    expanded.splice(index, 1)
+  } else {
+    expanded.push(folderId)
+  }
+
+  settings.value.assets.expanded = expanded
 }
 </script>
 
 <template>
-  <TreeRoot
-    v-slot="{ flattenItems, expanded }"
-    v-model:expanded="settings.assets.expanded"
-    class="w-full list-none select-none"
-    :items="rootFolders"
-    :get-key="(item) => item?.id"
-    :get-children="({ id }) => getChildrenOfFolder(id)"
-  >
-    <button
-      type="button"
-      :class="[
-        'group relative my-0.5 flex w-full items-center gap-2 rounded-md py-1 pr-2 pl-2 outline-none',
-        'transition-colors duration-200 hover:bg-input',
-        'cursor-pointer font-semibold',
-        !selectedFolderId ? 'bg-input text-primary' : '',
-      ]"
-      @click="selectedFolderId = undefined"
+  <div ref="treeContainerRef">
+    <TreeRoot
+      v-slot="{ flattenItems, expanded }"
+      v-model:expanded="settings.assets.expanded"
+      class="w-full list-none select-none"
+      :items="rootFolders"
+      :get-key="(item) => item?.id"
+      :get-children="({ id }) => getChildrenOfFolder(id)"
     >
-      <Icon name="lucide:home" />
-      <span>{{ $t('labels.assets.allAssets') }}</span>
-    </button>
-    <div class="my-2 flex items-center px-2">
-      <h2 class="text-sm font-semibold text-primary">
-        {{ $t('labels.assetFolders.title') }}
-      </h2>
-      <Button
-        class="ml-auto"
-        size="xs"
-        @click="triggerCreateFolderDialog(null)"
+      <button
+        type="button"
+        :class="[
+          'group relative my-0.5 flex w-full items-center gap-2 rounded-md py-1 pr-2 pl-2 outline-none',
+          'cursor-pointer font-semibold transition-colors duration-200 hover:bg-input',
+          !selectedFolderId ? 'bg-input text-primary' : '',
+          isRootDraggedOver ? 'bg-input/70 ring-1 ring-border' : '',
+        ]"
+        @click="selectedFolderId = null"
       >
-        <Icon name="lucide:plus" />
-      </Button>
-    </div>
-    <TreeItem
-      v-for="item in flattenItems"
-      v-slot="{ isExpanded }"
-      :key="item._id"
-      v-bind="item.bind"
-      :style="{ 'padding-left': `${item.level - 0.5}rem` }"
-      :class="[
-        'group my-0.5 flex items-center rounded-md px-2 py-1 outline-none',
-        'transition-colors duration-200 hover:bg-input',
-        'cursor-pointer font-semibold',
-        item.value.id === selectedFolderId ? 'bg-input text-primary' : '',
-        isDraggingOver === item.value.id
-          ? 'bg-opacity-20 border border-dashed border-accent bg-blue-800'
-          : '',
-      ]"
-      tabindex="0"
-      :aria-selected="item.value.id === selectedFolderId"
-      :aria-expanded="
-        item.value.children_count ? expanded.includes(item.value.id).toString() : undefined
-      "
-      @select="selectedFolderId = item.value.id"
-      @toggle="(e) => handleToggle(e)"
-      @drop="handleDrop($event, item.value.id)"
-      @dragover="handleDragOver($event, item.value.id)"
-      @dragleave="handleDragLeave"
-    >
-      <div class="flex w-5 items-center">
-        <button
-          v-if="item.value.children_count"
-          @click.stop.prevent="toggleExpanded(item.value.id)"
+        <Icon name="lucide:home" />
+        <span>{{ $t('labels.assets.allAssets') }}</span>
+      </button>
+
+      <div class="my-2 flex items-center px-2">
+        <h2 class="text-sm font-semibold text-primary">
+          {{ $t('labels.assetFolders.title') }}
+        </h2>
+        <Button
+          class="ml-auto"
+          size="xs"
+          @click="openCreateFolderDialog(null)"
         >
+          <Icon name="lucide:plus" />
+        </Button>
+      </div>
+
+      <TreeItem
+        v-for="item in flattenItems"
+        :ref="setFolderElement(item.value)"
+        v-slot="{ isExpanded }"
+        :key="item._id"
+        v-bind="item.bind"
+        :style="{ 'padding-left': `${item.level - 0.5}rem` }"
+        :class="[
+          'group my-0.5 flex items-center rounded-md px-2 py-1 outline-none',
+          'cursor-pointer font-semibold transition-colors duration-200 hover:bg-input',
+          item.value.id === selectedFolderId ? 'bg-input text-primary' : '',
+          activeDropTargetId === item.value.id ? 'bg-input/70 ring-1 ring-border' : '',
+        ]"
+        tabindex="0"
+        :aria-selected="item.value.id === selectedFolderId"
+        :aria-expanded="
+          item.value.children_count ? expanded.includes(item.value.id).toString() : undefined
+        "
+        @select="selectedFolderId = item.value.id"
+        @toggle="handleToggle"
+      >
+        <div class="flex w-5 items-center">
+          <button
+            v-if="item.value.children_count"
+            @click.stop.prevent="toggleExpanded(item.value.id)"
+          >
+            <Icon
+              name="lucide:chevron-right"
+              :class="['transition-transform duration-200', isExpanded && 'rotate-90']"
+              aria-hidden="true"
+            />
+          </button>
+        </div>
+        <div class="flex flex-1 items-center gap-2">
           <Icon
-            name="lucide:chevron-right"
-            :class="['transition-transform duration-200', isExpanded && 'rotate-90']"
+            v-if="item.value.icon"
+            :name="`lucide:${item.value.icon}`"
+            :style="{ color: item.value.color }"
             aria-hidden="true"
           />
-        </button>
-      </div>
-      <div class="flex flex-1 items-center gap-2">
-        <Icon
-          v-if="item.value.icon"
-          :name="`lucide:${item.value.icon}`"
-          :style="{ color: item.value.color }"
-          aria-hidden="true"
-        />
-        <RenamableTitle
-          :name="item.value.name"
-          @update="handleRename($event, item.value.id)"
-          @edit-start="handleEditStart(item.value.id)"
-          @cancel="handleEditCancel"
-        />
-      </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          class="opacity-0 transition-all duration-200 group-hover:opacity-100 hover:text-primary data-[state=open]:opacity-100"
-        >
-          <Icon name="lucide:ellipsis-vertical" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem @select="$emit('view', item.value)">
-            <Icon name="lucide:eye" />
-            <span>{{ $t('actions.view') }}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem @select="$emit('edit', item.value)">
-            <Icon name="lucide:edit" />
-            <span>{{ $t('actions.edit') }}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem @select="triggerCreateFolderDialog(item.value.id)">
-            <Icon name="lucide:folder-plus" />
-            <span>{{ $t('actions.createFolder') }}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem @select="$emit('move', item.value)">
-            <Icon name="lucide:folder-input" />
-            <span>{{ $t('actions.move') }}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            class="text-destructive"
-            @select="handleFolderDelete(item.value)"
+          <RenamableTitle
+            :name="item.value.name"
+            @update="handleFolderRename($event, item.value.id)"
+            @edit-start="currentlyEditingId = item.value.id"
+            @cancel="currentlyEditingId = null"
+          />
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            class="opacity-0 transition-all duration-200 group-hover:opacity-100 hover:text-primary data-[state=open]:opacity-100"
           >
-            <Icon name="lucide:trash-2" />
-            <span>{{ $t('actions.delete') }}</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </TreeItem>
-  </TreeRoot>
+            <Icon name="lucide:ellipsis-vertical" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem @select="selectedFolderId = item.value.id">
+              <Icon name="lucide:eye" />
+              <span>{{ $t('actions.view') }}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem @select="openEditFolderDialog(item.value)">
+              <Icon name="lucide:edit" />
+              <span>{{ $t('actions.edit') }}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem @select="openCreateFolderDialog(item.value.id)">
+              <Icon name="lucide:folder-plus" />
+              <span>{{ $t('actions.createFolder') }}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              class="text-destructive"
+              @select="handleFolderDelete(item.value)"
+            >
+              <Icon name="lucide:trash-2" />
+              <span>{{ $t('actions.delete') }}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TreeItem>
+    </TreeRoot>
 
-  <CreateFolderDialog
-    v-model:open="showCreateFolderDialog"
-    :parent-folder-id="parentFolderId"
-    :space-id="spaceId"
-  />
+    <CreateFolderDialog
+      v-model:open="folderDialogOpen"
+      :folder="editingFolder"
+      :parent-folder-id="dialogParentFolderId"
+      :space-id="spaceId"
+    />
+  </div>
 </template>

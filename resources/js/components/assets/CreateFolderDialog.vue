@@ -1,23 +1,45 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
-import { UpsertAssetFolderPayload } from '~/types/assets'
+import type { AssetFolderResource, UpsertAssetFolderPayload } from '~/types/assets'
 
-const props = defineProps<{
-  spaceId: string
-  parentFolderId?: string | null
-  open: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    spaceId: string
+    parentFolderId?: string | null
+    folder?: AssetFolderResource | null
+    open: boolean
+  }>(),
+  {
+    parentFolderId: null,
+    folder: null,
+  }
+)
 
 const emit = defineEmits(['update:open'])
 const { t } = useI18n()
 
-const { useCreateAssetFolderMutation } = useAssetFolders(props.spaceId)
-const { mutate: createFolder } = useCreateAssetFolderMutation()
+const { useCreateAssetFolderMutation, useUpdateAssetFolderMutation } = useAssetFolders(
+  props.spaceId
+)
+const { mutateAsync: createFolder } = useCreateAssetFolderMutation()
+const { mutateAsync: updateFolder } = useUpdateAssetFolderMutation()
+
+const isEditMode = computed(() => !!props.folder)
+const title = computed(() => {
+  return isEditMode.value ? t('labels.assetFolders.edit') : t('labels.assetFolders.create')
+})
+const description = computed(() => {
+  return isEditMode.value
+    ? t('labels.assetFolders.editDescription')
+    : t('labels.assetFolders.createDescription')
+})
+const submitLabel = computed(() => {
+  return isEditMode.value ? t('actions.saveChanges') : t('actions.create')
+})
 
 const folder = ref<UpsertAssetFolderPayload>({
   name: '',
@@ -38,12 +60,21 @@ const updateOpenState = (value: boolean) => {
 }
 
 const resetForm = () => {
-  folder.value = {
-    name: '',
-    description: null,
-    icon: 'folder',
-    parent_id: props.parentFolderId || null,
-  }
+  folder.value = props.folder
+    ? {
+        name: props.folder.name,
+        description: props.folder.description,
+        color: props.folder.color,
+        icon: props.folder.icon || 'folder',
+        parent_id: props.folder.parent_id,
+      }
+    : {
+        name: '',
+        description: null,
+        color: null,
+        icon: 'folder',
+        parent_id: props.parentFolderId || null,
+      }
   errorMessage.value = ''
 }
 
@@ -52,7 +83,15 @@ const handleSubmit = async () => {
   errorMessage.value = ''
 
   try {
-    await createFolder(folder.value)
+    if (isEditMode.value && props.folder) {
+      await updateFolder({
+        id: props.folder.id,
+        payload: folder.value,
+      })
+    } else {
+      await createFolder(folder.value)
+    }
+
     updateOpenState(false)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : t('errors.assetFolders.create')
@@ -62,7 +101,7 @@ const handleSubmit = async () => {
 }
 
 watch(
-  () => props.parentFolderId,
+  [() => props.parentFolderId, () => props.folder],
   () => {
     resetForm()
   },
@@ -77,8 +116,8 @@ watch(
   >
     <DialogContent class="sm:max-w-lg">
       <DialogHeaderCombined
-        :title="$t('labels.assetFolders.create')"
-        :description="$t('labels.assetFolders.createDescription')"
+        :title="title"
+        :description="description"
       />
 
       <form @submit.prevent="handleSubmit">
@@ -121,7 +160,7 @@ watch(
               name="lucide:loader"
               class="animate-spin"
             />
-            {{ $t('actions.create') }}
+            {{ submitLabel }}
           </Button>
         </DialogFooter>
       </form>

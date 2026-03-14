@@ -76,6 +76,7 @@ interface UploadAssetPayload {
 }
 
 interface UpdateAssetPayload {
+  filename?: string
   folder_id?: string | null
   tags?: string[]
   metadata?: Record<string, unknown>

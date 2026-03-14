@@ -190,6 +190,9 @@
       "title": "Asset Folders",
       "create": "New folder",
       "createDescription": "Organize your assets into folders.",
+      "edit": "Edit folder",
+      "editDescription": "Update the folder details without changing its contents.",
+      "deleteTitle": "Delete this folder?",
       "fields": {
         "icon": "Icon",
         "color": "Color",
@@ -322,10 +325,18 @@
       "uploadAssets": "Upload Assets",
       "uploadDetails": "Upload Details",
       "uploadDescription": "Upload files to your asset library. You can upload multiple files at once.",
+      "uploadRequirementsTitle": "Metadata requirements need acknowledgement",
+      "uploadRequirementsSummary": "{count} file is missing required metadata. | {count} files are missing required metadata.",
+      "uploadRequirementsWarning": "This file is missing required metadata for the current asset specification.",
       "dragAndDrop": "Drag and drop files here or click to browse",
       "browseFiles": "Browse Files",
       "addMoreFiles": "Add More Files",
       "fileInformation": "File Information",
+      "defaultLanguage": "Default",
+      "requirementsSummary": "{count} asset on this page is missing required metadata. | {count} assets on this page are missing required metadata.",
+      "metadataRequirementsMissing": "Missing required metadata",
+      "folderEmpty": "This folder is empty. Drop assets here or upload something new.",
+      "noAssetsWithTag": "No assets match the selected tag.",
       "setFocusPoint": "Set Focus Point",
       "removeFocusPoint": "Remove Focus Point",
       "fileTypes": {
@@ -365,7 +376,9 @@
       "size": "Size",
       "createdAt": "Uploaded at",
       "updatedAt": "Last Modified",
+      "lastModified": "Last Modified",
       "unknown": "Unknown",
+      "uploading": "Uploading...",
       "replaceMedia": "Replace Media",
       "finish": "Finish"
     },
@@ -2128,6 +2141,14 @@
       "noContent": "No content selected. Select a content item to preview.",
       "noEnvironments": "No environments available. [Setup environments in space settings]({url}) to preview content."
     },
-    "deleteTokenConfirm": "Are you sure you want to delete the token '{name}'? This action cannot be undone."
+    "deleteTokenConfirm": "Are you sure you want to delete the token '{name}'? This action cannot be undone.",
+    "assetFolders": {
+      "deleteConfirmation": "Delete \"{name}\"? The folder must be empty first.",
+      "invalidMoveToChild": "Folders cannot be moved into themselves or one of their descendants."
+    },
+    "assets": {
+      "deleteConfirmation": "Delete \"{name}\"? This cannot be undone.",
+      "uploadRequirementsConfirm": "Some files are missing required metadata. You can still upload them, but they will stay flagged until the missing values are filled in."
+    }
   }
 }

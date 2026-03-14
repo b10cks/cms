@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-import NuxtImg from '~/components/NuxtImg.vue'
-
 import { deepClone } from '@vue/devtools-shared'
 import { toast } from 'vue-sonner'
+
+import Icon from '~/components/Icon.vue'
+import NuxtImg from '~/components/NuxtImg.vue'
 import { Button } from '~/components/ui/button'
 import {
   Dialog,
@@ -15,12 +15,13 @@ import {
 import { InputField } from '~/components/ui/form'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { isClient } from '~/lib/env'
+import type { AssetResource } from '~/types/assets'
 
 const { formatFileSize, formatDateTime } = useFormat()
 const { getFileIcon } = useFileUtils()
 const props = withDefaults(
   defineProps<{
-    asset: AssetResource
+    asset: AssetResource | null
     mode?: 'normal' | 'reduced'
     folderId: string | null
     spaceId: string
@@ -33,13 +34,13 @@ const props = withDefaults(
 const { useFolderStructure } = useAssetFolders(props.spaceId)
 const { getBreadcrumbs } = useFolderStructure()
 const { getFileType } = useFileUtils()
-
-const { useSpaceQuery } = useSpaces()
-const { data: space } = useSpaceQuery(props.spaceId)
-
-const assetFields = computed(() => space.value?.settings?.asset_fields || [])
-const languages = computed(() => space.value?.settings?.languages || [])
-const defaultLanguage = computed(() => space.value?.settings?.default_language || '_default')
+const {
+  assetFields,
+  languageTabs,
+  ensureAssetFieldData,
+  getFieldValue: getAssetFieldValue,
+  setFieldValue: setAssetFieldValue,
+} = useAssetRequirements(props.spaceId)
 
 const assetCopy = ref<AssetResource | null>(null)
 const imageContainer = ref<HTMLElement | null>(null)
@@ -60,52 +61,28 @@ watch(
   { immediate: true }
 )
 
-const emit = defineEmits(['close', 'update:asset'])
-
-// Computed properties for language tabs
-const languageTabs = computed(() => {
-  const tabs = [{ code: '_default', name: 'Default' }]
-  if (languages.value && languages.value.length > 0) {
-    tabs.push(...languages.value)
-  }
-  return tabs
-})
-
-// Get fields for current language
-const currentLanguageFields = computed(() => {
-  if (!assetCopy.value?.data?.fields) {
-    return []
-  }
-  const languageData = assetCopy.value.data.fields[selectedLanguage.value]
-  return assetFields.value.filter((field) => {
-    return languageData && field.key in languageData
-  })
-})
-
-// Get or create fields object for a language
-const getLanguageFieldsData = (languageCode: string) => {
-  if (!assetCopy.value?.data) {
-    assetCopy.value!.data = {}
-  }
-  if (!assetCopy.value.data.fields) {
-    assetCopy.value.data.fields = {}
-  }
-  if (!assetCopy.value.data.fields[languageCode]) {
-    assetCopy.value.data.fields[languageCode] = {}
-  }
-  return assetCopy.value.data.fields[languageCode] as Record<string, unknown>
-}
+const emit = defineEmits<{
+  close: []
+  'update:asset': [asset: AssetResource]
+}>()
 
 // Get field value for current language
-const getFieldValue = (fieldKey: string): unknown => {
-  const languageData = getLanguageFieldsData(selectedLanguage.value)
-  return languageData[fieldKey] || ''
+const getFieldValue = (fieldKey: string): string => {
+  if (!assetCopy.value) {
+    return ''
+  }
+
+  return getAssetFieldValue(assetCopy.value, fieldKey, selectedLanguage.value)
 }
 
 // Set field value for current language
-const setFieldValue = (fieldKey: string, value: unknown) => {
-  const languageData = getLanguageFieldsData(selectedLanguage.value)
-  languageData[fieldKey] = value
+const setFieldValue = (fieldKey: string, value: string | number) => {
+  if (!assetCopy.value) {
+    return
+  }
+
+  ensureAssetFieldData(assetCopy.value)
+  setAssetFieldValue(assetCopy.value, fieldKey, selectedLanguage.value, String(value))
 }
 
 const formatKey = (key: string): string => {
@@ -113,8 +90,12 @@ const formatKey = (key: string): string => {
 }
 
 const copyAssetUrl = () => {
+  if (!assetCopy.value) {
+    return
+  }
+
   navigator.clipboard
-    .writeText(assetCopy.value!.url)
+    .writeText(assetCopy.value.url)
     .then(() => {
       toast.success('URL copied to clipboard')
     })
@@ -124,7 +105,11 @@ const copyAssetUrl = () => {
 }
 
 const openAssetInNewWindow = () => {
-  window.open(assetCopy.value!.url, '_blank', 'noopener,noreferrer')
+  if (!assetCopy.value) {
+    return
+  }
+
+  window.open(assetCopy.value.url, '_blank', 'noopener,noreferrer')
 }
 
 const toggleFocusPoint = () => {
@@ -192,6 +177,10 @@ const handleMouseMove = (event: MouseEvent) => {
 }
 
 const handleFinish = async () => {
+  if (!assetCopy.value) {
+    return
+  }
+
   emit('update:asset', assetCopy.value)
 }
 
@@ -217,7 +206,7 @@ const onOpenChange = (open: boolean) => {
           class="text-sm"
         >
           /<span
-            v-for="crumb in getBreadcrumbs(asset.folder_id)"
+            v-for="crumb in asset.folder_id ? getBreadcrumbs(asset.folder_id) : []"
             :key="crumb.id"
             >{{ crumb.name }}/</span
           >
@@ -239,8 +228,8 @@ const onOpenChange = (open: boolean) => {
                 ref="imageRef"
                 :src="asset.full_path"
                 :alt="String(assetCopy?.data?.altText || asset.filename)"
-                height="600"
-                width="600"
+                :height="600"
+                :width="600"
                 class="max-h-[calc(60svh)] max-w-full object-contain"
               />
               <div
