@@ -12,8 +12,7 @@ class SetupSpace extends QueuedJob
 {
     public function __construct(
         public Space $space
-    )
-    {
+    ) {
     }
 
     protected function execute(): void
@@ -62,9 +61,9 @@ class SetupSpace extends QueuedJob
             'color' => '#4f46e5',
             'is_default' => true,
             'is_managed' => true,
-            'config' => [
+            'config' => $config['driver'] === 'local' ? [
                 'root' => storage_path("app/spaces/{$space->id}"),
-            ],
+            ] : $config,
             'settings' => [
                 'max_file_size' => 100 * 1024 * 1024,
             ],
