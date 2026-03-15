@@ -4,6 +4,7 @@ namespace App\Models\Management;
 
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -41,6 +42,7 @@ class AutomationExecution extends GlobalModel
 {
     use HasFactory;
     use HasUlids;
+    use Filterable;
 
     public $timestamps = false;
 
@@ -74,6 +76,9 @@ class AutomationExecution extends GlobalModel
     public function setCompletedAtAttribute($value): void
     {
         $this->attributes['completed_at'] = $value;
-        $this->attributes['duration'] = $this->started_at->diffInMilliseconds($value);
+
+        if ($value && $this->started_at) {
+            $this->attributes['duration'] = $this->started_at->diffInMilliseconds($value);
+        }
     }
 }

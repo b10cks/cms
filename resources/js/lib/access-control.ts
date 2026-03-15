@@ -170,6 +170,11 @@ export const spaceNavigationItems: NavigationAccessItem[] = [
     routeName: 'space-audit-logs',
   },
   {
+    label: 'labels.navigation.automations',
+    icon: 'lucide:waypoints',
+    routeName: 'space-automations-index',
+  },
+  {
     label: 'labels.navigation.settings',
     icon: 'lucide:settings',
     routeName: 'space-settings-index',
@@ -212,6 +217,9 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-releases': { abilities: 'releases.view' },
   'space-redirects': { abilities: 'redirects.view' },
   'space-audit-logs': { abilities: 'audit_logs.view' },
+  'space-automations-index': { abilities: { anyOf: ['automations.view', 'automation_actions.view'] } },
+  'space-automations-actions': { abilities: 'automation_actions.view' },
+  'space-automations-executions': { abilities: 'automations.view' },
   'space-settings': { anyRouteOf: spaceSettingsNavigationItems.map((item) => item.routeName) },
   'space-settings-index': { abilities: 'space.update' },
   'space-settings-subscription': { abilities: 'space.billing.view' },

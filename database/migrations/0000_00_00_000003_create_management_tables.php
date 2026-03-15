@@ -185,7 +185,7 @@ return new class extends Migration {
             $table->foreignUlid('space_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignUlid('team_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignUlid('invited_by')->constrained('users')->onDelete('cascade');
-            $table->foreignUlid('invitee_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->foreignUlid('invitee_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignUlid('role_id')->nullable()->constrained('roles')->nullOnDelete();
 
             $table->text('message')->nullable();
@@ -276,17 +276,44 @@ return new class extends Migration {
             $table->index(['status', 'started_at']);
         });
 
-        // Space Automations
-        Schema::create('automations', function (Blueprint $table) {
+        // Space Automation Actions
+        Schema::create('automation_actions', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->foreignUlid('space_id')->constrained()->onDelete('cascade');
+            $table->foreignUlid('space_id')->constrained()->cascadeOnDelete();
 
             $table->string('name');
             $table->text('description')->nullable();
 
-            $table->json('trigger')->nullable();
-            $table->json('action')->nullable();
+            $table->enum('type', array_column(\App\Services\Automation\Enums\ActionType::cases(), 'value'))
+                ->charset('ascii');
+            $table->json('config')->nullable();
             $table->json('secrets')->nullable();
+
+            $table->boolean('is_active')->default(true);
+            $table->timestamp('last_executed_at')->nullable();
+            $table->string('last_execution_status', 20)->nullable()->charset('ascii');
+            $table->text('last_execution_error')->nullable();
+
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->index(['space_id', 'type']);
+            $table->index(['space_id', 'is_active']);
+            $table->index('last_executed_at');
+        });
+
+        // Space Automations
+        Schema::create('automations', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->foreignUlid('space_id')->constrained()->onDelete('cascade');
+            $table->foreignUlid('action_id')->constrained('automation_actions')->restrictOnDelete();
+
+            $table->string('name');
+            $table->text('description')->nullable();
+
+            $table->enum('trigger_type', array_column(\App\Services\Automation\Enums\TriggerType::cases(), 'value'))
+                ->charset('ascii');
+            $table->json('trigger_config')->nullable();
 
             $table->unsignedBigInteger('execution_limit')->nullable();
             $table->unsignedBigInteger('execution_count')->default(0);
@@ -296,6 +323,11 @@ return new class extends Migration {
 
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index(['space_id', 'trigger_type']);
+            $table->index(['space_id', 'is_active']);
+            $table->index(['action_id', 'is_active']);
+            $table->index('last_triggered_at');
         });
 
         // Space Automations Executions
@@ -339,6 +371,7 @@ return new class extends Migration {
         Schema::dropIfExists('automation_usage_stats');
         Schema::dropIfExists('automation_executions');
         Schema::dropIfExists('automations');
+        Schema::dropIfExists('automation_actions');
         Schema::dropIfExists('storage_files');
         Schema::dropIfExists('token_usage_stats');
         Schema::dropIfExists('token_executions');

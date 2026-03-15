@@ -40,6 +40,10 @@ use Illuminate\Support\Collection;
  * @property-read int|null $connections_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Management\SpaceConnection> $defaultConnection
  * @property-read int|null $default_connection_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, AutomationAction> $automationActions
+ * @property-read int|null $automation_actions_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Automation> $automations
+ * @property-read int|null $automations_count
  * @property-read int $rv
  * @property-read mixed $icon_url
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Management\Invite> $invites
@@ -203,6 +207,16 @@ class Space extends GlobalModel
     {
         return $this->hasMany(SpaceConnection::class, 'space_id', 'id')
             ->where('is_default', true);
+    }
+
+    public function automationActions(): HasMany
+    {
+        return $this->hasMany(AutomationAction::class, 'space_id', 'id');
+    }
+
+    public function automations(): HasMany
+    {
+        return $this->hasMany(Automation::class, 'space_id', 'id');
     }
 
     public function getRvAttribute(): int

@@ -9,6 +9,16 @@ use App\Http\Controllers\Mgmt\Ai\SpaceAiConfigController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiSettingsController;
 use App\Http\Controllers\Mgmt\Ai\TranslationController;
 use App\Http\Controllers\Mgmt\Ai\TranslationStreamController;
+use App\Http\Controllers\Mgmt\AutomationActionController;
+use App\Http\Controllers\Mgmt\AutomationController;
+use App\Http\Controllers\Mgmt\AutomationExecutionController;
+use App\Http\Controllers\Mgmt\AutomationExecutionReplayController;
+use App\Http\Controllers\Mgmt\AutomationTriggerCatalogController;
+use App\Http\Controllers\Mgmt\AutomationStats\AutomationStatsExecutionController;
+use App\Http\Controllers\Mgmt\AutomationStats\AutomationStatsStatisticController;
+use App\Http\Controllers\Mgmt\AutomationStats\AutomationStatsSummaryController;
+use App\Http\Controllers\Mgmt\AutomationStats\AutomationStatsTrendController;
+use App\Http\Controllers\Mgmt\AutomationTriggerController;
 use App\Http\Controllers\Mgmt\AssetController;
 use App\Http\Controllers\Mgmt\AssetDataExportController;
 use App\Http\Controllers\Mgmt\AssetDataImportController;
@@ -323,4 +333,27 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
         Route::delete('versions/remove', ReleaseVersionRemoveController::class)
             ->name('releases.versions.remove');
     });
+
+    Route::apiResource('automation-actions', AutomationActionController::class);
+    Route::get('automations/trigger-catalog', AutomationTriggerCatalogController::class)
+        ->name('automations.trigger-catalog');
+    Route::apiResource('automations', AutomationController::class);
+    Route::get('automation-executions', [AutomationExecutionController::class, 'index'])
+        ->name('automation-executions.index');
+    Route::post('automation-executions/{automationExecution}/replay', AutomationExecutionReplayController::class)
+        ->name('automation-executions.replay');
+    Route::post('automations/{automation}/trigger', AutomationTriggerController::class)
+        ->name('automations.trigger');
+    Route::prefix('automations/{automation}/stats')
+        ->name('automations.stats.')
+        ->group(function () {
+            Route::get('executions', AutomationStatsExecutionController::class)
+                ->name('executions');
+            Route::get('trends', AutomationStatsTrendController::class)
+                ->name('trends');
+            Route::get('statistics', AutomationStatsStatisticController::class)
+                ->name('statistics');
+            Route::get('summary', AutomationStatsSummaryController::class)
+                ->name('summary');
+        });
 });

@@ -8,6 +8,29 @@ export const queryKeys = {
     details: () => [...queryKeys.spaces.all(), 'detail'] as const,
     detail: (id: MaybeRef<string>) => [...queryKeys.spaces.details(), id] as const,
   },
+  automationActions: (spaceId: MaybeRef<string>) => ({
+    all: () => ['spaces', spaceId, 'automation-actions'] as const,
+    lists: () => [...queryKeys.automationActions(spaceId).all(), 'list'] as const,
+    list: (filters: any = {}) => [...queryKeys.automationActions(spaceId).lists(), filters] as const,
+    details: () => [...queryKeys.automationActions(spaceId).all(), 'detail'] as const,
+    detail: (id: MaybeRef<string>) =>
+      [...queryKeys.automationActions(spaceId).details(), id] as const,
+  }),
+  automationExecutions: (spaceId: MaybeRef<string>) => ({
+    all: () => ['spaces', spaceId, 'automation-executions'] as const,
+    lists: () => [...queryKeys.automationExecutions(spaceId).all(), 'list'] as const,
+    list: (filters: any = {}) => [...queryKeys.automationExecutions(spaceId).lists(), filters] as const,
+    details: () => [...queryKeys.automationExecutions(spaceId).all(), 'detail'] as const,
+    detail: (id: MaybeRef<string>) =>
+      [...queryKeys.automationExecutions(spaceId).details(), id] as const,
+  }),
+  automations: (spaceId: MaybeRef<string>) => ({
+    all: () => ['spaces', spaceId, 'automations'] as const,
+    lists: () => [...queryKeys.automations(spaceId).all(), 'list'] as const,
+    list: (filters: any = {}) => [...queryKeys.automations(spaceId).lists(), filters] as const,
+    details: () => [...queryKeys.automations(spaceId).all(), 'detail'] as const,
+    detail: (id: MaybeRef<string>) => [...queryKeys.automations(spaceId).details(), id] as const,
+  }),
   assetFolders: (spaceId: MaybeRef<string>) => ({
     all: () => ['spaces', spaceId, 'asset-folders'] as const,
     lists: () => [...queryKeys.assetFolders(spaceId).all(), 'list'] as const,

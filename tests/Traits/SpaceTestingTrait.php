@@ -36,5 +36,6 @@ trait SpaceTestingTrait
         ]);
         $this->runSpaceMigrations();
         app('router')->getCurrentRoute()?->setParameter('space', $space);
+        app()->offsetSet('currentSpace', $space);
     }
 }

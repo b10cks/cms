@@ -103,6 +103,9 @@ declare global {
   const useAuditLogs: typeof import('./resources/js/composables/useAuditLogs').useAuditLogs
   const useAuth: typeof import('./resources/js/composables/useAuth').useAuth
   const useAuthorization: typeof import('./resources/js/composables/useAuthorization').useAuthorization
+  const useAutomationActions: typeof import('./resources/js/composables/useAutomationActions').useAutomationActions
+  const useAutomationExecutions: typeof import('./resources/js/composables/useAutomationExecutions').useAutomationExecutions
+  const useAutomations: typeof import('./resources/js/composables/useAutomations').useAutomations
   const useBackups: typeof import('./resources/js/composables/useBackups').useBackups
   const useBlockFolders: typeof import('./resources/js/composables/useBlockFolders').useBlockFolders
   const useBlockTags: typeof import('./resources/js/composables/useBlockTags').useBlockTags
@@ -342,6 +345,9 @@ declare module 'vue' {
     readonly useAuditLogs: UnwrapRef<typeof import('./resources/js/composables/useAuditLogs')['useAuditLogs']>
     readonly useAuth: UnwrapRef<typeof import('./resources/js/composables/useAuth')['useAuth']>
     readonly useAuthorization: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['useAuthorization']>
+    readonly useAutomationActions: UnwrapRef<typeof import('./resources/js/composables/useAutomationActions')['useAutomationActions']>
+    readonly useAutomationExecutions: UnwrapRef<typeof import('./resources/js/composables/useAutomationExecutions')['useAutomationExecutions']>
+    readonly useAutomations: UnwrapRef<typeof import('./resources/js/composables/useAutomations')['useAutomations']>
     readonly useBackups: UnwrapRef<typeof import('./resources/js/composables/useBackups')['useBackups']>
     readonly useBlockFolders: UnwrapRef<typeof import('./resources/js/composables/useBlockFolders')['useBlockFolders']>
     readonly useBlockTags: UnwrapRef<typeof import('./resources/js/composables/useBlockTags')['useBlockTags']>

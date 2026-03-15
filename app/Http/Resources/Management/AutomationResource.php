@@ -13,14 +13,17 @@ class AutomationResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $trigger = $this->trigger?->toArray();
+
         return [
             'id' => $this->id,
             'space_id' => $this->space_id,
+            'action_id' => $this->action_id,
             'name' => $this->name,
             'description' => $this->description,
-            'trigger' => $this->trigger,
-            'action' => $this->action,
-            'secrets' => $this->secrets,
+            'trigger_type' => $this->trigger_type?->value,
+            'trigger' => $trigger,
+            'action' => $this->whenLoaded('action', fn () => new AutomationActionResource($this->action)),
             'is_active' => $this->is_active,
             'execution_count' => $this->execution_count,
             'execution_limit' => $this->execution_limit,

@@ -80,6 +80,10 @@ Route::get('/{space}/datasources', AppController::class)->name('space-datasource
 Route::get('/{space}/datasources/{dataSourceId}', AppController::class)->name('space-datasources-dataSourceId');
 Route::get('/{space}/releases', AppController::class)->name('space-releases');
 Route::get('/{space}/audit-logs', AppController::class)->name('space-audit-logs');
+Route::get('/{space}/automations', AppController::class)->name('space-automations');
+Route::get('/{space}/automations/actions', AppController::class)->name('space-automations-actions');
+Route::get('/{space}/automations/automations', AppController::class)->name('space-automations-automations');
+Route::get('/{space}/automations/executions', AppController::class)->name('space-automations-executions');
 Route::get('/{space}/redirects', AppController::class)->name('space-redirects');
 Route::get('/{space}/settings', AppController::class)->name('space-settings');
 Route::get('/{space}/settings/configuration', AppController::class)->name('space-settings-configuration');

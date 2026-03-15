@@ -1599,6 +1599,14 @@
         "title": "Konfiguration",
         "description": "Verwalte technische Einstellungen und Integrationen für deinen Space."
       },
+      "automationActions": {
+        "title": "Aktionen",
+        "description": "Lege wiederverwendbare Ziele, Secrets und Zustände für deine Automationen fest."
+      },
+      "automations": {
+        "title": "Automationen",
+        "description": "Verbinde Trigger mit Aktionen und steuere, wie Workflows in diesem Space laufen."
+      },
       "people": {
         "title": "Personen",
         "description": "Verwalte Teamkollegen und ihren Zugang zu deinem Space.",
@@ -2256,6 +2264,303 @@
         "remove": "Aus Space entfernen"
       }
     },
+    "automationActions": {
+      "title": "Automations-Aktionen",
+      "description": "Erstelle wiederverwendbare Zustellschritte für Webhooks, E-Mails und interne No-op-Abläufe. Secrets bleiben an der Aktion hängen und können sicher von mehreren Automationen genutzt werden.",
+      "createTitle": "Aktion erstellen",
+      "createDescription": "Definiere eine wiederverwendbare Aktion einmal und hänge sie danach an beliebig viele Automationen.",
+      "editTitle": "Aktion bearbeiten",
+      "editDescription": "Passe an, wie diese Aktion läuft, ohne jede abhängige Automation neu aufzusetzen.",
+      "previewLabel": "Aktionsvorschau",
+      "previewName": "Unbenannte Aktion",
+      "linkedAutomationsCount": "{count} verknüpfte Automation | {count} verknüpfte Automationen",
+      "actionsDisabledHint": "Löse erst alle verknüpften Automationen, bevor du diese Aktion löschst.",
+      "emptyTable": "Keine Aktionen gefunden. Erstelle die erste Aktion, um echte Ergebnisse an deine Automationen zu hängen.",
+      "emptyRecipients": "Noch keine Empfänger hinzugefügt.",
+      "emptyHeaders": "Noch keine Header konfiguriert.",
+      "emptyParameters": "Noch keine Parameter konfiguriert.",
+      "emptySecrets": "Noch keine Secrets gespeichert.",
+      "secretsTitle": "Geschützte Secrets",
+      "secretsDescription": "Lege hier Zugangsdaten, Signing-Secrets oder private Tokens ab. Bereits vorhandene Secret-Keys bleiben verborgen, bis du sie bewusst ersetzt.",
+      "summary": {
+        "webhook": "Webhook-Anfrage",
+        "email": "E-Mail-Versand",
+        "void": "Interne No-op-Aktion"
+      },
+      "types": {
+        "webhook": "Webhook",
+        "email": "E-Mail",
+        "void": "Void"
+      },
+      "status": {
+        "active": "Aktiv",
+        "inactive": "Deaktiviert",
+        "completed": "Zugestellt",
+        "failed": "Fehlgeschlagen",
+        "running": "Läuft",
+        "idle": "Noch nie ausgeführt"
+      },
+      "filters": {
+        "type": "Aktionstyp",
+        "status": "Verfügbarkeit"
+      },
+      "sort": {
+        "name": "Aktionsname",
+        "type": "Aktionstyp",
+        "lastExecuted": "Zuletzt ausgeführt",
+        "updatedAt": "Zuletzt geändert",
+        "createdAt": "Erstellt"
+      },
+      "columns": {
+        "name": "Aktion",
+        "type": "Typ",
+        "linked": "Verknüpfte Automationen",
+        "status": "Ausführungsstatus",
+        "lastExecuted": "Zuletzt ausgeführt",
+        "updated": "Geändert",
+        "actions": "Aktionen"
+      },
+      "deleteConfirm": {
+        "title": "Aktion löschen",
+        "message": "\"{name}\" löschen? Alle noch verknüpften Automationen müssen vorher umgestellt werden.",
+        "confirmLabel": "Aktion löschen"
+      },
+      "tabs": {
+        "configuration": "Konfiguration",
+        "secrets": "Secrets"
+      },
+      "fields": {
+        "name": "Aktionsname",
+        "namePlaceholder": "Produktions-Webhook benachrichtigen",
+        "description": "Beschreibung",
+        "descriptionPlaceholder": "Erkläre kurz, wann diese Aktion verwendet werden soll.",
+        "active": "Aktion aktiviert",
+        "activeDescription": "Deaktivierte Aktionen bleiben verknüpft, werden aber nicht mehr ausgeführt.",
+        "type": "Aktionstyp",
+        "typeDescription": "Wähle, wie diese Aktion ausliefern soll.",
+        "typePlaceholder": "Aktionstyp wählen",
+        "webhookUrl": "Webhook-URL",
+        "webhookMethod": "HTTP-Methode",
+        "timeout": "Timeout in Sekunden",
+        "timeoutDescription": "Halte Timeouts kurz, damit fehlerhafte Endpunkte die Queue nicht blockieren.",
+        "headers": "Header",
+        "headersDescription": "Sende statische Header oder Platzhalterwerte mit jeder Anfrage mit.",
+        "parameters": "Payload-Parameter",
+        "parametersDescription": "Diese Werte werden in den Ausführungskontext gemischt und mitgesendet.",
+        "to": "An",
+        "toDescription": "Definiere die primären Empfänger dieser E-Mail-Aktion.",
+        "cc": "CC",
+        "bcc": "BCC",
+        "replyTo": "Antwort an",
+        "subject": "Betreff",
+        "subjectDescription": "Baue den Betreff mit Inline-Token auf, die beim Ausführen der Aktion aufgelöst werden.",
+        "subjectPlaceholder": "Inhalt veröffentlicht:",
+        "body": "Inhalt",
+        "bodyDescription": "Erstelle den E-Mail-Inhalt mit Tokens aus der gewählten Tabelle, dem Workflow-Kontext und Secrets.",
+        "bodyPlaceholder": "Ein neuer Inhalt ist bereit zur Prüfung.",
+        "voidMessage": "Log-Nachricht",
+        "voidMessageDescription": "Praktisch für Dry-runs, Smoke-Tests und reine Instrumentierungs-Workflows.",
+        "voidMessagePlaceholderPrefix": "Automation",
+        "voidMessagePlaceholderSuffix": "wurde ohne Zustellung abgeschlossen.",
+        "placeholderTable": "Platzhalterkontext",
+        "placeholderTableDescription": "Wähle die CMS-Tabelle, deren Felder in diesem Editor als Tokens verfügbar sein sollen.",
+        "placeholderTablePlaceholder": "Tabelle auswählen",
+        "availablePlaceholders": "Verfügbare Tokens",
+        "insertPlaceholderPlaceholder": "Platzhalter-Token einfügen",
+        "tokenEditorHintPrefix": "Vorhandene",
+        "tokenEditorHintSuffix": "Platzhalter werden als Inline-Tokens angezeigt und bleiben zur Laufzeit kompatibel.",
+        "secrets": "Secrets",
+        "secretsHint": "Lass einen Secret-Wert leer, wenn der bestehende Wert unverändert bleiben soll.",
+        "key": "Schlüssel",
+        "value": "Wert",
+        "valuePlaceholder": "Wert oder Platzhalter",
+        "emailAddress": "E-Mail-Adresse"
+      },
+      "placeholderGroups": {
+        "record": "Gewählte Tabelle",
+        "changes": "Änderungen",
+        "workflow": "Workflow",
+        "secrets": "Secrets"
+      }
+    },
+    "automationExecutions": {
+      "title": "Ausführungsverlauf",
+      "description": "Prüfe alle eingeplanten, laufenden, fehlgeschlagenen und abgeschlossenen Läufe in diesem Space. Spiele einen früheren Kontext erneut ab, wenn du einen kaputten Workflow sauber erneut anstoßen musst.",
+      "emptyTable": "Noch keine Ausführungen gefunden. Läufe erscheinen hier, sobald eine Automation in die Queue gestellt wird.",
+      "emptyContext": "Für diesen Lauf wurde kein Ausführungskontext gespeichert.",
+      "emptyResult": "Dieser Lauf hat kein Ergebnis-Payload gespeichert.",
+      "detailTitle": "Ausführungsdetails",
+      "detailDescription": "Prüfe Runtime-Payload, Ergebnis und Fehlerdetails dieses Laufs.",
+      "status": {
+        "queued": "In Warteschlange",
+        "running": "Läuft",
+        "completed": "Abgeschlossen",
+        "failed": "Fehlgeschlagen"
+      },
+      "sources": {
+        "manual": "Manuell",
+        "replay": "Wiederholung",
+        "trigger": "Trigger",
+        "schedule": "Zeitplan",
+        "unknown": "Unbekannt"
+      },
+      "filters": {
+        "status": "Ausführungsstatus",
+        "automation": "Automation"
+      },
+      "sort": {
+        "createdAt": "Eingereiht am",
+        "startedAt": "Gestartet am",
+        "completedAt": "Abgeschlossen am",
+        "duration": "Dauer",
+        "status": "Status"
+      },
+      "columns": {
+        "automation": "Automation",
+        "status": "Status",
+        "source": "Quelle",
+        "timing": "Zeitpunkte",
+        "result": "Ergebnis",
+        "actions": "Aktionen"
+      },
+      "tabs": {
+        "overview": "Überblick",
+        "context": "Kontext",
+        "result": "Ergebnis"
+      },
+      "fields": {
+        "source": "Quelle",
+        "queuedAt": "Eingereiht am",
+        "startedAt": "Gestartet am",
+        "completedAt": "Abgeschlossen am",
+        "duration": "Dauer",
+        "error": "Fehler",
+        "automation": "Automation",
+        "action": "Aktion"
+      }
+    },
+    "automations": {
+      "title": "Automationen",
+      "description": "Verbinde Trigger mit wiederverwendbaren Aktionen, steuere Aktivierung und verfolge Ausführungslimits ohne doppelte Zustellkonfigurationen.",
+      "createTitle": "Automation erstellen",
+      "createDescription": "Wähle einen Trigger, verknüpfe eine Aktion und definiere, wie oft dieser Workflow laufen darf.",
+      "editTitle": "Automation bearbeiten",
+      "editDescription": "Passe Triggerlogik, verbundene Aktion oder Ausführungsschutz für diese Automation an.",
+      "previewLabel": "Triggervorschau",
+      "previewName": "Unbenannte Automation",
+      "selectedActionFallback": "Noch keine Beschreibung.",
+      "emptyTable": "Keine Automationen gefunden. Erstelle eine, sobald mindestens eine Aktion bereitsteht.",
+      "emptyConditions": "Noch keine Bedingungen hinzugefügt.",
+      "emptyPayload": "Noch keine Trigger-Payload-Werte konfiguriert.",
+      "missingAction": "Verknüpfte Aktion nicht verfügbar",
+      "unlimitedExecutions": "Unbegrenzte Ausführungen",
+      "executionSummary": "{used} von {limit} genutzt, {remaining} verbleiben",
+      "createPrerequisiteTitle": "Lege zuerst eine Aktion an",
+      "createPrerequisiteDescription": "Automationen verweisen jetzt auf wiederverwendbare Aktionen. Erstelle zuerst mindestens eine Aktion mit ihren Zustellungsdetails, bevor du einen Trigger anlegst.",
+      "createPrerequisiteCta": "Zu den Aktionen",
+      "summary": {
+        "timeBased": "Per Cron-Ausdruck geplant",
+        "manual": "Manuell ausgelöst",
+        "anyResource": "Läuft für jede passende Ressource"
+      },
+      "tableColumnsSummary": "{count} Spalten stehen für Bedingungen und beobachtete Updates bereit.",
+      "watchedColumnsSummary": "{count} beobachtete Spalten",
+      "triggerTypes": {
+        "on_insert": "Bei Erstellung",
+        "on_update": "Bei Änderung",
+        "on_delete": "Bei Löschung",
+        "time_based": "Zeitbasiert",
+        "manual": "Manuell"
+      },
+      "status": {
+        "active": "Aktiv",
+        "inactive": "Deaktiviert"
+      },
+      "filters": {
+        "triggerType": "Triggertyp",
+        "table": "CMS-Tabelle",
+        "actionType": "Aktionstyp",
+        "status": "Verfügbarkeit"
+      },
+      "sort": {
+        "name": "Automationsname",
+        "triggerType": "Triggertyp",
+        "executionCount": "Anzahl Ausführungen",
+        "lastTriggered": "Zuletzt ausgelöst",
+        "updatedAt": "Zuletzt geändert",
+        "createdAt": "Erstellt"
+      },
+      "columns": {
+        "name": "Automation",
+        "trigger": "Trigger",
+        "action": "Aktion",
+        "executions": "Ausführungen",
+        "lastTriggered": "Zuletzt ausgelöst",
+        "updated": "Geändert",
+        "actions": "Aktionen"
+      },
+      "deleteConfirm": {
+        "title": "Automation löschen",
+        "message": "\"{name}\" löschen? Trigger, Verlauf und Ausführungszähler werden dabei entfernt.",
+        "confirmLabel": "Automation löschen"
+      },
+      "tabs": {
+        "trigger": "Trigger",
+        "execution": "Ausführung"
+      },
+      "conditionOperators": {
+        "eq": "Ist gleich",
+        "ne": "Ist nicht gleich",
+        "contains": "Enthält",
+        "gt": "Größer als",
+        "gte": "Größer oder gleich",
+        "lt": "Kleiner als",
+        "lte": "Kleiner oder gleich",
+        "in": "In Liste",
+        "nin": "Nicht in Liste",
+        "exists": "Existiert",
+        "empty": "Ist leer"
+      },
+      "fields": {
+        "name": "Automationsname",
+        "namePlaceholder": "Reviewer bei Inhaltsänderungen benachrichtigen",
+        "description": "Beschreibung",
+        "descriptionPlaceholder": "Gib Teamkollegen Kontext, die diesen Workflow später pflegen.",
+        "active": "Automation aktiviert",
+        "activeDescription": "Deaktivierte Automationen behalten Trigger und Zähler, dispatchen aber keine Arbeit mehr.",
+        "action": "Verknüpfte Aktion",
+        "actionDescription": "Wähle die wiederverwendbare Aktion, die bei einem Treffer laufen soll.",
+        "actionPlaceholder": "Aktion auswählen",
+        "triggerType": "Triggertyp",
+        "triggerTypeDescription": "Wähle, wodurch diese Automation geweckt werden soll.",
+        "triggerTypePlaceholder": "Triggertyp auswählen",
+        "table": "CMS-Tabelle",
+        "tableDescription": "Wähle die Tabelle, deren Datensätze diese Automation aktivieren sollen.",
+        "tablePlaceholder": "Tabelle auswählen",
+        "watchColumns": "Beobachtete Spalten",
+        "watchColumnsDescription": "Optional. Führe diese Automation nur aus, wenn sich eine dieser Spalten ändert.",
+        "watchColumnsPlaceholder": "Spalten durchsuchen",
+        "schedule": "Cron-Zeitplan",
+        "scheduleDescription": "Verwende einen normalen Cron-Ausdruck mit fünf Feldern in der Zeitzone unten.",
+        "timezone": "Zeitzone",
+        "timezoneDescription": "In dieser Zeitzone wird der Cron-Ausdruck ausgewertet.",
+        "timezonePlaceholder": "Europe/Vienna",
+        "conditions": "Bedingungen",
+        "conditionsDescription": "Alle Bedingungen müssen erfüllt sein, bevor die Automation auslöst.",
+        "conditionPath": "Kontextpfad",
+        "conditionPathPlaceholder": "Pfad auswählen",
+        "conditionOperator": "Operator",
+        "conditionValue": "Erwarteter Wert",
+        "payload": "Trigger-Payload",
+        "payloadDescription": "Diese Werte werden beim Lauf in den Runtime-Kontext gemischt.",
+        "key": "Schlüssel",
+        "value": "Wert",
+        "valuePlaceholder": "Wert oder Platzhalter",
+        "executionLimit": "Ausführungslimit",
+        "executionLimitDescription": "Optional. Begrenze, wie oft diese Automation insgesamt laufen darf.",
+        "executionLimitPlaceholder": "Leer lassen für unbegrenzt"
+      }
+    },
     "teamRoles": {
       "title": "Space-Rollen",
       "description": "Lege fest, wie Mitarbeitende in den Spaces dieses Teams arbeiten können. Eingebaute Rollen bleiben als Referenz sichtbar, eigene Rollen kannst du für dieses Team und seine Unterteams zuschneiden.",
@@ -2382,6 +2687,8 @@
         "releases": "Releases",
         "backups": "Backups",
         "migrations": "Migrationen",
+        "automationActions": "Automations-Aktionen",
+        "automations": "Automationen",
         "ai": "KI-Werkzeuge",
         "auditLogs": "Audit-Log"
       }
@@ -2646,6 +2953,19 @@
       "create": "Neue Migration",
       "delete": "Löschen"
     },
+    "automationActions": {
+      "create": "Aktion erstellen",
+      "save": "Aktion speichern"
+    },
+    "automationExecutions": {
+      "replay": "Erneut ausführen",
+      "view": "Details ansehen"
+    },
+    "automations": {
+      "create": "Automation erstellen",
+      "save": "Automation speichern",
+      "runNow": "Jetzt ausführen"
+    },
     "subscriptions": {
       "upgrade": "Plan upgraden",
       "choosePlan": "Plan auswählen",
@@ -2756,6 +3076,17 @@
     "retry": "Erneut versuchen",
     "clearClipboard": "Zwischenablage löschen"
   },
+  "navigation": {
+    "home": "Start",
+    "content": "Inhalte",
+    "blocks": "Blocks",
+    "assets": "Assets",
+    "dataSets": "Datensätze",
+    "redirects": "Weiterleitungen",
+    "releases": "Releases",
+    "automations": "Automationen",
+    "settings": "Einstellungen"
+  },
   "components": {
     "fileDropZone": {
       "selectFileAction": "Datei auswählen",
@@ -2844,6 +3175,28 @@
       "createError": "Migration konnte nicht gestartet werden: {error}",
       "deleteSuccess": "Migration erfolgreich gelöscht",
       "deleteError": "Migration konnte nicht gelöscht werden: {error}"
+    },
+    "automationActions": {
+      "createSuccess": "Aktion \"{name}\" erfolgreich erstellt",
+      "createError": "Fehler beim Erstellen der Aktion: {error}",
+      "updateSuccess": "Aktion \"{name}\" erfolgreich aktualisiert",
+      "updateError": "Fehler beim Aktualisieren der Aktion: {error}",
+      "deleteSuccess": "Aktion erfolgreich gelöscht",
+      "deleteError": "Fehler beim Löschen der Aktion: {error}"
+    },
+    "automations": {
+      "createSuccess": "Automation \"{name}\" erfolgreich erstellt",
+      "createError": "Fehler beim Erstellen der Automation: {error}",
+      "updateSuccess": "Automation \"{name}\" erfolgreich aktualisiert",
+      "updateError": "Fehler beim Aktualisieren der Automation: {error}",
+      "deleteSuccess": "Automation erfolgreich gelöscht",
+      "deleteError": "Fehler beim Löschen der Automation: {error}",
+      "triggerSuccess": "Automation \"{name}\" wurde erfolgreich in die Queue gestellt",
+      "triggerError": "Automation konnte nicht ausgelöst werden: {error}"
+    },
+    "automationExecutions": {
+      "replaySuccess": "Ausführung wurde erfolgreich erneut in die Queue gestellt",
+      "replayError": "Ausführung konnte nicht erneut gestartet werden: {error}"
     },
     "assetFolders": {
       "createSuccess": "Ordner \"{name}\" erfolgreich erstellt",

@@ -47,6 +47,8 @@ type RoleAbilityResource =
   | 'releases'
   | 'backups'
   | 'migrations'
+  | 'automationActions'
+  | 'automations'
   | 'ai'
   | 'auditLogs'
 
@@ -142,6 +144,14 @@ const ROLE_ABILITY_META: Record<string, RoleAbilityMeta> = {
   'backups.manage': { group: 'operations', action: 'manage', resource: 'backups' },
   'migrations.view': { group: 'operations', action: 'view', resource: 'migrations' },
   'migrations.manage': { group: 'operations', action: 'manage', resource: 'migrations' },
+  'automation_actions.view': { group: 'operations', action: 'view', resource: 'automationActions' },
+  'automation_actions.manage': {
+    group: 'operations',
+    action: 'manage',
+    resource: 'automationActions',
+  },
+  'automations.view': { group: 'operations', action: 'view', resource: 'automations' },
+  'automations.manage': { group: 'operations', action: 'manage', resource: 'automations' },
   'ai.view': { group: 'ai', action: 'view', resource: 'ai' },
   'ai.manage': { group: 'ai', action: 'manage', resource: 'ai' },
   'audit_logs.view': { group: 'operations', action: 'view', resource: 'auditLogs' },

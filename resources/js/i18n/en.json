@@ -1600,6 +1600,14 @@
         "title": "Configuration",
         "description": "Manage technical settings and integrations for your space."
       },
+      "automationActions": {
+        "title": "Actions",
+        "description": "Define reusable delivery targets and execution secrets for your automations."
+      },
+      "automations": {
+        "title": "Automations",
+        "description": "Connect triggers to actions and control how workflows run inside this space."
+      },
       "people": {
         "title": "People",
         "description": "Manage team members and their access to your space.",
@@ -2280,6 +2288,303 @@
         "remove": "Remove from space"
       }
     },
+    "automationActions": {
+      "title": "Automation Actions",
+      "description": "Create reusable delivery steps for webhooks, emails, and internal no-op workflows. Secrets stay attached to the action so multiple automations can reuse the same destination safely.",
+      "createTitle": "Create Action",
+      "createDescription": "Define a reusable action once, then attach it to as many automations as you need.",
+      "editTitle": "Edit Action",
+      "editDescription": "Refine how this action runs without rebuilding every automation that depends on it.",
+      "previewLabel": "Action preview",
+      "previewName": "Untitled action",
+      "linkedAutomationsCount": "{count} linked automation | {count} linked automations",
+      "actionsDisabledHint": "Detach linked automations before deleting this action.",
+      "emptyTable": "No actions found. Create the first action to start wiring real outcomes into your automations.",
+      "emptyRecipients": "No recipients added yet.",
+      "emptyHeaders": "No headers configured yet.",
+      "emptyParameters": "No parameters configured yet.",
+      "emptySecrets": "No secrets stored yet.",
+      "secretsTitle": "Protected secrets",
+      "secretsDescription": "Store credentials, signing secrets, or private tokens here. Existing secret keys stay hidden until you intentionally replace them.",
+      "summary": {
+        "webhook": "Webhook request",
+        "email": "Email delivery",
+        "void": "Internal no-op action"
+      },
+      "types": {
+        "webhook": "Webhook",
+        "email": "Email",
+        "void": "Void"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Disabled",
+        "completed": "Delivered",
+        "failed": "Failed",
+        "running": "Running",
+        "idle": "Not executed yet"
+      },
+      "filters": {
+        "type": "Action type",
+        "status": "Availability"
+      },
+      "sort": {
+        "name": "Action Name",
+        "type": "Action Type",
+        "lastExecuted": "Last Executed",
+        "updatedAt": "Last Updated",
+        "createdAt": "Created"
+      },
+      "columns": {
+        "name": "Action",
+        "type": "Type",
+        "linked": "Linked Automations",
+        "status": "Execution Status",
+        "lastExecuted": "Last Executed",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "deleteConfirm": {
+        "title": "Delete Action",
+        "message": "Delete \"{name}\"? Any automation still linked to it must be reassigned first.",
+        "confirmLabel": "Delete action"
+      },
+      "tabs": {
+        "configuration": "Configuration",
+        "secrets": "Secrets"
+      },
+      "fields": {
+        "name": "Action name",
+        "namePlaceholder": "Notify production webhook",
+        "description": "Description",
+        "descriptionPlaceholder": "Explain when this action should be used.",
+        "active": "Action enabled",
+        "activeDescription": "Disabled actions stay attached to automations but will not execute.",
+        "type": "Action type",
+        "typeDescription": "Choose the delivery mechanism this action should use.",
+        "typePlaceholder": "Select an action type",
+        "webhookUrl": "Webhook URL",
+        "webhookMethod": "HTTP method",
+        "timeout": "Timeout in seconds",
+        "timeoutDescription": "Use a short timeout so failing endpoints do not stall the queue.",
+        "headers": "Headers",
+        "headersDescription": "Send static headers or placeholder-driven values with each request.",
+        "parameters": "Payload parameters",
+        "parametersDescription": "These values are merged into the execution context and sent with the request.",
+        "to": "To",
+        "toDescription": "Define the primary recipients for this email action.",
+        "cc": "CC",
+        "bcc": "BCC",
+        "replyTo": "Reply-to",
+        "subject": "Subject",
+        "subjectDescription": "Compose the subject with inline placeholder tokens that resolve when the action runs.",
+        "subjectPlaceholder": "Content published:",
+        "body": "Body",
+        "bodyDescription": "Build the email body with tokens from the selected table, workflow context, and secrets.",
+        "bodyPlaceholder": "A new piece of content is ready for review.",
+        "voidMessage": "Log message",
+        "voidMessageDescription": "Useful for dry runs, smoke tests, and instrumentation-only workflows.",
+        "voidMessagePlaceholderPrefix": "Automation",
+        "voidMessagePlaceholderSuffix": "completed without delivery.",
+        "placeholderTable": "Placeholder context",
+        "placeholderTableDescription": "Choose the CMS table whose fields should be available as tokens in this editor.",
+        "placeholderTablePlaceholder": "Select a table",
+        "availablePlaceholders": "Available tokens",
+        "insertPlaceholderPlaceholder": "Insert a placeholder token",
+        "tokenEditorHintPrefix": "Existing",
+        "tokenEditorHintSuffix": "placeholders are shown as inline tokens and remain compatible with runtime replacement.",
+        "secrets": "Secrets",
+        "secretsHint": "Leave a secret value blank to keep the existing value unchanged.",
+        "key": "Key",
+        "value": "Value",
+        "valuePlaceholder": "Value or placeholder",
+        "emailAddress": "Email address"
+      },
+      "placeholderGroups": {
+        "record": "Selected table",
+        "changes": "Changes",
+        "workflow": "Workflow",
+        "secrets": "Secrets"
+      }
+    },
+    "automationExecutions": {
+      "title": "Execution History",
+      "description": "Inspect queued, running, failed, and completed runs across every automation in this space. Replay a past context when you need to retry a broken workflow.",
+      "emptyTable": "No executions found yet. Runs will appear here as soon as an automation is queued.",
+      "emptyContext": "No execution context was stored for this run.",
+      "emptyResult": "This run did not store a result payload.",
+      "detailTitle": "Execution Details",
+      "detailDescription": "Inspect the runtime payload, result, and failure details for this execution.",
+      "status": {
+        "queued": "Queued",
+        "running": "Running",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "sources": {
+        "manual": "Manual",
+        "replay": "Replay",
+        "trigger": "Trigger",
+        "schedule": "Schedule",
+        "unknown": "Unknown"
+      },
+      "filters": {
+        "status": "Execution status",
+        "automation": "Automation"
+      },
+      "sort": {
+        "createdAt": "Queued At",
+        "startedAt": "Started At",
+        "completedAt": "Completed At",
+        "duration": "Duration",
+        "status": "Status"
+      },
+      "columns": {
+        "automation": "Automation",
+        "status": "Status",
+        "source": "Source",
+        "timing": "Timing",
+        "result": "Result",
+        "actions": "Actions"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "context": "Context",
+        "result": "Result"
+      },
+      "fields": {
+        "source": "Source",
+        "queuedAt": "Queued at",
+        "startedAt": "Started at",
+        "completedAt": "Completed at",
+        "duration": "Duration",
+        "error": "Error",
+        "automation": "Automation",
+        "action": "Action"
+      }
+    },
+    "automations": {
+      "title": "Automations",
+      "description": "Connect triggers to reusable actions, control activation, and track execution limits without duplicating delivery settings.",
+      "createTitle": "Create Automation",
+      "createDescription": "Choose a trigger, link an action, and define how often this workflow may run.",
+      "editTitle": "Edit Automation",
+      "editDescription": "Adjust the trigger logic, connected action, or execution guardrails for this automation.",
+      "previewLabel": "Trigger preview",
+      "previewName": "Untitled automation",
+      "selectedActionFallback": "No description yet.",
+      "emptyTable": "No automations found. Create one after you have at least a single action ready.",
+      "emptyConditions": "No conditions added yet.",
+      "emptyPayload": "No trigger payload values configured yet.",
+      "missingAction": "Linked action unavailable",
+      "unlimitedExecutions": "Unlimited executions",
+      "executionSummary": "{used} of {limit} used, {remaining} remaining",
+      "createPrerequisiteTitle": "Create an action first",
+      "createPrerequisiteDescription": "Automations now point to reusable actions. Add at least one action with its delivery settings before you create a trigger.",
+      "createPrerequisiteCta": "Open action settings",
+      "summary": {
+        "timeBased": "Scheduled by cron expression",
+        "manual": "Triggered manually",
+        "anyResource": "Runs for any matching resource"
+      },
+      "tableColumnsSummary": "{count} columns available for conditions and watched updates.",
+      "watchedColumnsSummary": "{count} watched columns",
+      "triggerTypes": {
+        "on_insert": "On insert",
+        "on_update": "On update",
+        "on_delete": "On delete",
+        "time_based": "Time based",
+        "manual": "Manual"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Disabled"
+      },
+      "filters": {
+        "triggerType": "Trigger type",
+        "table": "CMS table",
+        "actionType": "Action type",
+        "status": "Availability"
+      },
+      "sort": {
+        "name": "Automation Name",
+        "triggerType": "Trigger Type",
+        "executionCount": "Execution Count",
+        "lastTriggered": "Last Triggered",
+        "updatedAt": "Last Updated",
+        "createdAt": "Created"
+      },
+      "columns": {
+        "name": "Automation",
+        "trigger": "Trigger",
+        "action": "Action",
+        "executions": "Executions",
+        "lastTriggered": "Last Triggered",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "deleteConfirm": {
+        "title": "Delete Automation",
+        "message": "Delete \"{name}\"? Its trigger, history, and execution counters will be removed.",
+        "confirmLabel": "Delete automation"
+      },
+      "tabs": {
+        "trigger": "Trigger",
+        "execution": "Execution"
+      },
+      "conditionOperators": {
+        "eq": "Equals",
+        "ne": "Does not equal",
+        "contains": "Contains",
+        "gt": "Greater than",
+        "gte": "Greater than or equal",
+        "lt": "Less than",
+        "lte": "Less than or equal",
+        "in": "In list",
+        "nin": "Not in list",
+        "exists": "Exists",
+        "empty": "Is empty"
+      },
+      "fields": {
+        "name": "Automation name",
+        "namePlaceholder": "Notify reviewers when content changes",
+        "description": "Description",
+        "descriptionPlaceholder": "Add context for teammates managing this workflow later.",
+        "active": "Automation enabled",
+        "activeDescription": "Disabled automations keep their trigger and counters but do not dispatch work.",
+        "action": "Linked action",
+        "actionDescription": "Pick the reusable action that should run when this trigger matches.",
+        "actionPlaceholder": "Select an action",
+        "triggerType": "Trigger type",
+        "triggerTypeDescription": "Choose what should wake up this automation.",
+        "triggerTypePlaceholder": "Select a trigger type",
+        "table": "CMS table",
+        "tableDescription": "Choose the table whose records should activate this automation.",
+        "tablePlaceholder": "Select a table",
+        "watchColumns": "Watched columns",
+        "watchColumnsDescription": "Optional. Only run this automation when one of these columns changes.",
+        "watchColumnsPlaceholder": "Search columns",
+        "schedule": "Cron schedule",
+        "scheduleDescription": "Use a standard five-field cron expression in the timezone below.",
+        "timezone": "Timezone",
+        "timezoneDescription": "The cron expression is evaluated in this timezone.",
+        "timezonePlaceholder": "Europe/Vienna",
+        "conditions": "Conditions",
+        "conditionsDescription": "Every condition must match before the automation fires.",
+        "conditionPath": "Context path",
+        "conditionPathPlaceholder": "Select a path",
+        "conditionOperator": "Operator",
+        "conditionValue": "Expected value",
+        "payload": "Trigger payload",
+        "payloadDescription": "These values are merged into the runtime context when the automation runs.",
+        "key": "Key",
+        "value": "Value",
+        "valuePlaceholder": "Value or placeholder",
+        "executionLimit": "Execution limit",
+        "executionLimitDescription": "Optional. Cap how many times this automation may run in total.",
+        "executionLimitPlaceholder": "Leave blank for unlimited"
+      }
+    },
     "teamRoles": {
       "title": "Space Roles",
       "description": "Shape how collaborators can work inside spaces owned by this team. Built-in roles stay visible for reference, while custom roles can be tailored for this team and its descendants.",
@@ -2406,6 +2711,8 @@
         "releases": "releases",
         "backups": "backups",
         "migrations": "migrations",
+        "automationActions": "automation actions",
+        "automations": "automations",
         "ai": "AI tools",
         "auditLogs": "audit log"
       }
@@ -2674,6 +2981,19 @@
       "create": "New Migration",
       "delete": "Delete"
     },
+    "automationActions": {
+      "create": "Create Action",
+      "save": "Save Action"
+    },
+    "automationExecutions": {
+      "replay": "Replay",
+      "view": "View details"
+    },
+    "automations": {
+      "create": "Create Automation",
+      "save": "Save Automation",
+      "runNow": "Run now"
+    },
     "subscriptions": {
       "upgrade": "Upgrade Plan",
       "choosePlan": "Choose Plan",
@@ -2780,6 +3100,17 @@
     "logout": "Logout",
     "retry": "Retry",
     "clearClipboard": "Clear Clipboard"
+  },
+  "navigation": {
+    "home": "Home",
+    "content": "Content",
+    "blocks": "Blocks",
+    "assets": "Assets",
+    "dataSets": "Data sets",
+    "redirects": "Redirects",
+    "releases": "Releases",
+    "automations": "Automations",
+    "settings": "Settings"
   },
   "components": {
     "fileDropZone": {
@@ -2891,6 +3222,28 @@
       "createError": "Failed to start migration: {error}",
       "deleteSuccess": "Migration deleted successfully",
       "deleteError": "Failed to delete migration: {error}"
+    },
+    "automationActions": {
+      "createSuccess": "Action \"{name}\" created successfully",
+      "createError": "Failed to create action: {error}",
+      "updateSuccess": "Action \"{name}\" updated successfully",
+      "updateError": "Failed to update action: {error}",
+      "deleteSuccess": "Action deleted successfully",
+      "deleteError": "Failed to delete action: {error}"
+    },
+    "automations": {
+      "createSuccess": "Automation \"{name}\" created successfully",
+      "createError": "Failed to create automation: {error}",
+      "updateSuccess": "Automation \"{name}\" updated successfully",
+      "updateError": "Failed to update automation: {error}",
+      "deleteSuccess": "Automation deleted successfully",
+      "deleteError": "Failed to delete automation: {error}",
+      "triggerSuccess": "Automation \"{name}\" was queued successfully",
+      "triggerError": "Failed to trigger automation: {error}"
+    },
+    "automationExecutions": {
+      "replaySuccess": "Execution was queued for replay successfully",
+      "replayError": "Failed to replay execution: {error}"
     },
     "assetFolders": {
       "createSuccess": "Folder \"{name}\" created successfully",

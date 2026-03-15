@@ -21,8 +21,8 @@ class AutomationExecutionFactory extends Factory
             'automation_id' => Automation::factory(),
             'status' => fake()->randomElement(['completed', 'failed', 'running']),
             'context' => ['trigger_data' => fake()->words(3, true)],
-            'result' => $completedAt ? ['output' => fake()->sentence] : null,
-            'error' => !$completedAt && fake()->boolean(70) ? fake()->sentence : null,
+            'result' => $completedAt ? ['output' => fake()->sentence()] : null,
+            'error' => ! $completedAt && fake()->boolean(70) ? fake()->sentence() : null,
             'started_at' => $startedAt,
             'completed_at' => $completedAt,
             'created_at' => $startedAt,
@@ -37,7 +37,7 @@ class AutomationExecutionFactory extends Factory
 
             return [
                 'status' => 'completed',
-                'result' => ['output' => fake()->sentence],
+                'result' => ['output' => fake()->sentence()],
                 'error' => null,
                 'started_at' => $startedAt,
                 'completed_at' => $completedAt,
@@ -54,7 +54,7 @@ class AutomationExecutionFactory extends Factory
             return [
                 'status' => 'failed',
                 'result' => null,
-                'error' => fake()->sentence,
+                'error' => fake()->sentence(),
                 'started_at' => $startedAt,
                 'completed_at' => $completedAt,
             ];
@@ -70,6 +70,20 @@ class AutomationExecutionFactory extends Factory
                 'error' => null,
                 'started_at' => now()->subSeconds(rand(1, 300)),
                 'completed_at' => null,
+            ];
+        });
+    }
+
+    public function queued(): static
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'status' => 'queued',
+                'result' => null,
+                'error' => null,
+                'started_at' => null,
+                'completed_at' => null,
+                'created_at' => $attributes['created_at'] ?? now(),
             ];
         });
     }

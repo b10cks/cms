@@ -2,20 +2,20 @@
 
 namespace App\Models\Management;
 
-use App\Casts\Automation\ActionCast;
-use App\Casts\Automation\TriggerCast;
 use App\Http\Resources\Management\AutomationResource;
 use App\Models\Traits\Auditable;
 use App\Models\Traits\BroadcastsModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
+use App\Services\Automation\Enums\TriggerType;
+use App\Services\Automation\ValueObjects\Trigger;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use InvalidArgumentException;
 
 /**
  * App\Models\Management\Automation
@@ -24,9 +24,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $space_id
  * @property string|null $name
  * @property string|null $description
- * @property \App\Services\Automation\ValueObjects\Trigger|null $trigger
- * @property \App\Services\Automation\ValueObjects\Action|null $action
- * @property array<array-key, mixed>|null $secrets
+ * @property string $action_id
+ * @property Trigger|null $trigger
+ * @property TriggerType $trigger_type
+ * @property array<array-key, mixed>|null $trigger_config
  * @property int|null $execution_limit
  * @property int $execution_count
  * @property bool $is_active
@@ -37,6 +38,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Management\AutomationExecution> $executions
  * @property-read int|null $executions_count
  * @property string|null $make_purified_attribute
+ * @property-read AutomationAction $action
  * @property-read \App\Models\Management\Space $space
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Management\AutomationUsageStats> $usageStats
  * @property-read int|null $usage_stats_count
@@ -46,7 +48,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereAction($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereActionId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereDeletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereDescription($value)
@@ -56,9 +58,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereIsActive($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereLastTriggeredAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereSecrets($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereSpaceId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereTrigger($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereTriggerConfig($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereTriggerType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Automation withoutTrashed()
@@ -81,9 +83,8 @@ class Automation extends GlobalModel
     protected $fillable = [
         'name',
         'description',
+        'action_id',
         'trigger',
-        'action',
-        'secrets',
         'is_active',
         'execution_limit',
         'execution_count',
@@ -91,17 +92,11 @@ class Automation extends GlobalModel
     ];
 
     protected $casts = [
-        'trigger' => TriggerCast::class,
-        'action' => ActionCast::class,
+        'trigger_type' => TriggerType::class,
+        'trigger_config' => 'array',
         'is_active' => 'boolean',
-        'secrets' => 'encrypted:array',
         'last_triggered_at' => 'datetime',
     ];
-
-    public function getAuditRedactedFields(): array
-    {
-        return ['secrets'];
-    }
 
     protected function name(): Attribute
     {
@@ -113,9 +108,63 @@ class Automation extends GlobalModel
         return $this->makePurifiedAttribute('rte');
     }
 
+    protected function trigger(): Attribute
+    {
+        return Attribute::make(
+            get: function (mixed $value, array $attributes): ?Trigger {
+                $type = $attributes['trigger_type'] ?? null;
+                if (! $type) {
+                    return null;
+                }
+
+                $config = $attributes['trigger_config'] ?? null;
+                if (\is_string($config)) {
+                    $config = json_decode($config, true);
+                }
+
+                return new Trigger(
+                    $type instanceof TriggerType ? $type : TriggerType::from($type),
+                    \is_array($config) ? $config : null,
+                );
+            },
+            set: function (mixed $value): array {
+                if ($value instanceof Trigger) {
+                    return [
+                        'trigger_type' => $value->type()->value,
+                        'trigger_config' => $value->config() === null
+                            ? null
+                            : json_encode($value->config(), JSON_THROW_ON_ERROR),
+                    ];
+                }
+
+                if (\is_array($value)) {
+                    $trigger = Trigger::fromArray($value);
+
+                    if (! $trigger) {
+                        throw new InvalidArgumentException('Invalid trigger payload.');
+                    }
+
+                    return [
+                        'trigger_type' => $trigger->type()->value,
+                        'trigger_config' => $trigger->config() === null
+                            ? null
+                            : json_encode($trigger->config(), JSON_THROW_ON_ERROR),
+                    ];
+                }
+
+                throw new InvalidArgumentException('Invalid trigger value type.');
+            },
+        );
+    }
+
     public function space(): BelongsTo
     {
         return $this->belongsTo(Space::class, 'space_id', 'id');
+    }
+
+    public function action(): BelongsTo
+    {
+        return $this->belongsTo(AutomationAction::class, 'action_id', 'id');
     }
 
     public function executions(): HasMany

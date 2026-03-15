@@ -37,6 +37,12 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping()
             ->runInBackground();
+
+        $schedule->command('automations:run-scheduled')
+            ->everyMinute()
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     /**

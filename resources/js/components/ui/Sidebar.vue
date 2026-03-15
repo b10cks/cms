@@ -206,10 +206,9 @@ const availableLocales = locales
         </DropdownMenuTrigger>
       </DropdownMenu>
       <div class="flex flex-col items-center border-t-2 border-t-border pt-3">
-        <DropdownMenu>
+        <DropdownMenu v-if="user">
           <DropdownMenuTrigger>
             <Avatar
-              v-if="user"
               :avatar="user.avatar"
               :name="`${user.firstname} ${user.lastname}`.trim()"
             />

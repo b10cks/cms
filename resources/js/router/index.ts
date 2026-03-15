@@ -270,6 +270,22 @@ const routes: RouteRecordRaw[] = [
         component: () => import('~/pages/[space]/settings/configuration.vue'),
       },
       {
+        path: 'actions',
+        name: 'space-settings-automation-actions',
+        redirect: (to) => ({
+          name: 'space-automation-actions',
+          params: { space: to.params.space },
+        }),
+      },
+      {
+        path: 'automations',
+        name: 'space-settings-automations',
+        redirect: (to) => ({
+          name: 'space-automations-index',
+          params: { space: to.params.space },
+        }),
+      },
+      {
         path: 'ai',
         name: 'space-settings-ai',
         component: () => import('~/pages/[space]/settings/ai.vue'),
@@ -288,6 +304,32 @@ const routes: RouteRecordRaw[] = [
         path: 'migrations',
         name: 'space-settings-migrations',
         component: () => import('~/pages/[space]/settings/migrations.vue'),
+      },
+    ],
+  },
+  {
+    path: '/:space/automations',
+    name: 'space-automations',
+    component: () => import('~/pages/[space]/automations.vue'),
+    meta: { layout: 'default' },
+    children: [
+      {
+        path: '',
+        name: 'space-automations-index',
+        component: () => import('~/pages/[space]/settings/automations.vue'),
+        meta: { requiredAbility: 'automations.view' },
+      },
+      {
+        path: 'actions',
+        name: 'space-automation-actions',
+        component: () => import('~/pages/[space]/settings/actions.vue'),
+        meta: { requiredAbility: 'automation_actions.view' },
+      },
+      {
+        path: 'executions',
+        name: 'space-automation-executions',
+        component: () => import('~/pages/[space]/automations/executions.vue'),
+        meta: { requiredAbility: 'automations.view' },
       },
     ],
   },

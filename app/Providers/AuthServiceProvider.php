@@ -4,6 +4,8 @@ namespace App\Providers;
 
 // use Illuminate\Support\Facades\Gate;
 use App\Models\Management\Invite;
+use App\Models\Management\Automation;
+use App\Models\Management\AutomationAction;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceBackup;
 use App\Models\Management\SpaceBlueprint;
@@ -27,6 +29,8 @@ use App\Policies\ContentPolicy;
 use App\Policies\DataEntryPolicy;
 use App\Policies\DataSourcePolicy;
 use App\Policies\InvitePolicy;
+use App\Policies\AutomationActionPolicy;
+use App\Policies\AutomationPolicy;
 use App\Policies\PersonalAccessTokenPolicy;
 use App\Policies\RedirectPolicy;
 use App\Policies\ReleasePolicy;
@@ -48,6 +52,8 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         AuditLog::class => AuditLogPolicy::class,
+        Automation::class => AutomationPolicy::class,
+        AutomationAction::class => AutomationActionPolicy::class,
         Block::class => BlockPolicy::class,
         BlockTemplate::class => BlockTemplatePolicy::class,
         BlockVersion::class => BlockVersionPolicy::class,
