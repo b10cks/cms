@@ -5,6 +5,18 @@ import useSpaceSettings from '~/composables/useSpaceSettings'
 
 const route = useRoute()
 const { settings } = useSpaceSettings(route.params.space as string)
+
+const sidebar = useTemplateRef<InstanceType<typeof ResizablePanel>>('sidebar')
+
+const toggleSidebar = () => {
+  if (sidebar.value) {
+    if (sidebar.value.isCollapsed) {
+      sidebar.value.expand()
+    } else {
+      sidebar.value.collapse()
+    }
+  }
+}
 </script>
 
 <template>
@@ -14,13 +26,20 @@ const { settings } = useSpaceSettings(route.params.space as string)
   >
     <ResizablePanel
       id="content-panel-1"
-      class="shrink-0"
+      ref="sidebar"
+      size-unit="px"
+      collapsible
+      :min-size="120"
+      :max-size="512"
       :default-size="settings.content.treeWidth"
       @resize="(size) => (settings.content.treeWidth = size)"
     >
       <ContentTree :space-id="route.params.space as string" />
     </ResizablePanel>
-    <ResizableHandle id="content-handle-1" />
+    <ResizableHandle
+      id="content-handle-1"
+      @dblclick="toggleSidebar"
+    />
     <ResizablePanel
       id="content-panel-2"
       class="flex grow"
