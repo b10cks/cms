@@ -357,16 +357,15 @@ const handleToggle = (event: TreeItemToggleEvent<FlatContentMenuItem> | Event) =
 }
 
 const toggleExpanded = (contentId: string) => {
-  const expanded = [...(settings.value.content.expanded || [])]
+  const expanded = settings.value.content.expanded || []
   const index = expanded.indexOf(contentId)
 
   if (index > -1) {
-    expanded.splice(index, 1)
-  } else {
-    expanded.push(contentId)
+    settings.value.content.expanded = expanded.filter((id) => id !== contentId)
+    return
   }
 
-  settings.value.content.expanded = expanded
+  settings.value.content.expanded = [...expanded, contentId]
 }
 
 const setCurrentItemFromRoute = () => {
@@ -883,7 +882,7 @@ onBeforeUnmount(() => {
           item.value.id === selectedItemId ? 'text-primary' : '',
           isItemSelected(item.value.id) ? 'bg-border text-primary' : '',
           activeDropTargetId === item.value.id && activeDropEdge === 'left'
-            ? 'bg-accent/50 ring-1 ring-info'
+            ? 'bg-accent/50 ring-1 ring-info/30'
             : '',
         ]"
         @pointerdown="handleItemPointerDown($event, item.value.id)"
@@ -900,7 +899,7 @@ onBeforeUnmount(() => {
 
         <button
           v-if="item.value.children"
-          class="z-10 h-4 w-3"
+          class="z-10 h-4 w-3 cursor-pointer"
           @click.stop.prevent="toggleExpanded(item.value.id)"
         >
           <Icon
