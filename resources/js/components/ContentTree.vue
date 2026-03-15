@@ -807,8 +807,8 @@ onBeforeUnmount(() => {
           ref="rootDropZoneRef"
           type="button"
           :class="[
-            'group flex w-full items-center gap-2 rounded-md border border-transparent px-2 py-2 text-left transition-all duration-150',
-            rootDropMode ? 'bg-accent/70 ring-1 ring-info/40' : 'hover:bg-accent/40',
+            'group flex w-full items-center gap-2 rounded-md border border-transparent -my-1 py-1 px-2 text-left transition-all duration-150',
+            rootDropMode ? 'bg-accent/50 ring-1 ring-info' : '',
           ]"
           @click="
             router.push({ name: 'space-content-index', params: { space: route.params.space } })
@@ -883,7 +883,7 @@ onBeforeUnmount(() => {
           item.value.id === selectedItemId ? 'text-primary' : '',
           isItemSelected(item.value.id) ? 'bg-border text-primary' : '',
           activeDropTargetId === item.value.id && activeDropEdge === 'left'
-            ? 'bg-accent/50 ring-1 ring-info/30'
+            ? 'bg-accent/50 ring-1 ring-info'
             : '',
         ]"
         @pointerdown="handleItemPointerDown($event, item.value.id)"
