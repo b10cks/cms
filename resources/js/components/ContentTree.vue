@@ -159,15 +159,24 @@ const initDelete = async (item: { id: string }) => {
         v-if="selectedSpace"
         class="ml-2 flex items-center gap-2 py-1 font-semibold"
       >
+        <NuxtImg
+          v-if="selectedSpace.icon"
+          :src="selectedSpace.icon"
+          :alt="selectedSpace.name"
+          :width="20"
+          :height="20"
+          class="size-5 rounded-sm object-cover"
+        />
         <Icon
-          name="lucide:globe"
-          class="shrink-0 text-primary"
+          v-else
+          name="lucide:cuboid"
+          class="text-muted"
         />
         <span class="truncate">{{ selectedSpace.name }}</span>
         <SpaceBadge
           v-if="selectedSpace.badge"
           :badge="selectedSpace.badge"
-          size="xs"
+          size="2xs"
         />
         <div class="ml-auto">
           <Button
