@@ -31,7 +31,7 @@ const toggleSidebar = () => {
       collapsible
       :min-size="120"
       :max-size="512"
-      :default-size="settings.content.treeWidth"
+      :default-size="settings.content.treeWidth || 320"
       @resize="(size) => (settings.content.treeWidth = size)"
     >
       <ContentTree :space-id="route.params.space as string" />
