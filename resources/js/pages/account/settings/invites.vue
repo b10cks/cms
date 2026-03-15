@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import InvitesList from '~/components/invites/InvitesList.vue'
+import { Card, CardContent } from '~/components/ui/card'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 
 const { useMyInvitesQuery } = useInvites()
 const { t } = useI18n()
@@ -48,11 +48,7 @@ const handleResendInvite = (inviteId: string) => {
       :description="$t('labels.account.invites.description')"
     />
 
-    <Card variant="outline">
-      <CardHeader>
-        <CardTitle>{{ $t('labels.account.invites.myInvites') }}</CardTitle>
-        <CardDescription>{{ $t('labels.account.invites.myInvitesDescription') }}</CardDescription>
-      </CardHeader>
+    <Card variant="none">
       <CardContent>
         <InvitesList
           :invites="invites"

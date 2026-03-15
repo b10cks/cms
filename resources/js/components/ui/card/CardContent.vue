@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
+
 import { cn } from '@/lib/utils'
 
 const props = defineProps<{
@@ -8,7 +9,7 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div :class="cn('p-6 pt-0', props.class)">
+  <div :class="cn(props.class)">
     <slot />
   </div>
 </template>

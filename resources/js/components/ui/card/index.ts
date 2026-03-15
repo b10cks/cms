@@ -9,16 +9,17 @@ export { default as CardHeader } from './CardHeader.vue'
 export { default as CardHeaderCombined } from './CardHeaderCombined.vue'
 export { default as CardTitle } from './CardTitle.vue'
 
-export const cardVariants = cva('rounded-xl', {
+export const cardVariants = cva('', {
   variants: {
     variant: {
-      default: 'bg-card text-card-foreground shadow-soft',
-      surface: 'bg-surface shadow-soft',
-      outline: 'border border-border',
-      accent: 'bg-accent text-white shadow-soft',
-      warning: 'bg-warning-background/20 text-warning shadow-sm',
-      destructive: 'bg-destructive-background/20 text-destructive shadow-sm',
-      destructiveOutline: 'border border-destructive text-destructive',
+      none: 'pb-12',
+      default: 'rounded-xl p-6 bg-card text-card-foreground shadow-soft',
+      surface: 'rounded-xl p-6 bg-surface shadow-soft',
+      outline: 'rounded-xl p-6 border border-border',
+      accent: 'rounded-xl p-6 bg-accent text-white shadow-soft',
+      warning: 'rounded-xl p-6 bg-warning-background/20 text-warning shadow-sm',
+      destructive: 'rounded-xl p-6 bg-destructive-background/20 text-destructive shadow-sm',
+      destructiveOutline: 'rounded-xl p-6 border border-destructive text-destructive',
     },
   },
   defaultVariants: {

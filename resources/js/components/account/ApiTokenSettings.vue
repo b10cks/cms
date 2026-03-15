@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { useClipboard } from '@vueuse/core'
 import dayjs from 'dayjs'
 import { toast } from 'vue-sonner'
 
+import Icon from '~/components/Icon.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
@@ -90,7 +89,7 @@ const handleDeleteToken = async (id: number, tokenName: string) => {
 </script>
 
 <template>
-  <Card variant="outline">
+  <Card variant="none">
     <CardHeader>
       <CardTitle>{{ $t('labels.account.apiTokens.title') }}</CardTitle>
       <CardDescription>{{ $t('labels.account.apiTokens.description') }}</CardDescription>

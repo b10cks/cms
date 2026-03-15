@@ -80,7 +80,7 @@ const saveSettings = async () => {
 </script>
 
 <template>
-  <Card variant="outline">
+  <Card variant="none">
     <CardHeader>
       <CardTitle>{{ $t('labels.settings.assetLibrary.title') }}</CardTitle>
       <CardDescription>{{ $t('labels.settings.assetLibrary.description') }}</CardDescription>

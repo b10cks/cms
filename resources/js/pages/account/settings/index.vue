@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
-
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeaderCombined } from '~/components/ui/card'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
@@ -96,140 +95,152 @@ const onDragOverAvatar = (e: DragEvent) => {
       :description="$t('labels.account.profile.description')"
     />
 
-    <Card
-      v-if="user"
-      variant="outline"
-    >
-      <CardHeaderCombined :title="$t('labels.account.profile.avatar')" />
-      <CardContent class="grid gap-6">
-        <FormField
-          name="avatar"
-          :label="$t('labels.account.profile.avatar')"
-          :description="$t('labels.account.profile.avatarDescription')"
-        >
-          <div
-            class="flex items-center gap-4"
-            @drop="onDropAvatar"
-            @dragover="onDragOverAvatar"
+    <div class="pt-6 space-y-12 divide-y divide-border">
+      <Card
+        v-if="user"
+        variant="none"
+      >
+        <CardHeaderCombined :title="$t('labels.account.profile.avatar')" />
+        <CardContent class="grid gap-6">
+          <FormField
+            name="avatar"
+            :label="$t('labels.account.profile.avatar')"
+            :description="$t('labels.account.profile.avatarDescription')"
           >
             <div
-              v-if="avatar"
-              class="flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-surface"
-              @click="handleUploadAvatar"
+              class="flex items-center gap-4"
+              @drop="onDropAvatar"
+              @dragover="onDragOverAvatar"
             >
-              <NuxtImg
-                :src="avatar"
-                alt="Avatar"
-                class="h-full w-full object-cover"
+              <div
+                v-if="avatar"
+                class="flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-surface"
+                @click="handleUploadAvatar"
+              >
+                <NuxtImg
+                  :src="avatar"
+                  alt="Avatar"
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <div
+                v-else
+                class="flex h-20 w-20 cursor-pointer items-center justify-center rounded-full border border-dashed border-muted bg-surface"
+                @click="handleUploadAvatar"
+              >
+                <Icon
+                  name="lucide:user"
+                  class="h-10 w-10 text-muted"
+                />
+              </div>
+              <input
+                ref="avatarInputRef"
+                type="file"
+                accept="image/*"
+                class="hidden"
+                @change="onAvatarInputChange"
               />
+              <span
+                v-if="fileUploadIsUploading"
+                class="ml-2 text-xs text-muted"
+                >{{ uploadProgress }}%</span
+              >
             </div>
-            <div
-              v-else
-              class="flex h-20 w-20 cursor-pointer items-center justify-center rounded-full border border-dashed border-muted bg-surface"
-              @click="handleUploadAvatar"
-            >
-              <Icon
-                name="lucide:user"
-                class="h-10 w-10 text-muted"
-              />
-            </div>
-            <input
-              ref="avatarInputRef"
-              type="file"
-              accept="image/*"
-              class="hidden"
-              @change="onAvatarInputChange"
-            />
-            <span
-              v-if="fileUploadIsUploading"
-              class="ml-2 text-xs text-muted"
-              >{{ uploadProgress }}%</span
-            >
-          </div>
-        </FormField>
-        <InputField
-          :label="$t('labels.account.profile.userId')"
-          name="user-id"
-          :model-value="user.id"
-          readonly
-          :actions="['copy']"
-        />
-      </CardContent>
-    </Card>
-    <Card variant="outline">
-      <CardHeaderCombined
-        :title="$t('labels.account.profile.personalInfo')"
-        :description="$t('labels.account.profile.personalInfoDescription')"
-      />
-      <CardContent class="grid gap-6">
-        <InputField
-          v-model="firstname"
-          :label="$t('labels.account.profile.firstname')"
-          :placeholder="$t('labels.account.profile.firstnamePlaceholder')"
-          name="firstname"
-          required
-        />
-
-        <InputField
-          v-model="lastname"
-          :label="$t('labels.account.profile.lastname')"
-          :placeholder="$t('labels.account.profile.lastnamePlaceholder')"
-          name="lastname"
-          required
-        />
-      </CardContent>
-      <CardFooter>
-        <Button
-          variant="primary"
-          :disabled="isUpdating"
-          @click="handleSave"
-        >
-          <Icon
-            v-if="isUpdating"
-            name="lucide:loader"
-            class="animate-spin"
+          </FormField>
+          <InputField
+            :label="$t('labels.account.profile.userId')"
+            name="user-id"
+            :model-value="user.id"
+            readonly
+            :actions="['copy']"
           />
-          {{ $t('actions.saveChanges') }}
-        </Button>
-      </CardFooter>
-    </Card>
-    <Card
-      v-if="user"
-      variant="outline"
-    >
-      <CardHeaderCombined
-        :title="$t('labels.account.profile.email')"
-        :description="$t('labels.account.profile.emailReadonly')"
-      />
-      <CardContent>
-        <InputField
-          :label="$t('labels.account.profile.email')"
-          name="email"
-          :model-value="user.email"
-          readonly
+        </CardContent>
+      </Card>
+      <Card variant="none">
+        <CardHeaderCombined
+          :title="$t('labels.account.profile.personalInfo')"
+          :description="$t('labels.account.profile.personalInfoDescription')"
+        />
+        <CardContent class="grid gap-6">
+          <InputField
+            v-model="firstname"
+            :label="$t('labels.account.profile.firstname')"
+            :placeholder="$t('labels.account.profile.firstnamePlaceholder')"
+            name="firstname"
+            required
+          />
+
+          <InputField
+            v-model="lastname"
+            :label="$t('labels.account.profile.lastname')"
+            :placeholder="$t('labels.account.profile.lastnamePlaceholder')"
+            name="lastname"
+            required
+          />
+        </CardContent>
+        <CardFooter>
+          <Button
+            variant="primary"
+            :disabled="isUpdating"
+            @click="handleSave"
+          >
+            <Icon
+              v-if="isUpdating"
+              name="lucide:loader"
+              class="animate-spin"
+            />
+            {{ $t('actions.saveChanges') }}
+          </Button>
+        </CardFooter>
+      </Card>
+      <Card
+        v-if="user"
+        variant="none"
+      >
+        <CardHeaderCombined
+          :title="$t('labels.account.profile.email')"
           :description="$t('labels.account.profile.emailReadonly')"
         />
-      </CardContent>
-    </Card>
-    <Card
-      v-if="user"
-      variant="outline"
-    >
-      <CardHeaderCombined
-        :title="$t('labels.account.settings.localization')"
-        :description="$t('labels.account.settings.localizationDescription')"
-      />
-      <CardContent class="grid gap-6">
-        <SelectField
-          :label="$t('labels.account.settings.language')"
-          name="language"
-          :description="$t('labels.account.settings.languageDescription')"
-          :placeholder="$t('labels.account.settings.selectLanguage')"
-          :model-value="getLocale()"
-          @update:model-value="onLanguageChange"
-          :options="locales.map((locale) => ({ label: locale.name, value: locale.code }))"
+        <CardContent>
+          <InputField
+            :label="$t('labels.account.profile.email')"
+            name="email"
+            :model-value="user.email"
+            readonly
+            :description="$t('labels.account.profile.emailReadonly')"
+          >
+            <template #append>
+              <span
+                v-if="user.email_verified_at"
+                class="flex items-center gap-1 text-success text-sm pr-2"
+              >
+                <Icon name="lucide:circle-check" />
+                <span>verified</span>
+              </span>
+            </template>
+          </InputField>
+        </CardContent>
+      </Card>
+      <Card
+        v-if="user"
+        variant="none"
+      >
+        <CardHeaderCombined
+          :title="$t('labels.account.settings.localization')"
+          :description="$t('labels.account.settings.localizationDescription')"
         />
-      </CardContent>
-    </Card>
+        <CardContent class="grid gap-6">
+          <SelectField
+            :label="$t('labels.account.settings.language')"
+            name="language"
+            :description="$t('labels.account.settings.languageDescription')"
+            :placeholder="$t('labels.account.settings.selectLanguage')"
+            :model-value="getLocale()"
+            @update:model-value="onLanguageChange"
+            :options="locales.map((locale) => ({ label: locale.name, value: locale.code }))"
+          />
+        </CardContent>
+      </Card>
+    </div>
   </div>
 </template>

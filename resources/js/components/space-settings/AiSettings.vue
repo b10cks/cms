@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { toast } from 'vue-sonner'
+
 import type { SpaceAiConfig } from '~/api/resources/ai'
 import Icon from '~/components/Icon.vue'
+import AiConfigFormDialog from '~/components/space-settings/AiConfigFormDialog.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
@@ -15,8 +17,6 @@ import {
 import { Progress } from '~/components/ui/progress'
 import { Switch } from '~/components/ui/switch'
 import SimpleTooltip from '~/components/ui/tooltip/SimpleTooltip.vue'
-
-import AiConfigFormDialog from '~/components/space-settings/AiConfigFormDialog.vue'
 import { useAiConfigs, useAiModels, useAiSettings } from '~/composables/useAiModels'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 
@@ -191,12 +191,8 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
 </script>
 
 <template>
-  <div class="space-y-6">
-    <Card variant="outline">
-      <CardHeader>
-        <CardTitle>{{ $t('labels.settings.ai.title') }}</CardTitle>
-        <CardDescription>{{ $t('labels.settings.ai.description') }}</CardDescription>
-      </CardHeader>
+  <div class="pt-6 space-y-12 divide-y divide-border">
+    <Card variant="none">
       <CardContent class="space-y-6">
         <div class="space-y-2">
           <div class="flex items-center justify-between">
@@ -298,10 +294,10 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
 
     <Card
       v-if="enableAI"
-      variant="outline"
+      variant="none"
     >
       <CardHeader>
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-6">
           <div>
             <CardTitle>{{ $t('labels.settings.ai.configurations') }}</CardTitle>
             <CardDescription>{{

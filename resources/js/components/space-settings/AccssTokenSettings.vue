@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { useClipboard } from '@vueuse/core'
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
+
+import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { InputField } from '~/components/ui/form'
@@ -52,7 +52,7 @@ const copyToken = (token: string) => {
 </script>
 
 <template>
-  <Card variant="outline">
+  <Card variant="none">
     <CardHeader>
       <CardTitle>{{ $t('labels.settings.accessTokens.title') }}</CardTitle>
       <CardDescription>{{ $t('labels.settings.accessTokens.description') }}</CardDescription>

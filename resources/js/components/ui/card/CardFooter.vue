@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
+
 import { cn } from '@/lib/utils'
 
 const props = defineProps<{
@@ -8,7 +9,7 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div :class="cn('flex items-center p-6 pt-0', props.class)">
+  <div :class="cn('pt-6 flex justify-end items-center', props.class)">
     <slot />
   </div>
 </template>

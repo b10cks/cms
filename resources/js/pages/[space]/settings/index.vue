@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-import NuxtImg from '~/components/NuxtImg.vue'
-
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
+
+import Icon from '~/components/Icon.vue'
+import NuxtImg from '~/components/NuxtImg.vue'
 import ServerLocationSelect from '~/components/ServerLocationSelect.vue'
 import ContentSettings from '~/components/space-settings/ContentSettings.vue'
 import DangerZone from '~/components/space-settings/DangerZone.vue'
@@ -121,106 +121,108 @@ const onDragOverIcon = (e: DragEvent) => {
       :description="$t('labels.settings.general.description')"
     />
 
-    <Card
-      v-if="space"
-      variant="outline"
-    >
-      <CardHeader>
-        <CardTitle>{{ $t('labels.settings.space.title') }}</CardTitle>
-        <CardDescription>{{ $t('labels.settings.space.description') }}</CardDescription>
-      </CardHeader>
-      <CardContent class="grid gap-6">
-        <InputField
-          v-model="spaceName"
-          :label="$t('labels.settings.space.name')"
-          :placeholder="$t('labels.settings.space.namePlaceholder')"
-          :description="$t('labels.settings.space.nameDescription')"
-          name="space-name"
-          required
-        />
+    <div class="pt-6 space-y-12 divide-y divide-border">
+      <Card
+        v-if="space"
+        variant="none"
+      >
+        <CardHeader>
+          <CardTitle>{{ $t('labels.settings.space.title') }}</CardTitle>
+          <CardDescription>{{ $t('labels.settings.space.description') }}</CardDescription>
+        </CardHeader>
+        <CardContent class="grid gap-6">
+          <InputField
+            v-model="spaceName"
+            :label="$t('labels.settings.space.name')"
+            :placeholder="$t('labels.settings.space.namePlaceholder')"
+            :description="$t('labels.settings.space.nameDescription')"
+            name="space-name"
+            required
+          />
 
-        <div class="space-y-2">
-          <FormField
-            name="space-icon"
-            :label="$t('labels.settings.space.icon')"
-            :description="$t('labels.settings.space.iconDescription')"
-          >
-            <div
-              class="flex items-center gap-4"
-              @drop="onDropIcon"
-              @dragover="onDragOverIcon"
+          <div class="space-y-2">
+            <FormField
+              name="space-icon"
+              :label="$t('labels.settings.space.icon')"
+              :description="$t('labels.settings.space.iconDescription')"
             >
               <div
-                v-if="space?.icon"
-                class="flex h-16 w-16 cursor-pointer items-center justify-center rounded-sm bg-surface"
-                @click="handleUploadIcon"
+                class="flex items-center gap-4"
+                @drop="onDropIcon"
+                @dragover="onDragOverIcon"
               >
-                <NuxtImg
-                  :src="spaceIcon"
-                  alt="Space icon"
-                  class="h-14 w-14"
+                <div
+                  v-if="space?.icon"
+                  class="flex h-16 w-16 cursor-pointer items-center justify-center rounded-sm bg-surface"
+                  @click="handleUploadIcon"
+                >
+                  <NuxtImg
+                    :src="spaceIcon"
+                    alt="Space icon"
+                    class="h-14 w-14"
+                  />
+                </div>
+                <div
+                  v-else
+                  class="flex h-16 w-16 cursor-pointer items-center justify-center rounded-md border border-dashed border-muted bg-surface"
+                  @click="handleUploadIcon"
+                >
+                  <Icon
+                    name="lucide:image"
+                    class="h-8 w-8 text-muted"
+                  />
+                </div>
+                <input
+                  ref="iconInputRef"
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
+                  @change="onIconInputChange"
                 />
+                <span
+                  v-if="fileUploadIsUploading"
+                  class="ml-2 text-xs text-muted"
+                  >{{ uploadProgress }}%</span
+                >
               </div>
-              <div
-                v-else
-                class="flex h-16 w-16 cursor-pointer items-center justify-center rounded-md border border-dashed border-muted bg-surface"
-                @click="handleUploadIcon"
-              >
-                <Icon
-                  name="lucide:image"
-                  class="h-8 w-8 text-muted"
-                />
-              </div>
-              <input
-                ref="iconInputRef"
-                type="file"
-                accept="image/*"
-                class="hidden"
-                @change="onIconInputChange"
-              />
-              <span
-                v-if="fileUploadIsUploading"
-                class="ml-2 text-xs text-muted"
-                >{{ uploadProgress }}%</span
-              >
-            </div>
-          </FormField>
-        </div>
+            </FormField>
+          </div>
 
-        <InputField
-          :label="$t('labels.settings.space.spaceId')"
-          :description="$t('labels.settings.space.spaceIdDescription')"
-          name="space-id"
-          :model-value="space.id"
-          readonly
-          :actions="['copy']"
-        />
-
-        <ServerLocationSelect
-          :model-value="space.settings.region"
-          disabled
-        />
-      </CardContent>
-      <CardFooter>
-        <Button
-          variant="primary"
-          :disabled="isUpdating"
-          @click="handleSave"
-        >
-          <Icon
-            v-if="isUpdating"
-            name="lucide:loader"
-            class="animate-spin"
+          <InputField
+            :label="$t('labels.settings.space.spaceId')"
+            :description="$t('labels.settings.space.spaceIdDescription')"
+            name="space-id"
+            :model-value="space.id"
+            readonly
+            :actions="['copy']"
           />
-          {{ $t('actions.saveChanges') }}
-        </Button>
-      </CardFooter>
-    </Card>
 
-    <ContentSettings
-      v-if="space"
-      :space="space"
-    />
+          <ServerLocationSelect
+            :model-value="space.settings.region"
+            disabled
+          />
+        </CardContent>
+        <CardFooter>
+          <Button
+            variant="primary"
+            :disabled="isUpdating"
+            @click="handleSave"
+          >
+            <Icon
+              v-if="isUpdating"
+              name="lucide:loader"
+              class="animate-spin"
+            />
+            {{ $t('actions.saveChanges') }}
+          </Button>
+        </CardFooter>
+      </Card>
+
+      <ContentSettings
+        v-if="space"
+        :space="space"
+      />
+    </div>
     <DangerZone
       v-if="space"
       :space="space"

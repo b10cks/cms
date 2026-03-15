@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { useVModel } from '@vueuse/core'
 import type { HTMLAttributes } from 'vue'
 import { computed } from 'vue'
 import { toast } from 'vue-sonner'
+
+import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
+
 import Input from '../input/Input.vue'
 import FormField from './FormField.vue'
 
@@ -52,7 +53,7 @@ const modelValue = useVModel(props, 'modelValue', emits, {
 
 const inputProps = computed(() => {
   const {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    //
     id,
     label,
     tooltip,
@@ -96,10 +97,8 @@ const trigger = (action: InputActionType) => {
           :class="{ 'border-red-500': hasError }"
           v-bind="{ ...inputProps, ...$attrs }"
         />
-        <div
-          v-if="actions?.length"
-          class="absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5"
-        >
+        <div class="absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5">
+          <slot name="append"></slot>
           <Button
             v-for="action in actions"
             :key="action"

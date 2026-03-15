@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { deepClone } from '@vue/devtools-shared'
+
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import {
@@ -72,7 +73,7 @@ const saveSettings = async () => {
 </script>
 
 <template>
-  <Card variant="outline">
+  <Card variant="none">
     <CardHeader>
       <CardTitle>{{ $t('labels.settings.editor.title') }}</CardTitle>
       <CardDescription>{{ $t('labels.settings.editor.description') }}</CardDescription>

@@ -52,7 +52,7 @@ const handleSave = () => {
 </script>
 
 <template>
-  <Card variant="outline">
+  <Card variant="none">
     <CardHeader>
       <CardTitle>{{ $t('labels.settings.content.title') }}</CardTitle>
       <CardDescription>{{ $t('labels.settings.content.description') }}</CardDescription>

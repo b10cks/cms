@@ -23,21 +23,23 @@ useSeoMeta({
       :header="$t('labels.settings.configuration.title')"
       :description="$t('labels.settings.configuration.description')"
     />
-    <EditorSettings
-      v-if="space"
-      :space="space"
-    />
-    <I18nSettings
-      v-if="space"
-      :space="space"
-    />
-    <AccssTokenSettings
-      v-if="space"
-      :space="space"
-    />
-    <AssetLibrarySettings
-      v-if="space"
-      :space="space"
-    />
+    <div class="pt-6 space-y-12 divide-y divide-border">
+      <EditorSettings
+        v-if="space"
+        :space="space"
+      />
+      <I18nSettings
+        v-if="space"
+        :space="space"
+      />
+      <AccssTokenSettings
+        v-if="space"
+        :space="space"
+      />
+      <AssetLibrarySettings
+        v-if="space"
+        :space="space"
+      />
+    </div>
   </div>
 </template>
