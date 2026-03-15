@@ -195,7 +195,14 @@ class Content extends SpaceModel
             $result = [];
         }
 
-        return array_replace_recursive($result, json_decode($this->content ?? '[]', true));
+        if ($this->content) {
+            $content = json_decode($this->content ?? '[]', true);
+        } else {
+            $this->loadMissing('published_version');
+            $content = $this->published_version?->content ?? [];
+        }
+
+        return array_replace_recursive($result, $content);
     }
 
     public function setPublishedAt($date): void

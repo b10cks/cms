@@ -9,7 +9,6 @@ class TransformContentToSearchable
     public function execute(Content $content): string
     {
         $contentData = $content->getContent();
-
         if (empty($contentData)) {
             return '';
         }

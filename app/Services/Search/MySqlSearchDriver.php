@@ -78,8 +78,16 @@ class MySqlSearchDriver implements SearchDriverInterface
 
     public function reindexSpace(Space $space): void
     {
-        Content::whereNotNull('published_at')
-            ->with('published_version')
+        Content::whereNotNull('contents.published_at')
+            ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block', 'relations', 'assets', 'links'])
+            ->select([
+                'contents.*',
+                'content_versions.content',
+                'content_versions.relation_ids',
+                'content_versions.asset_ids',
+                'content_versions.link_ids'
+            ])
+            ->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id')
             ->chunk(100, function ($contents) use ($space) {
                 foreach ($contents as $content) {
                     $this->indexContent($content, $space);
