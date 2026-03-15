@@ -33,11 +33,11 @@ class SpaceController extends Controller
             : app(AuthorizationService::class)->accessibleSpaceIds($user);
 
         $spaces = Space::filter(SpaceFilter::fromRequest($request))
-            ->when(! $user->is_root, function ($query) use ($accessibleSpaceIds) {
+            ->when(!$user->is_root, function ($query) use ($accessibleSpaceIds) {
                 $query->whereIn('spaces.id', $accessibleSpaceIds);
             })
             ->with([
-                'subscriptions' => fn ($query) => $query->with('plan')->latest('created_at'),
+                'subscriptions' => fn($query) => $query->with('plan')->latest('created_at'),
             ])
             ->withCount(['users'])
             ->paginate();
@@ -55,7 +55,7 @@ class SpaceController extends Controller
         AuthorizationService $authorizationService,
     ): SpaceResource {
         $validated = $request->validated();
-        if (! empty($validated['team_id'])) {
+        if (!empty($validated['team_id'])) {
             $team = Team::query()->findOrFail($validated['team_id']);
             abort_unless($authorizationService->canInTeam(auth()->user(), $team, 'team.spaces.create'), 403);
         }
@@ -70,7 +70,7 @@ class SpaceController extends Controller
             $plan = Plan::find($planId);
 
             if ($plan) {
-                if ($plan->is_free || ! $ls->isConfigured() || empty($plan->ls_variant_id)) {
+                if ($plan->is_free || !$ls->isConfigured() || empty($plan->ls_variant_id)) {
                     // Create free/default subscription immediately
                     Subscription::forceCreate([
                         'space_id' => $space->id,
@@ -100,7 +100,7 @@ class SpaceController extends Controller
 
                     try {
                         $user = auth()->user();
-                        $redirectUrl = config('app.url')."/{$space->slug}/settings/subscription";
+                        $redirectUrl = config('app.url') . "/{$space->slug}/settings/subscription";
 
                         $checkout = $ls->createCheckout(
                             variantId: $plan->ls_variant_id,
@@ -123,7 +123,7 @@ class SpaceController extends Controller
         }
 
         $space->load([
-            'subscriptions' => fn ($query) => $query->with('plan')->latest('created_at'),
+            'subscriptions' => fn($query) => $query->with('plan')->latest('created_at'),
         ]);
 
         return (new SpaceResource($space))->additional(['checkout_url' => $checkoutUrl]);
@@ -138,7 +138,7 @@ class SpaceController extends Controller
         $space
             ->loadCount(['users'])
             ->load([
-                'subscriptions' => fn ($query) => $query->with('plan')->latest('created_at'),
+                'subscriptions' => fn($query) => $query->with('plan')->latest('created_at'),
             ]);
 
         return new SpaceResource($space);
@@ -156,7 +156,7 @@ class SpaceController extends Controller
         $originalTeamId = $space->team_id;
         $space->fill($request->validated());
 
-        if (! $space->save()) {
+        if (!$space->save()) {
             Log::error('Failed to update space', ['space_id' => $space->id]);
             abort(500, 'Failed to update space');
         }
@@ -164,7 +164,7 @@ class SpaceController extends Controller
         $space
             ->loadCount(['users'])
             ->load([
-                'subscriptions' => fn ($query) => $query->with('plan')->latest('created_at'),
+                'subscriptions' => fn($query) => $query->with('plan')->latest('created_at'),
             ]);
         if ($originalTeamId !== $space->team_id) {
             if ($originalTeamId) {

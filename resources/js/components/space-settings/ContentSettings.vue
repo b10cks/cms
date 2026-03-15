@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+
 import { Button } from '~/components/ui/button'
 import {
   Card,
@@ -17,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+
 import IconName from '../ui/IconName.vue'
 
 const { useUpdateSpaceMutation } = useSpaces()
@@ -27,7 +29,14 @@ const props = defineProps<{ space: SpaceResource }>()
 const { useBlocksQuery } = useBlocks(props.space.id)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 
-const defaultBlock = ref(props.space.settings.default_block)
+const defaultBlockId = ref(props.space.settings.default_block)
+
+const availableBlocks = computed(
+  () => blocks.value?.data?.filter(({ type }) => ['root', 'universal'].includes(type)) || []
+)
+const defaultBlock = computed(() =>
+  availableBlocks.value?.find(({ id }) => id === defaultBlockId.value)
+)
 
 const handleSave = () => {
   updateSpace({
@@ -35,7 +44,7 @@ const handleSave = () => {
     payload: {
       settings: {
         ...props.space.settings,
-        default_block: defaultBlock.value,
+        default_block: defaultBlockId.value,
       },
     },
   })
@@ -54,13 +63,21 @@ const handleSave = () => {
         :label="$t('labels.settings.content.defaultBlock')"
         :description="$t('labels.settings.content.defaultBlockDescription')"
       >
-        <Select v-model="defaultBlock">
+        <Select v-model="defaultBlockId">
           <SelectTrigger id="default-block">
-            <SelectValue :placeholder="$t('labels.settings.content.selectDefaultBlock')" />
+            <SelectValue>
+              <IconName
+                v-if="defaultBlock"
+                :icon="defaultBlock?.icon"
+                :color="defaultBlock?.color"
+                :name="defaultBlock?.name"
+              />
+              <span v-else>{{ $t('labels.settings.content.selectDefaultBlock') }}</span>
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem
-              v-for="block in blocks"
+              v-for="block in availableBlocks"
               :key="block.id"
               :value="block.id"
             >
@@ -70,6 +87,7 @@ const handleSave = () => {
                 :name="block.name"
               />
             </SelectItem>
+            <div v-if="!availableBlocks.length">{{ $t('labels.settings.content.noBlocks') }}</div>
           </SelectContent>
         </Select>
       </FormField>

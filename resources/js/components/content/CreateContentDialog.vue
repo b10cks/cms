@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { FormField, InputField } from '~/components/ui/form'
@@ -47,9 +46,9 @@ const selectedTemplate = ref<BlockTemplate | null>(null)
 
 watch(
   space,
-  () => {
-    if (!content.value.block_id) {
-      content.value.block_id = space.value?.settings.default_block || ''
+  (s) => {
+    if (!content.value.block_id || content.value.block_id === '') {
+      content.value.block_id = s?.settings.default_block || ''
     }
   },
   { immediate: true }
