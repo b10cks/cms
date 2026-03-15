@@ -1,76 +1,57 @@
-<script setup lang="ts">
+<script lang="ts" setup>
+import { SelectItem, SelectTrigger } from 'reka-ui'
+
 import Icon from '~/components/Icon.vue'
+import { Select, SelectContent, SelectGroup, SelectLabel } from '~/components/ui/select'
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '~/components/ui/dropdown-menu'
-import { ListboxContent, ListboxGroup, ListboxGroupLabel, ListboxItem, ListboxRoot } from 'reka-ui'
-
-import { Button } from '~/components/ui/button'
 import iconList from './iconlist.json'
 
 defineProps<{
-  disabled?: boolean
+  color?: string
 }>()
 
 const selectedIcon = defineModel<string | null>()
-const isDialogOpen = ref(false)
-
-function selectIcon(icon: string) {
-  selectedIcon.value = icon
-  isDialogOpen.value = false
-}
 </script>
 
 <template>
-  <DropdownMenu v-model="isDialogOpen">
-    <DropdownMenuTrigger as-child>
-      <Button
-        variant="outline"
-        type="button"
-        class="px-3!"
-        :disabled="disabled"
+  <Select v-model="selectedIcon">
+    <SelectTrigger
+      class="flex cursor-pointer items-center justify-between rounded-md border border-input px-2 py-1 font-semibold shadow-sm ring-offset-background data-placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-ring hover:bg-input disabled:cursor-not-allowed disabled:opacity-50 [&>span]:truncate text-start gap-2"
+    >
+      <Icon
+        v-if="selectedIcon"
+        :name="`lucide:${selectedIcon}`"
+        :style="{ color: color || 'inherit' }"
+      />
+      <span
+        v-else
+        class="h-4 w-4 rounded bg-input"
+      />
+    </SelectTrigger>
+    <SelectContent class="sm:max-w-md max-h-80 overflow-y-auto">
+      <SelectGroup
+        v-for="(group, i) in iconList"
+        :key="i"
       >
-        <Icon
-          v-if="selectedIcon"
-          :name="`lucide:${selectedIcon}`"
-        />
-        <span
-          v-else
-          class="h-4 w-4 rounded bg-input"
-        />
-      </Button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent class="max-h-80 overflow-y-auto sm:max-w-[700px]">
-      <ListboxRoot
-        :model-value="selectedIcon"
-        @update:model-value="selectIcon"
-      >
-        <ListboxContent class="">
-          <ListboxGroup
-            v-for="(group, i) in iconList"
-            :key="i"
+        <SelectLabel
+          class="py-1.5 text-xs tracking-widest text-muted uppercase select-none font-semibold"
+          >{{ group.title }}
+        </SelectLabel>
+        <div
+          :style="{ color: color || 'inherit' }"
+          class="grid grid-cols-8"
+        >
+          <SelectItem
+            v-for="option in group.items"
+            :key="`${i}-${option}`"
+            :title="option"
+            :value="option"
+            class="p-1.5 hover:bg-background rounded-md"
           >
-            <ListboxGroupLabel
-              class="py-1.5 text-xs font-semibold tracking-widest text-muted uppercase select-none"
-              >{{ group.title }}
-            </ListboxGroupLabel>
-            <div class="grid grid-cols-9">
-              <ListboxItem
-                v-for="option in group.items"
-                :key="option"
-                :value="option"
-                class="rounded-md p-1.5 hover:bg-background"
-                :title="option"
-              >
-                <Icon :name="`lucide:${option}`" />
-              </ListboxItem>
-            </div>
-          </ListboxGroup>
-        </ListboxContent>
-      </ListboxRoot>
-    </DropdownMenuContent>
-  </DropdownMenu>
+            <Icon :name="`lucide:${option}`" />
+          </SelectItem>
+        </div>
+      </SelectGroup>
+    </SelectContent>
+  </Select>
 </template>

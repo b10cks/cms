@@ -17,6 +17,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  submit: []
+  cancel: []
   'update:modelValue': [unknown]
   'update:name': [unknown]
   'update:color': [unknown]
@@ -46,10 +48,11 @@ const update = (key: keyof typeof localValue.value, value: unknown) => {
     :name="name"
     v-slot="{ id }"
   >
-    <div class="flex gap-2">
+    <div class="flex gap-1">
       <IconGrid
         :model-value="localValue.icon"
         :disabled="disabled"
+        :color="localValue.color"
         @update:model-value="update('icon', $event)"
       />
       <ColorSelect
@@ -62,7 +65,10 @@ const update = (key: keyof typeof localValue.value, value: unknown) => {
         :model-value="localValue.name"
         :disabled="disabled"
         :placeholder="placeholder"
+        autofocus
         @update:model-value="update('name', $event)"
+        @keydown.enter="$emit('submit')"
+        @keydown.esc="$emit('cancel')"
       />
     </div>
   </FormField>
