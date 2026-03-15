@@ -30,11 +30,6 @@ class MoveContent
             $content->parent_id = $parentId;
             $content->save();
 
-            // Reorder siblings if position is specified
-            if ($position !== null) {
-                $this->reorderSiblings($content, $position);
-            }
-
             $space->touch('content_updated_at');
         });
     }
@@ -52,27 +47,5 @@ class MoveContent
         }
 
         return false;
-    }
-
-    protected function reorderSiblings(Content $content, int $position): void
-    {
-        // Get all siblings (including the moved content)
-        $siblings = Content::where('parent_id', $content->parent_id)
-            ->where('id', '!=', $content->id)
-            ->orderBy('position')
-            ->get();
-
-        // Insert the content at the specified position
-        $reordered = $siblings->slice(0, $position)
-            ->push($content)
-            ->merge($siblings->slice($position));
-
-        // Update positions
-        $reordered->each(function ($item, $index) {
-            if ($item->position !== $index) {
-                $item->position = $index;
-                $item->saveQuietly();
-            }
-        });
     }
 }

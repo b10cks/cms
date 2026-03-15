@@ -8,15 +8,26 @@ use App\Http\Resources\Management\ContentResource;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MoveContentController extends Controller
 {
     public function __invoke(Request $request, Space $space, Content $content, MoveContent $action): ContentResource
     {
         $this->authorize('update', [$content, $space]);
+        $connectionName = new Content()->getConnectionName();
 
         $validated = $request->validate([
-            'parent_id' => 'nullable|string|exists:contents,id',
+            'parent_id' => [
+                'nullable',
+                'string',
+                [
+                    'nullable',
+                    'string',
+                    Rule::exists($connectionName . '.contents', 'id')
+                        ->whereNull('deleted_at')
+                ]
+            ],
             'position' => 'nullable|integer|min:0',
         ]);
 

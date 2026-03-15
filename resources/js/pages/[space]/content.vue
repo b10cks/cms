@@ -18,10 +18,7 @@ const { settings } = useSpaceSettings(route.params.space as string)
       :default-size="settings.content.treeWidth"
       @resize="(size) => (settings.content.treeWidth = size)"
     >
-      <ContentTree
-        title="Content Structure"
-        :space-id="route.params.space as string"
-      />
+      <ContentTree :space-id="route.params.space as string" />
     </ResizablePanel>
     <ResizableHandle id="content-handle-1" />
     <ResizablePanel
