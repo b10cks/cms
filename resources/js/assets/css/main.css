@@ -66,8 +66,8 @@
   --checkerboard-dark: var(--color-gray-950);
   --checkerboard-size: 20px;
 
-  --surface: var(--color-gray-50);
-  --background: var(--color-gray-100);
+  --surface: var(--color-gray-100);
+  --background: var(--color-gray-50);
   --elevated: var(--color-gray-150);
   --foreground: var(--color-gray-700);
 
