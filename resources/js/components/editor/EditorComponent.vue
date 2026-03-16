@@ -4,6 +4,11 @@ import Icon from '~/components/Icon.vue'
 import { useElementHover } from '@vueuse/core'
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
 import ContentBreadcrumbs from '~/components/editor/ContentBreadcrumbs.vue'
+import type {
+  CollaborationPresenceUser,
+  ContentFieldFocusPayload,
+  ContentFieldUpdatePayload,
+} from '~/composables/useContentLiveCollaboration'
 import FieldEditor from '~/components/editor/FieldEditor.vue'
 import { useContentTree } from '~/composables/useContentTree'
 import type { ContentBlock } from '~/types/contents'
@@ -46,12 +51,14 @@ const props = withDefaults(
     blockSlug?: string | null
     spaceId: string
     isChild?: boolean
+    getActiveCollaborators?: (itemId: string, field: string) => CollaborationPresenceUser[]
     rootId?: string
     itemId?: string | null
   }>(),
   {
     blockId: null,
     blockSlug: null,
+    getActiveCollaborators: () => [],
     rootId: undefined,
     isChild: false,
     itemId: null,
@@ -61,6 +68,8 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'navigate', itemId: string | null): void
   (e: 'createTemplate', blockId: string, content: object): void
+  (e: 'fieldUpdate', payload: ContentFieldUpdatePayload): void
+  (e: 'fieldFocus', payload: ContentFieldFocusPayload): void
 }>()
 
 const hoverRegistry = inject<Map<string, boolean>>('hoverRegistry', new Map())
@@ -142,6 +151,14 @@ const handleCreateTemplate = (blockId: string, content: Record<string, unknown>)
   emit('createTemplate', blockId, content)
 }
 
+const forwardFieldUpdate = (payload: ContentFieldUpdatePayload): void => {
+  emit('fieldUpdate', payload)
+}
+
+const forwardFieldFocus = (payload: ContentFieldFocusPayload): void => {
+  emit('fieldFocus', payload)
+}
+
 const updateSubItem = (updatedValue: unknown): void => {
   if (!props.itemId || !currentItem.value || !updatePreviewItem) return
 
@@ -212,10 +229,14 @@ const updateItem = (updatedValue: unknown): void => {
               v-for="item in page?.items"
               :key="item"
               v-model="currentItem.item"
+              :item-id="currentItem.item.id as string"
               :item="currentBlock?.schema?.[item]"
               :space-id="spaceId"
+              :active-collaborators="props.getActiveCollaborators(currentItem.item.id as string, item)"
               @update:model-value="updateSubItem"
               @create-template="handleCreateTemplate"
+              @field-update="forwardFieldUpdate"
+              @field-focus="forwardFieldFocus"
             />
           </template>
           <template v-else>
@@ -223,10 +244,14 @@ const updateItem = (updatedValue: unknown): void => {
               v-for="item in page?.items"
               :key="item"
               v-model="content"
+              :item-id="rootId as string"
               :item="currentBlock?.schema?.[item]"
               :space-id="spaceId"
+              :active-collaborators="props.getActiveCollaborators(rootId as string, item)"
               @update:model-value="updateItem"
               @create-template="handleCreateTemplate"
+              @field-update="forwardFieldUpdate"
+              @field-focus="forwardFieldFocus"
             />
           </template>
         </div>

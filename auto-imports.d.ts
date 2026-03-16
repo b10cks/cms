@@ -96,6 +96,7 @@ declare global {
   const useBlocks: typeof import('./resources/js/composables/useBlocks').useBlocks
   const useComments: typeof import('./resources/js/composables/useComments').useComments
   const useContent: typeof import('./resources/js/composables/useContent').useContent
+  const useContentLiveCollaboration: typeof import('./resources/js/composables/useContentLiveCollaboration').useContentLiveCollaboration
   const useContentMenu: typeof import('./resources/js/composables/useContentMenu').useContentMenu
   const useContentMenuPresence: typeof import('./resources/js/composables/useContentMenuPresence').useContentMenuPresence
   const useContentPresence: typeof import('./resources/js/composables/usePresence').useContentPresence
@@ -168,6 +169,9 @@ declare global {
   // @ts-ignore
   export type { AssetRequirementIssue } from './resources/js/composables/useAssetRequirements'
   import('./resources/js/composables/useAssetRequirements')
+  // @ts-ignore
+  export type { CollaborationPresenceUser, ContentFieldUpdatePayload, ContentFieldFocusPayload, ContentCommitAction } from './resources/js/composables/useContentLiveCollaboration'
+  import('./resources/js/composables/useContentLiveCollaboration')
   // @ts-ignore
   export type { ContentPresenceMap } from './resources/js/composables/useContentMenuPresence'
   import('./resources/js/composables/useContentMenuPresence')
@@ -288,6 +292,7 @@ declare module 'vue' {
     readonly useBlocks: UnwrapRef<typeof import('./resources/js/composables/useBlocks')['useBlocks']>
     readonly useComments: UnwrapRef<typeof import('./resources/js/composables/useComments')['useComments']>
     readonly useContent: UnwrapRef<typeof import('./resources/js/composables/useContent')['useContent']>
+    readonly useContentLiveCollaboration: UnwrapRef<typeof import('./resources/js/composables/useContentLiveCollaboration')['useContentLiveCollaboration']>
     readonly useContentMenu: UnwrapRef<typeof import('./resources/js/composables/useContentMenu')['useContentMenu']>
     readonly useContentMenuPresence: UnwrapRef<typeof import('./resources/js/composables/useContentMenuPresence')['useContentMenuPresence']>
     readonly useContentPresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['useContentPresence']>

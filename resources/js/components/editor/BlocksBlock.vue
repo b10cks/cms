@@ -13,6 +13,11 @@ import BlockHeader from '~/components/editor/BlockHeader.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
+import type {
+  CollaborationPresenceUser,
+  ContentFieldFocusPayload,
+  ContentFieldUpdatePayload,
+} from '~/composables/useContentLiveCollaboration'
 
 import EditorComponent from './EditorComponent.vue'
 
@@ -41,7 +46,13 @@ const {
 const emit = defineEmits<{
   'update:modelValue': [value: Array<Record<string, unknown>>]
   createTemplate: [blockId: string, content: Record<string, unknown>]
+  fieldUpdate: [payload: ContentFieldUpdatePayload]
+  fieldFocus: [payload: ContentFieldFocusPayload]
 }>()
+
+const getActiveCollaborators = inject<
+  (itemId: string, field: string) => CollaborationPresenceUser[]
+>('getActiveCollaborators', () => [])
 
 const getBlockForContent = (content: Record<string, unknown>) =>
   blocks.value?.data?.find((entry) => entry.slug === (content.block as string))
@@ -237,6 +248,14 @@ const navigateToItem = (itemId: string) => {
     hash: `#${itemId}`,
   })
 }
+
+const forwardFieldUpdate = (payload: ContentFieldUpdatePayload) => {
+  emit('fieldUpdate', payload)
+}
+
+const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
+  emit('fieldFocus', payload)
+}
 </script>
 
 <template>
@@ -295,8 +314,8 @@ const navigateToItem = (itemId: string) => {
       >
         <AccordionItem
           v-for="(content, i) in blockItems"
-          :key="i"
-          :value="`content-${i}`"
+          :key="(content.id as string) || i"
+          :value="`content-${(content.id as string) || i}`"
           class="relative mb-2 rounded-lg border border-border bg-background p-2"
         >
           <AccordionHeader class="group">
@@ -398,13 +417,23 @@ const navigateToItem = (itemId: string) => {
           </AccordionHeader>
           <AccordionContent>
             <div class="mt-2 grid items-start gap-4 border-t-2 border-surface p-1 pt-2">
-              <EditorComponent
-                :model-value="content"
-                :block-slug="content.block as string"
-                :space-id="spaceId"
-                is-child
-                @update:model-value="(value) => value && updateContent(i, value)"
-              />
+              <div
+                @focusin.stop
+                @focusout.stop
+              >
+                <EditorComponent
+                  :key="(content.id as string) || i"
+                  :model-value="content"
+                  :block-slug="content.block as string"
+                  :get-active-collaborators="getActiveCollaborators"
+                  :root-id="content.id as string"
+                  :space-id="spaceId"
+                  is-child
+                  @update:model-value="(value) => value && updateContent(i, value)"
+                  @field-update="forwardFieldUpdate"
+                  @field-focus="forwardFieldFocus"
+                />
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>

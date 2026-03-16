@@ -18,6 +18,10 @@ import { Button } from '~/components/ui/button'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { useAlertDialog } from '~/composables/useAlertDialog'
+import {
+  useContentLiveCollaboration,
+  type ContentCommitAction,
+} from '~/composables/useContentLiveCollaboration'
 import { useGlobalClipboard } from '~/composables/useGlobalClipboard'
 import type { ContentResource } from '~/types/contents'
 
@@ -41,25 +45,51 @@ const { useSpaceQuery } = useSpaces()
 const { data: spaceData } = useSpaceQuery(spaceId.value)
 
 const content = ref<ContentResource | null>(null)
-const originalContentData = ref<any>(null)
+const persistedContent = ref<ContentResource | null>(null)
 const aiInteractionRef = useTemplateRef('aiInteractionRef')
 
 const showAi = ref(false)
+
+const cloneContent = (value: ContentResource): ContentResource => JSON.parse(JSON.stringify(value))
+
+const syncPersistedContent = (
+  nextContent: ContentResource,
+  mode: 'replace' | 'preserve-local' = 'replace'
+) => {
+  const cloned = cloneContent(nextContent)
+
+  persistedContent.value = cloned
+
+  if (!content.value || mode === 'replace') {
+    content.value = cloneContent(cloned)
+    return
+  }
+
+  content.value = {
+    ...content.value,
+    ...cloned,
+    content: content.value.content,
+  }
+}
 
 watch(
   originalContent,
   (newContent) => {
     if (newContent) {
-      content.value = JSON.parse(JSON.stringify(newContent))
-      originalContentData.value = JSON.parse(JSON.stringify(newContent.content))
+      const shouldReplace =
+        !content.value ||
+        !persistedContent.value ||
+        JSON.stringify(content.value) === JSON.stringify(persistedContent.value)
+
+      syncPersistedContent(newContent, shouldReplace ? 'replace' : 'preserve-local')
     }
   },
   { immediate: true }
 )
 
 const isDirty = computed(() => {
-  if (!content.value || !originalContent.value) return false
-  return JSON.stringify(content.value) !== JSON.stringify(originalContent.value)
+  if (!content.value || !persistedContent.value) return false
+  return JSON.stringify(content.value) !== JSON.stringify(persistedContent.value)
 })
 
 async function guardLeave(to, from, next) {
@@ -75,6 +105,7 @@ async function guardLeave(to, from, next) {
       )
     )
     if (answer) {
+      discardOwnDrafts()
       next()
     } else {
       next(false)
@@ -112,18 +143,9 @@ watch(
 
 const resetDirtyState = () => {
   if (content.value) {
-    originalContentData.value = JSON.parse(JSON.stringify(content.value.content))
+    syncPersistedContent(content.value, 'replace')
   }
 }
-
-watch(originalContent, (newContent) => {
-  if (newContent && content.value) {
-    const serverContent = JSON.parse(JSON.stringify(newContent.content))
-    if (JSON.stringify(content.value.content) === JSON.stringify(serverContent)) {
-      originalContentData.value = serverContent
-    }
-  }
-})
 
 const selectedItemId = computed({
   get: () => (route.hash ? route.hash.substring(1) : null),
@@ -212,6 +234,28 @@ const updatePreviewItem = (item: Record<string, unknown>) => {
   }
 }
 
+const {
+  broadcastPersistedContent,
+  collaborators,
+  discardOwnDrafts,
+  getCollaboratorsForField,
+  queueFieldUpdate,
+  updateFieldFocus,
+} = useContentLiveCollaboration(spaceId, contentId, {
+  content,
+  hasLocalUnsavedChanges: () => isDirty.value,
+  syncPersistedContent,
+  syncPreviewItem: updatePreviewItem,
+})
+
+const commitPersistedContent = (
+  nextContent: ContentResource,
+  action: ContentCommitAction = 'save'
+) => {
+  syncPersistedContent(nextContent, 'replace')
+  broadcastPersistedContent(nextContent, action)
+}
+
 const findNestedObjectById = (data: unknown, id: string): Record<string, unknown> | null => {
   if (typeof data !== 'object' || data === null) return null
 
@@ -238,6 +282,14 @@ const findNestedObjectById = (data: unknown, id: string): Record<string, unknown
 
 const updateField = (update: { itemId: string; field: string; value: unknown }) => {
   if (!content.value?.content) return
+
+  if (update.itemId === content.value.id) {
+    content.value.content = {
+      ...(content.value.content as Record<string, unknown>),
+      [update.field]: update.value,
+    }
+    return
+  }
 
   const target = findNestedObjectById(content.value.content, update.itemId)
   if (target) {
@@ -266,6 +318,9 @@ provide(
   computed(() => content.value?.current_version_id)
 )
 provide('comments', comments)
+provide('commitPersistedContent', commitPersistedContent)
+provide('discardOwnDrafts', discardOwnDrafts)
+provide('getActiveCollaborators', getCollaboratorsForField)
 provide('updatePreviewItem', updatePreviewItem)
 provide('updateHoverItem', (id: string) => {
   if (previewRef.value) {
@@ -309,10 +364,13 @@ provide('resetDirtyState', resetDirtyState)
           v-model="content.content"
           :root-id="content.id"
           :block-id="content.block!.id"
+          :get-active-collaborators="getCollaboratorsForField"
           :space-id="spaceId"
           :item-id="selectedItemId"
           @navigate="handleNavigate"
           @create-template="handleTemplateTrigger"
+          @field-update="queueFieldUpdate"
+          @field-focus="updateFieldFocus"
         />
         <div
           :class="[
@@ -448,6 +506,7 @@ provide('resetDirtyState', resetDirtyState)
     <HeaderActions
       v-if="content"
       :content="content"
+      :present-users="collaborators"
       :space-id="spaceId"
       :is-dirty="isDirty"
     />

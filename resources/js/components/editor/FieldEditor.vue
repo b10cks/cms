@@ -13,6 +13,13 @@ import ReferenceBlock from '~/components/editor/ReferenceBlock.vue'
 import RichTextBlock from '~/components/editor/RichTextBlock.vue'
 import TextareaBlock from '~/components/editor/TextareaBlock.vue'
 import TextBlock from '~/components/editor/TextBlock.vue'
+import { AvatarList } from '~/components/ui/avatar'
+import type {
+  CollaborationPresenceUser,
+  ContentFieldFocusPayload,
+  ContentFieldUpdatePayload,
+} from '~/composables/useContentLiveCollaboration'
+
 import FieldComments from '../comments/FieldComments.vue'
 
 const editors = {
@@ -34,13 +41,17 @@ const editors = {
 
 const props = defineProps<{
   item: SchemaType & { key: string }
+  itemId: string
   modelValue: Record<string, unknown>
   spaceId: string
+  activeCollaborators?: CollaborationPresenceUser[]
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: Record<string, unknown>]
   createTemplate: [blockId: string, content: Record<string, unknown>]
+  fieldUpdate: [payload: ContentFieldUpdatePayload]
+  fieldFocus: [payload: ContentFieldFocusPayload]
 }>()
 
 // const updatePreviewItem = inject<(data: never) => void>('updatePreviewItem')
@@ -50,7 +61,8 @@ const fieldValue = computed({
     return props.modelValue[props.item.key]
   },
   set(newValue) {
-    if (newValue === props.modelValue[props.item.key]) return
+    const previousValue = props.modelValue[props.item.key]
+    if (newValue === previousValue) return
 
     const updatedModel = { ...props.modelValue }
 
@@ -62,18 +74,121 @@ const fieldValue = computed({
 
     // Emit the update with the new object
     emit('update:modelValue', updatedModel)
+    emit('fieldUpdate', {
+      debounceMs: fieldDebounceMs.value,
+      itemId: props.itemId,
+      field: props.item.key,
+      previousValue,
+      value: newValue,
+    })
   },
 })
 
 const handleCreateTemplate = (blockId: string, content: Record<string, unknown>): void => {
   emit('createTemplate', blockId, content)
 }
+
+const handleNestedFieldUpdate = (payload: ContentFieldUpdatePayload): void => {
+  emit('fieldUpdate', payload)
+}
+
+const handleNestedFieldFocus = (payload: ContentFieldFocusPayload): void => {
+  emit('fieldFocus', payload)
+}
+
+const isFocused = ref(false)
+const tracksOwnFocus = computed(() => props.item.type !== 'blocks')
+const fieldDebounceMs = computed(() => {
+  switch (props.item.type) {
+    case 'richtext':
+      return 500
+    case 'markdown':
+    case 'textarea':
+      return 250
+    default:
+      return 150
+  }
+})
+
+const collaborationColor = computed(() => props.activeCollaborators?.[0]?.color || null)
+const showContainerHighlight = computed(
+  () => tracksOwnFocus.value && !!props.activeCollaborators?.length
+)
+
+const collaborationStyle = computed(() => {
+  if (!collaborationColor.value) return undefined
+
+  return {
+    '--collaboration-color': collaborationColor.value,
+    '--collaboration-color-soft': `${collaborationColor.value}20`,
+  }
+})
+
+const handleFocusIn = () => {
+  if (!tracksOwnFocus.value) return
+  if (isFocused.value) return
+
+  isFocused.value = true
+  emit('fieldFocus', {
+    itemId: props.itemId,
+    field: props.item.key,
+    focused: true,
+  })
+}
+
+const handleFocusOut = (event: FocusEvent) => {
+  if (!tracksOwnFocus.value) return
+
+  const nextTarget = event.relatedTarget as Node | null
+  const currentTarget = event.currentTarget as HTMLElement | null
+
+  if (nextTarget && currentTarget?.contains(nextTarget)) {
+    return
+  }
+
+  if (!isFocused.value) return
+
+  isFocused.value = false
+  emit('fieldFocus', {
+    itemId: props.itemId,
+    field: props.item.key,
+    focused: false,
+  })
+}
+
+onBeforeUnmount(() => {
+  if (!tracksOwnFocus.value) return
+  if (!isFocused.value) return
+
+  emit('fieldFocus', {
+    itemId: props.itemId,
+    field: props.item.key,
+    focused: false,
+  })
+})
 </script>
 
 <template>
-  <div class="relative">
+  <div
+    :class="['relative', showContainerHighlight ? 'collaboration-field-active' : '']"
+    :style="collaborationStyle"
+    @focusin="handleFocusIn"
+    @focusout="handleFocusOut"
+  >
+    <div
+      v-if="activeCollaborators?.length"
+      class="absolute top-3 right-3 z-20"
+    >
+      <AvatarList
+        :users="activeCollaborators"
+        :max="3"
+        size="sm"
+        tooltip-side="left"
+        class="rounded-full bg-background/90 px-1 py-0.5 shadow-sm backdrop-blur"
+      />
+    </div>
     <FieldComments
-      :item-id="modelValue.id as string"
+      :item-id="itemId"
       :field="item.key"
     />
     <component
@@ -83,7 +198,21 @@ const handleCreateTemplate = (blockId: string, content: Record<string, unknown>)
       :item="item"
       :space-id="spaceId"
       @create-template="handleCreateTemplate"
+      @field-update="handleNestedFieldUpdate"
+      @field-focus="handleNestedFieldFocus"
     />
     <div v-else>Unknown editor type: {{ item.type }}</div>
   </div>
 </template>
+
+<style scoped>
+.collaboration-field-active :deep(input),
+.collaboration-field-active :deep(textarea),
+.collaboration-field-active :deep(select),
+.collaboration-field-active :deep(button[role='combobox']),
+.collaboration-field-active :deep(.border-input),
+.collaboration-field-active :deep(.border-input-border),
+.collaboration-field-active :deep(.ProseMirror) {
+  outline: 2px solid var(--collaboration-color);
+}
+</style>

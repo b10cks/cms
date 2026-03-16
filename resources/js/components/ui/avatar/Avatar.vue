@@ -9,6 +9,7 @@ import { avatarVariants } from '.'
 const props = defineProps<{
   name: string
   avatar?: string | null
+  borderColor?: string | null
   size?: AvatarVariants['size']
   class?: HTMLAttributes['class']
 }>()
@@ -34,7 +35,10 @@ const width = computed(() => {
 </script>
 
 <template>
-  <div :class="cn(avatarVariants({ size }), props.class)">
+  <div
+    :class="cn(avatarVariants({ size }), 'border-2', props.class)"
+    :style="{ borderColor: props.borderColor || 'transparent' }"
+  >
     <NuxtImg
       v-if="props.avatar"
       :src="props.avatar"

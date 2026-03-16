@@ -13,6 +13,7 @@ import { Avatar, avatarVariants } from './index'
 
 interface AvatarListUser extends User {
   joined_at?: string
+  color?: string | null
 }
 
 const props = withDefaults(
@@ -92,6 +93,7 @@ const placeholderSizeClass = computed(() => {
             :key="user.id"
             :name="`${user.firstname} ${user.lastname}`"
             :avatar="user.avatar"
+            :border-color="user.color"
             :size="size"
             class="ring-2 ring-background"
           />

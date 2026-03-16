@@ -18,6 +18,16 @@ export interface UsePresenceOptions {
   reconnectDelay?: number
 }
 
+interface WhisperListener {
+  eventName: string
+  callback: (payload: unknown) => void
+}
+
+interface PresenceRealtimeChannel {
+  whisper?: (eventName: string, payload: unknown) => void
+  listenForWhisper?: (eventName: string, callback: (payload: unknown) => void) => void
+}
+
 export function usePresence(
   channelNameRef: MaybeRefOrComputed<string | null>,
   options: UsePresenceOptions = {}
@@ -33,6 +43,7 @@ export function usePresence(
 
   let presenceChannel: ReturnType<Echo<'reverb'>['join']> | null = null
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  const whisperListeners: WhisperListener[] = []
 
   const currentUser = computed(() => {
     const auth = useAuth()
@@ -45,6 +56,20 @@ export function usePresence(
     } catch {
       return null
     }
+  }
+
+  const getRealtimeChannel = (): PresenceRealtimeChannel | null => {
+    if (!presenceChannel) return null
+    return presenceChannel as unknown as PresenceRealtimeChannel
+  }
+
+  const attachWhisperListeners = () => {
+    const channel = getRealtimeChannel()
+    if (!channel?.listenForWhisper) return
+
+    whisperListeners.forEach((listener) => {
+      channel.listenForWhisper?.(listener.eventName, listener.callback)
+    })
   }
 
   const connect = () => {
@@ -62,6 +87,7 @@ export function usePresence(
 
     try {
       presenceChannel = echo.join(channelName.value)
+      attachWhisperListeners()
 
       presenceChannel
         .here((members: PresenceUser[]) => {
@@ -130,6 +156,27 @@ export function usePresence(
     connect()
   }
 
+  const whisper = <T>(eventName: string, payload: T) => {
+    getRealtimeChannel()?.whisper?.(eventName, payload)
+  }
+
+  const onWhisper = <T>(eventName: string, callback: (payload: T) => void) => {
+    const listener: WhisperListener = {
+      eventName,
+      callback: callback as (payload: unknown) => void,
+    }
+
+    whisperListeners.push(listener)
+    getRealtimeChannel()?.listenForWhisper?.(eventName, listener.callback)
+
+    return () => {
+      const index = whisperListeners.indexOf(listener)
+      if (index >= 0) {
+        whisperListeners.splice(index, 1)
+      }
+    }
+  }
+
   watch(channelName, (newChannel, oldChannel) => {
     if (newChannel !== oldChannel) {
       disconnect()
@@ -158,6 +205,8 @@ export function usePresence(
     currentUser: readonly(currentUser),
     refresh,
     disconnect,
+    whisper,
+    onWhisper,
   }
 }
 

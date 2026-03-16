@@ -15,6 +15,10 @@ import {
   DropdownMenuSubTrigger,
 } from '~/components/ui/dropdown-menu'
 import { SimpleTooltip } from '~/components/ui/tooltip'
+import type {
+  CollaborationPresenceUser,
+  ContentCommitAction,
+} from '~/composables/useContentLiveCollaboration'
 import type { ContentResource } from '~/types/contents'
 import PublishDialog from './PublishDialog.vue'
 
@@ -23,10 +27,14 @@ const router = useRouter()
 const props = defineProps<{
   spaceId: string
   content: ContentResource
+  presentUsers?: CollaborationPresenceUser[]
   disabled?: boolean
   isDirty?: boolean
 }>()
 
+const commitPersistedContent = inject<
+  ((content: ContentResource, action?: ContentCommitAction) => void) | undefined
+>('commitPersistedContent', undefined)
 const resetDirtyState = inject<(() => void) | undefined>('resetDirtyState', undefined)
 
 const {
@@ -45,11 +53,11 @@ const { data: releases } = useReleasesQuery()
 
 const { mutate: assignVersions, isPending: isAssigning } = useAssignVersionsMutation()
 
-const { mutate: createContent } = useCreateContentMutation()
-const { mutate: updateContent } = useUpdateContentMutation()
-const { mutate: publishContent, isPending: isPublishing } = usePublishContentMutation()
-const { mutate: scheduleContent, isPending: isScheduling } = useScheduleContentMutation()
-const { mutate: unpublishContent } = useUnpublishContentMutation()
+const { mutateAsync: createContent } = useCreateContentMutation()
+const { mutateAsync: updateContent } = useUpdateContentMutation()
+const { mutateAsync: publishContent, isPending: isPublishing } = usePublishContentMutation()
+const { mutateAsync: scheduleContent, isPending: isScheduling } = useScheduleContentMutation()
+const { mutateAsync: unpublishContent } = useUnpublishContentMutation()
 
 const isLocalization = computed(() => route.name === 'space-content-contentId-localization')
 const isVersions = computed(() => route.name === 'space-content-contentId-versions')
@@ -59,23 +67,27 @@ const assignReleaseDialogOpen = ref(false)
 const selectedReleaseForAssign = ref<any>(null)
 const contentModel = computed(() => new ContentModel(props.content))
 
-const { users: presentUsers } = useContentPresence(
-  computed(() => props.spaceId),
-  computed(() => props.content.id)
-)
-
-const save = async () => {
-  if (props.content.id) {
-    await updateContent({ id: props.content.id, payload: props.content })
-  } else {
-    await createContent(props.content)
-  }
+const handlePersistedContent = (
+  nextContent: ContentResource,
+  action: ContentCommitAction = 'save'
+) => {
+  commitPersistedContent?.(nextContent, action)
   resetDirtyState?.()
 }
 
+const save = async () => {
+  if (props.content.id) {
+    const nextContent = await updateContent({ id: props.content.id, payload: props.content })
+    handlePersistedContent(nextContent, 'save')
+  } else {
+    const nextContent = await createContent(props.content)
+    handlePersistedContent(nextContent, 'save')
+  }
+}
+
 const publishDirectly = async () => {
-  await publishContent({ id: props.content.id, payload: props.content })
-  resetDirtyState?.()
+  const nextContent = await publishContent({ id: props.content.id, payload: props.content })
+  handlePersistedContent(nextContent, 'publish')
 }
 
 const publishWithMessage = () => {
@@ -93,9 +105,9 @@ const handlePublish = async (payload: { message?: string; published_at?: string 
     ...props.content,
     ...payload,
   }
-  await publishContent({ id: props.content.id, payload: publishPayload })
+  const nextContent = await publishContent({ id: props.content.id, payload: publishPayload })
+  handlePersistedContent(nextContent, 'publish')
   publishDialogOpen.value = false
-  resetDirtyState?.()
 }
 
 const handleSchedule = async (payload: { message?: string; scheduled_at?: string | null }) => {
@@ -104,13 +116,14 @@ const handleSchedule = async (payload: { message?: string; scheduled_at?: string
     message: payload.message,
     scheduled_at: payload.scheduled_at,
   }
-  await scheduleContent({ id: props.content.id, payload: schedulePayload })
+  const nextContent = await scheduleContent({ id: props.content.id, payload: schedulePayload })
+  handlePersistedContent(nextContent, 'schedule')
   publishDialogOpen.value = false
-  resetDirtyState?.()
 }
 
 const unpublish = async () => {
-  await unpublishContent({ id: props.content.id, payload: props.content })
+  const nextContent = await unpublishContent({ id: props.content.id, payload: props.content })
+  handlePersistedContent(nextContent, 'unpublish')
 }
 
 const switchLocalization = () => {
@@ -171,8 +184,8 @@ const handleConfirmAssign = (versionIds: string[]) => {
 <template>
   <div class="flex items-center gap-3">
     <AvatarList
-      v-if="presentUsers.length > 0"
-      :users="presentUsers"
+      v-if="props.presentUsers?.length"
+      :users="props.presentUsers"
       :max="3"
       tooltip-side="bottom"
     />

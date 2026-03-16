@@ -46,6 +46,7 @@ const emit = defineEmits<{
 
 const contentPickerOpen = ref(false)
 const linkInSelection = ref<InternalLinkAttrs | null>(null)
+const isApplyingExternalContent = ref(false)
 
 const getHeadingLabel = (level: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'): string => {
   if (level === 'p') return 'Paragraph'
@@ -103,6 +104,7 @@ const editor = useEditor({
     TableCell,
   ],
   onUpdate: ({ editor: currentEditor }) => {
+    if (isApplyingExternalContent.value) return
     emit('update:modelValue', currentEditor.getJSON())
   },
 })
@@ -151,7 +153,11 @@ watch(
     if (!editor.value) return
     const isSame = JSON.stringify(editor.value.getJSON()) === JSON.stringify(newValue)
     if (!isSame) {
+      isApplyingExternalContent.value = true
       editor.value.commands.setContent(newValue)
+      nextTick(() => {
+        isApplyingExternalContent.value = false
+      })
     }
   },
   { deep: true }
