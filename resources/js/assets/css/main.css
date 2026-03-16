@@ -62,8 +62,8 @@
   --text-sm: 13px;
   --text-base: 15px;
 
-  --checkerboard-light: var(--color-gray-900);
-  --checkerboard-dark: var(--color-gray-950);
+  --checkerboard-light: var(--color-gray-100);
+  --checkerboard-dark: var(--color-gray-200);
   --checkerboard-size: 20px;
 
   --surface: var(--color-gray-100);
@@ -116,6 +116,9 @@
   --background: var(--color-gray-900);
   --elevated: var(--color-gray-850);
   --foreground: var(--color-gray-400);
+
+  --checkerboard-light: var(--color-gray-900);
+  --checkerboard-dark: var(--color-gray-950);
 
   --primary: var(--color-gray-50);
   --primary-foreground: var(--color-gray-950);
