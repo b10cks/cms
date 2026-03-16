@@ -31,7 +31,7 @@ export function useTokens(spaceId: MaybeRef<string>) {
       },
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.tokens(spaceId).lists() })
-        toast.success(t('composables.tokens.createSuccess', { name: data.data.name }) as string)
+        toast.success(t('composables.tokens.createSuccess', { name: data.token.name }) as string)
       },
       onError: (error: Error) => {
         toast.error(
