@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import NuxtImg from '~/components/NuxtImg.vue'
+import type { HTMLAttributes } from 'vue'
 
 import { cn } from '@/lib/utils'
-import type { HTMLAttributes } from 'vue'
+import NuxtImg from '~/components/NuxtImg.vue'
+
 import type { AvatarVariants } from '.'
 import { avatarVariants } from '.'
 
@@ -36,7 +37,9 @@ const width = computed(() => {
 
 <template>
   <div
-    :class="cn(avatarVariants({ size }), 'border-2', props.class)"
+    :class="
+      cn(avatarVariants({ size }), props.borderColor ? 'border-2' : 'border-none', props.class)
+    "
     :style="{ borderColor: props.borderColor || 'transparent' }"
   >
     <NuxtImg
