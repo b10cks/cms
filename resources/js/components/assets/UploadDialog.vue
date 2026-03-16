@@ -239,6 +239,7 @@ const onOpenChange = (open: boolean) => {
 
   if (!open) {
     selectedFile.value = null
+    files.value = []
   }
   emit('update:open', open)
 }
@@ -296,6 +297,7 @@ const handleReplaceFile = () => {
 
 const handleDrop = (e: DragEvent) => {
   e.preventDefault()
+  e.stopPropagation()
   if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
     const inputElement = fileInputRef.value
     if (inputElement) {
@@ -313,6 +315,7 @@ const handleDrop = (e: DragEvent) => {
 
 const handleDragOver = (e: DragEvent) => {
   e.preventDefault()
+  e.stopPropagation()
 }
 
 const getProgressColor = (status: 'pending' | 'uploading' | 'error' | 'complete') => {
