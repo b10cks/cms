@@ -28,7 +28,6 @@ const toggleSidebar = () => {
       id="content-panel-1"
       ref="sidebar"
       size-unit="px"
-      collapsible
       :min-size="120"
       :max-size="512"
       :default-size="settings.content.treeWidth || 320"
