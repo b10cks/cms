@@ -181,6 +181,7 @@ class SetupConnection extends QueuedJob
     {
         Artisan::call('migrate', [
             '--path' => 'database/migrations/spaces',
+            '--force' => true,
             '--database' => $connectionName,
         ]);
     }
