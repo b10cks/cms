@@ -31,7 +31,7 @@ class CreateSpace
             $this->membershipService->assignSpaceRole($space, $owner, 'owner');
         }
 
-        SetupSpace::dispatch($space);
+        SetupSpace::dispatchSync($space);
 
         return $space;
     }

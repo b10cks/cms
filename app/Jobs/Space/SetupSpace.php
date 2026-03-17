@@ -39,7 +39,7 @@ class SetupSpace extends QueuedJob
             'is_default' => true,
         ]);
 
-        SetupConnection::dispatch($connection);
+        SetupConnection::dispatchSync($connection);
     }
 
     protected function createDefaultStorage(Space $space)
@@ -69,7 +69,7 @@ class SetupSpace extends QueuedJob
             ],
         ]);
 
-        SetupStorage::dispatch($storage);
+        SetupStorage::dispatchSync($storage);
     }
 
     protected function provisionDemoAiKey(Space $space): void
