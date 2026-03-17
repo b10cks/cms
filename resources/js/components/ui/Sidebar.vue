@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import type { Ref } from 'vue'
-import Icon from '~/components/Icon.vue'
-
 import { useDark, useToggle } from '@vueuse/core'
+import type { Ref } from 'vue'
+
+import Icon from '~/components/Icon.vue'
 import { Avatar } from '~/components/ui/avatar'
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuRadioGroup,
@@ -23,11 +24,17 @@ import { getLocale, locales } from '~/plugins/i18n'
 const router = useRouter()
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
-const { handleUpdateLanguage } = useUserSettings()
+
 
 const { user, logout } = useAuth()
+const { settings, extendedSidebar } = useUserSettings()
+
+
+const isExtendedSidebar = computed(() => extendedSidebar.value)
+
 
 const spaceId = inject<Ref<string | undefined>>('spaceId')
+
 
 const menu = [
   { icon: 'lucide:home', label: 'Home', route: 'space' },
@@ -39,6 +46,7 @@ const menu = [
   { icon: 'lucide:rocket', label: 'Releases', route: 'space-releases' },
   { icon: 'lucide:settings', label: 'Settings', route: 'space-settings-index' },
 ]
+
 
 const buildLink = (name: string) => {
   if (!spaceId?.value) {
@@ -52,36 +60,53 @@ const buildLink = (name: string) => {
   }
 }
 
+
 const handleLanguageChange = (lang: string) => {
-  handleUpdateLanguage(lang)
+  settings.languageIso = lang
 }
+
 
 const currentLocale = computed(() => getLocale())
 const availableLocales = locales
 </script>
 
 <template>
-  <div class="flex h-full w-14 flex-col overflow-hidden border-r border-r-border p-3 select-none">
+  <div
+    :class="[
+      'flex h-full flex-col overflow-hidden border-r border-r-border select-none',
+      isExtendedSidebar ? 'w-18 p-1' : 'w-14 p-3',
+    ]"
+  >
     <div class="flex min-h-0 flex-1 flex-col overflow-y-auto">
-      <div class="relative flex w-full min-w-0 flex-col gap-2">
-        <SimpleTooltip
+      <div
+        :class="['relative flex w-full min-w-0 flex-col', isExtendedSidebar ? 'gap-1' : 'gap-2']"
+      >
+        <component
+          :is="isExtendedSidebar ? 'div' : SimpleTooltip"
           v-for="m in menu"
           :key="m.label"
-          :tooltip="m.label"
-          side="right"
+          v-bind="isExtendedSidebar ? {} : { tooltip: m.label, side: 'right' }"
         >
           <RouterLink
             :to="buildLink(m.route)"
-            class="flex size-8 items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-border"
+            :class="[
+              'w-full flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-border',
+              isExtendedSidebar ? 'flex-col gap-1 p-2 text-center' : 'size-8 ',
+            ]"
             active-class="text-primary bg-border"
           >
             <Icon
               :name="m.icon"
-              size="1.25rem"
-              stroke-width="5"
+              size="20"
             />
+            <span
+              v-if="isExtendedSidebar"
+              class="line-clamp-2 text-[10px] leading-tight"
+            >
+              {{ m.label }}
+            </span>
           </RouterLink>
-        </SimpleTooltip>
+        </component>
       </div>
     </div>
     <div class="flex flex-col items-center gap-2">
@@ -99,6 +124,13 @@ const availableLocales = locales
             align="start"
           >
             <DropdownMenuItem disabled>{{ user.email }}</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuCheckboxItem
+              :model-value="isExtendedSidebar"
+              @select="settings.extendedSidebar = !isExtendedSidebar"
+            >
+              <span>{{ $t('labels.navigation.extendedSidebar', 'Extended sidebar') }}</span>
+            </DropdownMenuCheckboxItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem @select="toggleDark()">
               <span>{{ $t('labels.account.themes.darkMode') }}</span>

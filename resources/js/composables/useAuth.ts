@@ -52,6 +52,9 @@ export function useAuth() {
   const { t } = useI18n()
 
   const user = globalUser
+  const setUser = (value: User | null) => {
+    user.value = value
+  }
   const isAuthenticated = computed(() => !!user.value)
   const isLoading = ref(false)
   const isReady = globalIsReady
@@ -282,6 +285,7 @@ export function useAuth() {
 
   return {
     user: readonly(user),
+    setUser,
     isAuthenticated: readonly(isAuthenticated),
     isLoading: readonly(isLoading),
     isReady: readonly(isReady),

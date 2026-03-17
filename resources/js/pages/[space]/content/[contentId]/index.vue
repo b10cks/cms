@@ -32,25 +32,33 @@ const router = useRouter()
 const spaceId = computed<string>(() => route.params.space as string)
 const contentId = computed<string>(() => route.params.contentId as string)
 
+
 const { settings } = useSpaceSettings(spaceId.value)
 const { hasClipboardItem, clearClipboard } = useGlobalClipboard()
+
 
 const { useContentQuery } = useContent(spaceId)
 const { data: originalContent } = useContentQuery(contentId)
 
+
 const { useCommentsQuery } = useComments(spaceId, contentId)
 const { data: comments } = useCommentsQuery()
 
+
 const { useSpaceQuery } = useSpaces()
 const { data: spaceData } = useSpaceQuery(spaceId.value)
+
 
 const content = ref<ContentResource | null>(null)
 const persistedContent = ref<ContentResource | null>(null)
 const aiInteractionRef = useTemplateRef('aiInteractionRef')
 
+
 const showAi = ref(false)
 
+
 const cloneContent = (value: ContentResource): ContentResource => JSON.parse(JSON.stringify(value))
+
 
 const syncPersistedContent = (
   nextContent: ContentResource,
@@ -58,12 +66,15 @@ const syncPersistedContent = (
 ) => {
   const cloned = cloneContent(nextContent)
 
+
   persistedContent.value = cloned
+
 
   if (!content.value || mode === 'replace') {
     content.value = cloneContent(cloned)
     return
   }
+
 
   content.value = {
     ...content.value,
@@ -71,6 +82,7 @@ const syncPersistedContent = (
     content: content.value.content,
   }
 }
+
 
 watch(
   originalContent,
@@ -87,15 +99,18 @@ watch(
   { immediate: true }
 )
 
+
 const isDirty = computed(() => {
   if (!content.value || !persistedContent.value) return false
   return JSON.stringify(content.value) !== JSON.stringify(persistedContent.value)
 })
 
+
 async function guardLeave(to, from, next) {
   if (to && from && to.path === from.path) {
     return next()
   }
+
 
   if (isDirty.value) {
     const answer = await alert.confirm(
@@ -115,12 +130,15 @@ async function guardLeave(to, from, next) {
   }
 }
 
+
 onBeforeRouteUpdate(guardLeave)
 onBeforeRouteLeave(guardLeave)
+
 
 onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', handleBeforeUnload)
 })
+
 
 const handleBeforeUnload = (e: BeforeUnloadEvent) => {
   if (isDirty.value) {
@@ -128,6 +146,7 @@ const handleBeforeUnload = (e: BeforeUnloadEvent) => {
     e.returnValue = ''
   }
 }
+
 
 watch(
   isDirty,
@@ -141,11 +160,13 @@ watch(
   { immediate: true }
 )
 
+
 const resetDirtyState = () => {
   if (content.value) {
     syncPersistedContent(content.value, 'replace')
   }
 }
+
 
 const selectedItemId = computed({
   get: () => (route.hash ? route.hash.substring(1) : null),
@@ -158,11 +179,14 @@ const selectedItemId = computed({
   },
 })
 
+
 const handleNavigate = (itemId: string | null) => {
   selectedItemId.value = itemId
 }
 
+
 const previewRef = useTemplateRef('previewRef')
+
 
 type Tab = {
   value: string
@@ -171,10 +195,18 @@ type Tab = {
   badge?: { content: string | number; show: boolean; variant: BadgeVariants['variant'] }
 }
 
+
+const { settings: userSettings } = useUserSettings()
+
+
+const isExtendedSidebar = computed(() => userSettings.extendedSidebar ?? true)
+
+
 const unresolvedCommentsCount = computed(() => {
   if (!comments.value) return 0
   return comments.value.filter((c) => !c.is_resolved).length
 })
+
 
 const tabs = computed((): Tab[] => [
   { value: 'edit', icon: 'lucide:pencil', label: t('labels.contents.tabs.edit') },
@@ -192,13 +224,16 @@ const tabs = computed((): Tab[] => [
   },
 ])
 
+
 const mode = useRouteQuery('mode', 'edit') as Ref<'edit' | 'config' | 'info' | 'comments'>
+
 
 useSeoMeta({
   title: computed(() => {
     return content.value?.name
   }),
 })
+
 
 const rootBlock = computed(() => {
   if (!content.value) return null
@@ -211,6 +246,7 @@ const rootBlock = computed(() => {
   return null
 })
 
+
 const isPreviewDisabled = computed(() => {
   if (!spaceData.value) return false
 
@@ -219,20 +255,24 @@ const isPreviewDisabled = computed(() => {
   )
 })
 
+
 const showPreview = computed(() => {
   return !isPreviewDisabled.value && settings.value.content.showPreview
 })
+
 
 const isVisualEditorAvailable = computed(() => {
   if (!spaceData.value) return false
   return spaceData.value.settings?.visual_editor !== false
 })
 
+
 const updatePreviewItem = (item: Record<string, unknown>) => {
   if (previewRef.value) {
     previewRef.value.updateItem({ ...item })
   }
 }
+
 
 const {
   broadcastPersistedContent,
@@ -248,6 +288,7 @@ const {
   syncPreviewItem: updatePreviewItem,
 })
 
+
 const commitPersistedContent = (
   nextContent: ContentResource,
   action: ContentCommitAction = 'save'
@@ -256,8 +297,10 @@ const commitPersistedContent = (
   broadcastPersistedContent(nextContent, action)
 }
 
+
 const findNestedObjectById = (data: unknown, id: string): Record<string, unknown> | null => {
   if (typeof data !== 'object' || data === null) return null
+
 
   if (Array.isArray(data)) {
     for (const item of data) {
@@ -267,8 +310,10 @@ const findNestedObjectById = (data: unknown, id: string): Record<string, unknown
     return null
   }
 
+
   const obj = data as Record<string, unknown>
   if (obj.id === id) return obj
+
 
   for (const key in obj) {
     if (Object.hasOwn(obj, key) && typeof obj[key] === 'object' && obj[key] !== null) {
@@ -277,11 +322,14 @@ const findNestedObjectById = (data: unknown, id: string): Record<string, unknown
     }
   }
 
+
   return null
 }
 
+
 const updateField = (update: { itemId: string; field: string; value: unknown }) => {
   if (!content.value?.content) return
+
 
   if (update.itemId === content.value.id) {
     content.value.content = {
@@ -291,11 +339,13 @@ const updateField = (update: { itemId: string; field: string; value: unknown }) 
     return
   }
 
+
   const target = findNestedObjectById(content.value.content, update.itemId)
   if (target) {
     target[update.field] = update.value
   }
 }
+
 
 const template = reactive({
   isOpen: false,
@@ -303,11 +353,13 @@ const template = reactive({
   content: {},
 })
 
+
 const handleTemplateTrigger = (blockId: string, content: object) => {
   template.blockId = blockId
   template.content = content
   template.isOpen = true
 }
+
 
 provide('content', content)
 provide('rootBlock', rootBlock)
@@ -439,49 +491,77 @@ provide('resetDirtyState', resetDirtyState)
       v-else
       class="grow"
     />
-    <TabsList class="flex h-full w-14 shrink-0 flex-col border-l border-l-border p-3 select-none">
-      <div class="flex min-h-0 flex-1 flex-col">
-        <div class="relative flex w-full min-w-0 flex-col gap-2">
-          <SimpleTooltip
+    <TabsList
+      :class="[
+        'flex h-full flex-col overflow-hidden border-l border-l-border select-none',
+        isExtendedSidebar ? 'w-18 p-1' : 'w-14 p-3',
+      ]"
+    >
+      <div class="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div
+          :class="['relative flex w-full min-w-0 flex-col', isExtendedSidebar ? 'gap-1' : 'gap-2']"
+        >
+          <component
+            :is="isExtendedSidebar ? 'div' : SimpleTooltip"
             v-for="tab in tabs"
-            :tooltip="tab.label"
             :key="tab.value"
-            side="left"
+            v-bind="isExtendedSidebar ? {} : { tooltip: tab.label, side: 'left' }"
             class="flex cursor-pointer"
           >
+            {{ modelValue }}
             <TabsTrigger
               :value="tab.value"
-              class="relative flex size-8 items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-input data-[state=active]:bg-input data-[state=active]:text-primary data-[state=inactive]:cursor-pointer"
+              :class="[
+                'w-full flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-border',
+                isExtendedSidebar ? 'flex-col gap-1 p-2 text-center' : 'size-8',
+                mode === tab.value ? 'bg-border text-primary' : '',
+              ]"
             >
               <Icon
                 :name="tab.icon"
-                size="1.25rem"
+                size="20"
               />
+              <span
+                v-if="isExtendedSidebar"
+                class="line-clamp-2 text-[10px] leading-tight"
+              >
+                {{ tab.label }}
+              </span>
               <Badge
                 v-if="tab.badge?.show"
                 :variant="tab.badge.variant"
                 size="dot"
-                class="absolute -top-1 -right-1"
+                :class="isExtendedSidebar ? 'absolute top-1 right-1' : 'absolute -top-1 -right-1'"
               >
                 {{ tab.badge.content }}
               </Badge>
             </TabsTrigger>
-          </SimpleTooltip>
+          </component>
         </div>
       </div>
-      <div>
+      <div class="flex flex-col">
         <Button
-          size="toolbar"
+          :class="[
+            'w-full flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-border',
+            isExtendedSidebar ? 'flex-col gap-1 p-2 text-center' : 'size-8 ',
+          ]"
           :variant="showAi ? 'default' : 'ghost'"
           @click="showAi = !showAi"
         >
           <Icon
             name="lucide:wand"
+            size="20"
             :class="[
               showAi ? 'text-primary' : 'text-ai',
               'transition-colors duration-200 ease-butter ',
             ]"
           />
+          <span
+            v-if="isExtendedSidebar"
+            class="line-clamp-2 text-[10px] leading-tight"
+          >
+            AI
+          </span>
         </Button>
       </div>
     </TabsList>

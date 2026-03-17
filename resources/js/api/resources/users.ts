@@ -6,9 +6,11 @@ import { BaseResource } from './base-resource'
 export interface UpdateUserPayload {
   firstname?: string
   lastname?: string
-  settings?: {
-    languageIso?: string
-  }
+}
+
+export interface UpdateUserSettingsPayload {
+  languageIso?: string
+  extendedSidebar?: boolean
 }
 
 export interface ChangePasswordPayload {
@@ -29,6 +31,10 @@ export class Users extends BaseResource<User, never, UpdateUserPayload, never> {
 
   public async updateMe(payload: UpdateUserPayload): Promise<ApiResponse<User>> {
     return this.client.patch<ApiResponse<User>>(`${this.basePath}/me`, payload)
+  }
+
+  public async updateSettings(payload: UpdateUserSettingsPayload): Promise<void> {
+    return this.client.post(`${this.basePath}/me/settings`, payload)
   }
 
   public async changePassword(payload: ChangePasswordPayload): Promise<void> {

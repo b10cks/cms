@@ -13,7 +13,8 @@ use Illuminate\Contracts\Database\Eloquent\SerializesCastableAttributes;
 class UserSettings extends Settings
 {
     protected array $defaults = [
-        'language_iso' => 'en',
+        'languageIso' => 'en',
+        'extendedSidebar' => true,
     ];
 
     public static function castUsing(array $arguments)

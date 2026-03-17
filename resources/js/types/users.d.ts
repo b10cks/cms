@@ -9,5 +9,6 @@ export interface User {
   email_verified_at?: string
   settings?: {
     languageIso?: string
+    extendedSidebar?: boolean
   }
 }

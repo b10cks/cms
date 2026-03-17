@@ -12,11 +12,13 @@ const { t, locales } = useI18n()
 const { data: user } = useUserQuery()
 const { mutate: updateUser, isPending: isUpdating } = useUpdateUserMutation()
 const { mutate: uploadAvatar, isPending: isUploadingAvatar } = useUploadAvatarMutation()
-const { isUpdating: isUpdatingSettings, handleUpdateLanguage } = useUserSettings(user)
+const { settings } = useUserSettings()
+
 
 useSeoMeta({
   title: computed(() => t('labels.account.profile.title')),
 })
+
 
 const firstname = ref('')
 const lastname = ref('')
@@ -24,6 +26,7 @@ const avatar = ref<string | null>(null)
 const avatarInputRef = ref<HTMLInputElement | null>(null)
 const uploadProgress = ref(0)
 const { upload, isUploading: fileUploadIsUploading } = useFileUpload()
+
 
 watch(
   () => user.value,
@@ -37,6 +40,7 @@ watch(
   { immediate: true }
 )
 
+
 const handleSave = async () => {
   await updateUser({
     firstname: firstname.value,
@@ -44,9 +48,12 @@ const handleSave = async () => {
   })
 }
 
-const onLanguageChange = async (value: string) => {
-  await handleUpdateLanguage(value)
+
+const onLanguageChange = (value: string) => {
+  if (value === settings.languageIso) return
+  settings.languageIso = value
 }
+
 
 const handleAvatarFile = async (file: File) => {
   if (!file) return
@@ -65,9 +72,11 @@ const handleAvatarFile = async (file: File) => {
   }
 }
 
+
 const handleUploadAvatar = () => {
   avatarInputRef.value?.click()
 }
+
 
 const onAvatarInputChange = (e: Event) => {
   const files = (e.target as HTMLInputElement).files
@@ -76,12 +85,14 @@ const onAvatarInputChange = (e: Event) => {
   }
 }
 
+
 const onDropAvatar = (e: DragEvent) => {
   e.preventDefault()
   if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
     handleAvatarFile(e.dataTransfer.files[0])
   }
 }
+
 
 const onDragOverAvatar = (e: DragEvent) => {
   e.preventDefault()
@@ -235,7 +246,7 @@ const onDragOverAvatar = (e: DragEvent) => {
             name="language"
             :description="$t('labels.account.settings.languageDescription')"
             :placeholder="$t('labels.account.settings.selectLanguage')"
-            :model-value="getLocale()"
+            :model-value="settings.languageIso"
             @update:model-value="onLanguageChange"
             :options="locales.map((locale) => ({ label: locale.name, value: locale.code }))"
           />

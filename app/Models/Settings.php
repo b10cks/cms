@@ -32,7 +32,7 @@ abstract class Settings implements Castable
 
     public function apply($attributes): void
     {
-        $this->attributes = \array_merge($this->attributes, $attributes);
+        $this->attributes = [...$this->attributes, ...$attributes];
     }
 
     public function __get(string $name)
