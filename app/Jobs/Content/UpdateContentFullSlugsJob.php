@@ -21,7 +21,7 @@ class UpdateContentFullSlugsJob implements ShouldQueue
 
     public $tries = 3;
 
-    public $content;
+    public $contentId;
 
     public $space;
 
@@ -34,7 +34,7 @@ class UpdateContentFullSlugsJob implements ShouldQueue
      */
     public function __construct(Content $content, Space $space)
     {
-        $this->content = $content;
+        $this->contentId = $content->id;
         $this->space = $space;
     }
 
@@ -48,10 +48,10 @@ class UpdateContentFullSlugsJob implements ShouldQueue
         try {
             app()->offsetSet('currentSpace', $this->space);
 
-            $content = Content::query()->find($this->content->id);
+            $content = Content::query()->find($this->contentId);
 
             if (!$content) {
-                Log::warning("Unable to propagate full slugs because content {$this->content->id} no longer exists");
+                Log::warning("Unable to propagate full slugs because content {$this->contentId} no longer exists");
 
                 return;
             }
@@ -59,10 +59,10 @@ class UpdateContentFullSlugsJob implements ShouldQueue
             $stats = $slugService->processContentChildren($content, true);
 
             Log::info(
-                "Processed children for content {$content->id}: {$stats['updated']} updated, {$stats['redirects_created']} redirects created, {$stats['errors']} errors"
+                "Processed children for content {$this->contentId}: {$stats['updated']} updated, {$stats['redirects_created']} redirects created, {$stats['errors']} errors"
             );
         } catch (\Exception $e) {
-            Log::error("Error processing children for content {$this->content->id}: " . $e->getMessage());
+            Log::error("Error processing children for content {$this->contentId}: " . $e->getMessage());
             throw $e;
         }
     }
