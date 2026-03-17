@@ -46,6 +46,10 @@ class AuthenticateDataApi
             throw new UnauthorizedHttpException('Bearer', 'Invalid or expired api token');
         }
 
+        if ($token->space->state !== 'live') {
+            throw new NotFoundHttpException();
+        }
+
         if (!$usageService->canExecute($token)) {
             throw new UnauthorizedHttpException('Bearer', 'Token usage limit exceeded');
         }

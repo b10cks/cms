@@ -28,10 +28,8 @@ class SpaceFactory extends Factory
     }
     public function withLive(): static
     {
-        return $this->state(function (array $attributes) {
-            return [
+        return $this->state(fn (array $attributes) => [
                 'state' => 'live',
-            ];
-        });
+            ]);
     }
 }
