@@ -96,6 +96,7 @@ declare global {
   const useBlocks: typeof import('./resources/js/composables/useBlocks').useBlocks
   const useComments: typeof import('./resources/js/composables/useComments').useComments
   const useContent: typeof import('./resources/js/composables/useContent').useContent
+  const useContentJson: typeof import('./resources/js/composables/useContentJson').useContentJson
   const useContentLiveCollaboration: typeof import('./resources/js/composables/useContentLiveCollaboration').useContentLiveCollaboration
   const useContentMenu: typeof import('./resources/js/composables/useContentMenu').useContentMenu
   const useContentMenuPresence: typeof import('./resources/js/composables/useContentMenuPresence').useContentMenuPresence
@@ -292,6 +293,7 @@ declare module 'vue' {
     readonly useBlocks: UnwrapRef<typeof import('./resources/js/composables/useBlocks')['useBlocks']>
     readonly useComments: UnwrapRef<typeof import('./resources/js/composables/useComments')['useComments']>
     readonly useContent: UnwrapRef<typeof import('./resources/js/composables/useContent')['useContent']>
+    readonly useContentJson: UnwrapRef<typeof import('./resources/js/composables/useContentJson')['useContentJson']>
     readonly useContentLiveCollaboration: UnwrapRef<typeof import('./resources/js/composables/useContentLiveCollaboration')['useContentLiveCollaboration']>
     readonly useContentMenu: UnwrapRef<typeof import('./resources/js/composables/useContentMenu')['useContentMenu']>
     readonly useContentMenuPresence: UnwrapRef<typeof import('./resources/js/composables/useContentMenuPresence')['useContentMenuPresence']>

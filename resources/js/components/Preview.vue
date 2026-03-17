@@ -33,9 +33,11 @@ const props = defineProps<{
   comments?: CommentResource[] // Comments for the preview
 }>()
 
+
 const { useSpaceQuery } = useSpaces()
 const { data: currentSpace } = useSpaceQuery(props.spaceId)
 const { settings } = useSpaceSettings(props.spaceId)
+
 
 const emit = defineEmits<{
   (e: 'selectItem', itemId: string): void
@@ -44,6 +46,7 @@ const emit = defineEmits<{
   (e: 'commentCreate', payload: CommentCreateEvent): void
   (e: 'commentUpdate', payload: CommentUpdateEvent): void
 }>()
+
 
 const iframeRef = ref<HTMLIFrameElement | null>(null)
 const iframeKey = ref<string>()
@@ -54,6 +57,7 @@ const mobileWidth = ref<number>(384)
 const isResizing = ref<boolean>(false)
 const content = inject<Ref<ContentResource>>('content')
 let previewBridge: PreviewBridge
+
 
 const baseSrc = computed(() => {
   const env = settings.value.content.environment
@@ -69,15 +73,18 @@ const baseSrc = computed(() => {
   return `${url}${prefix}${props.fullSlug}`
 })
 
+
 const src = computed(() => {
   const timestamp = props.updatedAt ? new Date(props.updatedAt).getTime() : Date.now()
 
-  return baseSrc?.value ? `${baseSrc.value}?b10cks_vid=draft&b10cks_rv=${timestamp}` : null
+  return baseSrc?.value ? `${baseSrc.value}?b10cks_vid=draft&b10cks_rv=${timestamp / 1000}` : null
 })
+
 
 // Initialize connection with the iframe
 const setupConnection = async () => {
   if (!iframeRef.value || !baseSrc.value) return
+
 
   previewBridge = new PreviewBridge(iframeRef.value)
   previewBridge.on('SELECT_UPDATE', ({ selectedItem }) => {
@@ -98,11 +105,13 @@ const setupConnection = async () => {
   isConnected.value = true
 }
 
+
 onMounted(() => {
   if (!loading.value) {
     setupConnection()
   }
 })
+
 
 watch(loading, (isLoading) => {
   if (!isLoading) {
@@ -110,11 +119,13 @@ watch(loading, (isLoading) => {
   }
 })
 
+
 watchEffect(() => {
   if (isConnected.value && props.content) {
     previewBridge.updateContent(props.content)
   }
 })
+
 
 watchEffect(() => {
   if (isConnected.value && props.itemId !== undefined) {
@@ -122,11 +133,13 @@ watchEffect(() => {
   }
 })
 
+
 watchEffect(() => {
   if (isConnected.value && props.comments) {
     previewBridge.updateComments(props.comments)
   }
 })
+
 
 const switchEnvironment = (env: SpaceEnvironment) => {
   loading.value = true
@@ -134,15 +147,18 @@ const switchEnvironment = (env: SpaceEnvironment) => {
   isConnected.value = false
 }
 
+
 const openExternal = () => {
   window.open(src.value, '_blank')
 }
+
 
 const refresh = () => {
   loading.value = true
   isConnected.value = false
   iframeKey.value = Math.random().toString(36).substring(2, 9)
 }
+
 
 const updateItem = (item: never) => {
   if (previewBridge) {
@@ -155,11 +171,13 @@ const updateHover = (itemId: string | null) => {
   }
 }
 
+
 const copyLink = () => {
   navigator.clipboard
     .writeText(src.value)
     .then(() => toast.message(t('notifications.preview.copied') as string))
 }
+
 
 // Expose the refresh method to parent components
 defineExpose({
@@ -168,13 +186,17 @@ defineExpose({
   updateHover,
 })
 
+
 onBeforeUnmount(() => previewBridge && previewBridge.destroy())
+
 
 const handleLoad = () => {
   loading.value = false
 }
 
+
 const containerRef = ref<HTMLElement | null>(null)
+
 
 const startResize = () => {
   isResizing.value = true
@@ -182,38 +204,47 @@ const startResize = () => {
   document.addEventListener('mouseup', handleGlobalMouseUp)
 }
 
+
 const stopResize = () => {
   isResizing.value = false
   document.removeEventListener('mousemove', handleGlobalMouseMove)
   document.removeEventListener('mouseup', handleGlobalMouseUp)
 }
 
+
 const handleGlobalMouseMove = (event: MouseEvent) => {
   if (!isResizing.value || !containerRef.value || mode.value !== 'mobile') return
+
 
   const rect = containerRef.value.getBoundingClientRect()
   const newWidth = event.clientX - rect.left
   const minWidth = 320
+
 
   if (newWidth >= minWidth) {
     mobileWidth.value = newWidth
   }
 }
 
+
 const handleGlobalMouseUp = () => {
   stopResize()
 }
 
+
 const handleMouseMove = (event: MouseEvent) => {
   if (!isResizing.value || mode.value !== 'mobile') return
 
+
   const outerContainer = event.currentTarget as HTMLElement
   if (!outerContainer) return
+
 
   const rect = outerContainer.getBoundingClientRect()
   const newWidth = event.clientX - rect.left
   const minWidth = 280
   const maxWidth = 768
+
 
   if (newWidth >= minWidth && newWidth <= maxWidth) {
     mobileWidth.value = newWidth

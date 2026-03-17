@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import dayjs from 'dayjs'
 import { RadioGroupItem, RadioGroupRoot } from 'reka-ui'
 import { RouterLink } from 'vue-router'
+
 import DiffViewer from '~/components/content/DiffViewer.vue'
+import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
 import { Avatar } from '~/components/ui/avatar'
 import { Badge, SplitBadge } from '~/components/ui/badge'
@@ -22,17 +22,22 @@ const { user } = useAuth()
 const route = useRoute()
 const router = useRouter()
 
+
 const props = defineProps<{
   spaceId: string
   content: ContentResource
 }>()
 
+
 const { settings } = useSpaceSettings(props.spaceId)
+const { apiToken, openContentJsonInNewTab } = useContentJson(props.spaceId)
 const searchQuery = ref('')
 const filterOptions = ref({})
 
+
 const contentId = computed(() => props.content.id)
 const selectedVersionId = computed(() => route.query?.versionId || null)
+
 
 const selectedTab = computed({
   get: () => route.query?.mode || settings.value.content.history.mode,
@@ -46,6 +51,7 @@ const selectedTab = computed({
   },
 })
 
+
 // Get content versions data
 const {
   useContentVersionsQuery,
@@ -55,17 +61,22 @@ const {
   usePublishVersionMutation,
 } = useContentVersions(props.spaceId, contentId)
 
+
 const { data: versions, isLoading, error } = useContentVersionsQuery()
 
+
 const { data: selectedVersionData } = useContentVersionQuery(selectedVersionId)
+
 
 const { mutate: setCurrentVersion, isPending: isSettingCurrent } = useSetCurrentVersionMutation()
 const { mutate: publishVersion, isPending: isPublishing } = usePublishVersionMutation()
 const { mutate: updateVersion, isPending: isUpdating } = useUpdateVersionMutation()
 
+
 const { useRemoveVersionsMutation } = useReleases(props.spaceId)
 const { mutate: removeVersions, isPending: isRemovingVersion } = useRemoveVersionsMutation()
 const { alert } = useAlertDialog()
+
 
 const handleRemoveFromReleaseClick = async (version: ContentVersionListResource) => {
   if (version.release) {
@@ -85,6 +96,7 @@ const handleRemoveFromReleaseClick = async (version: ContentVersionListResource)
     )
   }
 }
+
 
 // Compute date-based groups for the versions
 const groupedVersions = computed(() => {
@@ -138,6 +150,7 @@ const groupedVersions = computed(() => {
   return groups
 })
 
+
 // Create a map of parent-child relationships
 const versionTreeMap = computed(() => {
   if (!versions.value) return new Map()
@@ -156,14 +169,17 @@ const versionTreeMap = computed(() => {
   return map
 })
 
+
 // Calculate indentation level for each version
 const getVersionIndentLevel = (versionId: string): number => {
   let level = 0
   let currentId = versionId
 
+
   while (true) {
     const version = versions.value?.find((v) => v.id === currentId)
     if (!version?.parent_id) break
+
 
     // Check if this is not the first child of its parent
     const siblings = versionTreeMap.value.get(version.parent_id) || []
@@ -171,23 +187,29 @@ const getVersionIndentLevel = (versionId: string): number => {
       level++
     }
 
+
     currentId = version.parent_id
   }
 
+
   return level
 }
+
 
 const handleSetAsCurrent = (versionId: string) => {
   setCurrentVersion(versionId)
 }
 
+
 const handlePublishVersion = (versionId: string) => {
   publishVersion(versionId)
 }
 
+
 const handleUpdateMessage = (id: string, message: string | null | undefined) => {
   updateVersion({ id, payload: { message } })
 }
+
 
 // Get group label
 const getGroupLabel = (groupKey: string) => {
@@ -207,11 +229,13 @@ const getGroupLabel = (groupKey: string) => {
   }
 }
 
+
 onMounted(() => {
   if (versions.value && versions.value.length > 0) {
     selectedVersionId.value = versions.value[0].id
   }
 })
+
 
 const versionFilterFields = [
   { id: 'message', label: 'Message' },
@@ -219,6 +243,7 @@ const versionFilterFields = [
   { id: 'published', label: 'Published' },
   { id: 'created_at', label: 'Date', datepicker: { max: new Date().toISOString() } },
 ]
+
 
 const getIndicatorClass = (version: ContentVersionListResource) => {
   if (wasPublished(version)) {
@@ -230,30 +255,37 @@ const getIndicatorClass = (version: ContentVersionListResource) => {
   return 'border-border bg-background'
 }
 
+
 const isCurrentDraft = (version: ContentVersionListResource) => {
   return version.id === props.content.current_version_id
 }
+
 
 const wasPublished = (version: ContentVersionListResource) => {
   return !!version.published_at
 }
 
+
 const isScheduled = (version: ContentVersionListResource) => {
   return !!version.scheduled_at
 }
+
 
 const isCurrentlyPublished = (version: ContentVersionListResource) => {
   return version.id === props.content.published_version_id
 }
 
+
 const isMine = (version: ContentVersionListResource) => {
   return version.author?.id === user.value?.id
 }
+
 
 const selectedVersion = computed(() => {
   if (!selectedVersionId.value || !versions.value) return null
   return versions.value.find((v) => v.id === selectedVersionId.value) || null
 })
+
 
 const previewSource = computed(() => {
   if (!selectedVersion.value) return null
@@ -267,9 +299,15 @@ const previewSource = computed(() => {
   return `${env.url}${props.content.full_slug}?b10cks_rv=${new Date(selectedVersion.value.created_at).getTime()}&b10cks_vid=${selectedVersion.value.id}`
 })
 
+
 const openInTab = () => {
   if (!previewSource.value) return
   window.open(previewSource.value, '_blank')
+}
+
+
+const openVersionJsonInNewTab = (versionId: string) => {
+  openContentJsonInNewTab(versionId)
 }
 </script>
 
@@ -488,6 +526,18 @@ const openInTab = () => {
                           @click.stop="handleSetAsCurrent(version.id)"
                         >
                           <Icon name="lucide:square-pen" />
+                        </Button>
+                      </SimpleTooltip>
+
+                      <SimpleTooltip tooltip="Show version JSON">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          class="!h-6 !w-6"
+                          :disabled="!apiToken"
+                          @click.stop="openVersionJsonInNewTab(version.id)"
+                        >
+                          <Icon name="lucide:braces" />
                         </Button>
                       </SimpleTooltip>
 
