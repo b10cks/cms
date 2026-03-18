@@ -245,6 +245,9 @@ export function useAuth() {
       console.warn('[Auth] Logout API call failed:', error)
     }
 
+    const { queryClient } = await import('~/plugins/vue-query')
+    queryClient.clear()
+
     user.value = null
     globalIsReady.value = false
     error.value = null
