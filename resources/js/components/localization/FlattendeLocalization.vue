@@ -13,7 +13,7 @@ import {
   normalizeSchema,
   normalizeSchemaType,
 } from '~/composables/useContentSchemaState'
-import type { ApiResponse } from '~/types'
+import { useAiTranslation } from '~/composables/useAiTranslation'
 
 import MarkdownLocalization from './MarkdownLocalization.vue'
 import RichTextLocalization from './RichTextLocalization.vue'
@@ -83,10 +83,27 @@ const { data: space } = useSpaceQuery(props.spaceId) as { data: Ref<Space> }
 
 const showUntranslatedOnly = ref(false)
 const searchQuery = ref('')
-const { client: apiClient } = useApiClient()
+const { t } = useI18n()
+const { streamTranslation, isStreaming: isTranslating } = useAiTranslation(
+  computed(() => props.spaceId)
+)
+const translationProgress = ref<{ applied: number; total: number } | null>(null)
 
-
-const isTranslating = ref(false)
+function extractCompletedTranslations(partial: string): Record<string, string> {
+  const result: Record<string, string> = {}
+  const regex = /"((?:[^"\\]|\\.)+)"\s*:\s*"((?:[^"\\]|\\.)*)"/g
+  let match
+  while ((match = regex.exec(partial)) !== null) {
+    const key = match[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\')
+    const value = match[2]
+      .replace(/\\"/g, '"')
+      .replace(/\\n/g, '\n')
+      .replace(/\\t/g, '\t')
+      .replace(/\\\\/g, '\\')
+    result[key] = value
+  }
+  return result
+}
 const sourceLanguage = computed((): string => space.value?.settings?.default_language || '')
 
 
@@ -309,47 +326,109 @@ const getUntranslatedFields = (): Record<string, string> => {
 }
 
 
+function stripCodeFences(content: string): string {
+  return content
+    .replace(/^```(?:json|javascript|js)?\s*\n?/i, '')
+    .replace(/\n?```\s*$/i, '')
+    .trim()
+}
+
+
+// Unwrap AI responses that may nest translations under a wrapper key
+// e.g. { "translations": { ... } } or { "data": { ... } }
+function findTranslationsObject(parsed: unknown): Record<string, string> | null {
+  if (typeof parsed !== 'object' || parsed === null) return null
+
+  const obj = parsed as Record<string, unknown>
+
+  // Check if it's already a flat string map
+  const values = Object.values(obj)
+  if (values.length > 0 && values.every((v) => typeof v === 'string')) {
+    return obj as Record<string, string>
+  }
+
+  // Look one level deep for a nested object that is a flat string map
+  for (const v of values) {
+    if (typeof v === 'object' && v !== null) {
+      const nested = v as Record<string, unknown>
+      const nestedValues = Object.values(nested)
+      if (nestedValues.length > 0 && nestedValues.every((nv) => typeof nv === 'string')) {
+        return nested as Record<string, string>
+      }
+    }
+  }
+
+  return null
+}
+
+
 const translateWithAI = async (): Promise<void> => {
   const fieldsToTranslate = getUntranslatedFields()
-
-
   const fieldCount = Object.keys(fieldsToTranslate).length
+
   if (fieldCount === 0) {
     toast.info('No untranslated fields found')
     return
   }
 
+  const appliedKeys = new Set<string>()
+  let accumulated = ''
+  translationProgress.value = { applied: 0, total: fieldCount }
 
-  try {
-    isTranslating.value = true
-    toast.info(
-      `Translating ${fieldCount} fields from ${sourceLanguage.value} to ${props.targetLanguage}...`
-    )
-    const requestData = {
+  // Apply only entries not yet applied — let updateTranslatedValues handle field matching
+  const applyNew = (entries: Record<string, string>) => {
+    const fresh: Record<string, string> = {}
+    for (const [k, v] of Object.entries(entries)) {
+      if (!appliedKeys.has(k)) {
+        fresh[k] = v
+        appliedKeys.add(k)
+      }
+    }
+    if (Object.keys(fresh).length > 0) {
+      updateTranslatedValues(fresh)
+      translationProgress.value = { applied: appliedKeys.size, total: fieldCount }
+    }
+  }
+
+  await streamTranslation(
+    {
       source: sourceLanguage.value,
       target: props.targetLanguage,
-      space_id: props.spaceId,
       fields: fieldsToTranslate,
+    },
+    {
+      onDelta: (chunk) => {
+        accumulated += chunk
+        applyNew(extractCompletedTranslations(accumulated))
+      },
+      onDone: (content) => {
+        try {
+          const raw = JSON.parse(stripCodeFences(content || accumulated))
+          const translations = findTranslationsObject(raw)
+          if (translations) {
+            applyNew(translations)
+          }
+          const count = appliedKeys.size
+          if (count > 0) {
+            toast.success(`Successfully translated ${count} field${count !== 1 ? 's' : ''}`)
+          } else {
+            toast.error(t('composables.aiTranslation.error', { error: 'No fields could be matched' }))
+          }
+        } catch {
+          if (appliedKeys.size > 0) {
+            toast.success(`Translated ${appliedKeys.size} field${appliedKeys.size !== 1 ? 's' : ''}`)
+          } else {
+            toast.error(t('composables.aiTranslation.error', { error: 'Invalid JSON response' }))
+          }
+        }
+        translationProgress.value = null
+      },
+      onError: (error) => {
+        translationProgress.value = null
+        toast.error(t('composables.aiTranslation.error', { error }))
+      },
     }
-
-
-    const response = await apiClient.post<ApiResponse<Record<string, string>>>(
-      '/mgmt/v1/ai/translate',
-      requestData,
-      {
-        query: { spaceId: props.spaceId },
-      }
-    )
-    updateTranslatedValues(response.data)
-
-
-    toast.success(`Successfully translated ${Object.keys(response.data).length} fields`)
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    toast.error(`Translation failed: ${errorMessage}`)
-  } finally {
-    isTranslating.value = false
-  }
+  )
 }
 
 
@@ -391,23 +470,38 @@ const translationStats = computed(() => {
       </div>
 
       <div class="flex items-center gap-3">
-        <Button
-          size="sm"
-          :disabled="isTranslating"
-          @click="translateWithAI"
-        >
-          <Icon
-            v-if="isTranslating"
-            name="lucide:loader"
-            class="animate-spin text-ai"
-          />
-          <Icon
-            v-else
-            name="lucide:sparkles"
-            class="text-ai"
-          />
-          <span>{{ isTranslating ? 'Translating...' : 'AI Translate' }}</span>
-        </Button>
+        <div class="flex flex-col items-end gap-1">
+          <Button
+            size="sm"
+            :disabled="isTranslating"
+            @click="translateWithAI"
+          >
+            <Icon
+              v-if="isTranslating"
+              name="lucide:loader"
+              class="animate-spin text-ai"
+            />
+            <Icon
+              v-else
+              name="lucide:sparkles"
+              class="text-ai"
+            />
+            <span>{{ isTranslating ? $t('components.flattenedLocalization.translating') : $t('components.flattenedLocalization.translate') }}</span>
+          </Button>
+          <Transition
+            enter-active-class="transition-all duration-200 ease-out"
+            enter-from-class="opacity-0 translate-y-1"
+            enter-to-class="opacity-100 translate-y-0"
+            leave-active-class="transition-all duration-150 ease-in"
+            leave-from-class="opacity-100 translate-y-0"
+            leave-to-class="opacity-0 translate-y-1"
+          >
+            <span
+              v-if="translationProgress"
+              class="ai-animate-text text-xs text-muted"
+            >{{ $t('components.flattenedLocalization.translationProgress', translationProgress) }}</span>
+          </Transition>
+        </div>
 
         <Input
           v-model="searchQuery"

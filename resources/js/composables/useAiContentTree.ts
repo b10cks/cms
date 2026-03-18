@@ -2,7 +2,7 @@ import { toast } from 'vue-sonner'
 
 import type { ContentResource } from '~/types/contents'
 
-import { getXsrfHeaders, hasXsrfToken } from '~/lib/csrf'
+import { ensureCsrfToken, getXsrfHeaders } from '~/lib/csrf'
 import { consumeSseStream, type SseCallbacks } from '~/lib/sse'
 
 export interface TreeOperation {
@@ -29,29 +29,6 @@ export interface ContentTreePayload {
 
 export interface TreeOperationsResult {
   operations: TreeOperation[]
-}
-
-async function fetchCsrfCookie(): Promise<boolean> {
-  try {
-    const response = await fetch('/auth/v1/csrf-cookie', {
-      method: 'GET',
-      credentials: 'include',
-      headers: { Accept: 'application/json' },
-    })
-    return response.ok
-  } catch {
-    return false
-  }
-}
-
-async function ensureCsrfToken(): Promise<boolean> {
-  if (hasXsrfToken()) return true
-
-  const success = await fetchCsrfCookie()
-  if (!success) return false
-
-  await new Promise((resolve) => setTimeout(resolve, 100))
-  return hasXsrfToken()
 }
 
 export function useAiContentTree(spaceId: MaybeRef<string>) {

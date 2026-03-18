@@ -1948,6 +1948,11 @@
       "loading": "Loading configurations...",
       "noConfigs": "No configurations available"
     },
+    "flattenedLocalization": {
+      "translate": "AI Translate",
+      "translating": "Translating...",
+      "translationProgress": "{applied} of {total} fields translated..."
+    },
     "aiText": {
       "thinking": "Thinking...",
       "streamError": "AI error: {error}",
@@ -1962,6 +1967,7 @@
       "preview": "Preview Changes",
       "placeholder": "Describe the content structure you need (e.g., \"Create a blog section with categories for Tech, Design, and Business\")...",
       "generating": "Generating content tree structure...",
+      "streamingProgress": "Building structure: {count} item planned... | Building structure: {count} items planned...",
       "applying": "Applying changes to your content...",
       "parseError": "Failed to parse AI response. Please try again.",
       "success": "Content tree updated successfully!",
@@ -2104,6 +2110,9 @@
     },
     "ai": {
       "interactionError": "AI interaction failed: {error}"
+    },
+    "aiTranslation": {
+      "error": "Translation failed: {error}"
     },
     "aiContentTree": {
       "interactionError": "Content tree AI interaction failed: {error}"

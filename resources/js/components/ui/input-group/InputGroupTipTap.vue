@@ -185,6 +185,16 @@ const getText = (): string => {
   return editor.value?.getText() ?? ''
 }
 
+const getTextWithMentions = (): string => {
+  return (
+    editor.value?.getText({
+      textSerializers: {
+        aiMention: ({ node }) => `@${node.attrs.label}`,
+      },
+    }) ?? ''
+  )
+}
+
 const getMentions = (): AiMentionItem[] => {
   const mentions: AiMentionItem[] = []
   const doc = editor.value?.state.doc
@@ -215,6 +225,7 @@ const getGlobalIndex = (item: AiMentionItem): number => {
 defineExpose({
   clear,
   getText,
+  getTextWithMentions,
   getMentions,
   focus,
 })

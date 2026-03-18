@@ -19,6 +19,7 @@ const modelValue = defineModel<string | null>()
 
 const emit = defineEmits<{
   (e: 'send', value: string, files: never[], configId: string | null, mentions: MentionItem[]): void
+  (e: 'cancel'): void
   (e: 'streamStart'): void
   (e: 'streamEnd'): void
 }>()
@@ -32,6 +33,7 @@ const props = withDefaults(
     content?: object | null
     defaultConfigId?: string | null
     showConfigSelector?: boolean
+    directEmit?: boolean
   }>(),
   {
     placeholder: '',
@@ -40,6 +42,7 @@ const props = withDefaults(
     content: null,
     defaultConfigId: null,
     showConfigSelector: true,
+    directEmit: false,
   }
 )
 
@@ -106,6 +109,13 @@ const dynamicPlaceholder = computed(() => {
   return t('components.aiText.placeholderDefault', { name: selectedConfig.value.name })
 })
 
+function stripCodeFences(content: string): string {
+  return content
+    .replace(/^```(?:json|javascript|js)?\s*\n?/i, '')
+    .replace(/\n?```\s*$/i, '')
+    .trim()
+}
+
 const clear = () => {
   modelValue.value = null
   statusMessage.value = null
@@ -125,10 +135,22 @@ const handleSend = async () => {
     return
   }
 
-  const prompt = modelValue.value?.trim() ?? ''
+  const prompt = (tiptapRef.value?.getTextWithMentions() ?? modelValue.value ?? '').trim()
   if (!prompt) return
 
   const editorMentions = tiptapRef.value?.getMentions() ?? []
+
+  if (props.directEmit) {
+    emit(
+      'send',
+      prompt,
+      [],
+      selectedConfigId.value,
+      editorMentions.map((m) => ({ type: m.type, id: m.id, content: null, label: m.label }))
+    )
+    clear()
+    return
+  }
 
   isThinking.value = true
   statusMessage.value = t('components.aiText.thinking') as string
@@ -148,7 +170,7 @@ const handleSend = async () => {
       isThinking.value = false
       emit(
         'send',
-        content,
+        stripCodeFences(content),
         [],
         selectedConfigId.value,
         editorMentions.map((m) => ({
@@ -190,6 +212,10 @@ const handleSend = async () => {
 }
 
 const handleCancel = () => {
+  if (props.directEmit) {
+    emit('cancel')
+    return
+  }
   cancelStream()
   statusMessage.value = null
   previewContent.value = null
@@ -231,6 +257,11 @@ defineExpose({
         </div>
       </div>
     </Transition>
+
+    <div
+      v-if="previewContent"
+      class="max-h-40 overflow-y-auto rounded-lg border border-ai/20 bg-popover/60 px-3 py-2 font-mono text-xs text-muted whitespace-pre-wrap"
+    >{{ previewContent }}</div>
 
     <InputGroup
       class="relative rounded-2xl! bg-popover transition-all"

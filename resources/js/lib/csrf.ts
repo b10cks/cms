@@ -37,3 +37,26 @@ export const getXsrfHeaders = (): Record<string, string> => {
 export const hasXsrfToken = (): boolean => {
   return getXsrfToken() !== null
 }
+
+export async function fetchCsrfCookie(): Promise<boolean> {
+  try {
+    const response = await fetch('/auth/v1/csrf-cookie', {
+      method: 'GET',
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    })
+    return response.ok
+  } catch {
+    return false
+  }
+}
+
+export async function ensureCsrfToken(): Promise<boolean> {
+  if (hasXsrfToken()) return true
+
+  const success = await fetchCsrfCookie()
+  if (!success) return false
+
+  await new Promise((resolve) => setTimeout(resolve, 100))
+  return hasXsrfToken()
+}

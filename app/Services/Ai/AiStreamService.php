@@ -117,6 +117,40 @@ class AiStreamService
         return ['openai', $fullId];
     }
 
+    public function streamWithSystemPrompt(
+        Space $space,
+        string $systemPrompt,
+        string $userPrompt,
+        array $options = []
+    ): Generator {
+        $aiConfig = $space->defaultAiConfig ?? $space->aiConfig;
+        if (! $aiConfig) {
+            yield StreamEvent::error('No AI configuration found');
+
+            return;
+        }
+
+        $modelId = $this->resolveModelId($space, $aiConfig);
+        [$driverName, $modelIdentifier] = $this->parseModelId($modelId);
+        $driver = $this->registry->getDriverForSpace($driverName, $space);
+
+        if (! $driver) {
+            yield StreamEvent::error("Driver '{$driverName}' not found");
+
+            return;
+        }
+
+        $messages = [
+            ['role' => 'system', 'content' => $systemPrompt],
+            ['role' => 'user', 'content' => $userPrompt],
+        ];
+
+        yield from $driver->stream($modelIdentifier, $messages, [], array_merge([
+            'max_tokens' => $aiConfig->max_tokens ?? 4096,
+            'temperature' => (float) ($aiConfig->temperature ?? 0.7),
+        ], $options));
+    }
+
     public function generate(
         Space $space,
         string $systemPrompt,

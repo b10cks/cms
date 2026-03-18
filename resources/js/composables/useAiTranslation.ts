@@ -1,18 +1,20 @@
 import { toast } from 'vue-sonner'
 
-import type { ContentInteractionPayload } from '~/api/resources/ai'
-
 import { ensureCsrfToken, getXsrfHeaders } from '~/lib/csrf'
 import { consumeSseStream, type SseCallbacks } from '~/lib/sse'
 
-export type { SseCallbacks as StreamCallbacks }
+export interface TranslationPayload {
+  source: string
+  target: string
+  fields: Record<string, string>
+}
 
-export function useAiContent(spaceId: MaybeRef<string>) {
+export function useAiTranslation(spaceId: MaybeRef<string>) {
   const { t } = useI18n()
   const abortController = ref<AbortController | null>(null)
 
-  const streamContentInteraction = async (
-    payload: ContentInteractionPayload,
+  const streamTranslation = async (
+    payload: TranslationPayload,
     callbacks: SseCallbacks
   ): Promise<void> => {
     const id = toValue(spaceId)
@@ -25,7 +27,7 @@ export function useAiContent(spaceId: MaybeRef<string>) {
 
     abortController.value = new AbortController()
 
-    const url = `/mgmt/v1/ai/content-interaction/stream?spaceId=${id}`
+    const url = `/mgmt/v1/ai/translate/stream?spaceId=${id}`
     const xsrfHeaders = getXsrfHeaders()
 
     if (Object.keys(xsrfHeaders).length === 0) {
@@ -73,7 +75,7 @@ export function useAiContent(spaceId: MaybeRef<string>) {
 
       const errorMessage = error.message || 'Unknown error'
       callbacks.onError?.(errorMessage)
-      toast.error(t('composables.ai.interactionError', { error: errorMessage }) as string)
+      toast.error(t('composables.aiTranslation.error', { error: errorMessage }) as string)
     } finally {
       abortController.value = null
     }
@@ -89,7 +91,7 @@ export function useAiContent(spaceId: MaybeRef<string>) {
   const isStreaming = computed(() => abortController.value !== null)
 
   return {
-    streamContentInteraction,
+    streamTranslation,
     cancelStream,
     isStreaming,
   }

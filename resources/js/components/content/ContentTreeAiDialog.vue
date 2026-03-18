@@ -18,6 +18,35 @@ import {
   useAiContentTree,
   type TreeOperation,
 } from '~/composables/useAiContentTree'
+
+function extractStreamingOperations(partial: string): TreeOperation[] {
+  const match = partial.match(/"operations"\s*:\s*\[([\s\S]*)$/)
+  if (!match) return []
+
+  const arrayContent = match[1]
+  const ops: TreeOperation[] = []
+  let depth = 0
+  let start = -1
+
+  for (let i = 0; i < arrayContent.length; i++) {
+    const ch = arrayContent[i]
+    if (ch === '{') {
+      if (depth === 0) start = i
+      depth++
+    } else if (ch === '}') {
+      depth--
+      if (depth === 0 && start !== -1) {
+        try {
+          const obj = JSON.parse(arrayContent.slice(start, i + 1))
+          if (obj.type === 'create' || obj.type === 'move') ops.push(obj as TreeOperation)
+        } catch {}
+        start = -1
+      }
+    }
+  }
+
+  return ops
+}
 import type { ContentResource } from '~/types/contents'
 
 const props = defineProps<{
@@ -177,7 +206,7 @@ function applyOperationsToFlatData(
 }
 
 const handleSubmit = async (
-  resultContent: string,
+  rawText: string,
   _files: never[],
   configId: string | null,
   mentions: MentionItem[]
@@ -186,18 +215,31 @@ const handleSubmit = async (
   previewContent.value = ''
   operations.value = []
   showPreview.value = false
-  operationStatus.value = null
+  operationStatus.value = { message: t('components.contentTreeAi.generating') as string, type: 'info' }
 
   await streamTreeInteraction(
     {
-      prompt: resultContent,
+      prompt: rawText,
       tree: props.tree,
       config_id: configId,
-      mentions: mentions,
+      mentions,
     },
     {
-      onDelta: (content) => {
-        previewContent.value += content
+      onStatus: (message) => {
+        operationStatus.value = { message, type: 'info' }
+      },
+      onDelta: (chunk) => {
+        previewContent.value += chunk
+
+        const partial = extractStreamingOperations(previewContent.value)
+        if (partial.length > 0) {
+          operations.value = partial
+          showPreview.value = true
+          operationStatus.value = {
+            message: t('components.contentTreeAi.streamingProgress', { count: partial.length }) as string,
+            type: 'info',
+          }
+        }
       },
       onDone: (content) => {
         const parsed = parseTreeOperations(content)
@@ -205,37 +247,26 @@ const handleSubmit = async (
           operations.value = parsed.operations
           showPreview.value = true
 
-          // Show summary of changes
           const createCount = parsed.operations.filter((op) => op.type === 'create').length
           const moveCount = parsed.operations.filter((op) => op.type === 'move').length
+          const parts: string[] = []
+          if (createCount > 0)
+            parts.push(t('components.contentTreeAi.willCreate', { count: createCount }) as string)
+          if (moveCount > 0)
+            parts.push(t('components.contentTreeAi.willMove', { count: moveCount }) as string)
 
-          if (createCount > 0 || moveCount > 0) {
-            const parts = []
-            if (createCount > 0) {
-              parts.push(t('components.contentTreeAi.willCreate', { count: createCount }) as string)
-            }
-            if (moveCount > 0) {
-              parts.push(t('components.contentTreeAi.willMove', { count: moveCount }) as string)
-            }
-
-            operationStatus.value = {
-              message: parts.join(' • '),
-              type: 'success',
-            }
-          }
+          operationStatus.value = parts.length
+            ? { message: parts.join(' • '), type: 'success' }
+            : null
         } else {
           operationStatus.value = {
             message: t('components.contentTreeAi.parseError') as string,
             type: 'error',
           }
         }
-        aiTextRef.value?.clear()
       },
       onError: (message) => {
-        operationStatus.value = {
-          message,
-          type: 'error',
-        }
+        operationStatus.value = { message, type: 'error' }
       },
     }
   )
@@ -321,6 +352,7 @@ const handleApply = async () => {
 const handleCancel = () => {
   cancelStream()
   previewContent.value = ''
+  operationStatus.value = null
 }
 
 const handleClose = () => {
@@ -516,7 +548,10 @@ const toggleExpanded = (contentId: string, isPreview: boolean = false) => {
             name="lucide:alert-circle"
             class="size-5 shrink-0"
           />
-          <span class="flex-1">{{ operationStatus.message }}</span>
+          <span
+            class="flex-1"
+            :class="operationStatus.type === 'info' && 'ai-animate-text'"
+          >{{ operationStatus.message }}</span>
         </div>
       </Transition>
 
@@ -524,8 +559,10 @@ const toggleExpanded = (contentId: string, isPreview: boolean = false) => {
         ref="aiTextRef"
         :space-id="spaceId"
         :placeholder="$t('components.contentTreeAi.placeholder')"
-        :loading="isApplying"
+        :loading="isStreaming || isApplying"
+        :direct-emit="true"
         @send="handleSubmit"
+        @cancel="handleCancel"
       />
       <div
         v-if="showPreview"

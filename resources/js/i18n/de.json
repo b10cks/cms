@@ -1878,6 +1878,11 @@
         "openrouter": "OpenRouter"
       }
     },
+    "flattenedLocalization": {
+      "translate": "KI-Übersetzen",
+      "translating": "Wird übersetzt...",
+      "translationProgress": "{applied} von {total} Feldern übersetzt..."
+    },
     "aiText": {
       "streamError": "KI-Stream-Fehler: {error}",
       "thinking": "Denke nach..."
@@ -1899,6 +1904,7 @@
       "preview": "Vorschau der Änderungen",
       "placeholder": "Beschreiben Sie die benötigte Inhaltsstruktur (z.B. \"Erstelle einen Blog-Bereich mit Kategorien für Technik, Design und Business\")...",
       "generating": "Generiere Inhaltsbaum-Struktur...",
+      "streamingProgress": "Struktur wird aufgebaut: {count} Element geplant... | Struktur wird aufgebaut: {count} Elemente geplant...",
       "applying": "Wende Änderungen auf Ihre Inhalte an...",
       "parseError": "KI-Antwort konnte nicht verarbeitet werden. Bitte versuchen Sie es erneut.",
       "success": "Inhaltsbaum erfolgreich aktualisiert!",
@@ -2041,6 +2047,9 @@
     },
     "ai": {
       "interactionError": "KI-Interaktion fehlgeschlagen: {error}"
+    },
+    "aiTranslation": {
+      "error": "Übersetzung fehlgeschlagen: {error}"
     },
     "aiContentTree": {
       "interactionError": "KI-Inhaltsbaum-Interaktion fehlgeschlagen: {error}"

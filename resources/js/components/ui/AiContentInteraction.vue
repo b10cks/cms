@@ -37,7 +37,7 @@ const handleSubmit = (
     const parsed = JSON.parse(resultContent)
     updatedContent = {
       ...content.value,
-      ...parsed,
+      content: parsed,
     }
   } catch {
     updatedContent = {
@@ -49,10 +49,10 @@ const handleSubmit = (
   emit('update:content', updatedContent)
 
   if (updatePreviewItem && updatedContent.id) {
-    updatePreviewItem({
-      id: updatedContent.id,
-      ...(typeof updatedContent.content === 'object' ? updatedContent.content : {}),
-    })
+    const fields = typeof updatedContent.content === 'object' && updatedContent.content !== null
+      ? updatedContent.content
+      : {}
+    updatePreviewItem({ id: updatedContent.id, ...fields })
   }
 
   aiTextRef.value?.clear()

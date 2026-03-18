@@ -8,6 +8,7 @@ use App\Http\Controllers\Mgmt\Ai\MetaTagsController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiConfigController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiSettingsController;
 use App\Http\Controllers\Mgmt\Ai\TranslationController;
+use App\Http\Controllers\Mgmt\Ai\TranslationStreamController;
 use App\Http\Controllers\Mgmt\AssetController;
 use App\Http\Controllers\Mgmt\AssetDataExportController;
 use App\Http\Controllers\Mgmt\AssetDataImportController;
@@ -103,6 +104,8 @@ Route::group(['prefix' => 'ai'], function () {
         ->name('ai.meta-tags');
     Route::post('translate', TranslationController::class)
         ->name('ai.translate');
+    Route::post('translate/stream', TranslationStreamController::class)
+        ->name('ai.translate.stream');
     Route::post('content-interaction/stream', ContentInteractionStreamController::class)
         ->name('ai.content-interaction.stream');
     Route::post('content-tree-interaction/stream', ContentTreeInteractionStreamController::class)

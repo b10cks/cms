@@ -82,6 +82,7 @@ declare global {
   const useAiMentions: typeof import('./resources/js/composables/useAiMentions').useAiMentions
   const useAiModels: typeof import('./resources/js/composables/useAiModels').useAiModels
   const useAiSettings: typeof import('./resources/js/composables/useAiModels').useAiSettings
+  const useAiTranslation: typeof import('./resources/js/composables/useAiTranslation').useAiTranslation
   const useAlertDialog: typeof import('./resources/js/composables/useAlertDialog').useAlertDialog
   const useApiClient: typeof import('./resources/js/composables/useApiClient').useApiClient
   const useAssetFolders: typeof import('./resources/js/composables/useAssetFolders').useAssetFolders
@@ -169,6 +170,9 @@ declare global {
   // @ts-ignore
   export type { AiModel, GroupedModels, SpaceAiSettings } from './resources/js/composables/useAiModels'
   import('./resources/js/composables/useAiModels')
+  // @ts-ignore
+  export type { TranslationPayload } from './resources/js/composables/useAiTranslation'
+  import('./resources/js/composables/useAiTranslation')
   // @ts-ignore
   export type { DialogAction, DialogOptions, MessageOptions, ConfirmOptions } from './resources/js/composables/useAlertDialog'
   import('./resources/js/composables/useAlertDialog')
@@ -284,6 +288,7 @@ declare module 'vue' {
     readonly useAiMentions: UnwrapRef<typeof import('./resources/js/composables/useAiMentions')['useAiMentions']>
     readonly useAiModels: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiModels']>
     readonly useAiSettings: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiSettings']>
+    readonly useAiTranslation: UnwrapRef<typeof import('./resources/js/composables/useAiTranslation')['useAiTranslation']>
     readonly useAlertDialog: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['useAlertDialog']>
     readonly useApiClient: UnwrapRef<typeof import('./resources/js/composables/useApiClient')['useApiClient']>
     readonly useAssetFolders: UnwrapRef<typeof import('./resources/js/composables/useAssetFolders')['useAssetFolders']>
