@@ -456,6 +456,12 @@
         "config": "Konfiguration",
         "info": "Info",
         "comments": "Kommentare"
+      },
+      "outOfSchema": {
+        "label": "Nicht im Schema",
+        "removeAll": "Alle entfernen",
+        "key": "Schlüssel",
+        "value": "Wert"
       }
     },
     "blocks": {

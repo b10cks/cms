@@ -16,7 +16,11 @@ import type { ContentTreeItem, FindResult } from '~/composables/useContentTree'
 import { useContentTree } from '~/composables/useContentTree'
 import type { ContentBlock } from '~/types/contents'
 
+import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
+
+const { $t } = useI18n()
+
 
 interface Breadcrumb {
   id: string
@@ -119,11 +123,11 @@ const updatePreviewItem = inject<PreviewUpdateFunction>('updatePreviewItem')
 
 const contentModel = computed({
   get: (): ContentTreeItem =>
-    ((content.value as ContentTreeItem | undefined) ??
+    (content.value as ContentTreeItem | undefined) ??
     ({
       id: props.rootId || '',
       block: props.blockSlug || '',
-    } as ContentTreeItem)),
+    } as ContentTreeItem),
   set: (value: ContentTreeItem) => {
     content.value = value
   },
@@ -292,6 +296,61 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload): void => {
 }
 
 
+const INTERNAL_CONTENT_KEYS = new Set(['id', 'block'])
+
+
+const contentData = computed<Record<string, unknown>>(
+  () => (currentContentItem.value ?? contentModel.value) as unknown as Record<string, unknown>
+)
+
+
+const outOfSchemaEntries = computed(() =>
+  Object.entries(contentData.value).filter(
+    ([key]) => !INTERNAL_CONTENT_KEYS.has(key) && !(key in currentSchema.value)
+  )
+)
+
+
+const isOutOfSchemaExpanded = ref(false)
+
+
+const formatOutOfSchemaValue = (value: unknown): string => {
+  if (value === null) return 'null'
+  if (value === undefined) return 'undefined'
+  if (typeof value === 'string') return value.length > 80 ? `${value.slice(0, 80)}…` : value
+  const json = JSON.stringify(value)
+  return json.length > 80 ? `${json.slice(0, 80)}…` : json
+}
+
+
+const applyContentUpdate = (data: Record<string, unknown>): void => {
+  if (currentContentItem.value && props.itemId) {
+    contentTree.updateItem(props.itemId, data as ContentTreeItem)
+    updatePreviewItem?.(data as Record<string, unknown>)
+  } else {
+    contentModel.value = data as ContentTreeItem
+    updatePreviewItem?.({ id: props.rootId, ...data })
+  }
+}
+
+
+const removeOutOfSchemaKey = (key: string): void => {
+  const data = { ...contentData.value }
+  delete data[key]
+  applyContentUpdate(data)
+}
+
+
+const removeAllOutOfSchemaKeys = (): void => {
+  const data = { ...contentData.value }
+  for (const [key] of outOfSchemaEntries.value) {
+    delete data[key]
+  }
+  applyContentUpdate(data)
+  isOutOfSchemaExpanded.value = false
+}
+
+
 const updateSubItem = (updatedValue: unknown): void => {
   if (!props.itemId || !currentContentItem.value || !updatePreviewItem) return
 
@@ -349,9 +408,15 @@ const updateItem = (updatedValue: unknown): void => {
           v-for="(page, i) in currentPages"
           :key="i"
           :value="`${id}-page-${i}`"
-          class="rounded-lg px-2 py-1 text-sm font-semibold transition-colors hover:text-primary data-[state=active]:bg-background data-[state=active]:text-primary"
+          class="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold transition-colors hover:text-primary data-[state=active]:bg-background data-[state=active]:text-primary"
         >
           {{ page.header }}
+          <Badge
+            v-if="i === 0 && outOfSchemaEntries.length > 0"
+            variant="warning"
+            size="xs"
+            >{{ outOfSchemaEntries.length }}</Badge
+          >
         </TabsTrigger>
       </TabsList>
       <TabsContent
@@ -402,6 +467,82 @@ const updateItem = (updatedValue: unknown): void => {
               />
             </template>
           </template>
+
+          <div
+            v-if="i === 0 && outOfSchemaEntries.length > 0"
+            class="rounded-lg border border-warning-background/40 bg-warning-background/10"
+          >
+            <button
+              type="button"
+              class="flex w-full items-center gap-2 px-3 py-2"
+              @click="isOutOfSchemaExpanded = !isOutOfSchemaExpanded"
+            >
+              <Icon
+                :name="isOutOfSchemaExpanded ? 'lucide:chevron-down' : 'lucide:chevron-right'"
+                class="size-4 shrink-0 text-warning"
+              />
+              <span class="text-sm font-medium text-warning">{{
+                $t('labels.contents.outOfSchema.label')
+              }}</span>
+              <Badge
+                variant="warning"
+                size="xs"
+                >{{ outOfSchemaEntries.length }}</Badge
+              >
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                class="ml-auto text-xs text-destructive hover:text-destructive"
+                @click.stop="removeAllOutOfSchemaKeys"
+              >
+                {{ $t('labels.contents.outOfSchema.removeAll') }}
+              </Button>
+            </button>
+            <div
+              v-if="isOutOfSchemaExpanded"
+              class="border-t border-warning/20 px-3 pt-2"
+            >
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="text-left text-xs text-warning">
+                    <th class="pb-1 w-1/3 font-medium">
+                      {{ $t('labels.contents.outOfSchema.key') }}
+                    </th>
+                    <th class="pb-1 w-2/3 font-medium">
+                      {{ $t('labels.contents.outOfSchema.value') }}
+                    </th>
+                    <th class="pb-1 w-12 font-medium" />
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="[key, value] in outOfSchemaEntries"
+                    :key="key"
+                    class="border-t border-warning/20"
+                  >
+                    <td class="py-1.5 text-xs text-warning">{{ key }}</td>
+                    <td class="py-1.5 text-sm text-primary">
+                      <span :title="JSON.stringify(value)">{{
+                        formatOutOfSchemaValue(value)
+                      }}</span>
+                    </td>
+                    <td class="py-1.5 text-right">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        class="text-destructive hover:text-destructive"
+                        @click="removeOutOfSchemaKey(key)"
+                      >
+                        <Icon name="lucide:trash-2" />
+                      </Button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </TabsContent>
     </TabsRoot>

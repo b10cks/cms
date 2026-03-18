@@ -463,6 +463,12 @@
         "config": "Config",
         "info": "Info",
         "comments": "Comments"
+      },
+      "outOfSchema": {
+        "label": "Out of schema",
+        "removeAll": "Remove all",
+        "key": "Key",
+        "value": "Value"
       }
     },
     "blocks": {
@@ -532,10 +538,8 @@
         "tagWhitelistEmpty": "No tags match your search.",
         "fileTypes": "Allowed file types",
         "fileTypesPlaceholder": "Select file types this block accepts",
-        "min": "Minimum items",
         "minPlaceholder": "e.g., 1",
         "minDescription": "Leave blank to allow zero.",
-        "max": "Maximum items",
         "maxPlaceholder": "e.g., 5",
         "maxDescription": "Leave blank for unlimited.",
         "createdAt": "Created at",
