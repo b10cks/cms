@@ -1,35 +1,40 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { deepClone } from '@vue/devtools-shared'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import { AccordionRoot } from 'reka-ui'
+import type { ComponentPublicInstance, Ref } from 'vue'
+
 import Add from '~/components/blocks/Add.vue'
 import Block from '~/components/blocks/Block.vue'
+import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
-
-interface EditorPage {
-  header: string
-  items: string[]
-}
 
 interface AddFieldPayload {
   type: string
   key: string
 }
 
+
 const props = defineProps<{
-  schema: Record<string, unknown>
+  schema: Record<string, SchemaType>
   editor: EditorPage[]
   readonly?: boolean
 }>()
 
-const emit = defineEmits(['update:schema', 'update:editor'])
+
+const emit = defineEmits<{
+  (e: 'update:schema', payload: Record<string, SchemaType>): void
+  (e: 'update:editor', payload: EditorPage[]): void
+}>()
 const { alert } = useAlertDialog()
 
-const localSchema = ref({ ...props.schema })
-const localEditor = ref(deepClone(props.editor ?? []))
+
+const localSchema = ref<Record<string, SchemaType>>(
+  deepClone(props.schema ?? {}) as Record<string, SchemaType>
+)
+const localEditor = ref<EditorPage[]>(deepClone(props.editor ?? []) as EditorPage[])
+
 
 if (localEditor.value.length === 0) {
   localEditor.value.push({
@@ -38,7 +43,36 @@ if (localEditor.value.length === 0) {
   })
 }
 
+
 const activeTab = ref(0)
+
+
+const resolveSortableElement = (
+  element: Element | ComponentPublicInstance | null
+): HTMLElement | null => {
+  if (element instanceof HTMLElement) {
+    return element
+  }
+
+
+  if (element && '$el' in element && element.$el instanceof HTMLElement) {
+    return element.$el
+  }
+
+
+  return null
+}
+
+
+const isAccordionItemOpen = (modelValue: unknown, key: string) => {
+  if (Array.isArray(modelValue)) {
+    return modelValue.includes(key)
+  }
+
+
+  return typeof modelValue === 'string' ? modelValue === key : false
+}
+
 
 const addPage = () => {
   localEditor.value.push({
@@ -46,9 +80,11 @@ const addPage = () => {
     items: [],
   })
 
+
   activeTab.value = localEditor.value.length - 1
   emitEditorUpdate()
 }
+
 
 const deletePage = async (pageIndex: number) => {
   const confirmed = await alert.confirm(
@@ -57,6 +93,7 @@ const deletePage = async (pageIndex: number) => {
       title: 'Delete Page',
     }
   )
+
 
   if (confirmed) {
     const itemsToMove = [...localEditor.value[pageIndex].items]
@@ -68,24 +105,29 @@ const deletePage = async (pageIndex: number) => {
         }
       )
 
+
       if (moveConfirmed) {
         const targetPageIndex = pageIndex === 0 ? 1 : 0
         localEditor.value[targetPageIndex].items.push(...itemsToMove)
       }
     }
 
+
     localEditor.value.splice(pageIndex, 1)
+
 
     if (activeTab.value >= localEditor.value.length) {
       activeTab.value = localEditor.value.length - 1
     }
 
+
     emitEditorUpdate()
   }
 }
 
+
 const deleteField = async (key: string) => {
-  const fieldName = localSchema.value[key]?.name || key
+  const fieldName = localSchema.value[key]?.name ?? key
   const confirmed = await alert.confirm(
     `Are you sure you want to delete the "${fieldName}" field?`,
     {
@@ -93,9 +135,11 @@ const deleteField = async (key: string) => {
     }
   )
 
+
   if (confirmed) {
     const updatedSchema = { ...localSchema.value }
     delete updatedSchema[key]
+
 
     localEditor.value.forEach((page) => {
       const keyIndex = page.items.indexOf(key)
@@ -104,29 +148,43 @@ const deleteField = async (key: string) => {
       }
     })
 
+
     emitSchemaUpdate(updatedSchema)
     emitEditorUpdate()
   }
 }
 
+
 const addField = async (payload: AddFieldPayload): Promise<boolean> => {
   const { type, key } = payload
+
 
   if (localSchema.value[key]) {
     await alert.message(`A field with key "${key}" already exists.`, {
       title: 'Duplicate Key',
     })
 
+
     return true
   }
 
-  updateSchemaItem(key, createDefaultSchemaForType(type, key))
+
+  updateSchemaItem(key, createDefaultSchemaForType(type, key) as SchemaType)
   localEditor.value[activeTab.value].items.push(key)
+
 
   emitEditorUpdate()
 
+
   return false
 }
+
+
+const handleAddField = async (payload: AddFieldPayload & { resolve: (value: boolean) => void }) => {
+  const result = await addField(payload)
+  payload.resolve(result)
+}
+
 
 const moveFieldToPage = (key: string, pageIndex: number) => {
   localEditor.value.forEach((page) => {
@@ -136,87 +194,133 @@ const moveFieldToPage = (key: string, pageIndex: number) => {
     }
   })
 
+
   localEditor.value[pageIndex].items.push(key)
   emitEditorUpdate()
 }
 
-const createDefaultSchemaForType = (type: string, key: string) => {
+
+const createDefaultSchemaForType = (type: string, key: string): SchemaType => {
   const name = key
     .replace(/_/g, ' ')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/\b\w/g, (l) => l.toUpperCase())
 
+
   const baseSchema = {
     name,
     required: false,
     translatable: false,
-    type,
+    indexable: ['text', 'textarea', 'markdown', 'richtext'].includes(type),
+    conditions: null,
+    validation: null,
   }
+
 
   switch (type) {
     case 'text':
       return {
         ...baseSchema,
+        type: 'text',
+        translatable: true,
         default: '',
-      }
+      } as TextSchema
     case 'textarea':
       return {
         ...baseSchema,
+        type: 'textarea',
+        translatable: true,
         default: '',
-      }
+      } as TextareaSchema
     case 'markdown':
       return {
         ...baseSchema,
+        type: 'markdown',
+        translatable: true,
         default: '',
-      }
+      } as MarkdownSchema
     case 'richtext':
       return {
         ...baseSchema,
+        type: 'richtext',
+        translatable: true,
         html_classes: [],
         default: {},
-      }
+      } as RichTextSchema
     case 'boolean':
       return {
         ...baseSchema,
+        type: 'boolean',
         default: false,
         show_inline: true,
-      }
+      } as BooleanSchema
     case 'number':
       return {
         ...baseSchema,
+        type: 'number',
         default: 0,
-      }
+      } as NumberSchema
     case 'link':
       return {
         ...baseSchema,
+        type: 'link',
+        translatable: true,
         asset_link_type: true,
         email_link_type: false,
         allow_target_blank: true,
         default: '',
-      }
+      } as LinkSchema
     case 'option':
       return {
         ...baseSchema,
+        type: 'option',
         options: [],
         exclude_empty: false,
         default: '',
-      }
+      } as OptionSchema
+    case 'references':
+      return {
+        ...baseSchema,
+        type: 'references',
+        block_whitelist: [],
+        min: 0,
+        max: 0,
+        default: [],
+      } as ReferencesSchema
+    case 'asset':
+      return {
+        ...baseSchema,
+        type: 'asset',
+        file_types: ['all'],
+        folder_id: null,
+        default: null,
+      } as AssetSchema
+    case 'multi_assets':
+      return {
+        ...baseSchema,
+        type: 'multi_assets',
+        file_types: ['all'],
+        min: 0,
+        max: 0,
+        default: [],
+      } as MultiAssetsSchema
     case 'blocks':
       return {
         ...baseSchema,
+        type: 'blocks',
         restrict_blocks: false,
         block_whitelist: [],
         restrict_tags: false,
         tag_whitelist: [],
         default: [],
-      }
+      } as unknown as BlocksSchema
     case 'meta':
       return {
         ...baseSchema,
         type: 'meta',
         translatable: true,
         has_og_tags: false,
-      }
+      } as MetaSchema
     case 'date':
       return {
         ...baseSchema,
@@ -226,21 +330,30 @@ const createDefaultSchemaForType = (type: string, key: string) => {
         min: undefined,
         max: undefined,
         use_current_as_default: false,
-      }
+      } as DateSchema
     default:
-      return baseSchema
+      return {
+        ...baseSchema,
+        type: 'text',
+        translatable: true,
+        default: '',
+      } as TextSchema
   }
 }
 
-const emitSchemaUpdate = (value) => {
+
+const emitSchemaUpdate = (value: Record<string, SchemaType>) => {
   emit('update:schema', value)
 }
+
 
 const emitEditorUpdate = () => {
   emit('update:editor', localEditor.value)
 }
 
-const tabsContainer = useTemplateRef('tabsContainer')
+
+const tabsContainer = useTemplateRef<HTMLElement>('tabsContainer')
+
 
 watch(
   () => localEditor.value.length,
@@ -252,16 +365,18 @@ watch(
   { immediate: true }
 )
 
+
 const setupTabsSortable = () => {
   nextTick(() => {
     if (!tabsContainer.value || props.readonly) return
 
-    useSortable(tabsContainer.value, localEditor.value, {
+    ;(useSortable as any)(tabsContainer.value, localEditor.value, {
       handle: '[tab-handle]',
       animation: 150,
-      onEnd: (event) => {
-        const { oldIndex, newIndex } = event
-        if (oldIndex === newIndex) return
+      onEnd: (event: { oldIndex?: number | null; newIndex?: number | null }) => {
+        const oldIndex = event.oldIndex
+        const newIndex = event.newIndex
+        if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
 
         if (activeTab.value === oldIndex) {
           activeTab.value = newIndex
@@ -275,10 +390,17 @@ const setupTabsSortable = () => {
   })
 }
 
+
 const setupFieldSortable = (pageIndex: number, element: HTMLElement) => {
   if (props.readonly) return
+  const page = localEditor.value[pageIndex]
+  if (!page) return
 
-  useSortable(element, localEditor.value[pageIndex].items, {
+
+  const pageItems = toRef(page, 'items')
+
+
+  ;(useSortable as any)(element, pageItems, {
     handle: '[draggable]',
     group: 'schema-fields',
     animation: 150,
@@ -288,29 +410,33 @@ const setupFieldSortable = (pageIndex: number, element: HTMLElement) => {
   })
 }
 
+
 onMounted(() => {
   if (localEditor.value.length > 1) {
     setupTabsSortable()
   }
 })
 
-const updateSchemaItem = (key: string, value: unknown) => {
+
+const updateSchemaItem = (key: string, value: SchemaType) => {
   emitSchemaUpdate({ ...localSchema.value, [key]: value })
 }
+
 
 watch(
   () => props.schema,
   (newSchema) => {
-    localSchema.value = deepClone(newSchema)
+    localSchema.value = deepClone(newSchema) as Record<string, SchemaType>
   },
   { deep: true }
 )
+
 
 watch(
   () => props.editor,
   (newEditor) => {
     if (JSON.stringify(newEditor) !== JSON.stringify(localEditor.value)) {
-      localEditor.value = [...newEditor]
+      localEditor.value = deepClone(newEditor) as EditorPage[]
     }
   },
   { deep: true }
@@ -382,7 +508,14 @@ watch(
       >
         <AccordionRoot
           v-slot="{ modelValue }"
-          :ref="(el) => el && setupFieldSortable(pageIndex, el)"
+          :ref="
+            (el: Element | ComponentPublicInstance | null) => {
+              const sortableElement = resolveSortableElement(el)
+              if (sortableElement) {
+                setupFieldSortable(pageIndex, sortableElement)
+              }
+            }
+          "
           type="multiple"
           class="grid gap-2"
         >
@@ -390,13 +523,14 @@ watch(
             v-for="key in page.items"
             :key="key"
             :name="key"
-            :item="localSchema[key]"
+            :item="localSchema[key] as SchemaType"
+            :schema="localSchema"
             :pages="localEditor"
             :current-page="pageIndex"
-            :is-open="modelValue.includes(key)"
-            :readonly="readonly"
+            :is-open="isAccordionItemOpen(modelValue, key)"
+            :readonly="Boolean(readonly)"
             class="rounded-md border border-border bg-surface p-2"
-            @update:item="(v) => updateSchemaItem(key, v)"
+            @update:item="(v: SchemaType) => updateSchemaItem(key, v)"
             @to-page="moveFieldToPage(key, $event)"
             @delete="deleteField(key)"
           />
@@ -404,7 +538,7 @@ watch(
 
         <Add
           v-if="!readonly"
-          @add="addField"
+          @add="handleAddField"
         />
       </div>
     </div>

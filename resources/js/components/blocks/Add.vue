@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
 import BlockTypeSelect from '~/components/ui/BlockTypeSelect.vue'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
@@ -14,30 +13,34 @@ const types = [
   'richtext',
   'blocks',
   'option',
-  'options',
   'link',
-  'reference',
+  'references',
   'boolean',
   'asset',
-  'multiAsset',
+  'multi_assets',
   'meta',
 ]
 
+
 const slugBlacklist = ['key', 'block']
+
 
 interface AddBlockProps {
   type: string
   key: string
 }
 
+
 const value = ref<AddBlockProps>({
   type: 'text',
   key: '',
 })
 
+
 const emit = defineEmits<{
   (e: 'add', payload: AddBlockProps & { resolve: (value: boolean) => void }): void
 }>()
+
 
 async function add() {
   if (value.value.key.trim() === '') return
@@ -50,6 +53,7 @@ async function add() {
   }
 }
 
+
 // Combined function to handle all key events
 function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'Enter') {
@@ -58,8 +62,10 @@ function handleKeydown(event: KeyboardEvent) {
   } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
     event.preventDefault()
 
+
     const currentIndex = types.findIndex((type) => type === value.value.type)
     let newIndex: number
+
 
     if (event.key === 'ArrowUp') {
       // Move up in the list (or wrap to the bottom)
@@ -69,22 +75,27 @@ function handleKeydown(event: KeyboardEvent) {
       newIndex = currentIndex >= types.length - 1 ? 0 : currentIndex + 1
     }
 
+
     value.value.type = types[newIndex]
+
 
     // Announce type change for screen readers
     announceTypeChange(types[newIndex])
   }
 }
 
+
 // Function to announce type changes to screen readers
 function announceTypeChange(type: string) {
   const announcement = `Block type changed to ${type}`
   const ariaLive = document.getElementById('type-change-announcer')
 
+
   if (ariaLive) {
     ariaLive.textContent = announcement
   }
 }
+
 
 // Lifecycle hook to ensure announcer element exists
 onMounted(() => {
@@ -96,6 +107,7 @@ onMounted(() => {
     document.body.appendChild(announcer)
   }
 })
+
 
 // Clean up on component unmount
 onUnmounted(() => {

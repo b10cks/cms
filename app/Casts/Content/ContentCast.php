@@ -2,20 +2,11 @@
 
 namespace App\Casts\Content;
 
-use App\Models\Space\Block;
-use App\Services\Content\ContentValidator;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Contracts\Database\Eloquent\SerializesCastableAttributes;
 
 class ContentCast implements CastsAttributes, SerializesCastableAttributes
 {
-    protected ContentValidator $validator;
-
-    public function __construct()
-    {
-        $this->validator = app(ContentValidator::class);
-    }
-
     /**
      * Cast the given value.
      */
@@ -39,11 +30,6 @@ class ContentCast implements CastsAttributes, SerializesCastableAttributes
     public function set($model, string $key, $value, array $attributes)
     {
         if (is_array($value)) {
-            // If we have a block relationship, validate the content
-            if (isset($attributes['block']) && $block = Block::whereSlug($attributes['block'])->first()) {
-                $this->validator->validate($block->schema, $value);
-            }
-
             return json_encode($value);
         }
 

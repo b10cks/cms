@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
-import type { BlockFolderResource, UpsertBlockFolderPayload } from '~/types/blocks'
+import type {
+  BlockFolderResource,
+  UpsertBlockFolderPayload,
+} from '~/api/resources/block-folders'
 
 import { api } from '~/api'
 

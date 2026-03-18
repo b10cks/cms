@@ -30,6 +30,8 @@ class ContentResource extends JsonResource
                 'icon' => $this->block->icon,
                 'slug' => $this->block->slug,
             ]),
+            'block_schema' => $this->whenLoaded('block', fn () => $this->block->schema->toArray()),
+            'block_editor' => $this->whenLoaded('block', fn () => $this->block->editor ?? []),
             'parent_id' => $this->parent_id,
             'parent' => $this->whenLoaded('parent', fn () => [
                 'id' => $this->parent->id,

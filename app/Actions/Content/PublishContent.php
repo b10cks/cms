@@ -5,22 +5,39 @@ namespace App\Actions\Content;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\User;
+use App\Services\Content\Schema\ContentSchemaValidator;
 use App\Services\Search\SearchService;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Validation\ValidationException;
 
 class PublishContent extends BasePublishAction
 {
     public function __construct(
-        protected SearchService $searchService
+        protected SearchService $searchService,
+        protected ContentSchemaValidator $contentSchemaValidator,
     ) {
     }
 
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner): void
     {
+        $content->loadMissing('block');
+        $contentValidation = $this->contentSchemaValidator->validateSubmission(
+            $space,
+            $content->block,
+            data_get($data, 'content', []),
+            $content,
+            $data['language_iso'] ?? $content->language_iso,
+            $data['i18n_parent_id'] ?? $content->i18n_parent_id,
+        );
+
+        if (! $contentValidation->isValid()) {
+            throw ValidationException::withMessages($contentValidation->errors);
+        }
+
         $success = false;
-        \DB::transaction(function () use ($data, $content, $space, $owner, &$success) {
+        \DB::transaction(function () use ($data, $content, $space, $owner, &$success, $contentValidation) {
             $this->clearScheduledVersions($content);
-            $this->processPublish($data, $content, $owner);
+            $this->processPublish($data, $content, $owner, $contentValidation->content);
             $this->finalizePublish($content, $space);
             $success = true;
         });
@@ -31,9 +48,16 @@ class PublishContent extends BasePublishAction
         }
     }
 
-    private function processPublish(array $data, Content $content, Authenticatable|User|null $owner): void
+    private function processPublish(
+        array $data,
+        Content $content,
+        Authenticatable|User|null $owner,
+        array $sanitizedContent,
+    ): void
     {
-        ['contentData' => $contentData, 'message' => $message] = $this->extractDataFromRequest($data);
+        $payload = $this->extractDataFromRequest($data);
+        $message = $payload['message'];
+        $contentData = $sanitizedContent;
 
         $this->updateContent($data, $content);
 

@@ -34,18 +34,23 @@ const editors = {
   number: NumberBlock,
   asset: AssetBlock,
   multiAsset: MultiAssetsBlock,
+  multi_assets: MultiAssetsBlock,
   reference: ReferenceBlock,
+  references: ReferenceBlock,
   meta: MetaBlock,
   date: DateBlock,
 } as const
+
 
 const props = defineProps<{
   item: SchemaType & { key: string }
   itemId: string
   modelValue: Record<string, unknown>
   spaceId: string
+  pathSegments?: Array<string | number>
   activeCollaborators?: CollaborationPresenceUser[]
 }>()
+
 
 const emit = defineEmits<{
   'update:modelValue': [value: Record<string, unknown>]
@@ -54,7 +59,36 @@ const emit = defineEmits<{
   fieldFocus: [payload: ContentFieldFocusPayload]
 }>()
 
+
+const markFieldDirty = inject<((path: string) => void) | undefined>('markFieldDirty', undefined)
+const getFieldError = inject<((path: string) => string | null) | undefined>(
+  'getFieldError',
+  undefined
+)
+const shouldShowFieldError = inject<((path: string) => boolean) | undefined>(
+  'shouldShowFieldError',
+  undefined
+)
+const fieldPath = computed(() => `content.${(props.pathSegments || []).map(String).join('.')}`)
+const fieldError = computed(() => getFieldError?.(fieldPath.value) || null)
+const showFieldError = computed(() => shouldShowFieldError?.(fieldPath.value) || false)
+const hasDirectFieldError = computed(() => Boolean(fieldError.value))
+const nestedValidationPrefix = computed(() => `${fieldPath.value}.`)
+const hasNestedFieldErrors = computed(() => {
+  if (props.item.type !== 'blocks') return false
+  if (typeof document === 'undefined') return false
+
+  return Boolean(
+    document.querySelector(
+      `[data-field-path^="${nestedValidationPrefix.value.replaceAll('"', '\\"')}"] [data-validation-visible="true"]`
+    )
+  )
+})
+const showValidationState = computed(() => showFieldError.value || hasNestedFieldErrors.value)
+
+
 // const updatePreviewItem = inject<(data: never) => void>('updatePreviewItem')
+
 
 const fieldValue = computed({
   get() {
@@ -74,6 +108,7 @@ const fieldValue = computed({
 
     // Emit the update with the new object
     emit('update:modelValue', updatedModel)
+    markFieldDirty?.(fieldPath.value)
     emit('fieldUpdate', {
       debounceMs: fieldDebounceMs.value,
       itemId: props.itemId,
@@ -84,17 +119,21 @@ const fieldValue = computed({
   },
 })
 
+
 const handleCreateTemplate = (blockId: string, content: Record<string, unknown>): void => {
   emit('createTemplate', blockId, content)
 }
+
 
 const handleNestedFieldUpdate = (payload: ContentFieldUpdatePayload): void => {
   emit('fieldUpdate', payload)
 }
 
+
 const handleNestedFieldFocus = (payload: ContentFieldFocusPayload): void => {
   emit('fieldFocus', payload)
 }
+
 
 const isFocused = ref(false)
 const tracksOwnFocus = computed(() => props.item.type !== 'blocks')
@@ -110,10 +149,12 @@ const fieldDebounceMs = computed(() => {
   }
 })
 
+
 const collaborationColor = computed(() => props.activeCollaborators?.[0]?.color || null)
 const showContainerHighlight = computed(
   () => tracksOwnFocus.value && !!props.activeCollaborators?.length
 )
+
 
 const collaborationStyle = computed(() => {
   if (!collaborationColor.value) return undefined
@@ -124,9 +165,11 @@ const collaborationStyle = computed(() => {
   }
 })
 
+
 const handleFocusIn = () => {
   if (!tracksOwnFocus.value) return
   if (isFocused.value) return
+
 
   isFocused.value = true
   emit('fieldFocus', {
@@ -136,17 +179,22 @@ const handleFocusIn = () => {
   })
 }
 
+
 const handleFocusOut = (event: FocusEvent) => {
   if (!tracksOwnFocus.value) return
 
+
   const nextTarget = event.relatedTarget as Node | null
   const currentTarget = event.currentTarget as HTMLElement | null
+
 
   if (nextTarget && currentTarget?.contains(nextTarget)) {
     return
   }
 
+
   if (!isFocused.value) return
+
 
   isFocused.value = false
   emit('fieldFocus', {
@@ -155,6 +203,7 @@ const handleFocusOut = (event: FocusEvent) => {
     focused: false,
   })
 }
+
 
 onBeforeUnmount(() => {
   if (!tracksOwnFocus.value) return
@@ -170,7 +219,12 @@ onBeforeUnmount(() => {
 
 <template>
   <div
-    :class="['relative', showContainerHighlight ? 'collaboration-field-active' : '']"
+    :data-field-path="fieldPath"
+    :data-validation-visible="showFieldError ? 'true' : undefined"
+    :class="[
+      'relative rounded-xl transition-colors',
+      showContainerHighlight ? 'collaboration-field-active' : '',
+    ]"
     :style="collaborationStyle"
     @focusin="handleFocusIn"
     @focusout="handleFocusOut"
@@ -196,12 +250,33 @@ onBeforeUnmount(() => {
       v-if="item.type in editors"
       v-model="fieldValue"
       :item="item"
+      :path-prefix="pathSegments"
       :space-id="spaceId"
       @create-template="handleCreateTemplate"
       @field-update="handleNestedFieldUpdate"
       @field-focus="handleNestedFieldFocus"
     />
     <div v-else>Unknown editor type: {{ item.type }}</div>
+    <div
+      v-if="showValidationState"
+      class="mt-2 space-y-1"
+    >
+      <div
+        v-if="showFieldError && fieldError"
+        class="rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+      >
+        {{ fieldError }}
+      </div>
+      <div
+        v-if="hasNestedFieldErrors"
+        class="flex items-center gap-2 rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+      >
+        <span class="font-medium">This field contains validation issues in nested fields.</span>
+        <span class="text-destructive/80"
+          >Open the affected block item to review and fix them.</span
+        >
+      </div>
+    </div>
   </div>
 </template>
 

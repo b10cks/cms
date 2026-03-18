@@ -7,6 +7,7 @@ use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
 use App\Services\Content\ContentI18nValidator;
+use App\Services\Content\Schema\ContentSchemaValidator;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -15,6 +16,7 @@ class CreateContent
 {
     public function __construct(
         private readonly ContentI18nValidator $validator,
+        private readonly ContentSchemaValidator $contentSchemaValidator,
     ) {}
 
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner)
@@ -25,9 +27,22 @@ class CreateContent
         }
 
         \DB::transaction(function () use ($data, $content, $owner, $space) {
-            $contentData = data_get($data, 'content');
             if (! \Arr::has($data, 'language_iso')) {
                 $data['language_iso'] = $space->settings->getDefaultLanguage();
+            }
+
+            $block = \App\Models\Space\Block::query()->findOrFail($data['block_id']);
+            $contentValidation = $this->contentSchemaValidator->validateSubmission(
+                $space,
+                $block,
+                data_get($data, 'content', []),
+                null,
+                $data['language_iso'] ?? null,
+                $data['i18n_parent_id'] ?? null,
+            );
+
+            if (! $contentValidation->isValid()) {
+                throw ValidationException::withMessages($contentValidation->errors);
             }
 
             unset($data['content']);
@@ -35,7 +50,7 @@ class CreateContent
 
             $content->id = strtolower((string) Str::ulid());
             $version = ContentVersion::forceCreate([
-                'content' => $contentData,
+                'content' => $contentValidation->content,
                 'content_id' => $content->id,
                 'created_by_id' => $owner->id,
             ]);

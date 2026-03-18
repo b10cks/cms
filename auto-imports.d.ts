@@ -28,6 +28,7 @@ declare global {
   const installI18n: typeof import('./resources/js/plugins/i18n').installI18n
   const installPosthog: typeof import('./resources/js/plugins/posthog').installPosthog
   const installVueQuery: typeof import('./resources/js/plugins/vue-query').installVueQuery
+  const isFieldVisible: typeof import('./resources/js/composables/useContentSchemaState').isFieldVisible
   const isProxy: typeof import('vue').isProxy
   const isReactive: typeof import('vue').isReactive
   const isReadonly: typeof import('vue').isReadonly
@@ -36,6 +37,9 @@ declare global {
   const locales: typeof import('./resources/js/plugins/i18n').locales
   const markRaw: typeof import('vue').markRaw
   const nextTick: typeof import('vue').nextTick
+  const normalizeSchema: typeof import('./resources/js/composables/useContentSchemaState').normalizeSchema
+  const normalizeSchemaField: typeof import('./resources/js/composables/useContentSchemaState').normalizeSchemaField
+  const normalizeSchemaType: typeof import('./resources/js/composables/useContentSchemaState').normalizeSchemaType
   const onActivated: typeof import('vue').onActivated
   const onBeforeMount: typeof import('vue').onBeforeMount
   const onBeforeRouteLeave: typeof import('vue-router').onBeforeRouteLeave
@@ -101,6 +105,7 @@ declare global {
   const useContentMenu: typeof import('./resources/js/composables/useContentMenu').useContentMenu
   const useContentMenuPresence: typeof import('./resources/js/composables/useContentMenuPresence').useContentMenuPresence
   const useContentPresence: typeof import('./resources/js/composables/usePresence').useContentPresence
+  const useContentSchemaState: typeof import('./resources/js/composables/useContentSchemaState').useContentSchemaState
   const useContentTree: typeof import('./resources/js/composables/useContentTree').useContentTree
   const useContentVersions: typeof import('./resources/js/composables/useContentVersions').useContentVersions
   const useCssModule: typeof import('vue').useCssModule
@@ -226,6 +231,7 @@ declare module 'vue' {
     readonly installI18n: UnwrapRef<typeof import('./resources/js/plugins/i18n')['installI18n']>
     readonly installPosthog: UnwrapRef<typeof import('./resources/js/plugins/posthog')['installPosthog']>
     readonly installVueQuery: UnwrapRef<typeof import('./resources/js/plugins/vue-query')['installVueQuery']>
+    readonly isFieldVisible: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['isFieldVisible']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
@@ -234,6 +240,9 @@ declare module 'vue' {
     readonly locales: UnwrapRef<typeof import('./resources/js/plugins/i18n')['locales']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
     readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
+    readonly normalizeSchema: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['normalizeSchema']>
+    readonly normalizeSchemaField: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['normalizeSchemaField']>
+    readonly normalizeSchemaType: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['normalizeSchemaType']>
     readonly onActivated: UnwrapRef<typeof import('vue')['onActivated']>
     readonly onBeforeMount: UnwrapRef<typeof import('vue')['onBeforeMount']>
     readonly onBeforeRouteLeave: UnwrapRef<typeof import('vue-router')['onBeforeRouteLeave']>
@@ -298,6 +307,7 @@ declare module 'vue' {
     readonly useContentMenu: UnwrapRef<typeof import('./resources/js/composables/useContentMenu')['useContentMenu']>
     readonly useContentMenuPresence: UnwrapRef<typeof import('./resources/js/composables/useContentMenuPresence')['useContentMenuPresence']>
     readonly useContentPresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['useContentPresence']>
+    readonly useContentSchemaState: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['useContentSchemaState']>
     readonly useContentTree: UnwrapRef<typeof import('./resources/js/composables/useContentTree')['useContentTree']>
     readonly useContentVersions: UnwrapRef<typeof import('./resources/js/composables/useContentVersions')['useContentVersions']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>

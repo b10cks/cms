@@ -2,9 +2,10 @@
 
 namespace App\Http\Requests\Block;
 
+use App\Http\Requests\Traits\ExternalIdValidation;
 use App\Models\Space\Block;
 use App\Models\Space\BlockFolder;
-use App\Http\Requests\Traits\ExternalIdValidation;
+use App\Services\Content\Schema\BlockSchemaRequestValidator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -55,6 +56,20 @@ class CreateBlockRequest extends FormRequest
         ];
     }
 
+    protected function prepareForValidation(): void
+    {
+        $schema = $this->input('schema');
+        $editor = $this->input('editor');
+
+        if (is_array($schema)) {
+            $this->merge(['schema' => \App\Services\Content\Schema\BlockSchema::fromArray($schema)->toArray()]);
+        }
+
+        if (is_array($editor)) {
+            $this->merge(['editor' => array_values($editor)]);
+        }
+    }
+
     /**
      * Get the error messages for the defined validation rules.
      *
@@ -65,6 +80,24 @@ class CreateBlockRequest extends FormRequest
         return [
             'slug.regex' => 'The slug may only contain lowercase letters, numbers, and hyphens.',
             'color.regex' => 'The color must be a valid hex color code (e.g., #FF5733).',
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function ($validator): void {
+                $errors = app(BlockSchemaRequestValidator::class)->validate(
+                    $this->input('schema', []),
+                    $this->input('editor', []),
+                );
+
+                foreach ($errors as $path => $messages) {
+                    foreach ($messages as $message) {
+                        $validator->errors()->add($path, $message);
+                    }
+                }
+            },
         ];
     }
 }

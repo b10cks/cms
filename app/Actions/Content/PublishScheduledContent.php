@@ -6,13 +6,16 @@ use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
+use App\Services\Content\Schema\ContentSchemaValidator;
 use App\Services\Search\SearchService;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Validation\ValidationException;
 
 class PublishScheduledContent
 {
     public function __construct(
-        protected SearchService $searchService
+        protected SearchService $searchService,
+        protected ContentSchemaValidator $contentSchemaValidator,
     ) {
     }
 
@@ -20,6 +23,12 @@ class PublishScheduledContent
     {
         if ($version->published_at !== null) {
             return;
+        }
+
+        $validation = $this->contentSchemaValidator->validateVersion($space, $content, $version);
+
+        if (! $validation->isValid()) {
+            throw ValidationException::withMessages($validation->errors);
         }
 
         $success = false;

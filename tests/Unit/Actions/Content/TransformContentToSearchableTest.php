@@ -49,6 +49,44 @@ class TransformContentToSearchableTest extends TestCase
             'name' => 'Page',
             'slug' => 'page',
             'type' => 'root',
+            'schema' => [
+                'title' => [
+                    'type' => 'text',
+                    'indexable' => true,
+                ],
+                'summary' => [
+                    'type' => 'text',
+                    'indexable' => true,
+                ],
+                'promo' => [
+                    'type' => 'text',
+                    'indexable' => true,
+                ],
+                'internal_notes' => [
+                    'type' => 'text',
+                    'indexable' => false,
+                ],
+                'blocks' => [
+                    'type' => 'blocks',
+                ],
+            ],
+        ]);
+
+        Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Hero',
+            'slug' => 'hero',
+            'type' => 'nestable',
+            'schema' => [
+                'headline' => [
+                    'type' => 'text',
+                    'indexable' => true,
+                ],
+                'body' => [
+                    'type' => 'text',
+                    'indexable' => true,
+                ],
+            ],
         ]);
     }
 
@@ -69,6 +107,7 @@ class TransformContentToSearchableTest extends TestCase
         ], $canonical);
         $translation = $this->createPublishedContent('de-at', 'startseite-at', [
             'promo' => 'Austrian promo',
+            'internal_notes' => 'Hidden from search',
         ], $canonical);
 
         $searchableText = app(TransformContentToSearchable::class)->execute($translation, $this->space);
@@ -78,6 +117,65 @@ class TransformContentToSearchableTest extends TestCase
         $this->assertStringContainsString('German summary', $searchableText);
         $this->assertStringContainsString('German hero body', $searchableText);
         $this->assertStringContainsString('Austrian promo', $searchableText);
+        $this->assertStringNotContainsString('Hidden from search', $searchableText);
+    }
+
+    #[Test]
+    public function it_only_extracts_visible_indexable_fields(): void
+    {
+        Block::query()
+            ->where('slug', 'hero')
+            ->update([
+                'schema' => [
+                    'headline' => [
+                        'type' => 'text',
+                        'indexable' => true,
+                    ],
+                    'body' => [
+                        'type' => 'text',
+                        'indexable' => true,
+                    ],
+                    'show_secret' => [
+                        'type' => 'boolean',
+                    ],
+                    'secret' => [
+                        'type' => 'text',
+                        'indexable' => true,
+                        'conditions' => [
+                            'mode' => 'all',
+                            'rules' => [[
+                                'field' => 'show_secret',
+                                'operator' => 'equals',
+                                'value' => true,
+                            ]],
+                        ],
+                    ],
+                ],
+            ]);
+
+        $content = $this->createPublishedContent('en', 'landing', [
+            'title' => 'Landing title',
+            'summary' => 'Index me',
+            'internal_notes' => 'Do not index',
+            'blocks' => [
+                [
+                    'block' => 'hero',
+                    'headline' => 'Hero headline',
+                    'body' => 'Hero body',
+                    'show_secret' => false,
+                    'secret' => 'Hidden secret',
+                ],
+            ],
+        ]);
+
+        $searchableText = app(TransformContentToSearchable::class)->execute($content, $this->space);
+
+        $this->assertStringContainsString('Landing title', $searchableText);
+        $this->assertStringContainsString('Index me', $searchableText);
+        $this->assertStringContainsString('Hero headline', $searchableText);
+        $this->assertStringContainsString('Hero body', $searchableText);
+        $this->assertStringNotContainsString('Do not index', $searchableText);
+        $this->assertStringNotContainsString('Hidden secret', $searchableText);
     }
 
     private function createPublishedContent(

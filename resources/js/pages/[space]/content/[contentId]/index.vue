@@ -22,6 +22,8 @@ import {
   useContentLiveCollaboration,
   type ContentCommitAction,
 } from '~/composables/useContentLiveCollaboration'
+import { useContentSchemaState } from '~/composables/useContentSchemaState'
+import type { ContentTreeItem } from '~/composables/useContentTree'
 import { useGlobalClipboard } from '~/composables/useGlobalClipboard'
 import { buildMissingLanguageDraft, resolveContentRouteName } from '~/lib/content-i18n'
 import type { ContentResource } from '~/types/contents'
@@ -40,6 +42,9 @@ const { hasClipboardItem, clearClipboard } = useGlobalClipboard()
 
 const { useContentQuery } = useContent(spaceId)
 const { data: routeContent } = useContentQuery(canonicalContentId)
+const { useBlocksQuery } = useBlocks(spaceId)
+const { data: blockResponse } = useBlocksQuery({ per_page: 1000 })
+const blocks = computed(() => blockResponse.value?.data || [])
 
 
 const { useSpaceQuery } = useSpaces()
@@ -182,6 +187,34 @@ const currentContentSource = computed<ContentResource | null>(() => {
 
 const content = ref<ContentResource | null>(null)
 const persistedContent = ref<ContentResource | null>(null)
+const editorContentModel = computed<ContentTreeItem>({
+  get: () => ({
+    id: content.value?.id || '',
+    block: content.value?.block?.slug || '',
+    ...((content.value?.content || {}) as Record<string, unknown>),
+  }),
+  set: (value) => {
+    if (!content.value) return
+
+    const { id: _id, block: _block, ...contentFields } = value
+    content.value.content = contentFields
+  },
+})
+const {
+  sanitizedContent,
+  markFieldDirty,
+  setServerErrors,
+  clearServerErrors,
+  getFieldError,
+  shouldShowFieldError,
+  validateAllForSubmit,
+  focusFirstInvalidField,
+  resetValidationState,
+  submitAttempted,
+} = useContentSchemaState({
+  content,
+  blocks,
+})
 
 
 const { useCommentsQuery } = useComments(
@@ -234,9 +267,26 @@ watch(
         JSON.stringify(content.value) === JSON.stringify(persistedContent.value)
 
       syncPersistedContent(newContent, shouldReplace ? 'replace' : 'preserve-local')
+      resetValidationState()
     }
   },
   { immediate: true }
+)
+
+
+watch(
+  sanitizedContent,
+  (nextSanitized) => {
+    if (!content.value) return
+
+    const currentSerialized = JSON.stringify(content.value.content || {})
+    const sanitizedSerialized = JSON.stringify(nextSanitized || {})
+
+    if (currentSerialized === sanitizedSerialized) return
+
+    content.value.content = JSON.parse(sanitizedSerialized)
+  },
+  { deep: true }
 )
 
 
@@ -305,6 +355,7 @@ const resetDirtyState = () => {
   if (content.value) {
     syncPersistedContent(content.value, 'replace')
   }
+  resetValidationState()
 }
 
 
@@ -438,6 +489,8 @@ const commitPersistedContent = (
   action: ContentCommitAction = 'save'
 ) => {
   syncPersistedContent(nextContent, 'replace')
+  clearServerErrors()
+  resetValidationState()
   broadcastPersistedContent(nextContent, action)
 }
 
@@ -527,6 +580,15 @@ provide('updateHoverItem', (id: string) => {
   }
 })
 provide('resetDirtyState', resetDirtyState)
+provide('markFieldDirty', markFieldDirty)
+provide('getFieldError', getFieldError)
+provide('shouldShowFieldError', shouldShowFieldError)
+provide('setValidationErrors', setServerErrors)
+provide('clearValidationErrors', clearServerErrors)
+provide('sanitizeContentForSubmit', () => sanitizedContent.value)
+provide('validateContentForSubmit', validateAllForSubmit)
+provide('submitValidationAttempted', submitAttempted)
+provide('focusFirstValidationError', focusFirstInvalidField)
 </script>
 
 <template>
@@ -560,7 +622,7 @@ provide('resetDirtyState', resetDirtyState)
         :class="['p-4', showPreview ? '' : 'mx-auto max-w-4xl', showAi ? 'pb-52' : '']"
       >
         <EditorComponent
-          v-model="content.content"
+          v-model="editorContentModel"
           :root-id="content.id"
           :block-id="content.block!.id"
           :get-active-collaborators="getCollaboratorsForField"

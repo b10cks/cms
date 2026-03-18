@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import type { Component, Ref } from 'vue'
 import { toast } from 'vue-sonner'
 
 import Icon from '~/components/Icon.vue'
@@ -7,6 +8,11 @@ import MetaLocalization from '~/components/localization/MetaLocalization.vue'
 import { Button } from '~/components/ui/button'
 import { CheckboxField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
+import {
+  isFieldVisible,
+  normalizeSchema,
+  normalizeSchemaType,
+} from '~/composables/useContentSchemaState'
 import type { ApiResponse } from '~/types'
 
 import MarkdownLocalization from './MarkdownLocalization.vue'
@@ -14,18 +20,14 @@ import RichTextLocalization from './RichTextLocalization.vue'
 import TextareaLocalization from './TextareaLocalization.vue'
 import TextLocalization from './TextLocalization.vue'
 
-interface SchemaType {
-  type: string
-  name?: string
-  translatable?: boolean
-}
+type LocalizableSchema = SchemaType & { translatable?: boolean }
 
 
 interface TranslatableField {
   key: string
   path: string[]
   fieldName: string
-  schemaItem: SchemaType
+  schemaItem: LocalizableSchema
   originalValue: unknown
   translatedValue: unknown
   isTranslated: boolean
@@ -48,7 +50,7 @@ interface Space {
 }
 
 
-const localizers = {
+const localizers: Partial<Record<CanonicalSchemaTypeName, Component>> = {
   text: TextLocalization,
   textarea: TextareaLocalization,
   markdown: MarkdownLocalization,
@@ -57,15 +59,21 @@ const localizers = {
 }
 
 
+function resolveLocalizerComponent(fieldType: string): Component | null {
+  const normalizedType = normalizeSchemaType(fieldType)
+  return normalizedType ? (localizers[normalizedType] ?? null) : null
+}
+
+
 const props = defineProps<{
   originalContent: Record<string, unknown>
   translationContent: Record<string, unknown>
-  blockSchema: Record<string, SchemaType>
+  blockSchema: Record<string, LocalizableSchema>
   spaceId: string
   targetLanguage: string
   getBlockSchema?: (
     blockSlug: string
-  ) => { schema: Record<string, SchemaType>; name: string } | undefined
+  ) => { schema: Record<string, LocalizableSchema>; name: string } | undefined
 }>()
 
 
@@ -91,7 +99,8 @@ const translatableFields = ref<TranslatableField[]>([])
 const traverseContent = (
   original: Record<string, unknown>,
   translation: Record<string, unknown>,
-  schema: Record<string, SchemaType>,
+  effective: Record<string, unknown>,
+  schema: Record<string, LocalizableSchema>,
   currentPath: string[] = [],
   result: TranslatableField[] = []
 ): TranslatableField[] => {
@@ -100,14 +109,21 @@ const traverseContent = (
   }
 
 
-  Object.entries(original).forEach(([key, value]) => {
+  const normalizedSchema = normalizeSchema(schema)
+  const originalScope = original as Record<string, unknown>
+  const translationScope = translation as Record<string, unknown>
+  const effectiveScope = effective as Record<string, unknown>
+
+
+  Object.entries(normalizedSchema).forEach(([key, schemaItem]) => {
     const path = [...currentPath, key]
-    const schemaItem = schema[key]
+    if (!isFieldVisible(schemaItem, normalizedSchema, originalScope, effectiveScope)) return
 
-    if (!schemaItem) return
+    const originalValue = originalScope[key]
+    const effectiveValue = effectiveScope[key]
 
-    if (schemaItem.type === 'blocks' && Array.isArray(value)) {
-      value.forEach((blockItem: BlockItem, index: number) => {
+    if (schemaItem.type === 'blocks' && Array.isArray(effectiveValue)) {
+      effectiveValue.forEach((blockItem: BlockItem, index: number) => {
         if (!blockItem || !blockItem.block) return
 
         const blockPath = [...path, index.toString()]
@@ -116,19 +132,26 @@ const traverseContent = (
         const blockSchemaItem = props.getBlockSchema ? props.getBlockSchema(blockSlug) : undefined
         if (!blockSchemaItem?.schema) return
 
-        const translatedBlockItems = (translation?.[key] as BlockItem[]) || []
+        const originalBlockItems = (originalScope[key] as BlockItem[]) || []
+        const translatedBlockItems = (translationScope[key] as BlockItem[]) || []
+        const originalBlockItem = originalBlockItems[index] || {}
         const translatedBlockItem = translatedBlockItems[index] || {}
+        const effectiveBlockItem = {
+          ...(originalBlockItem as Record<string, unknown>),
+          ...(translatedBlockItem as Record<string, unknown>),
+        }
 
         traverseContent(
-          blockItem as Record<string, unknown>,
+          originalBlockItem as Record<string, unknown>,
           translatedBlockItem as Record<string, unknown>,
+          effectiveBlockItem,
           blockSchemaItem.schema,
           blockPath,
           result
         )
       })
     } else if ('translatable' in schemaItem && schemaItem.translatable) {
-      const translatedValue = translation?.[key]
+      const translatedValue = translationScope[key]
       const isTranslated =
         translatedValue !== undefined && translatedValue !== null && translatedValue !== ''
 
@@ -137,7 +160,7 @@ const traverseContent = (
         path,
         fieldName: schemaItem.name || key,
         schemaItem,
-        originalValue: value,
+        originalValue,
         translatedValue: translatedValue || '',
         isTranslated,
       })
@@ -160,6 +183,10 @@ watch(
     translatableFields.value = traverseContent(
       props.originalContent as Record<string, unknown>,
       props.translationContent as Record<string, unknown>,
+      {
+        ...(props.originalContent as Record<string, unknown>),
+        ...(props.translationContent as Record<string, unknown>),
+      },
       props.blockSchema
     )
   },
@@ -169,10 +196,6 @@ watch(
 
 const filteredFields = computed(() => {
   return translatableFields.value.filter((field) => {
-    if (field.schemaItem.type === 'block_header') {
-      return true
-    }
-
     if (showUntranslatedOnly.value && field.isTranslated) {
       return false
     }
@@ -331,12 +354,8 @@ const translateWithAI = async (): Promise<void> => {
 
 
 const translationStats = computed(() => {
-  const fieldItems = translatableFields.value.filter(
-    (field) => field.schemaItem.type !== 'block_header'
-  )
-
-  const total = fieldItems.length
-  const translated = fieldItems.filter((f) => f.isTranslated).length
+  const total = translatableFields.value.length
+  const translated = translatableFields.value.filter((f) => f.isTranslated).length
   const percentage = total > 0 ? Math.round((translated / total) * 100) : 0
   const machineTranslated = machineTranslatedFields.value.size
 
@@ -405,6 +424,7 @@ const translationStats = computed(() => {
       <div
         v-for="field in filteredFields"
         :key="`${field.path.join('-')}-${field.key}`"
+        :data-field-path="`content.${field.path.join('.')}`"
       >
         <div class="-mb-2 pt-2">
           <h4 class="flex items-baseline gap-2">
@@ -416,15 +436,15 @@ const translationStats = computed(() => {
         </div>
         <div>
           <component
-            :is="localizers[field.schemaItem.type]"
-            v-if="field.schemaItem.type in localizers"
+            :is="resolveLocalizerComponent(field.schemaItem.type)"
+            v-if="resolveLocalizerComponent(field.schemaItem.type)"
             :item="field.schemaItem"
             :original-value="field.originalValue"
             :model-value="field.translatedValue"
             :disabled="isTranslating"
             :is-machine-translated="isMachineTranslated(field)"
             :space-id="props.spaceId"
-            @update:model-value="(newValue) => updateTranslatedValue(field, newValue)"
+            @update:model-value="(newValue: unknown) => updateTranslatedValue(field, newValue)"
           />
           <div
             v-else

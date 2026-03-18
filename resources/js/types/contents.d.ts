@@ -66,6 +66,8 @@ export interface ContentResource {
   children_count?: number
   block_id: string
   block?: ContentBlock
+  block_schema?: Record<string, SchemaType>
+  block_editor?: EditorPage[]
   language_iso: string
   i18n_parent_id: string | null
   i18n_canonical_id: string

@@ -7,6 +7,7 @@ use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
 use App\Services\Content\ContentI18nValidator;
+use App\Services\Content\Schema\ContentSchemaValidator;
 use App\Services\Search\SearchService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Validation\ValidationException;
@@ -16,6 +17,7 @@ class UpdateContent
     public function __construct(
         protected SearchService $searchService,
         protected ContentI18nValidator $validator,
+        protected ContentSchemaValidator $contentSchemaValidator,
     ) {}
 
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner)
@@ -26,9 +28,22 @@ class UpdateContent
         }
 
         $wasPublished = $content->published_at !== null;
+        $content->loadMissing('block');
+        $contentValidation = $this->contentSchemaValidator->validateSubmission(
+            $space,
+            $content->block,
+            data_get($data, 'content', []),
+            $content,
+            $data['language_iso'] ?? $content->language_iso,
+            $data['i18n_parent_id'] ?? $content->i18n_parent_id,
+        );
 
-        \DB::transaction(function () use ($data, $content, $space, $owner) {
-            $contentData = data_get($data, 'content');
+        if (! $contentValidation->isValid()) {
+            throw ValidationException::withMessages($contentValidation->errors);
+        }
+
+        \DB::transaction(function () use ($data, $content, $space, $owner, $contentValidation) {
+            $contentData = $contentValidation->content;
             $message = data_get($data, 'message');
 
             unset($data['content']);

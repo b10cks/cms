@@ -3,6 +3,7 @@
 namespace App\Casts\Content;
 
 use App\Services\Content\Schema\BlockSchema;
+use App\Services\Content\Schema\SchemaNormalizer;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Contracts\Database\Eloquent\SerializesCastableAttributes;
 
@@ -30,12 +31,14 @@ class SchemaCast implements CastsAttributes, SerializesCastableAttributes
      */
     public function set($model, string $key, $value, array $attributes)
     {
+        $normalizer = app(SchemaNormalizer::class);
+
         if ($value instanceof BlockSchema) {
             return json_encode($value->toArray());
         }
 
         if (is_array($value)) {
-            return json_encode($value);
+            return json_encode($normalizer->normalizeSchema($value));
         }
 
         return $value;

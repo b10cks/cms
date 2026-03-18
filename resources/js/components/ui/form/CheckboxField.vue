@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useVModel } from '@vueuse/core'
-import type { Translation } from 'nuxt-i18n-micro-types/src'
 import type { HTMLAttributes } from 'vue'
 import { Checkbox } from '~/components/ui/checkbox'
 import { TooltipIcon } from '~/components/ui/tooltip'
@@ -8,16 +7,16 @@ import { TooltipIcon } from '~/components/ui/tooltip'
 const props = defineProps<{
   // FormField props
   id?: string
-  label: string | Translation
+  label?: unknown
   required?: boolean
-  tooltip?: string | Translation
-  description?: string | Translation
+  tooltip?: unknown
+  description?: unknown
   error?: string
   class?: HTMLAttributes['class']
 
   // Input props
-  modelValue?: boolean
-  defaultValue?: boolean
+  modelValue?: boolean | 'indeterminate'
+  defaultValue?: boolean | 'indeterminate'
   type?: string
   disabled?: boolean
   readonly?: boolean
@@ -25,7 +24,7 @@ const props = defineProps<{
 }>()
 
 const emits = defineEmits<{
-  (e: 'update:modelValue', payload: string | number): void
+  (e: 'update:modelValue', payload: boolean | 'indeterminate'): void
 }>()
 
 // Create two-way binding for modelValue
@@ -47,7 +46,7 @@ const hasError = computed(() => !!props.error)
         :id="uniqueId"
         v-model="modelValue"
         :class="['relative z-10 cursor-pointer', hasError && 'border border-destructive']"
-        name="translatable"
+        :name="name"
       />
       <div class="flex items-center gap-2">
         <label

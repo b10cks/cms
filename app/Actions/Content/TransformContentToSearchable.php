@@ -5,11 +5,15 @@ namespace App\Actions\Content;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Services\Content\ContentI18nResolver;
+use App\Services\Content\Schema\ContentSchemaBuilder;
+use App\Services\Content\Schema\IndexableContentExtractor;
 
 class TransformContentToSearchable
 {
     public function __construct(
         private readonly ContentI18nResolver $contentI18nResolver,
+        private readonly ContentSchemaBuilder $contentSchemaBuilder,
+        private readonly IndexableContentExtractor $indexableContentExtractor,
     ) {}
 
     public function execute(Content $content, Space $space): string
@@ -22,10 +26,17 @@ class TransformContentToSearchable
             return '';
         }
 
-        $textParts = [];
-        $this->extractTextFromStructure($contentData, $textParts);
+        $content->loadMissing('block');
+        $tree = $this->contentSchemaBuilder->build($content->block, $contentData, $contentData);
 
-        return implode("\n", array_filter($textParts));
+        if ($tree->schema->getFields()->isEmpty()) {
+            $textParts = [];
+            $this->extractTextFromStructure($contentData, $textParts);
+
+            return implode("\n", array_filter($textParts));
+        }
+
+        return $this->indexableContentExtractor->extract($tree);
     }
 
     protected function extractTextFromStructure(array $data, array &$textParts): void
@@ -46,9 +57,9 @@ class TransformContentToSearchable
 
     protected function isSystemField(string $key): bool
     {
-        $systemFields = ['id', 'uuid', 'type', 'component', 'plugin', '_uid'];
+        $systemFields = ['id', 'uuid', 'type', 'component', 'plugin', '_uid', 'block'];
 
-        return \in_array($key, $systemFields) || \str_starts_with($key, '_');
+        return \in_array($key, $systemFields, true) || \str_starts_with($key, '_');
     }
 
     protected function cleanText(string $text): string
@@ -57,6 +68,6 @@ class TransformContentToSearchable
         $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $text = preg_replace('/\s+/', ' ', $text);
 
-        return trim($text);
+        return trim((string) $text);
     }
 }

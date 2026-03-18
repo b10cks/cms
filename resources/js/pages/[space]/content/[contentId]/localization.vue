@@ -14,6 +14,7 @@ import { Input } from '~/components/ui/input'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/components/ui/resizable'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { useAlertDialog } from '~/composables/useAlertDialog'
+import { useContentSchemaState } from '~/composables/useContentSchemaState'
 import { buildMissingLanguageDraft, resolveContentRouteName } from '~/lib/content-i18n'
 import type { ContentResource } from '~/types/contents'
 
@@ -333,6 +334,22 @@ watch(
 
 const { useBlocksQuery } = useBlocks(spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
+const blockList = computed(() => blocks.value?.data || [])
+const {
+  sanitizedContent,
+  setServerErrors,
+  clearServerErrors,
+  getFieldError,
+  shouldShowFieldError,
+  validateAllForSubmit,
+  focusFirstInvalidField,
+  resetValidationState,
+  submitAttempted,
+} = useContentSchemaState({
+  content: translatableContent,
+  blocks: blockList,
+  effectiveContent: previewContentPayload,
+})
 
 
 const block = computed(() => {
@@ -365,6 +382,22 @@ watch(
 )
 
 
+watch(
+  sanitizedContent,
+  (nextSanitized) => {
+    if (!translatableContent.value) return
+
+    const currentSerialized = JSON.stringify(translatableContent.value.content || {})
+    const sanitizedSerialized = JSON.stringify(nextSanitized || {})
+
+    if (currentSerialized === sanitizedSerialized) return
+
+    translatableContent.value.content = JSON.parse(sanitizedSerialized)
+  },
+  { deep: true }
+)
+
+
 const isLoading = computed(
   () =>
     !canonicalContent.value ||
@@ -374,6 +407,11 @@ const isLoading = computed(
     ) ||
     !block.value ||
     !translatableContent.value
+)
+const isPreviewDisabled = computed(
+  () =>
+    currentSpace.value?.settings?.visual_editor === false ||
+    translatableContent.value?.settings?.disablePreview === true
 )
 const showPreview = computed(() => {
   return (
@@ -484,13 +522,24 @@ watch(
 
 provide('commitPersistedContent', (nextContent: ContentResource) => {
   syncPersistedContent(nextContent)
+  clearServerErrors()
+  resetValidationState()
 })
 provide('resetDirtyState', () => {
   if (translatableContent.value) {
     syncPersistedContent(translatableContent.value)
   }
+  resetValidationState()
 })
 provide('content', previewContentRef)
+provide('getFieldError', getFieldError)
+provide('shouldShowFieldError', shouldShowFieldError)
+provide('setValidationErrors', setServerErrors)
+provide('clearValidationErrors', clearServerErrors)
+provide('sanitizeContentForSubmit', () => sanitizedContent.value)
+provide('validateContentForSubmit', validateAllForSubmit)
+provide('submitValidationAttempted', submitAttempted)
+provide('focusFirstValidationError', focusFirstInvalidField)
 
 
 useSeoMeta({

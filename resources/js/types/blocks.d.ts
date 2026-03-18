@@ -2,8 +2,67 @@ interface Schema {
   name: string
   description?: string | null
   required?: boolean
+  translatable?: boolean
+  indexable?: boolean
   order?: number
-  default?: string | undefined
+  default?: unknown
+  min?: number | string
+  max?: number | string
+  conditions?: FieldConditions | null
+  validation?: FieldValidation | null
+}
+
+type CanonicalSchemaTypeName =
+  | 'blocks'
+  | 'text'
+  | 'textarea'
+  | 'markdown'
+  | 'richtext'
+  | 'number'
+  | 'boolean'
+  | 'option'
+  | 'link'
+  | 'asset'
+  | 'multi_assets'
+  | 'references'
+  | 'date'
+  | 'meta'
+
+type LegacySchemaTypeName = 'multiAsset' | 'reference' | 'block'
+
+type ConditionOperator =
+  | 'equals'
+  | 'not_equals'
+  | 'in'
+  | 'not_in'
+  | 'is_empty'
+  | 'is_not_empty'
+  | 'gt'
+  | 'gte'
+  | 'lt'
+  | 'lte'
+  | 'contains'
+
+interface FieldCondition {
+  field: string
+  operator: ConditionOperator
+  value?: string | number | boolean | string[] | number[]
+}
+
+interface FieldConditions {
+  mode: 'all' | 'any'
+  rules: FieldCondition[]
+}
+
+interface FieldValidation {
+  min?: number | string
+  max?: number | string
+  min_length?: number
+  max_length?: number
+  min_items?: number
+  max_items?: number
+  pattern?: string
+  allowed_values?: string[]
 }
 
 interface BlocksSchema extends Schema {
@@ -45,15 +104,15 @@ interface AssetSchema extends Schema {
   folder_id?: string | null
 }
 
-interface MultiAssetSchema extends Schema {
-  type: 'multi_assets'
+interface MultiAssetsSchema extends Schema {
+  type: 'multi_assets' | 'multiAsset'
   file_types: FileTypes[]
   min: number
   max: number
 }
 
 interface ReferencesSchema extends Schema {
-  type: 'references'
+  type: 'references' | 'reference'
   block_whitelist: string[]
   min: number
   max: number
@@ -160,6 +219,7 @@ interface CreateBlockPayload {
   description?: string | null
   type: 'root' | 'nestable' | 'single' | 'universal'
   schema?: Record<string, SchemaType>
+  editor?: EditorPage[]
   tags: string[]
   folder_id: string | null
 }
@@ -171,6 +231,7 @@ interface UpdateBlockPayload {
   description?: string | null
   type: 'root' | 'nestable' | 'single' | 'universal'
   schema?: Record<string, SchemaType>
+  editor?: EditorPage[]
   tags: string[]
   folder_id: string | null
 }

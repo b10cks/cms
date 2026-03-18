@@ -18,23 +18,29 @@ import type {
   ContentFieldFocusPayload,
   ContentFieldUpdatePayload,
 } from '~/composables/useContentLiveCollaboration'
+import type { ContentTreeItem } from '~/composables/useContentTree'
 
 import EditorComponent from './EditorComponent.vue'
 
 const { $t } = useI18n()
 
+
 const props = defineProps<{
   item: BlocksSchema & { key: string }
   modelValue?: Array<Record<string, unknown>> | null
   spaceId: string
+  pathPrefix?: Array<string | number>
 }>()
+
 
 const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 
+
 const ulid = useUlid()
 const route = useRoute()
 const router = useRouter()
+
 
 const {
   copyItem: globalCopyItem,
@@ -43,6 +49,7 @@ const {
   hasClipboardItem,
 } = useGlobalClipboard()
 
+
 const emit = defineEmits<{
   'update:modelValue': [value: Array<Record<string, unknown>>]
   createTemplate: [blockId: string, content: Record<string, unknown>]
@@ -50,12 +57,27 @@ const emit = defineEmits<{
   fieldFocus: [payload: ContentFieldFocusPayload]
 }>()
 
+
 const getActiveCollaborators = inject<
   (itemId: string, field: string) => CollaborationPresenceUser[]
 >('getActiveCollaborators', () => [])
+const getFieldError = inject<((path: string) => string | null) | undefined>(
+  'getFieldError',
+  undefined
+)
+const shouldShowFieldError = inject<((path: string) => boolean) | undefined>(
+  'shouldShowFieldError',
+  undefined
+)
+const submitValidationAttempted = inject<Ref<boolean> | undefined>(
+  'submitValidationAttempted',
+  undefined
+)
+
 
 const getBlockForContent = (content: Record<string, unknown>) =>
   blocks.value?.data?.find((entry) => entry.slug === (content.block as string))
+
 
 const blockItems = computed({
   get: () => props.modelValue || [],
@@ -66,12 +88,16 @@ const blockItems = computed({
   },
 })
 
+
 const accordionContainer = ref<HTMLElement | null>(null)
 const selectedIndexes = ref<number[]>([])
+const openItems = ref<string[]>([])
+
 
 const addItem = (slug: string, index: number = -1) => {
   const newItem = { block: slug, id: ulid() }
   const updatedItems = [...blockItems.value]
+
 
   if (index === -1) {
     updatedItems.push(newItem)
@@ -79,8 +105,10 @@ const addItem = (slug: string, index: number = -1) => {
     updatedItems.splice(index, 0, newItem)
   }
 
+
   emit('update:modelValue', updatedItems)
 }
+
 
 const deleteItem = (index: number) => {
   const updatedItems = [...blockItems.value]
@@ -91,13 +119,16 @@ const deleteItem = (index: number) => {
     .map((selectedIndex) => (selectedIndex > index ? selectedIndex - 1 : selectedIndex))
 }
 
+
 const getClipboardLabel = (items: Array<Record<string, unknown>>) => {
   if (items.length === 1) {
     return items[0].block as string
   }
 
+
   return `${items.length} items`
 }
+
 
 const toggleSelected = (index: number, checked: boolean | 'indeterminate') => {
   if (checked) {
@@ -107,10 +138,13 @@ const toggleSelected = (index: number, checked: boolean | 'indeterminate') => {
     return
   }
 
+
   selectedIndexes.value = selectedIndexes.value.filter((selectedIndex) => selectedIndex !== index)
 }
 
+
 const isSelected = (index: number) => selectedIndexes.value.includes(index)
+
 
 const selectedItems = computed(() =>
   selectedIndexes.value
@@ -118,10 +152,12 @@ const selectedItems = computed(() =>
     .map((index) => blockItems.value[index])
 )
 
+
 const hasSelectedItems = computed(() => selectedItems.value.length > 0)
 const isAllSelected = computed(
   () => blockItems.value.length > 0 && selectedIndexes.value.length === blockItems.value.length
 )
+
 
 const selectAllItems = () => {
   if (isAllSelected.value) {
@@ -129,30 +165,38 @@ const selectAllItems = () => {
     return
   }
 
+
   selectedIndexes.value = blockItems.value.map((_, index) => index)
 }
+
 
 const getActionIndexes = (index?: number) => {
   if (typeof index === 'number') {
     return isSelected(index) ? [...selectedIndexes.value].sort((a, b) => a - b) : [index]
   }
 
+
   return [...selectedIndexes.value].sort((a, b) => a - b)
 }
+
 
 const normalizeClipboardItems = (pastedItem: Record<string, unknown> | null) => {
   if (!pastedItem) return []
 
+
   const items = Array.isArray(pastedItem.items) ? pastedItem.items : [pastedItem]
+
 
   return items
     .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
     .map((item) => ({ ...item }))
 }
 
+
 const copyItems = async (index?: number) => {
   const indexes = getActionIndexes(index)
   if (indexes.length === 0) return
+
 
   const itemsToCopy = indexes.map((itemIndex) => ({ ...blockItems.value[itemIndex] }))
   const payload =
@@ -162,12 +206,15 @@ const copyItems = async (index?: number) => {
           items: itemsToCopy,
         } as Record<string, unknown>)
 
+
   await globalCopyItem(payload, props.spaceId, getClipboardLabel(itemsToCopy))
 }
+
 
 const cutItems = async (index?: number) => {
   const indexes = getActionIndexes(index)
   if (indexes.length === 0) return
+
 
   const itemsToCut = indexes.map((itemIndex) => ({ ...blockItems.value[itemIndex] }))
   const payload =
@@ -177,7 +224,9 @@ const cutItems = async (index?: number) => {
           items: itemsToCut,
         } as Record<string, unknown>)
 
+
   await globalCutItem(payload, props.spaceId, getClipboardLabel(itemsToCut))
+
 
   const updatedItems = [...blockItems.value]
   indexes
@@ -186,9 +235,11 @@ const cutItems = async (index?: number) => {
       updatedItems.splice(itemIndex, 1)
     })
 
+
   blockItems.value = updatedItems
   selectedIndexes.value = []
 }
+
 
 const pasteItems = async (event?: ClipboardEvent | null, insertIndex?: number) => {
   if (event) {
@@ -196,8 +247,10 @@ const pasteItems = async (event?: ClipboardEvent | null, insertIndex?: number) =
     event.preventDefault()
   }
 
+
   const pastedItem = await globalPasteItem()
   const pastedItems = normalizeClipboardItems(pastedItem)
+
 
   if (pastedItems.length > 0) {
     const updatedItems = [...blockItems.value]
@@ -208,22 +261,26 @@ const pasteItems = async (event?: ClipboardEvent | null, insertIndex?: number) =
   }
 }
 
+
 const handleTemplateTrigger = (content: Record<string, unknown>) => {
   const block = getBlockForContent(content)
   if (!block?.id) return
 
+
   emit('createTemplate', block.id, content)
 }
+
 
 const setupSortable = () => {
   nextTick(() => {
     if (!accordionContainer.value) return
 
-    useSortable(accordionContainer.value, blockItems, {
+    ;(useSortable as any)(accordionContainer, blockItems, {
       handle: '[draggable]',
     })
   })
 }
+
 
 watch(
   () => blockItems.value.length,
@@ -234,13 +291,16 @@ watch(
   { immediate: true }
 )
 
+
 const updateContent = (index: number, newContent: Record<string, unknown>) => {
   if (newContent === blockItems.value[index]) return
+
 
   const updatedItems = [...blockItems.value]
   updatedItems[index] = newContent
   blockItems.value = updatedItems
 }
+
 
 const navigateToItem = (itemId: string) => {
   router.push({
@@ -249,9 +309,113 @@ const navigateToItem = (itemId: string) => {
   })
 }
 
+
 const forwardFieldUpdate = (payload: ContentFieldUpdatePayload) => {
   emit('fieldUpdate', payload)
 }
+
+
+const getItemAccordionValue = (content: Record<string, unknown>, index: number) =>
+  `content-${(content.id as string) || index}`
+
+
+const getItemPathPrefix = (index: number) => [...(props.pathPrefix || []), index]
+
+
+const getItemFieldPath = (index: number) =>
+  `content.${getItemPathPrefix(index).map(String).join('.')}`
+
+
+const getVisibleItemError = (index: number) => {
+  const basePath = getItemFieldPath(index)
+  const directError = getFieldError?.(basePath)
+  const showDirectError = shouldShowFieldError?.(basePath)
+
+
+  if (directError && showDirectError) return directError
+
+
+  if (typeof document === 'undefined') return null
+
+
+  const escapedPath =
+    typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+      ? CSS.escape(`${basePath}.`)
+      : `${basePath}.`
+  const visibleInvalidField = document.querySelector<HTMLElement>(
+    `[data-field-path^="${escapedPath}"][data-validation-visible="true"]`
+  )
+
+
+  if (visibleInvalidField) {
+    return (
+      visibleInvalidField.querySelector('.text-destructive')?.textContent?.trim() ||
+      'Nested fields need attention.'
+    )
+  }
+
+
+  const nestedFieldContainers = Array.from(
+    document.querySelectorAll<HTMLElement>(`[data-field-path^="${escapedPath}"]`)
+  )
+  const collapsedInvalidField = nestedFieldContainers.find((container) => {
+    const nestedError = getFieldError?.(container.dataset.fieldPath || '')
+    const shouldShowNestedError = shouldShowFieldError?.(container.dataset.fieldPath || '')
+    return Boolean(nestedError && shouldShowNestedError)
+  })
+
+
+  if (!collapsedInvalidField) return null
+
+
+  return (
+    getFieldError?.(collapsedInvalidField.dataset.fieldPath || '') ||
+    'Nested fields need attention.'
+  )
+}
+
+
+const hasVisibleItemError = (index: number) => Boolean(getVisibleItemError(index))
+
+
+const ensureInvalidItemsOpen = () => {
+  const invalidValues = blockItems.value
+    .map((content, index) =>
+      hasVisibleItemError(index) ? getItemAccordionValue(content, index) : null
+    )
+    .filter((value): value is string => Boolean(value))
+
+
+  if (invalidValues.length === 0) return
+
+
+  openItems.value = Array.from(new Set([...openItems.value, ...invalidValues]))
+}
+
+
+watch(
+  () => blockItems.value,
+  () => {
+    nextTick(() => {
+      ensureInvalidItemsOpen()
+    })
+  },
+  { deep: true, immediate: true }
+)
+
+
+watch(
+  () => submitValidationAttempted?.value,
+  (attempted, previousAttempted) => {
+    if (!attempted || attempted === previousAttempted) return
+
+
+    nextTick(() => {
+      ensureInvalidItemsOpen()
+    })
+  }
+)
+
 
 const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
   emit('fieldFocus', payload)
@@ -309,14 +473,18 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
 
       <AccordionRoot
         ref="accordionContainer"
+        v-model="openItems"
         type="multiple"
         class="relative pt-2"
       >
         <AccordionItem
           v-for="(content, i) in blockItems"
           :key="(content.id as string) || i"
-          :value="`content-${(content.id as string) || i}`"
-          class="relative mb-2 rounded-lg border border-border bg-background p-2"
+          :value="getItemAccordionValue(content, i)"
+          :class="[
+            'relative mb-2 rounded-lg border bg-background p-2 transition-colors',
+            hasVisibleItemError(i) ? 'border-destructive/40 bg-destructive/5' : 'border-border',
+          ]"
         >
           <AccordionHeader class="group">
             <AddDropdown
@@ -369,49 +537,61 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
                   <div class="flex text-sm text-muted">{{ content.block as string }}</div>
                 </div>
               </div>
-              <div class="ml-auto flex items-center gap-2 opacity-0 group-hover:opacity-100">
-                <button
-                  v-if="content.id"
-                  type="button"
-                  :title="$t('actions.blocks.tooltips.createTemplate')"
-                  class="flex transform cursor-pointer items-center hover:text-primary"
-                  @click.stop="handleTemplateTrigger(content)"
+              <div class="ml-auto flex items-center gap-2">
+                <div
+                  v-if="hasVisibleItemError(i)"
+                  class="mr-1 flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive"
                 >
-                  <Icon name="lucide:notepad-text-dashed" />
-                </button>
-                <button
-                  v-if="content.id"
-                  type="button"
-                  :title="$t('actions.blocks.tooltips.editNested')"
-                  class="flex transform cursor-pointer items-center hover:text-primary"
-                  @click.stop="navigateToItem(content.id as string)"
-                >
-                  <Icon name="lucide:edit-3" />
-                </button>
-                <button
-                  type="button"
-                  :title="$t('actions.blocks.tooltips.copy')"
-                  class="flex transform cursor-pointer items-center hover:text-primary"
-                  @click.stop="copyItems(i)"
-                >
-                  <Icon name="lucide:copy" />
-                </button>
-                <button
-                  type="button"
-                  :title="$t('actions.blocks.tooltips.cut')"
-                  class="flex transform cursor-pointer items-center hover:text-primary"
-                  @click.stop="cutItems(i)"
-                >
-                  <Icon name="lucide:scissors" />
-                </button>
-                <button
-                  type="button"
-                  :title="$t('actions.blocks.tooltips.delete')"
-                  class="flex transform cursor-pointer items-center hover:text-red-500"
-                  @click.stop="deleteItem(i)"
-                >
-                  <Icon name="lucide:trash-2" />
-                </button>
+                  <Icon
+                    name="lucide:circle-alert"
+                    size="0.75rem"
+                  />
+                  <span>Needs attention</span>
+                </div>
+                <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100">
+                  <button
+                    v-if="content.id"
+                    type="button"
+                    :title="$t('actions.blocks.tooltips.createTemplate')"
+                    class="flex transform cursor-pointer items-center hover:text-primary"
+                    @click.stop="handleTemplateTrigger(content)"
+                  >
+                    <Icon name="lucide:notepad-text-dashed" />
+                  </button>
+                  <button
+                    v-if="content.id"
+                    type="button"
+                    :title="$t('actions.blocks.tooltips.editNested')"
+                    class="flex transform cursor-pointer items-center hover:text-primary"
+                    @click.stop="navigateToItem(content.id as string)"
+                  >
+                    <Icon name="lucide:edit-3" />
+                  </button>
+                  <button
+                    type="button"
+                    :title="$t('actions.blocks.tooltips.copy')"
+                    class="flex transform cursor-pointer items-center hover:text-primary"
+                    @click.stop="copyItems(i)"
+                  >
+                    <Icon name="lucide:copy" />
+                  </button>
+                  <button
+                    type="button"
+                    :title="$t('actions.blocks.tooltips.cut')"
+                    class="flex transform cursor-pointer items-center hover:text-primary"
+                    @click.stop="cutItems(i)"
+                  >
+                    <Icon name="lucide:scissors" />
+                  </button>
+                  <button
+                    type="button"
+                    :title="$t('actions.blocks.tooltips.delete')"
+                    class="flex transform cursor-pointer items-center hover:text-red-500"
+                    @click.stop="deleteItem(i)"
+                  >
+                    <Icon name="lucide:trash-2" />
+                  </button>
+                </div>
               </div>
             </AccordionTrigger>
           </AccordionHeader>
@@ -423,13 +603,16 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
               >
                 <EditorComponent
                   :key="(content.id as string) || i"
-                  :model-value="content"
+                  :model-value="content as ContentTreeItem"
                   :block-slug="content.block as string"
                   :get-active-collaborators="getActiveCollaborators"
+                  :path-prefix="[...(pathPrefix || []), i]"
                   :root-id="content.id as string"
                   :space-id="spaceId"
                   is-child
-                  @update:model-value="(value) => value && updateContent(i, value)"
+                  @update:model-value="
+                    (value) => value && updateContent(i, value as Record<string, unknown>)
+                  "
                   @field-update="forwardFieldUpdate"
                   @field-focus="forwardFieldFocus"
                 />

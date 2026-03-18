@@ -461,6 +461,12 @@
     "blocks": {
       "title": "Blocks",
       "description": "Erstelle und verwalte deine wiederverwendbaren Content Blocks.",
+      "summary": {
+        "required": "Erforderlich",
+        "indexable": "Indexierbar",
+        "conditionsAll": "Alle Bedingungen erfüllen",
+        "conditionsAny": "Irgendeine Bedingung erfüllen"
+      },
       "fields": {
         "name": "Block-Name",
         "slug": "API-Name",
@@ -480,6 +486,19 @@
         "requiredTooltip": "Benutzer können keinen Eintrag erstellen, ohne dieses Feld auszufüllen.",
         "translatable": "Übersetzbar?",
         "translatableTooltip": "Benutzer können dieses Feld in verschiedenen Sprachen übersetzen.",
+        "indexable": "Indexierbar?",
+        "indexableDescription": "Dieses Feld wird für die Volltextsuche in den Suchergebnissen verwendet.",
+        "conditions": "Bedingungen",
+        "conditionsDescription": "Dieses Feld nur anzeigen oder anwenden, wenn bestimmte Bedingungen erfüllt sind.",
+        "conditionMode": "Treffermodus",
+        "conditionModeAll": "Alle erfüllen",
+        "conditionModeAny": "Irgendeine erfüllen",
+        "conditionField": "Feld",
+        "conditionOperator": "Operator",
+        "conditionValue": "Wert",
+        "conditionTrue": "Wahr",
+        "conditionFalse": "Falsch",
+        "conditionListPlaceholder": "Kommagetrennte Werte",
         "color": "Farbe",
         "order": "Reihenfolge",
         "restrict_blocks": "Mögliche Blocks einschränken",

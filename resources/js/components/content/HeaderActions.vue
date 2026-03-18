@@ -38,6 +38,23 @@ const commitPersistedContent = inject<
   ((content: ContentResource, action?: ContentCommitAction) => void) | undefined
 >('commitPersistedContent', undefined)
 const resetDirtyState = inject<(() => void) | undefined>('resetDirtyState', undefined)
+const validateContentForSubmit = inject<(() => boolean) | undefined>(
+  'validateContentForSubmit',
+  undefined
+)
+const sanitizeContentForSubmit = inject<(() => Record<string, unknown>) | undefined>(
+  'sanitizeContentForSubmit',
+  undefined
+)
+const setValidationErrors = inject<((errors: Record<string, string[]>) => void) | undefined>(
+  'setValidationErrors',
+  undefined
+)
+const clearValidationErrors = inject<(() => void) | undefined>('clearValidationErrors', undefined)
+const focusFirstValidationError = inject<(() => Promise<void>) | undefined>(
+  'focusFirstValidationError',
+  undefined
+)
 
 
 const {
@@ -87,25 +104,79 @@ const handlePersistedContent = (
   resetDirtyState?.()
 }
 
-const mutationPayload = computed(() => sanitizeContentMutationPayload(props.content))
+
+const mutationPayload = computed(() =>
+  sanitizeContentMutationPayload({
+    ...props.content,
+    content: sanitizeContentForSubmit?.() || props.content.content,
+  })
+)
+
+
+const handleMutationError = (error: unknown) => {
+  const errorData =
+    (error as { data?: { errors?: Record<string, string[]> } })?.data?.errors ||
+    (error as { response?: { data?: { errors?: Record<string, string[]> } } })?.response?.data
+      ?.errors
+  if (errorData) {
+    setValidationErrors?.(errorData)
+    focusFirstValidationError?.()
+  }
+}
+
+
+const guardSubmit = () => {
+  clearValidationErrors?.()
+  const isValid = validateContentForSubmit?.() ?? true
+  if (!isValid) {
+    focusFirstValidationError?.()
+  }
+
+
+  return isValid
+}
 
 
 const save = async () => {
+  if (!guardSubmit()) return
+
+
   if (props.content.id) {
-    const nextContent = await updateContent({ id: props.content.id, payload: mutationPayload.value })
-    handlePersistedContent(nextContent, 'save')
+    try {
+      const nextContent = await updateContent({
+        id: props.content.id,
+        payload: mutationPayload.value,
+      })
+      handlePersistedContent(nextContent, 'save')
+    } catch (error) {
+      handleMutationError(error)
+    }
     return
   }
 
 
-  const nextContent = await createContent(mutationPayload.value)
-  handlePersistedContent(nextContent, 'save')
+  try {
+    const nextContent = await createContent(mutationPayload.value)
+    handlePersistedContent(nextContent, 'save')
+  } catch (error) {
+    handleMutationError(error)
+  }
 }
 
 
 const publishDirectly = async () => {
-  const nextContent = await publishContent({ id: props.content.id, payload: mutationPayload.value })
-  handlePersistedContent(nextContent, 'publish')
+  if (!guardSubmit()) return
+
+
+  try {
+    const nextContent = await publishContent({
+      id: props.content.id,
+      payload: mutationPayload.value,
+    })
+    handlePersistedContent(nextContent, 'publish')
+  } catch (error) {
+    handleMutationError(error)
+  }
 }
 
 
@@ -122,30 +193,49 @@ const schedulePublish = () => {
 
 
 const handlePublish = async (payload: { message?: string; published_at?: string | null }) => {
+  if (!guardSubmit()) return
+
+
   const publishPayload = sanitizeContentMutationPayload({
     ...props.content,
+    content: sanitizeContentForSubmit?.() || props.content.content,
     ...payload,
   })
-  const nextContent = await publishContent({ id: props.content.id, payload: publishPayload })
-  handlePersistedContent(nextContent, 'publish')
-  publishDialogOpen.value = false
+  try {
+    const nextContent = await publishContent({ id: props.content.id, payload: publishPayload })
+    handlePersistedContent(nextContent, 'publish')
+    publishDialogOpen.value = false
+  } catch (error) {
+    handleMutationError(error)
+  }
 }
 
 
 const handleSchedule = async (payload: { message?: string; scheduled_at?: string | null }) => {
+  if (!guardSubmit()) return
+
+
   const schedulePayload = sanitizeContentMutationPayload({
     ...props.content,
+    content: sanitizeContentForSubmit?.() || props.content.content,
     message: payload.message,
     scheduled_at: payload.scheduled_at,
   })
-  const nextContent = await scheduleContent({ id: props.content.id, payload: schedulePayload })
-  handlePersistedContent(nextContent, 'schedule')
-  publishDialogOpen.value = false
+  try {
+    const nextContent = await scheduleContent({ id: props.content.id, payload: schedulePayload })
+    handlePersistedContent(nextContent, 'schedule')
+    publishDialogOpen.value = false
+  } catch (error) {
+    handleMutationError(error)
+  }
 }
 
 
 const unpublish = async () => {
-  const nextContent = await unpublishContent({ id: props.content.id, payload: mutationPayload.value })
+  const nextContent = await unpublishContent({
+    id: props.content.id,
+    payload: mutationPayload.value,
+  })
   handlePersistedContent(nextContent, 'unpublish')
 }
 
