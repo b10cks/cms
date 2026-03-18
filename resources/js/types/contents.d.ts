@@ -31,6 +31,21 @@ declare interface ContentVersionResource extends ContentVersionListResource {
 declare interface ContentVersionActionPayload {
   versionId: string
 }
+
+export type ContentI18nMode = 'overlay' | 'independent'
+
+export interface ContentLanguageVersion {
+  language_iso: string
+  label: string
+  exists: boolean
+  content_id: string | null
+  is_default: boolean
+  is_current: boolean
+  status: 'missing' | 'draft' | 'published'
+  published_at: string | null
+  fallback_language: string | null
+}
+
 export interface ContentBlock {
   id: string
   icon: string
@@ -40,6 +55,7 @@ export interface ContentBlock {
 
 export interface ContentSettings {
   disablePreview: boolean
+  i18n_mode_override?: 'inherit' | 'overlay' | 'independent'
 }
 
 export interface ContentResource {
@@ -50,12 +66,16 @@ export interface ContentResource {
   children_count?: number
   block_id: string
   block?: ContentBlock
+  language_iso: string
   i18n_parent_id: string | null
+  i18n_canonical_id: string
+  effective_i18n_mode: ContentI18nMode
+  language_versions: ContentLanguageVersion[]
   i18n_parent?: ContentMenuTranslation
   i18n_translations?: ContentMenuTranslation[]
   i18n_siblings?: ContentMenuTranslation[]
   name: string
-  content: object
+  content: Record<string, unknown>
   settings: ContentSettings
   published_version_id: string | null
   published_version?: ContentVersionListResource | null
@@ -73,7 +93,9 @@ export interface CreateContentPayload {
   block_id: string
   name: string
   slug: string
-  content?: object
+  language_iso?: string
+  i18n_parent_id?: string | null
+  content?: Record<string, unknown>
   settings?: Partial<ContentSettings>
   description?: string
 }
@@ -82,7 +104,9 @@ export interface UpdateContentPayload {
   parent_id?: string | null
   name?: string
   slug?: string
-  content?: object
+  language_iso?: string
+  i18n_parent_id?: string | null
+  content?: Record<string, unknown>
   settings?: Partial<ContentSettings>
   description?: string
   message?: string

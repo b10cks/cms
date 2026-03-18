@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import ContentStateBadge from '~/components/content/ContentStateBadge.vue'
 import Icon from '~/components/Icon.vue'
-import type { BadgeVariants } from '~/components/ui/badge'
-import { Badge } from '~/components/ui/badge'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -18,7 +17,7 @@ const props = defineProps<{
   showPreviewToggle?: boolean
 }>()
 
-const spaceId = inject('spaceId')
+const spaceId = inject<string>('spaceId', '')
 
 const { useContentMenuQuery, buildBreadcrumbs } = useContentMenu(spaceId)
 const { data: contentMenu } = useContentMenuQuery()
@@ -32,19 +31,9 @@ watch(breadcrumbs, (crumbs) => {
   settings.value.content.expanded = [...settings.value.content.expanded, ...path]
 })
 
-const status = computed<{ color: string; label: string }>(() => {
-  if (props.content?.published_at) {
-    return {
-      color: 'success',
-      label: 'published',
-    }
-  }
-
-  return {
-    color: 'default',
-    label: 'draft',
-  }
-})
+const status = computed<'draft' | 'published'>(() =>
+  props.content?.published_at ? 'published' : 'draft'
+)
 
 const togglePreview = () => {
   settings.value.content.showPreview = !settings.value.content.showPreview
@@ -56,12 +45,7 @@ const togglePreview = () => {
     <div v-if="content">
       <h1 class="-mb-1 flex items-center gap-2">
         <span class="text-lg font-semibold text-primary">{{ content?.name }}</span>
-        <Badge
-          size="sm"
-          :variant="status.color as BadgeVariants['variant']"
-        >
-          {{ $t(`labels.contents.status.${status.label}`) }}
-        </Badge>
+        <ContentStateBadge :status="status" />
       </h1>
       <div class="flex items-center">
         <Breadcrumb>

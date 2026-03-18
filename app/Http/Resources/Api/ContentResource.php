@@ -4,103 +4,90 @@ namespace App\Http\Resources\Api;
 
 use App\Models\Space\Content;
 use App\Services\Content\AssetHandler;
+use App\Services\Content\ContentI18nResolver;
 use App\Services\Content\LinkHandler;
+use App\Services\Content\ResolvedContent;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/**
- * @mixin Content
- */
 class ContentResource extends JsonResource
 {
     public function toArray(Request $request)
     {
+        $resolved = $this->resolveContent($request);
+        $row = $resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent;
+        $row->loadMissing('block');
+
         $this->additional([
-            'rv' => app('currentSpace')->rv
+            'rv' => app('currentSpace')->rv,
         ]);
 
         return [
-            'id' => $this->getRouteKey(),
-            'name' => $this->name,
-            'slug' => $this->slug,
-            'block' => $this->whenLoaded('block', fn(): string => $this->block->slug),
-            'parent_id' => $this->parent_id,
-            'full_slug' => $this->full_slug,
-            'content' => $this->getTransformedContent(),
-            'language_iso' => $this->language_iso,
-            'translations' => $this->handleTranslations(),
-            // 'links' => $this->handleLinks(),
-            // 'assets' => $this->handleAssets(),
-            // 'relations' => $this->handleRelations(),
-            'published_at' => $this->published_at?->toIso8601String(),
-            'first_published_at' => $this->first_published_at?->toIso8601String(),
-            'created_at' => $this->created_at?->toIso8601String(),
-            'updated_at' => $this->updated_at?->toIso8601String(),
+            'id' => $row->getRouteKey(),
+            'name' => $row->name,
+            'slug' => $row->slug,
+            'block' => $row->block?->slug,
+            'parent_id' => $row->parent_id,
+            'full_slug' => $row->full_slug,
+            'content' => $this->getTransformedContent($resolved),
+            'language_iso' => $resolved->requestedLanguage,
+            'translations' => $this->handleTranslations($resolved, $row),
+            'published_at' => $row->published_at?->toIso8601String(),
+            'first_published_at' => $row->first_published_at?->toIso8601String(),
+            'created_at' => $row->created_at?->toIso8601String(),
+            'updated_at' => $row->updated_at?->toIso8601String(),
         ];
     }
 
-    protected function getTransformedContent(): array|\stdClass
+    protected function resolveContent(Request $request): ResolvedContent
     {
-        $content = $this->getContent();
-        if (!$content) {
-            return new \stdClass();
+        if ($this->resource instanceof ResolvedContent) {
+            return $this->resource;
         }
 
-        $this->injectData($content);
+        /** @var Content $content */
+        $content = $this->resource;
+        $versionScope = $request->input('vid', 'published');
+
+        return app(ContentI18nResolver::class)->resolve(
+            app('currentSpace'),
+            $content,
+            $content->language_iso,
+            $versionScope === 'draft' ? 'current' : $versionScope,
+        );
+    }
+
+    protected function getTransformedContent(ResolvedContent $resolved): array|\stdClass
+    {
+        $content = $resolved->effectiveContent;
+        if (! $content) {
+            return new \stdClass;
+        }
+
+        $this->injectData($resolved, $content);
 
         return [
             ...$content,
-            'block' => $this->block->slug,
+            'block' => ($resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent)
+                ->loadMissing('block')
+                ->block
+                ?->slug,
         ];
     }
 
-    protected function handleTranslations()
+    protected function handleTranslations(ResolvedContent $resolved, Content $currentRow)
     {
-        if (
-            !$this->resource->relationLoaded('i18n_children') ||
-            !$this->resource->relationLoaded('i18n_siblings') ||
-            !$this->resource->relationLoaded('i18n_parent')
-        ) {
-            return [];
-        }
-
-        $alternatives = [];
-        if ($this->resource->i18n_parent) {
-            $alternatives[] = $this->resource->i18n_parent;
-        }
-        $alternatives = [...$alternatives, ...$this->resource->i18n_children->all(), ...$this->resource->i18n_siblings->all()];
-
-        return SimpleContentResource::collection($alternatives);
+        return SimpleContentResource::collection(
+            $resolved->familyContents
+                ->filter(fn (Content $content) => $content->published_at !== null && $content->id !== $currentRow->id)
+                ->values()
+        );
     }
 
-    protected function handleLinks()
+    protected function injectData(ResolvedContent $resolved, array &$content)
     {
-        if (!$this->resource->relationLoaded('links')) {
-            return [];
-        }
-
-        return SimpleContentResource::collection($this->resource->links);
-    }
-
-    protected function handleRelations()
-    {
-        if (!$this->resource->relationLoaded('relations')) {
-            return [];
-        }
-
-        return SimpleContentResource::collection($this->resource->relations);
-    }
-
-    protected function injectData(array &$content)
-    {
-        $links = $this->resource->relationLoaded('i18n_parent')
-            ? ($this->resource->i18n_parent->published_version->links ?? collect([]))->merge($this->resource->links)
-            : $this->resource->links;
-        $content = app(LinkHandler::class)->replaceContentLinks($content, $links);
-
-        $assets = $this->resource->relationLoaded('i18n_parent')
-            ? ($this->resource->i18n_parent->published_version->assets ?? collect([]))->merge($this->resource->assets)
-            : $this->resource->assets;
-        $content = app(AssetHandler::class)->replaceContentAssets($this->resource, $content, $assets);
+        $content = app(LinkHandler::class)->replaceContentLinks($content, $resolved->effectiveLinks);
+        $assetContext = $resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent;
+        $content = app(AssetHandler::class)->replaceContentAssets($assetContext, $content, $resolved->effectiveAssets);
     }
 }

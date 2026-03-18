@@ -25,7 +25,8 @@ export const badgeVariants = cva(
         outline: 'border-border bg-transparent',
       },
       size: {
-        dot: 'text-xs px-1 uppercase',
+        indicator: 'size-2 rounded-full!',
+        dot: 'text-[0.5rem] px-1 uppercase',
         '2xs': 'text-[0.5rem] px-1 py-0.5 tracking-widest uppercase',
         xs: 'text-xs px-1.5 py-0.5 uppercase',
         sm: 'text-xs px-2 py-0.5',

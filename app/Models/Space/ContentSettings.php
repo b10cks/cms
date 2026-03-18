@@ -9,15 +9,17 @@ use Illuminate\Contracts\Database\Eloquent\SerializesCastableAttributes;
 class ContentSettings extends Settings
 {
     protected array $defaults = [
-
+        'disablePreview' => false,
+        'i18n_mode_override' => 'inherit',
     ];
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public static function castUsing(array $arguments)
     {
-        return new class implements CastsAttributes, SerializesCastableAttributes {
+        return new class implements CastsAttributes, SerializesCastableAttributes
+        {
             public function get($model, string $key, $value, array $attributes)
             {
                 return ContentSettings::make($value ? json_decode($value, true) : []);

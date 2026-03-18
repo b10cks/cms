@@ -30,7 +30,10 @@ const props = defineProps<{
 
 
 const { settings } = useSpaceSettings(props.spaceId)
-const { apiToken, openContentJsonInNewTab } = useContentJson(props.spaceId)
+const { apiToken, openContentJsonInNewTab } = useContentJson(
+  props.spaceId,
+  computed(() => props.content)
+)
 const searchQuery = ref('')
 const filterOptions = ref({})
 

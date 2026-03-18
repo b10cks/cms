@@ -13,15 +13,15 @@ use App\Services\Content\LocalizedContentSlugService;
 use App\Services\CustomStr;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
- *
- *
  * @property string $id
  * @property string|null $external_id
  * @property string $block_id
@@ -32,28 +32,29 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $language_iso
  * @property string|null $i18n_parent_id
  * @property string|null $content
- * @property \App\Models\Space\ContentSettings|null $settings
+ * @property ContentSettings|null $settings
  * @property string $current_version_id
  * @property string|null $published_version_id
  * @property string|null $searchable_content
- * @property \Illuminate\Support\Carbon|null $published_at
- * @property \Illuminate\Support\Carbon|null $first_published_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property \Illuminate\Support\Carbon|null $deleted_at
- * @property-read \App\Models\Space\Block|null $block
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Content> $children
+ * @property Carbon|null $published_at
+ * @property Carbon|null $first_published_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
+ * @property-read Block|null $block
+ * @property-read Collection<int, Content> $children
  * @property-read int|null $children_count
- * @property-read \App\Models\Space\ContentVersion|null $current_version
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Content> $i18n_children
+ * @property-read ContentVersion|null $current_version
+ * @property-read Collection<int, Content> $i18n_children
  * @property-read int|null $i18n_children_count
  * @property-read Content|null $i18n_parent
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Content> $i18n_siblings
+ * @property-read Collection<int, Content> $i18n_siblings
  * @property-read int|null $i18n_siblings_count
  * @property-read Content|null $parent
- * @property-read \App\Models\Space\ContentVersion|null $published_version
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Space\ContentVersion> $versions
+ * @property-read ContentVersion|null $published_version
+ * @property-read Collection<int, ContentVersion> $versions
  * @property-read int|null $versions_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Content filter(\CodersCantina\Filter\Filter $filter)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Content newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Content newQuery()
@@ -78,6 +79,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Content whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Content withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Content withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class Content extends SpaceModel
@@ -120,7 +122,7 @@ class Content extends SpaceModel
         static::saving(function (Content $content) {
             $slugService = app(LocalizedContentSlugService::class);
             $oldFullSlug = $slugService->updateFullSlug($content);
-            if (!empty($oldFullSlug)) {
+            if (! empty($oldFullSlug)) {
                 $redirectSource = $slugService->formatRedirectSlug($oldFullSlug, $content->language_iso);
                 $redirectTarget = $slugService->formatRedirectSlug($content->full_slug, $content->language_iso);
                 $slugService->createRedirect($redirectSource, $redirectTarget);
@@ -188,21 +190,13 @@ class Content extends SpaceModel
 
     public function getContent(): array
     {
-        if ($this->i18n_parent_id) {
-            $this->loadMissing('i18n_parent');
-            $result = $this->i18n_parent?->getContent() ?? [];
-        } else {
-            $result = [];
-        }
-
         if ($this->content) {
-            $content = json_decode($this->content ?? '[]', true);
-        } else {
-            $this->loadMissing('published_version');
-            $content = $this->published_version?->content ?? [];
+            return json_decode($this->content ?? '[]', true);
         }
 
-        return array_replace_recursive($result, $content);
+        $this->loadMissing('published_version');
+
+        return $this->published_version?->content ?? [];
     }
 
     public function setPublishedAt($date): void

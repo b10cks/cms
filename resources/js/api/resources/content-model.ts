@@ -1,4 +1,9 @@
-import type { ContentResource, ContentVersionListResource } from '~/types/contents'
+import type {
+  ContentI18nMode,
+  ContentLanguageVersion,
+  ContentResource,
+  ContentVersionListResource,
+} from '~/types/contents'
 
 export class ContentModel {
   constructor(private resource: ContentResource) {}
@@ -105,6 +110,18 @@ export class ContentModel {
 
   public get i18nSiblings(): any[] | undefined {
     return this.resource.i18n_siblings
+  }
+
+  public get languageIso(): string {
+    return this.resource.language_iso
+  }
+
+  public get effectiveI18nMode(): ContentI18nMode {
+    return this.resource.effective_i18n_mode
+  }
+
+  public get languageVersions(): ContentLanguageVersion[] {
+    return this.resource.language_versions || []
   }
 
   public get hasChildren(): boolean {

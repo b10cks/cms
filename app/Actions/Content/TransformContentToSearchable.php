@@ -2,13 +2,22 @@
 
 namespace App\Actions\Content;
 
+use App\Models\Management\Space;
 use App\Models\Space\Content;
+use App\Services\Content\ContentI18nResolver;
 
 class TransformContentToSearchable
 {
-    public function execute(Content $content): string
+    public function __construct(
+        private readonly ContentI18nResolver $contentI18nResolver,
+    ) {}
+
+    public function execute(Content $content, Space $space): string
     {
-        $contentData = $content->getContent();
+        $contentData = $this->contentI18nResolver
+            ->resolve($space, $content, $content->language_iso, 'published')
+            ->effectiveContent;
+
         if (empty($contentData)) {
             return '';
         }
@@ -24,10 +33,10 @@ class TransformContentToSearchable
         foreach ($data as $key => $value) {
             if (\is_array($value)) {
                 $this->extractTextFromStructure($value, $textParts);
-            } elseif (\is_string($value) && !empty(trim($value))) {
-                if (!$this->isSystemField($key)) {
+            } elseif (\is_string($value) && ! empty(trim($value))) {
+                if (! $this->isSystemField($key)) {
                     $cleaned = $this->cleanText($value);
-                    if (!empty($cleaned)) {
+                    if (! empty($cleaned)) {
                         $textParts[] = $cleaned;
                     }
                 }

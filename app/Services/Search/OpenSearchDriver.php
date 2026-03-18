@@ -33,7 +33,7 @@ class OpenSearchDriver implements SearchDriverInterface
             return;
         }
 
-        $searchableText = $this->transformer->execute($content);
+        $searchableText = $this->transformer->execute($content, $space);
         $indexName = $this->getIndexName($space);
 
         try {

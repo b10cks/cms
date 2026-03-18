@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
+
+import Icon from '~/components/Icon.vue'
 import MetaLocalization from '~/components/localization/MetaLocalization.vue'
 import { Button } from '~/components/ui/button'
 import { CheckboxField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import type { ApiResponse } from '~/types'
+
 import MarkdownLocalization from './MarkdownLocalization.vue'
 import RichTextLocalization from './RichTextLocalization.vue'
 import TextareaLocalization from './TextareaLocalization.vue'
@@ -19,6 +20,7 @@ interface SchemaType {
   translatable?: boolean
 }
 
+
 interface TranslatableField {
   key: string
   path: string[]
@@ -29,18 +31,22 @@ interface TranslatableField {
   isTranslated: boolean
 }
 
+
 interface BlockItem {
   block?: string
   [key: string]: unknown
 }
 
+
 interface SpaceSettings {
   default_language: string
 }
 
+
 interface Space {
   settings: SpaceSettings
 }
+
 
 const localizers = {
   text: TextLocalization,
@@ -49,6 +55,7 @@ const localizers = {
   richtext: RichTextLocalization,
   meta: MetaLocalization,
 }
+
 
 const props = defineProps<{
   originalContent: Record<string, unknown>
@@ -61,19 +68,25 @@ const props = defineProps<{
   ) => { schema: Record<string, SchemaType>; name: string } | undefined
 }>()
 
+
 const { useSpaceQuery } = useSpaces()
 const { data: space } = useSpaceQuery(props.spaceId) as { data: Ref<Space> }
+
 
 const showUntranslatedOnly = ref(false)
 const searchQuery = ref('')
 const { client: apiClient } = useApiClient()
 
+
 const isTranslating = ref(false)
 const sourceLanguage = computed((): string => space.value?.settings?.default_language || '')
 
+
 const machineTranslatedFields = ref(new Set<string>())
 
+
 const translatableFields = ref<TranslatableField[]>([])
+
 
 const traverseContent = (
   original: Record<string, unknown>,
@@ -85,6 +98,7 @@ const traverseContent = (
   if (typeof original !== 'object' || original === null) {
     return result
   }
+
 
   Object.entries(original).forEach(([key, value]) => {
     const path = [...currentPath, key]
@@ -130,8 +144,10 @@ const traverseContent = (
     }
   })
 
+
   return result
 }
+
 
 watch(
   [() => props.originalContent, () => props.translationContent, () => props.blockSchema],
@@ -149,6 +165,7 @@ watch(
   },
   { immediate: true, deep: true }
 )
+
 
 const filteredFields = computed(() => {
   return translatableFields.value.filter((field) => {
@@ -172,27 +189,34 @@ const filteredFields = computed(() => {
   })
 })
 
+
 const getFieldIdentifier = (field: TranslatableField): string => {
   return `${field.path.join('-')}-${field.key}`
 }
 
+
 const isMachineTranslated = (field: TranslatableField): boolean => {
   return machineTranslatedFields.value.has(getFieldIdentifier(field))
 }
+
 
 const updateTranslatedValue = (field: TranslatableField, newValue: unknown): void => {
   const fieldToUpdate = translatableFields.value.find(
     (f) => f.key === field.key && JSON.stringify(f.path) === JSON.stringify(field.path)
   )
 
+
   if (fieldToUpdate) {
     fieldToUpdate.translatedValue = newValue
     fieldToUpdate.isTranslated = newValue !== '' && newValue !== null && newValue !== undefined
 
+
     let current: Record<string, unknown> = props.translationContent
+
 
     for (let i = 0; i < field.path.length - 1; i++) {
       const pathPart = field.path[i]
+
 
       if (current[pathPart] === undefined) {
         if (Number.isInteger(parseInt(field.path[i + 1]))) {
@@ -201,6 +225,7 @@ const updateTranslatedValue = (field: TranslatableField, newValue: unknown): voi
           current[pathPart] = {}
         }
       }
+
 
       if (Array.isArray(current[pathPart])) {
         const nextIndex = parseInt(field.path[i + 1])
@@ -212,13 +237,16 @@ const updateTranslatedValue = (field: TranslatableField, newValue: unknown): voi
         }
       }
 
+
       current = current[pathPart] as Record<string, unknown>
     }
+
 
     const finalKey = field.path[field.path.length - 1]
     current[finalKey] = newValue
   }
 }
+
 
 const updateTranslatedValues = (translatedTexts: Record<string, string>): void => {
   Object.entries(translatedTexts).forEach(([fieldPath, translation]) => {
@@ -236,8 +264,10 @@ const updateTranslatedValues = (translatedTexts: Record<string, string>): void =
   })
 }
 
+
 const getUntranslatedFields = (): Record<string, string> => {
   const untranslatedFields: Record<string, string> = {}
+
 
   translatableFields.value
     .filter(
@@ -251,17 +281,21 @@ const getUntranslatedFields = (): Record<string, string> => {
       untranslatedFields[fieldPath] = field.originalValue as string
     })
 
+
   return untranslatedFields
 }
 
+
 const translateWithAI = async (): Promise<void> => {
   const fieldsToTranslate = getUntranslatedFields()
+
 
   const fieldCount = Object.keys(fieldsToTranslate).length
   if (fieldCount === 0) {
     toast.info('No untranslated fields found')
     return
   }
+
 
   try {
     isTranslating.value = true
@@ -275,6 +309,7 @@ const translateWithAI = async (): Promise<void> => {
       fields: fieldsToTranslate,
     }
 
+
     const response = await apiClient.post<ApiResponse<Record<string, string>>>(
       '/mgmt/v1/ai/translate',
       requestData,
@@ -284,6 +319,7 @@ const translateWithAI = async (): Promise<void> => {
     )
     updateTranslatedValues(response.data)
 
+
     toast.success(`Successfully translated ${Object.keys(response.data).length} fields`)
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -292,6 +328,7 @@ const translateWithAI = async (): Promise<void> => {
     isTranslating.value = false
   }
 }
+
 
 const translationStats = computed(() => {
   const fieldItems = translatableFields.value.filter(
@@ -370,10 +407,12 @@ const translationStats = computed(() => {
         :key="`${field.path.join('-')}-${field.key}`"
       >
         <div class="-mb-2 pt-2">
-          <h4 class="font-semibold text-primary">{{ field.fieldName }}</h4>
-          <p class="text-sm text-muted">
-            {{ field.path.join(' > ') }}
-          </p>
+          <h4 class="flex items-baseline gap-2">
+            <span class="font-semibold text-primary">{{ field.fieldName }}</span>
+            <span class="text-2xs opacity-50 font-mono">
+              {{ field.path.join('.') }}
+            </span>
+          </h4>
         </div>
         <div>
           <component

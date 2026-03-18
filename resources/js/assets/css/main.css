@@ -58,6 +58,7 @@
   --ease-bounce: cubic-bezier(0.8, -0.4, 0.219, 1.429);
   --ease-embellishment: cubic-bezier(0.42, 0, 0, 1);
 
+  --text-2xs: 10px;
   --text-xs: 11px;
   --text-sm: 13px;
   --text-base: 15px;

@@ -4,6 +4,13 @@ import Icon from '~/components/Icon.vue'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
 import { Switch } from '~/components/ui/switch'
 import {
   Table,
@@ -18,11 +25,22 @@ import {
 export interface ColumnDefinition {
   key: string
   label: string
-  type?: 'text' | 'switch' | 'custom'
+  type?: 'text' | 'switch' | 'select' | 'custom'
   width?: string
   placeholder?: string
   required?: boolean
   readonly?: boolean
+  options?:
+    | Array<{
+        value: string
+        label: string
+        disabled?: boolean
+      }>
+    | ((item: TableItem) => Array<{
+        value: string
+        label: string
+        disabled?: boolean
+      }>)
 }
 
 export interface TableItem {
@@ -69,7 +87,7 @@ watch(
 )
 
 if (props.allowSort) {
-  useSortable(tableBodyRef, localItems, {
+  ;(useSortable as any)(tableBodyRef, localItems, {
     handle: '.sort-handle',
     animation: 150,
     onEnd: () => {
@@ -102,6 +120,21 @@ const removeItem = (index: number) => {
   const item = localItems.value[index]
   localItems.value.splice(index, 1)
   emit('remove', index, item)
+}
+
+const getSelectValue = (item: TableItem, key: string) => {
+  const value = item[key]
+  return typeof value === 'string' ? value : undefined
+}
+
+const updateSelectValue = (item: TableItem, key: string, value: unknown) => {
+  if (typeof value === 'string') {
+    item[key] = value
+  }
+}
+
+const getColumnOptions = (column: ColumnDefinition, item: TableItem) => {
+  return typeof column.options === 'function' ? column.options(item) : (column.options ?? [])
 }
 </script>
 
@@ -151,6 +184,26 @@ const removeItem = (index: number) => {
               v-model="item[column.key] as boolean"
               :disabled="column.readonly"
             />
+            <Select
+              v-else-if="column.type === 'select'"
+              :model-value="getSelectValue(item, column.key)"
+              :disabled="column.readonly"
+              @update:model-value="(value) => updateSelectValue(item, column.key, value)"
+            >
+              <SelectTrigger>
+                <SelectValue :placeholder="column.placeholder || $t('common.select')" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  v-for="option in getColumnOptions(column, item)"
+                  :key="option.value"
+                  :value="option.value"
+                  :disabled="option.disabled"
+                >
+                  {{ option.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
             <Input
               v-else
               v-model="item[column.key] as string"
@@ -198,6 +251,26 @@ const removeItem = (index: number) => {
               v-model="newItem[column.key] as boolean"
               :disabled="column.readonly"
             />
+            <Select
+              v-else-if="column.type === 'select'"
+              :model-value="getSelectValue(newItem, column.key)"
+              :disabled="column.readonly"
+              @update:model-value="(value) => updateSelectValue(newItem, column.key, value)"
+            >
+              <SelectTrigger>
+                <SelectValue :placeholder="column.placeholder || $t('common.select')" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  v-for="option in getColumnOptions(column, newItem)"
+                  :key="option.value"
+                  :value="option.value"
+                  :disabled="option.disabled"
+                >
+                  {{ option.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
             <Input
               v-else
               v-model="newItem[column.key] as string"

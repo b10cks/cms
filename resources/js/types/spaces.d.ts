@@ -6,6 +6,7 @@ interface SpaceEnvironment {
 interface SpaceLanguage {
   code: string
   name: string
+  fallback_language?: string | null
 }
 
 interface SpaceAssetField {
@@ -20,6 +21,7 @@ interface SpaceSettings {
   environments?: SpaceEnvironment[]
   region?: 'eu' | 'us'
   default_language?: string
+  i18n_mode?: 'overlay' | 'independent'
   slug_strategy?: 'never' | 'prepend_translations' | 'always_prepend'
   asset_fields?: SpaceAssetField[]
   languages?: SpaceLanguage[]

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ContentModel } from '~/api/resources/content-model'
+import LanguageSwitcher from '~/components/content/LanguageSwitcher.vue'
 import Icon from '~/components/Icon.vue'
 import AssignToReleaseDialog from '~/components/releases/AssignToReleaseDialog.vue'
 import { AvatarList } from '~/components/ui/avatar'
@@ -13,12 +14,11 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '~/components/ui/dropdown-menu'
-import { SimpleTooltip } from '~/components/ui/tooltip'
 import type {
   CollaborationPresenceUser,
   ContentCommitAction,
 } from '~/composables/useContentLiveCollaboration'
-import type { ContentVersionListResource } from '~/types/contents'
+import { sanitizeContentMutationPayload } from '~/lib/content-i18n'
 import type { ContentResource } from '~/types/contents'
 
 import PublishDialog from './PublishDialog.vue'
@@ -51,7 +51,10 @@ const {
 
 const { useSpaceQuery } = useSpaces()
 const { data: space } = useSpaceQuery(props.spaceId)
-const { apiToken, openContentJsonInNewTab } = useContentJson(props.spaceId)
+const { apiToken, openContentJsonInNewTab } = useContentJson(
+  props.spaceId,
+  computed(() => props.content)
+)
 
 
 const { useReleasesQuery, useAssignVersionsMutation, getReleaseState } = useReleases(props.spaceId)
@@ -68,7 +71,6 @@ const { mutateAsync: scheduleContent, isPending: isScheduling } = useScheduleCon
 const { mutateAsync: unpublishContent } = useUnpublishContentMutation()
 
 
-const isLocalization = computed(() => route.name === 'space-content-contentId-localization')
 const isVersions = computed(() => route.name === 'space-content-contentId-versions')
 const publishDialogOpen = ref(false)
 const publishType = ref<'now' | 'schedule'>('now')
@@ -85,20 +87,24 @@ const handlePersistedContent = (
   resetDirtyState?.()
 }
 
+const mutationPayload = computed(() => sanitizeContentMutationPayload(props.content))
+
 
 const save = async () => {
   if (props.content.id) {
-    const nextContent = await updateContent({ id: props.content.id, payload: props.content })
+    const nextContent = await updateContent({ id: props.content.id, payload: mutationPayload.value })
     handlePersistedContent(nextContent, 'save')
-  } else {
-    const nextContent = await createContent(props.content)
-    handlePersistedContent(nextContent, 'save')
+    return
   }
+
+
+  const nextContent = await createContent(mutationPayload.value)
+  handlePersistedContent(nextContent, 'save')
 }
 
 
 const publishDirectly = async () => {
-  const nextContent = await publishContent({ id: props.content.id, payload: props.content })
+  const nextContent = await publishContent({ id: props.content.id, payload: mutationPayload.value })
   handlePersistedContent(nextContent, 'publish')
 }
 
@@ -116,10 +122,10 @@ const schedulePublish = () => {
 
 
 const handlePublish = async (payload: { message?: string; published_at?: string | null }) => {
-  const publishPayload = {
+  const publishPayload = sanitizeContentMutationPayload({
     ...props.content,
     ...payload,
-  }
+  })
   const nextContent = await publishContent({ id: props.content.id, payload: publishPayload })
   handlePersistedContent(nextContent, 'publish')
   publishDialogOpen.value = false
@@ -127,11 +133,11 @@ const handlePublish = async (payload: { message?: string; published_at?: string 
 
 
 const handleSchedule = async (payload: { message?: string; scheduled_at?: string | null }) => {
-  const schedulePayload = {
+  const schedulePayload = sanitizeContentMutationPayload({
     ...props.content,
     message: payload.message,
     scheduled_at: payload.scheduled_at,
-  }
+  })
   const nextContent = await scheduleContent({ id: props.content.id, payload: schedulePayload })
   handlePersistedContent(nextContent, 'schedule')
   publishDialogOpen.value = false
@@ -139,16 +145,8 @@ const handleSchedule = async (payload: { message?: string; scheduled_at?: string
 
 
 const unpublish = async () => {
-  const nextContent = await unpublishContent({ id: props.content.id, payload: props.content })
+  const nextContent = await unpublishContent({ id: props.content.id, payload: mutationPayload.value })
   handlePersistedContent(nextContent, 'unpublish')
-}
-
-
-const switchLocalization = () => {
-  router.push({
-    name: isLocalization.value ? 'space-content-contentId' : 'space-content-contentId-localization',
-    params: route.params,
-  })
 }
 
 
@@ -156,6 +154,7 @@ const switchVersions = () => {
   router.push({
     name: isVersions.value ? 'space-content-contentId' : 'space-content-contentId-versions',
     params: route.params,
+    query: route.query,
   })
 }
 
@@ -170,16 +169,13 @@ const isInScheduledRelease = computed(
 )
 
 
-const hasLocalization = computed(() => space.value?.settings?.languages?.length > 0)
-
-
 const draftReleases = computed(() =>
   (releases.value?.data || []).filter((release) => getReleaseState(release) === 'draft')
 )
 
 
 const canPublishToRelease = computed(
-  () => !isInScheduledRelease.value && !contentModel.value.isPublished
+  () => !!props.content.id && !isInScheduledRelease.value && !contentModel.value.isPublished
 )
 
 
@@ -199,27 +195,24 @@ const showPublishedJson = () => {
 }
 
 
-const openVersionJsonInNewTab = (version: ContentVersionListResource | null | undefined) => {
-  if (!version) return
-  openContentJsonInNewTab(version.id)
-}
-
-
 const handleConfirmAssign = (versionIds: string[]) => {
-  if (selectedReleaseForAssign.value) {
-    assignVersions(
-      {
-        releaseId: selectedReleaseForAssign.value.id,
-        payload: { version_ids: versionIds },
-      },
-      {
-        onSuccess: () => {
-          assignReleaseDialogOpen.value = false
-          selectedReleaseForAssign.value = null
-        },
-      }
-    )
+  if (!selectedReleaseForAssign.value) {
+    return
   }
+
+
+  assignVersions(
+    {
+      releaseId: selectedReleaseForAssign.value.id,
+      payload: { version_ids: versionIds },
+    },
+    {
+      onSuccess: () => {
+        assignReleaseDialogOpen.value = false
+        selectedReleaseForAssign.value = null
+      },
+    }
+  )
 }
 </script>
 
@@ -231,22 +224,7 @@ const handleConfirmAssign = (versionIds: string[]) => {
       :max="3"
       tooltip-side="bottom"
     />
-    <SimpleTooltip
-      :tooltip="
-        hasLocalization
-          ? $t('labels.contents.localization.available')
-          : $t('labels.contents.localization.notAvailable')
-      "
-    >
-      <Button
-        :variant="isLocalization ? 'primary' : 'default'"
-        size="icon"
-        :disabled="!hasLocalization"
-        @click="switchLocalization"
-      >
-        <Icon name="lucide:globe" />
-      </Button>
-    </SimpleTooltip>
+    <LanguageSwitcher :content="content" />
     <Button
       :variant="isVersions ? 'primary' : 'default'"
       size="icon"
@@ -255,28 +233,33 @@ const handleConfirmAssign = (versionIds: string[]) => {
       <Icon name="lucide:history" />
     </Button>
     <Button
-      :disabled="disabled || !isDirty"
+      :disabled="disabled || (!!content.id && !isDirty)"
       @click="save"
       >Save
     </Button>
     <SplitButton
       variant="accent"
       :primary-action="publishDirectly"
-      :disabled="disabled || !(contentModel.canPublish || isDirty)"
+      :disabled="disabled || !content.id || !(contentModel.canPublish || isDirty)"
       :loading="isPublishing || isScheduling"
     >
       <span>{{ $t('actions.content.publish') }}</span>
       <template #menu>
         <DropdownMenuLabel>Publish</DropdownMenuLabel>
         <DropdownMenuItem
-          :disabled="disabled || !(contentModel.canPublish || isDirty)"
+          :disabled="disabled || !content.id || !(contentModel.canPublish || isDirty)"
           @select="publishWithMessage"
         >
           <Icon name="lucide:send" />
           <span>{{ $t('actions.content.publishWithMessage') }}</span>
         </DropdownMenuItem>
         <DropdownMenuItem
-          :disabled="disabled || !(contentModel.canPublish || isDirty) || contentModel.isInRelease"
+          :disabled="
+            disabled ||
+            !content.id ||
+            !(contentModel.canPublish || isDirty) ||
+            contentModel.isInRelease
+          "
           @select="schedulePublish"
         >
           <Icon name="lucide:clock-fading" />
@@ -313,14 +296,14 @@ const handleConfirmAssign = (versionIds: string[]) => {
         </DropdownMenuSub>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          :disabled="!apiToken || !space?.updated_at"
+          :disabled="!content.id || !apiToken || !space?.updated_at"
           @select="showDraftJson"
         >
           <Icon name="lucide:braces" />
           <span>Show draft JSON</span>
         </DropdownMenuItem>
         <DropdownMenuItem
-          :disabled="!apiToken || !space?.updated_at || !contentModel.isPublished"
+          :disabled="!content.id || !apiToken || !space?.updated_at || !contentModel.isPublished"
           @select="showPublishedJson"
         >
           <Icon name="lucide:braces" />

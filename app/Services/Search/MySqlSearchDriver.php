@@ -21,7 +21,7 @@ class MySqlSearchDriver implements SearchDriverInterface
             return;
         }
 
-        $searchableText = $this->transformer->execute($content);
+        $searchableText = $this->transformer->execute($content, $space);
         try {
             $content->searchable_content = $searchableText;
             $content->saveQuietly();

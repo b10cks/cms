@@ -6,17 +6,25 @@ use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
+use App\Services\Content\ContentI18nValidator;
 use App\Services\Search\SearchService;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Validation\ValidationException;
 
 class UpdateContent
 {
     public function __construct(
-        protected SearchService $searchService
-    ) {
-    }
+        protected SearchService $searchService,
+        protected ContentI18nValidator $validator,
+    ) {}
+
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner)
     {
+        $errors = $this->validator->validate($space, $data, $content);
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+
         $wasPublished = $content->published_at !== null;
 
         \DB::transaction(function () use ($data, $content, $space, $owner) {

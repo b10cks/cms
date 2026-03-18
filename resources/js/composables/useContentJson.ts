@@ -1,4 +1,9 @@
-export function useContentJson(spaceId: MaybeRef<string>) {
+import type { ContentResource } from '~/types/contents'
+
+export function useContentJson(
+  spaceId: MaybeRef<string>,
+  content?: MaybeRef<Pick<ContentResource, 'full_slug' | 'language_iso'> | null | undefined>
+) {
   const { useSpaceQuery } = useSpaces()
   const { useTokensQuery } = useTokens(spaceId)
 
@@ -11,15 +16,18 @@ export function useContentJson(spaceId: MaybeRef<string>) {
   )
 
   const buildContentJsonUrl = (vid: 'draft' | 'published' | string) => {
-    if (!apiToken.value || !rv.value) return null
+    const activeContent = content ? toValue(content) : null
+    const slug = activeContent?.full_slug?.replace(/^\/+/, '')
+    if (!apiToken.value || !rv.value || !slug || !activeContent?.language_iso) return null
 
     const params = new URLSearchParams({
       vid,
-      rv: rv.value / 1000,
+      rv: String(rv.value / 1000),
       token: apiToken.value,
+      language: activeContent.language_iso,
     })
 
-    return `https://api.b10cks.com/api/v1/contents/_config?${params.toString()}`
+    return `https://api.b10cks.test/api/v1/contents/${slug}?${params.toString()}`
   }
 
   const openContentJsonInNewTab = (vid: 'draft' | 'published' | string) => {

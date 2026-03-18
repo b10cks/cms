@@ -23,6 +23,7 @@ import {
   type ContentCommitAction,
 } from '~/composables/useContentLiveCollaboration'
 import { useGlobalClipboard } from '~/composables/useGlobalClipboard'
+import { buildMissingLanguageDraft, resolveContentRouteName } from '~/lib/content-i18n'
 import type { ContentResource } from '~/types/contents'
 
 const { t } = useI18n()
@@ -30,7 +31,7 @@ const { alert } = useAlertDialog()
 const route = useRoute()
 const router = useRouter()
 const spaceId = computed<string>(() => route.params.space as string)
-const contentId = computed<string>(() => route.params.contentId as string)
+const canonicalContentId = computed<string>(() => route.params.contentId as string)
 
 
 const { settings } = useSpaceSettings(spaceId.value)
@@ -38,19 +39,158 @@ const { hasClipboardItem, clearClipboard } = useGlobalClipboard()
 
 
 const { useContentQuery } = useContent(spaceId)
-const { data: originalContent } = useContentQuery(contentId)
-
-
-const { useCommentsQuery } = useComments(spaceId, contentId)
-const { data: comments } = useCommentsQuery()
+const { data: routeContent } = useContentQuery(canonicalContentId)
 
 
 const { useSpaceQuery } = useSpaces()
 const { data: spaceData } = useSpaceQuery(spaceId.value)
+const defaultLanguage = computed(
+  () =>
+    spaceData.value?.settings.default_language ||
+    routeContent.value?.language_versions?.find((version) => version.is_default)?.language_iso ||
+    'en'
+)
+const activeLanguage = useRouteQuery('lang', defaultLanguage.value)
+const canonicalContent = computed(() =>
+  routeContent.value?.i18n_parent_id === null ? routeContent.value : null
+)
+const activeLanguageVersion = computed(
+  () =>
+    canonicalContent.value?.language_versions?.find(
+      (version) => version.language_iso === activeLanguage.value
+    ) ||
+    canonicalContent.value?.language_versions?.find((version) => version.is_default) ||
+    null
+)
+const activeContentId = computed(() => activeLanguageVersion.value?.content_id || null)
+const fallbackLanguageVersion = computed(
+  () =>
+    canonicalContent.value?.language_versions?.find(
+      (version) => version.language_iso === activeLanguageVersion.value?.fallback_language
+    ) || null
+)
+const { data: activeOriginalContent } = useContentQuery(activeContentId)
+const { data: fallbackContent } = useContentQuery(
+  computed(() => fallbackLanguageVersion.value?.content_id)
+)
+
+
+watch(
+  [routeContent, defaultLanguage],
+  async ([currentContent, currentDefaultLanguage]) => {
+    if (!currentContent) {
+      return
+    }
+
+    if (!activeLanguage.value) {
+      activeLanguage.value = currentContent.language_iso || currentDefaultLanguage
+    }
+
+    if (
+      currentContent.i18n_parent_id &&
+      currentContent.i18n_canonical_id !== canonicalContentId.value
+    ) {
+      await router.replace({
+        name: resolveContentRouteName(
+          route.name as string | undefined,
+          currentContent.effective_i18n_mode,
+          currentContent.language_iso,
+          currentDefaultLanguage
+        ),
+        params: {
+          ...route.params,
+          contentId: currentContent.i18n_canonical_id,
+        },
+        query: {
+          ...route.query,
+          lang: currentContent.language_iso,
+        },
+        hash: '',
+      })
+    }
+  },
+  { immediate: true }
+)
+
+
+watch(
+  [canonicalContent, activeLanguage, defaultLanguage],
+  async ([currentCanonical, languageIso, currentDefaultLanguage]) => {
+    if (!currentCanonical) {
+      return
+    }
+
+    const availableLanguages = currentCanonical.language_versions.map(
+      (version) => version.language_iso
+    )
+    const nextLanguage = availableLanguages.includes(languageIso || '')
+      ? (languageIso as string)
+      : currentDefaultLanguage
+
+    if (nextLanguage !== activeLanguage.value) {
+      activeLanguage.value = nextLanguage
+      return
+    }
+
+    const nextRouteName = resolveContentRouteName(
+      route.name as string | undefined,
+      currentCanonical.effective_i18n_mode,
+      nextLanguage,
+      currentDefaultLanguage
+    )
+
+    if (route.name !== nextRouteName) {
+      await router.replace({
+        name: nextRouteName,
+        params: {
+          ...route.params,
+          contentId: currentCanonical.id,
+        },
+        query: {
+          ...route.query,
+          lang: nextLanguage,
+        },
+        hash: route.hash,
+      })
+    }
+  },
+  { immediate: true }
+)
+
+
+const currentContentSource = computed<ContentResource | null>(() => {
+  if (activeOriginalContent.value) {
+    return activeOriginalContent.value
+  }
+
+  if (
+    canonicalContent.value &&
+    canonicalContent.value.effective_i18n_mode === 'independent' &&
+    !activeContentId.value &&
+    activeLanguage.value
+  ) {
+    return buildMissingLanguageDraft(
+      canonicalContent.value,
+      fallbackContent.value || canonicalContent.value,
+      activeLanguage.value
+    )
+  }
+
+  return null
+})
 
 
 const content = ref<ContentResource | null>(null)
 const persistedContent = ref<ContentResource | null>(null)
+
+
+const { useCommentsQuery } = useComments(
+  spaceId,
+  computed(() => content.value?.id || null)
+)
+const { data: comments } = useCommentsQuery()
+
+
 const aiInteractionRef = useTemplateRef('aiInteractionRef')
 
 
@@ -85,7 +225,7 @@ const syncPersistedContent = (
 
 
 watch(
-  originalContent,
+  currentContentSource,
   (newContent) => {
     if (newContent) {
       const shouldReplace =
@@ -106,7 +246,7 @@ const isDirty = computed(() => {
 })
 
 
-async function guardLeave(to, from, next) {
+async function guardLeave(to: any, from: any, next: any) {
   if (to && from && to.path === from.path) {
     return next()
   }
@@ -217,8 +357,8 @@ const tabs = computed((): Tab[] => [
     icon: 'lucide:message-square',
     label: t('labels.contents.tabs.comments'),
     badge: {
-      content: comments.value?.length,
-      show: comments.value?.length > 0,
+      content: comments.value?.length ?? 0,
+      show: (comments.value?.length ?? 0) > 0,
       variant: unresolvedCommentsCount.value > 0 ? 'warning' : 'default',
     },
   },
@@ -269,7 +409,7 @@ const isVisualEditorAvailable = computed(() => {
 
 const updatePreviewItem = (item: Record<string, unknown>) => {
   if (previewRef.value) {
-    previewRef.value.updateItem({ ...item })
+    ;(previewRef.value as any).updateItem({ ...item })
   }
 }
 
@@ -281,12 +421,16 @@ const {
   getCollaboratorsForField,
   queueFieldUpdate,
   updateFieldFocus,
-} = useContentLiveCollaboration(spaceId, contentId, {
-  content,
-  hasLocalUnsavedChanges: () => isDirty.value,
-  syncPersistedContent,
-  syncPreviewItem: updatePreviewItem,
-})
+} = useContentLiveCollaboration(
+  spaceId,
+  computed(() => content.value?.id || null),
+  {
+    content,
+    hasLocalUnsavedChanges: () => isDirty.value,
+    syncPersistedContent,
+    syncPreviewItem: updatePreviewItem,
+  }
+)
 
 
 const commitPersistedContent = (
@@ -364,7 +508,10 @@ const handleTemplateTrigger = (blockId: string, content: object) => {
 provide('content', content)
 provide('rootBlock', rootBlock)
 provide('spaceId', spaceId.value)
-provide('contentId', contentId)
+provide(
+  'contentId',
+  computed(() => content.value?.id || null)
+)
 provide(
   'contentVersionId',
   computed(() => content.value?.current_version_id)
@@ -376,7 +523,7 @@ provide('getActiveCollaborators', getCollaboratorsForField)
 provide('updatePreviewItem', updatePreviewItem)
 provide('updateHoverItem', (id: string) => {
   if (previewRef.value) {
-    previewRef.value.updateHover(id)
+    ;(previewRef.value as any).updateHover(id)
   }
 })
 provide('resetDirtyState', resetDirtyState)
@@ -387,7 +534,7 @@ provide('resetDirtyState', resetDirtyState)
     v-if="showPreview"
     ref="previewRef"
     :full-slug="content?.full_slug"
-    :content-id="content?.id"
+    :content-id="content?.id || ''"
     :updated-at="content?.updated_at"
     :item-id="selectedItemId"
     :space-id="spaceId"
@@ -458,7 +605,7 @@ provide('resetDirtyState', resetDirtyState)
               ref="aiInteractionRef"
               v-model:content="content"
               :space-id="spaceId"
-              :content-id="contentId"
+              :content-id="content?.id"
               class="mx-auto max-w-xl"
               :placeholder="t('labels.settings.ai.placeholder', 'Ask AI to modify your content...')"
             />
@@ -493,11 +640,11 @@ provide('resetDirtyState', resetDirtyState)
     />
     <TabsList
       :class="[
-        'flex h-full flex-col overflow-hidden border-l border-l-border select-none',
+        'flex h-full flex-col shrink-0 border-l border-l-border select-none',
         isExtendedSidebar ? 'w-18 p-1' : 'w-14 p-3',
       ]"
     >
-      <div class="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div class="flex min-h-0 flex-1 flex-col">
         <div
           :class="['relative flex w-full min-w-0 flex-col', isExtendedSidebar ? 'gap-1' : 'gap-2']"
         >
@@ -508,11 +655,10 @@ provide('resetDirtyState', resetDirtyState)
             v-bind="isExtendedSidebar ? {} : { tooltip: tab.label, side: 'left' }"
             class="flex cursor-pointer"
           >
-            {{ modelValue }}
             <TabsTrigger
               :value="tab.value"
               :class="[
-                'w-full flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-border',
+                'w-full relative flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-border',
                 isExtendedSidebar ? 'flex-col gap-1 p-2 text-center' : 'size-8',
                 mode === tab.value ? 'bg-border text-primary' : '',
               ]"
@@ -570,6 +716,7 @@ provide('resetDirtyState', resetDirtyState)
   <BlockTemplateCreateDialog
     :space-id="spaceId"
     :block-id="template.blockId"
+    :block-name="rootBlock?.name || ''"
     :content="template.content"
     v-model:open="template.isOpen"
   />

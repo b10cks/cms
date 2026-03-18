@@ -7,16 +7,21 @@ import { api } from '~/api'
 
 import { queryKeys } from './useQueryClient'
 
-export function useContentVersions(spaceId: MaybeRef<string>, contentId: MaybeRef<string>) {
+export function useContentVersions(
+  spaceId: MaybeRef<string>,
+  contentId: MaybeRef<string | null | undefined>
+) {
   const { t } = useI18n()
   const queryClient = useQueryClient()
 
   const spaceAPI = computed(() => api.forSpace(toValue(spaceId)))
-  const versionsAPI = computed(() => spaceAPI.value.contentVersions(toValue(contentId)))
+  const resolvedContentId = computed(() => toValue(contentId) || '')
+  const versionsAPI = computed(() => spaceAPI.value.contentVersions(resolvedContentId.value))
+  const hasContentId = computed(() => !!toValue(contentId))
 
   const useContentVersionsQuery = (params: MaybeRef<ContentVersionsQueryParams> = {}) => {
     return useQuery({
-      queryKey: computed(() => queryKeys.contentVersions(spaceId, contentId).list(params)),
+      queryKey: computed(() => queryKeys.contentVersions(spaceId, resolvedContentId.value).list(params)),
       queryFn: async () => {
         const response = await versionsAPI.value.index({
           ...toValue(params),
@@ -24,17 +29,18 @@ export function useContentVersions(spaceId: MaybeRef<string>, contentId: MaybeRe
         })
         return response.data
       },
+      enabled: hasContentId,
     })
   }
 
   const useContentVersionQuery = (versionId: MaybeRef<string>) => {
     return useQuery({
-      queryKey: computed(() => queryKeys.contentVersions(spaceId, contentId).detail(versionId)),
+      queryKey: computed(() => queryKeys.contentVersions(spaceId, resolvedContentId.value).detail(versionId)),
       queryFn: async () => {
         const response = await versionsAPI.value.get(toValue(versionId))
         return response.data
       },
-      enabled: computed(() => !!versionId),
+      enabled: computed(() => hasContentId.value && !!toValue(versionId)),
     })
   }
 
@@ -47,13 +53,13 @@ export function useContentVersions(spaceId: MaybeRef<string>, contentId: MaybeRe
       },
       onSuccess: (data) => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.contentVersions(spaceId, contentId).lists(),
+          queryKey: queryKeys.contentVersions(spaceId, resolvedContentId.value).lists(),
         })
         queryClient.invalidateQueries({
-          queryKey: queryKeys.contentVersions(spaceId, contentId).detail(data.id),
+          queryKey: queryKeys.contentVersions(spaceId, resolvedContentId.value).detail(data.id),
         })
         queryClient.invalidateQueries({
-          queryKey: queryKeys.contents(spaceId).detail(contentId),
+          queryKey: queryKeys.contents(spaceId).detail(resolvedContentId.value),
         })
         toast.success(t('composables.contentVersions.setCurrentSuccess') as string)
       },
@@ -75,13 +81,13 @@ export function useContentVersions(spaceId: MaybeRef<string>, contentId: MaybeRe
       },
       onSuccess: (data) => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.contentVersions(spaceId, contentId).lists(),
+          queryKey: queryKeys.contentVersions(spaceId, resolvedContentId.value).lists(),
         })
         queryClient.invalidateQueries({
-          queryKey: queryKeys.contentVersions(spaceId, contentId).detail(data.id),
+          queryKey: queryKeys.contentVersions(spaceId, resolvedContentId.value).detail(data.id),
         })
         queryClient.invalidateQueries({
-          queryKey: queryKeys.contents(spaceId).detail(contentId),
+          queryKey: queryKeys.contents(spaceId).detail(resolvedContentId.value),
         })
         toast.success(t('composables.contentVersions.setCurrentSuccess') as string)
       },
@@ -104,14 +110,14 @@ export function useContentVersions(spaceId: MaybeRef<string>, contentId: MaybeRe
       },
       onSuccess: (data) => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.contentVersions(spaceId, contentId).lists(),
+          queryKey: queryKeys.contentVersions(spaceId, resolvedContentId.value).lists(),
         })
         queryClient.invalidateQueries({
-          queryKey: queryKeys.contentVersions(spaceId, contentId).detail(data.id),
+          queryKey: queryKeys.contentVersions(spaceId, resolvedContentId.value).detail(data.id),
         })
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
         queryClient.invalidateQueries({
-          queryKey: queryKeys.contents(spaceId).detail(contentId),
+          queryKey: queryKeys.contents(spaceId).detail(resolvedContentId.value),
         })
         toast.success(t('composables.contentVersions.publishSuccess') as string)
       },

@@ -3,6 +3,7 @@
 namespace App\Models\Management;
 
 use App\Models\Settings;
+use App\Services\Space\SpaceI18nSettingsService;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Contracts\Database\Eloquent\SerializesCastableAttributes;
 
@@ -23,6 +24,7 @@ class SpaceSettings extends Settings
         'region' => 'eu',
         'default_block' => null,
         'default_language' => 'en',
+        'i18n_mode' => 'overlay',
         'languages' => [],
         'asset_fields' => [],
         'environments' => [],
@@ -46,8 +48,10 @@ class SpaceSettings extends Settings
 
     public function getEnabledLanguages(): array
     {
-        return array_map(fn($language): string => $language['code'], $this->attributes['languages'] ?? [])
-            + [$this->getDefaultLanguage()];
+        return [
+            $this->getDefaultLanguage(),
+            ...array_values(array_map(fn ($language): string => $language['code'], $this->attributes['languages'] ?? [])),
+        ];
     }
 
     public function getDefaultLanguage(): string
@@ -55,22 +59,63 @@ class SpaceSettings extends Settings
         return $this->attributes['default_language'] ?? 'en';
     }
 
+    public function getI18nMode(): string
+    {
+        return $this->attributes['i18n_mode'] ?? 'overlay';
+    }
+
+    public function getLanguageConfig(string $languageIso): ?array
+    {
+        if ($languageIso === $this->getDefaultLanguage()) {
+            return null;
+        }
+
+        foreach ($this->attributes['languages'] ?? [] as $language) {
+            if (($language['code'] ?? null) === $languageIso) {
+                return $language;
+            }
+        }
+
+        return null;
+    }
+
+    public function getFallbackLanguage(string $languageIso): ?string
+    {
+        if ($languageIso === $this->getDefaultLanguage()) {
+            return null;
+        }
+
+        return $this->getLanguageConfig($languageIso)['fallback_language'] ?? $this->getDefaultLanguage();
+    }
+
+    public function getLanguageLabel(string $languageIso): string
+    {
+        return $this->getLanguageConfig($languageIso)['name'] ?? strtoupper($languageIso);
+    }
+
     public static function castUsing(array $arguments): CastsAttributes
     {
-        return new class implements CastsAttributes, SerializesCastableAttributes {
+        return new class implements CastsAttributes, SerializesCastableAttributes
+        {
             public function get($model, string $key, $value, array $attributes)
             {
-                return SpaceSettings::make($value ? json_decode($value, true) : []);
+                $settings = $value ? json_decode($value, true) : [];
+
+                return SpaceSettings::make(app(SpaceI18nSettingsService::class)->normalize($settings));
             }
 
             public function set($model, string $key, mixed $value, array $attributes)
             {
-                return json_encode(\is_array($value) ? $value : $value->toArray());
+                $settings = \is_array($value) ? $value : $value->toArray();
+
+                return json_encode(app(SpaceI18nSettingsService::class)->normalize($settings));
             }
 
             public function serialize($model, string $key, $value, array $attributes)
             {
-                return json_encode(\is_array($value) ? $value : $value->toArray());
+                $settings = \is_array($value) ? $value : $value->toArray();
+
+                return json_encode(app(SpaceI18nSettingsService::class)->normalize($settings));
             }
         };
     }

@@ -430,7 +430,10 @@
         "label": "Localization",
         "language": "Language",
         "notAvailable": "This space has no localization configured.",
-        "available": "Switch to localization mode"
+        "available": "Switch to localization mode",
+        "status": {
+          "missing": "Missing"
+        }
       },
       "createContent": "Create New Content",
       "blankTemplate": "Blank",
@@ -442,7 +445,18 @@
       },
       "settings": {
         "disablePreview": "Disable Preview",
-        "disablePreviewDescription": "Disable the preview panel for this content"
+        "disablePreviewDescription": "Disable the preview panel for this content",
+        "i18n": {
+          "override": {
+            "label": "I18n Mode",
+            "description": "Override the inherited i18n mode for this page family.",
+            "canonicalOnly": "Only the canonical default-language page can change the family mode.",
+            "inherit": "Inherit",
+            "overlay": "Overlay",
+            "independent": "Independent"
+          },
+          "effectiveMode": "Effective mode: {mode}"
+        }
       },
       "tabs": {
         "edit": "Edit",
@@ -1008,11 +1022,25 @@
         "languages": "Languages",
         "languagesDescription": "Add and manage supported languages for your content.",
         "defaultLanguage": "Default Language",
+        "defaultLanguagePlaceholder": "e.g. en",
         "defaultLanguageDescription": "This language will be used as the default for content creation. It is recommended to set this to your primary audience's language. It will be used for AI translations as well.",
         "code": "Code",
         "label": "Label",
         "codePlaceholder": "Code (e.g., de)",
         "labelPlaceholder": "Label (e.g., German)",
+        "mode": {
+          "label": "Mode",
+          "description": "Choose whether non-default languages behave like overlays or standalone pages.",
+          "options": {
+            "overlay": "Overlay",
+            "independent": "Independent"
+          }
+        },
+        "fallback": {
+          "label": "Fallback",
+          "description": "Choose the direct fallback language used for this language.",
+          "none": "No fallback"
+        },
         "slugStrategy": {
           "label": "Slug Strategy",
           "placeholder": "Select slug strategy",

@@ -423,7 +423,10 @@
         "label": "Lokalisierung",
         "language": "Sprache",
         "notAvailable": "Dieser Space hat keine Lokalisierung konfiguriert.",
-        "available": "Wechsle zum Lokalisierungsmodus"
+        "available": "Wechsle zum Lokalisierungsmodus",
+        "status": {
+          "missing": "Fehlt"
+        }
       },
       "createContent": "Neuen Inhalt erstellen",
       "blankTemplate": "Leer",
@@ -435,7 +438,18 @@
       },
       "settings": {
         "disablePreview": "Vorschau deaktivieren",
-        "disablePreviewDescription": "Deaktiviere das Vorschau-Panel für diesen Inhalt"
+        "disablePreviewDescription": "Deaktiviere das Vorschau-Panel für diesen Inhalt",
+        "i18n": {
+          "override": {
+            "label": "I18n-Modus",
+            "description": "Überschreibe den vererbten I18n-Modus für diese Seitenfamilie.",
+            "canonicalOnly": "Nur die kanonische Standardsprachseite kann den Familienmodus ändern.",
+            "inherit": "Vererben",
+            "overlay": "Overlay",
+            "independent": "Unabhängig"
+          },
+          "effectiveMode": "Effektiver Modus: {mode}"
+        }
       },
       "tabs": {
         "edit": "Bearbeiten",
@@ -998,11 +1012,25 @@
         "languages": "Sprachen",
         "languagesDescription": "Füge unterstützte Sprachen für deinen Content hinzu und verwalte sie.",
         "defaultLanguage": "Standardsprache",
+        "defaultLanguagePlaceholder": "z. B. en",
         "defaultLanguageDescription": "Diese Sprache wird als Standard für die Content-Erstellung verwendet. Es wird empfohlen, dies auf die Sprache deines Hauptpublikums einzustellen. Sie wird auch für KI-Übersetzungen verwendet.",
         "code": "Code",
         "label": "Label",
         "codePlaceholder": "Code (z.B. de)",
         "labelPlaceholder": "Label (z.B. Deutsch)",
+        "mode": {
+          "label": "Modus",
+          "description": "Lege fest, ob nicht standardmäßige Sprachen als Overlay oder als eigenständige Seiten arbeiten.",
+          "options": {
+            "overlay": "Overlay",
+            "independent": "Unabhängig"
+          }
+        },
+        "fallback": {
+          "label": "Fallback",
+          "description": "Wähle die direkte Fallback-Sprache für diese Sprache.",
+          "none": "Kein Fallback"
+        },
         "slugStrategy": {
           "label": "Slug-Strategie",
           "placeholder": "Wähle eine Slug-Strategie",

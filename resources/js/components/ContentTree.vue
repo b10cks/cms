@@ -337,6 +337,7 @@ const buildLink = (contentId: string) => {
 
   return {
     name,
+    query: route.query,
     hash: '',
     params: {
       space: route.params.space,

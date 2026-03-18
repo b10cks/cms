@@ -1,7 +1,7 @@
 import type { CommentResource } from '~/types/comments'
 
 export type ContentUpdateEvent = {
-  content: Record<string, never>
+  content: Record<string, unknown>
 }
 
 export type SelectUpdateEvent = {
@@ -107,11 +107,11 @@ export class PreviewBridge {
     )
   }
 
-  public updateContent(content: Record<string, never>): void {
+  public updateContent(content: Record<string, unknown>): void {
     this.postMessageToIframe('CONTENT_UPDATE', { content })
   }
 
-  public updateSelectedItem(selectedItem: string): void {
+  public updateSelectedItem(selectedItem: string | null): void {
     this.postMessageToIframe('SELECT_UPDATE', { selectedItem })
   }
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Ref } from 'vue'
 import { toast } from 'vue-sonner'
 
 import Icon from '~/components/Icon.vue'
@@ -28,19 +29,19 @@ const props = defineProps<{
   contentId: string
   fullSlug?: string
   updatedAt?: string
-  content?: never // Content for live updates
+  content?: Record<string, unknown>
   itemId?: string | null // Currently selected item in the editor
   comments?: CommentResource[] // Comments for the preview
 }>()
 
 
 const { useSpaceQuery } = useSpaces()
-const { data: currentSpace } = useSpaceQuery(props.spaceId)
+const { data: currentSpace } = useSpaceQuery(props.spaceId) as { data: Ref<SpaceResource | null> }
 const { settings } = useSpaceSettings(props.spaceId)
 
 
 const emit = defineEmits<{
-  (e: 'selectItem', itemId: string): void
+  (e: 'selectItem', itemId: string | null): void
   (e: 'updateField', payload: FieldUpdateEvent): void
   (e: 'commentClick', payload: CommentClickEvent): void
   (e: 'commentCreate', payload: CommentCreateEvent): void
@@ -55,23 +56,32 @@ const isConnected = ref<boolean>(false)
 const mode = ref<'desktop' | 'mobile'>('desktop')
 const mobileWidth = ref<number>(384)
 const isResizing = ref<boolean>(false)
-const content = inject<Ref<ContentResource>>('content')
+const content = inject<Ref<ContentResource | null>>('content', ref(null))
 let previewBridge: PreviewBridge
 
 
 const baseSrc = computed(() => {
-  const env = settings.value.content.environment
-  if (!env?.url) return null
+  const env = settings.value.content.environment as SpaceEnvironment | null
+  const currentContent = content.value
+
+  if (!env?.url || !currentContent?.language_iso || !props.fullSlug) {
+    return null
+  }
+
   const slugStrategy = currentSpace.value?.settings.slug_strategy
   const needsPrepend =
     slugStrategy === 'always_prepend' ||
     (slugStrategy === 'prepend_translations' &&
-      content.value.language_iso !== currentSpace.value?.settings.default_language)
-  const prefix = needsPrepend ? `/${content.value.language_iso}` : ''
+      currentContent.language_iso !== currentSpace.value?.settings.default_language)
+  const prefix = needsPrepend ? `/${currentContent.language_iso}` : ''
 
   const url = env.url.replace(/\/$/, '')
   return `${url}${prefix}${props.fullSlug}`
 })
+const currentEnvironmentUrl = computed(
+  () => (settings.value.content as { environment: SpaceEnvironment | null }).environment?.url
+)
+const availableEnvironments = computed(() => currentSpace.value?.settings.environments ?? [])
 
 
 const src = computed(() => {
@@ -143,13 +153,15 @@ watchEffect(() => {
 
 const switchEnvironment = (env: SpaceEnvironment) => {
   loading.value = true
-  settings.value.content.environment = env
+  ;(settings.value.content as { environment: SpaceEnvironment | null }).environment = env
   isConnected.value = false
 }
 
 
 const openExternal = () => {
-  window.open(src.value, '_blank')
+  if (src.value) {
+    window.open(src.value, '_blank')
+  }
 }
 
 
@@ -160,7 +172,7 @@ const refresh = () => {
 }
 
 
-const updateItem = (item: never) => {
+const updateItem = (item: Record<string, unknown>) => {
   if (previewBridge) {
     previewBridge.updateContent(JSON.parse(JSON.stringify(item)))
   }
@@ -173,6 +185,10 @@ const updateHover = (itemId: string | null) => {
 
 
 const copyLink = () => {
+  if (!src.value) {
+    return
+  }
+
   navigator.clipboard
     .writeText(src.value)
     .then(() => toast.message(t('notifications.preview.copied') as string))
@@ -324,9 +340,9 @@ const handleMouseMove = (event: MouseEvent) => {
                 <Icon name="lucide:cog" />
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuRadioGroup :model-value="settings.content.environment?.url">
+                <DropdownMenuRadioGroup :model-value="currentEnvironmentUrl">
                   <DropdownMenuRadioItem
-                    v-for="env in currentSpace?.settings.environments"
+                    v-for="env in availableEnvironments"
                     :key="env.url"
                     :value="env.url"
                     class="grid"
@@ -356,7 +372,7 @@ const handleMouseMove = (event: MouseEvent) => {
           <Markdown
             class="mx-auto text-center text-sm text-balance text-muted"
             :content="
-              currentSpace?.settings.environments?.length > 0
+              availableEnvironments.length > 0
                 ? $t('messages.preview.noContent')
                 : $t('messages.preview.noEnvironments', {
                     url: $router.resolve({

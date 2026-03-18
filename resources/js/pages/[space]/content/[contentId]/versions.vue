@@ -1,35 +1,123 @@
 <script setup lang="ts">
+import { useRouteQuery } from '@vueuse/router'
+
+import LanguageSwitcher from '~/components/content/LanguageSwitcher.vue'
 import Icon from '~/components/Icon.vue'
 
 import ContentHeader from '~/components/content/ContentHeader.vue'
 import ContentVersionHistory from '~/components/content/VersionHistory.vue'
 import { Button } from '~/components/ui/button'
+import { resolveContentRouteName } from '~/lib/content-i18n'
 
-// Extract route parameters
 const route = useRoute()
 const router = useRouter()
 const spaceId = computed<string>(() => route.params.space as string)
-const contentId = computed<string>(() => route.params.contentId as string)
+const canonicalContentId = computed<string>(() => route.params.contentId as string)
 
-// Fetch content data for breadcrumbs and title
+const { useSpaceQuery } = useSpaces()
+const { data: space } = useSpaceQuery(spaceId.value)
 const { useContentQuery } = useContent(spaceId)
-const { data: content, isLoading: isLoadingContent } = useContentQuery(contentId)
+const { data: routeContent } = useContentQuery(canonicalContentId)
 
-// Navigate back to content edit page
+const defaultLanguage = computed(
+  () =>
+    space.value?.settings.default_language ||
+    routeContent.value?.language_versions?.find((version) => version.is_default)?.language_iso ||
+    'en'
+)
+const activeLanguage = useRouteQuery('lang', defaultLanguage.value)
+const canonicalContent = computed(() => (routeContent.value?.i18n_parent_id === null ? routeContent.value : null))
+const activeLanguageVersion = computed(
+  () =>
+    canonicalContent.value?.language_versions?.find((version) => version.language_iso === activeLanguage.value) ||
+    canonicalContent.value?.language_versions?.find((version) => version.is_default) ||
+    null
+)
+const activeContentId = computed(() => activeLanguageVersion.value?.content_id || null)
+const { data: activeContent, isLoading: isLoadingContent } = useContentQuery(activeContentId)
+
+watch(
+  [routeContent, defaultLanguage],
+  async ([currentContent, currentDefaultLanguage]) => {
+    if (!currentContent) {
+      return
+    }
+
+    if (!activeLanguage.value) {
+      activeLanguage.value = currentContent.language_iso || currentDefaultLanguage
+    }
+
+    if (
+      currentContent.i18n_parent_id &&
+      currentContent.i18n_canonical_id !== canonicalContentId.value
+    ) {
+      await router.replace({
+        name: resolveContentRouteName(
+          route.name as string | undefined,
+          currentContent.effective_i18n_mode,
+          currentContent.language_iso,
+          currentDefaultLanguage
+        ),
+        params: {
+          ...route.params,
+          contentId: currentContent.i18n_canonical_id,
+        },
+        query: {
+          ...route.query,
+          lang: currentContent.language_iso,
+        },
+        hash: '',
+      })
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  [canonicalContent, activeLanguage, defaultLanguage],
+  ([currentCanonical, currentLanguage, currentDefaultLanguage]) => {
+    if (!currentCanonical) {
+      return
+    }
+
+    const availableLanguages = currentCanonical.language_versions.map((version) => version.language_iso)
+    const nextLanguage = availableLanguages.includes(currentLanguage || '')
+      ? (currentLanguage as string)
+      : currentDefaultLanguage
+
+    if (nextLanguage !== activeLanguage.value) {
+      activeLanguage.value = nextLanguage
+    }
+  },
+  { immediate: true }
+)
+
 const navigateToContent = () => {
+  if (!canonicalContent.value) {
+    return
+  }
+
   router.push({
-    name: 'space-content-contentId',
+    name: resolveContentRouteName(
+      'space-content-contentId',
+      canonicalContent.value.effective_i18n_mode,
+      activeLanguage.value || defaultLanguage.value,
+      defaultLanguage.value
+    ),
     params: {
       space: spaceId.value,
-      contentId: contentId.value,
+      contentId: canonicalContent.value.id,
+    },
+    query: {
+      ...route.query,
+      lang: activeLanguage.value || defaultLanguage.value,
     },
   })
 }
 
-// Document title
 useSeoMeta({
   title: computed(() =>
-    content.value?.name ? `History: ${content.value.name}` : 'Version History'
+    activeContent.value?.name ? `History: ${activeContent.value.name}` : 'Version History'
   ),
 })
 </script>
@@ -48,14 +136,13 @@ useSeoMeta({
     </div>
 
     <div
-      v-else-if="content"
+      v-else-if="activeContent"
       class="flex h-full flex-col"
     >
-      <!-- Main content section -->
       <div class="flex-1 overflow-hidden">
         <ContentVersionHistory
           :space-id="spaceId"
-          :content="content"
+          :content="activeContent"
         />
       </div>
     </div>
@@ -68,26 +155,27 @@ useSeoMeta({
         name="lucide:file-question"
         class="mb-4 h-16 w-16 text-muted"
       />
-      <h2 class="mb-2 text-xl font-bold">Content not found</h2>
+      <h2 class="mb-2 text-xl font-bold">No versions yet</h2>
       <p class="mb-6 text-muted">
-        The requested content could not be found or you don't have permission to view it.
+        The selected language does not have a saved content row yet.
       </p>
-      <Button @click="router.push(`/${spaceId}/content`)"> Return to content list </Button>
+      <Button @click="navigateToContent"> Open editor </Button>
     </div>
   </div>
 
   <Teleport to="#appHeader">
     <ContentHeader
-      v-if="content"
-      :content="content"
+      v-if="activeContent"
+      :content="activeContent"
     />
   </Teleport>
 
   <Teleport to="#appHeaderActions">
     <div
-      v-if="content"
+      v-if="canonicalContent"
       class="flex items-center gap-3"
     >
+      <LanguageSwitcher :content="canonicalContent" />
       <Button @click="navigateToContent">
         <Icon name="lucide:arrow-left" />
         Back to Editor

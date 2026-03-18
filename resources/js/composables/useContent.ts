@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import type { ContentsQueryParams } from '~/api/resources/contents'
-import type { CreateContentPayload, UpdateContentPayload } from '~/types/contents'
+import type { ContentResource, CreateContentPayload, UpdateContentPayload } from '~/types/contents'
 
 import { api } from '~/api'
 
@@ -12,6 +12,33 @@ export function useContent(spaceId: MaybeRef<string>) {
   const { t } = useI18n()
   const queryClient = useQueryClient()
   const spaceAPI = computed(() => api.forSpace(toValue(spaceId)))
+
+  const invalidateContentFamily = (content: ContentResource) => {
+    const familyContentIds = new Set<string>()
+
+    if (content.id) {
+      familyContentIds.add(content.id)
+    }
+
+    if (content.i18n_canonical_id) {
+      familyContentIds.add(content.i18n_canonical_id)
+    }
+
+    content.language_versions.forEach((version) => {
+      if (version.content_id) {
+        familyContentIds.add(version.content_id)
+      }
+    })
+
+    familyContentIds.forEach((contentId) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents(spaceId).detail(contentId),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contentVersions(spaceId, contentId).lists(),
+      })
+    })
+  }
 
   const useContentsQuery = (params: MaybeRef<ContentsQueryParams> = {}) => {
     return useQuery({
@@ -24,13 +51,21 @@ export function useContent(spaceId: MaybeRef<string>) {
   }
 
   // Query to fetch a single content item
-  const useContentQuery = (id: MaybeRef<string>) => {
+  const useContentQuery = (id: MaybeRef<string | null | undefined>) => {
+    const resolvedId = computed(() => toValue(id) || '')
+
     return useQuery({
-      queryKey: computed(() => queryKeys.contents(spaceId).detail(id)),
+      queryKey: computed(() => queryKeys.contents(spaceId).detail(resolvedId.value)),
       queryFn: async () => {
-        const response = await spaceAPI.value.contents.get(toValue(id))
+        const contentId = toValue(id)
+        if (!contentId) {
+          throw new Error('Content ID is required')
+        }
+
+        const response = await spaceAPI.value.contents.get(contentId)
         return response.data
       },
+      enabled: computed(() => !!toValue(id)),
     })
   }
 
@@ -58,6 +93,7 @@ export function useContent(spaceId: MaybeRef<string>) {
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
+        invalidateContentFamily(data)
 
         toast.success(t('composables.content.createSuccess', { name: data.name }) as string)
       },
@@ -79,13 +115,8 @@ export function useContent(spaceId: MaybeRef<string>) {
       },
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.contents(spaceId).detail(data.id),
-        })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.contentVersions(spaceId, data.id).lists(),
-        })
+        invalidateContentFamily(data)
 
         toast.success(t('composables.content.updateSuccess', { name: data.name }) as string)
       },
@@ -107,13 +138,8 @@ export function useContent(spaceId: MaybeRef<string>) {
       },
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.contents(spaceId).detail(data.id),
-        })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.contentVersions(spaceId, data.id).lists(),
-        })
+        invalidateContentFamily(data)
 
         toast.success(t('composables.content.publishSuccess', { name: data.name }) as string)
       },
@@ -135,13 +161,8 @@ export function useContent(spaceId: MaybeRef<string>) {
       },
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.contents(spaceId).detail(data.id),
-        })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.contentVersions(spaceId, data.id).lists(),
-        })
+        invalidateContentFamily(data)
 
         toast.success(t('composables.content.scheduleSuccess', { name: data.name }) as string)
       },
@@ -163,13 +184,8 @@ export function useContent(spaceId: MaybeRef<string>) {
       },
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.contents(spaceId).detail(data.id),
-        })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.contentVersions(spaceId, data.id).lists(),
-        })
+        invalidateContentFamily(data)
 
         toast.success(t('composables.content.unpublishSuccess', { name: data.name }) as string)
       },
@@ -276,10 +292,8 @@ export function useContent(spaceId: MaybeRef<string>) {
       },
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.contents(spaceId).detail(data.id),
-        })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
+        invalidateContentFamily(data)
       },
       onError: (error: Error) => {
         toast.error(
