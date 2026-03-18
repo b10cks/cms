@@ -81,7 +81,7 @@ const tabs = computed(() => ({
           v-for="({ icon, label, count }, key) in tabs"
           :key="key"
           :value="key"
-          class="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 text-sm font-semibold transition-colors hover:text-primary data-[state=active]:bg-gray-900 data-[state=active]:text-primary"
+          class="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 text-sm font-semibold transition-colors hover:text-primary data-[state=active]:bg-background data-[state=active]:text-primary"
         >
           <Icon :name="icon" />
           <span>{{ label }}</span>
