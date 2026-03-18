@@ -1,8 +1,7 @@
 import type { Broadcaster } from 'laravel-echo'
-import type { App } from 'vue'
-
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js'
+import type { App } from 'vue'
 
 import { api } from '~/api'
 import { getXsrfHeaders } from '~/lib/csrf'
@@ -84,6 +83,4 @@ export function installEcho(_app: App) {
   window.Pusher = Pusher
   // @ts-expect-error - Echo configuration types are complex and runtime config is dynamic
   window.Echo = new Echo(echoOptions)
-
-  console.log('[Echo] Initialized with Sanctum authorizer')
 }

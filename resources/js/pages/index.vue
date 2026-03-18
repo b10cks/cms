@@ -123,7 +123,6 @@ const actions: Array<Action | string> = [
       const url = new URL(
         window.location.origin + router.resolve({ name: 'space', params: { space: s.id } }).href
       )
-      console.log(url.toString())
       useClipboard().copy(url.toString())
     },
   },

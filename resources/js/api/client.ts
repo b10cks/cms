@@ -62,8 +62,6 @@ export class ApiClient {
   public async ensureCsrfCookie(): Promise<void> {
     if (!isClient || this.csrfReady) return
 
-    console.log('[API] Fetching CSRF cookie from /auth/v1/csrf-cookie')
-
     try {
       const response = await fetch('/auth/v1/csrf-cookie', {
         method: 'GET',
@@ -72,10 +70,6 @@ export class ApiClient {
           Accept: 'application/json',
         },
       })
-
-      console.log('[API] CSRF response status:', response.status)
-      console.log('[API] CSRF response headers:', Object.fromEntries(response.headers.entries()))
-      console.log('[API] Document cookies after CSRF request:', document.cookie)
 
       if (response.ok) {
         this.csrfReady = true
