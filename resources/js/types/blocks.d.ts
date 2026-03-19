@@ -139,11 +139,17 @@ interface HtmlClassConfig {
   css?: string
 }
 
+interface PlaceholderConfig {
+  key: string
+  label: string
+}
+
 interface RichTextSchema extends Schema {
   type: 'richtext'
   translatable: boolean
   html_classes: HtmlClassConfig[]
   heading_levels?: Array<'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'>
+  placeholders?: PlaceholderConfig[]
 }
 
 interface NumberSchema extends Schema {

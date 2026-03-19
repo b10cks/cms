@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { Link } from '@tiptap/extension-link'
 import { Table } from '@tiptap/extension-table'
 import { TableCell } from '@tiptap/extension-table-cell'
@@ -9,15 +7,20 @@ import { TableRow } from '@tiptap/extension-table-row'
 import { Underline } from '@tiptap/extension-underline'
 import { StarterKit } from '@tiptap/starter-kit'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
+
 import ContentPicker from '~/components/editor/ContentPicker.vue'
+import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
+
 import { InternalLink, type InternalLinkAttrs } from './extensions/InternalLink'
+import { PlaceholderToken } from './extensions/PlaceholderToken'
 import { TextClass } from './extensions/TextClass'
 
 interface HtmlClass {
@@ -26,37 +29,51 @@ interface HtmlClass {
   css?: string
 }
 
+
+interface Placeholder {
+  key: string
+  label: string
+}
+
+
 const props = withDefaults(
   defineProps<{
     modelValue: Record<string, unknown>
     htmlClasses?: HtmlClass[]
     spaceId?: string
     headingLevels?: Array<'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'>
+    placeholders?: Placeholder[]
   }>(),
   {
     htmlClasses: () => [],
     spaceId: undefined,
     headingLevels: () => ['h1', 'h2', 'h3', 'h4', 'p'],
+    placeholders: () => [],
   }
 )
+
 
 const emit = defineEmits<{
   'update:modelValue': [value: Record<string, unknown>]
 }>()
 
+
 const contentPickerOpen = ref(false)
 const linkInSelection = ref<InternalLinkAttrs | null>(null)
 const isApplyingExternalContent = ref(false)
+
 
 const getHeadingLabel = (level: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'): string => {
   if (level === 'p') return 'Paragraph'
   return `Heading ${level.charAt(1)}`
 }
 
+
 const getHeadingIcon = (level: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'): string => {
   if (level === 'p') return 'lucide:pilcrow'
   return `lucide:heading-${level.charAt(1)}`
 }
+
 
 const currentHeading = computed(() => {
   if (editor.value?.isActive('paragraph')) {
@@ -70,12 +87,14 @@ const currentHeading = computed(() => {
   return null
 })
 
+
 const headingDisplayLabel = computed(() => {
   if (!currentHeading.value) {
     return 'Format'
   }
   return getHeadingLabel(currentHeading.value)
 })
+
 
 const editor = useEditor({
   content: props.modelValue,
@@ -92,6 +111,7 @@ const editor = useEditor({
     }),
     InternalLink,
     TextClass,
+    PlaceholderToken,
     Table.configure({
       resizable: true,
       handleWidth: 4,
@@ -109,16 +129,19 @@ const editor = useEditor({
   },
 })
 
+
 const applyClass = (className: string) => {
   if (!editor.value) return
   editor.value.chain().focus().toggleMark('textClass', { class: className }).run()
 }
+
 
 const openInternalLinkPicker = () => {
   if (!editor.value || !props.spaceId) return
   linkInSelection.value = null
   contentPickerOpen.value = true
 }
+
 
 const onInternalLinkSelect = (contentId: string) => {
   if (!editor.value) return
@@ -127,6 +150,7 @@ const onInternalLinkSelect = (contentId: string) => {
   contentPickerOpen.value = false
 }
 
+
 const onInternalLinkWithAnchorSelect = (contentId: string, anchorId: string) => {
   if (!editor.value) return
   const linkData: InternalLinkAttrs = { content: contentId, anchor: anchorId }
@@ -134,10 +158,18 @@ const onInternalLinkWithAnchorSelect = (contentId: string, anchorId: string) => 
   contentPickerOpen.value = false
 }
 
+
 const removeInternalLink = () => {
   if (!editor.value) return
   editor.value.chain().focus().unsetInternalLink().run()
 }
+
+
+const insertPlaceholder = (placeholder: Placeholder) => {
+  if (!editor.value) return
+  ;(editor.value.chain().focus() as any).insertPlaceholderToken(placeholder).run()
+}
+
 
 const insertExternalLink = () => {
   if (!editor.value) return
@@ -146,6 +178,7 @@ const insertExternalLink = () => {
     editor.value.chain().focus().setLink({ href: url }).run()
   }
 }
+
 
 watch(
   () => props.modelValue,
@@ -162,6 +195,7 @@ watch(
   },
   { deep: true }
 )
+
 
 onBeforeUnmount(() => {
   editor.value?.destroy()
@@ -478,6 +512,34 @@ onBeforeUnmount(() => {
         <Icon name="lucide:trash-2" />
       </Button>
 
+      <DropdownMenu v-if="placeholders.length > 0">
+        <DropdownMenuTrigger as-child>
+          <Button
+            type="button"
+            size="xs"
+            variant="outline"
+            title="Insert Placeholder"
+          >
+            <Icon name="lucide:braces" />
+            <Icon name="lucide:chevron-down" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent class="max-h-96 overflow-y-auto">
+          <DropdownMenuItem
+            v-for="placeholder in placeholders"
+            :key="placeholder.key"
+            @click="insertPlaceholder(placeholder)"
+          >
+            <span class="flex items-center gap-2">
+              <code class="text-xs text-muted-foreground"
+                >&#123;&#123;{{ placeholder.key }}&#125;&#125;</code
+              >
+              {{ placeholder.label }}
+            </span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       <DropdownMenu v-if="htmlClasses.length > 0">
         <DropdownMenuTrigger as-child>
           <Button
@@ -487,11 +549,7 @@ onBeforeUnmount(() => {
             title="Apply CSS Class"
           >
             <Icon name="lucide:palette" />
-            Classes
-            <Icon
-              name="lucide:chevron-down"
-              size="0.8rem"
-            />
+            <Icon name="lucide:chevron-down" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent class="max-h-96 overflow-y-auto">
@@ -507,6 +565,15 @@ onBeforeUnmount(() => {
               />
               {{ htmlClass.name }}
             </span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            :disabled="!editor?.isActive('textClass')"
+            class="text-destructive focus:text-destructive"
+            @click="editor?.chain().focus().unsetTextClass().run()"
+          >
+            <Icon name="lucide:x" />
+            Remove Class
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

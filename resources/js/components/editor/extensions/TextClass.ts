@@ -1,4 +1,4 @@
-import { Mark } from '@tiptap/core'
+import { Mark, mergeAttributes } from '@tiptap/core'
 
 const TextClass = Mark.create({
   name: 'textClass',
@@ -34,17 +34,8 @@ const TextClass = Mark.create({
     ]
   },
 
-  renderHTML({ attributes }: any) {
-    if (!attributes || !attributes.class) {
-      return ['span', {}, 0]
-    }
-    return [
-      'span',
-      {
-        class: attributes.class,
-      },
-      0,
-    ]
+  renderHTML({ HTMLAttributes }: any) {
+    return ['span', mergeAttributes(HTMLAttributes), 0]
   },
 
   addCommands() {

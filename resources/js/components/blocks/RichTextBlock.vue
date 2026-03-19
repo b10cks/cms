@@ -10,6 +10,11 @@ interface HtmlClass {
   css?: string
 }
 
+interface Placeholder {
+  key: string
+  label: string
+}
+
 const props = defineProps<{
   name: string
   value: RichTextSchema
@@ -22,6 +27,10 @@ const emit = defineEmits<{
 const htmlClasses = ref<HtmlClass[]>(props.value.html_classes || [])
 const newClass = ref<HtmlClass>({ name: '', className: '', css: '' })
 const showAddForm = ref(false)
+
+const placeholders = ref<Placeholder[]>(props.value.placeholders || [])
+const newPlaceholder = ref<Placeholder>({ key: '', label: '' })
+const showAddPlaceholderForm = ref(false)
 
 const updateItemValue = (key: string, value: unknown) => {
   emit('update:item-value', key, value)
@@ -49,10 +58,40 @@ const updateHtmlClass = (index: number, key: keyof HtmlClass, value: string) => 
   updateItemValue('html_classes', htmlClasses.value)
 }
 
+const addPlaceholder = () => {
+  if (!newPlaceholder.value.key || !newPlaceholder.value.label) return
+
+  placeholders.value.push({ ...newPlaceholder.value })
+  updateItemValue('placeholders', placeholders.value)
+  newPlaceholder.value = { key: '', label: '' }
+  showAddPlaceholderForm.value = false
+}
+
+const removePlaceholder = (index: number) => {
+  placeholders.value.splice(index, 1)
+  updateItemValue('placeholders', placeholders.value)
+}
+
+const updatePlaceholder = (index: number, field: keyof Placeholder, value: string) => {
+  placeholders.value[index] = {
+    ...placeholders.value[index],
+    [field]: value,
+  }
+  updateItemValue('placeholders', placeholders.value)
+}
+
 watch(
   () => props.value.html_classes,
   (newClasses) => {
     htmlClasses.value = newClasses || []
+  },
+  { deep: true }
+)
+
+watch(
+  () => props.value.placeholders,
+  (newPlaceholders) => {
+    placeholders.value = newPlaceholders || []
   },
   { deep: true }
 )
@@ -159,6 +198,98 @@ watch(
           size="0.9rem"
         />
         Add HTML Class
+      </Button>
+    </div>
+
+    <div class="space-y-2">
+      <h4 class="text-sm font-semibold">Placeholders</h4>
+      <p class="text-xs text-muted-foreground">
+        Define variables editors can insert as tokens (e.g.
+        <code class="font-mono">&#123;&#123;first_name&#125;&#125;</code>).
+      </p>
+      <div class="space-y-2">
+        <div
+          v-for="(placeholder, index) in placeholders"
+          :key="index"
+          class="flex items-end gap-2 rounded border border-input bg-surface p-3"
+        >
+          <InputField
+            :model-value="placeholder.key"
+            name="placeholder-key"
+            label="Key"
+            placeholder="e.g., first_name"
+            class="font-mono"
+            @update:model-value="(v) => updatePlaceholder(index, 'key', v as string)"
+          />
+          <InputField
+            :model-value="placeholder.label"
+            name="placeholder-label"
+            label="Label"
+            placeholder="e.g., First Name"
+            @update:model-value="(v) => updatePlaceholder(index, 'label', v as string)"
+          />
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            class="hover:text-destructive"
+            @click="removePlaceholder(index)"
+          >
+            <Icon
+              name="lucide:trash-2"
+              size="0.9rem"
+            />
+          </Button>
+        </div>
+      </div>
+
+      <div
+        v-if="showAddPlaceholderForm"
+        class="flex flex-col gap-2 rounded border border-input bg-surface p-3"
+      >
+        <InputField
+          v-model="newPlaceholder.key"
+          name="new-placeholder-key"
+          label="Key"
+          placeholder="e.g., first_name"
+        />
+        <InputField
+          v-model="newPlaceholder.label"
+          name="new-placeholder-label"
+          label="Label"
+          placeholder="e.g., First Name"
+        />
+        <div class="flex gap-2">
+          <Button
+            type="button"
+            size="sm"
+            @click="addPlaceholder"
+          >
+            Add Placeholder
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            @click="showAddPlaceholderForm = false"
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
+
+      <Button
+        v-if="!showAddPlaceholderForm"
+        type="button"
+        size="sm"
+        variant="outline"
+        @click="showAddPlaceholderForm = true"
+      >
+        <Icon
+          name="lucide:plus"
+          size="0.9rem"
+        />
+        Add Placeholder
       </Button>
     </div>
   </div>
