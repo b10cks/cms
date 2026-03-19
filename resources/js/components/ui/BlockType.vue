@@ -7,6 +7,7 @@ interface BlockType {
   text?: string
 }
 
+
 const types: Record<string, BlockType> = {
   blocks: {
     cls: 'text-violet-300 border border-violet-400 bg-violet-800',
@@ -18,6 +19,7 @@ const types: Record<string, BlockType> = {
   },
   link: { cls: 'text-blue-400 border border-accent bg-blue-900', icon: 'lucide:link' },
   reference: { cls: 'text-blue-400 border border-accent bg-blue-900', icon: 'lucide:link-2' },
+  references: { cls: 'text-blue-400 border border-accent bg-blue-900', icon: 'lucide:link-2' },
   number: { cls: 'text-green-400 border border-green-600 bg-green-800', icon: 'lucide:hash' },
   date: { cls: 'text-green-400 border border-green-600 bg-green-800', icon: 'lucide:calendar' },
   text: { cls: 'text-green-400 border border-green-600 bg-green-800', text: 'Aa' },
@@ -37,10 +39,16 @@ const types: Record<string, BlockType> = {
     cls: 'text-yellow-300 border border-yellow-400 bg-yellow-800',
     icon: 'lucide:images',
   },
+  multi_assets: {
+    cls: 'text-yellow-300 border border-yellow-400 bg-yellow-800',
+    icon: 'lucide:images',
+  },
   meta: { cls: 'text-gray-400 border border-gray-500 bg-gray-800', icon: 'lucide:search' },
 }
 
+
 const props = defineProps<{ type: keyof typeof types }>()
+
 
 const currentType = computed(() => {
   return types[props.type] ?? { cls: props.type }

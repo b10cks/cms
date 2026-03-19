@@ -619,7 +619,7 @@
           "label": "Text",
           "description": "Single-line text field"
         },
-        "reference": {
+        "references": {
           "label": "Reference",
           "description": "Reference to another content"
         },
@@ -627,7 +627,7 @@
           "label": "Asset",
           "description": "Reference to an asset"
         },
-        "multiAsset": {
+        "multi_assets": {
           "label": "Multi Asset",
           "description": "Reference multiple assets"
         },
