@@ -1004,7 +1004,9 @@
         "description": "Konfiguriere Standard-Content-Einstellungen für deinen Space.",
         "defaultBlock": "Standard-Content Block",
         "selectDefaultBlock": "Wähle Standard Block",
-        "defaultBlockDescription": "Dieser Block-Typ wird beim Erstellen neuer Inhalte verwendet."
+        "defaultBlockDescription": "Dieser Block-Typ wird beim Erstellen neuer Inhalte verwendet.",
+        "filterHiddenBlocks": "Versteckte Blöcke aus der Data API filtern",
+        "filterHiddenBlocksDescription": "Wenn aktiviert, werden als versteckt markierte Blöcke aus den Data-API-Antworten entfernt. Standardmäßig deaktiviert."
       },
       "dangerZone": {
         "title": "Gefahrenzone",
@@ -1803,6 +1805,8 @@
       "tooltips": {
         "createTemplate": "Vorlage aus diesem Block erstellen",
         "editNested": "Verschachtelten Content bearbeiten",
+        "hide": "Block ausblenden",
+        "show": "Block einblenden",
         "copy": "Element kopieren",
         "cut": "Element ausschneiden",
         "delete": "Element löschen",

@@ -302,6 +302,14 @@ const updateContent = (index: number, newContent: Record<string, unknown>) => {
 }
 
 
+const toggleHidden = (index: number) => {
+  const item = blockItems.value[index]
+  const updatedItems = [...blockItems.value]
+  updatedItems[index] = { ...item, hidden: !item.hidden }
+  blockItems.value = updatedItems
+}
+
+
 const navigateToItem = (itemId: string) => {
   router.push({
     ...route,
@@ -484,6 +492,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
           :class="[
             'relative mb-2 rounded-lg border bg-background p-2 transition-colors',
             hasVisibleItemError(i) ? 'border-destructive/40 bg-destructive/5' : 'border-border',
+            content.hidden ? 'opacity-50' : '',
           ]"
         >
           <AccordionHeader class="group">
@@ -549,6 +558,18 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
                   <span>Needs attention</span>
                 </div>
                 <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100">
+                  <button
+                    type="button"
+                    :title="
+                      content.hidden
+                        ? $t('actions.blocks.tooltips.show')
+                        : $t('actions.blocks.tooltips.hide')
+                    "
+                    class="flex transform cursor-pointer items-center hover:text-primary"
+                    @click.stop="toggleHidden(i)"
+                  >
+                    <Icon :name="content.hidden ? 'lucide:eye-off' : 'lucide:eye'" />
+                  </button>
                   <button
                     v-if="content.id"
                     type="button"

@@ -1020,7 +1020,9 @@
         "description": "Configure default content settings for your space.",
         "defaultBlock": "Default Content Block",
         "selectDefaultBlock": "Select default block",
-        "defaultBlockDescription": "This block type will be used when creating new content."
+        "defaultBlockDescription": "This block type will be used when creating new content.",
+        "filterHiddenBlocks": "Filter hidden blocks from Data API",
+        "filterHiddenBlocksDescription": "When enabled, blocks marked as hidden will be stripped from Data API responses. Disabled by default."
       },
       "dangerZone": {
         "title": "Danger Zone",
@@ -1848,6 +1850,8 @@
       "tooltips": {
         "createTemplate": "Create Template from this block",
         "editNested": "Edit nested content",
+        "hide": "Hide block",
+        "show": "Show block",
         "copy": "Copy item",
         "cut": "Cut item",
         "delete": "Delete item",

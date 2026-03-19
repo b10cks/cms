@@ -64,6 +64,10 @@ class ContentResource extends JsonResource
             return new \stdClass;
         }
 
+        if (app('currentSpace')->settings->shouldFilterHiddenBlocks()) {
+            $content = $this->removeHiddenBlocks($content);
+        }
+
         $this->injectData($resolved, $content);
 
         return [
@@ -73,6 +77,35 @@ class ContentResource extends JsonResource
                 ->block
                 ?->slug,
         ];
+    }
+
+    protected function removeHiddenBlocks(array $content): array
+    {
+        foreach ($content as $key => $value) {
+            if (! is_array($value)) {
+                continue;
+            }
+
+            // If this is a blocks array (items have a 'block' key), filter hidden items
+            $isBlocksArray = array_is_list($value) && count($value) > 0 && isset($value[0]['block']);
+
+            if ($isBlocksArray) {
+                $content[$key] = array_values(
+                    array_filter($value, fn (mixed $item) => ! (is_array($item) && ($item['hidden'] ?? false) === true))
+                );
+
+                // Recurse into surviving items
+                foreach ($content[$key] as $i => $item) {
+                    if (is_array($item)) {
+                        $content[$key][$i] = $this->removeHiddenBlocks($item);
+                    }
+                }
+            } else {
+                $content[$key] = $this->removeHiddenBlocks($value);
+            }
+        }
+
+        return $content;
     }
 
     protected function handleTranslations(ResolvedContent $resolved, Content $currentRow)

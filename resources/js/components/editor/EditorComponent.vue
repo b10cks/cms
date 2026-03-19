@@ -296,7 +296,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload): void => {
 }
 
 
-const INTERNAL_CONTENT_KEYS = new Set(['id', 'block'])
+const INTERNAL_CONTENT_KEYS = new Set(['id', 'block', 'hidden'])
 
 
 const contentData = computed<Record<string, unknown>>(

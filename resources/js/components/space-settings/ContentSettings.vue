@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card'
-import { FormField } from '~/components/ui/form'
+import { FormField, Label } from '~/components/ui/form'
 import {
   Select,
   SelectContent,
@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { Switch } from '~/components/ui/switch'
 
 import IconName from '../ui/IconName.vue'
 
@@ -30,6 +31,7 @@ const { useBlocksQuery } = useBlocks(props.space.id)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 
 const defaultBlockId = ref(props.space.settings.default_block)
+const filterHiddenBlocks = ref(props.space.settings.filter_hidden_blocks ?? false)
 
 const availableBlocks = computed(
   () => blocks.value?.data?.filter(({ type }) => ['root', 'universal'].includes(type)) || []
@@ -45,6 +47,7 @@ const handleSave = () => {
       settings: {
         ...props.space.settings,
         default_block: defaultBlockId.value,
+        filter_hidden_blocks: filterHiddenBlocks.value,
       },
     },
   })
@@ -91,6 +94,23 @@ const handleSave = () => {
           </SelectContent>
         </Select>
       </FormField>
+      <div class="space-y-2">
+        <div class="flex items-center space-x-2">
+          <Switch
+            id="filter-hidden-blocks"
+            v-model="filterHiddenBlocks"
+            aria-label="Filter hidden blocks from Data API"
+          />
+          <Label
+            for="filter-hidden-blocks"
+            class="text-sm font-medium"
+            :label="$t('labels.settings.content.filterHiddenBlocks')"
+          />
+        </div>
+        <p class="text-xs text-muted">
+          {{ $t('labels.settings.content.filterHiddenBlocksDescription') }}
+        </p>
+      </div>
     </CardContent>
     <CardFooter>
       <Button

@@ -18,7 +18,7 @@ class IndexableContentExtractor
     protected function walk(ContentSchemaTree $tree, array &$parts): void
     {
         foreach ($tree->nodes as $node) {
-            if (! $node->visible) {
+            if (!$node->visible) {
                 continue;
             }
 
@@ -27,6 +27,10 @@ class IndexableContentExtractor
             }
 
             foreach ($node->childTrees as $childTree) {
+                if (($childTree->rawContent['hidden'] ?? false) === true) {
+                    continue;
+                }
+
                 $this->walk($childTree, $parts);
             }
         }
@@ -57,7 +61,7 @@ class IndexableContentExtractor
         $parts = [];
 
         foreach ($values as $value) {
-            if (is_string($value)) {
+            if (\is_string($value)) {
                 $clean = trim(preg_replace('/\s+/', ' ', strip_tags(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'))));
 
                 if ($clean !== '') {
@@ -67,7 +71,7 @@ class IndexableContentExtractor
                 continue;
             }
 
-            if (is_array($value)) {
+            if (\is_array($value)) {
                 $parts = [...$parts, ...$this->extractStrings($value)];
             }
         }

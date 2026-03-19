@@ -31,7 +31,13 @@ class SpaceSettings extends Settings
         'visual_editor' => true,
         'search_driver' => 'mysql',
         'slug_strategy' => 'prepend_translations',
+        'filter_hidden_blocks' => false,
     ];
+
+    public function shouldFilterHiddenBlocks(): bool
+    {
+        return (bool) ($this->attributes['filter_hidden_blocks'] ?? false);
+    }
 
     public function shouldPrependLocale(string $languageIso): bool
     {
