@@ -18,6 +18,7 @@ import type { ContentBlock } from '~/types/contents'
 
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
+import { SimpleTooltip } from '../ui/tooltip'
 
 const { $t } = useI18n()
 
@@ -388,13 +389,18 @@ const updateItem = (updatedValue: unknown): void => {
       <h2 class="mb-2 text-xl font-bold text-primary">
         {{ currentBlock?.name || currentBlock?.slug }}
       </h2>
-      <Button
-        class="ml-auto"
-        size="xs"
-        variant="ghost"
-        @click="handleTemplateTrigger"
-        ><Icon name="lucide:notepad-text-dashed"
-      /></Button>
+      <SimpleTooltip
+        class="ml-auto flex"
+        side="bottom"
+        :tooltip="$t('labels.blockTemplates.createFromBlock')"
+      >
+        <Button
+          size="xs"
+          variant="ghost"
+          @click="handleTemplateTrigger"
+          ><Icon name="lucide:notepad-text-dashed"
+        /></Button>
+      </SimpleTooltip>
     </div>
     <TabsRoot
       :key="`${id}-tabs`"

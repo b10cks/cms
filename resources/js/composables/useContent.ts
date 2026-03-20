@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
+import { api } from '~/api'
 import type { ContentsQueryParams } from '~/api/resources/contents'
 import type { ContentResource, CreateContentPayload, UpdateContentPayload } from '~/types/contents'
-
-import { api } from '~/api'
 
 import { queryKeys } from './useQueryClient'
 

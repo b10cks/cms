@@ -2,7 +2,6 @@ import type { BaseQueryParams } from '~/types'
 import type { ContentVersionListResource, ContentVersionResource } from '~/types/contents'
 
 import type { ApiClient } from '../client'
-
 import { BaseResource } from './base-resource'
 
 export interface ContentVersionsQueryParams extends BaseQueryParams {
@@ -15,7 +14,7 @@ export interface ContentVersionsQueryParams extends BaseQueryParams {
 export class ContentVersions extends BaseResource<
   ContentVersionListResource,
   ContentVersionResource,
-  null,
+  { message?: string | null },
   ContentVersionsQueryParams
 > {
   protected basePath: string

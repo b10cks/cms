@@ -7,6 +7,7 @@ use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
 use App\Services\Content\ContentI18nValidator;
+use App\Services\Content\Schema\ContentSchemaValidationResult;
 use App\Services\Content\Schema\ContentSchemaValidator;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Str;
@@ -20,11 +21,26 @@ class CreateContent
     ) {
     }
 
+    protected function throwIfValidationFails(
+        ContentSchemaValidationResult $contentValidation,
+        bool $force = false,
+    ): void {
+        if (!$contentValidation->isValid()) {
+            throw ValidationException::withMessages($contentValidation->errors);
+        }
+
+        if (!$force && $contentValidation->hasWarnings()) {
+            throw ValidationException::withMessages($contentValidation->warnings);
+        }
+    }
+
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner)
     {
-        $errors = $this->validator->validate($space, $data);
-        if ($errors !== []) {
-            throw ValidationException::withMessages($errors);
+        if (!(bool) data_get($data, 'force', false)) {
+            $errors = $this->validator->validate($space, $data);
+            if ($errors !== []) {
+                throw ValidationException::withMessages($errors);
+            }
         }
 
         \DB::transaction(function () use ($data, $content, $owner, $space) {
@@ -48,16 +64,16 @@ class CreateContent
                     null,
                     $data['language_iso'] ?? null,
                     $data['i18n_parent_id'] ?? null,
+                    'save',
                 );
 
-                if (!$contentValidation->isValid()) {
-                    throw ValidationException::withMessages($contentValidation->errors);
-                }
+                $this->throwIfValidationFails($contentValidation, (bool) data_get($data, 'force', false));
 
                 $validatedContent = $contentValidation->content;
             }
 
             unset($data['content']);
+            unset($data['force']);
             $content->fill($data);
 
             $content->id = strtolower((string) Str::ulid());

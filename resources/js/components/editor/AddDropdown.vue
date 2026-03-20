@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import IconName from '~/components/ui/IconName.vue'
+
 import BlockWithTemplatesSubmenu from './BlockWithTemplatesSubmenu.vue'
 
 const emit = defineEmits<{
@@ -16,24 +16,28 @@ const emit = defineEmits<{
   (e: 'paste'): void
 }>()
 
+
 const props = defineProps<{
   item: BlocksSchema
   hasClipboardItem: boolean
   spaceId: string
 }>()
 
+
 const type = ref<string>()
 const isOpen = ref(false)
 
+
 const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
+
 
 const possibleBlocks = computed(() => {
   return (
     blocks.value?.data.filter((block: BlockResource) => {
       const isValidType = ['nestable', 'universal'].includes(block.type)
       const hasValidTag =
-        !props.item.restrict_blocks ||
+        !props.item.restrict_tags ||
         props.item.tag_whitelist?.length === 0 ||
         !block.tags?.length ||
         block.tags.some((t) => props.item.tag_whitelist.includes(t))
@@ -47,10 +51,12 @@ const possibleBlocks = computed(() => {
   )
 })
 
+
 const select = (blockSlug: string, templateId?: string | null) => {
   emit('select', blockSlug, templateId)
   isOpen.value = false
 }
+
 
 const autofill = (newIsOpen: boolean) => {
   if (newIsOpen && possibleBlocks.value.length === 1) {

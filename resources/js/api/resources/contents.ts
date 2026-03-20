@@ -1,8 +1,11 @@
 import type { ApiResponse, BaseQueryParams } from '~/types'
 import type { ContentResource, CreateContentPayload, UpdateContentPayload } from '~/types/contents'
 
-import type { ApiClient } from '../client'
+type ForceableContentPayload = UpdateContentPayload & {
+  force?: boolean
+}
 
+import type { ApiClient } from '../client'
 // src/api/resources/contents.ts
 import { BaseResource } from './base-resource'
 
@@ -16,8 +19,8 @@ export interface ContentsQueryParams extends BaseQueryParams {
 
 export class Contents extends BaseResource<
   ContentResource,
-  CreateContentPayload,
-  UpdateContentPayload,
+  CreateContentPayload & { force?: boolean },
+  ForceableContentPayload,
   ContentsQueryParams
 > {
   protected basePath: string
@@ -32,7 +35,7 @@ export class Contents extends BaseResource<
    */
   public async publish(
     contentId: string,
-    payload: UpdateContentPayload
+    payload: ForceableContentPayload
   ): Promise<ApiResponse<ContentResource>> {
     return this.client.post<ApiResponse<ContentResource>>(
       `${this.basePath}/${contentId}/publish`,
@@ -45,7 +48,7 @@ export class Contents extends BaseResource<
    */
   public async schedule(
     contentId: string,
-    payload: UpdateContentPayload
+    payload: ForceableContentPayload
   ): Promise<ApiResponse<ContentResource>> {
     return this.client.post<ApiResponse<ContentResource>>(
       `${this.basePath}/${contentId}/schedule`,
@@ -58,7 +61,7 @@ export class Contents extends BaseResource<
    */
   public async unpublish(
     contentId: string,
-    payload: UpdateContentPayload
+    payload: ForceableContentPayload
   ): Promise<ApiResponse<ContentResource>> {
     return this.client.post<ApiResponse<ContentResource>>(
       `${this.basePath}/${contentId}/unpublish`,
@@ -119,11 +122,22 @@ export class Contents extends BaseResource<
       parent_id?: string | null
       temp_id?: string
     }>
-  }): Promise<ApiResponse<Array<{ temp_id?: string; id: string; name: string; slug: string; parent_id: string | null }>>> {
-    return this.client.post<ApiResponse<Array<{ temp_id?: string; id: string; name: string; slug: string; parent_id: string | null }>>>(
-      `${this.basePath}/bulk-create`,
-      payload
-    )
+  }): Promise<
+    ApiResponse<
+      Array<{ temp_id?: string; id: string; name: string; slug: string; parent_id: string | null }>
+    >
+  > {
+    return this.client.post<
+      ApiResponse<
+        Array<{
+          temp_id?: string
+          id: string
+          name: string
+          slug: string
+          parent_id: string | null
+        }>
+      >
+    >(`${this.basePath}/bulk-create`, payload)
   }
 
   /**

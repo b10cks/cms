@@ -72,6 +72,7 @@ class UpsertContentRequest extends FormRequest
             ],
             'language_iso' => 'sometimes|required|string|min:2|max:5',
             'content' => 'nullable|array',
+            'force' => 'sometimes|boolean',
         ];
     }
 
@@ -91,6 +92,10 @@ class UpsertContentRequest extends FormRequest
     {
         return [
             function ($validator): void {
+                if ($this->boolean('force')) {
+                    return;
+                }
+
                 $space = $this->route('space');
                 if (!$space) {
                     return;

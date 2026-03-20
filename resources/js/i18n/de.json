@@ -318,6 +318,43 @@
     "preview": {
       "liveEdit": "Live-Bearbeitung verfügbar"
     },
+    "contentVersions": {
+      "title": "Versionsverlauf",
+      "loading": "Lädt Versionen...",
+      "noVersions": "Keine Versionen gefunden",
+      "selectVersion": "Wähle eine Version, um Details anzuzeigen",
+      "noMessage": "Keine Nachricht",
+      "changesFromPrevious": "Änderungen zur vorherigen Version",
+      "previewingVersionFrom": "Vorschau der Version vom {date}",
+      "previewTitle": "Inhaltsvorschau",
+      "groups": {
+        "today": "Heute",
+        "yesterday": "Gestern",
+        "thisWeek": "Diese Woche",
+        "lastWeek": "Letzte Woche",
+        "older": "Früher"
+      },
+      "badges": {
+        "draft": "Entwurf",
+        "scheduled": "Geplant",
+        "published": "Veröffentlicht",
+        "release": "Release"
+      },
+      "tabs": {
+        "changes": "Änderungen",
+        "visual": "Visuell"
+      },
+      "actions": {
+        "setCurrent": "Mit dieser Version als Entwurf fortfahren",
+        "showJson": "Versions-JSON anzeigen",
+        "publish": "Diese Version veröffentlichen"
+      },
+      "removeFromRelease": {
+        "title": "Aus Release entfernen",
+        "message": "Möchtest du diese Version wirklich aus dem Release „{name}“ entfernen?",
+        "confirmLabel": "Entfernen"
+      }
+    },
     "assets": {
       "pageTitle": "Asset-Bibliothek",
       "addAsset": "Asset hinzufügen",
@@ -390,6 +427,10 @@
       "finish": "Fertig"
     },
     "contents": {
+      "validationWarning": {
+        "title": "Validierungswarnung",
+        "description": "Dieser Inhalt hat Validierungswarnungen. Du kannst ihn trotzdem speichern, solltest aber die folgenden Hinweise zuerst prüfen:"
+      },
       "title": "Inhalt",
       "fields": {
         "name": "Name",
@@ -1729,7 +1770,8 @@
   },
   "actions": {
     "open": "Öffnen",
-    "toDashboard": "Gehe zum Dashboard",
+    "forceSave": "Trotzdem speichern",
+    "toDashboard": "Zum Dashboard",
     "quickActions": "Schnellaktionen",
     "saveClose": "Speichern & Schließen",
     "save": "Speichern",
@@ -1861,7 +1903,6 @@
     "remove": "Entfernen",
     "edit": "Bearbeiten",
     "commit": "Committen",
-    "view": "Anzeigen",
     "createFolder": "Ordner erstellen",
     "copy": "Kopieren",
     "delete": "Löschen",
@@ -2052,6 +2093,10 @@
     "contentVersions": {
       "setCurrentSuccess": "Version erfolgreich als aktuell festgelegt",
       "setCurrentError": "Fehler beim Festlegen der Version als aktuell: {error}",
+      "restoreSuccess": "Version erfolgreich wiederhergestellt",
+      "restoreError": "Fehler beim Wiederherstellen der Version: {error}",
+      "updateSuccess": "Version erfolgreich aktualisiert",
+      "updateError": "Fehler beim Aktualisieren der Version: {error}",
       "publishSuccess": "Version erfolgreich veröffentlicht",
       "publishError": "Fehler beim Veröffentlichen der Version: {error}"
     },

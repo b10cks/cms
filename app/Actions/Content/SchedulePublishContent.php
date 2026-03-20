@@ -15,7 +15,8 @@ class SchedulePublishContent extends BasePublishAction
 {
     public function __construct(
         protected readonly ContentSchemaValidator $contentSchemaValidator,
-    ) {}
+    ) {
+    }
 
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner): void
     {
@@ -27,9 +28,10 @@ class SchedulePublishContent extends BasePublishAction
             $content,
             $data['language_iso'] ?? $content->language_iso,
             $data['i18n_parent_id'] ?? $content->i18n_parent_id,
+            'publish',
         );
 
-        if (! $contentValidation->isValid()) {
+        if (!$contentValidation->isValid()) {
             throw ValidationException::withMessages($contentValidation->errors);
         }
 
@@ -47,8 +49,7 @@ class SchedulePublishContent extends BasePublishAction
         Authenticatable|User|null $owner,
         Space $space,
         array $sanitizedContent,
-    ): void
-    {
+    ): void {
         $scheduledAt = Carbon::parse(data_get($data, 'scheduled_at'));
         $payload = $this->extractDataFromRequest($data);
         $message = $payload['message'];

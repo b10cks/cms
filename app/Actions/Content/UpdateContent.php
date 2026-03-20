@@ -7,6 +7,7 @@ use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
 use App\Services\Content\ContentI18nValidator;
+use App\Services\Content\Schema\ContentSchemaValidationResult;
 use App\Services\Content\Schema\ContentSchemaValidator;
 use App\Services\Search\SearchService;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -18,13 +19,29 @@ class UpdateContent
         protected SearchService $searchService,
         protected ContentI18nValidator $validator,
         protected ContentSchemaValidator $contentSchemaValidator,
-    ) {}
+    ) {
+    }
+
+    protected function throwIfValidationFails(
+        ContentSchemaValidationResult $contentValidation,
+        bool $force = false,
+    ): void {
+        if (!$contentValidation->isValid()) {
+            throw ValidationException::withMessages($contentValidation->errors);
+        }
+
+        if (!$force && $contentValidation->hasWarnings()) {
+            throw ValidationException::withMessages($contentValidation->warnings);
+        }
+    }
 
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner)
     {
-        $errors = $this->validator->validate($space, $data, $content);
-        if ($errors !== []) {
-            throw ValidationException::withMessages($errors);
+        if (!(bool) data_get($data, 'force', false)) {
+            $errors = $this->validator->validate($space, $data, $content);
+            if ($errors !== []) {
+                throw ValidationException::withMessages($errors);
+            }
         }
 
         $wasPublished = $content->published_at !== null;
@@ -36,11 +53,10 @@ class UpdateContent
             $content,
             $data['language_iso'] ?? $content->language_iso,
             $data['i18n_parent_id'] ?? $content->i18n_parent_id,
+            'save',
         );
 
-        if (! $contentValidation->isValid()) {
-            throw ValidationException::withMessages($contentValidation->errors);
-        }
+        $this->throwIfValidationFails($contentValidation, (bool) data_get($data, 'force', false));
 
         \DB::transaction(function () use ($data, $content, $space, $owner, $contentValidation) {
             $contentData = $contentValidation->content;
@@ -48,6 +64,7 @@ class UpdateContent
 
             unset($data['content']);
             unset($data['message']);
+            unset($data['force']);
             $content->update($data);
             $content->load('current_version');
 

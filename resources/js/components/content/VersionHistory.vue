@@ -14,7 +14,15 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/componen
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { SimpleTooltip } from '~/components/ui/tooltip'
-import type { ContentResource, ContentVersionListResource } from '~/types/contents'
+import type {
+  ContentResource,
+  ContentVersionDiffEntry,
+  ContentVersionListResource,
+  ContentVersionResource,
+} from '~/types/contents'
+
+const { $t } = useI18n()
+
 
 const { formatDateTime, formatRelativeTime, formatCalendarTime, formatDateTimeDynamically } =
   useFormat()
@@ -39,11 +47,22 @@ const filterOptions = ref({})
 
 
 const contentId = computed(() => props.content.id)
-const selectedVersionId = computed(() => route.query?.versionId || null)
+const selectedVersionId = computed<string | null>(() => {
+  const versionId = route.query?.versionId
+
+  if (typeof versionId === 'string') {
+    return versionId
+  }
+
+  return null
+})
 
 
 const selectedTab = computed({
-  get: () => route.query?.mode || settings.value.content.history.mode,
+  get: () => {
+    const mode = route.query?.mode
+    return typeof mode === 'string' ? mode : settings.value.content.history.mode
+  },
   set: (mode) => {
     if (mode) {
       router.replace({ ...route, query: { ...route.query, mode } })
@@ -84,10 +103,10 @@ const { alert } = useAlertDialog()
 const handleRemoveFromReleaseClick = async (version: ContentVersionListResource) => {
   if (version.release) {
     await alert.confirm(
-      `Are you sure you want to remove this version from the release "${version.release.name}"?`,
+      $t('labels.contentVersions.removeFromRelease.message', { name: version.release.name }),
       {
-        title: 'Remove from Release',
-        confirmLabel: 'Remove',
+        title: $t('labels.contentVersions.removeFromRelease.title'),
+        confirmLabel: $t('labels.contentVersions.removeFromRelease.confirmLabel'),
         variant: 'destructive',
         onConfirm: () => {
           removeVersions({
@@ -218,15 +237,15 @@ const handleUpdateMessage = (id: string, message: string | null | undefined) => 
 const getGroupLabel = (groupKey: string) => {
   switch (groupKey) {
     case 'today':
-      return 'Today'
+      return $t('labels.contentVersions.groups.today')
     case 'yesterday':
-      return 'Yesterday'
+      return $t('labels.contentVersions.groups.yesterday')
     case 'thisWeek':
-      return 'This Week'
+      return $t('labels.contentVersions.groups.thisWeek')
     case 'lastWeek':
-      return 'Last Week'
+      return $t('labels.contentVersions.groups.lastWeek')
     case 'older':
-      return 'Earlier'
+      return $t('labels.contentVersions.groups.older')
     default:
       return groupKey
   }
@@ -234,8 +253,14 @@ const getGroupLabel = (groupKey: string) => {
 
 
 onMounted(() => {
-  if (versions.value && versions.value.length > 0) {
-    selectedVersionId.value = versions.value[0].id
+  if (!selectedVersionId.value && versions.value && versions.value.length > 0) {
+    router.replace({
+      ...route,
+      query: {
+        ...route.query,
+        versionId: versions.value[0].id,
+      },
+    })
   }
 })
 
@@ -290,16 +315,23 @@ const selectedVersion = computed(() => {
 })
 
 
+const selectedVersionDetail = computed<ContentVersionResource | null>(() => {
+  if (!selectedVersionData.value) return null
+  return selectedVersionData.value as ContentVersionResource
+})
+
+
 const previewSource = computed(() => {
   if (!selectedVersion.value) return null
-  const env = settings.value.content.environment
-  if (!env?.url) return false
 
-  if (env.url.endsWith('/')) {
-    env.url = env.url.slice(0, -1)
-  }
+  const env = settings.value.content.environment as { url?: string } | null
+  const envUrl = env?.url
 
-  return `${env.url}${props.content.full_slug}?b10cks_rv=${new Date(selectedVersion.value.created_at).getTime()}&b10cks_vid=${selectedVersion.value.id}`
+  if (!envUrl) return null
+
+  const normalizedUrl = envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl
+
+  return `${normalizedUrl}${props.content.full_slug}?b10cks_rv=${new Date(selectedVersion.value.created_at).getTime()}&b10cks_vid=${selectedVersion.value.id}`
 })
 
 
@@ -323,7 +355,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
       <ResizablePanel>
         <div class="flex h-full min-h-0 flex-col gap-4">
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold">Version History</h2>
+            <h2 class="text-lg font-semibold">{{ $t('labels.contentVersions.title') }}</h2>
             <div class="flex w-2/3 gap-2">
               <SearchFilter
                 v-model="filterOptions"
@@ -343,7 +375,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
                 name="lucide:loader"
                 class="mr-2 h-6 w-6 animate-spin"
               />
-              <span>Loading versions...</span>
+              <span>{{ $t('labels.contentVersions.loading') }}</span>
             </div>
 
             <div
@@ -357,7 +389,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
               v-else-if="!versions?.length"
               class="p-4 text-center text-muted"
             >
-              No versions found
+              {{ $t('labels.contentVersions.noVersions') }}
             </div>
 
             <RadioGroupRoot
@@ -430,10 +462,10 @@ const openVersionJsonInNewTab = (versionId: string) => {
                             variant="default"
                             size="sm"
                           >
-                            Draft
+                            {{ $t('labels.contentVersions.badges.draft') }}
                           </Badge>
                           <SimpleTooltip
-                            v-if="isScheduled(version)"
+                            v-if="isScheduled(version) && version.scheduled_at"
                             :tooltip="formatDateTime(version.scheduled_at)"
                           >
                             <Badge
@@ -441,27 +473,27 @@ const openVersionJsonInNewTab = (versionId: string) => {
                               variant="warning"
                               size="sm"
                             >
-                              Scheduled
+                              {{ $t('labels.contentVersions.badges.scheduled') }}
                             </Badge>
                             <SplitBadge
                               v-else
                               variant="secondary"
                               label-variant="warning"
                               size="sm"
-                              label="Scheduled"
+                              :label="$t('labels.contentVersions.badges.scheduled')"
                             >
                               {{ formatDateTimeDynamically(version.scheduled_at, 7) }}
                             </SplitBadge>
                           </SimpleTooltip>
                           <SimpleTooltip
-                            v-if="isCurrentlyPublished(version)"
+                            v-if="isCurrentlyPublished(version) && version.published_at"
                             :tooltip="formatDateTime(version.published_at)"
                           >
                             <SplitBadge
                               label-variant="success"
                               variant="secondary"
                               size="sm"
-                              label="Published"
+                              :label="$t('labels.contentVersions.badges.published')"
                             >
                               <time>{{ formatDateTimeDynamically(version.published_at, 14) }}</time>
                             </SplitBadge>
@@ -471,7 +503,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
                             size="sm"
                             variant="accent"
                             label-variant="secondary"
-                            label="Release"
+                            :label="$t('labels.contentVersions.badges.release')"
                             removable
                             @remove="handleRemoveFromReleaseClick(version)"
                           >
@@ -483,18 +515,17 @@ const openVersionJsonInNewTab = (versionId: string) => {
                           </SplitBadge>
                         </div>
                         <RenamableTitle
-                          :name="version.message"
-                          fallback="No message"
+                          :name="version.message || $t('labels.contentVersions.noMessage')"
+                          :fallback="$t('labels.contentVersions.noMessage')"
                           class="text-left"
-                          :disabled="!isMine"
+                          :disabled="!isMine(version)"
                           @update="handleUpdateMessage(version.id, $event)"
                         />
                       </div>
 
                       <div class="ml-auto flex items-center gap-2">
-                        <SimpleTooltip
+                        <div
                           v-if="version.author"
-                          :tooltip="version.author.email"
                           class="flex items-center gap-2"
                         >
                           <Avatar
@@ -503,7 +534,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
                             size="sm"
                           />
                           <span>{{ version.author.name }}</span>
-                        </SimpleTooltip>
+                        </div>
                         <span v-else>System</span>
                         <span>•</span>
                         <SimpleTooltip :tooltip="formatDateTime(version.created_at)">
@@ -520,37 +551,37 @@ const openVersionJsonInNewTab = (versionId: string) => {
                         'opacity-0 group-hover:opacity-100': selectedVersionId !== version.id,
                       }"
                     >
-                      <SimpleTooltip tooltip="Continue with this version as draft">
+                      <SimpleTooltip :tooltip="$t('labels.contentVersions.actions.setCurrent')">
                         <Button
                           variant="ghost"
                           size="icon"
-                          class="!h-6 !w-6"
+                          class="h-6! w-6!"
                           :disabled="isCurrentDraft(version) || isSettingCurrent"
-                          @click.stop="handleSetAsCurrent(version.id)"
+                          @click.prevent.stop="handleSetAsCurrent(version.id)"
                         >
                           <Icon name="lucide:square-pen" />
                         </Button>
                       </SimpleTooltip>
 
-                      <SimpleTooltip tooltip="Show version JSON">
+                      <SimpleTooltip :tooltip="$t('labels.contentVersions.actions.showJson')">
                         <Button
                           variant="ghost"
                           size="icon"
-                          class="!h-6 !w-6"
+                          class="h-6! w-6!"
                           :disabled="!apiToken"
-                          @click.stop="openVersionJsonInNewTab(version.id)"
+                          @click.prevent.stop="openVersionJsonInNewTab(version.id)"
                         >
                           <Icon name="lucide:braces" />
                         </Button>
                       </SimpleTooltip>
 
-                      <SimpleTooltip tooltip="Publish this version">
+                      <SimpleTooltip :tooltip="$t('labels.contentVersions.actions.publish')">
                         <Button
                           variant="ghost"
                           size="icon"
-                          class="!h-6 !w-6"
+                          class="h-6! w-6!"
                           :disabled="isCurrentlyPublished(version) || isPublishing"
-                          @click.stop="handlePublishVersion(version.id)"
+                          @click.prevent.stop="handlePublishVersion(version.id)"
                         >
                           <Icon name="lucide:send" />
                         </Button>
@@ -579,7 +610,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
           v-if="!selectedVersion"
           class="flex h-full items-center justify-center text-muted"
         >
-          Select a version to view details
+          {{ $t('labels.contentVersions.selectVersion') }}
         </div>
         <div
           v-else
@@ -596,12 +627,16 @@ const openVersionJsonInNewTab = (versionId: string) => {
                 </h3>
                 <div class="flex items-center gap-2 text-sm">
                   <Icon name="lucide:git-commit" />
-                  <span>Changes from previous version</span>
+                  <span>{{ $t('labels.contentVersions.changesFromPrevious') }}</span>
                 </div>
               </div>
               <TabsList>
-                <TabsTrigger value="changes">Changes</TabsTrigger>
-                <TabsTrigger value="visual">Visual</TabsTrigger>
+                <TabsTrigger value="changes">{{
+                  $t('labels.contentVersions.tabs.changes')
+                }}</TabsTrigger>
+                <TabsTrigger value="visual">{{
+                  $t('labels.contentVersions.tabs.visual')
+                }}</TabsTrigger>
               </TabsList>
             </div>
             <TabsContent
@@ -610,8 +645,20 @@ const openVersionJsonInNewTab = (versionId: string) => {
             >
               <ScrollArea class="h-full flex-1 rounded-lg bg-surface p-4">
                 <DiffViewer
-                  v-if="selectedVersionData"
-                  :changes="selectedVersionData.diff.entries"
+                  v-if="selectedVersionDetail?.diff"
+                  :changes="
+                    selectedVersionDetail.diff.entries.map((entry: ContentVersionDiffEntry) => ({
+                      path: entry.path,
+                      type:
+                        entry.type === 'added' ||
+                        entry.type === 'removed' ||
+                        entry.type === 'changed'
+                          ? entry.type
+                          : 'changed',
+                      oldValue: entry.old_value,
+                      newValue: entry.new_value,
+                    }))
+                  "
                 />
               </ScrollArea>
             </TabsContent>
@@ -622,7 +669,11 @@ const openVersionJsonInNewTab = (versionId: string) => {
               <div class="flex grow flex-col gap-4">
                 <div class="flex items-center justify-between">
                   <div class="mt-2 text-xs text-muted">
-                    Previewing version from {{ formatCalendarTime(selectedVersion.created_at) }}
+                    {{
+                      $t('labels.contentVersions.previewingVersionFrom', {
+                        date: formatCalendarTime(selectedVersion.created_at),
+                      })
+                    }}
                   </div>
                   <Button
                     variant="outline"
@@ -630,14 +681,14 @@ const openVersionJsonInNewTab = (versionId: string) => {
                     @click="openInTab"
                   >
                     <Icon name="lucide:external-link" />
-                    Open in new tab
+                    {{ $t('actions.open') }}
                   </Button>
                 </div>
                 <div class="flex grow overflow-hidden rounded-lg bg-surface">
                   <iframe
                     v-if="previewSource"
                     class="flex-1 grow bg-white"
-                    title="Content Preview"
+                    :title="$t('labels.contentVersions.previewTitle')"
                     :src="previewSource"
                   />
                 </div>

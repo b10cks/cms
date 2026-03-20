@@ -29,6 +29,8 @@ import PublishDialog from './PublishDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
+const { alert } = useAlertDialog()
 const props = defineProps<{
   spaceId: string
   content: ContentResource
@@ -42,8 +44,12 @@ const commitPersistedContent = inject<
   ((content: ContentResource, action?: ContentCommitAction) => void) | undefined
 >('commitPersistedContent', undefined)
 const resetDirtyState = inject<(() => void) | undefined>('resetDirtyState', undefined)
-const validateContentForSubmit = inject<(() => boolean) | undefined>(
+const validateContentForSubmit = inject<((options?: { silent?: boolean }) => boolean) | undefined>(
   'validateContentForSubmit',
+  undefined
+)
+const getClientValidationErrors = inject<(() => Record<string, string[]>) | undefined>(
+  'getClientValidationErrors',
   undefined
 )
 const sanitizeContentForSubmit = inject<(() => Record<string, unknown>) | undefined>(
@@ -92,11 +98,11 @@ const { data: releases } = useReleasesQuery()
 const { mutate: assignVersions, isPending: isAssigning } = useAssignVersionsMutation()
 
 
-const { mutateAsync: createContent } = useCreateContentMutation()
-const { mutateAsync: updateContent } = useUpdateContentMutation()
+const { mutateAsync: createContent, isPending: isCreating } = useCreateContentMutation()
+const { mutateAsync: updateContent, isPending: isUpdating } = useUpdateContentMutation()
 const { mutateAsync: publishContent, isPending: isPublishing } = usePublishContentMutation()
 const { mutateAsync: scheduleContent, isPending: isScheduling } = useScheduleContentMutation()
-const { mutateAsync: unpublishContent } = useUnpublishContentMutation()
+const { mutateAsync: unpublishContent, isPending: isUnpublishing } = useUnpublishContentMutation()
 
 
 const isVersions = computed(() => route.name === 'space-content-contentId-versions')
@@ -105,6 +111,13 @@ const publishType = ref<'now' | 'schedule'>('now')
 const assignReleaseDialogOpen = ref(false)
 const selectedReleaseForAssign = ref<any>(null)
 const contentModel = computed(() => new ContentModel(props.content))
+const isSaving = computed(() => isCreating.value || isUpdating.value)
+const isPublishingAction = computed(
+  () => isPublishing.value || isScheduling.value || isUnpublishing.value
+)
+const isAnyActionPending = computed(
+  () => isSaving.value || isPublishingAction.value || isAssigning.value
+)
 
 
 const handlePersistedContent = (
@@ -136,10 +149,56 @@ const handleMutationError = (error: unknown) => {
 }
 
 
-const guardSubmit = () => {
-  clearValidationErrors?.()
-  const isValid = validateContentForSubmit?.() ?? true
-  if (!isValid) {
+const getValidationErrorData = (error: unknown): Record<string, string[]> | null => {
+  const errorData =
+    (error as { data?: { errors?: Record<string, string[]> } })?.data?.errors ||
+    (error as { response?: { data?: { errors?: Record<string, string[]> } } })?.response?.data
+      ?.errors
+
+
+  return errorData || null
+}
+
+
+const isSoftValidationError = (error: unknown): boolean => {
+  return (
+    (error as { status?: number })?.status === 422 &&
+    !!getValidationErrorData(error) &&
+    Object.keys(getValidationErrorData(error) || {}).length > 0
+  )
+}
+
+
+const getValidationWarningMessage = (errors: Record<string, string[]>): string => {
+  const messages = Object.values(errors).flat().filter(Boolean)
+
+
+  return [
+    t('labels.contents.validationWarning.description') as string,
+    ...(messages.length ? ['', ...messages.map((message) => `• ${message}`)] : []),
+  ].join('\n')
+}
+
+
+const confirmSoftValidation = async (errors: Record<string, string[]>) => {
+  return await alert.confirm(getValidationWarningMessage(errors), {
+    title: t('labels.contents.validationWarning.title') as string,
+    confirmLabel: t('actions.forceSave') as string,
+    cancelLabel: t('actions.cancel') as string,
+  })
+}
+
+
+const guardSubmit = (options?: { silent?: boolean }) => {
+  if (!options?.silent) {
+    clearValidationErrors?.()
+  }
+
+
+  const isValid = validateContentForSubmit?.(options) ?? true
+
+
+  if (!isValid && !options?.silent) {
     focusFirstValidationError?.()
   }
 
@@ -148,18 +207,49 @@ const guardSubmit = () => {
 }
 
 
-const save = async () => {
-  if (!guardSubmit()) return
+const confirmClientValidationWarnings = async () => {
+  const clientErrors = getClientValidationErrors?.() || {}
+  const messages = Object.values(clientErrors).flat().filter(Boolean)
+
+
+  return await alert.confirm(
+    [
+      t('labels.contents.validationWarning.description') as string,
+      ...(messages.length ? ['', ...messages.map((message) => `${message}`)] : []),
+    ].join('\n'),
+    {
+      title: t('labels.contents.validationWarning.title') as string,
+      confirmLabel: t('actions.forceSave') as string,
+      cancelLabel: t('actions.cancel') as string,
+    }
+  )
+}
+
+
+const performSave = async (force = false) => {
+  const payload = {
+    ...mutationPayload.value,
+    ...(force ? { force: true } : {}),
+  }
 
 
   if (props.content.id) {
     try {
       const nextContent = await updateContent({
         id: props.content.id,
-        payload: mutationPayload.value,
+        payload,
       })
       handlePersistedContent(nextContent, 'save')
     } catch (error) {
+      if (!force && isSoftValidationError(error)) {
+        const validationErrors = getValidationErrorData(error)
+        if (validationErrors && (await confirmSoftValidation(validationErrors))) {
+          await performSave(true)
+          return
+        }
+      }
+
+
       handleMutationError(error)
     }
     return
@@ -167,11 +257,66 @@ const save = async () => {
 
 
   try {
-    const nextContent = await createContent(mutationPayload.value)
+    const nextContent = await createContent(payload)
     handlePersistedContent(nextContent, 'save')
   } catch (error) {
+    if (!force && isSoftValidationError(error)) {
+      const validationErrors = getValidationErrorData(error)
+      if (validationErrors && (await confirmSoftValidation(validationErrors))) {
+        await performSave(true)
+        return
+      }
+    }
+
+
     handleMutationError(error)
   }
+}
+
+
+const save = async (force = false) => {
+  if (force) {
+    await performSave(true)
+    return
+  }
+
+
+  const isValid = guardSubmit({ silent: false })
+
+
+  if (!isValid) {
+    await nextTick()
+
+
+    const confirmed = await confirmClientValidationWarnings()
+
+
+    if (!confirmed) {
+      focusFirstValidationError?.()
+      return
+    }
+
+
+    await performSave(true)
+    return
+  }
+
+
+  await performSave(false)
+}
+
+
+const handleSaveClick = async (event?: MouseEvent) => {
+  event?.preventDefault()
+  event?.stopPropagation()
+
+
+  if (isAnyActionPending.value) {
+    return
+  }
+
+
+  await save()
 }
 
 
@@ -243,11 +388,15 @@ const handleSchedule = async (payload: { message?: string; scheduled_at?: string
 
 
 const unpublish = async () => {
-  const nextContent = await unpublishContent({
-    id: props.content.id,
-    payload: mutationPayload.value,
-  })
-  handlePersistedContent(nextContent, 'unpublish')
+  try {
+    const nextContent = await unpublishContent({
+      id: props.content.id,
+      payload: mutationPayload.value,
+    })
+    handlePersistedContent(nextContent, 'unpublish')
+  } catch (error) {
+    handleMutationError(error)
+  }
 }
 
 
@@ -351,21 +500,31 @@ const handleConfirmAssign = (versionIds: string[]) => {
       <Icon name="lucide:history" />
     </Button>
     <Button
-      :disabled="disabled || (!!content.id && !isDirty)"
-      @click="save"
-      >Save
+      :disabled="disabled || isAnyActionPending || (!!content.id && !isDirty)"
+      @click="handleSaveClick"
+    >
+      <Icon
+        v-if="isSaving"
+        name="lucide:loader"
+        class="animate-spin"
+      />
+      {{ $t('actions.save') }}
     </Button>
     <SplitButton
       variant="accent"
       :primary-action="publishDirectly"
-      :disabled="disabled || !content.id || !(contentModel.canPublish || isDirty)"
-      :loading="isPublishing || isScheduling"
+      :disabled="
+        disabled || isAnyActionPending || !content.id || !(contentModel.canPublish || isDirty)
+      "
+      :loading="isPublishingAction"
     >
       <span>{{ $t('actions.content.publish') }}</span>
       <template #menu>
         <DropdownMenuLabel>Publish</DropdownMenuLabel>
         <DropdownMenuItem
-          :disabled="disabled || !content.id || !(contentModel.canPublish || isDirty)"
+          :disabled="
+            disabled || isAnyActionPending || !content.id || !(contentModel.canPublish || isDirty)
+          "
           @select="publishWithMessage"
         >
           <Icon name="lucide:send" />
@@ -374,6 +533,7 @@ const handleConfirmAssign = (versionIds: string[]) => {
         <DropdownMenuItem
           :disabled="
             disabled ||
+            isAnyActionPending ||
             !content.id ||
             !(contentModel.canPublish || isDirty) ||
             contentModel.isInRelease
@@ -428,7 +588,7 @@ const handleConfirmAssign = (versionIds: string[]) => {
           <span>Show published JSON</span>
         </DropdownMenuItem>
         <DropdownMenuItem
-          :disabled="!contentModel.isPublished"
+          :disabled="isPublishingAction || !contentModel.isPublished"
           @select="unpublish"
         >
           <Icon name="lucide:eye-off" />

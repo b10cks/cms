@@ -480,8 +480,13 @@ export const useContentSchemaState = ({
   const shouldShowFieldError = (path: string) =>
     Boolean(getFieldError(path) && (dirtyFields.value[path] || submitAttempted.value))
 
-  const validateAllForSubmit = () => {
-    submitAttempted.value = true
+  const getClientErrors = () => clientErrors.value
+
+  const validateAllForSubmit = (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      submitAttempted.value = true
+    }
+
     return Object.keys(clientErrors.value).length === 0
   }
 
@@ -533,6 +538,7 @@ export const useContentSchemaState = ({
     clearServerErrors,
     getFieldError,
     shouldShowFieldError,
+    getClientErrors,
     validateAllForSubmit,
     getFirstInvalidFieldPath,
     focusFirstInvalidField,

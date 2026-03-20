@@ -264,6 +264,7 @@ const {
   clearServerErrors,
   getFieldError,
   shouldShowFieldError,
+  getClientErrors,
   validateAllForSubmit,
   focusFirstInvalidField,
   resetValidationState,
@@ -642,6 +643,7 @@ provide('getFieldError', getFieldError)
 provide('shouldShowFieldError', shouldShowFieldError)
 provide('setValidationErrors', setServerErrors)
 provide('clearValidationErrors', clearServerErrors)
+provide('getClientValidationErrors', getClientErrors)
 provide('sanitizeContentForSubmit', () => sanitizedContent.value)
 provide('validateContentForSubmit', validateAllForSubmit)
 provide('submitValidationAttempted', submitAttempted)

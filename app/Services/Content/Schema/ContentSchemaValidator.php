@@ -15,7 +15,8 @@ class ContentSchemaValidator
         protected readonly ContentI18nResolver $contentI18nResolver,
         protected readonly ContentSchemaBuilder $builder,
         protected readonly FieldVisibilityPruner $pruner,
-    ) {}
+    ) {
+    }
 
     public function validateSubmission(
         Space $space,
@@ -24,6 +25,7 @@ class ContentSchemaValidator
         ?Content $content = null,
         ?string $languageIso = null,
         ?string $i18nParentId = null,
+        string $mode = 'save',
     ): ContentSchemaValidationResult {
         $effectiveBase = $this->resolveEffectiveBase($space, $content, $languageIso, $i18nParentId);
         $tree = $this->builder->build(
@@ -41,7 +43,8 @@ class ContentSchemaValidator
         return new ContentSchemaValidationResult(
             content: $sanitizedContent,
             tree: $sanitizedTree,
-            errors: $this->collectErrors($sanitizedTree),
+            errors: $this->collectErrors($sanitizedTree, $mode),
+            warnings: $this->collectWarnings($sanitizedTree, $mode),
         );
     }
 
@@ -49,6 +52,7 @@ class ContentSchemaValidator
         Space $space,
         Content $content,
         ContentVersion $version,
+        string $mode = 'publish',
     ): ContentSchemaValidationResult {
         $content->loadMissing('block');
 
@@ -59,6 +63,7 @@ class ContentSchemaValidator
             $content,
             $content->language_iso,
             $content->i18n_parent_id,
+            $mode,
         );
     }
 
@@ -71,14 +76,14 @@ class ContentSchemaValidator
         $requestedLanguage = strtolower((string) ($languageIso ?? $content?->language_iso ?? $space->settings->getDefaultLanguage()));
         $resolverContent = $content;
 
-        if (! $resolverContent && $i18nParentId) {
+        if (!$resolverContent && $i18nParentId) {
             $resolverContent = Content::query()
                 ->where('id', $i18nParentId)
                 ->whereNull('deleted_at')
                 ->first();
         }
 
-        if (! $resolverContent) {
+        if (!$resolverContent) {
             return [];
         }
 
@@ -97,16 +102,16 @@ class ContentSchemaValidator
     /**
      * @return array<string, array<int, string>>
      */
-    protected function collectErrors(ContentSchemaTree $tree): array
+    protected function collectErrors(ContentSchemaTree $tree, string $mode = 'publish'): array
     {
         $errors = [];
 
         foreach ($tree->flatten() as $node) {
-            if (! $node->visible) {
+            if (!$node->visible) {
                 continue;
             }
 
-            $messages = $this->validateNode($node);
+            $messages = $this->validateNode($node, $mode);
 
             if ($messages !== []) {
                 $errors[$node->dotPath()] = $messages;
@@ -117,16 +122,40 @@ class ContentSchemaValidator
     }
 
     /**
+     * @return array<string, array<int, string>>
+     */
+    protected function collectWarnings(ContentSchemaTree $tree, string $mode = 'save'): array
+    {
+        $warnings = [];
+
+        foreach ($tree->flatten() as $node) {
+            if (!$node->visible) {
+                continue;
+            }
+
+            $messages = $this->warnNode($node, $mode);
+
+            if ($messages !== []) {
+                $warnings[$node->dotPath()] = $messages;
+            }
+        }
+
+        return $warnings;
+    }
+
+    /**
      * @return array<int, string>
      */
-    protected function validateNode(ContentSchemaNode $node): array
+    protected function validateNode(ContentSchemaNode $node, string $mode = 'publish'): array
     {
         $field = $node->field;
         $type = $field->getType();
         $value = $node->effectiveValue;
 
         if ($field->isRequired() && $this->isEmpty($value)) {
-            return [sprintf('%s is required.', $field->getLabel())];
+            return $mode === 'publish'
+                ? [sprintf('%s is required.', $field->getLabel())]
+                : [];
         }
 
         if ($this->isEmpty($value)) {
@@ -152,6 +181,21 @@ class ContentSchemaValidator
     /**
      * @return array<int, string>
      */
+    protected function warnNode(ContentSchemaNode $node, string $mode = 'save'): array
+    {
+        $field = $node->field;
+        $value = $node->effectiveValue;
+
+        if ($mode === 'save' && $field->isRequired() && $this->isEmpty($value)) {
+            return [sprintf('%s is required.', $field->getLabel())];
+        }
+
+        return [];
+    }
+
+    /**
+     * @return array<int, string>
+     */
     protected function validateTextLike(SchemaField $field, mixed $value): array
     {
         $text = is_string($value) ? $value : json_encode($value);
@@ -167,7 +211,7 @@ class ContentSchemaValidator
             $messages[] = sprintf('%s may not be greater than %d characters.', $field->getLabel(), $maxLength);
         }
 
-        if (($pattern = Arr::get($validation, 'pattern')) && @preg_match($pattern, '') !== false && ! preg_match($pattern, (string) $text)) {
+        if (($pattern = Arr::get($validation, 'pattern')) && @preg_match($pattern, '') !== false && !preg_match($pattern, (string) $text)) {
             $messages[] = sprintf('%s has an invalid format.', $field->getLabel());
         }
 
@@ -179,7 +223,7 @@ class ContentSchemaValidator
      */
     protected function validateNumber(SchemaField $field, mixed $value): array
     {
-        if (! is_numeric($value)) {
+        if (!is_numeric($value)) {
             return [sprintf('%s must be a number.', $field->getLabel())];
         }
 
@@ -209,7 +253,7 @@ class ContentSchemaValidator
             ->values()
             ->all();
 
-        if ($allowed !== [] && ! in_array($value, $allowed, true)) {
+        if ($allowed !== [] && !in_array($value, $allowed, true)) {
             return [sprintf('%s must be one of the allowed options.', $field->getLabel())];
         }
 
@@ -221,20 +265,20 @@ class ContentSchemaValidator
      */
     protected function validateLink(SchemaField $field, mixed $value): array
     {
-        if (! is_array($value) || ! isset($value['type'])) {
+        if (!is_array($value) || !isset($value['type'])) {
             return [sprintf('%s must be a valid link.', $field->getLabel())];
         }
 
         return match ($value['type']) {
             'url' => filter_var($value['url'] ?? null, FILTER_VALIDATE_URL)
-                ? []
-                : [sprintf('%s must contain a valid URL.', $field->getLabel())],
+            ? []
+            : [sprintf('%s must contain a valid URL.', $field->getLabel())],
             'email' => ($field->getAttribute('email_link_type', false) && filter_var($value['email'] ?? null, FILTER_VALIDATE_EMAIL))
-                ? []
-                : [sprintf('%s must contain a valid email link.', $field->getLabel())],
-            'internal' => ! empty($value['content'])
-                ? []
-                : [sprintf('%s must reference content.', $field->getLabel())],
+            ? []
+            : [sprintf('%s must contain a valid email link.', $field->getLabel())],
+            'internal' => !empty($value['content'])
+            ? []
+            : [sprintf('%s must reference content.', $field->getLabel())],
             default => [sprintf('%s contains an unsupported link type.', $field->getLabel())],
         };
     }
@@ -244,7 +288,7 @@ class ContentSchemaValidator
      */
     protected function validateDate(SchemaField $field, mixed $value): array
     {
-        if (! is_string($value) || strtotime($value) === false) {
+        if (!is_string($value) || strtotime($value) === false) {
             return [sprintf('%s must be a valid date.', $field->getLabel())];
         }
 
@@ -268,7 +312,7 @@ class ContentSchemaValidator
      */
     protected function validateAsset(SchemaField $field, mixed $value): array
     {
-        if (! is_array($value) || ($value['type'] ?? null) !== 'asset' || empty($value['id'])) {
+        if (!is_array($value) || ($value['type'] ?? null) !== 'asset' || empty($value['id'])) {
             return [sprintf('%s must reference an asset.', $field->getLabel())];
         }
 
@@ -280,7 +324,7 @@ class ContentSchemaValidator
      */
     protected function validateMultiAssets(SchemaField $field, mixed $value): array
     {
-        if (! is_array($value)) {
+        if (!is_array($value)) {
             return [sprintf('%s must be an asset collection.', $field->getLabel())];
         }
 
@@ -304,7 +348,7 @@ class ContentSchemaValidator
      */
     protected function validateReferences(SchemaField $field, mixed $value): array
     {
-        if (! is_array($value)) {
+        if (!is_array($value)) {
             return [sprintf('%s must be a reference collection.', $field->getLabel())];
         }
 
@@ -317,7 +361,7 @@ class ContentSchemaValidator
         );
 
         foreach ($value as $reference) {
-            if (! is_string($reference) || $reference === '') {
+            if (!is_string($reference) || $reference === '') {
                 $messages[] = sprintf('%s contains an invalid reference.', $field->getLabel());
             }
         }
@@ -330,7 +374,7 @@ class ContentSchemaValidator
      */
     protected function validateBlocks(SchemaField $field, mixed $value): array
     {
-        if (! is_array($value)) {
+        if (!is_array($value)) {
             return [sprintf('%s must be a block collection.', $field->getLabel())];
         }
 
@@ -348,14 +392,14 @@ class ContentSchemaValidator
      */
     protected function validateMeta(SchemaField $field, mixed $value): array
     {
-        if (! is_array($value)) {
+        if (!is_array($value)) {
             return [sprintf('%s must be a metadata object.', $field->getLabel())];
         }
 
         $messages = [];
 
         foreach (['title', 'description', 'canonical', 'robots', 'ogTitle', 'ogDescription'] as $key) {
-            if (isset($value[$key]) && ! is_string($value[$key])) {
+            if (isset($value[$key]) && !is_string($value[$key])) {
                 $messages[] = sprintf('%s.%s must be a string.', $field->getLabel(), $key);
             }
         }

@@ -25,9 +25,9 @@ class ContentVersionPublishController extends Controller
     public function __invoke(Space $space, Content $content, ContentVersion $version, Request $request)
     {
         $this->authorize('publish', [$content, $space]);
-        $validation = $this->contentSchemaValidator->validateVersion($space, $content, $version);
+        $validation = $this->contentSchemaValidator->validateVersion($space, $content, $version, 'publish');
 
-        if (! $validation->isValid()) {
+        if (!$validation->isValid()) {
             throw ValidationException::withMessages($validation->errors);
         }
 

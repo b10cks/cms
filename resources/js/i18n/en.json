@@ -325,6 +325,43 @@
     "preview": {
       "liveEdit": "Live Edit available"
     },
+    "contentVersions": {
+      "title": "Version History",
+      "loading": "Loading versions...",
+      "noVersions": "No versions found",
+      "selectVersion": "Select a version to view details",
+      "noMessage": "No message",
+      "changesFromPrevious": "Changes from previous version",
+      "previewingVersionFrom": "Previewing version from {date}",
+      "previewTitle": "Content Preview",
+      "groups": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "thisWeek": "This Week",
+        "lastWeek": "Last Week",
+        "older": "Earlier"
+      },
+      "badges": {
+        "draft": "Draft",
+        "scheduled": "Scheduled",
+        "published": "Published",
+        "release": "Release"
+      },
+      "tabs": {
+        "changes": "Changes",
+        "visual": "Visual"
+      },
+      "actions": {
+        "setCurrent": "Continue with this version as draft",
+        "showJson": "Show version JSON",
+        "publish": "Publish this version"
+      },
+      "removeFromRelease": {
+        "title": "Remove from Release",
+        "message": "Are you sure you want to remove this version from the release \"{name}\"?",
+        "confirmLabel": "Remove"
+      }
+    },
     "assets": {
       "pageTitle": "Asset Library",
       "addAsset": "Add Asset",
@@ -397,6 +434,10 @@
       "finish": "Finish"
     },
     "contents": {
+      "validationWarning": {
+        "title": "Validation warning",
+        "description": "This content has validation warnings. You can still save it, but you should review the following issues first:"
+      },
       "title": "Content",
       "fields": {
         "name": "Name",
@@ -1171,7 +1212,6 @@
         "configDialogDescription": "Configure an AI profile with specific model, temperature, and behavior settings for different content tasks.",
         "configName": "Configuration Name",
         "configNamePlaceholder": "e.g., Creative Writer, Technical Editor, Marketing Copy...",
-        "selectModel": "AI Model",
         "setAsDefault": "Set as default configuration",
         "default": "Default",
         "noConfigs": "No AI configurations yet",
@@ -1769,6 +1809,7 @@
   },
   "actions": {
     "open": "Open",
+    "forceSave": "Save anyway",
     "toDashboard": "Go to dashboard",
     "view": {
       "all": "All",
@@ -1902,7 +1943,6 @@
     "remove": "Remove",
     "edit": "Edit",
     "commit": "Commit",
-    "view": "View",
     "createFolder": "Create Folder",
     "copy": "Copy",
     "delete": "Delete",
@@ -2115,6 +2155,10 @@
     "contentVersions": {
       "setCurrentSuccess": "Version set as current successfully",
       "setCurrentError": "Failed to set version as current: {error}",
+      "restoreSuccess": "Version restored successfully",
+      "restoreError": "Failed to restore version: {error}",
+      "updateSuccess": "Version updated successfully",
+      "updateError": "Failed to update version: {error}",
       "publishSuccess": "Version published successfully",
       "publishError": "Failed to publish version: {error}"
     },

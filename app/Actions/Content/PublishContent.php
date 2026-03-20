@@ -28,9 +28,10 @@ class PublishContent extends BasePublishAction
             $content,
             $data['language_iso'] ?? $content->language_iso,
             $data['i18n_parent_id'] ?? $content->i18n_parent_id,
+            'publish',
         );
 
-        if (! $contentValidation->isValid()) {
+        if (!$contentValidation->isValid()) {
             throw ValidationException::withMessages($contentValidation->errors);
         }
 
@@ -53,8 +54,7 @@ class PublishContent extends BasePublishAction
         Content $content,
         Authenticatable|User|null $owner,
         array $sanitizedContent,
-    ): void
-    {
+    ): void {
         $payload = $this->extractDataFromRequest($data);
         $message = $payload['message'];
         $contentData = $sanitizedContent;

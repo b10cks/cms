@@ -22,10 +22,22 @@ declare interface ContentVersionListResource {
   created_at: string
 }
 
+declare interface ContentVersionDiffEntry {
+  path: string
+  old_value: unknown
+  new_value: unknown
+  type: string
+}
+
+declare interface ContentVersionDiff {
+  entries: ContentVersionDiffEntry[]
+}
+
 declare interface ContentVersionResource extends ContentVersionListResource {
   content: Record<string, never>
   assets?: string[] | null
   relations?: Record<string, never> | null
+  diff: ContentVersionDiff
 }
 
 declare interface ContentVersionActionPayload {
