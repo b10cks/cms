@@ -27,7 +27,7 @@ export function useContentJson(
       language: activeContent.language_iso,
     })
 
-    return `https://api.b10cks.test/api/v1/contents/${slug}?${params.toString()}`
+    return `https://api.b10cks.com/api/v1/contents/${slug}?${params.toString()}`
   }
 
   const openContentJsonInNewTab = (vid: 'draft' | 'published' | string) => {
