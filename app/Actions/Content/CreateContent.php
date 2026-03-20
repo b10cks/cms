@@ -17,7 +17,8 @@ class CreateContent
     public function __construct(
         private readonly ContentI18nValidator $validator,
         private readonly ContentSchemaValidator $contentSchemaValidator,
-    ) {}
+    ) {
+    }
 
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner)
     {
@@ -27,22 +28,33 @@ class CreateContent
         }
 
         \DB::transaction(function () use ($data, $content, $owner, $space) {
-            if (! \Arr::has($data, 'language_iso')) {
+            if (!\Arr::has($data, 'language_iso')) {
                 $data['language_iso'] = $space->settings->getDefaultLanguage();
             }
 
             $block = \App\Models\Space\Block::query()->findOrFail($data['block_id']);
-            $contentValidation = $this->contentSchemaValidator->validateSubmission(
-                $space,
-                $block,
-                data_get($data, 'content', []),
-                null,
-                $data['language_iso'] ?? null,
-                $data['i18n_parent_id'] ?? null,
-            );
 
-            if (! $contentValidation->isValid()) {
-                throw ValidationException::withMessages($contentValidation->errors);
+            // Allow empty content submissions: if no content (null) or an empty array is provided,
+            // skip schema validation and store an empty content payload.
+            $submittedContent = data_get($data, 'content', null);
+
+            if ($submittedContent === null || (is_array($submittedContent) && empty($submittedContent))) {
+                $validatedContent = $submittedContent === null ? [] : $submittedContent;
+            } else {
+                $contentValidation = $this->contentSchemaValidator->validateSubmission(
+                    $space,
+                    $block,
+                    $submittedContent,
+                    null,
+                    $data['language_iso'] ?? null,
+                    $data['i18n_parent_id'] ?? null,
+                );
+
+                if (!$contentValidation->isValid()) {
+                    throw ValidationException::withMessages($contentValidation->errors);
+                }
+
+                $validatedContent = $contentValidation->content;
             }
 
             unset($data['content']);
@@ -50,7 +62,7 @@ class CreateContent
 
             $content->id = strtolower((string) Str::ulid());
             $version = ContentVersion::forceCreate([
-                'content' => $contentValidation->content,
+                'content' => $validatedContent,
                 'content_id' => $content->id,
                 'created_by_id' => $owner->id,
             ]);
