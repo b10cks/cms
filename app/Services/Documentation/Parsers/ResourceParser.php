@@ -4,10 +4,10 @@ namespace App\Services\Documentation\Parsers;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use PhpParser\Comment\Doc;
 use PhpParser\Node;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitorAbstract;
-use PhpParser\ParserFactory;
 use ReflectionClass;
 
 class ResourceParser
@@ -30,7 +30,7 @@ class ResourceParser
 
         // Check if it's a ResourceCollection
         if (is_subclass_of($resourceClass, ResourceCollection::class)) {
-            return $this->parseResourceCollection($resourceClass);
+            return $this->parseConcreteResourceCollection($resourceClass);
         }
 
         // Check if it's a JsonResource
@@ -57,6 +57,9 @@ class ResourceParser
                 return ['type' => 'object'];
             }
 
+            $resourceMetadata = $this->extractResourceMetadata($reflection->getDocComment() ?: null);
+            $parentSchema = $this->extractParentResourceSchema($reflection);
+
             // Find toArray method
             $visitor = new ToArrayVisitor();
             $traverser = new NodeTraverser();
@@ -66,10 +69,16 @@ class ResourceParser
             $returnArray = $visitor->getReturnArray();
 
             if (empty($returnArray)) {
-                return ['type' => 'object'];
+                return $parentSchema ?: ['type' => 'object'];
             }
 
-            return $this->buildSchemaFromArray($returnArray);
+            $schema = $this->buildSchemaFromArray($returnArray, $resourceMetadata);
+
+            if ($parentSchema) {
+                $schema = $this->mergeSchemas($parentSchema, $schema);
+            }
+
+            return $schema;
         } catch (\Exception $e) {
             return ['type' => 'object'];
         }
@@ -105,6 +114,115 @@ class ResourceParser
     }
 
     /**
+     * Parse a concrete ResourceCollection class by inspecting its own toArray structure.
+     */
+    protected function parseConcreteResourceCollection(string $resourceClass): array
+    {
+        try {
+            $this->parsedResources[$resourceClass] = true;
+
+            $reflection = new ReflectionClass($resourceClass);
+            $filename = $reflection->getFileName();
+
+            if (!file_exists($filename)) {
+                return $this->parseResourceCollection($resourceClass);
+            }
+
+            $code = file_get_contents($filename);
+
+            try {
+                $parser = new \PhpParser\Parser\Php7(new \PhpParser\Lexer\Emulative());
+                $ast = $parser->parse($code);
+            } catch (\Exception $e) {
+                return $this->parseResourceCollection($resourceClass);
+            }
+
+            $resourceMetadata = $this->extractResourceMetadata($reflection->getDocComment() ?: null);
+            $visitor = new ToArrayVisitor();
+            $traverser = new NodeTraverser();
+            $traverser->addVisitor($visitor);
+            $traverser->traverse($ast);
+
+            $returnArray = $visitor->getReturnArray();
+            if (empty($returnArray)) {
+                return $this->parseResourceCollection($resourceClass);
+            }
+
+            $schema = $this->buildSchemaFromArray($returnArray, $resourceMetadata);
+            $collectedResourceClass = $this->extractCollectedResourceFromClass($resourceClass);
+
+            if ($collectedResourceClass) {
+                foreach (['results', 'data'] as $collectionProperty) {
+                    if (isset($schema['properties'][$collectionProperty]) && is_array($schema['properties'][$collectionProperty])) {
+                        $schema['properties'][$collectionProperty] = [
+                            'type' => 'array',
+                            'description' => $schema['properties'][$collectionProperty]['description'] ?? 'Collection of resources',
+                            'items' => $this->parse($collectedResourceClass),
+                        ];
+                    }
+                }
+            }
+
+            return $schema;
+        } catch (\Exception $e) {
+            return $this->parseResourceCollection($resourceClass);
+        }
+    }
+
+    /**
+     * Extract inherited schema from a parent JsonResource class.
+     */
+    protected function extractParentResourceSchema(ReflectionClass $reflection): ?array
+    {
+        $parentClass = $reflection->getParentClass();
+
+        if (!$parentClass) {
+            return null;
+        }
+
+        $parentClassName = $parentClass->getName();
+
+        if (!is_subclass_of($parentClassName, JsonResource::class)) {
+            return null;
+        }
+
+        return $this->parse($parentClassName);
+    }
+
+    /**
+     * Merge parent and child resource schemas, with child properties overriding parent properties.
+     */
+    protected function mergeSchemas(array $parentSchema, array $childSchema): array
+    {
+        if (($parentSchema['type'] ?? null) !== 'object' || ($childSchema['type'] ?? null) !== 'object') {
+            return $childSchema;
+        }
+
+        $merged = $parentSchema;
+        $merged['properties'] = [
+            ...($parentSchema['properties'] ?? []),
+            ...($childSchema['properties'] ?? []),
+        ];
+
+        if (isset($parentSchema['required']) || isset($childSchema['required'])) {
+            $merged['required'] = array_values(array_unique([
+                ...($parentSchema['required'] ?? []),
+                ...($childSchema['required'] ?? []),
+            ]));
+        }
+
+        foreach ($childSchema as $key => $value) {
+            if ($key === 'properties' || $key === 'required') {
+                continue;
+            }
+
+            $merged[$key] = $value;
+        }
+
+        return $merged;
+    }
+
+    /**
      * Extract collected resource class from ResourceCollection definition
      */
     protected function extractCollectedResourceFromClass(string $resourceClass): ?string
@@ -120,6 +238,33 @@ class ResourceParser
             $code = file_get_contents($filename);
 
             // Look for public $collects = 'ResourceClass'
+            if (preg_match('/public\s+\$collects\s*=\s*([A-Za-z0-9_\\\\:]+)::class/', $code, $matches)) {
+                $className = trim($matches[1], '\\');
+                if (class_exists($className)) {
+                    return $className;
+                }
+
+                $apiClass = 'App\\Http\\Resources\\Api\\' . $className;
+                if (class_exists($apiClass)) {
+                    return $apiClass;
+                }
+
+                $managementClass = 'App\\Http\\Resources\\Management\\' . $className;
+                if (class_exists($managementClass)) {
+                    return $managementClass;
+                }
+
+                $userClass = 'App\\Http\\Resources\\User\\' . $className;
+                if (class_exists($userClass)) {
+                    return $userClass;
+                }
+
+                $appClass = 'App\\Http\\Resources\\' . $className;
+                if (class_exists($appClass)) {
+                    return $appClass;
+                }
+            }
+
             if (preg_match('/public\s+\$collects\s*=\s*[\'"]([^\'\"]+)[\'"]/', $code, $matches)) {
                 $className = $matches[1];
                 // Try to resolve the class name
@@ -147,6 +292,29 @@ class ResourceParser
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    /**
+     * Resolve a resource class name with namespace fallbacks.
+     */
+    protected function resolveResourceClassName(string $resourceClass): ?string
+    {
+        if (class_exists($resourceClass)) {
+            return $resourceClass;
+        }
+
+        foreach ([
+            'App\\Http\\Resources\\Api\\',
+            'App\\Http\\Resources\\Management\\',
+            'App\\Http\\Resources\\User\\',
+            'App\\Http\\Resources\\',
+        ] as $namespace) {
+            if (class_exists($namespace . $resourceClass)) {
+                return $namespace . $resourceClass;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -178,13 +346,13 @@ class ResourceParser
                             'description' => 'URL to the last page',
                         ],
                         'prev' => [
-                            'type' => ['string', 'null'],
+                            'type' => 'string',
                             'format' => 'uri',
                             'nullable' => true,
                             'description' => 'URL to the previous page',
                         ],
                         'next' => [
-                            'type' => ['string', 'null'],
+                            'type' => 'string',
                             'format' => 'uri',
                             'nullable' => true,
                             'description' => 'URL to the next page',
@@ -200,7 +368,7 @@ class ResourceParser
                             'description' => 'Current page number',
                         ],
                         'from' => [
-                            'type' => ['integer', 'null'],
+                            'type' => 'integer',
                             'nullable' => true,
                             'description' => 'Index of first item on current page',
                         ],
@@ -213,7 +381,7 @@ class ResourceParser
                             'description' => 'Number of items per page',
                         ],
                         'to' => [
-                            'type' => ['integer', 'null'],
+                            'type' => 'integer',
                             'nullable' => true,
                             'description' => 'Index of last item on current page',
                         ],
@@ -231,7 +399,7 @@ class ResourceParser
     /**
      * Build OpenAPI schema from extracted array structure
      */
-    protected function buildSchemaFromArray(array $structure): array
+    protected function buildSchemaFromArray(array $structure, array $metadata = []): array
     {
         $schema = [
             'type' => 'object',
@@ -239,7 +407,8 @@ class ResourceParser
         ];
 
         foreach ($structure as $key => $value) {
-            $schema['properties'][$key] = $this->inferPropertyType($key, $value);
+            $propertySchema = $this->inferPropertyType($key, $value);
+            $schema['properties'][$key] = $this->applyPropertyMetadata($propertySchema, $metadata[$key] ?? []);
         }
 
         return $schema;
@@ -252,14 +421,60 @@ class ResourceParser
     {
         // Handle null
         if ($value === null) {
-            return ['type' => 'null'];
+            return ['nullable' => true];
         }
 
         // Handle direct values with method calls
         if (is_string($value)) {
+            // Dynamic content payloads
+            if (
+                $key === 'content'
+                || str_contains($value, 'getTransformedContent(')
+                || str_contains($value, 'new \stdClass')
+                || str_contains($value, 'new stdClass')
+            ) {
+                return [
+                    'type' => 'object',
+                    'additionalProperties' => true,
+                ];
+            }
+
+            // Resource arrays / collections
+            if (
+                str_contains($value, '::collection(')
+                || str_contains($value, '->resolve(')
+                || str_contains($value, '->all()')
+                || str_contains($value, '->toArray(')
+            ) {
+                if (preg_match('/([A-Za-z0-9_\\\\]+Resource)::collection\s*\(/', $value, $matches)) {
+                    $resourceClass = $this->resolveResourceClassName($matches[1]);
+                    if ($resourceClass) {
+                        return [
+                            'type' => 'array',
+                            'items' => $this->parse($resourceClass),
+                        ];
+                    }
+                }
+
+                if (preg_match('/([A-Za-z0-9_\\\\]+Resource)::collection/', $value, $matches)) {
+                    $resourceClass = $this->resolveResourceClassName($matches[1]);
+                    if ($resourceClass) {
+                        return [
+                            'type' => 'array',
+                            'items' => $this->parse($resourceClass),
+                        ];
+                    }
+                }
+
+                return [
+                    'type' => 'array',
+                    'items' => ['type' => 'object'],
+                ];
+            }
+
             // Date/time formatting
             if (str_contains($value, 'toIso8601String')) {
-                return ['type' => 'string', 'format' => 'date-time'];
+                return ['type' => 'string', 'format' => 'date-time', 'nullable' => true];
             }
 
             // Route key (UUID/ID)
@@ -270,10 +485,8 @@ class ResourceParser
             // whenLoaded (optional relationship)
             if (str_contains($value, 'whenLoaded')) {
                 return [
-                    'oneOf' => [
-                        ['type' => 'object'],
-                        ['type' => 'null'],
-                    ],
+                    'type' => 'object',
+                    'nullable' => true,
                 ];
             }
 
@@ -311,6 +524,118 @@ class ResourceParser
     }
 
     /**
+     * Extract annotation-driven metadata from the resource docblock.
+     *
+     * Supported annotations:
+     * @resourceProperty field description text
+     * @resourceProperty field type=string description text
+     * @resourceProperty field format=date-time description text
+     * @resourceProperty field example=value description text
+     * @resourceProperty field additionalProperties=true description text
+     * @resourceProperty field items=SomeResource description text
+     */
+    protected function extractResourceMetadata(?string $docComment): array
+    {
+        if ($docComment === null || $docComment === '') {
+            return [];
+        }
+
+        $metadata = [];
+        $lines = preg_split('/\R/', $docComment) ?: [];
+
+        foreach ($lines as $line) {
+            if (!preg_match('/@resourceProperty\s+([A-Za-z0-9_\.]+)(?:\s+(.*))?$/', trim($line, " \t\n\r\0\x0B*"), $matches)) {
+                continue;
+            }
+
+            $field = $matches[1];
+            $tail = trim($matches[2] ?? '');
+
+            $entry = $metadata[$field] ?? [];
+
+            if (preg_match_all('/(\w+)=("([^"]*)"|\'([^\']*)\'|(\S+))/', $tail, $attributeMatches, PREG_SET_ORDER)) {
+                foreach ($attributeMatches as $attributeMatch) {
+                    $entry[$attributeMatch[1]] = $attributeMatch[3] ?: $attributeMatch[4] ?: $attributeMatch[5] ?: null;
+                }
+
+                $tail = trim(preg_replace('/(\w+)=("([^"]*)"|\'([^\']*)\'|(\S+))/', '', $tail) ?? '');
+            }
+
+            if ($tail !== '') {
+                $entry['description'] = $tail;
+            }
+
+            $metadata[$field] = $entry;
+        }
+
+        return $metadata;
+    }
+
+    /**
+     * Apply extracted metadata to a generated property schema.
+     */
+    protected function applyPropertyMetadata(array $schema, array $metadata): array
+    {
+        if (isset($metadata['description']) && $metadata['description'] !== '') {
+            $schema['description'] = $metadata['description'];
+        }
+
+        if (isset($metadata['type']) && $metadata['type'] !== '') {
+            $schema['type'] = $metadata['type'];
+        }
+
+        if (isset($metadata['format']) && $metadata['format'] !== '') {
+            if ($metadata['format'] === 'integer') {
+                $schema['type'] = 'integer';
+                unset($schema['format']);
+            } elseif ($metadata['format'] === 'number') {
+                $schema['type'] = 'number';
+                unset($schema['format']);
+            } elseif ($metadata['format'] === 'boolean') {
+                $schema['type'] = 'boolean';
+                unset($schema['format']);
+            } elseif ($metadata['format'] === 'array') {
+                $schema['type'] = 'array';
+                unset($schema['format']);
+            } elseif ($metadata['format'] === 'object') {
+                $schema['type'] = 'object';
+                unset($schema['format']);
+            } elseif ($metadata['format'] !== 'string') {
+                $schema['format'] = $metadata['format'];
+            }
+        }
+
+        if (array_key_exists('example', $metadata)) {
+            $schema['example'] = $metadata['example'];
+        }
+
+        if (array_key_exists('nullable', $metadata)) {
+            $schema['nullable'] = filter_var($metadata['nullable'], FILTER_VALIDATE_BOOLEAN);
+        }
+
+        if (array_key_exists('additionalProperties', $metadata)) {
+            $additionalProperties = $metadata['additionalProperties'];
+
+            if (is_string($additionalProperties) && in_array(strtolower($additionalProperties), ['true', 'false'], true)) {
+                $schema['additionalProperties'] = filter_var($additionalProperties, FILTER_VALIDATE_BOOLEAN);
+            } else {
+                $schema['additionalProperties'] = $additionalProperties;
+            }
+        }
+
+        if (isset($metadata['items']) && $metadata['items'] !== '') {
+            $schema['type'] = 'array';
+
+            $resourceClass = $this->resolveResourceClassName($metadata['items']);
+            $schema['items'] = $resourceClass
+                ? $this->parse($resourceClass)
+                : ['type' => 'object'];
+        }
+
+        return $schema;
+    }
+
+    /**
      * Get schema name from class name
      */
     protected function getSchemaName(string $resourceClass): string
@@ -342,12 +667,31 @@ class ToArrayVisitor extends NodeVisitorAbstract
             if (!empty($node->stmts)) {
                 foreach ($node->stmts as $stmt) {
                     if ($stmt instanceof Node\Stmt\Return_) {
-                        $this->returnArray = $this->parseArrayNode($stmt->expr);
+                        $this->returnArray = $this->parseExpression($stmt->expr);
                         break;
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Parse expression node to PHP array structure
+     */
+    protected function parseExpression($node): array
+    {
+        if ($node instanceof Node\Expr\Array_) {
+            return $this->parseArrayNode($node);
+        }
+
+        if ($node instanceof Node\Expr\BinaryOp\Array_) {
+            return array_merge(
+                $this->parseExpression($node->left),
+                $this->parseExpression($node->right),
+            );
+        }
+
+        return [];
     }
 
     /**
@@ -360,6 +704,11 @@ class ToArrayVisitor extends NodeVisitorAbstract
 
             foreach ($node->items as $item) {
                 if ($item === null) {
+                    continue;
+                }
+
+                if ($item->unpack) {
+                    $result = array_merge($result, $this->parseExpression($item->value));
                     continue;
                 }
 

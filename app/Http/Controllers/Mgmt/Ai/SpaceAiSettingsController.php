@@ -3,31 +3,27 @@
 namespace App\Http\Controllers\Mgmt\Ai;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Space\UpdateSpaceAiSettingsRequest;
 use App\Models\Management\Space;
 use App\Services\Ai\ModelRegistry;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class SpaceAiSettingsController extends Controller
 {
     public function __construct(
         protected ModelRegistry $registry
-    ) {}
+    ) {
+    }
 
-    public function update(Request $request, Space $space): JsonResponse
+    public function update(UpdateSpaceAiSettingsRequest $request, Space $space): JsonResponse
     {
-        $validated = $request->validate([
-            'model' => ['sometimes', 'nullable', 'string'],
-            'favourites' => ['sometimes', 'array'],
-            'favourites.*' => ['string'],
-            'enabled' => ['sometimes', 'boolean'],
-        ]);
+        $validated = $request->validated();
 
         $settings = $space->settings;
 
         if (isset($validated['model'])) {
             $model = $this->registry->findModel($validated['model']);
-            if (! $model && $validated['model'] !== null) {
+            if (!$model && $validated['model'] !== null) {
                 return response()->json([
                     'message' => 'Invalid model ID',
                 ], 422);

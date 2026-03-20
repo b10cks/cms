@@ -22,7 +22,8 @@ class RouteAnalyzer
         private FilterParser $filterParser,
         private ResourceParser $resourceParser,
         private TypeInferencer $typeInferencer,
-    ) {}
+    ) {
+    }
 
     /**
      * Analyze all routes matching configured prefixes
@@ -67,8 +68,8 @@ class RouteAnalyzer
         // If no prefixes specified, include all API routes
         if (empty($prefixes)) {
             return str_starts_with($uri, 'api/') ||
-                   str_starts_with($uri, 'mgmt/') ||
-                   str_starts_with($uri, 'auth/');
+                str_starts_with($uri, 'mgmt/') ||
+                str_starts_with($uri, 'auth/');
         }
 
         // Check against specified prefixes
@@ -119,8 +120,8 @@ class RouteAnalyzer
             'controllerMethod' => $method,
             'middleware' => $route->middleware(),
             'parameters' => $this->extractPathParameters($controller, $method, $route),
-            'queryParameters' => $this->extractQueryParameters($controller, $method),
-            'requestBody' => $this->extractRequestBody($controller, $method),
+            'queryParameters' => $this->extractQueryParameters($controller, $method, $methods[0]),
+            'requestBody' => $this->extractRequestBody($controller, $method, $methods[0]),
             'responses' => $this->extractResponses($controller, $method),
             'summary' => $this->generateSummary($route),
             'description' => $this->generateDescription($controller, $method),
@@ -169,7 +170,9 @@ class RouteAnalyzer
                 }
 
                 // Get parameter type
-                $type = $param->getType()?->getName();
+                $type = $param->getType() instanceof \ReflectionNamedType
+                    ? $param->getType()->getName()
+                    : null;
 
                 // Try to infer from type hint
                 if ($type && class_exists($type)) {
@@ -197,7 +200,7 @@ class RouteAnalyzer
     /**
      * Extract query parameters from Filter usage
      */
-    protected function extractQueryParameters(string $controller, string $method): array
+    protected function extractQueryParameters(string $controller, string $method, ?string $httpMethod = null): array
     {
         try {
             $reflection = new ReflectionMethod($controller, $method);
@@ -213,56 +216,60 @@ class RouteAnalyzer
             $lines = file($filename);
             $methodCode = implode('', array_slice($lines, $startLine - 1, $endLine - $startLine + 1));
 
+            $parameters = [];
+
             // Look for filter() method call with Filter class reference
             // Pattern: ->filter(ContentFilter::fromRequest($request)) or ::filter(ContentFilter::fromRequest($request))
             if (preg_match('/(?:->|::)filter\s*\(\s*([A-Za-z\\\]+Filter)::fromRequest/', $methodCode, $matches)) {
-                $filterClass = $matches[1];
+                $filterClass = $this->resolveFilterClass($matches[1]);
 
-                // Resolve class name if it's a relative reference
-                if (!str_contains($filterClass, '\\')) {
-                    // Try different namespace paths
-                    $namespaces = [
-                        'App\\Http\\Filters\\',
-                        'App\\Http\\Filters\\Api\\',
-                        'App\\Http\\Filters\\Mgmt\\',
-                    ];
-
-                    foreach ($namespaces as $ns) {
-                        if (class_exists($ns . $filterClass)) {
-                            $filterClass = $ns . $filterClass;
-                            break;
-                        }
-                    }
-                }
-
-                if (class_exists($filterClass)) {
-                    return $this->filterParser->parse($filterClass);
+                if ($filterClass && class_exists($filterClass)) {
+                    $parameters = array_merge($parameters, $this->filterParser->parse($filterClass));
                 }
             }
 
             // Also try direct Filter::fromRequest pattern
             if (preg_match('/([A-Za-z\\\]+Filter)::fromRequest/', $methodCode, $matches)) {
-                $filterClass = $matches[1];
+                $filterClass = $this->resolveFilterClass($matches[1]);
 
-                if (!str_contains($filterClass, '\\')) {
-                    $namespaces = [
-                        'App\\Http\\Filters\\',
-                        'App\\Http\\Filters\\Api\\',
-                        'App\\Http\\Filters\\Mgmt\\',
-                    ];
-
-                    foreach ($namespaces as $ns) {
-                        if (class_exists($ns . $filterClass)) {
-                            $filterClass = $ns . $filterClass;
-                            break;
-                        }
-                    }
-                }
-
-                if (class_exists($filterClass)) {
-                    return $this->filterParser->parse($filterClass);
+                if ($filterClass && class_exists($filterClass)) {
+                    $parameters = array_merge($parameters, $this->filterParser->parse($filterClass));
                 }
             }
+
+            if ($httpMethod === 'get') {
+                foreach ($reflection->getParameters() as $param) {
+                    $type = $param->getType() instanceof \ReflectionNamedType
+                        ? $param->getType()->getName()
+                        : null;
+
+                    if (!$type) {
+                        continue;
+                    }
+
+                    if (!class_exists($type) || !is_subclass_of($type, FormRequest::class)) {
+                        continue;
+                    }
+
+                    try {
+                        $requestBody = $this->formRequestParser->parse($type);
+                        $schema = $requestBody['content']['application/json']['schema'] ?? null;
+
+                        if (!is_array($schema)) {
+                            continue;
+                        }
+
+                        $parameters = $this->mergeParameters(
+                            $parameters,
+                            $this->convertSchemaPropertiesToQueryParameters($schema)
+                        );
+                    } catch (\Exception $e) {
+                        // Silently skip FormRequests that can't be parsed
+                    }
+                }
+            }
+
+            return $this->mergeParameters($parameters);
         } catch (\Exception $e) {
             // Skip on error
         }
@@ -273,13 +280,15 @@ class RouteAnalyzer
     /**
      * Extract request body from FormRequest usage
      */
-    protected function extractRequestBody(string $controller, string $method): ?array
+    protected function extractRequestBody(string $controller, string $method, ?string $httpMethod = null): ?array
     {
         try {
             $reflection = new ReflectionMethod($controller, $method);
 
             foreach ($reflection->getParameters() as $param) {
-                $type = $param->getType()?->getName();
+                $type = $param->getType() instanceof \ReflectionNamedType
+                    ? $param->getType()->getName()
+                    : null;
 
                 if (!$type) {
                     continue;
@@ -289,9 +298,15 @@ class RouteAnalyzer
                 if (class_exists($type) && is_subclass_of($type, FormRequest::class)) {
                     try {
                         $requestBody = $this->formRequestParser->parse($type);
-                        if (!empty($requestBody)) {
-                            return $requestBody;
+                        if (empty($requestBody)) {
+                            return null;
                         }
+
+                        if ($httpMethod === 'get') {
+                            return null;
+                        }
+
+                        return $requestBody;
                     } catch (\Exception $e) {
                         // Silently skip FormRequests that can't be parsed
                         return null;
@@ -300,6 +315,128 @@ class RouteAnalyzer
             }
         } catch (\Exception $e) {
             // Skip on error
+        }
+
+        return null;
+    }
+
+    /**
+     * Convert a parsed request schema into query parameters.
+     */
+    protected function convertSchemaPropertiesToQueryParameters(array $schema, string $prefix = ''): array
+    {
+        $parameters = [];
+        $properties = $schema['properties'] ?? [];
+        $required = $schema['required'] ?? [];
+
+        foreach ($properties as $name => $propertySchema) {
+            if (!is_array($propertySchema)) {
+                continue;
+            }
+
+            $parameterName = $prefix === '' ? $name : "{$prefix}.{$name}";
+            $type = $propertySchema['type'] ?? null;
+
+            if ($type === 'object') {
+                $parameters = array_merge(
+                    $parameters,
+                    $this->convertSchemaPropertiesToQueryParameters($propertySchema, $parameterName)
+                );
+                continue;
+            }
+
+            $parameter = [
+                'name' => $parameterName,
+                'in' => 'query',
+                'required' => in_array($name, $required, true),
+                'schema' => $propertySchema,
+            ];
+
+            if (isset($propertySchema['description'])) {
+                $parameter['description'] = $propertySchema['description'];
+            }
+
+            if (array_key_exists('example', $propertySchema)) {
+                $parameter['example'] = $propertySchema['example'];
+            }
+
+            $parameters[] = $parameter;
+        }
+
+        return $parameters;
+    }
+
+    /**
+     * Merge parameter definitions while preserving richer metadata.
+     */
+    protected function mergeParameters(array ...$parameterGroups): array
+    {
+        $merged = [];
+
+        foreach ($parameterGroups as $group) {
+            foreach ($group as $parameter) {
+                if (!is_array($parameter)) {
+                    continue;
+                }
+
+                $name = $parameter['name'] ?? null;
+                $in = $parameter['in'] ?? null;
+
+                if (!$name || !$in) {
+                    continue;
+                }
+
+                $key = $in . ':' . $name;
+
+                if (!isset($merged[$key])) {
+                    $merged[$key] = $parameter;
+                    continue;
+                }
+
+                $existing = $merged[$key];
+
+                if (!isset($existing['description']) && isset($parameter['description'])) {
+                    $existing['description'] = $parameter['description'];
+                }
+
+                if (!array_key_exists('example', $existing) && array_key_exists('example', $parameter)) {
+                    $existing['example'] = $parameter['example'];
+                }
+
+                if (isset($existing['schema']) && isset($parameter['schema']) && is_array($existing['schema']) && is_array($parameter['schema'])) {
+                    $existing['schema'] = array_replace_recursive($existing['schema'], $parameter['schema']);
+                } elseif (!isset($existing['schema']) && isset($parameter['schema'])) {
+                    $existing['schema'] = $parameter['schema'];
+                }
+
+                $existing['required'] = ($existing['required'] ?? false) || ($parameter['required'] ?? false);
+
+                $merged[$key] = $existing;
+            }
+        }
+
+        return array_values($merged);
+    }
+
+    /**
+     * Resolve a possibly short filter class name to a fully qualified class.
+     */
+    protected function resolveFilterClass(string $filterClass): ?string
+    {
+        if (str_contains($filterClass, '\\')) {
+            return $filterClass;
+        }
+
+        $namespaces = [
+            'App\\Http\\Filters\\',
+            'App\\Http\\Filters\\Api\\',
+            'App\\Http\\Filters\\Mgmt\\',
+        ];
+
+        foreach ($namespaces as $ns) {
+            if (class_exists($ns . $filterClass)) {
+                return $ns . $filterClass;
+            }
         }
 
         return null;
@@ -327,26 +464,48 @@ class RouteAnalyzer
                 if (empty($types)) {
                     return $responses;
                 }
-                $returnTypeName = $types[0]->getName();
+                $returnTypeName = $types[0] instanceof \ReflectionNamedType
+                    ? $types[0]->getName()
+                    : null;
             } else {
-                $returnTypeName = $returnType->getName();
+                $returnTypeName = $returnType instanceof \ReflectionNamedType
+                    ? $returnType->getName()
+                    : null;
             }
 
             // Check for ResourceCollection
-            if (class_exists($returnTypeName) && is_subclass_of($returnTypeName, ResourceCollection::class)) {
+            if (is_string($returnTypeName) && class_exists($returnTypeName) && is_subclass_of($returnTypeName, ResourceCollection::class)) {
+                $docBlock = $reflection->getDocComment() ?: '';
+
+                // Prefer explicit method-level @response annotations for concrete collection schemas
+                $annotatedCollectionClass = $this->extractCollectionClassFromPhpDocAnnotation($docBlock);
+
                 // Try to detect the collected resource type
-                $collectedResource = $this->extractCollectedResourceFromMethod($controller, $method, $returnTypeName);
+                $collectedResource = $this->extractCollectedResourceFromMethod($controller, $method, $annotatedCollectionClass ?? $returnTypeName);
 
-                // Create a custom parse method that passes the collected resource
-                $schema = $this->parseResourceCollectionWithDetection($returnTypeName, $collectedResource);
+                if ($annotatedCollectionClass) {
+                    $schema = $this->resourceParser->parse($annotatedCollectionClass);
+                } else {
+                    // Parse the concrete collection schema first
+                    $schema = $this->resourceParser->parse($returnTypeName);
+                }
 
-                // Store the resource class for schema reference - add it to items
+                // Fallback to generic paginated collection parsing if necessary
+                if (($schema['type'] ?? null) !== 'object') {
+                    $schema = $this->parseResourceCollectionWithDetection($returnTypeName, $collectedResource);
+                }
+
+                // Store the resource class for schema reference on concrete collection item arrays
+                if ($collectedResource && isset($schema['properties']['results']['items'])) {
+                    $schema['properties']['results']['items']['x-resource-class'] = $collectedResource;
+                }
+
                 if ($collectedResource && isset($schema['properties']['data']['items'])) {
                     $schema['properties']['data']['items']['x-resource-class'] = $collectedResource;
                 }
 
                 $responses['200'] = [
-                    'description' => 'Paginated collection',
+                    'description' => 'Successful response',
                     'content' => [
                         'application/json' => [
                             'schema' => $schema,
@@ -355,7 +514,7 @@ class RouteAnalyzer
                 ];
             }
             // Check for JsonResource
-            elseif (class_exists($returnTypeName) && is_subclass_of($returnTypeName, JsonResource::class)) {
+            elseif (is_string($returnTypeName) && class_exists($returnTypeName) && is_subclass_of($returnTypeName, JsonResource::class)) {
                 $schema = $this->resourceParser->parse($returnTypeName);
 
                 // Store the resource class for schema reference
@@ -493,23 +652,58 @@ class RouteAnalyzer
     {
         // First, look for the most common pattern with nested generics
         // Pattern: @response ...Collection<...Paginator<ResourceClass>>
-        if (preg_match('/@response\s+[a-zA-Z0-9_]*Collection\s*<[^<]*[a-zA-Z]*Paginator\s*<\s*([a-zA-Z0-9_]+)\s*>\s*>/', $docBlock, $matches)) {
+        if (preg_match('/@response\s+[a-zA-Z0-9_\\\\]*Collection\s*<[^<]*[a-zA-Z]*Paginator\s*<\s*([a-zA-Z0-9_\\\\]+)\s*>\s*>/', $docBlock, $matches)) {
             return $this->resolveResourceClass(trim($matches[1]));
         }
 
         // Pattern: @response ...Paginator<ResourceClass>
-        if (preg_match('/@response\s+[a-zA-Z0-9_]*Paginator\s*<\s*([a-zA-Z0-9_]+)\s*>/', $docBlock, $matches)) {
+        if (preg_match('/@response\s+[a-zA-Z0-9_\\\\]*Paginator\s*<\s*([a-zA-Z0-9_\\\\]+)\s*>/', $docBlock, $matches)) {
             return $this->resolveResourceClass(trim($matches[1]));
         }
 
         // Pattern: @response ...Collection<ResourceClass>
-        if (preg_match('/@response\s+[a-zA-Z0-9_]*Collection\s*<\s*([a-zA-Z0-9_]+)\s*>/', $docBlock, $matches)) {
+        if (preg_match('/@response\s+[a-zA-Z0-9_\\\\]*Collection\s*<\s*([a-zA-Z0-9_\\\\]+)\s*>/', $docBlock, $matches)) {
             return $this->resolveResourceClass(trim($matches[1]));
         }
 
         // Pattern: Extract from nested generics - look for innermost type
-        if (preg_match('/@response\s+[a-zA-Z0-9_]*(?:Collection|Paginator).*<.*<\s*([a-zA-Z0-9_]+)\s*>\s*>/', $docBlock, $matches)) {
+        if (preg_match('/@response\s+[a-zA-Z0-9_\\\\]*(?:Collection|Paginator).*<.*<\s*([a-zA-Z0-9_\\\\]+)\s*>\s*>/', $docBlock, $matches)) {
             return $this->resolveResourceClass(trim($matches[1]));
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract a concrete ResourceCollection class from PHPDoc @response annotation.
+     * Examples:
+     * - @response SearchResultCollection
+     * - @response \App\Http\Resources\Api\SearchResultCollection
+     */
+    protected function extractCollectionClassFromPhpDocAnnotation(string $docBlock): ?string
+    {
+        if (preg_match('/@response\s+([A-Za-z0-9_\\\\]*ResourceCollection)\b/', $docBlock, $matches)) {
+            $collectionClass = trim($matches[1]);
+
+            if (class_exists($collectionClass)) {
+                return $collectionClass;
+            }
+
+            if (class_exists('App\\Http\\Resources\\' . $collectionClass)) {
+                return 'App\\Http\\Resources\\' . $collectionClass;
+            }
+
+            if (class_exists('App\\Http\\Resources\\Api\\' . $collectionClass)) {
+                return 'App\\Http\\Resources\\Api\\' . $collectionClass;
+            }
+
+            if (class_exists('App\\Http\\Resources\\Management\\' . $collectionClass)) {
+                return 'App\\Http\\Resources\\Management\\' . $collectionClass;
+            }
+
+            if (class_exists('App\\Http\\Resources\\User\\' . $collectionClass)) {
+                return 'App\\Http\\Resources\\User\\' . $collectionClass;
+            }
         }
 
         return null;

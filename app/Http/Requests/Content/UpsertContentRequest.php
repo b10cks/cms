@@ -4,6 +4,7 @@ namespace App\Http\Requests\Content;
 
 use App\Http\Requests\Traits\ExternalIdValidation;
 use App\Models\Space\Content;
+use App\Models\Space\ContentSettings;
 use App\Services\Content\ContentI18nValidator;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -42,32 +43,31 @@ class UpsertContentRequest extends FormRequest
                 'required',
                 'string',
                 'max:50',
-                Rule::unique($connectionName.'.contents', 'slug')
-                    ->when($languageIso, fn ($query) => $query->where('language_iso', $languageIso))
-                    ->when($parentId, fn ($query) => $query->where('parent_id', $parentId))
+                Rule::unique($connectionName . '.contents', 'slug')
+                    ->when($languageIso, fn($query) => $query->where('language_iso', $languageIso))
+                    ->when($parentId, fn($query) => $query->where('parent_id', $parentId))
                     ->whereNull('deleted_at')
                     ->ignore($contentId),
             ],
             'settings' => 'nullable|array',
-            'settings.disablePreview' => 'nullable|boolean',
-            'settings.i18n_mode_override' => ['nullable', 'string', Rule::in(['inherit', 'overlay', 'independent'])],
+            ...ContentSettings::toValidator('settings'),
             'block_id' => [
                 'sometimes',
                 'required',
-                Rule::exists($connectionName.'.blocks', 'id')
+                Rule::exists($connectionName . '.blocks', 'id')
                     ->whereNull('deleted_at'),
             ],
             'parent_id' => [
                 'nullable',
                 'string',
-                Rule::exists($connectionName.'.contents', 'id')
+                Rule::exists($connectionName . '.contents', 'id')
                     ->whereNull('deleted_at'),
             ],
             'i18n_parent_id' => [
                 'sometimes',
                 'nullable',
                 'string',
-                Rule::exists($connectionName.'.contents', 'id')
+                Rule::exists($connectionName . '.contents', 'id')
                     ->whereNull('deleted_at'),
             ],
             'language_iso' => 'sometimes|required|string|min:2|max:5',
@@ -92,7 +92,7 @@ class UpsertContentRequest extends FormRequest
         return [
             function ($validator): void {
                 $space = $this->route('space');
-                if (! $space) {
+                if (!$space) {
                     return;
                 }
 

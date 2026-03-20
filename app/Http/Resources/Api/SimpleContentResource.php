@@ -8,6 +8,15 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * @mixin Content
+ *
+ * @resourceProperty id format=uuid Unique content identifier.
+ * @resourceProperty name Human-readable content name.
+ * @resourceProperty slug URL-safe content slug.
+ * @resourceProperty full_slug Full resolved slug including parent path segments.
+ * @resourceProperty language_iso ISO language code of the content entry.
+ * @resourceProperty published_at format=date-time Publication timestamp in ISO 8601 format.
+ * @resourceProperty created_at format=date-time Creation timestamp in ISO 8601 format.
+ * @resourceProperty updated_at format=date-time Last update timestamp in ISO 8601 format.
  */
 class SimpleContentResource extends JsonResource
 {

@@ -10,6 +10,22 @@ use App\Services\Content\ResolvedContent;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin Content
+ * @resourceProperty id format=uuid Unique content identifier.
+ * @resourceProperty name Human-readable content name.
+ * @resourceProperty slug URL slug of the resolved content.
+ * @resourceProperty block Slug of the assigned block definition.
+ * @resourceProperty parent_id format=uuid Parent content identifier if this content is nested.
+ * @resourceProperty full_slug Full resolved path including all parent slugs.
+ * @resourceProperty content Effective content payload after i18n, link, and asset resolution.
+ * @resourceProperty language_iso Requested language ISO code used for content resolution.
+ * @resourceProperty translations Published sibling translations of the resolved content.
+ * @resourceProperty published_at format=date-time Publication timestamp in ISO 8601 format.
+ * @resourceProperty first_published_at format=date-time First publication timestamp in ISO 8601 format.
+ * @resourceProperty created_at format=date-time Creation timestamp in ISO 8601 format.
+ * @resourceProperty updated_at format=date-time Last update timestamp in ISO 8601 format.
+ */
 class ContentResource extends JsonResource
 {
     public function toArray(Request $request)
@@ -60,7 +76,7 @@ class ContentResource extends JsonResource
     protected function getTransformedContent(ResolvedContent $resolved): array|\stdClass
     {
         $content = $resolved->effectiveContent;
-        if (! $content) {
+        if (!$content) {
             return new \stdClass;
         }
 
@@ -75,26 +91,24 @@ class ContentResource extends JsonResource
             'block' => ($resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent)
                 ->loadMissing('block')
                 ->block
-                ?->slug,
+                    ?->slug,
         ];
     }
 
     protected function removeHiddenBlocks(array $content): array
     {
         foreach ($content as $key => $value) {
-            if (! is_array($value)) {
+            if (!is_array($value)) {
                 continue;
             }
 
-            // If this is a blocks array (items have a 'block' key), filter hidden items
             $isBlocksArray = array_is_list($value) && count($value) > 0 && isset($value[0]['block']);
 
             if ($isBlocksArray) {
                 $content[$key] = array_values(
-                    array_filter($value, fn (mixed $item) => ! (is_array($item) && ($item['hidden'] ?? false) === true))
+                    array_filter($value, fn(mixed $item) => !(is_array($item) && ($item['hidden'] ?? false) === true))
                 );
 
-                // Recurse into surviving items
                 foreach ($content[$key] as $i => $item) {
                     if (is_array($item)) {
                         $content[$key][$i] = $this->removeHiddenBlocks($item);
@@ -112,7 +126,7 @@ class ContentResource extends JsonResource
     {
         return SimpleContentResource::collection(
             $resolved->familyContents
-                ->filter(fn (Content $content) => $content->published_at !== null && $content->id !== $currentRow->id)
+                ->filter(fn(Content $content) => $content->published_at !== null && $content->id !== $currentRow->id)
                 ->values()
         );
     }

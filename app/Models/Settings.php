@@ -17,10 +17,10 @@ abstract class Settings implements Castable
 
     public function __construct($attributes = [])
     {
-        $this->attributes = $attributes;
+        $this->attributes = is_array($attributes) ? $attributes : [];
     }
 
-    public static function make($attributes = [])
+    public static function make($attributes = []): static
     {
         return new static($attributes);
     }
@@ -32,7 +32,66 @@ abstract class Settings implements Castable
 
     public function apply($attributes): void
     {
-        $this->attributes = [...$this->attributes, ...$attributes];
+        $this->attributes = [...$this->attributes, ...(is_array($attributes) ? $attributes : [])];
+    }
+
+    /**
+     * Build validation rules for this settings object.
+     *
+     * Child classes should override this to expose their supported structure.
+     *
+     * @param  string|null  $prefix
+     * @param  bool  $partial
+     * @return array<string, mixed>
+     */
+    public static function toValidator(?string $prefix = null, bool $partial = false): array
+    {
+        $rules = static::validationRules($partial);
+
+        if ($prefix === null || $prefix === '') {
+            return $rules;
+        }
+
+        return static::prefixRules($rules, $prefix);
+    }
+
+    /**
+     * Validation rules for the concrete settings class.
+     *
+     * @param  bool  $partial
+     * @return array<string, mixed>
+     */
+    public static function validationRules(bool $partial = false): array
+    {
+        return [];
+    }
+
+    /**
+     * Optional OpenAPI / documentation metadata for settings fields.
+     *
+     * Supported shape:
+     * - ['field' => ['description' => '...', 'example' => ..., 'format' => '...']]
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function schemaMetadata(): array
+    {
+        return [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $rules
+     * @return array<string, mixed>
+     */
+    protected static function prefixRules(array $rules, string $prefix): array
+    {
+        $prefixed = [];
+
+        foreach ($rules as $key => $rule) {
+            $prefixed[$prefix . '.' . $key] = $rule;
+        }
+
+        return $prefixed;
     }
 
     public function __get(string $name)
@@ -54,5 +113,4 @@ abstract class Settings implements Castable
     {
         unset($this->attributes[$name]);
     }
-
 }

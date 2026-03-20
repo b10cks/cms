@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\SearchRequest;
 use App\Http\Resources\Api\SearchResultResource;
 use App\Models\Management\Space;
 use App\Services\Search\SearchService;
@@ -16,16 +17,11 @@ class SearchController extends Controller
     ) {
     }
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(SearchRequest $request): JsonResponse
     {
         /** @var Space $space */
         $space = app('currentSpace');
-        $validated = $request->validate([
-            'q' => 'required|string|min:1|max:500',
-            'limit' => 'sometimes|integer|min:1|max:100',
-            'offset' => 'sometimes|integer|min:0',
-            'language' => 'sometimes|string|min:2|max:5'
-        ]);
+        $validated = $request->validated();
 
         $query = $validated['q'];
         $limit = $validated['limit'] ?? 20;

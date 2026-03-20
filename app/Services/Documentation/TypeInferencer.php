@@ -12,20 +12,20 @@ class TypeInferencer
         $schema = [];
 
         // Extract base type from rules
-        if (in_array('string', $rules)) {
+        if (in_array('string', $rules, true)) {
             $schema['type'] = 'string';
-        } elseif (in_array('integer', $rules) || in_array('int', $rules)) {
+        } elseif (in_array('integer', $rules, true) || in_array('int', $rules, true)) {
             $schema['type'] = 'integer';
-        } elseif (in_array('numeric', $rules)) {
+        } elseif (in_array('numeric', $rules, true)) {
             $schema['type'] = 'number';
-        } elseif (in_array('boolean', $rules)) {
+        } elseif (in_array('boolean', $rules, true)) {
             $schema['type'] = 'boolean';
-        } elseif (in_array('array', $rules)) {
+        } elseif (in_array('array', $rules, true)) {
             $schema['type'] = 'array';
-        } elseif (in_array('file', $rules)) {
+        } elseif (in_array('file', $rules, true)) {
             $schema['type'] = 'string';
             $schema['format'] = 'binary';
-        } elseif (in_array('image', $rules)) {
+        } elseif (in_array('image', $rules, true)) {
             $schema['type'] = 'string';
             $schema['format'] = 'binary';
         } else {
@@ -34,15 +34,19 @@ class TypeInferencer
 
         // Add constraints from rules
         foreach ($rules as $rule) {
+            if (!is_string($rule) || $rule === '') {
+                continue;
+            }
+
             // Handle max constraint
             if (str_starts_with($rule, 'max:')) {
                 $value = (int) substr($rule, 4);
                 if ($schema['type'] === 'string') {
                     $schema['maxLength'] = $value;
-                } elseif ($schema['type'] === 'integer') {
+                } elseif ($schema['type'] === 'integer' || $schema['type'] === 'number') {
                     $schema['maximum'] = $value;
                 } else {
-                    $schema['max'] = $value;
+                    $schema['maxItems'] = $value;
                 }
             }
 
@@ -51,10 +55,10 @@ class TypeInferencer
                 $value = (int) substr($rule, 4);
                 if ($schema['type'] === 'string') {
                     $schema['minLength'] = $value;
-                } elseif ($schema['type'] === 'integer') {
+                } elseif ($schema['type'] === 'integer' || $schema['type'] === 'number') {
                     $schema['minimum'] = $value;
                 } else {
-                    $schema['min'] = $value;
+                    $schema['minItems'] = $value;
                 }
             }
 
@@ -75,11 +79,11 @@ class TypeInferencer
             }
 
             // Handle specific formats
-            if ($rule === 'email') {
+            if ($rule === 'email' || str_starts_with($rule, 'email:')) {
                 $schema['format'] = 'email';
             }
 
-            if ($rule === 'url') {
+            if ($rule === 'url' || str_starts_with($rule, 'url:')) {
                 $schema['format'] = 'uri';
             }
 
@@ -100,14 +104,9 @@ class TypeInferencer
             }
         }
 
-        // Handle nullable fields
-        if (in_array('nullable', $rules)) {
-            return [
-                'oneOf' => [
-                    $schema,
-                    ['type' => 'null'],
-                ],
-            ];
+        // Handle nullable fields using OpenAPI nullable instead of type=null unions
+        if (in_array('nullable', $rules, true)) {
+            $schema['nullable'] = true;
         }
 
         return $schema;

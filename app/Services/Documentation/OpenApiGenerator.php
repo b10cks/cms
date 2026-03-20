@@ -12,7 +12,8 @@ class OpenApiGenerator
         private RouteAnalyzer $routeAnalyzer,
         private SchemaBuilder $schemaBuilder,
         private Filesystem $files
-    ) {}
+    ) {
+    }
 
     /**
      * Generate OpenAPI documentation
@@ -23,10 +24,8 @@ class OpenApiGenerator
         $prefixes = $this->getConfiguredPrefixes();
         $routes = $this->routeAnalyzer->analyzeRoutes(array_keys($prefixes));
 
-        // Build base OpenAPI structure
         $spec = $this->buildBaseStructure();
 
-        // Build paths from routes
         $pathsByPrefix = [];
 
         foreach ($routes as $route) {
@@ -45,7 +44,6 @@ class OpenApiGenerator
             $pathsByPrefix[$prefix][$path][$method] = $this->buildOperation($route);
         }
 
-        // Add paths to spec
         $spec['paths'] = [];
         foreach ($pathsByPrefix as $prefix => $paths) {
             foreach ($paths as $path => $operations) {
@@ -53,7 +51,6 @@ class OpenApiGenerator
             }
         }
 
-        // Build component schemas - only used ones
         $allSchemas = $this->schemaBuilder->buildAllSchemas();
         $spec['components']['schemas'] = $this->filterSchemasForUsed($allSchemas);
 
@@ -73,11 +70,7 @@ class OpenApiGenerator
         }
 
         $routes = $this->routeAnalyzer->analyzeRoutes([$prefix]);
-
-        // Build base OpenAPI structure with prefix-specific config
         $spec = $this->buildBaseStructure($prefix);
-
-        // Build paths from routes
         $spec['paths'] = [];
 
         foreach ($routes as $route) {
@@ -91,11 +84,9 @@ class OpenApiGenerator
             $spec['paths'][$path][$method] = $this->buildOperation($route);
         }
 
-        // Build component schemas - only used ones
         $allSchemas = $this->schemaBuilder->buildAllSchemas();
         $spec['components']['schemas'] = $this->filterSchemasForUsed($allSchemas);
 
-        // Apply security scheme for this prefix
         $security = $prefixes[$prefix]['security'] ?? [];
         if (!empty($security)) {
             $securityScheme = array_fill_keys($security, []);
@@ -120,7 +111,6 @@ class OpenApiGenerator
         $outputDir = config('docs.output.directory', public_path('docs'));
         $perPrefix = config('docs.output.per_prefix', true);
 
-        // Ensure directory exists
         if (!$this->files->isDirectory($outputDir)) {
             $this->files->makeDirectory($outputDir, 0755, true);
         }
@@ -128,7 +118,6 @@ class OpenApiGenerator
         $files = [];
 
         if ($perPrefix) {
-            // Generate separate file per prefix
             foreach (array_keys($prefixes) as $prefix) {
                 $spec = $this->generateForPrefix($prefix);
                 $filename = str_replace('/', '_', $prefix) . '.json';
@@ -138,7 +127,6 @@ class OpenApiGenerator
                 $files[$prefix] = $filepath;
             }
         } else {
-            // Generate single file with all routes
             $spec = $this->generate();
             $filepath = $outputDir . '/openapi.json';
 
@@ -160,7 +148,6 @@ class OpenApiGenerator
         $title = $config['info']['title'] ?? 'API';
         $description = $config['info']['description'] ?? '';
 
-        // Use prefix-specific title if available
         if ($prefix && isset($prefixes[$prefix]['title'])) {
             $title = $prefixes[$prefix]['title'];
             $description = $prefixes[$prefix]['description'] ?? $description;
@@ -194,11 +181,10 @@ class OpenApiGenerator
     protected function buildSecuritySchemes(): array
     {
         $config = config('docs.security_schemes', []);
-
         $schemes = [];
 
         foreach ($config as $name => $scheme) {
-            if ($scheme['type'] === 'apiKey') {
+            if (($scheme['type'] ?? null) === 'apiKey') {
                 $schemes[$name] = [
                     'type' => 'apiKey',
                     'in' => $scheme['in'] ?? 'query',
@@ -208,7 +194,7 @@ class OpenApiGenerator
                 if (isset($scheme['description'])) {
                     $schemes[$name]['description'] = $scheme['description'];
                 }
-            } elseif ($scheme['type'] === 'http') {
+            } elseif (($scheme['type'] ?? null) === 'http') {
                 $schemes[$name] = [
                     'type' => 'http',
                     'scheme' => $scheme['scheme'] ?? 'bearer',
@@ -235,20 +221,19 @@ class OpenApiGenerator
             'operationId' => $this->generateOperationId($route),
         ];
 
-        // Add parameters
-        if (!empty($route['parameters']) || !empty($route['queryParameters'])) {
-            $operation['parameters'] = array_merge(
-                $route['parameters'] ?? [],
-                $route['queryParameters'] ?? []
-            );
+        $parameters = $this->mergeParameters(
+            $route['parameters'] ?? [],
+            $route['queryParameters'] ?? [],
+        );
+
+        if (!empty($parameters)) {
+            $operation['parameters'] = array_values($parameters);
         }
 
-        // Add request body - convert to refs
         if (!empty($route['requestBody'])) {
             $operation['requestBody'] = $this->convertSchemasToRefs($route['requestBody']);
         }
 
-        // Add responses - convert to refs
         if (!empty($route['responses'])) {
             $operation['responses'] = $this->convertResponseSchemasToRefs($route['responses']);
         } else {
@@ -257,21 +242,191 @@ class OpenApiGenerator
             ];
         }
 
-        // Add security if not already in path item
         $prefixes = $this->getConfiguredPrefixes();
         $prefix = $route['prefix'];
 
         if (isset($prefixes[$prefix]['security'])) {
             $security = $prefixes[$prefix]['security'];
+
             if (!empty($security)) {
                 $operation['security'] = [array_fill_keys($security, [])];
             } elseif ($security === [] || $security === false) {
-                // Explicitly no security required
                 $operation['security'] = [];
             }
         }
 
         return $operation;
+    }
+
+    /**
+     * Merge path/query parameter definitions while preserving richer details.
+     *
+     * Parameters are keyed by "in:name". When duplicates exist, the more complete
+     * version wins and missing metadata is merged into the final output.
+     */
+    protected function mergeParameters(array ...$parameterGroups): array
+    {
+        $merged = [];
+
+        foreach ($parameterGroups as $group) {
+            foreach ($group as $parameter) {
+                if (!is_array($parameter)) {
+                    continue;
+                }
+
+                $name = $parameter['name'] ?? null;
+                $in = $parameter['in'] ?? null;
+
+                if (!$name || !$in) {
+                    continue;
+                }
+
+                $key = $in . ':' . $name;
+
+                if (!isset($merged[$key])) {
+                    $merged[$key] = $parameter;
+                    continue;
+                }
+
+                $merged[$key] = $this->mergeParameter($merged[$key], $parameter);
+            }
+        }
+
+        return $merged;
+    }
+
+    /**
+     * Merge two parameter definitions into one richer representation.
+     */
+    protected function mergeParameter(array $base, array $incoming): array
+    {
+        $result = $base;
+
+        $result['name'] = $incoming['name'] ?? $base['name'] ?? null;
+        $result['in'] = $incoming['in'] ?? $base['in'] ?? null;
+        $result['required'] = ($base['required'] ?? false) || ($incoming['required'] ?? false);
+
+        if (!isset($result['description']) || $this->isDescriptionBetter($incoming['description'] ?? null, $result['description'] ?? null)) {
+            if (!empty($incoming['description'])) {
+                $result['description'] = $incoming['description'];
+            }
+        }
+
+        if (isset($base['schema']) || isset($incoming['schema'])) {
+            $result['schema'] = $this->mergeSchemaDetails(
+                $base['schema'] ?? [],
+                $incoming['schema'] ?? [],
+            );
+        }
+
+        foreach (['example', 'examples', 'deprecated', 'style', 'explode', 'allowEmptyValue', 'allowReserved'] as $field) {
+            if (!array_key_exists($field, $result) && array_key_exists($field, $incoming)) {
+                $result[$field] = $incoming[$field];
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Merge schema fragments while preferring the richer definition.
+     */
+    protected function mergeSchemaDetails(array $base, array $incoming): array
+    {
+        if (empty($base)) {
+            return $incoming;
+        }
+
+        if (empty($incoming)) {
+            return $base;
+        }
+
+        $result = $base;
+
+        foreach ($incoming as $key => $value) {
+            if (!array_key_exists($key, $result)) {
+                $result[$key] = $value;
+                continue;
+            }
+
+            if ($key === 'description') {
+                if ($this->isDescriptionBetter($value, $result[$key])) {
+                    $result[$key] = $value;
+                }
+                continue;
+            }
+
+            if ($key === 'enum' && is_array($value) && is_array($result[$key])) {
+                $result[$key] = array_values(array_unique([...$result[$key], ...$value], SORT_REGULAR));
+                continue;
+            }
+
+            if ($key === 'oneOf' && is_array($value) && is_array($result[$key])) {
+                $result[$key] = array_values(array_merge($result[$key], $value));
+                continue;
+            }
+
+            if ($key === 'items' && is_array($value) && is_array($result[$key])) {
+                $result[$key] = $this->mergeSchemaDetails($result[$key], $value);
+                continue;
+            }
+
+            if ($key === 'properties' && is_array($value) && is_array($result[$key])) {
+                foreach ($value as $propertyName => $propertySchema) {
+                    if (isset($result[$key][$propertyName]) && is_array($result[$key][$propertyName]) && is_array($propertySchema)) {
+                        $result[$key][$propertyName] = $this->mergeSchemaDetails($result[$key][$propertyName], $propertySchema);
+                    } else {
+                        $result[$key][$propertyName] = $propertySchema;
+                    }
+                }
+                continue;
+            }
+
+            if (in_array($key, ['required'], true) && is_array($value) && is_array($result[$key])) {
+                $result[$key] = array_values(array_unique([...$result[$key], ...$value]));
+                continue;
+            }
+
+            if ($this->isValueMoreInformative($value, $result[$key])) {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+    protected function isDescriptionBetter(mixed $candidate, mixed $current): bool
+    {
+        if (!is_string($candidate) || trim($candidate) === '') {
+            return false;
+        }
+
+        if (!is_string($current) || trim($current) === '') {
+            return true;
+        }
+
+        return mb_strlen(trim($candidate)) > mb_strlen(trim($current));
+    }
+
+    protected function isValueMoreInformative(mixed $candidate, mixed $current): bool
+    {
+        if ($current === null || $current === '' || $current === []) {
+            return true;
+        }
+
+        if ($candidate === null || $candidate === '' || $candidate === []) {
+            return false;
+        }
+
+        if (is_array($candidate) && is_array($current)) {
+            return count($candidate) > count($current);
+        }
+
+        if (is_string($candidate) && is_string($current)) {
+            return mb_strlen($candidate) > mb_strlen($current);
+        }
+
+        return false;
     }
 
     /**
@@ -281,9 +436,7 @@ class OpenApiGenerator
     {
         $parts = explode('/', trim($route['uri'], '/'));
         $resource = $parts[count($parts) - 1] ?? 'resource';
-
         $method = strtolower($route['method']);
-        $name = $route['controllerMethod'] ?? $method;
 
         return "{$method}_{$resource}";
     }
@@ -294,8 +447,8 @@ class OpenApiGenerator
     protected function convertSchemasToRefs(array $requestBody): array
     {
         if (isset($requestBody['content'])) {
-            foreach ($requestBody['content'] as $contentType => &$content) {
-                if (isset($content['schema'])) {
+            foreach ($requestBody['content'] as &$content) {
+                if (isset($content['schema']) && is_array($content['schema'])) {
                     $content['schema'] = $this->convertSchemaToRef($content['schema']);
                 }
             }
@@ -309,10 +462,10 @@ class OpenApiGenerator
      */
     protected function convertResponseSchemasToRefs(array $responses): array
     {
-        foreach ($responses as $statusCode => &$response) {
+        foreach ($responses as &$response) {
             if (isset($response['content'])) {
-                foreach ($response['content'] as $contentType => &$content) {
-                    if (isset($content['schema'])) {
+                foreach ($response['content'] as &$content) {
+                    if (isset($content['schema']) && is_array($content['schema'])) {
                         $content['schema'] = $this->convertSchemaToRef($content['schema']);
                     }
                 }
@@ -327,33 +480,38 @@ class OpenApiGenerator
      */
     protected function convertSchemaToRef(array $schema): array
     {
-        // If already a ref, return as-is
         if (isset($schema['$ref'])) {
             $this->trackSchemaUsageFromRef($schema['$ref']);
-            // Clean internal hints
             unset($schema['x-resource-class']);
+
             return $schema;
         }
 
-        // Check if this is a paginated response (has data, links, meta structure)
-        if (isset($schema['properties']['data']) && isset($schema['properties']['links']) && isset($schema['properties']['meta'])) {
-            // Convert the items inside the data array
-            if (isset($schema['properties']['data']['items']) && isset($schema['properties']['data']['items']['x-resource-class'])) {
+        if (
+            isset($schema['properties']['data']) &&
+            isset($schema['properties']['links']) &&
+            isset($schema['properties']['meta'])
+        ) {
+            if (
+                isset($schema['properties']['data']['items']) &&
+                isset($schema['properties']['data']['items']['x-resource-class'])
+            ) {
                 $resourceClass = $schema['properties']['data']['items']['x-resource-class'];
                 unset($schema['properties']['data']['items']['x-resource-class']);
 
                 $schemaName = class_basename($resourceClass);
                 $this->trackSchemaUsage($schemaName);
 
-                $schema['properties']['data']['items'] = ['$ref' => "#/components/schemas/{$schemaName}"];
+                $schema['properties']['data']['items'] = [
+                    '$ref' => "#/components/schemas/{$schemaName}",
+                ];
             }
 
-            // Clean internal hints from top level
             unset($schema['x-resource-class']);
+
             return $schema;
         }
 
-        // Check if this schema has a resource class hint (single resource response)
         if (isset($schema['x-resource-class'])) {
             $resourceClass = $schema['x-resource-class'];
             unset($schema['x-resource-class']);
@@ -372,7 +530,6 @@ class OpenApiGenerator
      */
     protected function trackSchemaUsageFromRef(string $ref): void
     {
-        // Extract schema name from ref like "#/components/schemas/BlockResource"
         if (preg_match('#/components/schemas/(.+)$#', $ref, $matches)) {
             $this->usedSchemas[$matches[1]] = true;
         }
@@ -399,7 +556,6 @@ class OpenApiGenerator
             }
         }
 
-        // Always include common schemas
         $commonSchemas = ['PaginatedResponse', 'Error', 'ValidationError'];
         foreach ($commonSchemas as $schemaName) {
             if (isset($allSchemas[$schemaName]) && !isset($filtered[$schemaName])) {

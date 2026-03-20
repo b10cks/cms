@@ -13,7 +13,8 @@ class SchemaBuilder
 
     public function __construct(
         private ResourceParser $resourceParser
-    ) {}
+    ) {
+    }
 
     /**
      * Build all component schemas
@@ -131,13 +132,13 @@ class SchemaBuilder
                             'description' => 'Link to last page',
                         ],
                         'prev' => [
-                            'type' => ['string', 'null'],
+                            'type' => 'string',
                             'format' => 'uri',
                             'nullable' => true,
                             'description' => 'Link to previous page',
                         ],
                         'next' => [
-                            'type' => ['string', 'null'],
+                            'type' => 'string',
                             'format' => 'uri',
                             'nullable' => true,
                             'description' => 'Link to next page',
@@ -153,7 +154,7 @@ class SchemaBuilder
                             'description' => 'Current page number',
                         ],
                         'from' => [
-                            'type' => ['integer', 'null'],
+                            'type' => 'integer',
                             'nullable' => true,
                             'description' => 'Index of first item on current page',
                         ],
@@ -166,7 +167,7 @@ class SchemaBuilder
                             'description' => 'Number of items per page',
                         ],
                         'to' => [
-                            'type' => ['integer', 'null'],
+                            'type' => 'integer',
                             'nullable' => true,
                             'description' => 'Index of last item on current page',
                         ],
