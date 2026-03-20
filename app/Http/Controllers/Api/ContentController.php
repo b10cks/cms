@@ -12,6 +12,7 @@ use App\Services\Content\ContentI18nResolver;
 use App\Services\Content\LocalizedContentSlugService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ContentController
 {
@@ -44,7 +45,37 @@ class ContentController
             $query->leftJoin('content_versions', 'contents.current_version_id', '=', 'content_versions.id');
         }
 
-        return new ContentResourceCollection($query->paginate(min($request->per_page ?? 20, 500)));
+        $paginator = $query->paginate(min($request->per_page ?? 20, 500));
+        $resolver = app(ContentI18nResolver::class);
+        $space = app('currentSpace');
+        $versionScope = $vid === 'draft' ? 'current' : $vid;
+
+        $requestedLanguage = $request->input('language') ?? $request->input('language_iso') ?? $space->settings->getDefaultLanguage();
+
+        $resolvedItems = $resolver->resolveMany(
+            $space,
+            $paginator->getCollection()->map(
+                fn(Content $content): array => [
+                    'content' => $content,
+                    'target_language' => $requestedLanguage,
+                ]
+            ),
+            $versionScope,
+        )->map(fn($resolved) => new ContentResource($resolved));
+
+        $resolvedPaginator = new LengthAwarePaginator(
+            $resolvedItems,
+            $paginator->total(),
+            $paginator->perPage(),
+            $paginator->currentPage(),
+            [
+                'path' => $paginator->path(),
+                'pageName' => $paginator->getPageName(),
+                'query' => request()->query(),
+            ],
+        );
+
+        return new ContentResourceCollection($resolvedPaginator);
     }
 
     public function show(Request $request, string $slug): ContentResource|Response
@@ -53,7 +84,7 @@ class ContentController
         $space = app('currentSpace');
 
         $language = $request->input('language') ?? $request->input('language_iso') ?? $space->settings->getDefaultLanguage();
-        if (! \in_array($language, $space->settings->getEnabledLanguages())) {
+        if (!\in_array($language, $space->settings->getEnabledLanguages())) {
             $language = $space->settings->getDefaultLanguage();
         }
 
@@ -71,9 +102,30 @@ class ContentController
         }
 
         $candidate = $this->findFamilyCandidate($slug, $language, $space);
-        abort_if(! $candidate, 404);
+        abort_if(!$candidate, 404);
 
         $versionScope = $request->input('vid', 'published');
+
+        if ($versionScope === 'published') {
+            $candidate->loadMissing([
+                'published_version.assets',
+                'published_version.links',
+                'published_version.relations',
+            ]);
+        } elseif ($versionScope === 'draft') {
+            $candidate->loadMissing([
+                'current_version.assets',
+                'current_version.links',
+                'current_version.relations',
+            ]);
+        }
+
+        $candidate->loadMissing([
+            'block',
+            'i18n_parent',
+            'i18n_children',
+            'i18n_siblings',
+        ]);
         $resolved = app(ContentI18nResolver::class)->resolve(
             $space,
             $candidate,
@@ -82,8 +134,8 @@ class ContentController
         );
 
         if (
-            ($resolved->effectiveMode === 'independent' && ! $resolved->targetContent) ||
-            ($resolved->effectiveMode === 'overlay' && ! $resolved->targetContent && ! $resolved->fallbackContent)
+            ($resolved->effectiveMode === 'independent' && !$resolved->targetContent) ||
+            ($resolved->effectiveMode === 'overlay' && !$resolved->targetContent && !$resolved->fallbackContent)
         ) {
             abort(404);
         }
@@ -96,6 +148,12 @@ class ContentController
         $candidates = Content::query()
             ->where('full_slug', "/$slug")
             ->whereNull('deleted_at')
+            ->with([
+                'block',
+                'i18n_parent',
+                'i18n_children',
+                'i18n_siblings',
+            ])
             ->get();
 
         if ($candidates->isEmpty()) {

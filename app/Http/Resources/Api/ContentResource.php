@@ -61,14 +61,16 @@ class ContentResource extends JsonResource
             return $this->resource;
         }
 
+        $versionScope = $request->input('vid', 'published');
+
         /** @var Content $content */
         $content = $this->resource;
-        $versionScope = $request->input('vid', 'published');
+        $language = $content->language_iso;
 
         return app(ContentI18nResolver::class)->resolve(
             app('currentSpace'),
             $content,
-            $content->language_iso,
+            $language,
             $versionScope === 'draft' ? 'current' : $versionScope,
         );
     }

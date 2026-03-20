@@ -13,8 +13,9 @@ class ContentResourceCollection extends ResourceCollection
             'rv' => app('currentSpace')->rv
         ]);
 
-        return $this->collection->map(fn($content) => new ContentResource($content->resource))
-            ->all();
+        return $this->collection->map(
+            fn($content) => $content instanceof ContentResource ? $content : new ContentResource($content)
+        )->all();
     }
 
 }
