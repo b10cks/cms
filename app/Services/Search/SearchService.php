@@ -6,6 +6,7 @@ use App\Contracts\Search\SearchDriverInterface;
 use App\Enums\SearchDriver;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
+use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
 class SearchService
@@ -72,7 +73,78 @@ class SearchService
     public function search(Space $space, string $query, string $language, int $limit = 20, int $offset = 0): array
     {
         $driver = $this->getDriver($space);
-        return $driver->search($space, $query, $language, $limit, $offset);
+        $searchResults = $driver->search($space, $query, $language, $limit, $offset);
+
+        $hits = collect($searchResults['results'] ?? []);
+        if ($hits->isEmpty()) {
+            return [
+                'total' => (int) ($searchResults['total'] ?? 0),
+                'results' => [],
+            ];
+        }
+
+        $contents = $this->hydrateContents($hits);
+
+        $results = $hits
+            ->map(function (array $hit) use ($contents): ?Content {
+                $content = $contents->get($hit['id'] ?? null);
+
+                if (!$content) {
+                    return null;
+                }
+
+                $content->setAttribute('relevance_score', isset($hit['relevance_score']) ? (float) $hit['relevance_score'] : 0.0);
+
+                return $content;
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        return [
+            'total' => (int) ($searchResults['total'] ?? 0),
+            'results' => $results,
+        ];
+    }
+
+    protected function hydrateContents(Collection $hits): Collection
+    {
+        $ids = $hits
+            ->pluck('id')
+            ->filter()
+            ->values()
+            ->all();
+
+        if ($ids === []) {
+            return collect();
+        }
+
+        $contents = Content::query()
+            ->whereIn('contents.id', $ids)
+            ->whereNotNull('contents.published_at')
+            ->select([
+                'contents.*',
+                'content_versions.content',
+                'content_versions.relation_ids',
+                'content_versions.asset_ids',
+                'content_versions.link_ids',
+            ])
+            ->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id')
+            ->with([
+                'i18n_parent',
+                'i18n_children',
+                'i18n_siblings',
+                'block',
+                'relations',
+                'assets',
+                'links',
+            ])
+            ->get()
+            ->keyBy('id');
+
+        return collect($ids)
+            ->mapWithKeys(fn(string $id) => [$id => $contents->get($id)])
+            ->filter();
     }
 
     protected function getSearchDriver(Space $space): SearchDriver

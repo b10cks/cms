@@ -153,7 +153,8 @@ class OpenSearchDriver implements SearchDriverInterface
     {
         $this->createIndex($space);
 
-        Content::whereNotNull('contents.published_at')
+        Content::query()
+            ->whereNotNull('contents.published_at')
             ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block', 'relations', 'assets', 'links'])
             ->select([
                 'contents.*',
@@ -163,11 +164,13 @@ class OpenSearchDriver implements SearchDriverInterface
                 'content_versions.link_ids'
             ])
             ->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id')
-            ->chunk(100, function ($contents) use ($space) {
+            ->orderBy('contents.id')
+            ->chunkById(100, function ($contents) use ($space) {
                 foreach ($contents as $content) {
+                    /** @var Content $content */
                     $this->indexContent($content, $space);
                 }
-            });
+            }, 'contents.id', 'id');
     }
 
     protected function getIndexName(Space $space): string
@@ -177,7 +180,9 @@ class OpenSearchDriver implements SearchDriverInterface
 
     public function search(Space $space, string $query, string $language, int $limit = 20, int $offset = 0): array
     {
-        if (empty(trim($query))) {
+        $query = trim($query);
+
+        if ($query === '') {
             return [
                 'total' => 0,
                 'results' => [],
@@ -192,37 +197,58 @@ class OpenSearchDriver implements SearchDriverInterface
                     'from' => $offset,
                     'size' => $limit,
                     'query' => [
-                        'match' => [
-                            'language_iso' => $language,
-                            'searchable_content' => [
-                                'query' => $query,
-                                'operator' => 'or'
-                            ]
-                        ]
+                        'bool' => [
+                            'must' => [
+                                [
+                                    'match' => [
+                                        'searchable_content' => [
+                                            'query' => $query,
+                                            'operator' => 'or',
+                                        ],
+                                    ],
+                                ],
+                            ],
+                            'filter' => [
+                                [
+                                    'term' => [
+                                        'language_iso' => $language,
+                                    ],
+                                ],
+                            ],
+                        ],
                     ],
                     'sort' => [
-                        '_score' => ['order' => 'desc']
-                    ]
-                ]
+                        [
+                            '_score' => [
+                                'order' => 'desc',
+                            ],
+                        ],
+                        [
+                            'published_at' => [
+                                'order' => 'desc',
+                                'unmapped_type' => 'date',
+                            ],
+                        ],
+                    ],
+                    '_source' => [
+                        'includes' => ['id'],
+                    ],
+                ],
             ]);
 
             $body = json_decode($response->getBody()->getContents(), true);
             $hits = $body['hits'] ?? [];
-            $total = $hits['total']['value'] ?? 0;
+            $total = (int) ($hits['total']['value'] ?? 0);
 
-            $results = array_map(function ($hit) {
-                $source = $hit['_source'];
-                return [
-                    'id' => $source['id'],
-                    'name' => $source['name'],
-                    'slug' => $source['slug'],
-                    'full_slug' => $source['full_slug'],
-                    'language_iso' => $source['language_iso'],
-                    'block_id' => $source['block_id'],
-                    'published_at' => $source['published_at'],
-                    'relevance_score' => $hit['_score'],
-                ];
-            }, $hits['hits'] ?? []);
+            $results = array_values(array_filter(array_map(
+                fn(array $hit): ?array => isset($hit['_source']['id'])
+                ? [
+                    'id' => $hit['_source']['id'],
+                    'relevance_score' => round((float) ($hit['_score'] ?? 0), 4),
+                ]
+                : null,
+                $hits['hits'] ?? [],
+            )));
 
             return [
                 'total' => $total,
@@ -239,8 +265,12 @@ class OpenSearchDriver implements SearchDriverInterface
             Log::error('Failed to search content in OpenSearch', [
                 'space_id' => $space->id,
                 'query' => $query,
-                'error' => $e->getMessage()
+                'language' => $language,
+                'limit' => $limit,
+                'offset' => $offset,
+                'error' => $e->getMessage(),
             ]);
+
             throw $e;
         }
     }

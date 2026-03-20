@@ -88,11 +88,13 @@ class MySqlSearchDriver implements SearchDriverInterface
                 'content_versions.link_ids'
             ])
             ->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id')
-            ->chunk(100, function ($contents) use ($space) {
+            ->orderBy('contents.id')
+            ->chunkById(100, function ($contents) use ($space) {
                 foreach ($contents as $content) {
+                    /** @var Content $content */
                     $this->indexContent($content, $space);
                 }
-            });
+            }, 'contents.id', 'id');
     }
 
     public function search(Space $space, string $query, string $language, int $limit = 20, int $offset = 0): array
@@ -104,40 +106,29 @@ class MySqlSearchDriver implements SearchDriverInterface
             ];
         }
 
-        $content = new Content();
-        $connection = $content->getConnection();
-        $tableName = $content->getTable();
-
         $searchQuery = $this->prepareSearchQuery($query);
 
         try {
-            $totalQuery = Content::whereNotNull('published_at')
+            $baseQuery = Content::query()
+                ->whereNotNull('published_at')
                 ->whereNotNull('searchable_content')
                 ->where('language_iso', $language)
                 ->whereRaw("MATCH(searchable_content) AGAINST(? IN NATURAL LANGUAGE MODE)", [$searchQuery]);
 
-            $total = $totalQuery->count();
+            $total = (clone $baseQuery)->count();
 
-            $results = Content::whereNotNull('published_at')
-                ->whereNotNull('searchable_content')
-                ->where('language_iso', $language)
-                ->whereRaw("MATCH(searchable_content) AGAINST(? IN NATURAL LANGUAGE MODE)", [$searchQuery])
-                ->selectRaw("contents.*, MATCH(searchable_content) AGAINST(? IN NATURAL LANGUAGE MODE) as relevance_score", [$searchQuery])
+            $results = (clone $baseQuery)
+                ->selectRaw('contents.id, MATCH(searchable_content) AGAINST(? IN NATURAL LANGUAGE MODE) as relevance_score', [$searchQuery])
                 ->orderByDesc('relevance_score')
+                ->orderBy('contents.id')
                 ->skip($offset)
                 ->take($limit)
                 ->get()
-                ->map(fn($content) => [
-                    'id' => $content->id,
-                    'name' => $content->name,
-                    'slug' => $content->slug,
-                    'full_slug' => $content->full_slug,
-                    'language_iso' => $content->language_iso,
-                    'block_id' => $content->block_id,
-                    'published_at' => $content->published_at?->toIso8601String(),
-                    'relevance_score' => $content->relevance_score,
-                ])
-                ->toArray();
+                ->map(fn($content) => $this->formatSearchHit(
+                    id: $content->id,
+                    relevanceScore: (float) $content->relevance_score,
+                ))
+                ->all();
 
             return [
                 'total' => $total,
@@ -150,6 +141,7 @@ class MySqlSearchDriver implements SearchDriverInterface
                     'results' => [],
                 ];
             }
+
             throw $e;
         }
     }
@@ -157,5 +149,13 @@ class MySqlSearchDriver implements SearchDriverInterface
     protected function prepareSearchQuery(string $query): string
     {
         return trim($query);
+    }
+
+    protected function formatSearchHit(string $id, float $relevanceScore): array
+    {
+        return [
+            'id' => $id,
+            'relevance_score' => $relevanceScore,
+        ];
     }
 }

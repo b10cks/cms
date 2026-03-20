@@ -3,31 +3,30 @@
 namespace App\Http\Resources\Api;
 
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @resourceProperty id Search result identifier.
+ * @resourceProperty id format=uuid Unique content identifier.
  * @resourceProperty name Human-readable content name.
- * @resourceProperty slug URL slug of the matched content.
- * @resourceProperty full_slug Full resolved path of the matched content.
- * @resourceProperty language_iso example=en ISO language code of the matched content.
- * @resourceProperty block_id Identifier of the related block.
+ * @resourceProperty slug URL slug of the resolved content.
+ * @resourceProperty block Slug of the assigned block definition.
+ * @resourceProperty parent_id format=uuid Parent content identifier if this content is nested.
+ * @resourceProperty full_slug Full resolved path including all parent slugs.
+ * @resourceProperty content type=object additionalProperties=true Effective content payload after i18n, link, and asset resolution.
+ * @resourceProperty language_iso Requested language ISO code used for content resolution.
+ * @resourceProperty translations type=array itemResource=SimpleContentResource Published sibling translations of the resolved content.
  * @resourceProperty published_at format=date-time Publication timestamp in ISO 8601 format.
- * @resourceProperty relevance_score example=0.9876 Search relevance score rounded to 4 decimal places.
+ * @resourceProperty first_published_at format=date-time First publication timestamp in ISO 8601 format.
+ * @resourceProperty created_at format=date-time Creation timestamp in ISO 8601 format.
+ * @resourceProperty updated_at format=date-time Last update timestamp in ISO 8601 format.
+ * @resourceProperty relevance_score type=number example=0.9876 Search relevance score rounded to 4 decimal places.
  */
-class SearchResultResource extends JsonResource
+class SearchResultResource extends ContentResource
 {
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->resource['id'],
-            'name' => $this->resource['name'],
-            'slug' => $this->resource['slug'],
-            'full_slug' => $this->resource['full_slug'],
-            'language_iso' => $this->resource['language_iso'],
-            'block_id' => $this->resource['block_id'],
-            'published_at' => $this->resource['published_at'],
-            'relevance_score' => round($this->resource['relevance_score'], 4),
+            ...parent::toArray($request),
+            'relevance_score' => round((float) data_get($this->resource, 'relevance_score', 0), 4),
         ];
     }
 }
