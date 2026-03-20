@@ -155,6 +155,29 @@ class AuthorizationTest extends TestCase
     }
 
     #[Test]
+    public function selector_team_index_includes_teams_for_space_only_users_without_granting_team_access(): void
+    {
+        $user = User::factory()->create();
+        $team = Team::factory()->create();
+        $space = Space::factory()->create(['team_id' => $team->id]);
+
+        $this->assignSpaceRole($space, $user, 'editor');
+        $this->actingAs($user);
+
+        $response = $this->getJson(route('mgmt.teams.index', [
+            'include_space_context' => 'true',
+        ]));
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $team->id)
+            ->assertJsonPath('data.0.can_view_detail', false)
+            ->assertJsonPath('data.0.can_create_space', false);
+
+        $this->getJson(route('mgmt.teams.show', $team))->assertForbidden();
+    }
+
+    #[Test]
     public function team_member_cannot_manage_members_invites_or_space_roles(): void
     {
         $user = User::factory()->create();

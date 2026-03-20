@@ -99,6 +99,28 @@ class AuthorizationService
         return array_keys($this->graphForUser($user)['teams'] ?? []);
     }
 
+    public function selectorAccessibleTeamIds(User $user): array
+    {
+        if ($user->is_root) {
+            return DB::table('teams')
+                ->whereNull('deleted_at')
+                ->pluck('id')
+                ->all();
+        }
+
+        $teamIds = $this->accessibleTeamIds($user);
+        $spaceTeamIds = DB::table('spaces')
+            ->whereIn('id', $this->accessibleSpaceIds($user))
+            ->whereNotNull('team_id')
+            ->pluck('team_id')
+            ->all();
+
+        return array_values(array_unique([
+            ...$teamIds,
+            ...$spaceTeamIds,
+        ]));
+    }
+
     public function accessibleSpaceIds(User $user): array
     {
         if ($user->is_root) {

@@ -61,7 +61,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const { alert } = useAlertDialog()
-const { formatDateTime, formatRelativeTime } = useFormat()
+const { formatRelativeTime } = useFormat()
 
 const memberFilters = computed(() => [
   {
@@ -108,13 +108,14 @@ const selectedMembers = ref<Map<string, TeamUserResource>>(new Map())
 const editingRole = ref<string | null>(null)
 
 const selectionCount = computed(() => selectedMembers.value.size)
+const removableMembers = computed(() => props.members.filter((member) => member.can_remove))
 const isAllSelected = computed(() => {
-  return selectionCount.value > 0 && props.members.length === selectionCount.value
+  return selectionCount.value > 0 && removableMembers.value.length === selectionCount.value
 })
 
 const handleSelectAll = (checked: boolean) => {
   if (checked) {
-    props.members.forEach((member) => {
+    removableMembers.value.forEach((member) => {
       selectedMembers.value.set(member.id, member)
     })
   } else {
@@ -123,6 +124,10 @@ const handleSelectAll = (checked: boolean) => {
 }
 
 const handleMemberSelect = (member: TeamUserResource, selected: boolean) => {
+  if (!member.can_remove) {
+    return
+  }
+
   if (selected) {
     selectedMembers.value.set(member.id, member)
   } else {
@@ -139,7 +144,7 @@ const isMemberSelected = (member: TeamUserResource) => {
 }
 
 const handleRoleChange = (member: TeamUserResource, newRole: string) => {
-  if (newRole !== member.role) {
+  if (newRole && newRole !== member.role) {
     emit('updateRole', member.user.id, newRole)
   }
   editingRole.value = null
@@ -159,7 +164,9 @@ const handleRemove = async (member: TeamUserResource) => {
     }
   )
   if (confirmed) {
-    emit('remove', member.user.id)
+    if (member.can_remove) {
+      emit('remove', member.user.id)
+    }
   }
 }
 
@@ -182,10 +189,6 @@ const handleBulkRemove = async () => {
     }
     clearSelection()
   }
-}
-
-const getInitials = (firstname: string, lastname: string) => {
-  return `${firstname.charAt(0)}${lastname.charAt(0)}`.toUpperCase()
 }
 </script>
 
@@ -242,6 +245,7 @@ const getInitials = (firstname: string, lastname: string) => {
               <Checkbox
                 :checked="isAllSelected"
                 :indeterminate="selectionCount > 0 && !isAllSelected"
+                :disabled="removableMembers.length === 0"
                 @update:checked="handleSelectAll"
               />
             </TableHead>
@@ -290,6 +294,7 @@ const getInitials = (firstname: string, lastname: string) => {
             >
               <TableCell class="w-12">
                 <Checkbox
+                  :disabled="!member.can_remove"
                   :checked="isMemberSelected(member)"
                   @update:checked="(checked: boolean) => handleMemberSelect(member, checked)"
                 />
@@ -303,7 +308,30 @@ const getInitials = (firstname: string, lastname: string) => {
                     size="sm"
                   />
                   <div class="font-medium">
-                    {{ member.user.firstname }} {{ member.user.lastname }}
+                    <div class="flex items-center gap-2">
+                      <span>{{ member.user.firstname }} {{ member.user.lastname }}</span>
+                      <Badge
+                        v-if="member.membership_origin === 'space'"
+                        variant="surface"
+                        size="sm"
+                      >
+                        {{ $t('labels.teamMembers.spaceOnly') }}
+                      </Badge>
+                    </div>
+                    <div
+                      v-if="member.space_memberships.length > 0"
+                      class="text-muted-foreground mt-1 text-sm"
+                    >
+                      {{ $t('labels.teamMembers.sourceSpaces') }}:
+                      {{
+                        member.space_memberships
+                          .map(
+                            (membership) =>
+                              `${membership.space.name} (${availableRoles.find((role) => role.key === membership.role)?.name || membership.role || '-'})`
+                          )
+                          .join(', ')
+                      }}
+                    </div>
                   </div>
                 </div>
               </TableCell>
@@ -318,11 +346,11 @@ const getInitials = (firstname: string, lastname: string) => {
                   class="w-32"
                 >
                   <Select
-                    :model-value="member.role"
+                    :model-value="member.role ?? undefined"
                     @update:model-value="(value) => handleRoleChange(member, value as string)"
                   >
                     <SelectTrigger class="h-8">
-                      <SelectValue />
+                      <SelectValue :placeholder="$t('labels.teamMembers.assignRole')" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem
@@ -337,12 +365,16 @@ const getInitials = (firstname: string, lastname: string) => {
                 </div>
                 <Badge
                   v-else
-                  variant="outline"
+                  :variant="member.membership_origin === 'space' ? 'surface' : 'outline'"
                   size="sm"
-                  class="cursor-pointer"
-                  @click="editingRole = member.id"
+                  :class="member.can_assign_team_role ? 'cursor-pointer' : ''"
+                  @click="member.can_assign_team_role ? (editingRole = member.id) : undefined"
                 >
-                  {{ availableRoles.find((role) => role.key === member.role)?.name || member.role }}
+                  {{
+                    member.role
+                      ? availableRoles.find((role) => role.key === member.role)?.name || member.role
+                      : $t('labels.teamMembers.assignRole')
+                  }}
                 </Badge>
               </TableCell>
 
@@ -353,6 +385,7 @@ const getInitials = (firstname: string, lastname: string) => {
               <TableCell class="text-right">
                 <div class="flex justify-end gap-1">
                   <Button
+                    v-if="member.can_assign_team_role"
                     size="icon"
                     variant="ghost"
                     :title="$t('labels.teamMembers.tooltip.editRole')"
@@ -361,6 +394,7 @@ const getInitials = (firstname: string, lastname: string) => {
                     <Icon name="lucide:shield" />
                   </Button>
                   <Button
+                    v-if="member.can_remove"
                     size="icon"
                     variant="ghost"
                     :title="$t('labels.teamMembers.tooltip.remove')"

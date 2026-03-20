@@ -740,6 +740,7 @@
       "emptyDescription": "Spaces give your team a home for content, assets, workflows, and structure — all in one place. Start with your first one and build from there.",
       "newPageTitle": "Create a new space",
       "newPageDescription": "Create a new content space to organize your content.",
+      "noCreateAccess": "You can select {team}, but you do not have permission to create spaces in that team.",
       "steps": {
         "plan": {
           "title": "Plan",
@@ -1370,6 +1371,7 @@
       "detailTitle": "{name}",
       "peopleTitle": "People",
       "peopleDescription": "Invite new collaborators into the team, keep an eye on pending invites, and adjust roles for members who have already joined.",
+      "selectorLimitedAccess": "You can select {team}, but you do not have permission to create spaces there.",
       "invitesTitle": "Pending Invites",
       "invitesDescription": "Track what is still waiting for acceptance, resend the right invite, or clean up stale requests.",
       "inviteAction": "Invite People",
@@ -1459,6 +1461,7 @@
     "teamMembers": {
       "title": "Team Members",
       "description": "Everyone who has already accepted their invitation appears here.",
+      "helper": "This list also includes space-only collaborators from spaces in this team. The member count above still reflects direct team memberships only.",
       "add": "Add Member",
       "addTitle": "Add Team Member",
       "addDescription": "Add an existing user to this team",
@@ -1494,6 +1497,9 @@
         "role": "Role",
         "rolePlaceholder": "Select a role"
       },
+      "assignRole": "Assign team role",
+      "spaceOnly": "Space-only",
+      "sourceSpaces": "From spaces",
       "removeConfirm": {
         "title": "Remove Member",
         "message": "Are you sure you want to remove {firstname} {lastname} from this team?",

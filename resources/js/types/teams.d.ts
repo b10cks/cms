@@ -26,6 +26,8 @@ export interface TeamResource {
   user_count?: number
   spaces_count?: number
   children_count?: number
+  can_view_detail: boolean
+  can_create_space: boolean
   created_at: string
   updated_at: string
 }
@@ -71,7 +73,18 @@ export interface TeamUserResource {
     email: string
     avatar?: string | null
   }
-  role: string
+  role: string | null
+  membership_origin: 'team' | 'space'
+  can_assign_team_role: boolean
+  can_remove: boolean
+  space_memberships: Array<{
+    space: {
+      id: string
+      name: string
+    }
+    role: string | null
+    joined_at: string
+  }>
   joined_at: string
 }
 

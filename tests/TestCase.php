@@ -44,4 +44,15 @@ abstract class TestCase extends BaseTestCase
             'role_id' => $roleId,
         ]);
     }
+
+    protected function assertTeamRole(Team $team, User $user, string $roleKey): void
+    {
+        $roleId = app(RoleService::class)->resolveTeamRole($roleKey)->id;
+
+        $this->assertDatabaseHas('team_user', [
+            'team_id' => $team->id,
+            'user_id' => $user->id,
+            'role_id' => $roleId,
+        ]);
+    }
 }

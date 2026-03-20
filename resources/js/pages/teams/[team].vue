@@ -362,6 +362,9 @@ const navigateBack = () => {
               <p class="text-muted-foreground text-sm">
                 {{ $t('labels.teamMembers.description') }}
               </p>
+              <p class="text-muted-foreground text-sm">
+                {{ $t('labels.teamMembers.helper') }}
+              </p>
             </div>
 
             <TeamMembersList

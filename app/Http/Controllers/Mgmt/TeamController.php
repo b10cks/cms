@@ -4,13 +4,14 @@ namespace App\Http\Controllers\Mgmt;
 
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\TeamFilter;
+use App\Http\Requests\Team\ListTeamsRequest;
 use App\Http\Requests\Team\StoreTeamRequest;
 use App\Http\Requests\Team\UpdateTeamRequest;
 use App\Http\Resources\Management\TeamResource;
 use App\Models\Management\Team;
+use App\Services\Auth\AuthorizationService;
 use App\Services\Team\TeamService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Response;
 
@@ -21,13 +22,23 @@ class TeamController extends Controller
     /**
      * Display a listing of teams
      */
-    public function index(Request $request): ResourceCollection
+    public function index(ListTeamsRequest $request, AuthorizationService $authorizationService): ResourceCollection
     {
-        $this->authorize('viewAny', Team::class);
-
         $filter = new TeamFilter($request->all());
         $user = auth()->user();
-        $accessibleTeamIds = app(\App\Services\Auth\AuthorizationService::class)->accessibleTeamIds($user);
+        $includeSpaceContext = $request->boolean('include_space_context');
+
+        if (! $includeSpaceContext) {
+            $this->authorize('viewAny', Team::class);
+        } elseif (! $user->is_root
+            && $authorizationService->accessibleTeamIds($user) === []
+            && $authorizationService->accessibleSpaceIds($user) === []) {
+            abort(403);
+        }
+
+        $accessibleTeamIds = $includeSpaceContext
+            ? $authorizationService->selectorAccessibleTeamIds($user)
+            : $authorizationService->accessibleTeamIds($user);
 
         $teams = Team::filter($filter)
             ->when(! $user->is_root, function ($query) use ($accessibleTeamIds) {

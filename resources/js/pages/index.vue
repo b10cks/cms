@@ -216,6 +216,7 @@ const getSpacePlanLabel = (plan: SpacePlanSummary) => {
       <div class="flex items-center gap-3">
         <template v-if="selectedTeam">
           <Button
+            v-if="selectedTeam.can_view_detail"
             size="sm"
             :as="RouterLink"
             :to="`/teams/${selectedTeam.id}`"
@@ -230,6 +231,7 @@ const getSpacePlanLabel = (plan: SpacePlanSummary) => {
             {{ $t('actions.inviteMember') }}
           </Button>
           <Button
+            v-if="selectedTeam.can_create_space"
             :as="RouterLink"
             size="sm"
             variant="primary"

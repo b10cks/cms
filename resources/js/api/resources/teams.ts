@@ -23,6 +23,7 @@ export interface TeamsQueryParams extends BaseQueryParams {
   parent_id?: string | null
   created_at?: string
   updated_at?: string
+  include_space_context?: boolean
 }
 
 export class Teams extends BaseResource<

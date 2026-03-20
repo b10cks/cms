@@ -16,7 +16,7 @@ const defaultState: GlobalTeamState = {
 }
 
 export function useGlobalTeam() {
-  const { useTeamsQuery, useTeamQuery } = useTeams()
+  const { useTeamsQuery } = useTeams()
 
   const state = isClient
     ? useStorage<GlobalTeamState>(STORAGE_KEY, defaultState, localStorage, {
@@ -41,7 +41,11 @@ export function useGlobalTeam() {
       })
     : ref<GlobalTeamState>({ ...defaultState })
 
-  const { data: teams, isLoading: isLoadingTeams, error: teamsError } = useTeamsQuery()
+  const {
+    data: teams,
+    isLoading: isLoadingTeams,
+    error: teamsError,
+  } = useTeamsQuery({ include_space_context: true })
 
   const availableTeams = computed<TeamResource[]>(() => teams.value?.data ?? [])
 
@@ -106,27 +110,7 @@ export function useGlobalTeam() {
     },
   })
 
-  const selectedTeamQuery = isClient
-    ? useTeamQuery(computed(() => selectedTeamId.value ?? ''))
-    : { data: ref<TeamResource | null>(null), isLoading: ref(false), error: ref(null) }
-
-  const {
-    data: selectedTeamData,
-    isLoading: isLoadingSelectedTeam,
-    error: selectedTeamError,
-  } = selectedTeamQuery
-
-  const selectedTeam = computed<TeamResource | null>(() => {
-    const validSelectedTeam = findTeamById(selectedTeamId.value)
-
-    if (!validSelectedTeam) {
-      return null
-    }
-
-    return selectedTeamData.value?.id === validSelectedTeam.id
-      ? selectedTeamData.value
-      : validSelectedTeam
-  })
+  const selectedTeam = computed<TeamResource | null>(() => findTeamById(selectedTeamId.value))
 
   const hasTeams = computed(() => availableTeams.value.length > 0)
   const hasSelectedTeam = computed(() => !!selectedTeam.value)
@@ -134,7 +118,9 @@ export function useGlobalTeam() {
     if (!selectedTeamId.value) return !hasTeams.value
     return !!findTeamById(selectedTeamId.value)
   })
-  const isLoading = computed(() => isLoadingTeams.value || isLoadingSelectedTeam.value)
+  const isLoadingSelectedTeam = computed(() => false)
+  const selectedTeamError = computed(() => null)
+  const isLoading = computed(() => isLoadingTeams.value)
 
   const selectTeam = (team: TeamResource | string | null) => {
     if (team === null) {

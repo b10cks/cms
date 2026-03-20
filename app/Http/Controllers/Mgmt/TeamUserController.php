@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Management\TeamMemberListResource;
 use App\Models\Management\Team;
 use App\Models\User;
+use App\Services\Team\TeamMemberDirectoryService;
 use App\Services\Team\TeamService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,10 @@ use Illuminate\Http\Response;
 
 class TeamUserController extends Controller
 {
-    public function __construct(private TeamService $teamService)
+    public function __construct(
+        private TeamService $teamService,
+        private readonly TeamMemberDirectoryService $directory,
+    )
     {
     }
 
@@ -75,6 +79,12 @@ class TeamUserController extends Controller
     {
         $this->authorize('manageMembers', $team);
 
+        if (! $team->users()->where('users.id', $userId)->exists()) {
+            return response()->json([
+                'message' => 'User does not have a direct team membership.',
+            ], 404);
+        }
+
         try {
             $this->teamService->detachUser($team, $userId);
 
@@ -89,10 +99,6 @@ class TeamUserController extends Controller
 
     private function loadTeamUser(Team $team, string $userId): User
     {
-        return $team->users()
-            ->leftJoin('roles', 'roles.id', '=', 'team_user.role_id')
-            ->select('users.*', 'roles.key as role_key', 'team_user.created_at as joined_at')
-            ->where('users.id', $userId)
-            ->firstOrFail();
+        return $this->directory->findMember($team, $userId) ?? abort(404);
     }
 }

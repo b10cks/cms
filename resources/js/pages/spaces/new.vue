@@ -69,6 +69,7 @@ const handleNameChange = (event: Event) => {
 }
 
 const { selectedTeam, hasSelectedTeam, isValidSelection } = useGlobalTeam()
+const canCreateSpace = computed(() => !!selectedTeam.value?.can_create_space)
 
 const handleNext = async () => {
   if (step.value === 1 && (!selectedPlanId.value || selectedPlan.value?.contact_url)) {
@@ -78,7 +79,7 @@ const handleNext = async () => {
   if (step.value < 2) {
     step.value++
   } else {
-    if (!selectedTeam.value?.id || !hasSelectedTeam.value || !isValidSelection.value) {
+    if (!selectedTeam.value?.id || !hasSelectedTeam.value || !isValidSelection.value || !canCreateSpace.value) {
       return
     }
 
@@ -123,6 +124,12 @@ const handleBack = () => {
           :header="$t('labels.spaces.newPageTitle')"
           :description="$t('labels.spaces.newPageDescription')"
         />
+        <p
+          v-if="selectedTeam && !canCreateSpace"
+          class="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted-foreground"
+        >
+          {{ $t('labels.spaces.noCreateAccess', { team: selectedTeam.name }) }}
+        </p>
         <Stepper
           v-model="step"
           class="flex w-full items-start justify-center"
@@ -330,7 +337,8 @@ const handleBack = () => {
                   !serverLocation ||
                   !selectedTeam?.id ||
                   !hasSelectedTeam ||
-                  !isValidSelection))
+                  !isValidSelection ||
+                  !canCreateSpace))
             "
             @click="handleNext"
           >

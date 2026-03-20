@@ -724,6 +724,7 @@
       "emptyDescription": "Spaces geben deinem Team ein gemeinsames Zuhause für Inhalte, Assets, Workflows und Struktur. Starte mit deinem ersten Space und baue von dort aus weiter.",
       "newPageTitle": "Erstelle einen neuen Space",
       "newPageDescription": "Erstelle einen neuen Content Space, um deine Inhalte zu organisieren.",
+      "noCreateAccess": "Du kannst {team} auswählen, aber in diesem Team keine Spaces erstellen.",
       "steps": {
         "plan": {
           "title": "Plan",
@@ -1330,6 +1331,7 @@
       "detailTitle": "{name}",
       "peopleTitle": "Personen",
       "peopleDescription": "Lade neue Mitarbeitende ins Team ein, behalte offene Einladungen im Blick und passe Rollen für bereits beigetretene Personen an.",
+      "selectorLimitedAccess": "Du kannst {team} auswählen, aber dort keine Spaces erstellen.",
       "invitesTitle": "Ausstehende Einladungen",
       "invitesDescription": "Behalte ausstehende Einladungen im Blick, sende die passende Einladung erneut oder räume veraltete Anfragen auf.",
       "inviteAction": "Personen einladen",
@@ -1419,6 +1421,7 @@
     "teamMembers": {
       "title": "Team-Mitglieder",
       "description": "Hier erscheinen alle Personen, die ihre Einladung bereits angenommen haben.",
+      "helper": "Diese Liste enthält auch Personen, die nur über Spaces in diesem Team eingebunden sind. Die Mitgliederzahl oben zählt weiterhin nur direkte Team-Mitgliedschaften.",
       "add": "Mitglied hinzufügen",
       "addTitle": "Team-Mitglied hinzufügen",
       "addDescription": "Füge einen bestehenden Benutzer diesem Team hinzu",
@@ -1454,6 +1457,9 @@
         "role": "Rolle",
         "rolePlaceholder": "Wähle eine Rolle"
       },
+      "assignRole": "Team-Rolle vergeben",
+      "spaceOnly": "Nur im Space",
+      "sourceSpaces": "Aus Spaces",
       "removeConfirm": {
         "title": "Mitglied entfernen",
         "message": "Bist du sicher, dass du {firstname} {lastname} aus diesem Team entfernen möchtest?",
