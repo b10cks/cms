@@ -11,7 +11,8 @@ class ContentI18nResolver
 {
     public function __construct(
         private readonly ContentI18nService $contentI18nService,
-    ) {}
+    ) {
+    }
 
     public function resolve(
         Space $space,
@@ -28,6 +29,9 @@ class ContentI18nResolver
         $targetContent = $this->contentI18nService->findLanguageContent($family, $canonical, $requestedLanguage);
         $targetVersion = $targetContent ? $this->resolveVersion($targetContent, $versionScope) : null;
 
+        $resolvedLanguage = $requestedLanguage;
+        $resolvedRow = $targetContent;
+
         $fallbackContent = null;
         $fallbackVersion = null;
         $fallbackChain = collect();
@@ -38,6 +42,11 @@ class ContentI18nResolver
             $fallbackVersion = $fallbackChain->first()['version'] ?? null;
         }
 
+        if ($resolvedRow === null) {
+            $resolvedRow = $fallbackContent ?? $canonical;
+            $resolvedLanguage = $resolvedRow->language_iso;
+        }
+
         $effectiveContent = $effectiveMode === 'overlay'
             ? $this->mergeContentChain($fallbackChain, $targetVersion)
             : ($targetVersion?->content ?? []);
@@ -46,21 +55,23 @@ class ContentI18nResolver
             canonicalContent: $canonical,
             familyContents: $family,
             requestedLanguage: $requestedLanguage,
+            resolvedLanguage: $resolvedLanguage,
             effectiveMode: $effectiveMode,
+            resolvedRow: $resolvedRow,
             targetContent: $targetContent,
             targetVersion: $targetVersion,
             fallbackContent: $fallbackContent,
             fallbackVersion: $fallbackVersion,
             effectiveContent: $effectiveContent,
             effectiveAssets: $effectiveMode === 'overlay'
-                ? $this->mergeCollectionChain($fallbackChain, 'assets', $targetVersion?->assets)
-                : collect($targetVersion?->assets ?? []),
+            ? $this->mergeCollectionChain($fallbackChain, 'assets', $targetVersion?->assets)
+            : collect($targetVersion?->assets ?? []),
             effectiveLinks: $effectiveMode === 'overlay'
-                ? $this->mergeCollectionChain($fallbackChain, 'links', $targetVersion?->links)
-                : collect($targetVersion?->links ?? []),
+            ? $this->mergeCollectionChain($fallbackChain, 'links', $targetVersion?->links)
+            : collect($targetVersion?->links ?? []),
             effectiveRelations: $effectiveMode === 'overlay'
-                ? $this->mergeCollectionChain($fallbackChain, 'relations', $targetVersion?->relations)
-                : collect($targetVersion?->relations ?? []),
+            ? $this->mergeCollectionChain($fallbackChain, 'relations', $targetVersion?->relations)
+            : collect($targetVersion?->relations ?? []),
         );
     }
 
@@ -76,7 +87,7 @@ class ContentI18nResolver
         $visited = [$requestedLanguage => true];
         $fallbackLanguage = $space->settings->getFallbackLanguage($requestedLanguage);
 
-        while ($fallbackLanguage !== null && ! isset($visited[$fallbackLanguage])) {
+        while ($fallbackLanguage !== null && !isset($visited[$fallbackLanguage])) {
             $visited[$fallbackLanguage] = true;
             $content = $this->contentI18nService->findLanguageContent($family, $canonical, $fallbackLanguage);
 
@@ -136,7 +147,7 @@ class ContentI18nResolver
             ->filter();
 
         return $contentChain->reduce(
-            fn (array $merged, ContentVersion $version): array => array_replace_recursive($merged, $version->content ?? []),
+            fn(array $merged, ContentVersion $version): array => array_replace_recursive($merged, $version->content ?? []),
             []
         );
     }
@@ -147,7 +158,7 @@ class ContentI18nResolver
             ->pluck('version')
             ->filter()
             ->reverse()
-            ->map(fn (ContentVersion $version): Collection => $version->{$property} ?? collect())
+            ->map(fn(ContentVersion $version): Collection => $version->{$property} ?? collect())
             ->pipe(function (Collection $collections) use ($target): Collection {
                 if ($target) {
                     $collections->push($target);
@@ -156,7 +167,7 @@ class ContentI18nResolver
                 return $collections;
             })
             ->reduce(
-                fn (Collection $merged, Collection $items): Collection => $merged->merge($items),
+                fn(Collection $merged, Collection $items): Collection => $merged->merge($items),
                 collect()
             )
             ->filter()

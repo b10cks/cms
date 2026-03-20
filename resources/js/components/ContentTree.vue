@@ -17,13 +17,21 @@ import { Button } from '~/components/ui/button'
 import DropIndicator from '~/components/ui/DropIndicator.vue'
 import RenamableTitle from '~/components/ui/RenamableTitle.vue'
 import { SimpleTooltip } from '~/components/ui/tooltip'
+import {
+  getContentDefaultLanguage,
+  resolveContentLanguage,
+  resolveContentRouteName,
+  withContentLanguageQuery,
+} from '~/lib/content-i18n'
 import type { ContentResource } from '~/types/contents'
 
 type Edge = 'left'
 
+
 type ContentTreeDragItem = {
   id: string
 }
+
 
 type ContentTreeDragData = {
   kind: 'content-tree'
@@ -31,17 +39,23 @@ type ContentTreeDragData = {
   primaryId: string
 }
 
+
 const CONTENT_TREE_DRAG_KIND = 'content-tree'
+
 
 const props = defineProps<{
   title?: string
   spaceId: string
 }>()
 
+
 const route = useRoute()
 const router = useRouter()
 
+
 const { alert } = useAlertDialog()
+const { useSpaceQuery } = useSpaces()
+const { data: currentSpace } = useSpaceQuery(computed(() => props.spaceId))
 const { useSpacesQuery } = useSpaces()
 const { data: spaces } = useSpacesQuery({})
 const { useContentMenuQuery, getChildren, getRootItems } = useContentMenu(props.spaceId)
@@ -49,16 +63,21 @@ const { useUpdateContentMutation, useDeleteContentMutation, useMoveContentMutati
   props.spaceId
 )
 
+
 const { mutate: updateContent } = useUpdateContentMutation()
 const { mutate: deleteContent } = useDeleteContentMutation()
 const { mutateAsync: moveContent } = useMoveContentMutation()
 
+
 const { settings } = useSpaceSettings(props.spaceId)
+
 
 const { isLoading, error, data } = useContentMenuQuery()
 const rootItems = computed(() => getRootItems(data.value) || [])
 
+
 const { getUsersForContent } = useContentMenuPresence(props.spaceId)
+
 
 const selectedItemId = ref<string | null>(null)
 const selectedItemIds = ref<string[]>([])
@@ -67,29 +86,36 @@ const showCreateDialog = ref(false)
 const createParentId = ref<string | null>(null)
 const showAiDialog = ref(false)
 
+
 const activeDropTargetId = ref<string | null>(null)
 const activeDropEdge = ref<Edge | null>(null)
 const rootDropMode = ref<'root' | 'root-top' | null>(null)
 const isDragging = ref(false)
 const dragSelectionSnapshot = ref<string[] | null>(null)
 
+
 const treeContainerRef = ref<HTMLElement | null>(null)
 const rootDropZoneRef = ref<HTMLElement | null>(null)
 const itemCleanupMap = new Map<string, () => void>()
+
 
 const selectedSpace = computed(() => {
   return spaces.value?.find((space) => space.id === props.spaceId) || null
 })
 
+
 const flatItems = computed(() => {
   return data.value ? Object.values(data.value) : []
 })
+
 
 const itemIndexMap = computed(() => {
   return new Map(flatItems.value.map((item, index) => [item.id, index]))
 })
 
+
 const selectedItemsSet = computed(() => new Set(selectedItemIds.value))
+
 
 const childIdMap = computed(() => {
   const map = new Map<string | null, string[]>()
@@ -124,6 +150,7 @@ const childIdMap = computed(() => {
   return map
 })
 
+
 const descendantIdsMap = computed(() => {
   const map = new Map<string, Set<string>>()
 
@@ -152,7 +179,9 @@ const descendantIdsMap = computed(() => {
   return map
 })
 
+
 const isItemSelected = (id: string) => selectedItemsSet.value.has(id)
+
 
 const clearDropState = () => {
   activeDropTargetId.value = null
@@ -160,20 +189,24 @@ const clearDropState = () => {
   rootDropMode.value = null
 }
 
+
 const restoreDragSelection = () => {
   if (dragSelectionSnapshot.value) {
     selectedItemIds.value = [...dragSelectionSnapshot.value]
     selectedItemId.value = dragSelectionSnapshot.value[0] ?? null
   }
 
+
   dragSelectionSnapshot.value = null
 }
+
 
 const finishDragState = () => {
   isDragging.value = false
   dragSelectionSnapshot.value = null
   clearDropState()
 }
+
 
 function createContentTreeDragData(
   items: ContentTreeDragItem[],
@@ -186,11 +219,13 @@ function createContentTreeDragData(
   }
 }
 
+
 function isContentTreeDragData(
   value: Record<string, unknown> | null | undefined
 ): value is ContentTreeDragData {
   return value?.kind === CONTENT_TREE_DRAG_KIND
 }
+
 
 function getContentTreeDragItems(
   value: Record<string, unknown> | null | undefined
@@ -198,6 +233,7 @@ function getContentTreeDragItems(
   if (!isContentTreeDragData(value) || !Array.isArray(value.items)) {
     return []
   }
+
 
   return value.items.flatMap((item) => {
     if (item && typeof item === 'object' && 'id' in item && typeof item.id === 'string') {
@@ -207,6 +243,7 @@ function getContentTreeDragItems(
     return []
   })
 }
+
 
 function attachClosestEdge(
   value: Record<string, unknown>,
@@ -218,12 +255,15 @@ function attachClosestEdge(
 ) {
   const rect = options.element.getBoundingClientRect()
 
+
   const distances = options.allowedEdges.map((edge) => ({
     edge,
     value: Math.abs(options.input.clientX - rect.left),
   }))
 
+
   const closest = distances.sort((a, b) => a.value - b.value)[0]
+
 
   return {
     ...value,
@@ -231,13 +271,16 @@ function attachClosestEdge(
   }
 }
 
+
 function extractClosestEdge(value: Record<string, unknown>): Edge | null {
   if ('closestEdge' in value && value.closestEdge === 'left') {
     return value.closestEdge
   }
 
+
   return null
 }
+
 
 function setContentTreeDragPreview({
   nativeSetDragImage,
@@ -251,6 +294,7 @@ function setContentTreeDragPreview({
   if (!nativeSetDragImage) {
     return
   }
+
 
   setCustomNativeDragPreview({
     nativeSetDragImage,
@@ -305,17 +349,21 @@ function setContentTreeDragPreview({
   })
 }
 
+
 const resolveElement = (value: Element | { $el?: Element } | null): HTMLElement | null => {
   if (value instanceof HTMLElement) {
     return value
   }
 
+
   if (value && '$el' in value && value.$el instanceof HTMLElement) {
     return value.$el
   }
 
+
   return null
 }
+
 
 function handleRename(newName: string, contentId: string) {
   if (contentId && newName) {
@@ -324,20 +372,79 @@ function handleRename(newName: string, contentId: string) {
   currentlyEditingId.value = null
 }
 
+
 function handleEditStart(contentId: string) {
   currentlyEditingId.value = contentId
 }
+
 
 function handleEditCancel() {
   currentlyEditingId.value = null
 }
 
-const buildLink = (contentId: string) => {
-  const name = route.name != 'space-content-index' ? route.name : 'space-content-contentId'
+
+const buildLink = (contentId: string, item?: FlatContentMenuItem) => {
+  const menuLanguages = item?.i18n?.map((translation) => translation.language_iso) || []
+  const defaultLanguage = getContentDefaultLanguage(
+    currentSpace.value?.settings.default_language,
+    menuLanguages.map((languageIso) => ({
+      language_iso: languageIso,
+      label: languageIso,
+      exists: true,
+      content_id: null,
+      is_default: languageIso === currentSpace.value?.settings.default_language,
+      is_current: false,
+      status: 'draft' as const,
+      published_at: null,
+      fallback_language: null,
+    })),
+    menuLanguages[0]
+  )
+
+
+  const currentLanguage =
+    typeof route.query.lang === 'string' && route.query.lang.length > 0
+      ? route.query.lang
+      : undefined
+
+
+  const targetLanguage = resolveContentLanguage(
+    currentLanguage,
+    defaultLanguage,
+    menuLanguages.map((languageIso) => ({
+      language_iso: languageIso,
+      label: languageIso,
+      exists: true,
+      content_id: null,
+      is_default: languageIso === defaultLanguage,
+      is_current: false,
+      status: 'draft' as const,
+      published_at: null,
+      fallback_language: null,
+    })),
+    defaultLanguage
+  )
+
+
+  const name =
+    route.name != 'space-content-index'
+      ? resolveContentRouteName(
+          route.name as string | undefined,
+          undefined,
+          targetLanguage,
+          defaultLanguage
+        )
+      : resolveContentRouteName(
+          'space-content-contentId',
+          undefined,
+          targetLanguage,
+          defaultLanguage
+        )
+
 
   return {
     name,
-    query: route.query,
+    query: withContentLanguageQuery(route.query, targetLanguage, defaultLanguage),
     hash: '',
     params: {
       space: route.params.space,
@@ -346,39 +453,47 @@ const buildLink = (contentId: string) => {
   }
 }
 
+
 const handleToggle = (event: TreeItemToggleEvent<FlatContentMenuItem> | Event) => {
   if ('detail' in event && event.detail?.originalEvent instanceof PointerEvent) {
     event.preventDefault()
     return
   }
 
+
   if (event instanceof PointerEvent) {
     event.preventDefault()
   }
 }
 
+
 const toggleExpanded = (contentId: string) => {
   const expanded = settings.value.content.expanded || []
   const index = expanded.indexOf(contentId)
+
 
   if (index > -1) {
     settings.value.content.expanded = expanded.filter((id) => id !== contentId)
     return
   }
 
+
   settings.value.content.expanded = [...expanded, contentId]
 }
+
 
 const setCurrentItemFromRoute = () => {
   if (route.params.contentId) {
     const contentId = route.params.contentId as string
     selectedItemId.value = contentId
 
+
     if (!selectedItemsSet.value.has(contentId)) {
       selectedItemIds.value = [contentId]
     }
   }
 }
+
 
 watch(
   () => route.params.contentId,
@@ -388,30 +503,37 @@ watch(
   { immediate: true }
 )
 
+
 onMounted(() => {
   setCurrentItemFromRoute()
 })
+
 
 const initCreate = (parentId: string | null) => {
   createParentId.value = parentId
   showCreateDialog.value = true
 }
 
+
 const initDelete = async (item: { id: string }) => {
   if (!(await alert.confirm('Are you sure you want to delete this item?'))) {
     return
   }
 
+
   deleteContent(item.id)
 }
+
 
 function selectSingleItem(id: string) {
   selectedItemId.value = id
   selectedItemIds.value = [id]
 }
 
+
 function toggleItemSelection(id: string) {
   const next = new Set(selectedItemIds.value)
+
 
   if (next.has(id)) {
     next.delete(id)
@@ -419,14 +541,17 @@ function toggleItemSelection(id: string) {
     next.add(id)
   }
 
+
   selectedItemIds.value = Array.from(next)
   selectedItemId.value = id
 }
+
 
 function handleItemPointerDown(event: MouseEvent, id: string) {
   if (currentlyEditingId.value === id || isDragging.value) {
     return
   }
+
 
   if (event.metaKey || event.ctrlKey) {
     event.preventDefault()
@@ -435,10 +560,12 @@ function handleItemPointerDown(event: MouseEvent, id: string) {
     return
   }
 
+
   if (!selectedItemsSet.value.has(id) || selectedItemIds.value.length <= 1) {
     selectSingleItem(id)
   }
 }
+
 
 function handleItemNavigate(event: MouseEvent, id: string) {
   if (isDragging.value || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
@@ -447,41 +574,51 @@ function handleItemNavigate(event: MouseEvent, id: string) {
     return
   }
 
+
   if (selectedItemId.value !== id) {
     selectSingleItem(id)
   }
 }
+
 
 function getSelectedDragItemsFor(id: string): ContentTreeDragItem[] {
   if (!selectedItemsSet.value.has(id) || selectedItemIds.value.length === 0) {
     return [{ id }]
   }
 
+
   return selectedItemIds.value.map((selectedId) => ({ id: selectedId }))
 }
+
 
 function getDragPreviewTitle(item: FlatContentMenuItem, dragItems: ContentTreeDragItem[]) {
   if (dragItems.length > 1) {
     return `${dragItems.length} pages`
   }
 
+
   return item.name
 }
+
 
 function canDropItemsOnTarget(dragItems: ContentTreeDragItem[], targetId: string | null) {
   if (!dragItems.length) {
     return false
   }
 
+
   const draggedIds = new Set(dragItems.map((item) => item.id))
+
 
   if (targetId === null) {
     return true
   }
 
+
   if (draggedIds.has(targetId)) {
     return false
   }
+
 
   for (const draggedId of draggedIds) {
     const descendants = descendantIdsMap.value.get(draggedId)
@@ -490,8 +627,10 @@ function canDropItemsOnTarget(dragItems: ContentTreeDragItem[], targetId: string
     }
   }
 
+
   return true
 }
+
 
 async function moveDraggedItemsToTarget(
   dragItems: ContentTreeDragItem[],
@@ -503,14 +642,17 @@ async function moveDraggedItemsToTarget(
     return
   }
 
+
   const orderedDraggedIds = dragItems
     .map((item) => item.id)
     .filter((id, index, array) => array.indexOf(id) === index)
+
 
   if (orderedDraggedIds.length === 1 && targetId === orderedDraggedIds[0]) {
     finishDragState()
     return
   }
+
 
   if (targetId === null) {
     try {
@@ -526,17 +668,22 @@ async function moveDraggedItemsToTarget(
       finishDragState()
     }
 
+
     return
   }
 
+
   const target = data.value?.[targetId]
+
 
   if (!target) {
     finishDragState()
     return
   }
 
+
   const parentId = target.type === 'single' ? (target.pid ?? null) : target.id
+
 
   try {
     for (const id of orderedDraggedIds) {
@@ -551,6 +698,7 @@ async function moveDraggedItemsToTarget(
     finishDragState()
   }
 }
+
 
 function registerItemInteractions(item: FlatContentMenuItem, element: HTMLElement) {
   const cleanup = combine(
@@ -664,22 +812,27 @@ function registerItemInteractions(item: FlatContentMenuItem, element: HTMLElemen
     })
   )
 
+
   itemCleanupMap.set(item.id, cleanup)
 }
+
 
 const setItemElement = (item: FlatContentMenuItem) => {
   return (value: Element | { $el?: Element } | null) => {
     itemCleanupMap.get(item.id)?.()
     itemCleanupMap.delete(item.id)
 
+
     const element = resolveElement(value)
     if (!element) {
       return
     }
 
+
     registerItemInteractions(item, element)
   }
 }
+
 
 watch([treeContainerRef, rootDropZoneRef], ([containerElement, rootElement], _, onCleanup) => {
   if (!containerElement || !rootElement) {
@@ -746,10 +899,12 @@ watch([treeContainerRef, rootDropZoneRef], ([containerElement, rootElement], _, 
   })
 })
 
+
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key !== 'Escape' || !isDragging.value) {
     return
   }
+
 
   event.preventDefault()
   event.stopPropagation()
@@ -757,9 +912,11 @@ const handleKeydown = (event: KeyboardEvent) => {
   finishDragState()
 }
 
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
 })
+
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
@@ -875,7 +1032,7 @@ onBeforeUnmount(() => {
         :style="{ 'padding-left': `${item.level - 0.5}rem` }"
         v-bind="item.bind"
         :as="RouterLink"
-        :to="buildLink(item.value.id)"
+        :to="buildLink(item.value.id, item.value)"
         :class="[
           'group relative my-0.5 flex items-center gap-2 rounded-md py-1 pr-2 pl-0 outline-none',
           'transition-colors duration-150 hover:bg-border',

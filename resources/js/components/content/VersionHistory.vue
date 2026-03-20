@@ -402,7 +402,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
                     :to="{
                       name: 'space-content-contentId-versions',
                       params: { space: spaceId, contentId: contentId },
-                      query: { versionId: version.id },
+                      query: { ...route.query, versionId: version.id },
                     }"
                     class="group ring-none relative z-10 flex items-center rounded-md px-3 py-1 transition-colors outline-none"
                     :class="{

@@ -12,7 +12,9 @@ class ResolvedContent
         public readonly Content $canonicalContent,
         public readonly Collection $familyContents,
         public readonly string $requestedLanguage,
+        public readonly string $resolvedLanguage,
         public readonly string $effectiveMode,
+        public readonly ?Content $resolvedRow,
         public readonly ?Content $targetContent,
         public readonly ?ContentVersion $targetVersion,
         public readonly ?Content $fallbackContent,
@@ -21,5 +23,6 @@ class ResolvedContent
         public readonly Collection $effectiveAssets,
         public readonly Collection $effectiveLinks,
         public readonly Collection $effectiveRelations,
-    ) {}
+    ) {
+    }
 }

@@ -296,6 +296,7 @@ class SpaceSettings extends Settings
 
     public function getDefaultLanguage(): string
     {
+        \Log::info('attributes', [$this->attributes['default_language']]);
         return $this->attributes['default_language'] ?? 'en';
     }
 

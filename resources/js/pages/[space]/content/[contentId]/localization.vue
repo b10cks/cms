@@ -12,10 +12,15 @@ import FlattenedLocalization from '~/components/localization/FlattendeLocalizati
 import Preview from '~/components/Preview.vue'
 import { Input } from '~/components/ui/input'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/components/ui/resizable'
-import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 import { useContentSchemaState } from '~/composables/useContentSchemaState'
-import { buildMissingLanguageDraft, resolveContentRouteName } from '~/lib/content-i18n'
+import {
+  buildMissingLanguageDraft,
+  getContentDefaultLanguage,
+  resolveContentLanguage,
+  resolveContentRouteName,
+  withContentLanguageQuery,
+} from '~/lib/content-i18n'
 import type { ContentResource } from '~/types/contents'
 
 const route = useRoute()
@@ -34,21 +39,43 @@ const spaceAPI = computed(() => api.forSpace(spaceId.value))
 const { data: routeContent } = useContentQuery(canonicalContentId)
 
 
-const defaultLanguage = computed(
-  () =>
-    currentSpace.value?.settings?.default_language ||
-    routeContent.value?.language_versions?.find((version) => version.is_default)?.language_iso ||
-    'en'
+const defaultLanguage = computed(() =>
+  getContentDefaultLanguage(
+    currentSpace.value?.settings?.default_language,
+    routeContent.value?.language_versions,
+    routeContent.value?.language_iso
+  )
 )
-const language = useRouteQuery('lang', defaultLanguage.value)
-const canonicalContent = computed(() =>
-  routeContent.value?.i18n_parent_id === null ? routeContent.value : null
+const language = useRouteQuery<string | undefined>('lang')
+const canonicalContent = computed(() => {
+  if (!routeContent.value) {
+    return null
+  }
+
+  if (routeContent.value.i18n_parent_id === null) {
+    return routeContent.value
+  }
+
+  return {
+    ...routeContent.value,
+    id: routeContent.value.i18n_canonical_id,
+  }
+})
+const resolvedLanguage = computed(() =>
+  resolveContentLanguage(
+    language.value,
+    defaultLanguage.value,
+    canonicalContent.value?.language_versions,
+    routeContent.value?.language_iso
+  )
 )
 const selectedLanguageVersion = computed(
   () =>
     canonicalContent.value?.language_versions?.find(
-      (version) => version.language_iso === language.value
-    ) || null
+      (version) => version.language_iso === resolvedLanguage.value
+    ) ||
+    canonicalContent.value?.language_versions?.[0] ||
+    null
 )
 const translatableId = computed(() => selectedLanguageVersion.value?.content_id || null)
 const fallbackLanguageVersion = computed(
@@ -231,9 +258,17 @@ watch(
       return
     }
 
-    if (!language.value) {
-      language.value = currentContent.language_iso || currentDefaultLanguage
-    }
+    const currentLanguage = resolveContentLanguage(
+      language.value,
+      currentDefaultLanguage,
+      currentContent.language_versions,
+      currentContent.language_iso
+    )
+    const nextQuery = withContentLanguageQuery(
+      route.query as Record<string, unknown>,
+      currentLanguage,
+      currentDefaultLanguage
+    )
 
     if (
       currentContent.i18n_parent_id &&
@@ -243,18 +278,33 @@ watch(
         name: resolveContentRouteName(
           route.name as string | undefined,
           currentContent.effective_i18n_mode,
-          currentContent.language_iso,
+          currentLanguage,
           currentDefaultLanguage
         ),
         params: {
           ...route.params,
           contentId: currentContent.i18n_canonical_id,
         },
-        query: {
-          ...route.query,
-          lang: currentContent.language_iso,
-        },
+        query: nextQuery as any,
         hash: '',
+      })
+      return
+    }
+
+    if (route.query.lang !== nextQuery.lang) {
+      await router.replace({
+        name: resolveContentRouteName(
+          route.name as string | undefined,
+          currentContent.effective_i18n_mode,
+          currentLanguage,
+          currentDefaultLanguage
+        ),
+        params: {
+          ...route.params,
+          contentId: currentContent.i18n_canonical_id,
+        },
+        query: nextQuery as any,
+        hash: route.hash,
       })
     }
   },
@@ -269,15 +319,18 @@ watch(
       return
     }
 
-    const availableLanguages = currentCanonical.language_versions.map(
-      (version) => version.language_iso
+    const nextLanguage = resolveContentLanguage(
+      currentLanguage,
+      currentDefaultLanguage,
+      currentCanonical.language_versions,
+      routeContent.value?.language_iso
     )
-    const nextLanguage = availableLanguages.includes(currentLanguage || '')
-      ? (currentLanguage as string)
-      : currentDefaultLanguage
 
-    if (nextLanguage !== language.value) {
-      language.value = nextLanguage
+    if (
+      (nextLanguage === currentDefaultLanguage && language.value !== undefined) ||
+      (nextLanguage !== currentDefaultLanguage && language.value !== nextLanguage)
+    ) {
+      language.value = nextLanguage === currentDefaultLanguage ? undefined : nextLanguage
       return
     }
 
@@ -288,17 +341,24 @@ watch(
       currentDefaultLanguage
     )
 
-    if (route.name !== nextRouteName) {
+    const nextQuery = withContentLanguageQuery(
+      route.query as Record<string, unknown>,
+      nextLanguage,
+      currentDefaultLanguage
+    )
+
+    if (
+      route.name !== nextRouteName ||
+      route.params.contentId !== currentCanonical.id ||
+      route.query.lang !== nextQuery.lang
+    ) {
       await router.replace({
         name: nextRouteName,
         params: {
           ...route.params,
           contentId: currentCanonical.id,
         },
-        query: {
-          ...route.query,
-          lang: nextLanguage,
-        },
+        query: nextQuery as any,
         hash: route.hash,
       })
     }
@@ -308,7 +368,7 @@ watch(
 
 
 watch(
-  [translatableOriginalContent, canonicalContent, nearestSourceContent, language],
+  [translatableOriginalContent, canonicalContent, nearestSourceContent, resolvedLanguage],
   ([existingTranslation, currentCanonical, currentSource, currentLanguage]) => {
     if (!currentCanonical || !currentLanguage) {
       return
@@ -666,7 +726,7 @@ useSeoMeta({
               :block-schema="block.schema"
               :space-id="spaceId"
               :get-block-schema="getBlockSchemaFn"
-              :target-language="language"
+              :target-language="resolvedLanguage"
             />
           </div>
         </div>

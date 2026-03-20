@@ -25,7 +25,13 @@ import {
 import { useContentSchemaState } from '~/composables/useContentSchemaState'
 import type { ContentTreeItem } from '~/composables/useContentTree'
 import { useGlobalClipboard } from '~/composables/useGlobalClipboard'
-import { buildMissingLanguageDraft, resolveContentRouteName } from '~/lib/content-i18n'
+import {
+  buildMissingLanguageDraft,
+  getContentDefaultLanguage,
+  resolveContentLanguage,
+  resolveContentRouteName,
+  withContentLanguageQuery,
+} from '~/lib/content-i18n'
 import type { ContentResource } from '~/types/contents'
 
 const { t } = useI18n()
@@ -49,25 +55,58 @@ const blocks = computed(() => blockResponse.value?.data || [])
 
 const { useSpaceQuery } = useSpaces()
 const { data: spaceData } = useSpaceQuery(spaceId.value)
-const defaultLanguage = computed(
-  () =>
-    spaceData.value?.settings.default_language ||
-    routeContent.value?.language_versions?.find((version) => version.is_default)?.language_iso ||
-    'en'
+const defaultLanguage = computed(() =>
+  getContentDefaultLanguage(
+    spaceData.value?.settings.default_language,
+    routeContent.value?.language_versions,
+    routeContent.value?.language_iso
+  )
 )
-const activeLanguage = useRouteQuery('lang', defaultLanguage.value)
-const canonicalContent = computed(() =>
-  routeContent.value?.i18n_parent_id === null ? routeContent.value : null
+const activeLanguage = useRouteQuery<string | undefined>('lang')
+const canonicalContentIdForQuery = computed(
+  () => routeContent.value?.i18n_canonical_id || canonicalContentId.value
 )
-const activeLanguageVersion = computed(
-  () =>
-    canonicalContent.value?.language_versions?.find(
-      (version) => version.language_iso === activeLanguage.value
-    ) ||
-    canonicalContent.value?.language_versions?.find((version) => version.is_default) ||
+const { data: canonicalContentResponse } = useContentQuery(canonicalContentIdForQuery)
+const canonicalContent = computed(() => canonicalContentResponse.value || null)
+const resolvedActiveLanguage = computed(() =>
+  resolveContentLanguage(
+    activeLanguage.value,
+    defaultLanguage.value,
+    canonicalContent.value?.language_versions,
+    routeContent.value?.language_iso
+  )
+)
+const activeLanguageVersion = computed(() => {
+  const languageVersions = canonicalContent.value?.language_versions || []
+  const resolvedLanguage = resolveContentLanguage(
+    resolvedActiveLanguage.value,
+    defaultLanguage.value,
+    languageVersions,
+    routeContent.value?.language_iso
+  )
+
+  return (
+    languageVersions.find((version) => version.language_iso === resolvedLanguage) ||
+    languageVersions.find((version) => version.is_default) ||
+    languageVersions[0] ||
     null
-)
-const activeContentId = computed(() => activeLanguageVersion.value?.content_id || null)
+  )
+})
+const activeContentId = computed(() => {
+  if (activeLanguageVersion.value?.content_id) {
+    return activeLanguageVersion.value.content_id
+  }
+
+  if (
+    routeContent.value &&
+    routeContent.value.language_iso === resolvedActiveLanguage.value &&
+    routeContent.value.i18n_parent_id !== null
+  ) {
+    return routeContent.value.id
+  }
+
+  return null
+})
 const fallbackLanguageVersion = computed(
   () =>
     canonicalContent.value?.language_versions?.find(
@@ -87,9 +126,12 @@ watch(
       return
     }
 
-    if (!activeLanguage.value) {
-      activeLanguage.value = currentContent.language_iso || currentDefaultLanguage
-    }
+    const currentLanguage = resolveContentLanguage(
+      activeLanguage.value,
+      currentDefaultLanguage,
+      currentContent.language_versions,
+      currentContent.language_iso
+    )
 
     if (
       currentContent.i18n_parent_id &&
@@ -99,17 +141,14 @@ watch(
         name: resolveContentRouteName(
           route.name as string | undefined,
           currentContent.effective_i18n_mode,
-          currentContent.language_iso,
+          currentLanguage,
           currentDefaultLanguage
         ),
         params: {
           ...route.params,
           contentId: currentContent.i18n_canonical_id,
         },
-        query: {
-          ...route.query,
-          lang: currentContent.language_iso,
-        },
+        query: withContentLanguageQuery(route.query, currentLanguage, currentDefaultLanguage),
         hash: '',
       })
     }
@@ -119,21 +158,21 @@ watch(
 
 
 watch(
-  [canonicalContent, activeLanguage, defaultLanguage],
+  [canonicalContent, resolvedActiveLanguage, defaultLanguage],
   async ([currentCanonical, languageIso, currentDefaultLanguage]) => {
     if (!currentCanonical) {
       return
     }
 
-    const availableLanguages = currentCanonical.language_versions.map(
-      (version) => version.language_iso
+    const nextLanguage = resolveContentLanguage(
+      languageIso,
+      currentDefaultLanguage,
+      currentCanonical.language_versions,
+      routeContent.value?.language_iso
     )
-    const nextLanguage = availableLanguages.includes(languageIso || '')
-      ? (languageIso as string)
-      : currentDefaultLanguage
 
-    if (nextLanguage !== activeLanguage.value) {
-      activeLanguage.value = nextLanguage
+    if (nextLanguage !== resolvedActiveLanguage.value) {
+      activeLanguage.value = nextLanguage === currentDefaultLanguage ? undefined : nextLanguage
       return
     }
 
@@ -144,17 +183,14 @@ watch(
       currentDefaultLanguage
     )
 
-    if (route.name !== nextRouteName) {
+    if (route.name !== nextRouteName || route.query.lang !== activeLanguage.value) {
       await router.replace({
         name: nextRouteName,
         params: {
           ...route.params,
           contentId: currentCanonical.id,
         },
-        query: {
-          ...route.query,
-          lang: nextLanguage,
-        },
+        query: withContentLanguageQuery(route.query, nextLanguage, currentDefaultLanguage),
         hash: route.hash,
       })
     }
@@ -169,15 +205,36 @@ const currentContentSource = computed<ContentResource | null>(() => {
   }
 
   if (
+    routeContent.value &&
+    routeContent.value.language_iso === resolvedActiveLanguage.value &&
+    routeContent.value.i18n_parent_id !== null
+  ) {
+    return routeContent.value
+  }
+
+  if (
+    canonicalContent.value &&
+    canonicalContent.value.language_iso === resolvedActiveLanguage.value &&
+    canonicalContent.value.i18n_parent_id === null
+  ) {
+    return canonicalContent.value
+  }
+
+  if (
     canonicalContent.value &&
     canonicalContent.value.effective_i18n_mode === 'independent' &&
     !activeContentId.value &&
-    activeLanguage.value
+    resolvedActiveLanguage.value
   ) {
     return buildMissingLanguageDraft(
       canonicalContent.value,
       fallbackContent.value || canonicalContent.value,
-      activeLanguage.value
+      resolveContentLanguage(
+        resolvedActiveLanguage.value,
+        defaultLanguage.value,
+        canonicalContent.value.language_versions,
+        routeContent.value?.language_iso
+      )
     )
   }
 
@@ -622,9 +679,10 @@ provide('focusFirstValidationError', focusFirstInvalidField)
         :class="['p-4', showPreview ? '' : 'mx-auto max-w-4xl', showAi ? 'pb-52' : '']"
       >
         <EditorComponent
+          v-if="content.block"
           v-model="editorContentModel"
           :root-id="content.id"
-          :block-id="content.block!.id"
+          :block-id="content.block.id"
           :get-active-collaborators="getCollaboratorsForField"
           :space-id="spaceId"
           :item-id="selectedItemId"

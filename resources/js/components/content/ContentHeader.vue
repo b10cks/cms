@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+
 import ContentStateBadge from '~/components/content/ContentStateBadge.vue'
 import Icon from '~/components/Icon.vue'
 import {
@@ -9,7 +10,9 @@ import {
   BreadcrumbList,
 } from '~/components/ui/breadcrumb'
 import { Button } from '~/components/ui/button'
+import { resolveContentRouteName, withContentLanguageQuery } from '~/lib/content-i18n'
 import type { ContentResource } from '~/types/contents'
+
 import { SimpleTooltip } from '../ui/tooltip'
 
 const props = defineProps<{
@@ -17,23 +20,47 @@ const props = defineProps<{
   showPreviewToggle?: boolean
 }>()
 
+
+const route = useRoute()
 const spaceId = inject<string>('spaceId', '')
+
 
 const { useContentMenuQuery, buildBreadcrumbs } = useContentMenu(spaceId)
 const { data: contentMenu } = useContentMenuQuery()
 const { settings } = useSpaceSettings(spaceId)
-const breadcrumbs = computed(
-  () => props.content && buildBreadcrumbs(contentMenu.value, props.content.id)
+const { useSpaceQuery } = useSpaces()
+const { data: space } = useSpaceQuery(spaceId)
+const defaultLanguage = computed(
+  () =>
+    space.value?.settings.default_language ||
+    props.content.language_versions?.find((version) => version.is_default)?.language_iso ||
+    props.content.language_iso
 )
+const breadcrumbs = computed(
+  () => props.content && buildBreadcrumbs(contentMenu.value, props.content.i18n_canonical_id)
+)
+const breadcrumbRoute = (contentId: string) => ({
+  name: resolveContentRouteName(
+    route.name as string | undefined,
+    props.content.effective_i18n_mode,
+    props.content.language_iso,
+    defaultLanguage.value
+  ),
+  params: { space: spaceId, contentId },
+  query: withContentLanguageQuery(route.query, props.content.language_iso, defaultLanguage.value),
+})
+
 
 watch(breadcrumbs, (crumbs) => {
   const path = crumbs.map(({ id }) => id)
   settings.value.content.expanded = [...settings.value.content.expanded, ...path]
 })
 
+
 const status = computed<'draft' | 'published'>(() =>
   props.content?.published_at ? 'published' : 'draft'
 )
+
 
 const togglePreview = () => {
   settings.value.content.showPreview = !settings.value.content.showPreview
@@ -63,10 +90,7 @@ const togglePreview = () => {
               <BreadcrumbItem>
                 <BreadcrumbLink
                   :as="RouterLink"
-                  :to="{
-                    name: 'space-content-contentId',
-                    params: { space: spaceId, contentId: id },
-                  }"
+                  :to="breadcrumbRoute(id)"
                 >
                   {{ name }}
                 </BreadcrumbLink>

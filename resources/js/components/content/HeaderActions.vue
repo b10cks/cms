@@ -18,7 +18,11 @@ import type {
   CollaborationPresenceUser,
   ContentCommitAction,
 } from '~/composables/useContentLiveCollaboration'
-import { sanitizeContentMutationPayload } from '~/lib/content-i18n'
+import {
+  resolveContentRouteName,
+  sanitizeContentMutationPayload,
+  withContentLanguageQuery,
+} from '~/lib/content-i18n'
 import type { ContentResource } from '~/types/contents'
 
 import PublishDialog from './PublishDialog.vue'
@@ -68,6 +72,13 @@ const {
 
 const { useSpaceQuery } = useSpaces()
 const { data: space } = useSpaceQuery(props.spaceId)
+const defaultLanguage = computed(
+  () =>
+    space.value?.settings.default_language ||
+    props.content.language_versions?.find((version) => version.is_default)?.language_iso ||
+    props.content.language_iso
+)
+const resolvedLanguage = computed(() => route.query.lang || defaultLanguage.value)
 const { apiToken, openContentJsonInNewTab } = useContentJson(
   props.spaceId,
   computed(() => props.content)
@@ -241,10 +252,27 @@ const unpublish = async () => {
 
 
 const switchVersions = () => {
+  const targetRouteName = isVersions.value
+    ? resolveContentRouteName(
+        'space-content-contentId',
+        props.content.effective_i18n_mode,
+        resolvedLanguage.value as string,
+        defaultLanguage.value
+      )
+    : 'space-content-contentId-versions'
+
+
   router.push({
-    name: isVersions.value ? 'space-content-contentId' : 'space-content-contentId-versions',
-    params: route.params,
-    query: route.query,
+    name: targetRouteName,
+    params: {
+      ...route.params,
+      contentId: props.content.i18n_canonical_id,
+    },
+    query: withContentLanguageQuery(
+      route.query,
+      resolvedLanguage.value as string,
+      defaultLanguage.value
+    ),
   })
 }
 

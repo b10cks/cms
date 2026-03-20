@@ -10,7 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
-import { resolveContentRouteName } from '~/lib/content-i18n'
+import {
+  getContentDefaultLanguage,
+  resolveContentLanguage,
+  resolveContentRouteName,
+  withContentLanguageQuery,
+} from '~/lib/content-i18n'
 import type { ContentResource } from '~/types/contents'
 
 const route = useRoute()
@@ -26,48 +31,61 @@ const { useSpaceQuery } = useSpaces()
 const { data: space } = useSpaceQuery(computed(() => route.params.space as string))
 
 
-const defaultLanguage = computed(
-  () =>
-    space.value?.settings.default_language ||
-    props.content.language_versions?.find((version) => version.is_default)?.language_iso ||
+const defaultLanguage = computed(() =>
+  getContentDefaultLanguage(
+    space.value?.settings.default_language,
+    props.content.language_versions,
     props.content.language_iso
+  )
 )
 
 
 const languageVersions = computed(() => props.content.language_versions || [])
-const activeLanguage = useRouteQuery('lang', defaultLanguage.value)
+const activeLanguage = useRouteQuery<string | undefined>('lang')
+const resolvedLanguage = computed(() =>
+  resolveContentLanguage(
+    activeLanguage.value,
+    defaultLanguage.value,
+    languageVersions.value,
+    props.content.language_iso
+  )
+)
 
 
 const currentLanguage = computed(() => {
   return (
-    languageVersions.value.find((version) => version.language_iso === activeLanguage.value) ||
+    languageVersions.value.find((version) => version.language_iso === resolvedLanguage.value) ||
     languageVersions.value.find((version) => version.is_default) ||
     languageVersions.value[0]
   )
 })
 
 
+const isSwitcherDisabled = computed(() => languageVersions.value.length <= 1)
+
+
 watch(
-  [languageVersions, defaultLanguage],
-  ([versions, fallbackLanguage]) => {
+  [languageVersions, defaultLanguage, resolvedLanguage],
+  ([versions, fallbackLanguage, currentLanguage]) => {
     if (versions.length === 0) {
       return
     }
 
-    const nextLanguage = versions.some((version) => version.language_iso === activeLanguage.value)
-      ? activeLanguage.value
-      : fallbackLanguage
+    const nextLanguage = resolveContentLanguage(
+      currentLanguage,
+      fallbackLanguage,
+      versions,
+      props.content.language_iso
+    )
 
-    if (nextLanguage && nextLanguage !== activeLanguage.value) {
-      activeLanguage.value = nextLanguage
-    }
+    activeLanguage.value = nextLanguage === fallbackLanguage ? undefined : nextLanguage
   },
   { immediate: true }
 )
 
 
 const handleLanguageChange = async (value: string | number | null) => {
-  if (typeof value !== 'string' || value === '') {
+  if (isSwitcherDisabled.value || typeof value !== 'string' || value === '') {
     return
   }
 
@@ -87,10 +105,7 @@ const handleLanguageChange = async (value: string | number | null) => {
       ...route.params,
       contentId: props.content.i18n_canonical_id,
     },
-    query: {
-      ...route.query,
-      lang: languageIso,
-    },
+    query: withContentLanguageQuery(route.query, languageIso, defaultLanguage.value),
     hash: '',
   })
 }
@@ -98,10 +113,15 @@ const handleLanguageChange = async (value: string | number | null) => {
 
 <template>
   <Select
+    v-if="!isSwitcherDisabled"
     :model-value="currentLanguage?.language_iso"
+    :disabled="isSwitcherDisabled"
     @update:model-value="(value) => handleLanguageChange(value == null ? '' : String(value))"
   >
-    <SelectTrigger class="w-56">
+    <SelectTrigger
+      class="w-56"
+      :disabled="isSwitcherDisabled"
+    >
       <SelectValue :placeholder="$t('labels.contents.localization.language')">
         <div
           v-if="currentLanguage"
