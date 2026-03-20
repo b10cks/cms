@@ -1,20 +1,31 @@
 import {
   useClipboard,
-  useLocalStorage,
-  useWindowFocus,
   useIntervalFn,
+  useLocalStorage,
   usePermission,
+  useWindowFocus,
 } from '@vueuse/core'
-import { ref, watch, onMounted, readonly } from 'vue'
-import { toast } from 'vue-sonner'
+import { onMounted, readonly, ref, watch } from 'vue'
 
-export interface ClipboardItem {
+export interface ClipboardSingleItem {
   type: 'blocks-editor-clipboard-item'
   data: Record<string, unknown>
   timestamp: number
   spaceId: string
   blockType?: string
+  _isCut?: boolean
 }
+
+export interface ClipboardMultipleItems {
+  type: 'blocks-editor-clipboard-items'
+  data: Record<string, unknown>[]
+  timestamp: number
+  spaceId: string
+  blockType?: string
+  _isCut?: boolean
+}
+
+export type ClipboardItem = ClipboardSingleItem | ClipboardMultipleItems
 
 const { copy: copyToClipboard, text: clipboardText, isSupported } = useClipboard({ read: true })
 const localStorageClipboard = useLocalStorage<string | null>('blocks-clipboard', null)
@@ -59,19 +70,27 @@ const checkClipboard = async () => {
 }
 
 // Helper function to validate clipboard item format
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object' && !Array.isArray(value)
+
 const isValidClipboardItem = (item: unknown): item is ClipboardItem => {
-  return (
-    item &&
-    typeof item === 'object' &&
-    'type' in item &&
-    item.type === 'blocks-editor-clipboard-item' &&
-    'data' in item &&
-    typeof item.data === 'object' &&
-    'timestamp' in item &&
-    typeof item.timestamp === 'number' &&
-    'spaceId' in item &&
-    typeof item.spaceId === 'string'
-  )
+  if (!isRecord(item)) {
+    return false
+  }
+
+  if (typeof item.timestamp !== 'number' || typeof item.spaceId !== 'string') {
+    return false
+  }
+
+  if (item.type === 'blocks-editor-clipboard-item') {
+    return isRecord(item.data) && (item._isCut === undefined || typeof item._isCut === 'boolean')
+  }
+
+  if (item.type === 'blocks-editor-clipboard-items') {
+    return Array.isArray(item.data) && item.data.every(isRecord)
+  }
+
+  return false
 }
 
 // Periodic clipboard checking when window is focused
@@ -136,15 +155,7 @@ export const useGlobalClipboard = () => {
     return obj
   }
 
-  const copyItem = async (item: Record<string, unknown>, spaceId: string, blockType?: string) => {
-    const clipboardItem: ClipboardItem = {
-      type: 'blocks-editor-clipboard-item',
-      data: { ...item },
-      timestamp: Date.now(),
-      spaceId,
-      blockType,
-    }
-
+  const writeClipboardItem = async (clipboardItem: ClipboardItem) => {
     const serializedItem = JSON.stringify(clipboardItem)
 
     try {
@@ -159,27 +170,54 @@ export const useGlobalClipboard = () => {
     }
   }
 
-  const cutItem = async (item: Record<string, unknown>, spaceId: string, blockType?: string) => {
-    const clipboardItem: ClipboardItem = {
-      type: 'blocks-editor-clipboard-item',
-      data: { ...item, _isCut: true },
-      timestamp: Date.now(),
-      spaceId,
-      blockType,
-    }
+  const copyItem = async (
+    item: Record<string, unknown> | Record<string, unknown>[],
+    spaceId: string,
+    blockType?: string
+  ) => {
+    const clipboardItem: ClipboardItem = Array.isArray(item)
+      ? {
+          type: 'blocks-editor-clipboard-items',
+          data: item.map((entry) => ({ ...entry })),
+          timestamp: Date.now(),
+          spaceId,
+          blockType,
+        }
+      : {
+          type: 'blocks-editor-clipboard-item',
+          data: { ...item },
+          timestamp: Date.now(),
+          spaceId,
+          blockType,
+        }
 
-    const serializedItem = JSON.stringify(clipboardItem)
+    await writeClipboardItem(clipboardItem)
+  }
 
-    try {
-      await copyToClipboard(serializedItem)
-      localStorageClipboard.value = serializedItem
-      hasClipboardItem.value = true
-    } catch (error) {
-      localStorageClipboard.value = serializedItem
-      hasClipboardItem.value = true
-      // eslint-disable-next-line no-console
-      console.warn('Failed to copy to system clipboard, using localStorage:', error)
-    }
+  const cutItem = async (
+    item: Record<string, unknown> | Record<string, unknown>[],
+    spaceId: string,
+    blockType?: string
+  ) => {
+    const clipboardItem: ClipboardItem = Array.isArray(item)
+      ? {
+          type: 'blocks-editor-clipboard-items',
+          data: item.map((entry) => ({ ...entry })),
+          timestamp: Date.now(),
+          spaceId,
+          blockType,
+          _isCut: true,
+        }
+      : {
+          type: 'blocks-editor-clipboard-item',
+          data: { ...item },
+          timestamp: Date.now(),
+          spaceId,
+          blockType,
+          _isCut: true,
+        }
+
+    await writeClipboardItem(clipboardItem)
   }
 
   const getClipboardItem = async (): Promise<ClipboardItem | null> => {
@@ -212,11 +250,17 @@ export const useGlobalClipboard = () => {
     return null
   }
 
-  const pasteItem = async (): Promise<Record<string, unknown> | null> => {
+  const pasteItem = async (): Promise<
+    Record<string, unknown> | Record<string, unknown>[] | null
+  > => {
     const clipboardItem = await getClipboardItem()
 
     if (!clipboardItem) {
       return null
+    }
+
+    if (clipboardItem.type === 'blocks-editor-clipboard-items') {
+      return clipboardItem.data.map((item) => replaceIds(item) as Record<string, unknown>)
     }
 
     return replaceIds(clipboardItem.data) as Record<string, unknown>

@@ -189,7 +189,7 @@ declare global {
   export type { ContentTreeItem, FindResult } from './resources/js/composables/useContentTree'
   import('./resources/js/composables/useContentTree')
   // @ts-ignore
-  export type { ClipboardItem } from './resources/js/composables/useGlobalClipboard'
+  export type { ClipboardSingleItem, ClipboardMultipleItems, ClipboardItem } from './resources/js/composables/useGlobalClipboard'
   import('./resources/js/composables/useGlobalClipboard')
   // @ts-ignore
   export type { PresenceUser, PresenceState, UsePresenceOptions } from './resources/js/composables/usePresence'

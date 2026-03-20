@@ -180,16 +180,22 @@ const getActionIndexes = (index?: number) => {
 }
 
 
-const normalizeClipboardItems = (pastedItem: Record<string, unknown> | null) => {
+const isClipboardBlockItem = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object' && !Array.isArray(value)
+
+
+const normalizeClipboardItems = (
+  pastedItem: Record<string, unknown> | Record<string, unknown>[] | null
+) => {
   if (!pastedItem) return []
 
 
-  const items = Array.isArray(pastedItem.items) ? pastedItem.items : [pastedItem]
+  if (Array.isArray(pastedItem)) {
+    return pastedItem.filter(isClipboardBlockItem).map((item) => ({ ...item }))
+  }
 
 
-  return items
-    .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
-    .map((item) => ({ ...item }))
+  return [pastedItem]
 }
 
 
@@ -199,12 +205,7 @@ const copyItems = async (index?: number) => {
 
 
   const itemsToCopy = indexes.map((itemIndex) => ({ ...blockItems.value[itemIndex] }))
-  const payload =
-    itemsToCopy.length === 1
-      ? itemsToCopy[0]
-      : ({
-          items: itemsToCopy,
-        } as Record<string, unknown>)
+  const payload = itemsToCopy.length === 1 ? itemsToCopy[0] : itemsToCopy
 
 
   await globalCopyItem(payload, props.spaceId, getClipboardLabel(itemsToCopy))
@@ -217,12 +218,7 @@ const cutItems = async (index?: number) => {
 
 
   const itemsToCut = indexes.map((itemIndex) => ({ ...blockItems.value[itemIndex] }))
-  const payload =
-    itemsToCut.length === 1
-      ? itemsToCut[0]
-      : ({
-          items: itemsToCut,
-        } as Record<string, unknown>)
+  const payload = itemsToCut.length === 1 ? itemsToCut[0] : itemsToCut
 
 
   await globalCutItem(payload, props.spaceId, getClipboardLabel(itemsToCut))
