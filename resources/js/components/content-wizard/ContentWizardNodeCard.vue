@@ -2,12 +2,14 @@
 import type { AcceptableValue } from 'reka-ui'
 
 import Icon from '~/components/Icon.vue'
+import { AvatarList } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '~/components/ui/select'
 import { cn } from '~/lib/utils'
 import type {
   ContentWizardAddPosition,
+  ContentWizardCollaborator,
   ContentWizardDraftNode,
   ContentWizardEditableField,
 } from '~/types/content-wizard'
@@ -21,6 +23,7 @@ const props = withDefaults(
     focused?: boolean
     editingField?: ContentWizardEditableField | null
     dropActive?: boolean
+    remoteFocusedUsers?: ContentWizardCollaborator[]
     blockOptions?: BlockResource[]
     blocksForBottom?: BlockResource[]
     blocksForRight?: BlockResource[]
@@ -29,6 +32,7 @@ const props = withDefaults(
     focused: false,
     editingField: null,
     dropActive: false,
+    remoteFocusedUsers: () => [],
     blockOptions: () => [],
     blocksForBottom: () => [],
     blocksForRight: () => [],
@@ -40,6 +44,8 @@ const emit = defineEmits<{
   (event: 'focus'): void
   (event: 'keydown', value: KeyboardEvent): void
   (event: 'start-edit', payload: { field: ContentWizardEditableField; initialChar?: string }): void
+  (event: 'input-title', value: string): void
+  (event: 'input-slug', value: string): void
   (event: 'commit-title', value: string): void
   (event: 'commit-slug', value: string): void
   (event: 'update-block', value: string): void
@@ -120,6 +126,8 @@ const isChanged = computed(
   () => props.node.changes.created || props.node.changes.updated || props.node.changes.moved
 )
 const isDeleted = computed(() => props.node.deletedReason)
+const hasRemoteFocus = computed(() => props.remoteFocusedUsers.length > 0)
+const remoteFocusColor = computed(() => props.remoteFocusedUsers[0]?.color || null)
 
 
 const focusCard = () => {
@@ -186,6 +194,25 @@ const handleBlockChange = (value: AcceptableValue) => {
     @drop.stop.prevent="emit('drop', $event)"
   >
     <div
+      v-if="hasRemoteFocus"
+      class="pointer-events-none absolute inset-0 rounded-lg border-2"
+      :style="{ borderColor: remoteFocusColor || undefined }"
+    />
+
+    <div
+      v-if="hasRemoteFocus"
+      class="pointer-events-none absolute -top-3 left-2"
+    >
+      <AvatarList
+        :users="props.remoteFocusedUsers"
+        size="sm"
+        :max="3"
+        tooltip-side="top"
+        class="rounded-full bg-background/90 px-1 py-0.5 shadow-sm"
+      />
+    </div>
+
+    <div
       v-if="node.isRootVirtual"
       class="flex h-full items-center justify-center"
     >
@@ -239,6 +266,7 @@ const handleBlockChange = (value: AcceptableValue) => {
               :disabled="!!node.deletedReason"
               :placeholder="$t('labels.contents.wizard.untitledNode')"
               class="h-7! text-xs px-1.5!"
+              @update:model-value="emit('input-title', String($event))"
               @focus="emit('focus')"
               @blur="commitTitle"
               @keydown.enter.prevent="commitTitle"
@@ -250,6 +278,7 @@ const handleBlockChange = (value: AcceptableValue) => {
               v-model="slugValue"
               :disabled="!!node.deletedReason"
               class="h-6! text-xs px-1.5!"
+              @update:model-value="emit('input-slug', String($event))"
               @focus="emit('focus')"
               @blur="commitSlug"
               @keydown.enter.prevent="commitSlug"

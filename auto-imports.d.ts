@@ -111,6 +111,7 @@ declare global {
   const useContentTree: typeof import('./resources/js/composables/useContentTree').useContentTree
   const useContentVersions: typeof import('./resources/js/composables/useContentVersions').useContentVersions
   const useContentWizardApply: typeof import('./resources/js/composables/useContentWizardApply').useContentWizardApply
+  const useContentWizardCollaboration: typeof import('./resources/js/composables/useContentWizardCollaboration').useContentWizardCollaboration
   const useContentWizardKeyboard: typeof import('./resources/js/composables/useContentWizardKeyboard').useContentWizardKeyboard
   const useContentWizardLayout: typeof import('./resources/js/composables/useContentWizardLayout').useContentWizardLayout
   const useContentWizardSlug: typeof import('./resources/js/composables/useContentWizardSlug').useContentWizardSlug
@@ -324,6 +325,7 @@ declare module 'vue' {
     readonly useContentTree: UnwrapRef<typeof import('./resources/js/composables/useContentTree')['useContentTree']>
     readonly useContentVersions: UnwrapRef<typeof import('./resources/js/composables/useContentVersions')['useContentVersions']>
     readonly useContentWizardApply: UnwrapRef<typeof import('./resources/js/composables/useContentWizardApply')['useContentWizardApply']>
+    readonly useContentWizardCollaboration: UnwrapRef<typeof import('./resources/js/composables/useContentWizardCollaboration')['useContentWizardCollaboration']>
     readonly useContentWizardKeyboard: UnwrapRef<typeof import('./resources/js/composables/useContentWizardKeyboard')['useContentWizardKeyboard']>
     readonly useContentWizardLayout: UnwrapRef<typeof import('./resources/js/composables/useContentWizardLayout')['useContentWizardLayout']>
     readonly useContentWizardSlug: UnwrapRef<typeof import('./resources/js/composables/useContentWizardSlug')['useContentWizardSlug']>

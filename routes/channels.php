@@ -62,3 +62,18 @@ Broadcast::channel('presence-spaces.{space}.content.{contentId}', function (User
         'joined_at' => now()->toIso8601String(),
     ];
 });
+
+Broadcast::channel('presence-spaces.{space}.content-wizard', function (User $user, Space $space) {
+    if (!$space || !$user->spaces()->where('spaces.id', $space->id)->exists()) {
+        return false;
+    }
+
+    return [
+        'id' => $user->id,
+        'firstname' => $user->firstname,
+        'lastname' => $user->lastname,
+        'email' => $user->email,
+        'avatar' => $user->avatar_url,
+        'joined_at' => now()->toIso8601String(),
+    ];
+});

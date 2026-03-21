@@ -1,3 +1,5 @@
+import type { User } from '~/types/users'
+
 export const CONTENT_WIZARD_ROOT_ID = '__root__'
 export const CONTENT_WIZARD_CARD_WIDTH = 256
 export const CONTENT_WIZARD_CARD_HEIGHT = 64
@@ -136,3 +138,66 @@ export interface ContentWizardViewportState {
   y: number
   scale: number
 }
+
+export interface ContentWizardCollaborator extends User {
+  color: string
+  colorLabel: string
+  joined_at?: string
+}
+
+export interface ContentWizardRemoteCursorState {
+  userId: string
+  x: number
+  y: number
+  visible: boolean
+  updatedAt: number
+}
+
+export interface ContentWizardAddOperationPayload {
+  type: 'add'
+  nodeId: string
+  parentId: string | null
+  blockId: string
+  title: string
+  slug: string
+  slugMode: ContentWizardSlugMode
+}
+
+export interface ContentWizardTitleOperationPayload {
+  type: 'title'
+  nodeId: string
+  value: string
+}
+
+export interface ContentWizardSlugOperationPayload {
+  type: 'slug'
+  nodeId: string
+  value: string
+}
+
+export interface ContentWizardBlockOperationPayload {
+  type: 'block'
+  nodeId: string
+  blockId: string
+}
+
+export interface ContentWizardMoveOperationPayload {
+  type: 'move'
+  nodeId: string
+  parentId: string | null
+  index?: number
+}
+
+export interface ContentWizardDeleteOperationPayload {
+  type: 'delete-state'
+  nodeId: string
+  deleted: boolean
+}
+
+export type ContentWizardSyncOperation =
+  | ContentWizardAddOperationPayload
+  | ContentWizardTitleOperationPayload
+  | ContentWizardSlugOperationPayload
+  | ContentWizardBlockOperationPayload
+  | ContentWizardMoveOperationPayload
+  | ContentWizardDeleteOperationPayload

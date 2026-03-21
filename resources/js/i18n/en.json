@@ -478,7 +478,7 @@
         },
         "aiDockTitle": "AI content planning",
         "aiDockDescription": "Describe how this draft should change. AI can add, move, rename, delete, restore, and retarget nodes live on the canvas.",
-        "aiDockPlaceholder": "Ask AI to reshape this draft, for example: \"Create a Solutions page with For Agencies and For Developers\"",
+        "aiDockPlaceholder": "Ask AI to reshape this content tree",
         "aiGenerating": "Generating tree changes...",
         "aiStreamingProgress": "Updating the draft preview: {count} AI action ready... | Updating the draft preview: {count} AI actions ready...",
         "aiParseError": "The AI response could not be applied. The draft was restored.",

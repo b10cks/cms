@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import type { MentionItem } from '~/api/resources/ai'
-import type { AiMentionItem } from '~/components/editor/extensions/AiMention'
+import { useDebounceFn } from '@vueuse/core'
 import { RouterLink } from 'vue-router'
 import { toast } from 'vue-sonner'
 
+import type { MentionItem } from '~/api/resources/ai'
 import ContentWizardAiDock from '~/components/content-wizard/ContentWizardAiDock.vue'
 import ContentWizardCanvas from '~/components/content-wizard/ContentWizardCanvas.vue'
 import ContentWizardToolbar from '~/components/content-wizard/ContentWizardToolbar.vue'
+import type { AiMentionItem } from '~/components/editor/extensions/AiMention'
 import Icon from '~/components/Icon.vue'
 import { Alert } from '~/components/ui/alert'
+import { AvatarList } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
@@ -18,6 +20,7 @@ import {
   type TreeOperation,
 } from '~/composables/useAiContentTree'
 import { useContentWizardApply } from '~/composables/useContentWizardApply'
+import { useContentWizardCollaboration } from '~/composables/useContentWizardCollaboration'
 import { useContentWizardKeyboard } from '~/composables/useContentWizardKeyboard'
 import { useContentWizardTree } from '~/composables/useContentWizardTree'
 import {
@@ -25,6 +28,7 @@ import {
   type ContentWizardAddPosition,
   type ContentWizardDraftTree,
   type ContentWizardEditableField,
+  type ContentWizardSyncOperation,
 } from '~/types/content-wizard'
 
 type AiPreviewWarning = {
@@ -33,6 +37,7 @@ type AiPreviewWarning = {
   nodeId?: string | null
   nodeLabel?: string | null
 }
+
 
 const route = useRoute()
 const { t } = useI18n()
@@ -68,7 +73,12 @@ const { apply, applyError, invalidateContentQueries, isApplying } = useContentWi
   spaceId,
   treeApi
 )
-const { streamTreeInteraction, cancelStream, isStreaming: isAiStreaming } = useAiContentTree(spaceId)
+const {
+  streamTreeInteraction,
+  cancelStream,
+  isStreaming: isAiStreaming,
+} = useAiContentTree(spaceId)
+const collaboration = useContentWizardCollaboration(spaceId)
 
 
 const canvasRef = useTemplateRef<InstanceType<typeof ContentWizardCanvas>>('canvas')
@@ -86,6 +96,9 @@ const aiStatus = ref<{
 const aiPreviewSnapshot = ref<ContentWizardDraftTree | null>(null)
 const aiResponseBuffer = ref('')
 const aiWarnings = ref<AiPreviewWarning[]>([])
+const pendingRemoteOperations: ContentWizardSyncOperation[] = []
+const liveFieldTimers = new Map<string, ReturnType<typeof setTimeout>>()
+const queuedRemoteOperations = new Map<string, ContentWizardSyncOperation>()
 
 
 const isLoading = computed(() => isBlocksLoading.value || isMenuLoading.value)
@@ -101,12 +114,247 @@ const draftMentionItems = computed<AiMentionItem[]>(() =>
     .filter((node) => !node.isRootVirtual)
     .map((node) => ({
       id: node.id,
-      label: node.title.trim() || node.blockName || (t('labels.contents.wizard.untitledNode') as string),
+      label:
+        node.title.trim() || node.blockName || (t('labels.contents.wizard.untitledNode') as string),
       type: 'draft-content',
       color: node.color,
       icon: node.icon ? `lucide:${node.icon}` : 'lucide:file',
     }))
 )
+
+
+const broadcastCursorPosition = useDebounceFn((payload: { x: number; y: number } | null) => {
+  collaboration.broadcastCursor(payload)
+}, 50)
+
+
+const clearLiveFieldBroadcasts = () => {
+  liveFieldTimers.forEach((timer) => clearTimeout(timer))
+  liveFieldTimers.clear()
+}
+
+
+const createLiveFieldKey = (nodeId: string, field: 'title' | 'slug') => `${nodeId}:${field}`
+
+
+const parseLiveFieldKey = (fieldKey: string) => {
+  const separatorIndex = fieldKey.lastIndexOf(':')
+  if (separatorIndex < 0) {
+    return null
+  }
+
+
+  const nodeId = fieldKey.slice(0, separatorIndex)
+  const field = fieldKey.slice(separatorIndex + 1)
+
+
+  if (field !== 'title' && field !== 'slug') {
+    return null
+  }
+
+
+  return {
+    nodeId,
+    field,
+  }
+}
+
+
+const getRemoteOperationKey = (operation: ContentWizardSyncOperation) =>
+  `${operation.type}:${operation.nodeId}`
+
+
+const flushLiveFieldBroadcast = (fieldKey: string) => {
+  const parsedFieldKey = parseLiveFieldKey(fieldKey)
+  if (!parsedFieldKey) {
+    return
+  }
+
+
+  const { nodeId, field } = parsedFieldKey
+  const node = treeApi.getNode(nodeId)
+
+
+  const existingTimer = liveFieldTimers.get(fieldKey)
+  if (existingTimer) {
+    clearTimeout(existingTimer)
+    liveFieldTimers.delete(fieldKey)
+  }
+
+
+  if (!node || node.isRootVirtual) {
+    return
+  }
+
+
+  if (field === 'title') {
+    collaboration.broadcastOperation({
+      type: 'title',
+      nodeId,
+      value: node.title,
+    })
+    return
+  }
+
+
+  collaboration.broadcastOperation({
+    type: 'slug',
+    nodeId,
+    value: node.slug,
+  })
+}
+
+
+const scheduleLiveFieldBroadcast = (
+  nodeId: string,
+  field: 'title' | 'slug',
+  debounceMs: number = 200
+) => {
+  const fieldKey = createLiveFieldKey(nodeId, field)
+  const existingTimer = liveFieldTimers.get(fieldKey)
+
+
+  if (existingTimer) {
+    clearTimeout(existingTimer)
+  }
+
+
+  liveFieldTimers.set(
+    fieldKey,
+    setTimeout(() => {
+      flushLiveFieldBroadcast(fieldKey)
+    }, debounceMs)
+  )
+}
+
+
+const queueRemoteOperation = (operation: ContentWizardSyncOperation) => {
+  queuedRemoteOperations.set(getRemoteOperationKey(operation), operation)
+}
+
+
+const applyRemoteOperation = (operation: ContentWizardSyncOperation) => {
+  if (!initialized.value) {
+    pendingRemoteOperations.push(operation)
+    return false
+  }
+
+
+  if (operation.type === 'add') {
+    if (treeApi.getNode(operation.nodeId)) {
+      return true
+    }
+
+
+    const block = blocks.value.find((item) => item.id === operation.blockId)
+    if (!block) {
+      return false
+    }
+
+
+    if (operation.parentId && !treeApi.getNode(operation.parentId)) {
+      queueRemoteOperation(operation)
+      return false
+    }
+
+
+    try {
+      treeApi.addNode(block, {
+        nodeId: operation.nodeId,
+        parentId: operation.parentId,
+        position: 'child',
+        title: operation.title,
+        slug: operation.slug,
+        slugMode: operation.slugMode,
+      })
+    } catch {
+      queueRemoteOperation(operation)
+      return false
+    }
+
+
+    return true
+  }
+
+
+  if (!treeApi.getNode(operation.nodeId)) {
+    queueRemoteOperation(operation)
+    return false
+  }
+
+
+  if (operation.type === 'title') {
+    treeApi.updateTitle(operation.nodeId, operation.value)
+    return true
+  }
+
+
+  if (operation.type === 'slug') {
+    treeApi.updateSlug(operation.nodeId, operation.value)
+    return true
+  }
+
+
+  if (operation.type === 'block') {
+    treeApi.updateBlock(operation.nodeId, operation.blockId)
+    return true
+  }
+
+
+  if (operation.type === 'move') {
+    treeApi.moveNode(operation.nodeId, operation.parentId, operation.index)
+    return true
+  }
+
+
+  treeApi.setDeletedState(operation.nodeId, operation.deleted)
+  return true
+}
+
+
+const flushPendingRemoteOperations = () => {
+  while (pendingRemoteOperations.length > 0) {
+    const nextOperation = pendingRemoteOperations.shift()
+    if (!nextOperation) {
+      continue
+    }
+
+
+    applyRemoteOperation(nextOperation)
+  }
+}
+
+
+const flushQueuedRemoteOperations = () => {
+  let appliedOperation = true
+
+  while (appliedOperation && queuedRemoteOperations.size > 0) {
+    appliedOperation = false
+
+    const queuedEntries = new Map(queuedRemoteOperations)
+
+    for (const [operationKey, operation] of queuedEntries) {
+      queuedRemoteOperations.delete(operationKey)
+
+      if (applyRemoteOperation(operation)) {
+        appliedOperation = true
+        continue
+      }
+
+
+      const nextKey = getRemoteOperationKey(operation)
+      if (!queuedRemoteOperations.has(nextKey)) {
+        queuedRemoteOperations.set(nextKey, operation)
+      }
+    }
+  }
+}
+
+
+const stopRemoteOperationListener = collaboration.onOperation((operation) => {
+  applyRemoteOperation(operation)
+  flushQueuedRemoteOperations()
+})
 
 
 watch(
@@ -119,6 +367,8 @@ watch(
     treeApi.initializeFromSource()
     focusedNodeId.value = CONTENT_WIZARD_ROOT_ID
     initialized.value = true
+    flushPendingRemoteOperations()
+    flushQueuedRemoteOperations()
     nextTick(() => canvasRef.value?.fitToView())
   },
   { immediate: true }
@@ -130,29 +380,43 @@ const focusNode = (nodeId: string) => {
 }
 
 
+watch(
+  focusedNodeId,
+  (nodeId) => {
+    collaboration.broadcastFocus(nodeId)
+  },
+  { immediate: true }
+)
+
+
 const clearTransientState = () => {
   editingField.value = null
   editingNodeId.value = null
   dropTargetId.value = null
 }
 
+
 const clearAiStreamState = () => {
   aiResponseBuffer.value = ''
   aiPreviewSnapshot.value = null
 }
+
 
 const clearAiState = () => {
   clearAiStreamState()
   aiWarnings.value = []
 }
 
+
 const restoreAiSnapshot = () => {
   if (!aiPreviewSnapshot.value) {
     return
   }
 
+
   treeApi.restoreSnapshot(aiPreviewSnapshot.value)
 }
+
 
 const summarizeAiOperations = (operations: TreeOperation[]) => {
   const counts = operations.reduce(
@@ -174,6 +438,7 @@ const summarizeAiOperations = (operations: TreeOperation[]) => {
     { create: 0, move: 0, update: 0, delete: 0, restore: 0 }
   )
 
+
   const parts = [
     counts.create > 0
       ? (t('labels.contents.wizard.aiSummaryCreate', { count: counts.create }) as string)
@@ -192,14 +457,14 @@ const summarizeAiOperations = (operations: TreeOperation[]) => {
       : null,
   ].filter((value): value is string => !!value)
 
+
   return parts.join(' • ')
 }
 
+
 const normalizeAiReference = (value: string | null | undefined) =>
-  (value || '')
-    .trim()
-    .toLowerCase()
-    .replace(/^@+/, '')
+  (value || '').trim().toLowerCase().replace(/^@+/, '')
+
 
 const normalizeAiLookupKey = (value: string | null | undefined) =>
   normalizeAiReference(value)
@@ -207,8 +472,10 @@ const normalizeAiLookupKey = (value: string | null | undefined) =>
     .replace(/[^a-z0-9:-]+/g, '-')
     .replace(/^-+|-+$/g, '')
 
+
 const createAiNodeReferenceMap = () => {
   const map = new Map<string, string>()
+
 
   for (const node of treeApi.orderedNodes.value) {
     const references = [
@@ -220,6 +487,7 @@ const createAiNodeReferenceMap = () => {
       node.blockName ? `${node.blockName} ${node.title}` : null,
     ]
 
+
     for (const reference of references) {
       const key = normalizeAiLookupKey(reference)
       if (key && !map.has(key)) {
@@ -228,8 +496,10 @@ const createAiNodeReferenceMap = () => {
     }
   }
 
+
   return map
 }
+
 
 const resolveAiNodeId = (id: string | null | undefined, tempIdMap: Map<string, string>) => {
   const rawReference = normalizeAiReference(id)
@@ -237,23 +507,28 @@ const resolveAiNodeId = (id: string | null | undefined, tempIdMap: Map<string, s
     return null
   }
 
+
   const directReference = rawReference.replace(/^draft-content:/, '')
   if (tempIdMap.has(rawReference)) {
     return tempIdMap.get(rawReference) || null
   }
 
+
   if (tempIdMap.has(directReference)) {
     return tempIdMap.get(directReference) || null
   }
+
 
   if (treeApi.getNode(directReference)) {
     return directReference
   }
 
+
   const referenceMap = createAiNodeReferenceMap()
   const resolvedReference = referenceMap.get(normalizeAiLookupKey(rawReference))
   return resolvedReference || directReference
 }
+
 
 const normalizeAiBlockReference = (value: string | null | undefined) =>
   (value || '')
@@ -262,15 +537,18 @@ const normalizeAiBlockReference = (value: string | null | undefined) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 
+
 const resolveAiBlock = (blockReference: string | null | undefined) => {
   if (!blockReference) {
     return null
   }
 
+
   const normalizedReference = normalizeAiBlockReference(blockReference)
   if (!normalizedReference) {
     return null
   }
+
 
   const scoredBlocks = blocks.value
     .map((block) => {
@@ -279,8 +557,12 @@ const resolveAiBlock = (blockReference: string | null | undefined) => {
       const singularReference = normalizedReference.endsWith('s')
         ? normalizedReference.slice(0, -1)
         : normalizedReference
-      const singularSlug = normalizedSlug.endsWith('s') ? normalizedSlug.slice(0, -1) : normalizedSlug
-      const singularName = normalizedName.endsWith('s') ? normalizedName.slice(0, -1) : normalizedName
+      const singularSlug = normalizedSlug.endsWith('s')
+        ? normalizedSlug.slice(0, -1)
+        : normalizedSlug
+      const singularName = normalizedName.endsWith('s')
+        ? normalizedName.slice(0, -1)
+        : normalizedName
 
       let score = 0
 
@@ -292,9 +574,15 @@ const resolveAiBlock = (blockReference: string | null | undefined) => {
         score = 85
       } else if (singularSlug === singularReference || singularName === singularReference) {
         score = 80
-      } else if (normalizedSlug.includes(normalizedReference) || normalizedName.includes(normalizedReference)) {
+      } else if (
+        normalizedSlug.includes(normalizedReference) ||
+        normalizedName.includes(normalizedReference)
+      ) {
         score = 65
-      } else if (normalizedReference.includes(normalizedSlug) || normalizedReference.includes(normalizedName)) {
+      } else if (
+        normalizedReference.includes(normalizedSlug) ||
+        normalizedReference.includes(normalizedName)
+      ) {
         score = 55
       }
 
@@ -303,33 +591,41 @@ const resolveAiBlock = (blockReference: string | null | undefined) => {
     .filter((candidate) => candidate.score > 0)
     .sort((left, right) => right.score - left.score)
 
+
   if (scoredBlocks.length > 0) {
     return scoredBlocks[0]?.block || null
   }
+
 
   if (['page', 'pages'].includes(normalizedReference) && blocks.value.length === 1) {
     return blocks.value[0] || null
   }
 
+
   return null
 }
+
 
 const getAiNodeLabel = (nodeId: string | null | undefined) => {
   if (!nodeId) {
     return null
   }
 
+
   const node = treeApi.getNode(nodeId)
   if (!node) {
     return null
   }
 
+
   if (node.isRootVirtual) {
     return space.value?.name || (t('labels.contents.wizard.rootNodeTitle') as string)
   }
 
+
   return node.title.trim() || node.blockName || (t('labels.contents.wizard.untitledNode') as string)
 }
+
 
 const formatAiWarning = ({
   id,
@@ -346,6 +642,7 @@ const formatAiWarning = ({
 }): AiPreviewWarning => {
   const resolvedLabel = nodeLabel || getAiNodeLabel(nodeId)
 
+
   return {
     id,
     nodeId,
@@ -353,6 +650,7 @@ const formatAiWarning = ({
     message: resolvedLabel ? `${action} "${resolvedLabel}": ${detail}` : `${action}: ${detail}`,
   }
 }
+
 
 const applyAiOperationsPreview = (operations: TreeOperation[]) => {
   if (!aiPreviewSnapshot.value) {
@@ -362,14 +660,18 @@ const applyAiOperationsPreview = (operations: TreeOperation[]) => {
     }
   }
 
+
   treeApi.restoreSnapshot(aiPreviewSnapshot.value)
+
 
   const tempIdMap = new Map<string, string>()
   const alteredNodeIds = new Set<string>()
   const warnings: AiPreviewWarning[] = []
 
+
   for (const [operationIndex, operation] of operations.entries()) {
     const warningId = `${operation.type}:${operationIndex}`
+
 
     if (operation.type === 'create') {
       if (!operation.block_id) {
@@ -383,6 +685,7 @@ const applyAiOperationsPreview = (operations: TreeOperation[]) => {
         continue
       }
 
+
       const block = resolveAiBlock(operation.block_id)
       if (!block) {
         warnings.push(
@@ -395,6 +698,7 @@ const applyAiOperationsPreview = (operations: TreeOperation[]) => {
         continue
       }
 
+
       const parentId = resolveAiNodeId(operation.parent_id, tempIdMap)
       try {
         const createdNode = treeApi.addNode(block, {
@@ -403,13 +707,16 @@ const applyAiOperationsPreview = (operations: TreeOperation[]) => {
           title: operation.name,
         })
 
+
         if (typeof operation.slug === 'string') {
           treeApi.updateSlug(createdNode.id, operation.slug)
         }
 
+
         if (operation.temp_id) {
           tempIdMap.set(operation.temp_id, createdNode.id)
         }
+
 
         alteredNodeIds.add(createdNode.id)
       } catch (error) {
@@ -426,8 +733,10 @@ const applyAiOperationsPreview = (operations: TreeOperation[]) => {
         )
       }
 
+
       continue
     }
+
 
     const targetNodeId = resolveAiNodeId(operation.id, tempIdMap)
     if (!targetNodeId) {
@@ -442,6 +751,7 @@ const applyAiOperationsPreview = (operations: TreeOperation[]) => {
       )
       continue
     }
+
 
     if (operation.type === 'move') {
       const parentId = resolveAiNodeId(operation.parent_id, tempIdMap)
@@ -458,18 +768,22 @@ const applyAiOperationsPreview = (operations: TreeOperation[]) => {
         continue
       }
 
+
       alteredNodeIds.add(targetNodeId)
       continue
     }
+
 
     if (operation.type === 'update' || operation.type === 'rename') {
       if (typeof operation.name === 'string') {
         treeApi.updateTitle(targetNodeId, operation.name)
       }
 
+
       if (typeof operation.slug === 'string') {
         treeApi.updateSlug(targetNodeId, operation.slug)
       }
+
 
       if (typeof operation.block_id === 'string') {
         const result = treeApi.updateBlock(targetNodeId, operation.block_id)
@@ -486,9 +800,11 @@ const applyAiOperationsPreview = (operations: TreeOperation[]) => {
         }
       }
 
+
       alteredNodeIds.add(targetNodeId)
       continue
     }
+
 
     if (operation.type === 'delete' || operation.type === 'remove') {
       const result = treeApi.setDeletedState(targetNodeId, true)
@@ -504,9 +820,11 @@ const applyAiOperationsPreview = (operations: TreeOperation[]) => {
         continue
       }
 
+
       alteredNodeIds.add(targetNodeId)
       continue
     }
+
 
     if (operation.type === 'restore') {
       const result = treeApi.setDeletedState(targetNodeId, false)
@@ -522,11 +840,14 @@ const applyAiOperationsPreview = (operations: TreeOperation[]) => {
         continue
       }
 
+
       alteredNodeIds.add(targetNodeId)
     }
   }
 
+
   treeApi.markAiAltered(alteredNodeIds)
+
 
   return {
     alteredNodeIds: [...alteredNodeIds],
@@ -585,7 +906,41 @@ const startEditing = (nodeId: string, field: ContentWizardEditableField, initial
 
   if (field === 'title' && initialChar) {
     treeApi.updateTitle(nodeId, initialChar)
+    scheduleLiveFieldBroadcast(nodeId, 'title')
   }
+}
+
+
+const broadcastCreatedSubtree = (nodeId: string) => {
+  const node = treeApi.getNode(nodeId)
+  if (!node || node.isRootVirtual) {
+    return
+  }
+
+
+  collaboration.broadcastOperation({
+    type: 'add',
+    nodeId: node.id,
+    parentId: node.parentId,
+    blockId: node.blockId,
+    title: node.title,
+    slug: node.slug,
+    slugMode: node.slugMode,
+  })
+
+
+  if (node.deletedReason === 'self') {
+    collaboration.broadcastOperation({
+      type: 'delete-state',
+      nodeId: node.id,
+      deleted: true,
+    })
+  }
+
+
+  node.childrenIds.forEach((childId) => {
+    broadcastCreatedSubtree(childId)
+  })
 }
 
 
@@ -635,6 +990,9 @@ const createNodeFromContext = (
     position: resolvedPosition,
     referenceNodeId: node.isRootVirtual ? null : node.id,
   })
+
+
+  broadcastCreatedSubtree(createdNode.id)
 
 
   focusNode(createdNode.id)
@@ -701,9 +1059,15 @@ function handleToggleDelete(nodeId: string) {
   const fallbackNodeId =
     nodeIndex > 0 ? siblings[nodeIndex - 1] : node.parentId || CONTENT_WIZARD_ROOT_ID
   const removesDraftNode = !node.backendId
+  const nextDeletedState = node.deletedReason !== 'self'
 
 
   treeApi.toggleDelete(nodeId)
+  collaboration.broadcastOperation({
+    type: 'delete-state',
+    nodeId,
+    deleted: nextDeletedState,
+  })
   clearTransientState()
   focusNode(removesDraftNode ? fallbackNodeId : nodeId)
 }
@@ -722,13 +1086,29 @@ const { handleKeydown } = useContentWizardKeyboard({
 
 const handleCommitTitle = (nodeId: string, value: string) => {
   treeApi.updateTitle(nodeId, value)
-  clearTransientState()
+  scheduleLiveFieldBroadcast(nodeId, 'title')
   focusNode(nodeId)
 }
 
 
 const handleCommitSlug = (nodeId: string, value: string) => {
   treeApi.updateSlug(nodeId, value)
+  scheduleLiveFieldBroadcast(nodeId, 'slug')
+  focusNode(nodeId)
+}
+
+
+const handleTitleCommitEnd = (nodeId: string, value: string) => {
+  treeApi.updateTitle(nodeId, value)
+  flushLiveFieldBroadcast(`${nodeId}:title`)
+  clearTransientState()
+  focusNode(nodeId)
+}
+
+
+const handleSlugCommitEnd = (nodeId: string, value: string) => {
+  treeApi.updateSlug(nodeId, value)
+  flushLiveFieldBroadcast(`${nodeId}:slug`)
   clearTransientState()
   focusNode(nodeId)
 }
@@ -738,7 +1118,15 @@ const handleBlockUpdate = (nodeId: string, blockId: string) => {
   const result = treeApi.updateBlock(nodeId, blockId)
   if (!result.valid && result.message) {
     toast.error(result.message)
+    return
   }
+
+
+  collaboration.broadcastOperation({
+    type: 'block',
+    nodeId,
+    blockId,
+  })
 }
 
 
@@ -805,11 +1193,26 @@ const handleDropOnNode = ({ nodeId, event }: { nodeId: string; event: DragEvent 
 
   const draggedNodeId = draggingNodeId.value
   const copyMode = isCopyDrop(event)
-  const result = copyMode
-    ? treeApi.duplicateNode(draggedNodeId, nodeId)
-    : treeApi.moveNode(draggedNodeId, nodeId)
+  const duplicateResult = copyMode ? treeApi.duplicateNode(draggedNodeId, nodeId) : null
+  const moveResult = !copyMode ? treeApi.moveNode(draggedNodeId, nodeId) : null
+  const result = duplicateResult ?? moveResult ?? { valid: false }
   if (!result.valid && result.message) {
     toast.error(result.message)
+  }
+
+
+  if (copyMode && duplicateResult?.valid && duplicateResult.createdNodeId) {
+    broadcastCreatedSubtree(duplicateResult.createdNodeId)
+  }
+
+
+  if (result.valid && !copyMode) {
+    const draggedNode = treeApi.getNode(draggedNodeId)
+    collaboration.broadcastOperation({
+      type: 'move',
+      nodeId: draggedNodeId,
+      parentId: draggedNode?.parentId ?? null,
+    })
   }
 
 
@@ -826,11 +1229,25 @@ const handleDropOnRoot = (event: DragEvent) => {
 
   const draggedNodeId = draggingNodeId.value
   const copyMode = isCopyDrop(event)
-  const result = copyMode
-    ? treeApi.duplicateNode(draggedNodeId, null)
-    : treeApi.moveNode(draggedNodeId, null)
+  const duplicateResult = copyMode ? treeApi.duplicateNode(draggedNodeId, null) : null
+  const moveResult = !copyMode ? treeApi.moveNode(draggedNodeId, null) : null
+  const result = duplicateResult ?? moveResult ?? { valid: false }
   if (!result.valid && result.message) {
     toast.error(result.message)
+  }
+
+
+  if (copyMode && duplicateResult?.valid && duplicateResult.createdNodeId) {
+    broadcastCreatedSubtree(duplicateResult.createdNodeId)
+  }
+
+
+  if (result.valid && !copyMode) {
+    collaboration.broadcastOperation({
+      type: 'move',
+      nodeId: draggedNodeId,
+      parentId: null,
+    })
   }
 
 
@@ -838,14 +1255,17 @@ const handleDropOnRoot = (event: DragEvent) => {
   handleDragEnd()
 }
 
+
 const updateAiPreview = (operations: TreeOperation[], isFinal: boolean = false) => {
   if (!aiPreviewSnapshot.value) {
     return
   }
 
+
   const { warnings } = applyAiOperationsPreview(operations)
   aiWarnings.value = warnings
   const summary = summarizeAiOperations(operations)
+
 
   if (warnings.length > 0) {
     aiStatus.value = isFinal
@@ -860,22 +1280,25 @@ const updateAiPreview = (operations: TreeOperation[], isFinal: boolean = false) 
     return
   }
 
+
   aiStatus.value = {
     message:
       operations.length === 0
-        ? (isFinal
-            ? ''
-            : (t('labels.contents.wizard.aiGenerating') as string))
+        ? isFinal
+          ? ''
+          : (t('labels.contents.wizard.aiGenerating') as string)
         : isFinal
           ? ''
           : `${t('labels.contents.wizard.aiStreamingProgress', { count: operations.length }) as string} • ${summary}`,
     tone: 'info',
   }
 
+
   if (isFinal) {
     aiStatus.value = null
   }
 }
+
 
 const handleAiSubmit = async ({
   prompt,
@@ -891,12 +1314,14 @@ const handleAiSubmit = async ({
   restoreAiSnapshot()
   clearAiState()
 
+
   aiPreviewSnapshot.value = treeApi.createSnapshot()
   aiResponseBuffer.value = ''
   aiStatus.value = {
     message: t('labels.contents.wizard.aiGenerating') as string,
     tone: 'info',
   }
+
 
   await streamTreeInteraction(
     {
@@ -940,6 +1365,7 @@ const handleAiSubmit = async ({
   )
 }
 
+
 const handleAiCancel = () => {
   cancelStream()
   restoreAiSnapshot()
@@ -950,15 +1376,18 @@ const handleAiCancel = () => {
   clearAiState()
 }
 
+
 const handleFocusAiWarning = (warning: AiPreviewWarning) => {
   if (!warning.nodeId) {
     return
   }
 
+
   const node = treeApi.getNode(warning.nodeId)
   if (!node) {
     return
   }
+
 
   clearTransientState()
   focusNode(node.id)
@@ -969,6 +1398,7 @@ const handleFocusAiWarning = (warning: AiPreviewWarning) => {
 const reloadFromServer = async () => {
   cancelStream()
   clearAiState()
+  clearLiveFieldBroadcasts()
   await Promise.all([invalidateContentQueries(), refetchMenu(), refetchBlocks()])
   treeApi.initializeFromSource()
   clearTransientState()
@@ -1012,6 +1442,12 @@ const handleApply = async () => {
 useSeoMeta({
   title: computed(() => t('labels.contents.wizard.title')),
 })
+
+
+onBeforeUnmount(() => {
+  clearLiveFieldBroadcasts()
+  stopRemoteOperationListener()
+})
 </script>
 
 <template>
@@ -1029,6 +1465,12 @@ useSeoMeta({
 
     <Teleport to="#appHeaderActions">
       <div class="flex items-center gap-2">
+        <AvatarList
+          v-if="collaboration.collaborators.value.length > 0"
+          :users="collaboration.collaborators.value"
+          :max="4"
+          tooltip-side="bottom"
+        />
         <Button
           :as="RouterLink"
           :to="{ name: 'space-content-index', params: { space: spaceId } }"
@@ -1111,14 +1553,19 @@ useSeoMeta({
           :editing-field="editingField"
           :drop-target-id="dropTargetId"
           :root-drop-active="rootDropActive"
+          :remote-focus-users-by-node-id="collaboration.focusedUsersByNodeId.value"
+          :remote-cursors="collaboration.visibleRemoteCursors.value"
           :get-bottom-blocks="getBottomBlocks"
           :get-right-blocks="getRightBlocks"
           :get-block-options="getBlockOptions"
           @focus-node="focusNode"
           @node-keydown="handleKeydown($event.event, $event.nodeId)"
           @start-edit="startEditing($event.nodeId, $event.field, $event.initialChar)"
-          @commit-title="handleCommitTitle($event.nodeId, $event.value)"
-          @commit-slug="handleCommitSlug($event.nodeId, $event.value)"
+          @cursor-move="broadcastCursorPosition"
+          @input-title="handleCommitTitle($event.nodeId, $event.value)"
+          @input-slug="handleCommitSlug($event.nodeId, $event.value)"
+          @commit-title="handleTitleCommitEnd($event.nodeId, $event.value)"
+          @commit-slug="handleSlugCommitEnd($event.nodeId, $event.value)"
           @update-block="handleBlockUpdate($event.nodeId, $event.blockId)"
           @toggle-delete="handleToggleDelete($event)"
           @add-node="createNodeFromContext($event.nodeId, $event.position, $event.block)"

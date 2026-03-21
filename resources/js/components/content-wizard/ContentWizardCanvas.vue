@@ -7,6 +7,7 @@ import {
   CONTENT_WIZARD_CARD_WIDTH,
   type ContentWizardAddPosition,
   type ContentWizardBounds,
+  type ContentWizardCollaborator,
   type ContentWizardDraftNode,
   type ContentWizardEditableField,
 } from '~/types/content-wizard'
@@ -23,6 +24,15 @@ const props = defineProps<{
   editingNodeId: string | null
   dropTargetId: string | null
   rootDropActive: boolean
+  remoteFocusUsersByNodeId: Record<string, ContentWizardCollaborator[]>
+  remoteCursors: Array<{
+    user: ContentWizardCollaborator
+    userId: string
+    x: number
+    y: number
+    updatedAt: number
+    visible: boolean
+  }>
   getBottomBlocks: (nodeId: string) => BlockResource[]
   getRightBlocks: (nodeId: string) => BlockResource[]
   getBlockOptions: (nodeId: string) => BlockResource[]
@@ -36,6 +46,8 @@ const emit = defineEmits<{
     event: 'start-edit',
     payload: { nodeId: string; field: ContentWizardEditableField; initialChar?: string }
   ): void
+  (event: 'input-title', payload: { nodeId: string; value: string }): void
+  (event: 'input-slug', payload: { nodeId: string; value: string }): void
   (event: 'commit-title', payload: { nodeId: string; value: string }): void
   (event: 'commit-slug', payload: { nodeId: string; value: string }): void
   (event: 'update-block', payload: { nodeId: string; blockId: string }): void
@@ -50,6 +62,7 @@ const emit = defineEmits<{
   (event: 'dragleave', nodeId: string): void
   (event: 'drop-on-node', payload: { nodeId: string; event: DragEvent }): void
   (event: 'drop-on-root', dragEvent: DragEvent): void
+  (event: 'cursor-move', payload: { x: number; y: number } | null): void
 }>()
 
 
@@ -126,6 +139,7 @@ const focusNodeCard = (nodeId: string) => {
   })
 }
 
+
 const centerNode = (nodeId: string) => {
   nextTick(() => {
     const element = containerRef.value
@@ -156,11 +170,43 @@ const openNodeAddMenu = (nodeId: string, position: ContentWizardAddPosition) => 
   return true
 }
 
+
 const handleCanvasDragOver = (event: DragEvent) => {
   if (event.dataTransfer) {
-    event.dataTransfer.dropEffect =
-      event.altKey || event.ctrlKey || event.metaKey ? 'copy' : 'move'
+    event.dataTransfer.dropEffect = event.altKey || event.ctrlKey || event.metaKey ? 'copy' : 'move'
   }
+}
+
+
+const emitCursorPosition = (event: PointerEvent | null) => {
+  const element = containerRef.value
+  if (!element || !event) {
+    emit('cursor-move', null)
+    return
+  }
+
+
+  const rect = element.getBoundingClientRect()
+  const relativeX = event.clientX - rect.left
+  const relativeY = event.clientY - rect.top
+
+
+  emit('cursor-move', {
+    x: (element.scrollLeft + relativeX) / viewport.scale,
+    y: (element.scrollTop + relativeY) / viewport.scale,
+  })
+}
+
+
+const handleCanvasPointerMove = (event: PointerEvent) => {
+  emitCursorPosition(event)
+  handlePointerMove(event)
+}
+
+
+const handleCanvasPointerLeave = () => {
+  emitCursorPosition(null)
+  handlePointerLeave()
 }
 
 
@@ -203,9 +249,9 @@ defineExpose({
     ref="containerRef"
     class="absolute inset-0 overflow-auto"
     @pointerdown="handlePointerDown"
-    @pointermove="handlePointerMove"
+    @pointermove="handleCanvasPointerMove"
     @pointerup="handlePointerUp"
-    @pointerleave="handlePointerLeave"
+    @pointerleave="handleCanvasPointerLeave"
   >
     <div
       class="relative min-h-full min-w-full"
@@ -216,6 +262,37 @@ defineExpose({
       @dragover.prevent="handleCanvasDragOver"
       @drop.prevent="emit('drop-on-root', $event)"
     >
+      <div class="pointer-events-none absolute inset-0">
+        <div
+          v-for="cursor in props.remoteCursors"
+          :key="`${cursor.userId}:${cursor.updatedAt}`"
+          class="absolute z-30"
+          :style="{
+            left: `${cursor.x * viewport.scale}px`,
+            top: `${cursor.y * viewport.scale}px`,
+          }"
+        >
+          <svg
+            class="size-6"
+            :style="{ color: cursor.user.color }"
+            viewBox="0 0 24 24"
+          >
+            <path
+              fill="currentColor"
+              fill-rule="evenodd"
+              d="M4.38 3.075a1 1 0 0 0-1.305 1.306l7 17a1 1 0 0 0 1.844.013l2.685-6.265a1 1 0 0 1 .525-.525l6.265-2.685a1 1 0 0 0-.013-1.844z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <div
+            class="rounded-md ml-6 px-2 py-1 text-xs font-bold text-white shadow-soft"
+            :style="{ backgroundColor: cursor.user.color }"
+          >
+            {{ cursor.user.firstname }} {{ cursor.user.lastname }}
+          </div>
+        </div>
+      </div>
+
       <div
         class="absolute left-0 top-0 origin-top-left"
         :style="{
@@ -243,6 +320,7 @@ defineExpose({
           :focused="props.focusedNodeId === node.id"
           :editing-field="props.editingNodeId === node.id ? props.editingField : null"
           :drop-active="props.dropTargetId === node.id"
+          :remote-focused-users="props.remoteFocusUsersByNodeId[node.id] || []"
           :block-options="props.getBlockOptions(node.id)"
           :blocks-for-bottom="props.getBottomBlocks(node.id)"
           :blocks-for-right="props.getRightBlocks(node.id)"
@@ -260,6 +338,8 @@ defineExpose({
               initialChar: $event.initialChar,
             })
           "
+          @input-title="emit('input-title', { nodeId: node.id, value: $event })"
+          @input-slug="emit('input-slug', { nodeId: node.id, value: $event })"
           @commit-title="emit('commit-title', { nodeId: node.id, value: $event })"
           @commit-slug="emit('commit-slug', { nodeId: node.id, value: $event })"
           @update-block="emit('update-block', { nodeId: node.id, blockId: $event })"

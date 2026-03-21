@@ -450,6 +450,9 @@ export function useContentWizardTree(
       parentId: string | null
       position: ContentWizardAddPosition
       referenceNodeId?: string | null
+      nodeId?: string
+      slug?: string
+      slugMode?: 'auto' | 'manual'
       title?: string
     }
   ) => {
@@ -462,7 +465,7 @@ export function useContentWizardTree(
       throw new Error(validation.message || 'Invalid block placement')
     }
 
-    const nodeId = createDraftId()
+    const nodeId = options.nodeId || createDraftId()
     const title = options.title || block.name
     const nextNode: ContentWizardDraftNode = {
       id: nodeId,
@@ -473,8 +476,8 @@ export function useContentWizardTree(
       blockType: block.type,
       blockName: block.name,
       title,
-      slug: slugify(title),
-      slugMode: 'auto',
+      slug: options.slug ?? slugify(title),
+      slugMode: options.slugMode ?? 'auto',
       icon: block.icon || null,
       color: block.color || null,
       depth: 0,
