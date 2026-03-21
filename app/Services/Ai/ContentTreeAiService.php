@@ -77,7 +77,7 @@ class ContentTreeAiService
     protected function createTools(Space $space): array
     {
         return [
-            (new GetBlockListTool)->setSpace($space)->setTypes(['root', 'universal']),
+            (new GetBlockListTool)->setSpace($space)->setTypes(['root', 'universal', 'single']),
             (new GetMentionedContentTool)->setSpace($space),
         ];
     }

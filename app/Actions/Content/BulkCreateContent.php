@@ -42,8 +42,8 @@ class BulkCreateContent
                 $this->createContent->execute($item, $content, $space, $owner);
 
                 // Map temp_id to real ID for subsequent items
-                if (isset($item['temp_id'])) {
-                    $tempIdMap[$item['temp_id']] = $content->id;
+                if ($tmpId !== null) {
+                    $tempIdMap[$tmpId] = $content->id;
                 }
 
                 $createdItems[] = [

@@ -63,6 +63,8 @@ export interface ContentBlock {
   icon: string
   name: string
   slug: string
+  type: 'root' | 'nestable' | 'single' | 'universal'
+  color?: string | null
 }
 
 export interface ContentSettings {
@@ -116,6 +118,7 @@ export interface CreateContentPayload {
 
 export interface UpdateContentPayload {
   parent_id?: string | null
+  block_id?: string
   name?: string
   slug?: string
   language_iso?: string

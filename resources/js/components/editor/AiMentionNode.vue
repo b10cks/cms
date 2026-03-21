@@ -7,7 +7,7 @@ const props = defineProps(nodeViewProps)
 const icon = computed(() => {
   const storedIcon = props.node.attrs.icon
   if (storedIcon) return storedIcon
-  return props.node.attrs.mentionType === 'content' ? 'file' : 'box'
+  return props.node.attrs.mentionType === 'block' ? 'box' : 'file'
 })
 </script>
 

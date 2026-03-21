@@ -14,6 +14,7 @@ declare global {
   const defineAsyncComponent: typeof import('vue').defineAsyncComponent
   const defineComponent: typeof import('vue').defineComponent
   const effectScope: typeof import('vue').effectScope
+  const extractStreamingTreeOperations: typeof import('./resources/js/composables/useAiContentTree').extractStreamingTreeOperations
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
   const getCurrentWatcher: typeof import('vue').getCurrentWatcher
@@ -109,6 +110,12 @@ declare global {
   const useContentSchemaState: typeof import('./resources/js/composables/useContentSchemaState').useContentSchemaState
   const useContentTree: typeof import('./resources/js/composables/useContentTree').useContentTree
   const useContentVersions: typeof import('./resources/js/composables/useContentVersions').useContentVersions
+  const useContentWizardApply: typeof import('./resources/js/composables/useContentWizardApply').useContentWizardApply
+  const useContentWizardKeyboard: typeof import('./resources/js/composables/useContentWizardKeyboard').useContentWizardKeyboard
+  const useContentWizardLayout: typeof import('./resources/js/composables/useContentWizardLayout').useContentWizardLayout
+  const useContentWizardSlug: typeof import('./resources/js/composables/useContentWizardSlug').useContentWizardSlug
+  const useContentWizardTree: typeof import('./resources/js/composables/useContentWizardTree').useContentWizardTree
+  const useContentWizardViewport: typeof import('./resources/js/composables/useContentWizardViewport').useContentWizardViewport
   const useCssModule: typeof import('vue').useCssModule
   const useCssVars: typeof import('vue').useCssVars
   const useDataEntries: typeof import('./resources/js/composables/useDataEntries').useDataEntries
@@ -165,7 +172,7 @@ declare global {
   export type { StreamCallbacks } from './resources/js/composables/useAiContent'
   import('./resources/js/composables/useAiContent')
   // @ts-ignore
-  export type { TreeOperation, ContentTreePayload, TreeOperationsResult } from './resources/js/composables/useAiContentTree'
+  export type { AiContentTreeNode, CreateTreeOperation, MoveTreeOperation, UpdateTreeOperation, DeleteTreeOperation, RestoreTreeOperation, TreeOperation, ContentTreePayload, TreeOperationsResult } from './resources/js/composables/useAiContentTree'
   import('./resources/js/composables/useAiContentTree')
   // @ts-ignore
   export type { AiModel, GroupedModels, SpaceAiSettings } from './resources/js/composables/useAiModels'
@@ -221,6 +228,7 @@ declare module 'vue' {
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
+    readonly extractStreamingTreeOperations: UnwrapRef<typeof import('./resources/js/composables/useAiContentTree')['extractStreamingTreeOperations']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
     readonly getCurrentWatcher: UnwrapRef<typeof import('vue')['getCurrentWatcher']>
@@ -315,6 +323,12 @@ declare module 'vue' {
     readonly useContentSchemaState: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['useContentSchemaState']>
     readonly useContentTree: UnwrapRef<typeof import('./resources/js/composables/useContentTree')['useContentTree']>
     readonly useContentVersions: UnwrapRef<typeof import('./resources/js/composables/useContentVersions')['useContentVersions']>
+    readonly useContentWizardApply: UnwrapRef<typeof import('./resources/js/composables/useContentWizardApply')['useContentWizardApply']>
+    readonly useContentWizardKeyboard: UnwrapRef<typeof import('./resources/js/composables/useContentWizardKeyboard')['useContentWizardKeyboard']>
+    readonly useContentWizardLayout: UnwrapRef<typeof import('./resources/js/composables/useContentWizardLayout')['useContentWizardLayout']>
+    readonly useContentWizardSlug: UnwrapRef<typeof import('./resources/js/composables/useContentWizardSlug')['useContentWizardSlug']>
+    readonly useContentWizardTree: UnwrapRef<typeof import('./resources/js/composables/useContentWizardTree')['useContentWizardTree']>
+    readonly useContentWizardViewport: UnwrapRef<typeof import('./resources/js/composables/useContentWizardViewport')['useContentWizardViewport']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
     readonly useDataEntries: UnwrapRef<typeof import('./resources/js/composables/useDataEntries')['useDataEntries']>

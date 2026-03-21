@@ -24,7 +24,7 @@ class ContentTreeInteractionStreamController extends Controller
             'tree' => 'required|array',
             'config_id' => 'sometimes|nullable|string',
             'mentions' => 'sometimes|array',
-            'mentions.*.type' => 'sometimes|string|in:content,block',
+            'mentions.*.type' => 'sometimes|string|in:content,block,draft-content',
             'mentions.*.id' => 'sometimes|string',
             'mentions.*.label' => 'sometimes|string',
         ]);

@@ -39,6 +39,7 @@ const filteredItems = computed(() => {
 })
 
 const contentItems = computed(() => filteredItems.value.filter((i) => i.type === 'content'))
+const draftContentItems = computed(() => filteredItems.value.filter((i) => i.type === 'draft-content'))
 const blockItems = computed(() => filteredItems.value.filter((i) => i.type === 'block'))
 
 const selectedIndex = ref(0)
@@ -72,9 +73,11 @@ const editor = useEditor({
   extensions: [
     StarterKit.configure(),
     Placeholder.configure({
-      placeholder: props.placeholder,
+      placeholder: () => props.placeholder,
       showOnlyWhenEditable: true,
       showOnlyCurrent: true,
+      emptyNodeClass: 'is-editor-empty',
+      emptyEditorClass: 'is-editor-empty',
     }),
     AiMention.configure({
       suggestion: {
@@ -125,7 +128,7 @@ const editor = useEditor({
   },
   editorProps: {
     attributes: {
-      class: 'prose max-w-none focus:outline-none',
+      class: 'tiptap prose max-w-none focus:outline-none',
       'aria-placeholder': props.placeholder,
       role: 'textbox',
       'aria-multiline': 'true',
@@ -158,6 +161,7 @@ watch(
       )
       if (placeholderExt) {
         placeholderExt.options.placeholder = newPlaceholder
+        editor.value.view.dispatch(editor.value.state.tr)
       }
     }
   }
@@ -278,6 +282,34 @@ defineExpose({
         </button>
       </div>
 
+      <div
+        v-if="draftContentItems.length > 0"
+        class="mb-1"
+      >
+        <div
+          class="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+        >
+          {{ $t('components.aiMention.draftContent') }}
+        </div>
+        <button
+          v-for="item in draftContentItems"
+          :key="`draft-content-${item.id}`"
+          type="button"
+          role="option"
+          :aria-selected="selectedIndex === getGlobalIndex(item)"
+          :class="[
+            'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm',
+            selectedIndex === getGlobalIndex(item)
+              ? 'bg-accent text-accent-foreground'
+              : 'hover:bg-accent/50',
+          ]"
+          @click="selectItem(getGlobalIndex(item))"
+          @mouseenter="selectedIndex = getGlobalIndex(item)"
+        >
+          <span class="truncate">{{ item.label }}</span>
+        </button>
+      </div>
+
       <div v-if="blockItems.length > 0">
         <div
           class="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
@@ -307,21 +339,21 @@ defineExpose({
 </template>
 
 <style scoped>
-:deep(.tiptap-editor) {
-  .tiptap {
-    min-height: 2.5rem;
-  }
+:deep(.tiptap-editor .tiptap) {
+  min-height: 2.5rem;
+}
 
-  .tiptap p.is-editor-empty:first-child::before {
-    content: attr(data-placeholder);
-    float: left;
-    color: hsl(var(--muted-foreground));
-    pointer-events: none;
-    height: 0;
-  }
+:deep(.tiptap-editor .tiptap .is-editor-empty:first-child::before) {
+  content: attr(data-placeholder);
+  display: block;
+  width: 100%;
+  float: left;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  height: 0;
+}
 
-  .tiptap:focus {
-    outline: none;
-  }
+:deep(.tiptap-editor .tiptap:focus) {
+  outline: none;
 }
 </style>

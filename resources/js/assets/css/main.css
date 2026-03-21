@@ -439,6 +439,11 @@
       }
     }
 
+    .is-editor-empty:after {
+      content: attr(data-placeholder);
+      @apply opacity-50 absolute top-3 left-3 pointer-events-none block;
+    }
+
     code {
       @apply font-mono bg-popover border border-popover-border text-popover-foreground rounded px-1 p-0.5 text-sm;
     }

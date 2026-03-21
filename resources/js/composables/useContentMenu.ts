@@ -101,6 +101,7 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
 
     try {
       const echo = useEcho()
+      if (!echo) return
       echo
         .channel(`spaces.${toValue(spaceId)}.content`)
         .listen('.content:updated', (content: ContentResource) => {
@@ -114,8 +115,12 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
             : ({
                 id: content.id,
                 name: content.name,
+                slug: content.slug,
+                block_id: content.block_id,
                 pid: content.parent_id,
-                children: content?.children_count || 0 > 0,
+                type: content.block?.type || 'universal',
+                color: content.block?.color || null,
+                children: (content?.children_count || 0) > 0,
                 icon: content.block?.icon,
                 i18n: content?.i18n_translations || [],
                 pat: content.published_at,
@@ -127,7 +132,7 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
           newContentTree[content.id] = item
           queryClient.setQueryData(queryKeys.contentMenu(spaceId).all(), newContentTree)
         })
-    } catch (err: unknown) {
+    } catch {
       /** */
     }
   }

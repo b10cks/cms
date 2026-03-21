@@ -18,7 +18,7 @@ export interface AiStreamEvent {
 }
 
 export interface MentionItem {
-  type: 'content' | 'block'
+  type: 'content' | 'block' | 'draft-content'
   id: string
   content: Record<string, unknown> | null
   label: string

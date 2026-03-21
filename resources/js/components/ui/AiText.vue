@@ -14,8 +14,17 @@ import AiConfigSelector from '~/components/ui/AiConfigSelector.vue'
 import { useAiContent } from '~/composables/useAiContent'
 import { useAiMentions } from '~/composables/useAiMentions'
 import { useAiConfigs } from '~/composables/useAiModels'
+import type { AiMentionItem } from '~/components/editor/extensions/AiMention'
+
+export type AttachedFile = never
 
 const modelValue = defineModel<string | null>()
+const editorValue = computed({
+  get: () => modelValue.value ?? '',
+  set: (value: string) => {
+    modelValue.value = value
+  },
+})
 
 const emit = defineEmits<{
   (e: 'send', value: string, files: never[], configId: string | null, mentions: MentionItem[]): void
@@ -34,6 +43,7 @@ const props = withDefaults(
     defaultConfigId?: string | null
     showConfigSelector?: boolean
     directEmit?: boolean
+    extraMentionItems?: AiMentionItem[]
   }>(),
   {
     placeholder: '',
@@ -43,6 +53,7 @@ const props = withDefaults(
     defaultConfigId: null,
     showConfigSelector: true,
     directEmit: false,
+    extraMentionItems: () => [],
   }
 )
 
@@ -55,6 +66,20 @@ const { useMentionItemsQuery } = useAiMentions(toRef(props, 'spaceId'))
 
 const { data: aiConfigs, isLoading: isLoadingConfigs } = useAiConfigsQuery()
 const { items: mentionItems } = useMentionItemsQuery()
+const mergedMentionItems = computed(() => {
+  const combined = [...mentionItems.value, ...props.extraMentionItems]
+  const seen = new Set<string>()
+
+  return combined.filter((item) => {
+    const key = `${item.type}:${item.id}`
+    if (seen.has(key)) {
+      return false
+    }
+
+    seen.add(key)
+    return true
+  })
+})
 
 const canSend = computed(
   () =>
@@ -273,10 +298,10 @@ defineExpose({
     >
       <InputGroupTipTap
         ref="tiptapRef"
-        v-model="modelValue"
+        v-model="editorValue"
         :placeholder="dynamicPlaceholder"
         :disabled="loading || isStreaming"
-        :mention-items="mentionItems"
+        :mention-items="mergedMentionItems"
         @submit="handleSend"
       />
 

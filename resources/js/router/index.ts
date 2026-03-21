@@ -129,6 +129,12 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: '/:space/content-wizard',
+    name: 'space-content-wizard',
+    component: () => import('~/pages/[space]/content-wizard.vue'),
+    meta: { layout: 'default' },
+  },
+  {
     path: '/:space/assets',
     name: 'space-assets',
     component: () => import('~/pages/[space]/assets.vue'),
@@ -247,7 +253,7 @@ export const router = createRouter({
   },
 })
 
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to) => {
   const auth = useAuth()
 
   try {
@@ -263,21 +269,18 @@ router.beforeEach(async (to, _from, next) => {
   const isPublicRoute = to.meta.public === true
 
   if (!isReady) {
-    next()
-    return
+    return true
   }
 
   if (isGuestRoute && isAuthenticated) {
-    next({ name: 'index' })
-    return
+    return { name: 'index' }
   }
 
   if (!isGuestRoute && !isPublicRoute && !isAuthenticated) {
-    next({
+    return {
       name: 'login',
       query: { return: to.fullPath },
-    })
-    return
+    }
   }
 
   const requiredAbility =
@@ -302,15 +305,13 @@ router.beforeEach(async (to, _from, next) => {
       ]
 
       if (!response.data.is_root && !abilities.includes(requiredAbility)) {
-        next({ name: 'index' })
-        return
+        return { name: 'index' }
       }
     } catch (error) {
       console.error('[Router] Authorization guard failed:', error)
-      next({ name: 'index' })
-      return
+      return { name: 'index' }
     }
   }
 
-  next()
+  return true
 })

@@ -42,7 +42,9 @@ const handleSubmit = (
   } catch {
     updatedContent = {
       ...content.value,
-      content: resultContent,
+      content: {
+        value: resultContent,
+      },
     }
   }
 

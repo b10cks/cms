@@ -3,9 +3,11 @@
 namespace App\Actions\Content;
 
 use App\Models\Management\Space;
+use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
+use App\Services\Content\ContentHierarchyValidator;
 use App\Services\Content\ContentI18nValidator;
 use App\Services\Content\Schema\ContentSchemaValidationResult;
 use App\Services\Content\Schema\ContentSchemaValidator;
@@ -16,6 +18,7 @@ use Illuminate\Validation\ValidationException;
 class CreateContent
 {
     public function __construct(
+        private readonly ContentHierarchyValidator $contentHierarchyValidator,
         private readonly ContentI18nValidator $validator,
         private readonly ContentSchemaValidator $contentSchemaValidator,
     ) {
@@ -48,7 +51,17 @@ class CreateContent
                 $data['language_iso'] = $space->settings->getDefaultLanguage();
             }
 
-            $block = \App\Models\Space\Block::query()->findOrFail($data['block_id']);
+            /** @var Block $block */
+            $block = Block::query()->findOrFail($data['block_id']);
+            $parent = isset($data['parent_id']) ? Content::query()->with('block')->find($data['parent_id']) : null;
+
+            $this->contentHierarchyValidator->validatePlacement(
+                $space,
+                $block,
+                $parent,
+                null,
+                $data['language_iso'] ?? null,
+            );
 
             // Allow empty content submissions: if no content (null) or an empty array is provided,
             // skip schema validation and store an empty content payload.

@@ -13,7 +13,7 @@ export interface AiMentionOptions {
 export interface AiMentionItem {
   id: string
   label: string
-  type: 'content' | 'block'
+  type: 'content' | 'block' | 'draft-content'
   color?: string | null
   icon?: string | null
 }
@@ -143,7 +143,7 @@ export const AiMention = Node.create<AiMentionOptions>({
 
 export function extractMentionsFromText(text: string): Array<{ type: string; id: string }> {
   const mentions: Array<{ type: string; id: string }> = []
-  const regex = /@(content|block):([A-Z0-9]{26}|[a-z0-9-]+)/gi
+  const regex = /@(content|block|draft-content):([A-Z0-9]{26}|draft:[A-Za-z0-9-]+|[a-z0-9-]+)/gi
   let match: RegExpExecArray | null = regex.exec(text)
   while (match !== null) {
     mentions.push({

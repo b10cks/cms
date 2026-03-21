@@ -7,7 +7,6 @@ import { TreeItem, TreeRoot, type TreeItemToggleEvent } from 'reka-ui'
 import { RouterLink } from 'vue-router'
 import { toast } from 'vue-sonner'
 
-import ContentTreeAiDialog from '~/components/content/ContentTreeAiDialog.vue'
 import CreateContentDialog from '~/components/content/CreateContentDialog.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
@@ -23,7 +22,6 @@ import {
   resolveContentRouteName,
   withContentLanguageQuery,
 } from '~/lib/content-i18n'
-import type { ContentResource } from '~/types/contents'
 
 type Edge = 'left'
 
@@ -84,9 +82,6 @@ const selectedItemIds = ref<string[]>([])
 const currentlyEditingId = ref<string | null>(null)
 const showCreateDialog = ref(false)
 const createParentId = ref<string | null>(null)
-const showAiDialog = ref(false)
-
-
 const activeDropTargetId = ref<string | null>(null)
 const activeDropEdge = ref<Edge | null>(null)
 const rootDropMode = ref<'root' | 'root-top' | null>(null)
@@ -958,15 +953,15 @@ onBeforeUnmount(() => {
 
       <div
         v-if="selectedSpace"
-        class="relative mb-2"
+        ref="rootDropZoneRef"
+        :class="[
+          'group relative mb-2 flex w-full items-center gap-2 rounded-md border border-transparent -my-1 px-2 py-1 transition-all duration-150',
+          rootDropMode ? 'bg-accent/50 ring-1 ring-info' : '',
+        ]"
       >
         <button
-          ref="rootDropZoneRef"
           type="button"
-          :class="[
-            'group flex w-full items-center gap-2 rounded-md border border-transparent -my-1 py-1 px-2 text-left transition-all duration-150',
-            rootDropMode ? 'bg-accent/50 ring-1 ring-info' : '',
-          ]"
+          class="min-w-0 flex flex-1 items-center gap-2 text-left"
           @click="
             router.push({ name: 'space-content-index', params: { space: route.params.space } })
           "
@@ -994,27 +989,17 @@ onBeforeUnmount(() => {
               size="2xs"
             />
           </div>
-
-          <div class="ml-auto flex items-center">
-            <Button
-              variant="ghost"
-              size="toolbar"
-              @click.stop="showAiDialog = true"
-            >
-              <Icon
-                name="lucide:wand"
-                class="text-ai"
-              />
-            </Button>
-            <Button
-              variant="ghost"
-              size="toolbar"
-              @click.stop="initCreate(null)"
-            >
-              <Icon name="lucide:plus" />
-            </Button>
-          </div>
         </button>
+
+        <div class="ml-auto flex items-center">
+          <Button
+            variant="ghost"
+            size="toolbar"
+            @click.stop="initCreate(null)"
+          >
+            <Icon name="lucide:plus" />
+          </Button>
+        </div>
 
         <DropIndicator
           v-if="rootDropMode === 'root'"
@@ -1131,12 +1116,6 @@ onBeforeUnmount(() => {
       v-model:open="showCreateDialog"
       :space-id="props.spaceId"
       :parent-id="createParentId"
-    />
-
-    <ContentTreeAiDialog
-      v-model:open="showAiDialog"
-      :space-id="props.spaceId"
-      :tree="rootItems as unknown as ContentResource[]"
     />
   </aside>
 </template>

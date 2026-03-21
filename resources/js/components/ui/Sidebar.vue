@@ -38,6 +38,7 @@ const spaceId = inject<Ref<string | undefined>>('spaceId')
 
 const menu = [
   { icon: 'lucide:home', label: 'Home', route: 'space' },
+  { icon: 'lucide:network', label: 'Wizard', route: 'space-content-wizard' },
   { icon: 'lucide:feather', label: 'Content', route: 'space-content-index' },
   { icon: 'lucide:blocks', label: 'Blocks', route: 'space-blocks-index' },
   { icon: 'lucide:images', label: 'Assets', route: 'space-assets-index' },
@@ -73,8 +74,8 @@ const availableLocales = locales
 <template>
   <div
     :class="[
-      'flex h-full flex-col overflow-hidden border-r border-r-border select-none',
-      isExtendedSidebar ? 'w-18 p-1' : 'w-14 p-3',
+      'flex h-full flex-col overflow-hidden border-r border-r-border select-none transition-all',
+      isExtendedSidebar ? 'w-18 p-1 pb-3' : 'w-14 p-3',
     ]"
   >
     <div class="flex min-h-0 flex-1 flex-col overflow-y-auto">

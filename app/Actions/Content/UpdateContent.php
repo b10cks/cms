@@ -3,9 +3,11 @@
 namespace App\Actions\Content;
 
 use App\Models\Management\Space;
+use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
+use App\Services\Content\ContentHierarchyValidator;
 use App\Services\Content\ContentI18nValidator;
 use App\Services\Content\Schema\ContentSchemaValidationResult;
 use App\Services\Content\Schema\ContentSchemaValidator;
@@ -17,6 +19,7 @@ class UpdateContent
 {
     public function __construct(
         protected SearchService $searchService,
+        protected ContentHierarchyValidator $contentHierarchyValidator,
         protected ContentI18nValidator $validator,
         protected ContentSchemaValidator $contentSchemaValidator,
     ) {
@@ -46,10 +49,30 @@ class UpdateContent
 
         $wasPublished = $content->published_at !== null;
         $content->loadMissing('block');
+        $targetParent = array_key_exists('parent_id', $data)
+            ? Content::query()->with('block')->find($data['parent_id'])
+            : $content->parent()->with('block')->first();
+        /** @var Block $targetBlock */
+        $targetBlock = array_key_exists('block_id', $data)
+            ? Block::query()->findOrFail($data['block_id'])
+            : $content->block;
+
+        $this->contentHierarchyValidator->validatePlacement(
+            $space,
+            $targetBlock,
+            $targetParent,
+            $content,
+            $data['language_iso'] ?? $content->language_iso,
+        );
+
+        $submission = array_key_exists('content', $data)
+            ? data_get($data, 'content', [])
+            : $content->getContent();
+
         $contentValidation = $this->contentSchemaValidator->validateSubmission(
             $space,
-            $content->block,
-            data_get($data, 'content', []),
+            $targetBlock,
+            $submission,
             $content,
             $data['language_iso'] ?? $content->language_iso,
             $data['i18n_parent_id'] ?? $content->i18n_parent_id,

@@ -817,7 +817,7 @@ provide('focusFirstValidationError', focusFirstInvalidField)
           @click="showAi = !showAi"
         >
           <Icon
-            name="lucide:wand"
+            name="lucide:wand-sparkles"
             size="20"
             :class="[
               showAi ? 'text-primary' : 'text-ai',

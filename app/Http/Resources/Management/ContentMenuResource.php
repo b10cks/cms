@@ -17,6 +17,8 @@ class ContentMenuResource extends JsonResource
             'id' => $this->id,
             'pid' => $this->parent_id,
             'name' => $this->name,
+            'slug' => $this->slug,
+            'block_id' => $this->block_id,
             'type' => $this->whenLoaded('block', fn() => $this->block->type),
             'children' => $this->whenCounted('children', fn() => $this->children_count > 0),
             'icon' => $this->whenLoaded('block', fn() => $this->block->icon),

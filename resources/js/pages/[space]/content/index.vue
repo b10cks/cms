@@ -1,10 +1,15 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router'
+
 import ContentsIcon from '~/assets/images/contents.svg?component'
+import Icon from '~/components/Icon.vue'
+import { Button } from '~/components/ui/button'
 
 const route = useRoute()
 const { t } = useI18n()
+const spaceId = computed(() => route.params.space as string)
 
-const { useContentMenuQuery, getRootItems } = useContentMenu(route.params.space as string)
+const { useContentMenuQuery, getRootItems } = useContentMenu(spaceId)
 const { data } = useContentMenuQuery()
 
 useSeoMeta({
@@ -23,6 +28,14 @@ const rootItems = computed(() => getRootItems(data.value) || [])
       <ContentsIcon class="mx-auto mb-6 w-32 text-muted" />
       <h3 class="mb-2 text-xl font-bold">No Content Selected</h3>
       <p class="mb-6 text-muted">Start by creating your first content page</p>
+      <Button
+        :as="RouterLink"
+        :to="{ name: 'space-content-wizard', params: { space: spaceId } }"
+        variant="outline"
+      >
+        <Icon name="lucide:network" />
+        {{ $t('labels.contents.wizard.entry') }}
+      </Button>
     </div>
     <div
       v-else
@@ -33,6 +46,14 @@ const rootItems = computed(() => getRootItems(data.value) || [])
       <p class="mb-6 text-muted">
         Select an item from the content menu to edit or create new content.
       </p>
+      <Button
+        :as="RouterLink"
+        :to="{ name: 'space-content-wizard', params: { space: spaceId } }"
+        variant="outline"
+      >
+        <Icon name="lucide:network" />
+        {{ $t('labels.contents.wizard.entry') }}
+      </Button>
     </div>
   </div>
 </template>
