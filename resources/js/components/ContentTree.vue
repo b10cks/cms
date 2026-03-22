@@ -1052,7 +1052,7 @@ onBeforeUnmount(() => {
         </button>
         <span
           v-else
-          class="size-3"
+          class="size-4"
         />
 
         <Icon
