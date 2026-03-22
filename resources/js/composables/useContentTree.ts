@@ -20,20 +20,14 @@ export function useContentTree(
   contentRef: MaybeRef<ContentTreeItem>,
   root: MaybeRef<ContentBlock>
 ) {
-  const findItemById = (itemId: string): FindResult => {
+  const findItemById = (itemId: string): ?FindResult => {
     const content = unref(contentRef)
     if (!content) {
-      return { item: null, path: [], parent: null, parentKey: null, index: null }
+      return null
     }
 
     if (content.id === itemId) {
-      return {
-        item: content,
-        path: [unref(root), content],
-        parent: null,
-        parentKey: null,
-        index: null,
-      }
+      return null
     }
 
     const result: FindResult = {
@@ -94,19 +88,15 @@ export function useContentTree(
   }
 
   const buildBreadcrumbs = (itemId: string) => {
-    const { path } = findItemById(itemId)
-    const result = path
+    const item = findItemById(itemId)
+    if (!item) return []
+    const { path } = item
+    return path
       .map((item) => ({
         id: item.id,
         label: item.block,
       }))
       .slice(0, -1)
-
-    const rootValue = unref(root)
-    result.unshift({
-      id: null,
-      label: rootValue?.name || rootValue?.slug || '',
-    })
 
     return result
   }

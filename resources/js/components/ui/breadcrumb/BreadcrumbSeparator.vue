@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import type { HTMLAttributes } from 'vue'
+
+import Icon from '@/components/Icon.vue'
 import { cn } from '@/lib/utils'
 
 const props = withDefaults(
