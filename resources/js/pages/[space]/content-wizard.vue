@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDebounceFn } from '@vueuse/core'
+import { useThrottleFn } from '@vueuse/core'
 import { RouterLink } from 'vue-router'
 import { toast } from 'vue-sonner'
 
@@ -123,9 +123,13 @@ const draftMentionItems = computed<AiMentionItem[]>(() =>
 )
 
 
-const broadcastCursorPosition = useDebounceFn((payload: { x: number; y: number } | null) => {
-  collaboration.broadcastCursor(payload)
-}, 50)
+const broadcastCursorPosition = useThrottleFn(
+  (payload: { x: number; y: number } | null) => {
+    collaboration.broadcastCursor(payload)
+  },
+  100,
+  true
+)
 
 
 const clearLiveFieldBroadcasts = () => {
@@ -328,13 +332,17 @@ const flushPendingRemoteOperations = () => {
 const flushQueuedRemoteOperations = () => {
   let appliedOperation = true
 
+
   while (appliedOperation && queuedRemoteOperations.size > 0) {
     appliedOperation = false
 
+
     const queuedEntries = new Map(queuedRemoteOperations)
+
 
     for (const [operationKey, operation] of queuedEntries) {
       queuedRemoteOperations.delete(operationKey)
+
 
       if (applyRemoteOperation(operation)) {
         appliedOperation = true
