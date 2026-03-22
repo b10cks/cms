@@ -221,10 +221,7 @@ onBeforeUnmount(() => {
   <div
     :data-field-path="fieldPath"
     :data-validation-visible="showFieldError ? 'true' : undefined"
-    :class="[
-      'relative rounded-xl transition-colors',
-      showContainerHighlight ? 'collaboration-field-active' : '',
-    ]"
+    :class="['relative group/field', showContainerHighlight ? 'collaboration-field-active' : '']"
     :style="collaborationStyle"
     @focusin="handleFocusIn"
     @focusout="handleFocusOut"
