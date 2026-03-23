@@ -52,6 +52,7 @@ const emit = defineEmits<{
   (event: 'commit-slug', payload: { nodeId: string; value: string }): void
   (event: 'update-block', payload: { nodeId: string; blockId: string }): void
   (event: 'toggle-delete', nodeId: string): void
+  (event: 'toggle-collapse', nodeId: string): void
   (
     event: 'add-node',
     payload: { nodeId: string; position: ContentWizardAddPosition; block: BlockResource }
@@ -76,6 +77,7 @@ const {
   handlePointerMove,
   handlePointerUp,
   resetView,
+  setZoom100,
   viewport,
   zoomIn,
   zoomOut,
@@ -88,13 +90,15 @@ const nodeRefs = new Map<string, InstanceType<typeof ContentWizardNodeCard>>()
 
 
 const sortedNodes = computed(() =>
-  Object.values(props.nodes).sort((left, right) => {
-    if (left.depth !== right.depth) {
-      return left.depth - right.depth
-    }
+  Object.values(props.nodes)
+    .filter((node) => node.isVisible)
+    .sort((left, right) => {
+      if (left.depth !== right.depth) {
+        return left.depth - right.depth
+      }
 
-    return left.position - right.position
-  })
+      return left.position - right.position
+    })
 )
 
 
@@ -238,6 +242,7 @@ defineExpose({
   focusNodeCard,
   openNodeAddMenu,
   resetView,
+  setZoom100,
   zoomIn,
   zoomOut,
   zoomPercent,
@@ -344,6 +349,7 @@ defineExpose({
           @commit-slug="emit('commit-slug', { nodeId: node.id, value: $event })"
           @update-block="emit('update-block', { nodeId: node.id, blockId: $event })"
           @toggle-delete="emit('toggle-delete', node.id)"
+          @toggle-collapse="emit('toggle-collapse', node.id)"
           @add="
             emit('add-node', { nodeId: node.id, position: $event.position, block: $event.block })
           "

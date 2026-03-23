@@ -5,9 +5,9 @@ import type {
   ContentWizardSyncOperation,
 } from '~/types/content-wizard'
 
-const CONTENT_WIZARD_FOCUS_EVENT = 'content-wizard-focus'
-const CONTENT_WIZARD_CURSOR_EVENT = 'content-wizard-cursor'
-const CONTENT_WIZARD_OPERATION_EVENT = 'content-wizard-operation'
+const CONTENT_WIZARD_FOCUS_EVENT = 'content-canvas-focus'
+const CONTENT_WIZARD_CURSOR_EVENT = 'content-canvas-cursor'
+const CONTENT_WIZARD_OPERATION_EVENT = 'content-canvas-operation'
 
 interface ContentWizardFocusWhisperPayload {
   nodeId: string | null
@@ -33,7 +33,7 @@ export function useContentWizardCollaboration(spaceIdRef: MaybeRefOrComputed<str
       return null
     }
 
-    return `presence-spaces.${spaceId}.content-wizard`
+    return `presence-spaces.${spaceId}.content-canvas`
   })
 
   const presence = usePresence(channelName)

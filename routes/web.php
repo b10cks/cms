@@ -38,6 +38,7 @@ Route::get('/account/settings/security', AppController::class)->name('account-se
 // Space routes (must come last to avoid shadowing more specific routes)
 Route::get('/{space}', AppController::class)->name('space');
 Route::get('/{space}/content', AppController::class)->name('space-content');
+Route::get('/{space}/canvas', AppController::class)->name('space-canvas');
 Route::get('/{space}/content-wizard', AppController::class)->name('space-content-wizard');
 Route::get('/{space}/content/{contentId}', AppController::class)->name('space-content-contentId');
 Route::get('/{space}/content/{contentId}/localization', AppController::class)->name('space-content-contentId-localization');

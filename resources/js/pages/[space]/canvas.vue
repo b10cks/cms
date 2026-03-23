@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useThrottleFn } from '@vueuse/core'
-import { RouterLink } from 'vue-router'
 import { toast } from 'vue-sonner'
 
 import type { MentionItem } from '~/api/resources/ai'
@@ -19,6 +18,7 @@ import {
   useAiContentTree,
   type TreeOperation,
 } from '~/composables/useAiContentTree'
+import { useContentCanvasCommands } from '~/composables/useContentCanvasCommands'
 import { useContentWizardApply } from '~/composables/useContentWizardApply'
 import { useContentWizardCollaboration } from '~/composables/useContentWizardCollaboration'
 import { useContentWizardKeyboard } from '~/composables/useContentWizardKeyboard'
@@ -99,6 +99,7 @@ const aiWarnings = ref<AiPreviewWarning[]>([])
 const pendingRemoteOperations: ContentWizardSyncOperation[] = []
 const liveFieldTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const queuedRemoteOperations = new Map<string, ContentWizardSyncOperation>()
+const editSessionSnapshots = new Map<string, ContentWizardDraftTree>()
 
 
 const isLoading = computed(() => isBlocksLoading.value || isMenuLoading.value)
@@ -115,7 +116,7 @@ const draftMentionItems = computed<AiMentionItem[]>(() =>
     .map((node) => ({
       id: node.id,
       label:
-        node.title.trim() || node.blockName || (t('labels.contents.wizard.untitledNode') as string),
+        node.title.trim() || node.blockName || (t('labels.contents.canvas.untitledNode') as string),
       type: 'draft-content',
       color: node.color,
       icon: node.icon ? `lucide:${node.icon}` : 'lucide:file',
@@ -161,6 +162,23 @@ const parseLiveFieldKey = (fieldKey: string) => {
     nodeId,
     field,
   }
+}
+
+
+const createEditSessionKey = (nodeId: string, field: ContentWizardEditableField) =>
+  `${nodeId}:${field}`
+
+
+const startEditSession = (nodeId: string, field: ContentWizardEditableField) => {
+  const sessionKey = createEditSessionKey(nodeId, field)
+  if (!editSessionSnapshots.has(sessionKey)) {
+    editSessionSnapshots.set(sessionKey, treeApi.createSnapshot())
+  }
+}
+
+
+const clearEditSession = (nodeId: string, field: ContentWizardEditableField) => {
+  editSessionSnapshots.delete(createEditSessionKey(nodeId, field))
 }
 
 
@@ -281,6 +299,14 @@ const applyRemoteOperation = (operation: ContentWizardSyncOperation) => {
   }
 
 
+  if (operation.type === 'replace-draft') {
+    treeApi.restoreSnapshot(operation.snapshot)
+    clearTransientState()
+    focusNode(CONTENT_WIZARD_ROOT_ID)
+    return true
+  }
+
+
   if (!treeApi.getNode(operation.nodeId)) {
     queueRemoteOperation(operation)
     return false
@@ -307,6 +333,18 @@ const applyRemoteOperation = (operation: ContentWizardSyncOperation) => {
 
   if (operation.type === 'move') {
     treeApi.moveNode(operation.nodeId, operation.parentId, operation.index)
+    return true
+  }
+
+
+  if (operation.type === 'collapse-state') {
+    treeApi.setCollapsed(operation.nodeId, operation.collapsed)
+    if (focusedNodeId.value) {
+      const focusedNode = treeApi.getNode(focusedNodeId.value)
+      if (focusedNode && !focusedNode.isVisible) {
+        focusNode(operation.nodeId)
+      }
+    }
     return true
   }
 
@@ -359,7 +397,103 @@ const flushQueuedRemoteOperations = () => {
 }
 
 
+function focusNode(nodeId: string) {
+  focusedNodeId.value = nodeId
+}
+
+
+function clearTransientState() {
+  editingField.value = null
+  editingNodeId.value = null
+  dropTargetId.value = null
+}
+
+
+const clearEditSessions = () => {
+  editSessionSnapshots.clear()
+}
+
+const serializeHistorySnapshot = (snapshot: ContentWizardDraftTree) => {
+  return JSON.stringify({
+    rootId: snapshot.rootId,
+    nodes: Object.fromEntries(
+      Object.entries(snapshot.nodes).map(([nodeId, node]) => [
+        nodeId,
+        {
+          id: node.id,
+          backendId: node.backendId,
+          parentId: node.parentId,
+          childrenIds: node.childrenIds,
+          blockId: node.blockId,
+          blockType: node.blockType,
+          blockName: node.blockName,
+          title: node.title,
+          slug: node.slug,
+          slugMode: node.slugMode,
+          icon: node.icon,
+          color: node.color,
+          isRootVirtual: node.isRootVirtual,
+          canHaveChildren: node.canHaveChildren,
+          isAiAltered: node.isAiAltered,
+          isDeletedSelf: node.isDeletedSelf,
+          original: node.original,
+        },
+      ])
+    ),
+  })
+}
+
+const mergeCurrentCollapsedState = (snapshot: ContentWizardDraftTree): ContentWizardDraftTree => ({
+  rootId: snapshot.rootId,
+  nodes: Object.fromEntries(
+    Object.entries(snapshot.nodes).map(([nodeId, node]) => {
+      const currentNode = treeApi.getNode(nodeId)
+
+      return [
+        nodeId,
+        {
+          ...node,
+          childrenIds: [...node.childrenIds],
+          layout: { ...node.layout },
+          changes: { ...node.changes },
+          validationState: {
+            hasErrors: node.validationState.hasErrors,
+            errors: node.validationState.errors.map((error) => ({ ...error })),
+          },
+          original: node.original ? { ...node.original } : null,
+          isCollapsed: currentNode?.isCollapsed ?? node.isCollapsed,
+        },
+      ]
+    })
+  ),
+})
+
+
+const history = useContentCanvasCommands({
+  createSnapshot: treeApi.createSnapshot,
+  restoreSnapshot: (snapshot) => {
+    treeApi.restoreSnapshot(mergeCurrentCollapsedState(snapshot))
+    clearTransientState()
+    const focusedNode = focusedNodeId.value ? treeApi.getNode(focusedNodeId.value) : null
+    if (!focusedNode || !focusedNode.isVisible) {
+      focusNode(CONTENT_WIZARD_ROOT_ID)
+    }
+  },
+  onHistoryRestore: (snapshot) => {
+    const mergedSnapshot = mergeCurrentCollapsedState(snapshot)
+    collaboration.broadcastOperation({
+      type: 'replace-draft',
+      nodeId: CONTENT_WIZARD_ROOT_ID,
+      snapshot: mergedSnapshot,
+    })
+  },
+  serializeSnapshot: serializeHistorySnapshot,
+})
+
+
 const stopRemoteOperationListener = collaboration.onOperation((operation) => {
+  history.clearHistory()
+  clearEditSessions()
   applyRemoteOperation(operation)
   flushQueuedRemoteOperations()
 })
@@ -373,6 +507,8 @@ watch(
     }
 
     treeApi.initializeFromSource()
+    history.clearHistory()
+    clearEditSessions()
     focusedNodeId.value = CONTENT_WIZARD_ROOT_ID
     initialized.value = true
     flushPendingRemoteOperations()
@@ -383,11 +519,6 @@ watch(
 )
 
 
-const focusNode = (nodeId: string) => {
-  focusedNodeId.value = nodeId
-}
-
-
 watch(
   focusedNodeId,
   (nodeId) => {
@@ -395,13 +526,6 @@ watch(
   },
   { immediate: true }
 )
-
-
-const clearTransientState = () => {
-  editingField.value = null
-  editingNodeId.value = null
-  dropTargetId.value = null
-}
 
 
 const clearAiStreamState = () => {
@@ -423,6 +547,8 @@ const restoreAiSnapshot = () => {
 
 
   treeApi.restoreSnapshot(aiPreviewSnapshot.value)
+  history.clearHistory()
+  clearEditSessions()
 }
 
 
@@ -449,19 +575,19 @@ const summarizeAiOperations = (operations: TreeOperation[]) => {
 
   const parts = [
     counts.create > 0
-      ? (t('labels.contents.wizard.aiSummaryCreate', { count: counts.create }) as string)
+      ? (t('labels.contents.canvas.aiSummaryCreate', { count: counts.create }) as string)
       : null,
     counts.move > 0
-      ? (t('labels.contents.wizard.aiSummaryMove', { count: counts.move }) as string)
+      ? (t('labels.contents.canvas.aiSummaryMove', { count: counts.move }) as string)
       : null,
     counts.update > 0
-      ? (t('labels.contents.wizard.aiSummaryUpdate', { count: counts.update }) as string)
+      ? (t('labels.contents.canvas.aiSummaryUpdate', { count: counts.update }) as string)
       : null,
     counts.delete > 0
-      ? (t('labels.contents.wizard.aiSummaryDelete', { count: counts.delete }) as string)
+      ? (t('labels.contents.canvas.aiSummaryDelete', { count: counts.delete }) as string)
       : null,
     counts.restore > 0
-      ? (t('labels.contents.wizard.aiSummaryRestore', { count: counts.restore }) as string)
+      ? (t('labels.contents.canvas.aiSummaryRestore', { count: counts.restore }) as string)
       : null,
   ].filter((value): value is string => !!value)
 
@@ -627,11 +753,11 @@ const getAiNodeLabel = (nodeId: string | null | undefined) => {
 
 
   if (node.isRootVirtual) {
-    return space.value?.name || (t('labels.contents.wizard.rootNodeTitle') as string)
+    return space.value?.name || (t('labels.contents.canvas.rootNodeTitle') as string)
   }
 
 
-  return node.title.trim() || node.blockName || (t('labels.contents.wizard.untitledNode') as string)
+  return node.title.trim() || node.blockName || (t('labels.contents.canvas.untitledNode') as string)
 }
 
 
@@ -735,8 +861,8 @@ const applyAiOperationsPreview = (operations: TreeOperation[]) => {
             detail: error instanceof Error ? error.message : 'could not be previewed.',
             nodeId: parentId,
             nodeLabel: parentId
-              ? `${t('labels.contents.wizard.aiCreateUnder') as string} ${getAiNodeLabel(parentId) || parentId}`
-              : (t('labels.contents.wizard.aiCreateAtRoot') as string),
+              ? `${t('labels.contents.canvas.aiCreateUnder') as string} ${getAiNodeLabel(parentId) || parentId}`
+              : (t('labels.contents.canvas.aiCreateAtRoot') as string),
           })
         )
       }
@@ -908,6 +1034,7 @@ const startEditing = (nodeId: string, field: ContentWizardEditableField, initial
 
 
   focusNode(nodeId)
+  startEditSession(nodeId, field)
   editingNodeId.value = nodeId
   editingField.value = field
 
@@ -978,7 +1105,7 @@ const createNodeFromContext = (
 
 
   if (!preferredBlock || !availableBlocks.some((candidate) => candidate.id === preferredBlock.id)) {
-    toast.error(t('labels.contents.wizard.noBlocksAvailable'))
+    toast.error(t('labels.contents.canvas.noBlocksAvailable'))
     return false
   }
 
@@ -993,19 +1120,35 @@ const createNodeFromContext = (
         : node.parentId
 
 
-  const createdNode = treeApi.addNode(preferredBlock, {
-    parentId,
-    position: resolvedPosition,
-    referenceNodeId: node.isRootVirtual ? null : node.id,
+  const commandResult = history.executeCommand({
+    label: 'add-node',
+    execute: () => {
+      const createdNode = treeApi.addNode(preferredBlock, {
+        parentId,
+        position: resolvedPosition,
+        referenceNodeId: node.isRootVirtual ? null : node.id,
+      })
+
+      if (resolvedPosition === 'child' && !node.isRootVirtual && node.isCollapsed) {
+        treeApi.setCollapsed(node.id, false)
+      }
+
+      return createdNode
+    },
+    onCommitted: ({ result }) => {
+      broadcastCreatedSubtree(result.id)
+    },
   })
 
 
-  broadcastCreatedSubtree(createdNode.id)
+  if (!commandResult.changed) {
+    return false
+  }
 
 
-  focusNode(createdNode.id)
+  focusNode(commandResult.result.id)
   nextTick(() => {
-    startEditing(createdNode.id, 'title')
+    startEditing(commandResult.result.id, 'title')
   })
 
 
@@ -1038,14 +1181,14 @@ const openAddMenu = (nodeId: string, position: ContentWizardAddPosition) => {
 
 
   if (availableBlocks.length === 0) {
-    toast.error(t('labels.contents.wizard.noBlocksAvailable'))
+    toast.error(t('labels.contents.canvas.noBlocksAvailable'))
     return false
   }
 
 
   const opened = canvasRef.value?.openNodeAddMenu(nodeId, resolvedPosition)
   if (!opened) {
-    toast.error(t('labels.contents.wizard.noBlocksAvailable'))
+    toast.error(t('labels.contents.canvas.noBlocksAvailable'))
     return false
   }
 
@@ -1070,13 +1213,19 @@ function handleToggleDelete(nodeId: string) {
   const nextDeletedState = node.deletedReason !== 'self'
 
 
-  treeApi.toggleDelete(nodeId)
-  collaboration.broadcastOperation({
-    type: 'delete-state',
-    nodeId,
-    deleted: nextDeletedState,
+  history.executeCommand({
+    label: 'toggle-delete',
+    execute: () => treeApi.toggleDelete(nodeId),
+    onCommitted: () => {
+      collaboration.broadcastOperation({
+        type: 'delete-state',
+        nodeId,
+        deleted: nextDeletedState,
+      })
+    },
   })
   clearTransientState()
+  clearEditSessions()
   focusNode(removesDraftNode ? fallbackNodeId : nodeId)
 }
 
@@ -1107,34 +1256,86 @@ const handleCommitSlug = (nodeId: string, value: string) => {
 
 
 const handleTitleCommitEnd = (nodeId: string, value: string) => {
+  const before = editSessionSnapshots.get(createEditSessionKey(nodeId, 'title'))
   treeApi.updateTitle(nodeId, value)
   flushLiveFieldBroadcast(`${nodeId}:title`)
+  if (before) {
+    history.recordSnapshotChange({
+      label: 'update-title',
+      before,
+      after: treeApi.createSnapshot(),
+    })
+  }
+  clearEditSession(nodeId, 'title')
   clearTransientState()
   focusNode(nodeId)
 }
 
 
 const handleSlugCommitEnd = (nodeId: string, value: string) => {
+  const before = editSessionSnapshots.get(createEditSessionKey(nodeId, 'slug'))
   treeApi.updateSlug(nodeId, value)
   flushLiveFieldBroadcast(`${nodeId}:slug`)
+  if (before) {
+    history.recordSnapshotChange({
+      label: 'update-slug',
+      before,
+      after: treeApi.createSnapshot(),
+    })
+  }
+  clearEditSession(nodeId, 'slug')
   clearTransientState()
   focusNode(nodeId)
 }
 
 
 const handleBlockUpdate = (nodeId: string, blockId: string) => {
-  const result = treeApi.updateBlock(nodeId, blockId)
+  const commandResult = history.executeCommand({
+    label: 'update-block',
+    execute: () => treeApi.updateBlock(nodeId, blockId),
+    onCommitted: () => {
+      collaboration.broadcastOperation({
+        type: 'block',
+        nodeId,
+        blockId,
+      })
+    },
+  })
+  const result = commandResult.result
+  if (!result.valid && result.message) {
+    toast.error(result.message)
+    return
+  }
+}
+
+
+const handleToggleCollapse = (nodeId: string) => {
+  const node = treeApi.getNode(nodeId)
+  if (!node || node.isRootVirtual) {
+    return
+  }
+
+
+  const nextCollapsed = !node.isCollapsed
+  const result = treeApi.setCollapsed(nodeId, nextCollapsed)
   if (!result.valid && result.message) {
     toast.error(result.message)
     return
   }
 
-
   collaboration.broadcastOperation({
-    type: 'block',
+    type: 'collapse-state',
     nodeId,
-    blockId,
+    collapsed: nextCollapsed,
   })
+
+
+  if (nextCollapsed && focusedNodeId.value) {
+    const focusedNode = treeApi.getNode(focusedNodeId.value)
+    if (focusedNode && !focusedNode.isVisible) {
+      focusNode(nodeId)
+    }
+  }
 }
 
 
@@ -1201,26 +1402,36 @@ const handleDropOnNode = ({ nodeId, event }: { nodeId: string; event: DragEvent 
 
   const draggedNodeId = draggingNodeId.value
   const copyMode = isCopyDrop(event)
-  const duplicateResult = copyMode ? treeApi.duplicateNode(draggedNodeId, nodeId) : null
-  const moveResult = !copyMode ? treeApi.moveNode(draggedNodeId, nodeId) : null
-  const result = duplicateResult ?? moveResult ?? { valid: false }
+  const commandResult = history.executeCommand({
+    label: copyMode ? 'duplicate-subtree' : 'move-node',
+    execute: () =>
+      copyMode
+        ? treeApi.duplicateNode(draggedNodeId, nodeId)
+        : treeApi.moveNode(draggedNodeId, nodeId),
+    onCommitted: ({ result }) => {
+      if (
+        copyMode &&
+        result.valid &&
+        'createdNodeId' in result &&
+        typeof result.createdNodeId === 'string'
+      ) {
+        broadcastCreatedSubtree(result.createdNodeId)
+        return
+      }
+
+      if (!copyMode && result.valid) {
+        const draggedNode = treeApi.getNode(draggedNodeId)
+        collaboration.broadcastOperation({
+          type: 'move',
+          nodeId: draggedNodeId,
+          parentId: draggedNode?.parentId ?? null,
+        })
+      }
+    },
+  })
+  const result = commandResult.result
   if (!result.valid && result.message) {
     toast.error(result.message)
-  }
-
-
-  if (copyMode && duplicateResult?.valid && duplicateResult.createdNodeId) {
-    broadcastCreatedSubtree(duplicateResult.createdNodeId)
-  }
-
-
-  if (result.valid && !copyMode) {
-    const draggedNode = treeApi.getNode(draggedNodeId)
-    collaboration.broadcastOperation({
-      type: 'move',
-      nodeId: draggedNodeId,
-      parentId: draggedNode?.parentId ?? null,
-    })
   }
 
 
@@ -1237,25 +1448,33 @@ const handleDropOnRoot = (event: DragEvent) => {
 
   const draggedNodeId = draggingNodeId.value
   const copyMode = isCopyDrop(event)
-  const duplicateResult = copyMode ? treeApi.duplicateNode(draggedNodeId, null) : null
-  const moveResult = !copyMode ? treeApi.moveNode(draggedNodeId, null) : null
-  const result = duplicateResult ?? moveResult ?? { valid: false }
+  const commandResult = history.executeCommand({
+    label: copyMode ? 'duplicate-subtree-root' : 'move-node-root',
+    execute: () =>
+      copyMode ? treeApi.duplicateNode(draggedNodeId, null) : treeApi.moveNode(draggedNodeId, null),
+    onCommitted: ({ result }) => {
+      if (
+        copyMode &&
+        result.valid &&
+        'createdNodeId' in result &&
+        typeof result.createdNodeId === 'string'
+      ) {
+        broadcastCreatedSubtree(result.createdNodeId)
+        return
+      }
+
+      if (!copyMode && result.valid) {
+        collaboration.broadcastOperation({
+          type: 'move',
+          nodeId: draggedNodeId,
+          parentId: null,
+        })
+      }
+    },
+  })
+  const result = commandResult.result
   if (!result.valid && result.message) {
     toast.error(result.message)
-  }
-
-
-  if (copyMode && duplicateResult?.valid && duplicateResult.createdNodeId) {
-    broadcastCreatedSubtree(duplicateResult.createdNodeId)
-  }
-
-
-  if (result.valid && !copyMode) {
-    collaboration.broadcastOperation({
-      type: 'move',
-      nodeId: draggedNodeId,
-      parentId: null,
-    })
   }
 
 
@@ -1281,8 +1500,8 @@ const updateAiPreview = (operations: TreeOperation[], isFinal: boolean = false) 
       : {
           message:
             summary.length > 0
-              ? `${summary} • ${t('labels.contents.wizard.aiWarnings', { count: warnings.length })}`
-              : (t('labels.contents.wizard.aiWarningsOnly', { count: warnings.length }) as string),
+              ? `${summary} • ${t('labels.contents.canvas.aiWarnings', { count: warnings.length })}`
+              : (t('labels.contents.canvas.aiWarningsOnly', { count: warnings.length }) as string),
           tone: 'error',
         }
     return
@@ -1294,10 +1513,10 @@ const updateAiPreview = (operations: TreeOperation[], isFinal: boolean = false) 
       operations.length === 0
         ? isFinal
           ? ''
-          : (t('labels.contents.wizard.aiGenerating') as string)
+          : (t('labels.contents.canvas.aiGenerating') as string)
         : isFinal
           ? ''
-          : `${t('labels.contents.wizard.aiStreamingProgress', { count: operations.length }) as string} • ${summary}`,
+          : `${t('labels.contents.canvas.aiStreamingProgress', { count: operations.length }) as string} • ${summary}`,
     tone: 'info',
   }
 
@@ -1318,6 +1537,8 @@ const handleAiSubmit = async ({
   mentions: MentionItem[]
 }) => {
   clearTransientState()
+  history.clearHistory()
+  clearEditSessions()
   cancelStream()
   restoreAiSnapshot()
   clearAiState()
@@ -1326,7 +1547,7 @@ const handleAiSubmit = async ({
   aiPreviewSnapshot.value = treeApi.createSnapshot()
   aiResponseBuffer.value = ''
   aiStatus.value = {
-    message: t('labels.contents.wizard.aiGenerating') as string,
+    message: t('labels.contents.canvas.aiGenerating') as string,
     tone: 'info',
   }
 
@@ -1354,7 +1575,7 @@ const handleAiSubmit = async ({
         if (!parsed) {
           restoreAiSnapshot()
           aiStatus.value = {
-            message: t('labels.contents.wizard.aiParseError') as string,
+            message: t('labels.contents.canvas.aiParseError') as string,
             tone: 'error',
           }
           clearAiStreamState()
@@ -1378,7 +1599,7 @@ const handleAiCancel = () => {
   cancelStream()
   restoreAiSnapshot()
   aiStatus.value = {
-    message: t('labels.contents.wizard.aiCanceled') as string,
+    message: t('labels.contents.canvas.aiCanceled') as string,
     tone: 'info',
   }
   clearAiState()
@@ -1407,6 +1628,8 @@ const reloadFromServer = async () => {
   cancelStream()
   clearAiState()
   clearLiveFieldBroadcasts()
+  clearEditSessions()
+  history.clearHistory()
   await Promise.all([invalidateContentQueries(), refetchMenu(), refetchBlocks()])
   treeApi.initializeFromSource()
   clearTransientState()
@@ -1420,7 +1643,7 @@ const reloadFromServer = async () => {
 const handleDiscard = async () => {
   if (
     hasUnsavedChanges.value &&
-    !(await alert.confirm(t('labels.contents.wizard.discardConfirmMessage')))
+    !(await alert.confirm(t('labels.contents.canvas.discardConfirmMessage')))
   ) {
     return
   }
@@ -1442,18 +1665,70 @@ const handleApply = async () => {
 
   await reloadFromServer()
   toast.success(
-    t('labels.contents.wizard.applySuccess', { count: result.operations.length }) as string
+    t('labels.contents.canvas.applySuccess', { count: result.operations.length }) as string
   )
 }
 
 
+const handleUndo = () => {
+  clearEditSessions()
+  clearTransientState()
+  history.undo()
+}
+
+
+const handleRedo = () => {
+  clearEditSessions()
+  clearTransientState()
+  history.redo()
+}
+
+
+const handleGlobalKeydown = (event: KeyboardEvent) => {
+  const target = event.target as HTMLElement | null
+  if (target?.closest('input,textarea,[contenteditable="true"]')) {
+    return
+  }
+
+
+  if (!(event.metaKey || event.ctrlKey) || event.altKey) {
+    return
+  }
+
+
+  if (event.key.toLowerCase() === 'z') {
+    event.preventDefault()
+    if (event.shiftKey) {
+      handleRedo()
+      return
+    }
+
+
+    handleUndo()
+  }
+
+
+  if (event.key.toLowerCase() === 'y') {
+    event.preventDefault()
+    handleRedo()
+  }
+}
+
+
 useSeoMeta({
-  title: computed(() => t('labels.contents.wizard.title')),
+  title: computed(() => t('labels.contents.canvas.title')),
+})
+
+
+onMounted(() => {
+  window.addEventListener('keydown', handleGlobalKeydown)
 })
 
 
 onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown)
   clearLiveFieldBroadcasts()
+  clearEditSessions()
   stopRemoteOperationListener()
 })
 </script>
@@ -1464,7 +1739,7 @@ onBeforeUnmount(() => {
       <div class="min-w-0">
         <h1 class="flex items-center gap-2">
           <span class="text-lg font-semibold text-primary">{{
-            $t('labels.contents.wizard.title')
+            $t('labels.contents.canvas.title')
           }}</span>
           <Badge>Beta</Badge>
         </h1>
@@ -1480,19 +1755,11 @@ onBeforeUnmount(() => {
           tooltip-side="bottom"
         />
         <Button
-          :as="RouterLink"
-          :to="{ name: 'space-content-index', params: { space: spaceId } }"
-          variant="outline"
-        >
-          <Icon name="lucide:arrow-left" />
-          {{ $t('labels.contents.wizard.backToTree') }}
-        </Button>
-        <Button
           variant="outline"
           :disabled="isApplying || !hasUnsavedChanges"
           @click="handleDiscard"
         >
-          {{ $t('labels.contents.wizard.discard') }}
+          {{ $t('labels.contents.canvas.discard') }}
         </Button>
         <Button
           variant="primary"
@@ -1505,7 +1772,7 @@ onBeforeUnmount(() => {
             class="animate-spin"
           />
           {{
-            isApplying ? $t('labels.contents.wizard.applying') : $t('labels.contents.wizard.apply')
+            isApplying ? $t('labels.contents.canvas.applying') : $t('labels.contents.canvas.apply')
           }}
         </Button>
       </div>
@@ -1544,8 +1811,13 @@ onBeforeUnmount(() => {
         <ContentWizardToolbar
           :validation-count="validationCount"
           :zoom-percent="zoomPercent"
+          :can-undo="history.canUndo.value"
+          :can-redo="history.canRedo.value"
           :apply-error="applyError"
           @reload="reloadFromServer"
+          @undo="handleUndo"
+          @redo="handleRedo"
+          @zoom-reset="canvasRef?.setZoom100()"
           @zoom-in="canvasRef?.zoomIn()"
           @zoom-out="canvasRef?.zoomOut()"
           @fit="canvasRef?.fitToView()"
@@ -1555,7 +1827,7 @@ onBeforeUnmount(() => {
           ref="canvas"
           :nodes="draftNodes"
           :bounds="bounds"
-          :root-title="space?.name || $t('labels.contents.wizard.rootNodeTitle')"
+          :root-title="space?.name || $t('labels.contents.canvas.rootNodeTitle')"
           :focused-node-id="focusedNodeId"
           :editing-node-id="editingNodeId"
           :editing-field="editingField"
@@ -1575,6 +1847,7 @@ onBeforeUnmount(() => {
           @commit-title="handleTitleCommitEnd($event.nodeId, $event.value)"
           @commit-slug="handleSlugCommitEnd($event.nodeId, $event.value)"
           @update-block="handleBlockUpdate($event.nodeId, $event.blockId)"
+          @toggle-collapse="handleToggleCollapse($event)"
           @toggle-delete="handleToggleDelete($event)"
           @add-node="createNodeFromContext($event.nodeId, $event.position, $event.block)"
           @dragstart="handleDragStart($event.nodeId, $event.event)"

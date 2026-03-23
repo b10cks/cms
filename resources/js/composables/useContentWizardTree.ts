@@ -60,6 +60,8 @@ export function useContentWizardTree(
     layout: { x: 0, y: 0 },
     isRootVirtual: true,
     canHaveChildren: true,
+    isCollapsed: false,
+    isVisible: true,
     isAiAltered: false,
     isDeletedSelf: false,
     changes: {
@@ -299,7 +301,12 @@ export function useContentWizardTree(
       return
     }
 
-    const visit = (nodeId: string, depth: number, ancestorDeleted: boolean) => {
+    const visit = (
+      nodeId: string,
+      depth: number,
+      ancestorDeleted: boolean,
+      isVisible: boolean
+    ) => {
       const node = getNode(nodeId)
       if (!node) {
         return
@@ -307,6 +314,7 @@ export function useContentWizardTree(
 
       node.depth = depth
       node.canHaveChildren = node.blockType !== 'single'
+      node.isVisible = isVisible
       node.deletedReason = node.isRootVirtual
         ? undefined
         : node.isDeletedSelf
@@ -315,18 +323,22 @@ export function useContentWizardTree(
             ? 'ancestor'
             : undefined
 
+      const descendantsVisible = node.isVisible && !node.isCollapsed
+
       node.childrenIds.forEach((childId, index) => {
         const child = getNode(childId)
         if (child) {
           child.position = index
+          child.isVisible = descendantsVisible
         }
 
-        visit(childId, depth + 1, ancestorDeleted || node.isDeletedSelf)
+        visit(childId, depth + 1, ancestorDeleted || node.isDeletedSelf, descendantsVisible)
       })
     }
 
     root.position = 0
-    visit(root.id, 0, false)
+    root.isVisible = true
+    visit(root.id, 0, false, true)
 
     Object.values(tree.value.nodes).forEach((node) => {
       if (node.isRootVirtual) {
@@ -404,6 +416,8 @@ export function useContentWizardTree(
         layout: { x: 0, y: 0 },
         isRootVirtual: false,
         canHaveChildren: blockType !== 'single',
+        isCollapsed: false,
+        isVisible: true,
         isAiAltered: false,
         isDeletedSelf: false,
         changes: {
@@ -485,6 +499,8 @@ export function useContentWizardTree(
       layout: { x: 0, y: 0 },
       isRootVirtual: false,
       canHaveChildren: block.type !== 'single',
+      isCollapsed: false,
+      isVisible: true,
       isAiAltered: false,
       isDeletedSelf: false,
       changes: {
@@ -630,6 +646,28 @@ export function useContentWizardTree(
     node.icon = block.icon || null
     node.color = block.color || null
     node.canHaveChildren = block.type !== 'single'
+    recomputeNodeState()
+
+    return { valid: true }
+  }
+
+  const setCollapsed = (nodeId: string, collapsed: boolean): ValidationResult => {
+    const node = getNode(nodeId)
+    if (!node || node.isRootVirtual) {
+      return {
+        valid: false,
+        message: 'The selected node cannot be collapsed.',
+      }
+    }
+
+    if (node.childrenIds.length === 0) {
+      return {
+        valid: false,
+        message: 'Only nodes with children can be collapsed.',
+      }
+    }
+
+    node.isCollapsed = collapsed
     recomputeNodeState()
 
     return { valid: true }
@@ -990,6 +1028,7 @@ export function useContentWizardTree(
     updateTitle,
     updateSlug,
     updateBlock,
+    setCollapsed,
     toggleDelete,
     moveNode,
   }

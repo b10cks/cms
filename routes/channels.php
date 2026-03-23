@@ -63,7 +63,7 @@ Broadcast::channel('presence-spaces.{space}.content.{contentId}', function (User
     ];
 });
 
-Broadcast::channel('presence-spaces.{space}.content-wizard', function (User $user, Space $space) {
+Broadcast::channel('presence-spaces.{space}.content-canvas', function (User $user, Space $space) {
     if (!$space || !$user->spaces()->where('spaces.id', $space->id)->exists()) {
         return false;
     }

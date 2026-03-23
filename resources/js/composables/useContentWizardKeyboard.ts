@@ -10,6 +10,7 @@ export function useContentWizardKeyboard(options: {
     parentId: string | null
     childrenIds: string[]
     isRootVirtual: boolean
+    isCollapsed?: boolean
     deletedReason?: string
   } | null
   focusNode: (nodeId: string) => void
@@ -54,6 +55,10 @@ export function useContentWizardKeyboard(options: {
       }
 
       return node.parentId ?? CONTENT_WIZARD_ROOT_ID
+    }
+
+    if (node.isCollapsed) {
+      return null
     }
 
     return node.childrenIds[0] || null

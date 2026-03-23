@@ -14,7 +14,7 @@ const props = defineProps<{
 
 const connectors = computed(() => {
   return Object.values(props.nodes)
-    .filter((node) => !node.isRootVirtual && node.parentId !== undefined)
+    .filter((node) => !node.isRootVirtual && node.isVisible && node.parentId !== undefined)
     .flatMap((node) => {
       const parentId = node.parentId || CONTENT_WIZARD_ROOT_ID
       const parent = props.positions[parentId]

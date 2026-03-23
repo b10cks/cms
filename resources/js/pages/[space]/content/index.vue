@@ -30,11 +30,11 @@ const rootItems = computed(() => getRootItems(data.value) || [])
       <p class="mb-6 text-muted">Start by creating your first content page</p>
       <Button
         :as="RouterLink"
-        :to="{ name: 'space-content-wizard', params: { space: spaceId } }"
+        :to="{ name: 'space-canvas', params: { space: spaceId } }"
         variant="outline"
       >
         <Icon name="lucide:network" />
-        {{ $t('labels.contents.wizard.entry') }}
+        {{ $t('labels.contents.canvas.entry') }}
       </Button>
     </div>
     <div
@@ -48,11 +48,11 @@ const rootItems = computed(() => getRootItems(data.value) || [])
       </p>
       <Button
         :as="RouterLink"
-        :to="{ name: 'space-content-wizard', params: { space: spaceId } }"
+        :to="{ name: 'space-canvas', params: { space: spaceId } }"
         variant="outline"
       >
         <Icon name="lucide:network" />
-        {{ $t('labels.contents.wizard.entry') }}
+        {{ $t('labels.contents.canvas.entry') }}
       </Button>
     </div>
   </div>

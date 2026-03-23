@@ -96,7 +96,7 @@ defineExpose({
         <input
           ref="searchRef"
           v-model="query"
-          :placeholder="$t('labels.contents.wizard.searchBlocks')"
+          :placeholder="$t('labels.contents.canvas.searchBlocks')"
           class="flex h-9 w-full rounded-md border border-input-border bg-input px-3 py-1 text-sm text-primary shadow-sm outline-none placeholder:text-muted"
         />
 
@@ -104,7 +104,7 @@ defineExpose({
           v-if="filteredBlocks.length === 0"
           class="rounded-xl border border-dashed border-border px-3 py-4 text-sm text-muted"
         >
-          {{ $t('labels.contents.wizard.noBlocksAvailable') }}
+          {{ $t('labels.contents.canvas.noBlocksAvailable') }}
         </div>
 
         <div

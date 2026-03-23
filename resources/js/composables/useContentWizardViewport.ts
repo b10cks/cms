@@ -2,9 +2,9 @@ import { useEventListener } from '@vueuse/core'
 
 import type { ContentWizardBounds, ContentWizardViewportState } from '~/types/content-wizard'
 
-const MIN_SCALE = 0.45
-const MAX_SCALE = 1.8
-const ZOOM_STEP = 0.12
+const MIN_SCALE = 0.1
+const MAX_SCALE = 2
+const ZOOM_STEP = 0.1
 const CANVAS_PADDING = 240
 const CANVAS_MIN_WIDTH = 2200
 const CANVAS_MIN_HEIGHT = 1600
@@ -118,6 +118,7 @@ export function useContentWizardViewport(bounds: Ref<ContentWizardBounds>) {
     })
   }
 
+  const setZoom100 = () => setScaleAroundPoint(1)
   const zoomIn = () => setScaleAroundPoint(viewport.scale + ZOOM_STEP)
   const zoomOut = () => setScaleAroundPoint(viewport.scale - ZOOM_STEP)
 
@@ -183,6 +184,7 @@ export function useContentWizardViewport(bounds: Ref<ContentWizardBounds>) {
     canvasOrigin,
     canvasSize,
     zoomPercent,
+    setZoom100,
     zoomIn,
     zoomOut,
     fitToView,

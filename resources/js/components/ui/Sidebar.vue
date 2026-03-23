@@ -38,7 +38,7 @@ const spaceId = inject<Ref<string | undefined>>('spaceId')
 
 const menu = [
   { icon: 'lucide:home', label: 'Home', route: 'space' },
-  { icon: 'lucide:network', label: 'Wizard', route: 'space-content-wizard' },
+  { icon: 'lucide:network', label: 'Canvas', route: 'space-canvas' },
   { icon: 'lucide:feather', label: 'Content', route: 'space-content-index' },
   { icon: 'lucide:blocks', label: 'Blocks', route: 'space-blocks-index' },
   { icon: 'lucide:images', label: 'Assets', route: 'space-assets-index' },
@@ -124,7 +124,7 @@ const availableLocales = locales
             class="min-w-48"
             align="start"
           >
-            <DropdownMenuItem disabled>{{ user.email }}</DropdownMenuItem>
+            <DropdownMenuItem disabled>{{ user?.email }}</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuCheckboxItem
               :model-value="isExtendedSidebar"

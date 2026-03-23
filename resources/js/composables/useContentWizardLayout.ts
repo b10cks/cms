@@ -28,7 +28,7 @@ export function useContentWizardLayout() {
     const place = (nodeId: string, depth: number) => {
       const node = nodes[nodeId]
 
-      if (!node) {
+      if (!node || !node.isVisible) {
         return
       }
 

@@ -50,6 +50,7 @@ const emit = defineEmits<{
   (event: 'commit-slug', value: string): void
   (event: 'update-block', value: string): void
   (event: 'toggle-delete'): void
+  (event: 'toggle-collapse'): void
   (event: 'add', payload: { block: BlockResource; position: ContentWizardAddPosition }): void
   (event: 'dragstart', value: DragEvent): void
   (event: 'dragend', value: DragEvent): void
@@ -128,6 +129,7 @@ const isChanged = computed(
 const isDeleted = computed(() => props.node.deletedReason)
 const hasRemoteFocus = computed(() => props.remoteFocusedUsers.length > 0)
 const remoteFocusColor = computed(() => props.remoteFocusedUsers[0]?.color || null)
+const canCollapse = computed(() => !props.node.isRootVirtual && props.node.childrenIds.length > 0)
 
 
 const focusCard = () => {
@@ -217,7 +219,7 @@ const handleBlockChange = (value: AcceptableValue) => {
       class="flex h-full items-center justify-center"
     >
       <p class="text-sm font-semibold text-primary">
-        {{ rootTitle || node.title || $t('labels.contents.wizard.rootNodeTitle') }}
+        {{ rootTitle || node.title || $t('labels.contents.canvas.rootNodeTitle') }}
       </p>
     </div>
 
@@ -264,10 +266,10 @@ const handleBlockChange = (value: AcceptableValue) => {
               ref="titleInputRef"
               v-model="titleValue"
               :disabled="!!node.deletedReason"
-              :placeholder="$t('labels.contents.wizard.untitledNode')"
+              :placeholder="$t('labels.contents.canvas.untitledNode')"
               class="h-7! text-xs px-1.5!"
               @update:model-value="emit('input-title', String($event))"
-              @focus="emit('focus')"
+              @focus="emit('focus'); emit('start-edit', { field: 'title' })"
               @blur="commitTitle"
               @keydown.enter.prevent="commitTitle"
               @keydown.esc.prevent="titleValue = node.title"
@@ -279,7 +281,7 @@ const handleBlockChange = (value: AcceptableValue) => {
               :disabled="!!node.deletedReason"
               class="h-6! text-xs px-1.5!"
               @update:model-value="emit('input-slug', String($event))"
-              @focus="emit('focus')"
+              @focus="emit('focus'); emit('start-edit', { field: 'slug' })"
               @blur="commitSlug"
               @keydown.enter.prevent="commitSlug"
               @keydown.esc.prevent="slugValue = node.slug"
@@ -289,9 +291,18 @@ const handleBlockChange = (value: AcceptableValue) => {
       </div>
 
       <div
-        v-if="isActionActive"
+        v-if="isActionActive || (canCollapse && node.isCollapsed)"
         class="absolute -top-3.5 -right-3.5 flex"
       >
+        <Button
+          v-if="canCollapse"
+          variant="ghost"
+          size="toolbar"
+          class="size-7 rounded-full border border-border bg-background shadow-sm"
+          @click.stop="emit('toggle-collapse')"
+        >
+          <Icon :name="node.isCollapsed ? 'lucide:chevron-right' : 'lucide:chevron-down'" />
+        </Button>
         <Button
           v-if="node.deletedReason === 'self'"
           variant="ghost"

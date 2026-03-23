@@ -6,12 +6,17 @@ import { Button } from '~/components/ui/button'
 defineProps<{
   validationCount: number
   zoomPercent: number
+  canUndo: boolean
+  canRedo: boolean
   applyError?: string | null
 }>()
 
 
 defineEmits<{
   (event: 'reload'): void
+  (event: 'undo'): void
+  (event: 'redo'): void
+  (event: 'zoom-reset'): void
   (event: 'zoom-in'): void
   (event: 'zoom-out'): void
   (event: 'fit'): void
@@ -34,7 +39,7 @@ defineEmits<{
               size="sm"
               @click="$emit('reload')"
             >
-              {{ $t('labels.contents.wizard.reloadFromServer') }}
+              {{ $t('labels.contents.canvas.reloadFromServer') }}
             </Button>
           </div>
         </Alert>
@@ -45,9 +50,32 @@ defineEmits<{
           color="warning"
           class="backdrop-blur"
         >
-          {{ $t('labels.contents.wizard.validationSummary', { count: validationCount }) }}
+          {{ $t('labels.contents.canvas.validationSummary', { count: validationCount }) }}
         </Alert>
       </div>
+    </div>
+  </div>
+
+  <div class="pointer-events-none absolute bottom-4 left-4 z-20">
+    <div
+      class="pointer-events-auto flex items-center gap-1 rounded-xl border border-border bg-background/50 p-2 shadow-soft backdrop-blur"
+    >
+      <Button
+        variant="ghost"
+        size="toolbar"
+        :disabled="!canUndo"
+        @click="$emit('undo')"
+      >
+        <Icon name="lucide:undo-2" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="toolbar"
+        :disabled="!canRedo"
+        @click="$emit('redo')"
+      >
+        <Icon name="lucide:redo-2" />
+      </Button>
     </div>
   </div>
 
@@ -71,6 +99,14 @@ defineEmits<{
         @click="$emit('zoom-in')"
       >
         <Icon name="lucide:plus" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="toolbar"
+        class="px-3 text-xs font-semibold"
+        @click="$emit('zoom-reset')"
+      >
+        1:1
       </Button>
       <Button
         variant="ghost"

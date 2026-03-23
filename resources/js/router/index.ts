@@ -129,9 +129,19 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: '/:space/canvas',
+    name: 'space-canvas',
+    component: () => import('~/pages/[space]/canvas.vue'),
+    meta: { layout: 'default' },
+  },
+  {
     path: '/:space/content-wizard',
-    name: 'space-content-wizard',
-    component: () => import('~/pages/[space]/content-wizard.vue'),
+    redirect: (to) => ({
+      name: 'space-canvas',
+      params: to.params,
+      query: to.query,
+      hash: to.hash,
+    }),
     meta: { layout: 'default' },
   },
   {

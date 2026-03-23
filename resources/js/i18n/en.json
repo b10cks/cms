@@ -439,10 +439,10 @@
         "description": "This content has validation warnings. You can still save it, but you should review the following issues first:"
       },
       "title": "Content",
-      "wizard": {
-        "title": "Content Wizard",
+      "canvas": {
+        "title": "Canvas",
         "description": "Plan, reshape, and stage your content tree for {name} on an infinite canvas. Nothing is saved until you apply the draft.",
-        "entry": "Open content wizard",
+        "entry": "Open canvas",
         "backToTree": "Back to content tree",
         "globalRoot": "Global root",
         "rootNodeTitle": "Root",
@@ -476,7 +476,7 @@
           "moved": "Moved",
           "deleted": "Deleted"
         },
-        "aiDockTitle": "AI content planning",
+        "aiDockTitle": "AI canvas planning",
         "aiDockDescription": "Describe how this draft should change. AI can add, move, rename, delete, restore, and retarget nodes live on the canvas.",
         "aiDockPlaceholder": "Ask AI to reshape this content tree",
         "aiGenerating": "Generating tree changes...",

@@ -432,10 +432,10 @@
         "description": "Dieser Inhalt hat Validierungswarnungen. Du kannst ihn trotzdem speichern, solltest aber die folgenden Hinweise zuerst prüfen:"
       },
       "title": "Inhalt",
-      "wizard": {
-        "title": "Content Wizard",
+      "canvas": {
+        "title": "Canvas",
         "description": "Plane, verschiebe und stage den Content-Baum für {name} auf einer unendlichen Arbeitsfläche. Gespeichert wird erst mit Anwenden.",
-        "entry": "Content Wizard öffnen",
+        "entry": "Canvas öffnen",
         "backToTree": "Zurück zum Content-Baum",
         "globalRoot": "Globaler Root",
         "rootNodeTitle": "Root",
@@ -469,7 +469,7 @@
           "moved": "Verschoben",
           "deleted": "Gelöscht"
         },
-        "aiDockTitle": "KI-Content-Planung",
+        "aiDockTitle": "KI-Canvas-Planung",
         "aiDockDescription": "Beschreibe, wie sich dieser Entwurf ändern soll. Die KI kann Knoten direkt auf dem Canvas hinzufügen, verschieben, umbenennen, löschen, wiederherstellen und umstellen.",
         "aiDockPlaceholder": "Bitte die KI, diesen Entwurf umzubauen, zum Beispiel: \"Erstelle eine Solutions-Seite mit For Agencies und For Developers\"",
         "aiGenerating": "Baumänderungen werden erzeugt...",

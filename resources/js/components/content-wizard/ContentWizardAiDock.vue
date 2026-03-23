@@ -67,7 +67,7 @@ const handleSend = (
         class="space-y-1 rounded-xl border border-destructive/20 bg-background/90 p-2 shadow-soft backdrop-blur"
       >
         <div class="px-2 text-xs font-medium text-destructive">
-          {{ $t('labels.contents.wizard.aiReviewTitle') }}
+          {{ $t('labels.contents.canvas.aiReviewTitle') }}
         </div>
 
         <div
@@ -86,14 +86,14 @@ const handleSend = (
             class="h-7 px-2 text-xs"
             @click="emit('focus-warning', warning)"
           >
-            {{ $t('labels.contents.wizard.aiReviewAction') }}
+            {{ $t('labels.contents.canvas.aiReviewAction') }}
           </Button>
         </div>
       </div>
 
       <AiText
         :space-id="props.spaceId"
-        :placeholder="$t('labels.contents.wizard.aiDockPlaceholder')"
+        :placeholder="$t('labels.contents.canvas.aiDockPlaceholder')"
         :loading="props.loading"
         :direct-emit="true"
         :extra-mention-items="props.draftMentionItems"

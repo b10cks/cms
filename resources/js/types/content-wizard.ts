@@ -72,6 +72,8 @@ export interface ContentWizardDraftNode {
   layout: ContentWizardPosition
   isRootVirtual: boolean
   canHaveChildren: boolean
+  isCollapsed: boolean
+  isVisible: boolean
   isAiAltered: boolean
   isDeletedSelf: boolean
   deletedReason?: ContentWizardDeletedReason
@@ -194,6 +196,18 @@ export interface ContentWizardDeleteOperationPayload {
   deleted: boolean
 }
 
+export interface ContentWizardCollapseOperationPayload {
+  type: 'collapse-state'
+  nodeId: string
+  collapsed: boolean
+}
+
+export interface ContentWizardReplaceOperationPayload {
+  type: 'replace-draft'
+  nodeId: typeof CONTENT_WIZARD_ROOT_ID
+  snapshot: ContentWizardDraftTree
+}
+
 export type ContentWizardSyncOperation =
   | ContentWizardAddOperationPayload
   | ContentWizardTitleOperationPayload
@@ -201,3 +215,5 @@ export type ContentWizardSyncOperation =
   | ContentWizardBlockOperationPayload
   | ContentWizardMoveOperationPayload
   | ContentWizardDeleteOperationPayload
+  | ContentWizardCollapseOperationPayload
+  | ContentWizardReplaceOperationPayload

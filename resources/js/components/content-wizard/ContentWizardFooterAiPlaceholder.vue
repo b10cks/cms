@@ -10,14 +10,14 @@ import Icon from '~/components/Icon.vue'
       </div>
       <div class="min-w-0 flex-1">
         <p class="font-semibold text-primary">
-          {{ $t('labels.contents.wizard.aiPlaceholderTitle') }}
+          {{ $t('labels.contents.canvas.aiPlaceholderTitle') }}
         </p>
         <p class="text-sm text-muted">
-          {{ $t('labels.contents.wizard.aiPlaceholderDescription') }}
+          {{ $t('labels.contents.canvas.aiPlaceholderDescription') }}
         </p>
       </div>
       <span class="rounded-full border border-dashed border-border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-        {{ $t('labels.contents.wizard.comingSoon') }}
+        {{ $t('labels.contents.canvas.comingSoon') }}
       </span>
     </div>
   </div>

@@ -20,7 +20,7 @@ export function useContentTree(
   contentRef: MaybeRef<ContentTreeItem>,
   root: MaybeRef<ContentBlock>
 ) {
-  const findItemById = (itemId: string): ?FindResult => {
+  const findItemById = (itemId: string): FindResult | null => {
     const content = unref(contentRef)
     if (!content) {
       return null
