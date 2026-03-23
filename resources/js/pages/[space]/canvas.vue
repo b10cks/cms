@@ -18,7 +18,10 @@ import {
   useAiContentTree,
   type TreeOperation,
 } from '~/composables/useAiContentTree'
-import { useContentCanvasCommands } from '~/composables/useContentCanvasCommands'
+import {
+  useContentCanvasCommands,
+  type ContentCanvasHistoryEntry,
+} from '~/composables/useContentCanvasCommands'
 import { useContentWizardApply } from '~/composables/useContentWizardApply'
 import { useContentWizardCollaboration } from '~/composables/useContentWizardCollaboration'
 import { useContentWizardKeyboard } from '~/composables/useContentWizardKeyboard'
@@ -302,7 +305,11 @@ const applyRemoteOperation = (operation: ContentWizardSyncOperation) => {
   if (operation.type === 'replace-draft') {
     treeApi.restoreSnapshot(operation.snapshot)
     clearTransientState()
-    focusNode(CONTENT_WIZARD_ROOT_ID)
+    const focusedNode = focusedNodeId.value ? treeApi.getNode(focusedNodeId.value) : null
+    if (!focusedNode || !focusedNode.isVisible) {
+      const fallbackNodeId = treeApi.getNode(operation.nodeId)?.id || CONTENT_WIZARD_ROOT_ID
+      focusNode(fallbackNodeId)
+    }
     return true
   }
 
@@ -468,6 +475,202 @@ const mergeCurrentCollapsedState = (snapshot: ContentWizardDraftTree): ContentWi
   ),
 })
 
+const getSnapshotNodeDepth = (
+  snapshot: ContentWizardDraftTree,
+  nodeId: string,
+  depth: number = 0
+): number => {
+  const node = snapshot.nodes[nodeId]
+  if (!node || !node.parentId) {
+    return depth
+  }
+
+  return getSnapshotNodeDepth(snapshot, node.parentId, depth + 1)
+}
+
+const buildAddSubtreeOperations = (
+  snapshot: ContentWizardDraftTree,
+  nodeId: string
+): ContentWizardSyncOperation[] => {
+  const node = snapshot.nodes[nodeId]
+  if (!node || node.isRootVirtual) {
+    return []
+  }
+
+  const operations: ContentWizardSyncOperation[] = [
+    {
+      type: 'add',
+      nodeId: node.id,
+      parentId: node.parentId,
+      blockId: node.blockId,
+      title: node.title,
+      slug: node.slug,
+      slugMode: node.slugMode,
+    },
+  ]
+
+  if (node.isDeletedSelf) {
+    operations.push({
+      type: 'delete-state',
+      nodeId: node.id,
+      deleted: true,
+    })
+  }
+
+  node.childrenIds.forEach((childId) => {
+    operations.push(...buildAddSubtreeOperations(snapshot, childId))
+  })
+
+  return operations
+}
+
+const buildHistoryOperations = (
+  fromSnapshot: ContentWizardDraftTree,
+  toSnapshot: ContentWizardDraftTree
+): ContentWizardSyncOperation[] => {
+  const operations: ContentWizardSyncOperation[] = []
+  const fromNodes = fromSnapshot.nodes
+  const toNodes = toSnapshot.nodes
+  const fromNodeIds = new Set(Object.keys(fromNodes))
+  const toNodeIds = new Set(Object.keys(toNodes))
+
+  const addedRootIds = [...toNodeIds]
+    .filter((nodeId) => !fromNodeIds.has(nodeId) && nodeId !== CONTENT_WIZARD_ROOT_ID)
+    .filter((nodeId) => {
+      const parentId = toNodes[nodeId]?.parentId
+      return !parentId || fromNodeIds.has(parentId) || !toNodeIds.has(parentId)
+    })
+    .sort(
+      (left, right) =>
+        getSnapshotNodeDepth(toSnapshot, left) - getSnapshotNodeDepth(toSnapshot, right)
+    )
+
+  addedRootIds.forEach((nodeId) => {
+    operations.push(...buildAddSubtreeOperations(toSnapshot, nodeId))
+  })
+
+  const sharedNodeIds = [...toNodeIds]
+    .filter((nodeId) => fromNodeIds.has(nodeId) && nodeId !== CONTENT_WIZARD_ROOT_ID)
+    .sort(
+      (left, right) =>
+        getSnapshotNodeDepth(toSnapshot, left) - getSnapshotNodeDepth(toSnapshot, right)
+    )
+
+  sharedNodeIds.forEach((nodeId) => {
+    const fromNode = fromNodes[nodeId]
+    const toNode = toNodes[nodeId]
+    if (!fromNode || !toNode) {
+      return
+    }
+
+    const titleChanged = fromNode.title !== toNode.title
+    const slugChanged = fromNode.slug !== toNode.slug
+    const blockChanged = fromNode.blockId !== toNode.blockId
+    const moveChanged = fromNode.parentId !== toNode.parentId || fromNode.position !== toNode.position
+    const deletedChanged = fromNode.isDeletedSelf !== toNode.isDeletedSelf
+
+    if (deletedChanged && !toNode.isDeletedSelf) {
+      operations.push({
+        type: 'delete-state',
+        nodeId,
+        deleted: false,
+      })
+    }
+
+    if (fromNode.blockType !== 'single' && toNode.blockType === 'single') {
+      if (moveChanged) {
+        operations.push({
+          type: 'move',
+          nodeId,
+          parentId: toNode.parentId,
+          index: toNode.position,
+        })
+      }
+
+      if (blockChanged) {
+        operations.push({
+          type: 'block',
+          nodeId,
+          blockId: toNode.blockId,
+        })
+      }
+    } else {
+      if (blockChanged) {
+        operations.push({
+          type: 'block',
+          nodeId,
+          blockId: toNode.blockId,
+        })
+      }
+
+      if (moveChanged) {
+        operations.push({
+          type: 'move',
+          nodeId,
+          parentId: toNode.parentId,
+          index: toNode.position,
+        })
+      }
+    }
+
+    if (titleChanged) {
+      operations.push({
+        type: 'title',
+        nodeId,
+        value: toNode.title,
+      })
+    }
+
+    if (slugChanged) {
+      operations.push({
+        type: 'slug',
+        nodeId,
+        value: toNode.slug,
+      })
+    }
+
+    if (deletedChanged && toNode.isDeletedSelf) {
+      operations.push({
+        type: 'delete-state',
+        nodeId,
+        deleted: true,
+      })
+    }
+  })
+
+  const removedRootIds = [...fromNodeIds]
+    .filter((nodeId) => !toNodeIds.has(nodeId) && nodeId !== CONTENT_WIZARD_ROOT_ID)
+    .filter((nodeId) => {
+      const parentId = fromNodes[nodeId]?.parentId
+      return !parentId || toNodeIds.has(parentId) || !fromNodeIds.has(parentId)
+    })
+    .sort(
+      (left, right) =>
+        getSnapshotNodeDepth(fromSnapshot, right) - getSnapshotNodeDepth(fromSnapshot, left)
+    )
+
+  removedRootIds.forEach((nodeId) => {
+    operations.push({
+      type: 'delete-state',
+      nodeId,
+      deleted: true,
+    })
+  })
+
+  return operations
+}
+
+const broadcastHistoryEntry = (entry: ContentCanvasHistoryEntry, direction: 'undo' | 'redo') => {
+  const operations =
+    direction === 'undo'
+      ? buildHistoryOperations(entry.after, entry.before)
+      : buildHistoryOperations(entry.before, entry.after)
+
+  operations.forEach((operation) => {
+    collaboration.broadcastOperation(operation)
+  })
+}
+
 
 const history = useContentCanvasCommands({
   createSnapshot: treeApi.createSnapshot,
@@ -479,13 +682,8 @@ const history = useContentCanvasCommands({
       focusNode(CONTENT_WIZARD_ROOT_ID)
     }
   },
-  onHistoryRestore: (snapshot) => {
-    const mergedSnapshot = mergeCurrentCollapsedState(snapshot)
-    collaboration.broadcastOperation({
-      type: 'replace-draft',
-      nodeId: CONTENT_WIZARD_ROOT_ID,
-      snapshot: mergedSnapshot,
-    })
+  onHistoryRestore: ({ entry, direction }) => {
+    broadcastHistoryEntry(entry, direction)
   },
   serializeSnapshot: serializeHistorySnapshot,
 })

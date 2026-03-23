@@ -189,7 +189,7 @@ declare global {
   export type { AssetRequirementIssue } from './resources/js/composables/useAssetRequirements'
   import('./resources/js/composables/useAssetRequirements')
   // @ts-ignore
-  export type { ContentCanvasCommand } from './resources/js/composables/useContentCanvasCommands'
+  export type { ContentCanvasCommand, ContentCanvasHistoryEntry } from './resources/js/composables/useContentCanvasCommands'
   import('./resources/js/composables/useContentCanvasCommands')
   // @ts-ignore
   export type { CollaborationPresenceUser, ContentFieldUpdatePayload, ContentFieldFocusPayload, ContentCommitAction } from './resources/js/composables/useContentLiveCollaboration'

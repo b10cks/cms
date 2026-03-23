@@ -10,7 +10,7 @@ export interface ContentCanvasCommand<TResult = void> {
   }) => void
 }
 
-interface ContentCanvasHistoryEntry {
+export interface ContentCanvasHistoryEntry {
   label: string
   before: ContentWizardDraftTree
   after: ContentWizardDraftTree
@@ -19,7 +19,11 @@ interface ContentCanvasHistoryEntry {
 export function useContentCanvasCommands(options: {
   createSnapshot: () => ContentWizardDraftTree
   restoreSnapshot: (snapshot: ContentWizardDraftTree) => void
-  onHistoryRestore?: (snapshot: ContentWizardDraftTree, entry: ContentCanvasHistoryEntry) => void
+  onHistoryRestore?: (payload: {
+    snapshot: ContentWizardDraftTree
+    entry: ContentCanvasHistoryEntry
+    direction: 'undo' | 'redo'
+  }) => void
   serializeSnapshot?: (snapshot: ContentWizardDraftTree) => string
 }) {
   const undoStack = ref<ContentCanvasHistoryEntry[]>([])
@@ -73,7 +77,11 @@ export function useContentCanvasCommands(options: {
     undoStack.value = undoStack.value.slice(0, -1)
     redoStack.value = [...redoStack.value, entry]
     options.restoreSnapshot(entry.before)
-    options.onHistoryRestore?.(entry.before, entry)
+    options.onHistoryRestore?.({
+      snapshot: entry.before,
+      entry,
+      direction: 'undo',
+    })
 
     return true
   }
@@ -87,7 +95,11 @@ export function useContentCanvasCommands(options: {
     redoStack.value = redoStack.value.slice(0, -1)
     undoStack.value = [...undoStack.value, entry]
     options.restoreSnapshot(entry.after)
-    options.onHistoryRestore?.(entry.after, entry)
+    options.onHistoryRestore?.({
+      snapshot: entry.after,
+      entry,
+      direction: 'redo',
+    })
 
     return true
   }
