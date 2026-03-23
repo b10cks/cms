@@ -120,4 +120,19 @@ class ContentFilter extends AdvancedFilter
     {
         $this->applyDynamicFilter('contents.parent_id', $value);
     }
+
+    /**
+     * Filter by content ID.
+     *
+     * Example:
+     * - `?id=01J123ABC456DEF789GHIJKLMN`
+     *
+     * @filterDescription Filter by content identifier.
+     * @filterType string
+     * @filterExample 01J123ABC456DEF789GHIJKLMN
+     */
+    public function id($value)
+    {
+        $this->applyDynamicFilter('contents.id', $value);
+    }
 }
