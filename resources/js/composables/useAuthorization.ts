@@ -56,17 +56,17 @@ export async function ensureAuthorizationContext(params: AuthorizationQueryParam
 }
 
 export async function ensureSelectedTeamAccess(): Promise<SelectedTeamAccess> {
-  const teams = await queryClient.ensureQueryData({
+  const teamsResponse = await queryClient.ensureQueryData({
     queryKey: queryKeys.teams.list({ include_space_context: true }),
     queryFn: async () => {
-      const response = await api.teams.index({
+      return await api.teams.index({
         sort: '+name',
         include_space_context: true,
       })
-      return response.data
     },
   })
 
+  const teams = teamsResponse.data ?? []
   const storedSelectedTeamId = getStoredSelectedTeamId()
   const selectedTeam = teams.find((team) => team.id === storedSelectedTeamId) ?? teams[0] ?? null
 
