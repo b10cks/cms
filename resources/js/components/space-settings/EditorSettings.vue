@@ -18,8 +18,13 @@ import { Switch } from '~/components/ui/switch'
 const { $t } = useI18n()
 const { useUpdateSpaceMutation } = useSpaces()
 const { mutate: updateSpace } = useUpdateSpaceMutation()
+const { useAccessControl } = useAuthorization()
+
 
 const props = defineProps<{ space: SpaceResource }>()
+const access = useAccessControl(computed(() => ({ space_id: props.space.id })))
+const canUpdateSpace = computed(() => access.hasAbility('space.update'))
+
 
 const environments = ref(
   deepClone(
@@ -27,6 +32,7 @@ const environments = ref(
   )
 )
 const visualEditorEnabled = ref(props.space.settings.visual_editor)
+
 
 const columns: ColumnDefinition[] = [
   {
@@ -45,18 +51,22 @@ const columns: ColumnDefinition[] = [
   },
 ]
 
+
 const newItemTemplate = {
   name: '',
   url: '',
 }
 
+
 const removeEnvironment = (index: number) => {
   environments.value.splice(index, 1)
 }
 
+
 const openInTab = (url: string) => {
   window.open(url, '_blank')
 }
+
 
 const saveSettings = async () => {
   updateSpace({
@@ -137,6 +147,7 @@ const saveSettings = async () => {
     </CardContent>
     <CardFooter>
       <Button
+        v-if="canUpdateSpace"
         variant="primary"
         @click="saveSettings"
         >{{ $t('actions.saveChanges') }}

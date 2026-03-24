@@ -63,6 +63,7 @@ const emit = defineEmits<{
 
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
+const { useAccessControl } = useAuthorization()
 const { settings } = useSpaceSettings(props.spaceId)
 const { useAssetsQuery, useDeleteAssetMutation, useUpdateAssetMutation } = useAssets(props.spaceId)
 const { useFolderStructure } = useAssetFolders(props.spaceId)
@@ -81,6 +82,9 @@ const {
 const { getBreadcrumbs } = useFolderStructure()
 const { mutateAsync: updateAsset } = useUpdateAssetMutation()
 const { mutateAsync: deleteAsset } = useDeleteAssetMutation()
+const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
+const canManageAssets = computed(() => access.hasAbility('assets.manage'))
+const canManageFolders = computed(() => access.hasAbility('asset_folders.manage'))
 
 const folderId = defineModel<string | null>('folderId')
 const tagId = defineModel<string | null>('tagId')
@@ -387,7 +391,7 @@ onMounted(async () => {
 
       <div class="flex items-center gap-2">
         <Button
-          v-if="allowUpload"
+          v-if="allowUpload && canManageAssets"
           variant="primary"
           @click="showUploadDialog = true"
         >
@@ -395,7 +399,7 @@ onMounted(async () => {
           {{ $t('actions.assets.upload') }}
         </Button>
         <Button
-          v-if="allowFolderCreation"
+          v-if="allowFolderCreation && canManageFolders"
           @click="folderDialogOpen = true"
         >
           <Icon name="lucide:folder-plus" />
@@ -465,6 +469,7 @@ onMounted(async () => {
         </DropdownMenu>
 
         <div class="flex items-center gap-2">
+          <template v-if="canManageAssets">
           <Switch
             id="autosave"
             v-model="settings.assets.autoSave"
@@ -475,6 +480,7 @@ onMounted(async () => {
           >
             {{ $t('labels.datasets.autoSave') }}
           </label>
+          </template>
         </div>
       </div>
 
@@ -559,6 +565,7 @@ onMounted(async () => {
                   :label="$t('labels.assets.fields.filename')"
                   :name="`filename-${asset.id}`"
                   :model-value="getEditableAsset(asset).filename"
+                  :disabled="!canManageAssets"
                   @update:model-value="
                     (value: string | number) => handleGridFilenameChange(asset, String(value))
                   "
@@ -579,6 +586,7 @@ onMounted(async () => {
                 :model-value="getFieldValue(getEditableAsset(asset), field.key, language.code)"
                 :placeholder="field.label"
                 :required="isFieldRequiredForLanguage(field, language.code)"
+                :disabled="!canManageAssets"
                 @update:model-value="
                   (value: string | number) =>
                     handleGridFieldChange(asset, field.key, language.code, String(value))
@@ -588,7 +596,7 @@ onMounted(async () => {
 
             <TableCell>
               <div class="flex w-full justify-end gap-1">
-                <template v-if="!settings.assets.autoSave">
+                <template v-if="canManageAssets && !settings.assets.autoSave">
                   <Button
                     size="icon"
                     variant="outline"
@@ -615,7 +623,7 @@ onMounted(async () => {
                   </Button>
                 </template>
 
-                <DropdownMenu>
+                <DropdownMenu v-if="canManageAssets">
                   <DropdownMenuTrigger as-child>
                     <Button
                       size="icon"
@@ -656,14 +664,14 @@ onMounted(async () => {
     />
 
     <UploadDialog
-      v-if="allowUpload"
+      v-if="allowUpload && canManageAssets"
       v-model:open="showUploadDialog"
       :folder-id="folderId || undefined"
       :space-id="spaceId"
     />
 
     <CreateFolderDialog
-      v-if="allowFolderCreation"
+      v-if="allowFolderCreation && canManageFolders"
       v-model:open="folderDialogOpen"
       :parent-folder-id="folderId || null"
       :space-id="spaceId"

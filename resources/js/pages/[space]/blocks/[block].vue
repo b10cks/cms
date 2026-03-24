@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { Badge } from '@/components/ui/badge'
 import BlockEdit from '~/components/BlockEdit.vue'
 import BlockMenu from '~/components/BlockMenu.vue'
 import BlockTemplatesSheet from '~/components/blocks/BlockTemplatesSheet.vue'
 import BlockVersionsSheet from '~/components/blocks/BlockVersionsSheet.vue'
+import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { ScrollArea } from '~/components/ui/scroll-area'
@@ -13,19 +12,27 @@ import { ScrollArea } from '~/components/ui/scroll-area'
 const route = useRoute()
 const spaceId = computed(() => route.params.space as string)
 const blockId = computed(() => route.params.block as string)
+const { useAccessControl } = useAuthorization()
+const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
+const canManageBlocks = computed(() => access.hasAbility('blocks.manage'))
+
 
 const { useBlockQuery, useUpdateBlockMutation } = useBlocks(spaceId)
 const { isLoading, data: block } = useBlockQuery(blockId)
 
+
 const { mutate: updateBlock } = useUpdateBlockMutation()
+
 
 useSeoMeta({
   title: computed(() => block.value?.name),
 })
 
+
 const activeTab = ref('editor')
 const showTemplatesSheet = ref(false)
 const showVersionsSheet = ref(false)
+
 
 const submit = async (b: BlockResource) => {
   updateBlock({
@@ -78,11 +85,13 @@ const submit = async (b: BlockResource) => {
           v-slot="{ editBlock }"
           :block="block"
           :space-id="spaceId"
+          :readonly="!canManageBlocks"
           show-schema
           @submit="submit"
         >
           <div class="flex">
             <Button
+              v-if="canManageBlocks"
               type="button"
               variant="primary"
               class="ml-auto"

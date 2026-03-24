@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import type { BackupsQueryParams } from '~/api/resources/backups'
 import BackupIcon from '~/assets/images/backups.svg?component'
+import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
 import { Avatar } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
@@ -29,11 +28,14 @@ import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { SimpleTooltip } from '~/components/ui/tooltip'
+
 import BackupProgress from './BackupProgress.vue'
 import BackupStatusBadge from './BackupStatusBadge.vue'
 
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
+const { useAccessControl } = useAuthorization()
+
 
 const backupStates = computed(() => [
   { value: 'pending', label: $t('labels.backups.states.pending') },
@@ -41,6 +43,7 @@ const backupStates = computed(() => [
   { value: 'expired', label: $t('labels.backups.states.expired') },
   { value: 'failed', label: $t('labels.backups.states.failed') },
 ])
+
 
 const backupFilters = computed(() => [
   {
@@ -61,6 +64,7 @@ const backupFilters = computed(() => [
   },
 ])
 
+
 const sortOptions = [
   { value: 'name', label: $t('labels.backups.columns.name') },
   { value: 'state', label: $t('labels.backups.columns.state') },
@@ -68,6 +72,7 @@ const sortOptions = [
   { value: 'created_at', label: $t('labels.backups.columns.createdAt') },
   { value: 'expires_at', label: $t('labels.backups.columns.expiresAt') },
 ]
+
 
 const filters = ref<Record<string, unknown>>({})
 const currentPage = ref(1)
@@ -77,7 +82,9 @@ const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
   direction: 'desc',
 })
 
+
 const selectedBackups = ref<Map<string, BackupResource>>(new Map())
+
 
 const queryParams = computed<BackupsQueryParams>(() => {
   return {
@@ -89,15 +96,22 @@ const queryParams = computed<BackupsQueryParams>(() => {
   }
 })
 
+
 const props = defineProps<{
   spaceId: string
 }>()
+const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
+const canManageBackups = computed(() => access.hasAbility('backups.manage'))
+const tableColumnCount = computed(() => (canManageBackups.value ? 9 : 8))
+
 
 const { useBackupsQuery, useDeleteBackupMutation } = useBackups(props.spaceId)
 const { data: backups, isLoading } = useBackupsQuery(queryParams)
 const { mutate: deleteBackup } = useDeleteBackupMutation()
 
+
 const { formatDateTime, formatFileSize } = useFormat()
+
 
 const handleDelete = async (backup: BackupResource) => {
   const confirmed = await alert.confirm(
@@ -113,6 +127,7 @@ const handleDelete = async (backup: BackupResource) => {
     await deleteBackup(backup.id)
   }
 }
+
 
 const handleBulkDelete = async () => {
   const confirmed = await alert.confirm(
@@ -133,17 +148,20 @@ const handleBulkDelete = async () => {
   }
 }
 
+
 const sortedBackups = computed(() => {
   return backups.value?.data || []
 })
+
 
 const selectionCount = computed(() => selectedBackups.value.size)
 const isAllSelected = computed(() => {
   return selectionCount.value > 0 && sortedBackups.value.length === selectionCount.value
 })
 
-const handleSelectAll = (checked: boolean) => {
-  if (checked) {
+
+const handleSelectAll = (checked: boolean | 'indeterminate') => {
+  if (checked === true) {
     sortedBackups.value.forEach((backup) => {
       selectedBackups.value.set(backup.id, backup)
     })
@@ -152,21 +170,25 @@ const handleSelectAll = (checked: boolean) => {
   }
 }
 
-const handleBackupSelect = (backup: BackupResource, selected: boolean) => {
-  if (selected) {
+
+const handleBackupSelect = (backup: BackupResource, selected: boolean | 'indeterminate') => {
+  if (selected === true) {
     selectedBackups.value.set(backup.id, backup)
   } else {
     selectedBackups.value.delete(backup.id)
   }
 }
 
+
 const clearSelection = () => {
   selectedBackups.value.clear()
 }
 
+
 const isBackupSelected = (backup: BackupResource) => {
   return selectedBackups.value.has(backup.id)
 }
+
 
 watch(
   () => currentPage.value,
@@ -194,7 +216,7 @@ watch(
       </div>
     </div>
     <div
-      v-if="selectionCount > 0"
+      v-if="canManageBackups && selectionCount > 0"
       class="flex items-center justify-between gap-4 rounded-lg border border-border bg-surface p-4"
     >
       <div class="flex items-center gap-2">
@@ -226,7 +248,10 @@ watch(
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead class="w-8">
+            <TableHead
+              v-if="canManageBackups"
+              class="w-8"
+            >
               <Checkbox
                 :model-value="isAllSelected"
                 aria-label="Select all backups"
@@ -272,7 +297,7 @@ watch(
         <TableBody>
           <TableLoadingRow
             v-if="isLoading"
-            :colspan="9"
+            :colspan="tableColumnCount"
           />
           <template v-else-if="backups?.data?.length > 0">
             <TableRow
@@ -280,7 +305,7 @@ watch(
               :key="backup.id"
               :data-state="isBackupSelected(backup) ? 'selected' : undefined"
             >
-              <TableCell>
+              <TableCell v-if="canManageBackups">
                 <Checkbox
                   :model-value="isBackupSelected(backup)"
                   :aria-label="`Select backup ${backup.name}`"
@@ -349,7 +374,7 @@ watch(
               </TableCell>
               <TableCell>
                 <div class="flex justify-end space-x-1">
-                  <DropdownMenu>
+                  <DropdownMenu v-if="canManageBackups || backup.state === 'active'">
                     <DropdownMenuTrigger as-child>
                       <Button
                         variant="ghost"
@@ -370,8 +395,9 @@ watch(
                         />
                         {{ $t('actions.backups.download') }}
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator v-if="backup.state === 'active'" />
+                      <DropdownMenuSeparator v-if="backup.state === 'active' && canManageBackups" />
                       <DropdownMenuItem
+                        v-if="canManageBackups"
                         class="text-destructive focus:text-destructive"
                         @click="handleDelete(backup)"
                       >
@@ -389,7 +415,7 @@ watch(
           </template>
           <TableEmptyRow
             v-else
-            :colspan="9"
+            :colspan="tableColumnCount"
             :icon="BackupIcon"
             :label="$t('labels.backups.noBackups')"
           />

@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
-import type { RedirectsQueryParams } from '~/api/resources/redirects'
-
 import { api } from '~/api'
+import type { RedirectsQueryParams } from '~/api/resources/redirects'
 
 import { queryKeys } from './useQueryClient'
 
@@ -13,7 +12,10 @@ export function useRedirects(spaceId: MaybeRef<string>) {
 
   const spaceAPI = computed(() => api.forSpace(toValue(spaceId)))
 
-  const useRedirectsQuery = (params: MaybeRef<RedirectsQueryParams> = {}) => {
+  const useRedirectsQuery = (
+    params: MaybeRef<RedirectsQueryParams> = {},
+    enabled: MaybeRef<boolean> = true
+  ) => {
     return useQuery({
       queryKey: computed(() => queryKeys.redirects(spaceId).list(params)),
       queryFn: async () => {
@@ -23,16 +25,18 @@ export function useRedirects(spaceId: MaybeRef<string>) {
         })
         return response
       },
+      enabled: computed(() => !!toValue(spaceId) && !!toValue(enabled)),
     })
   }
 
-  const useRedirectQuery = (id: MaybeRef<string>) => {
+  const useRedirectQuery = (id: MaybeRef<string>, enabled: MaybeRef<boolean> = true) => {
     return useQuery({
       queryKey: computed(() => queryKeys.redirects(spaceId).detail(id)),
       queryFn: async () => {
         const response = await spaceAPI.value.redirects.get(toValue(id))
         return response.data
       },
+      enabled: computed(() => !!toValue(spaceId) && !!toValue(id) && !!toValue(enabled)),
     })
   }
 

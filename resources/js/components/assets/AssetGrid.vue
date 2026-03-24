@@ -32,6 +32,7 @@ export interface AssetGridProps {
   initialTagId?: string | null
 }
 
+
 const props = withDefaults(defineProps<AssetGridProps>(), {
   mode: 'manage',
   allowUpload: true,
@@ -42,6 +43,7 @@ const props = withDefaults(defineProps<AssetGridProps>(), {
   initialTagId: null,
 })
 
+
 const emit = defineEmits<{
   selectionChange: [{ folders: AssetFolderResource[]; assets: AssetResource[] }]
   'asset-select': [asset: AssetResource]
@@ -49,8 +51,10 @@ const emit = defineEmits<{
   'tag-change': [tagId: string | null]
 }>()
 
+
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
+const { useAccessControl } = useAuthorization()
 const { settings } = useSpaceSettings(props.spaceId)
 const { useFolderStructure, useDeleteAssetFolderMutation } = useAssetFolders(props.spaceId)
 const { useAssetsQuery, useDeleteAssetMutation, useUpdateAssetMutation } = useAssets(props.spaceId)
@@ -60,9 +64,14 @@ const { getMissingRequiredFields, isCompliant } = useAssetRequirements(props.spa
 const { mutateAsync: updateAsset } = useUpdateAssetMutation()
 const { mutateAsync: deleteAsset } = useDeleteAssetMutation()
 const { mutateAsync: deleteFolder } = useDeleteAssetFolderMutation()
+const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
+const canManageAssets = computed(() => access.hasAbility('assets.manage'))
+const canManageFolders = computed(() => access.hasAbility('asset_folders.manage'))
+
 
 const folderId = defineModel<string | null>('folderId')
 const tagId = defineModel<string | null>('tagId')
+
 
 const showUploadDialog = ref(false)
 const droppedFiles = ref<File[]>([])
@@ -84,11 +93,13 @@ const selectedFolders = ref<Map<string, AssetFolderResource>>(new Map())
 const filters = ref<Record<string, unknown>>({})
 const q = ref('')
 
+
 const gridSizes = {
   sm: { cls: 'grid-cols-4 xl:grid-cols-6 2xl:grid-cols-12', icon: 'lucide:grid-3x3' },
   md: { cls: 'grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6', icon: 'lucide:grid-2x2' },
   lg: { cls: 'grid-cols-2 xl:grid-cols-4', icon: 'lucide:square-square' },
 } as const
+
 
 const sortOptions = [
   { value: 'created_at', label: $t('labels.assets.createdAt') },
@@ -96,6 +107,7 @@ const sortOptions = [
   { value: 'filename', label: $t('labels.assets.fields.filename') },
   { value: 'size', label: $t('labels.assets.size') },
 ]
+
 
 const assetFilters = computed(() => [
   { id: 'extension', label: 'Extension' },
@@ -111,6 +123,7 @@ const assetFilters = computed(() => [
   },
 ])
 
+
 const assetQueryParams = computed<AssetsQueryParams>(() => {
   return {
     ...filters.value,
@@ -123,12 +136,15 @@ const assetQueryParams = computed<AssetsQueryParams>(() => {
   }
 })
 
+
 const { data: assetResponse } = useAssetsQuery(assetQueryParams)
+
 
 const selectedGridSize = computed(() => {
   const key = settings.value.assets.gridSize as keyof typeof gridSizes
   return gridSizes[key] || gridSizes.md
 })
+
 
 const imageSize = computed(() => {
   switch (settings.value.assets.gridSize) {
@@ -141,6 +157,7 @@ const imageSize = computed(() => {
   }
 })
 
+
 const breadcrumbs = computed(() => {
   if (!folderId.value) {
     return []
@@ -148,6 +165,7 @@ const breadcrumbs = computed(() => {
 
   return getBreadcrumbs(folderId.value)
 })
+
 
 const folders = computed(() => {
   if (tagId.value) {
@@ -157,19 +175,24 @@ const folders = computed(() => {
   return getChildrenOfFolder(activeFolderId.value)
 })
 
+
 const assets = computed(() => assetResponse.value?.data || [])
+
 
 const nonCompliantAssets = computed(() => {
   return assets.value.filter((asset) => !isCompliant(asset))
 })
 
+
 const hasSelection = computed(() => {
   return selectedAssets.value.size > 0 || selectedFolders.value.size > 0
 })
 
+
 const selectionCount = computed(() => {
   return selectedAssets.value.size + selectedFolders.value.size
 })
+
 
 const getSelectedDragItems = (): AssetManagerDragItem[] => {
   return [
@@ -178,28 +201,36 @@ const getSelectedDragItems = (): AssetManagerDragItem[] => {
   ]
 }
 
+
 const getDragItemsFor = (type: 'asset' | 'folder', id: string): AssetManagerDragItem[] => {
   const isSelected = type === 'asset' ? selectedAssets.value.has(id) : selectedFolders.value.has(id)
+
 
   if (!isSelected || !hasSelection.value) {
     return [{ id, type }]
   }
 
+
   return getSelectedDragItems()
 }
+
 
 const assetItemProps = computed(() => {
   return {
     mode: props.mode,
-    draggable: props.mode === 'manage',
+    draggable: props.mode === 'manage' && canManageAssets.value,
     showCheckbox: props.mode === 'manage' && props.multiSelect,
+    canEdit: canManageAssets.value,
+    canDelete: canManageAssets.value,
   }
 })
+
 
 const emitSelectionChange = () => {
   if (props.mode !== 'manage') {
     return
   }
+
 
   emit('selectionChange', {
     folders: Array.from(selectedFolders.value.values()),
@@ -207,15 +238,18 @@ const emitSelectionChange = () => {
   })
 }
 
+
 const clearSelection = () => {
   if (props.mode !== 'manage') {
     return
   }
 
+
   selectedAssets.value.clear()
   selectedFolders.value.clear()
   emitSelectionChange()
 }
+
 
 const handleAssetView = (asset: AssetResource) => {
   if (props.mode === 'select') {
@@ -223,8 +257,10 @@ const handleAssetView = (asset: AssetResource) => {
     return
   }
 
+
   detailAsset.value = asset
 }
+
 
 const handleAssetSelect = (asset: AssetResource, selected?: boolean) => {
   if (props.mode === 'select') {
@@ -232,9 +268,11 @@ const handleAssetSelect = (asset: AssetResource, selected?: boolean) => {
     return
   }
 
+
   if (typeof selected !== 'boolean') {
     return
   }
+
 
   if (selected) {
     selectedAssets.value.set(asset.id, asset)
@@ -242,13 +280,16 @@ const handleAssetSelect = (asset: AssetResource, selected?: boolean) => {
     selectedAssets.value.delete(asset.id)
   }
 
+
   emitSelectionChange()
 }
+
 
 const handleFolderSelect = (folder: AssetFolderResource, selected: boolean) => {
   if (props.mode !== 'manage' || !props.multiSelect) {
     return
   }
+
 
   if (selected) {
     selectedFolders.value.set(folder.id, folder)
@@ -256,13 +297,16 @@ const handleFolderSelect = (folder: AssetFolderResource, selected: boolean) => {
     selectedFolders.value.delete(folder.id)
   }
 
+
   emitSelectionChange()
 }
+
 
 const handleFolderClick = (folder: AssetFolderResource) => {
   folderId.value = folder.id
   emit('folder-change', folder.id)
 }
+
 
 const openCreateFolderDialog = (parentId: string | null = activeFolderId.value) => {
   editingFolder.value = null
@@ -270,11 +314,13 @@ const openCreateFolderDialog = (parentId: string | null = activeFolderId.value) 
   folderDialogOpen.value = true
 }
 
+
 const openEditFolderDialog = (folder: AssetFolderResource) => {
   editingFolder.value = folder
   dialogParentFolderId.value = folder.parent_id
   folderDialogOpen.value = true
 }
+
 
 const handleFolderDelete = async (folder: AssetFolderResource) => {
   const confirmed = await alert.confirm(
@@ -286,14 +332,17 @@ const handleFolderDelete = async (folder: AssetFolderResource) => {
     }
   )
 
+
   if (!confirmed) {
     return
   }
+
 
   await deleteFolder(folder.id)
   selectedFolders.value.delete(folder.id)
   emitSelectionChange()
 }
+
 
 const handleAssetDelete = async (asset: AssetResource) => {
   const confirmed = await alert.confirm(
@@ -305,29 +354,35 @@ const handleAssetDelete = async (asset: AssetResource) => {
     }
   )
 
+
   if (!confirmed) {
     return
   }
+
 
   await deleteAsset(asset.id)
   selectedAssets.value.delete(asset.id)
   emitSelectionChange()
 }
 
+
 const deleteSelection = async () => {
   if (props.mode !== 'manage' || !selectedAssets.value.size) {
     return
   }
 
+
   await Promise.all(Array.from(selectedAssets.value.keys()).map((id) => deleteAsset(id)))
   clearSelection()
 }
+
 
 const handleItemsMove = async (targetFolderId: string | null, items: AssetManagerDragItem[]) => {
   if (!canMoveItems(items, targetFolderId)) {
     toast.error(String($t('messages.assetFolders.invalidMoveToChild')))
     return
   }
+
 
   try {
     await moveItemsToFolder(items, targetFolderId)
@@ -336,6 +391,7 @@ const handleItemsMove = async (targetFolderId: string | null, items: AssetManage
     toast.error(String($t('messages.assetFolders.invalidMoveToChild')))
   }
 }
+
 
 const saveAsset = async (asset: AssetResource) => {
   await updateAsset({
@@ -349,8 +405,10 @@ const saveAsset = async (asset: AssetResource) => {
     },
   })
 
+
   detailAsset.value = null
 }
+
 
 const handleKeyNavigation = (
   event: KeyboardEvent,
@@ -362,9 +420,11 @@ const handleKeyNavigation = (
     return
   }
 
+
   const containerElement = event.currentTarget as HTMLElement
   const focusableItems = containerElement.querySelectorAll(selector) as NodeListOf<HTMLElement>
   let nextIndex = currentIndex
+
 
   if (event.key === 'ArrowRight') {
     nextIndex = Math.min(currentIndex + 1, items.length - 1)
@@ -378,11 +438,13 @@ const handleKeyNavigation = (
     return
   }
 
+
   if (nextIndex !== currentIndex && focusableItems[nextIndex]) {
     event.preventDefault()
     focusableItems[nextIndex].focus()
   }
 }
+
 
 const getItemsPerRow = (container: HTMLElement): number => {
   const sampleItem = container.querySelector('[role="option"]') as HTMLElement | null
@@ -390,33 +452,40 @@ const getItemsPerRow = (container: HTMLElement): number => {
     return 3
   }
 
+
   const itemWidth = sampleItem.offsetWidth + parseInt(getComputedStyle(sampleItem).marginLeft) * 2
   return Math.max(1, Math.floor(container.clientWidth / itemWidth))
 }
+
 
 const handleDocumentDragOver = (event: DragEvent) => {
   if (!event.dataTransfer?.types.includes('Files')) {
     return
   }
 
+
   event.preventDefault()
   document.body.classList.add('drag-over')
 }
+
 
 const handleDocumentDragLeave = (event: DragEvent) => {
   if (!event.dataTransfer?.types.includes('Files')) {
     return
   }
 
+
   if (!event.relatedTarget || event.relatedTarget === document.body) {
     document.body.classList.remove('drag-over')
   }
 }
 
+
 const handleDocumentDrop = (event: DragEvent) => {
   if (!event.dataTransfer?.files?.length) {
     return
   }
+
 
   event.preventDefault()
   document.body.classList.remove('drag-over')
@@ -424,10 +493,12 @@ const handleDocumentDrop = (event: DragEvent) => {
   showUploadDialog.value = true
 }
 
+
 watch([folderId, tagId], () => {
   clearSelection()
   currentPage.value = 1
 })
+
 
 watch(rootBreadcrumbRef, (element, _, onCleanup) => {
   if (!element) {
@@ -456,6 +527,7 @@ watch(rootBreadcrumbRef, (element, _, onCleanup) => {
   })
 })
 
+
 onMounted(() => {
   if (props.initialFolderId) {
     folderId.value = props.initialFolderId
@@ -469,6 +541,7 @@ onMounted(() => {
   document.addEventListener('dragleave', handleDocumentDragLeave)
   document.addEventListener('drop', handleDocumentDrop)
 })
+
 
 onUnmounted(() => {
   document.removeEventListener('dragover', handleDocumentDragOver)
@@ -524,7 +597,7 @@ onUnmounted(() => {
 
       <div class="flex items-center gap-2">
         <Button
-          v-if="allowUpload"
+          v-if="allowUpload && canManageAssets"
           variant="primary"
           @click="showUploadDialog = true"
         >
@@ -532,7 +605,7 @@ onUnmounted(() => {
           {{ $t('actions.assets.upload') }}
         </Button>
         <Button
-          v-if="allowFolderCreation"
+          v-if="allowFolderCreation && canManageFolders"
           @click="openCreateFolderDialog()"
         >
           <Icon name="lucide:folder-plus" />
@@ -554,7 +627,7 @@ onUnmounted(() => {
     </Alert>
 
     <div
-      v-if="hasSelection"
+      v-if="hasSelection && (canManageAssets || canManageFolders)"
       class="flex items-center justify-between gap-4 rounded-lg border border-border bg-surface p-4"
     >
       <div class="flex items-center gap-2">
@@ -628,7 +701,10 @@ onUnmounted(() => {
           :key="folder.id"
           :folder="folder"
           :selected="selectedFolders.has(folder.id)"
-          :draggable="mode === 'manage'"
+          :draggable="mode === 'manage' && canManageFolders"
+          :can-edit="canManageFolders"
+          :can-delete="canManageFolders"
+          :can-create-children="canManageFolders"
           :drag-items="getDragItemsFor('folder', folder.id)"
           :can-receive-drop="(items) => canMoveItems(items, folder.id)"
           :on-items-drop="(items) => handleItemsMove(folder.id, items)"
@@ -705,7 +781,7 @@ onUnmounted(() => {
             }}
           </p>
           <Button
-            v-if="allowUpload"
+            v-if="allowUpload && canManageAssets"
             variant="primary"
             @click="showUploadDialog = true"
           >
@@ -764,7 +840,7 @@ onUnmounted(() => {
     </section>
 
     <UploadDialog
-      v-if="allowUpload"
+      v-if="allowUpload && canManageAssets"
       v-model:open="showUploadDialog"
       :folder-id="activeFolderId || undefined"
       :space-id="spaceId"
@@ -779,7 +855,7 @@ onUnmounted(() => {
     />
 
     <CreateFolderDialog
-      v-if="allowFolderCreation"
+      v-if="allowFolderCreation && canManageFolders"
       v-model:open="folderDialogOpen"
       :folder="editingFolder"
       :parent-folder-id="dialogParentFolderId"
@@ -791,6 +867,7 @@ onUnmounted(() => {
       v-model:asset="detailAsset"
       :folder-id="activeFolderId"
       :space-id="spaceId"
+      :read-only="!canManageAssets"
       @update:asset="saveAsset"
       @close="detailAsset = null"
     />

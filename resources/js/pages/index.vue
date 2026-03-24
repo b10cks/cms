@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useClipboard } from '@vueuse/core'
 import { SelectTrigger } from 'reka-ui'
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
@@ -9,19 +8,14 @@ import SpaceIcon from '~/assets/images/space.svg?component'
 import AppHeader from '~/components/AppHeader.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
+import SpaceActionsMenu from '~/components/space/SpaceActionsMenu.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import SpaceBadgeDialog from '~/components/space/SpaceBadgeDialog.vue'
 import TeamSelector from '~/components/TeamSelector.vue'
 import { Badge, type BadgeVariants } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '~/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuTrigger } from '~/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem } from '~/components/ui/select'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 import { useI18n } from '~/plugins/i18n'
@@ -32,6 +26,14 @@ const { formatRelativeTime } = useFormat()
 const route = useRoute()
 const router = useRouter()
 const { selectedTeam } = useGlobalTeam()
+const { useAccessControl } = useAuthorization()
+const access = useAccessControl(
+  computed(() => ({
+    ...(selectedTeam.value?.id ? { team_id: selectedTeam.value.id } : {}),
+  }))
+)
+const canCreateSpace = computed(() => access.canAccessRoute('spaces-new'))
+
 
 useSeoMeta({
   title: computed(() => {
@@ -40,6 +42,7 @@ useSeoMeta({
     return team ? `${team}: ${title}` : title
   }),
 })
+
 
 const sort = computed({
   get() {
@@ -55,6 +58,7 @@ const sort = computed({
   },
 })
 
+
 const archived = computed({
   get() {
     return route.query.archived === 'true'
@@ -69,6 +73,7 @@ const archived = computed({
   },
 })
 
+
 const spaceFilter = computed<SpaceQueryParams>(() => {
   return {
     archived: archived.value || undefined,
@@ -76,19 +81,17 @@ const spaceFilter = computed<SpaceQueryParams>(() => {
   }
 })
 
+
 const { data: spaces } = useSpacesQuery(spaceFilter)
 
-interface Action {
-  icon?: string
-  label: string
-  action?: (space: SpaceResource) => void
-}
 
 // Track which space has the badge dialog open
 const badgeDialogSpaceId = ref<string | null>(null)
 
+
 const { alert } = useAlertDialog()
 const archiveMutation = useArchiveSpaceMutation()
+
 
 const handleArchive = async (space: SpaceResource) => {
   const confirmed = await alert.confirm(`Are you sure you want to archive "${space.name}"?`, {
@@ -101,69 +104,26 @@ const handleArchive = async (space: SpaceResource) => {
   }
 }
 
-const actions: Array<Action | string> = [
-  {
-    icon: 'lucide:home',
-    label: $t('actions.open'),
-    action: (s) => {
-      router.push({ name: 'space', params: { space: s.id } })
-    },
-  },
-  {
-    icon: 'lucide:external-link',
-    label: $t('actions.newTab'),
-    action: (s) => {
-      window.open(s.id, '_blank')
-    },
-  },
-  {
-    icon: 'lucide:copy',
-    label: $t('actions.copyLink'),
-    action: (s) => {
-      const url = new URL(
-        window.location.origin + router.resolve({ name: 'space', params: { space: s.id } }).href
-      )
-      useClipboard().copy(url.toString())
-    },
-  },
-  {
-    icon: 'lucide:cog',
-    label: $t('actions.settings'),
-    action: (s) => {
-      router.push({ name: 'space-settings', params: { space: s.id } })
-    },
-  },
-  '-',
-  {
-    icon: 'lucide:tag',
-    label: $t('actions.spaces.assignBadge'),
-    action: (s) => {
-      badgeDialogSpaceId.value = s.id
-    },
-  },
-  '-',
-  {
-    icon: 'lucide:archive',
-    label: $t('actions.archive'),
-    action: handleArchive,
-  },
-]
 
 const getSortLabel = (sort: string) => {
   return $t(sort.replace(/^[+-]?(\w*)/, 'labels.sort.$1') + (sort.startsWith('-') ? 'Desc' : 'Asc'))
 }
 
+
 const teamRelatedSpaces = computed(() => {
   return spaces.value?.filter((space) => space.team_id === selectedTeam.value?.id) || []
 })
+
 
 const formatLastUpdated = (space: SpaceResource) => {
   const contentTs = space.content_updated_at ? Date.parse(space.content_updated_at) : 0
   const updatedTs = space.updated_at ? Date.parse(space.updated_at) : 0
   const date = (contentTs >= updatedTs ? space.content_updated_at : space.updated_at) ?? null
 
+
   return date ? formatRelativeTime(date) : ''
 }
+
 
 const getSpacePlanBadgeVariant = (status: SpacePlanSummary['status']): BadgeVariants['variant'] => {
   switch (status) {
@@ -183,6 +143,7 @@ const getSpacePlanBadgeVariant = (status: SpacePlanSummary['status']): BadgeVari
   }
 }
 
+
 const getSpacePlanIcon = (status: SpacePlanSummary['status']) => {
   switch (status) {
     case 'active':
@@ -201,6 +162,7 @@ const getSpacePlanIcon = (status: SpacePlanSummary['status']) => {
       return 'lucide:circle-off'
   }
 }
+
 
 const getSpacePlanLabel = (plan: SpacePlanSummary) => {
   return plan.name ?? $t('labels.plans.free')
@@ -231,7 +193,7 @@ const getSpacePlanLabel = (plan: SpacePlanSummary) => {
             {{ $t('actions.inviteMember') }}
           </Button>
           <Button
-            v-if="selectedTeam.can_create_space"
+            v-if="canCreateSpace"
             :as="RouterLink"
             size="sm"
             variant="primary"
@@ -374,28 +336,11 @@ const getSpacePlanLabel = (plan: SpacePlanSummary) => {
                         </Button>
                       </DropdownMenuTrigger>
 
-                      <DropdownMenuContent align="start">
-                        <template
-                          v-for="(action, i) in actions"
-                          :key="`menu-${i}`"
-                        >
-                          <DropdownMenuSeparator v-if="action === '-'" />
-                          <DropdownMenuItem
-                            v-else
-                            @select="
-                              (action as Action).action
-                                ? (action as Action).action?.(space)
-                                : () => {}
-                            "
-                          >
-                            <Icon
-                              v-if="(action as Action).icon"
-                              :name="(action as Action).icon!"
-                            />
-                            <span>{{ (action as Action).label }}</span>
-                          </DropdownMenuItem>
-                        </template>
-                      </DropdownMenuContent>
+                      <SpaceActionsMenu
+                        :space="space"
+                        @archive="handleArchive"
+                        @assign-badge="badgeDialogSpaceId = $event.id"
+                      />
                     </div>
                   </div>
                 </DropdownMenu>
@@ -431,6 +376,7 @@ const getSpacePlanLabel = (plan: SpacePlanSummary) => {
               </p>
             </div>
             <Button
+              v-if="canCreateSpace"
               :as="RouterLink"
               variant="primary"
               :to="{ name: 'spaces-new' }"

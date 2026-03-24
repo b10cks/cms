@@ -21,10 +21,20 @@ import {
 
 const { useSpacesQuery } = useSpaces()
 const { data: spaces } = useSpacesQuery({})
+const { selectedTeam } = useGlobalTeam()
+const { useAccessControl } = useAuthorization()
+const access = useAccessControl(
+  computed(() => ({
+    ...(selectedTeam.value?.id ? { team_id: selectedTeam.value.id } : {}),
+  }))
+)
+const canCreateSpace = computed(() => access.canAccessRoute('spaces-new'))
+
 
 const router = useRouter()
 const route = useRoute()
 const commandOpen = inject<Ref<boolean>>('commandOpen')
+
 
 const selectedSpaceId = computed({
   get: () => route.params?.space as string | undefined,
@@ -38,13 +48,16 @@ const selectedSpaceId = computed({
   },
 })
 
+
 const selectedSpace = computed(() => {
   return spaces.value?.find((space) => space.id === selectedSpaceId.value) ?? null
 })
 
+
 const toDashboard = () => {
   router.push('/')
 }
+
 
 const toSpaceDashboard = () => {
   if (selectedSpaceId.value) {
@@ -52,27 +65,33 @@ const toSpaceDashboard = () => {
   }
 }
 
+
 const openQuickActions = () => {
   if (typeof commandOpen === 'object' && commandOpen !== null) {
     commandOpen.value = true
   }
 }
 
+
 const openAccountSettings = () => {
   router.push({ name: 'account-settings-index' })
 }
+
 
 const switchSpace = (spaceId: string) => {
   selectedSpaceId.value = spaceId
 }
 
+
 const createNewSpace = () => {
   router.push('/spaces/new')
 }
 
+
 const logout = () => {
   useAuth().logout()
 }
+
 
 const isSpaceSelected = computed(() => !!selectedSpace.value)
 </script>
@@ -178,7 +197,10 @@ const isSpaceSelected = computed(() => !!selectedSpace.value)
                   />
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem @select="createNewSpace">
+                <DropdownMenuItem
+                  v-if="canCreateSpace"
+                  @select="createNewSpace"
+                >
                   <Icon name="lucide:plus" />
                   {{ $t('actions.spaces.add') }}
                 </DropdownMenuItem>

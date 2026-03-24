@@ -1,8 +1,29 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { createRouter, createWebHistory } from 'vue-router'
 
-import { api } from '~/api'
 import { useAuth } from '~/composables/useAuth'
+import {
+  ensureAuthorizationContext,
+  ensureSelectedTeamAccess,
+} from '~/composables/useAuthorization'
+import { canAccessRouteByName, getRouteAccessRequirement } from '~/lib/access-control'
+
+function buildAccessDeniedRedirect(
+  to: { fullPath: string; params: Record<string, unknown> },
+  scope: 'space' | 'team' | 'global',
+  spaceId?: string | null,
+  teamId?: string | null
+) {
+  return {
+    name: 'access-denied',
+    query: {
+      from: to.fullPath,
+      scope,
+      ...(spaceId ? { space: spaceId } : {}),
+      ...(teamId ? { team: teamId } : {}),
+    },
+  }
+}
 
 const routes: RouteRecordRaw[] = [
   {
@@ -34,6 +55,12 @@ const routes: RouteRecordRaw[] = [
     name: 'login-password-reset',
     component: () => import('~/pages/login/password.vue'),
     meta: { layout: 'unauthenticated', guest: true },
+  },
+  {
+    path: '/access-denied',
+    name: 'access-denied',
+    component: () => import('~/pages/access-denied.vue'),
+    meta: { layout: 'start' },
   },
   {
     path: '/invites/:id',
@@ -228,7 +255,6 @@ const routes: RouteRecordRaw[] = [
         path: 'people',
         name: 'space-settings-people',
         component: () => import('~/pages/[space]/settings/people.vue'),
-        meta: { requiredAbility: 'space.members.manage' },
       },
       {
         path: 'backups',
@@ -277,6 +303,12 @@ router.beforeEach(async (to) => {
 
   const isGuestRoute = to.meta.guest === true
   const isPublicRoute = to.meta.public === true
+  const routeName = typeof to.name === 'string' ? to.name : null
+  const spaceId = typeof to.params.space === 'string' ? to.params.space : null
+  const teamId = typeof to.params.team === 'string' ? to.params.team : null
+  const scope = spaceId ? 'space' : teamId ? 'team' : 'global'
+  const needsAccessCheck =
+    !!routeName && (Boolean(spaceId || teamId) || !!getRouteAccessRequirement(routeName))
 
   if (!isReady) {
     return true
@@ -293,32 +325,57 @@ router.beforeEach(async (to) => {
     }
   }
 
-  const requiredAbility =
-    typeof to.meta.requiredAbility === 'string' ? to.meta.requiredAbility : null
+  if (routeName === 'access-denied' || !routeName || !needsAccessCheck) {
+    return true
+  }
 
-  if (requiredAbility) {
-    const params: Record<string, string> = {}
+  try {
+    let authorization = null
+    let selectedTeamId: string | null = null
+    let selectedTeamCanCreateSpace = false
 
-    if (typeof to.params.space === 'string') {
-      params.space_id = to.params.space
-    }
+    if (routeName === 'spaces-new') {
+      const selectedTeamAccess = await ensureSelectedTeamAccess()
+      selectedTeamId = selectedTeamAccess.teamId
+      selectedTeamCanCreateSpace = selectedTeamAccess.canCreateSpace
 
-    if (typeof to.params.team === 'string') {
-      params.team_id = to.params.team
-    }
-
-    try {
-      const response = await api.authorization.get(params)
-      const abilities = [
-        ...(response.data.team?.abilities || []),
-        ...(response.data.space?.abilities || []),
-      ]
-
-      if (!response.data.is_root && !abilities.includes(requiredAbility)) {
-        return { name: 'index' }
+      if (selectedTeamId) {
+        authorization = await ensureAuthorizationContext({ team_id: selectedTeamId })
       }
-    } catch (error) {
-      console.error('[Router] Authorization guard failed:', error)
+    } else if (spaceId || teamId) {
+      authorization = await ensureAuthorizationContext({
+        ...(spaceId ? { space_id: spaceId } : {}),
+        ...(teamId ? { team_id: teamId } : {}),
+      })
+    }
+
+    if (
+      !canAccessRouteByName(routeName, {
+        authorization,
+        routeName,
+        spaceId,
+        teamId,
+        selectedTeamId,
+        selectedTeamCanCreateSpace,
+      })
+    ) {
+      return buildAccessDeniedRedirect(
+        to,
+        routeName === 'spaces-new' ? 'global' : scope,
+        spaceId,
+        teamId ?? selectedTeamId
+      )
+    }
+  } catch (error) {
+    console.error('[Router] Authorization guard failed:', error)
+    try {
+      return buildAccessDeniedRedirect(
+        to,
+        routeName === 'spaces-new' ? 'global' : scope,
+        spaceId,
+        teamId
+      )
+    } catch {
       return { name: 'index' }
     }
   }

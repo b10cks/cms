@@ -12,32 +12,47 @@ import {
   CommandItem,
   CommandList,
 } from '~/components/ui/command'
+import { getActionAccessRequirement } from '~/lib/access-control'
 
 const route = useRoute()
 const router = useRouter()
 
+
 const spaceId = computed<string>(() => route.params.space as string)
+const { useAccessControl } = useAuthorization()
+const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
+const canViewBlocks = computed(() =>
+  access.canAccessRoute(getActionAccessRequirement('command.blocks'))
+)
+const canViewContent = computed(() =>
+  access.canAccessRoute(getActionAccessRequirement('command.content'))
+)
+
 
 const { useSpacesQuery } = useSpaces()
 const { data: spaces } = useSpacesQuery({})
 const { useBlocksQuery } = useBlocks(spaceId)
-const { data: blocks } = useBlocksQuery({ per_page: 1000 })
+const { data: blocks } = useBlocksQuery({ per_page: 1000 }, canViewBlocks)
 const { useContentMenuQuery } = useContentMenu(spaceId)
-const { data: contents } = useContentMenuQuery()
+const { data: contents } = useContentMenuQuery(canViewContent)
+
 
 const keys = useMagicKeys()
 const triggerKey = keys['Cmd+K']
+
 
 const open = inject('commandOpen', ref(true))
 function handleOpenChange() {
   open.value = !open.value
 }
 
+
 watch(triggerKey, (v) => {
   if (v) {
     handleOpenChange()
   }
 })
+
 
 const jumpTo = (url: string) => {
   router.push(url)
@@ -54,7 +69,7 @@ const jumpTo = (url: string) => {
     <CommandList>
       <CommandEmpty>{{ $t('labels.command.empty') }}</CommandEmpty>
       <CommandGroup
-        v-if="blocks"
+        v-if="canViewBlocks && blocks"
         heading="Blocks"
       >
         <CommandItem
@@ -72,7 +87,7 @@ const jumpTo = (url: string) => {
         </CommandItem>
       </CommandGroup>
       <CommandGroup
-        v-if="contents"
+        v-if="canViewContent && contents"
         heading="Contents"
       >
         <CommandItem

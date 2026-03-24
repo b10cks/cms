@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
-import type { AcceptInvitePayload, CreateInvitePayload, InviteQueryParams } from '~/types/invites'
-
 import { api } from '~/api'
+import type { AcceptInvitePayload, CreateInvitePayload, InviteQueryParams } from '~/types/invites'
 
 import { queryKeys } from './useQueryClient'
 
@@ -50,7 +49,8 @@ export function useInvites() {
 
   const useSpaceInvitesQuery = (
     spaceId: MaybeRef<string>,
-    params: MaybeRef<InviteQueryParams> = {}
+    params: MaybeRef<InviteQueryParams> = {},
+    enabled: MaybeRef<boolean> = true
   ) => {
     return useQuery({
       queryKey: computed(() => queryKeys.invites.spaceList(spaceId, params)),
@@ -58,12 +58,14 @@ export function useInvites() {
         const response = await api.invites.listSpaceInvites(toValue(spaceId), toValue(params))
         return response
       },
+      enabled: computed(() => !!toValue(spaceId) && !!toValue(enabled)),
     })
   }
 
   const useTeamInvitesQuery = (
     teamId: MaybeRef<string>,
-    params: MaybeRef<InviteQueryParams> = {}
+    params: MaybeRef<InviteQueryParams> = {},
+    enabled: MaybeRef<boolean> = true
   ) => {
     return useQuery({
       queryKey: computed(() => queryKeys.invites.teamList(teamId, params)),
@@ -71,6 +73,7 @@ export function useInvites() {
         const response = await api.invites.listTeamInvites(toValue(teamId), toValue(params))
         return response
       },
+      enabled: computed(() => !!toValue(teamId) && !!toValue(enabled)),
     })
   }
 

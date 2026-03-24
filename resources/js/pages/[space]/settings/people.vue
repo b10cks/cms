@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
 import CreateInviteDialog from '~/components/invites/CreateInviteDialog.vue'
 import SpaceInvitesList from '~/components/invites/SpaceInvitesList.vue'
 import { Button } from '~/components/ui/button'
@@ -10,27 +9,35 @@ import { useAuthorization } from '~/composables/useAuthorization'
 const route = useRoute()
 const { t } = useI18n()
 const spaceId = computed(() => route.params.space as string)
-const { useAuthorizationQuery, useAbility } = useAuthorization()
+const { useAuthorizationQuery, useAccessControl } = useAuthorization()
 const { data: authorization } = useAuthorizationQuery(computed(() => ({ space_id: spaceId.value })))
-const canManagePeople = useAbility(
-  computed(() => 'space.members.manage'),
-  computed(() => ({ space_id: spaceId.value }))
+const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
+const canManagePeople = computed(() =>
+  access.hasAnyAbility(['space.members.manage', 'space.invites.manage'])
 )
+const canViewInvites = computed(() =>
+  access.hasAnyAbility(['space.invites.view', 'space.invites.manage'])
+)
+
 
 useSeoMeta({
   title: computed(() => t('labels.settings.people.title')),
 })
+
 
 const { useSpaceInvitesQuery, useDeleteSpaceInviteMutation, useResendSpaceInviteMutation } =
   useInvites()
 const { mutate: deleteInvite } = useDeleteSpaceInviteMutation()
 const { mutate: resendInvite } = useResendSpaceInviteMutation()
 
+
 const inviteDialogOpen = ref(false)
+
 
 const handleDeleteInvite = (inviteId: string) => {
   deleteInvite({ spaceId: spaceId.value, inviteId })
 }
+
 
 const handleResendInvite = (inviteId: string) => {
   resendInvite({ spaceId: spaceId.value, inviteId })
@@ -58,6 +65,7 @@ const handleResendInvite = (inviteId: string) => {
     <SpaceInvitesList
       :space-id="spaceId"
       :available-roles="authorization?.roles.space || []"
+      :enabled="canViewInvites"
       @delete="handleDeleteInvite"
       @resend="handleResendInvite"
     />

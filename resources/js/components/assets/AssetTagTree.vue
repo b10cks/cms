@@ -9,6 +9,7 @@ import { Input } from '~/components/ui/input'
 import { UpsertAssetTagPayload } from '~/types/assets'
 
 const route = useRoute()
+const { useAccessControl } = useAuthorization()
 const { useAssetTagsQuery } = useAssetTags(route.params.spaceId as string)
 const { data: tags } = useAssetTagsQuery({
   per_page: 500,
@@ -26,6 +27,8 @@ const newTag = ref<UpsertAssetTagPayload>({
 
 const { useCreateAssetTagMutation } = useAssetTags(route.params.spaceId as string)
 const { mutate: createTag } = useCreateAssetTagMutation()
+const access = useAccessControl(computed(() => ({ space_id: route.params.spaceId as string })))
+const canManageTags = computed(() => access.hasAbility('asset_tags.manage'))
 
 function create() {
   if (newTag.value.name) {
@@ -49,6 +52,7 @@ function create() {
         {{ $t('labels.assetTags.title') }}
       </h2>
       <Button
+        v-if="canManageTags"
         class="ml-auto"
         variant="ghost"
         size="xs"
@@ -58,7 +62,7 @@ function create() {
       </Button>
     </div>
     <div
-      v-if="showNewTag"
+      v-if="canManageTags && showNewTag"
       class="flex gap-2"
     >
       <IconGrid v-model="newTag.icon" />

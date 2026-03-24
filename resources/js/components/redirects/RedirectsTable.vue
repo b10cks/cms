@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import type { RedirectsQueryParams } from '~/api/resources/redirects'
+import RedirectsIcon from '~/assets/images/redirects.svg?component'
 import Icon from '~/components/Icon.vue'
-
 import SearchFilter from '~/components/SearchFilter.vue'
+import type { FilterableField } from '~/components/SearchFilter.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
@@ -20,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import SortSelect from '~/components/ui/SortSelect.vue'
 import {
   Table,
   TableBody,
@@ -29,16 +32,14 @@ import {
   TableRow,
   TableSortableHead,
 } from '~/components/ui/table'
-import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
-
-import type { RedirectsQueryParams } from '~/api/resources/redirects'
-import RedirectsIcon from '~/assets/images/redirects.svg?component'
-import SortSelect from '~/components/ui/SortSelect.vue'
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
+import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
+const { useAccessControl } = useAuthorization()
+
 
 const statusCodes = computed(() =>
   [301, 302, 303, 307, 308].map((code) => {
@@ -49,7 +50,8 @@ const statusCodes = computed(() =>
   })
 )
 
-const redirectFilters = computed(() => [
+
+const redirectFilters = computed<FilterableField[]>(() => [
   {
     id: 'source',
     label: 'Source Path',
@@ -78,6 +80,7 @@ const redirectFilters = computed(() => [
   },
 ])
 
+
 const sortOptions = [
   { value: 'source', label: $t('labels.redirects.columns.source') },
   { value: 'target', label: $t('labels.redirects.columns.target') },
@@ -88,6 +91,7 @@ const sortOptions = [
   { value: 'updated_at', label: $t('labels.redirects.columns.updatedAt') },
 ]
 
+
 const filters = ref<Record<string, unknown>>({})
 const searchQuery = ref('')
 const currentPage = ref(1)
@@ -97,7 +101,9 @@ const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
   direction: 'desc',
 })
 
+
 const selectedRedirects = ref<Map<string, RedirectResource>>(new Map())
+
 
 const queryParams = computed<RedirectsQueryParams>(() => {
   return {
@@ -108,9 +114,14 @@ const queryParams = computed<RedirectsQueryParams>(() => {
   }
 })
 
+
 const props = defineProps<{
   spaceId: string
 }>()
+const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
+const canManageRedirects = computed(() => access.hasAbility('redirects.manage'))
+const tableColumnCount = computed(() => (canManageRedirects.value ? 8 : 7))
+
 
 const {
   useRedirectsQuery,
@@ -123,7 +134,9 @@ const { mutate: updateRedirect } = useUpdateRedirectMutation()
 const { mutate: resetRedirectStats } = useResetRedirectStatsMutation()
 const { mutate: deleteRedirect } = useDeleteRedirectMutation()
 
+
 const { formatDateTime } = useFormat()
+
 
 const editingState = reactive<
   Record<
@@ -136,6 +149,7 @@ const editingState = reactive<
     }
   >
 >({})
+
 
 const handleDelete = async (redirect: RedirectResource) => {
   const confirmed = await alert.confirm(
@@ -152,6 +166,7 @@ const handleDelete = async (redirect: RedirectResource) => {
   }
 }
 
+
 const handleReset = async (redirect: RedirectResource) => {
   const confirmed = await alert.confirm(
     $t('labels.redirects.resetConfirmMessage', { from: redirect.source }),
@@ -165,6 +180,7 @@ const handleReset = async (redirect: RedirectResource) => {
     await resetRedirectStats(redirect.id)
   }
 }
+
 
 const handleBulkDelete = async () => {
   const confirmed = await alert.confirm(
@@ -185,6 +201,7 @@ const handleBulkDelete = async () => {
   }
 }
 
+
 const handleBulkReset = async () => {
   const confirmed = await alert.confirm(
     $t('labels.redirects.bulkResetConfirmMessage', { count: selectionCount.value }),
@@ -203,16 +220,19 @@ const handleBulkReset = async () => {
   }
 }
 
+
 const sortedRedirects = computed(() => {
   return redirects.value?.data || []
 })
+const redirectRows = computed(() => redirects.value?.data ?? [])
+
 
 const selectionCount = computed(() => selectedRedirects.value.size)
 const isAllSelected = computed(() => {
   return selectionCount.value > 0 && sortedRedirects.value.length === selectionCount.value
 })
-const handleSelectAll = (checked: boolean) => {
-  if (checked) {
+const handleSelectAll = (checked: boolean | 'indeterminate') => {
+  if (checked === true) {
     sortedRedirects.value.forEach((redirect) => {
       selectedRedirects.value.set(redirect.id, redirect)
     })
@@ -221,21 +241,25 @@ const handleSelectAll = (checked: boolean) => {
   }
 }
 
-const handleRedirectSelect = (redirect: RedirectResource, selected: boolean) => {
-  if (selected) {
+
+const handleRedirectSelect = (redirect: RedirectResource, selected: boolean | 'indeterminate') => {
+  if (selected === true) {
     selectedRedirects.value.set(redirect.id, redirect)
   } else {
     selectedRedirects.value.delete(redirect.id)
   }
 }
 
+
 const clearSelection = () => {
   selectedRedirects.value.clear()
 }
 
+
 const isRedirectSelected = (redirect: RedirectResource) => {
   return selectedRedirects.value.has(redirect.id)
 }
+
 
 const startEditing = (
   redirect: RedirectResource,
@@ -252,9 +276,11 @@ const startEditing = (
   editingState[redirect.id].isEditing = true
 }
 
+
 const saveEdits = async (redirect: RedirectResource) => {
   const currentState = editingState[redirect.id]
   if (!currentState) return
+
 
   const payload: UpdateRedirectPayload = {
     source: editingState[redirect.id].source,
@@ -262,13 +288,16 @@ const saveEdits = async (redirect: RedirectResource) => {
     status_code: editingState[redirect.id].status_code,
   }
 
+
   await updateRedirect({
     id: redirect.id,
     payload,
   })
 
+
   currentState.isEditing = false
 }
+
 
 const cancelEditing = (redirect: RedirectResource) => {
   if (editingState[redirect.id]) {
@@ -279,6 +308,7 @@ const cancelEditing = (redirect: RedirectResource) => {
   }
 }
 
+
 const navigateToRow = (
   direction: 'up' | 'down',
   currentRedirect: RedirectResource,
@@ -286,10 +316,13 @@ const navigateToRow = (
 ) => {
   saveEdits(currentRedirect)
 
+
   const currentIndex = sortedRedirects.value.findIndex((r) => r.id === currentRedirect.id)
   if (currentIndex === -1) return
 
+
   let nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+
 
   if (nextIndex < 0) {
     nextIndex = sortedRedirects.value.length - 1
@@ -297,15 +330,18 @@ const navigateToRow = (
     nextIndex = 0
   }
 
+
   const nextRedirect = sortedRedirects.value[nextIndex]
   if (nextRedirect) {
     startEditing(nextRedirect, field)
   }
 }
 
+
 const handleKeyDown = (event: KeyboardEvent, redirect: RedirectResource) => {
   const currentState = editingState[redirect.id]
   if (!currentState || !currentState.isEditing) return
+
 
   if (event.key === 'Escape') {
     event.preventDefault()
@@ -322,10 +358,12 @@ const handleKeyDown = (event: KeyboardEvent, redirect: RedirectResource) => {
   }
 }
 
+
 watch(
   () => redirects.value,
   (newRedirects) => {
     if (!newRedirects?.data) return
+
 
     newRedirects.data.forEach((redirect) => {
       if (editingState[redirect.id] && !editingState[redirect.id].isEditing) {
@@ -338,11 +376,13 @@ watch(
   { deep: true }
 )
 
+
 const getStatusCodeDescription = (code: number): string => {
   return $t(
     `labels.redirects.statusCodes.${[301, 302, 303, 307, 308].includes(code) ? code : 'unknown'}`
   ) as string
 }
+
 
 watch(
   () => currentPage.value,
@@ -372,7 +412,7 @@ watch(
       </div>
     </div>
     <div
-      v-if="selectionCount > 0"
+      v-if="canManageRedirects && selectionCount > 0"
       class="flex items-center justify-between gap-4 rounded-lg border border-border bg-surface p-4"
     >
       <div class="flex items-center gap-2">
@@ -412,7 +452,10 @@ watch(
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead class="w-8">
+            <TableHead
+              v-if="canManageRedirects"
+              class="w-8"
+            >
               <Checkbox
                 :model-value="isAllSelected"
                 aria-label="Select all redirects"
@@ -463,23 +506,23 @@ watch(
         <TableBody>
           <TableLoadingRow
             v-if="isLoading"
-            :colspan="8"
+            :colspan="tableColumnCount"
           />
-          <template v-else-if="redirects?.data?.length > 0">
+          <template v-else-if="redirectRows.length > 0">
             <TableRow
-              v-for="redirect in redirects.data"
+              v-for="redirect in redirectRows"
               :key="redirect.id"
               class="hover:bg-muted/50"
               :data-state="isRedirectSelected(redirect) ? 'selected' : undefined"
             >
-              <TableCell>
+              <TableCell v-if="canManageRedirects">
                 <Checkbox
                   :model-value="isRedirectSelected(redirect)"
                   :aria-label="`Select redirect ${redirect.source}`"
                   @update:model-value="(checked) => handleRedirectSelect(redirect, checked)"
                 />
               </TableCell>
-              <TableCell @dblclick="startEditing(redirect, 'source')">
+              <TableCell @dblclick="canManageRedirects && startEditing(redirect, 'source')">
                 <template v-if="editingState[redirect.id]?.isEditing">
                   <Input
                     v-model="editingState[redirect.id].source"
@@ -493,7 +536,7 @@ watch(
                 </template>
               </TableCell>
 
-              <TableCell @dblclick="startEditing(redirect, 'target')">
+              <TableCell @dblclick="canManageRedirects && startEditing(redirect, 'target')">
                 <template v-if="editingState[redirect.id]?.isEditing">
                   <Input
                     v-model="editingState[redirect.id].target"
@@ -507,7 +550,7 @@ watch(
                 </template>
               </TableCell>
 
-              <TableCell @dblclick="startEditing(redirect, 'status_code')">
+              <TableCell @dblclick="canManageRedirects && startEditing(redirect, 'status_code')">
                 <template v-if="editingState[redirect.id]?.isEditing">
                   <Select
                     v-model="editingState[redirect.id].status_code"
@@ -574,7 +617,7 @@ watch(
                   </Button>
                 </div>
                 <div
-                  v-else
+                  v-else-if="canManageRedirects"
                   class="flex space-x-1"
                 >
                   <Button
@@ -624,7 +667,7 @@ watch(
           </template>
           <TableEmptyRow
             v-else
-            :colspan="8"
+            :colspan="tableColumnCount"
             :icon="RedirectsIcon"
             :label="$t('labels.redirects.noRedirects')"
           />

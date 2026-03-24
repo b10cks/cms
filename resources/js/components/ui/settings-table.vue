@@ -53,6 +53,9 @@ const props = withDefaults(
     columns: ColumnDefinition[]
     allowSort?: boolean
     showAddRow?: boolean
+    canAdd?: boolean
+    canEdit?: boolean
+    canDelete?: boolean
     newItemTemplate?: TableItem
     addButtonLabel?: string
     removeButtonLabel?: string
@@ -60,6 +63,9 @@ const props = withDefaults(
   {
     allowSort: false,
     showAddRow: true,
+    canAdd: true,
+    canEdit: true,
+    canDelete: true,
     newItemTemplate: () => ({}),
     addButtonLabel: 'actions.add',
     removeButtonLabel: 'actions.remove',
@@ -90,6 +96,7 @@ if (props.allowSort) {
   ;(useSortable as any)(tableBodyRef, localItems, {
     handle: '.sort-handle',
     animation: 150,
+    disabled: !props.canEdit,
     onEnd: () => {
       nextTick(() => emit('update:items', [...localItems.value]))
     },
@@ -97,6 +104,10 @@ if (props.allowSort) {
 }
 
 const canAddItem = computed(() => {
+  if (!props.canAdd) {
+    return false
+  }
+
   return props.columns
     .filter((col) => col.required)
     .every((col) => {
@@ -182,12 +193,12 @@ const getColumnOptions = (column: ColumnDefinition, item: TableItem) => {
             <Switch
               v-else-if="column.type === 'switch'"
               v-model="item[column.key] as boolean"
-              :disabled="column.readonly"
+              :disabled="column.readonly || !canEdit"
             />
             <Select
               v-else-if="column.type === 'select'"
               :model-value="getSelectValue(item, column.key)"
-              :disabled="column.readonly"
+              :disabled="column.readonly || !canEdit"
               @update:model-value="(value) => updateSelectValue(item, column.key, value)"
             >
               <SelectTrigger>
@@ -209,7 +220,7 @@ const getColumnOptions = (column: ColumnDefinition, item: TableItem) => {
               v-model="item[column.key] as string"
               :name="column.key"
               :placeholder="column.placeholder"
-              :disabled="column.readonly"
+              :disabled="column.readonly || !canEdit"
             />
           </TableCell>
           <TableCell class="flex items-center gap-1">
@@ -219,6 +230,7 @@ const getColumnOptions = (column: ColumnDefinition, item: TableItem) => {
               :index="index"
             />
             <Button
+              v-if="canDelete"
               variant="ghost"
               size="icon"
               @click="removeItem(index)"
@@ -231,7 +243,7 @@ const getColumnOptions = (column: ColumnDefinition, item: TableItem) => {
       </TableBody>
       <TableFooter>
         <TableRow
-          v-if="showAddRow"
+          v-if="showAddRow && canAdd"
           :id="`${id}-new-row`"
           class="hover:bg-transparent"
         >
@@ -249,12 +261,12 @@ const getColumnOptions = (column: ColumnDefinition, item: TableItem) => {
             <Switch
               v-else-if="column.type === 'switch'"
               v-model="newItem[column.key] as boolean"
-              :disabled="column.readonly"
+              :disabled="column.readonly || !canEdit"
             />
             <Select
               v-else-if="column.type === 'select'"
               :model-value="getSelectValue(newItem, column.key)"
-              :disabled="column.readonly"
+              :disabled="column.readonly || !canEdit"
               @update:model-value="(value) => updateSelectValue(newItem, column.key, value)"
             >
               <SelectTrigger>
@@ -275,6 +287,7 @@ const getColumnOptions = (column: ColumnDefinition, item: TableItem) => {
               v-else
               v-model="newItem[column.key] as string"
               :placeholder="column.placeholder"
+              :disabled="!canEdit"
               @keydown.enter="addItem"
             />
           </TableCell>

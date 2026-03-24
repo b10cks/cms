@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
+import { api } from '~/api'
 import type { BlocksQueryParams } from '~/api/resources/blocks'
 import type { ApiResponse } from '~/types'
-
-import { api } from '~/api'
 
 import { queryKeys } from './useQueryClient'
 
@@ -13,7 +12,10 @@ export function useBlocks(spaceId: MaybeRef<string>) {
   const queryClient = useQueryClient()
   const spaceAPI = computed(() => api.forSpace(toValue(spaceId)))
 
-  const useBlocksQuery = (params: MaybeRef<BlocksQueryParams> = {}) => {
+  const useBlocksQuery = (
+    params: MaybeRef<BlocksQueryParams> = {},
+    enabled: MaybeRef<boolean> = true
+  ) => {
     return useQuery({
       queryKey: computed(() => queryKeys.blocks(spaceId).list(params)),
       queryFn: async () => {
@@ -22,17 +24,18 @@ export function useBlocks(spaceId: MaybeRef<string>) {
           ...toValue(params),
         })
       },
-      enabled: computed(() => !!toValue(spaceId)),
+      enabled: computed(() => !!toValue(spaceId) && !!toValue(enabled)),
     })
   }
 
-  const useBlockQuery = (id: MaybeRef<string>) => {
+  const useBlockQuery = (id: MaybeRef<string>, enabled: MaybeRef<boolean> = true) => {
     return useQuery({
       queryKey: computed(() => queryKeys.blocks(spaceId).detail(id)),
       queryFn: async () => {
         const response = await spaceAPI.value.blocks.get(toValue(id))
         return response.data
       },
+      enabled: computed(() => !!toValue(spaceId) && !!toValue(id) && !!toValue(enabled)),
     })
   }
 
@@ -123,9 +126,9 @@ export function useBlocks(spaceId: MaybeRef<string>) {
     slugRef: MaybeRef<string>
   ) => {
     const blocks = unref(blocksRef)
-    const slug = slugRef
+    const slug = unref(slugRef)
 
-    if (!blocks) return null
+    if (!blocks?.data) return null
     return blocks.data.find((block) => block.slug == slug)
   }
 
@@ -134,9 +137,9 @@ export function useBlocks(spaceId: MaybeRef<string>) {
     idRef: MaybeRef<string>
   ) => {
     const blocks = unref(blocksRef)
-    const id = idRef
+    const id = unref(idRef)
 
-    if (!blocks) return null
+    if (!blocks?.data) return null
     return blocks.data.find((block) => block.id == id)
   }
 

@@ -23,6 +23,9 @@ const props = defineProps<{
   folder: AssetFolderResource
   selected?: boolean
   draggable?: boolean
+  canEdit?: boolean
+  canDelete?: boolean
+  canCreateChildren?: boolean
   dragItems?: AssetManagerDragItem[]
   canReceiveDrop?: (items: AssetManagerDragItem[]) => boolean
   onItemsDrop?: (items: AssetManagerDragItem[]) => void | Promise<void>
@@ -163,7 +166,10 @@ watchEffect((onCleanup) => {
         </div>
       </div>
     </div>
-    <DropdownMenu class="ml-auto">
+    <DropdownMenu
+      v-if="canEdit || canDelete || canCreateChildren"
+      class="ml-auto"
+    >
       <DropdownMenuTrigger class="transition-colors hover:text-primary">
         <Icon name="lucide:ellipsis-vertical" />
       </DropdownMenuTrigger>
@@ -172,15 +178,22 @@ watchEffect((onCleanup) => {
           <Icon name="lucide:eye" />
           <span>{{ $t('actions.view') }}</span>
         </DropdownMenuItem>
-        <DropdownMenuItem @select="$emit('edit', folder)">
+        <DropdownMenuItem
+          v-if="canEdit"
+          @select="$emit('edit', folder)"
+        >
           <Icon name="lucide:edit" />
           <span>{{ $t('actions.edit') }}</span>
         </DropdownMenuItem>
-        <DropdownMenuItem @select="$emit('create', folder)">
+        <DropdownMenuItem
+          v-if="canCreateChildren"
+          @select="$emit('create', folder)"
+        >
           <Icon name="lucide:folder-plus" />
           <span>{{ $t('actions.createFolder') }}</span>
         </DropdownMenuItem>
         <DropdownMenuItem
+          v-if="canDelete"
           class="text-destructive"
           @select="$emit('delete', folder)"
         >

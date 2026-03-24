@@ -19,6 +19,7 @@ const props = defineProps<{
   nodes: Record<string, ContentWizardDraftNode>
   bounds: ContentWizardBounds
   rootTitle?: string
+  canMutate?: boolean
   focusedNodeId: string | null
   editingField: ContentWizardEditableField | null
   editingNodeId: string | null
@@ -322,6 +323,7 @@ defineExpose({
           :key="node.id"
           :node="node"
           :root-title="props.rootTitle"
+          :can-mutate="props.canMutate ?? true"
           :focused="props.focusedNodeId === node.id"
           :editing-field="props.editingNodeId === node.id ? props.editingField : null"
           :drop-active="props.dropTargetId === node.id"

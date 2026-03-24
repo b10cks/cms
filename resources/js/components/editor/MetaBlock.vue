@@ -1,20 +1,24 @@
 <script lang="ts" setup>
 import { toast } from 'vue-sonner'
+
 import AssetBlock from '~/components/editor/AssetBlock.vue'
 import { Button } from '~/components/ui/button'
 import { InputField, TextField } from '~/components/ui/form'
 import type { ApiResponse } from '~/types'
+import type { AssetValue } from '~/types/assets'
 
 interface MetaSchema {
   key: string
   has_og_tags?: boolean
 }
 
+
 interface ContentValue {
   name?: string
   full_slug?: string
   content?: string | Record<string, unknown>
 }
+
 
 interface MetaValue {
   title?: string
@@ -26,21 +30,27 @@ interface MetaValue {
   ogImage?: AssetValue
 }
 
+
 const props = defineProps<{
   item: MetaSchema & { key: string }
   modelValue?: unknown
   spaceId: string
+  readOnly?: boolean
 }>()
 
-const content = inject<Ref<ContentValue>>('content')
+
+const content = inject<Ref<ContentValue>>('content', ref({}))
 const { client: apiClient } = useApiClient()
+
 
 const emit = defineEmits<{
   (e: 'update:model-value', value: unknown): void
 }>()
 
+
 const localValue = ref<MetaValue>((props.modelValue as MetaValue) || {})
 const isGenerating = ref(false)
+
 
 const updateValue = (key: keyof MetaValue, value: unknown): void => {
   const newValue = {
@@ -51,6 +61,7 @@ const updateValue = (key: keyof MetaValue, value: unknown): void => {
   emit('update:model-value', newValue)
 }
 
+
 watch(
   () => props.modelValue,
   (newValue: unknown) => {
@@ -59,17 +70,21 @@ watch(
   { immediate: true, deep: true }
 )
 
+
 const serpTitle = computed((): string => {
   return localValue.value?.title || content.value?.name || ''
 })
+
 
 const serpDescription = computed((): string => {
   return localValue.value?.description || ''
 })
 
+
 const serpUrl = computed((): string => {
   return `https://example.com${content.value?.full_slug || ''}`
 })
+
 
 const truncatedDescription = computed((): string => {
   const desc = serpDescription.value
@@ -82,6 +97,7 @@ const truncatedDescription = computed((): string => {
   return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...'
 })
 
+
 const truncatedTitle = computed((): string => {
   const title = serpTitle.value
   if (title.length <= 60) return title
@@ -91,6 +107,7 @@ const truncatedTitle = computed((): string => {
 
   return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...'
 })
+
 
 const generateMetaWithAI = async (): Promise<void> => {
   try {
@@ -110,6 +127,7 @@ const generateMetaWithAI = async (): Promise<void> => {
       },
     }
 
+
     const response = await apiClient.post<
       ApiResponse<{
         title: string
@@ -118,6 +136,7 @@ const generateMetaWithAI = async (): Promise<void> => {
         ogDescription: string
       }>
     >('/mgmt/v1/ai/meta-tags', { context: requestData }, { query: { spaceId: props.spaceId } })
+
 
     // Update local values and emit changes
     const generatedMeta = response.data
@@ -131,8 +150,10 @@ const generateMetaWithAI = async (): Promise<void> => {
       }),
     }
 
+
     localValue.value = newValue
     emit('update:model-value', newValue)
+
 
     toast.success('Meta tags generated successfully!')
   } catch (error: unknown) {
@@ -142,6 +163,7 @@ const generateMetaWithAI = async (): Promise<void> => {
     isGenerating.value = false
   }
 }
+
 
 const hasContent = computed((): boolean => {
   return !!(content.value?.name || content.value?.content)
@@ -157,7 +179,7 @@ const hasContent = computed((): boolean => {
       </div>
       <Button
         size="sm"
-        :disabled="isGenerating || !hasContent"
+        :disabled="props.readOnly || isGenerating || !hasContent"
         class="absolute top-1 right-1 flex items-center gap-2"
         @click="generateMetaWithAI"
       >
@@ -194,7 +216,7 @@ const hasContent = computed((): boolean => {
       :name="item.key + '-title'"
       :label="$t('labels.contents.fields.meta.title')"
       :placeholder="$t('labels.contents.fields.meta.titlePlaceholder')"
-      :disabled="isGenerating"
+      :disabled="props.readOnly || isGenerating"
       @update:model-value="updateValue('title', $event)"
     />
     <TextField
@@ -202,7 +224,7 @@ const hasContent = computed((): boolean => {
       :name="item.key + '-description'"
       :label="$t('labels.contents.fields.meta.description')"
       :placeholder="$t('labels.contents.fields.meta.descriptionPlaceholder')"
-      :disabled="isGenerating"
+      :disabled="props.readOnly || isGenerating"
       auto-size
       @update:model-value="updateValue('description', $event)"
     />
@@ -211,7 +233,7 @@ const hasContent = computed((): boolean => {
       :name="item.key + '-canonical'"
       :label="$t('labels.contents.fields.meta.canonical')"
       :tooltip="$t('labels.contents.fields.meta.canonicalDescription')"
-      :disabled="isGenerating"
+      :disabled="props.readOnly || isGenerating"
       @update:model-value="updateValue('canonical', $event)"
     />
     <InputField
@@ -219,13 +241,14 @@ const hasContent = computed((): boolean => {
       :name="item.key + '-robots'"
       :label="$t('labels.contents.fields.meta.robots')"
       :tooltip="$t('labels.contents.fields.meta.robotsDescription')"
-      :disabled="isGenerating"
+      :disabled="props.readOnly || isGenerating"
       @update:model-value="updateValue('robots', $event)"
     />
     <template v-if="item.has_og_tags">
       <AssetBlock
         :model-value="localValue.ogImage"
         :space-id="spaceId"
+        :read-only="props.readOnly"
         :item="{ name: 'ogImage', key: 'ogImage', type: 'asset', file_types: ['image'] }"
         @update:model-value="updateValue('ogImage', $event)"
       />
@@ -234,7 +257,7 @@ const hasContent = computed((): boolean => {
         :name="item.key + '-ogTitle'"
         :label="$t('labels.contents.fields.meta.ogTitle')"
         :placeholder="$t('labels.contents.fields.meta.ogTitlePlaceholder')"
-        :disabled="isGenerating"
+        :disabled="props.readOnly || isGenerating"
         @update:model-value="updateValue('ogTitle', $event)"
       />
       <TextField
@@ -242,7 +265,7 @@ const hasContent = computed((): boolean => {
         :name="item.key + '-ogDescription'"
         :label="$t('labels.contents.fields.meta.ogDescription')"
         :placeholder="$t('labels.contents.fields.meta.ogDescriptionPlaceholder')"
-        :disabled="isGenerating"
+        :disabled="props.readOnly || isGenerating"
         auto-size
         @update:model-value="updateValue('ogDescription', $event)"
       />

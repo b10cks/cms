@@ -31,6 +31,9 @@ const props = defineProps<{
 
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
+const { useAccessControl } = useAuthorization()
+const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
+const canManageBlocks = computed(() => access.hasAbility('blocks.manage'))
 
 const showCreateBlockDialog = ref(false)
 
@@ -133,6 +136,7 @@ const handleDelete = async (block: BlockResource) => {
       >
         <template #actions>
           <Button
+            v-if="canManageBlocks"
             variant="primary"
             @click="showCreateBlockDialog = true"
           >
@@ -255,7 +259,10 @@ const handleDelete = async (block: BlockResource) => {
                     </span>
                   </TableCell>
                   <TableCell class="text-right">
-                    <div class="flex gap-1">
+                    <div
+                      v-if="canManageBlocks"
+                      class="flex gap-1"
+                    >
                       <Button
                         variant="ghost"
                         size="icon"
@@ -292,6 +299,7 @@ const handleDelete = async (block: BlockResource) => {
     </div>
 
     <CreateBlockDialog
+      v-if="canManageBlocks"
       v-model:open="showCreateBlockDialog"
       :space-id="spaceId"
       :folder-id="folder"

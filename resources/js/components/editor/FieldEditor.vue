@@ -49,6 +49,7 @@ const props = defineProps<{
   spaceId: string
   pathSegments?: Array<string | number>
   activeCollaborators?: CollaborationPresenceUser[]
+  readOnly?: boolean
 }>()
 
 
@@ -74,6 +75,7 @@ const fieldError = computed(() => getFieldError?.(fieldPath.value) || null)
 const showFieldError = computed(() => shouldShowFieldError?.(fieldPath.value) || false)
 const hasDirectFieldError = computed(() => Boolean(fieldError.value))
 const nestedValidationPrefix = computed(() => `${fieldPath.value}.`)
+const shouldBlockPointerEvents = computed(() => props.readOnly && props.item.type !== 'blocks')
 const hasNestedFieldErrors = computed(() => {
   if (props.item.type !== 'blocks') return false
   if (typeof document === 'undefined') return false
@@ -249,6 +251,8 @@ onBeforeUnmount(() => {
       :item="item"
       :path-prefix="pathSegments"
       :space-id="spaceId"
+      :read-only="props.readOnly"
+      :class="shouldBlockPointerEvents ? 'pointer-events-none opacity-70' : undefined"
       @create-template="handleCreateTemplate"
       @field-update="handleNestedFieldUpdate"
       @field-focus="handleNestedFieldFocus"

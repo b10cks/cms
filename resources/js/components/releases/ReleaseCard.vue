@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
 import ReleaseBadge from '~/components/releases/ReleaseBadge.vue'
 import { Button } from '~/components/ui/button'
 import {
@@ -17,9 +16,12 @@ const spaceId = inject<string>('spaceId') || ''
 const { getReleaseState } = useReleases(spaceId)
 const { formatDateTimeDynamically, formatDateTime, formatTime } = useFormat()
 
+
 const props = defineProps<{
   release: Release
+  canManage?: boolean
 }>()
+
 
 const emit = defineEmits<{
   edit: [release: Release]
@@ -28,9 +30,11 @@ const emit = defineEmits<{
   cancel: [release: Release]
 }>()
 
+
 const isDraft = computed(() => getReleaseState(props.release) === 'draft')
 const isScheduled = computed(() => getReleaseState(props.release) === 'scheduled')
 const isPublished = computed(() => getReleaseState(props.release) === 'published')
+
 
 const formatCalendarDate = (dateStr: string | null) => {
   if (!dateStr) return null
@@ -42,17 +46,21 @@ const formatCalendarDate = (dateStr: string | null) => {
   }
 }
 
+
 const handleEditClick = () => {
   emit('edit', props.release)
 }
+
 
 const handleDelete = () => {
   emit('delete', props.release)
 }
 
+
 const handleCommit = () => {
   emit('commit', props.release)
 }
+
 
 const handleCancel = () => {
   emit('cancel', props.release)
@@ -87,7 +95,7 @@ const handleCancel = () => {
         >
           <Icon name="lucide:layers" />
           <span>{{
-            $t('labels.releases.fields.versionsCount', release.versions_count, {
+            $t('labels.releases.fields.versionsCount', {
               count: release.versions_count,
             })
           }}</span>
@@ -116,7 +124,7 @@ const handleCancel = () => {
       </div>
 
       <div class="flex items-center justify-end gap-1">
-        <DropdownMenu>
+        <DropdownMenu v-if="props.canManage">
           <DropdownMenuTrigger as-child>
             <Button
               variant="ghost"

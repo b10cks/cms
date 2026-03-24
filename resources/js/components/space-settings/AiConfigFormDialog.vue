@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { toast } from 'vue-sonner'
+
 import type { SpaceAiConfig } from '~/api/resources/ai'
-import type { AiModel } from '~/composables/useAiModels'
 import Icon from '~/components/Icon.vue'
+import AiModelSelector from '~/components/ui/AiModelSelector.vue'
 import { Button } from '~/components/ui/button'
 import {
   Dialog,
@@ -15,22 +16,27 @@ import {
 } from '~/components/ui/dialog'
 import { FormField, InputField, TextField } from '~/components/ui/form'
 import { Switch } from '~/components/ui/switch'
-import AiModelSelector from '~/components/ui/AiModelSelector.vue'
+import type { AiModel } from '~/composables/useAiModels'
 
 const open = defineModel<boolean>('open', { required: true })
+
 
 const props = defineProps<{
   config: SpaceAiConfig | null
   spaceId: string
   groupedModels: Record<string, AiModel[]>
   isSubmitting: boolean
+  canSubmit?: boolean
 }>()
+
 
 const emit = defineEmits<{
   submit: [payload: Partial<SpaceAiConfig>]
 }>()
 
+
 const { t } = useI18n()
+
 
 const formData = ref({
   name: '',
@@ -42,16 +48,19 @@ const formData = ref({
   is_default: false,
 })
 
+
 const flatModels = computed(() => {
   if (!props.groupedModels) return []
   return Object.values(props.groupedModels).flat()
 })
+
 
 const selectedModel = computed(() => {
   if (!formData.value.driver || !formData.value.model) return null
   const fullId = `${formData.value.driver}:${formData.value.model}`
   return flatModels.value.find((m) => m.full_id === fullId) ?? null
 })
+
 
 const isFormValid = computed(() => {
   return (
@@ -61,11 +70,13 @@ const isFormValid = computed(() => {
   )
 })
 
+
 const formatContextWindow = (input: number): string => {
   if (input >= 1000000) return `${(input / 1000000).toFixed(1)}M`
   if (input >= 1000) return `${(input / 1000).toFixed(0)}k`
   return input.toString()
 }
+
 
 const handleModelSelect = (modelId: string | null | undefined) => {
   if (!modelId) {
@@ -74,13 +85,16 @@ const handleModelSelect = (modelId: string | null | undefined) => {
     return
   }
 
+
   const [driver, model] = modelId.split(':')
   formData.value.driver = driver
   formData.value.model = model
 }
 
+
 const handleSubmit = () => {
   if (!isFormValid.value) return
+
 
   const payload = {
     ...formData.value,
@@ -88,8 +102,10 @@ const handleSubmit = () => {
     max_tokens: Number(formData.value.max_tokens),
   }
 
+
   emit('submit', payload)
 }
+
 
 watch(
   () => props.config,
@@ -257,6 +273,7 @@ watch(
           </Button>
         </DialogClose>
         <Button
+          v-if="canSubmit ?? true"
           variant="primary"
           :disabled="!isFormValid || isSubmitting"
           @click="handleSubmit"

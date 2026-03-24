@@ -20,6 +20,9 @@ const props = defineProps<{
 
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
+const { useAccessControl } = useAuthorization()
+const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
+const canManageBlockFolders = computed(() => access.hasAbility('blocks.manage'))
 
 const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
@@ -106,6 +109,7 @@ const tabs = computed(() => ({
               {{ $t('labels.blockFolders.title') }}
             </h2>
             <Button
+              v-if="canManageBlockFolders"
               class="ml-auto"
               size="xs"
               @click="showCreateFolderDialog = true"
@@ -152,6 +156,7 @@ const tabs = computed(() => ({
               class="absolute right-2 flex items-center gap-1 overflow-clip bg-border opacity-0 transition-opacity duration-200 group-hover:w-auto group-hover:opacity-100"
             >
               <button
+                v-if="canManageBlockFolders"
                 type="button"
                 title="Delete block"
                 class="flex transform cursor-pointer items-center p-1 hover:text-red-500"
@@ -169,6 +174,7 @@ const tabs = computed(() => ({
     </TabsRoot>
 
     <CreateBlockFolderDialog
+      v-if="canManageBlockFolders"
       v-model:open="showCreateFolderDialog"
       :space-id="spaceId"
     />

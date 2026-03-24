@@ -25,11 +25,14 @@ const props = withDefaults(
     mode?: 'normal' | 'reduced'
     folderId: string | null
     spaceId: string
+    readOnly?: boolean
   }>(),
   {
     mode: 'normal',
+    readOnly: false,
   }
 )
+
 
 const { useFolderStructure } = useAssetFolders(props.spaceId)
 const { getBreadcrumbs } = useFolderStructure()
@@ -43,6 +46,7 @@ const {
   setFieldValue: setAssetFieldValue,
 } = useAssetRequirements(props.spaceId)
 
+
 const assetCopy = ref<AssetResource | null>(null)
 const imageContainer = ref<HTMLElement | null>(null)
 const imageRef = useTemplateRef('imageRef')
@@ -51,6 +55,7 @@ const selectedLanguage = ref<string>('_default')
 const effectiveFields = computed(() => {
   return getEffectiveFieldsForTarget(assetCopy.value)
 })
+
 
 watch(
   () => props.asset,
@@ -65,10 +70,12 @@ watch(
   { immediate: true }
 )
 
+
 const emit = defineEmits<{
   close: []
   'update:asset': [asset: AssetResource]
 }>()
+
 
 // Get field value for current language
 const getFieldValue = (fieldKey: string): string => {
@@ -76,8 +83,10 @@ const getFieldValue = (fieldKey: string): string => {
     return ''
   }
 
+
   return getAssetFieldValue(assetCopy.value, fieldKey, selectedLanguage.value)
 }
+
 
 // Set field value for current language
 const setFieldValue = (fieldKey: string, value: string | number) => {
@@ -85,18 +94,22 @@ const setFieldValue = (fieldKey: string, value: string | number) => {
     return
   }
 
+
   ensureAssetFieldData(assetCopy.value)
   setAssetFieldValue(assetCopy.value, fieldKey, selectedLanguage.value, String(value))
 }
+
 
 const formatKey = (key: string): string => {
   return key.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
 }
 
+
 const copyAssetUrl = () => {
   if (!assetCopy.value) {
     return
   }
+
 
   navigator.clipboard
     .writeText(assetCopy.value.url)
@@ -108,13 +121,16 @@ const copyAssetUrl = () => {
     })
 }
 
+
 const openAssetInNewWindow = () => {
   if (!assetCopy.value) {
     return
   }
 
+
   window.open(assetCopy.value.url, '_blank', 'noopener,noreferrer')
 }
+
 
 const toggleFocusPoint = () => {
   if (!assetCopy.value) return
@@ -128,33 +144,41 @@ const toggleFocusPoint = () => {
   }
 }
 
+
 const startDragging = (event: MouseEvent) => {
   if (!imageRef.value || !assetCopy.value) return
   event.preventDefault()
   isDraggingFocus.value = true
 
+
   updateFocusPointPosition(event)
 }
+
 
 const stopDragging = () => {
   isDraggingFocus.value = false
 }
 
+
 const updateFocusPointPosition = (event: MouseEvent) => {
   if (!isDraggingFocus.value || !imageRef.value || !assetCopy.value || !assetCopy.value.data) return
   const rect = (imageRef.value?.$el as HTMLElement)?.getBoundingClientRect()
 
+
   let x = ((event.clientX - rect.left) / rect.width) * 100
   let y = ((event.clientY - rect.top) / rect.height) * 100
 
+
   x = Math.max(0, Math.min(100, x))
   y = Math.max(0, Math.min(100, y))
+
 
   assetCopy.value.data.focus = {
     x: parseFloat(x.toFixed(2)),
     y: parseFloat(y.toFixed(2)),
   }
 }
+
 
 onMounted(() => {
   if (isClient) {
@@ -163,12 +187,14 @@ onMounted(() => {
   }
 })
 
+
 onUnmounted(() => {
   if (isClient) {
     window.removeEventListener('mousemove', handleMouseMove)
     window.removeEventListener('mouseup', stopDragging)
   }
 })
+
 
 let lastUpdateTime = 0
 const throttleTime = 16
@@ -180,13 +206,22 @@ const handleMouseMove = (event: MouseEvent) => {
   }
 }
 
+
 const handleFinish = async () => {
+  if (props.readOnly) {
+    emit('close')
+    return
+  }
+
+
   if (!assetCopy.value) {
     return
   }
 
+
   emit('update:asset', assetCopy.value)
 }
+
 
 const onOpenChange = (open: boolean) => {
   if (!open) {
@@ -252,7 +287,7 @@ const onOpenChange = (open: boolean) => {
                 />
               </div>
               <div
-                v-if="assetCopy.data?.focus"
+                v-if="!props.readOnly && assetCopy.data?.focus"
                 class="absolute inset-0 cursor-crosshair"
                 @mousedown="startDragging"
               />
@@ -292,7 +327,7 @@ const onOpenChange = (open: boolean) => {
               <Icon name="lucide:link" />
             </Button>
             <Button
-              v-if="getFileType(asset.mime_type) === 'image'"
+              v-if="!props.readOnly && getFileType(asset.mime_type) === 'image'"
               variant="outline"
               class="flex items-center gap-2"
               @click="toggleFocusPoint"
@@ -312,6 +347,7 @@ const onOpenChange = (open: boolean) => {
             name="filename"
             :label="$t('labels.assets.fields.name')"
             required
+            :disabled="props.readOnly"
           />
 
           <div
@@ -374,6 +410,7 @@ const onOpenChange = (open: boolean) => {
                 :label="String(field.label)"
                 :name="field.key"
                 :required="isFieldRequiredForLanguage(field, selectedLanguage)"
+                :disabled="props.readOnly"
                 @update:model-value="setFieldValue(field.key, $event)"
               />
             </div>
@@ -389,6 +426,7 @@ const onOpenChange = (open: boolean) => {
               :label="String(field.label)"
               :name="field.key"
               :required="isFieldRequiredForLanguage(field, '_default')"
+              :disabled="props.readOnly"
               @update:model-value="setFieldValue(field.key, $event)"
             />
           </div>
@@ -399,9 +437,14 @@ const onOpenChange = (open: boolean) => {
           variant="outline"
           @click="onOpenChange(false)"
         >
-          {{ $t('alertDialog.cancel') }}
+          {{ props.readOnly ? $t('actions.close') : $t('alertDialog.cancel') }}
         </Button>
-        <Button @click="handleFinish">{{ $t('actions.saveClose') }}</Button>
+        <Button
+          v-if="!props.readOnly"
+          @click="handleFinish"
+        >
+          {{ $t('actions.saveClose') }}
+        </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>

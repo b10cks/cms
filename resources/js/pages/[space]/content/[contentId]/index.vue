@@ -38,8 +38,11 @@ const { t } = useI18n()
 const { alert } = useAlertDialog()
 const route = useRoute()
 const router = useRouter()
+const { useAccessControl } = useAuthorization()
 const spaceId = computed<string>(() => route.params.space as string)
 const canonicalContentId = computed<string>(() => route.params.contentId as string)
+const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
+const canManageContent = computed(() => access.hasAbility('content.manage'))
 
 
 const { settings } = useSpaceSettings(spaceId.value)
@@ -685,6 +688,7 @@ provide('focusFirstValidationError', focusFirstInvalidField)
           v-model="editorContentModel"
           :root-id="content.id"
           :block-id="content.block.id"
+          :read-only="!canManageContent"
           :get-active-collaborators="getCollaboratorsForField"
           :space-id="spaceId"
           :item-id="selectedItemId"

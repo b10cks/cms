@@ -1,10 +1,9 @@
 // src/composables/useContentMenu.ts
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 
-import type { ContentResource } from '~/types/contents'
-
 import { api } from '~/api'
 import { isClient } from '~/lib/env'
+import type { ContentResource } from '~/types/contents'
 
 import { queryKeys } from './useQueryClient'
 
@@ -15,14 +14,14 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
   const spaceAPI = computed(() => api.forSpace(toValue(spaceId)))
 
   // Query to fetch the content menu
-  const useContentMenuQuery = () => {
+  const useContentMenuQuery = (enabled: MaybeRef<boolean> = true) => {
     return useQuery({
       queryKey: computed(() => queryKeys.contentMenu(spaceId).all()),
       queryFn: async () => {
         const response = await spaceAPI.value.contentMenu.get()
         return response.data
       },
-      enabled: computed(() => !!toValue(spaceId)),
+      enabled: computed(() => !!toValue(spaceId) && !!toValue(enabled)),
     })
   }
 

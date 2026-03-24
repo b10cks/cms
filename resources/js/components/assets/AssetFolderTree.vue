@@ -27,6 +27,7 @@ const props = defineProps<{
 
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
+const { useAccessControl } = useAuthorization()
 const { settings } = useSpaceSettings(props.spaceId)
 const { useFolderStructure, useDeleteAssetFolderMutation, useUpdateAssetFolderMutation } =
   useAssetFolders(props.spaceId)
@@ -34,6 +35,8 @@ const { canMoveItems, moveItemsToFolder } = useAssetLibraryMoves(props.spaceId)
 const { mutateAsync: deleteFolder } = useDeleteAssetFolderMutation()
 const { mutateAsync: updateFolder } = useUpdateAssetFolderMutation()
 const { getChildrenOfFolder, rootFolders } = useFolderStructure()
+const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
+const canManageFolders = computed(() => access.hasAbility('asset_folders.manage'))
 
 const selectedFolderId = defineModel<string | null>()
 
@@ -262,6 +265,7 @@ const toggleExpanded = (folderId: string) => {
           {{ $t('labels.assetFolders.title') }}
         </h2>
         <Button
+          v-if="canManageFolders"
           class="ml-auto"
           size="xs"
           @click="openCreateFolderDialog(null)"
@@ -312,12 +316,13 @@ const toggleExpanded = (folderId: string) => {
           />
           <RenamableTitle
             :name="item.value.name"
+            :disabled="!canManageFolders"
             @update="handleFolderRename($event, item.value.id)"
             @edit-start="currentlyEditingId = item.value.id"
             @cancel="currentlyEditingId = null"
           />
         </div>
-        <DropdownMenu>
+        <DropdownMenu v-if="canManageFolders">
           <DropdownMenuTrigger
             class="opacity-0 transition-all duration-200 group-hover:opacity-100 hover:text-primary data-[state=open]:opacity-100"
           >
@@ -349,6 +354,7 @@ const toggleExpanded = (folderId: string) => {
     </TreeRoot>
 
     <CreateFolderDialog
+      v-if="canManageFolders"
       v-model:open="folderDialogOpen"
       :folder="editingFolder"
       :parent-folder-id="dialogParentFolderId"

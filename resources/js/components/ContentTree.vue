@@ -49,6 +49,7 @@ const props = defineProps<{
 
 const route = useRoute()
 const router = useRouter()
+const { useAccessControl } = useAuthorization()
 
 
 const { alert } = useAlertDialog()
@@ -60,6 +61,8 @@ const { useContentMenuQuery, getChildren, getRootItems } = useContentMenu(props.
 const { useUpdateContentMutation, useDeleteContentMutation, useMoveContentMutation } = useContent(
   props.spaceId
 )
+const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
+const canManageContent = computed(() => access.hasAbility('content.manage'))
 
 
 const { mutate: updateContent } = useUpdateContentMutation()
@@ -993,6 +996,7 @@ onBeforeUnmount(() => {
 
         <div class="ml-auto flex items-center">
           <Button
+            v-if="canManageContent"
             variant="ghost"
             size="toolbar"
             @click.stop="initCreate(null)"
@@ -1063,6 +1067,7 @@ onBeforeUnmount(() => {
 
         <RenamableTitle
           :name="item.value.name"
+          :disabled="!canManageContent"
           class="w-full truncate text-left"
           @update="handleRename($event, item.value.id)"
           @edit-start="handleEditStart(item.value.id)"
@@ -1094,13 +1099,14 @@ onBeforeUnmount(() => {
           class="absolute right-6 flex items-center gap-1 overflow-clip bg-border opacity-0 transition-opacity duration-200 group-hover:w-auto group-hover:opacity-100"
         >
           <button
-            v-if="item.value.type !== 'single'"
+            v-if="canManageContent && item.value.type !== 'single'"
             class="flex transform cursor-pointer items-center hover:text-primary"
             @click.stop.prevent="initCreate(item.value.id)"
           >
             <Icon name="lucide:plus" />
           </button>
           <button
+            v-if="canManageContent"
             type="button"
             title="Delete item"
             class="flex transform cursor-pointer items-center hover:text-red-500"
@@ -1113,6 +1119,7 @@ onBeforeUnmount(() => {
     </TreeRoot>
 
     <CreateContentDialog
+      v-if="canManageContent"
       v-model:open="showCreateDialog"
       :space-id="props.spaceId"
       :parent-id="createParentId"

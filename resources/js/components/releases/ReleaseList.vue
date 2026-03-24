@@ -8,16 +8,20 @@ import type { Release } from '~/types/releases'
 
 const { $t } = useI18n()
 
+
 const spaceId = inject<string>('spaceId') || ''
 const { useReleasesQuery } = useReleases(spaceId)
 
+
 const props = defineProps<{
   isLoading?: boolean
+  canManage?: boolean
   onEdit?: (release: Release) => void
   onDelete?: (release: Release) => void
   onCommit?: (release: Release) => void
   onCancel?: (release: Release) => void
 }>()
+
 
 const emit = defineEmits<{
   edit: [release: Release]
@@ -26,11 +30,13 @@ const emit = defineEmits<{
   cancel: [release: Release]
 }>()
 
+
 const releaseStates = computed(() => [
   { value: 'draft', label: $t('labels.releases.states.draft') },
   { value: 'scheduled', label: $t('labels.releases.states.scheduled') },
   { value: 'published', label: $t('labels.releases.states.published') },
 ])
+
 
 const filters = ref<Record<string, unknown>>({})
 const releaseFilters = computed((): FilterableField[] => [
@@ -42,7 +48,7 @@ const releaseFilters = computed((): FilterableField[] => [
       { value: '^like', label: $t('labels.filters.operators.^like') },
       { value: 'like$', label: $t('labels.filters.operators.like$') },
       { value: 'eq', label: $t('labels.filters.operators.eq') },
-      { value: 'ne', label: $t('labels.filters.operators.ne') },
+      { value: 'neq', label: $t('labels.filters.operators.ne') },
     ],
   },
   {
@@ -60,16 +66,20 @@ const releaseFilters = computed((): FilterableField[] => [
   },
 ])
 
+
 const queryParams = computed(() => ({
   ...filters.value,
   per_page: 1000, // Fetch all releases for local filtering
   sort: '-publish_at',
 }))
 
+
 const { data: queryData, isLoading: isLoadingReleases } = useReleasesQuery(queryParams)
+
 
 const allReleases = computed(() => queryData.value?.data || [])
 const isLoading = computed(() => isLoadingReleases.value || props.isLoading)
+
 
 // Group releases by month or into Unscheduled
 const groupedReleases = computed(() => {
@@ -122,6 +132,7 @@ const groupedReleases = computed(() => {
   }
 })
 
+
 const hasReleases = computed(() => allReleases.value.length > 0)
 const hasSearchResults = computed(() => {
   const groups = groupedReleases.value
@@ -133,20 +144,24 @@ const hasSearchResults = computed(() => {
   return unscheduledCount + monthCount > 0
 })
 
+
 const handleEditClick = (release: Release) => {
   emit('edit', release)
   props.onEdit?.(release)
 }
+
 
 const handleDelete = (release: Release) => {
   emit('delete', release)
   props.onDelete?.(release)
 }
 
+
 const handleCommit = (release: Release) => {
   emit('commit', release)
   props.onCommit?.(release)
 }
+
 
 const handleCancel = (release: Release) => {
   emit('cancel', release)
@@ -162,18 +177,6 @@ const handleCancel = (release: Release) => {
           v-model="filters"
           :filterable-fields="releaseFilters"
           class="flex-1"
-          @search="
-            (query) => {
-              searchQuery = query
-              currentPage = 1
-            }
-          "
-          @reset="
-            () => {
-              searchQuery = ''
-              currentPage = 1
-            }
-          "
         />
       </div>
     </div>
@@ -227,6 +230,7 @@ const handleCancel = (release: Release) => {
             v-for="release in groupedReleases.unscheduled"
             :key="release.id"
             :release="release"
+            :can-manage="props.canManage"
             @edit="handleEditClick"
             @delete="handleDelete"
             @commit="handleCommit"
@@ -247,6 +251,7 @@ const handleCancel = (release: Release) => {
             v-for="release in releases"
             :key="release.id"
             :release="release"
+            :can-manage="props.canManage"
             @edit="handleEditClick"
             @delete="handleDelete"
             @commit="handleCommit"

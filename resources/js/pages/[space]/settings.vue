@@ -1,53 +1,34 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
-interface NavItem {
-  title: string
-  name: string
-  icon: string
-  disabled?: boolean
-}
-
-const items: NavItem[] = [
-  {
-    title: 'labels.settings.general.title',
-    name: 'space-settings-index',
-    icon: 'lucide:settings',
-  },
-  {
-    title: 'labels.settings.subscription.title',
-    name: 'space-settings-subscription',
-    icon: 'lucide:credit-card',
-  },
-  {
-    title: 'labels.settings.configuration.title',
-    name: 'space-settings-configuration',
-    icon: 'lucide:sliders',
-  },
-  {
-    title: 'labels.settings.ai.title',
-    name: 'space-settings-ai',
-    icon: 'lucide:sparkles',
-  },
-  {
-    title: 'labels.settings.people.title',
-    name: 'space-settings-people',
-    icon: 'lucide:users',
-  },
-  {
-    title: 'labels.settings.backups.title',
-    name: 'space-settings-backups',
-    icon: 'lucide:database-backup',
-  },
-  {
-    title: 'labels.settings.migrations.title',
-    name: 'space-settings-migrations',
-    icon: 'lucide:arrow-right-left',
-  },
-]
+import { spaceSettingsNavigationItems } from '~/lib/access-control'
 
 const route = useRoute()
+const router = useRouter()
 const spaceId = computed<string>(() => route.params.space as string)
+const { useAccessControl } = useAuthorization()
+const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
+const items = computed(() => access.filterVisibleItems(spaceSettingsNavigationItems))
+
+
+watch(
+  [items, () => route.name],
+  ([visibleItems, routeName]) => {
+    if (visibleItems.length === 0 || typeof routeName !== 'string') {
+      return
+    }
+
+    const currentIsVisible = visibleItems.some((item) => item.routeName === routeName)
+
+    if (!currentIsVisible) {
+      router.replace({
+        name: visibleItems[0].routeName,
+        params: { space: spaceId.value },
+      })
+    }
+  },
+  { immediate: true }
+)
+
 
 provide('spaceId', spaceId)
 </script>
@@ -58,8 +39,8 @@ provide('spaceId', spaceId)
       <nav class="sticky top-20 flex flex-col space-y-1">
         <RouterLink
           v-for="item in items"
-          :key="item.href"
-          :to="{ name: item.name, params: { space: $route.params.space } }"
+          :key="item.routeName"
+          :to="{ name: item.routeName, params: { space: $route.params.space } }"
           exact-active-class="bg-secondary text-primary"
           :class="[
             'flex items-center gap-2 rounded-md px-4 py-2',
@@ -71,7 +52,7 @@ provide('spaceId', spaceId)
             :name="item.icon"
             class="shrink-0"
           />
-          <span>{{ $t(item.title) }}</span>
+          <span>{{ $t(item.label) }}</span>
         </RouterLink>
       </nav>
     </aside>

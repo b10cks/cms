@@ -1,11 +1,9 @@
-import type { ComputedRef, MaybeRef } from 'vue'
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import type { ComputedRef, MaybeRef } from 'vue'
 import { toast } from 'vue-sonner'
 
-import type { BackupsQueryParams } from '~/api/resources/backups'
-
 import { api } from '~/api'
+import type { BackupsQueryParams } from '~/api/resources/backups'
 
 import { queryKeys } from './useQueryClient'
 
@@ -17,7 +15,10 @@ export function useBackups(spaceIdRef: MaybeRefOrComputed<string>) {
   const spaceId = computed(() => unref(spaceIdRef))
   const spaceAPI = computed(() => api.forSpace(spaceId.value))
 
-  const useBackupsQuery = (paramsRef: MaybeRefOrComputed<BackupsQueryParams> = {}) => {
+  const useBackupsQuery = (
+    paramsRef: MaybeRefOrComputed<BackupsQueryParams> = {},
+    enabled: MaybeRef<boolean> = true
+  ) => {
     const params = computed(() => unref(paramsRef))
 
     return useQuery({
@@ -30,11 +31,11 @@ export function useBackups(spaceIdRef: MaybeRefOrComputed<string>) {
         })
         return response
       },
-      enabled: computed(() => !!spaceId.value),
+      enabled: computed(() => !!spaceId.value && !!toValue(enabled)),
     })
   }
 
-  const useBackupQuery = (idRef: MaybeRefOrComputed<string>) => {
+  const useBackupQuery = (idRef: MaybeRefOrComputed<string>, enabled: MaybeRef<boolean> = true) => {
     const id = computed(() => unref(idRef))
 
     return useQuery({
@@ -43,7 +44,7 @@ export function useBackups(spaceIdRef: MaybeRefOrComputed<string>) {
         const response = await spaceAPI.value.backups.get(id.value)
         return response.data
       },
-      enabled: computed(() => !!spaceId.value && !!id.value),
+      enabled: computed(() => !!spaceId.value && !!id.value && !!toValue(enabled)),
       refetchInterval: (query) => {
         const data = query.state.data as BackupResource | undefined
         if (data?.state === 'pending') {

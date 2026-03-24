@@ -28,6 +28,9 @@ const props = defineProps<{
 
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
+const { useAccessControl } = useAuthorization()
+const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
+const canManageBlockTags = computed(() => access.hasAbility('blocks.manage'))
 
 const searchQuery = ref('')
 const currentPage = ref(1)
@@ -89,6 +92,7 @@ const handleDelete = async (tag: BlockTagResource) => {
       >
         <template #actions>
           <Button
+            v-if="canManageBlockTags"
             variant="primary"
             @click="showCreateTagDialog = true"
           >
@@ -151,7 +155,10 @@ const handleDelete = async (tag: BlockTagResource) => {
                     {{ tag.blocks_count }}
                   </TableCell>
                   <TableCell class="text-right">
-                    <div class="flex gap-1">
+                    <div
+                      v-if="canManageBlockTags"
+                      class="flex gap-1"
+                    >
                       <Button
                         variant="ghost"
                         size="icon"
@@ -187,6 +194,7 @@ const handleDelete = async (tag: BlockTagResource) => {
     </div>
 
     <CreateBlockTagDialog
+      v-if="canManageBlockTags"
       v-model:open="showCreateTagDialog"
       :space-id="spaceId"
     />

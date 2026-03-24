@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
+import { api } from '~/api'
 import type { DataSourcesQueryParams } from '~/api/resources/data-sources'
 import type { CreateDataSourcePayload, UpdateDataSourcePayload } from '~/types/data-sources'
-
-import { api } from '~/api'
 
 import { queryKeys } from './useQueryClient'
 
@@ -18,7 +17,10 @@ export function useDataSources(spaceId: MaybeRef<string>) {
   /**
    * Query all data sources in a space
    */
-  const useDataSourcesQuery = (params: MaybeRef<DataSourcesQueryParams> = {}) => {
+  const useDataSourcesQuery = (
+    params: MaybeRef<DataSourcesQueryParams> = {},
+    enabled: MaybeRef<boolean> = true
+  ) => {
     return useQuery({
       queryKey: computed(() => queryKeys.dataSources(spaceId).list(params)),
       queryFn: async () => {
@@ -27,19 +29,21 @@ export function useDataSources(spaceId: MaybeRef<string>) {
           ...toValue(params),
         })
       },
+      enabled: computed(() => !!toValue(spaceId) && !!toValue(enabled)),
     })
   }
 
   /**
    * Query a single data source by ID
    */
-  const useDataSourceQuery = (id: MaybeRef<string>) => {
+  const useDataSourceQuery = (id: MaybeRef<string>, enabled: MaybeRef<boolean> = true) => {
     return useQuery({
       queryKey: computed(() => queryKeys.dataSources(spaceId).detail(id)),
       queryFn: async () => {
         const response = await spaceAPI.value.dataSources.get(toValue(id))
         return response.data
       },
+      enabled: computed(() => !!toValue(spaceId) && !!toValue(id) && !!toValue(enabled)),
     })
   }
 

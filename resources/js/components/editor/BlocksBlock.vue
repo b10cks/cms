@@ -30,6 +30,7 @@ const props = defineProps<{
   modelValue?: Array<Record<string, unknown>> | null
   spaceId: string
   pathPrefix?: Array<string | number>
+  readOnly?: boolean
 }>()
 
 
@@ -433,7 +434,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
     </div>
     <div class="rounded-2xl border border-border bg-surface px-2">
       <div
-        v-if="hasSelectedItems"
+        v-if="!props.readOnly && hasSelectedItems"
         class="flex items-center justify-between gap-2 pt-2 px-2"
       >
         <div class="text-xs font-medium text-muted-foreground">
@@ -495,6 +496,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
             <AddDropdown
               :item="item"
               :space-id="spaceId"
+              :can-mutate="!props.readOnly"
               :has-clipboard-item="hasClipboardItem"
               @paste="() => pasteItems(null, i)"
               @select="(slug: string) => addItem(slug, i)"
@@ -504,6 +506,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
               @click.stop
             >
               <Checkbox
+                v-if="!props.readOnly"
                 :model-value="isSelected(i)"
                 :aria-label="`Select ${content.block || `item ${i + 1}`}`"
                 :class="[
@@ -555,6 +558,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
                 </div>
                 <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100">
                   <button
+                    v-if="!props.readOnly"
                     type="button"
                     :title="
                       content.hidden
@@ -567,7 +571,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
                     <Icon :name="content.hidden ? 'lucide:eye-off' : 'lucide:eye'" />
                   </button>
                   <button
-                    v-if="content.id"
+                    v-if="!props.readOnly && content.id"
                     type="button"
                     :title="$t('actions.blocks.tooltips.createTemplate')"
                     class="flex transform cursor-pointer items-center hover:text-primary"
@@ -585,6 +589,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
                     <Icon name="lucide:edit-3" />
                   </button>
                   <button
+                    v-if="!props.readOnly"
                     type="button"
                     :title="$t('actions.blocks.tooltips.copy')"
                     class="flex transform cursor-pointer items-center hover:text-primary"
@@ -593,6 +598,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
                     <Icon name="lucide:copy" />
                   </button>
                   <button
+                    v-if="!props.readOnly"
                     type="button"
                     :title="$t('actions.blocks.tooltips.cut')"
                     class="flex transform cursor-pointer items-center hover:text-primary"
@@ -601,6 +607,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
                     <Icon name="lucide:scissors" />
                   </button>
                   <button
+                    v-if="!props.readOnly"
                     type="button"
                     :title="$t('actions.blocks.tooltips.delete')"
                     class="flex transform cursor-pointer items-center hover:text-red-500"
@@ -622,6 +629,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
                   :key="(content.id as string) || i"
                   :model-value="content as ContentTreeItem"
                   :block-slug="content.block as string"
+                  :read-only="props.readOnly"
                   :get-active-collaborators="getActiveCollaborators"
                   :path-prefix="[...(pathPrefix || []), i]"
                   :root-id="content.id as string"
@@ -640,12 +648,13 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
         <AddDropdown
           :item="item"
           :space-id="spaceId"
+          :can-mutate="!props.readOnly"
           :has-clipboard-item="hasClipboardItem"
           @paste="pasteItems"
           @select="(slug: string) => addItem(slug, blockItems.length)"
         />
         <div
-          v-if="hasClipboardItem"
+          v-if="!props.readOnly && hasClipboardItem"
           class="mt-2 flex justify-center pb-2"
         >
           <Button

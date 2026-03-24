@@ -30,6 +30,8 @@ export interface AssetItemProps {
   draggable?: boolean
   size?: number
   mode?: 'manage' | 'select'
+  canEdit?: boolean
+  canDelete?: boolean
   showExtension?: boolean
   showCheckbox?: boolean
   dragItems?: AssetManagerDragItem[]
@@ -41,6 +43,8 @@ const props = withDefaults(defineProps<AssetItemProps>(), {
   draggable: false,
   size: 284,
   mode: 'manage',
+  canEdit: true,
+  canDelete: true,
   showExtension: true,
   showCheckbox: true,
   dragItems: () => [],
@@ -189,16 +193,23 @@ watchEffect((onCleanup) => {
           {{ asset.extension }} • {{ formatFileSize(asset.size) }}
         </div>
       </div>
-      <DropdownMenu class="ml-auto">
+      <DropdownMenu
+        v-if="canEdit || canDelete"
+        class="ml-auto"
+      >
         <DropdownMenuTrigger class="transition-colors hover:text-primary">
           <Icon name="lucide:ellipsis-vertical" />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuItem @select="handleView">
+          <DropdownMenuItem
+            v-if="canEdit"
+            @select="handleView"
+          >
             <Icon name="lucide:pencil" />
             <span>{{ $t('actions.edit') }}</span>
           </DropdownMenuItem>
           <DropdownMenuItem
+            v-if="canDelete"
             class="text-destructive"
             @select="$emit('delete', asset)"
           >

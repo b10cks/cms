@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-import NuxtImg from '~/components/NuxtImg.vue'
-
 import AssetDetailsDialog from '~/components/assets/AssetDetailsDialog.vue'
 import AssetGrid from '~/components/assets/AssetGrid.vue'
+import Icon from '~/components/Icon.vue'
+import NuxtImg from '~/components/NuxtImg.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { useAlertDialog } from '~/composables/useAlertDialog'
+import type { AssetResource } from '~/types/assets'
+
 import Label from '../ui/form/Label.vue'
 
 interface AssetValue {
@@ -20,25 +21,35 @@ interface AssetValue {
   data: object
 }
 
+
 const props = defineProps<{
   modelValue?: AssetValue[] | null
-  item: MultiAssetSchema & { key: string }
+  item: {
+    key: string
+    name?: string
+    max?: number | null
+  }
   spaceId: string
+  readOnly?: boolean
 }>()
+
 
 const emit = defineEmits<{
   'update:modelValue': [value: AssetValue[] | null]
 }>()
 
+
 const { alert } = useAlertDialog()
 const { $t } = useI18n()
 const { getFileIcon, getFileType } = useFileUtils()
+
 
 const localValue = ref<AssetValue[]>([])
 const showAssetPicker = ref(false)
 const showAssetDetails = ref(false)
 const editingAsset = ref<AssetValue | null>(null)
 const draggedIndex = ref<number | null>(null)
+
 
 watch(
   () => props.modelValue,
@@ -48,26 +59,31 @@ watch(
   { immediate: true, deep: true }
 )
 
+
 const hasAssets = computed(() => localValue.value.length > 0)
 const canAddMore = computed(() => {
   if (!props.item.max) return true
   return localValue.value.length < props.item.max
 })
 
+
 const remainingSlots = computed(() => {
   if (!props.item.max) return null
   return props.item.max - localValue.value.length
 })
 
+
 const updateValue = () => {
   emit('update:modelValue', localValue.value.length > 0 ? localValue.value : null)
 }
+
 
 const handleAssetSelect = (asset: AssetResource) => {
   if (props.item.max && localValue.value.length >= props.item.max) {
     showAssetPicker.value = false
     return
   }
+
 
   const newAsset: AssetValue = {
     id: asset.id,
@@ -80,19 +96,23 @@ const handleAssetSelect = (asset: AssetResource) => {
     data: {},
   }
 
+
   localValue.value.push(newAsset)
   updateValue()
   showAssetPicker.value = false
 }
+
 
 const handleAssetEdit = (asset: AssetValue) => {
   editingAsset.value = { ...asset }
   showAssetDetails.value = true
 }
 
+
 const handleAssetDelete = async (index: number) => {
   const asset = localValue.value[index]
   if (!asset) return
+
 
   const confirmed = await alert.confirm($t('messages.assets.confirmDeleteFromCollection'), {
     title: $t('labels.assets.removeAsset'),
@@ -100,18 +120,22 @@ const handleAssetDelete = async (index: number) => {
     cancelLabel: $t('actions.cancel'),
   })
 
+
   if (confirmed) {
     localValue.value.splice(index, 1)
     updateValue()
   }
 }
 
+
 const handleAssetReplace = (index: number) => {
   replaceIndex.value = index
   showAssetPicker.value = true
 }
 
+
 const replaceIndex = ref<number | null>(null)
+
 
 const handleAssetSelectForReplace = (asset: AssetResource) => {
   if (replaceIndex.value === null) {
@@ -133,29 +157,36 @@ const handleAssetSelectForReplace = (asset: AssetResource) => {
   showAssetPicker.value = false
 }
 
+
 const handleDragStart = (index: number) => {
   draggedIndex.value = index
 }
+
 
 const handleDragOver = (e: DragEvent) => {
   e.preventDefault()
 }
 
+
 const handleDrop = (e: DragEvent, targetIndex: number) => {
   if (draggedIndex.value === null) return
   e.preventDefault()
+
 
   const draggedAsset = localValue.value[draggedIndex.value]
   localValue.value.splice(draggedIndex.value, 1)
   localValue.value.splice(targetIndex, 0, draggedAsset)
 
+
   draggedIndex.value = null
   updateValue()
 }
 
+
 const isImage = (asset: AssetValue) => {
   return getFileType(asset.mime_type) === 'image'
 }
+
 
 const handleAssetDetailsUpdate = (updatedAsset: AssetValue) => {
   const index = localValue.value.findIndex((a) => a.id === updatedAsset.id)
@@ -165,9 +196,18 @@ const handleAssetDetailsUpdate = (updatedAsset: AssetValue) => {
   }
 }
 
+
 const closeAssetDetails = () => {
   showAssetDetails.value = false
   editingAsset.value = null
+}
+
+
+const editingAssetResource = computed(() => editingAsset.value as unknown as AssetResource | null)
+
+
+const handleAssetDetailsDialogUpdate = (asset: AssetResource) => {
+  handleAssetDetailsUpdate(asset as unknown as AssetValue)
 }
 </script>
 
@@ -176,8 +216,11 @@ const closeAssetDetails = () => {
     <Label :label="item.name || item.key" />
     <div
       v-if="!hasAssets"
-      class="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-input bg-surface/50 p-4 transition-colors hover:bg-surface"
-      @click="showAssetPicker = true"
+      :class="[
+        'flex items-center gap-2 rounded-lg border border-dashed border-input bg-surface/50 p-4 transition-colors',
+        props.readOnly ? 'cursor-default' : 'cursor-pointer hover:bg-surface',
+      ]"
+      @click="!props.readOnly && (showAssetPicker = true)"
     >
       <Icon
         name="lucide:images"
@@ -205,13 +248,14 @@ const closeAssetDetails = () => {
           v-for="(asset, index) in localValue"
           :key="asset.id"
           class="group relative overflow-hidden rounded-lg border border-input bg-surface"
-          draggable
-          @dragstart="handleDragStart(index)"
-          @dragover="handleDragOver"
-          @drop="handleDrop($event, index)"
+          :draggable="!props.readOnly"
+          @dragstart="!props.readOnly && handleDragStart(index)"
+          @dragover="!props.readOnly && handleDragOver($event)"
+          @drop="!props.readOnly && handleDrop($event, index)"
         >
           <div class="flex items-center gap-3 p-2">
             <div
+              v-if="!props.readOnly"
               class="cursor-ns-resize opacity-0 group-hover:opacity-100"
               :title="$t('actions.assets.reorder')"
             >
@@ -227,9 +271,9 @@ const closeAssetDetails = () => {
               >
                 <NuxtImg
                   :src="asset.full_path"
-                  :alt="asset.data?.altText || asset.filename"
-                  width="56"
-                  height="56"
+                  :alt="String((asset.data as Record<string, unknown>)?.altText || asset.filename)"
+                  :width="56"
+                  :height="56"
                   :modifiers="{ crop: 'fill' }"
                   class="h-full w-full object-cover"
                 />
@@ -255,6 +299,7 @@ const closeAssetDetails = () => {
 
             <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100">
               <button
+                v-if="!props.readOnly"
                 class="flex transform cursor-pointer items-center hover:text-primary"
                 :title="$t('actions.assets.replace') as string"
                 @click.stop="handleAssetReplace(index)"
@@ -269,6 +314,7 @@ const closeAssetDetails = () => {
                 <Icon name="lucide:pencil" />
               </button>
               <button
+                v-if="!props.readOnly"
                 class="flex transform cursor-pointer items-center hover:text-red-500"
                 :title="$t('actions.assets.remove') as string"
                 @click.stop="handleAssetDelete(index)"
@@ -281,7 +327,7 @@ const closeAssetDetails = () => {
       </div>
 
       <Button
-        v-if="canAddMore"
+        v-if="!props.readOnly && canAddMore"
         @click="showAssetPicker = true"
       >
         <Icon name="lucide:plus" />
@@ -302,6 +348,7 @@ const closeAssetDetails = () => {
     </div>
 
     <Dialog
+      v-if="!props.readOnly"
       v-model:open="showAssetPicker"
       :modal="true"
       @update:open="
@@ -333,12 +380,13 @@ const closeAssetDetails = () => {
 
     <AssetDetailsDialog
       v-if="editingAsset && showAssetDetails"
-      v-model:asset="editingAsset"
+      :asset="editingAssetResource"
       :folder-id="null"
       :space-id="spaceId"
+      :read-only="props.readOnly"
       mode="reduced"
       @close="closeAssetDetails"
-      @update:asset="handleAssetDetailsUpdate"
+      @update:asset="handleAssetDetailsDialogUpdate"
     />
   </div>
 </template>

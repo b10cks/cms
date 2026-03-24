@@ -19,6 +19,7 @@ import {
 } from '~/components/ui/dropdown-menu'
 import { Switch } from '~/components/ui/switch'
 import { SimpleTooltip } from '~/components/ui/tooltip'
+import { spaceNavigationItems } from '~/lib/access-control'
 import { getLocale, locales } from '~/plugins/i18n'
 
 const router = useRouter()
@@ -34,19 +35,23 @@ const isExtendedSidebar = computed(() => extendedSidebar.value)
 
 
 const spaceId = inject<Ref<string | undefined>>('spaceId')
+const { useAccessControl } = useAuthorization()
+const access = useAccessControl(
+  computed(() => ({
+    ...(spaceId?.value ? { space_id: spaceId.value } : {}),
+  }))
+)
 
 
-const menu = [
-  { icon: 'lucide:home', label: 'Home', route: 'space' },
-  { icon: 'lucide:network', label: 'Canvas', route: 'space-canvas' },
-  { icon: 'lucide:feather', label: 'Content', route: 'space-content-index' },
-  { icon: 'lucide:blocks', label: 'Blocks', route: 'space-blocks-index' },
-  { icon: 'lucide:images', label: 'Assets', route: 'space-assets-index' },
-  { icon: 'lucide:database-zap', label: 'Data sets', route: 'space-datasources' },
-  { icon: 'lucide:split', label: 'Redirects', route: 'space-redirects' },
-  { icon: 'lucide:rocket', label: 'Releases', route: 'space-releases' },
-  { icon: 'lucide:settings', label: 'Settings', route: 'space-settings-index' },
-]
+const menu = computed(() =>
+  access.filterVisibleItems(spaceNavigationItems).filter((item) => {
+    if (item.routeName !== 'space-settings-index') {
+      return true
+    }
+
+    return access.canAccessRoute('space-settings-index')
+  })
+)
 
 
 const buildLink = (name: string) => {
@@ -89,7 +94,7 @@ const availableLocales = locales
           v-bind="isExtendedSidebar ? {} : { tooltip: m.label, side: 'right' }"
         >
           <RouterLink
-            :to="buildLink(m.route)"
+            :to="buildLink(m.routeName)"
             :class="[
               'w-full flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-border',
               isExtendedSidebar ? 'flex-col gap-1 p-2 text-center' : 'size-8 ',
@@ -104,7 +109,7 @@ const availableLocales = locales
               v-if="isExtendedSidebar"
               class="line-clamp-2 text-[10px] leading-tight"
             >
-              {{ m.label }}
+              {{ m.label.startsWith('labels.') ? $t(m.label) : m.label }}
             </span>
           </RouterLink>
         </component>

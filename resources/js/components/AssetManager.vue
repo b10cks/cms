@@ -35,9 +35,13 @@ const modes = {
   },
 }
 
-defineProps<{
+const props = defineProps<{
   spaceId: string
 }>()
+const { useAccessControl } = useAuthorization()
+const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
+const canManageAssets = computed(() => access.hasAbility('assets.manage'))
+const canManageAssetFolders = computed(() => access.hasAbility('asset_folders.manage'))
 
 const selectedFolder = defineModel<string | null>('folderId', {
   default: null,
@@ -105,6 +109,8 @@ watch(sidebarMode, (newMode) => {
               v-model:folder-id="selectedFolder"
               v-model:tag-id="selectedTag"
               :space-id="spaceId"
+              :allow-upload="canManageAssets"
+              :allow-folder-creation="canManageAssetFolders"
             />
           </TabsContent>
           <TabsContent value="list">
@@ -112,6 +118,8 @@ watch(sidebarMode, (newMode) => {
               v-model:folder-id="selectedFolder"
               :tag-id="selectedTag"
               :space-id="spaceId"
+              :allow-upload="canManageAssets"
+              :allow-folder-creation="canManageAssetFolders"
             />
           </TabsContent>
         </div>
@@ -133,7 +141,10 @@ watch(sidebarMode, (newMode) => {
 
     <Teleport to="#appHeaderActions">
       <div class="flex gap-2">
-        <Button @click="importDialogOpen = true">
+        <Button
+          v-if="canManageAssets"
+          @click="importDialogOpen = true"
+        >
           <Icon name="lucide:upload" />
           {{ $t('labels.assets.import') }}
         </Button>
@@ -153,6 +164,7 @@ watch(sidebarMode, (newMode) => {
     />
 
     <ImportAssetsDialog
+      v-if="canManageAssets"
       v-model:open="importDialogOpen"
       :space-id="spaceId"
     />

@@ -44,6 +44,7 @@ const props = withDefaults(
     blockId?: string | null
     blockSlug?: string | null
     spaceId: string
+    readOnly?: boolean
     isChild?: boolean
     getActiveCollaborators?: (itemId: string, field: string) => CollaborationPresenceUser[]
     rootId?: string
@@ -143,6 +144,7 @@ const rootTreeBlock = computed<ContentBlock>(() => {
     icon: '',
     name: '',
     slug: props.blockSlug || '',
+    type: 'root',
   }
 })
 
@@ -157,7 +159,7 @@ const currentItem = computed<FindResult | null>(() =>
 const currentContentItem = computed<ContentTreeItem | null>(() => currentItem.value?.item ?? null)
 const breadcrumbs = computed((): Breadcrumb[] =>
   props.itemId
-    ? contentTree.buildBreadcrumbs(props.itemId).map((crumb) => ({
+    ? contentTree.buildBreadcrumbs(props.itemId).map((crumb: Breadcrumb) => ({
         id: crumb.id ?? '',
         label: crumb.label,
         block: crumb.label,
@@ -395,6 +397,7 @@ const updateItem = (updatedValue: unknown): void => {
         :tooltip="$t('labels.blockTemplates.createFromBlock')"
       >
         <Button
+          v-if="!props.readOnly"
           size="xs"
           variant="ghost"
           @click="handleTemplateTrigger"
@@ -443,6 +446,7 @@ const updateItem = (updatedValue: unknown): void => {
                 :item="currentSchema[fieldKey]"
                 :path-segments="[...currentPathPrefix, fieldKey]"
                 :space-id="spaceId"
+                :read-only="props.readOnly"
                 :active-collaborators="
                   props.getActiveCollaborators(currentContentItem.id, fieldKey)
                 "
@@ -465,6 +469,7 @@ const updateItem = (updatedValue: unknown): void => {
                 :item="currentSchema[fieldKey]"
                 :path-segments="[...currentPathPrefix, fieldKey]"
                 :space-id="spaceId"
+                :read-only="props.readOnly"
                 :active-collaborators="props.getActiveCollaborators(rootContentId, fieldKey)"
                 @update:model-value="updateItem"
                 @create-template="handleCreateTemplate"
@@ -496,6 +501,7 @@ const updateItem = (updatedValue: unknown): void => {
                 >{{ outOfSchemaEntries.length }}</Badge
               >
               <Button
+                v-if="!props.readOnly"
                 type="button"
                 variant="ghost"
                 size="xs"
@@ -535,6 +541,7 @@ const updateItem = (updatedValue: unknown): void => {
                     </td>
                     <td class="py-1.5 text-right">
                       <Button
+                        v-if="!props.readOnly"
                         type="button"
                         variant="ghost"
                         size="xs"

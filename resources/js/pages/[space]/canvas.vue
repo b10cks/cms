@@ -45,7 +45,10 @@ type AiPreviewWarning = {
 const route = useRoute()
 const { t } = useI18n()
 const { alert } = useAlertDialog()
+const { useAccessControl } = useAuthorization()
 const spaceId = computed(() => route.params.space as string)
+const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
+const canApplyCanvas = computed(() => access.hasAbility('content.manage'))
 
 
 const { useSpaceQuery } = useSpaces()
@@ -420,6 +423,7 @@ const clearEditSessions = () => {
   editSessionSnapshots.clear()
 }
 
+
 const serializeHistorySnapshot = (snapshot: ContentWizardDraftTree) => {
   return JSON.stringify({
     rootId: snapshot.rootId,
@@ -450,6 +454,7 @@ const serializeHistorySnapshot = (snapshot: ContentWizardDraftTree) => {
   })
 }
 
+
 const mergeCurrentCollapsedState = (snapshot: ContentWizardDraftTree): ContentWizardDraftTree => ({
   rootId: snapshot.rootId,
   nodes: Object.fromEntries(
@@ -475,6 +480,7 @@ const mergeCurrentCollapsedState = (snapshot: ContentWizardDraftTree): ContentWi
   ),
 })
 
+
 const getSnapshotNodeDepth = (
   snapshot: ContentWizardDraftTree,
   nodeId: string,
@@ -485,8 +491,10 @@ const getSnapshotNodeDepth = (
     return depth
   }
 
+
   return getSnapshotNodeDepth(snapshot, node.parentId, depth + 1)
 }
+
 
 const buildAddSubtreeOperations = (
   snapshot: ContentWizardDraftTree,
@@ -496,6 +504,7 @@ const buildAddSubtreeOperations = (
   if (!node || node.isRootVirtual) {
     return []
   }
+
 
   const operations: ContentWizardSyncOperation[] = [
     {
@@ -509,6 +518,7 @@ const buildAddSubtreeOperations = (
     },
   ]
 
+
   if (node.isDeletedSelf) {
     operations.push({
       type: 'delete-state',
@@ -517,12 +527,15 @@ const buildAddSubtreeOperations = (
     })
   }
 
+
   node.childrenIds.forEach((childId) => {
     operations.push(...buildAddSubtreeOperations(snapshot, childId))
   })
 
+
   return operations
 }
+
 
 const buildHistoryOperations = (
   fromSnapshot: ContentWizardDraftTree,
@@ -533,6 +546,7 @@ const buildHistoryOperations = (
   const toNodes = toSnapshot.nodes
   const fromNodeIds = new Set(Object.keys(fromNodes))
   const toNodeIds = new Set(Object.keys(toNodes))
+
 
   const addedRootIds = [...toNodeIds]
     .filter((nodeId) => !fromNodeIds.has(nodeId) && nodeId !== CONTENT_WIZARD_ROOT_ID)
@@ -545,9 +559,11 @@ const buildHistoryOperations = (
         getSnapshotNodeDepth(toSnapshot, left) - getSnapshotNodeDepth(toSnapshot, right)
     )
 
+
   addedRootIds.forEach((nodeId) => {
     operations.push(...buildAddSubtreeOperations(toSnapshot, nodeId))
   })
+
 
   const sharedNodeIds = [...toNodeIds]
     .filter((nodeId) => fromNodeIds.has(nodeId) && nodeId !== CONTENT_WIZARD_ROOT_ID)
@@ -555,6 +571,7 @@ const buildHistoryOperations = (
       (left, right) =>
         getSnapshotNodeDepth(toSnapshot, left) - getSnapshotNodeDepth(toSnapshot, right)
     )
+
 
   sharedNodeIds.forEach((nodeId) => {
     const fromNode = fromNodes[nodeId]
@@ -566,7 +583,8 @@ const buildHistoryOperations = (
     const titleChanged = fromNode.title !== toNode.title
     const slugChanged = fromNode.slug !== toNode.slug
     const blockChanged = fromNode.blockId !== toNode.blockId
-    const moveChanged = fromNode.parentId !== toNode.parentId || fromNode.position !== toNode.position
+    const moveChanged =
+      fromNode.parentId !== toNode.parentId || fromNode.position !== toNode.position
     const deletedChanged = fromNode.isDeletedSelf !== toNode.isDeletedSelf
 
     if (deletedChanged && !toNode.isDeletedSelf) {
@@ -638,6 +656,7 @@ const buildHistoryOperations = (
     }
   })
 
+
   const removedRootIds = [...fromNodeIds]
     .filter((nodeId) => !toNodeIds.has(nodeId) && nodeId !== CONTENT_WIZARD_ROOT_ID)
     .filter((nodeId) => {
@@ -649,6 +668,7 @@ const buildHistoryOperations = (
         getSnapshotNodeDepth(fromSnapshot, right) - getSnapshotNodeDepth(fromSnapshot, left)
     )
 
+
   removedRootIds.forEach((nodeId) => {
     operations.push({
       type: 'delete-state',
@@ -657,14 +677,17 @@ const buildHistoryOperations = (
     })
   })
 
+
   return operations
 }
+
 
 const broadcastHistoryEntry = (entry: ContentCanvasHistoryEntry, direction: 'undo' | 'redo') => {
   const operations =
     direction === 'undo'
       ? buildHistoryOperations(entry.after, entry.before)
       : buildHistoryOperations(entry.before, entry.after)
+
 
   operations.forEach((operation) => {
     collaboration.broadcastOperation(operation)
@@ -1521,6 +1544,7 @@ const handleToggleCollapse = (nodeId: string) => {
     return
   }
 
+
   collaboration.broadcastOperation({
     type: 'collapse-state',
     nodeId,
@@ -1960,6 +1984,7 @@ onBeforeUnmount(() => {
           {{ $t('labels.contents.canvas.discard') }}
         </Button>
         <Button
+          v-if="canApplyCanvas"
           variant="primary"
           :disabled="isApplying || validationCount > 0 || !hasUnsavedChanges"
           @click="handleApply"
@@ -2025,6 +2050,7 @@ onBeforeUnmount(() => {
           ref="canvas"
           :nodes="draftNodes"
           :bounds="bounds"
+          :can-mutate="canApplyCanvas"
           :root-title="space?.name || $t('labels.contents.canvas.rootNodeTitle')"
           :focused-node-id="focusedNodeId"
           :editing-node-id="editingNodeId"

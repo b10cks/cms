@@ -18,8 +18,12 @@ import SettingsTable, {
 const { useUpdateSpaceMutation } = useSpaces()
 const { mutate: updateSpace } = useUpdateSpaceMutation()
 const { $t } = useI18n()
+const { useAccessControl } = useAuthorization()
+
 
 const props = defineProps<{ space: SpaceResource }>()
+const access = useAccessControl(computed(() => ({ space_id: props.space.id })))
+const canUpdateSpace = computed(() => access.hasAbility('space.update'))
 const assetFields = ref(deepClone(props.space.settings.asset_fields ?? []))
 const newItemTemplate = {
   key: '',
@@ -27,7 +31,9 @@ const newItemTemplate = {
   required: false,
 }
 
+
 const defaultFields = ['alt', 'description']
+
 
 const columns: ColumnDefinition[] = [
   {
@@ -52,6 +58,7 @@ const columns: ColumnDefinition[] = [
   },
 ]
 
+
 const removeField = (index: number) => {
   const item = assetFields.value[index] as TableItem
   if (!defaultFields.includes(item.key as string)) {
@@ -59,12 +66,14 @@ const removeField = (index: number) => {
   }
 }
 
+
 const addField = (newField: { key: string; label: string; required: boolean }) => {
   if (assetFields.value.find((field) => field.key === newField.key)) {
     return
   }
   assetFields.value.push(newField)
 }
+
 
 const saveSettings = async () => {
   updateSpace({
@@ -105,6 +114,7 @@ const saveSettings = async () => {
     </CardContent>
     <CardFooter>
       <Button
+        v-if="canUpdateSpace"
         variant="primary"
         @click="saveSettings"
         >{{ $t('actions.saveChanges') }}

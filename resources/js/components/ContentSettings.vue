@@ -7,6 +7,9 @@ import type { ContentResource } from '~/types/contents'
 const { t } = useI18n()
 const content = defineModel<ContentResource>()
 const spaceId = inject<string>('spaceId')
+const { useAccessControl } = useAuthorization()
+const access = useAccessControl(computed(() => ({ space_id: spaceId || undefined })))
+const canManageContent = computed(() => access.hasAbility('content.manage'))
 const { useSpaceQuery } = useSpaces()
 const { data: space } = useSpaceQuery(spaceId || null)
 
@@ -28,23 +31,26 @@ const overrideOptions = computed(() => [
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
+  <div :class="['flex flex-col gap-6', !canManageContent ? 'pointer-events-none opacity-70' : '']">
     <InputField
       v-if="content"
       v-model="content.name"
       :label="$t('labels.contents.fields.name')"
+      :readonly="!canManageContent"
       name="name"
     />
     <InputField
       v-if="content"
       v-model="content.slug"
       :label="$t('labels.contents.fields.slug')"
+      :readonly="!canManageContent"
       name="slug"
     />
     <CheckboxField
       v-if="content"
       v-model="content.settings.disablePreview"
       :label="$t('labels.contents.settings.disablePreview')"
+      :disabled="!canManageContent"
       name="disablePreview"
       :description="$t('labels.contents.settings.disablePreviewDescription')"
     />
@@ -53,6 +59,7 @@ const overrideOptions = computed(() => [
       v-model="content.settings.i18n_mode_override"
       name="i18nModeOverride"
       :label="$t('labels.contents.settings.i18n.override.label')"
+      :readonly="!canManageContent"
       :description="
         isCanonical
           ? $t('labels.contents.settings.i18n.override.description')

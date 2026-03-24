@@ -20,6 +20,7 @@ const props = withDefaults(
   defineProps<{
     node: ContentWizardDraftNode
     rootTitle?: string
+    canMutate?: boolean
     focused?: boolean
     editingField?: ContentWizardEditableField | null
     dropActive?: boolean
@@ -29,6 +30,7 @@ const props = withDefaults(
     blocksForRight?: BlockResource[]
   }>(),
   {
+    canMutate: true,
     focused: false,
     editingField: null,
     dropActive: false,
@@ -163,6 +165,12 @@ const handleDragOver = (event: DragEvent) => {
 }
 
 
+const onFocus = (field: string) => {
+  emit('focus')
+  emit('start-edit', { field })
+}
+
+
 const handleBlockChange = (value: AcceptableValue) => {
   if (typeof value === 'string' || typeof value === 'number') {
     emit('update-block', String(value))
@@ -174,7 +182,7 @@ const handleBlockChange = (value: AcceptableValue) => {
   <div
     ref="wrapperRef"
     data-node-card
-    :draggable="!node.isRootVirtual"
+    :draggable="canMutate && !node.isRootVirtual"
     tabindex="0"
     :class="
       cn(
@@ -227,7 +235,7 @@ const handleBlockChange = (value: AcceptableValue) => {
       <div class="flex items-center gap-1">
         <Select
           v-model="selectedBlockId"
-          :disabled="!!node.deletedReason"
+          :disabled="!canMutate || !!node.deletedReason"
           @update:model-value="handleBlockChange"
         >
           <SelectTrigger
@@ -265,11 +273,11 @@ const handleBlockChange = (value: AcceptableValue) => {
             <Input
               ref="titleInputRef"
               v-model="titleValue"
-              :disabled="!!node.deletedReason"
+              :disabled="!canMutate || !!node.deletedReason"
               :placeholder="$t('labels.contents.canvas.untitledNode')"
               class="h-7! text-xs px-1.5!"
               @update:model-value="emit('input-title', String($event))"
-              @focus="emit('focus'); emit('start-edit', { field: 'title' })"
+              @focus="onFocus('start-edit', 'title')"
               @blur="commitTitle"
               @keydown.enter.prevent="commitTitle"
               @keydown.esc.prevent="titleValue = node.title"
@@ -278,10 +286,10 @@ const handleBlockChange = (value: AcceptableValue) => {
             <Input
               ref="slugInputRef"
               v-model="slugValue"
-              :disabled="!!node.deletedReason"
+              :disabled="!canMutate || !!node.deletedReason"
               class="h-6! text-xs px-1.5!"
               @update:model-value="emit('input-slug', String($event))"
-              @focus="emit('focus'); emit('start-edit', { field: 'slug' })"
+              @focus="onFocus('start-edit', 'slug')"
               @blur="commitSlug"
               @keydown.enter.prevent="commitSlug"
               @keydown.esc.prevent="slugValue = node.slug"
@@ -304,7 +312,7 @@ const handleBlockChange = (value: AcceptableValue) => {
           <Icon :name="node.isCollapsed ? 'lucide:chevron-right' : 'lucide:chevron-down'" />
         </Button>
         <Button
-          v-if="node.deletedReason === 'self'"
+          v-if="canMutate && node.deletedReason === 'self'"
           variant="ghost"
           size="toolbar"
           class="rounded-full border border-border bg-background shadow-sm"
@@ -313,7 +321,7 @@ const handleBlockChange = (value: AcceptableValue) => {
           <Icon name="lucide:rotate-ccw" />
         </Button>
         <Button
-          v-else
+          v-else-if="canMutate"
           variant="ghost"
           size="toolbar"
           class="size-7 rounded-full border border-border bg-background shadow-sm"
@@ -337,7 +345,7 @@ const handleBlockChange = (value: AcceptableValue) => {
       </div>
 
       <ContentWizardAddMenu
-        v-if="blocksForRight.length > 0 && !node.deletedReason"
+        v-if="canMutate && blocksForRight.length > 0 && !node.deletedReason"
         ref="rightAddMenuRef"
         :blocks="blocksForRight"
         side="right"
@@ -359,7 +367,7 @@ const handleBlockChange = (value: AcceptableValue) => {
       </ContentWizardAddMenu>
 
       <ContentWizardAddMenu
-        v-if="blocksForBottom.length > 0 && !node.deletedReason"
+        v-if="canMutate && blocksForBottom.length > 0 && !node.deletedReason"
         ref="bottomAddMenuRef"
         :blocks="blocksForBottom"
         side="bottom"
@@ -382,7 +390,7 @@ const handleBlockChange = (value: AcceptableValue) => {
     </template>
 
     <ContentWizardAddMenu
-      v-if="node.isRootVirtual && blocksForBottom.length > 0"
+      v-if="canMutate && node.isRootVirtual && blocksForBottom.length > 0"
       ref="bottomAddMenuRef"
       :blocks="blocksForBottom"
       side="bottom"

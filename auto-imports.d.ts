@@ -9,11 +9,14 @@ declare global {
   const AlertDialogProvider: typeof import('./resources/js/composables/useAlertDialog').AlertDialogProvider
   const EffectScope: typeof import('vue').EffectScope
   const computed: typeof import('vue').computed
+  const createAccessEvaluationContext: typeof import('./resources/js/composables/useAuthorization').createAccessEvaluationContext
   const createApp: typeof import('vue').createApp
   const customRef: typeof import('vue').customRef
   const defineAsyncComponent: typeof import('vue').defineAsyncComponent
   const defineComponent: typeof import('vue').defineComponent
   const effectScope: typeof import('vue').effectScope
+  const ensureAuthorizationContext: typeof import('./resources/js/composables/useAuthorization').ensureAuthorizationContext
+  const ensureSelectedTeamAccess: typeof import('./resources/js/composables/useAuthorization').ensureSelectedTeamAccess
   const extractStreamingTreeOperations: typeof import('./resources/js/composables/useAiContentTree').extractStreamingTreeOperations
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
@@ -228,11 +231,14 @@ declare module 'vue' {
     readonly AlertDialogProvider: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['AlertDialogProvider']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
+    readonly createAccessEvaluationContext: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['createAccessEvaluationContext']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
+    readonly ensureAuthorizationContext: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['ensureAuthorizationContext']>
+    readonly ensureSelectedTeamAccess: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['ensureSelectedTeamAccess']>
     readonly extractStreamingTreeOperations: UnwrapRef<typeof import('./resources/js/composables/useAiContentTree')['extractStreamingTreeOperations']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>

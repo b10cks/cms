@@ -10,15 +10,17 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card'
+import { FormField, SelectField } from '~/components/ui/form'
+import { Input } from '~/components/ui/input'
 import SettingsTable, {
   type ColumnDefinition,
   type TableItem,
 } from '~/components/ui/settings-table.vue'
-import { FormField, SelectField } from '~/components/ui/form'
-import { Input } from '~/components/ui/input'
 
 const { t } = useI18n()
 const props = defineProps<{ space: SpaceResource }>()
+const { useAccessControl } = useAuthorization()
+
 
 const NO_FALLBACK_VALUE = '__none__'
 type EditableSpaceLanguage = Omit<SpaceLanguage, 'fallback_language'> & {
@@ -30,8 +32,12 @@ type LanguageOption = {
   disabled?: boolean
 }
 
+
 const { useUpdateSpaceMutation } = useSpaces()
 const { mutateAsync: updateSpace, isPending } = useUpdateSpaceMutation()
+const access = useAccessControl(computed(() => ({ space_id: props.space.id })))
+const canUpdateSpace = computed(() => access.hasAbility('space.update'))
+
 
 const languages = ref<EditableSpaceLanguage[]>(
   deepClone(props.space.settings.languages || []).map((language: SpaceLanguage) => ({
@@ -43,6 +49,7 @@ const defaultLanguage = ref(props.space.settings.default_language || 'en')
 const slugStrategy = ref(props.space.settings.slug_strategy || 'never')
 const i18nMode = ref(props.space.settings.i18n_mode || 'overlay')
 const errors = ref<Record<string, string[]>>({})
+
 
 const slugStrategyOptions = [
   {
@@ -59,6 +66,7 @@ const slugStrategyOptions = [
   },
 ]
 
+
 const modeOptions = [
   {
     value: 'overlay',
@@ -70,7 +78,9 @@ const modeOptions = [
   },
 ]
 
+
 const getError = (path: string) => errors.value[path]?.[0]
+
 
 const fallbackOptions = computed<LanguageOption[]>(() => {
   return languages.value
@@ -80,6 +90,7 @@ const fallbackOptions = computed<LanguageOption[]>(() => {
       label: language.name || language.code.toUpperCase(),
     }))
 })
+
 
 const columns = computed<ColumnDefinition[]>(() => [
   {
@@ -115,26 +126,32 @@ const columns = computed<ColumnDefinition[]>(() => [
   },
 ])
 
+
 const newItemTemplate: EditableSpaceLanguage = {
   code: '',
   name: '',
   fallback_language: NO_FALLBACK_VALUE,
 }
 
+
 const removeLanguage = (index: number) => {
   languages.value.splice(index, 1)
 }
+
 
 const addLanguage = (item: TableItem) => {
   languages.value.push(item as EditableSpaceLanguage)
 }
 
+
 const languageErrorEntries = computed(() =>
   Object.entries(errors.value).filter(([path]) => path.startsWith('settings.languages.'))
 )
 
+
 const saveSettings = async () => {
   errors.value = {}
+
 
   try {
     await updateSpace({
@@ -146,9 +163,7 @@ const saveSettings = async () => {
             code: language.code,
             name: language.name,
             fallback_language:
-              language.fallback_language === NO_FALLBACK_VALUE
-                ? null
-                : language.fallback_language,
+              language.fallback_language === NO_FALLBACK_VALUE ? null : language.fallback_language,
           })),
           default_language: defaultLanguage.value,
           i18n_mode: i18nMode.value,
@@ -237,6 +252,7 @@ const saveSettings = async () => {
     </CardContent>
     <CardFooter>
       <Button
+        v-if="canUpdateSpace"
         variant="primary"
         :disabled="isPending"
         @click="saveSettings"

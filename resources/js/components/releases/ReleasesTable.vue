@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import ReleasesIcon from '~/assets/images/releases.svg?component'
+import Icon from '~/components/Icon.vue'
 import ReleaseBadge from '~/components/releases/ReleaseBadge.vue'
 import SearchFilter, { FilterableField } from '~/components/SearchFilter.vue'
 import { Button } from '~/components/ui/button'
@@ -30,16 +29,20 @@ import type { Release } from '~/types/releases'
 
 const { $t } = useI18n()
 
+
 const spaceId = inject<string>('spaceId') || ''
 const { getReleaseState, useReleasesQuery } = useReleases(spaceId)
 
+
 const props = defineProps<{
   isLoading?: boolean
+  canManage?: boolean
   onEdit?: (release: Release) => void
   onDelete?: (release: Release) => void
   onCommit?: (release: Release) => void
   onCancel?: (release: Release) => void
 }>()
+
 
 const emit = defineEmits<{
   edit: [release: Release]
@@ -48,11 +51,13 @@ const emit = defineEmits<{
   cancel: [release: Release]
 }>()
 
+
 const releaseStates = computed(() => [
   { value: 'draft', label: $t('labels.releases.states.draft') },
   { value: 'scheduled', label: $t('labels.releases.states.scheduled') },
   { value: 'published', label: $t('labels.releases.states.published') },
 ])
+
 
 const releaseFilters = computed((): FilterableField[] => [
   {
@@ -81,12 +86,14 @@ const releaseFilters = computed((): FilterableField[] => [
   },
 ])
 
+
 const sortOptions = [
   { value: 'name', label: 'Name' },
   { value: 'publish_at', label: $t('labels.releases.fields.publishAt') },
   { value: 'created_at', label: $t('labels.releases.fields.createdAt') },
   { value: 'updated_at', label: $t('labels.releases.fields.updatedAt') },
 ]
+
 
 const filters = ref<Record<string, unknown>>({})
 const searchQuery = ref('')
@@ -97,6 +104,7 @@ const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
   direction: 'desc',
 })
 
+
 const queryParams = computed(() => ({
   ...filters.value,
   page: currentPage.value,
@@ -105,33 +113,41 @@ const queryParams = computed(() => ({
   direction: sortBy.value.direction,
 }))
 
+
 const { data: releases, isLoading: isLoadingReleases } = useReleasesQuery(queryParams)
 
+
 const isLoading = computed(() => isLoadingReleases.value || props.isLoading)
+
 
 const getVersionsLabel = (count: number) => {
   return `${count} ${count === 1 ? 'version' : 'versions'}`
 }
+
 
 const handleEditClick = (release: Release) => {
   emit('edit', release)
   props.onEdit?.(release)
 }
 
+
 const handleDelete = (release: Release) => {
   emit('delete', release)
   props.onDelete?.(release)
 }
+
 
 const handleCommit = (release: Release) => {
   emit('commit', release)
   props.onCommit?.(release)
 }
 
+
 const handleCancel = (release: Release) => {
   emit('cancel', release)
   props.onCancel?.(release)
 }
+
 
 const formatDate = (dateStr: string | null) => {
   if (!dateStr) {
@@ -146,9 +162,11 @@ const formatDate = (dateStr: string | null) => {
   })
 }
 
+
 const isDraft = (release: Release) => getReleaseState(release) === 'draft'
 const isScheduled = (release: Release) => getReleaseState(release) === 'scheduled'
 const isPublished = (release: Release) => getReleaseState(release) === 'published'
+
 
 const handleSort = (column: string) => {
   if (sortBy.value.column === column) {
@@ -246,7 +264,7 @@ const handleSort = (column: string) => {
                 <span class="cursor-help">{{ release.versions_count }}</span>
               </TableCell>
               <TableCell class="text-right">
-                <DropdownMenu>
+                <DropdownMenu v-if="props.canManage">
                   <DropdownMenuTrigger as-child>
                     <Button
                       variant="ghost"

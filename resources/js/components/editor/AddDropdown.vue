@@ -21,6 +21,7 @@ const props = defineProps<{
   item: BlocksSchema
   hasClipboardItem: boolean
   spaceId: string
+  canMutate?: boolean
 }>()
 
 
@@ -69,6 +70,7 @@ const autofill = (newIsOpen: boolean) => {
 
 <template>
   <DropdownMenu
+    v-if="props.canMutate !== false"
     v-model:open="isOpen"
     @update:open="autofill"
   >

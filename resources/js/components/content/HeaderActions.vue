@@ -31,6 +31,7 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const { alert } = useAlertDialog()
+const { useAccessControl } = useAuthorization()
 const props = defineProps<{
   spaceId: string
   content: ContentResource
@@ -38,6 +39,10 @@ const props = defineProps<{
   disabled?: boolean
   isDirty?: boolean
 }>()
+const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
+const canSaveContent = computed(() => access.hasAbility('content.manage'))
+const canPublishContent = computed(() => access.hasAbility('content.publish'))
+const canManageReleases = computed(() => access.hasAbility('releases.manage'))
 
 
 const commitPersistedContent = inject<
@@ -500,6 +505,7 @@ const handleConfirmAssign = (versionIds: string[]) => {
       <Icon name="lucide:history" />
     </Button>
     <Button
+      v-if="canSaveContent"
       :disabled="disabled || isAnyActionPending || (!!content.id && !isDirty)"
       @click="handleSaveClick"
     >
@@ -511,6 +517,7 @@ const handleConfirmAssign = (versionIds: string[]) => {
       {{ $t('actions.save') }}
     </Button>
     <SplitButton
+      v-if="canPublishContent"
       variant="accent"
       :primary-action="publishDirectly"
       :disabled="
@@ -545,11 +552,14 @@ const handleConfirmAssign = (versionIds: string[]) => {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger :disabled="disabled || !canPublishToRelease">
+          <DropdownMenuSubTrigger
+            v-if="canManageReleases"
+            :disabled="disabled || !canPublishToRelease"
+          >
             <Icon name="lucide:tag" />
             <span>Add to Release</span>
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
+          <DropdownMenuSubContent v-if="canManageReleases">
             <DropdownMenuItem
               v-if="draftReleases.length === 0"
               disabled

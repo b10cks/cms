@@ -1,19 +1,23 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
 import CreateReleaseDialog from '~/components/releases/CreateReleaseDialog.vue'
 import ReleaseList from '~/components/releases/ReleaseList.vue'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
-import type { CreateReleaseRequest, Release } from '~/types/releases'
+import type { CreateReleaseRequest, Release, UpdateReleaseRequest } from '~/types/releases'
 
 const route = useRoute()
 const { t } = useI18n()
 const spaceId = computed(() => route.params.space as string)
+const { useAccessControl } = useAuthorization()
+const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
+const canManageReleases = computed(() => access.hasAbility('releases.manage'))
+
 
 useSeoMeta({
   title: computed(() => t('labels.releases.title')),
 })
+
 
 const {
   useReleasesQuery,
@@ -25,6 +29,7 @@ const {
   usePublishReleaseMutation,
 } = useReleases(spaceId)
 
+
 const { data: releases, isLoading: isLoadingReleases } = useReleasesQuery()
 const { mutate: createRelease, isPending: isCreating } = useCreateReleaseMutation()
 const { mutate: updateRelease, isPending: isUpdating } = useUpdateReleaseMutation()
@@ -33,12 +38,15 @@ const { mutate: cancelRelease, isPending: isCancelling } = useCancelReleaseMutat
 const { mutate: deleteRelease, isPending: isDeleting } = useDeleteReleaseMutation()
 const { mutate: publishRelease, isPending: isPublishing } = usePublishReleaseMutation()
 
+
 const { alert } = useAlertDialog()
+
 
 const createDialogOpen = ref(false)
 const editDialogOpen = ref(false)
 const releaseToEdit = ref<Release | null>(null)
 const isUpdatingRelease = ref(false)
+
 
 const handleCreateRelease = (payload: CreateReleaseRequest) => {
   createRelease(payload, {
@@ -48,10 +56,11 @@ const handleCreateRelease = (payload: CreateReleaseRequest) => {
   })
 }
 
+
 const handleUpdateRelease = (id: string, payload: CreateReleaseRequest) => {
   isUpdatingRelease.value = true
   updateRelease(
-    { id, payload },
+    { id, payload: payload as UpdateReleaseRequest },
     {
       onSuccess: () => {
         isUpdatingRelease.value = false
@@ -65,9 +74,11 @@ const handleUpdateRelease = (id: string, payload: CreateReleaseRequest) => {
   )
 }
 
+
 const handleCommit = (releaseId: string) => {
   commitRelease(releaseId)
 }
+
 
 const handleCancelClick = async (release: Release) => {
   const confirmed = await alert.confirm(
@@ -83,6 +94,7 @@ const handleCancelClick = async (release: Release) => {
   )
 }
 
+
 const handleDeleteClick = async (release: Release) => {
   const confirmed = await alert.confirm(
     `Are you sure you want to delete the release "${release.name}"? This action cannot be undone.`,
@@ -97,9 +109,11 @@ const handleDeleteClick = async (release: Release) => {
   )
 }
 
+
 const handlePublish = (releaseId: string) => {
   publishRelease(releaseId)
 }
+
 
 const isLoading = computed(
   () =>
@@ -122,9 +136,10 @@ const isLoading = computed(
       >
         <template #actions>
           <Button
+            v-if="canManageReleases"
             variant="primary"
-            @click="createDialogOpen = true"
             :disabled="isLoading"
+            @click="createDialogOpen = true"
           >
             <Icon name="lucide:plus" />
             {{ $t('labels.releases.createRelease') }}
@@ -134,13 +149,14 @@ const isLoading = computed(
 
       <ReleaseList
         :is-loading="isLoading"
+        :can-manage="canManageReleases"
         @commit="(release) => handleCommit(release.id)"
         @cancel="handleCancelClick"
         @delete="handleDeleteClick"
         @edit="
           (release) => {
-            releaseToEdit.value = release
-            editDialogOpen.value = true
+            releaseToEdit = release
+            editDialogOpen = true
           }
         "
       />
@@ -148,6 +164,7 @@ const isLoading = computed(
   </div>
 
   <CreateReleaseDialog
+    v-if="canManageReleases"
     :open="createDialogOpen"
     :loading="isCreating"
     @update:open="createDialogOpen = $event"
@@ -155,14 +172,15 @@ const isLoading = computed(
   />
 
   <CreateReleaseDialog
+    v-if="canManageReleases"
     :open="editDialogOpen"
     :loading="isUpdatingRelease"
     :release-to-edit="releaseToEdit"
     @update:open="
       (newOpen) => {
-        editDialogOpen.value = newOpen
+        editDialogOpen = newOpen
         if (!newOpen) {
-          releaseToEdit.value = null
+          releaseToEdit = null
         }
       }
     "

@@ -11,6 +11,7 @@ import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
 import IconName from '~/components/ui/IconName.vue'
 import { useAuthorization } from '~/composables/useAuthorization'
+import { teamNavigationItems } from '~/lib/access-control'
 import type { CreateTeamSpaceRolePayload, RoleCatalogEntry } from '~/types/authorization'
 import type { TeamUserQueryParams, UpdateTeamUserPayload } from '~/types/teams'
 
@@ -18,7 +19,9 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 
+
 const teamId = computed(() => route.params.team as string)
+
 
 const {
   useTeamQuery,
@@ -31,19 +34,24 @@ const {
   useDeleteTeamSpaceRoleMutation,
 } = useTeams()
 
+
 const { useDeleteTeamInviteMutation, useResendTeamInviteMutation } = useInvites()
-const { useAuthorizationQuery } = useAuthorization()
+const { useAuthorizationQuery, useAccessControl } = useAuthorization()
+
 
 const { data: team, isLoading: isLoadingTeam } = useTeamQuery(teamId)
 const { data: authorization, isLoading: isLoadingAuthorization } = useAuthorizationQuery(
   computed(() => ({ team_id: teamId.value }))
 )
+const access = useAccessControl(computed(() => ({ team_id: teamId.value })))
+
 
 useSeoMeta({
   title: computed(() =>
     team.value ? t('labels.teams.detailTitle', { name: team.value.name }) : t('labels.loading')
   ),
 })
+
 
 const currentPage = ref(1)
 const perPage = ref(20)
@@ -63,20 +71,13 @@ const isCreateInviteDialogOpen = ref(false)
 const isRoleDialogOpen = ref(false)
 const selectedRole = ref<RoleCatalogEntry | null>(null)
 
-const teamAbilities = computed(() => new Set(authorization.value?.team?.abilities || []))
-const canViewMembers = computed(() => {
-  return !!authorization.value?.is_root || teamAbilities.value.has('team.members.view')
-})
-const canViewInvites = computed(() => {
-  return !!authorization.value?.is_root || teamAbilities.value.has('team.invites.view')
-})
-const canManageInvites = computed(() => {
-  return !!authorization.value?.is_root || teamAbilities.value.has('team.invites.manage')
-})
-const canManageRoles = computed(() => {
-  return !!authorization.value?.is_root || teamAbilities.value.has('team.members.manage')
-})
-const canViewPeople = computed(() => canViewMembers.value || canViewInvites.value)
+
+const canViewMembers = computed(() => access.hasAbility('team.members.view'))
+const canViewInvites = computed(() => access.hasAbility('team.invites.view'))
+const canManageInvites = computed(() => access.hasAbility('team.invites.manage'))
+const canManageRoles = computed(() => access.canAccessRoute('team-roles'))
+const canViewPeople = computed(() => access.canAccessRoute('team'))
+
 
 const queryParams = computed<TeamUserQueryParams>(() => ({
   ...filters.value,
@@ -84,6 +85,7 @@ const queryParams = computed<TeamUserQueryParams>(() => ({
   page: currentPage.value,
   per_page: perPage.value,
 }))
+
 
 const { data: membersData, isLoading: isLoadingMembers } = useTeamUsersQuery(
   teamId,
@@ -95,14 +97,17 @@ const { data: teamRoles, isLoading: isLoadingRoles } = useTeamSpaceRolesQuery(
   canManageRoles
 )
 
+
 const updateUserMutation = useUpdateTeamUserMutation()
 const removeUserMutation = useRemoveTeamUserMutation()
 const createRoleMutation = useCreateTeamSpaceRoleMutation()
 const updateRoleMutation = useUpdateTeamSpaceRoleMutation()
 const deleteRoleMutation = useDeleteTeamSpaceRoleMutation()
 
+
 const deleteInviteMutation = useDeleteTeamInviteMutation()
 const resendInviteMutation = useResendTeamInviteMutation()
+
 
 const members = computed(() => membersData.value?.data || [])
 const meta = computed(() => membersData.value?.meta)
@@ -114,20 +119,20 @@ const availableSpaceAbilities = computed(() =>
 const isRoleSubmitting = computed(() => {
   return createRoleMutation.isPending.value || updateRoleMutation.isPending.value
 })
-const availableViews = computed(() => {
-  return [canViewPeople.value ? 'people' : null, canManageRoles.value ? 'roles' : null].filter(
-    (value): value is string => !!value
-  )
-})
+const visibleTabs = computed(() => access.filterVisibleItems(teamNavigationItems))
+const availableViews = computed(() => visibleTabs.value.map((item) => item.routeName))
+
 
 watch(
   availableViews,
   (views) => {
     if (views.length === 0) return
 
-    if (!views.includes(activeView.value)) {
+    const currentView = activeView.value === 'roles' ? 'team-roles' : 'team'
+
+    if (!views.includes(currentView)) {
       router.replace({
-        name: views[0] === 'roles' ? 'team-roles' : 'team',
+        name: views[0],
         params: { team: teamId.value },
       })
     }
@@ -135,51 +140,62 @@ watch(
   { immediate: true }
 )
 
+
 const handleUpdateRole = (userId: string, role: string) => {
   const payload: UpdateTeamUserPayload = { role }
   updateUserMutation.mutate({ teamId: teamId.value, userId, payload })
 }
 
+
 const handleRemoveMember = (userId: string) => {
   removeUserMutation.mutate({ teamId: teamId.value, userId })
 }
+
 
 const handleDeleteInvite = (inviteId: string) => {
   deleteInviteMutation.mutate({ teamId: teamId.value, inviteId })
 }
 
+
 const handleResendInvite = (inviteId: string) => {
   resendInviteMutation.mutate({ teamId: teamId.value, inviteId })
 }
 
+
 const handleCurrentPageUpdate = (page: number) => {
   currentPage.value = page
 }
+
 
 const handlePerPageUpdate = (perPageValue: number) => {
   perPage.value = perPageValue
   currentPage.value = 1
 }
 
+
 const handleSortByUpdate = (sort: { column: string; direction: 'asc' | 'desc' }) => {
   sortBy.value = sort
   currentPage.value = 1
 }
+
 
 const handleFiltersUpdate = (filtersValue: Record<string, unknown>) => {
   filters.value = filtersValue
   currentPage.value = 1
 }
 
+
 const handleCreateRole = () => {
   selectedRole.value = null
   isRoleDialogOpen.value = true
 }
 
+
 const handleViewRole = (role: RoleCatalogEntry) => {
   selectedRole.value = role
   isRoleDialogOpen.value = true
 }
+
 
 const handleSaveRole = (payload: CreateTeamSpaceRolePayload) => {
   if (selectedRole.value) {
@@ -199,6 +215,7 @@ const handleSaveRole = (payload: CreateTeamSpaceRolePayload) => {
     return
   }
 
+
   createRoleMutation.mutate(
     {
       teamId: teamId.value,
@@ -212,23 +229,28 @@ const handleSaveRole = (payload: CreateTeamSpaceRolePayload) => {
   )
 }
 
+
 const handleDeleteRole = (role: RoleCatalogEntry) => {
   deleteRoleMutation.mutate({ teamId: teamId.value, roleId: role.id })
 }
+
 
 const navigateToPeople = () => {
   router.push({ name: 'team', params: { team: teamId.value } })
 }
 
+
 const navigateToRoles = () => {
   router.push({ name: 'team-roles', params: { team: teamId.value } })
 }
+
 
 const navigateBack = () => {
   if (window.history.length > 1) {
     router.back()
     return
   }
+
 
   router.push({ name: 'teams-index' })
 }

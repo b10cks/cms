@@ -1,11 +1,9 @@
-import type { ComputedRef, MaybeRef } from 'vue'
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import type { ComputedRef, MaybeRef } from 'vue'
 import { toast } from 'vue-sonner'
 
-import type { MigrationsQueryParams } from '~/api/resources/migrations'
-
 import { api } from '~/api'
+import type { MigrationsQueryParams } from '~/api/resources/migrations'
 
 import { queryKeys } from './useQueryClient'
 
@@ -18,7 +16,10 @@ export function useMigrations(spaceIdRef: MaybeRefOrComputed<string>) {
   const spaceId = computed(() => unref(spaceIdRef))
   const spaceAPI = computed(() => api.forSpace(spaceId.value))
 
-  const useMigrationsQuery = (paramsRef: MaybeRefOrComputed<MigrationsQueryParams> = {}) => {
+  const useMigrationsQuery = (
+    paramsRef: MaybeRefOrComputed<MigrationsQueryParams> = {},
+    enabled: MaybeRef<boolean> = true
+  ) => {
     const params = computed(() => unref(paramsRef))
 
     return useQuery({
@@ -31,11 +32,14 @@ export function useMigrations(spaceIdRef: MaybeRefOrComputed<string>) {
         })
         return response
       },
-      enabled: computed(() => !!spaceId.value),
+      enabled: computed(() => !!spaceId.value && !!toValue(enabled)),
     })
   }
 
-  const useMigrationQuery = (idRef: MaybeRefOrComputed<string>) => {
+  const useMigrationQuery = (
+    idRef: MaybeRefOrComputed<string>,
+    enabled: MaybeRef<boolean> = true
+  ) => {
     const id = computed(() => unref(idRef))
 
     return useQuery({
@@ -44,7 +48,7 @@ export function useMigrations(spaceIdRef: MaybeRefOrComputed<string>) {
         const response = await spaceAPI.value.migrations.get(id.value)
         return response.data
       },
-      enabled: computed(() => !!spaceId.value && !!id.value),
+      enabled: computed(() => !!spaceId.value && !!id.value && !!toValue(enabled)),
       refetchInterval: (query) => {
         const data = query.state.data as MigrationResource | undefined
         if (data?.state === 'pending' || data?.state === 'processing') {

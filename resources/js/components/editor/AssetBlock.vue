@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-import NuxtImg from '~/components/NuxtImg.vue'
-
 import AssetsIcon from '~/assets/images/assets.svg?component'
 import AssetDetailsDialog from '~/components/assets/AssetDetailsDialog.vue'
 import AssetGrid from '~/components/assets/AssetGrid.vue'
+import Icon from '~/components/Icon.vue'
+import NuxtImg from '~/components/NuxtImg.vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import Label from '~/components/ui/form/Label.vue'
 import { ScrollArea } from '~/components/ui/scroll-area'
@@ -15,19 +14,24 @@ const props = defineProps<{
   item: AssetSchema & { key: string }
   modelValue?: AssetValue | null
   spaceId: string
+  readOnly?: boolean
 }>()
+
 
 const emit = defineEmits<{
   'update:modelValue': [value: AssetValue | null]
 }>()
 
+
 const { alert } = useAlertDialog()
 const { $t } = useI18n()
 const { getFileIcon, getFileType } = useFileUtils()
 
+
 const localValue = ref<AssetValue | null>(null)
 const showAssetPicker = ref(false)
 const showAssetDetails = ref(false)
+
 
 watch(
   () => props.modelValue,
@@ -37,16 +41,21 @@ watch(
   { immediate: true, deep: true }
 )
 
+
 const hasAsset = computed(() => !!localValue.value)
+const currentAsset = computed(() => localValue.value)
+const currentAssetResource = computed(() => localValue.value as unknown as AssetResource | null)
 const isImage = computed(() => {
   if (!localValue.value) return false
 
   return getFileType(localValue.value.mime_type) === 'image'
 })
 
+
 const updateValue = () => {
   emit('update:modelValue', localValue.value)
 }
+
 
 const handleAssetSelect = (asset: AssetResource) => {
   localValue.value = {
@@ -63,13 +72,16 @@ const handleAssetSelect = (asset: AssetResource) => {
   showAssetPicker.value = false
 }
 
+
 const handleAssetReplace = () => {
   showAssetPicker.value = true
 }
 
+
 const handleAssetEdit = () => {
   showAssetDetails.value = true
 }
+
 
 const handleAssetDelete = async () => {
   const confirmed = await alert.confirm($t('messages.assets.confirmDelete'), {
@@ -78,10 +90,16 @@ const handleAssetDelete = async () => {
     cancelLabel: $t('actions.cancel'),
   })
 
+
   if (confirmed) {
     localValue.value = null
     updateValue()
   }
+}
+
+
+const handleAssetDetailsUpdate = (asset: AssetResource) => {
+  localValue.value = asset as unknown as AssetValue
 }
 </script>
 
@@ -90,8 +108,11 @@ const handleAssetDelete = async () => {
     <Label :label="item.name || item.key" />
     <div
       v-if="!hasAsset"
-      class="cursor-pointer rounded-lg border-2 border-dashed border-input bg-surface/50 p-8 text-center transition-colors hover:bg-surface"
-      @click="showAssetPicker = true"
+      :class="[
+        'rounded-lg border-2 border-dashed border-input bg-surface/50 p-8 text-center transition-colors',
+        props.readOnly ? 'cursor-default' : 'cursor-pointer hover:bg-surface',
+      ]"
+      @click="!props.readOnly && (showAssetPicker = true)"
     >
       <AssetsIcon class="mx-auto mb-3 size-16 text-muted" />
       <p class="mb-1 text-sm font-medium text-primary">
@@ -103,7 +124,7 @@ const handleAssetDelete = async () => {
     </div>
 
     <div
-      v-else
+      v-else-if="currentAsset"
       class="group relative max-w-sm overflow-hidden rounded-lg border border-input bg-surface"
     >
       <div class="flex items-center gap-3 p-2">
@@ -113,8 +134,8 @@ const handleAssetDelete = async () => {
             class="h-14 w-14 overflow-hidden rounded border border-input bg-background"
           >
             <NuxtImg
-              :src="localValue.full_path"
-              :alt="localValue.data?.altText || localValue.filename"
+              :src="currentAsset.full_path"
+              :alt="String(currentAsset.data?.altText || currentAsset.filename)"
               :width="56"
               :height="56"
               :modifiers="{ crop: 'fill' }"
@@ -126,14 +147,14 @@ const handleAssetDelete = async () => {
             class="flex h-12 w-12 items-center justify-center rounded border border-input bg-background"
           >
             <Icon
-              :name="getFileIcon(getFileType(localValue.mime_type))"
+              :name="getFileIcon(getFileType(currentAsset.mime_type))"
               class="text-muted"
             />
           </div>
         </div>
         <div class="min-w-0 flex-1">
           <p class="truncate font-semibold text-primary">
-            {{ localValue.filename }}
+            {{ currentAsset.filename }}
           </p>
           <p class="text-sm text-muted">
             {{ $t('labels.assets.asset') }}
@@ -142,6 +163,7 @@ const handleAssetDelete = async () => {
 
         <div class="ml-auto flex items-center gap-2 opacity-0 group-hover:opacity-100">
           <button
+            v-if="!props.readOnly"
             class="flex transform cursor-pointer items-center hover:text-primary"
             :title="$t('actions.assets.replace')"
             @click.stop="handleAssetReplace"
@@ -156,6 +178,7 @@ const handleAssetDelete = async () => {
             <Icon name="lucide:pencil" />
           </button>
           <button
+            v-if="!props.readOnly"
             class="flex transform cursor-pointer items-center hover:text-red-500"
             :title="$t('actions.assets.delete')"
             @click.stop="handleAssetDelete"
@@ -167,6 +190,7 @@ const handleAssetDelete = async () => {
     </div>
 
     <Dialog
+      v-if="!props.readOnly"
       v-model:open="showAssetPicker"
       :modal="true"
     >
@@ -189,10 +213,12 @@ const handleAssetDelete = async () => {
 
     <AssetDetailsDialog
       v-if="localValue && showAssetDetails"
-      v-model:asset="localValue"
+      :asset="currentAssetResource"
       :folder-id="null"
       :space-id="spaceId"
+      :read-only="props.readOnly"
       mode="reduced"
+      @update:asset="handleAssetDetailsUpdate"
       @close="showAssetDetails = false"
     />
   </div>

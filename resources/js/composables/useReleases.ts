@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
+import { api } from '~/api'
 import type {
   AssignVersionsRequest,
   CreateReleaseRequest,
@@ -9,8 +10,6 @@ import type {
   UpdateReleaseRequest,
 } from '~/types/releases'
 
-import { api } from '~/api'
-
 import { queryKeys } from './useQueryClient'
 
 export function useReleases(spaceId: MaybeRef<string>) {
@@ -18,22 +17,24 @@ export function useReleases(spaceId: MaybeRef<string>) {
   const queryClient = useQueryClient()
   const spaceAPI = computed(() => api.forSpace(toValue(spaceId)))
 
-  const useReleasesQuery = (params: MaybeRef<any> = {}) => {
+  const useReleasesQuery = (params: MaybeRef<any> = {}, enabled: MaybeRef<boolean> = true) => {
     return useQuery({
       queryKey: computed(() => queryKeys.releases(spaceId).list(params)),
       queryFn: async () => {
         return await spaceAPI.value.releases.index(toValue(params))
       },
+      enabled: computed(() => !!toValue(spaceId) && !!toValue(enabled)),
     })
   }
 
-  const useReleaseQuery = (id: MaybeRef<string>) => {
+  const useReleaseQuery = (id: MaybeRef<string>, enabled: MaybeRef<boolean> = true) => {
     return useQuery({
       queryKey: computed(() => queryKeys.releases(spaceId).detail(id)),
       queryFn: async () => {
         const response = await spaceAPI.value.releases.getDetail(toValue(id))
         return response.data
       },
+      enabled: computed(() => !!toValue(spaceId) && !!toValue(id) && !!toValue(enabled)),
     })
   }
 
