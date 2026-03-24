@@ -21,10 +21,18 @@ changelog_block() {
     fi
 
     local commits
-    if [[ -z "$prev_tag" ]]; then
-        commits=$(git log "$tag" --pretty=format:"- %s" --no-merges 2>/dev/null || true)
+    # Use the tag ref if it exists (backfill), otherwise fall back to HEAD (new release, not tagged yet)
+    local upper
+    if git rev-parse --verify "${tag}" >/dev/null 2>&1; then
+        upper="$tag"
     else
-        commits=$(git log "${prev_tag}..${tag}" --pretty=format:"- %s" --no-merges 2>/dev/null || true)
+        upper="HEAD"
+    fi
+
+    if [[ -z "$prev_tag" ]]; then
+        commits=$(git log "$upper" --pretty=format:"- %s" --no-merges 2>/dev/null || true)
+    else
+        commits=$(git log "${prev_tag}..${upper}" --pretty=format:"- %s" --no-merges 2>/dev/null || true)
     fi
 
     if [[ -z "$commits" ]]; then
@@ -153,8 +161,8 @@ current_date=$(date +"%Y.%-m.%-d")
 short_hash=$(git rev-parse --short HEAD)
 new_tag="v${current_date}-${short_hash}"
 
-# Determine the previous tag
-previous_tag=$(git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "")
+# Determine the previous tag (HEAD^ mirrors deploy.yml — avoids returning a tag on HEAD itself)
+previous_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
 
 # Update CHANGELOG.md before tagging so the file is included in the tagged commit
 echo "Updating $CHANGELOG_FILE..."
