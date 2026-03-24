@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.3.24-9c73a9d] — 2026-3-24
+
+- 🔇 Remove console.log
+- 📈 Identify user with posthog
+
 ## [v2026.3.24-23c0294] — 2026-3-24
 
 - 👔 Improve blocks management
