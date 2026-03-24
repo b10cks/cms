@@ -610,8 +610,8 @@
       "content": "Inhalt",
       "blocks": "Blocks",
       "assets": "Assets",
-      "datasets": "Datensätze",
-      "redirects": "Weiterleitungen",
+      "datasets": "Datenquellen",
+      "redirects": "Redirects",
       "releases": "Releases",
       "settings": "Einstellungen",
       "extendedSidebar": "Erweiterte Seitenleiste"
@@ -1944,7 +1944,7 @@
       "space_stats": "Space-Statistiken"
     },
     "cards": {
-      "total_content": "Gesamter Content",
+      "total_content": "Gesamter Inhalt",
       "published": "veröffentlicht",
       "draft": "Entwurf",
       "assets": "Assets",
