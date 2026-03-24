@@ -12,8 +12,12 @@ export default function useSpaceSettings(spaceId: string) {
       },
       expanded: [] as string[],
     },
+    blocks: {
+      pageSize: 25,
+    },
     assets: {
       gridSize: 'md' as 'sm' | 'md' | 'lg',
+      pageSize: 24,
       gridFolders: true,
       expanded: [] as string[],
       visibleFields: [] as string[],

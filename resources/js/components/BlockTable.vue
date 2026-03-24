@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { useRouteQuery } from '@vueuse/router'
+
 import { BlockTagResource } from '~/api/resources/block-tags'
 import BlocksIcon from '~/assets/images/blocks.svg?component'
 import CreateBlockDialog from '~/components/blocks/CreateBlockDialog.vue'
+import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
@@ -29,6 +29,7 @@ const props = defineProps<{
   folder?: string | null
 }>()
 
+const { settings } = useSpaceSettings(props.spaceId)
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
 const { useAccessControl } = useAuthorization()
@@ -39,7 +40,6 @@ const showCreateBlockDialog = ref(false)
 
 const searchQuery = useRouteQuery('q')
 const currentPage = useRouteQuery('page', 1, { transform: Number })
-const perPage = useRouteQuery('per_page', 25, { transform: Number })
 const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
   column: 'name',
   direction: 'asc',
@@ -49,7 +49,7 @@ const queryParams = computed(() => ({
   ...filters.value,
   folder_id: props.folder || undefined,
   page: currentPage.value,
-  per_page: perPage.value,
+  per_page: settings.value.blocks.pageSize || 25,
   q: searchQuery.value,
   sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
 }))
@@ -290,10 +290,10 @@ const handleDelete = async (block: BlockResource) => {
           v-if="blocks?.meta"
           :meta="blocks.meta"
           :current-page="currentPage"
-          :per-page="perPage"
+          :per-page="settings.blocks.pageSize"
           :page-size-options="pageSizeOptions"
           @update:current-page="(val) => (currentPage = val)"
-          @update:per-page="(val) => (perPage = val)"
+          @update:per-page="(val) => (settings.blocks.pageSize = val)"
         />
       </div>
     </div>
