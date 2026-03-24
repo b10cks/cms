@@ -183,7 +183,6 @@ const selectedVersion = computed(() => {
 
 const previewBlock = computed<BlockResource | null>(() => {
   const version = selectedVersionData.value ?? selectedVersion.value
-  console.log(version)
   if (!version) return null
 
   return {
