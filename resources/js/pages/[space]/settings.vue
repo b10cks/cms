@@ -36,7 +36,7 @@ provide('spaceId', spaceId)
 <template>
   <div class="flex h-full w-full bg-background">
     <aside class="p-6 xl:w-1/5">
-      <nav class="sticky top-20 flex flex-col space-y-1">
+      <nav class="sticky flex flex-col space-y-1">
         <RouterLink
           v-for="item in items"
           :key="item.routeName"
