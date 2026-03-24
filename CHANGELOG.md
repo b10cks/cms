@@ -3,6 +3,25 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.3.24-23c0294] — 2026-3-24
+
+- 👔 Improve blocks management
+- 🎨 Apply oxmft code style
+- ⬆️ Bump versions
+- 🚸 Save page size for results
+- 🐛 Fix missing icon
+- 💄 Improve canvas node
+- 🚸 Reduce flicker on comment
+- 🚸 Allow to clear non reqired Options
+- ✨ Add languages icon
+- 🚸 Add translatable icon to block field summary
+- 💄 Align checkbox
+- 💄 Fix vertical scrollbar
+- 🚸 Improve editor tab navigation
+- 📝 Add SECURITY.md with security policy
+- 🐛 Add auto imports
+- 🚸 Small UX improvements in canvas
+
 ## [v2026.3.24-20dd9a8] — 2026-3-24
 
 - 🐛 Fix changelog generation
