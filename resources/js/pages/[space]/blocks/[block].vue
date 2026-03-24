@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router'
+
 import { Badge } from '@/components/ui/badge'
 import BlockEdit from '~/components/BlockEdit.vue'
 import BlockMenu from '~/components/BlockMenu.vue'
+import CreateBlockDialog from '~/components/blocks/CreateBlockDialog.vue'
 import BlockTemplatesSheet from '~/components/blocks/BlockTemplatesSheet.vue'
 import BlockVersionsSheet from '~/components/blocks/BlockVersionsSheet.vue'
 import Icon from '~/components/Icon.vue'
@@ -10,6 +13,7 @@ import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { ScrollArea } from '~/components/ui/scroll-area'
 
 const route = useRoute()
+const router = useRouter()
 const spaceId = computed(() => route.params.space as string)
 const blockId = computed(() => route.params.block as string)
 const { useAccessControl } = useAuthorization()
@@ -21,18 +25,36 @@ const { isLoading, data: block } = useBlockQuery(blockId)
 
 const { mutate: updateBlock } = useUpdateBlockMutation()
 
+const overviewRoute = computed(() => ({
+  name: 'space-blocks-index' as const,
+  params: { space: spaceId.value },
+  query: route.query,
+}))
+
 useSeoMeta({
   title: computed(() => block.value?.name),
 })
 
-const activeTab = ref('editor')
 const showTemplatesSheet = ref(false)
 const showVersionsSheet = ref(false)
+const showDuplicateBlockDialog = ref(false)
 
 const submit = async (b: BlockResource) => {
   updateBlock({
     id: b.id,
     payload: { ...b },
+  })
+}
+
+const handleDuplicateCreated = (createdBlock: BlockResource) => {
+  showDuplicateBlockDialog.value = false
+  void router.push({
+    name: 'space-block',
+    params: {
+      space: spaceId.value,
+      block: createdBlock.id,
+    },
+    query: route.query,
   })
 }
 </script>
@@ -46,8 +68,28 @@ const submit = async (b: BlockResource) => {
       class="mx-auto flex w-full max-w-5xl flex-col gap-6 pb-6"
     >
       <ContentHeader :header="block.name">
+        <template #before-header>
+          <Button
+            :as="RouterLink"
+            :to="overviewRoute"
+            variant="ghost"
+            size="icon"
+          >
+            <Icon name="lucide:arrow-left" />
+            <span class="sr-only">{{ $t('actions.back') }}</span>
+          </Button>
+        </template>
         <template #actions>
           <div class="flex items-center gap-2">
+            <Button
+              v-if="canManageBlocks"
+              variant="outline"
+              size="sm"
+              @click="showDuplicateBlockDialog = true"
+            >
+              <Icon name="lucide:copy" />
+              {{ $t('actions.blocks.duplicate') }}
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -112,5 +154,14 @@ const submit = async (b: BlockResource) => {
     v-model:open="showTemplatesSheet"
     :space-id="spaceId"
     :block-id="blockId"
+  />
+
+  <CreateBlockDialog
+    v-if="block && canManageBlocks"
+    v-model:open="showDuplicateBlockDialog"
+    :space-id="spaceId"
+    :initial-block="block"
+    :title="$t('actions.blocks.duplicate')"
+    @created="handleDuplicateCreated"
   />
 </template>

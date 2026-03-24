@@ -31,6 +31,7 @@ const meta = reactive({
 const assignSettings = (nextSettings?: Partial<User['settings']> | null) => {
   state.languageIso = nextSettings?.languageIso ?? defaultSettings.languageIso
   state.extendedSidebar = nextSettings?.extendedSidebar ?? defaultSettings.extendedSidebar
+
   setLocale(state.languageIso as 'en' | 'de')
 }
 

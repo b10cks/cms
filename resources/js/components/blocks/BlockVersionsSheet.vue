@@ -27,7 +27,6 @@ const { user } = useAuth()
 const { $t } = useI18n()
 
 const selectedVersionId = ref<string | null>(null)
-const selectedTab = ref('preview')
 
 const {
   useBlockVersionsQuery,
@@ -182,6 +181,30 @@ const selectedVersion = computed(() => {
   return versions.value.find((v) => v.id === selectedVersionId.value) || null
 })
 
+const previewBlock = computed<BlockResource | null>(() => {
+  const version = selectedVersionData.value ?? selectedVersion.value
+  console.log(version)
+  if (!version) return null
+
+  return {
+    id: props.block.id,
+    slug: version.slug,
+    icon: version.icon ?? null,
+    color: version.color ?? null,
+    name: version.name,
+    description: version.description ?? '',
+    type: version.type,
+    preview_template: version.preview_template ?? '',
+    schema: version.schema ?? {},
+    editor: version.editor ?? [],
+    tags: version.tags ?? [],
+    folder_id: version.folder_id ?? null,
+    templates_count: props.block.templates_count,
+    created_at: props.block.created_at,
+    updated_at: props.block.updated_at,
+  }
+})
+
 onMounted(() => {
   if (versions.value && versions.value.length > 0) {
     selectedVersionId.value = versions.value[0].id
@@ -205,7 +228,7 @@ watch(
     @update:open="open = $event"
   >
     <SheetContent class="sm:max-w-2xl">
-      <SheetHeaderCombined :title="$t('labels.blockTemplates.manageTitle')" />
+      <SheetHeaderCombined :title="$t('labels.blockVersions.manageTitle')" />
       <ResizablePanelGroup
         direction="vertical"
         class="h-full min-h-0"
@@ -374,7 +397,7 @@ watch(
         >
           <ScrollArea>
             <div
-              v-if="!selectedVersion"
+              v-if="!previewBlock"
               class="flex h-full items-center justify-center text-muted"
             >
               {{ $t('labels.blockVersions.selectVersion') }}
@@ -384,9 +407,10 @@ watch(
               class="flex h-full flex-1 flex-col"
             >
               <BlockEdit
+                :key="selectedVersionId ?? 'preview'"
                 :readonly="true"
                 :space-id="spaceId"
-                :block="selectedVersion.data as BlockResource"
+                :block="previewBlock"
                 show-schema
               />
             </div>

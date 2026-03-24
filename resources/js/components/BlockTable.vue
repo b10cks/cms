@@ -30,6 +30,8 @@ const props = defineProps<{
 }>()
 
 const { settings } = useSpaceSettings(props.spaceId)
+const route = useRoute()
+const router = useRouter()
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
 const { useAccessControl } = useAuthorization()
@@ -37,6 +39,8 @@ const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageBlocks = computed(() => access.hasAbility('blocks.manage'))
 
 const showCreateBlockDialog = ref(false)
+const showDuplicateBlockDialog = ref(false)
+const duplicateSourceBlock = ref<BlockResource | null>(null)
 
 const searchQuery = useRouteQuery('q')
 const currentPage = useRouteQuery('page', 1, { transform: Number })
@@ -111,6 +115,12 @@ const getBlockFolder = (folderId: string | null) => {
   return folderId ? blockFolders.value?.find((folder) => folder.id === folderId) : null
 }
 
+const buildBlockRoute = (blockId: string) => ({
+  name: 'space-block' as const,
+  params: { space: props.spaceId, block: blockId },
+  query: route.query,
+})
+
 const handleDelete = async (block: BlockResource) => {
   const confirmed = await alert.confirm(
     $t('messages.blockTags.deleteConfirmation', { name: block.name }),
@@ -123,6 +133,29 @@ const handleDelete = async (block: BlockResource) => {
 
   if (confirmed) {
     await deleteBlock(block.id)
+  }
+}
+
+const openDuplicateDialog = (block: BlockResource) => {
+  duplicateSourceBlock.value = block
+  showDuplicateBlockDialog.value = true
+}
+
+const handleDuplicateCreated = (block: BlockResource) => {
+  duplicateSourceBlock.value = null
+  router.push(buildBlockRoute(block.id))
+}
+
+const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
+  switch (type) {
+    case 'root':
+      return 'text-primary'
+    case 'single':
+      return 'text-primary'
+    case 'universal':
+      return 'text-primary'
+    default:
+      return ''
   }
 }
 </script>
@@ -208,9 +241,7 @@ const handleDelete = async (block: BlockResource) => {
                   class="cursor-pointer hover:bg-accent"
                 >
                   <TableCell>
-                    <RouterLink
-                      :to="{ name: 'space-block', params: { space: spaceId, block: block.id } }"
-                    >
+                    <RouterLink :to="buildBlockRoute(block.id)">
                       <IconName
                         v-bind="{ name: block.name, color: block.color, icon: block.icon }"
                         class="font-semibold"
@@ -219,8 +250,8 @@ const handleDelete = async (block: BlockResource) => {
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant="outline"
-                      class="text-nowrap"
+                      variant="surface"
+                      :class="['text-nowrap', typeColor(block.type)]"
                       >{{ $t(`labels.blocks.types.${block.type}.label`) }}
                     </Badge>
                   </TableCell>
@@ -266,9 +297,17 @@ const handleDelete = async (block: BlockResource) => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        @click.stop="() => $router.push(`/${props.spaceId}/blocks/${block.id}`)"
+                        @click.stop="router.push(buildBlockRoute(block.id))"
                       >
                         <Icon name="lucide:pencil" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        @click.stop="openDuplicateDialog(block)"
+                      >
+                        <Icon name="lucide:copy" />
+                        <span class="sr-only">{{ $t('actions.blocks.duplicate') }}</span>
                       </Button>
                       <Button
                         variant="destructive"
@@ -303,6 +342,15 @@ const handleDelete = async (block: BlockResource) => {
       v-model:open="showCreateBlockDialog"
       :space-id="spaceId"
       :folder-id="folder"
+    />
+
+    <CreateBlockDialog
+      v-if="canManageBlocks && duplicateSourceBlock"
+      v-model:open="showDuplicateBlockDialog"
+      :space-id="spaceId"
+      :initial-block="duplicateSourceBlock"
+      :title="$t('actions.blocks.duplicate')"
+      @created="handleDuplicateCreated"
     />
   </div>
 </template>

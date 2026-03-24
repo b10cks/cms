@@ -699,19 +699,19 @@
       },
       "types": {
         "root": {
-          "label": "Root Block",
+          "label": "Root",
           "description": "Top-Level-Inhalte wie Blogbeiträge, Produktseiten oder Landingpages. Werden direkt im Content-Baum erstellt."
         },
         "nestable": {
-          "label": "Nestable Block",
+          "label": "Nestable",
           "description": "Bausteine wie Hero-Sektionen, Bildgalerien oder CTAs. Mix und Match diese in Root Blocks."
         },
         "single": {
-          "label": "Singleton Block",
+          "label": "Singleton",
           "description": "Website-weite Inhalte wie Navigation oder Footer-Einstellungen. Nur eine Instanz erlaubt, keine verschachtelten Blocks."
         },
         "universal": {
-          "label": "Universal Block",
+          "label": "Universal",
           "description": "Flexible Blocks, die überall funktionieren. Können im Content-Baum erstellt oder in anderen Blocks verschachtelt werden."
         }
       },

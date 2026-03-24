@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { TabsList, TabsRoot, TabsTrigger, TreeItem, TreeRoot } from 'reka-ui'
+import { TreeItem, TreeRoot } from 'reka-ui'
+import { RouterLink, type LocationQueryRaw } from 'vue-router'
 
 import type { BlockFolderResource } from '~/api/resources/block-folders'
 import CreateBlockFolderDialog from '~/components/blocks/CreateBlockFolderDialog.vue'
@@ -18,6 +19,7 @@ const props = defineProps<{
   spaceId: string
 }>()
 
+const route = useRoute()
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
 const { useAccessControl } = useAuthorization()
@@ -36,9 +38,48 @@ const { data: blockTags } = useBlockTagsQuery({ per_page: 500 })
 
 const showCreateFolderDialog = ref(false)
 
-function handleSelectFolder(folder?: BlockFolderResource) {
-  selectedFolder.value = folder ? folder?.id : undefined
-  mode.value = 'list'
+const currentMode = computed<'list' | 'tags'>(() => {
+  const routeMode = route.query.mode
+  if (routeMode === 'tags' || routeMode === 'list') {
+    return routeMode
+  }
+
+  return mode.value
+})
+
+const currentFolder = computed<string | null>(() => {
+  return typeof route.query.folder === 'string'
+    ? route.query.folder
+    : (selectedFolder.value ?? null)
+})
+
+const buildOverviewRoute = ({
+  mode: nextMode = currentMode.value,
+  folder = currentFolder.value,
+}: {
+  mode?: 'list' | 'tags'
+  folder?: string | null
+}) => {
+  const query: LocationQueryRaw = {
+    ...route.query,
+    mode: nextMode,
+  }
+
+  delete query.page
+
+  if (nextMode === 'list' && folder) {
+    query.folder = folder
+  } else {
+    delete query.folder
+  }
+
+  return {
+    name: 'space-blocks-index' as const,
+    params: {
+      space: props.spaceId,
+    },
+    query,
+  }
 }
 
 const initDeleteFolder = async (folder: BlockFolderResource) => {
@@ -53,7 +94,7 @@ const initDeleteFolder = async (folder: BlockFolderResource) => {
 
   if (confirmed) {
     deleteBlockFolder(folder.id)
-    if (selectedFolder.value === folder.id) {
+    if (currentFolder.value === folder.id) {
       selectedFolder.value = folder.parent_id || null
     }
   }
@@ -75,27 +116,25 @@ const tabs = computed(() => ({
 
 <template>
   <div class="sticky top-0 flex h-[calc(100vh-3.5rem)] min-w-2xs flex-col overflow-hidden p-2">
-    <TabsRoot
-      v-model="mode"
-      default-value="list"
-    >
-      <TabsList class="mb-6 flex w-full flex-col rounded-md bg-input p-1">
-        <TabsTrigger
+    <div>
+      <div class="mb-6 flex w-full flex-col rounded-md bg-input p-1">
+        <RouterLink
           v-for="({ icon, label, count }, key) in tabs"
           :key="key"
-          :value="key"
+          :to="buildOverviewRoute({ mode: key as 'list' | 'tags' })"
           class="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 text-sm font-semibold transition-colors hover:text-primary data-[state=active]:bg-background data-[state=active]:text-primary"
+          :class="currentMode === key ? 'bg-background text-primary' : ''"
         >
           <Icon :name="icon" />
           <span>{{ label }}</span>
           <Badge
             class="ml-auto"
             size="xs"
-            variant="outline"
+            variant="surface"
             >{{ count }}
           </Badge>
-        </TabsTrigger>
-      </TabsList>
+        </RouterLink>
+      </div>
       <ScrollArea class="flex-1 overflow-y-auto">
         <TreeRoot
           v-slot="{ flattenItems }"
@@ -117,32 +156,32 @@ const tabs = computed(() => ({
               <Icon name="lucide:plus" />
             </Button>
           </div>
-          <div
+          <RouterLink
+            :to="buildOverviewRoute({ mode: 'list', folder: null })"
             :class="[
               'group relative my-0.5 flex items-center gap-2 rounded-md py-1 pr-2 pl-2 outline-none',
               'transition-colors duration-200 hover:bg-input',
               'cursor-pointer font-semibold',
-              !selectedFolder && mode === 'list' ? 'bg-input text-primary' : '',
+              !currentFolder && currentMode === 'list' ? 'bg-input text-primary' : '',
             ]"
-            @click="handleSelectFolder()"
-            @keydown.enter="handleSelectFolder()"
           >
             <Icon name="lucide:folder" />
             <span>{{ $t('labels.blockFolders.allBlocks') }}</span>
-          </div>
+          </RouterLink>
           <TreeItem
             v-for="item in flattenItems"
             :key="item._id"
             :value="item"
             :level="item.level"
+            :as="RouterLink"
+            :to="buildOverviewRoute({ mode: 'list', folder: item.value.id })"
             :style="{ 'padding-left': `${item.level - 0.5}rem` }"
             :class="[
               'group relative my-0.5 flex items-center gap-2 rounded-md py-1 pr-2 pl-0 outline-none',
               'transition-colors duration-200 hover:bg-input',
               'cursor-pointer font-semibold',
-              item.value.id === selectedFolder ? 'bg-input text-primary' : '',
+              item.value.id === currentFolder ? 'bg-input text-primary' : '',
             ]"
-            @select="handleSelectFolder(item.value)"
           >
             <Icon
               v-if="item.value.icon"
@@ -160,18 +199,15 @@ const tabs = computed(() => ({
                 type="button"
                 title="Delete block"
                 class="flex transform cursor-pointer items-center p-1 hover:text-red-500"
-                @click.stop="initDeleteFolder(item.value)"
+                @click.prevent.stop="initDeleteFolder(item.value)"
               >
-                <Icon
-                  name="lucide:trash-2"
-                  size="14"
-                />
+                <Icon name="lucide:trash-2" />
               </button>
             </div>
           </TreeItem>
         </TreeRoot>
       </ScrollArea>
-    </TabsRoot>
+    </div>
 
     <CreateBlockFolderDialog
       v-if="canManageBlockFolders"

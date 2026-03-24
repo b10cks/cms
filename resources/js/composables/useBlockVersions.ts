@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
+import type { BlockVersionsQueryParams } from '~/api/resources/block-versions'
 
 import { queryKeys } from './useQueryClient'
 
@@ -32,7 +33,7 @@ export function useBlockVersions(spaceId: MaybeRef<string>, blockId: MaybeRef<st
         const response = await versionsAPI.value.get(toValue(versionId))
         return response.data
       },
-      enabled: computed(() => !!spaceId.value && !!blockId.value && !!versionId.value),
+      enabled: computed(() => !!toValue(spaceId) && !!toValue(blockId) && !!toValue(versionId)),
     })
   }
 

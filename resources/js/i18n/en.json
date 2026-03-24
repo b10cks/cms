@@ -715,19 +715,19 @@
       },
       "types": {
         "root": {
-          "label": "Root Block",
+          "label": "Root",
           "description": "Top-level content like blog posts, product pages, or landing pages. Are directly created in the content tree."
         },
         "nestable": {
-          "label": "Nestable Block",
+          "label": "Nestable",
           "description": "Building blocks like hero sections, image galleries, or CTAs. Mix and match these inside root blocks."
         },
         "single": {
-          "label": "Singleton Block",
+          "label": "Singleton",
           "description": "Site-wide content like navigation or footer settings. Only one instance allowed with no nested blocks."
         },
         "universal": {
-          "label": "Universal Block",
+          "label": "Universal",
           "description": "Flexible blocks that work anywhere. Can be created in the content tree or nested within other blocks."
         }
       },

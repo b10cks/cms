@@ -51,7 +51,6 @@ class CreateBlockRequest extends FormRequest
                 'nullable',
                 'string',
                 Rule::exists(new BlockFolder()->getConnectionName() . '.block_folders', 'id')
-                    ->whereNull('deleted_at')
             ],
         ];
     }
