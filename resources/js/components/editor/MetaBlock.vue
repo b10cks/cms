@@ -2,6 +2,7 @@
 import { toast } from 'vue-sonner'
 
 import AssetBlock from '~/components/editor/AssetBlock.vue'
+import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { InputField, TextField } from '~/components/ui/form'
 import type { ApiResponse } from '~/types'
@@ -12,13 +13,11 @@ interface MetaSchema {
   has_og_tags?: boolean
 }
 
-
 interface ContentValue {
   name?: string
   full_slug?: string
   content?: string | Record<string, unknown>
 }
-
 
 interface MetaValue {
   title?: string
@@ -30,7 +29,6 @@ interface MetaValue {
   ogImage?: AssetValue
 }
 
-
 const props = defineProps<{
   item: MetaSchema & { key: string }
   modelValue?: unknown
@@ -38,19 +36,15 @@ const props = defineProps<{
   readOnly?: boolean
 }>()
 
-
 const content = inject<Ref<ContentValue>>('content', ref({}))
 const { client: apiClient } = useApiClient()
-
 
 const emit = defineEmits<{
   (e: 'update:model-value', value: unknown): void
 }>()
 
-
 const localValue = ref<MetaValue>((props.modelValue as MetaValue) || {})
 const isGenerating = ref(false)
-
 
 const updateValue = (key: keyof MetaValue, value: unknown): void => {
   const newValue = {
@@ -61,7 +55,6 @@ const updateValue = (key: keyof MetaValue, value: unknown): void => {
   emit('update:model-value', newValue)
 }
 
-
 watch(
   () => props.modelValue,
   (newValue: unknown) => {
@@ -70,21 +63,17 @@ watch(
   { immediate: true, deep: true }
 )
 
-
 const serpTitle = computed((): string => {
   return localValue.value?.title || content.value?.name || ''
 })
-
 
 const serpDescription = computed((): string => {
   return localValue.value?.description || ''
 })
 
-
 const serpUrl = computed((): string => {
   return `https://example.com${content.value?.full_slug || ''}`
 })
-
 
 const truncatedDescription = computed((): string => {
   const desc = serpDescription.value
@@ -97,7 +86,6 @@ const truncatedDescription = computed((): string => {
   return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...'
 })
 
-
 const truncatedTitle = computed((): string => {
   const title = serpTitle.value
   if (title.length <= 60) return title
@@ -107,7 +95,6 @@ const truncatedTitle = computed((): string => {
 
   return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...'
 })
-
 
 const generateMetaWithAI = async (): Promise<void> => {
   try {
@@ -127,7 +114,6 @@ const generateMetaWithAI = async (): Promise<void> => {
       },
     }
 
-
     const response = await apiClient.post<
       ApiResponse<{
         title: string
@@ -136,7 +122,6 @@ const generateMetaWithAI = async (): Promise<void> => {
         ogDescription: string
       }>
     >('/mgmt/v1/ai/meta-tags', { context: requestData }, { query: { spaceId: props.spaceId } })
-
 
     // Update local values and emit changes
     const generatedMeta = response.data
@@ -150,10 +135,8 @@ const generateMetaWithAI = async (): Promise<void> => {
       }),
     }
 
-
     localValue.value = newValue
     emit('update:model-value', newValue)
-
 
     toast.success('Meta tags generated successfully!')
   } catch (error: unknown) {
@@ -163,7 +146,6 @@ const generateMetaWithAI = async (): Promise<void> => {
     isGenerating.value = false
   }
 }
-
 
 const hasContent = computed((): boolean => {
   return !!(content.value?.name || content.value?.content)
@@ -190,7 +172,7 @@ const hasContent = computed((): boolean => {
         />
         <Icon
           v-else
-          name="lucide:sparkles"
+          name="lucide:wand-sparkles"
           class="text-ai"
         />
         <span>{{ isGenerating ? 'Generating...' : 'AI Generate' }}</span>
