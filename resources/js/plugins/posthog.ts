@@ -3,10 +3,6 @@ import posthog from 'posthog-js'
 import { runtimeConfig } from '~/lib/runtime-config'
 
 export async function installPosthog() {
-  if (import.meta.env.MODE === 'development') {
-    return
-  }
-
   const config = runtimeConfig
 
   if (!config.public.posthog.key) {
