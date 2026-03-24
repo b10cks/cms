@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
 import type { CommentResource } from '~/types/comments'
+
 import CommentItem from './CommentItem.vue'
 
 const props = defineProps<{
@@ -38,25 +38,7 @@ const repliesByParent = computed(() => {
 <template>
   <div class="space-y-6 py-4">
     <div
-      v-if="isLoading"
-      class="space-y-4"
-    >
-      <div
-        v-for="i in 3"
-        :key="i"
-        class="flex animate-pulse gap-3"
-      >
-        <div class="h-8 w-8 rounded-full bg-muted" />
-        <div class="flex-1 space-y-2">
-          <div class="h-4 w-24 rounded bg-muted" />
-          <div class="h-3 w-full rounded bg-muted" />
-          <div class="h-3 w-3/4 rounded bg-muted" />
-        </div>
-      </div>
-    </div>
-
-    <div
-      v-else-if="comments.length === 0"
+      v-if="comments.length === 0"
       class="flex items-start gap-2 text-muted"
     >
       <Icon
