@@ -33,20 +33,39 @@ const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 
 
+const activeBlockWhitelist = computed(() =>
+  (props.item.block_whitelist || []).filter((slug): slug is string => Boolean(slug))
+)
+
+
+const activeTagWhitelist = computed(() =>
+  (props.item.tag_whitelist || []).filter((tag): tag is string => Boolean(tag))
+)
+
+
 const possibleBlocks = computed(() => {
   return (
     blocks.value?.data.filter((block: BlockResource) => {
       const isValidType = ['nestable', 'universal'].includes(block.type)
-      const hasValidTag =
-        !props.item.restrict_tags ||
-        props.item.tag_whitelist?.length === 0 ||
-        Boolean(block.tags?.some((tag) => props.item.tag_whitelist.includes(tag)))
-      const isWhitelisted =
-        !props.item.restrict_blocks ||
-        props.item.block_whitelist?.length === 0 ||
-        props.item.block_whitelist?.includes(block.slug)
+      const blockAllowlistActive = activeBlockWhitelist.value.length > 0
+      const tagAllowlistActive = activeTagWhitelist.value.length > 0
+      const hasExplicitAllowlists = blockAllowlistActive || tagAllowlistActive
+      const restrictionEnabled =
+        props.item.restrict_blocks || props.item.restrict_tags || hasExplicitAllowlists
+      const matchesBlockWhitelist = activeBlockWhitelist.value.includes(block.slug)
+      const matchesTagWhitelist = Boolean(
+        block.tags?.some((tag) => activeTagWhitelist.value.includes(tag))
+      )
 
-      return isValidType && hasValidTag && isWhitelisted
+      if (!isValidType) {
+        return false
+      }
+
+      if (!restrictionEnabled || !hasExplicitAllowlists) {
+        return true
+      }
+
+      return matchesBlockWhitelist || matchesTagWhitelist
     }) || []
   )
 })
