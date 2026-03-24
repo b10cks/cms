@@ -21,6 +21,7 @@ const props = defineProps<{
   rootTitle?: string
   canMutate?: boolean
   focusedNodeId: string | null
+  selectedNodeIds: string[]
   editingField: ContentWizardEditableField | null
   editingNodeId: string | null
   dropTargetId: string | null
@@ -41,7 +42,9 @@ const props = defineProps<{
 
 
 const emit = defineEmits<{
+  (event: 'canvas-pointerdown', payload: PointerEvent): void
   (event: 'focus-node', nodeId: string): void
+  (event: 'node-pointerdown', payload: { nodeId: string; event: PointerEvent }): void
   (event: 'node-keydown', payload: { nodeId: string; event: KeyboardEvent }): void
   (
     event: 'start-edit',
@@ -60,6 +63,8 @@ const emit = defineEmits<{
   ): void
   (event: 'dragstart', payload: { nodeId: string; event: DragEvent }): void
   (event: 'dragend'): void
+  (event: 'dragover-node', payload: { nodeId: string; event: DragEvent }): void
+  (event: 'dragover-root', payload: DragEvent): void
   (event: 'dragenter', nodeId: string): void
   (event: 'dragleave', nodeId: string): void
   (event: 'drop-on-node', payload: { nodeId: string; event: DragEvent }): void
@@ -72,6 +77,8 @@ const {
   canvasOrigin,
   canvasSize,
   containerRef,
+  containerHeight,
+  containerWidth,
   fitToView,
   handlePointerDown,
   handlePointerLeave,
@@ -85,9 +92,10 @@ const {
   zoomPercent,
 } = useContentWizardViewport(toRef(props, 'bounds'))
 
-
+const AI_DOCK_SAFE_AREA = 220
 const hasFittedInitially = ref(false)
 const nodeRefs = new Map<string, InstanceType<typeof ContentWizardNodeCard>>()
+const selectedNodeIdSet = computed(() => new Set(props.selectedNodeIds))
 
 
 const sortedNodes = computed(() =>
@@ -156,9 +164,11 @@ const centerNode = (nodeId: string) => {
 
     const centerX = (position.x + CONTENT_WIZARD_CARD_WIDTH / 2) * viewport.scale
     const centerY = (position.y + CONTENT_WIZARD_CARD_HEIGHT / 2) * viewport.scale
+    const viewportCenterX = element.clientWidth / 2
+    const viewportCenterY = Math.max((element.clientHeight - AI_DOCK_SAFE_AREA) / 2, 120)
 
-    element.scrollLeft = Math.max(0, centerX - element.clientWidth / 2)
-    element.scrollTop = Math.max(0, centerY - element.clientHeight / 2)
+    element.scrollLeft = Math.max(0, centerX - viewportCenterX)
+    element.scrollTop = Math.max(0, centerY - viewportCenterY)
   })
 }
 
@@ -179,6 +189,29 @@ const handleCanvasDragOver = (event: DragEvent) => {
   if (event.dataTransfer) {
     event.dataTransfer.dropEffect = event.altKey || event.ctrlKey || event.metaKey ? 'copy' : 'move'
   }
+}
+
+const handleContainerPointerDown = (event: PointerEvent) => {
+  emit('canvas-pointerdown', event)
+  handlePointerDown(event)
+}
+
+const handleNodeDragOver = (node: ContentWizardDraftNode, event: DragEvent) => {
+  if (node.isRootVirtual) {
+    emit('dragover-root', event)
+    return
+  }
+
+  emit('dragover-node', { nodeId: node.id, event })
+}
+
+const handleNodeDrop = (node: ContentWizardDraftNode, event: DragEvent) => {
+  if (node.isRootVirtual) {
+    emit('drop-on-root', event)
+    return
+  }
+
+  emit('drop-on-node', { nodeId: node.id, event })
 }
 
 
@@ -225,11 +258,15 @@ watch(
 
 
 watch(
-  () => [props.bounds.width, props.bounds.height],
-  ([width, height]) => {
-    if ((width > 0 || height > 0) && !hasFittedInitially.value) {
+  () => [props.bounds.width, props.bounds.height, containerWidth.value, containerHeight.value],
+  ([width, height, widthPx, heightPx]) => {
+    if ((width > 0 || height > 0) && widthPx > 0 && heightPx > 0 && !hasFittedInitially.value) {
       hasFittedInitially.value = true
-      nextTick(() => fitToView())
+      nextTick(() => {
+        requestAnimationFrame(() => {
+          fitToView()
+        })
+      })
     }
   },
   { immediate: true }
@@ -252,8 +289,8 @@ defineExpose({
 <template>
   <div
     ref="containerRef"
-    class="absolute inset-0 overflow-auto"
-    @pointerdown="handlePointerDown"
+    class="absolute inset-0 overflow-auto overscroll-none"
+    @pointerdown="handleContainerPointerDown"
     @pointermove="handleCanvasPointerMove"
     @pointerup="handlePointerUp"
     @pointerleave="handleCanvasPointerLeave"
@@ -264,8 +301,7 @@ defineExpose({
         width: `${scaledCanvasSize.width}px`,
         height: `${scaledCanvasSize.height}px`,
       }"
-      @dragover.prevent="handleCanvasDragOver"
-      @drop.prevent="emit('drop-on-root', $event)"
+      @dragover="handleCanvasDragOver"
     >
       <div class="pointer-events-none absolute inset-0">
         <div
@@ -306,11 +342,6 @@ defineExpose({
           transform: `scale(${viewport.scale})`,
         }"
       >
-        <div
-          class="absolute inset-0 transition-colors"
-          :class="props.rootDropActive ? 'bg-info-background/10' : ''"
-        />
-
         <ContentWizardConnectorLayer
           :nodes="props.nodes"
           :positions="canvasPositions"
@@ -323,9 +354,10 @@ defineExpose({
           :node="node"
           :root-title="props.rootTitle"
           :can-mutate="props.canMutate ?? true"
+          :selected="selectedNodeIdSet.has(node.id)"
           :focused="props.focusedNodeId === node.id"
           :editing-field="props.editingNodeId === node.id ? props.editingField : null"
-          :drop-active="props.dropTargetId === node.id"
+          :drop-active="node.isRootVirtual ? props.rootDropActive : props.dropTargetId === node.id"
           :remote-focused-users="props.remoteFocusUsersByNodeId[node.id] || []"
           :block-options="props.getBlockOptions(node.id)"
           :blocks-for-bottom="props.getBottomBlocks(node.id)"
@@ -335,6 +367,7 @@ defineExpose({
             height: `${CONTENT_WIZARD_CARD_HEIGHT}px`,
             transform: `translate(${canvasPositions[node.id]?.x || 0}px, ${canvasPositions[node.id]?.y || 0}px)`,
           }"
+          @pointerdown="emit('node-pointerdown', { nodeId: node.id, event: $event })"
           @focus="emit('focus-node', node.id)"
           @keydown="emit('node-keydown', { nodeId: node.id, event: $event })"
           @start-edit="
@@ -356,9 +389,10 @@ defineExpose({
           "
           @dragstart="emit('dragstart', { nodeId: node.id, event: $event })"
           @dragend="emit('dragend')"
+          @dragover="handleNodeDragOver(node, $event)"
           @dragenter="emit('dragenter', node.id)"
           @dragleave="emit('dragleave', node.id)"
-          @drop="emit('drop-on-node', { nodeId: node.id, event: $event })"
+          @drop="handleNodeDrop(node, $event)"
         />
       </div>
     </div>

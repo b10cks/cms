@@ -92,7 +92,9 @@ const canvasRef = useTemplateRef<InstanceType<typeof ContentWizardCanvas>>('canv
 const editingField = ref<ContentWizardEditableField | null>(null)
 const editingNodeId = ref<string | null>(null)
 const focusedNodeId = ref<string | null>(CONTENT_WIZARD_ROOT_ID)
+const selectedNodeIds = ref<string[]>([])
 const draggingNodeId = ref<string | null>(null)
+const draggingNodeIds = ref<string[]>([])
 const dropTargetId = ref<string | null>(null)
 const rootDropActive = ref(false)
 const isHelpDialogOpen = ref(false)
@@ -108,6 +110,7 @@ const pendingRemoteOperations: ContentWizardSyncOperation[] = []
 const liveFieldTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const queuedRemoteOperations = new Map<string, ContentWizardSyncOperation>()
 const editSessionSnapshots = new Map<string, ContentWizardDraftTree>()
+let preserveSelectionOnNextFocus = false
 
 
 const isLoading = computed(() => isBlocksLoading.value || isMenuLoading.value)
@@ -130,6 +133,7 @@ const draftMentionItems = computed<AiMentionItem[]>(() =>
       icon: node.icon ? `lucide:${node.icon}` : 'lucide:file',
     }))
 )
+const selectedNodeIdSet = computed(() => new Set(selectedNodeIds.value))
 
 
 const broadcastCursorPosition = useThrottleFn(
@@ -411,6 +415,43 @@ const flushQueuedRemoteOperations = () => {
 
 function focusNode(nodeId: string) {
   focusedNodeId.value = nodeId
+}
+
+const setSelectedNodes = (nodeIds: string[]) => {
+  selectedNodeIds.value = [...new Set(nodeIds)].filter((nodeId) => {
+    const node = treeApi.getNode(nodeId)
+    return !!node && !node.isRootVirtual
+  })
+}
+
+const isDescendantOf = (nodeId: string, possibleAncestorId: string) => {
+  let currentNode = treeApi.getNode(nodeId)
+
+  while (currentNode?.parentId) {
+    if (currentNode.parentId === possibleAncestorId) {
+      return true
+    }
+
+    currentNode = treeApi.getNode(currentNode.parentId)
+  }
+
+  return false
+}
+
+const getSelectedDragRootIds = (originNodeId: string) => {
+  const sourceIds =
+    selectedNodeIdSet.value.has(originNodeId) && selectedNodeIds.value.length > 0
+      ? selectedNodeIds.value
+      : [originNodeId]
+
+  const movableIds = sourceIds.filter((nodeId) => {
+    const node = treeApi.getNode(nodeId)
+    return !!node && !node.isRootVirtual
+  })
+
+  return movableIds.filter(
+    (nodeId) => !movableIds.some((otherNodeId) => otherNodeId !== nodeId && isDescendantOf(nodeId, otherNodeId))
+  )
 }
 
 
@@ -752,6 +793,74 @@ watch(
   },
   { immediate: true }
 )
+
+const handleCanvasFocusNode = (nodeId: string) => {
+  focusNode(nodeId)
+
+  if (preserveSelectionOnNextFocus) {
+    preserveSelectionOnNextFocus = false
+    return
+  }
+
+  if (nodeId === CONTENT_WIZARD_ROOT_ID) {
+    setSelectedNodes([])
+    return
+  }
+
+  setSelectedNodes([nodeId])
+}
+
+const handleNodePointerDown = ({
+  nodeId,
+  event,
+}: {
+  nodeId: string
+  event: PointerEvent
+}) => {
+  if (event.button !== 0) {
+    return
+  }
+
+  const target = event.target as HTMLElement | null
+  if (
+    target?.closest(
+      'input,textarea,[data-block-select],[data-add-menu],button:not([data-drag-handle])'
+    )
+  ) {
+    return
+  }
+
+  if (nodeId === CONTENT_WIZARD_ROOT_ID) {
+    preserveSelectionOnNextFocus = false
+    setSelectedNodes([])
+    return
+  }
+
+  if (event.metaKey || event.ctrlKey) {
+    preserveSelectionOnNextFocus = true
+    if (selectedNodeIdSet.value.has(nodeId)) {
+      setSelectedNodes(selectedNodeIds.value.filter((selectedNodeId) => selectedNodeId !== nodeId))
+    } else {
+      setSelectedNodes([...selectedNodeIds.value, nodeId])
+    }
+    focusNode(nodeId)
+    return
+  }
+
+  preserveSelectionOnNextFocus = false
+  setSelectedNodes([nodeId])
+  focusNode(nodeId)
+}
+
+const handleCanvasPointerDown = (event: PointerEvent) => {
+  const target = event.target as HTMLElement | null
+  if (target?.closest('[data-node-card]') || event.metaKey || event.ctrlKey) {
+    return
+  }
+
+  preserveSelectionOnNextFocus = false
+  setSelectedNodes([])
+}
 
 
 const clearAiStreamState = () => {
@@ -1592,20 +1701,80 @@ const handleToggleCollapse = (nodeId: string) => {
   }
 }
 
+const createDragPreviewElement = (draggedNodeIds: string[]) => {
+  const preview = document.createElement('div')
+  preview.className =
+    'pointer-events-none fixed left-0 top-0 z-[9999] flex max-w-[320px] flex-col gap-2 opacity-95'
+  preview.style.transform = 'translate(-10000px, -10000px)'
 
-const handleDragStart = (nodeId: string, event: DragEvent) => {
-  draggingNodeId.value = nodeId
-  rootDropActive.value = true
-  dropTargetId.value = null
-  event.dataTransfer?.setData('text/plain', nodeId)
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'copyMove'
+  draggedNodeIds.slice(0, 3).forEach((draggedNodeId, index) => {
+    const source = document.querySelector<HTMLElement>(
+      `[data-node-card-id="${CSS.escape(draggedNodeId)}"]`
+    )
+    if (!source) {
+      return
+    }
+
+    const clone = source.cloneNode(true) as HTMLElement
+    clone.style.position = 'relative'
+    clone.style.left = '0'
+    clone.style.top = '0'
+    clone.style.transform = `translate(${index * 10}px, 0)`
+    clone.style.width = `${source.offsetWidth}px`
+    clone.style.height = `${source.offsetHeight}px`
+    clone.style.pointerEvents = 'none'
+    preview.appendChild(clone)
+  })
+
+  if (draggedNodeIds.length > 1) {
+    const badge = document.createElement('div')
+    badge.className =
+      'ml-auto rounded-full bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground shadow-sm'
+    badge.textContent = `${draggedNodeIds.length}`
+    preview.appendChild(badge)
   }
+
+  if (!preview.childElementCount) {
+    return null
+  }
+
+  document.body.appendChild(preview)
+  return preview
 }
 
 
-const handleDragEnterNode = (nodeId: string) => {
-  if (!draggingNodeId.value || draggingNodeId.value === nodeId) {
+const handleDragStart = (nodeId: string, event: DragEvent) => {
+  const draggedNodeIds = getSelectedDragRootIds(nodeId)
+  if (draggedNodeIds.length === 0) {
+    event.preventDefault()
+    return
+  }
+
+  setSelectedNodes(draggedNodeIds)
+  draggingNodeIds.value = draggedNodeIds
+  draggingNodeId.value = draggedNodeIds[0] || null
+  rootDropActive.value = true
+  dropTargetId.value = null
+  event.dataTransfer?.setData('text/plain', draggedNodeIds.join(','))
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'copyMove'
+    const preview = createDragPreviewElement(draggedNodeIds)
+    if (preview) {
+      event.dataTransfer.setDragImage(preview, 28, 24)
+      requestAnimationFrame(() => {
+        preview.remove()
+      })
+    }
+  }
+}
+
+const handleDragOverNode = ({ nodeId }: { nodeId: string; event: DragEvent }) => {
+  if (nodeId === CONTENT_WIZARD_ROOT_ID) {
+    handleDragOverRoot()
+    return
+  }
+
+  if (!draggingNodeIds.value.length || draggingNodeIds.value.includes(nodeId)) {
     return
   }
 
@@ -1614,17 +1783,19 @@ const handleDragEnterNode = (nodeId: string) => {
   rootDropActive.value = false
 }
 
-
-const handleDragLeaveNode = (nodeId: string) => {
-  if (dropTargetId.value === nodeId) {
-    dropTargetId.value = null
-    rootDropActive.value = !!draggingNodeId.value
+const handleDragOverRoot = () => {
+  if (!draggingNodeIds.value.length) {
+    return
   }
+
+  dropTargetId.value = null
+  rootDropActive.value = true
 }
 
 
 const handleDragEnd = () => {
   draggingNodeId.value = null
+  draggingNodeIds.value = []
   dropTargetId.value = null
   rootDropActive.value = false
 }
@@ -1634,51 +1805,93 @@ const isCopyDrop = (event: DragEvent) =>
   event.altKey || event.ctrlKey || event.metaKey || event.dataTransfer?.dropEffect === 'copy'
 
 
-const getDropFocusNodeId = (
-  draggedNodeId: string,
-  result: { valid: boolean; createdNodeId?: string },
-  copyMode: boolean
-) => {
-  if (!copyMode) {
-    return draggedNodeId
+type DragDropCommandResult = {
+  valid: boolean
+  message?: string
+  createdNodeId?: string
+  createdNodeIds?: string[]
+}
+
+const executeDragDrop = (
+  draggedNodeIds: string[],
+  copyMode: boolean,
+  targetParentId: string | null
+): DragDropCommandResult => {
+  const beforeSnapshot = treeApi.createSnapshot()
+  const createdNodeIds: string[] = []
+
+  for (const draggedNodeId of draggedNodeIds) {
+    const result = copyMode
+      ? treeApi.duplicateNode(draggedNodeId, targetParentId)
+      : treeApi.moveNode(draggedNodeId, targetParentId)
+
+    if (!result.valid) {
+      treeApi.restoreSnapshot(beforeSnapshot)
+      return result
+    }
+
+    if ('createdNodeId' in result && typeof result.createdNodeId === 'string') {
+      createdNodeIds.push(result.createdNodeId)
+    }
   }
 
+  return {
+    valid: true,
+    createdNodeId: createdNodeIds[0],
+    createdNodeIds,
+  }
+}
 
-  return typeof result.createdNodeId === 'string' ? result.createdNodeId : draggedNodeId
+const getDropFocusNodeId = (
+  draggedNodeIds: string[],
+  result: DragDropCommandResult,
+  copyMode: boolean
+) => {
+  if (copyMode) {
+    return typeof result.createdNodeId === 'string' ? result.createdNodeId : draggedNodeIds[0]
+  }
+
+  return draggedNodeIds[0]
 }
 
 
 const handleDropOnNode = ({ nodeId, event }: { nodeId: string; event: DragEvent }) => {
-  if (!draggingNodeId.value) {
+  if (nodeId === CONTENT_WIZARD_ROOT_ID) {
+    handleDropOnRoot(event)
+    return
+  }
+
+  if (!draggingNodeIds.value.length) {
     return
   }
 
 
-  const draggedNodeId = draggingNodeId.value
+  const draggedNodeIds = [...draggingNodeIds.value]
+  if (draggedNodeIds.includes(nodeId)) {
+    handleDragEnd()
+    return
+  }
+
   const copyMode = isCopyDrop(event)
   const commandResult = history.executeCommand({
     label: copyMode ? 'duplicate-subtree' : 'move-node',
-    execute: () =>
-      copyMode
-        ? treeApi.duplicateNode(draggedNodeId, nodeId)
-        : treeApi.moveNode(draggedNodeId, nodeId),
+    execute: () => executeDragDrop(draggedNodeIds, copyMode, nodeId),
     onCommitted: ({ result }) => {
-      if (
-        copyMode &&
-        result.valid &&
-        'createdNodeId' in result &&
-        typeof result.createdNodeId === 'string'
-      ) {
-        broadcastCreatedSubtree(result.createdNodeId)
+      if (copyMode && result.valid) {
+        result.createdNodeIds?.forEach((createdNodeId) => {
+          broadcastCreatedSubtree(createdNodeId)
+        })
         return
       }
 
       if (!copyMode && result.valid) {
-        const draggedNode = treeApi.getNode(draggedNodeId)
-        collaboration.broadcastOperation({
-          type: 'move',
-          nodeId: draggedNodeId,
-          parentId: draggedNode?.parentId ?? null,
+        draggedNodeIds.forEach((draggedNodeId) => {
+          const draggedNode = treeApi.getNode(draggedNodeId)
+          collaboration.broadcastOperation({
+            type: 'move',
+            nodeId: draggedNodeId,
+            parentId: draggedNode?.parentId ?? null,
+          })
         })
       }
     },
@@ -1688,40 +1901,46 @@ const handleDropOnNode = ({ nodeId, event }: { nodeId: string; event: DragEvent 
     toast.error(result.message)
   }
 
+  const nextSelectedNodeIds =
+    copyMode && result.valid
+      ? result.createdNodeIds || []
+      : result.valid
+        ? draggedNodeIds
+        : selectedNodeIds.value
 
-  focusNode(getDropFocusNodeId(draggedNodeId, result, copyMode))
+  setSelectedNodes(nextSelectedNodeIds)
+  preserveSelectionOnNextFocus = nextSelectedNodeIds.length > 1
+  focusNode(getDropFocusNodeId(draggedNodeIds, result, copyMode))
   handleDragEnd()
 }
 
 
 const handleDropOnRoot = (event: DragEvent) => {
-  if (!draggingNodeId.value) {
+  if (!draggingNodeIds.value.length) {
     return
   }
 
 
-  const draggedNodeId = draggingNodeId.value
+  const draggedNodeIds = [...draggingNodeIds.value]
   const copyMode = isCopyDrop(event)
   const commandResult = history.executeCommand({
     label: copyMode ? 'duplicate-subtree-root' : 'move-node-root',
-    execute: () =>
-      copyMode ? treeApi.duplicateNode(draggedNodeId, null) : treeApi.moveNode(draggedNodeId, null),
+    execute: () => executeDragDrop(draggedNodeIds, copyMode, null),
     onCommitted: ({ result }) => {
-      if (
-        copyMode &&
-        result.valid &&
-        'createdNodeId' in result &&
-        typeof result.createdNodeId === 'string'
-      ) {
-        broadcastCreatedSubtree(result.createdNodeId)
+      if (copyMode && result.valid) {
+        result.createdNodeIds?.forEach((createdNodeId) => {
+          broadcastCreatedSubtree(createdNodeId)
+        })
         return
       }
 
       if (!copyMode && result.valid) {
-        collaboration.broadcastOperation({
-          type: 'move',
-          nodeId: draggedNodeId,
-          parentId: null,
+        draggedNodeIds.forEach((draggedNodeId) => {
+          collaboration.broadcastOperation({
+            type: 'move',
+            nodeId: draggedNodeId,
+            parentId: null,
+          })
         })
       }
     },
@@ -1731,8 +1950,16 @@ const handleDropOnRoot = (event: DragEvent) => {
     toast.error(result.message)
   }
 
+  const nextSelectedNodeIds =
+    copyMode && result.valid
+      ? result.createdNodeIds || []
+      : result.valid
+        ? draggedNodeIds
+        : selectedNodeIds.value
 
-  focusNode(getDropFocusNodeId(draggedNodeId, result, copyMode))
+  setSelectedNodes(nextSelectedNodeIds)
+  preserveSelectionOnNextFocus = nextSelectedNodeIds.length > 1
+  focusNode(getDropFocusNodeId(draggedNodeIds, result, copyMode))
   handleDragEnd()
 }
 
@@ -2097,6 +2324,7 @@ onBeforeUnmount(() => {
           :can-mutate="canApplyCanvas"
           :root-title="space?.name || $t('labels.contents.canvas.rootNodeTitle')"
           :focused-node-id="focusedNodeId"
+          :selected-node-ids="selectedNodeIds"
           :editing-node-id="editingNodeId"
           :editing-field="editingField"
           :drop-target-id="dropTargetId"
@@ -2106,7 +2334,9 @@ onBeforeUnmount(() => {
           :get-bottom-blocks="getBottomBlocks"
           :get-right-blocks="getRightBlocks"
           :get-block-options="getBlockOptions"
-          @focus-node="focusNode"
+          @canvas-pointerdown="handleCanvasPointerDown"
+          @node-pointerdown="handleNodePointerDown"
+          @focus-node="handleCanvasFocusNode"
           @node-keydown="handleKeydown($event.event, $event.nodeId)"
           @start-edit="startEditing($event.nodeId, $event.field, $event.initialChar)"
           @cursor-move="broadcastCursorPosition"
@@ -2120,8 +2350,8 @@ onBeforeUnmount(() => {
           @add-node="createNodeFromContext($event.nodeId, $event.position, $event.block)"
           @dragstart="handleDragStart($event.nodeId, $event.event)"
           @dragend="handleDragEnd"
-          @dragenter="handleDragEnterNode"
-          @dragleave="handleDragLeaveNode"
+          @dragover-node="handleDragOverNode"
+          @dragover-root="handleDragOverRoot"
           @drop-on-node="handleDropOnNode"
           @drop-on-root="handleDropOnRoot"
         />

@@ -91,6 +91,7 @@ const activeDropEdge = ref<Edge | null>(null)
 const rootDropMode = ref<'root' | 'root-top' | null>(null)
 const isDragging = ref(false)
 const dragSelectionSnapshot = ref<string[] | null>(null)
+let lastDragEndedAt = 0
 
 
 const treeContainerRef = ref<HTMLElement | null>(null)
@@ -201,6 +202,10 @@ const restoreDragSelection = () => {
 
 
 const finishDragState = () => {
+  if (isDragging.value) {
+    lastDragEndedAt = Date.now()
+  }
+
   isDragging.value = false
   dragSelectionSnapshot.value = null
   clearDropState()
@@ -525,12 +530,14 @@ const initDelete = async (item: { id: string }) => {
 
 
 function selectSingleItem(id: string) {
+  dragSelectionSnapshot.value = null
   selectedItemId.value = id
   selectedItemIds.value = [id]
 }
 
 
 function toggleItemSelection(id: string) {
+  dragSelectionSnapshot.value = null
   const next = new Set(selectedItemIds.value)
 
 
@@ -559,6 +566,14 @@ function handleItemPointerDown(event: MouseEvent, id: string) {
     return
   }
 
+  if (selectedItemsSet.value.has(id) && selectedItemIds.value.length > 1) {
+    event.stopPropagation()
+    dragSelectionSnapshot.value = [...selectedItemIds.value]
+    return
+  }
+
+  dragSelectionSnapshot.value = null
+
 
   if (!selectedItemsSet.value.has(id) || selectedItemIds.value.length <= 1) {
     selectSingleItem(id)
@@ -567,6 +582,13 @@ function handleItemPointerDown(event: MouseEvent, id: string) {
 
 
 function handleItemNavigate(event: MouseEvent, id: string) {
+  if (Date.now() - lastDragEndedAt < 250) {
+    event.preventDefault()
+    event.stopPropagation()
+    return
+  }
+
+
   if (isDragging.value || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
     event.preventDefault()
     event.stopPropagation()
@@ -581,12 +603,19 @@ function handleItemNavigate(event: MouseEvent, id: string) {
 
 
 function getSelectedDragItemsFor(id: string): ContentTreeDragItem[] {
-  if (!selectedItemsSet.value.has(id) || selectedItemIds.value.length === 0) {
+  const selection =
+    dragSelectionSnapshot.value && dragSelectionSnapshot.value.includes(id)
+      ? dragSelectionSnapshot.value
+      : selectedItemIds.value
+  const selectionSet = new Set(selection)
+
+
+  if (!selectionSet.has(id) || selection.length === 0) {
     return [{ id }]
   }
 
 
-  return selectedItemIds.value.map((selectedId) => ({ id: selectedId }))
+  return selection.map((selectedId) => ({ id: selectedId }))
 }
 
 
@@ -628,6 +657,15 @@ function canDropItemsOnTarget(dragItems: ContentTreeDragItem[], targetId: string
 
 
   return true
+}
+
+
+function isSelfDrop(dragItems: ContentTreeDragItem[], targetId: string | null) {
+  if (!targetId) {
+    return false
+  }
+
+  return dragItems.some((item) => item.id === targetId)
 }
 
 
@@ -705,7 +743,7 @@ function registerItemInteractions(item: FlatContentMenuItem, element: HTMLElemen
       element,
       getInitialData: () => {
         const dragItems = getSelectedDragItemsFor(item.id)
-        dragSelectionSnapshot.value = [...selectedItemIds.value]
+        dragSelectionSnapshot.value = dragItems.map((dragItem) => dragItem.id)
         return createContentTreeDragData(dragItems, item.id)
       },
       onGenerateDragPreview: ({ nativeSetDragImage }) => {
@@ -717,6 +755,7 @@ function registerItemInteractions(item: FlatContentMenuItem, element: HTMLElemen
         })
       },
       onDragStart: () => {
+        restoreDragSelection()
         isDragging.value = true
       },
       onDrop: () => {
@@ -801,7 +840,9 @@ function registerItemInteractions(item: FlatContentMenuItem, element: HTMLElemen
         const closestEdge = extractClosestEdge(self.data)
 
         if (!canDropItemsOnTarget(dragItems, item.id)) {
-          toast.error('Invalid move')
+          if (!isSelfDrop(dragItems, item.id)) {
+            toast.error('Invalid move')
+          }
           clearDropState()
           return
         }

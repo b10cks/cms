@@ -20,6 +20,7 @@ const props = withDefaults(
     node: ContentWizardDraftNode
     rootTitle?: string
     canMutate?: boolean
+    selected?: boolean
     focused?: boolean
     editingField?: ContentWizardEditableField | null
     dropActive?: boolean
@@ -30,6 +31,7 @@ const props = withDefaults(
   }>(),
   {
     canMutate: true,
+    selected: false,
     focused: false,
     editingField: null,
     dropActive: false,
@@ -43,6 +45,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (event: 'focus'): void
+  (event: 'pointerdown', value: PointerEvent): void
   (event: 'keydown', value: KeyboardEvent): void
   (event: 'start-edit', payload: { field: ContentWizardEditableField; initialChar?: string }): void
   (event: 'input-title', value: string): void
@@ -140,13 +143,13 @@ const focusCard = () => {
 
 const openAddMenu = (position: ContentWizardAddPosition) => {
   const menu =
-    position === 'child'
-      ? (rightAddMenuRef.value || bottomAddMenuRef.value)
-      : bottomAddMenuRef.value
+    position === 'child' ? rightAddMenuRef.value || bottomAddMenuRef.value : bottomAddMenuRef.value
+
 
   if (!menu) {
     return false
   }
+
 
   menu.openMenu()
   return true
@@ -190,21 +193,23 @@ const handleBlockChange = (value: AcceptableValue) => {
   <div
     ref="wrapperRef"
     data-node-card
-    :draggable="canMutate && !node.isRootVirtual"
+    :data-node-card-id="node.id"
+    :draggable="false"
     tabindex="0"
     :class="
       cn(
         'group absolute rounded-lg bg-card p-1 shadow-soft outline-none transition-all',
         isDeleted ? 'ring-1 ring-destructive opacity-30' : '',
         isChanged && !isDeleted ? 'ring-1 ring-warning' : '',
+        selected && !focused && !dropActive ? 'ring-2 ring-primary/50' : '',
         focused ? ' ring-2 ring-accent!' : '',
-        dropActive ? 'ring-2 ring-accent!' : '',
+        dropActive ? 'ring-2 ring-accent! bg-info-background/10' : '',
         node.isAiAltered && !focused && !dropActive ? 'ring-2 ring-ai!' : ''
       )
     "
+    @pointerdown="emit('pointerdown', $event)"
     @focus="emit('focus')"
     @keydown="emit('keydown', $event)"
-    @dragstart="emit('dragstart', $event)"
     @dragend="emit('dragend', $event)"
     @dragenter.prevent="emit('dragenter', $event)"
     @dragover.prevent="handleDragOver"
@@ -240,7 +245,28 @@ const handleBlockChange = (value: AcceptableValue) => {
     </div>
 
     <template v-else>
-      <div class="flex items-start gap-1">
+      <button
+        v-if="canMutate"
+        type="button"
+        data-drag-handle
+        draggable="true"
+        :class="
+          cn(
+            'absolute top-1/2 -left-2 z-10 flex size-6 -translate-y-1/2 items-center justify-center rounded-md border border-border bg-background text-muted shadow-sm transition',
+            selected || focused || dropActive
+              ? 'opacity-100'
+              : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'
+          )
+        "
+        tabindex="-1"
+        @pointerdown.stop
+        @dragstart="emit('dragstart', $event)"
+        @dragend="emit('dragend', $event)"
+      >
+        <Icon name="lucide:grip-vertical" />
+      </button>
+
+      <div class="flex items-start gap-1 pl-2">
         <Select
           v-model="selectedBlockId"
           :disabled="!canMutate || !!node.deletedReason"
@@ -249,7 +275,7 @@ const handleBlockChange = (value: AcceptableValue) => {
           <SelectTrigger
             tabindex="-1"
             data-block-select
-            class="flex size-7! items-center justify-center border-0 bg-transparent shadow-none! [&>svg:last-child]:hidden"
+            class="flex size-6! items-center justify-center border-0 bg-transparent shadow-none! [&>svg:last-child]:hidden"
           >
             <Icon
               :name="`lucide:${selectedBlock?.icon || 'layout-template'}`"

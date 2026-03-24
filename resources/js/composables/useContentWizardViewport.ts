@@ -1,16 +1,27 @@
-import { useEventListener } from '@vueuse/core'
+import { useElementSize, useEventListener } from '@vueuse/core'
 
 import type { ContentWizardBounds, ContentWizardViewportState } from '~/types/content-wizard'
 
 const MIN_SCALE = 0.1
-const MAX_SCALE = 2
+const MAX_SCALE = 3
 const ZOOM_STEP = 0.1
-const CANVAS_PADDING = 240
-const CANVAS_MIN_WIDTH = 2200
-const CANVAS_MIN_HEIGHT = 1600
+const CANVAS_PADDING = 100
+const CANVAS_MIN_OVERSCROLL_X = 2400
+const CANVAS_MIN_OVERSCROLL_Y = 2000
+const CANVAS_MIN_WIDTH = 5200
+const CANVAS_MIN_HEIGHT = 4200
+const GESTURE_ZOOM_SENSITIVITY = 0.005
+const AI_DOCK_SAFE_AREA = 120
+
+interface WebKitGestureEvent extends Event {
+  scale: number
+  clientX: number
+  clientY: number
+}
 
 export function useContentWizardViewport(bounds: Ref<ContentWizardBounds>) {
   const containerRef = ref<HTMLElement | null>(null)
+  const { width: containerWidth, height: containerHeight } = useElementSize(containerRef)
   const viewport = reactive<ContentWizardViewportState>({
     x: 0,
     y: 0,
@@ -26,18 +37,40 @@ export function useContentWizardViewport(bounds: Ref<ContentWizardBounds>) {
     active: false,
   })
 
+  const gestureState = reactive({
+    active: false,
+    startScale: 1,
+  })
+
+  const overscrollPadding = computed(() => ({
+    x: Math.max(CANVAS_PADDING, containerWidth.value * 2, CANVAS_MIN_OVERSCROLL_X),
+    y: Math.max(CANVAS_PADDING, containerHeight.value * 2, CANVAS_MIN_OVERSCROLL_Y),
+  }))
+
   const canvasOrigin = computed(() => ({
-    x: CANVAS_PADDING - bounds.value.minX,
-    y: CANVAS_PADDING - bounds.value.minY,
+    x: overscrollPadding.value.x - bounds.value.minX,
+    y: overscrollPadding.value.y - bounds.value.minY,
   }))
 
   const canvasSize = computed(() => ({
-    width: Math.max(bounds.value.width + CANVAS_PADDING * 2, CANVAS_MIN_WIDTH),
-    height: Math.max(bounds.value.height + CANVAS_PADDING * 2 + 220, CANVAS_MIN_HEIGHT),
+    width: Math.max(
+      bounds.value.width + overscrollPadding.value.x * 2,
+      containerWidth.value + overscrollPadding.value.x * 2,
+      CANVAS_MIN_WIDTH
+    ),
+    height: Math.max(
+      bounds.value.height + overscrollPadding.value.y * 2 + 220,
+      containerHeight.value + overscrollPadding.value.y * 2 + 220,
+      CANVAS_MIN_HEIGHT
+    ),
   }))
 
   const zoomPercent = computed(() => Math.round(viewport.scale * 100))
   const clampScale = (scale: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale))
+  const getViewportCenterOffset = (element: HTMLElement) => ({
+    x: element.clientWidth / 2,
+    y: Math.max((element.clientHeight - AI_DOCK_SAFE_AREA) / 2, 120),
+  })
 
   const syncViewport = () => {
     const element = containerRef.value
@@ -55,11 +88,14 @@ export function useContentWizardViewport(bounds: Ref<ContentWizardBounds>) {
       return
     }
 
-    const contentCenterX = (canvasOrigin.value.x + bounds.value.minX + bounds.value.width / 2) * scale
-    const contentCenterY = (canvasOrigin.value.y + bounds.value.minY + bounds.value.height / 2) * scale
+    const contentCenterX =
+      (canvasOrigin.value.x + bounds.value.minX + bounds.value.width / 2) * scale
+    const contentCenterY =
+      (canvasOrigin.value.y + bounds.value.minY + bounds.value.height / 2) * scale
+    const viewportCenter = getViewportCenterOffset(element)
 
-    element.scrollLeft = Math.max(0, contentCenterX - element.clientWidth / 2)
-    element.scrollTop = Math.max(0, contentCenterY - element.clientHeight / 2)
+    element.scrollLeft = Math.max(0, contentCenterX - viewportCenter.x)
+    element.scrollTop = Math.max(0, contentCenterY - viewportCenter.y)
     syncViewport()
   }
 
@@ -97,10 +133,11 @@ export function useContentWizardViewport(bounds: Ref<ContentWizardBounds>) {
       return
     }
 
+    const availableHeight = Math.max(element.clientHeight - AI_DOCK_SAFE_AREA, 240)
     const targetScale = clampScale(
       Math.min(
         element.clientWidth / Math.max(bounds.value.width + padding * 2, 320),
-        element.clientHeight / Math.max(bounds.value.height + padding * 2, 320),
+        availableHeight / Math.max(bounds.value.height + padding * 2, 320),
         1
       )
     )
@@ -122,14 +159,65 @@ export function useContentWizardViewport(bounds: Ref<ContentWizardBounds>) {
   const zoomIn = () => setScaleAroundPoint(viewport.scale + ZOOM_STEP)
   const zoomOut = () => setScaleAroundPoint(viewport.scale - ZOOM_STEP)
 
+  const resolveWheelDelta = (event: WheelEvent) => {
+    const element = containerRef.value
+    const deltaMultiplier =
+      event.deltaMode === WheelEvent.DOM_DELTA_LINE
+        ? 16
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? element?.clientHeight || 1
+          : 1
+
+    return {
+      x: event.deltaX * deltaMultiplier,
+      y: event.deltaY * deltaMultiplier,
+    }
+  }
+
   const handleWheel = (event: WheelEvent) => {
-    if (!(event.ctrlKey || event.metaKey)) {
+    const element = containerRef.value
+    if (!element) {
       return
     }
 
     event.preventDefault()
-    const delta = event.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP
-    setScaleAroundPoint(viewport.scale + delta, event.clientX, event.clientY)
+
+    if (event.ctrlKey || event.metaKey) {
+      const { y } = resolveWheelDelta(event)
+      const nextScale = viewport.scale * Math.exp(-y * GESTURE_ZOOM_SENSITIVITY)
+      setScaleAroundPoint(nextScale, event.clientX, event.clientY)
+      return
+    }
+
+    const { x, y } = resolveWheelDelta(event)
+    element.scrollLeft += x
+    element.scrollTop += y
+    syncViewport()
+  }
+
+  const handleGestureStart = (event: Event) => {
+    const gestureEvent = event as WebKitGestureEvent
+    gestureEvent.preventDefault()
+    gestureState.active = true
+    gestureState.startScale = viewport.scale
+  }
+
+  const handleGestureChange = (event: Event) => {
+    if (!gestureState.active) {
+      return
+    }
+
+    const gestureEvent = event as WebKitGestureEvent
+    gestureEvent.preventDefault()
+    setScaleAroundPoint(
+      gestureState.startScale * gestureEvent.scale,
+      gestureEvent.clientX,
+      gestureEvent.clientY
+    )
+  }
+
+  const handleGestureEnd = () => {
+    gestureState.active = false
   }
 
   const handleScroll = () => {
@@ -175,10 +263,19 @@ export function useContentWizardViewport(bounds: Ref<ContentWizardBounds>) {
   }
 
   useEventListener(containerRef, 'wheel', handleWheel, { passive: false })
+  useEventListener(containerRef, 'gesturestart', handleGestureStart as EventListener, {
+    passive: false,
+  })
+  useEventListener(containerRef, 'gesturechange', handleGestureChange as EventListener, {
+    passive: false,
+  })
+  useEventListener(containerRef, 'gestureend', handleGestureEnd as EventListener, { passive: true })
   useEventListener(containerRef, 'scroll', handleScroll, { passive: true })
 
   return {
     containerRef,
+    containerHeight,
+    containerWidth,
     viewport,
     dragState,
     canvasOrigin,
