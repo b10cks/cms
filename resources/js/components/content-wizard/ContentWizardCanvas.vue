@@ -171,8 +171,7 @@ const openNodeAddMenu = (nodeId: string, position: ContentWizardAddPosition) => 
 
 
   nodeRef.focusCard()
-  nodeRef.openAddMenu(position)
-  return true
+  return nodeRef.openAddMenu(position)
 }
 
 

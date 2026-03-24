@@ -681,6 +681,12 @@ const buildHistoryOperations = (
   return operations
 }
 
+const broadcastOperations = (operations: ContentWizardSyncOperation[]) => {
+  operations.forEach((operation) => {
+    collaboration.broadcastOperation(operation)
+  })
+}
+
 
 const broadcastHistoryEntry = (entry: ContentCanvasHistoryEntry, direction: 'undo' | 'redo') => {
   const operations =
@@ -688,10 +694,7 @@ const broadcastHistoryEntry = (entry: ContentCanvasHistoryEntry, direction: 'und
       ? buildHistoryOperations(entry.after, entry.before)
       : buildHistoryOperations(entry.before, entry.after)
 
-
-  operations.forEach((operation) => {
-    collaboration.broadcastOperation(operation)
-  })
+  broadcastOperations(operations)
 }
 
 
@@ -1299,6 +1302,15 @@ const broadcastCreatedSubtree = (nodeId: string) => {
   })
 }
 
+const getSpaceDefaultBlock = (availableBlocks: BlockResource[]) => {
+  const defaultBlockId = space.value?.settings?.default_block
+  if (!defaultBlockId) {
+    return null
+  }
+
+  return availableBlocks.find((block) => block.id === defaultBlockId) || null
+}
+
 
 const createNodeFromContext = (
   nodeId: string,
@@ -1313,7 +1325,7 @@ const createNodeFromContext = (
 
   const resolvedPosition: ContentWizardAddPosition = node.isRootVirtual ? 'child' : position
   const availableBlocks =
-    resolvedPosition === 'sibling' ? getBottomBlocks(nodeId) : getRightBlocks(nodeId)
+    node.isRootVirtual || resolvedPosition === 'sibling' ? getBottomBlocks(nodeId) : getRightBlocks(nodeId)
 
 
   const preferredBlock =
@@ -1376,6 +1388,20 @@ const createNodeFromContext = (
   return true
 }
 
+const createNodeFromSpaceDefault = (nodeId: string) => {
+  const node = treeApi.getNode(nodeId)
+  if (!node || !node.isRootVirtual) {
+    return false
+  }
+
+  const defaultBlock = getSpaceDefaultBlock(getBottomBlocks(nodeId))
+  if (!defaultBlock) {
+    return false
+  }
+
+  return createNodeFromContext(nodeId, 'child', defaultBlock)
+}
+
 
 const duplicateWithCurrentBlock = (nodeId: string, position: ContentWizardAddPosition) => {
   const node = treeApi.getNode(nodeId)
@@ -1395,10 +1421,13 @@ const duplicateWithCurrentBlock = (nodeId: string, position: ContentWizardAddPos
 
 
 const openAddMenu = (nodeId: string, position: ContentWizardAddPosition) => {
+  const node = treeApi.getNode(nodeId)
   const resolvedPosition: ContentWizardAddPosition =
     nodeId === CONTENT_WIZARD_ROOT_ID ? 'child' : position
   const availableBlocks =
-    resolvedPosition === 'sibling' ? getBottomBlocks(nodeId) : getRightBlocks(nodeId)
+    node?.isRootVirtual || resolvedPosition === 'sibling'
+      ? getBottomBlocks(nodeId)
+      : getRightBlocks(nodeId)
 
 
   if (availableBlocks.length === 0) {
@@ -1454,6 +1483,7 @@ function handleToggleDelete(nodeId: string) {
 const { handleKeydown } = useContentWizardKeyboard({
   getNode: treeApi.getNode,
   focusNode,
+  createNodeFromSpaceDefault,
   duplicateWithCurrentBlock,
   openAddMenu,
   toggleDelete: handleToggleDelete,
@@ -1804,7 +1834,12 @@ const handleAiSubmit = async ({
           return
         }
 
+        const beforeSnapshot = aiPreviewSnapshot.value
         updateAiPreview(parsed.operations, true)
+        if (beforeSnapshot) {
+          const afterSnapshot = treeApi.createSnapshot()
+          broadcastOperations(buildHistoryOperations(beforeSnapshot, afterSnapshot))
+        }
         clearAiStreamState()
       },
       onError: (message) => {

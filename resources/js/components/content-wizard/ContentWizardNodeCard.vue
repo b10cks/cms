@@ -4,7 +4,6 @@ import type { AcceptableValue } from 'reka-ui'
 import Icon from '~/components/Icon.vue'
 import { AvatarList } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
-import { Input } from '~/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '~/components/ui/select'
 import { cn } from '~/lib/utils'
 import type {
@@ -140,8 +139,17 @@ const focusCard = () => {
 
 
 const openAddMenu = (position: ContentWizardAddPosition) => {
-  const menu = position === 'child' ? rightAddMenuRef.value : bottomAddMenuRef.value
-  menu?.openMenu()
+  const menu =
+    position === 'child'
+      ? (rightAddMenuRef.value || bottomAddMenuRef.value)
+      : bottomAddMenuRef.value
+
+  if (!menu) {
+    return false
+  }
+
+  menu.openMenu()
+  return true
 }
 
 
@@ -165,7 +173,7 @@ const handleDragOver = (event: DragEvent) => {
 }
 
 
-const onFocus = (field: string) => {
+const onFocus = (field: ContentWizardEditableField) => {
   emit('focus')
   emit('start-edit', { field })
 }
@@ -186,7 +194,7 @@ const handleBlockChange = (value: AcceptableValue) => {
     tabindex="0"
     :class="
       cn(
-        'group absolute rounded-lg bg-surface p-1 shadow-soft outline-none transition-all',
+        'group absolute rounded-lg bg-card p-1 shadow-soft outline-none transition-all',
         isDeleted ? 'ring-1 ring-destructive opacity-30' : '',
         isChanged && !isDeleted ? 'ring-1 ring-warning' : '',
         focused ? ' ring-2 ring-accent!' : '',
@@ -232,15 +240,16 @@ const handleBlockChange = (value: AcceptableValue) => {
     </div>
 
     <template v-else>
-      <div class="flex items-center gap-1">
+      <div class="flex items-start gap-1">
         <Select
           v-model="selectedBlockId"
           :disabled="!canMutate || !!node.deletedReason"
           @update:model-value="handleBlockChange"
         >
           <SelectTrigger
+            tabindex="-1"
             data-block-select
-            class="flex size-7! items-center justify-center [&>svg:last-child]:hidden"
+            class="flex size-7! items-center justify-center border-0 bg-transparent shadow-none! [&>svg:last-child]:hidden"
           >
             <Icon
               :name="`lucide:${selectedBlock?.icon || 'layout-template'}`"
@@ -268,30 +277,31 @@ const handleBlockChange = (value: AcceptableValue) => {
           </SelectContent>
         </Select>
 
-        <div class="min-w-0 flex-1">
-          <div class="flex min-h-10 flex-col justify-center gap-1">
-            <Input
-              ref="titleInputRef"
-              v-model="titleValue"
-              :disabled="!canMutate || !!node.deletedReason"
-              :placeholder="$t('labels.contents.canvas.untitledNode')"
-              class="h-7! text-xs px-1.5!"
-              @update:model-value="emit('input-title', String($event))"
-              @focus="onFocus('start-edit', 'title')"
-              @blur="commitTitle"
-              @keydown.enter.prevent="commitTitle"
-              @keydown.esc.prevent="titleValue = node.title"
-            />
+        <div class="flex min-h-10 flex-col justify-center">
+          <input
+            ref="titleInputRef"
+            v-model="titleValue"
+            tabindex="-1"
+            :disabled="!canMutate || !!node.deletedReason"
+            :placeholder="$t('labels.contents.canvas.untitledNode')"
+            class="h-7 text-sm font-medium text-primary shadow-none outline-none placeholder:text-muted"
+            @input="emit('input-title', String(($event.target as HTMLInputElement).value))"
+            @focus="onFocus('title')"
+            @blur="commitTitle"
+            @keydown.esc.prevent="titleValue = node.title"
+          />
 
-            <Input
+          <div class="flex items-center gap-0.5">
+            <span class="text-xs text-muted">/</span>
+            <input
               ref="slugInputRef"
               v-model="slugValue"
+              tabindex="-1"
               :disabled="!canMutate || !!node.deletedReason"
-              class="h-6! text-xs px-1.5!"
-              @update:model-value="emit('input-slug', String($event))"
-              @focus="onFocus('start-edit', 'slug')"
+              class="h-4 text-xs text-muted shadow-none outline-none placeholder:text-muted"
+              @input="emit('input-slug', String(($event.target as HTMLInputElement).value))"
+              @focus="onFocus('slug')"
               @blur="commitSlug"
-              @keydown.enter.prevent="commitSlug"
               @keydown.esc.prevent="slugValue = node.slug"
             />
           </div>
@@ -307,6 +317,7 @@ const handleBlockChange = (value: AcceptableValue) => {
           variant="ghost"
           size="toolbar"
           class="size-7 rounded-full border border-border bg-background shadow-sm"
+          tabindex="-1"
           @click.stop="emit('toggle-collapse')"
         >
           <Icon :name="node.isCollapsed ? 'lucide:chevron-right' : 'lucide:chevron-down'" />
@@ -316,6 +327,7 @@ const handleBlockChange = (value: AcceptableValue) => {
           variant="ghost"
           size="toolbar"
           class="rounded-full border border-border bg-background shadow-sm"
+          tabindex="-1"
           @click.stop="emit('toggle-delete')"
         >
           <Icon name="lucide:rotate-ccw" />
@@ -325,6 +337,7 @@ const handleBlockChange = (value: AcceptableValue) => {
           variant="ghost"
           size="toolbar"
           class="size-7 rounded-full border border-border bg-background shadow-sm"
+          tabindex="-1"
           @click.stop="emit('toggle-delete')"
         >
           <Icon name="lucide:trash-2" />

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { useVModel } from '@vueuse/core'
+import { useEventListener, useVModel } from '@vueuse/core'
+import type { ComponentPublicInstance } from 'vue'
 
 import Icon from '~/components/Icon.vue'
 import { Input } from '~/components/ui/input'
@@ -35,6 +36,8 @@ const open = useVModel(props, 'modelValue', emit, {
 })
 const query = ref('')
 const searchRef = ref<HTMLInputElement | null>(null)
+const optionRefs = new Map<number, HTMLButtonElement>()
+const activeIndex = ref(0)
 
 
 const filteredBlocks = computed(() => {
@@ -52,17 +55,39 @@ const filteredBlocks = computed(() => {
 watch(open, async (value) => {
   if (!value) {
     query.value = ''
+    activeIndex.value = 0
     return
   }
 
+  activeIndex.value = 0
   await nextTick()
   searchRef.value?.focus()
   searchRef.value?.select()
 })
 
+watch(
+  filteredBlocks,
+  async (blocks) => {
+    if (!open.value) {
+      return
+    }
+
+    activeIndex.value = blocks.length === 0 ? -1 : Math.min(Math.max(activeIndex.value, 0), blocks.length - 1)
+    await nextTick()
+    if (activeIndex.value >= 0) {
+      optionRefs.get(activeIndex.value)?.scrollIntoView({ block: 'nearest' })
+    }
+  },
+  { flush: 'post' }
+)
+
 
 const selectBlock = (block: BlockResource) => {
   emit('select', block)
+  open.value = false
+}
+
+const closeMenu = () => {
   open.value = false
 }
 
@@ -72,6 +97,77 @@ const openMenu = () => {
     open.value = true
   }
 }
+
+const setOptionRef = (index: number) => {
+  return (element: Element | ComponentPublicInstance | null) => {
+    const button = element as HTMLButtonElement | null
+    if (button) {
+      optionRefs.set(index, button)
+      return
+    }
+
+    optionRefs.delete(index)
+  }
+}
+
+const moveActiveIndex = (direction: 'up' | 'down') => {
+  if (filteredBlocks.value.length === 0) {
+    activeIndex.value = -1
+    return
+  }
+
+  if (activeIndex.value < 0) {
+    activeIndex.value = 0
+    return
+  }
+
+  const delta = direction === 'down' ? 1 : -1
+  activeIndex.value = (activeIndex.value + delta + filteredBlocks.value.length) % filteredBlocks.value.length
+}
+
+const handleMenuKeydown = async (event: KeyboardEvent) => {
+  if (!open.value) {
+    return
+  }
+
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    event.stopPropagation()
+    closeMenu()
+    return
+  }
+
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault()
+    moveActiveIndex(event.key === 'ArrowDown' ? 'down' : 'up')
+    await nextTick()
+    if (activeIndex.value >= 0) {
+      optionRefs.get(activeIndex.value)?.scrollIntoView({ block: 'nearest' })
+    }
+    return
+  }
+
+  if (event.key === 'Enter') {
+    const block = filteredBlocks.value[activeIndex.value]
+    if (!block) {
+      return
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
+    selectBlock(block)
+  }
+}
+
+useEventListener(window, 'keydown', (event) => {
+  if (!open.value || event.key !== 'Escape') {
+    return
+  }
+
+  event.preventDefault()
+  event.stopPropagation()
+  closeMenu()
+})
 
 
 const positionClass = computed(() => {
@@ -85,6 +181,7 @@ const positionClass = computed(() => {
 
 
 defineExpose({
+  closeMenu,
   openMenu,
 })
 </script>
@@ -98,6 +195,7 @@ defineExpose({
     >
       <slot>
         <button
+          tabindex="-1"
           :class="[
             'absolute flex size-6 items-center justify-center rounded-full bg-accent text-primary transition',
             positionClass,
@@ -116,6 +214,7 @@ defineExpose({
       :side="side"
       align="center"
       class="w-72 border border-border"
+      @keydown.capture="handleMenuKeydown"
     >
       <div class="space-y-2">
         <Input
@@ -136,10 +235,16 @@ defineExpose({
           class="max-h-64 space-y-1 overflow-y-auto"
         >
           <button
-            v-for="block in filteredBlocks"
+            v-for="(block, index) in filteredBlocks"
             :key="block.id"
+            :ref="setOptionRef(index)"
             type="button"
-            class="flex w-full items-center gap-3 rounded px-2 py-1 text-left transition-colors hover:bg-accent"
+            tabindex="-1"
+            :class="[
+              'flex w-full items-center gap-3 rounded px-2 py-1 text-left transition-colors hover:bg-accent',
+              index === activeIndex ? 'bg-accent' : '',
+            ]"
+            @mouseenter="activeIndex = index"
             @click="selectBlock(block)"
           >
             <IconName

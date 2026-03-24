@@ -2,7 +2,7 @@ import type { User } from '~/types/users'
 
 export const CONTENT_WIZARD_ROOT_ID = '__root__'
 export const CONTENT_WIZARD_CARD_WIDTH = 256
-export const CONTENT_WIZARD_CARD_HEIGHT = 64
+export const CONTENT_WIZARD_CARD_HEIGHT = 56
 export const CONTENT_WIZARD_HORIZONTAL_GAP = 32
 export const CONTENT_WIZARD_VERTICAL_GAP = 32
 

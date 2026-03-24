@@ -14,6 +14,7 @@ export function useContentWizardKeyboard(options: {
     deletedReason?: string
   } | null
   focusNode: (nodeId: string) => void
+  createNodeFromSpaceDefault: (nodeId: string) => boolean
   duplicateWithCurrentBlock: (nodeId: string, position: ContentWizardAddPosition) => boolean
   openAddMenu: (nodeId: string, position: ContentWizardAddPosition) => boolean
   toggleDelete: (nodeId: string) => void
@@ -64,33 +65,62 @@ export function useContentWizardKeyboard(options: {
     return node.childrenIds[0] || null
   }
 
-  const tryCreateOrOpen = (nodeId: string, position: ContentWizardAddPosition) => {
-    if (options.duplicateWithCurrentBlock(nodeId, position)) {
-      return
-    }
-
-    options.openAddMenu(nodeId, position)
-  }
-
   const handleKeydown = (event: KeyboardEvent, nodeId: string) => {
     const target = event.target as HTMLElement | null
-    if (target?.closest('input,textarea,[contenteditable="true"],[data-block-select]')) {
-      return
-    }
+    const isEditingField = !!target?.closest('input,textarea,[contenteditable="true"]')
+    const isBlockSelect = !!target?.closest('[data-block-select]')
+    const node = options.getNode(nodeId)
 
     if (event.key === 'Tab') {
       event.preventDefault()
-      tryCreateOrOpen(nodeId, 'child')
+      if (node?.isRootVirtual) {
+        if (!options.createNodeFromSpaceDefault(nodeId)) {
+          options.openAddMenu(nodeId, 'child')
+        }
+        return
+      }
+
+      if (event.altKey) {
+        options.openAddMenu(nodeId, 'child')
+        return
+      }
+
+      if (!options.duplicateWithCurrentBlock(nodeId, 'child')) {
+        options.openAddMenu(nodeId, 'child')
+      }
       return
     }
 
     if (event.key === 'Enter') {
       event.preventDefault()
-      tryCreateOrOpen(nodeId, 'sibling')
+      if (node?.isRootVirtual) {
+        if (event.altKey) {
+          options.openAddMenu(nodeId, 'child')
+          return
+        }
+
+        if (!options.createNodeFromSpaceDefault(nodeId)) {
+          options.openAddMenu(nodeId, 'child')
+        }
+        return
+      }
+
+      if (event.altKey) {
+        options.openAddMenu(nodeId, 'sibling')
+        return
+      }
+
+      if (!options.duplicateWithCurrentBlock(nodeId, 'sibling')) {
+        options.openAddMenu(nodeId, 'sibling')
+      }
       return
     }
 
     if (event.key === 'Delete' || event.key === 'Backspace') {
+      if (isEditingField && !event.altKey) {
+        return
+      }
+
       event.preventDefault()
       options.toggleDelete(nodeId)
       return
@@ -109,6 +139,10 @@ export function useContentWizardKeyboard(options: {
     }
 
     if (event.key.startsWith('Arrow')) {
+      if (isEditingField && !event.altKey) {
+        return
+      }
+
       event.preventDefault()
       const direction = event.key.replace('Arrow', '').toLowerCase() as
         | 'left'
@@ -122,6 +156,10 @@ export function useContentWizardKeyboard(options: {
       if (neighbor) {
         options.focusNode(neighbor)
       }
+      return
+    }
+
+    if (isEditingField || isBlockSelect) {
       return
     }
 
