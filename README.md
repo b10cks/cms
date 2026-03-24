@@ -13,7 +13,7 @@ An opinionated headless CMS based on Laravel and Vue.js
 
 </div>
 
-## 🚀 Why Choose b10cks?
+## Why Choose b10cks?
 
 b10cks is a modern API-first headless CMS built on Laravel and Vue.js that gives developers the freedom to create without constraints while providing content editors with powerful visual tools.
 
@@ -23,15 +23,38 @@ b10cks is a modern API-first headless CMS built on Laravel and Vue.js that gives
 
 ## Features
 
-- **🧩 Block-Based Content Modeling**: Define and compose content structures with reusable blocks
-- **🌇 Asset Management**: Comprehensive asset library with folders, tags, and metadata
-- **🌍 Internationalization**: Built-in support for content localization
+### Content Editing
+
+- **🧩 Block-Based Content Modeling**: Define and compose content structures with reusable, versioned blocks
+- **🗺️ Canvas Editor**: Visual drag-and-drop canvas for structuring content hierarchically as a tree — pan, zoom, and rearrange nodes with full keyboard support and undo/redo history
+- **📝 Content Versioning**: Full version history with selective publishing and scheduled publication
+- **🚀 Release Management**: Batch multiple content versions into a release and publish them together atomically
+- **💬 Comments & Reviews**: Threaded comments on content items with resolution tracking and emoji reactions
+
+### Search
+
+- **🔍 Full-Text Search**: Dual-driver search supporting both **MySQL** (fulltext indexes, natural language mode) and **OpenSearch** for flexible deployment — switch drivers per space without changing your API
+- Multi-language filtering and relevance scoring out of the box
+
+### Collaboration
+
+- **👥 Real-Time Collaboration**: Live presence tracking per space, content item, and canvas — see who is editing what in real time with cursor positions
+- **🤖 AI Assistance**: Multi-model AI integration for content generation, translation, meta-tag generation, and intelligent canvas structuring — all with streaming responses
+
+### Assets & Media
+
+- **🌇 Asset Management**: Hierarchical asset library with folders, tags, and bulk import/export
+- **🖼️ Image Transformations**: On-the-fly image processing (resize, crop, smart-fit with face detection) via the built-in Ilum service — WebP, AVIF, JPG, PNG output with long-term HTTP caching
+
+### Infrastructure
+
+- **🌍 Internationalization**: Built-in support for content localization across multiple languages
 - **🔌 API-First**: Powerful REST API for seamless integration with any frontend
-- **🧑🏻‍💻 Developer Tooling**: Extensive SDK and tools for a smooth development experience
-- **🔍 Content Preview**: Real-time visual preview with live editing capabilities
-- **👥 Team Collaboration**: Role-based access control for efficient teamwork
-- **📊 Data Sources**: Structured data management with dimension support
-- **🔄 Versioning**: Track content history with comprehensive versioning
+- **🏢 Multi-Tenant Spaces**: Isolated per-space databases with full team and role management
+- **📊 Data Sources**: Structured dynamic data management with dimension support
+- **🔀 Redirects**: URL redirect management with hit tracking
+- **💾 Backups & Migrations**: Space backups and direct DB-to-DB space migration with configurable conflict resolution (skip, overwrite, merge newer)
+- **💳 Subscription Billing**: LemonSqueezy integration for plan-based subscriptions
 
 ## Technical Architecture
 
@@ -43,6 +66,7 @@ b10cks CMS is built with a modern stack optimized for performance and developer 
 - **Storage**: Local and cloud storage options for assets, including S3 and Google Cloud Storage
 - **Caching**: Intelligent multi-level caching strategy with Redis support
 - **Real-time Updates**: Laravel Echo + Pusher for real-time updates and collaboration
+- **Search**: MySQL fulltext or OpenSearch — configurable per space
 - **API**: RESTful endpoints with comprehensive documentation and SDKs
 
 ## Getting Started
@@ -70,7 +94,17 @@ php artisan serve
 
 #### Optional
 
-- **Redis**: Install Redis version 6.0 or higher.
+- **Redis**: Install Redis version 6.0 or higher for caching and queues.
+- **OpenSearch**: Install OpenSearch for advanced full-text search capabilities.
+
+### Search Configuration
+
+b10cks supports two search drivers. Set the driver per space in the admin UI or via the API:
+
+- **`mysql`** (default): Uses MySQL `FULLTEXT` indexes with natural language mode — no extra infrastructure needed.
+- **`opensearch`**: Connects to an OpenSearch cluster for scalable, relevance-tuned search. Configure via `OPENSEARCH_HOST`, `OPENSEARCH_USERNAME`, `OPENSEARCH_PASSWORD` in your `.env`.
+
+After switching drivers, trigger a reindex from the space settings.
 
 ## Deployment Options
 
@@ -103,11 +137,11 @@ We love contributions! Check out our [Contributing Guide](CONTRIBUTING.md) to ge
 
 1. Fork the repository
 2. Create your feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add some amazing feature'`
+3. Commit your changes: `git commit -m '✨ Add some amazing feature'`
 4. Push to the branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
 
-## 💬 Community Support
+## Community Support
 
 Join our growing community:
 
