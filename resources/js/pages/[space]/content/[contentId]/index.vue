@@ -44,17 +44,14 @@ const canonicalContentId = computed<string>(() => route.params.contentId as stri
 const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
 const canManageContent = computed(() => access.hasAbility('content.manage'))
 
-
 const { settings } = useSpaceSettings(spaceId.value)
 const { hasClipboardItem, clearClipboard } = useGlobalClipboard()
-
 
 const { useContentQuery } = useContent(spaceId)
 const { data: routeContent } = useContentQuery(canonicalContentId)
 const { useBlocksQuery } = useBlocks(spaceId)
 const { data: blockResponse } = useBlocksQuery({ per_page: 1000 })
 const blocks = computed(() => blockResponse.value?.data || [])
-
 
 const { useSpaceQuery } = useSpaces()
 const { data: spaceData } = useSpaceQuery(spaceId.value)
@@ -121,7 +118,6 @@ const { data: fallbackContent } = useContentQuery(
   computed(() => fallbackLanguageVersion.value?.content_id)
 )
 
-
 watch(
   [routeContent, defaultLanguage],
   async ([currentContent, currentDefaultLanguage]) => {
@@ -158,7 +154,6 @@ watch(
   },
   { immediate: true }
 )
-
 
 watch(
   [canonicalContent, resolvedActiveLanguage, defaultLanguage],
@@ -200,7 +195,6 @@ watch(
   },
   { immediate: true }
 )
-
 
 const currentContentSource = computed<ContentResource | null>(() => {
   if (activeOriginalContent.value) {
@@ -244,15 +238,12 @@ const currentContentSource = computed<ContentResource | null>(() => {
   return null
 })
 
-
 const content = ref<ContentResource | null>(null)
 const persistedContent = ref<ContentResource | null>(null)
 const editorContentTree = ref<ContentTreeItem | null>(null)
 
-
 const buildEditorContentTree = (value: ContentResource | null): ContentTreeItem | null => {
   if (!value) return null
-
 
   return {
     id: value.id,
@@ -261,10 +252,8 @@ const buildEditorContentTree = (value: ContentResource | null): ContentTreeItem 
   } as ContentTreeItem
 }
 
-
 const stripEditorContentTree = (value: ContentTreeItem | null): Record<string, unknown> => {
   if (!value) return {}
-
 
   const {
     id: _id,
@@ -272,10 +261,8 @@ const stripEditorContentTree = (value: ContentTreeItem | null): Record<string, u
     ...contentFields
   } = JSON.parse(JSON.stringify(value)) as ContentTreeItem
 
-
   return contentFields as Record<string, unknown>
 }
-
 
 const editorContentModel = computed<ContentTreeItem>({
   get: () =>
@@ -308,22 +295,17 @@ const {
   blocks,
 })
 
-
 const { useCommentsQuery } = useComments(
   spaceId,
   computed(() => content.value?.id || null)
 )
 const { data: comments } = useCommentsQuery()
 
-
 const aiInteractionRef = useTemplateRef('aiInteractionRef')
-
 
 const showAi = ref(false)
 
-
 const cloneContent = (value: ContentResource): ContentResource => JSON.parse(JSON.stringify(value))
-
 
 const syncPersistedContent = (
   nextContent: ContentResource,
@@ -331,9 +313,7 @@ const syncPersistedContent = (
 ) => {
   const cloned = cloneContent(nextContent)
 
-
   persistedContent.value = cloned
-
 
   if (!content.value || mode === 'replace') {
     content.value = cloneContent(cloned)
@@ -341,19 +321,16 @@ const syncPersistedContent = (
     return
   }
 
-
   content.value = {
     ...content.value,
     ...cloned,
     content: content.value.content,
   }
 
-
   if (!editorContentTree.value) {
     editorContentTree.value = buildEditorContentTree(content.value)
   }
 }
-
 
 watch(
   currentContentSource,
@@ -371,7 +348,6 @@ watch(
   { immediate: true }
 )
 
-
 watch(
   sanitizedContent,
   (nextSanitized) => {
@@ -386,7 +362,6 @@ watch(
   },
   { deep: true }
 )
-
 
 watch(
   editorContentTree,
@@ -404,18 +379,15 @@ watch(
   { deep: true }
 )
 
-
 const isDirty = computed(() => {
   if (!content.value || !persistedContent.value) return false
   return JSON.stringify(content.value) !== JSON.stringify(persistedContent.value)
 })
 
-
 async function guardLeave(to: any, from: any, next: any) {
   if (to && from && to.path === from.path) {
     return next()
   }
-
 
   if (isDirty.value) {
     const answer = await alert.confirm(
@@ -435,15 +407,12 @@ async function guardLeave(to: any, from: any, next: any) {
   }
 }
 
-
 onBeforeRouteUpdate(guardLeave)
 onBeforeRouteLeave(guardLeave)
-
 
 onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', handleBeforeUnload)
 })
-
 
 const handleBeforeUnload = (e: BeforeUnloadEvent) => {
   if (isDirty.value) {
@@ -451,7 +420,6 @@ const handleBeforeUnload = (e: BeforeUnloadEvent) => {
     e.returnValue = ''
   }
 }
-
 
 watch(
   isDirty,
@@ -465,14 +433,12 @@ watch(
   { immediate: true }
 )
 
-
 const resetDirtyState = () => {
   if (content.value) {
     syncPersistedContent(content.value, 'replace')
   }
   resetValidationState()
 }
-
 
 const selectedItemId = computed({
   get: () => (route.hash ? route.hash.substring(1) : null),
@@ -485,14 +451,11 @@ const selectedItemId = computed({
   },
 })
 
-
 const handleNavigate = (itemId: string | null) => {
   selectedItemId.value = itemId
 }
 
-
 const previewRef = useTemplateRef('previewRef')
-
 
 type Tab = {
   value: string
@@ -501,18 +464,14 @@ type Tab = {
   badge?: { content: string | number; show: boolean; variant: BadgeVariants['variant'] }
 }
 
-
 const { settings: userSettings } = useUserSettings()
 
-
 const isExtendedSidebar = computed(() => userSettings.extendedSidebar ?? true)
-
 
 const unresolvedCommentsCount = computed(() => {
   if (!comments.value) return 0
   return comments.value.filter((c) => !c.is_resolved).length
 })
-
 
 const tabs = computed((): Tab[] => [
   { value: 'edit', icon: 'lucide:pencil', label: t('labels.contents.tabs.edit') },
@@ -530,16 +489,13 @@ const tabs = computed((): Tab[] => [
   },
 ])
 
-
 const mode = useRouteQuery('mode', 'edit') as Ref<'edit' | 'config' | 'info' | 'comments'>
-
 
 useSeoMeta({
   title: computed(() => {
     return content.value?.name
   }),
 })
-
 
 const rootBlock = computed(() => {
   if (!content.value) return null
@@ -552,7 +508,6 @@ const rootBlock = computed(() => {
   return null
 })
 
-
 const isPreviewDisabled = computed(() => {
   if (!spaceData.value) return false
 
@@ -561,24 +516,20 @@ const isPreviewDisabled = computed(() => {
   )
 })
 
-
 const showPreview = computed(() => {
   return !isPreviewDisabled.value && settings.value.content.showPreview
 })
-
 
 const isVisualEditorAvailable = computed(() => {
   if (!spaceData.value) return false
   return spaceData.value.settings?.visual_editor !== false
 })
 
-
 const updatePreviewItem = (item: Record<string, unknown>) => {
   if (previewRef.value) {
     ;(previewRef.value as any).updateItem({ ...item })
   }
 }
-
 
 const {
   broadcastPersistedContent,
@@ -598,7 +549,6 @@ const {
   }
 )
 
-
 const commitPersistedContent = (
   nextContent: ContentResource,
   action: ContentCommitAction = 'save'
@@ -609,10 +559,8 @@ const commitPersistedContent = (
   broadcastPersistedContent(nextContent, action)
 }
 
-
 const findNestedObjectById = (data: unknown, id: string): Record<string, unknown> | null => {
   if (typeof data !== 'object' || data === null) return null
-
 
   if (Array.isArray(data)) {
     for (const item of data) {
@@ -622,10 +570,8 @@ const findNestedObjectById = (data: unknown, id: string): Record<string, unknown
     return null
   }
 
-
   const obj = data as Record<string, unknown>
   if (obj.id === id) return obj
-
 
   for (const key in obj) {
     if (Object.hasOwn(obj, key) && typeof obj[key] === 'object' && obj[key] !== null) {
@@ -634,14 +580,11 @@ const findNestedObjectById = (data: unknown, id: string): Record<string, unknown
     }
   }
 
-
   return null
 }
 
-
 const updateField = (update: { itemId: string; field: string; value: unknown }) => {
   if (!content.value?.content) return
-
 
   if (update.itemId === content.value.id) {
     content.value.content = {
@@ -651,13 +594,11 @@ const updateField = (update: { itemId: string; field: string; value: unknown }) 
     return
   }
 
-
   const target = findNestedObjectById(content.value.content, update.itemId)
   if (target) {
     target[update.field] = update.value
   }
 }
-
 
 const template = reactive({
   isOpen: false,
@@ -665,13 +606,11 @@ const template = reactive({
   content: {},
 })
 
-
 const handleTemplateTrigger = (blockId: string, content: object) => {
   template.blockId = blockId
   template.content = content
   template.isOpen = true
 }
-
 
 provide('content', content)
 provide('rootBlock', rootBlock)
@@ -721,7 +660,7 @@ provide('focusFirstValidationError', focusFirstInvalidField)
   />
   <TabsRoot
     v-model="mode"
-    :class="['flex min-h-0', showPreview ? 'w-lg' : 'w-full']"
+    :class="['flex min-h-0', showPreview ? 'w-132' : 'w-full']"
     orientation="vertical"
   >
     <ScrollArea
