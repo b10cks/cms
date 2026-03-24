@@ -41,7 +41,6 @@ const editors = {
   date: DateBlock,
 } as const
 
-
 const props = defineProps<{
   item: SchemaType & { key: string }
   itemId: string
@@ -52,14 +51,12 @@ const props = defineProps<{
   readOnly?: boolean
 }>()
 
-
 const emit = defineEmits<{
   'update:modelValue': [value: Record<string, unknown>]
   createTemplate: [blockId: string, content: Record<string, unknown>]
   fieldUpdate: [payload: ContentFieldUpdatePayload]
   fieldFocus: [payload: ContentFieldFocusPayload]
 }>()
-
 
 const markFieldDirty = inject<((path: string) => void) | undefined>('markFieldDirty', undefined)
 const getFieldError = inject<((path: string) => string | null) | undefined>(
@@ -88,9 +85,7 @@ const hasNestedFieldErrors = computed(() => {
 })
 const showValidationState = computed(() => showFieldError.value || hasNestedFieldErrors.value)
 
-
 // const updatePreviewItem = inject<(data: never) => void>('updatePreviewItem')
-
 
 const fieldValue = computed({
   get() {
@@ -121,21 +116,17 @@ const fieldValue = computed({
   },
 })
 
-
 const handleCreateTemplate = (blockId: string, content: Record<string, unknown>): void => {
   emit('createTemplate', blockId, content)
 }
-
 
 const handleNestedFieldUpdate = (payload: ContentFieldUpdatePayload): void => {
   emit('fieldUpdate', payload)
 }
 
-
 const handleNestedFieldFocus = (payload: ContentFieldFocusPayload): void => {
   emit('fieldFocus', payload)
 }
-
 
 const isFocused = ref(false)
 const tracksOwnFocus = computed(() => props.item.type !== 'blocks')
@@ -151,12 +142,10 @@ const fieldDebounceMs = computed(() => {
   }
 })
 
-
 const collaborationColor = computed(() => props.activeCollaborators?.[0]?.color || null)
 const showContainerHighlight = computed(
   () => tracksOwnFocus.value && !!props.activeCollaborators?.length
 )
-
 
 const collaborationStyle = computed(() => {
   if (!collaborationColor.value) return undefined
@@ -167,11 +156,9 @@ const collaborationStyle = computed(() => {
   }
 })
 
-
 const handleFocusIn = () => {
   if (!tracksOwnFocus.value) return
   if (isFocused.value) return
-
 
   isFocused.value = true
   emit('fieldFocus', {
@@ -181,22 +168,17 @@ const handleFocusIn = () => {
   })
 }
 
-
 const handleFocusOut = (event: FocusEvent) => {
   if (!tracksOwnFocus.value) return
 
-
   const nextTarget = event.relatedTarget as Node | null
   const currentTarget = event.currentTarget as HTMLElement | null
-
 
   if (nextTarget && currentTarget?.contains(nextTarget)) {
     return
   }
 
-
   if (!isFocused.value) return
-
 
   isFocused.value = false
   emit('fieldFocus', {
@@ -205,7 +187,6 @@ const handleFocusOut = (event: FocusEvent) => {
     focused: false,
   })
 }
-
 
 onBeforeUnmount(() => {
   if (!tracksOwnFocus.value) return

@@ -13,16 +13,13 @@ const props = defineProps<{
   field?: string
 }>()
 
-
 const spaceId = inject<string>('spaceId', '')
 const contentId = inject<Ref<string>>('contentId', ref(''))
 const contentVersionId = inject<Ref<string | undefined>>('contentVersionId', ref(undefined))
 
-
 const isOpen = ref(false)
 const newCommentBody = ref('')
 const comments = inject<Ref<CommentResource[]>>('comments', ref([]))
-
 
 const {
   useCreateCommentMutation,
@@ -37,7 +34,6 @@ const {
   computed(() => contentId.value)
 )
 
-
 const createCommentMutation = useCreateCommentMutation()
 const updateCommentMutation = useUpdateCommentMutation()
 const deleteCommentMutation = useDeleteCommentMutation()
@@ -45,7 +41,6 @@ const resolveCommentMutation = useResolveCommentMutation()
 const unresolveCommentMutation = useUnresolveCommentMutation()
 const addReactionMutation = useAddReactionMutation()
 const removeReactionMutation = useRemoveReactionMutation()
-
 
 const fieldComments = computed(() => {
   return (
@@ -55,20 +50,16 @@ const fieldComments = computed(() => {
   )
 })
 
-
 const unresolvedCount = computed(() => {
   return fieldComments.value.filter((c) => !c.is_resolved).length
 })
-
 
 const totalComments = computed(() => {
   return fieldComments.value.length
 })
 
-
 const handleCreateComment = () => {
   if (!newCommentBody.value.trim()) return
-
 
   const payload: CreateCommentRequest = {
     content_version_id: contentVersionId.value,
@@ -77,7 +68,6 @@ const handleCreateComment = () => {
     field: props.field,
   }
 
-
   createCommentMutation.mutate(payload, {
     onSuccess: () => {
       newCommentBody.value = ''
@@ -85,26 +75,21 @@ const handleCreateComment = () => {
   })
 }
 
-
 const handleDelete = (comment: CommentResource) => {
   deleteCommentMutation.mutate(comment.id)
 }
-
 
 const handleResolve = (commentId: string) => {
   resolveCommentMutation.mutate(commentId)
 }
 
-
 const handleUnresolve = (commentId: string) => {
   unresolveCommentMutation.mutate(commentId)
 }
 
-
 const handleEdit = (comment: CommentResource, body: string) => {
   updateCommentMutation.mutate({ id: comment.id, payload: { body } })
 }
-
 
 const handleReply = (parentId: string, body: string) => {
   const payload: CreateCommentRequest = {
@@ -117,11 +102,9 @@ const handleReply = (parentId: string, body: string) => {
   createCommentMutation.mutate(payload)
 }
 
-
 const handleAddReaction = (commentId: string, emoji: string) => {
   addReactionMutation.mutate({ commentId, emoji })
 }
-
 
 const handleRemoveReaction = (commentId: string, emoji: string) => {
   removeReactionMutation.mutate({ commentId, emoji })
@@ -130,8 +113,11 @@ const handleRemoveReaction = (commentId: string, emoji: string) => {
 
 <template>
   <Popover v-model:open="isOpen">
-    <PopoverTrigger class="absolute -top-1 right-0 z-0 flex w-full justify-end">
-      <button
+    <PopoverTrigger
+      class="absolute -top-1 right-0 z-0 flex w-full justify-end"
+      tabindex="-1"
+    >
+      <span
         :class="[
           unresolvedCount > 0 ? 'text-warning' : 'text-muted',
           totalComments > 0 ? '' : 'opacity-0 group-hover/field:opacity-100',
@@ -145,7 +131,7 @@ const handleRemoveReaction = (commentId: string, emoji: string) => {
         <span v-if="totalComments > 0">
           {{ totalComments }}
         </span>
-      </button>
+      </span>
     </PopoverTrigger>
     <PopoverContent
       class="w-md max-w-full"
