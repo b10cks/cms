@@ -2,6 +2,7 @@ import { computed, readonly, ref } from 'vue'
 
 import { isClient } from '~/lib/env'
 import { useI18n } from '~/plugins/i18n'
+import { getPosthog } from '~/plugins/posthog'
 import { router } from '~/router'
 import type { ApiResponse } from '~/types'
 import type { User } from '~/types/users'
@@ -85,6 +86,11 @@ export function useAuth() {
       const { api } = await import('~/api')
       const response = await api.client.request<ApiResponse<User>>('/mgmt/v1/users/me')
       user.value = response.data
+
+      getPosthog().identify(user.value.id, {
+        email: user.value.email,
+        name: `${user.value.firstname} ${user.value.lastname}`,
+      })
     } catch (err: any) {
       const { status } = parseErrorResponse(err)
       user.value = null
@@ -253,6 +259,8 @@ export function useAuth() {
     error.value = null
     requiresTwoFactor.value = false
     pendingLoginPayload.value = null
+
+    getPosthog().reset()
 
     const currentRoute = router.currentRoute.value
 

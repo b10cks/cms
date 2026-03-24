@@ -11,8 +11,9 @@ export async function installPosthog() {
 
   posthog.init(config.public.posthog.key, {
     api_host: config.public.posthog.host || 'https://app.posthog.com',
-    capture_pageview: false,
+    capture_pageview: 'history_change',
     capture_pageleave: true,
+    mask_all_text: true,
     loaded: (ph) => {
       if (import.meta.env.MODE === 'development') ph.debug()
     },
