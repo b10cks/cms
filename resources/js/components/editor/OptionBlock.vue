@@ -13,6 +13,7 @@ defineProps<{
     v-model="value"
     :name="item.key"
     :label="item.name || item.key"
+    :clearable="!item.required"
     :options="
       item.options.map((option) => ({ label: option.name || option.value, value: option.value }))
     "

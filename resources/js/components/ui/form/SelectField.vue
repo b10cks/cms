@@ -2,6 +2,8 @@
 import { useVModel } from '@vueuse/core'
 import type { HTMLAttributes } from 'vue'
 import { computed } from 'vue'
+
+import Icon from '~/components/Icon.vue'
 import {
   Select,
   SelectContent,
@@ -11,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+
 import FormField from './FormField.vue'
 
 export interface SelectOption<T = unknown> {
@@ -38,6 +41,7 @@ const props = defineProps<{
   displayFn?: (option: SelectOption<T>) => string
   valueFn?: (option: SelectOption<T>) => T
   emptyText?: string
+  clearable?: boolean
 }>()
 
 const emits = defineEmits<{
@@ -70,11 +74,19 @@ const emptyTextComputed = computed(() => {
 })
 
 const handleSelect = (value: T) => {
+  if (value === '' || value === null || value === undefined) {
+    handleClear()
+    return
+  }
   modelValue.value = value
   const option = getOptionByValue(value)
   if (option) {
     emits('select', { option, value })
   }
+}
+
+const handleClear = () => {
+  modelValue.value = undefined as T
 }
 </script>
 
@@ -90,38 +102,48 @@ const handleSelect = (value: T) => {
     :class="props.class"
   >
     <template #default="{ id, hasError }">
-      <Select
-        :model-value="modelValue"
-        :disabled="disabled || readonly"
-        :class="[selectClass, { 'opacity-50': disabled || readonly }]"
-        @update:model-value="handleSelect"
-      >
-        <SelectTrigger
-          :id="id"
-          :class="{ 'border-red-500': hasError }"
+      <div class="flex items-center gap-1">
+        <Select
+          :model-value="modelValue"
+          :disabled="disabled || readonly"
+          :class="['flex-1', selectClass, { 'opacity-50': disabled || readonly }]"
+          @update:model-value="handleSelect"
         >
-          <SelectValue :placeholder="$t(String(placeholder || 'common.select'))">
-            {{ getOptionByValue(modelValue)?.label || '' }}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <template v-if="options.length">
-              <SelectItem
-                v-for="option in options"
-                :key="String(getOptionValue(option))"
-                :value="getOptionValue(option)"
-                :disabled="option.disabled"
-              >
-                {{ getDisplayValue(option) }}
-              </SelectItem>
-            </template>
-            <template v-else>
-              <SelectLabel class="opacity-50">{{ $t(String(emptyTextComputed)) }}</SelectLabel>
-            </template>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+          <SelectTrigger
+            :id="id"
+            :class="{ 'border-red-500': hasError }"
+          >
+            <SelectValue :placeholder="$t(String(placeholder || 'common.select'))">
+              {{ getOptionByValue(modelValue)?.label || '' }}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <template v-if="options.length">
+                <SelectItem
+                  v-for="option in options"
+                  :key="String(getOptionValue(option))"
+                  :value="getOptionValue(option)"
+                  :disabled="option.disabled"
+                >
+                  {{ getDisplayValue(option) }}
+                </SelectItem>
+              </template>
+              <template v-else>
+                <SelectLabel class="opacity-50">{{ $t(String(emptyTextComputed)) }}</SelectLabel>
+              </template>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        <button
+          v-if="clearable && modelValue != null && modelValue !== ''"
+          size="icon"
+          class="absolute right-8 shrink-0 text-muted-foreground hover:text-foreground"
+          @click="handleClear"
+        >
+          <Icon name="lucide:x" />
+        </button>
+      </div>
     </template>
   </FormField>
 </template>
