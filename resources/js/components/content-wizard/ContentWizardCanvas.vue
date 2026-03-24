@@ -92,6 +92,7 @@ const {
   zoomPercent,
 } = useContentWizardViewport(toRef(props, 'bounds'))
 
+
 const AI_DOCK_SAFE_AREA = 220
 const hasFittedInitially = ref(false)
 const nodeRefs = new Map<string, InstanceType<typeof ContentWizardNodeCard>>()
@@ -191,10 +192,12 @@ const handleCanvasDragOver = (event: DragEvent) => {
   }
 }
 
+
 const handleContainerPointerDown = (event: PointerEvent) => {
   emit('canvas-pointerdown', event)
   handlePointerDown(event)
 }
+
 
 const handleNodeDragOver = (node: ContentWizardDraftNode, event: DragEvent) => {
   if (node.isRootVirtual) {
@@ -202,14 +205,17 @@ const handleNodeDragOver = (node: ContentWizardDraftNode, event: DragEvent) => {
     return
   }
 
+
   emit('dragover-node', { nodeId: node.id, event })
 }
+
 
 const handleNodeDrop = (node: ContentWizardDraftNode, event: DragEvent) => {
   if (node.isRootVirtual) {
     emit('drop-on-root', event)
     return
   }
+
 
   emit('drop-on-node', { nodeId: node.id, event })
 }
@@ -289,7 +295,7 @@ defineExpose({
 <template>
   <div
     ref="containerRef"
-    class="absolute inset-0 overflow-auto overscroll-none"
+    class="absolute inset-0 overflow-auto overscroll-none select-none"
     @pointerdown="handleContainerPointerDown"
     @pointermove="handleCanvasPointerMove"
     @pointerup="handlePointerUp"
