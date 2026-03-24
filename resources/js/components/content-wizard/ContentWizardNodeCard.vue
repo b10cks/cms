@@ -42,7 +42,6 @@ const props = withDefaults(
   }
 )
 
-
 const emit = defineEmits<{
   (event: 'focus'): void
   (event: 'pointerdown', value: PointerEvent): void
@@ -64,13 +63,11 @@ const emit = defineEmits<{
   (event: 'drop', value: DragEvent): void
 }>()
 
-
 const wrapperRef = ref<HTMLElement | null>(null)
 const titleInputRef = useTemplateRef<HTMLInputElement | null>('titleInputRef')
 const slugInputRef = useTemplateRef<HTMLInputElement | null>('slugInputRef')
 const rightAddMenuRef = ref<InstanceType<typeof ContentWizardAddMenu> | null>(null)
 const bottomAddMenuRef = ref<InstanceType<typeof ContentWizardAddMenu> | null>(null)
-
 
 const titleValue = ref(props.node.title)
 const slugValue = ref(props.node.slug)
@@ -79,14 +76,12 @@ const selectedBlock = computed(
   () => props.blockOptions.find((block) => block.id === selectedBlockId.value) || null
 )
 
-
 watch(
   () => props.node.title,
   (value) => {
     titleValue.value = value
   }
 )
-
 
 watch(
   () => props.node.slug,
@@ -95,7 +90,6 @@ watch(
   }
 )
 
-
 watch(
   () => props.node.blockId,
   (value) => {
@@ -103,18 +97,15 @@ watch(
   }
 )
 
-
 watch(
   () => props.editingField,
   async (field) => {
     await nextTick()
 
-
     if (field === 'title') {
       titleInputRef.value?.focus()
       titleInputRef.value?.select()
     }
-
 
     if (field === 'slug') {
       slugInputRef.value?.focus()
@@ -123,9 +114,7 @@ watch(
   }
 )
 
-
 const isActionActive = computed(() => props.focused || props.dropActive)
-
 
 const isChanged = computed(
   () => props.node.changes.created || props.node.changes.updated || props.node.changes.moved
@@ -135,52 +124,42 @@ const hasRemoteFocus = computed(() => props.remoteFocusedUsers.length > 0)
 const remoteFocusColor = computed(() => props.remoteFocusedUsers[0]?.color || null)
 const canCollapse = computed(() => !props.node.isRootVirtual && props.node.childrenIds.length > 0)
 
-
 const focusCard = () => {
   wrapperRef.value?.focus()
 }
-
 
 const openAddMenu = (position: ContentWizardAddPosition) => {
   const menu =
     position === 'child' ? rightAddMenuRef.value || bottomAddMenuRef.value : bottomAddMenuRef.value
 
-
   if (!menu) {
     return false
   }
 
-
   menu.openMenu()
   return true
 }
-
 
 defineExpose({
   focusCard,
   openAddMenu,
 })
 
-
 const commitTitle = () => emit('commit-title', titleValue.value)
 const commitSlug = () => emit('commit-slug', slugValue.value)
-
 
 const handleDragOver = (event: DragEvent) => {
   if (event.dataTransfer) {
     event.dataTransfer.dropEffect = event.altKey || event.ctrlKey || event.metaKey ? 'copy' : 'move'
   }
 
-
   emit('dragover', event)
 }
-
 
 const onFocus = (field: ContentWizardEditableField) => {
   emit('focus')
   emit('start-edit', { field })
 }
-
 
 const handleBlockChange = (value: AcceptableValue) => {
   if (typeof value === 'string' || typeof value === 'number') {
@@ -198,7 +177,7 @@ const handleBlockChange = (value: AcceptableValue) => {
     tabindex="0"
     :class="
       cn(
-        'group absolute rounded-lg bg-card p-1 shadow-soft outline-none transition-all',
+        'group absolute rounded-lg bg-card p-2 shadow-soft outline-none transition-all',
         isDeleted ? 'ring-1 ring-destructive opacity-30' : '',
         isChanged && !isDeleted ? 'ring-1 ring-warning' : '',
         selected && !focused && !dropActive ? 'ring-2 ring-primary/50' : '',
@@ -252,7 +231,7 @@ const handleBlockChange = (value: AcceptableValue) => {
         draggable="true"
         :class="
           cn(
-            'cursor-grab absolute top-1/2 -left-2 z-10 flex size-6 -translate-y-1/2 items-center justify-center rounded-md border border-border bg-background text-muted shadow-sm transition',
+            'cursor-grab absolute top-1/2 -left-2 z-10 flex w-4 h-6 -translate-y-1/2 items-center justify-center rounded-md border border-border bg-background text-muted shadow-sm transition',
             selected || focused || dropActive
               ? 'opacity-100'
               : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'
@@ -266,7 +245,7 @@ const handleBlockChange = (value: AcceptableValue) => {
         <Icon name="lucide:grip-vertical" />
       </button>
 
-      <div class="flex items-start pl-3">
+      <div class="flex items-start gap-1">
         <Select
           v-model="selectedBlockId"
           :disabled="!canMutate || !!node.deletedReason"
@@ -303,21 +282,21 @@ const handleBlockChange = (value: AcceptableValue) => {
           </SelectContent>
         </Select>
 
-        <div class="flex flex-col justify-center">
+        <div class="flex flex-col justify-center pt-0.5">
           <input
             ref="titleInputRef"
             v-model="titleValue"
             tabindex="-1"
             :disabled="!canMutate || !!node.deletedReason"
             :placeholder="$t('labels.contents.canvas.untitledNode')"
-            class="h-6 text-sm font-medium text-primary shadow-none outline-none placeholder:text-muted"
+            class="h-5 text-sm font-medium text-primary shadow-none outline-none placeholder:text-muted"
             @input="emit('input-title', String(($event.target as HTMLInputElement).value))"
             @focus="onFocus('title')"
             @blur="commitTitle"
             @keydown.esc.prevent="titleValue = node.title"
           />
 
-          <div class="flex items-center gap-0.5">
+          <div class="flex items-center gap-px">
             <span class="text-xs text-muted">/</span>
             <input
               ref="slugInputRef"

@@ -242,7 +242,7 @@ defineExpose({
             tabindex="-1"
             :class="[
               'flex w-full items-center gap-3 rounded px-2 py-1 text-left transition-colors hover:bg-accent',
-              index === activeIndex ? 'bg-accent' : '',
+              index === activeIndex ? 'bg-accent text-accent-foreground' : '',
             ]"
             @mouseenter="activeIndex = index"
             @click="selectBlock(block)"
