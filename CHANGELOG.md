@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.3.24-7764460] — 2026-3-24
+
+- 🐛 Fix auth guard for new space
+
 ## [v2026.3.24-8dca4b5] — 2026-3-24
 
 - 👔 Use a new ContentSelect for reference block
