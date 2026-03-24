@@ -24,7 +24,6 @@ import EditorComponent from './EditorComponent.vue'
 
 const { $t } = useI18n()
 
-
 const props = defineProps<{
   item: BlocksSchema & { key: string }
   modelValue?: Array<Record<string, unknown>> | null
@@ -33,15 +32,12 @@ const props = defineProps<{
   readOnly?: boolean
 }>()
 
-
 const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
-
 
 const ulid = useUlid()
 const route = useRoute()
 const router = useRouter()
-
 
 const {
   copyItem: globalCopyItem,
@@ -50,14 +46,12 @@ const {
   hasClipboardItem,
 } = useGlobalClipboard()
 
-
 const emit = defineEmits<{
   'update:modelValue': [value: Array<Record<string, unknown>>]
   createTemplate: [blockId: string, content: Record<string, unknown>]
   fieldUpdate: [payload: ContentFieldUpdatePayload]
   fieldFocus: [payload: ContentFieldFocusPayload]
 }>()
-
 
 const getActiveCollaborators = inject<
   (itemId: string, field: string) => CollaborationPresenceUser[]
@@ -75,10 +69,8 @@ const submitValidationAttempted = inject<Ref<boolean> | undefined>(
   undefined
 )
 
-
 const getBlockForContent = (content: Record<string, unknown>) =>
   blocks.value?.data?.find((entry) => entry.slug === (content.block as string))
-
 
 const blockItems = computed({
   get: () => props.modelValue || [],
@@ -89,16 +81,13 @@ const blockItems = computed({
   },
 })
 
-
 const accordionContainer = ref<HTMLElement | null>(null)
 const selectedIndexes = ref<number[]>([])
 const openItems = ref<string[]>([])
 
-
 const addItem = (slug: string, index: number = -1) => {
   const newItem = { block: slug, id: ulid() }
   const updatedItems = [...blockItems.value]
-
 
   if (index === -1) {
     updatedItems.push(newItem)
@@ -106,10 +95,8 @@ const addItem = (slug: string, index: number = -1) => {
     updatedItems.splice(index, 0, newItem)
   }
 
-
   emit('update:modelValue', updatedItems)
 }
-
 
 const deleteItem = (index: number) => {
   const updatedItems = [...blockItems.value]
@@ -120,16 +107,13 @@ const deleteItem = (index: number) => {
     .map((selectedIndex) => (selectedIndex > index ? selectedIndex - 1 : selectedIndex))
 }
 
-
 const getClipboardLabel = (items: Array<Record<string, unknown>>) => {
   if (items.length === 1) {
     return items[0].block as string
   }
 
-
   return `${items.length} items`
 }
-
 
 const toggleSelected = (index: number, checked: boolean | 'indeterminate') => {
   if (checked) {
@@ -139,13 +123,10 @@ const toggleSelected = (index: number, checked: boolean | 'indeterminate') => {
     return
   }
 
-
   selectedIndexes.value = selectedIndexes.value.filter((selectedIndex) => selectedIndex !== index)
 }
 
-
 const isSelected = (index: number) => selectedIndexes.value.includes(index)
-
 
 const selectedItems = computed(() =>
   selectedIndexes.value
@@ -153,12 +134,10 @@ const selectedItems = computed(() =>
     .map((index) => blockItems.value[index])
 )
 
-
 const hasSelectedItems = computed(() => selectedItems.value.length > 0)
 const isAllSelected = computed(
   () => blockItems.value.length > 0 && selectedIndexes.value.length === blockItems.value.length
 )
-
 
 const selectAllItems = () => {
   if (isAllSelected.value) {
@@ -166,64 +145,50 @@ const selectAllItems = () => {
     return
   }
 
-
   selectedIndexes.value = blockItems.value.map((_, index) => index)
 }
-
 
 const getActionIndexes = (index?: number) => {
   if (typeof index === 'number') {
     return isSelected(index) ? [...selectedIndexes.value].sort((a, b) => a - b) : [index]
   }
 
-
   return [...selectedIndexes.value].sort((a, b) => a - b)
 }
 
-
 const isClipboardBlockItem = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === 'object' && !Array.isArray(value)
-
 
 const normalizeClipboardItems = (
   pastedItem: Record<string, unknown> | Record<string, unknown>[] | null
 ) => {
   if (!pastedItem) return []
 
-
   if (Array.isArray(pastedItem)) {
     return pastedItem.filter(isClipboardBlockItem).map((item) => ({ ...item }))
   }
 
-
   return [pastedItem]
 }
-
 
 const copyItems = async (index?: number) => {
   const indexes = getActionIndexes(index)
   if (indexes.length === 0) return
 
-
   const itemsToCopy = indexes.map((itemIndex) => ({ ...blockItems.value[itemIndex] }))
   const payload = itemsToCopy.length === 1 ? itemsToCopy[0] : itemsToCopy
 
-
   await globalCopyItem(payload, props.spaceId, getClipboardLabel(itemsToCopy))
 }
-
 
 const cutItems = async (index?: number) => {
   const indexes = getActionIndexes(index)
   if (indexes.length === 0) return
 
-
   const itemsToCut = indexes.map((itemIndex) => ({ ...blockItems.value[itemIndex] }))
   const payload = itemsToCut.length === 1 ? itemsToCut[0] : itemsToCut
 
-
   await globalCutItem(payload, props.spaceId, getClipboardLabel(itemsToCut))
-
 
   const updatedItems = [...blockItems.value]
   indexes
@@ -232,11 +197,9 @@ const cutItems = async (index?: number) => {
       updatedItems.splice(itemIndex, 1)
     })
 
-
   blockItems.value = updatedItems
   selectedIndexes.value = []
 }
-
 
 const pasteItems = async (event?: ClipboardEvent | null, insertIndex?: number) => {
   if (event) {
@@ -244,10 +207,8 @@ const pasteItems = async (event?: ClipboardEvent | null, insertIndex?: number) =
     event.preventDefault()
   }
 
-
   const pastedItem = await globalPasteItem()
   const pastedItems = normalizeClipboardItems(pastedItem)
-
 
   if (pastedItems.length > 0) {
     const updatedItems = [...blockItems.value]
@@ -258,15 +219,12 @@ const pasteItems = async (event?: ClipboardEvent | null, insertIndex?: number) =
   }
 }
 
-
 const handleTemplateTrigger = (content: Record<string, unknown>) => {
   const block = getBlockForContent(content)
   if (!block?.id) return
 
-
   emit('createTemplate', block.id, content)
 }
-
 
 const setupSortable = () => {
   nextTick(() => {
@@ -278,7 +236,6 @@ const setupSortable = () => {
   })
 }
 
-
 watch(
   () => blockItems.value.length,
   () => {
@@ -288,16 +245,13 @@ watch(
   { immediate: true }
 )
 
-
 const updateContent = (index: number, newContent: Record<string, unknown>) => {
   if (newContent === blockItems.value[index]) return
-
 
   const updatedItems = [...blockItems.value]
   updatedItems[index] = newContent
   blockItems.value = updatedItems
 }
-
 
 const toggleHidden = (index: number) => {
   const item = blockItems.value[index]
@@ -306,7 +260,6 @@ const toggleHidden = (index: number) => {
   blockItems.value = updatedItems
 }
 
-
 const navigateToItem = (itemId: string) => {
   router.push({
     ...route,
@@ -314,34 +267,26 @@ const navigateToItem = (itemId: string) => {
   })
 }
 
-
 const forwardFieldUpdate = (payload: ContentFieldUpdatePayload) => {
   emit('fieldUpdate', payload)
 }
 
-
 const getItemAccordionValue = (content: Record<string, unknown>, index: number) =>
   `content-${(content.id as string) || index}`
 
-
 const getItemPathPrefix = (index: number) => [...(props.pathPrefix || []), index]
-
 
 const getItemFieldPath = (index: number) =>
   `content.${getItemPathPrefix(index).map(String).join('.')}`
-
 
 const getVisibleItemError = (index: number) => {
   const basePath = getItemFieldPath(index)
   const directError = getFieldError?.(basePath)
   const showDirectError = shouldShowFieldError?.(basePath)
 
-
   if (directError && showDirectError) return directError
 
-
   if (typeof document === 'undefined') return null
-
 
   const escapedPath =
     typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
@@ -351,14 +296,12 @@ const getVisibleItemError = (index: number) => {
     `[data-field-path^="${escapedPath}"][data-validation-visible="true"]`
   )
 
-
   if (visibleInvalidField) {
     return (
       visibleInvalidField.querySelector('.text-destructive')?.textContent?.trim() ||
       'Nested fields need attention.'
     )
   }
-
 
   const nestedFieldContainers = Array.from(
     document.querySelectorAll<HTMLElement>(`[data-field-path^="${escapedPath}"]`)
@@ -369,9 +312,7 @@ const getVisibleItemError = (index: number) => {
     return Boolean(nestedError && shouldShowNestedError)
   })
 
-
   if (!collapsedInvalidField) return null
-
 
   return (
     getFieldError?.(collapsedInvalidField.dataset.fieldPath || '') ||
@@ -379,9 +320,7 @@ const getVisibleItemError = (index: number) => {
   )
 }
 
-
 const hasVisibleItemError = (index: number) => Boolean(getVisibleItemError(index))
-
 
 const ensureInvalidItemsOpen = () => {
   const invalidValues = blockItems.value
@@ -390,13 +329,10 @@ const ensureInvalidItemsOpen = () => {
     )
     .filter((value): value is string => Boolean(value))
 
-
   if (invalidValues.length === 0) return
-
 
   openItems.value = Array.from(new Set([...openItems.value, ...invalidValues]))
 }
-
 
 watch(
   () => blockItems.value,
@@ -408,19 +344,16 @@ watch(
   { deep: true, immediate: true }
 )
 
-
 watch(
   () => submitValidationAttempted?.value,
   (attempted, previousAttempted) => {
     if (!attempted || attempted === previousAttempted) return
-
 
     nextTick(() => {
       ensureInvalidItemsOpen()
     })
   }
 )
-
 
 const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
   emit('fieldFocus', payload)
@@ -435,7 +368,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
     <div class="rounded-2xl border border-border bg-surface px-2">
       <div
         v-if="!props.readOnly && hasSelectedItems"
-        class="flex items-center justify-between gap-2 pt-2 px-2"
+        class="flex items-center justify-between pt-2"
       >
         <div class="text-xs font-medium text-muted-foreground">
           {{ selectedItems.length }} selected
@@ -492,7 +425,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
             content.hidden ? 'opacity-50' : '',
           ]"
         >
-          <AccordionHeader class="group">
+          <AccordionHeader class="group relative">
             <AddDropdown
               :item="item"
               :space-id="spaceId"
@@ -502,7 +435,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
               @select="(slug: string) => addItem(slug, i)"
             />
             <div
-              class="absolute left-8 top-3.5 z-10"
+              class="absolute left-6 top-1/2 z-10 -translate-y-1/2"
               @click.stop
             >
               <Checkbox
