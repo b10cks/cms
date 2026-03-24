@@ -157,9 +157,15 @@ const currentItem = computed<FindResult | null>(() =>
   props.itemId ? contentTree.findItemById(props.itemId) : null
 )
 const currentContentItem = computed<ContentTreeItem | null>(() => currentItem.value?.item ?? null)
+const selectedContentModel = computed<Record<string, unknown>>({
+  get: () => (currentContentItem.value ?? contentModel.value) as Record<string, unknown>,
+  set: (value) => {
+    applyContentUpdate(value)
+  },
+})
 const breadcrumbs = computed((): Breadcrumb[] =>
   props.itemId
-    ? contentTree.buildBreadcrumbs(props.itemId).map((crumb: Breadcrumb) => ({
+    ? contentTree.buildBreadcrumbs(props.itemId).map((crumb) => ({
         id: crumb.id ?? '',
         label: crumb.label,
         block: crumb.label,
@@ -352,26 +358,6 @@ const removeAllOutOfSchemaKeys = (): void => {
   applyContentUpdate(data)
   isOutOfSchemaExpanded.value = false
 }
-
-
-const updateSubItem = (updatedValue: unknown): void => {
-  if (!props.itemId || !currentContentItem.value || !updatePreviewItem) return
-
-
-  updatePreviewItem(updatedValue as Record<string, unknown>)
-  contentTree.updateItem(props.itemId, updatedValue as ContentTreeItem)
-}
-
-
-const updateItem = (updatedValue: unknown): void => {
-  if (!updatePreviewItem) return
-
-
-  updatePreviewItem({
-    id: props.rootId,
-    ...(updatedValue as Record<string, unknown>),
-  })
-}
 </script>
 
 <template>
@@ -441,7 +427,7 @@ const updateItem = (updatedValue: unknown): void => {
             >
               <FieldEditor
                 v-if="isVisibleField(fieldKey)"
-                v-model="currentContentItem"
+                v-model="selectedContentModel"
                 :item-id="currentContentItem.id"
                 :item="currentSchema[fieldKey]"
                 :path-segments="[...currentPathPrefix, fieldKey]"
@@ -450,7 +436,6 @@ const updateItem = (updatedValue: unknown): void => {
                 :active-collaborators="
                   props.getActiveCollaborators(currentContentItem.id, fieldKey)
                 "
-                @update:model-value="updateSubItem"
                 @create-template="handleCreateTemplate"
                 @field-update="forwardFieldUpdate"
                 @field-focus="forwardFieldFocus"
@@ -464,14 +449,13 @@ const updateItem = (updatedValue: unknown): void => {
             >
               <FieldEditor
                 v-if="isVisibleField(fieldKey)"
-                v-model="contentModel"
+                v-model="selectedContentModel"
                 :item-id="rootContentId"
                 :item="currentSchema[fieldKey]"
                 :path-segments="[...currentPathPrefix, fieldKey]"
                 :space-id="spaceId"
                 :read-only="props.readOnly"
                 :active-collaborators="props.getActiveCollaborators(rootContentId, fieldKey)"
-                @update:model-value="updateItem"
                 @create-template="handleCreateTemplate"
                 @field-update="forwardFieldUpdate"
                 @field-focus="forwardFieldFocus"

@@ -14,17 +14,22 @@ const { selectTeam } = useGlobalTeam()
 const { usePublicInviteQuery } = useInvites()
 const { t } = useI18n()
 
+
 useSeoMeta({
   title: computed(() => t('labels.login.signupPageTitle')),
 })
 
+
 const inviteId = computed(() => route.query.invite_id as string | undefined)
 const inviteToken = computed(() => route.query.invite_token as string | undefined)
+const returnPath = computed(() => route.query.return as string | undefined)
+
 
 const { data: publicInvite, error: inviteError } = usePublicInviteQuery(inviteId)
 const inviteErrorMessage = computed(() => {
   return (inviteError.value as { data?: { message?: string } } | null)?.data?.message
 })
+
 
 const formData = ref<{
   firstname: string
@@ -44,11 +49,14 @@ const formData = ref<{
   invite_token: inviteToken.value,
 })
 
+
 const hasPendingInvite = computed(() => {
   return publicInvite.value?.status === InviteStatus.PENDING && !!inviteToken.value
 })
 
+
 const emailHash = ref<string | undefined>()
+
 
 watch(
   () => formData.value.email,
@@ -57,14 +65,31 @@ watch(
   }
 )
 
-const loginUrl = computed(
-  () =>
-    `/login${
-      inviteId.value
-        ? `?return=${encodeURIComponent(`/invites/${inviteId.value}?invite_token=${inviteToken.value}`)}`
-        : ''
-    }`
-)
+
+const loginUrl = computed(() => {
+  const params = new URLSearchParams()
+
+  if (inviteId.value) {
+    params.set('invite_id', inviteId.value)
+  }
+
+  if (inviteToken.value) {
+    params.set('invite_token', inviteToken.value)
+  }
+
+  if (returnPath.value) {
+    params.set('return', returnPath.value)
+  } else if (inviteId.value) {
+    params.set(
+      'return',
+      `/invites/${inviteId.value}${inviteToken.value ? `?invite_token=${inviteToken.value}` : ''}`
+    )
+  }
+
+  const query = params.toString()
+  return query ? `/login?${query}` : '/login'
+})
+
 
 const emailMismatch = computed(() => {
   if (!publicInvite.value?.email_hash || !emailHash.value || !formData.value.email) {
@@ -74,6 +99,7 @@ const emailMismatch = computed(() => {
   return publicInvite.value.email_hash !== emailHash.value
 })
 
+
 const handleSignup = async () => {
   const didRegister = await register({
     ...formData.value,
@@ -81,14 +107,17 @@ const handleSignup = async () => {
     invite_token: hasPendingInvite.value ? formData.value.invite_token || undefined : undefined,
   })
 
+
   if (!didRegister) {
     return
   }
+
 
   if (publicInvite.value?.space?.id) {
     router.push(`/${publicInvite.value.space.id}`)
     return
   }
+
 
   if (publicInvite.value?.team?.id) {
     selectTeam(publicInvite.value.team.id)
@@ -160,6 +189,7 @@ const handleSignup = async () => {
         v-model="formData.firstname"
         type="text"
         name="firstname"
+        autocomplete="given-name"
         :label="$t('labels.login.fields.firstnameLabel')"
         :placeholder="$t('labels.login.fields.firstnamePlaceholder')"
         required
@@ -168,6 +198,7 @@ const handleSignup = async () => {
         v-model="formData.lastname"
         type="text"
         name="lastname"
+        autocomplete="family-name"
         :label="$t('labels.login.fields.lastnameLabel')"
         :placeholder="$t('labels.login.fields.lastnamePlaceholder')"
         required
@@ -176,6 +207,7 @@ const handleSignup = async () => {
         v-model="formData.email"
         type="email"
         name="email"
+        autocomplete="email"
         :label="$t('labels.login.fields.emailLabel')"
         :placeholder="$t('labels.login.fields.emailPlaceholder')"
         :description="emailMismatch ? $t('labels.login.emailMismatch') : ''"
@@ -185,6 +217,7 @@ const handleSignup = async () => {
         v-model="formData.password"
         type="password"
         name="password"
+        autocomplete="new-password"
         :label="$t('labels.login.fields.passwordLabel')"
         :placeholder="$t('labels.login.fields.passwordPlaceholder')"
         required
@@ -193,6 +226,7 @@ const handleSignup = async () => {
         v-model="formData.password_confirmation"
         type="password"
         name="password_confirmation"
+        autocomplete="new-password"
         :label="$t('labels.login.fields.passwordConfirmationLabel')"
         :placeholder="$t('labels.login.fields.passwordConfirmationPlaceholder')"
         required

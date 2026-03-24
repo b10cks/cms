@@ -40,8 +40,7 @@ const possibleBlocks = computed(() => {
       const hasValidTag =
         !props.item.restrict_tags ||
         props.item.tag_whitelist?.length === 0 ||
-        !block.tags?.length ||
-        block.tags.some((t) => props.item.tag_whitelist.includes(t))
+        Boolean(block.tags?.some((tag) => props.item.tag_whitelist.includes(tag)))
       const isWhitelisted =
         !props.item.restrict_blocks ||
         props.item.block_whitelist?.length === 0 ||

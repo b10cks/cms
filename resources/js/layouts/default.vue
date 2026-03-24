@@ -6,8 +6,10 @@ import PendingSubscriptionBanner from '~/components/PendingSubscriptionBanner.vu
 const { useCurrentSpaceQuery } = useSpaces()
 const { data: currentSpace } = useCurrentSpaceQuery()
 
+
 const route = useRoute()
 const spaceId = computed(() => (route.params?.space as string) || null)
+
 
 useSeoMeta({
   titleTemplate: (title) => {
@@ -20,26 +22,20 @@ useSeoMeta({
   },
 })
 
+
 provide('spaceId', spaceId)
 </script>
 
 <template>
   <div class="flex min-h-svh flex-col pt-14">
-    <AppHeader>
-      <template #default>
-        <div id="appHeader" />
-      </template>
-      <template #actions>
-        <div id="appActions" />
-      </template>
-    </AppHeader>
+    <AppHeader />
     <PendingSubscriptionBanner
       v-if="spaceId"
       :space-id="spaceId"
     />
-    <div class="flex flex-1">
+    <div class="flex flex-1 min-h-0">
       <AppSidebar />
-      <main class="flex grow w-[calc(100%-3.5rem)]">
+      <main class="flex min-h-0 grow w-[calc(100%-3.5rem)] overflow-hidden">
         <slot />
       </main>
     </div>

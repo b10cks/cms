@@ -15,9 +15,13 @@ useDark()
 useUrlNotifications()
 const commandOpen = ref(false)
 
+
 provide('commandOpen', commandOpen)
 
+
 const route = useRoute()
+const { isAuthenticated } = useAuth()
+
 
 const layoutMap: Record<string, Component> = {
   default: DefaultLayout,
@@ -25,7 +29,12 @@ const layoutMap: Record<string, Component> = {
   unauthenticated: UnauthenticatedLayout,
 }
 
+
 const currentLayout = computed(() => {
+  if (route.name === 'invite' && !isAuthenticated.value) {
+    return UnauthenticatedLayout
+  }
+
   const layoutName = route.meta.layout as string | undefined
   return layoutName ? layoutMap[layoutName] || DefaultLayout : DefaultLayout
 })

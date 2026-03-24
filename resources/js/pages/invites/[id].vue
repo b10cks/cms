@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-import TeamSelector from '~/components/TeamSelector.vue'
-
-import AppHeader from '~/components/AppHeader.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { InviteStatus } from '~/types/invites.d'
@@ -12,15 +9,18 @@ const router = useRouter()
 const { t } = useI18n()
 const inviteId = computed(() => route.params.id as string)
 
+
 const { selectTeam } = useGlobalTeam()
 const { isAuthenticated } = useAuth()
 const { usePublicInviteQuery, useAcceptInviteMutation } = useInvites()
 const { data: invite, isPending, error } = usePublicInviteQuery(inviteId)
 const { mutate: acceptInvite, isPending: isAccepting } = useAcceptInviteMutation()
 
+
 useSeoMeta({
   title: computed(() => t('labels.invites.page.title')),
 })
+
 
 const token = computed(() => {
   const inviteToken = route.query.invite_token
@@ -37,15 +37,28 @@ const token = computed(() => {
   return ''
 })
 
+
 const invitePath = computed(() => {
   const query = token.value ? `?invite_token=${encodeURIComponent(token.value)}` : ''
   return `/invites/${inviteId.value}${query}`
 })
 
-const loginPath = computed(() => `/login?return=${encodeURIComponent(invitePath.value)}`)
+
+const loginPath = computed(() => {
+  const params = new URLSearchParams()
+  params.set('return', invitePath.value)
+  params.set('invite_id', inviteId.value)
+
+  if (token.value) {
+    params.set('invite_token', token.value)
+  }
+
+  return `/login?${params.toString()}`
+})
 const signupPath = computed(() => {
   const params = new URLSearchParams()
   params.set('invite_id', inviteId.value)
+  params.set('return', invitePath.value)
 
   if (token.value) {
     params.set('invite_token', token.value)
@@ -53,6 +66,7 @@ const signupPath = computed(() => {
 
   return `/login/signup?${params.toString()}`
 })
+
 
 const resourceName = computed(() => {
   if (invite.value?.space) {
@@ -64,23 +78,29 @@ const resourceName = computed(() => {
   return 'this resource'
 })
 
+
 const inviterName = computed(() => {
   return invite.value?.inviter?.name || 'Someone'
 })
+
 
 const isExpired = computed(() => {
   return invite.value?.status === InviteStatus.EXPIRED
 })
 
+
 const isAccepted = computed(() => {
   return invite.value?.status === InviteStatus.ACCEPTED
 })
+
 
 const isPendingInvite = computed(() => {
   return invite.value?.status === InviteStatus.PENDING
 })
 
+
 const hasToken = computed(() => token.value.length > 0)
+
 
 const handleAccept = () => {
   if (invite.value?.id && token.value) {
@@ -102,12 +122,7 @@ const handleAccept = () => {
 </script>
 
 <template>
-  <AppHeader v-if="isAuthenticated">
-    <div class="flex items-start">
-      <TeamSelector size="sm" />
-    </div>
-  </AppHeader>
-  <div class="flex w-full grow items-center justify-center bg-background pt-14">
+  <div class="flex w-full grow items-center justify-center bg-background">
     <div class="w-full max-w-md space-y-6">
       <h1 class="text-2xl font-bold">{{ $t('labels.invites.page.title') }}</h1>
       <Alert

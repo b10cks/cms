@@ -735,7 +735,10 @@ useSeoMeta({
       </ResizablePanel>
     </ResizablePanelGroup>
   </div>
-  <Teleport to="#appHeader">
+  <Teleport
+    defer
+    to="#appHeader"
+  >
     <ContentHeader
       v-if="translatableContent"
       :content="translatableContent"
@@ -743,7 +746,10 @@ useSeoMeta({
     />
   </Teleport>
 
-  <Teleport to="#appHeaderActions">
+  <Teleport
+    defer
+    to="#appHeaderActions"
+  >
     <HeaderActions
       v-if="translatableContent"
       :content="translatableContent"

@@ -247,17 +247,48 @@ const currentContentSource = computed<ContentResource | null>(() => {
 
 const content = ref<ContentResource | null>(null)
 const persistedContent = ref<ContentResource | null>(null)
+const editorContentTree = ref<ContentTreeItem | null>(null)
+
+
+const buildEditorContentTree = (value: ContentResource | null): ContentTreeItem | null => {
+  if (!value) return null
+
+
+  return {
+    id: value.id,
+    block: value.block?.slug || '',
+    ...JSON.parse(JSON.stringify((value.content || {}) as Record<string, unknown>)),
+  } as ContentTreeItem
+}
+
+
+const stripEditorContentTree = (value: ContentTreeItem | null): Record<string, unknown> => {
+  if (!value) return {}
+
+
+  const {
+    id: _id,
+    block: _block,
+    ...contentFields
+  } = JSON.parse(JSON.stringify(value)) as ContentTreeItem
+
+
+  return contentFields as Record<string, unknown>
+}
+
+
 const editorContentModel = computed<ContentTreeItem>({
-  get: () => ({
-    id: content.value?.id || '',
-    block: content.value?.block?.slug || '',
-    ...((content.value?.content || {}) as Record<string, unknown>),
-  }),
+  get: () =>
+    editorContentTree.value ||
+    ({
+      id: content.value?.id || '',
+      block: content.value?.block?.slug || '',
+    } as ContentTreeItem),
   set: (value) => {
     if (!content.value) return
 
-    const { id: _id, block: _block, ...contentFields } = value
-    content.value.content = contentFields
+    editorContentTree.value = value
+    content.value.content = stripEditorContentTree(value)
   },
 })
 const {
@@ -306,6 +337,7 @@ const syncPersistedContent = (
 
   if (!content.value || mode === 'replace') {
     content.value = cloneContent(cloned)
+    editorContentTree.value = buildEditorContentTree(content.value)
     return
   }
 
@@ -314,6 +346,11 @@ const syncPersistedContent = (
     ...content.value,
     ...cloned,
     content: content.value.content,
+  }
+
+
+  if (!editorContentTree.value) {
+    editorContentTree.value = buildEditorContentTree(content.value)
   }
 }
 
@@ -346,6 +383,23 @@ watch(
     if (currentSerialized === sanitizedSerialized) return
 
     content.value.content = JSON.parse(sanitizedSerialized)
+  },
+  { deep: true }
+)
+
+
+watch(
+  editorContentTree,
+  (nextTree) => {
+    if (!content.value || !nextTree) return
+
+    const strippedContent = stripEditorContentTree(nextTree)
+    const currentSerialized = JSON.stringify(content.value.content || {})
+    const nextSerialized = JSON.stringify(strippedContent)
+
+    if (currentSerialized === nextSerialized) return
+
+    content.value.content = strippedContent
   },
   { deep: true }
 )
@@ -667,7 +721,7 @@ provide('focusFirstValidationError', focusFirstInvalidField)
   />
   <TabsRoot
     v-model="mode"
-    :class="['flex', showPreview ? 'w-lg' : 'w-full']"
+    :class="['flex min-h-0', showPreview ? 'w-lg' : 'w-full']"
     orientation="vertical"
   >
     <ScrollArea
@@ -847,7 +901,10 @@ provide('focusFirstValidationError', focusFirstInvalidField)
     v-model:open="template.isOpen"
   />
 
-  <Teleport to="#appHeader">
+  <Teleport
+    defer
+    to="#appHeader"
+  >
     <ContentHeader
       v-if="content"
       :content="content"
@@ -855,7 +912,10 @@ provide('focusFirstValidationError', focusFirstInvalidField)
     />
   </Teleport>
 
-  <Teleport to="#appHeaderActions">
+  <Teleport
+    defer
+    to="#appHeaderActions"
+  >
     <HeaderActions
       v-if="content"
       :content="content"

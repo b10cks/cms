@@ -10,165 +10,136 @@ export interface ContentTreeItem {
 
 export interface FindResult {
   item: ContentTreeItem | null
-  path: Array<ContentTreeItem | ContentBlock>
+  path: ContentTreeItem[]
   parent: ContentTreeItem | null
   parentKey: string | null
   index: number | null
 }
 
-export function useContentTree(
-  contentRef: MaybeRef<ContentTreeItem>,
-  root: MaybeRef<ContentBlock>
-) {
-  const findItemById = (itemId: string): FindResult | null => {
-    const content = unref(contentRef)
-    if (!content) {
-      return null
-    }
+type InternalFindResult = {
+  item: ContentTreeItem
+  path: ContentTreeItem[]
+  parent: ContentTreeItem | null
+  parentKey: string | null
+  index: number | null
+}
 
-    if (content.id === itemId) {
-      return null
-    }
+const isContentTreeItem = (value: unknown): value is ContentTreeItem =>
+  Boolean(
+    value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    'id' in value &&
+    typeof (value as { id?: unknown }).id === 'string'
+  )
 
-    const result: FindResult = {
-      item: null,
-      path: [],
-      parent: null,
+const findNestedItem = (
+  node: ContentTreeItem,
+  itemId: string,
+  path: ContentTreeItem[] = []
+): InternalFindResult | null => {
+  if (!isContentTreeItem(node)) {
+    return null
+  }
+
+  const currentPath = [...path, node]
+
+  if (node.id === itemId) {
+    return {
+      item: node,
+      path: currentPath,
+      parent: path[path.length - 1] ?? null,
       parentKey: null,
       index: null,
     }
+  }
 
-    const findInObject = (obj: ContentTreeItem, currentPath: ContentTreeItem[] = []): boolean => {
-      if (!obj || typeof obj !== 'object') return false
+  for (const [key, value] of Object.entries(node)) {
+    if (!value || typeof value !== 'object') {
+      continue
+    }
 
-      if (obj.id === itemId) {
-        result.item = obj
-        result.path = [...currentPath, obj]
-        return true
-      }
+    if (Array.isArray(value)) {
+      for (const [index, entry] of value.entries()) {
+        if (!isContentTreeItem(entry)) {
+          continue
+        }
 
-      for (const key in obj) {
-        const value = obj[key] as ContentTreeItem
-
-        if (typeof value !== 'object' || value === null) continue
-
-        if (Array.isArray(value)) {
-          for (let i = 0; i < value.length; i++) {
-            const item = value[i]
-
-            if (!item || typeof item !== 'object' || !item.id) continue
-
-            const newPath = [...currentPath]
-            if (obj.id) newPath.push(obj)
-
-            if (findInObject(item, newPath)) {
-              result.parent = obj
-              result.parentKey = key
-              result.index = i
-              return true
-            }
-          }
-        } else if (value.id) {
-          const newPath = [...currentPath]
-          if (obj.id) newPath.push(obj)
-
-          if (findInObject(value, newPath)) {
-            result.parent = obj
-            result.parentKey = key
-            return true
+        const result = findNestedItem(entry, itemId, currentPath)
+        if (result) {
+          return {
+            ...result,
+            parent: result.parent ?? node,
+            parentKey: result.parentKey ?? key,
+            index: result.index ?? index,
           }
         }
       }
 
-      return false
+      continue
     }
 
-    findInObject(content)
-    return result
+    if (!isContentTreeItem(value)) {
+      continue
+    }
+
+    const result = findNestedItem(value, itemId, currentPath)
+    if (result) {
+      return {
+        ...result,
+        parent: result.parent ?? node,
+        parentKey: result.parentKey ?? key,
+      }
+    }
+  }
+
+  return null
+}
+
+export function useContentTree(
+  contentRef: MaybeRef<ContentTreeItem>,
+  _root: MaybeRef<ContentBlock>
+) {
+  const findItemById = (itemId: string): FindResult | null => {
+    const content = unref(contentRef)
+    if (!content || content.id === itemId) {
+      return null
+    }
+
+    const result = findNestedItem(content, itemId)
+    if (!result) {
+      return null
+    }
+
+    return {
+      item: result.item,
+      path: result.path,
+      parent: result.parent,
+      parentKey: result.parentKey,
+      index: result.index,
+    }
   }
 
   const buildBreadcrumbs = (itemId: string) => {
-    const item = findItemById(itemId)
-    if (!item) return []
-    const { path } = item
-    return path
+    const result = findItemById(itemId)
+    if (!result) return []
+
+    return result.path
       .map((item) => ({
         id: item.id,
         label: item.block,
       }))
       .slice(0, -1)
-
-    return result
   }
 
   const updateItem = (itemId: string, updatedItem: ContentTreeItem) => {
-    const content = unref(contentRef)
-    if (!content) return false
-
-    const { item, path } = findItemById(itemId)
-
-    if (!item) return false
-
-    if (path.length <= 1) {
-      Object.assign(item, updatedItem)
-      return true
+    const result = findItemById(itemId)
+    if (!result?.item) {
+      return false
     }
 
-    let current: ContentTreeItem = content
-    const pathItemIds = path.map((p) => p.id).filter(Boolean)
-    for (let i = 0; i < pathItemIds.length - 1; i++) {
-      const pathItemId = pathItemIds[i]
-      const foundInArray = Object.entries(current).find(([_, value]) => {
-        if (Array.isArray(value)) {
-          return value.some((item) => item.id === pathItemId)
-        }
-        return false
-      })
-
-      if (foundInArray) {
-        const [_, array] = foundInArray
-        const arrayValue = array as ContentTreeItem[]
-        const index = arrayValue.findIndex((item: ContentTreeItem) => item.id === pathItemId)
-        current = arrayValue[index]
-      } else {
-        // Check for nested objects
-        const foundInObject = Object.entries(current).find(([_, value]) => {
-          return (
-            typeof value === 'object' &&
-            value !== null &&
-            !Array.isArray(value) &&
-            (value as any).id === pathItemId
-          )
-        })
-
-        if (foundInObject) {
-          const [_, obj] = foundInObject
-          current = obj as ContentTreeItem
-        } else {
-          return false // Path item not found
-        }
-      }
-    }
-
-    // Now that we have the parent object, find the target item and update it
-    const targetId = pathItemIds[pathItemIds.length - 1]
-
-    for (const key in current) {
-      const value = current[key]
-
-      if (Array.isArray(value)) {
-        const index = value.findIndex((item: ContentTreeItem) => item.id === targetId)
-        if (index !== -1) {
-          current[key][index] = { ...current[key][index], ...updatedItem }
-          return true
-        }
-      } else if (typeof value === 'object' && value !== null && value.id === targetId) {
-        current[key] = { ...current[key], ...updatedItem }
-        return true
-      }
-    }
-
-    return false
+    Object.assign(result.item, updatedItem)
+    return true
   }
 
   return {

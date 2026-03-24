@@ -15,6 +15,7 @@ import { AvatarList } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import DropIndicator from '~/components/ui/DropIndicator.vue'
 import RenamableTitle from '~/components/ui/RenamableTitle.vue'
+import { ScrollArea } from '~/components/ui/scroll-area'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import {
   getContentDefaultLanguage,
@@ -924,199 +925,204 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <aside ref="treeContainerRef">
-    <div
-      v-if="isLoading"
-      class="flex items-center justify-center py-4"
-    >
-      <span class="text-sm text-muted">Loading...</span>
-    </div>
-
-    <div
-      v-else-if="error"
-      class="px-2 py-4 text-sm text-destructive"
-    >
-      {{ error }}
-    </div>
-
-    <TreeRoot
-      v-slot="{ flattenItems }"
-      v-model:expanded="settings.content.expanded"
-      class="w-full list-none p-2 select-none"
-      :items="rootItems"
-      :get-children="(item) => getChildren(data, item.id)"
-      :get-key="({ id }) => id"
-    >
-      <h2
-        v-if="title && !isLoading"
-        class="px-2 pt-1 pb-3 text-sm font-semibold text-primary"
-      >
-        {{ title }}
-      </h2>
-
+  <aside
+    ref="treeContainerRef"
+    class="flex h-full min-h-0 flex-col overflow-hidden"
+  >
+    <ScrollArea class="h-full min-h-0 flex-1">
       <div
-        v-if="selectedSpace"
-        ref="rootDropZoneRef"
-        :class="[
-          'group relative mb-2 flex w-full items-center gap-2 rounded-md border border-transparent -my-1 px-2 py-1 transition-all duration-150',
-          rootDropMode ? 'bg-accent/50 ring-1 ring-info' : '',
-        ]"
+        v-if="isLoading"
+        class="flex items-center justify-center py-4"
       >
-        <button
-          type="button"
-          class="min-w-0 flex flex-1 items-center gap-2 text-left"
-          @click="
-            router.push({ name: 'space-content-index', params: { space: route.params.space } })
-          "
-        >
-          <div class="min-w-0">
-            <div class="flex items-center gap-2">
-              <NuxtImg
-                v-if="selectedSpace.icon"
-                :src="selectedSpace.icon"
-                :alt="selectedSpace.name"
-                :width="20"
-                :height="20"
-                class="size-5 shrink-0 rounded-sm object-cover"
-              />
-              <Icon
-                v-else
-                name="lucide:cuboid"
-                class="shrink-0 text-muted"
-              />
-              <span class="truncate font-semibold">{{ selectedSpace.name }}</span>
-            </div>
-            <SpaceBadge
-              v-if="selectedSpace.badge"
-              :badge="selectedSpace.badge"
-              size="2xs"
-            />
-          </div>
-        </button>
-
-        <div class="ml-auto flex items-center">
-          <Button
-            v-if="canManageContent"
-            variant="ghost"
-            size="toolbar"
-            @click.stop="initCreate(null)"
-          >
-            <Icon name="lucide:plus" />
-          </Button>
-        </div>
-
-        <DropIndicator
-          v-if="rootDropMode === 'root'"
-          edge="bottom"
-          gap="0px"
-          label="Move to root"
-        />
+        <span class="text-sm text-muted">Loading...</span>
       </div>
 
-      <TreeItem
-        v-for="item in flattenItems"
-        :ref="setItemElement(item.value)"
-        v-slot="{ isExpanded }"
-        :key="item._id"
-        :style="{ 'padding-left': `${item.level - 0.5}rem` }"
-        v-bind="item.bind"
-        :as="RouterLink"
-        :to="buildLink(item.value.id, item.value)"
-        :class="[
-          'group relative my-0.5 flex items-center gap-2 rounded-md py-1 pr-2 pl-0 outline-none',
-          'transition-colors duration-150 hover:bg-border',
-          'cursor-pointer font-semibold',
-          item.value.id === selectedItemId ? 'text-primary' : '',
-          isItemSelected(item.value.id) ? 'bg-border text-primary' : '',
-          activeDropTargetId === item.value.id && activeDropEdge === 'left'
-            ? 'bg-accent/50 ring-1 ring-info/30'
-            : '',
-        ]"
-        @pointerdown="handleItemPointerDown($event, item.value.id)"
-        @click="handleItemNavigate($event, item.value.id)"
-        @toggle="handleToggle"
+      <div
+        v-else-if="error"
+        class="px-2 py-4 text-sm text-destructive"
       >
-        <DropIndicator
-          v-if="activeDropTargetId === item.value.id && activeDropEdge"
-          :edge="activeDropEdge"
-          gap="4px"
-          inset="6px"
-          label="Move into"
-        />
+        {{ error }}
+      </div>
 
-        <button
-          v-if="item.value.children"
-          class="z-10 h-4 w-3 cursor-pointer"
-          @click.stop.prevent="toggleExpanded(item.value.id)"
+      <TreeRoot
+        v-slot="{ flattenItems }"
+        v-model:expanded="settings.content.expanded"
+        class="w-full list-none p-2 select-none"
+        :items="rootItems"
+        :get-children="(item) => getChildren(data, item.id)"
+        :get-key="({ id }) => id"
+      >
+        <h2
+          v-if="title && !isLoading"
+          class="px-2 pt-1 pb-3 text-sm font-semibold text-primary"
         >
-          <Icon
-            name="lucide:chevron-right"
-            :class="['transition-transform duration-200', isExpanded && 'rotate-90']"
-          />
-        </button>
-        <span
-          v-else
-          class="size-4"
-        />
-
-        <Icon
-          :name="`lucide:${item.value.icon}`"
-          class="shrink-0"
-          :style="{ color: item.value.color }"
-        />
-
-        <RenamableTitle
-          :name="item.value.name"
-          :disabled="!canManageContent"
-          class="w-full truncate text-left"
-          @update="handleRename($event, item.value.id)"
-          @edit-start="handleEditStart(item.value.id)"
-          @cancel="handleEditCancel"
-        />
-
-        <div class="ml-auto flex items-center gap-2">
-          <AvatarList
-            v-if="getUsersForContent(item.value.id).length > 0"
-            :users="getUsersForContent(item.value.id)"
-            :max="2"
-            size="sm"
-            class="mr-1"
-          />
-          <div
-            v-if="!item.value.pat"
-            class="h-2 w-2 rounded-full bg-text-muted"
-            title="Draft"
-          />
-          <SimpleTooltip
-            v-else
-            :tooltip="item.value.pat"
-          >
-            <div class="h-2 w-2 rounded-full bg-success" />
-          </SimpleTooltip>
-        </div>
+          {{ title }}
+        </h2>
 
         <div
-          class="absolute right-6 flex items-center gap-1 overflow-clip bg-border opacity-0 transition-opacity duration-200 group-hover:w-auto group-hover:opacity-100"
+          v-if="selectedSpace"
+          ref="rootDropZoneRef"
+          :class="[
+            'group relative mb-2 flex w-full items-center gap-2 rounded-md border border-transparent -my-1 px-2 py-1 transition-all duration-150',
+            rootDropMode ? 'bg-accent/50 ring-1 ring-info' : '',
+          ]"
         >
           <button
-            v-if="canManageContent && item.value.type !== 'single'"
-            class="flex transform cursor-pointer items-center hover:text-primary"
-            @click.stop.prevent="initCreate(item.value.id)"
-          >
-            <Icon name="lucide:plus" />
-          </button>
-          <button
-            v-if="canManageContent"
             type="button"
-            title="Delete item"
-            class="flex transform cursor-pointer items-center hover:text-red-500"
-            @click.stop.prevent="initDelete(item.value)"
+            class="min-w-0 flex flex-1 items-center gap-2 text-left"
+            @click="
+              router.push({ name: 'space-content-index', params: { space: route.params.space } })
+            "
           >
-            <Icon name="lucide:trash-2" />
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <NuxtImg
+                  v-if="selectedSpace.icon"
+                  :src="selectedSpace.icon"
+                  :alt="selectedSpace.name"
+                  :width="20"
+                  :height="20"
+                  class="size-5 shrink-0 rounded-sm object-cover"
+                />
+                <Icon
+                  v-else
+                  name="lucide:cuboid"
+                  class="shrink-0 text-muted"
+                />
+                <span class="truncate font-semibold">{{ selectedSpace.name }}</span>
+              </div>
+              <SpaceBadge
+                v-if="selectedSpace.badge"
+                :badge="selectedSpace.badge"
+                size="2xs"
+              />
+            </div>
           </button>
+
+          <div class="ml-auto flex items-center">
+            <Button
+              v-if="canManageContent"
+              variant="ghost"
+              size="toolbar"
+              @click.stop="initCreate(null)"
+            >
+              <Icon name="lucide:plus" />
+            </Button>
+          </div>
+
+          <DropIndicator
+            v-if="rootDropMode === 'root'"
+            edge="bottom"
+            gap="0px"
+            label="Move to root"
+          />
         </div>
-      </TreeItem>
-    </TreeRoot>
+
+        <TreeItem
+          v-for="item in flattenItems"
+          :ref="setItemElement(item.value)"
+          v-slot="{ isExpanded }"
+          :key="item._id"
+          :style="{ 'padding-left': `${item.level - 0.5}rem` }"
+          v-bind="item.bind"
+          :as="RouterLink"
+          :to="buildLink(item.value.id, item.value)"
+          :class="[
+            'group relative my-0.5 flex items-center gap-2 rounded-md py-1 pr-2 pl-0 outline-none',
+            'transition-colors duration-150 hover:bg-border',
+            'cursor-pointer font-semibold',
+            item.value.id === selectedItemId ? 'text-primary' : '',
+            isItemSelected(item.value.id) ? 'bg-border text-primary' : '',
+            activeDropTargetId === item.value.id && activeDropEdge === 'left'
+              ? 'bg-accent/50 ring-1 ring-info/30'
+              : '',
+          ]"
+          @pointerdown="handleItemPointerDown($event, item.value.id)"
+          @click="handleItemNavigate($event, item.value.id)"
+          @toggle="handleToggle"
+        >
+          <DropIndicator
+            v-if="activeDropTargetId === item.value.id && activeDropEdge"
+            :edge="activeDropEdge"
+            gap="4px"
+            inset="6px"
+            label="Move into"
+          />
+
+          <button
+            v-if="item.value.children"
+            class="z-10 h-4 w-3 cursor-pointer"
+            @click.stop.prevent="toggleExpanded(item.value.id)"
+          >
+            <Icon
+              name="lucide:chevron-right"
+              :class="['transition-transform duration-200', isExpanded && 'rotate-90']"
+            />
+          </button>
+          <span
+            v-else
+            class="size-4"
+          />
+
+          <Icon
+            :name="`lucide:${item.value.icon}`"
+            class="shrink-0"
+            :style="{ color: item.value.color }"
+          />
+
+          <RenamableTitle
+            :name="item.value.name"
+            :disabled="!canManageContent"
+            class="w-full truncate text-left"
+            @update="handleRename($event, item.value.id)"
+            @edit-start="handleEditStart(item.value.id)"
+            @cancel="handleEditCancel"
+          />
+
+          <div class="ml-auto flex items-center gap-2">
+            <AvatarList
+              v-if="getUsersForContent(item.value.id).length > 0"
+              :users="getUsersForContent(item.value.id)"
+              :max="2"
+              size="sm"
+              class="mr-1"
+            />
+            <div
+              v-if="!item.value.pat"
+              class="h-2 w-2 rounded-full bg-text-muted"
+              title="Draft"
+            />
+            <SimpleTooltip
+              v-else
+              :tooltip="item.value.pat"
+            >
+              <div class="h-2 w-2 rounded-full bg-success" />
+            </SimpleTooltip>
+          </div>
+
+          <div
+            class="absolute right-6 flex items-center gap-1 overflow-clip bg-border opacity-0 transition-opacity duration-200 group-hover:w-auto group-hover:opacity-100"
+          >
+            <button
+              v-if="canManageContent && item.value.type !== 'single'"
+              class="flex transform cursor-pointer items-center hover:text-primary"
+              @click.stop.prevent="initCreate(item.value.id)"
+            >
+              <Icon name="lucide:plus" />
+            </button>
+            <button
+              v-if="canManageContent"
+              type="button"
+              title="Delete item"
+              class="flex transform cursor-pointer items-center hover:text-red-500"
+              @click.stop.prevent="initDelete(item.value)"
+            >
+              <Icon name="lucide:trash-2" />
+            </button>
+          </div>
+        </TreeItem>
+      </TreeRoot>
+    </ScrollArea>
 
     <CreateContentDialog
       v-if="canManageContent"

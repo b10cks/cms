@@ -30,7 +30,7 @@ const rootItems = computed(() => getRootItems(data.value) || [])
 </script>
 
 <template>
-  <div class="flex-1 overflow-y-auto bg-background p-6">
+  <div class="flex min-h-0 flex-1 overflow-y-auto bg-background p-6">
     <div
       v-if="rootItems.length === 0"
       class="py-12 text-center"

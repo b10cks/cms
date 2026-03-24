@@ -35,7 +35,7 @@
       "signupHeader": "Get started with b10cks",
       "signupDescription": "Build faster, ship smarter. All the content infrastructure you need—no friction.",
       "invite": "**You're in!**\n\n**{inviter}** just invited you to join **{name}**.",
-      "signup": "New here? [Create an account](/login/signup)",
+      "signup": "New here? [Create an account]({url})",
       "login": "Already a member? [Log back in]({url})",
       "terms": "I agree to b10cks [Terms of Service](https://www.b10cks.com/en/legal/terms-of-service) and [Privacy Policy](https://www.b10cks.com/en/legal/privacy-policy)",
       "forgotPassword": "Forgot your password?",

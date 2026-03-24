@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { useRouteQuery } from '@vueuse/router'
 import { TabsContent, TabsRoot } from 'reka-ui'
+
 import AssetFolderTree from '~/components/assets/AssetFolderTree.vue'
 import AssetGrid from '~/components/assets/AssetGrid.vue'
 import AssetListView from '~/components/assets/AssetListView.vue'
 import AssetTagTree from '~/components/assets/AssetTagTree.vue'
+import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { TabsList, TabsTrigger } from '~/components/ui/tabs'
+
 import ExportAssetsDialog from './assets/ExportAssetsDialog.vue'
 import ImportAssetsDialog from './assets/ImportAssetsDialog.vue'
 
@@ -24,6 +25,7 @@ const tabs = {
   },
 }
 
+
 const modes = {
   grid: {
     icon: 'lucide:grid-3x3',
@@ -35,6 +37,7 @@ const modes = {
   },
 }
 
+
 const props = defineProps<{
   spaceId: string
 }>()
@@ -43,6 +46,7 @@ const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageAssets = computed(() => access.hasAbility('assets.manage'))
 const canManageAssetFolders = computed(() => access.hasAbility('asset_folders.manage'))
 
+
 const selectedFolder = defineModel<string | null>('folderId', {
   default: null,
 })
@@ -50,10 +54,12 @@ const selectedTag = defineModel<string | null>('tagId', {
   default: null,
 })
 
+
 const viewMode = useRouteQuery('view', 'grid') as Ref<'grid' | 'list'>
 const sidebarMode = ref<'folders' | 'tags'>('folders')
 const exportDialogOpen = ref(false)
 const importDialogOpen = ref(false)
+
 
 watch(sidebarMode, (newMode) => {
   if (newMode === 'folders') {
@@ -139,7 +145,10 @@ watch(sidebarMode, (newMode) => {
       </TabsRoot>
     </div>
 
-    <Teleport to="#appHeaderActions">
+    <Teleport
+      defer
+      to="#appHeaderActions"
+    >
       <div class="flex gap-2">
         <Button
           v-if="canManageAssets"

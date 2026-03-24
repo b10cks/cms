@@ -10,9 +10,11 @@ const { login, error, requiresTwoFactor, verifyTwoFactorAndLogin, cancelTwoFacto
 const { t } = useI18n()
 const route = useRoute()
 
+
 useSeoMeta({
   title: computed(() => t('labels.login.pageTitle')),
 })
+
 
 const formData = ref<{
   email: string
@@ -22,19 +24,47 @@ const formData = ref<{
   password: '',
 })
 
+
 const twoFactorDialogOpen = ref(false)
+
 
 watch(requiresTwoFactor, (value) => {
   twoFactorDialogOpen.value = value
 })
 
+
 const handleVerify = async (code: string): Promise<boolean> => {
   return await verifyTwoFactorAndLogin(code)
 }
 
+
 const handleCancel = () => {
   cancelTwoFactorLogin()
 }
+
+
+const signupUrl = computed(() => {
+  const params = new URLSearchParams()
+  const inviteId = route.query.invite_id
+  const inviteToken = route.query.invite_token
+  const returnPath = route.query.return
+
+  if (typeof inviteId === 'string' && inviteId.length > 0) {
+    params.set('invite_id', inviteId)
+  }
+
+  if (typeof inviteToken === 'string' && inviteToken.length > 0) {
+    params.set('invite_token', inviteToken)
+  }
+
+  if (typeof returnPath === 'string' && returnPath.length > 0) {
+    params.set('return', returnPath)
+  }
+
+  const query = params.toString()
+  return query ? `/login/signup?${query}` : '/login/signup'
+})
+
 
 // Handle session expired message
 onMounted(() => {
@@ -42,6 +72,7 @@ onMounted(() => {
     error.value = 'Your session has expired. Please log in again.'
   }
 })
+
 
 const e = ref(null)
 </script>
@@ -75,6 +106,7 @@ const e = ref(null)
         v-model="formData.email"
         type="email"
         name="email"
+        autocomplete="username"
         :label="$t('labels.login.fields.emailLabel')"
         :placeholder="$t('labels.login.fields.emailPlaceholder')"
         required
@@ -84,6 +116,7 @@ const e = ref(null)
           v-model="formData.password"
           type="password"
           name="password"
+          autocomplete="current-password"
           :label="$t('labels.login.fields.passwordLabel')"
           :placeholder="$t('labels.login.fields.passwordPlaceholder')"
           required
@@ -93,7 +126,7 @@ const e = ref(null)
         </div>
       </div>
       <Button variant="primary">{{ $t('actions.login') }}</Button>
-      <Markdown :content="$t('labels.login.signup')" />
+      <Markdown :content="$t('labels.login.signup', { url: signupUrl })" />
     </form>
   </div>
   <TwoFactorVerifyDialog

@@ -1957,7 +1957,10 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="flex min-h-0 w-full flex-1 flex-col bg-background">
-    <Teleport to="#appHeader">
+    <Teleport
+      defer
+      to="#appHeader"
+    >
       <div class="min-w-0">
         <h1 class="flex items-center gap-2">
           <span class="text-lg font-semibold text-primary">{{
@@ -1968,7 +1971,10 @@ onBeforeUnmount(() => {
       </div>
     </Teleport>
 
-    <Teleport to="#appHeaderActions">
+    <Teleport
+      defer
+      to="#appHeaderActions"
+    >
       <div class="flex items-center gap-2">
         <AvatarList
           v-if="collaboration.collaborators.value.length > 0"

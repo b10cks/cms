@@ -251,14 +251,20 @@ useSeoMeta({
     </div>
   </div>
 
-  <Teleport to="#appHeader">
+  <Teleport
+    defer
+    to="#appHeader"
+  >
     <ContentHeader
       v-if="activeContent"
       :content="activeContent"
     />
   </Teleport>
 
-  <Teleport to="#appHeaderActions">
+  <Teleport
+    defer
+    to="#appHeaderActions"
+  >
     <div
       v-if="canonicalContent"
       class="flex items-center gap-3"
