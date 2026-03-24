@@ -628,7 +628,8 @@
       "description": "Build and manage your reusable content blocks.",
       "summary": {
         "required": "Required",
-        "indexable": "Indexable",
+        "indexable": "Is indexed",
+        "translatable": "Is translatable",
         "conditionsAll": "Match all conditions",
         "conditionsAny": "Match any conditions"
       },
