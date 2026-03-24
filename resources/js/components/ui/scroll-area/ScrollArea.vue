@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { cn } from '@/lib/utils'
 import {
   ScrollAreaCorner,
   ScrollAreaRoot,
@@ -7,9 +6,13 @@ import {
   ScrollAreaViewport,
 } from 'reka-ui'
 import { computed, type HTMLAttributes } from 'vue'
+
+import { cn } from '@/lib/utils'
+
 import ScrollBar from './ScrollBar.vue'
 
 const props = defineProps<ScrollAreaRootProps & { class?: HTMLAttributes['class'] }>()
+
 
 const delegatedProps = computed(() => {
   const { class: _a, type: _b, scrollHideDelay: _c, ...delegated } = props

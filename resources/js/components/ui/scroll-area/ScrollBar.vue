@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { cn } from '@/lib/utils'
 import { ScrollAreaScrollbar, type ScrollAreaScrollbarProps, ScrollAreaThumb } from 'reka-ui'
 import { computed, type HTMLAttributes } from 'vue'
+
+import { cn } from '@/lib/utils'
 
 const props = withDefaults(
   defineProps<ScrollAreaScrollbarProps & { class?: HTMLAttributes['class'] }>(),
@@ -9,6 +10,7 @@ const props = withDefaults(
     orientation: 'vertical',
   }
 )
+
 
 const delegatedProps = computed(() => {
   const { class: _, ...delegated } = props
@@ -22,9 +24,9 @@ const delegatedProps = computed(() => {
     v-bind="delegatedProps"
     :class="
       cn(
-        'flex touch-none transition-colors select-none',
-        orientation === 'vertical' && 'h-full w-2.5 border-l border-l-transparent p-px',
-        orientation === 'horizontal' && 'h-2.5 flex-col border-t border-t-transparent p-px',
+        'flex touch-none select-none transition-all duration-1000 ease-out data-[state=visible]:duration-200 data-[state=visible]:opacity-100 data-[state=hidden]:opacity-0',
+        orientation === 'vertical' && 'h-full w-2 border-l border-l-transparent p-px',
+        orientation === 'horizontal' && 'h-2 flex-col border-t border-t-transparent p-px',
         props.class
       )
     "
