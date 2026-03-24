@@ -30,42 +30,30 @@ const rootItems = computed(() => getRootItems(data.value) || [])
 </script>
 
 <template>
-  <div class="flex min-h-0 flex-1 overflow-y-auto bg-background p-6">
-    <div
-      v-if="rootItems.length === 0"
-      class="py-12 text-center"
-    >
+  <div class="flex h-full grow bg-background p-6">
+    <div class="grow flex justify-center flex-col text-center">
       <ContentsIcon class="mx-auto mb-6 w-32 text-muted" />
-      <h3 class="mb-2 text-xl font-bold">No Content Selected</h3>
-      <p class="mb-6 text-muted">Start by creating your first content page</p>
-      <Button
-        v-if="canAccessCanvas"
-        :as="RouterLink"
-        :to="{ name: 'space-canvas', params: { space: spaceId } }"
-        variant="outline"
-      >
-        <Icon name="lucide:network" />
-        {{ $t('labels.contents.canvas.entry') }}
-      </Button>
-    </div>
-    <div
-      v-else
-      class="py-12 text-center"
-    >
-      <ContentsIcon class="mx-auto mb-6 w-32 text-muted" />
-      <h3 class="mb-2 text-xl font-bold">Content Manager</h3>
-      <p class="mb-6 text-muted">
-        Select an item from the content menu to edit or create new content.
-      </p>
-      <Button
-        v-if="canAccessCanvas"
-        :as="RouterLink"
-        :to="{ name: 'space-canvas', params: { space: spaceId } }"
-        variant="outline"
-      >
-        <Icon name="lucide:network" />
-        {{ $t('labels.contents.canvas.entry') }}
-      </Button>
+      <template v-if="rootItems.length === 0">
+        <h3 class="mb-2 text-xl font-bold">No Content Selected</h3>
+        <p class="mb-6 text-muted">Start by creating your first content page</p>
+      </template>
+      <template v-else>
+        <h3 class="mb-2 text-xl font-bold">Content Manager</h3>
+        <p class="mb-6 text-muted">
+          Select an item from the content menu to edit or create new content.
+        </p>
+      </template>
+      <div>
+        <Button
+          v-if="canAccessCanvas"
+          :as="RouterLink"
+          :to="{ name: 'space-canvas', params: { space: spaceId } }"
+          variant="outline"
+        >
+          <Icon name="lucide:network" />
+          {{ $t('labels.contents.canvas.entry') }}
+        </Button>
+      </div>
     </div>
   </div>
 </template>
