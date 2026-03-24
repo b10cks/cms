@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { TabsList, TabsRoot, TabsTrigger, TreeItem, TreeRoot } from 'reka-ui'
+
 import type { BlockFolderResource } from '~/api/resources/block-folders'
 import CreateBlockFolderDialog from '~/components/blocks/CreateBlockFolderDialog.vue'
+import Icon from '~/components/Icon.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { ScrollArea } from '~/components/ui/scroll-area'
@@ -12,11 +12,14 @@ const mode = defineModel<'list' | 'tags'>('mode', {
   default: 'list',
 })
 
+
 const selectedFolder = defineModel<string | null>('selectedFolder')
+
 
 const props = defineProps<{
   spaceId: string
 }>()
+
 
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
@@ -24,22 +27,28 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageBlockFolders = computed(() => access.hasAbility('blocks.manage'))
 
+
 const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
+
 
 const { useFolderStructure, useDeleteBlockFolderMutation } = useBlockFolders(props.spaceId)
 const { rootFolders, getChildrenOfFolder } = useFolderStructure()
 const { mutate: deleteBlockFolder } = useDeleteBlockFolderMutation()
 
+
 const { useBlockTagsQuery } = useBlockTags(props.spaceId)
 const { data: blockTags } = useBlockTagsQuery({ per_page: 500 })
 
+
 const showCreateFolderDialog = ref(false)
+
 
 function handleSelectFolder(folder?: BlockFolderResource) {
   selectedFolder.value = folder ? folder?.id : undefined
   mode.value = 'list'
 }
+
 
 const initDeleteFolder = async (folder: BlockFolderResource) => {
   const confirmed = await alert.confirm(
@@ -51,6 +60,7 @@ const initDeleteFolder = async (folder: BlockFolderResource) => {
     }
   )
 
+
   if (confirmed) {
     deleteBlockFolder(folder.id)
     if (selectedFolder.value === folder.id) {
@@ -58,6 +68,7 @@ const initDeleteFolder = async (folder: BlockFolderResource) => {
     }
   }
 }
+
 
 const tabs = computed(() => ({
   list: {
@@ -74,7 +85,7 @@ const tabs = computed(() => ({
 </script>
 
 <template>
-  <div class="sticky top-14 flex h-[calc(100vh-3.5rem)] min-w-2xs flex-col overflow-hidden p-2">
+  <div class="sticky top-0 flex h-[calc(100vh-3.5rem)] min-w-2xs flex-col overflow-hidden p-2">
     <TabsRoot
       v-model="mode"
       default-value="list"

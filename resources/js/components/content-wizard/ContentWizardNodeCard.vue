@@ -348,67 +348,28 @@ const handleBlockChange = (value: AcceptableValue) => {
         v-if="canMutate && blocksForRight.length > 0 && !node.deletedReason"
         ref="rightAddMenuRef"
         :blocks="blocksForRight"
+        :is-action-active="isActionActive"
         side="right"
         @select="emit('add', { block: $event, position: 'child' })"
-      >
-        <button
-          type="button"
-          :class="
-            cn(
-              'absolute top-1/2 -right-6 flex size-6 -translate-y-1/2 items-center justify-center rounded-full bg-accent text-primary transition',
-              isActionActive
-                ? 'pointer-events-auto cursor-pointer opacity-100 scale-50 hover:scale-100'
-                : 'pointer-events-none opacity-0 group-hover:pointer-events-auto hover:text-primary'
-            )
-          "
-        >
-          <Icon name="lucide:plus" />
-        </button>
-      </ContentWizardAddMenu>
+      />
 
       <ContentWizardAddMenu
         v-if="canMutate && blocksForBottom.length > 0 && !node.deletedReason"
         ref="bottomAddMenuRef"
         :blocks="blocksForBottom"
+        :is-action-active="isActionActive"
         side="bottom"
         @select="emit('add', { block: $event, position: 'sibling' })"
-      >
-        <button
-          type="button"
-          :class="
-            cn(
-              'absolute -bottom-6 left-1/2 flex size-6 -translate-x-1/2 items-center justify-center rounded-full bg-accent text-primary transition',
-              isActionActive
-                ? 'pointer-events-auto cursor-pointer opacity-100 scale-50 hover:scale-100'
-                : 'pointer-events-none opacity-0 group-hover:pointer-events-auto hover:text-primary'
-            )
-          "
-        >
-          <Icon name="lucide:plus" />
-        </button>
-      </ContentWizardAddMenu>
+      />
     </template>
 
     <ContentWizardAddMenu
       v-if="canMutate && node.isRootVirtual && blocksForBottom.length > 0"
       ref="bottomAddMenuRef"
       :blocks="blocksForBottom"
+      :is-action-active="isActionActive"
       side="bottom"
       @select="emit('add', { block: $event, position: 'child' })"
-    >
-      <button
-        type="button"
-        :class="
-          cn(
-            'absolute -bottom-3.5 left-1/2 flex size-7 -translate-x-1/2 items-center justify-center rounded-full bg-accent text-primary transition',
-            isActionActive
-              ? 'pointer-events-auto opacity-100'
-              : 'pointer-events-none opacity-0 scale-50 group-hover:pointer-events-auto group-hover:scale-100 hover:text-primary'
-          )
-        "
-      >
-        <Icon name="lucide:plus" />
-      </button>
-    </ContentWizardAddMenu>
+    />
   </div>
 </template>

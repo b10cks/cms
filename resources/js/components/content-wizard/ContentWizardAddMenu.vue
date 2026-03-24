@@ -2,33 +2,40 @@
 import { useVModel } from '@vueuse/core'
 
 import Icon from '~/components/Icon.vue'
-import { Button } from '~/components/ui/button'
+import { Input } from '~/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
+
+import IconName from '../ui/IconName.vue'
 
 const props = withDefaults(
   defineProps<{
     modelValue?: boolean
     blocks: BlockResource[]
     disabled?: boolean
-    side?: 'left' | 'right' | 'bottom'
+    isActionActive: boolean
+    side?: 'right' | 'bottom'
   }>(),
   {
     modelValue: false,
     disabled: false,
+    isActionActive: false,
     side: 'bottom',
   }
 )
+
 
 const emit = defineEmits<{
   (event: 'update:modelValue', value: boolean): void
   (event: 'select', value: BlockResource): void
 }>()
 
+
 const open = useVModel(props, 'modelValue', emit, {
   passive: true,
 })
 const query = ref('')
 const searchRef = ref<HTMLInputElement | null>(null)
+
 
 const filteredBlocks = computed(() => {
   const needle = query.value.trim().toLowerCase()
@@ -41,6 +48,7 @@ const filteredBlocks = computed(() => {
   )
 })
 
+
 watch(open, async (value) => {
   if (!value) {
     query.value = ''
@@ -52,16 +60,29 @@ watch(open, async (value) => {
   searchRef.value?.select()
 })
 
+
 const selectBlock = (block: BlockResource) => {
   emit('select', block)
   open.value = false
 }
+
 
 const openMenu = () => {
   if (!props.disabled && props.blocks.length > 0) {
     open.value = true
   }
 }
+
+
+const positionClass = computed(() => {
+  switch (props.side) {
+    case 'right':
+      return 'top-1/2 -right-6 -translate-y-1/2'
+    default:
+      return '-bottom-6 left-1/2 -translate-x-1/2'
+  }
+})
+
 
 defineExpose({
   openMenu,
@@ -76,10 +97,14 @@ defineExpose({
       data-add-menu
     >
       <slot>
-        <Button
-          variant="outline"
-          size="icon"
-          class="size-7 rounded-full border-dashed"
+        <button
+          :class="[
+            'absolute flex size-6 items-center justify-center rounded-full bg-accent text-primary transition',
+            positionClass,
+            isActionActive
+              ? 'pointer-events-auto cursor-pointer opacity-100 scale-50 hover:scale-100'
+              : 'pointer-events-none opacity-0 group-hover:pointer-events-auto hover:text-primary',
+          ]"
           :disabled="disabled"
         >
           <Icon name="lucide:plus" />
@@ -90,14 +115,13 @@ defineExpose({
     <PopoverContent
       :side="side"
       align="center"
-      class="w-72 rounded-2xl border border-border bg-background p-2 shadow-soft-lg"
+      class="w-72 border border-border"
     >
       <div class="space-y-2">
-        <input
+        <Input
           ref="searchRef"
           v-model="query"
           :placeholder="$t('labels.contents.canvas.searchBlocks')"
-          class="flex h-9 w-full rounded-md border border-input-border bg-input px-3 py-1 text-sm text-primary shadow-sm outline-none placeholder:text-muted"
         />
 
         <div
@@ -115,19 +139,14 @@ defineExpose({
             v-for="block in filteredBlocks"
             :key="block.id"
             type="button"
-            class="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-accent"
+            class="flex w-full items-center gap-3 rounded px-2 py-1 text-left transition-colors hover:bg-accent"
             @click="selectBlock(block)"
           >
-            <div
-              class="flex size-8 items-center justify-center rounded-lg border border-border bg-muted/50"
-              :style="block.color ? { color: block.color } : undefined"
-            >
-              <Icon :name="block.icon ? `lucide:${block.icon}` : 'lucide:layout-template'" />
-            </div>
-            <div class="min-w-0">
-              <div class="truncate font-medium text-primary">{{ block.name }}</div>
-              <div class="truncate text-xs text-muted">{{ block.type }}</div>
-            </div>
+            <IconName
+              :icon="block.icon"
+              :color="block.color"
+              :name="block.name"
+            />
           </button>
         </div>
       </div>
