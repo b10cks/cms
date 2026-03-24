@@ -5,6 +5,7 @@ import { toast } from 'vue-sonner'
 import type { MentionItem } from '~/api/resources/ai'
 import ContentWizardAiDock from '~/components/content-wizard/ContentWizardAiDock.vue'
 import ContentWizardCanvas from '~/components/content-wizard/ContentWizardCanvas.vue'
+import ContentCanvasHelpDialog from '~/components/content-wizard/ContentCanvasHelpDialog.vue'
 import ContentWizardToolbar from '~/components/content-wizard/ContentWizardToolbar.vue'
 import type { AiMentionItem } from '~/components/editor/extensions/AiMention'
 import Icon from '~/components/Icon.vue'
@@ -94,6 +95,7 @@ const focusedNodeId = ref<string | null>(CONTENT_WIZARD_ROOT_ID)
 const draggingNodeId = ref<string | null>(null)
 const dropTargetId = ref<string | null>(null)
 const rootDropActive = ref(false)
+const isHelpDialogOpen = ref(false)
 const initialized = ref(false)
 const aiStatus = ref<{
   message: string
@@ -2079,6 +2081,7 @@ onBeforeUnmount(() => {
           :can-redo="history.canRedo.value"
           :apply-error="applyError"
           @reload="reloadFromServer"
+          @help="isHelpDialogOpen = true"
           @undo="handleUndo"
           @redo="handleRedo"
           @zoom-reset="canvasRef?.setZoom100()"
@@ -2134,6 +2137,8 @@ onBeforeUnmount(() => {
           @cancel="handleAiCancel"
           @focus-warning="handleFocusAiWarning"
         />
+
+        <ContentCanvasHelpDialog v-model:open="isHelpDialogOpen" />
       </template>
     </main>
   </div>

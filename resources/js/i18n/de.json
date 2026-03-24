@@ -487,7 +487,33 @@
         "aiSummaryMove": "{count} Verschiebung | {count} Verschiebungen",
         "aiSummaryUpdate": "{count} Aktualisierung | {count} Aktualisierungen",
         "aiSummaryDelete": "{count} Löschung | {count} Löschungen",
-        "aiSummaryRestore": "{count} Wiederherstellung | {count} Wiederherstellungen"
+        "aiSummaryRestore": "{count} Wiederherstellung | {count} Wiederherstellungen",
+        "help": {
+          "open": "Canvas-Hilfe öffnen",
+          "title": "So nutzt du den Canvas",
+          "description": "Mit dem Canvas bereitest du Hierarchie-Änderungen vor, arbeitest schneller per Tastatur und steuerst den Viewport direkt im Entwurf.",
+          "sections": {
+            "navigation": "Navigation",
+            "editing": "Bearbeitung",
+            "history": "Verlauf",
+            "viewport": "Viewport"
+          },
+          "items": {
+            "moveFocus": "Bewege den Fokus zum nächsten sichtbaren Knoten in diese Richtung.",
+            "toggleCollapse": "Nutze die Collapse-Aktion an einem Knoten, um seine Nachfahren für alle im Canvas ein- oder auszublenden.",
+            "rename": "Starte sofort die Bearbeitung des Titels des fokussierten Knotens.",
+            "createChild": "Erstellt, wenn möglich, ein Kind mit demselben Block. Wenn die Platzierung nicht gültig ist, öffnet sich stattdessen das Menü zum Hinzufügen eines Kindes.",
+            "createSibling": "Erstellt, wenn möglich, ein Geschwister mit demselben Block. Wenn die Platzierung nicht gültig ist, öffnet sich stattdessen das Menü zum Hinzufügen eines Geschwisters.",
+            "toggleDelete": "Schaltet das Löschen im Entwurf für den fokussierten Knoten um.",
+            "undo": "Macht die zuletzt aufgezeichnete Entwurfsänderung rückgängig.",
+            "redo": "Stellt die zuletzt rückgängig gemachte Entwurfsänderung wieder her.",
+            "redoAlternative": "Alternativer Wiederholen-Shortcut auf Plattformen, die ihn unterstützen.",
+            "dragPan": "Ziehe auf einer freien Canvas-Fläche, um in jede Richtung zu pannen.",
+            "scrollPan": "Normales Scrollen oder Trackpad-Bewegungen verschieben den Canvas.",
+            "modifiedZoom": "Halte Ctrl oder Cmd gedrückt und nutze Mausrad oder Trackpad-Geste zum Zoomen.",
+            "toolbarZoom": "Mit den Toolbar-Steuerelementen kannst du zoomen, auf 100 % zurücksetzen oder den aktuellen Baum einpassen."
+          }
+        }
       },
       "fields": {
         "name": "Name",

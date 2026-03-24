@@ -494,7 +494,33 @@
         "aiSummaryMove": "{count} move | {count} moves",
         "aiSummaryUpdate": "{count} update | {count} updates",
         "aiSummaryDelete": "{count} delete | {count} deletes",
-        "aiSummaryRestore": "{count} restore | {count} restores"
+        "aiSummaryRestore": "{count} restore | {count} restores",
+        "help": {
+          "open": "Open canvas help",
+          "title": "How to use the canvas",
+          "description": "Use the canvas to stage hierarchy changes, move quickly with the keyboard, and manage the viewport without leaving the draft.",
+          "sections": {
+            "navigation": "Navigation",
+            "editing": "Editing",
+            "history": "History",
+            "viewport": "Viewport"
+          },
+          "items": {
+            "moveFocus": "Move focus to the nearest visible node in that direction.",
+            "toggleCollapse": "Use the collapse action on a node to hide or reveal its descendants for everyone on the canvas.",
+            "rename": "Start editing the focused node title immediately.",
+            "createChild": "Create a child of the same block when possible. If that placement is not valid, the child add menu opens instead.",
+            "createSibling": "Create a sibling of the same block when possible. If that placement is not valid, the sibling add menu opens instead.",
+            "toggleDelete": "Toggle draft deletion for the focused node.",
+            "undo": "Undo the last recorded draft change.",
+            "redo": "Redo the most recently undone draft change.",
+            "redoAlternative": "Alternative redo shortcut on platforms that support it.",
+            "dragPan": "Drag on empty canvas space to pan in any direction.",
+            "scrollPan": "Use normal scrolling or trackpad movement to pan the canvas.",
+            "modifiedZoom": "Hold Ctrl or Cmd while using the wheel or trackpad gesture to zoom.",
+            "toolbarZoom": "Use the toolbar controls to zoom, reset to 100%, or fit the current tree into view."
+          }
+        }
       },
       "fields": {
         "name": "Name",

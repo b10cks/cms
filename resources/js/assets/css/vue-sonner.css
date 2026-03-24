@@ -278,9 +278,9 @@ html[dir='rtl'],
   transform: var(--y) translateY(var(--swipe-amount-y, 0px)) translateX(var(--swipe-amount-x, 0px));
 }
 
-[data-sonner-toast][data-swiped='true'] {
+/*[data-sonner-toast][data-swiped='true'] {
   @apply select-none;
-}
+}*/
 
 /* Swipe Out Animations */
 [data-sonner-toast][data-swipe-out='true'][data-y-position='bottom'],

@@ -14,6 +14,7 @@ defineProps<{
 
 defineEmits<{
   (event: 'reload'): void
+  (event: 'help'): void
   (event: 'undo'): void
   (event: 'redo'): void
   (event: 'zoom-reset'): void
@@ -60,6 +61,14 @@ defineEmits<{
     <div
       class="pointer-events-auto flex items-center gap-1 rounded-xl border border-border bg-background/50 p-2 shadow-soft backdrop-blur"
     >
+      <Button
+        variant="ghost"
+        size="toolbar"
+        @click="$emit('help')"
+      >
+        <Icon name="lucide:circle-help" />
+        <span class="sr-only">{{ $t('labels.contents.canvas.help.open') }}</span>
+      </Button>
       <Button
         variant="ghost"
         size="toolbar"
