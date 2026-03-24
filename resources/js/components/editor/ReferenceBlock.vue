@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { useSortable } from '@vueuse/integrations/useSortable'
+import { computed, nextTick, ref, watch } from 'vue'
 
 import Icon from '~/components/Icon.vue'
-import { Button } from '~/components/ui/button'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 
-import ContentPicker from './ContentPicker.vue'
+import ContentSelect from './ContentSelect.vue'
 
 const props = defineProps<{
   modelValue?: string[] | null
@@ -23,9 +23,8 @@ const { useContentMenuQuery } = useContentMenu(props.spaceId)
 const { data: contentMenu } = useContentMenuQuery()
 
 const localValue = ref<string[]>([])
-const showContentPicker = ref(false)
-const draggedIndex = ref<number | null>(null)
 const editingIndex = ref<number | null>(null)
+const sortableContainer = ref<HTMLElement | null>(null)
 
 // Sync with props
 watch(
@@ -48,6 +47,8 @@ const canAddMore = computed(() => {
 
 const minReferences = computed(() => props.item.min || 0)
 
+const isSingle = computed(() => props.item.type === 'reference' || props.item.max === 1)
+
 // Helper functions
 const updateValue = () => {
   const hasMinimumReferences = localValue.value.length >= minReferences.value
@@ -63,109 +64,6 @@ const getContentName = (contentId: string): string => {
   return item?.name || $t('labels.references.unknownContent')
 }
 
-// Event handlers
-const handleContentSelect = (contentId: string) => {
-  if (editingIndex.value !== null) {
-    // Replace existing reference
-    localValue.value[editingIndex.value] = contentId
-    editingIndex.value = null
-  } else {
-    // Add new reference
-    if (!canAddMore.value) return
-
-    // Check for duplicates
-    if (localValue.value.some((ref) => ref === contentId)) {
-      alert.message($t('messages.references.duplicateReference'), {
-        title: $t('labels.references.duplicateTitle'),
-        okLabel: $t('actions.ok'),
-      })
-      return
-    }
-
-    localValue.value.push(contentId)
-  }
-
-  updateValue()
-  showContentPicker.value = false
-}
-
-const handleContentWithAnchorSelect = (contentId: string, anchorId: string) => {
-  if (editingIndex.value !== null) {
-    localValue.value[editingIndex.value] = contentId
-    editingIndex.value = null
-  } else {
-    if (!canAddMore.value) return
-
-    if (localValue.value.some((ref) => ref === contentId)) {
-      alert.message($t('messages.references.duplicateReference'), {
-        title: $t('labels.references.duplicateTitle'),
-        okLabel: $t('actions.ok'),
-      })
-      return
-    }
-
-    localValue.value.push(contentId)
-  }
-
-  updateValue()
-  showContentPicker.value = false
-}
-
-const handleReferenceEdit = (index: number) => {
-  editingIndex.value = index
-  showContentPicker.value = true
-}
-
-const handleReferenceDelete = async (index: number) => {
-  const reference = localValue.value[index]
-  if (!reference) return
-
-  const confirmed = await alert.confirm(
-    $t('messages.references.confirmDelete', { name: getContentName(reference.id) }),
-    {
-      title: $t('labels.references.removeReference'),
-      confirmLabel: $t('actions.remove'),
-      cancelLabel: $t('actions.cancel'),
-    }
-  )
-
-  if (confirmed) {
-    localValue.value.splice(index, 1)
-    updateValue()
-  }
-}
-
-// Drag and drop handlers
-const handleDragStart = (e: DragEvent, index: number) => {
-  if (!e.dataTransfer) return
-  draggedIndex.value = index
-  e.dataTransfer.effectAllowed = 'move'
-  e.dataTransfer.setData('text/plain', index.toString())
-}
-
-const handleDragOver = (e: DragEvent) => {
-  e.preventDefault()
-  if (e.dataTransfer) {
-    e.dataTransfer.dropEffect = 'move'
-  }
-}
-
-const handleDrop = (e: DragEvent, targetIndex: number) => {
-  e.preventDefault()
-
-  if (draggedIndex.value === null || draggedIndex.value === targetIndex) {
-    draggedIndex.value = null
-    return
-  }
-
-  const draggedItem = localValue.value[draggedIndex.value]
-  localValue.value.splice(draggedIndex.value, 1)
-  localValue.value.splice(targetIndex, 0, draggedItem)
-
-  updateValue()
-  draggedIndex.value = null
-}
-
 const getContentIcon = (contentId: string): string => {
   if (!contentMenu.value || !contentId) return 'file'
   const item = contentMenu.value[contentId]
@@ -177,6 +75,75 @@ const getContentColor = (contentId: string): string => {
   const item = contentMenu.value[contentId]
   return item?.color || '#64748b'
 }
+
+// Event handlers
+
+/** Handle selection from ContentSelect (add or replace) */
+const handleContentSelect = (contentId: string) => {
+  if (editingIndex.value !== null) {
+    localValue.value[editingIndex.value] = contentId
+    editingIndex.value = null
+  } else {
+    if (!canAddMore.value) return
+
+    localValue.value.push(contentId)
+  }
+
+  updateValue()
+}
+
+/** Handle ContentSelect update:modelValue when used for single reference */
+const handleSingleSelect = (contentId: string) => {
+  localValue.value = [contentId]
+  updateValue()
+}
+
+const handleReferenceEdit = (index: number) => {
+  editingIndex.value = index
+}
+
+const handleEditSelect = (index: number, contentId: string) => {
+  localValue.value[index] = contentId
+  editingIndex.value = null
+  updateValue()
+}
+
+const handleReferenceDelete = async (index: number) => {
+  const reference = localValue.value[index]
+  if (!reference) return
+
+  const confirmed = await alert.confirm(
+    $t('messages.references.confirmDelete', { name: getContentName(reference) }),
+    {
+      title: $t('labels.references.removeReference'),
+      confirmLabel: $t('actions.remove'),
+      cancelLabel: $t('actions.cancel'),
+    }
+  )
+
+  if (confirmed) {
+    localValue.value.splice(index, 1)
+    if (editingIndex.value === index) editingIndex.value = null
+    updateValue()
+  }
+}
+
+// Drag and drop via sortable
+const setupSortable = () => {
+  nextTick(() => {
+    if (!sortableContainer.value) return
+    ;(useSortable as any)(sortableContainer, localValue, {
+      handle: '[reference-draggable]',
+      onEnd: () => nextTick(() => updateValue()),
+    })
+  })
+}
+
+watch(
+  () => localValue.value.length,
+  () => setupSortable(),
+  { immediate: true }
+)
 </script>
 
 <template>
@@ -192,7 +159,20 @@ const getContentColor = (contentId: string): string => {
         {{ item.description }}
       </p>
     </div>
-    <div class="space-y-2">
+
+    <!-- Single reference: inline select -->
+    <ContentSelect
+      v-if="isSingle"
+      :model-value="localValue[0] ?? null"
+      :space-id="spaceId"
+      @update:model-value="handleSingleSelect"
+    />
+
+    <!-- Multiple references: list + add select -->
+    <div
+      v-else
+      class="space-y-2"
+    >
       <div
         v-if="!hasReferences"
         class="flex flex-col items-center justify-center gap-2 py-2"
@@ -205,65 +185,77 @@ const getContentColor = (contentId: string): string => {
           {{ $t('labels.references.noReferences') }}
         </p>
       </div>
+
       <div
         v-else
-        class="space-y-2"
+        ref="sortableContainer"
+        class="space-y-1"
       >
         <div
           v-for="(reference, index) in localValue"
           :key="reference"
-          class="group relative overflow-hidden rounded-lg border border-input bg-surface"
-          :draggable="localValue.length > 1"
-          @dragstart="handleDragStart($event, index)"
-          @dragover="handleDragOver"
-          @drop="handleDrop($event, index)"
         >
-          <div class="flex items-center p-2">
-            <Icon
-              v-if="localValue.length > 1"
-              name="lucide:grip-vertical"
-              class="cursor-ns-resize text-muted opacity-0 group-hover:opacity-100 hover:text-primary"
-            />
-            <div
-              v-else
-              class="w-2"
-            />
-            <div class="flex flex-1 items-center gap-2">
-              <Icon
-                :name="`lucide:${getContentIcon(reference) || 'file'}`"
-                class="shrink-0"
-                :style="{ color: getContentColor(reference) }"
-              />
-              <div class="min-w-0 flex-1">
-                {{ getContentName(reference) }}
+          <!-- Edit mode: inline ContentSelect -->
+          <ContentSelect
+            v-if="editingIndex === index"
+            :model-value="reference"
+            :space-id="spaceId"
+            @update:model-value="handleEditSelect(index, $event)"
+            @cancel="editingIndex = null"
+          />
+
+          <!-- Display mode -->
+          <div
+            v-else
+            class="group relative overflow-hidden rounded-lg border border-input bg-surface"
+          >
+            <div class="flex items-center p-2 gap-2">
+              <button
+                v-if="localValue.length > 1"
+                type="button"
+                reference-draggable
+                class="z-10 cursor-ns-resize absolute text-muted opacity-0 group-hover:opacity-100 hover:text-primary"
+                @click.prevent
+              >
+                <Icon name="lucide:grip-vertical" />
+              </button>
+              <div class="flex flex-1 items-center gap-2">
+                <Icon
+                  :name="`lucide:${getContentIcon(reference) || 'file'}`"
+                  class="shrink-0 group-hover:opacity-0"
+                  :style="{ color: getContentColor(reference) }"
+                />
+                <div class="min-w-0 flex-1">
+                  {{ getContentName(reference) }}
+                </div>
               </div>
-            </div>
-            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100">
-              <button
-                class="flex transform cursor-pointer items-center hover:text-primary"
-                @click="handleReferenceEdit(index)"
-              >
-                <Icon name="lucide:pencil" />
-              </button>
-              <button
-                class="flex transform cursor-pointer items-center hover:text-red-500"
-                @click="handleReferenceDelete(index)"
-              >
-                <Icon name="lucide:trash-2" />
-              </button>
+              <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100">
+                <button
+                  class="flex transform cursor-pointer items-center hover:text-primary"
+                  @click="handleReferenceEdit(index)"
+                >
+                  <Icon name="lucide:pencil" />
+                </button>
+                <button
+                  class="flex transform cursor-pointer items-center hover:text-red-500"
+                  @click="handleReferenceDelete(index)"
+                >
+                  <Icon name="lucide:trash-2" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <Button
+      <!-- Add new reference -->
+      <ContentSelect
         v-if="canAddMore"
-        class="w-full"
-        @click="showContentPicker = true"
-      >
-        <Icon name="lucide:plus" />
-        {{ $t('actions.references.add') }}
-      </Button>
+        :model-value="null"
+        :space-id="spaceId"
+        :placeholder="$t('actions.references.add')"
+        @update:model-value="handleContentSelect"
+      />
 
       <div
         v-if="item.max && item.max > 0"
@@ -272,15 +264,5 @@ const getContentColor = (contentId: string): string => {
         {{ $t('labels.references.referencesCount', { current: localValue.length, max: item.max }) }}
       </div>
     </div>
-
-    <!-- Content Picker Dialog -->
-    <ContentPicker
-      v-model:open="showContentPicker"
-      :space-id="spaceId"
-      :title="$t('labels.references.selectContent')"
-      :show-elements="true"
-      @content-select="handleContentSelect"
-      @content-with-anchor-select="handleContentWithAnchorSelect"
-    />
   </div>
 </template>

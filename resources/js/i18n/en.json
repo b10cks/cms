@@ -162,13 +162,11 @@
         "deleteEntry": "Delete",
         "addEntry": "Add entry"
       },
-
       "actions": {
         "edit": "Edit",
         "delete": "Delete",
         "view": "View all"
       },
-
       "deleteConfirm": {
         "title": "Delete this entry?",
         "description": "This action can't be undone.",
@@ -1950,6 +1948,16 @@
         "splitCell": "Split Cell",
         "toggleHeaderCell": "Toggle Header Cell"
       }
+    },
+    "references": {
+      "selectContent": "Select content...",
+      "searchPlaceholder": "Search content...",
+      "noResults": "No content found",
+      "noReferences": "No references added",
+      "unknownContent": "Unknown content",
+      "duplicateTitle": "Already added",
+      "removeReference": "Remove Reference",
+      "referencesCount": "{current} of {max}"
     }
   },
   "notifications": {
@@ -2512,6 +2520,10 @@
     "assets": {
       "deleteConfirmation": "Delete \"{name}\"? This cannot be undone.",
       "uploadRequirementsConfirm": "Some files are missing required metadata. You can still upload them, but they will stay flagged until the missing values are filled in."
+    },
+    "references": {
+      "duplicateReference": "This content has already been added to the references.",
+      "confirmDelete": "Remove the reference to \"{name}\"?"
     }
   }
 }

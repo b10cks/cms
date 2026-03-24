@@ -1910,6 +1910,16 @@
         "splitCell": "Zelle trennen",
         "toggleHeaderCell": "Kopfzelle umschalten"
       }
+    },
+    "references": {
+      "selectContent": "Inhalt auswählen...",
+      "searchPlaceholder": "Inhalte suchen...",
+      "noResults": "Kein Inhalt gefunden",
+      "noReferences": "Keine Referenzen hinzugefügt",
+      "unknownContent": "Unbekannter Inhalt",
+      "duplicateTitle": "Bereits hinzugefügt",
+      "removeReference": "Referenz entfernen",
+      "referencesCount": "{current} von {max}"
     }
   },
   "notifications": {
@@ -2449,6 +2459,10 @@
     "assets": {
       "deleteConfirmation": "Lösche \"{name}\"? Diese Aktion kann nicht rückgängig gemacht werden.",
       "uploadRequirementsConfirm": "Einige Dateien haben fehlende Pflicht-Metadaten. Du kannst sie trotzdem hochladen, aber sie bleiben markiert, bis die fehlenden Werte ergänzt wurden."
+    },
+    "references": {
+      "duplicateReference": "Dieser Inhalt wurde bereits zu den Referenzen hinzugefügt.",
+      "confirmDelete": "Referenz zu \"{name}\" entfernen?"
     }
   }
 }

@@ -461,6 +461,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
               >
                 <button
                   type="button"
+                  draggable
                   class="flex shrink-0 cursor-ns-resize items-center text-muted-foreground hover:text-primary"
                   :title="$t('actions.blocks.tooltips.drag')"
                   @click.stop
