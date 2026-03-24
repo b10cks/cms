@@ -266,7 +266,7 @@ const handleBlockChange = (value: AcceptableValue) => {
         <Icon name="lucide:grip-vertical" />
       </button>
 
-      <div class="flex items-start gap-1 pl-2">
+      <div class="flex items-start pl-3">
         <Select
           v-model="selectedBlockId"
           :disabled="!canMutate || !!node.deletedReason"
@@ -303,14 +303,14 @@ const handleBlockChange = (value: AcceptableValue) => {
           </SelectContent>
         </Select>
 
-        <div class="flex min-h-10 flex-col justify-center">
+        <div class="flex flex-col justify-center">
           <input
             ref="titleInputRef"
             v-model="titleValue"
             tabindex="-1"
             :disabled="!canMutate || !!node.deletedReason"
             :placeholder="$t('labels.contents.canvas.untitledNode')"
-            class="h-7 text-sm font-medium text-primary shadow-none outline-none placeholder:text-muted"
+            class="h-6 text-sm font-medium text-primary shadow-none outline-none placeholder:text-muted"
             @input="emit('input-title', String(($event.target as HTMLInputElement).value))"
             @focus="onFocus('title')"
             @blur="commitTitle"
