@@ -148,6 +148,7 @@ declare global {
   const useRuntimeConfig: typeof import('~/env').useRuntimeConfig
   const useSeoMeta: typeof import('./resources/js/composables/useSeoMeta').useSeoMeta
   const useSlots: typeof import('vue').useSlots
+  const useSpaceMembers: typeof import('./resources/js/composables/useSpaceMembers').useSpaceMembers
   const useSpacePresence: typeof import('./resources/js/composables/usePresence').useSpacePresence
   const useSpacePresencePeek: typeof import('./resources/js/composables/useSpacePresencePeek').useSpacePresencePeek
   const useSpaceSettings: typeof import('./resources/js/composables/useSpaceSettings').default
@@ -369,6 +370,7 @@ declare module 'vue' {
     readonly useRuntimeConfig: UnwrapRef<typeof import('~/env')['useRuntimeConfig']>
     readonly useSeoMeta: UnwrapRef<typeof import('./resources/js/composables/useSeoMeta')['useSeoMeta']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
+    readonly useSpaceMembers: UnwrapRef<typeof import('./resources/js/composables/useSpaceMembers')['useSpaceMembers']>
     readonly useSpacePresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['useSpacePresence']>
     readonly useSpacePresencePeek: UnwrapRef<typeof import('./resources/js/composables/useSpacePresencePeek')['useSpacePresencePeek']>
     readonly useSpaceSettings: UnwrapRef<typeof import('./resources/js/composables/useSpaceSettings')['default']>
