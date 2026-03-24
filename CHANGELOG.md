@@ -3,6 +3,16 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.3.24-20dd9a8] — 2026-3-24
+
+- 🐛 Fix changelog generation
+- 💄 Remove spacing
+- 💄 Auto hide scrollbars
+- ⬆️ Bump versions
+- 💄 Add glass effect to AiText
+- 🔖 Release v2026.3.24-64ecd34
+- 📝 Add changelog
+
 ## [v2026.3.24-655536e] — 2026-3-24
 
 - 🚸 Improve canvas infinite area
