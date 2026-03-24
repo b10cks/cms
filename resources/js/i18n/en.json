@@ -1141,7 +1141,9 @@
       },
       "people": {
         "title": "People",
-        "description": "Manage team members and their access to your space."
+        "description": "Manage team members and their access to your space.",
+        "invitesTitle": "Pending Invites",
+        "invitesDescription": "These collaborators have been invited but haven't accepted yet."
       },
       "backups": {
         "title": "Backups",
@@ -1672,6 +1674,55 @@
       "tooltip": {
         "editRole": "Change role",
         "remove": "Remove from team"
+      }
+    },
+    "spaceMembers": {
+      "title": "Space Members",
+      "description": "Everyone who has already accepted their invitation appears here.",
+      "empty": "No members found.",
+      "columns": {
+        "member": "Member",
+        "email": "Email",
+        "role": "Role",
+        "joined": "Joined"
+      },
+      "filters": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role"
+      },
+      "operators": {
+        "contains": "Contains",
+        "startsWith": "Starts with",
+        "endsWith": "Ends with",
+        "equals": "Equals"
+      },
+      "sort": {
+        "firstname": "First Name",
+        "lastname": "Last Name",
+        "email": "Email",
+        "created_at": "Joined At",
+        "last_login_at": "Last Login"
+      },
+      "assignRole": "Assign role",
+      "removeConfirm": {
+        "title": "Remove Member",
+        "message": "Are you sure you want to remove {firstname} {lastname} from this space?",
+        "confirmLabel": "Remove",
+        "bulkTitle": "Remove Multiple Members",
+        "bulkMessage": "Are you sure you want to remove {count} members from this space?",
+        "bulkConfirmLabel": "Remove ({count})"
+      },
+      "selection": {
+        "selected": "{count} selected",
+        "clear": "Clear selection"
+      },
+      "actions": {
+        "remove": "Remove ({count})"
+      },
+      "tooltip": {
+        "editRole": "Change role",
+        "remove": "Remove from space"
       }
     },
     "teamRoles": {
@@ -2413,6 +2464,12 @@
       "updateRoleError": "Failed to update role: {error}",
       "deleteRoleSuccess": "Role deleted successfully",
       "deleteRoleError": "Failed to delete role: {error}"
+    },
+    "spaceMembers": {
+      "updateUserSuccess": "Member role updated to {role}",
+      "updateUserError": "Failed to update member role: {error}",
+      "removeUserSuccess": "Member removed from space",
+      "removeUserError": "Failed to remove member from space: {error}"
     },
     "tokens": {
       "createSuccess": "Token \"{name}\" created successfully",

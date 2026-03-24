@@ -143,6 +143,11 @@ export const queryKeys = {
     detail: (id: MaybeRef<string>) =>
       [...queryKeys.dataEntries(spaceId, dataSourceId).details(), id] as const,
   }),
+  spaceMembers: (spaceId: MaybeRef<string>) => ({
+    all: () => ['spaces', spaceId, 'members'] as const,
+    lists: () => [...queryKeys.spaceMembers(spaceId).all(), 'list'] as const,
+    list: (filters: any = {}) => [...queryKeys.spaceMembers(spaceId).lists(), filters] as const,
+  }),
   invites: {
     all: () => ['invites'] as const,
     public: (inviteId: MaybeRef<string | undefined>) =>

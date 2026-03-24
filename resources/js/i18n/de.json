@@ -1125,7 +1125,9 @@
       },
       "people": {
         "title": "Personen",
-        "description": "Verwalte Teamkollegen und ihren Zugang zu deinem Space."
+        "description": "Verwalte Teamkollegen und ihren Zugang zu deinem Space.",
+        "invitesTitle": "Ausstehende Einladungen",
+        "invitesDescription": "Diese Mitarbeitenden wurden eingeladen, haben aber noch nicht akzeptiert."
       },
       "backups": {
         "title": "Sicherungen",
@@ -1633,6 +1635,55 @@
       "tooltip": {
         "editRole": "Rolle ändern",
         "remove": "Aus Team entfernen"
+      }
+    },
+    "spaceMembers": {
+      "title": "Space-Mitglieder",
+      "description": "Hier erscheinen alle Personen, die ihre Einladung bereits angenommen haben.",
+      "empty": "Keine Mitglieder gefunden.",
+      "columns": {
+        "member": "Mitglied",
+        "email": "E-Mail",
+        "role": "Rolle",
+        "joined": "Beigetreten"
+      },
+      "filters": {
+        "name": "Name",
+        "email": "E-Mail",
+        "role": "Rolle"
+      },
+      "operators": {
+        "contains": "Enthält",
+        "startsWith": "Beginnt mit",
+        "endsWith": "Endet mit",
+        "equals": "Gleich"
+      },
+      "sort": {
+        "firstname": "Vorname",
+        "lastname": "Nachname",
+        "email": "E-Mail",
+        "created_at": "Beigetreten am",
+        "last_login_at": "Letzter Login"
+      },
+      "assignRole": "Rolle vergeben",
+      "removeConfirm": {
+        "title": "Mitglied entfernen",
+        "message": "Bist du sicher, dass du {firstname} {lastname} aus diesem Space entfernen möchtest?",
+        "confirmLabel": "Entfernen",
+        "bulkTitle": "Mehrere Mitglieder entfernen",
+        "bulkMessage": "Bist du sicher, dass du {count} Mitglieder aus diesem Space entfernen möchtest?",
+        "bulkConfirmLabel": "Entfernen ({count})"
+      },
+      "selection": {
+        "selected": "{count} ausgewählt",
+        "clear": "Auswahl aufheben"
+      },
+      "actions": {
+        "remove": "Entfernen ({count})"
+      },
+      "tooltip": {
+        "editRole": "Rolle ändern",
+        "remove": "Aus Space entfernen"
       }
     },
     "teamRoles": {
@@ -2351,6 +2402,12 @@
       "updateRoleError": "Fehler beim Aktualisieren der Rolle: {error}",
       "deleteRoleSuccess": "Rolle erfolgreich gelöscht",
       "deleteRoleError": "Fehler beim Löschen der Rolle: {error}"
+    },
+    "spaceMembers": {
+      "updateUserSuccess": "Mitgliederrolle aktualisiert zu {role}",
+      "updateUserError": "Fehler beim Aktualisieren der Mitgliederrolle: {error}",
+      "removeUserSuccess": "Mitglied aus Space entfernt",
+      "removeUserError": "Fehler beim Entfernen des Mitglieds aus Space: {error}"
     },
     "tokens": {
       "createSuccess": "Token \"{name}\" erfolgreich erstellt",

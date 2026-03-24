@@ -10,6 +10,7 @@ import { DataSources } from '~/api/resources/data-sources'
 import { PersonalAccessTokens } from '~/api/resources/personal-access-tokens'
 import { Redirects } from '~/api/resources/redirects'
 import { Releases } from '~/api/resources/releases'
+import { SpaceMembers } from '~/api/resources/space-members'
 import { Tokens } from '~/api/resources/tokens'
 import { TwoFactorAuth } from '~/api/resources/two-factor'
 import { Users } from '~/api/resources/users'
@@ -126,6 +127,7 @@ export class API {
       contentVersions: (contentId: string) => new ContentVersions(this.client, spaceId, contentId),
       comments: (contentId: string) => new Comments(this.client, spaceId, contentId),
       subscriptions: new Subscriptions(this.client, spaceId),
+      members: new SpaceMembers(this.client, spaceId),
     }
   }
 }

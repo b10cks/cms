@@ -74,6 +74,35 @@ interface UpdateSpacePayload {
   settings?: SpaceSettings
 }
 
+export interface SpaceMemberResource {
+  id: string
+  user: {
+    id: string
+    firstname: string
+    lastname: string
+    name: string
+    email: string
+    avatar?: string | null
+  }
+  role: string | null
+  can_assign_space_role: boolean
+  can_remove: boolean
+  joined_at: string
+}
+
+export interface UpdateSpaceMemberPayload {
+  role: string | null
+}
+
+export interface SpaceMemberQueryParams {
+  role?: string
+  name?: string
+  email?: string
+  sort?: string
+  page?: number
+  per_page?: number
+}
+
 interface Token {
   id: string
   name: string

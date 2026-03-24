@@ -48,6 +48,7 @@ use App\Http\Controllers\Mgmt\SpaceController;
 use App\Http\Controllers\Mgmt\SpaceIconController;
 use App\Http\Controllers\Mgmt\SpaceInviteController;
 use App\Http\Controllers\Mgmt\SpaceInviteResendController;
+use App\Http\Controllers\Mgmt\SpaceMemberController;
 use App\Http\Controllers\Mgmt\SpaceRoleController;
 use App\Http\Controllers\Mgmt\SpaceSearchController;
 use App\Http\Controllers\Mgmt\SpaceStatsController;
@@ -154,6 +155,10 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::post('invites', [SpaceInviteController::class, 'store'])->name('spaces.invites.store');
     Route::delete('invites/{invite}', [SpaceInviteController::class, 'destroy'])->name('spaces.invites.destroy');
     Route::post('invites/{invite}/resend', SpaceInviteResendController::class)->name('spaces.invites.resend');
+
+    Route::get('members', [SpaceMemberController::class, 'index'])->name('spaces.members.index');
+    Route::patch('members/{user}', [SpaceMemberController::class, 'update'])->name('spaces.members.update');
+    Route::delete('members/{user}', [SpaceMemberController::class, 'destroy'])->name('spaces.members.destroy');
 
     Route::patch('search', [SpaceSearchController::class, 'update'])->name('spaces.search.update');
     Route::post('search/reindex', [SpaceSearchController::class, 'reindex'])->name('spaces.search.reindex');
