@@ -12,6 +12,13 @@ import {
   CardTitle,
 } from '~/components/ui/card'
 import { Label } from '~/components/ui/form'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
 import SettingsTable, { type ColumnDefinition } from '~/components/ui/settings-table.vue'
 import { Switch } from '~/components/ui/switch'
 
@@ -31,6 +38,7 @@ const environments = ref(
     Array.isArray(props.space.settings?.environments) ? props.space.settings!.environments : []
   )
 )
+const defaultEnvironment = ref(props.space.settings.default_environment ?? null)
 const visualEditorEnabled = ref(props.space.settings.visual_editor)
 
 
@@ -75,6 +83,7 @@ const saveSettings = async () => {
       settings: {
         ...props.space.settings,
         environments: environments.value,
+        default_environment: defaultEnvironment.value || null,
         visual_editor: visualEditorEnabled.value,
       },
     },
@@ -118,6 +127,32 @@ const saveSettings = async () => {
             </Button>
           </template>
         </SettingsTable>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <h4 class="text-sm font-medium">{{ $t('labels.settings.editor.defaultEnvironment') }}</h4>
+          <p class="text-xs text-muted">
+            {{ $t('labels.settings.editor.defaultEnvironmentDescription') }}
+          </p>
+        </div>
+        <Select
+          v-model="defaultEnvironment"
+          :disabled="environments.length === 0"
+        >
+          <SelectTrigger>
+            <SelectValue :placeholder="$t('labels.settings.editor.selectDefaultEnvironment')" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem
+              v-for="env in environments"
+              :key="env.name"
+              :value="env.name"
+            >
+              {{ env.name }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div class="space-y-4">

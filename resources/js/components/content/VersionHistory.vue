@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { RadioGroupItem, RadioGroupRoot } from 'reka-ui'
+import type { Ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import DiffViewer from '~/components/content/DiffViewer.vue'
@@ -38,6 +39,8 @@ const props = defineProps<{
 
 
 const { settings } = useSpaceSettings(props.spaceId)
+const { useSpaceQuery } = useSpaces()
+const { data: currentSpace } = useSpaceQuery(props.spaceId) as { data: Ref<SpaceResource | null> }
 const { apiToken, openContentJsonInNewTab } = useContentJson(
   props.spaceId,
   computed(() => props.content)
@@ -321,12 +324,20 @@ const selectedVersionDetail = computed<ContentVersionResource | null>(() => {
 })
 
 
+const effectiveEnvironment = computed<SpaceEnvironment | null>(() => {
+  const userEnv = settings.value.content.environment as SpaceEnvironment | null
+  if (userEnv) return userEnv
+
+  const defaultName = currentSpace.value?.settings.default_environment
+  if (!defaultName) return null
+
+  return currentSpace.value?.settings.environments?.find((e) => e.name === defaultName) ?? null
+})
+
 const previewSource = computed(() => {
   if (!selectedVersion.value) return null
 
-  const env = settings.value.content.environment as { url?: string } | null
-  const envUrl = env?.url
-
+  const envUrl = effectiveEnvironment.value?.url
   if (!envUrl) return null
 
   const normalizedUrl = envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl

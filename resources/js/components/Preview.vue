@@ -60,8 +60,18 @@ const content = inject<Ref<ContentResource | null>>('content', ref(null))
 let previewBridge: PreviewBridge
 
 
+const effectiveEnvironment = computed<SpaceEnvironment | null>(() => {
+  const userEnv = settings.value.content.environment as SpaceEnvironment | null
+  if (userEnv) return userEnv
+
+  const defaultName = currentSpace.value?.settings.default_environment
+  if (!defaultName) return null
+
+  return currentSpace.value?.settings.environments?.find((e) => e.name === defaultName) ?? null
+})
+
 const baseSrc = computed(() => {
-  const env = settings.value.content.environment as SpaceEnvironment | null
+  const env = effectiveEnvironment.value
   const currentContent = content.value
 
   if (!env?.url || !currentContent?.language_iso || !props.fullSlug) {
@@ -78,9 +88,7 @@ const baseSrc = computed(() => {
   const url = env.url.replace(/\/$/, '')
   return `${url}${prefix}${props.fullSlug}`
 })
-const currentEnvironmentUrl = computed(
-  () => (settings.value.content as { environment: SpaceEnvironment | null }).environment?.url
-)
+const currentEnvironmentUrl = computed(() => effectiveEnvironment.value?.url)
 const availableEnvironments = computed(() => currentSpace.value?.settings.environments ?? [])
 
 

@@ -1200,7 +1200,10 @@
         "visualEditor": "Visual Editor",
         "visualEditorDescription": "Enable or disable the visual editor for content creation.",
         "enableVisualEditor": "Enable Visual Editor",
-        "visualEditorInfo": "The visual editor provides a WYSIWYG experience for content creators."
+        "visualEditorInfo": "The visual editor provides a WYSIWYG experience for content creators.",
+        "defaultEnvironment": "Default Environment",
+        "defaultEnvironmentDescription": "This environment is used when no personal preference has been set.",
+        "selectDefaultEnvironment": "Select default environment"
       },
       "i18n": {
         "title": "Internationalization",

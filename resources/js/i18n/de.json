@@ -1184,7 +1184,10 @@
         "visualEditor": "Visual Editor",
         "visualEditorDescription": "Aktiviere oder deaktiviere den Visual Editor für die Content-Erstellung.",
         "enableVisualEditor": "Visual Editor aktivieren",
-        "visualEditorInfo": "Der Visual Editor bietet ein WYSIWYG-Erlebnis für Content-Creator."
+        "visualEditorInfo": "Der Visual Editor bietet ein WYSIWYG-Erlebnis für Content-Creator.",
+        "defaultEnvironment": "Standard-Umgebung",
+        "defaultEnvironmentDescription": "Diese Umgebung wird verwendet, wenn keine persönliche Einstellung gesetzt wurde.",
+        "selectDefaultEnvironment": "Standard-Umgebung auswählen"
       },
       "i18n": {
         "title": "Internationalisierung",

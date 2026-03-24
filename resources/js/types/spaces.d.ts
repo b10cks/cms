@@ -19,6 +19,7 @@ interface SpaceSettings {
   visual_editor?: boolean
   default_block?: string
   environments?: SpaceEnvironment[]
+  default_environment?: string | null
   region?: 'eu' | 'us'
   default_language?: string
   i18n_mode?: 'overlay' | 'independent'

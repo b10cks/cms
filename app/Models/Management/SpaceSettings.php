@@ -29,6 +29,7 @@ class SpaceSettings extends Settings
         'languages' => [],
         'asset_fields' => [],
         'environments' => [],
+        'default_environment' => null,
         'visual_editor' => true,
         'search_driver' => 'mysql',
         'slug_strategy' => 'prepend_translations',
@@ -119,6 +120,12 @@ class SpaceSettings extends Settings
             ],
             'environments.*.label' => [
                 ...$required,
+                'string',
+                'max:100',
+            ],
+            'default_environment' => [
+                ...$sometimes,
+                'nullable',
                 'string',
                 'max:100',
             ],
@@ -231,6 +238,11 @@ class SpaceSettings extends Settings
                 'description' => 'Display label for the environment.',
                 'example' => 'Preview',
             ],
+            'default_environment' => [
+                'description' => 'Name of the default environment used when no user preference is set.',
+                'nullable' => true,
+                'example' => 'production',
+            ],
             'visual_editor' => [
                 'description' => 'Whether the visual editor is enabled for the space.',
             ],
@@ -266,6 +278,23 @@ class SpaceSettings extends Settings
                 'description' => 'AI model identifier.',
             ],
         ];
+    }
+
+    public function getDefaultEnvironment(): ?array
+    {
+        $name = $this->attributes['default_environment'] ?? null;
+
+        if (! $name) {
+            return null;
+        }
+
+        foreach ($this->attributes['environments'] ?? [] as $environment) {
+            if (($environment['name'] ?? null) === $name) {
+                return $environment;
+            }
+        }
+
+        return null;
     }
 
     public function shouldFilterHiddenBlocks(): bool
