@@ -1,5 +1,123 @@
 #!/bin/bash
 
+set -euo pipefail
+
+CHANGELOG_FILE="CHANGELOG.md"
+
+# ─── Helpers ──────────────────────────────────────────────────────────────────
+
+# Build the changelog block for a given tag range.
+# Usage: changelog_block <new_tag> <previous_tag|"">
+changelog_block() {
+    local tag="$1"
+    local prev_tag="$2"
+    local date_str
+
+    # Derive date from tag (vYYYY.M.D-hash → YYYY-M-D) or fall back to today
+    if [[ "$tag" =~ ^v([0-9]{4}\.[0-9]+\.[0-9]+) ]]; then
+        date_str="${BASH_REMATCH[1]//./-}"
+    else
+        date_str=$(date +"%Y-%m-%d")
+    fi
+
+    local commits
+    if [[ -z "$prev_tag" ]]; then
+        commits=$(git log "$tag" --pretty=format:"- %s" --no-merges 2>/dev/null || true)
+    else
+        commits=$(git log "${prev_tag}..${tag}" --pretty=format:"- %s" --no-merges 2>/dev/null || true)
+    fi
+
+    if [[ -z "$commits" ]]; then
+        commits="- No changes recorded"
+    fi
+
+    echo "## [$tag] — $date_str"
+    echo ""
+    echo "$commits"
+    echo ""
+}
+
+# Prepend a block of text to CHANGELOG.md, keeping the header intact.
+prepend_to_changelog() {
+    local block="$1"
+    local tmp
+    tmp=$(mktemp)
+
+    if [[ ! -f "$CHANGELOG_FILE" ]]; then
+        {
+            echo "# Changelog"
+            echo ""
+            echo "All notable changes to b10cks are documented here."
+            echo "Commits follow the [Gitmoji](https://gitmoji.dev/) convention."
+            echo ""
+            echo "$block"
+        } > "$CHANGELOG_FILE"
+    else
+        # Split at the first ## section and insert the new block before it
+        local header_lines
+        header_lines=$(grep -n "^## " "$CHANGELOG_FILE" | head -1 | cut -d: -f1)
+
+        if [[ -n "$header_lines" ]]; then
+            head -n $(( header_lines - 1 )) "$CHANGELOG_FILE" > "$tmp"
+            echo "$block" >> "$tmp"
+            echo "" >> "$tmp"
+            tail -n "+${header_lines}" "$CHANGELOG_FILE" >> "$tmp"
+        else
+            # No existing ## sections — append after the 4-line header
+            head -n 4 "$CHANGELOG_FILE" > "$tmp"
+            echo "" >> "$tmp"
+            echo "$block" >> "$tmp"
+            tail -n +5 "$CHANGELOG_FILE" >> "$tmp"
+        fi
+
+        mv "$tmp" "$CHANGELOG_FILE"
+    fi
+}
+
+# ─── Backfill mode ────────────────────────────────────────────────────────────
+
+if [[ "${1:-}" == "--backfill" ]]; then
+    echo "Backfilling CHANGELOG.md from all existing tags..."
+
+    # Collect all tags sorted oldest-first
+    ALL_TAGS=()
+    while IFS= read -r tag; do
+        ALL_TAGS+=("$tag")
+    done < <(git tag --sort=version:refname)
+
+    if [[ ${#ALL_TAGS[@]} -eq 0 ]]; then
+        echo "No tags found."
+        exit 0
+    fi
+
+    # Build the full changelog from scratch
+    {
+        echo "# Changelog"
+        echo ""
+        echo "All notable changes to b10cks are documented here."
+        echo "Commits follow the [Gitmoji](https://gitmoji.dev/) convention."
+        echo ""
+    } > "$CHANGELOG_FILE"
+
+    # Iterate newest-first so newest release appears at the top
+    for (( i=${#ALL_TAGS[@]}-1; i>=0; i-- )); do
+        tag="${ALL_TAGS[$i]}"
+        prev_tag=""
+        if (( i > 0 )); then
+            prev_tag="${ALL_TAGS[$i-1]}"
+        fi
+
+        echo "  → $tag"
+        changelog_block "$tag" "$prev_tag" >> "$CHANGELOG_FILE"
+    done
+
+    echo ""
+    echo "Done. $CHANGELOG_FILE written with ${#ALL_TAGS[@]} releases."
+    exit 0
+fi
+
+# ─── Normal release flow ──────────────────────────────────────────────────────
+
 # Ensure we're on the main branch
 if [[ $(git rev-parse --abbrev-ref HEAD) != "main" ]]; then
     echo "Error: Not on main branch. Please checkout main before tagging."
@@ -32,9 +150,23 @@ if [[ $local_commit != $remote_commit ]]; then
 fi
 
 current_date=$(date +"%Y.%-m.%-d")
-
 short_hash=$(git rev-parse --short HEAD)
+new_tag="v${current_date}-${short_hash}"
 
+# Determine the previous tag
+previous_tag=$(git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "")
+
+# Update CHANGELOG.md before tagging so the file is included in the tagged commit
+echo "Updating $CHANGELOG_FILE..."
+block=$(changelog_block "$new_tag" "$previous_tag")
+prepend_to_changelog "$block"
+
+git add "$CHANGELOG_FILE"
+git commit -m "🔖 Release $new_tag"
+
+# Re-read commit after the changelog commit
+local_commit=$(git rev-parse HEAD)
+short_hash=$(git rev-parse --short HEAD)
 new_tag="v${current_date}-${short_hash}"
 
 git tag "$new_tag"
