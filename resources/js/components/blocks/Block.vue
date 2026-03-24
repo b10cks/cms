@@ -34,7 +34,6 @@ import { SimpleTooltip } from '~/components/ui/tooltip'
 const emit = defineEmits(['delete', 'to-page', 'update:name', 'update:item'])
 const { $t } = useI18n()
 
-
 const props = defineProps<{
   item: SchemaType
   schema: Record<string, SchemaType>
@@ -44,7 +43,6 @@ const props = defineProps<{
   readonly: boolean
   name: string
 }>()
-
 
 const localItem = ref<SchemaType>({ ...props.item })
 const translatable = ['text', 'textarea', 'markdown', 'richtext', 'number', 'link', 'meta']
@@ -85,7 +83,6 @@ const textOperators: ConditionOperator[] = [
 ]
 const booleanOperators: ConditionOperator[] = ['equals', 'not_equals', 'is_empty', 'is_not_empty']
 
-
 const schemas = {
   asset: AssetBlock,
   multiAsset: MultiAssetBlock,
@@ -105,7 +102,6 @@ const schemas = {
   richtext: RichTextBlock,
 } satisfies Partial<Record<CanonicalSchemaTypeName | LegacySchemaTypeName, Component>>
 
-
 watch(
   () => props.item,
   (newItem) => {
@@ -114,7 +110,6 @@ watch(
   { deep: true }
 )
 
-
 const updateValue = (key: string, value: unknown) => {
   emit('update:item', {
     ...deepClone(props.item),
@@ -122,18 +117,15 @@ const updateValue = (key: string, value: unknown) => {
   })
 }
 
-
 const updateBooleanValue = (key: string, value: unknown) => {
   updateValue(key, Boolean(value))
 }
-
 
 const createDefaultConditionRule = (): FieldCondition => ({
   field: '',
   operator: 'equals',
   value: '',
 })
-
 
 const validation = computed(() => localItem.value.validation || {})
 const conditions = computed<FieldConditions | null>(() => localItem.value.conditions || null)
@@ -166,17 +158,14 @@ const controllerFieldOptions = computed(() =>
     }))
 )
 
-
 const getControllerField = (fieldKey?: string) => {
   if (!fieldKey) return null
   return props.schema[fieldKey] || null
 }
 
-
 const getOperatorOptions = (fieldKey?: string) => {
   const field = getControllerField(fieldKey)
   if (!field) return operatorOptions
-
 
   switch (field.type) {
     case 'boolean':
@@ -204,11 +193,9 @@ const getOperatorOptions = (fieldKey?: string) => {
   }
 }
 
-
 const getConditionValueKind = (fieldKey?: string) => {
   const field = getControllerField(fieldKey)
   if (!field) return 'text'
-
 
   if (field.type === 'boolean') return 'boolean'
   if (field.type === 'number') return 'number'
@@ -217,27 +204,22 @@ const getConditionValueKind = (fieldKey?: string) => {
   return 'text'
 }
 
-
 const setValidationValue = (key: keyof FieldValidation, value: unknown) => {
   const nextValidation = {
     ...localItem.value.validation,
     [key]: value === '' ? undefined : value,
   }
 
-
   updateValue('validation', nextValidation)
-
 
   if (['min', 'max'].includes(key)) {
     updateValue(key, value === '' ? undefined : value)
   }
 
-
   if (['min_items', 'max_items'].includes(key)) {
     updateValue(key === 'min_items' ? 'min' : 'max', value === '' ? undefined : value)
   }
 }
-
 
 const toggleConditions = (enabled: unknown) => {
   updateValue(
@@ -251,19 +233,16 @@ const toggleConditions = (enabled: unknown) => {
   )
 }
 
-
 const updateCondition = (index: number, patch: Partial<FieldCondition>) => {
   const existingRule = conditions.value?.rules?.[index]
   const nextField = patch.field ?? existingRule?.field ?? ''
   const allowedOperators = getOperatorOptions(nextField)
   const nextOperator = patch.operator ?? existingRule?.operator ?? 'equals'
 
-
   const nextConditions = {
     mode: conditions.value?.mode || 'all',
     rules: [...(conditions.value?.rules || [])],
   }
-
 
   nextConditions.rules[index] = {
     field: nextField,
@@ -274,22 +253,18 @@ const updateCondition = (index: number, patch: Partial<FieldCondition>) => {
     ...patch,
   }
 
-
   updateValue('conditions', nextConditions)
 }
-
 
 const updateConditionValue = (index: number, rawValue: unknown) => {
   const operator = conditions.value?.rules?.[index]?.operator || 'equals'
   const fieldKey = conditions.value?.rules?.[index]?.field || ''
   const valueKind = getConditionValueKind(fieldKey)
 
-
   if (emptyValueOperators.includes(operator)) {
     updateCondition(index, { value: undefined })
     return
   }
-
 
   if (listOperators.includes(operator)) {
     const values = String(rawValue || '')
@@ -300,12 +275,10 @@ const updateConditionValue = (index: number, rawValue: unknown) => {
     return
   }
 
-
   if (valueKind === 'boolean') {
     updateCondition(index, { value: rawValue === true || rawValue === 'true' })
     return
   }
-
 
   if (valueKind === 'number') {
     updateCondition(index, {
@@ -314,10 +287,8 @@ const updateConditionValue = (index: number, rawValue: unknown) => {
     return
   }
 
-
   updateCondition(index, { value: String(rawValue ?? '') })
 }
-
 
 const addCondition = () => {
   const nextConditions: FieldConditions = {
@@ -325,15 +296,12 @@ const addCondition = () => {
     rules: [...(conditions.value?.rules || []), createDefaultConditionRule()],
   }
 
-
   updateValue('conditions', nextConditions)
 }
-
 
 const removeCondition = (index: number) => {
   const nextRules = [...(conditions.value?.rules || [])]
   nextRules.splice(index, 1)
-
 
   updateValue(
     'conditions',
@@ -346,7 +314,6 @@ const removeCondition = (index: number) => {
   )
 }
 
-
 const fieldSummaryItems = computed(() => {
   const items: Array<{ icon: string; tooltip: string }> = []
 
@@ -354,6 +321,13 @@ const fieldSummaryItems = computed(() => {
     items.push({
       icon: 'lucide:asterisk',
       tooltip: String($t('labels.blocks.summary.required')),
+    })
+  }
+
+  if (localItem.value.translatable) {
+    items.push({
+      icon: 'lucide:languages',
+      tooltip: String($t('labels.blocks.summary.translatable')),
     })
   }
 
@@ -380,14 +354,12 @@ const fieldSummaryItems = computed(() => {
   return items
 })
 
-
 const getConditionValueDisplay = (condition: FieldCondition) =>
   Array.isArray(condition.value)
     ? condition.value.join(', ')
     : typeof condition.value === 'boolean'
       ? String(condition.value)
       : (condition.value as string | number | undefined)
-
 
 const updateConditionMode = (value: unknown) => {
   updateValue('conditions', {
@@ -396,11 +368,9 @@ const updateConditionMode = (value: unknown) => {
   })
 }
 
-
 const updateConditionField = (index: number, value: unknown) => {
   updateCondition(index, { field: String(value || '') })
 }
-
 
 const updateConditionOperator = (index: number, value: unknown) => {
   updateCondition(index, {
@@ -439,10 +409,7 @@ const updateConditionOperator = (index: number, value: unknown) => {
             side="top"
             class="inline-flex"
           >
-            <Icon
-              :name="item.icon"
-              class="h-3.5 w-3.5"
-            />
+            <Icon :name="item.icon" />
           </SimpleTooltip>
         </div>
       </AccordionTrigger>
