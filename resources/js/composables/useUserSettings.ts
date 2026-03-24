@@ -2,6 +2,7 @@ import { computed, reactive, watch } from 'vue'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
+import { setLocale } from '~/plugins/i18n'
 import type { User } from '~/types/users'
 
 type UserSettings = {
@@ -30,6 +31,7 @@ const meta = reactive({
 const assignSettings = (nextSettings?: Partial<User['settings']> | null) => {
   state.languageIso = nextSettings?.languageIso ?? defaultSettings.languageIso
   state.extendedSidebar = nextSettings?.extendedSidebar ?? defaultSettings.extendedSidebar
+  setLocale(state.languageIso as 'en' | 'de')
 }
 
 export function useUserSettings() {
@@ -62,7 +64,7 @@ export function useUserSettings() {
     })
 
     if (key === 'languageIso') {
-      i18n.switchLocale(value)
+      i18n.setLocale(value)
     }
 
     meta.pendingCount += 1
@@ -81,7 +83,7 @@ export function useUserSettings() {
       })
 
       if (key === 'languageIso') {
-        i18n.switchLocale(previousSettings.languageIso)
+        i18n.setLocale(previousSettings.languageIso)
       }
 
       toast.error(error?.message || 'Failed to update user settings')

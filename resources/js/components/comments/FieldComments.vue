@@ -155,7 +155,7 @@ const handleRemoveReaction = (commentId: string, emoji: string) => {
     >
       <div class="flex h-160 flex-col">
         <div class="flex items-center justify-between">
-          <h4 class="font-medium">Field Comments</h4>
+          <h4 class="font-medium">{{ $t('labels.comments.fieldTitle') }}</h4>
           <Button
             variant="ghost"
             size="toolbar"
@@ -176,8 +176,7 @@ const handleRemoveReaction = (commentId: string, emoji: string) => {
                 class="shrink-0"
               />
               <p class="text-sm">
-                Give feedback, ask questions, or share your thoughts. You can also click anywhere in
-                the preview to leave a positioned comment.
+                {{ $t('labels.comments.emptyState') }}
               </p>
             </div>
             <CommentsList
@@ -200,7 +199,7 @@ const handleRemoveReaction = (commentId: string, emoji: string) => {
             name="comment"
             v-model="newCommentBody"
             @keydown.enter.meta.prevent.stop="handleCreateComment"
-            placeholder="Add a comment..."
+            :placeholder="$t('labels.comments.placeholder')"
             :auto-size="100"
           />
           <div class="flex justify-end">
@@ -213,7 +212,7 @@ const handleRemoveReaction = (commentId: string, emoji: string) => {
                 name="lucide:loader-2"
                 class="mr-1 animate-spin"
               />
-              <span> Add Comment </span>
+              <span>{{ $t('labels.comments.addButton') }}</span>
             </Button>
           </div>
         </div>

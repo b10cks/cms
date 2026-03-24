@@ -66,11 +66,11 @@ const resetForm = () => {
   >
     <DialogContent class="max-w-md">
       <DialogHeaderCombined
-        :title="publishType === 'now' ? 'Publish Now' : 'Schedule Publication'"
+        :title="publishType === 'now' ? $t('labels.publishDialog.titleNow') : $t('labels.publishDialog.titleSchedule')"
         :description="
           publishType === 'now'
-            ? 'Publish this content immediately'
-            : 'Choose when to publish this content'
+            ? $t('labels.publishDialog.descNow')
+            : $t('labels.publishDialog.descSchedule')
         "
       />
 
@@ -78,16 +78,16 @@ const resetForm = () => {
         <InputField
           v-model="message"
           name="message"
-          label="Publication Message"
-          placeholder="Add a publication message (optional)"
+          :label="$t('labels.publishDialog.messageLabel')"
+          :placeholder="$t('labels.publishDialog.messagePlaceholder')"
           type="text"
         />
         <DateTimeFormField
           v-if="publishType === 'schedule'"
           v-model="scheduledAt"
           name="published_at"
-          label="Publish At"
-          placeholder="Select date and time"
+          :label="$t('labels.publishDialog.publishAtLabel')"
+          :placeholder="$t('labels.publishDialog.publishAtPlaceholder')"
           :min="minDateTime"
           required
         />
@@ -98,14 +98,14 @@ const resetForm = () => {
           variant="outline"
           @click="handleCancel"
         >
-          Cancel
+          {{ $t('actions.cancel') }}
         </Button>
         <Button
           variant="accent"
           :disabled="loading || !isScheduleValid"
           @click="handlePublish"
         >
-          {{ publishType === 'now' ? 'Publish' : 'Schedule' }}
+          {{ publishType === 'now' ? $t('actions.content.publish') : $t('actions.content.schedule') }}
         </Button>
       </DialogFooter>
     </DialogContent>

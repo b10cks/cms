@@ -527,7 +527,7 @@ const handleConfirmAssign = (versionIds: string[]) => {
     >
       <span>{{ $t('actions.content.publish') }}</span>
       <template #menu>
-        <DropdownMenuLabel>Publish</DropdownMenuLabel>
+        <DropdownMenuLabel>{{ $t('actions.content.publish') }}</DropdownMenuLabel>
         <DropdownMenuItem
           :disabled="
             disabled || isAnyActionPending || !content.id || !(contentModel.canPublish || isDirty)
@@ -557,14 +557,14 @@ const handleConfirmAssign = (versionIds: string[]) => {
             :disabled="disabled || !canPublishToRelease"
           >
             <Icon name="lucide:tag" />
-            <span>Add to Release</span>
+            <span>{{ $t('actions.content.addToRelease') }}</span>
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent v-if="canManageReleases">
             <DropdownMenuItem
               v-if="draftReleases.length === 0"
               disabled
             >
-              No draft releases available
+              {{ $t('actions.content.noDraftReleases') }}
             </DropdownMenuItem>
             <template v-else>
               <DropdownMenuItem
@@ -588,14 +588,14 @@ const handleConfirmAssign = (versionIds: string[]) => {
           @select="showDraftJson"
         >
           <Icon name="lucide:braces" />
-          <span>Show draft JSON</span>
+          <span>{{ $t('actions.content.showDraftJson') }}</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           :disabled="!content.id || !apiToken || !space?.updated_at || !contentModel.isPublished"
           @select="showPublishedJson"
         >
           <Icon name="lucide:braces" />
-          <span>Show published JSON</span>
+          <span>{{ $t('actions.content.showPublishedJson') }}</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           :disabled="isPublishingAction || !contentModel.isPublished"

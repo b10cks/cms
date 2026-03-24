@@ -64,8 +64,7 @@ const repliesByParent = computed(() => {
         class="shrink-0"
       />
       <p class="text-sm">
-        Give feedback, ask questions, or share your thoughts. You can also click anywhere in the
-        preview to leave a positioned comment.
+        {{ $t('labels.comments.emptyState') }}
       </p>
     </div>
 

@@ -586,7 +586,35 @@
         "removeAll": "Alle entfernen",
         "key": "Schlüssel",
         "value": "Wert"
-      }
+      },
+      "emptyTitle": "Kein Inhalt ausgewählt",
+      "emptyDescription": "Erstelle zunächst deine erste Inhaltsseite",
+      "managerTitle": "Inhalts-Manager",
+      "managerDescription": "Wähle ein Element aus dem Inhaltsmenü aus, um es zu bearbeiten oder neuen Inhalt zu erstellen."
+    },
+    "comments": {
+      "title": "Kommentare",
+      "fieldTitle": "Feld-Kommentare",
+      "placeholder": "Kommentar hinzufügen...",
+      "replyPlaceholder": "Antwort schreiben...",
+      "addButton": "Kommentar hinzufügen",
+      "emptyState": "Gib Feedback, stelle Fragen oder teile deine Gedanken. Du kannst auch auf eine beliebige Stelle in der Vorschau klicken, um einen positionierten Kommentar zu hinterlassen.",
+      "hideReplies": "Ausblenden",
+      "showReplies": "Anzeigen",
+      "reply": "Antwort | Antworten",
+      "you": "Du"
+    },
+    "navigation": {
+      "home": "Startseite",
+      "canvas": "Canvas",
+      "content": "Inhalt",
+      "blocks": "Blocks",
+      "assets": "Assets",
+      "datasets": "Datensätze",
+      "redirects": "Weiterleitungen",
+      "releases": "Releases",
+      "settings": "Einstellungen",
+      "extendedSidebar": "Erweiterte Seitenleiste"
     },
     "blocks": {
       "title": "Blocks",
@@ -1780,6 +1808,54 @@
         "1f3fe": "Mittel-Dunkel",
         "1f3ff": "Dunkel"
       }
+    },
+    "publishDialog": {
+      "titleNow": "Jetzt veröffentlichen",
+      "titleSchedule": "Veröffentlichung planen",
+      "descNow": "Diesen Inhalt sofort veröffentlichen",
+      "descSchedule": "Wähle, wann dieser Inhalt veröffentlicht werden soll",
+      "messageLabel": "Veröffentlichungsnachricht",
+      "messagePlaceholder": "Veröffentlichungsnachricht hinzufügen (optional)",
+      "publishAtLabel": "Veröffentlichen am",
+      "publishAtPlaceholder": "Datum und Uhrzeit auswählen"
+    },
+    "tiptap": {
+      "toolbar": {
+        "bold": "Fett (Strg+B)",
+        "italic": "Kursiv (Strg+I)",
+        "underline": "Unterstrichen (Strg+U)",
+        "strikethrough": "Durchgestrichen",
+        "inlineCode": "Inline-Code",
+        "format": "Format",
+        "bulletList": "Aufzählungsliste",
+        "orderedList": "Nummerierte Liste",
+        "codeBlock": "Code-Block",
+        "blockquote": "Blockzitat",
+        "horizontalRule": "Horizontale Linie",
+        "insertTable": "Tabelle einfügen",
+        "tableTools": "Tabellen-Werkzeuge",
+        "externalLink": "Externer Link",
+        "internalLink": "Interner Link",
+        "removeInternalLink": "Internen Link entfernen",
+        "insertPlaceholder": "Platzhalter einfügen",
+        "applyCssClass": "CSS-Klasse anwenden"
+      },
+      "headings": {
+        "paragraph": "Absatz",
+        "heading": "Überschrift {level}"
+      },
+      "table": {
+        "addColumnBefore": "Spalte davor einfügen",
+        "addColumnAfter": "Spalte danach einfügen",
+        "deleteColumn": "Spalte löschen",
+        "addRowBefore": "Zeile davor einfügen",
+        "addRowAfter": "Zeile danach einfügen",
+        "deleteRow": "Zeile löschen",
+        "deleteTable": "Tabelle löschen",
+        "mergeCells": "Zellen zusammenführen",
+        "splitCell": "Zelle trennen",
+        "toggleHeaderCell": "Kopfzelle umschalten"
+      }
     }
   },
   "notifications": {
@@ -1881,6 +1957,10 @@
       "publishWithMessage": "Mit Nachricht veröffentlichen",
       "schedule": "Zeitplan",
       "schedulePublish": "Veröffentlichung zeitplanen",
+      "addToRelease": "Zu Release hinzufügen",
+      "noDraftReleases": "Keine Entwurfs-Releases verfügbar",
+      "showDraftJson": "Entwurf-JSON anzeigen",
+      "showPublishedJson": "Veröffentlichtes JSON anzeigen",
       "modes": {
         "toVisual": "Zum Visual Editor mit Vorschau wechseln",
         "toField": "Zum Feld-Editor wechseln"

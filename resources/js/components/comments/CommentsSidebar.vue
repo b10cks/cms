@@ -102,7 +102,7 @@ const unresolvedCount = computed(() => {
 <template>
   <div class="flex h-full flex-1 flex-col">
     <div class="flex items-center gap-1">
-      <h3 class="text-xl font-semibold text-primary">Comments</h3>
+      <h3 class="text-xl font-semibold text-primary">{{ $t('labels.comments.title') }}</h3>
       <Badge
         v-if="unresolvedCount > 0"
         variant="default"
@@ -131,7 +131,7 @@ const unresolvedCount = computed(() => {
         name="comment"
         v-model="newCommentBody"
         @keydown.enter.meta.prevent.stop="handleCreateComment"
-        placeholder="Add a comment..."
+        :placeholder="$t('labels.comments.placeholder')"
         :auto-size="100"
       />
       <div class="flex justify-end">
@@ -144,7 +144,7 @@ const unresolvedCount = computed(() => {
             name="lucide:loader-2"
             class="animate-spin"
           />
-          <span> Add Comment </span>
+          <span>{{ $t('labels.comments.addButton') }}</span>
         </Button>
       </div>
     </div>

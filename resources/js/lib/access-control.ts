@@ -107,47 +107,47 @@ export const teamNavigationItems: NavigationAccessItem[] = [
 
 export const spaceNavigationItems: NavigationAccessItem[] = [
   {
-    label: 'Home',
+    label: 'labels.navigation.home',
     icon: 'lucide:home',
     routeName: 'space',
   },
   {
-    label: 'Canvas',
+    label: 'labels.navigation.canvas',
     icon: 'lucide:network',
     routeName: 'space-canvas',
   },
   {
-    label: 'Content',
+    label: 'labels.navigation.content',
     icon: 'lucide:feather',
     routeName: 'space-content-index',
   },
   {
-    label: 'Blocks',
+    label: 'labels.navigation.blocks',
     icon: 'lucide:blocks',
     routeName: 'space-blocks-index',
   },
   {
-    label: 'Assets',
+    label: 'labels.navigation.assets',
     icon: 'lucide:images',
     routeName: 'space-assets-index',
   },
   {
-    label: 'Data sets',
+    label: 'labels.navigation.datasets',
     icon: 'lucide:database-zap',
     routeName: 'space-datasources',
   },
   {
-    label: 'Redirects',
+    label: 'labels.navigation.redirects',
     icon: 'lucide:split',
     routeName: 'space-redirects',
   },
   {
-    label: 'Releases',
+    label: 'labels.navigation.releases',
     icon: 'lucide:rocket',
     routeName: 'space-releases',
   },
   {
-    label: 'Settings',
+    label: 'labels.navigation.settings',
     icon: 'lucide:settings',
     routeName: 'space-settings-index',
     visibilityRouteNames: spaceSettingsNavigationItems.map((item) => item.routeName),

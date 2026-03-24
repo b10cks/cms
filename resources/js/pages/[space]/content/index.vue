@@ -34,14 +34,12 @@ const rootItems = computed(() => getRootItems(data.value) || [])
     <div class="grow flex justify-center flex-col text-center">
       <ContentsIcon class="mx-auto mb-6 w-32 text-muted" />
       <template v-if="rootItems.length === 0">
-        <h3 class="mb-2 text-xl font-bold">No Content Selected</h3>
-        <p class="mb-6 text-muted">Start by creating your first content page</p>
+        <h3 class="mb-2 text-xl font-bold">{{ $t('labels.contents.emptyTitle') }}</h3>
+        <p class="mb-6 text-muted">{{ $t('labels.contents.emptyDescription') }}</p>
       </template>
       <template v-else>
-        <h3 class="mb-2 text-xl font-bold">Content Manager</h3>
-        <p class="mb-6 text-muted">
-          Select an item from the content menu to edit or create new content.
-        </p>
+        <h3 class="mb-2 text-xl font-bold">{{ $t('labels.contents.managerTitle') }}</h3>
+        <p class="mb-6 text-muted">{{ $t('labels.contents.managerDescription') }}</p>
       </template>
       <div>
         <Button

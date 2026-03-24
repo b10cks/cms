@@ -593,7 +593,35 @@
         "removeAll": "Remove all",
         "key": "Key",
         "value": "Value"
-      }
+      },
+      "emptyTitle": "No Content Selected",
+      "emptyDescription": "Start by creating your first content page",
+      "managerTitle": "Content Manager",
+      "managerDescription": "Select an item from the content menu to edit or create new content."
+    },
+    "comments": {
+      "title": "Comments",
+      "fieldTitle": "Field Comments",
+      "placeholder": "Add a comment...",
+      "replyPlaceholder": "Write a reply...",
+      "addButton": "Add Comment",
+      "emptyState": "Give feedback, ask questions, or share your thoughts. You can also click anywhere in the preview to leave a positioned comment.",
+      "hideReplies": "Hide",
+      "showReplies": "Show",
+      "reply": "reply | replies",
+      "you": "You"
+    },
+    "navigation": {
+      "home": "Home",
+      "canvas": "Canvas",
+      "content": "Content",
+      "blocks": "Blocks",
+      "assets": "Assets",
+      "datasets": "Data sets",
+      "redirects": "Redirects",
+      "releases": "Releases",
+      "settings": "Settings",
+      "extendedSidebar": "Extended sidebar"
     },
     "blocks": {
       "title": "Blocks",
@@ -1819,6 +1847,54 @@
         "1f3fe": "Medium-Dark",
         "1f3ff": "Dark"
       }
+    },
+    "publishDialog": {
+      "titleNow": "Publish Now",
+      "titleSchedule": "Schedule Publication",
+      "descNow": "Publish this content immediately",
+      "descSchedule": "Choose when to publish this content",
+      "messageLabel": "Publication Message",
+      "messagePlaceholder": "Add a publication message (optional)",
+      "publishAtLabel": "Publish At",
+      "publishAtPlaceholder": "Select date and time"
+    },
+    "tiptap": {
+      "toolbar": {
+        "bold": "Bold (Ctrl+B)",
+        "italic": "Italic (Ctrl+I)",
+        "underline": "Underline (Ctrl+U)",
+        "strikethrough": "Strikethrough",
+        "inlineCode": "Inline Code",
+        "format": "Format",
+        "bulletList": "Bullet List",
+        "orderedList": "Ordered List",
+        "codeBlock": "Code Block",
+        "blockquote": "Blockquote",
+        "horizontalRule": "Horizontal Rule",
+        "insertTable": "Insert Table",
+        "tableTools": "Table Tools",
+        "externalLink": "External Link",
+        "internalLink": "Internal Link",
+        "removeInternalLink": "Remove Internal Link",
+        "insertPlaceholder": "Insert Placeholder",
+        "applyCssClass": "Apply CSS Class"
+      },
+      "headings": {
+        "paragraph": "Paragraph",
+        "heading": "Heading {level}"
+      },
+      "table": {
+        "addColumnBefore": "Add Column Before",
+        "addColumnAfter": "Add Column After",
+        "deleteColumn": "Delete Column",
+        "addRowBefore": "Add Row Before",
+        "addRowAfter": "Add Row After",
+        "deleteRow": "Delete Row",
+        "deleteTable": "Delete Table",
+        "mergeCells": "Merge Cells",
+        "splitCell": "Split Cell",
+        "toggleHeaderCell": "Toggle Header Cell"
+      }
     }
   },
   "notifications": {
@@ -1924,6 +2000,10 @@
       "publishWithMessage": "Publish with Message",
       "schedule": "Schedule",
       "schedulePublish": "Schedule Publish",
+      "addToRelease": "Add to Release",
+      "noDraftReleases": "No draft releases available",
+      "showDraftJson": "Show draft JSON",
+      "showPublishedJson": "Show published JSON",
       "modes": {
         "toVisual": "Switch to Visual Editor with Preview",
         "toField": "Switch to Field Editor"

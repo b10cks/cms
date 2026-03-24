@@ -57,6 +57,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: Record<string, unknown>]
 }>()
 
+const { t } = useI18n()
 
 const contentPickerOpen = ref(false)
 const linkInSelection = ref<InternalLinkAttrs | null>(null)
@@ -64,8 +65,8 @@ const isApplyingExternalContent = ref(false)
 
 
 const getHeadingLabel = (level: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'): string => {
-  if (level === 'p') return 'Paragraph'
-  return `Heading ${level.charAt(1)}`
+  if (level === 'p') return t('labels.tiptap.headings.paragraph')
+  return t('labels.tiptap.headings.heading', { level: level.charAt(1) })
 }
 
 
@@ -90,7 +91,7 @@ const currentHeading = computed(() => {
 
 const headingDisplayLabel = computed(() => {
   if (!currentHeading.value) {
-    return 'Format'
+    return t('labels.tiptap.toolbar.format')
   }
   return getHeadingLabel(currentHeading.value)
 })
@@ -209,7 +210,7 @@ onBeforeUnmount(() => {
         type="button"
         size="toolbar"
         variant="ghost"
-        title="Bold (Ctrl+B)"
+        :title="$t('labels.tiptap.toolbar.bold')"
         :class="editor?.isActive('bold') && 'bg-primary text-primary-foreground'"
         @click="editor?.chain().focus().toggleBold().run()"
       >
@@ -219,7 +220,7 @@ onBeforeUnmount(() => {
         type="button"
         size="toolbar"
         variant="ghost"
-        title="Italic (Ctrl+I)"
+        :title="$t('labels.tiptap.toolbar.italic')"
         :class="editor?.isActive('italic') && 'bg-primary text-primary-foreground'"
         @click="editor?.chain().focus().toggleItalic().run()"
       >
@@ -229,7 +230,7 @@ onBeforeUnmount(() => {
         type="button"
         size="toolbar"
         variant="ghost"
-        title="Underline (Ctrl+U)"
+        :title="$t('labels.tiptap.toolbar.underline')"
         :class="editor?.isActive('underline') && 'bg-primary text-primary-foreground'"
         @click="editor?.chain().focus().toggleUnderline().run()"
       >
@@ -239,7 +240,7 @@ onBeforeUnmount(() => {
         type="button"
         size="toolbar"
         variant="ghost"
-        title="Strikethrough"
+        :title="$t('labels.tiptap.toolbar.strikethrough')"
         :class="editor?.isActive('strike') && 'bg-primary text-primary-foreground'"
         @click="editor?.chain().focus().toggleStrike().run()"
       >
@@ -249,7 +250,7 @@ onBeforeUnmount(() => {
         type="button"
         size="toolbar"
         variant="ghost"
-        title="Inline Code"
+        :title="$t('labels.tiptap.toolbar.inlineCode')"
         :class="editor?.isActive('code') && 'bg-primary text-primary-foreground'"
         @click="editor?.chain().focus().toggleCode().run()"
       >
@@ -303,7 +304,7 @@ onBeforeUnmount(() => {
         type="button"
         size="toolbar"
         variant="ghost"
-        title="Bullet List"
+        :title="$t('labels.tiptap.toolbar.bulletList')"
         :class="editor?.isActive('bulletList') && 'bg-primary text-primary-foreground'"
         @click="editor?.chain().focus().toggleBulletList().run()"
       >
@@ -313,7 +314,7 @@ onBeforeUnmount(() => {
         type="button"
         size="toolbar"
         variant="ghost"
-        title="Ordered List"
+        :title="$t('labels.tiptap.toolbar.orderedList')"
         :class="editor?.isActive('orderedList') && 'bg-primary text-primary-foreground'"
         @click="editor?.chain().focus().toggleOrderedList().run()"
       >
@@ -323,7 +324,7 @@ onBeforeUnmount(() => {
         type="button"
         size="toolbar"
         variant="ghost"
-        title="Code Block"
+        :title="$t('labels.tiptap.toolbar.codeBlock')"
         :class="editor?.isActive('codeBlock') && 'bg-primary text-primary-foreground'"
         @click="editor?.chain().focus().toggleCodeBlock().run()"
       >
@@ -333,7 +334,7 @@ onBeforeUnmount(() => {
         type="button"
         size="toolbar"
         variant="ghost"
-        title="Blockquote"
+        :title="$t('labels.tiptap.toolbar.blockquote')"
         :class="editor?.isActive('blockquote') && 'bg-primary text-primary-foreground'"
         @click="editor?.chain().focus().toggleBlockquote().run()"
       >
@@ -343,7 +344,7 @@ onBeforeUnmount(() => {
         type="button"
         size="toolbar"
         variant="ghost"
-        title="Horizontal Rule"
+        :title="$t('labels.tiptap.toolbar.horizontalRule')"
         @click="editor?.chain().focus().setHorizontalRule().run()"
       >
         <Icon name="lucide:minus" />
@@ -352,7 +353,7 @@ onBeforeUnmount(() => {
         type="button"
         size="toolbar"
         variant="ghost"
-        title="Insert Table"
+        :title="$t('labels.tiptap.toolbar.insertTable')"
         @click="
           editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
         "
@@ -366,7 +367,7 @@ onBeforeUnmount(() => {
             size="xs"
             variant="outline"
             class="gap-1"
-            title="Table Tools"
+            :title="$t('labels.tiptap.toolbar.tableTools')"
             :disabled="!editor?.isActive('table')"
           >
             <Icon name="lucide:table-2" />
@@ -385,7 +386,7 @@ onBeforeUnmount(() => {
               name="lucide:columns"
               class="mr-2"
             />
-            Add Column Before
+            {{ $t('labels.tiptap.table.addColumnBefore') }}
           </DropdownMenuItem>
           <DropdownMenuItem
             :disabled="!editor?.can().addColumnAfter()"
@@ -395,7 +396,7 @@ onBeforeUnmount(() => {
               name="lucide:columns"
               class="mr-2"
             />
-            Add Column After
+            {{ $t('labels.tiptap.table.addColumnAfter') }}
           </DropdownMenuItem>
           <DropdownMenuItem
             :disabled="!editor?.can().deleteColumn()"
@@ -405,7 +406,7 @@ onBeforeUnmount(() => {
               name="lucide:trash-2"
               class="mr-2"
             />
-            Delete Column
+            {{ $t('labels.tiptap.table.deleteColumn') }}
           </DropdownMenuItem>
           <DropdownMenuItem
             :disabled="!editor?.can().addRowBefore()"
@@ -415,7 +416,7 @@ onBeforeUnmount(() => {
               name="lucide:rows"
               class="mr-2"
             />
-            Add Row Before
+            {{ $t('labels.tiptap.table.addRowBefore') }}
           </DropdownMenuItem>
           <DropdownMenuItem
             :disabled="!editor?.can().addRowAfter()"
@@ -425,7 +426,7 @@ onBeforeUnmount(() => {
               name="lucide:rows"
               class="mr-2"
             />
-            Add Row After
+            {{ $t('labels.tiptap.table.addRowAfter') }}
           </DropdownMenuItem>
           <DropdownMenuItem
             :disabled="!editor?.can().deleteRow()"
@@ -435,7 +436,7 @@ onBeforeUnmount(() => {
               name="lucide:trash-2"
               class="mr-2"
             />
-            Delete Row
+            {{ $t('labels.tiptap.table.deleteRow') }}
           </DropdownMenuItem>
           <DropdownMenuItem
             :disabled="!editor?.can().deleteTable()"
@@ -445,7 +446,7 @@ onBeforeUnmount(() => {
               name="lucide:trash-2"
               class="mr-2"
             />
-            Delete Table
+            {{ $t('labels.tiptap.table.deleteTable') }}
           </DropdownMenuItem>
           <DropdownMenuItem
             :disabled="!editor?.can().mergeCells()"
@@ -455,7 +456,7 @@ onBeforeUnmount(() => {
               name="lucide:merge"
               class="mr-2"
             />
-            Merge Cells
+            {{ $t('labels.tiptap.table.mergeCells') }}
           </DropdownMenuItem>
           <DropdownMenuItem
             :disabled="!editor?.can().splitCell()"
@@ -465,7 +466,7 @@ onBeforeUnmount(() => {
               name="lucide:split-square-vertical"
               class="mr-2"
             />
-            Split Cell
+            {{ $t('labels.tiptap.table.splitCell') }}
           </DropdownMenuItem>
           <DropdownMenuItem
             :disabled="!editor?.can().toggleHeaderCell()"
@@ -475,7 +476,7 @@ onBeforeUnmount(() => {
               name="lucide:heading"
               class="mr-2"
             />
-            Toggle Header Cell
+            {{ $t('labels.tiptap.table.toggleHeaderCell') }}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -483,7 +484,7 @@ onBeforeUnmount(() => {
         type="button"
         size="toolbar"
         variant="ghost"
-        title="External Link"
+        :title="$t('labels.tiptap.toolbar.externalLink')"
         :class="editor?.isActive('link') && 'bg-primary text-primary-foreground'"
         @click="insertExternalLink"
       >
@@ -493,7 +494,7 @@ onBeforeUnmount(() => {
         type="button"
         size="toolbar"
         variant="ghost"
-        title="Internal Link"
+        :title="$t('labels.tiptap.toolbar.internalLink')"
         :class="editor?.isActive('internalLink') && 'bg-primary text-primary-foreground'"
         :disabled="!props.spaceId"
         @click="openInternalLinkPicker"
@@ -506,7 +507,7 @@ onBeforeUnmount(() => {
         size="toolbar"
         variant="ghost"
         class="hover:text-destructive"
-        title="Remove Internal Link"
+        :title="$t('labels.tiptap.toolbar.removeInternalLink')"
         @click="removeInternalLink"
       >
         <Icon name="lucide:trash-2" />
@@ -518,7 +519,7 @@ onBeforeUnmount(() => {
             type="button"
             size="xs"
             variant="outline"
-            title="Insert Placeholder"
+            :title="$t('labels.tiptap.toolbar.insertPlaceholder')"
           >
             <Icon name="lucide:braces" />
             <Icon name="lucide:chevron-down" />
@@ -546,7 +547,7 @@ onBeforeUnmount(() => {
             type="button"
             size="xs"
             variant="outline"
-            title="Apply CSS Class"
+            :title="$t('labels.tiptap.toolbar.applyCssClass')"
           >
             <Icon name="lucide:palette" />
             <Icon name="lucide:chevron-down" />

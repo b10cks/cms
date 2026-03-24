@@ -91,7 +91,7 @@ const availableLocales = locales
           :is="isExtendedSidebar ? 'div' : SimpleTooltip"
           v-for="m in menu"
           :key="m.label"
-          v-bind="isExtendedSidebar ? {} : { tooltip: m.label, side: 'right' }"
+          v-bind="isExtendedSidebar ? {} : { tooltip: $t(m.label), side: 'right' }"
         >
           <RouterLink
             :to="buildLink(m.routeName)"
@@ -109,7 +109,7 @@ const availableLocales = locales
               v-if="isExtendedSidebar"
               class="line-clamp-2 text-[10px] leading-tight"
             >
-              {{ m.label.startsWith('labels.') ? $t(m.label) : m.label }}
+              {{ $t(m.label) }}
             </span>
           </RouterLink>
         </component>

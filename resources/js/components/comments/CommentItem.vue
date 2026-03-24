@@ -215,8 +215,8 @@ const toggleResolved = () => {
           size="xs"
           @click="isExpanded = !isExpanded"
         >
-          {{ isExpanded ? 'Hide' : 'Show' }} {{ repliesCount }}
-          {{ repliesCount === 1 ? 'reply' : 'replies' }}
+          {{ isExpanded ? $t('labels.comments.hideReplies') : $t('labels.comments.showReplies') }}
+          {{ repliesCount }} {{ $t('labels.comments.reply', repliesCount) }}
         </Button>
 
         <div
@@ -242,7 +242,7 @@ const toggleResolved = () => {
       >
         <div class="flex flex-col gap-1">
           <Avatar
-            :name="currentUser ? `${currentUser.firstname} ${currentUser.lastname}` : 'You'"
+            :name="currentUser ? `${currentUser.firstname} ${currentUser.lastname}` : $t('labels.comments.you')"
             :avatar="currentUser?.avatar"
             size="sm"
           />
@@ -251,7 +251,7 @@ const toggleResolved = () => {
               name="replyBody"
               v-model="replyBody"
               @keydown.enter.meta.prevent.stop="submitReply"
-              placeholder="Write a reply..."
+              :placeholder="$t('labels.comments.replyPlaceholder')"
             />
             <div class="flex justify-end gap-1">
               <Button
