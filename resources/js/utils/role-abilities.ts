@@ -191,8 +191,7 @@ export function groupRoleAbilities(abilities: string[], t: TranslateFn): Grouped
     grouped.set(meta.group, group)
   }
 
-  return ROLE_ABILITY_ORDER
-    .map((groupId) => grouped.get(groupId))
+  return ROLE_ABILITY_ORDER.map((groupId) => grouped.get(groupId))
     .filter((group): group is GroupedRoleAbilities => !!group)
     .map((group) => ({
       ...group,
@@ -238,8 +237,7 @@ export function groupRoleAbilitySections(
     grouped.set(meta.group, section)
   }
 
-  return ROLE_ABILITY_ORDER
-    .map((groupId) => grouped.get(groupId))
+  return ROLE_ABILITY_ORDER.map((groupId) => grouped.get(groupId))
     .filter((group): group is GroupedRoleAbilitySection => !!group)
     .map((group) => ({
       ...group,
@@ -247,7 +245,9 @@ export function groupRoleAbilitySections(
         .sort((left, right) => left.label.localeCompare(right.label))
         .map((resource) => ({
           ...resource,
-          abilities: [...resource.abilities].sort((left, right) => left.label.localeCompare(right.label)),
+          abilities: [...resource.abilities].sort((left, right) =>
+            left.label.localeCompare(right.label)
+          ),
         })),
     }))
 }

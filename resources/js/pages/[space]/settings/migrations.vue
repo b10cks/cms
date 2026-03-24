@@ -12,18 +12,14 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: spaceId })))
 const canManageMigrations = computed(() => access.hasAbility('migrations.manage'))
 
-
 const { useCreateMigrationMutation } = useMigrations(spaceId)
 const { mutate: createMigration, isPending: isCreating } = useCreateMigrationMutation()
-
 
 useSeoMeta({
   title: computed(() => t('labels.settings.migrations.title')),
 })
 
-
 const isCreateDialogOpen = ref(false)
-
 
 const handleCreate = (payload: CreateMigrationPayload) => {
   createMigration(payload)

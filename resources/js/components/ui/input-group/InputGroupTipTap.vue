@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { PluginKey } from '@tiptap/pm/state'
 import Placeholder from '@tiptap/extension-placeholder'
+import { PluginKey } from '@tiptap/pm/state'
 import { StarterKit } from '@tiptap/starter-kit'
 import type { SuggestionProps } from '@tiptap/suggestion'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
+
 import { AiMention, type AiMentionItem } from '~/components/editor/extensions/AiMention'
 
 const modelValue = defineModel<string>({ default: '' })
@@ -39,7 +40,9 @@ const filteredItems = computed(() => {
 })
 
 const contentItems = computed(() => filteredItems.value.filter((i) => i.type === 'content'))
-const draftContentItems = computed(() => filteredItems.value.filter((i) => i.type === 'draft-content'))
+const draftContentItems = computed(() =>
+  filteredItems.value.filter((i) => i.type === 'draft-content')
+)
 const blockItems = computed(() => filteredItems.value.filter((i) => i.type === 'block'))
 
 const selectedIndex = ref(0)

@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import Markdown from '~/components/Markdown.vue'
-import GradientText from '~/components/ui/GradientText.vue'
-
 import GithubLogo from '~/assets/images/partners/github.svg?component'
 import YoutubeLogo from '~/assets/images/partners/youtube.svg?component'
+import Markdown from '~/components/Markdown.vue'
+import GradientText from '~/components/ui/GradientText.vue'
 </script>
 
 <template>

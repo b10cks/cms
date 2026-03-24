@@ -12,7 +12,6 @@ import { Sheet, SheetContent, SheetHeaderCombined } from '~/components/ui/sheet'
 const open = defineModel<boolean>('open')
 const { $t } = useI18n()
 
-
 const props = defineProps<{
   spaceId: string
   blockId: string
@@ -21,16 +20,13 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageBlockTemplates = computed(() => access.hasAbility('block_templates.manage'))
 
-
 const { useBlockTemplatesQuery, useUpdateBlockTemplateMutation, useDeleteBlockTemplateMutation } =
   useBlockTemplates(props.spaceId, props.blockId)
 const { data: templates, isLoading } = useBlockTemplatesQuery()
 const { mutate: updateTemplate, isPending: isUpdating } = useUpdateBlockTemplateMutation()
 const { mutate: deleteTemplate, isPending: isDeleting } = useDeleteBlockTemplateMutation()
 
-
 const { alert } = useAlertDialog()
-
 
 const editingTemplate = ref<BlockTemplate | null>(null)
 const editForm = ref<{
@@ -47,9 +43,7 @@ const editForm = ref<{
   previewFile: null,
 })
 
-
 const fileInputRef = ref<HTMLInputElement | null>(null)
-
 
 const startEditing = (template: BlockTemplate) => {
   editingTemplate.value = template
@@ -62,11 +56,9 @@ const startEditing = (template: BlockTemplate) => {
   }
 }
 
-
 const cancelEditing = () => {
   editingTemplate.value = null
 }
-
 
 const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement
@@ -75,7 +67,6 @@ const handleFileSelect = (event: Event) => {
   }
 }
 
-
 const handleRemoveFile = () => {
   editForm.value.previewFile = null
   if (fileInputRef.value) {
@@ -83,10 +74,8 @@ const handleRemoveFile = () => {
   }
 }
 
-
 const handleUpdate = async () => {
   if (!editingTemplate.value) return
-
 
   await updateTemplate({
     id: editingTemplate.value.id,
@@ -99,10 +88,8 @@ const handleUpdate = async () => {
     },
   })
 
-
   editingTemplate.value = null
 }
-
 
 const handleDelete = async (template: BlockTemplate) => {
   await alert.confirm($t('labels.blockTemplates.delete.message', { name: template.name }), {
@@ -115,11 +102,9 @@ const handleDelete = async (template: BlockTemplate) => {
   })
 }
 
-
 const formatDate = (date: string) => {
   return dayjs(date).format('MMM D, YYYY HH:mm')
 }
-
 
 watch(open, (isOpen) => {
   if (!isOpen) {

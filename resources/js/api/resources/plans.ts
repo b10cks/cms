@@ -1,5 +1,6 @@
-import type { ApiClient } from '../client'
 import type { ApiCollectionResponse } from '~/types'
+
+import type { ApiClient } from '../client'
 
 export class Plans {
   private client: ApiClient

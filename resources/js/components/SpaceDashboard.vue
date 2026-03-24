@@ -5,6 +5,7 @@ import StatsLineChart from '~/components/stats/StatsLineChart.vue'
 import StatsMultiLineChart from '~/components/stats/StatsMultiLineChart.vue'
 import StatsPieChart from '~/components/stats/StatsPieChart.vue'
 import { installChart } from '~/plugins/chart'
+
 import { SelectField } from './ui/form'
 
 installChart()
@@ -190,10 +191,14 @@ const contentActivityData = computed(() => {
   }
 })
 
-watch([() => props.spaceId, period, dateRange], () => {
-  stats.value = null
-  fetchDashboardStats()
-}, { immediate: true })
+watch(
+  [() => props.spaceId, period, dateRange],
+  () => {
+    stats.value = null
+    fetchDashboardStats()
+  },
+  { immediate: true }
+)
 </script>
 
 <template>

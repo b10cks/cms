@@ -10,7 +10,6 @@ import type {
 } from '~/types/data-sources'
 
 import type { ApiClient } from '../client'
-
 // api/resources/data-sources.ts
 import { BaseResource } from './base-resource'
 

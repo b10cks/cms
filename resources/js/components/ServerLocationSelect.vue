@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
+import { FormField } from '~/components/ui/form'
 import {
   Select,
   SelectContent,
@@ -8,7 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
-import { FormField } from '~/components/ui/form'
 
 const serverLocations = [
   { id: 'eu', name: 'Europe (EU)', icon: 'flag:eu-4x3' },

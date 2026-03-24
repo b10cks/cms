@@ -1,6 +1,15 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
+import { computed, ref } from 'vue'
 
+import type { BlockTagResource } from '~/api/resources/block-tags'
+import CreateBlockTagDialog from '~/components/blocks/CreateBlockTagDialog.vue'
+import Icon from '~/components/Icon.vue'
+import SearchFilter from '~/components/SearchFilter.vue'
+import { Badge } from '~/components/ui/badge'
+import { Button } from '~/components/ui/button'
+import ContentHeader from '~/components/ui/ContentHeader.vue'
+import IconName from '~/components/ui/IconName.vue'
+import SortSelect from '~/components/ui/SortSelect.vue'
 import {
   Table,
   TableBody,
@@ -10,17 +19,8 @@ import {
   TableRow,
   TableSortableHead,
 } from '~/components/ui/table'
-import CreateBlockTagDialog from '~/components/blocks/CreateBlockTagDialog.vue'
-import ContentHeader from '~/components/ui/ContentHeader.vue'
-import SortSelect from '~/components/ui/SortSelect.vue'
-import SearchFilter from '~/components/SearchFilter.vue'
-import { computed, ref } from 'vue'
-import { Button } from '~/components/ui/button'
-import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
-import IconName from '~/components/ui/IconName.vue'
-import { Badge } from '~/components/ui/badge'
-import type { BlockTagResource } from '~/api/resources/block-tags'
+import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 
 const props = defineProps<{
   spaceId: string

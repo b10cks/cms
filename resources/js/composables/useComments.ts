@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
+import { api } from '~/api'
 import type { CommentsQueryParams } from '~/api/resources/comments'
 import type { CreateCommentRequest, UpdateCommentRequest } from '~/types/comments'
-
-import { api } from '~/api'
 
 import { queryKeys } from './useQueryClient'
 
@@ -15,7 +14,9 @@ export function useComments(
   const { t } = useI18n()
   const queryClient = useQueryClient()
   const resolvedContentId = computed(() => toValue(contentId) || '')
-  const commentsAPI = computed(() => api.forSpace(toValue(spaceId)).comments(resolvedContentId.value))
+  const commentsAPI = computed(() =>
+    api.forSpace(toValue(spaceId)).comments(resolvedContentId.value)
+  )
   const hasContentId = computed(() => !!toValue(contentId))
 
   const useCommentsQuery = (params: MaybeRef<CommentsQueryParams> = {}) => {
@@ -31,7 +32,9 @@ export function useComments(
 
   const useCommentQuery = (commentId: MaybeRef<string>) => {
     return useQuery({
-      queryKey: computed(() => queryKeys.comments(spaceId, resolvedContentId.value).detail(commentId)),
+      queryKey: computed(() =>
+        queryKeys.comments(spaceId, resolvedContentId.value).detail(commentId)
+      ),
       queryFn: async () => {
         const response = await commentsAPI.value.get(toValue(commentId))
         return response.data

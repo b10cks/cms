@@ -16,23 +16,18 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
 const canManageBlocks = computed(() => access.hasAbility('blocks.manage'))
 
-
 const { useBlockQuery, useUpdateBlockMutation } = useBlocks(spaceId)
 const { isLoading, data: block } = useBlockQuery(blockId)
 
-
 const { mutate: updateBlock } = useUpdateBlockMutation()
-
 
 useSeoMeta({
   title: computed(() => block.value?.name),
 })
 
-
 const activeTab = ref('editor')
 const showTemplatesSheet = ref(false)
 const showVersionsSheet = ref(false)
-
 
 const submit = async (b: BlockResource) => {
   updateBlock({

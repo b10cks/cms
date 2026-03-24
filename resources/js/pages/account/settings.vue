@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import AppHeader from '~/components/AppHeader.vue'
+import Icon from '~/components/Icon.vue'
 interface NavItem {
   title: string
   name: string

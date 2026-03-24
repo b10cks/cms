@@ -8,7 +8,6 @@ import type {
 } from '~/types/releases'
 
 import type { ApiClient } from '../client'
-
 import { BaseResource } from './base-resource'
 
 export interface ReleasesQueryParams extends BaseQueryParams {}

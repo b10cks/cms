@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue';
-import SpaceBadgeSelect from '~/components/space/SpaceBadgeSelect.vue';
-import { Button } from '~/components/ui/button';
+import Icon from '~/components/Icon.vue'
+import SpaceBadgeSelect from '~/components/space/SpaceBadgeSelect.vue'
+import { Button } from '~/components/ui/button'
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '~/components/ui/dialog';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '~/components/ui/dialog'
 
 const props = defineProps<{
   space: SpaceResource
@@ -52,7 +52,7 @@ watch(
   () => props.space.badge,
   (val) => {
     badge.value = val ?? null
-  },
+  }
 )
 
 // Reset local badge to the current space value whenever the dialog opens
@@ -76,7 +76,7 @@ const handleSave = () => {
       onSuccess() {
         isOpen.value = false
       },
-    },
+    }
   )
 }
 
@@ -86,15 +86,24 @@ const handleOpenChange = (val: boolean) => {
 </script>
 
 <template>
-  <Dialog :open="isOpen" @update:open="handleOpenChange">
+  <Dialog
+    :open="isOpen"
+    @update:open="handleOpenChange"
+  >
     <!--
       The trigger slot is only rendered when the component is used in uncontrolled
       mode (no external `open` binding). In controlled mode the parent drives
       opening, so we skip the trigger to avoid rendering an extra element.
     -->
-    <DialogTrigger v-if="!isControlled" as-child>
+    <DialogTrigger
+      v-if="!isControlled"
+      as-child
+    >
       <slot>
-        <Button variant="outline" size="sm">
+        <Button
+          variant="outline"
+          size="sm"
+        >
           <Icon name="lucide:tag" />
           {{ space.badge ? t('actions.spaces.editBadge') : t('actions.spaces.assignBadge') }}
         </Button>
@@ -105,9 +114,7 @@ const handleOpenChange = (val: boolean) => {
       <DialogHeader>
         <DialogTitle>
           {{
-            space.badge
-              ? t('labels.spaces.badge.editTitle')
-              : t('labels.spaces.badge.assignTitle')
+            space.badge ? t('labels.spaces.badge.editTitle') : t('labels.spaces.badge.assignTitle')
           }}
         </DialogTitle>
         <DialogDescription>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
+
 import {
   Tooltip,
   TooltipContent,

@@ -79,7 +79,12 @@ const handleNext = async () => {
   if (step.value < 2) {
     step.value++
   } else {
-    if (!selectedTeam.value?.id || !hasSelectedTeam.value || !isValidSelection.value || !canCreateSpace.value) {
+    if (
+      !selectedTeam.value?.id ||
+      !hasSelectedTeam.value ||
+      !isValidSelection.value ||
+      !canCreateSpace.value
+    ) {
       return
     }
 

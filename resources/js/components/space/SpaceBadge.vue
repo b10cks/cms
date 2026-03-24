@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { BadgeVariants } from '~/components/ui/badge';
-import { Badge } from '~/components/ui/badge';
+import type { BadgeVariants } from '~/components/ui/badge'
+import { Badge } from '~/components/ui/badge'
 
 const props = defineProps<{
   badge: string | null | undefined

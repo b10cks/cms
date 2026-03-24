@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+
 import type { RoleCatalogEntry } from '~/types/authorization'
 import type { InviteQueryParams } from '~/types/invites'
+
 import InvitesList from './InvitesList.vue'
 
 const props = defineProps<{

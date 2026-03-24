@@ -24,12 +24,10 @@ const props = withDefaults(
   }
 )
 
-
 const emit = defineEmits<{
   (event: 'update:modelValue', value: boolean): void
   (event: 'select', value: BlockResource): void
 }>()
-
 
 const open = useVModel(props, 'modelValue', emit, {
   passive: true,
@@ -38,7 +36,6 @@ const query = ref('')
 const searchRef = ref<HTMLInputElement | null>(null)
 const optionRefs = new Map<number, HTMLButtonElement>()
 const activeIndex = ref(0)
-
 
 const filteredBlocks = computed(() => {
   const needle = query.value.trim().toLowerCase()
@@ -50,7 +47,6 @@ const filteredBlocks = computed(() => {
     [block.name, block.slug, block.type].some((value) => value.toLowerCase().includes(needle))
   )
 })
-
 
 watch(open, async (value) => {
   if (!value) {
@@ -72,7 +68,8 @@ watch(
       return
     }
 
-    activeIndex.value = blocks.length === 0 ? -1 : Math.min(Math.max(activeIndex.value, 0), blocks.length - 1)
+    activeIndex.value =
+      blocks.length === 0 ? -1 : Math.min(Math.max(activeIndex.value, 0), blocks.length - 1)
     await nextTick()
     if (activeIndex.value >= 0) {
       optionRefs.get(activeIndex.value)?.scrollIntoView({ block: 'nearest' })
@@ -80,7 +77,6 @@ watch(
   },
   { flush: 'post' }
 )
-
 
 const selectBlock = (block: BlockResource) => {
   emit('select', block)
@@ -90,7 +86,6 @@ const selectBlock = (block: BlockResource) => {
 const closeMenu = () => {
   open.value = false
 }
-
 
 const openMenu = () => {
   if (!props.disabled && props.blocks.length > 0) {
@@ -122,7 +117,8 @@ const moveActiveIndex = (direction: 'up' | 'down') => {
   }
 
   const delta = direction === 'down' ? 1 : -1
-  activeIndex.value = (activeIndex.value + delta + filteredBlocks.value.length) % filteredBlocks.value.length
+  activeIndex.value =
+    (activeIndex.value + delta + filteredBlocks.value.length) % filteredBlocks.value.length
 }
 
 const handleMenuKeydown = async (event: KeyboardEvent) => {
@@ -169,7 +165,6 @@ useEventListener(window, 'keydown', (event) => {
   closeMenu()
 })
 
-
 const positionClass = computed(() => {
   switch (props.side) {
     case 'right':
@@ -178,7 +173,6 @@ const positionClass = computed(() => {
       return '-bottom-6 left-1/2 -translate-x-1/2'
   }
 })
-
 
 defineExpose({
   closeMenu,
@@ -206,7 +200,7 @@ defineExpose({
           :disabled="disabled"
         >
           <Icon name="lucide:plus" />
-        </Button>
+        </button>
       </slot>
     </PopoverTrigger>
 

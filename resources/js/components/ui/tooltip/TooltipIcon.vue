@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
-import TooltipProvider from '~/components/ui/tooltip/TooltipProvider.vue'
 import Tooltip from '~/components/ui/tooltip/Tooltip.vue'
-import TooltipTrigger from '~/components/ui/tooltip/TooltipTrigger.vue'
 import TooltipContent from '~/components/ui/tooltip/TooltipContent.vue'
+import TooltipProvider from '~/components/ui/tooltip/TooltipProvider.vue'
+import TooltipTrigger from '~/components/ui/tooltip/TooltipTrigger.vue'
 
 withDefaults(
   defineProps<{

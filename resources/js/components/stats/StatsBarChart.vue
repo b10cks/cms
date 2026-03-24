@@ -10,6 +10,7 @@ import {
   Tooltip,
 } from 'chart.js'
 import { Bar } from 'vue-chartjs'
+
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)

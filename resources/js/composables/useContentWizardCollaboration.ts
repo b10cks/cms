@@ -148,13 +148,16 @@ export function useContentWizardCollaboration(spaceIdRef: MaybeRefOrComputed<str
   }
 
   const onOperation = (callback: (operation: ContentWizardSyncOperation) => void) =>
-    presence.onWhisper<ContentWizardOperationWhisperPayload>(CONTENT_WIZARD_OPERATION_EVENT, (payload) => {
-      if (!payload || payload.userId === currentUserId.value) {
-        return
-      }
+    presence.onWhisper<ContentWizardOperationWhisperPayload>(
+      CONTENT_WIZARD_OPERATION_EVENT,
+      (payload) => {
+        if (!payload || payload.userId === currentUserId.value) {
+          return
+        }
 
-      callback(payload.operation)
-    })
+        callback(payload.operation)
+      }
+    )
 
   const stopFocusListener = presence.onWhisper<ContentWizardFocusWhisperPayload>(
     CONTENT_WIZARD_FOCUS_EVENT,

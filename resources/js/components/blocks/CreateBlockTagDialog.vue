@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
-import { Button } from '~/components/ui/button'
 import type { BlockTagResource } from '~/api/resources/block-tags'
 import BlockTagEdit from '~/components/BlockTagEdit.vue'
+import { Button } from '~/components/ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 
 const open = defineModel<boolean>('open')
 

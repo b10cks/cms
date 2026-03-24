@@ -1,6 +1,5 @@
-import type { MaybeRefOrGetter } from 'vue'
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import type { MaybeRefOrGetter } from 'vue'
 
 import type { SpaceAiConfig } from '~/api/resources/ai'
 

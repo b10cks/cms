@@ -26,11 +26,9 @@ const canViewMembers = computed(() =>
   access.hasAnyAbility(['space.members.view', 'space.members.manage'])
 )
 
-
 useSeoMeta({
   title: computed(() => t('labels.settings.people.title')),
 })
-
 
 const { useSpaceInvitesQuery, useDeleteSpaceInviteMutation, useResendSpaceInviteMutation } =
   useInvites()
@@ -70,22 +68,18 @@ const members = computed(() => membersData.value?.data || [])
 const membersMeta = computed(() => membersData.value?.meta)
 const availableRoles = computed(() => authorization.value?.roles.space || [])
 
-
 const handleDeleteInvite = (inviteId: string) => {
   deleteInvite({ spaceId: spaceId.value, inviteId })
 }
-
 
 const handleResendInvite = (inviteId: string) => {
   resendInvite({ spaceId: spaceId.value, inviteId })
 }
 
-
 const handleUpdateRole = (userId: string, role: string) => {
   const payload: UpdateSpaceMemberPayload = { role }
   updateMemberMutation.mutate({ spaceId: spaceId.value, userId, payload })
 }
-
 
 const handleRemoveMember = (userId: string) => {
   removeMemberMutation.mutate({ spaceId: spaceId.value, userId })
@@ -148,10 +142,29 @@ const handleRemoveMember = (userId: string) => {
           :available-roles="availableRoles"
           @update-role="handleUpdateRole"
           @remove="handleRemoveMember"
-          @update:current-page="(val) => { currentPage = val }"
-          @update:per-page="(val) => { perPage = val; currentPage = 1 }"
-          @update:sort-by="(val) => { sortBy = val; currentPage = 1 }"
-          @update:filters="(val) => { filters = val; currentPage = 1 }"
+          @update:current-page="
+            (val) => {
+              currentPage = val
+            }
+          "
+          @update:per-page="
+            (val) => {
+              perPage = val
+              currentPage = 1
+            }
+          "
+          @update:sort-by="
+            (val) => {
+              sortBy = val
+              currentPage = 1
+            }
+          "
+          @update:filters="
+            (val) => {
+              filters = val
+              currentPage = 1
+            }
+          "
         />
       </div>
     </template>

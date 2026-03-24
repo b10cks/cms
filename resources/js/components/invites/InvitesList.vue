@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import UsersIcon from '~/assets/images/users.svg?component'
+import Icon from '~/components/Icon.vue'
 import SearchFilter, { FilterableField } from '~/components/SearchFilter.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
@@ -19,10 +18,11 @@ import {
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { SimpleTooltip } from '~/components/ui/tooltip'
-import type { RoleCatalogEntry } from '~/types/authorization'
 import type { LaravelMeta } from '~/types'
+import type { RoleCatalogEntry } from '~/types/authorization'
 import type { InviteResource } from '~/types/invites'
 import { InviteStatus } from '~/types/invites.d'
+
 import TableEmptyRow from '../ui/TableEmptyRow.vue'
 
 const props = withDefaults(
@@ -79,9 +79,9 @@ const inviteFilters = computed((): FilterableField[] => [
     label: t('labels.invites.filters.role'),
     operators: [{ value: 'eq' as const, label: t('labels.invites.operators.equals') }],
     items: props.availableRoles.map((role) => ({
-        value: role.key,
-        label: role.name,
-      })),
+      value: role.key,
+      label: role.name,
+    })),
   },
   {
     id: 'status',

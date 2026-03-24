@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { useVModel } from '@vueuse/core'
 import type { HTMLAttributes } from 'vue'
+
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
+
 import FormField from './FormField.vue'
 
 const props = defineProps<{

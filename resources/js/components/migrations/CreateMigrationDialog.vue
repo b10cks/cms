@@ -154,7 +154,14 @@ const handleOpenChange = (newOpen: boolean) => {
         >
           <div class="mt-2 space-y-2">
             <label
-              v-for="key in ['blocks', 'block_templates', 'content', 'assets', 'data_sources', 'redirects']"
+              v-for="key in [
+                'blocks',
+                'block_templates',
+                'content',
+                'assets',
+                'data_sources',
+                'redirects',
+              ]"
               :key="key"
               class="flex cursor-pointer items-center gap-2"
             >

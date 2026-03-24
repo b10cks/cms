@@ -470,16 +470,16 @@ onMounted(async () => {
 
         <div class="flex items-center gap-2">
           <template v-if="canManageAssets">
-          <Switch
-            id="autosave"
-            v-model="settings.assets.autoSave"
-          />
-          <label
-            for="autosave"
-            class="text-sm text-muted-foreground"
-          >
-            {{ $t('labels.datasets.autoSave') }}
-          </label>
+            <Switch
+              id="autosave"
+              v-model="settings.assets.autoSave"
+            />
+            <label
+              for="autosave"
+              class="text-sm text-muted-foreground"
+            >
+              {{ $t('labels.datasets.autoSave') }}
+            </label>
           </template>
         </div>
       </div>

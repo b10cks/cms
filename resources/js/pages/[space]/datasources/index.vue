@@ -13,29 +13,23 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
 const canManageDataSources = computed(() => access.hasAbility('data_sources.manage'))
 
-
 const createDialogOpen = ref(false)
 const editingDataSource = ref<DataSourceResource | null>(null)
 
-
 const { $t, t } = useI18n()
 const { alert } = useAlertDialog()
-
 
 useSeoMeta({
   title: computed(() => t('labels.datasets.title')),
 })
 
-
 const { useDeleteDataSourceMutation } = useDataSources(spaceId)
 const { mutate: deleteDataSource } = useDeleteDataSourceMutation()
-
 
 const handleEditDataSource = (dataSource: DataSourceResource) => {
   editingDataSource.value = dataSource
   createDialogOpen.value = true
 }
-
 
 const handleAddDataSource = () => {
   editingDataSource.value = null
@@ -45,7 +39,6 @@ const closeDialog = () => {
   createDialogOpen.value = false
   editingDataSource.value = null
 }
-
 
 const handleDelete = async (dataSource: DataSourceResource) => {
   const confirmed = await alert.confirm(

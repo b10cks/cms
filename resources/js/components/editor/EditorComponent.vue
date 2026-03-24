@@ -22,22 +22,18 @@ import { SimpleTooltip } from '../ui/tooltip'
 
 const { $t } = useI18n()
 
-
 interface Breadcrumb {
   id: string
   label: string
   block: string
 }
 
-
 type HoverUpdateFunction = (data: string | null) => void
 type PreviewUpdateFunction = (data: Record<string, unknown>) => void
-
 
 const content = defineModel<ContentTreeItem | Record<string, unknown>>({ required: true })
 const containerRef = useTemplateRef<HTMLElement>('containerRef')
 const isHovered = useElementHover(containerRef)
-
 
 const props = withDefaults(
   defineProps<{
@@ -62,7 +58,6 @@ const props = withDefaults(
   }
 )
 
-
 const emit = defineEmits<{
   (e: 'navigate', itemId: string | null): void
   (e: 'createTemplate', blockId: string, content: object): void
@@ -70,16 +65,12 @@ const emit = defineEmits<{
   (e: 'fieldFocus', payload: ContentFieldFocusPayload): void
 }>()
 
-
 const hoverRegistry = inject<Map<string, boolean>>('hoverRegistry', new Map())
 const componentId = computed((): string => (content.value?.id || props.itemId || '') as string)
 
-
 provide('hoverRegistry', hoverRegistry)
 
-
 const updateHoverItem = inject<HoverUpdateFunction>('updateHoverItem')
-
 
 const updateRegistry = (isComponentHovered: boolean): void => {
   hoverRegistry.set(componentId.value, isComponentHovered)
@@ -94,7 +85,6 @@ const updateRegistry = (isComponentHovered: boolean): void => {
   }
 }
 
-
 watch(
   isHovered,
   (hovered: boolean) => {
@@ -103,25 +93,20 @@ watch(
   { immediate: true }
 )
 
-
 onBeforeUnmount(() => {
   hoverRegistry.delete(componentId.value)
 })
-
 
 // Initialize on mount
 onMounted(() => {
   updateRegistry(isHovered.value)
 })
 
-
 const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 
-
 const rootBlock = inject<ContentBlock>('rootBlock')
 const updatePreviewItem = inject<PreviewUpdateFunction>('updatePreviewItem')
-
 
 const contentModel = computed({
   get: (): ContentTreeItem =>
@@ -135,7 +120,6 @@ const contentModel = computed({
   },
 })
 
-
 const rootTreeBlock = computed<ContentBlock>(() => {
   if (rootBlock) return rootBlock
 
@@ -147,7 +131,6 @@ const rootTreeBlock = computed<ContentBlock>(() => {
     type: 'root',
   }
 })
-
 
 const contentTree = useContentTree(
   contentModel as unknown as ComputedRef<ContentTreeItem>,
@@ -181,7 +164,6 @@ const rootContentId = computed(
   () => props.rootId || String((contentModel.value as { id?: string }).id || '')
 )
 
-
 const currentBlock = computed((): BlockResource | null => {
   const blockList = blocks.value?.data ?? []
 
@@ -200,11 +182,9 @@ const currentBlock = computed((): BlockResource | null => {
   return null
 })
 
-
 const currentSchema = computed(
   (): Record<string, SchemaType & { key: string }> => normalizeSchema(currentBlockSchema.value)
 )
-
 
 const findItemPathPrefix = (
   value: unknown,
@@ -213,38 +193,30 @@ const findItemPathPrefix = (
 ): Array<string | number> | null => {
   if (!value || typeof value !== 'object') return null
 
-
   if (Array.isArray(value)) {
     for (const [index, item] of value.entries()) {
       const result = findItemPathPrefix(item, targetId, [...currentPath, index])
       if (result) return result
     }
 
-
     return null
   }
 
-
   const objectValue = value as Record<string, unknown>
-
 
   if (objectValue.id === targetId) {
     return currentPath
   }
 
-
   for (const [key, nestedValue] of Object.entries(objectValue)) {
     if (!nestedValue || typeof nestedValue !== 'object') continue
-
 
     const result = findItemPathPrefix(nestedValue, targetId, [...currentPath, key])
     if (result) return result
   }
 
-
   return null
 }
-
 
 const currentPathPrefix = computed<Array<string | number>>(() => {
   if (props.itemId) {
@@ -256,14 +228,11 @@ const currentPathPrefix = computed<Array<string | number>>(() => {
   return props.pathPrefix
 })
 
-
 const isVisibleField = (itemKey: string) => {
   const field = currentSchema.value[itemKey]
   if (!field) return false
 
-
   const scope = (currentContentItem.value || contentModel.value || {}) as Record<string, unknown>
-
 
   return isFieldVisible(
     field as SchemaType & { key: string },
@@ -272,15 +241,12 @@ const isVisibleField = (itemKey: string) => {
   )
 }
 
-
 const handleBreadcrumbNavigation = (itemId: string | null): void => {
   emit('navigate', itemId)
 }
 
-
 const handleTemplateTrigger = (): void => {
   if (!currentBlock.value) return
-
 
   emit(
     'createTemplate',
@@ -289,29 +255,23 @@ const handleTemplateTrigger = (): void => {
   )
 }
 
-
 const handleCreateTemplate = (blockId: string, content: Record<string, unknown>): void => {
   emit('createTemplate', blockId, content)
 }
-
 
 const forwardFieldUpdate = (payload: ContentFieldUpdatePayload): void => {
   emit('fieldUpdate', payload)
 }
 
-
 const forwardFieldFocus = (payload: ContentFieldFocusPayload): void => {
   emit('fieldFocus', payload)
 }
 
-
 const INTERNAL_CONTENT_KEYS = new Set(['id', 'block', 'hidden'])
-
 
 const contentData = computed<Record<string, unknown>>(
   () => (currentContentItem.value ?? contentModel.value) as unknown as Record<string, unknown>
 )
-
 
 const outOfSchemaEntries = computed(() =>
   Object.entries(contentData.value).filter(
@@ -319,9 +279,7 @@ const outOfSchemaEntries = computed(() =>
   )
 )
 
-
 const isOutOfSchemaExpanded = ref(false)
-
 
 const formatOutOfSchemaValue = (value: unknown): string => {
   if (value === null) return 'null'
@@ -330,7 +288,6 @@ const formatOutOfSchemaValue = (value: unknown): string => {
   const json = JSON.stringify(value)
   return json.length > 80 ? `${json.slice(0, 80)}…` : json
 }
-
 
 const applyContentUpdate = (data: Record<string, unknown>): void => {
   if (currentContentItem.value && props.itemId) {
@@ -342,13 +299,11 @@ const applyContentUpdate = (data: Record<string, unknown>): void => {
   }
 }
 
-
 const removeOutOfSchemaKey = (key: string): void => {
   const data = { ...contentData.value }
   delete data[key]
   applyContentUpdate(data)
 }
-
 
 const removeAllOutOfSchemaKeys = (): void => {
   const data = { ...contentData.value }

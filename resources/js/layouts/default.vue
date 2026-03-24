@@ -6,10 +6,8 @@ import PendingSubscriptionBanner from '~/components/PendingSubscriptionBanner.vu
 const { useCurrentSpaceQuery } = useSpaces()
 const { data: currentSpace } = useCurrentSpaceQuery()
 
-
 const route = useRoute()
 const spaceId = computed(() => (route.params?.space as string) || null)
-
 
 useSeoMeta({
   titleTemplate: (title) => {
@@ -21,7 +19,6 @@ useSeoMeta({
     return parts.filter(Boolean).join(' – ')
   },
 })
-
 
 provide('spaceId', spaceId)
 </script>

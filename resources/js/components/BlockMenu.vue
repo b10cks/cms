@@ -12,14 +12,11 @@ const mode = defineModel<'list' | 'tags'>('mode', {
   default: 'list',
 })
 
-
 const selectedFolder = defineModel<string | null>('selectedFolder')
-
 
 const props = defineProps<{
   spaceId: string
 }>()
-
 
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
@@ -27,28 +24,22 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageBlockFolders = computed(() => access.hasAbility('blocks.manage'))
 
-
 const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
-
 
 const { useFolderStructure, useDeleteBlockFolderMutation } = useBlockFolders(props.spaceId)
 const { rootFolders, getChildrenOfFolder } = useFolderStructure()
 const { mutate: deleteBlockFolder } = useDeleteBlockFolderMutation()
 
-
 const { useBlockTagsQuery } = useBlockTags(props.spaceId)
 const { data: blockTags } = useBlockTagsQuery({ per_page: 500 })
 
-
 const showCreateFolderDialog = ref(false)
-
 
 function handleSelectFolder(folder?: BlockFolderResource) {
   selectedFolder.value = folder ? folder?.id : undefined
   mode.value = 'list'
 }
-
 
 const initDeleteFolder = async (folder: BlockFolderResource) => {
   const confirmed = await alert.confirm(
@@ -60,7 +51,6 @@ const initDeleteFolder = async (folder: BlockFolderResource) => {
     }
   )
 
-
   if (confirmed) {
     deleteBlockFolder(folder.id)
     if (selectedFolder.value === folder.id) {
@@ -68,7 +58,6 @@ const initDeleteFolder = async (folder: BlockFolderResource) => {
     }
   }
 }
-
 
 const tabs = computed(() => ({
   list: {

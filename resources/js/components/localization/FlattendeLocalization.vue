@@ -8,12 +8,12 @@ import MetaLocalization from '~/components/localization/MetaLocalization.vue'
 import { Button } from '~/components/ui/button'
 import { CheckboxField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
+import { useAiTranslation } from '~/composables/useAiTranslation'
 import {
   isFieldVisible,
   normalizeSchema,
   normalizeSchemaType,
 } from '~/composables/useContentSchemaState'
-import { useAiTranslation } from '~/composables/useAiTranslation'
 
 import MarkdownLocalization from './MarkdownLocalization.vue'
 import RichTextLocalization from './RichTextLocalization.vue'
@@ -21,7 +21,6 @@ import TextareaLocalization from './TextareaLocalization.vue'
 import TextLocalization from './TextLocalization.vue'
 
 type LocalizableSchema = SchemaType & { translatable?: boolean }
-
 
 interface TranslatableField {
   key: string
@@ -33,22 +32,18 @@ interface TranslatableField {
   isTranslated: boolean
 }
 
-
 interface BlockItem {
   block?: string
   [key: string]: unknown
 }
 
-
 interface SpaceSettings {
   default_language: string
 }
 
-
 interface Space {
   settings: SpaceSettings
 }
-
 
 const localizers: Partial<Record<CanonicalSchemaTypeName, Component>> = {
   text: TextLocalization,
@@ -58,12 +53,10 @@ const localizers: Partial<Record<CanonicalSchemaTypeName, Component>> = {
   meta: MetaLocalization,
 }
 
-
 function resolveLocalizerComponent(fieldType: string): Component | null {
   const normalizedType = normalizeSchemaType(fieldType)
   return normalizedType ? (localizers[normalizedType] ?? null) : null
 }
-
 
 const props = defineProps<{
   originalContent: Record<string, unknown>
@@ -76,10 +69,8 @@ const props = defineProps<{
   ) => { schema: Record<string, LocalizableSchema>; name: string } | undefined
 }>()
 
-
 const { useSpaceQuery } = useSpaces()
 const { data: space } = useSpaceQuery(props.spaceId) as { data: Ref<Space> }
-
 
 const showUntranslatedOnly = ref(false)
 const searchQuery = ref('')
@@ -106,12 +97,9 @@ function extractCompletedTranslations(partial: string): Record<string, string> {
 }
 const sourceLanguage = computed((): string => space.value?.settings?.default_language || '')
 
-
 const machineTranslatedFields = ref(new Set<string>())
 
-
 const translatableFields = ref<TranslatableField[]>([])
-
 
 const traverseContent = (
   original: Record<string, unknown>,
@@ -125,12 +113,10 @@ const traverseContent = (
     return result
   }
 
-
   const normalizedSchema = normalizeSchema(schema)
   const originalScope = original as Record<string, unknown>
   const translationScope = translation as Record<string, unknown>
   const effectiveScope = effective as Record<string, unknown>
-
 
   Object.entries(normalizedSchema).forEach(([key, schemaItem]) => {
     const path = [...currentPath, key]
@@ -184,10 +170,8 @@ const traverseContent = (
     }
   })
 
-
   return result
 }
-
 
 watch(
   [() => props.originalContent, () => props.translationContent, () => props.blockSchema],
@@ -210,7 +194,6 @@ watch(
   { immediate: true, deep: true }
 )
 
-
 const filteredFields = computed(() => {
   return translatableFields.value.filter((field) => {
     if (showUntranslatedOnly.value && field.isTranslated) {
@@ -229,34 +212,27 @@ const filteredFields = computed(() => {
   })
 })
 
-
 const getFieldIdentifier = (field: TranslatableField): string => {
   return `${field.path.join('-')}-${field.key}`
 }
 
-
 const isMachineTranslated = (field: TranslatableField): boolean => {
   return machineTranslatedFields.value.has(getFieldIdentifier(field))
 }
-
 
 const updateTranslatedValue = (field: TranslatableField, newValue: unknown): void => {
   const fieldToUpdate = translatableFields.value.find(
     (f) => f.key === field.key && JSON.stringify(f.path) === JSON.stringify(field.path)
   )
 
-
   if (fieldToUpdate) {
     fieldToUpdate.translatedValue = newValue
     fieldToUpdate.isTranslated = newValue !== '' && newValue !== null && newValue !== undefined
 
-
     let current: Record<string, unknown> = props.translationContent
-
 
     for (let i = 0; i < field.path.length - 1; i++) {
       const pathPart = field.path[i]
-
 
       if (current[pathPart] === undefined) {
         if (Number.isInteger(parseInt(field.path[i + 1]))) {
@@ -265,7 +241,6 @@ const updateTranslatedValue = (field: TranslatableField, newValue: unknown): voi
           current[pathPart] = {}
         }
       }
-
 
       if (Array.isArray(current[pathPart])) {
         const nextIndex = parseInt(field.path[i + 1])
@@ -277,16 +252,13 @@ const updateTranslatedValue = (field: TranslatableField, newValue: unknown): voi
         }
       }
 
-
       current = current[pathPart] as Record<string, unknown>
     }
-
 
     const finalKey = field.path[field.path.length - 1]
     current[finalKey] = newValue
   }
 }
-
 
 const updateTranslatedValues = (translatedTexts: Record<string, string>): void => {
   Object.entries(translatedTexts).forEach(([fieldPath, translation]) => {
@@ -304,10 +276,8 @@ const updateTranslatedValues = (translatedTexts: Record<string, string>): void =
   })
 }
 
-
 const getUntranslatedFields = (): Record<string, string> => {
   const untranslatedFields: Record<string, string> = {}
-
 
   translatableFields.value
     .filter(
@@ -321,10 +291,8 @@ const getUntranslatedFields = (): Record<string, string> => {
       untranslatedFields[fieldPath] = field.originalValue as string
     })
 
-
   return untranslatedFields
 }
-
 
 function stripCodeFences(content: string): string {
   return content
@@ -332,7 +300,6 @@ function stripCodeFences(content: string): string {
     .replace(/\n?```\s*$/i, '')
     .trim()
 }
-
 
 // Unwrap AI responses that may nest translations under a wrapper key
 // e.g. { "translations": { ... } } or { "data": { ... } }
@@ -360,7 +327,6 @@ function findTranslationsObject(parsed: unknown): Record<string, string> | null 
 
   return null
 }
-
 
 const translateWithAI = async (): Promise<void> => {
   const fieldsToTranslate = getUntranslatedFields()
@@ -412,11 +378,15 @@ const translateWithAI = async (): Promise<void> => {
           if (count > 0) {
             toast.success(`Successfully translated ${count} field${count !== 1 ? 's' : ''}`)
           } else {
-            toast.error(t('composables.aiTranslation.error', { error: 'No fields could be matched' }))
+            toast.error(
+              t('composables.aiTranslation.error', { error: 'No fields could be matched' })
+            )
           }
         } catch {
           if (appliedKeys.size > 0) {
-            toast.success(`Translated ${appliedKeys.size} field${appliedKeys.size !== 1 ? 's' : ''}`)
+            toast.success(
+              `Translated ${appliedKeys.size} field${appliedKeys.size !== 1 ? 's' : ''}`
+            )
           } else {
             toast.error(t('composables.aiTranslation.error', { error: 'Invalid JSON response' }))
           }
@@ -430,7 +400,6 @@ const translateWithAI = async (): Promise<void> => {
     }
   )
 }
-
 
 const translationStats = computed(() => {
   const total = translatableFields.value.length
@@ -486,7 +455,11 @@ const translationStats = computed(() => {
               name="lucide:sparkles"
               class="text-ai"
             />
-            <span>{{ isTranslating ? $t('components.flattenedLocalization.translating') : $t('components.flattenedLocalization.translate') }}</span>
+            <span>{{
+              isTranslating
+                ? $t('components.flattenedLocalization.translating')
+                : $t('components.flattenedLocalization.translate')
+            }}</span>
           </Button>
           <Transition
             enter-active-class="transition-all duration-200 ease-out"
@@ -499,7 +472,10 @@ const translationStats = computed(() => {
             <span
               v-if="translationProgress"
               class="ai-animate-text text-xs text-muted"
-            >{{ $t('components.flattenedLocalization.translationProgress', translationProgress) }}</span>
+              >{{
+                $t('components.flattenedLocalization.translationProgress', translationProgress)
+              }}</span
+            >
           </Transition>
         </div>
 

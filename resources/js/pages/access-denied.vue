@@ -10,53 +10,43 @@ import { accessDeniedMetadataByScope } from '~/lib/access-control'
 
 const route = useRoute()
 
-
 const scope = computed<'space' | 'team' | 'global'>(() => {
   const value = route.query.scope
   return value === 'space' || value === 'team' ? value : 'global'
 })
 
-
 const spaceId = computed(() => {
   return typeof route.query.space === 'string' ? route.query.space : null
 })
 
-
 const teamId = computed(() => {
   return typeof route.query.team === 'string' ? route.query.team : null
 })
-
 
 const authorizationParams = computed(() => ({
   ...(spaceId.value ? { space_id: spaceId.value } : {}),
   ...(teamId.value ? { team_id: teamId.value } : {}),
 }))
 
-
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(authorizationParams)
-
 
 const metadata = computed(() => accessDeniedMetadataByScope[scope.value])
 const sourcePath = computed(() => {
   return typeof route.query.from === 'string' ? route.query.from : null
 })
 
-
 const canReturnToSpaceHome = computed(() => {
   return !!spaceId.value && access.canAccessRoute('space')
 })
-
 
 const canReturnToTeam = computed(() => {
   return !!teamId.value && access.canAccessRoute('team')
 })
 
-
 const canOpenFallbackSpaceRoute = computed(() => {
   return !!spaceId.value && !!access.firstAllowedRouteForSpace(spaceId.value)
 })
-
 
 const fallbackSpaceRoute = computed(() => {
   if (!spaceId.value) {
@@ -65,7 +55,6 @@ const fallbackSpaceRoute = computed(() => {
 
   return access.firstAllowedRouteForSpace(spaceId.value)
 })
-
 
 useSeoMeta({
   title: computed(() => metadata.value.title),

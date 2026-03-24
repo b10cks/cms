@@ -16,15 +16,12 @@ const canAccessCanvas = computed(() =>
 )
 const canViewContent = computed(() => access.hasAbility('content.view'))
 
-
 const { useContentMenuQuery, getRootItems } = useContentMenu(spaceId)
 const { data } = useContentMenuQuery(canViewContent)
-
 
 useSeoMeta({
   title: computed(() => t('labels.contents.title')),
 })
-
 
 const rootItems = computed(() => getRootItems(data.value) || [])
 </script>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+
 import { CheckboxField } from '~/components/ui/form'
 import ComboboxField from '~/components/ui/form/ComboboxField.vue'
 import type { ComboboxOption } from '~/components/ui/form/ComboboxField.vue'

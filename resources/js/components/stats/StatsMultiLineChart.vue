@@ -12,6 +12,7 @@ import {
   Tooltip,
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
+
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 
 ChartJS.register(

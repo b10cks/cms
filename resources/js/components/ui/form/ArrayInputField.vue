@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { computed, reactive } from 'vue'
+
+import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { FormField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'

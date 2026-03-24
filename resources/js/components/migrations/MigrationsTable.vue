@@ -27,7 +27,6 @@ const props = defineProps<{
   spaceId: string
 }>()
 
-
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
 const { formatDateTime } = useFormat()
@@ -36,21 +35,17 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageMigrations = computed(() => access.hasAbility('migrations.manage'))
 
-
 const currentPage = ref(1)
 const perPage = ref(24)
-
 
 const queryParams = computed(() => ({
   page: currentPage.value,
   per_page: perPage.value,
 }))
 
-
 const { useMigrationsQuery, useDeleteMigrationMutation } = useMigrations(props.spaceId)
 const { data: migrations, isLoading, refetch } = useMigrationsQuery(queryParams)
 const { mutate: deleteMigration } = useDeleteMigrationMutation()
-
 
 // Poll in-progress migrations
 const inProgressIds = computed(() =>
@@ -58,7 +53,6 @@ const inProgressIds = computed(() =>
     .filter((m) => m.state === 'pending' || m.state === 'processing')
     .map((m) => m.id)
 )
-
 
 watch(inProgressIds, (ids) => {
   if (ids.length > 0) {
@@ -72,9 +66,7 @@ watch(inProgressIds, (ids) => {
   }
 })
 
-
 const currentSpaceId = route.params.space as string
-
 
 const scopeLabel = (scope: MigrationScope): string => {
   const parts: string[] = []
@@ -87,14 +79,12 @@ const scopeLabel = (scope: MigrationScope): string => {
   return parts.join(', ') || '—'
 }
 
-
 const directionLabel = (migration: MigrationResource): string => {
   if (migration.source_space_id === currentSpaceId) {
     return `→ ${migration.target_space?.name ?? migration.target_space_id}`
   }
   return `← ${migration.source_space?.name ?? migration.source_space_id}`
 }
-
 
 const handleDelete = async (migration: MigrationResource) => {
   const confirmed = await alert.confirm($t('labels.migrations.deleteConfirmMessage'), {

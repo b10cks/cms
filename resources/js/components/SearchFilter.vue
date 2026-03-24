@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
 import { SplitBadge } from '~/components/ui/badge'
 
 interface FilterableItem {

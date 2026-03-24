@@ -1,12 +1,10 @@
-import type { MaybeRefOrGetter } from 'vue'
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import type { MaybeRefOrGetter } from 'vue'
 import { toast } from 'vue-sonner'
 
+import { api } from '~/api'
 import type { SpaceQueryParams } from '~/api/resources/spaces'
 import type { ApiResponse } from '~/types'
-
-import { api } from '~/api'
 
 import { queryKeys } from './useQueryClient'
 
@@ -50,7 +48,9 @@ export function useSpaces() {
     return useMutation({
       mutationFn: async (payload: CreateSpacePayload) => {
         // Return the full response so callers can access top-level fields like checkout_url
-        return api.spaces.create(payload) as Promise<ApiResponse<SpaceResource> & { checkout_url?: string | null }>
+        return api.spaces.create(payload) as Promise<
+          ApiResponse<SpaceResource> & { checkout_url?: string | null }
+        >
       },
       onSuccess: (response) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.spaces.lists() })

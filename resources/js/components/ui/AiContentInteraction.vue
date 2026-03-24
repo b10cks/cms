@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import type { MentionItem } from '~/api/resources/ai'
 import AiText, { type AttachedFile } from '~/components/ui/AiText.vue'
 import type { ContentResource } from '~/types/contents'
-import type { MentionItem } from '~/api/resources/ai'
 
 const content = defineModel<ContentResource | null>('content', { required: true })
 
@@ -51,9 +51,10 @@ const handleSubmit = (
   emit('update:content', updatedContent)
 
   if (updatePreviewItem && updatedContent.id) {
-    const fields = typeof updatedContent.content === 'object' && updatedContent.content !== null
-      ? updatedContent.content
-      : {}
+    const fields =
+      typeof updatedContent.content === 'object' && updatedContent.content !== null
+        ? updatedContent.content
+        : {}
     updatePreviewItem({ id: updatedContent.id, ...fields })
   }
 

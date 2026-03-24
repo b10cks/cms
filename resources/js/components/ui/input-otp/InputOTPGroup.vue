@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from 'vue'
 import { reactiveOmit } from '@vueuse/core'
 import { useForwardProps } from 'reka-ui'
+import type { HTMLAttributes } from 'vue'
+
 import { cn } from '@/lib/utils'
 
 const props = defineProps<{ class?: HTMLAttributes['class'] }>()

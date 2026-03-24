@@ -29,12 +29,10 @@ interface HtmlClass {
   css?: string
 }
 
-
 interface Placeholder {
   key: string
   label: string
 }
-
 
 const props = withDefaults(
   defineProps<{
@@ -52,7 +50,6 @@ const props = withDefaults(
   }
 )
 
-
 const emit = defineEmits<{
   'update:modelValue': [value: Record<string, unknown>]
 }>()
@@ -63,18 +60,15 @@ const contentPickerOpen = ref(false)
 const linkInSelection = ref<InternalLinkAttrs | null>(null)
 const isApplyingExternalContent = ref(false)
 
-
 const getHeadingLabel = (level: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'): string => {
   if (level === 'p') return t('labels.tiptap.headings.paragraph')
   return t('labels.tiptap.headings.heading', { level: level.charAt(1) })
 }
 
-
 const getHeadingIcon = (level: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'): string => {
   if (level === 'p') return 'lucide:pilcrow'
   return `lucide:heading-${level.charAt(1)}`
 }
-
 
 const currentHeading = computed(() => {
   if (editor.value?.isActive('paragraph')) {
@@ -88,14 +82,12 @@ const currentHeading = computed(() => {
   return null
 })
 
-
 const headingDisplayLabel = computed(() => {
   if (!currentHeading.value) {
     return t('labels.tiptap.toolbar.format')
   }
   return getHeadingLabel(currentHeading.value)
 })
-
 
 const editor = useEditor({
   content: props.modelValue,
@@ -130,19 +122,16 @@ const editor = useEditor({
   },
 })
 
-
 const applyClass = (className: string) => {
   if (!editor.value) return
   editor.value.chain().focus().toggleMark('textClass', { class: className }).run()
 }
-
 
 const openInternalLinkPicker = () => {
   if (!editor.value || !props.spaceId) return
   linkInSelection.value = null
   contentPickerOpen.value = true
 }
-
 
 const onInternalLinkSelect = (contentId: string) => {
   if (!editor.value) return
@@ -151,7 +140,6 @@ const onInternalLinkSelect = (contentId: string) => {
   contentPickerOpen.value = false
 }
 
-
 const onInternalLinkWithAnchorSelect = (contentId: string, anchorId: string) => {
   if (!editor.value) return
   const linkData: InternalLinkAttrs = { content: contentId, anchor: anchorId }
@@ -159,18 +147,15 @@ const onInternalLinkWithAnchorSelect = (contentId: string, anchorId: string) => 
   contentPickerOpen.value = false
 }
 
-
 const removeInternalLink = () => {
   if (!editor.value) return
   editor.value.chain().focus().unsetInternalLink().run()
 }
 
-
 const insertPlaceholder = (placeholder: Placeholder) => {
   if (!editor.value) return
   ;(editor.value.chain().focus() as any).insertPlaceholderToken(placeholder).run()
 }
-
 
 const insertExternalLink = () => {
   if (!editor.value) return
@@ -179,7 +164,6 @@ const insertExternalLink = () => {
     editor.value.chain().focus().setLink({ href: url }).run()
   }
 }
-
 
 watch(
   () => props.modelValue,
@@ -196,7 +180,6 @@ watch(
   },
   { deep: true }
 )
-
 
 onBeforeUnmount(() => {
   editor.value?.destroy()

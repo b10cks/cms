@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { InputField, SelectField, TextField } from '~/components/ui/form'
-import type { CreateInvitePayload } from '~/types/invites'
 import type { RoleCatalogEntry } from '~/types/authorization'
+import type { CreateInvitePayload } from '~/types/invites'
 
 const open = defineModel<boolean>('open')
 const { t } = useI18n()

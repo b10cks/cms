@@ -7,7 +7,9 @@ export class Authorization {
 
   constructor(private readonly client: ApiClient) {}
 
-  public async get(params: AuthorizationQueryParams = {}): Promise<ApiResponse<AuthorizationPayload>> {
+  public async get(
+    params: AuthorizationQueryParams = {}
+  ): Promise<ApiResponse<AuthorizationPayload>> {
     return this.client.get<ApiResponse<AuthorizationPayload>>(
       this.basePath,
       params as Record<string, unknown>

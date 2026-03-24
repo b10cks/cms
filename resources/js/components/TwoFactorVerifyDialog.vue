@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { ref } from 'vue'
+
+import Icon from '~/components/Icon.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'

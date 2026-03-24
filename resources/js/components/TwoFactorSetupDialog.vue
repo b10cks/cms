@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import {
@@ -12,6 +11,7 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog'
 import { CheckboxField, InputField, OtpField } from '~/components/ui/form'
+
 import BackupCodesDisplay from './BackupCodesDisplay.vue'
 import TwoFactorQRCode from './TwoFactorQRCode.vue'
 

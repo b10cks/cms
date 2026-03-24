@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 import { ComboboxField, InputField } from '~/components/ui/form'
 import type { ComboboxOption } from '~/components/ui/form/ComboboxField.vue'
-import { computed } from 'vue'
 
 defineProps<{ value: ReferencesSchema }>()
 

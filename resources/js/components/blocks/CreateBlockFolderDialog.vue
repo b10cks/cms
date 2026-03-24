@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
-import { Button } from '~/components/ui/button'
 import type { BlockFolderResource } from '~/api/resources/block-folders'
 import BlockFolderEdit from '~/components/BlockFolderEdit.vue'
+import { Button } from '~/components/ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 
 const open = defineModel<boolean>('open')
 

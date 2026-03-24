@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import CommentItem from '~/components/comments/CommentItem.vue'
 import Icon from '~/components/Icon.vue'
-
 import { Avatar } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import { Emoji, EmojiPicker } from '~/components/ui/emoji'
@@ -242,7 +241,11 @@ const toggleResolved = () => {
       >
         <div class="flex flex-col gap-1">
           <Avatar
-            :name="currentUser ? `${currentUser.firstname} ${currentUser.lastname}` : $t('labels.comments.you')"
+            :name="
+              currentUser
+                ? `${currentUser.firstname} ${currentUser.lastname}`
+                : $t('labels.comments.you')
+            "
             :avatar="currentUser?.avatar"
             size="sm"
           />

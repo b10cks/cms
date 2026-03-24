@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
+import { api } from '~/api'
 import type { ApiResponse } from '~/types'
 import type {
   CreateDataEntryPayload,
@@ -8,8 +9,6 @@ import type {
   DataEntryResource,
   UpdateDataEntryPayload,
 } from '~/types/data-sources'
-
-import { api } from '~/api'
 
 import { queryKeys } from './useQueryClient'
 

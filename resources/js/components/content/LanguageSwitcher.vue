@@ -21,15 +21,12 @@ import type { ContentResource } from '~/types/contents'
 const route = useRoute()
 const router = useRouter()
 
-
 const props = defineProps<{
   content: ContentResource
 }>()
 
-
 const { useSpaceQuery } = useSpaces()
 const { data: space } = useSpaceQuery(computed(() => route.params.space as string))
-
 
 const defaultLanguage = computed(() =>
   getContentDefaultLanguage(
@@ -38,7 +35,6 @@ const defaultLanguage = computed(() =>
     props.content.language_iso
   )
 )
-
 
 const languageVersions = computed(() => props.content.language_versions || [])
 const activeLanguage = useRouteQuery<string | undefined>('lang')
@@ -51,7 +47,6 @@ const resolvedLanguage = computed(() =>
   )
 )
 
-
 const currentLanguage = computed(() => {
   return (
     languageVersions.value.find((version) => version.language_iso === resolvedLanguage.value) ||
@@ -60,9 +55,7 @@ const currentLanguage = computed(() => {
   )
 })
 
-
 const isSwitcherDisabled = computed(() => languageVersions.value.length <= 1)
-
 
 watch(
   [languageVersions, defaultLanguage, resolvedLanguage],
@@ -83,12 +76,10 @@ watch(
   { immediate: true }
 )
 
-
 const handleLanguageChange = async (value: string | number | null) => {
   if (isSwitcherDisabled.value || typeof value !== 'string' || value === '') {
     return
   }
-
 
   const languageIso = value
   const routeName = resolveContentRouteName(
@@ -97,7 +88,6 @@ const handleLanguageChange = async (value: string | number | null) => {
     languageIso,
     defaultLanguage.value
   )
-
 
   await router.push({
     name: routeName,

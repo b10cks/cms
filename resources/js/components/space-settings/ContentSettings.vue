@@ -26,19 +26,15 @@ const { useUpdateSpaceMutation } = useSpaces()
 const { mutate: updateSpace } = useUpdateSpaceMutation()
 const { useAccessControl } = useAuthorization()
 
-
 const props = defineProps<{ space: SpaceResource }>()
 const access = useAccessControl(computed(() => ({ space_id: props.space.id })))
 const canUpdateSpace = computed(() => access.hasAbility('space.update'))
 
-
 const { useBlocksQuery } = useBlocks(props.space.id)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 
-
 const defaultBlockId = ref(props.space.settings.default_block)
 const filterHiddenBlocks = ref(props.space.settings.filter_hidden_blocks ?? false)
-
 
 const availableBlocks = computed(
   () => blocks.value?.data?.filter(({ type }) => ['root', 'universal'].includes(type)) || []
@@ -46,7 +42,6 @@ const availableBlocks = computed(
 const defaultBlock = computed(() =>
   availableBlocks.value?.find(({ id }) => id === defaultBlockId.value)
 )
-
 
 const handleSave = () => {
   updateSpace({

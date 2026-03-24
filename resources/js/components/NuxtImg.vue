@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
+
 import { runtimeConfig } from '~/lib/runtime-config'
 
 interface IlumModifiers {

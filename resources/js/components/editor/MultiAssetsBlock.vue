@@ -21,7 +21,6 @@ interface AssetValue {
   data: object
 }
 
-
 const props = defineProps<{
   modelValue?: AssetValue[] | null
   item: {
@@ -33,23 +32,19 @@ const props = defineProps<{
   readOnly?: boolean
 }>()
 
-
 const emit = defineEmits<{
   'update:modelValue': [value: AssetValue[] | null]
 }>()
 
-
 const { alert } = useAlertDialog()
 const { $t } = useI18n()
 const { getFileIcon, getFileType } = useFileUtils()
-
 
 const localValue = ref<AssetValue[]>([])
 const showAssetPicker = ref(false)
 const showAssetDetails = ref(false)
 const editingAsset = ref<AssetValue | null>(null)
 const draggedIndex = ref<number | null>(null)
-
 
 watch(
   () => props.modelValue,
@@ -59,31 +54,26 @@ watch(
   { immediate: true, deep: true }
 )
 
-
 const hasAssets = computed(() => localValue.value.length > 0)
 const canAddMore = computed(() => {
   if (!props.item.max) return true
   return localValue.value.length < props.item.max
 })
 
-
 const remainingSlots = computed(() => {
   if (!props.item.max) return null
   return props.item.max - localValue.value.length
 })
 
-
 const updateValue = () => {
   emit('update:modelValue', localValue.value.length > 0 ? localValue.value : null)
 }
-
 
 const handleAssetSelect = (asset: AssetResource) => {
   if (props.item.max && localValue.value.length >= props.item.max) {
     showAssetPicker.value = false
     return
   }
-
 
   const newAsset: AssetValue = {
     id: asset.id,
@@ -96,23 +86,19 @@ const handleAssetSelect = (asset: AssetResource) => {
     data: {},
   }
 
-
   localValue.value.push(newAsset)
   updateValue()
   showAssetPicker.value = false
 }
-
 
 const handleAssetEdit = (asset: AssetValue) => {
   editingAsset.value = { ...asset }
   showAssetDetails.value = true
 }
 
-
 const handleAssetDelete = async (index: number) => {
   const asset = localValue.value[index]
   if (!asset) return
-
 
   const confirmed = await alert.confirm($t('messages.assets.confirmDeleteFromCollection'), {
     title: $t('labels.assets.removeAsset'),
@@ -120,22 +106,18 @@ const handleAssetDelete = async (index: number) => {
     cancelLabel: $t('actions.cancel'),
   })
 
-
   if (confirmed) {
     localValue.value.splice(index, 1)
     updateValue()
   }
 }
 
-
 const handleAssetReplace = (index: number) => {
   replaceIndex.value = index
   showAssetPicker.value = true
 }
 
-
 const replaceIndex = ref<number | null>(null)
-
 
 const handleAssetSelectForReplace = (asset: AssetResource) => {
   if (replaceIndex.value === null) {
@@ -157,36 +139,29 @@ const handleAssetSelectForReplace = (asset: AssetResource) => {
   showAssetPicker.value = false
 }
 
-
 const handleDragStart = (index: number) => {
   draggedIndex.value = index
 }
-
 
 const handleDragOver = (e: DragEvent) => {
   e.preventDefault()
 }
 
-
 const handleDrop = (e: DragEvent, targetIndex: number) => {
   if (draggedIndex.value === null) return
   e.preventDefault()
-
 
   const draggedAsset = localValue.value[draggedIndex.value]
   localValue.value.splice(draggedIndex.value, 1)
   localValue.value.splice(targetIndex, 0, draggedAsset)
 
-
   draggedIndex.value = null
   updateValue()
 }
 
-
 const isImage = (asset: AssetValue) => {
   return getFileType(asset.mime_type) === 'image'
 }
-
 
 const handleAssetDetailsUpdate = (updatedAsset: AssetValue) => {
   const index = localValue.value.findIndex((a) => a.id === updatedAsset.id)
@@ -196,15 +171,12 @@ const handleAssetDetailsUpdate = (updatedAsset: AssetValue) => {
   }
 }
 
-
 const closeAssetDetails = () => {
   showAssetDetails.value = false
   editingAsset.value = null
 }
 
-
 const editingAssetResource = computed(() => editingAsset.value as unknown as AssetResource | null)
-
 
 const handleAssetDetailsDialogUpdate = (asset: AssetResource) => {
   handleAssetDetailsUpdate(asset as unknown as AssetValue)

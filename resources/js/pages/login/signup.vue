@@ -14,22 +14,18 @@ const { selectTeam } = useGlobalTeam()
 const { usePublicInviteQuery } = useInvites()
 const { t } = useI18n()
 
-
 useSeoMeta({
   title: computed(() => t('labels.login.signupPageTitle')),
 })
-
 
 const inviteId = computed(() => route.query.invite_id as string | undefined)
 const inviteToken = computed(() => route.query.invite_token as string | undefined)
 const returnPath = computed(() => route.query.return as string | undefined)
 
-
 const { data: publicInvite, error: inviteError } = usePublicInviteQuery(inviteId)
 const inviteErrorMessage = computed(() => {
   return (inviteError.value as { data?: { message?: string } } | null)?.data?.message
 })
-
 
 const formData = ref<{
   firstname: string
@@ -49,14 +45,11 @@ const formData = ref<{
   invite_token: inviteToken.value,
 })
 
-
 const hasPendingInvite = computed(() => {
   return publicInvite.value?.status === InviteStatus.PENDING && !!inviteToken.value
 })
 
-
 const emailHash = ref<string | undefined>()
-
 
 watch(
   () => formData.value.email,
@@ -64,7 +57,6 @@ watch(
     emailHash.value = await digest(formData.value.email)
   }
 )
-
 
 const loginUrl = computed(() => {
   const params = new URLSearchParams()
@@ -90,7 +82,6 @@ const loginUrl = computed(() => {
   return query ? `/login?${query}` : '/login'
 })
 
-
 const emailMismatch = computed(() => {
   if (!publicInvite.value?.email_hash || !emailHash.value || !formData.value.email) {
     return false
@@ -99,7 +90,6 @@ const emailMismatch = computed(() => {
   return publicInvite.value.email_hash !== emailHash.value
 })
 
-
 const handleSignup = async () => {
   const didRegister = await register({
     ...formData.value,
@@ -107,17 +97,14 @@ const handleSignup = async () => {
     invite_token: hasPendingInvite.value ? formData.value.invite_token || undefined : undefined,
   })
 
-
   if (!didRegister) {
     return
   }
-
 
   if (publicInvite.value?.space?.id) {
     router.push(`/${publicInvite.value.space.id}`)
     return
   }
-
 
   if (publicInvite.value?.team?.id) {
     selectTeam(publicInvite.value.team.id)

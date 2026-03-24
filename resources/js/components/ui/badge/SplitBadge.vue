@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import type { HTMLAttributes } from 'vue'
+
 import Icon from '~/components/Icon.vue'
 
-import type { HTMLAttributes } from 'vue'
 import { type BadgeVariants, badgeVariants } from '.'
 
 const props = withDefaults(

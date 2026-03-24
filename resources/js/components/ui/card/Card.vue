@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
+
 import { cn } from '@/lib/utils'
 import type { CardVariants } from '~/components/ui/card/index'
 import { cardVariants } from '~/components/ui/card/index'

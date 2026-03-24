@@ -15,13 +15,11 @@ interface AddFieldPayload {
   key: string
 }
 
-
 const props = defineProps<{
   schema: Record<string, SchemaType>
   editor: EditorPage[]
   readonly?: boolean
 }>()
-
 
 const emit = defineEmits<{
   (e: 'update:schema', payload: Record<string, SchemaType>): void
@@ -29,12 +27,10 @@ const emit = defineEmits<{
 }>()
 const { alert } = useAlertDialog()
 
-
 const localSchema = ref<Record<string, SchemaType>>(
   deepClone(props.schema ?? {}) as Record<string, SchemaType>
 )
 const localEditor = ref<EditorPage[]>(deepClone(props.editor ?? []) as EditorPage[])
-
 
 if (localEditor.value.length === 0) {
   localEditor.value.push({
@@ -43,9 +39,7 @@ if (localEditor.value.length === 0) {
   })
 }
 
-
 const activeTab = ref(0)
-
 
 const resolveSortableElement = (
   element: Element | ComponentPublicInstance | null
@@ -54,25 +48,20 @@ const resolveSortableElement = (
     return element
   }
 
-
   if (element && '$el' in element && element.$el instanceof HTMLElement) {
     return element.$el
   }
 
-
   return null
 }
-
 
 const isAccordionItemOpen = (modelValue: unknown, key: string) => {
   if (Array.isArray(modelValue)) {
     return modelValue.includes(key)
   }
 
-
   return typeof modelValue === 'string' ? modelValue === key : false
 }
-
 
 const addPage = () => {
   localEditor.value.push({
@@ -80,11 +69,9 @@ const addPage = () => {
     items: [],
   })
 
-
   activeTab.value = localEditor.value.length - 1
   emitEditorUpdate()
 }
-
 
 const deletePage = async (pageIndex: number) => {
   const confirmed = await alert.confirm(
@@ -93,7 +80,6 @@ const deletePage = async (pageIndex: number) => {
       title: 'Delete Page',
     }
   )
-
 
   if (confirmed) {
     const itemsToMove = [...localEditor.value[pageIndex].items]
@@ -105,26 +91,21 @@ const deletePage = async (pageIndex: number) => {
         }
       )
 
-
       if (moveConfirmed) {
         const targetPageIndex = pageIndex === 0 ? 1 : 0
         localEditor.value[targetPageIndex].items.push(...itemsToMove)
       }
     }
 
-
     localEditor.value.splice(pageIndex, 1)
-
 
     if (activeTab.value >= localEditor.value.length) {
       activeTab.value = localEditor.value.length - 1
     }
 
-
     emitEditorUpdate()
   }
 }
-
 
 const deleteField = async (key: string) => {
   const fieldName = localSchema.value[key]?.name ?? key
@@ -135,11 +116,9 @@ const deleteField = async (key: string) => {
     }
   )
 
-
   if (confirmed) {
     const updatedSchema = { ...localSchema.value }
     delete updatedSchema[key]
-
 
     localEditor.value.forEach((page) => {
       const keyIndex = page.items.indexOf(key)
@@ -148,43 +127,34 @@ const deleteField = async (key: string) => {
       }
     })
 
-
     emitSchemaUpdate(updatedSchema)
     emitEditorUpdate()
   }
 }
 
-
 const addField = async (payload: AddFieldPayload): Promise<boolean> => {
   const { type, key } = payload
-
 
   if (localSchema.value[key]) {
     await alert.message(`A field with key "${key}" already exists.`, {
       title: 'Duplicate Key',
     })
 
-
     return true
   }
-
 
   updateSchemaItem(key, createDefaultSchemaForType(type, key) as SchemaType)
   localEditor.value[activeTab.value].items.push(key)
 
-
   emitEditorUpdate()
-
 
   return false
 }
-
 
 const handleAddField = async (payload: AddFieldPayload & { resolve: (value: boolean) => void }) => {
   const result = await addField(payload)
   payload.resolve(result)
 }
-
 
 const moveFieldToPage = (key: string, pageIndex: number) => {
   localEditor.value.forEach((page) => {
@@ -194,18 +164,15 @@ const moveFieldToPage = (key: string, pageIndex: number) => {
     }
   })
 
-
   localEditor.value[pageIndex].items.push(key)
   emitEditorUpdate()
 }
-
 
 const createDefaultSchemaForType = (type: string, key: string): SchemaType => {
   const name = key
     .replace(/_/g, ' ')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/\b\w/g, (l) => l.toUpperCase())
-
 
   const baseSchema = {
     name,
@@ -215,7 +182,6 @@ const createDefaultSchemaForType = (type: string, key: string): SchemaType => {
     conditions: null,
     validation: null,
   }
-
 
   switch (type) {
     case 'text':
@@ -341,19 +307,15 @@ const createDefaultSchemaForType = (type: string, key: string): SchemaType => {
   }
 }
 
-
 const emitSchemaUpdate = (value: Record<string, SchemaType>) => {
   emit('update:schema', value)
 }
-
 
 const emitEditorUpdate = () => {
   emit('update:editor', localEditor.value)
 }
 
-
 const tabsContainer = useTemplateRef<HTMLElement>('tabsContainer')
-
 
 watch(
   () => localEditor.value.length,
@@ -364,7 +326,6 @@ watch(
   },
   { immediate: true }
 )
-
 
 const setupTabsSortable = () => {
   nextTick(() => {
@@ -390,15 +351,12 @@ const setupTabsSortable = () => {
   })
 }
 
-
 const setupFieldSortable = (pageIndex: number, element: HTMLElement) => {
   if (props.readonly) return
   const page = localEditor.value[pageIndex]
   if (!page) return
 
-
   const pageItems = toRef(page, 'items')
-
 
   ;(useSortable as any)(element, pageItems, {
     handle: '[draggable]',
@@ -410,18 +368,15 @@ const setupFieldSortable = (pageIndex: number, element: HTMLElement) => {
   })
 }
 
-
 onMounted(() => {
   if (localEditor.value.length > 1) {
     setupTabsSortable()
   }
 })
 
-
 const updateSchemaItem = (key: string, value: SchemaType) => {
   emitSchemaUpdate({ ...localSchema.value, [key]: value })
 }
-
 
 watch(
   () => props.schema,
@@ -430,7 +385,6 @@ watch(
   },
   { deep: true }
 )
-
 
 watch(
   () => props.editor,

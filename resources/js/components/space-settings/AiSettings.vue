@@ -22,13 +22,11 @@ import { useAlertDialog } from '~/composables/useAlertDialog'
 
 const props = defineProps<{ space: SpaceResource }>()
 
-
 interface SpaceAiUsageResource {
   used_tokens: number
   max_tokens: number
   valid_to: string | null
 }
-
 
 const { t } = useI18n()
 const { alert } = useAlertDialog()
@@ -39,7 +37,6 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.space.id })))
 const canManageAi = computed(() => access.hasAbility('ai.manage'))
 
-
 const { useModelsQuery } = useAiModels(computed(() => props.space.id))
 const { useAiSettingsQuery } = useAiSettings(computed(() => props.space.id))
 const {
@@ -49,7 +46,6 @@ const {
   useDeleteAiConfigMutation,
 } = useAiConfigs(computed(() => props.space.id))
 
-
 const { data: groupedModels } = useModelsQuery()
 const { data: aiSettings } = useAiSettingsQuery()
 const { data: aiConfigs, isLoading: isLoadingConfigs } = useAiConfigsQuery()
@@ -57,24 +53,19 @@ const { mutate: createConfig, isPending: isCreating } = useCreateAiConfigMutatio
 const { mutate: updateConfig, isPending: isUpdatingConfig } = useUpdateAiConfigMutation()
 const { mutate: deleteConfig, isPending: isDeleting } = useDeleteAiConfigMutation()
 
-
 const enableAI = ref(aiSettings.value?.enabled ?? true)
-
 
 const aiUsage = ref<SpaceAiUsageResource | null>(null)
 const isLoadingUsage = ref(false)
 const usageError = ref<string | null>(null)
 
-
 const isDialogOpen = ref(false)
 const editingConfig = ref<SpaceAiConfig | null>(null)
-
 
 const usagePercentage = computed(() => {
   if (!aiUsage.value || aiUsage.value.max_tokens === 0) return 0
   return Math.round((aiUsage.value.used_tokens / aiUsage.value.max_tokens) * 100)
 })
-
 
 const resetDate = computed(() => {
   if (!aiUsage.value?.valid_to) return null
@@ -85,11 +76,9 @@ const resetDate = computed(() => {
   }
 })
 
-
 const fetchAiUsage = async () => {
   isLoadingUsage.value = true
   usageError.value = null
-
 
   try {
     const response = await apiClient.get<{ data: SpaceAiUsageResource }>(
@@ -103,11 +92,9 @@ const fetchAiUsage = async () => {
   }
 }
 
-
 onMounted(() => {
   fetchAiUsage()
 })
-
 
 watch(
   () => aiSettings.value,
@@ -119,13 +106,11 @@ watch(
   { immediate: true }
 )
 
-
 watch(isDialogOpen, (isOpen) => {
   if (!isOpen) {
     editingConfig.value = null
   }
 })
-
 
 const saveSettings = async () => {
   try {
@@ -147,18 +132,15 @@ const saveSettings = async () => {
   }
 }
 
-
 const openCreateDialog = () => {
   editingConfig.value = null
   isDialogOpen.value = true
 }
 
-
 const openEditDialog = (config: SpaceAiConfig) => {
   editingConfig.value = config
   isDialogOpen.value = true
 }
-
 
 const handleConfigSubmit = (payload: Partial<SpaceAiConfig>) => {
   if (editingConfig.value) {
@@ -190,12 +172,10 @@ const handleConfigSubmit = (payload: Partial<SpaceAiConfig>) => {
   }
 }
 
-
 const handleDeleteConfig = async (config: SpaceAiConfig) => {
   if (aiConfigs.value && aiConfigs.value.length === 1) {
     return
   }
-
 
   const confirmed = await alert.confirm(
     t('components.aiSettings.deleteDialogDescription', { name: config.name }),
@@ -205,7 +185,6 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
       variant: 'destructive',
     }
   )
-
 
   if (confirmed) {
     deleteConfig(config.id, {

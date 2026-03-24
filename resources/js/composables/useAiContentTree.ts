@@ -74,7 +74,15 @@ export interface TreeOperationsResult {
   operations: TreeOperation[]
 }
 
-const TREE_OPERATION_TYPES = new Set(['create', 'move', 'update', 'rename', 'delete', 'remove', 'restore'])
+const TREE_OPERATION_TYPES = new Set([
+  'create',
+  'move',
+  'update',
+  'rename',
+  'delete',
+  'remove',
+  'restore',
+])
 
 function stripCodeFences(content: string): string {
   return content
@@ -158,7 +166,9 @@ export function useAiContentTree(spaceId: MaybeRef<string>) {
 
       const errorMessage = error.message || 'Unknown error'
       callbacks.onError?.(errorMessage)
-      toast.error(t('composables.aiContentTree.interactionError', { error: errorMessage }) as string)
+      toast.error(
+        t('composables.aiContentTree.interactionError', { error: errorMessage }) as string
+      )
     } finally {
       abortController.value = null
     }

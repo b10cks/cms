@@ -11,7 +11,6 @@ const props = defineProps<{
   positions: Record<string, ContentWizardPosition>
 }>()
 
-
 const connectors = computed(() => {
   return Object.values(props.nodes)
     .filter((node) => !node.isRootVirtual && node.isVisible && node.parentId !== undefined)

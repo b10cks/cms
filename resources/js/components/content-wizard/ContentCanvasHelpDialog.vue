@@ -10,7 +10,6 @@ import {
 const open = defineModel<boolean>('open', { default: false })
 const { t } = useI18n()
 
-
 const sections = computed(() => [
   {
     title: t('labels.contents.canvas.help.sections.navigation'),

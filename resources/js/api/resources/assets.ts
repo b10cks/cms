@@ -1,10 +1,8 @@
+import { getXsrfHeaders } from '~/lib/csrf'
 import type { ApiResponse, BaseQueryParams } from '~/types'
 import type { ExportTypes } from '~/types/assets'
 
-import { getXsrfHeaders } from '~/lib/csrf'
-
 import type { ApiClient } from '../client'
-
 import { BaseResource } from './base-resource'
 
 export interface AssetsQueryParams extends BaseQueryParams {

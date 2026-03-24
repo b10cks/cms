@@ -27,11 +27,9 @@ const { useUpdateSpaceMutation } = useSpaces()
 const { mutate: updateSpace } = useUpdateSpaceMutation()
 const { useAccessControl } = useAuthorization()
 
-
 const props = defineProps<{ space: SpaceResource }>()
 const access = useAccessControl(computed(() => ({ space_id: props.space.id })))
 const canUpdateSpace = computed(() => access.hasAbility('space.update'))
-
 
 const environments = ref(
   deepClone(
@@ -40,7 +38,6 @@ const environments = ref(
 )
 const defaultEnvironment = ref(props.space.settings.default_environment ?? null)
 const visualEditorEnabled = ref(props.space.settings.visual_editor)
-
 
 const columns: ColumnDefinition[] = [
   {
@@ -59,22 +56,18 @@ const columns: ColumnDefinition[] = [
   },
 ]
 
-
 const newItemTemplate = {
   name: '',
   url: '',
 }
 
-
 const removeEnvironment = (index: number) => {
   environments.value.splice(index, 1)
 }
 
-
 const openInTab = (url: string) => {
   window.open(url, '_blank')
 }
-
 
 const saveSettings = async () => {
   updateSpace({

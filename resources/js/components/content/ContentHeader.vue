@@ -20,10 +20,8 @@ const props = defineProps<{
   showPreviewToggle?: boolean
 }>()
 
-
 const route = useRoute()
 const spaceId = inject<string>('spaceId', '')
-
 
 const { useContentMenuQuery, buildBreadcrumbs } = useContentMenu(spaceId)
 const { data: contentMenu } = useContentMenuQuery()
@@ -50,17 +48,14 @@ const breadcrumbRoute = (contentId: string) => ({
   query: withContentLanguageQuery(route.query, props.content.language_iso, defaultLanguage.value),
 })
 
-
 watch(breadcrumbs, (crumbs) => {
   const path = crumbs.map(({ id }) => id)
   settings.value.content.expanded = [...settings.value.content.expanded, ...path]
 })
 
-
 const status = computed<'draft' | 'published'>(() =>
   props.content?.published_at ? 'published' : 'draft'
 )
-
 
 const togglePreview = () => {
   settings.value.content.showPreview = !settings.value.content.showPreview

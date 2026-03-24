@@ -53,10 +53,7 @@ interface ContentDiscardWhisperPayload {
 interface UseContentLiveCollaborationOptions {
   content: Ref<ContentResource | null>
   hasLocalUnsavedChanges?: () => boolean
-  syncPersistedContent?: (
-    content: ContentResource,
-    mode: 'replace' | 'preserve-local'
-  ) => void
+  syncPersistedContent?: (content: ContentResource, mode: 'replace' | 'preserve-local') => void
   syncPreviewItem?: (item: Record<string, unknown>) => void
   syncInterval?: number
 }
@@ -227,7 +224,8 @@ export function useContentLiveCollaboration(
 
   const applyRemoteFieldUpdate = (payload: ContentFieldWhisperPayload) => {
     const fieldKey = getFieldKey(payload.itemId, payload.field)
-    const userDrafts = remoteDraftFields.get(payload.userId) ?? new Map<string, DraftFieldSnapshot>()
+    const userDrafts =
+      remoteDraftFields.get(payload.userId) ?? new Map<string, DraftFieldSnapshot>()
 
     if (!remoteDraftFields.has(payload.userId)) {
       remoteDraftFields.set(payload.userId, userDrafts)
@@ -350,7 +348,10 @@ export function useContentLiveCollaboration(
     const activeUserIds = new Set(nextCollaborators.map((user) => user.id))
     const nextFieldPresence = Object.fromEntries(
       Object.entries(fieldPresence.value)
-        .map(([fieldKey, userIds]) => [fieldKey, userIds.filter((userId) => activeUserIds.has(userId))])
+        .map(([fieldKey, userIds]) => [
+          fieldKey,
+          userIds.filter((userId) => activeUserIds.has(userId)),
+        ])
         .filter(([, userIds]) => userIds.length > 0)
     ) as Record<string, string[]>
 

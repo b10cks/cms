@@ -1,5 +1,10 @@
 import type { ApiCollectionResponse } from '~/types'
-import type { SpaceMemberQueryParams, SpaceMemberResource, UpdateSpaceMemberPayload } from '~/types/spaces'
+import type {
+  SpaceMemberQueryParams,
+  SpaceMemberResource,
+  UpdateSpaceMemberPayload,
+} from '~/types/spaces'
+
 import type { ApiClient } from '../client'
 
 export class SpaceMembers {
@@ -8,7 +13,9 @@ export class SpaceMembers {
     private readonly spaceId: string
   ) {}
 
-  public async list(params: SpaceMemberQueryParams = {}): Promise<ApiCollectionResponse<SpaceMemberResource>> {
+  public async list(
+    params: SpaceMemberQueryParams = {}
+  ): Promise<ApiCollectionResponse<SpaceMemberResource>> {
     return this.client.get<ApiCollectionResponse<SpaceMemberResource>>(
       `/mgmt/v1/spaces/${this.spaceId}/members`,
       params as Record<string, unknown>

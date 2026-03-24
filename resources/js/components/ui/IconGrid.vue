@@ -42,8 +42,7 @@ const loadIconList = async () => {
   try {
     const module = await import('./iconlist.json')
     iconList.value = module.default as IconGroup[]
-  }
-  finally {
+  } finally {
     isLoading.value = false
   }
 }

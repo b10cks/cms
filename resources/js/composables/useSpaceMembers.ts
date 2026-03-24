@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
-import type { SpaceMemberQueryParams, UpdateSpaceMemberPayload } from '~/types/spaces'
-
 import { api } from '~/api'
+import type { SpaceMemberQueryParams, UpdateSpaceMemberPayload } from '~/types/spaces'
 
 import { queryKeys } from './useQueryClient'
 
@@ -47,7 +46,9 @@ export function useSpaceMembers() {
       },
       onSuccess: ({ spaceId, role }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.spaceMembers(spaceId).lists() })
-        toast.success(t('composables.spaceMembers.updateUserSuccess', { role: role ?? '' }) as string)
+        toast.success(
+          t('composables.spaceMembers.updateUserSuccess', { role: role ?? '' }) as string
+        )
       },
       onError: (error: Error) => {
         toast.error(

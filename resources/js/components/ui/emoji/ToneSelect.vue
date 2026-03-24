@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { SelectRoot, SelectTrigger } from 'reka-ui'
+
 import { SelectContent, SelectItem } from '~/components/ui/select'
+
 import { type Tone } from './utils'
 const { tone, tones } = useTone()
 

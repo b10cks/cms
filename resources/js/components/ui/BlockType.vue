@@ -7,7 +7,6 @@ interface BlockType {
   text?: string
 }
 
-
 const types: Record<string, BlockType> = {
   blocks: {
     cls: 'text-violet-300 border border-violet-400 bg-violet-800',
@@ -46,9 +45,7 @@ const types: Record<string, BlockType> = {
   meta: { cls: 'text-gray-400 border border-gray-500 bg-gray-800', icon: 'lucide:search' },
 }
 
-
 const props = defineProps<{ type: keyof typeof types }>()
-
 
 const currentType = computed(() => {
   return types[props.type] ?? { cls: props.type }

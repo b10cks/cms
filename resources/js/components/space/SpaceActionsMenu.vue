@@ -14,17 +14,14 @@ const props = defineProps<{
   space: SpaceResource
 }>()
 
-
 const emit = defineEmits<{
   archive: [space: SpaceResource]
   assignBadge: [space: SpaceResource]
 }>()
 
-
 const router = useRouter()
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.space.id })))
-
 
 const canOpenSettings = computed(() =>
   access.canAccessRoute(getActionAccessRequirement('space.settings'))
@@ -34,16 +31,13 @@ const canArchive = computed(() =>
   access.canAccessRoute(getActionAccessRequirement('space.archive'))
 )
 
-
 const openSpace = () => {
   router.push({ name: 'space', params: { space: props.space.id } })
 }
 
-
 const openInNewTab = () => {
   window.open(props.space.id, '_blank')
 }
-
 
 const copyLink = () => {
   const url = new URL(
@@ -52,7 +46,6 @@ const copyLink = () => {
   )
   useClipboard().copy(url.toString())
 }
-
 
 const openSettings = () => {
   router.push({ name: 'space-settings-index', params: { space: props.space.id } })

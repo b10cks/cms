@@ -26,13 +26,10 @@ const router = useRouter()
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
 
-
 const { user, logout } = useAuth()
 const { settings, extendedSidebar } = useUserSettings()
 
-
 const isExtendedSidebar = computed(() => extendedSidebar.value)
-
 
 const spaceId = inject<Ref<string | undefined>>('spaceId')
 const { useAccessControl } = useAuthorization()
@@ -41,7 +38,6 @@ const access = useAccessControl(
     ...(spaceId?.value ? { space_id: spaceId.value } : {}),
   }))
 )
-
 
 const menu = computed(() =>
   access.filterVisibleItems(spaceNavigationItems).filter((item) => {
@@ -52,7 +48,6 @@ const menu = computed(() =>
     return access.canAccessRoute('space-settings-index')
   })
 )
-
 
 const buildLink = (name: string) => {
   if (!spaceId?.value) {
@@ -66,11 +61,9 @@ const buildLink = (name: string) => {
   }
 }
 
-
 const handleLanguageChange = (lang: string) => {
   settings.languageIso = lang
 }
-
 
 const currentLocale = computed(() => getLocale())
 const availableLocales = locales

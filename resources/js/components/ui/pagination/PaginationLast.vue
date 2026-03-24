@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
 import { PaginationLast, type PaginationLastProps } from 'reka-ui'
 import { computed, type HTMLAttributes } from 'vue'
+
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import Icon from '~/components/Icon.vue'
 
 const props = withDefaults(
   defineProps<PaginationLastProps & { class?: HTMLAttributes['class'] }>(),

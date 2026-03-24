@@ -6,7 +6,6 @@ const route = useRoute()
 const { t } = useI18n()
 const spaceId = computed(() => route.params.space as string)
 
-
 useSeoMeta({
   title: computed(() => t('labels.redirects.title')),
 })

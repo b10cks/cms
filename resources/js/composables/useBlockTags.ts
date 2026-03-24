@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
-import type { BlockTagsQueryParams, UpsertBlockTagPayload } from '~/api/resources/block-tags'
-
 import { api } from '~/api'
+import type { BlockTagsQueryParams, UpsertBlockTagPayload } from '~/api/resources/block-tags'
 
 import { queryKeys } from './useQueryClient'
 

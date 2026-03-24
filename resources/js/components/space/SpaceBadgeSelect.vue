@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { BadgeVariants } from '~/components/ui/badge';
+import type { BadgeVariants } from '~/components/ui/badge'
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '~/components/ui/select';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
 
 const props = defineProps<{
   modelValue?: string | null
@@ -25,10 +25,10 @@ type PredefinedBadge = {
 }
 
 const PREDEFINED_BADGES: PredefinedBadge[] = [
-  { value: 'sandbox',     label: 'Sandbox',     variant: 'secondary' },
-  { value: 'development', label: 'Development', variant: 'info'      },
-  { value: 'staging',     label: 'Staging',     variant: 'warning'   },
-  { value: 'production',  label: 'Production',  variant: 'success'   },
+  { value: 'sandbox', label: 'Sandbox', variant: 'secondary' },
+  { value: 'development', label: 'Development', variant: 'info' },
+  { value: 'staging', label: 'Staging', variant: 'warning' },
+  { value: 'production', label: 'Production', variant: 'success' },
 ]
 
 // reka-ui Select requires a non-empty string; we use an empty string to represent "none"

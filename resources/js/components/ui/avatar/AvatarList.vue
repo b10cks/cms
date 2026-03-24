@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { cn } from '@/lib/utils'
 import type { HTMLAttributes } from 'vue'
+
+import { cn } from '@/lib/utils'
 import {
   Tooltip,
   TooltipContent,
@@ -8,6 +9,7 @@ import {
   TooltipTrigger,
 } from '~/components/ui/tooltip/index'
 import type { User } from '~/types/users'
+
 import type { AvatarVariants } from './index'
 import { Avatar, avatarVariants } from './index'
 

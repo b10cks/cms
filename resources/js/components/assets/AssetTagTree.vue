@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { TreeItem, TreeRoot } from 'reka-ui'
+
+import Icon from '~/components/Icon.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import IconGrid from '~/components/ui/IconGrid.vue'

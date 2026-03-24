@@ -1,9 +1,9 @@
-import type { ComputedRef, MaybeRef } from 'vue'
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import type { ComputedRef, MaybeRef } from 'vue'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
+
 import { queryKeys } from './useQueryClient'
 
 export type MaybeRefOrComputed<T> = MaybeRef<T> | ComputedRef<T>
@@ -51,19 +51,27 @@ export function useSubscription(spaceIdRef: MaybeRefOrComputed<string>) {
           toast.success(t('composables.subscriptions.upgradeSuccess'))
         } else {
           toast.success(t('composables.subscriptions.planChanged'))
-          queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions(spaceId.value).current() })
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.subscriptions(spaceId.value).current(),
+          })
         }
       },
       onError: (error: Error) => {
         const apiError = error as any
         if (apiError.status === 409 && apiError.data?.use_reinit) {
           // A pending payment already exists for this plan — refresh so the pending notice appears
-          queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions(spaceId.value).current() })
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.subscriptions(spaceId.value).current(),
+          })
           toast.warning(t('composables.subscriptions.pendingAlreadyExists'))
         } else if (apiError.status === 409) {
           toast.warning(t('composables.subscriptions.pendingConflict'))
         } else {
-          toast.error(t('composables.subscriptions.checkoutError', { error: error.message || 'Unknown error' }))
+          toast.error(
+            t('composables.subscriptions.checkoutError', {
+              error: error.message || 'Unknown error',
+            })
+          )
         }
       },
     })
@@ -82,7 +90,9 @@ export function useSubscription(spaceIdRef: MaybeRefOrComputed<string>) {
         }
       },
       onError: (error: Error) => {
-        toast.error(t('composables.subscriptions.reinitError', { error: error.message || 'Unknown error' }))
+        toast.error(
+          t('composables.subscriptions.reinitError', { error: error.message || 'Unknown error' })
+        )
       },
     })
   }
@@ -97,7 +107,9 @@ export function useSubscription(spaceIdRef: MaybeRefOrComputed<string>) {
         toast.success(t('composables.subscriptions.cancelSuccess'))
       },
       onError: (error: Error) => {
-        toast.error(t('composables.subscriptions.cancelError', { error: error.message || 'Unknown error' }))
+        toast.error(
+          t('composables.subscriptions.cancelError', { error: error.message || 'Unknown error' })
+        )
       },
     })
   }

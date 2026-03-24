@@ -10,11 +10,9 @@ const { login, error, requiresTwoFactor, verifyTwoFactorAndLogin, cancelTwoFacto
 const { t } = useI18n()
 const route = useRoute()
 
-
 useSeoMeta({
   title: computed(() => t('labels.login.pageTitle')),
 })
-
 
 const formData = ref<{
   email: string
@@ -24,24 +22,19 @@ const formData = ref<{
   password: '',
 })
 
-
 const twoFactorDialogOpen = ref(false)
-
 
 watch(requiresTwoFactor, (value) => {
   twoFactorDialogOpen.value = value
 })
 
-
 const handleVerify = async (code: string): Promise<boolean> => {
   return await verifyTwoFactorAndLogin(code)
 }
 
-
 const handleCancel = () => {
   cancelTwoFactorLogin()
 }
-
 
 const signupUrl = computed(() => {
   const params = new URLSearchParams()
@@ -65,14 +58,12 @@ const signupUrl = computed(() => {
   return query ? `/login/signup?${query}` : '/login/signup'
 })
 
-
 // Handle session expired message
 onMounted(() => {
   if (route.query.message === 'session_expired') {
     error.value = 'Your session has expired. Please log in again.'
   }
 })
-
 
 const e = ref(null)
 </script>

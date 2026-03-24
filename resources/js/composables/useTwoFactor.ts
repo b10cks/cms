@@ -1,13 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
+import { api } from '~/api'
 import type {
   TwoFactorConfirmPayload,
   TwoFactorDisablePayload,
   TwoFactorVerifyPayload,
 } from '~/api/resources/two-factor'
-
-import { api } from '~/api'
 
 import { queryKeys } from './useQueryClient'
 

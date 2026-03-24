@@ -17,7 +17,6 @@ import { getActionAccessRequirement } from '~/lib/access-control'
 const route = useRoute()
 const router = useRouter()
 
-
 const spaceId = computed<string>(() => route.params.space as string)
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
@@ -28,7 +27,6 @@ const canViewContent = computed(() =>
   access.canAccessRoute(getActionAccessRequirement('command.content'))
 )
 
-
 const { useSpacesQuery } = useSpaces()
 const { data: spaces } = useSpacesQuery({})
 const { useBlocksQuery } = useBlocks(spaceId)
@@ -36,23 +34,19 @@ const { data: blocks } = useBlocksQuery({ per_page: 1000 }, canViewBlocks)
 const { useContentMenuQuery } = useContentMenu(spaceId)
 const { data: contents } = useContentMenuQuery(canViewContent)
 
-
 const keys = useMagicKeys()
 const triggerKey = keys['Cmd+K']
-
 
 const open = inject('commandOpen', ref(true))
 function handleOpenChange() {
   open.value = !open.value
 }
 
-
 watch(triggerKey, (v) => {
   if (v) {
     handleOpenChange()
   }
 })
-
 
 const jumpTo = (url: string) => {
   router.push(url)

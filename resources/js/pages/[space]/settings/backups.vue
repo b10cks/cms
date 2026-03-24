@@ -12,19 +12,15 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: spaceId })))
 const canManageBackups = computed(() => access.hasAbility('backups.manage'))
 
-
 const { useBackupsQuery, useCreateBackupMutation } = useBackups(spaceId)
 const { data: backups } = useBackupsQuery()
 const { mutate: createBackup, isPending: isCreating } = useCreateBackupMutation()
-
 
 useSeoMeta({
   title: computed(() => t('labels.settings.backups.title')),
 })
 
-
 const isCreateDialogOpen = ref(false)
-
 
 const handleCreateBackup = (payload: CreateBackupPayload) => {
   createBackup(payload)

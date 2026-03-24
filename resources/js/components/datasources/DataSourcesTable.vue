@@ -29,15 +29,12 @@ const props = defineProps<{
   spaceId: string
 }>()
 
-
 const { useDataSourcesQuery, useDeleteDataSourceMutation } = useDataSources(props.spaceId)
 const { mutate: deleteDataSource } = useDeleteDataSourceMutation()
-
 
 const emit = defineEmits<{
   (e: 'edit' | 'delete', dataSource: DataSourceResource): void
 }>()
-
 
 const { $t } = useI18n()
 const router = useRouter()
@@ -46,12 +43,10 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageDataSources = computed(() => access.hasAbility('data_sources.manage'))
 
-
 const filters = ref<Record<string, unknown>>({})
 const searchQuery = ref('')
 const currentPage = ref(1)
 const perPage = ref(10)
-
 
 const possibleFilters = [
   {
@@ -77,7 +72,6 @@ const possibleFilters = [
   },
 ]
 
-
 const sortOptions = [
   { value: 'name', label: $t('labels.datasets.fields.name') },
   { value: 'slug', label: $t('labels.datasets.fields.slug') },
@@ -86,12 +80,10 @@ const sortOptions = [
   { value: 'updated_at', label: $t('labels.datasets.fields.updatedAt') },
 ]
 
-
 const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
   column: 'name',
   direction: 'asc',
 })
-
 
 const queryParams = computed<DataSourcesQueryParams>(() => {
   return {
@@ -102,13 +94,10 @@ const queryParams = computed<DataSourcesQueryParams>(() => {
   }
 })
 
-
 const { data: dataSources, isLoading, refetch } = useDataSourcesQuery(queryParams)
-
 
 const deleteDialogOpen = ref(false)
 const dataSourceToDelete = ref<DataSourceResource | null>(null)
-
 
 // Navigate to data entries
 const viewDataEntries = (dataSource: DataSourceResource) => {
@@ -121,18 +110,15 @@ const viewDataEntries = (dataSource: DataSourceResource) => {
   })
 }
 
-
 const copySlug = (slug: string) => {
   const url = `${window.location.origin}/api/v1/datasources/${slug}/entries?token=[YOUR_PUBLIC_API_TOKEN]`
   useClipboard().copy(url)
 }
 
-
 const handleDeleteConfirm = (dataSource: DataSourceResource) => {
   dataSourceToDelete.value = dataSource
   deleteDialogOpen.value = true
 }
-
 
 const confirmDelete = async () => {
   if (dataSourceToDelete.value) {

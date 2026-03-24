@@ -13,11 +13,9 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
 const canManageReleases = computed(() => access.hasAbility('releases.manage'))
 
-
 useSeoMeta({
   title: computed(() => t('labels.releases.title')),
 })
-
 
 const {
   useReleasesQuery,
@@ -29,7 +27,6 @@ const {
   usePublishReleaseMutation,
 } = useReleases(spaceId)
 
-
 const { data: releases, isLoading: isLoadingReleases } = useReleasesQuery()
 const { mutate: createRelease, isPending: isCreating } = useCreateReleaseMutation()
 const { mutate: updateRelease, isPending: isUpdating } = useUpdateReleaseMutation()
@@ -38,15 +35,12 @@ const { mutate: cancelRelease, isPending: isCancelling } = useCancelReleaseMutat
 const { mutate: deleteRelease, isPending: isDeleting } = useDeleteReleaseMutation()
 const { mutate: publishRelease, isPending: isPublishing } = usePublishReleaseMutation()
 
-
 const { alert } = useAlertDialog()
-
 
 const createDialogOpen = ref(false)
 const editDialogOpen = ref(false)
 const releaseToEdit = ref<Release | null>(null)
 const isUpdatingRelease = ref(false)
-
 
 const handleCreateRelease = (payload: CreateReleaseRequest) => {
   createRelease(payload, {
@@ -55,7 +49,6 @@ const handleCreateRelease = (payload: CreateReleaseRequest) => {
     },
   })
 }
-
 
 const handleUpdateRelease = (id: string, payload: CreateReleaseRequest) => {
   isUpdatingRelease.value = true
@@ -74,11 +67,9 @@ const handleUpdateRelease = (id: string, payload: CreateReleaseRequest) => {
   )
 }
 
-
 const handleCommit = (releaseId: string) => {
   commitRelease(releaseId)
 }
-
 
 const handleCancelClick = async (release: Release) => {
   const confirmed = await alert.confirm(
@@ -94,7 +85,6 @@ const handleCancelClick = async (release: Release) => {
   )
 }
 
-
 const handleDeleteClick = async (release: Release) => {
   const confirmed = await alert.confirm(
     `Are you sure you want to delete the release "${release.name}"? This action cannot be undone.`,
@@ -109,11 +99,9 @@ const handleDeleteClick = async (release: Release) => {
   )
 }
 
-
 const handlePublish = (releaseId: string) => {
   publishRelease(releaseId)
 }
-
 
 const isLoading = computed(
   () =>

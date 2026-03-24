@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
 import type { CommentResource, CreateCommentRequest } from '~/types/comments'
+
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { TextField } from '../ui/form'

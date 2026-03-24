@@ -44,7 +44,6 @@ const canSaveContent = computed(() => access.hasAbility('content.manage'))
 const canPublishContent = computed(() => access.hasAbility('content.publish'))
 const canManageReleases = computed(() => access.hasAbility('releases.manage'))
 
-
 const commitPersistedContent = inject<
   ((content: ContentResource, action?: ContentCommitAction) => void) | undefined
 >('commitPersistedContent', undefined)
@@ -71,7 +70,6 @@ const focusFirstValidationError = inject<(() => Promise<void>) | undefined>(
   undefined
 )
 
-
 const {
   useCreateContentMutation,
   useUpdateContentMutation,
@@ -79,7 +77,6 @@ const {
   useScheduleContentMutation,
   useUnpublishContentMutation,
 } = useContent(props.spaceId)
-
 
 const { useSpaceQuery } = useSpaces()
 const { data: space } = useSpaceQuery(props.spaceId)
@@ -95,20 +92,16 @@ const { apiToken, openContentJsonInNewTab } = useContentJson(
   computed(() => props.content)
 )
 
-
 const { useReleasesQuery, useAssignVersionsMutation, getReleaseState } = useReleases(props.spaceId)
 const { data: releases } = useReleasesQuery()
 
-
 const { mutate: assignVersions, isPending: isAssigning } = useAssignVersionsMutation()
-
 
 const { mutateAsync: createContent, isPending: isCreating } = useCreateContentMutation()
 const { mutateAsync: updateContent, isPending: isUpdating } = useUpdateContentMutation()
 const { mutateAsync: publishContent, isPending: isPublishing } = usePublishContentMutation()
 const { mutateAsync: scheduleContent, isPending: isScheduling } = useScheduleContentMutation()
 const { mutateAsync: unpublishContent, isPending: isUnpublishing } = useUnpublishContentMutation()
-
 
 const isVersions = computed(() => route.name === 'space-content-contentId-versions')
 const publishDialogOpen = ref(false)
@@ -124,7 +117,6 @@ const isAnyActionPending = computed(
   () => isSaving.value || isPublishingAction.value || isAssigning.value
 )
 
-
 const handlePersistedContent = (
   nextContent: ContentResource,
   action: ContentCommitAction = 'save'
@@ -133,14 +125,12 @@ const handlePersistedContent = (
   resetDirtyState?.()
 }
 
-
 const mutationPayload = computed(() =>
   sanitizeContentMutationPayload({
     ...props.content,
     content: sanitizeContentForSubmit?.() || props.content.content,
   })
 )
-
 
 const handleMutationError = (error: unknown) => {
   const errorData =
@@ -153,17 +143,14 @@ const handleMutationError = (error: unknown) => {
   }
 }
 
-
 const getValidationErrorData = (error: unknown): Record<string, string[]> | null => {
   const errorData =
     (error as { data?: { errors?: Record<string, string[]> } })?.data?.errors ||
     (error as { response?: { data?: { errors?: Record<string, string[]> } } })?.response?.data
       ?.errors
 
-
   return errorData || null
 }
-
 
 const isSoftValidationError = (error: unknown): boolean => {
   return (
@@ -173,17 +160,14 @@ const isSoftValidationError = (error: unknown): boolean => {
   )
 }
 
-
 const getValidationWarningMessage = (errors: Record<string, string[]>): string => {
   const messages = Object.values(errors).flat().filter(Boolean)
-
 
   return [
     t('labels.contents.validationWarning.description') as string,
     ...(messages.length ? ['', ...messages.map((message) => `• ${message}`)] : []),
   ].join('\n')
 }
-
 
 const confirmSoftValidation = async (errors: Record<string, string[]>) => {
   return await alert.confirm(getValidationWarningMessage(errors), {
@@ -193,29 +177,23 @@ const confirmSoftValidation = async (errors: Record<string, string[]>) => {
   })
 }
 
-
 const guardSubmit = (options?: { silent?: boolean }) => {
   if (!options?.silent) {
     clearValidationErrors?.()
   }
 
-
   const isValid = validateContentForSubmit?.(options) ?? true
-
 
   if (!isValid && !options?.silent) {
     focusFirstValidationError?.()
   }
 
-
   return isValid
 }
-
 
 const confirmClientValidationWarnings = async () => {
   const clientErrors = getClientValidationErrors?.() || {}
   const messages = Object.values(clientErrors).flat().filter(Boolean)
-
 
   return await alert.confirm(
     [
@@ -230,13 +208,11 @@ const confirmClientValidationWarnings = async () => {
   )
 }
 
-
 const performSave = async (force = false) => {
   const payload = {
     ...mutationPayload.value,
     ...(force ? { force: true } : {}),
   }
-
 
   if (props.content.id) {
     try {
@@ -254,12 +230,10 @@ const performSave = async (force = false) => {
         }
       }
 
-
       handleMutationError(error)
     }
     return
   }
-
 
   try {
     const nextContent = await createContent(payload)
@@ -273,11 +247,9 @@ const performSave = async (force = false) => {
       }
     }
 
-
     handleMutationError(error)
   }
 }
-
 
 const save = async (force = false) => {
   if (force) {
@@ -285,49 +257,38 @@ const save = async (force = false) => {
     return
   }
 
-
   const isValid = guardSubmit({ silent: false })
-
 
   if (!isValid) {
     await nextTick()
 
-
     const confirmed = await confirmClientValidationWarnings()
-
 
     if (!confirmed) {
       focusFirstValidationError?.()
       return
     }
 
-
     await performSave(true)
     return
   }
 
-
   await performSave(false)
 }
-
 
 const handleSaveClick = async (event?: MouseEvent) => {
   event?.preventDefault()
   event?.stopPropagation()
 
-
   if (isAnyActionPending.value) {
     return
   }
 
-
   await save()
 }
 
-
 const publishDirectly = async () => {
   if (!guardSubmit()) return
-
 
   try {
     const nextContent = await publishContent({
@@ -340,22 +301,18 @@ const publishDirectly = async () => {
   }
 }
 
-
 const publishWithMessage = () => {
   publishType.value = 'now'
   publishDialogOpen.value = true
 }
-
 
 const schedulePublish = () => {
   publishType.value = 'schedule'
   publishDialogOpen.value = true
 }
 
-
 const handlePublish = async (payload: { message?: string; published_at?: string | null }) => {
   if (!guardSubmit()) return
-
 
   const publishPayload = sanitizeContentMutationPayload({
     ...props.content,
@@ -371,10 +328,8 @@ const handlePublish = async (payload: { message?: string; published_at?: string 
   }
 }
 
-
 const handleSchedule = async (payload: { message?: string; scheduled_at?: string | null }) => {
   if (!guardSubmit()) return
-
 
   const schedulePayload = sanitizeContentMutationPayload({
     ...props.content,
@@ -391,7 +346,6 @@ const handleSchedule = async (payload: { message?: string; scheduled_at?: string
   }
 }
 
-
 const unpublish = async () => {
   try {
     const nextContent = await unpublishContent({
@@ -404,7 +358,6 @@ const unpublish = async () => {
   }
 }
 
-
 const switchVersions = () => {
   const targetRouteName = isVersions.value
     ? resolveContentRouteName(
@@ -414,7 +367,6 @@ const switchVersions = () => {
         defaultLanguage.value
       )
     : 'space-content-contentId-versions'
-
 
   router.push({
     name: targetRouteName,
@@ -430,48 +382,39 @@ const switchVersions = () => {
   })
 }
 
-
 const assignedRelease = computed(() =>
   (releases.value?.data || []).find((release) => release.id === contentModel.value.releaseId)
 )
-
 
 const isInScheduledRelease = computed(
   () => assignedRelease.value && getReleaseState(assignedRelease.value) !== 'draft'
 )
 
-
 const draftReleases = computed(() =>
   (releases.value?.data || []).filter((release) => getReleaseState(release) === 'draft')
 )
 
-
 const canPublishToRelease = computed(
   () => !!props.content.id && !isInScheduledRelease.value && !contentModel.value.isPublished
 )
-
 
 const handleAssignToRelease = (release: any) => {
   selectedReleaseForAssign.value = release
   assignReleaseDialogOpen.value = true
 }
 
-
 const showDraftJson = () => {
   openContentJsonInNewTab('draft')
 }
-
 
 const showPublishedJson = () => {
   openContentJsonInNewTab('published')
 }
 
-
 const handleConfirmAssign = (versionIds: string[]) => {
   if (!selectedReleaseForAssign.value) {
     return
   }
-
 
   assignVersions(
     {

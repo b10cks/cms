@@ -112,10 +112,10 @@
 </template>
 
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { TreeItem, TreeRoot } from 'reka-ui'
 import { computed, ref } from 'vue'
+
+import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { ScrollArea } from '~/components/ui/scroll-area'

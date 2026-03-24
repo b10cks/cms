@@ -33,7 +33,6 @@ const props = withDefaults(
   }
 )
 
-
 const { useFolderStructure } = useAssetFolders(props.spaceId)
 const { getBreadcrumbs } = useFolderStructure()
 const { getFileType } = useFileUtils()
@@ -46,7 +45,6 @@ const {
   setFieldValue: setAssetFieldValue,
 } = useAssetRequirements(props.spaceId)
 
-
 const assetCopy = ref<AssetResource | null>(null)
 const imageContainer = ref<HTMLElement | null>(null)
 const imageRef = useTemplateRef('imageRef')
@@ -55,7 +53,6 @@ const selectedLanguage = ref<string>('_default')
 const effectiveFields = computed(() => {
   return getEffectiveFieldsForTarget(assetCopy.value)
 })
-
 
 watch(
   () => props.asset,
@@ -70,12 +67,10 @@ watch(
   { immediate: true }
 )
 
-
 const emit = defineEmits<{
   close: []
   'update:asset': [asset: AssetResource]
 }>()
-
 
 // Get field value for current language
 const getFieldValue = (fieldKey: string): string => {
@@ -83,10 +78,8 @@ const getFieldValue = (fieldKey: string): string => {
     return ''
   }
 
-
   return getAssetFieldValue(assetCopy.value, fieldKey, selectedLanguage.value)
 }
-
 
 // Set field value for current language
 const setFieldValue = (fieldKey: string, value: string | number) => {
@@ -94,22 +87,18 @@ const setFieldValue = (fieldKey: string, value: string | number) => {
     return
   }
 
-
   ensureAssetFieldData(assetCopy.value)
   setAssetFieldValue(assetCopy.value, fieldKey, selectedLanguage.value, String(value))
 }
-
 
 const formatKey = (key: string): string => {
   return key.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
 }
 
-
 const copyAssetUrl = () => {
   if (!assetCopy.value) {
     return
   }
-
 
   navigator.clipboard
     .writeText(assetCopy.value.url)
@@ -121,16 +110,13 @@ const copyAssetUrl = () => {
     })
 }
 
-
 const openAssetInNewWindow = () => {
   if (!assetCopy.value) {
     return
   }
 
-
   window.open(assetCopy.value.url, '_blank', 'noopener,noreferrer')
 }
-
 
 const toggleFocusPoint = () => {
   if (!assetCopy.value) return
@@ -144,41 +130,33 @@ const toggleFocusPoint = () => {
   }
 }
 
-
 const startDragging = (event: MouseEvent) => {
   if (!imageRef.value || !assetCopy.value) return
   event.preventDefault()
   isDraggingFocus.value = true
 
-
   updateFocusPointPosition(event)
 }
-
 
 const stopDragging = () => {
   isDraggingFocus.value = false
 }
 
-
 const updateFocusPointPosition = (event: MouseEvent) => {
   if (!isDraggingFocus.value || !imageRef.value || !assetCopy.value || !assetCopy.value.data) return
   const rect = (imageRef.value?.$el as HTMLElement)?.getBoundingClientRect()
 
-
   let x = ((event.clientX - rect.left) / rect.width) * 100
   let y = ((event.clientY - rect.top) / rect.height) * 100
 
-
   x = Math.max(0, Math.min(100, x))
   y = Math.max(0, Math.min(100, y))
-
 
   assetCopy.value.data.focus = {
     x: parseFloat(x.toFixed(2)),
     y: parseFloat(y.toFixed(2)),
   }
 }
-
 
 onMounted(() => {
   if (isClient) {
@@ -187,14 +165,12 @@ onMounted(() => {
   }
 })
 
-
 onUnmounted(() => {
   if (isClient) {
     window.removeEventListener('mousemove', handleMouseMove)
     window.removeEventListener('mouseup', stopDragging)
   }
 })
-
 
 let lastUpdateTime = 0
 const throttleTime = 16
@@ -206,22 +182,18 @@ const handleMouseMove = (event: MouseEvent) => {
   }
 }
 
-
 const handleFinish = async () => {
   if (props.readOnly) {
     emit('close')
     return
   }
 
-
   if (!assetCopy.value) {
     return
   }
 
-
   emit('update:asset', assetCopy.value)
 }
-
 
 const onOpenChange = (open: boolean) => {
   if (!open) {

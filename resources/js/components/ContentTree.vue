@@ -26,11 +26,9 @@ import {
 
 type Edge = 'left'
 
-
 type ContentTreeDragItem = {
   id: string
 }
-
 
 type ContentTreeDragData = {
   kind: 'content-tree'
@@ -38,20 +36,16 @@ type ContentTreeDragData = {
   primaryId: string
 }
 
-
 const CONTENT_TREE_DRAG_KIND = 'content-tree'
-
 
 const props = defineProps<{
   title?: string
   spaceId: string
 }>()
 
-
 const route = useRoute()
 const router = useRouter()
 const { useAccessControl } = useAuthorization()
-
 
 const { alert } = useAlertDialog()
 const { useSpaceQuery } = useSpaces()
@@ -65,21 +59,16 @@ const { useUpdateContentMutation, useDeleteContentMutation, useMoveContentMutati
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageContent = computed(() => access.hasAbility('content.manage'))
 
-
 const { mutate: updateContent } = useUpdateContentMutation()
 const { mutate: deleteContent } = useDeleteContentMutation()
 const { mutateAsync: moveContent } = useMoveContentMutation()
 
-
 const { settings } = useSpaceSettings(props.spaceId)
-
 
 const { isLoading, error, data } = useContentMenuQuery()
 const rootItems = computed(() => getRootItems(data.value) || [])
 
-
 const { getUsersForContent } = useContentMenuPresence(props.spaceId)
-
 
 const selectedItemId = ref<string | null>(null)
 const selectedItemIds = ref<string[]>([])
@@ -93,29 +82,23 @@ const isDragging = ref(false)
 const dragSelectionSnapshot = ref<string[] | null>(null)
 let lastDragEndedAt = 0
 
-
 const treeContainerRef = ref<HTMLElement | null>(null)
 const rootDropZoneRef = ref<HTMLElement | null>(null)
 const itemCleanupMap = new Map<string, () => void>()
-
 
 const selectedSpace = computed(() => {
   return spaces.value?.find((space) => space.id === props.spaceId) || null
 })
 
-
 const flatItems = computed(() => {
   return data.value ? Object.values(data.value) : []
 })
-
 
 const itemIndexMap = computed(() => {
   return new Map(flatItems.value.map((item, index) => [item.id, index]))
 })
 
-
 const selectedItemsSet = computed(() => new Set(selectedItemIds.value))
-
 
 const childIdMap = computed(() => {
   const map = new Map<string | null, string[]>()
@@ -150,7 +133,6 @@ const childIdMap = computed(() => {
   return map
 })
 
-
 const descendantIdsMap = computed(() => {
   const map = new Map<string, Set<string>>()
 
@@ -179,9 +161,7 @@ const descendantIdsMap = computed(() => {
   return map
 })
 
-
 const isItemSelected = (id: string) => selectedItemsSet.value.has(id)
-
 
 const clearDropState = () => {
   activeDropTargetId.value = null
@@ -189,17 +169,14 @@ const clearDropState = () => {
   rootDropMode.value = null
 }
 
-
 const restoreDragSelection = () => {
   if (dragSelectionSnapshot.value) {
     selectedItemIds.value = [...dragSelectionSnapshot.value]
     selectedItemId.value = dragSelectionSnapshot.value[0] ?? null
   }
 
-
   dragSelectionSnapshot.value = null
 }
-
 
 const finishDragState = () => {
   if (isDragging.value) {
@@ -210,7 +187,6 @@ const finishDragState = () => {
   dragSelectionSnapshot.value = null
   clearDropState()
 }
-
 
 function createContentTreeDragData(
   items: ContentTreeDragItem[],
@@ -223,13 +199,11 @@ function createContentTreeDragData(
   }
 }
 
-
 function isContentTreeDragData(
   value: Record<string, unknown> | null | undefined
 ): value is ContentTreeDragData {
   return value?.kind === CONTENT_TREE_DRAG_KIND
 }
-
 
 function getContentTreeDragItems(
   value: Record<string, unknown> | null | undefined
@@ -237,7 +211,6 @@ function getContentTreeDragItems(
   if (!isContentTreeDragData(value) || !Array.isArray(value.items)) {
     return []
   }
-
 
   return value.items.flatMap((item) => {
     if (item && typeof item === 'object' && 'id' in item && typeof item.id === 'string') {
@@ -247,7 +220,6 @@ function getContentTreeDragItems(
     return []
   })
 }
-
 
 function attachClosestEdge(
   value: Record<string, unknown>,
@@ -259,15 +231,12 @@ function attachClosestEdge(
 ) {
   const rect = options.element.getBoundingClientRect()
 
-
   const distances = options.allowedEdges.map((edge) => ({
     edge,
     value: Math.abs(options.input.clientX - rect.left),
   }))
 
-
   const closest = distances.sort((a, b) => a.value - b.value)[0]
-
 
   return {
     ...value,
@@ -275,16 +244,13 @@ function attachClosestEdge(
   }
 }
 
-
 function extractClosestEdge(value: Record<string, unknown>): Edge | null {
   if ('closestEdge' in value && value.closestEdge === 'left') {
     return value.closestEdge
   }
 
-
   return null
 }
-
 
 function setContentTreeDragPreview({
   nativeSetDragImage,
@@ -298,7 +264,6 @@ function setContentTreeDragPreview({
   if (!nativeSetDragImage) {
     return
   }
-
 
   setCustomNativeDragPreview({
     nativeSetDragImage,
@@ -353,21 +318,17 @@ function setContentTreeDragPreview({
   })
 }
 
-
 const resolveElement = (value: Element | { $el?: Element } | null): HTMLElement | null => {
   if (value instanceof HTMLElement) {
     return value
   }
 
-
   if (value && '$el' in value && value.$el instanceof HTMLElement) {
     return value.$el
   }
 
-
   return null
 }
-
 
 function handleRename(newName: string, contentId: string) {
   if (contentId && newName) {
@@ -376,16 +337,13 @@ function handleRename(newName: string, contentId: string) {
   currentlyEditingId.value = null
 }
 
-
 function handleEditStart(contentId: string) {
   currentlyEditingId.value = contentId
 }
 
-
 function handleEditCancel() {
   currentlyEditingId.value = null
 }
-
 
 const buildLink = (contentId: string, item?: FlatContentMenuItem) => {
   const menuLanguages = item?.i18n?.map((translation) => translation.language_iso) || []
@@ -405,12 +363,10 @@ const buildLink = (contentId: string, item?: FlatContentMenuItem) => {
     menuLanguages[0]
   )
 
-
   const currentLanguage =
     typeof route.query.lang === 'string' && route.query.lang.length > 0
       ? route.query.lang
       : undefined
-
 
   const targetLanguage = resolveContentLanguage(
     currentLanguage,
@@ -429,7 +385,6 @@ const buildLink = (contentId: string, item?: FlatContentMenuItem) => {
     defaultLanguage
   )
 
-
   const name =
     route.name != 'space-content-index'
       ? resolveContentRouteName(
@@ -445,7 +400,6 @@ const buildLink = (contentId: string, item?: FlatContentMenuItem) => {
           defaultLanguage
         )
 
-
   return {
     name,
     query: withContentLanguageQuery(route.query, targetLanguage, defaultLanguage),
@@ -457,47 +411,39 @@ const buildLink = (contentId: string, item?: FlatContentMenuItem) => {
   }
 }
 
-
 const handleToggle = (event: TreeItemToggleEvent<FlatContentMenuItem> | Event) => {
   if ('detail' in event && event.detail?.originalEvent instanceof PointerEvent) {
     event.preventDefault()
     return
   }
 
-
   if (event instanceof PointerEvent) {
     event.preventDefault()
   }
 }
 
-
 const toggleExpanded = (contentId: string) => {
   const expanded = settings.value.content.expanded || []
   const index = expanded.indexOf(contentId)
-
 
   if (index > -1) {
     settings.value.content.expanded = expanded.filter((id) => id !== contentId)
     return
   }
 
-
   settings.value.content.expanded = [...expanded, contentId]
 }
-
 
 const setCurrentItemFromRoute = () => {
   if (route.params.contentId) {
     const contentId = route.params.contentId as string
     selectedItemId.value = contentId
 
-
     if (!selectedItemsSet.value.has(contentId)) {
       selectedItemIds.value = [contentId]
     }
   }
 }
-
 
 watch(
   () => route.params.contentId,
@@ -507,27 +453,22 @@ watch(
   { immediate: true }
 )
 
-
 onMounted(() => {
   setCurrentItemFromRoute()
 })
-
 
 const initCreate = (parentId: string | null) => {
   createParentId.value = parentId
   showCreateDialog.value = true
 }
 
-
 const initDelete = async (item: { id: string }) => {
   if (!(await alert.confirm('Are you sure you want to delete this item?'))) {
     return
   }
 
-
   deleteContent(item.id)
 }
-
 
 function selectSingleItem(id: string) {
   dragSelectionSnapshot.value = null
@@ -535,11 +476,9 @@ function selectSingleItem(id: string) {
   selectedItemIds.value = [id]
 }
 
-
 function toggleItemSelection(id: string) {
   dragSelectionSnapshot.value = null
   const next = new Set(selectedItemIds.value)
-
 
   if (next.has(id)) {
     next.delete(id)
@@ -547,17 +486,14 @@ function toggleItemSelection(id: string) {
     next.add(id)
   }
 
-
   selectedItemIds.value = Array.from(next)
   selectedItemId.value = id
 }
-
 
 function handleItemPointerDown(event: MouseEvent, id: string) {
   if (currentlyEditingId.value === id || isDragging.value) {
     return
   }
-
 
   if (event.metaKey || event.ctrlKey) {
     event.preventDefault()
@@ -574,12 +510,10 @@ function handleItemPointerDown(event: MouseEvent, id: string) {
 
   dragSelectionSnapshot.value = null
 
-
   if (!selectedItemsSet.value.has(id) || selectedItemIds.value.length <= 1) {
     selectSingleItem(id)
   }
 }
-
 
 function handleItemNavigate(event: MouseEvent, id: string) {
   if (Date.now() - lastDragEndedAt < 250) {
@@ -588,19 +522,16 @@ function handleItemNavigate(event: MouseEvent, id: string) {
     return
   }
 
-
   if (isDragging.value || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
     event.preventDefault()
     event.stopPropagation()
     return
   }
 
-
   if (selectedItemId.value !== id) {
     selectSingleItem(id)
   }
 }
-
 
 function getSelectedDragItemsFor(id: string): ContentTreeDragItem[] {
   const selection =
@@ -609,44 +540,35 @@ function getSelectedDragItemsFor(id: string): ContentTreeDragItem[] {
       : selectedItemIds.value
   const selectionSet = new Set(selection)
 
-
   if (!selectionSet.has(id) || selection.length === 0) {
     return [{ id }]
   }
 
-
   return selection.map((selectedId) => ({ id: selectedId }))
 }
-
 
 function getDragPreviewTitle(item: FlatContentMenuItem, dragItems: ContentTreeDragItem[]) {
   if (dragItems.length > 1) {
     return `${dragItems.length} pages`
   }
 
-
   return item.name
 }
-
 
 function canDropItemsOnTarget(dragItems: ContentTreeDragItem[], targetId: string | null) {
   if (!dragItems.length) {
     return false
   }
 
-
   const draggedIds = new Set(dragItems.map((item) => item.id))
-
 
   if (targetId === null) {
     return true
   }
 
-
   if (draggedIds.has(targetId)) {
     return false
   }
-
 
   for (const draggedId of draggedIds) {
     const descendants = descendantIdsMap.value.get(draggedId)
@@ -655,10 +577,8 @@ function canDropItemsOnTarget(dragItems: ContentTreeDragItem[], targetId: string
     }
   }
 
-
   return true
 }
-
 
 function isSelfDrop(dragItems: ContentTreeDragItem[], targetId: string | null) {
   if (!targetId) {
@@ -667,7 +587,6 @@ function isSelfDrop(dragItems: ContentTreeDragItem[], targetId: string | null) {
 
   return dragItems.some((item) => item.id === targetId)
 }
-
 
 async function moveDraggedItemsToTarget(
   dragItems: ContentTreeDragItem[],
@@ -679,17 +598,14 @@ async function moveDraggedItemsToTarget(
     return
   }
 
-
   const orderedDraggedIds = dragItems
     .map((item) => item.id)
     .filter((id, index, array) => array.indexOf(id) === index)
-
 
   if (orderedDraggedIds.length === 1 && targetId === orderedDraggedIds[0]) {
     finishDragState()
     return
   }
-
 
   if (targetId === null) {
     try {
@@ -705,22 +621,17 @@ async function moveDraggedItemsToTarget(
       finishDragState()
     }
 
-
     return
   }
 
-
   const target = data.value?.[targetId]
-
 
   if (!target) {
     finishDragState()
     return
   }
 
-
   const parentId = target.type === 'single' ? (target.pid ?? null) : target.id
-
 
   try {
     for (const id of orderedDraggedIds) {
@@ -735,7 +646,6 @@ async function moveDraggedItemsToTarget(
     finishDragState()
   }
 }
-
 
 function registerItemInteractions(item: FlatContentMenuItem, element: HTMLElement) {
   const cleanup = combine(
@@ -852,27 +762,22 @@ function registerItemInteractions(item: FlatContentMenuItem, element: HTMLElemen
     })
   )
 
-
   itemCleanupMap.set(item.id, cleanup)
 }
-
 
 const setItemElement = (item: FlatContentMenuItem) => {
   return (value: Element | { $el?: Element } | null) => {
     itemCleanupMap.get(item.id)?.()
     itemCleanupMap.delete(item.id)
 
-
     const element = resolveElement(value)
     if (!element) {
       return
     }
 
-
     registerItemInteractions(item, element)
   }
 }
-
 
 watch([treeContainerRef, rootDropZoneRef], ([containerElement, rootElement], _, onCleanup) => {
   if (!containerElement || !rootElement) {
@@ -939,12 +844,10 @@ watch([treeContainerRef, rootDropZoneRef], ([containerElement, rootElement], _, 
   })
 })
 
-
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key !== 'Escape' || !isDragging.value) {
     return
   }
-
 
   event.preventDefault()
   event.stopPropagation()
@@ -952,11 +855,9 @@ const handleKeydown = (event: KeyboardEvent) => {
   finishDragState()
 }
 
-
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
 })
-
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)

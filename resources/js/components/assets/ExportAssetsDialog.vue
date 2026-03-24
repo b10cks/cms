@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import type { AssetsQueryParams } from '~/api/resources/assets'
+import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import type { ExportTypes } from '~/types/assets'
+
 import SelectField from '../ui/form/SelectField.vue'
 
 const props = defineProps<{

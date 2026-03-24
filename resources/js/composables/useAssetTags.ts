@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
+import { api } from '~/api'
 import type { AssetTagsQueryParams } from '~/api/resources/asset-tags'
 import type { UpsertAssetTagPayload } from '~/types/assets'
-
-import { api } from '~/api'
 
 import { queryKeys } from './useQueryClient'
 

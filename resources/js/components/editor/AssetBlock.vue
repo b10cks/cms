@@ -17,21 +17,17 @@ const props = defineProps<{
   readOnly?: boolean
 }>()
 
-
 const emit = defineEmits<{
   'update:modelValue': [value: AssetValue | null]
 }>()
-
 
 const { alert } = useAlertDialog()
 const { $t } = useI18n()
 const { getFileIcon, getFileType } = useFileUtils()
 
-
 const localValue = ref<AssetValue | null>(null)
 const showAssetPicker = ref(false)
 const showAssetDetails = ref(false)
-
 
 watch(
   () => props.modelValue,
@@ -40,7 +36,6 @@ watch(
   },
   { immediate: true, deep: true }
 )
-
 
 const hasAsset = computed(() => !!localValue.value)
 const currentAsset = computed(() => localValue.value)
@@ -51,11 +46,9 @@ const isImage = computed(() => {
   return getFileType(localValue.value.mime_type) === 'image'
 })
 
-
 const updateValue = () => {
   emit('update:modelValue', localValue.value)
 }
-
 
 const handleAssetSelect = (asset: AssetResource) => {
   localValue.value = {
@@ -72,16 +65,13 @@ const handleAssetSelect = (asset: AssetResource) => {
   showAssetPicker.value = false
 }
 
-
 const handleAssetReplace = () => {
   showAssetPicker.value = true
 }
 
-
 const handleAssetEdit = () => {
   showAssetDetails.value = true
 }
-
 
 const handleAssetDelete = async () => {
   const confirmed = await alert.confirm($t('messages.assets.confirmDelete'), {
@@ -90,13 +80,11 @@ const handleAssetDelete = async () => {
     cancelLabel: $t('actions.cancel'),
   })
 
-
   if (confirmed) {
     localValue.value = null
     updateValue()
   }
 }
-
 
 const handleAssetDetailsUpdate = (asset: AssetResource) => {
   localValue.value = asset as unknown as AssetValue

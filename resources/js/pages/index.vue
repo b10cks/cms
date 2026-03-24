@@ -34,7 +34,6 @@ const access = useAccessControl(
 )
 const canCreateSpace = computed(() => access.canAccessRoute('spaces-new'))
 
-
 useSeoMeta({
   title: computed(() => {
     const title = t('labels.spaces.title')
@@ -42,7 +41,6 @@ useSeoMeta({
     return team ? `${team}: ${title}` : title
   }),
 })
-
 
 const sort = computed({
   get() {
@@ -58,7 +56,6 @@ const sort = computed({
   },
 })
 
-
 const archived = computed({
   get() {
     return route.query.archived === 'true'
@@ -73,7 +70,6 @@ const archived = computed({
   },
 })
 
-
 const spaceFilter = computed<SpaceQueryParams>(() => {
   return {
     archived: archived.value || undefined,
@@ -81,17 +77,13 @@ const spaceFilter = computed<SpaceQueryParams>(() => {
   }
 })
 
-
 const { data: spaces } = useSpacesQuery(spaceFilter)
-
 
 // Track which space has the badge dialog open
 const badgeDialogSpaceId = ref<string | null>(null)
 
-
 const { alert } = useAlertDialog()
 const archiveMutation = useArchiveSpaceMutation()
-
 
 const handleArchive = async (space: SpaceResource) => {
   const confirmed = await alert.confirm(`Are you sure you want to archive "${space.name}"?`, {
@@ -104,26 +96,21 @@ const handleArchive = async (space: SpaceResource) => {
   }
 }
 
-
 const getSortLabel = (sort: string) => {
   return $t(sort.replace(/^[+-]?(\w*)/, 'labels.sort.$1') + (sort.startsWith('-') ? 'Desc' : 'Asc'))
 }
 
-
 const teamRelatedSpaces = computed(() => {
   return spaces.value?.filter((space) => space.team_id === selectedTeam.value?.id) || []
 })
-
 
 const formatLastUpdated = (space: SpaceResource) => {
   const contentTs = space.content_updated_at ? Date.parse(space.content_updated_at) : 0
   const updatedTs = space.updated_at ? Date.parse(space.updated_at) : 0
   const date = (contentTs >= updatedTs ? space.content_updated_at : space.updated_at) ?? null
 
-
   return date ? formatRelativeTime(date) : ''
 }
-
 
 const getSpacePlanBadgeVariant = (status: SpacePlanSummary['status']): BadgeVariants['variant'] => {
   switch (status) {
@@ -143,7 +130,6 @@ const getSpacePlanBadgeVariant = (status: SpacePlanSummary['status']): BadgeVari
   }
 }
 
-
 const getSpacePlanIcon = (status: SpacePlanSummary['status']) => {
   switch (status) {
     case 'active':
@@ -162,7 +148,6 @@ const getSpacePlanIcon = (status: SpacePlanSummary['status']) => {
       return 'lucide:circle-off'
   }
 }
-
 
 const getSpacePlanLabel = (plan: SpacePlanSummary) => {
   return plan.name ?? $t('labels.plans.free')

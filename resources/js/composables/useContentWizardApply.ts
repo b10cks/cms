@@ -2,9 +2,9 @@ import { useQueryClient } from '@tanstack/vue-query'
 
 import type { ContentWizardApplyResult, ContentWizardDraftNode } from '~/types/content-wizard'
 
-import { queryKeys } from './useQueryClient'
-import { useContentWizardTree } from './useContentWizardTree'
 import { useContentWizardSlug } from './useContentWizardSlug'
+import { useContentWizardTree } from './useContentWizardTree'
+import { queryKeys } from './useQueryClient'
 
 export function useContentWizardApply(
   spaceId: MaybeRef<string>,
@@ -29,10 +29,10 @@ export function useContentWizardApply(
 
   const isApplying = computed(
     () =>
-      bulkCreateMutation.isPending.value
-      || updateMutation.isPending.value
-      || moveMutation.isPending.value
-      || deleteMutation.isPending.value
+      bulkCreateMutation.isPending.value ||
+      updateMutation.isPending.value ||
+      moveMutation.isPending.value ||
+      deleteMutation.isPending.value
   )
 
   const applyError = ref<string | null>(null)
@@ -110,9 +110,8 @@ export function useContentWizardApply(
     try {
       const createOperations = operations
         .filter(
-          (
-            operation
-          ): operation is Extract<(typeof operations)[number], { type: 'create' }> => operation.type === 'create'
+          (operation): operation is Extract<(typeof operations)[number], { type: 'create' }> =>
+            operation.type === 'create'
         )
         .sort((left, right) => left.depth - right.depth)
 
@@ -155,9 +154,9 @@ export function useContentWizardApply(
           ? resolveEffectiveSlug(node.original.title, node.original.slug)
           : ''
         const shouldUpdate =
-          node.title !== node.original?.title
-          || effectiveSlug !== originalSlug
-          || node.blockId !== node.original?.blockId
+          node.title !== node.original?.title ||
+          effectiveSlug !== originalSlug ||
+          node.blockId !== node.original?.blockId
         const shouldMove = node.parentId !== node.original?.parentId
 
         if (!shouldUpdate && !shouldMove) {
@@ -195,9 +194,8 @@ export function useContentWizardApply(
 
       const deleteOperations = operations
         .filter(
-          (
-            operation
-          ): operation is Extract<(typeof operations)[number], { type: 'delete' }> => operation.type === 'delete'
+          (operation): operation is Extract<(typeof operations)[number], { type: 'delete' }> =>
+            operation.type === 'delete'
         )
         .sort((left, right) => right.depth - left.depth)
 

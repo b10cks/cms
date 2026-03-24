@@ -16,7 +16,6 @@ const emit = defineEmits<{
   (e: 'paste'): void
 }>()
 
-
 const props = defineProps<{
   item: BlocksSchema
   hasClipboardItem: boolean
@@ -24,24 +23,19 @@ const props = defineProps<{
   canMutate?: boolean
 }>()
 
-
 const type = ref<string>()
 const isOpen = ref(false)
 
-
 const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
-
 
 const activeBlockWhitelist = computed(() =>
   (props.item.block_whitelist || []).filter((slug): slug is string => Boolean(slug))
 )
 
-
 const activeTagWhitelist = computed(() =>
   (props.item.tag_whitelist || []).filter((tag): tag is string => Boolean(tag))
 )
-
 
 const possibleBlocks = computed(() => {
   return (
@@ -70,12 +64,10 @@ const possibleBlocks = computed(() => {
   )
 })
 
-
 const select = (blockSlug: string, templateId?: string | null) => {
   emit('select', blockSlug, templateId)
   isOpen.value = false
 }
-
 
 const autofill = (newIsOpen: boolean) => {
   if (newIsOpen && possibleBlocks.value.length === 1) {

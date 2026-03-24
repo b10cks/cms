@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { toast } from 'vue-sonner'
+
 import Icon from '~/components/Icon.vue'
 import { Badge } from '~/components/ui/badge'
 import {
@@ -14,9 +15,7 @@ import {
   SelectValue,
 } from '~/components/ui/select'
 import { Skeleton } from '~/components/ui/skeleton'
-
 import type { AiModel } from '~/composables/useAiModels'
-
 import { useAiModels, useAiSettings } from '~/composables/useAiModels'
 
 const modelValue = defineModel<string | null>()

@@ -40,7 +40,6 @@ const props = defineProps<{
   getBlockOptions: (nodeId: string) => BlockResource[]
 }>()
 
-
 const emit = defineEmits<{
   (event: 'canvas-pointerdown', payload: PointerEvent): void
   (event: 'focus-node', nodeId: string): void
@@ -72,7 +71,6 @@ const emit = defineEmits<{
   (event: 'cursor-move', payload: { x: number; y: number } | null): void
 }>()
 
-
 const {
   canvasOrigin,
   canvasSize,
@@ -92,12 +90,10 @@ const {
   zoomPercent,
 } = useContentWizardViewport(toRef(props, 'bounds'))
 
-
 const AI_DOCK_SAFE_AREA = 220
 const hasFittedInitially = ref(false)
 const nodeRefs = new Map<string, InstanceType<typeof ContentWizardNodeCard>>()
 const selectedNodeIdSet = computed(() => new Set(props.selectedNodeIds))
-
 
 const sortedNodes = computed(() =>
   Object.values(props.nodes)
@@ -111,7 +107,6 @@ const sortedNodes = computed(() =>
     })
 )
 
-
 const canvasPositions = computed(() => {
   return Object.fromEntries(
     sortedNodes.value.map((node) => [
@@ -124,35 +119,29 @@ const canvasPositions = computed(() => {
   )
 })
 
-
 const scaledCanvasSize = computed(() => ({
   width: canvasSize.value.width * viewport.scale,
   height: canvasSize.value.height * viewport.scale,
 }))
 
-
 const setNodeRef = (nodeId: string) => {
   return (instance: Element | ComponentPublicInstance | null) => {
     const component = instance as InstanceType<typeof ContentWizardNodeCard> | null
-
 
     if (component) {
       nodeRefs.set(nodeId, component)
       return
     }
 
-
     nodeRefs.delete(nodeId)
   }
 }
-
 
 const focusNodeCard = (nodeId: string) => {
   nextTick(() => {
     nodeRefs.get(nodeId)?.focusCard()
   })
 }
-
 
 const centerNode = (nodeId: string) => {
   nextTick(() => {
@@ -173,18 +162,15 @@ const centerNode = (nodeId: string) => {
   })
 }
 
-
 const openNodeAddMenu = (nodeId: string, position: ContentWizardAddPosition) => {
   const nodeRef = nodeRefs.get(nodeId)
   if (!nodeRef) {
     return false
   }
 
-
   nodeRef.focusCard()
   return nodeRef.openAddMenu(position)
 }
-
 
 const handleCanvasDragOver = (event: DragEvent) => {
   if (event.dataTransfer) {
@@ -192,12 +178,10 @@ const handleCanvasDragOver = (event: DragEvent) => {
   }
 }
 
-
 const handleContainerPointerDown = (event: PointerEvent) => {
   emit('canvas-pointerdown', event)
   handlePointerDown(event)
 }
-
 
 const handleNodeDragOver = (node: ContentWizardDraftNode, event: DragEvent) => {
   if (node.isRootVirtual) {
@@ -205,10 +189,8 @@ const handleNodeDragOver = (node: ContentWizardDraftNode, event: DragEvent) => {
     return
   }
 
-
   emit('dragover-node', { nodeId: node.id, event })
 }
-
 
 const handleNodeDrop = (node: ContentWizardDraftNode, event: DragEvent) => {
   if (node.isRootVirtual) {
@@ -216,10 +198,8 @@ const handleNodeDrop = (node: ContentWizardDraftNode, event: DragEvent) => {
     return
   }
 
-
   emit('drop-on-node', { nodeId: node.id, event })
 }
-
 
 const emitCursorPosition = (event: PointerEvent | null) => {
   const element = containerRef.value
@@ -228,11 +208,9 @@ const emitCursorPosition = (event: PointerEvent | null) => {
     return
   }
 
-
   const rect = element.getBoundingClientRect()
   const relativeX = event.clientX - rect.left
   const relativeY = event.clientY - rect.top
-
 
   emit('cursor-move', {
     x: (element.scrollLeft + relativeX) / viewport.scale,
@@ -240,18 +218,15 @@ const emitCursorPosition = (event: PointerEvent | null) => {
   })
 }
 
-
 const handleCanvasPointerMove = (event: PointerEvent) => {
   emitCursorPosition(event)
   handlePointerMove(event)
 }
 
-
 const handleCanvasPointerLeave = () => {
   emitCursorPosition(null)
   handlePointerLeave()
 }
-
 
 watch(
   () => props.focusedNodeId,
@@ -261,7 +236,6 @@ watch(
     }
   }
 )
-
 
 watch(
   () => [props.bounds.width, props.bounds.height, containerWidth.value, containerHeight.value],
@@ -277,7 +251,6 @@ watch(
   },
   { immediate: true }
 )
-
 
 defineExpose({
   centerNode,

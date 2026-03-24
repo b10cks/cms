@@ -14,7 +14,6 @@ import { SimpleTooltip } from '~/components/ui/tooltip'
 
 const open = defineModel<boolean>('open')
 
-
 const props = defineProps<{
   spaceId: string
   block: BlockResource
@@ -23,15 +22,12 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageBlockVersions = computed(() => access.hasAbility('block_versions.manage'))
 
-
 const { formatDateTime, formatDateTimeDynamically } = useFormat()
 const { user } = useAuth()
 const { $t } = useI18n()
 
-
 const selectedVersionId = ref<string | null>(null)
 const selectedTab = ref('preview')
-
 
 const {
   useBlockVersionsQuery,
@@ -41,19 +37,15 @@ const {
   useDeleteBlockVersionMutation,
 } = useBlockVersions(props.spaceId, props.block.id)
 
-
 const { data: versions, isLoading } = useBlockVersionsQuery()
 const selectedVersionQueryId = computed(() => selectedVersionId.value ?? '')
 const { data: selectedVersionData } = useBlockVersionQuery(selectedVersionQueryId)
-
 
 const { mutate: updateVersion } = useUpdateBlockVersionMutation()
 const { mutate: restoreVersion, isPending: isRestoring } = useRestoreBlockVersionMutation()
 const { mutate: deleteVersion } = useDeleteBlockVersionMutation()
 
-
 const { alert } = useAlertDialog()
-
 
 const groupedVersions = computed(() => {
   if (!versions.value) return {}
@@ -96,7 +88,6 @@ const groupedVersions = computed(() => {
   return groups
 })
 
-
 const versionTreeMap = computed(() => {
   if (!versions.value) return new Map()
 
@@ -114,35 +105,28 @@ const versionTreeMap = computed(() => {
   return map
 })
 
-
 const getVersionIndentLevel = (versionId: string): number => {
   let level = 0
   let currentId = versionId
 
-
   while (true) {
     const version = versions.value?.find((v) => v.id === currentId)
     if (!version?.parent_id) break
-
 
     const siblings = versionTreeMap.value.get(version.parent_id) || []
     if (siblings.indexOf(currentId) > 0) {
       level++
     }
 
-
     currentId = version.parent_id
   }
-
 
   return level
 }
 
-
 const selectVersion = (version: BlockVersion) => {
   selectedVersionId.value = version.id
 }
-
 
 const handleRestore = async (versionId: string) => {
   await alert.confirm($t('labels.blockVersions.restore.message'), {
@@ -153,7 +137,6 @@ const handleRestore = async (versionId: string) => {
     },
   })
 }
-
 
 const handleDelete = async (version: BlockVersion) => {
   await alert.confirm(
@@ -169,11 +152,9 @@ const handleDelete = async (version: BlockVersion) => {
   )
 }
 
-
 const handleUpdateMessage = (id: string, message: string | null | undefined) => {
   updateVersion({ id, payload: { commit_message: message } })
 }
-
 
 const getGroupLabel = (groupKey: string) => {
   switch (groupKey) {
@@ -192,24 +173,20 @@ const getGroupLabel = (groupKey: string) => {
   }
 }
 
-
 const isMine = (version: BlockVersion) => {
   return version.created_by?.id === user.value?.id
 }
-
 
 const selectedVersion = computed(() => {
   if (!selectedVersionId.value || !versions.value) return null
   return versions.value.find((v) => v.id === selectedVersionId.value) || null
 })
 
-
 onMounted(() => {
   if (versions.value && versions.value.length > 0) {
     selectedVersionId.value = versions.value[0].id
   }
 })
-
 
 watch(
   versions,

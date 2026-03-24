@@ -6,7 +6,9 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
-const { useCurrentSubscriptionQuery, useReinitPaymentMutation } = useSubscription(computed(() => props.spaceId))
+const { useCurrentSubscriptionQuery, useReinitPaymentMutation } = useSubscription(
+  computed(() => props.spaceId)
+)
 const { data: subscription } = useCurrentSubscriptionQuery()
 const { mutate: reinitPayment, isPending: isReiniting } = useReinitPaymentMutation()
 

@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
-import type { BlockTemplatesQueryParams } from '~/api/resources/block-templates'
-
 import { api } from '~/api'
+import type { BlockTemplatesQueryParams } from '~/api/resources/block-templates'
 
 import { queryKeys } from './useQueryClient'
 

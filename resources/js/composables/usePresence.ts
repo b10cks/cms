@@ -1,8 +1,7 @@
 import type Echo from 'laravel-echo'
 
-import type { User } from '~/types/users'
-
 import { isClient } from '~/lib/env'
+import type { User } from '~/types/users'
 
 export interface PresenceUser extends User {
   joined_at: string

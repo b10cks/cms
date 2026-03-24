@@ -1,5 +1,5 @@
-import { useAuth } from '~/composables/useAuth'
 import { api } from '~/api'
+import { useAuth } from '~/composables/useAuth'
 
 import { router } from './index'
 

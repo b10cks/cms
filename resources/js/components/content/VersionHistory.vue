@@ -24,19 +24,16 @@ import type {
 
 const { $t } = useI18n()
 
-
 const { formatDateTime, formatRelativeTime, formatCalendarTime, formatDateTimeDynamically } =
   useFormat()
 const { user } = useAuth()
 const route = useRoute()
 const router = useRouter()
 
-
 const props = defineProps<{
   spaceId: string
   content: ContentResource
 }>()
-
 
 const { settings } = useSpaceSettings(props.spaceId)
 const { useSpaceQuery } = useSpaces()
@@ -48,7 +45,6 @@ const { apiToken, openContentJsonInNewTab } = useContentJson(
 const searchQuery = ref('')
 const filterOptions = ref({})
 
-
 const contentId = computed(() => props.content.id)
 const selectedVersionId = computed<string | null>(() => {
   const versionId = route.query?.versionId
@@ -59,7 +55,6 @@ const selectedVersionId = computed<string | null>(() => {
 
   return null
 })
-
 
 const selectedTab = computed({
   get: () => {
@@ -76,7 +71,6 @@ const selectedTab = computed({
   },
 })
 
-
 // Get content versions data
 const {
   useContentVersionsQuery,
@@ -86,22 +80,17 @@ const {
   usePublishVersionMutation,
 } = useContentVersions(props.spaceId, contentId)
 
-
 const { data: versions, isLoading, error } = useContentVersionsQuery()
 
-
 const { data: selectedVersionData } = useContentVersionQuery(selectedVersionId)
-
 
 const { mutate: setCurrentVersion, isPending: isSettingCurrent } = useSetCurrentVersionMutation()
 const { mutate: publishVersion, isPending: isPublishing } = usePublishVersionMutation()
 const { mutate: updateVersion, isPending: isUpdating } = useUpdateVersionMutation()
 
-
 const { useRemoveVersionsMutation } = useReleases(props.spaceId)
 const { mutate: removeVersions, isPending: isRemovingVersion } = useRemoveVersionsMutation()
 const { alert } = useAlertDialog()
-
 
 const handleRemoveFromReleaseClick = async (version: ContentVersionListResource) => {
   if (version.release) {
@@ -121,7 +110,6 @@ const handleRemoveFromReleaseClick = async (version: ContentVersionListResource)
     )
   }
 }
-
 
 // Compute date-based groups for the versions
 const groupedVersions = computed(() => {
@@ -175,7 +163,6 @@ const groupedVersions = computed(() => {
   return groups
 })
 
-
 // Create a map of parent-child relationships
 const versionTreeMap = computed(() => {
   if (!versions.value) return new Map()
@@ -194,17 +181,14 @@ const versionTreeMap = computed(() => {
   return map
 })
 
-
 // Calculate indentation level for each version
 const getVersionIndentLevel = (versionId: string): number => {
   let level = 0
   let currentId = versionId
 
-
   while (true) {
     const version = versions.value?.find((v) => v.id === currentId)
     if (!version?.parent_id) break
-
 
     // Check if this is not the first child of its parent
     const siblings = versionTreeMap.value.get(version.parent_id) || []
@@ -212,29 +196,23 @@ const getVersionIndentLevel = (versionId: string): number => {
       level++
     }
 
-
     currentId = version.parent_id
   }
 
-
   return level
 }
-
 
 const handleSetAsCurrent = (versionId: string) => {
   setCurrentVersion(versionId)
 }
 
-
 const handlePublishVersion = (versionId: string) => {
   publishVersion(versionId)
 }
 
-
 const handleUpdateMessage = (id: string, message: string | null | undefined) => {
   updateVersion({ id, payload: { message } })
 }
-
 
 // Get group label
 const getGroupLabel = (groupKey: string) => {
@@ -254,7 +232,6 @@ const getGroupLabel = (groupKey: string) => {
   }
 }
 
-
 onMounted(() => {
   if (!selectedVersionId.value && versions.value && versions.value.length > 0) {
     router.replace({
@@ -267,14 +244,12 @@ onMounted(() => {
   }
 })
 
-
 const versionFilterFields = [
   { id: 'message', label: 'Message' },
   { id: 'author', label: 'Author' },
   { id: 'published', label: 'Published' },
   { id: 'created_at', label: 'Date', datepicker: { max: new Date().toISOString() } },
 ]
-
 
 const getIndicatorClass = (version: ContentVersionListResource) => {
   if (wasPublished(version)) {
@@ -286,43 +261,35 @@ const getIndicatorClass = (version: ContentVersionListResource) => {
   return 'border-border bg-background'
 }
 
-
 const isCurrentDraft = (version: ContentVersionListResource) => {
   return version.id === props.content.current_version_id
 }
-
 
 const wasPublished = (version: ContentVersionListResource) => {
   return !!version.published_at
 }
 
-
 const isScheduled = (version: ContentVersionListResource) => {
   return !!version.scheduled_at
 }
-
 
 const isCurrentlyPublished = (version: ContentVersionListResource) => {
   return version.id === props.content.published_version_id
 }
 
-
 const isMine = (version: ContentVersionListResource) => {
   return version.author?.id === user.value?.id
 }
-
 
 const selectedVersion = computed(() => {
   if (!selectedVersionId.value || !versions.value) return null
   return versions.value.find((v) => v.id === selectedVersionId.value) || null
 })
 
-
 const selectedVersionDetail = computed<ContentVersionResource | null>(() => {
   if (!selectedVersionData.value) return null
   return selectedVersionData.value as ContentVersionResource
 })
-
 
 const effectiveEnvironment = computed<SpaceEnvironment | null>(() => {
   const userEnv = settings.value.content.environment as SpaceEnvironment | null
@@ -345,12 +312,10 @@ const previewSource = computed(() => {
   return `${normalizedUrl}${props.content.full_slug}?b10cks_rv=${new Date(selectedVersion.value.created_at).getTime()}&b10cks_vid=${selectedVersion.value.id}`
 })
 
-
 const openInTab = () => {
   if (!previewSource.value) return
   window.open(previewSource.value, '_blank')
 }
-
 
 const openVersionJsonInNewTab = (versionId: string) => {
   openContentJsonInNewTab(versionId)

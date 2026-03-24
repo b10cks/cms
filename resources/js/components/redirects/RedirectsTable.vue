@@ -40,7 +40,6 @@ const { $t } = useI18n()
 const { alert } = useAlertDialog()
 const { useAccessControl } = useAuthorization()
 
-
 const statusCodes = computed(() =>
   [301, 302, 303, 307, 308].map((code) => {
     return {
@@ -49,7 +48,6 @@ const statusCodes = computed(() =>
     }
   })
 )
-
 
 const redirectFilters = computed<FilterableField[]>(() => [
   {
@@ -80,7 +78,6 @@ const redirectFilters = computed<FilterableField[]>(() => [
   },
 ])
 
-
 const sortOptions = [
   { value: 'source', label: $t('labels.redirects.columns.source') },
   { value: 'target', label: $t('labels.redirects.columns.target') },
@@ -91,7 +88,6 @@ const sortOptions = [
   { value: 'updated_at', label: $t('labels.redirects.columns.updatedAt') },
 ]
 
-
 const filters = ref<Record<string, unknown>>({})
 const searchQuery = ref('')
 const currentPage = ref(1)
@@ -101,9 +97,7 @@ const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
   direction: 'desc',
 })
 
-
 const selectedRedirects = ref<Map<string, RedirectResource>>(new Map())
-
 
 const queryParams = computed<RedirectsQueryParams>(() => {
   return {
@@ -114,14 +108,12 @@ const queryParams = computed<RedirectsQueryParams>(() => {
   }
 })
 
-
 const props = defineProps<{
   spaceId: string
 }>()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageRedirects = computed(() => access.hasAbility('redirects.manage'))
 const tableColumnCount = computed(() => (canManageRedirects.value ? 8 : 7))
-
 
 const {
   useRedirectsQuery,
@@ -134,9 +126,7 @@ const { mutate: updateRedirect } = useUpdateRedirectMutation()
 const { mutate: resetRedirectStats } = useResetRedirectStatsMutation()
 const { mutate: deleteRedirect } = useDeleteRedirectMutation()
 
-
 const { formatDateTime } = useFormat()
-
 
 const editingState = reactive<
   Record<
@@ -149,7 +139,6 @@ const editingState = reactive<
     }
   >
 >({})
-
 
 const handleDelete = async (redirect: RedirectResource) => {
   const confirmed = await alert.confirm(
@@ -166,7 +155,6 @@ const handleDelete = async (redirect: RedirectResource) => {
   }
 }
 
-
 const handleReset = async (redirect: RedirectResource) => {
   const confirmed = await alert.confirm(
     $t('labels.redirects.resetConfirmMessage', { from: redirect.source }),
@@ -180,7 +168,6 @@ const handleReset = async (redirect: RedirectResource) => {
     await resetRedirectStats(redirect.id)
   }
 }
-
 
 const handleBulkDelete = async () => {
   const confirmed = await alert.confirm(
@@ -201,7 +188,6 @@ const handleBulkDelete = async () => {
   }
 }
 
-
 const handleBulkReset = async () => {
   const confirmed = await alert.confirm(
     $t('labels.redirects.bulkResetConfirmMessage', { count: selectionCount.value }),
@@ -220,12 +206,10 @@ const handleBulkReset = async () => {
   }
 }
 
-
 const sortedRedirects = computed(() => {
   return redirects.value?.data || []
 })
 const redirectRows = computed(() => redirects.value?.data ?? [])
-
 
 const selectionCount = computed(() => selectedRedirects.value.size)
 const isAllSelected = computed(() => {
@@ -241,7 +225,6 @@ const handleSelectAll = (checked: boolean | 'indeterminate') => {
   }
 }
 
-
 const handleRedirectSelect = (redirect: RedirectResource, selected: boolean | 'indeterminate') => {
   if (selected === true) {
     selectedRedirects.value.set(redirect.id, redirect)
@@ -250,16 +233,13 @@ const handleRedirectSelect = (redirect: RedirectResource, selected: boolean | 'i
   }
 }
 
-
 const clearSelection = () => {
   selectedRedirects.value.clear()
 }
 
-
 const isRedirectSelected = (redirect: RedirectResource) => {
   return selectedRedirects.value.has(redirect.id)
 }
-
 
 const startEditing = (
   redirect: RedirectResource,
@@ -276,11 +256,9 @@ const startEditing = (
   editingState[redirect.id].isEditing = true
 }
 
-
 const saveEdits = async (redirect: RedirectResource) => {
   const currentState = editingState[redirect.id]
   if (!currentState) return
-
 
   const payload: UpdateRedirectPayload = {
     source: editingState[redirect.id].source,
@@ -288,16 +266,13 @@ const saveEdits = async (redirect: RedirectResource) => {
     status_code: editingState[redirect.id].status_code,
   }
 
-
   await updateRedirect({
     id: redirect.id,
     payload,
   })
 
-
   currentState.isEditing = false
 }
-
 
 const cancelEditing = (redirect: RedirectResource) => {
   if (editingState[redirect.id]) {
@@ -308,7 +283,6 @@ const cancelEditing = (redirect: RedirectResource) => {
   }
 }
 
-
 const navigateToRow = (
   direction: 'up' | 'down',
   currentRedirect: RedirectResource,
@@ -316,13 +290,10 @@ const navigateToRow = (
 ) => {
   saveEdits(currentRedirect)
 
-
   const currentIndex = sortedRedirects.value.findIndex((r) => r.id === currentRedirect.id)
   if (currentIndex === -1) return
 
-
   let nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
-
 
   if (nextIndex < 0) {
     nextIndex = sortedRedirects.value.length - 1
@@ -330,18 +301,15 @@ const navigateToRow = (
     nextIndex = 0
   }
 
-
   const nextRedirect = sortedRedirects.value[nextIndex]
   if (nextRedirect) {
     startEditing(nextRedirect, field)
   }
 }
 
-
 const handleKeyDown = (event: KeyboardEvent, redirect: RedirectResource) => {
   const currentState = editingState[redirect.id]
   if (!currentState || !currentState.isEditing) return
-
 
   if (event.key === 'Escape') {
     event.preventDefault()
@@ -358,12 +326,10 @@ const handleKeyDown = (event: KeyboardEvent, redirect: RedirectResource) => {
   }
 }
 
-
 watch(
   () => redirects.value,
   (newRedirects) => {
     if (!newRedirects?.data) return
-
 
     newRedirects.data.forEach((redirect) => {
       if (editingState[redirect.id] && !editingState[redirect.id].isEditing) {
@@ -376,13 +342,11 @@ watch(
   { deep: true }
 )
 
-
 const getStatusCodeDescription = (code: number): string => {
   return $t(
     `labels.redirects.statusCodes.${[301, 302, 303, 307, 308].includes(code) ? code : 'unknown'}`
   ) as string
 }
-
 
 watch(
   () => currentPage.value,

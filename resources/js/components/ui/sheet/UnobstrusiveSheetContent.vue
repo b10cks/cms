@@ -1,12 +1,14 @@
 <script lang="ts" setup>
 import type { DialogContentEmits, DialogContentProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
-import { unobstrusiveSheetContentVariants, type UnobstrusiveSheetVariants } from '.'
+
 import { cn } from '@/lib/utils'
-import { unobstrusiveSheetVariants } from '.'
+import { Button } from '~/components/ui/button'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/components/ui/resizable'
 import { SimpleTooltip } from '~/components/ui/tooltip'
-import { Button } from '~/components/ui/button'
+
+import { unobstrusiveSheetContentVariants, type UnobstrusiveSheetVariants } from '.'
+import { unobstrusiveSheetVariants } from '.'
 
 interface SheetContentProps extends DialogContentProps {
   class?: HTMLAttributes['class']

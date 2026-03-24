@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+
 import ContentPicker from '~/components/editor/ContentPicker.vue'
 import { FormField, InputField } from '~/components/ui/form'
 import {

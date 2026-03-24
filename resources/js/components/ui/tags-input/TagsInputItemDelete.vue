@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
-import { cn } from '@/lib/utils'
 import type { TagsInputItemDeleteProps } from 'reka-ui'
 import { TagsInputItemDelete, useForwardProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import { computed } from 'vue'
+
+import { cn } from '@/lib/utils'
+import Icon from '~/components/Icon.vue'
 
 const props = defineProps<TagsInputItemDeleteProps & { class?: HTMLAttributes['class'] }>()
 

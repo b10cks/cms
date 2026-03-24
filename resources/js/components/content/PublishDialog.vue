@@ -66,7 +66,11 @@ const resetForm = () => {
   >
     <DialogContent class="max-w-md">
       <DialogHeaderCombined
-        :title="publishType === 'now' ? $t('labels.publishDialog.titleNow') : $t('labels.publishDialog.titleSchedule')"
+        :title="
+          publishType === 'now'
+            ? $t('labels.publishDialog.titleNow')
+            : $t('labels.publishDialog.titleSchedule')
+        "
         :description="
           publishType === 'now'
             ? $t('labels.publishDialog.descNow')
@@ -105,7 +109,9 @@ const resetForm = () => {
           :disabled="loading || !isScheduleValid"
           @click="handlePublish"
         >
-          {{ publishType === 'now' ? $t('actions.content.publish') : $t('actions.content.schedule') }}
+          {{
+            publishType === 'now' ? $t('actions.content.publish') : $t('actions.content.schedule')
+          }}
         </Button>
       </DialogFooter>
     </DialogContent>

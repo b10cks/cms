@@ -10,7 +10,6 @@ type AiDockWarning = {
   nodeId?: string | null
 }
 
-
 const props = withDefaults(
   defineProps<{
     spaceId: string
@@ -29,7 +28,6 @@ const props = withDefaults(
   }
 )
 
-
 const emit = defineEmits<{
   (
     event: 'send',
@@ -38,7 +36,6 @@ const emit = defineEmits<{
   (event: 'cancel'): void
   (event: 'focus-warning', warning: AiDockWarning): void
 }>()
-
 
 const handleSend = (
   prompt: string,

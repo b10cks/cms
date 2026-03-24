@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { useRouteQuery } from '@vueuse/router'
 import { computed, nextTick, ref } from 'vue'
+
 import DataEntriesIcon from '~/assets/images/data-entries.svg?component'
+import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'

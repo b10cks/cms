@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '~/components/ui/button'
 import {
   Pagination,
   PaginationEllipsis,
@@ -9,7 +10,6 @@ import {
   PaginationNext,
   PaginationPrev,
 } from '~/components/ui/pagination'
-import { Button } from '~/components/ui/button'
 import type { LaravelMeta } from '~/types'
 
 const props = withDefaults(

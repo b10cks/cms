@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import type { PrimitiveProps } from 'reka-ui'
 import { Primitive } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
+
+import Icon from '~/components/Icon.vue'
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '../dropdown-menu'
 import type { ButtonVariants } from './index'
 import { buttonVariants } from './index'

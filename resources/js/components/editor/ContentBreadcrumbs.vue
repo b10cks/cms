@@ -14,12 +14,10 @@ defineProps<{
   }>
 }>()
 
-
 // Emit events when navigating to a different item
 const emit = defineEmits<{
   (e: 'navigate', itemId: string | null): void
 }>()
-
 
 const navigateTo = (id: string | null) => {
   emit('navigate', id)

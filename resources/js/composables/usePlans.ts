@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/vue-query'
 
 import { api } from '~/api'
+
 import { queryKeys } from './useQueryClient'
 
 export function usePlans() {

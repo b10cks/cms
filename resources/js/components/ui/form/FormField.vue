@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
+
 import Label from '~/components/ui/form/Label.vue'
 import { TooltipIcon } from '~/components/ui/tooltip'
 

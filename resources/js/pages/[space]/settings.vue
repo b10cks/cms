@@ -9,7 +9,6 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
 const items = computed(() => access.filterVisibleItems(spaceSettingsNavigationItems))
 
-
 watch(
   [items, () => route.name],
   ([visibleItems, routeName]) => {
@@ -28,7 +27,6 @@ watch(
   },
   { immediate: true }
 )
-
 
 provide('spaceId', spaceId)
 </script>

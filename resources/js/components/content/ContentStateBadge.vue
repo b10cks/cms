@@ -12,7 +12,6 @@ const props = withDefaults(
   }
 )
 
-
 const badge = computed<{ variant: BadgeVariants['variant']; label: string }>(() => {
   if (props.status === 'published') {
     return {
@@ -33,7 +32,6 @@ const badge = computed<{ variant: BadgeVariants['variant']; label: string }>(() 
     label: 'labels.contents.status.draft',
   }
 })
-
 
 const isDotOnly = computed(() => props.size === 'indicator')
 </script>

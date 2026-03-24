@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
-import { cn } from '@/lib/utils'
 import { SelectScrollDownButton, type SelectScrollDownButtonProps, useForwardProps } from 'reka-ui'
 import { computed, type HTMLAttributes } from 'vue'
+
+import { cn } from '@/lib/utils'
+import Icon from '~/components/Icon.vue'
 
 const props = defineProps<SelectScrollDownButtonProps & { class?: HTMLAttributes['class'] }>()
 

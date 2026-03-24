@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
-import { cn } from '@/lib/utils'
 import { ListboxFilter, type ListboxFilterProps, useForwardProps } from 'reka-ui'
 import { computed, type HTMLAttributes } from 'vue'
+
+import { cn } from '@/lib/utils'
+import Icon from '~/components/Icon.vue'
+
 import { useCommand } from '.'
 
 defineOptions({

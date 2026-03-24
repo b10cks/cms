@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouteQuery } from '@vueuse/router'
+
 import BlockMenu from '~/components/BlockMenu.vue'
 import BlockTable from '~/components/BlockTable.vue'
 import BlockTagsTable from '~/components/BlockTagsTable.vue'

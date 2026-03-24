@@ -32,7 +32,8 @@ export function useContentWizardTree(
   menuData: Ref<Record<string, FlatContentMenuItem> | undefined>
 ) {
   const { layoutTree } = useContentWizardLayout()
-  const { resolveEffectiveSlug, resolveSlugMode, slugify, syncSlugWithTitle } = useContentWizardSlug()
+  const { resolveEffectiveSlug, resolveSlugMode, slugify, syncSlugWithTitle } =
+    useContentWizardSlug()
 
   const tree = ref<ContentWizardDraftTree>({
     rootId: CONTENT_WIZARD_ROOT_ID,
@@ -89,7 +90,9 @@ export function useContentWizardTree(
     original: node.original ? { ...node.original } : null,
   })
 
-  const cloneTreeSnapshot = (source: ContentWizardDraftTree = tree.value): ContentWizardDraftTree => ({
+  const cloneTreeSnapshot = (
+    source: ContentWizardDraftTree = tree.value
+  ): ContentWizardDraftTree => ({
     rootId: source.rootId,
     nodes: Object.fromEntries(
       Object.entries(source.nodes).map(([nodeId, node]) => [nodeId, cloneNode(node)])
@@ -146,7 +149,12 @@ export function useContentWizardTree(
 
   const isSingleBlockTaken = (blockId: string, excludeNodeId?: string) => {
     return Object.values(tree.value.nodes).some((node) => {
-      if (node.isRootVirtual || node.id === excludeNodeId || node.deletedReason || node.blockId !== blockId) {
+      if (
+        node.isRootVirtual ||
+        node.id === excludeNodeId ||
+        node.deletedReason ||
+        node.blockId !== blockId
+      ) {
         return false
       }
 
@@ -227,8 +235,8 @@ export function useContentWizardTree(
       return []
     }
 
-    const blocksForLocation = blocks.value.filter((block) =>
-      canPlaceBlockUnderParent(block, node.parentId, { excludeNodeId: nodeId }).valid
+    const blocksForLocation = blocks.value.filter(
+      (block) => canPlaceBlockUnderParent(block, node.parentId, { excludeNodeId: nodeId }).valid
     )
 
     if (blocksForLocation.some((block) => block.id === node.blockId)) {
@@ -245,9 +253,7 @@ export function useContentWizardTree(
       excludeNodeId?: string
     } = {}
   ) => {
-    return blocks.value.filter((block) =>
-      canPlaceBlockUnderParent(block, parentId, options).valid
-    )
+    return blocks.value.filter((block) => canPlaceBlockUnderParent(block, parentId, options).valid)
   }
 
   const removeFromParent = (nodeId: string) => {
@@ -274,7 +280,9 @@ export function useContentWizardTree(
 
     const nextChildren = [...parent.childrenIds]
     const targetIndex =
-      typeof index === 'number' ? Math.max(0, Math.min(index, nextChildren.length)) : nextChildren.length
+      typeof index === 'number'
+        ? Math.max(0, Math.min(index, nextChildren.length))
+        : nextChildren.length
 
     nextChildren.splice(targetIndex, 0, nodeId)
     parent.childrenIds = nextChildren
@@ -301,12 +309,7 @@ export function useContentWizardTree(
       return
     }
 
-    const visit = (
-      nodeId: string,
-      depth: number,
-      ancestorDeleted: boolean,
-      isVisible: boolean
-    ) => {
+    const visit = (nodeId: string, depth: number, ancestorDeleted: boolean, isVisible: boolean) => {
       const node = getNode(nodeId)
       if (!node) {
         return
@@ -358,12 +361,11 @@ export function useContentWizardTree(
 
       node.changes = {
         created: !node.backendId,
-        updated: !!node.backendId
-          && (
-            node.title !== node.original?.title
-            || effectiveSlug !== originalSlug
-            || node.blockId !== node.original?.blockId
-          ),
+        updated:
+          !!node.backendId &&
+          (node.title !== node.original?.title ||
+            effectiveSlug !== originalSlug ||
+            node.blockId !== node.original?.blockId),
         moved: !!node.backendId && node.parentId !== node.original?.parentId,
         deleted: node.deletedReason === 'self',
       }
@@ -524,7 +526,10 @@ export function useContentWizardTree(
     return nextNode
   }
 
-  const duplicateNode = (nodeId: string, nextParentId: string | null): ValidationResult & {
+  const duplicateNode = (
+    nodeId: string,
+    nextParentId: string | null
+  ): ValidationResult & {
     createdNodeId?: string
   } => {
     const sourceNode = getNode(nodeId)
@@ -765,7 +770,11 @@ export function useContentWizardTree(
     recomputeNodeState()
   }
 
-  const moveNode = (nodeId: string, nextParentId: string | null, index?: number): ValidationResult => {
+  const moveNode = (
+    nodeId: string,
+    nextParentId: string | null,
+    index?: number
+  ): ValidationResult => {
     const node = getNode(nodeId)
     if (!node || node.isRootVirtual) {
       return {
@@ -935,7 +944,9 @@ export function useContentWizardTree(
         return false
       }
 
-      return node.changes.created || node.changes.updated || node.changes.moved || node.changes.deleted
+      return (
+        node.changes.created || node.changes.updated || node.changes.moved || node.changes.deleted
+      )
     })
   })
 
@@ -964,9 +975,9 @@ export function useContentWizardTree(
           : ''
 
         return (
-          node.title !== node.original?.title
-          || effectiveSlug !== originalSlug
-          || node.blockId !== node.original?.blockId
+          node.title !== node.original?.title ||
+          effectiveSlug !== originalSlug ||
+          node.blockId !== node.original?.blockId
         )
       })
       .map((node) => ({
@@ -982,7 +993,10 @@ export function useContentWizardTree(
       }))
 
     const moves = nodes
-      .filter((node) => !!node.backendId && !node.deletedReason && node.parentId !== node.original?.parentId)
+      .filter(
+        (node) =>
+          !!node.backendId && !node.deletedReason && node.parentId !== node.original?.parentId
+      )
       .sort((left, right) => left.depth - right.depth)
       .map((node) => ({
         type: 'move' as const,

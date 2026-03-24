@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import UsersIcon from '~/assets/images/users.svg?component'
+import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
 import { Avatar } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
@@ -29,6 +28,7 @@ import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type { LaravelMeta } from '~/types'
 import type { RoleCatalogEntry } from '~/types/authorization'
 import type { TeamUserResource } from '~/types/teams'
+
 import TableEmptyRow from '../ui/TableEmptyRow.vue'
 
 const props = withDefaults(

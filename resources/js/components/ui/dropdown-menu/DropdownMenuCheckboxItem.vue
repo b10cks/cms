@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
-import { cn } from '@/lib/utils'
 import {
   DropdownMenuCheckboxItem,
   type DropdownMenuCheckboxItemEmits,
@@ -10,6 +7,9 @@ import {
   useForwardPropsEmits,
 } from 'reka-ui'
 import { computed, type HTMLAttributes } from 'vue'
+
+import { cn } from '@/lib/utils'
+import Icon from '~/components/Icon.vue'
 
 const props = defineProps<DropdownMenuCheckboxItemProps & { class?: HTMLAttributes['class'] }>()
 const emits = defineEmits<DropdownMenuCheckboxItemEmits>()

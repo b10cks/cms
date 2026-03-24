@@ -13,12 +13,10 @@ const canManageContent = computed(() => access.hasAbility('content.manage'))
 const { useSpaceQuery } = useSpaces()
 const { data: space } = useSpaceQuery(spaceId || null)
 
-
 const isCanonical = computed(() => !!content.value && content.value.i18n_parent_id === null)
 const effectiveMode = computed(
   () => content.value?.effective_i18n_mode || space.value?.settings.i18n_mode || 'overlay'
 )
-
 
 const overrideOptions = computed(() => [
   { value: 'inherit', label: t('labels.contents.settings.i18n.override.inherit') },

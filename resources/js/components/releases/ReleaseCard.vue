@@ -16,12 +16,10 @@ const spaceId = inject<string>('spaceId') || ''
 const { getReleaseState } = useReleases(spaceId)
 const { formatDateTimeDynamically, formatDateTime, formatTime } = useFormat()
 
-
 const props = defineProps<{
   release: Release
   canManage?: boolean
 }>()
-
 
 const emit = defineEmits<{
   edit: [release: Release]
@@ -30,11 +28,9 @@ const emit = defineEmits<{
   cancel: [release: Release]
 }>()
 
-
 const isDraft = computed(() => getReleaseState(props.release) === 'draft')
 const isScheduled = computed(() => getReleaseState(props.release) === 'scheduled')
 const isPublished = computed(() => getReleaseState(props.release) === 'published')
-
 
 const formatCalendarDate = (dateStr: string | null) => {
   if (!dateStr) return null
@@ -46,21 +42,17 @@ const formatCalendarDate = (dateStr: string | null) => {
   }
 }
 
-
 const handleEditClick = () => {
   emit('edit', props.release)
 }
-
 
 const handleDelete = () => {
   emit('delete', props.release)
 }
 
-
 const handleCommit = () => {
   emit('commit', props.release)
 }
-
 
 const handleCancel = () => {
   emit('cancel', props.release)

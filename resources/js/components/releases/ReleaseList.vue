@@ -8,10 +8,8 @@ import type { Release } from '~/types/releases'
 
 const { $t } = useI18n()
 
-
 const spaceId = inject<string>('spaceId') || ''
 const { useReleasesQuery } = useReleases(spaceId)
-
 
 const props = defineProps<{
   isLoading?: boolean
@@ -22,7 +20,6 @@ const props = defineProps<{
   onCancel?: (release: Release) => void
 }>()
 
-
 const emit = defineEmits<{
   edit: [release: Release]
   delete: [release: Release]
@@ -30,13 +27,11 @@ const emit = defineEmits<{
   cancel: [release: Release]
 }>()
 
-
 const releaseStates = computed(() => [
   { value: 'draft', label: $t('labels.releases.states.draft') },
   { value: 'scheduled', label: $t('labels.releases.states.scheduled') },
   { value: 'published', label: $t('labels.releases.states.published') },
 ])
-
 
 const filters = ref<Record<string, unknown>>({})
 const releaseFilters = computed((): FilterableField[] => [
@@ -66,20 +61,16 @@ const releaseFilters = computed((): FilterableField[] => [
   },
 ])
 
-
 const queryParams = computed(() => ({
   ...filters.value,
   per_page: 1000, // Fetch all releases for local filtering
   sort: '-publish_at',
 }))
 
-
 const { data: queryData, isLoading: isLoadingReleases } = useReleasesQuery(queryParams)
-
 
 const allReleases = computed(() => queryData.value?.data || [])
 const isLoading = computed(() => isLoadingReleases.value || props.isLoading)
-
 
 // Group releases by month or into Unscheduled
 const groupedReleases = computed(() => {
@@ -132,7 +123,6 @@ const groupedReleases = computed(() => {
   }
 })
 
-
 const hasReleases = computed(() => allReleases.value.length > 0)
 const hasSearchResults = computed(() => {
   const groups = groupedReleases.value
@@ -144,24 +134,20 @@ const hasSearchResults = computed(() => {
   return unscheduledCount + monthCount > 0
 })
 
-
 const handleEditClick = (release: Release) => {
   emit('edit', release)
   props.onEdit?.(release)
 }
-
 
 const handleDelete = (release: Release) => {
   emit('delete', release)
   props.onDelete?.(release)
 }
 
-
 const handleCommit = (release: Release) => {
   emit('commit', release)
   props.onCommit?.(release)
 }
-
 
 const handleCancel = (release: Release) => {
   emit('cancel', release)

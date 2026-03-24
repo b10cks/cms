@@ -1,11 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
+import { api } from '~/api'
 import type { TeamsQueryParams } from '~/api/resources/teams'
-import type {
-  CreateTeamSpaceRolePayload,
-  UpdateTeamSpaceRolePayload,
-} from '~/types/authorization'
+import type { CreateTeamSpaceRolePayload, UpdateTeamSpaceRolePayload } from '~/types/authorization'
 import type {
   AddTeamUserPayload,
   CreateTeamPayload,
@@ -14,8 +12,6 @@ import type {
   UpdateTeamPayload,
   UpdateTeamUserPayload,
 } from '~/types/teams'
-
-import { api } from '~/api'
 
 import { queryKeys } from './useQueryClient'
 

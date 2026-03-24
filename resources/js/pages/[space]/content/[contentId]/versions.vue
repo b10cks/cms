@@ -18,12 +18,10 @@ const router = useRouter()
 const spaceId = computed<string>(() => route.params.space as string)
 const canonicalContentId = computed<string>(() => route.params.contentId as string)
 
-
 const { useSpaceQuery } = useSpaces()
 const { data: space } = useSpaceQuery(spaceId.value)
 const { useContentQuery } = useContent(spaceId)
 const { data: routeContent } = useContentQuery(canonicalContentId)
-
 
 const defaultLanguage = computed(() =>
   getContentDefaultLanguage(
@@ -66,7 +64,6 @@ const activeLanguageVersion = computed(
 const activeContentId = computed(() => activeLanguageVersion.value?.content_id || null)
 const { data: activeContent, isLoading: isLoadingContent } = useContentQuery(activeContentId)
 
-
 const buildLanguageQuery = (language: string) =>
   withContentLanguageQuery(
     route.query as Record<string, unknown>,
@@ -78,7 +75,6 @@ const buildLanguageQuery = (language: string) =>
     ),
     defaultLanguage.value
   )
-
 
 watch(
   [routeContent, defaultLanguage],
@@ -116,7 +112,6 @@ watch(
   },
   { immediate: true }
 )
-
 
 watch(
   [canonicalContent, resolvedActiveLanguage, defaultLanguage],
@@ -174,12 +169,10 @@ watch(
   { immediate: true }
 )
 
-
 const navigateToContent = () => {
   if (!canonicalContent.value) {
     return
   }
-
 
   const targetLanguage = resolveContentLanguage(
     resolvedActiveLanguage.value,
@@ -187,7 +180,6 @@ const navigateToContent = () => {
     canonicalContent.value?.language_versions,
     routeContent.value?.language_iso
   )
-
 
   router.push({
     name: resolveContentRouteName(
@@ -203,7 +195,6 @@ const navigateToContent = () => {
     query: buildLanguageQuery(targetLanguage) as typeof route.query,
   })
 }
-
 
 useSeoMeta({
   title: computed(() =>

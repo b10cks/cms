@@ -2,7 +2,6 @@ import type { ApiResponse, BaseQueryParams } from '~/types'
 import type { CommentResource, CreateCommentRequest, UpdateCommentRequest } from '~/types/comments'
 
 import type { ApiClient } from '../client'
-
 import { BaseResource } from './base-resource'
 
 export interface CommentsQueryParams extends BaseQueryParams {

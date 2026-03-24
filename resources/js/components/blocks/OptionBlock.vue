@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { useSortable } from '@vueuse/integrations/useSortable'
+
+import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import SelectField from '~/components/ui/form/SelectField.vue'
 import { Input } from '~/components/ui/input'

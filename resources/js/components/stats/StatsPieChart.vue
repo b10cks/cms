@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArcElement, Chart as ChartJS, Legend, Tooltip, type ChartOptions } from 'chart.js'
 import { Pie } from 'vue-chartjs'
+
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 
 ChartJS.register(ArcElement, Tooltip, Legend)

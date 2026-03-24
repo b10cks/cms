@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { TextField } from '~/components/ui/form'
-import { ScrollArea } from '~/components/ui/scroll-area'
-
 import IconNameField from '~/components/ui/IconNameField.vue'
+import { ScrollArea } from '~/components/ui/scroll-area'
 
 const open = defineModel<boolean>('open')
 const { $t } = useI18n()

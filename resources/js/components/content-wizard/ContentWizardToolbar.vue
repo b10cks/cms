@@ -11,7 +11,6 @@ defineProps<{
   applyError?: string | null
 }>()
 
-
 defineEmits<{
   (event: 'reload'): void
   (event: 'help'): void

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useVModel } from '@vueuse/core'
 import type { HTMLAttributes } from 'vue'
+
 import { Checkbox } from '~/components/ui/checkbox'
 import { TooltipIcon } from '~/components/ui/tooltip'
 

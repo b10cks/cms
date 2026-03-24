@@ -9,18 +9,15 @@ const router = useRouter()
 const { t } = useI18n()
 const inviteId = computed(() => route.params.id as string)
 
-
 const { selectTeam } = useGlobalTeam()
 const { isAuthenticated } = useAuth()
 const { usePublicInviteQuery, useAcceptInviteMutation } = useInvites()
 const { data: invite, isPending, error } = usePublicInviteQuery(inviteId)
 const { mutate: acceptInvite, isPending: isAccepting } = useAcceptInviteMutation()
 
-
 useSeoMeta({
   title: computed(() => t('labels.invites.page.title')),
 })
-
 
 const token = computed(() => {
   const inviteToken = route.query.invite_token
@@ -37,12 +34,10 @@ const token = computed(() => {
   return ''
 })
 
-
 const invitePath = computed(() => {
   const query = token.value ? `?invite_token=${encodeURIComponent(token.value)}` : ''
   return `/invites/${inviteId.value}${query}`
 })
-
 
 const loginPath = computed(() => {
   const params = new URLSearchParams()
@@ -67,7 +62,6 @@ const signupPath = computed(() => {
   return `/login/signup?${params.toString()}`
 })
 
-
 const resourceName = computed(() => {
   if (invite.value?.space) {
     return `space "${invite.value.space.name}"`
@@ -78,29 +72,23 @@ const resourceName = computed(() => {
   return 'this resource'
 })
 
-
 const inviterName = computed(() => {
   return invite.value?.inviter?.name || 'Someone'
 })
-
 
 const isExpired = computed(() => {
   return invite.value?.status === InviteStatus.EXPIRED
 })
 
-
 const isAccepted = computed(() => {
   return invite.value?.status === InviteStatus.ACCEPTED
 })
-
 
 const isPendingInvite = computed(() => {
   return invite.value?.status === InviteStatus.PENDING
 })
 
-
 const hasToken = computed(() => token.value.length > 0)
-
 
 const handleAccept = () => {
   if (invite.value?.id && token.value) {

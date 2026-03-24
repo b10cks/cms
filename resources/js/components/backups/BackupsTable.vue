@@ -36,14 +36,12 @@ const { $t } = useI18n()
 const { alert } = useAlertDialog()
 const { useAccessControl } = useAuthorization()
 
-
 const backupStates = computed(() => [
   { value: 'pending', label: $t('labels.backups.states.pending') },
   { value: 'active', label: $t('labels.backups.states.active') },
   { value: 'expired', label: $t('labels.backups.states.expired') },
   { value: 'failed', label: $t('labels.backups.states.failed') },
 ])
-
 
 const backupFilters = computed(() => [
   {
@@ -64,7 +62,6 @@ const backupFilters = computed(() => [
   },
 ])
 
-
 const sortOptions = [
   { value: 'name', label: $t('labels.backups.columns.name') },
   { value: 'state', label: $t('labels.backups.columns.state') },
@@ -72,7 +69,6 @@ const sortOptions = [
   { value: 'created_at', label: $t('labels.backups.columns.createdAt') },
   { value: 'expires_at', label: $t('labels.backups.columns.expiresAt') },
 ]
-
 
 const filters = ref<Record<string, unknown>>({})
 const currentPage = ref(1)
@@ -82,9 +78,7 @@ const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
   direction: 'desc',
 })
 
-
 const selectedBackups = ref<Map<string, BackupResource>>(new Map())
-
 
 const queryParams = computed<BackupsQueryParams>(() => {
   return {
@@ -96,7 +90,6 @@ const queryParams = computed<BackupsQueryParams>(() => {
   }
 })
 
-
 const props = defineProps<{
   spaceId: string
 }>()
@@ -104,14 +97,11 @@ const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageBackups = computed(() => access.hasAbility('backups.manage'))
 const tableColumnCount = computed(() => (canManageBackups.value ? 9 : 8))
 
-
 const { useBackupsQuery, useDeleteBackupMutation } = useBackups(props.spaceId)
 const { data: backups, isLoading } = useBackupsQuery(queryParams)
 const { mutate: deleteBackup } = useDeleteBackupMutation()
 
-
 const { formatDateTime, formatFileSize } = useFormat()
-
 
 const handleDelete = async (backup: BackupResource) => {
   const confirmed = await alert.confirm(
@@ -127,7 +117,6 @@ const handleDelete = async (backup: BackupResource) => {
     await deleteBackup(backup.id)
   }
 }
-
 
 const handleBulkDelete = async () => {
   const confirmed = await alert.confirm(
@@ -148,17 +137,14 @@ const handleBulkDelete = async () => {
   }
 }
 
-
 const sortedBackups = computed(() => {
   return backups.value?.data || []
 })
-
 
 const selectionCount = computed(() => selectedBackups.value.size)
 const isAllSelected = computed(() => {
   return selectionCount.value > 0 && sortedBackups.value.length === selectionCount.value
 })
-
 
 const handleSelectAll = (checked: boolean | 'indeterminate') => {
   if (checked === true) {
@@ -170,7 +156,6 @@ const handleSelectAll = (checked: boolean | 'indeterminate') => {
   }
 }
 
-
 const handleBackupSelect = (backup: BackupResource, selected: boolean | 'indeterminate') => {
   if (selected === true) {
     selectedBackups.value.set(backup.id, backup)
@@ -179,16 +164,13 @@ const handleBackupSelect = (backup: BackupResource, selected: boolean | 'indeter
   }
 }
 
-
 const clearSelection = () => {
   selectedBackups.value.clear()
 }
 
-
 const isBackupSelected = (backup: BackupResource) => {
   return selectedBackups.value.has(backup.id)
 }
-
 
 watch(
   () => currentPage.value,

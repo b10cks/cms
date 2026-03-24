@@ -15,7 +15,6 @@ const props = defineProps<{
   class?: HTMLAttributes['class']
 }>()
 
-
 const initials = computed(() => {
   const name = props.name
   if (!name) return ''
@@ -23,7 +22,6 @@ const initials = computed(() => {
   if (names.length === 1) return names[0].charAt(0).toUpperCase()
   return names[0].charAt(0).toUpperCase() + names[1].charAt(0).toUpperCase()
 })
-
 
 const width = computed(() => {
   switch (props.size) {

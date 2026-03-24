@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import type { CheckboxRootEmits, CheckboxRootProps } from 'reka-ui'
 import { CheckboxIndicator, CheckboxRoot, useForwardPropsEmits } from 'reka-ui'
-import { cn } from '@/lib/utils'
 import { computed, type HTMLAttributes } from 'vue'
+
+import { cn } from '@/lib/utils'
+import Icon from '~/components/Icon.vue'
 
 const props = defineProps<CheckboxRootProps & { class?: HTMLAttributes['class'] }>()
 const emits = defineEmits<CheckboxRootEmits>()

@@ -6,9 +6,7 @@ import useSpaceSettings from '~/composables/useSpaceSettings'
 const route = useRoute()
 const { settings } = useSpaceSettings(route.params.space as string)
 
-
 const sidebar = useTemplateRef<InstanceType<typeof ResizablePanel>>('sidebar')
-
 
 const toggleSidebar = () => {
   if (sidebar.value) {

@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import ValueRenderer from '~/components/content/ValueRenderer.vue'
+import Icon from '~/components/Icon.vue'
 
 type ChangeType = 'added' | 'removed' | 'changed'
 

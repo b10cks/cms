@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouteQuery } from '@vueuse/router'
+
 import AssetManager from '~/components/AssetManager.vue'
 
 const route = useRoute()

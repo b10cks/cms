@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nodeViewProps, NodeViewWrapper } from '@tiptap/vue-3'
+
 import IconName from '../ui/IconName.vue'
 
 const props = defineProps(nodeViewProps)

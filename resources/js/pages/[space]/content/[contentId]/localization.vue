@@ -31,13 +31,11 @@ const spaceId = computed<string>(() => route.params.space as string)
 const canonicalContentId = computed<string>(() => route.params.contentId as string)
 const { settings } = useSpaceSettings(spaceId.value)
 
-
 const { useSpaceQuery } = useSpaces()
 const { data: currentSpace } = useSpaceQuery(spaceId.value)
 const { useContentQuery } = useContent(spaceId)
 const spaceAPI = computed(() => api.forSpace(spaceId.value))
 const { data: routeContent } = useContentQuery(canonicalContentId)
-
 
 const defaultLanguage = computed(() =>
   getContentDefaultLanguage(
@@ -139,7 +137,6 @@ const { data: sourceChainContents } = useQuery({
   },
 })
 
-
 const translatableContent = ref<ContentResource | null>(null)
 const persistedContent = ref<ContentResource | null>(null)
 const translationContentPayload = computed<Record<string, unknown>>(
@@ -154,16 +151,13 @@ const viewMode = useStorage<'split' | 'localize' | 'preview'>(
   'split'
 )
 
-
 const clonePreviewValue = <T>(value: T): T => {
   if (value === undefined || value === null || typeof value !== 'object') {
     return value
   }
 
-
   return JSON.parse(JSON.stringify(toRaw(value))) as T
 }
-
 
 const mergeOverlayContent = (base: unknown, overlay: unknown): unknown => {
   if (Array.isArray(base) && Array.isArray(overlay)) {
@@ -171,7 +165,6 @@ const mergeOverlayContent = (base: unknown, overlay: unknown): unknown => {
       index in overlay ? mergeOverlayContent(item, overlay[index]) : clonePreviewValue(item)
     )
   }
-
 
   if (
     base &&
@@ -183,25 +176,20 @@ const mergeOverlayContent = (base: unknown, overlay: unknown): unknown => {
   ) {
     const merged: Record<string, unknown> = clonePreviewValue(base as Record<string, unknown>)
 
-
     Object.entries(overlay as Record<string, unknown>).forEach(([key, value]) => {
       merged[key] =
         key in merged ? mergeOverlayContent(merged[key], value) : clonePreviewValue(value)
     })
 
-
     return merged
   }
-
 
   if (overlay !== undefined) {
     return clonePreviewValue(overlay)
   }
 
-
   return clonePreviewValue(base)
 }
-
 
 const nearestSourceContent = computed(
   () => sourceChainContents.value?.[0] || canonicalContent.value || null
@@ -226,11 +214,9 @@ const sourceContentPayload = computed<Record<string, unknown>>(() => {
     )
 })
 
-
 const mergePreviewContent = (source: unknown, overlay: unknown): unknown => {
   return mergeOverlayContent(source, overlay)
 }
-
 
 const previewContentPayload = computed<Record<string, unknown>>(
   () =>
@@ -240,16 +226,13 @@ const previewContentPayload = computed<Record<string, unknown>>(
     >) || {}
 )
 
-
 const cloneContent = (value: ContentResource): ContentResource => JSON.parse(JSON.stringify(value))
-
 
 const syncPersistedContent = (nextContent: ContentResource) => {
   const cloned = cloneContent(nextContent)
   persistedContent.value = cloned
   translatableContent.value = cloneContent(cloned)
 }
-
 
 watch(
   [routeContent, defaultLanguage],
@@ -311,7 +294,6 @@ watch(
   { immediate: true }
 )
 
-
 watch(
   [canonicalContent, language, defaultLanguage],
   async ([currentCanonical, currentLanguage, currentDefaultLanguage]) => {
@@ -366,7 +348,6 @@ watch(
   { immediate: true }
 )
 
-
 watch(
   [translatableOriginalContent, canonicalContent, nearestSourceContent, resolvedLanguage],
   ([existingTranslation, currentCanonical, currentSource, currentLanguage]) => {
@@ -391,7 +372,6 @@ watch(
   { immediate: true }
 )
 
-
 const { useBlocksQuery } = useBlocks(spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 const blockList = computed(() => blocks.value?.data || [])
@@ -412,7 +392,6 @@ const {
   effectiveContent: previewContentPayload,
 })
 
-
 const block = computed(() => {
   if (!canonicalContent.value || !blocks.value) return null
 
@@ -420,9 +399,7 @@ const block = computed(() => {
   return blocks.value.data.find((blockItem) => blockItem.id === blockId) || null
 })
 
-
 const blockSchemaCache = ref(new Map())
-
 
 watch(
   blocks,
@@ -442,7 +419,6 @@ watch(
   { immediate: true }
 )
 
-
 watch(
   sanitizedContent,
   (nextSanitized) => {
@@ -457,7 +433,6 @@ watch(
   },
   { deep: true }
 )
-
 
 const isLoading = computed(
   () =>
@@ -484,7 +459,6 @@ const showPreview = computed(() => {
 const showPreviewPane = computed(() => showPreview.value && viewMode.value !== 'localize')
 const editorPanel = useTemplateRef<InstanceType<typeof ResizablePanel>>('editorPanel')
 
-
 const toggleEditorPanel = () => {
   if (editorPanel.value) {
     if (editorPanel.value.isCollapsed) {
@@ -495,23 +469,19 @@ const toggleEditorPanel = () => {
   }
 }
 
-
 const getBlockSchemaFn = (blockSlug: string) => {
   return blockSchemaCache.value.get(blockSlug)
 }
-
 
 const isDirty = computed(() => {
   if (!translatableContent.value || !persistedContent.value) return false
   return JSON.stringify(translatableContent.value) !== JSON.stringify(persistedContent.value)
 })
 
-
 async function guardLeave(to: any, from: any, next: any) {
   if (to && from && to.path === from.path) {
     return next()
   }
-
 
   if (isDirty.value) {
     const answer = await alert.confirm(
@@ -530,15 +500,12 @@ async function guardLeave(to: any, from: any, next: any) {
   }
 }
 
-
 onBeforeRouteUpdate(guardLeave)
 onBeforeRouteLeave(guardLeave)
-
 
 onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', handleBeforeUnload)
 })
-
 
 const handleBeforeUnload = (e: BeforeUnloadEvent) => {
   if (isDirty.value) {
@@ -546,7 +513,6 @@ const handleBeforeUnload = (e: BeforeUnloadEvent) => {
     e.returnValue = ''
   }
 }
-
 
 watch(
   isDirty,
@@ -560,7 +526,6 @@ watch(
   { immediate: true }
 )
 
-
 watch(
   showPreview,
   (enabled) => {
@@ -571,7 +536,6 @@ watch(
   { immediate: true }
 )
 
-
 watch(
   previewContentPayload,
   (content) => {
@@ -579,7 +543,6 @@ watch(
   },
   { deep: true }
 )
-
 
 provide('commitPersistedContent', (nextContent: ContentResource) => {
   syncPersistedContent(nextContent)
@@ -602,7 +565,6 @@ provide('sanitizeContentForSubmit', () => sanitizedContent.value)
 provide('validateContentForSubmit', validateAllForSubmit)
 provide('submitValidationAttempted', submitAttempted)
 provide('focusFirstValidationError', focusFirstInvalidField)
-
 
 useSeoMeta({
   title: computed(

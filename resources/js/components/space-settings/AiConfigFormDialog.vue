@@ -20,7 +20,6 @@ import type { AiModel } from '~/composables/useAiModels'
 
 const open = defineModel<boolean>('open', { required: true })
 
-
 const props = defineProps<{
   config: SpaceAiConfig | null
   spaceId: string
@@ -29,14 +28,11 @@ const props = defineProps<{
   canSubmit?: boolean
 }>()
 
-
 const emit = defineEmits<{
   submit: [payload: Partial<SpaceAiConfig>]
 }>()
 
-
 const { t } = useI18n()
-
 
 const formData = ref({
   name: '',
@@ -48,19 +44,16 @@ const formData = ref({
   is_default: false,
 })
 
-
 const flatModels = computed(() => {
   if (!props.groupedModels) return []
   return Object.values(props.groupedModels).flat()
 })
-
 
 const selectedModel = computed(() => {
   if (!formData.value.driver || !formData.value.model) return null
   const fullId = `${formData.value.driver}:${formData.value.model}`
   return flatModels.value.find((m) => m.full_id === fullId) ?? null
 })
-
 
 const isFormValid = computed(() => {
   return (
@@ -70,13 +63,11 @@ const isFormValid = computed(() => {
   )
 })
 
-
 const formatContextWindow = (input: number): string => {
   if (input >= 1000000) return `${(input / 1000000).toFixed(1)}M`
   if (input >= 1000) return `${(input / 1000).toFixed(0)}k`
   return input.toString()
 }
-
 
 const handleModelSelect = (modelId: string | null | undefined) => {
   if (!modelId) {
@@ -85,16 +76,13 @@ const handleModelSelect = (modelId: string | null | undefined) => {
     return
   }
 
-
   const [driver, model] = modelId.split(':')
   formData.value.driver = driver
   formData.value.model = model
 }
 
-
 const handleSubmit = () => {
   if (!isFormValid.value) return
-
 
   const payload = {
     ...formData.value,
@@ -102,10 +90,8 @@ const handleSubmit = () => {
     max_tokens: Number(formData.value.max_tokens),
   }
 
-
   emit('submit', payload)
 }
-
 
 watch(
   () => props.config,

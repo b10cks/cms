@@ -1,7 +1,6 @@
 import { toast } from 'vue-sonner'
 
 import type { ContentInteractionPayload } from '~/api/resources/ai'
-
 import { ensureCsrfToken, getXsrfHeaders } from '~/lib/csrf'
 import { consumeSseStream, type SseCallbacks } from '~/lib/sse'
 

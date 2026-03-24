@@ -12,12 +12,10 @@ const props = defineProps<{
   enabled?: boolean
 }>()
 
-
 const emit = defineEmits<{
   delete: [inviteId: string]
   resend: [inviteId: string]
 }>()
-
 
 const currentPage = ref(1)
 const perPage = ref(24)
@@ -26,7 +24,6 @@ const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
   direction: 'desc',
 })
 const filters = ref<Record<string, unknown>>({})
-
 
 const queryParams = computed<InviteQueryParams>(() => {
   return {
@@ -37,7 +34,6 @@ const queryParams = computed<InviteQueryParams>(() => {
   }
 })
 
-
 const { useSpaceInvitesQuery } = useInvites()
 const { data: invitesData, isLoading } = useSpaceInvitesQuery(
   props.spaceId,
@@ -45,33 +41,27 @@ const { data: invitesData, isLoading } = useSpaceInvitesQuery(
   computed(() => props.enabled ?? true)
 )
 
-
 const handleDelete = (inviteId: string) => {
   emit('delete', inviteId)
 }
-
 
 const handleResend = (inviteId: string) => {
   emit('resend', inviteId)
 }
 
-
 const handleCurrentPageUpdate = (page: number) => {
   currentPage.value = page
 }
-
 
 const handlePerPageUpdate = (perPageValue: number) => {
   perPage.value = perPageValue
   currentPage.value = 1 // Reset to first page when changing per page
 }
 
-
 const handleSortByUpdate = (sort: { column: string; direction: 'asc' | 'desc' }) => {
   sortBy.value = sort
   currentPage.value = 1 // Reset to first page when changing sort
 }
-
 
 const handleFiltersUpdate = (filtersValue: Record<string, unknown>) => {
   filters.value = filtersValue

@@ -25,7 +25,6 @@ const tabs = {
   },
 }
 
-
 const modes = {
   grid: {
     icon: 'lucide:grid-3x3',
@@ -37,7 +36,6 @@ const modes = {
   },
 }
 
-
 const props = defineProps<{
   spaceId: string
 }>()
@@ -46,7 +44,6 @@ const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageAssets = computed(() => access.hasAbility('assets.manage'))
 const canManageAssetFolders = computed(() => access.hasAbility('asset_folders.manage'))
 
-
 const selectedFolder = defineModel<string | null>('folderId', {
   default: null,
 })
@@ -54,12 +51,10 @@ const selectedTag = defineModel<string | null>('tagId', {
   default: null,
 })
 
-
 const viewMode = useRouteQuery('view', 'grid') as Ref<'grid' | 'list'>
 const sidebarMode = ref<'folders' | 'tags'>('folders')
 const exportDialogOpen = ref(false)
 const importDialogOpen = ref(false)
-
 
 watch(sidebarMode, (newMode) => {
   if (newMode === 'folders') {

@@ -1,7 +1,6 @@
+import { createSharedComposable } from '@vueuse/core'
 import type { PluginsInjections } from 'nuxt-i18n-micro'
 import type { Component } from 'vue'
-
-import { createSharedComposable } from '@vueuse/core'
 
 import {
   AlertDialog,

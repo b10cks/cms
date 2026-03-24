@@ -20,7 +20,6 @@ const { mutate: updateSpace } = useUpdateSpaceMutation()
 const { $t } = useI18n()
 const { useAccessControl } = useAuthorization()
 
-
 const props = defineProps<{ space: SpaceResource }>()
 const access = useAccessControl(computed(() => ({ space_id: props.space.id })))
 const canUpdateSpace = computed(() => access.hasAbility('space.update'))
@@ -31,9 +30,7 @@ const newItemTemplate = {
   required: false,
 }
 
-
 const defaultFields = ['alt', 'description']
-
 
 const columns: ColumnDefinition[] = [
   {
@@ -58,7 +55,6 @@ const columns: ColumnDefinition[] = [
   },
 ]
 
-
 const removeField = (index: number) => {
   const item = assetFields.value[index] as TableItem
   if (!defaultFields.includes(item.key as string)) {
@@ -66,14 +62,12 @@ const removeField = (index: number) => {
   }
 }
 
-
 const addField = (newField: { key: string; label: string; required: boolean }) => {
   if (assetFields.value.find((field) => field.key === newField.key)) {
     return
   }
   assetFields.value.push(newField)
 }
-
 
 const saveSettings = async () => {
   updateSpace({

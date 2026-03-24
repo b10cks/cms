@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import { useClipboard } from '@vueuse/core'
 import { toast } from 'vue-sonner'
+
+import Icon from '~/components/Icon.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 
