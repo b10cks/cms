@@ -187,8 +187,10 @@ Rules:
 - Return a flat JSON object with **exactly the same keys** as the input — do not rename, wrap, or restructure them
 - Only translate the values, never the keys
 - Preserve meaning, context, and intent
+- Some values may be headlines, labels, SEO snippets, or sentence fragments rather than full paragraphs; translate each in the most natural form for its role
 - Adapt idioms to natural expressions in the target language
 - Maintain any HTML tags, template placeholders (e.g. {variable}), and special characters as-is
+- Keep markdown syntax, inline code, and formatting markers unchanged unless the surrounding natural language requires translation
 - Ensure proper grammar, punctuation, and capitalization
 - Respect the register (formal/informal) of the original
 

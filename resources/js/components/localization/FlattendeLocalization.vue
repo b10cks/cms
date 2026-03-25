@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
 import type { Component, Ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 
 import Icon from '~/components/Icon.vue'
@@ -37,6 +37,27 @@ interface BlockItem {
   [key: string]: unknown
 }
 
+interface MetaValue {
+  title?: string
+  description?: string
+  canonical?: string
+  robots?: string
+  ogTitle?: string
+  ogDescription?: string
+}
+
+interface RichTextSegment {
+  path: Array<string | number>
+  text: string
+}
+
+interface TranslationUnit {
+  id: string
+  source: string
+  fieldIdentifier: string
+  apply: (content: Record<string, unknown>, translation: string) => void
+}
+
 interface SpaceSettings {
   default_language: string
 }
@@ -68,6 +89,9 @@ const props = defineProps<{
     blockSlug: string
   ) => { schema: Record<string, LocalizableSchema>; name: string } | undefined
 }>()
+const emit = defineEmits<{
+  'update:translationContent': [value: Record<string, unknown>]
+}>()
 
 const { useSpaceQuery } = useSpaces()
 const { data: space } = useSpaceQuery(props.spaceId) as { data: Ref<Space> }
@@ -98,8 +122,239 @@ function extractCompletedTranslations(partial: string): Record<string, string> {
 const sourceLanguage = computed((): string => space.value?.settings?.default_language || '')
 
 const machineTranslatedFields = ref(new Set<string>())
+const translationDraft = ref<Record<string, unknown>>({})
 
 const translatableFields = ref<TranslatableField[]>([])
+const metaTranslatableKeys = ['title', 'description', 'ogTitle', 'ogDescription'] as const
+const emptyRichTextDocument = {
+  type: 'doc',
+  content: [
+    {
+      type: 'paragraph',
+      content: [],
+    },
+  ],
+} as Record<string, unknown>
+
+const cloneTranslationContent = (value: Record<string, unknown> | undefined) =>
+  JSON.parse(JSON.stringify(value || {})) as Record<string, unknown>
+
+const cloneValue = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
+
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim().length > 0
+
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+
+const isRichTextDocument = (value: unknown): value is Record<string, unknown> =>
+  isObjectRecord(value) && value.type === 'doc'
+
+const normalizeMetaValue = (value: unknown): MetaValue =>
+  (isObjectRecord(value) ? cloneValue(value as MetaValue) : {}) as MetaValue
+
+const normalizeRichTextValue = (
+  value: unknown,
+  fallback?: Record<string, unknown>
+): Record<string, unknown> => {
+  if (isRichTextDocument(value)) {
+    return cloneValue(value)
+  }
+
+  if (fallback && isRichTextDocument(fallback)) {
+    return cloneValue(fallback)
+  }
+
+  return cloneValue(emptyRichTextDocument)
+}
+
+const mergeLocalizedContent = (base: unknown, overlay: unknown): unknown => {
+  if (Array.isArray(base) && Array.isArray(overlay)) {
+    return base.map((item, index) =>
+      index in overlay ? mergeLocalizedContent(item, overlay[index]) : cloneValue(item)
+    )
+  }
+
+  if (Array.isArray(overlay)) {
+    return cloneValue(overlay)
+  }
+
+  if (isObjectRecord(base) && isObjectRecord(overlay)) {
+    const merged = cloneValue(base)
+
+    Object.entries(overlay).forEach(([key, value]) => {
+      merged[key] = key in merged ? mergeLocalizedContent(merged[key], value) : cloneValue(value)
+    })
+
+    return merged
+  }
+
+  if (overlay !== undefined) {
+    return cloneValue(overlay)
+  }
+
+  return cloneValue(base)
+}
+
+const getValueAtPath = (value: unknown, path: Array<string | number>): unknown => {
+  let current = value
+
+  for (const segment of path) {
+    if (current == null || typeof current !== 'object') {
+      return undefined
+    }
+
+    current = (current as Record<string | number, unknown>)[segment]
+  }
+
+  return current
+}
+
+const setValueAtPath = (value: unknown, path: Array<string | number>, nextValue: unknown) => {
+  if (!path.length || value == null || typeof value !== 'object') {
+    return
+  }
+
+  let current = value as Record<string | number, unknown>
+
+  for (let i = 0; i < path.length - 1; i++) {
+    const segment = path[i]
+    const nextSegment = path[i + 1]
+
+    if (current[segment] == null || typeof current[segment] !== 'object') {
+      current[segment] = typeof nextSegment === 'number' ? [] : {}
+    }
+
+    current = current[segment] as Record<string | number, unknown>
+  }
+
+  current[path[path.length - 1]] = nextValue
+}
+
+const collectRichTextSegments = (
+  value: unknown,
+  path: Array<string | number> = [],
+  segments: RichTextSegment[] = [],
+  parentTypes: string[] = []
+): RichTextSegment[] => {
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => {
+      collectRichTextSegments(entry, [...path, index], segments, parentTypes)
+    })
+    return segments
+  }
+
+  if (!isObjectRecord(value)) {
+    return segments
+  }
+
+  const nodeType = typeof value.type === 'string' ? value.type : undefined
+  const marks = Array.isArray(value.marks) ? value.marks : []
+  const isCodeText = marks.some((mark) => isObjectRecord(mark) && mark.type === 'code')
+  const skipTranslation =
+    parentTypes.includes('codeBlock') || nodeType === 'codeBlock' || isCodeText
+
+  if (!skipTranslation && isNonEmptyString(value.text)) {
+    segments.push({
+      path: [...path, 'text'],
+      text: value.text,
+    })
+  }
+
+  if (Array.isArray(value.content)) {
+    collectRichTextSegments(
+      value.content,
+      [...path, 'content'],
+      segments,
+      nodeType ? [...parentTypes, nodeType] : parentTypes
+    )
+  }
+
+  return segments
+}
+
+const hasTranslatedValue = (schemaItem: LocalizableSchema, value: unknown): boolean => {
+  const normalizedType = normalizeSchemaType(schemaItem.type)
+
+  if (normalizedType === 'meta') {
+    const metaValue = normalizeMetaValue(value)
+    return metaTranslatableKeys.some((key) => isNonEmptyString(metaValue[key]))
+  }
+
+  if (normalizedType === 'richtext') {
+    return collectRichTextSegments(value).length > 0
+  }
+
+  return isNonEmptyString(value)
+}
+
+const isFieldTranslated = (
+  schemaItem: LocalizableSchema,
+  originalValue: unknown,
+  translatedValue: unknown
+): boolean => {
+  const normalizedType = normalizeSchemaType(schemaItem.type)
+
+  if (normalizedType === 'meta') {
+    const originalMeta = normalizeMetaValue(originalValue)
+    const translatedMeta = normalizeMetaValue(translatedValue)
+
+    return metaTranslatableKeys
+      .filter((key) => isNonEmptyString(originalMeta[key]))
+      .every((key) => isNonEmptyString(translatedMeta[key]))
+  }
+
+  if (normalizedType === 'richtext') {
+    const originalDocument = normalizeRichTextValue(originalValue)
+    const translatedDocument = normalizeRichTextValue(translatedValue, originalDocument)
+
+    return collectRichTextSegments(originalDocument)
+      .filter((segment) => isNonEmptyString(segment.text))
+      .every((segment) => isNonEmptyString(getValueAtPath(translatedDocument, segment.path)))
+  }
+
+  return isNonEmptyString(translatedValue)
+}
+
+const normalizeTranslatedFieldValue = (field: TranslatableField, value: unknown): unknown => {
+  const normalizedType = normalizeSchemaType(field.schemaItem.type)
+
+  if (normalizedType === 'meta') {
+    return normalizeMetaValue(value)
+  }
+
+  if (normalizedType === 'richtext') {
+    return normalizeRichTextValue(value, field.originalValue as Record<string, unknown>)
+  }
+
+  return typeof value === 'string' ? value : ''
+}
+
+const buildRichTextTranslationBase = (
+  originalValue: unknown,
+  translatedValue: unknown
+): Record<string, unknown> => {
+  const originalDocument = normalizeRichTextValue(originalValue)
+  const nextDocument = cloneValue(originalDocument)
+  const currentDocument = normalizeRichTextValue(translatedValue, originalDocument)
+
+  collectRichTextSegments(originalDocument).forEach((segment) => {
+    const currentText = getValueAtPath(currentDocument, segment.path)
+    if (isNonEmptyString(currentText)) {
+      setValueAtPath(nextDocument, segment.path, currentText)
+    }
+  })
+
+  return nextDocument
+}
+
+watch(
+  () => props.translationContent,
+  (nextTranslationContent) => {
+    translationDraft.value = cloneTranslationContent(nextTranslationContent)
+  },
+  { immediate: true }
+)
 
 const traverseContent = (
   original: Record<string, unknown>,
@@ -139,10 +394,10 @@ const traverseContent = (
         const translatedBlockItems = (translationScope[key] as BlockItem[]) || []
         const originalBlockItem = originalBlockItems[index] || {}
         const translatedBlockItem = translatedBlockItems[index] || {}
-        const effectiveBlockItem = {
-          ...(originalBlockItem as Record<string, unknown>),
-          ...(translatedBlockItem as Record<string, unknown>),
-        }
+        const effectiveBlockItem = mergeLocalizedContent(
+          originalBlockItem as Record<string, unknown>,
+          translatedBlockItem as Record<string, unknown>
+        ) as Record<string, unknown>
 
         traverseContent(
           originalBlockItem as Record<string, unknown>,
@@ -155,8 +410,18 @@ const traverseContent = (
       })
     } else if ('translatable' in schemaItem && schemaItem.translatable) {
       const translatedValue = translationScope[key]
-      const isTranslated =
-        translatedValue !== undefined && translatedValue !== null && translatedValue !== ''
+      const normalizedTranslatedValue = normalizeTranslatedFieldValue(
+        {
+          key,
+          path,
+          fieldName: schemaItem.name || key,
+          schemaItem,
+          originalValue,
+          translatedValue,
+          isTranslated: false,
+        },
+        translatedValue
+      )
 
       result.push({
         key,
@@ -164,8 +429,8 @@ const traverseContent = (
         fieldName: schemaItem.name || key,
         schemaItem,
         originalValue,
-        translatedValue: translatedValue || '',
-        isTranslated,
+        translatedValue: normalizedTranslatedValue,
+        isTranslated: isFieldTranslated(schemaItem, originalValue, normalizedTranslatedValue),
       })
     }
   })
@@ -174,7 +439,7 @@ const traverseContent = (
 }
 
 watch(
-  [() => props.originalContent, () => props.translationContent, () => props.blockSchema],
+  [() => props.originalContent, translationDraft, () => props.blockSchema],
   () => {
     if (!props.originalContent || !props.blockSchema) {
       translatableFields.value = []
@@ -183,11 +448,11 @@ watch(
 
     translatableFields.value = traverseContent(
       props.originalContent as Record<string, unknown>,
-      props.translationContent as Record<string, unknown>,
-      {
-        ...(props.originalContent as Record<string, unknown>),
-        ...(props.translationContent as Record<string, unknown>),
-      },
+      translationDraft.value,
+      mergeLocalizedContent(
+        props.originalContent as Record<string, unknown>,
+        translationDraft.value
+      ) as Record<string, unknown>,
       props.blockSchema
     )
   },
@@ -220,6 +485,62 @@ const isMachineTranslated = (field: TranslatableField): boolean => {
   return machineTranslatedFields.value.has(getFieldIdentifier(field))
 }
 
+const applyTranslatedValue = (
+  content: Record<string, unknown>,
+  field: TranslatableField,
+  newValue: unknown
+) => {
+  let current: Record<string, unknown> | unknown[] = content
+
+  for (let i = 0; i < field.path.length - 1; i++) {
+    const pathPart = field.path[i]
+    const nextPathPart = field.path[i + 1]
+    const currentValue =
+      current instanceof Array
+        ? current[Number(pathPart)]
+        : (current as Record<string, unknown>)[pathPart]
+
+    if (currentValue === undefined) {
+      const nextValue = Number.isInteger(parseInt(nextPathPart, 10)) ? [] : {}
+      if (current instanceof Array) {
+        current[Number(pathPart)] = nextValue
+      } else {
+        ;(current as Record<string, unknown>)[pathPart] = nextValue
+      }
+    }
+
+    current =
+      current instanceof Array
+        ? (current[Number(pathPart)] as Record<string, unknown> | unknown[])
+        : ((current as Record<string, unknown>)[pathPart] as Record<string, unknown> | unknown[])
+
+    if (current instanceof Array) {
+      const nextIndex = parseInt(nextPathPart, 10)
+      if (!Number.isNaN(nextIndex) && nextIndex >= current.length) {
+        for (let j = current.length; j <= nextIndex; j++) {
+          current.push({})
+        }
+      }
+    }
+  }
+
+  const finalKey = field.path[field.path.length - 1]
+  if (current instanceof Array) {
+    current[Number(finalKey)] = newValue
+    return
+  }
+
+  current[finalKey] = newValue
+}
+
+const emitTranslationContent = (nextTranslationContent: Record<string, unknown>) => {
+  translationDraft.value = nextTranslationContent
+  emit('update:translationContent', nextTranslationContent)
+}
+
+const getFieldValue = (content: Record<string, unknown>, field: TranslatableField): unknown =>
+  getValueAtPath(content, field.path)
+
 const updateTranslatedValue = (field: TranslatableField, newValue: unknown): void => {
   const fieldToUpdate = translatableFields.value.find(
     (f) => f.key === field.key && JSON.stringify(f.path) === JSON.stringify(field.path)
@@ -227,71 +548,125 @@ const updateTranslatedValue = (field: TranslatableField, newValue: unknown): voi
 
   if (fieldToUpdate) {
     fieldToUpdate.translatedValue = newValue
-    fieldToUpdate.isTranslated = newValue !== '' && newValue !== null && newValue !== undefined
-
-    let current: Record<string, unknown> = props.translationContent
-
-    for (let i = 0; i < field.path.length - 1; i++) {
-      const pathPart = field.path[i]
-
-      if (current[pathPart] === undefined) {
-        if (Number.isInteger(parseInt(field.path[i + 1]))) {
-          current[pathPart] = []
-        } else {
-          current[pathPart] = {}
-        }
-      }
-
-      if (Array.isArray(current[pathPart])) {
-        const nextIndex = parseInt(field.path[i + 1])
-        const currentArray = current[pathPart] as unknown[]
-        if (!isNaN(nextIndex) && nextIndex >= currentArray.length) {
-          for (let j = currentArray.length; j <= nextIndex; j++) {
-            currentArray.push({})
-          }
-        }
-      }
-
-      current = current[pathPart] as Record<string, unknown>
-    }
-
-    const finalKey = field.path[field.path.length - 1]
-    current[finalKey] = newValue
+    fieldToUpdate.isTranslated = isFieldTranslated(field.schemaItem, field.originalValue, newValue)
   }
+
+  const nextTranslationContent = cloneTranslationContent(translationDraft.value)
+  applyTranslatedValue(nextTranslationContent, field, newValue)
+  emitTranslationContent(nextTranslationContent)
 }
 
-const updateTranslatedValues = (translatedTexts: Record<string, string>): void => {
-  Object.entries(translatedTexts).forEach(([fieldPath, translation]) => {
-    const pathParts = fieldPath.split('-')
-    const key = pathParts.pop() as string
+const buildTranslationUnits = (): TranslationUnit[] => {
+  const units: TranslationUnit[] = []
+  let unitIndex = 0
+  const nextUnitId = () => `f${++unitIndex}`
 
-    const field = translatableFields.value.find(
-      (f) => f.key === key && JSON.stringify(f.path.slice(0, -1)) === JSON.stringify(pathParts)
-    )
+  translatableFields.value.forEach((field) => {
+    const normalizedType = normalizeSchemaType(field.schemaItem.type)
+    const fieldIdentifier = getFieldIdentifier(field)
 
-    if (field) {
-      machineTranslatedFields.value.add(getFieldIdentifier(field))
-      updateTranslatedValue(field, translation)
+    if (normalizedType === 'meta') {
+      const originalMeta = normalizeMetaValue(field.originalValue)
+      const translatedMeta = normalizeMetaValue(field.translatedValue)
+
+      metaTranslatableKeys.forEach((key) => {
+        const source = originalMeta[key]
+        if (!isNonEmptyString(source) || isNonEmptyString(translatedMeta[key])) {
+          return
+        }
+
+        units.push({
+          id: nextUnitId(),
+          source,
+          fieldIdentifier,
+          apply: (content, translation) => {
+            const nextMeta = normalizeMetaValue(getFieldValue(content, field))
+            nextMeta[key] = translation
+            applyTranslatedValue(content, field, nextMeta)
+          },
+        })
+      })
+
+      return
     }
+
+    if (normalizedType === 'richtext') {
+      const originalDocument = normalizeRichTextValue(field.originalValue)
+      const translatedDocument = buildRichTextTranslationBase(
+        field.originalValue,
+        field.translatedValue
+      )
+      const translatedSegments = new Map(
+        collectRichTextSegments(translatedDocument).map(
+          (segment) => [JSON.stringify(segment.path), segment.text] as const
+        )
+      )
+
+      collectRichTextSegments(originalDocument).forEach((segment) => {
+        const translatedText = translatedSegments.get(JSON.stringify(segment.path))
+        if (!isNonEmptyString(segment.text) || isNonEmptyString(translatedText)) {
+          return
+        }
+
+        units.push({
+          id: nextUnitId(),
+          source: segment.text,
+          fieldIdentifier,
+          apply: (content, translation) => {
+            const nextDocument = buildRichTextTranslationBase(
+              field.originalValue,
+              getFieldValue(content, field)
+            )
+            setValueAtPath(nextDocument, segment.path, translation)
+            applyTranslatedValue(content, field, nextDocument)
+          },
+        })
+      })
+
+      return
+    }
+
+    if (
+      !isNonEmptyString(field.originalValue) ||
+      hasTranslatedValue(field.schemaItem, field.translatedValue)
+    ) {
+      return
+    }
+
+    units.push({
+      id: nextUnitId(),
+      source: field.originalValue,
+      fieldIdentifier,
+      apply: (content, translation) => {
+        applyTranslatedValue(content, field, translation)
+      },
+    })
   })
+
+  return units
 }
 
-const getUntranslatedFields = (): Record<string, string> => {
-  const untranslatedFields: Record<string, string> = {}
+const applyTranslatedValues = (
+  translatedTexts: Record<string, string>,
+  translationUnitsById: Map<string, TranslationUnit>
+) => {
+  const nextTranslationContent = cloneTranslationContent(translationDraft.value)
+  let hasUpdates = false
 
-  translatableFields.value
-    .filter(
-      (field) =>
-        !field.isTranslated &&
-        typeof field.originalValue === 'string' &&
-        field.originalValue.trim() !== ''
-    )
-    .forEach((field) => {
-      const fieldPath = [...field.path.slice(0, -1), field.key].join('-')
-      untranslatedFields[fieldPath] = field.originalValue as string
-    })
+  Object.entries(translatedTexts).forEach(([translationUnitId, translation]) => {
+    const unit = translationUnitsById.get(translationUnitId)
+    if (!unit || !isNonEmptyString(translation)) {
+      return
+    }
 
-  return untranslatedFields
+    machineTranslatedFields.value.add(unit.fieldIdentifier)
+    unit.apply(nextTranslationContent, translation)
+    hasUpdates = true
+  })
+
+  if (hasUpdates) {
+    emitTranslationContent(nextTranslationContent)
+  }
 }
 
 function stripCodeFences(content: string): string {
@@ -329,11 +704,15 @@ function findTranslationsObject(parsed: unknown): Record<string, string> | null 
 }
 
 const translateWithAI = async (): Promise<void> => {
-  const fieldsToTranslate = getUntranslatedFields()
-  const fieldCount = Object.keys(fieldsToTranslate).length
+  const translationUnits = buildTranslationUnits()
+  const fieldsToTranslate = Object.fromEntries(
+    translationUnits.map((unit) => [unit.id, unit.source] as const)
+  )
+  const translationUnitsById = new Map(translationUnits.map((unit) => [unit.id, unit] as const))
+  const fieldCount = translationUnits.length
 
   if (fieldCount === 0) {
-    toast.info('No untranslated fields found')
+    toast.info('No untranslated content found')
     return
   }
 
@@ -351,7 +730,7 @@ const translateWithAI = async (): Promise<void> => {
       }
     }
     if (Object.keys(fresh).length > 0) {
-      updateTranslatedValues(fresh)
+      applyTranslatedValues(fresh, translationUnitsById)
       translationProgress.value = { applied: appliedKeys.size, total: fieldCount }
     }
   }
@@ -376,7 +755,7 @@ const translateWithAI = async (): Promise<void> => {
           }
           const count = appliedKeys.size
           if (count > 0) {
-            toast.success(`Successfully translated ${count} field${count !== 1 ? 's' : ''}`)
+            toast.success(`Successfully translated ${count} item${count !== 1 ? 's' : ''}`)
           } else {
             toast.error(
               t('composables.aiTranslation.error', { error: 'No fields could be matched' })
@@ -384,9 +763,7 @@ const translateWithAI = async (): Promise<void> => {
           }
         } catch {
           if (appliedKeys.size > 0) {
-            toast.success(
-              `Translated ${appliedKeys.size} field${appliedKeys.size !== 1 ? 's' : ''}`
-            )
+            toast.success(`Translated ${appliedKeys.size} item${appliedKeys.size !== 1 ? 's' : ''}`)
           } else {
             toast.error(t('composables.aiTranslation.error', { error: 'Invalid JSON response' }))
           }

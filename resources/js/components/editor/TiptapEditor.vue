@@ -39,11 +39,13 @@ const props = withDefaults(
     modelValue: Record<string, unknown>
     htmlClasses?: HtmlClass[]
     spaceId?: string
+    disabled?: boolean
     headingLevels?: Array<'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'>
     placeholders?: Placeholder[]
   }>(),
   {
     htmlClasses: () => [],
+    disabled: false,
     spaceId: undefined,
     headingLevels: () => ['h1', 'h2', 'h3', 'h4', 'p'],
     placeholders: () => [],
@@ -91,6 +93,7 @@ const headingDisplayLabel = computed(() => {
 
 const editor = useEditor({
   content: props.modelValue,
+  editable: !props.disabled,
   extensions: [
     StarterKit.configure({
       heading: {
@@ -166,6 +169,14 @@ const insertExternalLink = () => {
 }
 
 watch(
+  () => props.disabled,
+  (disabled) => {
+    editor.value?.setEditable(!disabled)
+  },
+  { immediate: true }
+)
+
+watch(
   () => props.modelValue,
   (newValue) => {
     if (!editor.value) return
@@ -188,7 +199,10 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="flex flex-col rounded border border-input bg-surface">
-    <div class="flex flex-wrap gap-1 border-b border-input p-2">
+    <div
+      v-if="!props.disabled"
+      class="flex flex-wrap gap-1 border-b border-input p-2"
+    >
       <Button
         type="button"
         size="toolbar"
@@ -583,10 +597,13 @@ onBeforeUnmount(() => {
       </Button>
     </div>
 
-    <EditorContent :editor="editor" />
+    <EditorContent
+      :editor="editor"
+      :tabindex="props.disabled ? -1 : undefined"
+    />
 
     <ContentPicker
-      v-if="spaceId"
+      v-if="spaceId && !props.disabled"
       :open="contentPickerOpen"
       :space-id="spaceId"
       :show-elements="true"

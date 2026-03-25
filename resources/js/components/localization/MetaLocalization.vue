@@ -15,6 +15,7 @@ const props = defineProps<{
   originalValue: MetaValue | null
   modelValue: MetaValue
   isMachineTranslated?: boolean
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -38,11 +39,14 @@ const updateValue = (key: keyof MetaValue, value: string | number) => {
       :name="`${item.key}-title-original`"
       :model-value="originalValue?.title"
       :actions="['copy']"
+      action-tabindex="-1"
       readonly
+      tabindex="-1"
     />
     <InputField
       :name="`${item.key}-title-translation`"
       :model-value="modelValue.title"
+      :disabled="disabled"
       :input-class="[isMachineTranslated && 'ring-1 ring-ai']"
       :placeholder="originalValue?.title"
       hide-label
@@ -51,11 +55,15 @@ const updateValue = (key: keyof MetaValue, value: string | number) => {
     <TextField
       :name="`${item.key}-description-original`"
       :model-value="originalValue?.description"
+      :auto-size="600"
       readonly
+      tabindex="-1"
     />
     <TextField
       :name="`${item.key}-description-translation`"
       :model-value="modelValue.description"
+      :auto-size="600"
+      :disabled="disabled"
       :input-class="[isMachineTranslated && 'ring-1 ring-ai']"
       :placeholder="originalValue?.description"
       @update:model-value="updateValue('description', $event)"
@@ -65,10 +73,12 @@ const updateValue = (key: keyof MetaValue, value: string | number) => {
         :name="`${item.key}-ogTitle-original`"
         :model-value="originalValue?.ogTitle"
         readonly
+        tabindex="-1"
       />
       <TextField
         :name="`${item.key}-ogTitle-translation`"
         :model-value="modelValue.ogTitle"
+        :disabled="disabled"
         :input-class="[isMachineTranslated && 'ring-1 ring-ai']"
         :placeholder="originalValue?.ogTitle"
         @update:model-value="updateValue('ogTitle', $event)"
@@ -76,11 +86,15 @@ const updateValue = (key: keyof MetaValue, value: string | number) => {
       <TextField
         :name="`${item.key}-ogDescription-original`"
         :model-value="originalValue?.ogDescription"
+        :auto-size="600"
         readonly
+        tabindex="-1"
       />
       <TextField
         :name="`${item.key}-ogDescription-translation`"
         :model-value="modelValue.ogDescription"
+        :auto-size="600"
+        :disabled="disabled"
         :input-class="[isMachineTranslated && 'ring-1 ring-ai']"
         :placeholder="originalValue?.ogDescription"
         @update:model-value="updateValue('ogDescription', $event)"

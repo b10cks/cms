@@ -4,24 +4,24 @@ import { Textarea } from '~/components/ui/textarea'
 
 defineProps<{
   item: TextareaSchema & { key: string }
-  originalValue: string | null
+  originalValue?: string | null
   modelValue: string
   isMachineTranslated?: boolean
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-const updateValue = (e: Event) => {
-  const target = e.target as HTMLTextAreaElement
-  emit('update:modelValue', target.value)
+const updateValue = (value: string | number) => {
+  emit('update:modelValue', String(value ?? ''))
 }
 </script>
 
 <template>
   <div
-    class="grid grid-cols-2 gap-4 py-2"
+    class="grid grid-cols-2 items-start gap-4 py-2"
     :aria-labelledby="`${item.key}-label`"
   >
     <FormField
@@ -31,9 +31,11 @@ const updateValue = (e: Event) => {
     >
       <Textarea
         :model-value="originalValue || ''"
+        :auto-size="600"
         disabled
         rows="4"
         class="resize-none"
+        tabindex="-1"
         :aria-label="`Original ${item.name || item.key}`"
       />
     </FormField>
@@ -44,10 +46,12 @@ const updateValue = (e: Event) => {
     >
       <Textarea
         :model-value="modelValue"
+        :auto-size="600"
+        :disabled="disabled"
         rows="4"
         :class="['resize-none', isMachineTranslated && 'ring-1 ring-violet-500']"
-        :placeholder="originalValue"
-        @input="updateValue"
+        :placeholder="originalValue || ''"
+        @update:model-value="updateValue"
       />
     </FormField>
   </div>

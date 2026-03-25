@@ -17,12 +17,7 @@ import DropIndicator from '~/components/ui/DropIndicator.vue'
 import RenamableTitle from '~/components/ui/RenamableTitle.vue'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { SimpleTooltip } from '~/components/ui/tooltip'
-import {
-  getContentDefaultLanguage,
-  resolveContentLanguage,
-  resolveContentRouteName,
-  withContentLanguageQuery,
-} from '~/lib/content-i18n'
+import { normalizeLanguageIso } from '~/lib/content-i18n'
 
 type Edge = 'left'
 
@@ -48,8 +43,6 @@ const router = useRouter()
 const { useAccessControl } = useAuthorization()
 
 const { alert } = useAlertDialog()
-const { useSpaceQuery } = useSpaces()
-const { data: currentSpace } = useSpaceQuery(computed(() => props.spaceId))
 const { useSpacesQuery } = useSpaces()
 const { data: spaces } = useSpacesQuery({})
 const { useContentMenuQuery, getChildren, getRootItems } = useContentMenu(props.spaceId)
@@ -345,64 +338,29 @@ function handleEditCancel() {
   currentlyEditingId.value = null
 }
 
-const buildLink = (contentId: string, item?: FlatContentMenuItem) => {
-  const menuLanguages = item?.i18n?.map((translation) => translation.language_iso) || []
-  const defaultLanguage = getContentDefaultLanguage(
-    currentSpace.value?.settings.default_language,
-    menuLanguages.map((languageIso) => ({
-      language_iso: languageIso,
-      label: languageIso,
-      exists: true,
-      content_id: null,
-      is_default: languageIso === currentSpace.value?.settings.default_language,
-      is_current: false,
-      status: 'draft' as const,
-      published_at: null,
-      fallback_language: null,
-    })),
-    menuLanguages[0]
-  )
-
+const buildLink = (contentId: string) => {
   const currentLanguage =
-    typeof route.query.lang === 'string' && route.query.lang.length > 0
-      ? route.query.lang
-      : undefined
+    typeof route.query.lang === 'string' ? normalizeLanguageIso(route.query.lang) : undefined
+  const query = {
+    ...route.query,
+  } as Record<string, unknown>
 
-  const targetLanguage = resolveContentLanguage(
-    currentLanguage,
-    defaultLanguage,
-    menuLanguages.map((languageIso) => ({
-      language_iso: languageIso,
-      label: languageIso,
-      exists: true,
-      content_id: null,
-      is_default: languageIso === defaultLanguage,
-      is_current: false,
-      status: 'draft' as const,
-      published_at: null,
-      fallback_language: null,
-    })),
-    defaultLanguage
-  )
+  if (currentLanguage) {
+    query.lang = currentLanguage
+  } else {
+    delete query.lang
+  }
 
   const name =
-    route.name != 'space-content-index'
-      ? resolveContentRouteName(
-          route.name as string | undefined,
-          undefined,
-          targetLanguage,
-          defaultLanguage
-        )
-      : resolveContentRouteName(
-          'space-content-contentId',
-          undefined,
-          targetLanguage,
-          defaultLanguage
-        )
+    currentLanguage && route.name === 'space-content-contentId-localization'
+      ? 'space-content-contentId-localization'
+      : route.name === 'space-content-contentId-versions'
+        ? 'space-content-contentId-versions'
+        : 'space-content-contentId'
 
   return {
     name,
-    query: withContentLanguageQuery(route.query, targetLanguage, defaultLanguage),
+    query,
     hash: '',
     params: {
       space: route.params.space,
@@ -968,7 +926,7 @@ onBeforeUnmount(() => {
           :style="{ 'padding-left': `${item.level - 0.5}rem` }"
           v-bind="item.bind"
           :as="RouterLink"
-          :to="buildLink(item.value.id, item.value)"
+          :to="buildLink(item.value.id)"
           :class="[
             'group relative my-0.5 flex items-center gap-2 rounded-md py-1 pr-2 pl-0 outline-none',
             'transition-colors duration-150 hover:bg-border',

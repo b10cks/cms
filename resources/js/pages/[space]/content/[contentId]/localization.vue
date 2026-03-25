@@ -12,6 +12,7 @@ import FlattenedLocalization from '~/components/localization/FlattendeLocalizati
 import Preview from '~/components/Preview.vue'
 import { Input } from '~/components/ui/input'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/components/ui/resizable'
+import { ScrollArea } from '~/components/ui/scroll-area'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 import { useContentSchemaState } from '~/composables/useContentSchemaState'
 import {
@@ -142,6 +143,13 @@ const persistedContent = ref<ContentResource | null>(null)
 const translationContentPayload = computed<Record<string, unknown>>(
   () => (translatableContent.value?.content as Record<string, unknown>) || {}
 )
+const updateTranslationContent = (nextContent: Record<string, unknown>) => {
+  if (!translatableContent.value) {
+    return
+  }
+
+  translatableContent.value.content = nextContent
+}
 const previewRef = useTemplateRef<InstanceType<typeof Preview>>('previewRef')
 const previewContentRef = computed(
   () => translatableContent.value || canonicalContent.value || null
@@ -574,14 +582,16 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="h-full min-h-0 w-full overflow-hidden">
     <ResizablePanelGroup
       id="localization-group-1"
       direction="horizontal"
+      class="h-full min-h-0 w-full overflow-hidden"
     >
       <ResizablePanel
         v-if="showPreviewPane && translatableContent"
         id="localization-panel-1"
+        class="min-h-0 h-full max-h-[calc(100svh-3.5rem)] overflow-hidden"
       >
         <Preview
           ref="previewRef"
@@ -600,13 +610,13 @@ useSeoMeta({
       <ResizablePanel
         id="localization-panel-2"
         ref="editorPanel"
-        class="overflow-y-auto p-3 bg-background"
+        class="flex min-h-0 h-full max-h-[calc(100svh-3.5rem)] overflow-hidden bg-background"
       >
         <div
           v-if="isLoading"
-          class="flex h-full items-center justify-center"
+          class="flex h-full w-full items-center justify-center p-3"
         >
-          <div class="text-center">
+          <div :class="['w-full text-center', showPreviewPane ? '' : 'mx-auto max-w-4xl']">
             <Icon
               name="lucide:loader"
               class="mx-auto mb-4 h-8 w-8 animate-spin text-text-muted"
@@ -614,86 +624,91 @@ useSeoMeta({
             <p class="text-muted">Loading content...</p>
           </div>
         </div>
-        <div
+        <ScrollArea
           v-else
-          class="flex h-full flex-col"
+          class="h-full w-full"
         >
-          <div
-            v-if="block && canonicalContent && translatableContent"
-            class="grid gap-6"
-          >
-            <div class="flex flex-wrap items-start justify-between gap-4 rounded-lg bg-surface p-3">
-              <div class="min-w-0 flex-1 space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                  <div class="space-y-2">
-                    <label
-                      for="original-name"
-                      class="block text-sm font-medium"
-                    >
-                      Content Name (Source)
-                    </label>
-                    <Input
-                      id="original-name"
-                      :model-value="nearestSourceContent?.name"
-                      disabled
-                      aria-label="Source content name"
-                    />
+          <div class="w-full p-3">
+            <div
+              v-if="block && canonicalContent && translatableContent"
+              :class="['grid w-full gap-6', showPreviewPane ? '' : 'mx-auto max-w-4xl']"
+            >
+              <div
+                class="flex flex-wrap items-start justify-between gap-4 rounded-lg bg-surface p-3"
+              >
+                <div class="min-w-0 flex-1 space-y-4">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                      <label
+                        for="original-name"
+                        class="block text-sm font-medium"
+                      >
+                        Content Name (Source)
+                      </label>
+                      <Input
+                        id="original-name"
+                        :model-value="nearestSourceContent?.name"
+                        disabled
+                        aria-label="Source content name"
+                      />
+                    </div>
+                    <div class="space-y-2">
+                      <label
+                        for="translated-name"
+                        class="block text-sm font-medium"
+                      >
+                        Content Name (Translation)
+                      </label>
+                      <Input
+                        id="translated-name"
+                        v-model="translatableContent.name"
+                        aria-label="Translated content name"
+                      />
+                    </div>
                   </div>
-                  <div class="space-y-2">
-                    <label
-                      for="translated-name"
-                      class="block text-sm font-medium"
-                    >
-                      Content Name (Translation)
-                    </label>
-                    <Input
-                      id="translated-name"
-                      v-model="translatableContent.name"
-                      aria-label="Translated content name"
-                    />
-                  </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                  <div class="space-y-2">
-                    <label
-                      for="original-slug"
-                      class="block text-sm font-medium"
-                    >
-                      Content Slug (Source)
-                    </label>
-                    <Input
-                      id="original-slug"
-                      :model-value="nearestSourceContent?.slug"
-                      disabled
-                      aria-label="Source content slug"
-                    />
-                  </div>
-                  <div class="space-y-2">
-                    <label
-                      for="translated-slug"
-                      class="block text-sm font-medium"
-                    >
-                      Content Slug (Translation)
-                    </label>
-                    <Input
-                      id="translated-slug"
-                      v-model="translatableContent.slug"
-                      aria-label="Translated content slug"
-                    />
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                      <label
+                        for="original-slug"
+                        class="block text-sm font-medium"
+                      >
+                        Content Slug (Source)
+                      </label>
+                      <Input
+                        id="original-slug"
+                        :model-value="nearestSourceContent?.slug"
+                        disabled
+                        aria-label="Source content slug"
+                      />
+                    </div>
+                    <div class="space-y-2">
+                      <label
+                        for="translated-slug"
+                        class="block text-sm font-medium"
+                      >
+                        Content Slug (Translation)
+                      </label>
+                      <Input
+                        id="translated-slug"
+                        v-model="translatableContent.slug"
+                        aria-label="Translated content slug"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
+              <FlattenedLocalization
+                :original-content="sourceContentPayload"
+                :translation-content="translationContentPayload"
+                :block-schema="block.schema"
+                :space-id="spaceId"
+                :get-block-schema="getBlockSchemaFn"
+                :target-language="resolvedLanguage"
+                @update:translation-content="updateTranslationContent"
+              />
             </div>
-            <FlattenedLocalization
-              :original-content="sourceContentPayload"
-              :translation-content="translationContentPayload"
-              :block-schema="block.schema"
-              :space-id="spaceId"
-              :get-block-schema="getBlockSchemaFn"
-              :target-language="resolvedLanguage"
-            />
           </div>
-        </div>
+        </ScrollArea>
       </ResizablePanel>
     </ResizablePanelGroup>
   </div>

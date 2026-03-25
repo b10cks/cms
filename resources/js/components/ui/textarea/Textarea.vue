@@ -34,6 +34,10 @@ const resizeTextarea = () => {
 }
 
 onMounted(() => nextTick(resizeTextarea))
+
+watch([() => modelValue.value, () => props.autoSize], () => {
+  nextTick(resizeTextarea)
+})
 </script>
 
 <template>
@@ -42,7 +46,7 @@ onMounted(() => nextTick(resizeTextarea))
     v-model="modelValue"
     :class="
       cn(
-        'flex min-h-[60px] w-full rounded-md border border-input-border bg-input px-3 py-2 text-sm text-primary shadow-sm placeholder:text-muted focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+        'flex min-h-16 w-full rounded-md border border-input-border bg-input px-3 py-2 text-sm text-primary shadow-sm placeholder:text-muted focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none  disabled:text-foreground disabled:opacity-50',
         props.class
       )
     "

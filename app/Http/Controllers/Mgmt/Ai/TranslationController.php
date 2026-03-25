@@ -22,8 +22,9 @@ class TranslationController extends Controller
         $target = $request->string('target');
         $fields = $request->json('fields');
 
-        $userPrompt = "Translate the following texts from {$source} to {$target}.\n\n"
-            . json_encode($fields);
+        $userPrompt = "Translate the following texts from {$source} to {$target}.\n"
+            . "Return only the translated flat JSON object.\n\n"
+            . json_encode($fields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         $result = $service->generate(
             $space,

@@ -26,6 +26,7 @@ const props = defineProps<{
   class?: HTMLAttributes['class']
   inputClass?: HTMLAttributes['class']
   actions?: Array<InputActionType>
+  actionTabindex?: number | string
 
   // Input props
   modelValue?: string | number
@@ -104,6 +105,7 @@ const trigger = (action: InputActionType) => {
             :key="action"
             size="xs"
             :aria-label="action"
+            :tabindex="actionTabindex"
             @click="trigger(action)"
           >
             <Icon :name="icons[action]" />

@@ -3,18 +3,18 @@ import { InputField } from '~/components/ui/form'
 
 defineProps<{
   item: TextSchema & { key: string }
-  originalValue: string | null
+  originalValue?: string | null
   modelValue: string
   isMachineTranslated?: boolean
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-const updateValue = (e: Event) => {
-  const target = e.target as HTMLInputElement
-  emit('update:modelValue', target.value)
+const updateValue = (value: string | number) => {
+  emit('update:modelValue', String(value ?? ''))
 }
 </script>
 
@@ -28,17 +28,20 @@ const updateValue = (e: Event) => {
       :label="item.name || item.key"
       :model-value="originalValue || ''"
       :actions="['copy']"
+      action-tabindex="-1"
       readonly
+      tabindex="-1"
       hide-label
     />
     <InputField
       :name="`${item.key}-translation`"
       :label="item.name || item.key"
       :model-value="modelValue"
+      :disabled="disabled"
       :input-class="[isMachineTranslated && 'ring-1 ring-ai']"
-      :placeholder="originalValue"
+      :placeholder="originalValue || ''"
       hide-label
-      @input="updateValue"
+      @update:model-value="updateValue"
     />
   </div>
 </template>
