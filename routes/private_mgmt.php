@@ -28,6 +28,7 @@ use App\Http\Controllers\Mgmt\Content\ContentController;
 use App\Http\Controllers\Mgmt\Content\ContentMenuController;
 use App\Http\Controllers\Mgmt\Content\ContentPublishController;
 use App\Http\Controllers\Mgmt\Content\ContentScheduleController;
+use App\Http\Controllers\Mgmt\Content\ContentTreeOperationsController;
 use App\Http\Controllers\Mgmt\Content\ContentUnpublishController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionCurrentController;
@@ -185,6 +186,8 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::apiResource('contents', ContentController::class);
     Route::post('contents/bulk-create', BulkCreateContentController::class)
         ->name('contents.bulk-create');
+    Route::post('contents/tree-operations', ContentTreeOperationsController::class)
+        ->name('contents.tree-operations');
     Route::post('contents/{content}/move', MoveContentController::class)
         ->name('contents.move');
 

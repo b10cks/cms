@@ -3,7 +3,13 @@ import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { ContentsQueryParams } from '~/api/resources/contents'
-import type { ContentResource, CreateContentPayload, UpdateContentPayload } from '~/types/contents'
+import type {
+  ContentResource,
+  ContentTreeOperationPayload,
+  ContentTreeOperationResult,
+  CreateContentPayload,
+  UpdateContentPayload,
+} from '~/types/contents'
 
 import { queryKeys } from './useQueryClient'
 
@@ -304,6 +310,26 @@ export function useContent(spaceId: MaybeRef<string>) {
     })
   }
 
+  const useTreeOperationsMutation = () => {
+    return useMutation({
+      mutationFn: async (payload: { operations: ContentTreeOperationPayload[] }) => {
+        const response = await spaceAPI.value.contents.treeOperations(payload)
+        return response.data
+      },
+      onSuccess: (data: ContentTreeOperationResult) => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.content.moveError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
   return {
     // Queries
     useContentsQuery,
@@ -320,5 +346,6 @@ export function useContent(spaceId: MaybeRef<string>) {
     useDeleteContentMutation,
     useBulkCreateContentMutation,
     useMoveContentMutation,
+    useTreeOperationsMutation,
   }
 }

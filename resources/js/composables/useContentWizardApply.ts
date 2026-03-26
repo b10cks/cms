@@ -1,6 +1,8 @@
 import { useQueryClient } from '@tanstack/vue-query'
 
 import type { ContentWizardApplyResult, ContentWizardDraftNode } from '~/types/content-wizard'
+import { CONTENT_WIZARD_ROOT_ID } from '~/types/content-wizard'
+import type { ContentTreeOperationPayload } from '~/types/contents'
 
 import { useContentWizardSlug } from './useContentWizardSlug'
 import { useContentWizardTree } from './useContentWizardTree'
@@ -15,24 +17,13 @@ export function useContentWizardApply(
 ) {
   const queryClient = useQueryClient()
   const { resolveEffectiveSlug } = useContentWizardSlug()
-  const {
-    useBulkCreateContentMutation,
-    useDeleteContentMutation,
-    useMoveContentMutation,
-    useUpdateContentMutation,
-  } = useContent(spaceId)
+  const { useTreeOperationsMutation, useUpdateContentMutation } = useContent(spaceId)
 
-  const bulkCreateMutation = useBulkCreateContentMutation()
+  const treeOperationsMutation = useTreeOperationsMutation()
   const updateMutation = useUpdateContentMutation()
-  const moveMutation = useMoveContentMutation()
-  const deleteMutation = useDeleteContentMutation()
 
   const isApplying = computed(
-    () =>
-      bulkCreateMutation.isPending.value ||
-      updateMutation.isPending.value ||
-      moveMutation.isPending.value ||
-      deleteMutation.isPending.value
+    () => treeOperationsMutation.isPending.value || updateMutation.isPending.value
   )
 
   const applyError = ref<string | null>(null)
@@ -66,14 +57,41 @@ export function useContentWizardApply(
     }
 
     applyError.value = null
-    const createdIdMap = new Map<string, string>()
-
-    const resolveParentId = (parentId: string | null) => {
-      if (!parentId) {
+    const getNodeReferenceId = (nodeId: string | null) => {
+      if (!nodeId) {
         return null
       }
 
-      return createdIdMap.get(parentId) || parentId
+      const node = treeApi.getNode(nodeId)
+      if (!node || node.isRootVirtual) {
+        return null
+      }
+
+      return node.backendId || node.id
+    }
+
+    const getOrderedActiveChildIds = (parentId: string | null) => {
+      const parentNode =
+        parentId === null
+          ? treeApi.getNode(CONTENT_WIZARD_ROOT_ID)
+          : treeApi.getNode(parentId)
+
+      if (!parentNode) {
+        return []
+      }
+
+      return parentNode.childrenIds.filter((childId) => {
+        const child = treeApi.getNode(childId)
+        return !!child && !child.deletedReason
+      })
+    }
+
+    const getAfterReferenceId = (node: ContentWizardDraftNode) => {
+      const siblings = getOrderedActiveChildIds(node.parentId)
+      const nodeIndex = siblings.indexOf(node.id)
+      const previousSiblingId = nodeIndex > 0 ? siblings[nodeIndex - 1] : null
+
+      return getNodeReferenceId(previousSiblingId)
     }
 
     const executeUpdate = async (nodeId: string) => {
@@ -87,27 +105,12 @@ export function useContentWizardApply(
         payload: {
           name: node.title,
           slug: resolveEffectiveSlug(node.title, node.slug),
-          block_id: node.blockId,
-        },
-      })
-    }
-
-    const executeMove = async (nodeId: string) => {
-      const node = treeApi.getNode(nodeId)
-      if (!node?.backendId) {
-        return
-      }
-
-      await moveMutation.mutateAsync({
-        id: node.backendId,
-        payload: {
-          parent_id: resolveParentId(node.parentId),
-          position: node.position,
         },
       })
     }
 
     try {
+      const structuralOperations: ContentTreeOperationPayload[] = []
       const createOperations = operations
         .filter(
           (operation): operation is Extract<(typeof operations)[number], { type: 'create' }> =>
@@ -115,8 +118,8 @@ export function useContentWizardApply(
         )
         .sort((left, right) => left.depth - right.depth)
 
-      if (createOperations.length > 0) {
-        const items = createOperations.flatMap((operation) => {
+      structuralOperations.push(
+        ...createOperations.flatMap((operation) => {
           const node = treeApi.getNode(operation.nodeId)
           if (!node) {
             return []
@@ -124,22 +127,16 @@ export function useContentWizardApply(
 
           return [
             {
+              type: 'create' as const,
               temp_id: node.id,
               name: node.title,
               slug: resolveEffectiveSlug(node.title, node.slug),
               block_id: node.blockId,
-              parent_id: resolveParentId(node.parentId),
+              parent_id: getNodeReferenceId(node.parentId),
             },
           ]
         })
-
-        const createdItems = await bulkCreateMutation.mutateAsync({ items })
-        createdItems.forEach((item) => {
-          if (item.temp_id) {
-            createdIdMap.set(item.temp_id, item.id)
-          }
-        })
-      }
+      )
 
       const activeExistingNodes = Object.values(treeApi.tree.value.nodes)
         .filter(
@@ -149,46 +146,50 @@ export function useContentWizardApply(
         .sort((left, right) => left.depth - right.depth)
 
       for (const node of activeExistingNodes) {
-        const effectiveSlug = resolveEffectiveSlug(node.title, node.slug)
-        const originalSlug = node.original
-          ? resolveEffectiveSlug(node.original.title, node.original.slug)
-          : ''
-        const shouldUpdate =
-          node.title !== node.original?.title ||
-          effectiveSlug !== originalSlug ||
-          node.blockId !== node.original?.blockId
+        if (!node.backendId) {
+          continue
+        }
+
+        const backendId = node.backendId
+        const shouldUpdateBlock = node.blockId !== node.original?.blockId
         const shouldMove = node.parentId !== node.original?.parentId
 
-        if (!shouldUpdate && !shouldMove) {
+        if (!shouldUpdateBlock && !shouldMove) {
           continue
         }
 
-        if (node.original?.blockType === 'single' && node.blockType !== 'single') {
-          if (shouldUpdate) {
-            await executeUpdate(node.id)
-          }
-          if (shouldMove) {
-            await executeMove(node.id)
-          }
-          continue
-        }
+        const moveOperation: ContentTreeOperationPayload | null = shouldMove
+          ? {
+              type: 'move',
+              ids: [backendId],
+              parent_id: getNodeReferenceId(node.parentId),
+              after_id: getAfterReferenceId(node),
+            }
+          : null
+        const updateBlockOperation: ContentTreeOperationPayload | null = shouldUpdateBlock
+          ? {
+              type: 'update_block',
+              id: backendId,
+              block_id: node.blockId,
+            }
+          : null
 
         if (node.original?.blockType !== 'single' && node.blockType === 'single') {
-          if (shouldMove) {
-            await executeMove(node.id)
+          if (moveOperation) {
+            structuralOperations.push(moveOperation)
           }
-          if (shouldUpdate) {
-            await executeUpdate(node.id)
+          if (updateBlockOperation) {
+            structuralOperations.push(updateBlockOperation)
           }
           continue
         }
 
-        if (shouldUpdate) {
-          await executeUpdate(node.id)
+        if (updateBlockOperation) {
+          structuralOperations.push(updateBlockOperation)
         }
 
-        if (shouldMove) {
-          await executeMove(node.id)
+        if (moveOperation) {
+          structuralOperations.push(moveOperation)
         }
       }
 
@@ -199,13 +200,42 @@ export function useContentWizardApply(
         )
         .sort((left, right) => right.depth - left.depth)
 
-      for (const operation of deleteOperations) {
-        const node = treeApi.getNode(operation.nodeId)
-        if (!node?.backendId) {
+      structuralOperations.push(
+        ...deleteOperations.flatMap((operation) => {
+          const node = treeApi.getNode(operation.nodeId)
+          if (!node?.backendId) {
+            return []
+          }
+
+          return [
+            {
+              type: 'delete' as const,
+              ids: [node.backendId],
+            },
+          ]
+        })
+      )
+
+      if (structuralOperations.length > 0) {
+        await treeOperationsMutation.mutateAsync({
+          operations: structuralOperations,
+        })
+      }
+
+      for (const node of activeExistingNodes) {
+        const effectiveSlug = resolveEffectiveSlug(node.title, node.slug)
+        const originalSlug = node.original
+          ? resolveEffectiveSlug(node.original.title, node.original.slug)
+          : ''
+        const shouldUpdate =
+          node.title !== node.original?.title ||
+          effectiveSlug !== originalSlug
+
+        if (!shouldUpdate) {
           continue
         }
 
-        await deleteMutation.mutateAsync(node.backendId)
+        await executeUpdate(node.id)
       }
 
       return {

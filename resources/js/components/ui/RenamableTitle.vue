@@ -62,7 +62,7 @@ function submitRename() {
 // Cancel rename
 function cancelRename() {
   isEditing.value = false
-  emit('cancel', props)
+  emit('cancel')
 }
 
 function handleKeyDown(event: KeyboardEvent) {
@@ -83,6 +83,10 @@ watch(
     }
   }
 )
+
+defineExpose({
+  startEdit,
+})
 </script>
 
 <template>

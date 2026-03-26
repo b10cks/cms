@@ -592,6 +592,40 @@
       "managerTitle": "Inhalts-Manager",
       "managerDescription": "Wähle ein Element aus dem Inhaltsmenü aus, um es zu bearbeiten oder neuen Inhalt zu erstellen."
     },
+    "contentTree": {
+      "actions": {
+        "view": "Ansehen",
+        "edit": "Bearbeiten",
+        "rename": "Umbenennen",
+        "newSubItem": "Neues Unterelement",
+        "copy": "Kopieren",
+        "cut": "Ausschneiden",
+        "pasteIn": "Einfügen in",
+        "pasteAfter": "Einfügen nach",
+        "delete": "Löschen",
+        "more": "Weitere Aktionen"
+      },
+      "confirmations": {
+        "deleteTitle": "Inhalt löschen",
+        "deleteSingle": "Diesen Inhaltseintrag mit seinem Teilbaum löschen?",
+        "deleteMany": "{count} ausgewählte Inhaltsbäume löschen?"
+      },
+      "drag": {
+        "multiple": "{count} Seiten"
+      },
+      "drop": {
+        "moveInto": "Hier hinein verschieben",
+        "moveToRoot": "Auf Root-Ebene verschieben"
+      },
+      "errors": {
+        "invalidMove": "Ungültige Verschiebung",
+        "previewUnavailable": "Für diesen Space ist keine Vorschau-Umgebung konfiguriert.",
+        "previewFailed": "Das Vorschauziel konnte nicht geöffnet werden."
+      },
+      "status": {
+        "draft": "Entwurf"
+      }
+    },
     "comments": {
       "title": "Kommentare",
       "fieldTitle": "Feld-Kommentare",

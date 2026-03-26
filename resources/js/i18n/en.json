@@ -597,6 +597,40 @@
       "managerTitle": "Content Manager",
       "managerDescription": "Select an item from the content menu to edit or create new content."
     },
+    "contentTree": {
+      "actions": {
+        "view": "View",
+        "edit": "Edit",
+        "rename": "Rename",
+        "newSubItem": "New sub item",
+        "copy": "Copy",
+        "cut": "Cut",
+        "pasteIn": "Paste in",
+        "pasteAfter": "Paste after",
+        "delete": "Delete",
+        "more": "More actions"
+      },
+      "confirmations": {
+        "deleteTitle": "Delete content",
+        "deleteSingle": "Delete this content item and its subtree?",
+        "deleteMany": "Delete {count} selected content trees?"
+      },
+      "drag": {
+        "multiple": "{count} pages"
+      },
+      "drop": {
+        "moveInto": "Move into",
+        "moveToRoot": "Move to root"
+      },
+      "errors": {
+        "invalidMove": "Invalid move",
+        "previewUnavailable": "No preview environment is configured for this space.",
+        "previewFailed": "The preview target could not be opened."
+      },
+      "status": {
+        "draft": "Draft"
+      }
+    },
     "comments": {
       "title": "Comments",
       "fieldTitle": "Field Comments",

@@ -19,6 +19,7 @@ const props = withDefaults(
   defineProps<{
     spaceId: string
     parentId?: string | null
+    onSubmit?: (payload: CreateContentPayload) => Promise<void> | void
   }>(),
   {
     parentId: undefined,
@@ -30,9 +31,6 @@ const { data: space } = useSpaceQuery(props.spaceId)
 
 const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
-
-const { useCreateContentMutation } = useContent(props.spaceId)
-const { mutate: createContent } = useCreateContentMutation()
 
 const content = ref<CreateContentPayload>({
   block_id: '',
@@ -64,7 +62,7 @@ const handleCreate = async (editContent: CreateContentPayload) => {
     payload.content = selectedTemplate.value.content
   }
 
-  await createContent(payload)
+  await props.onSubmit?.(payload)
   open.value = false
   resetForm()
 }

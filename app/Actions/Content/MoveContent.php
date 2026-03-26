@@ -58,7 +58,16 @@ class MoveContent
                 return true;
             }
 
-            $current = $current->parent;
+            if ($current->parent_id === null) {
+                return false;
+            }
+
+            $current = $current->relationLoaded('parent')
+                ? $current->getRelation('parent')
+                : Content::query()
+                    ->whereNull('deleted_at')
+                    ->select(['id', 'parent_id'])
+                    ->find($current->parent_id);
         }
 
         return false;

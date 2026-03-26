@@ -3,23 +3,41 @@ import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
 import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 import { pointerOutsideOfPreview } from '@atlaskit/pragmatic-drag-and-drop/element/pointer-outside-of-preview'
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview'
+import { useQueryClient } from '@tanstack/vue-query'
 import { TreeItem, TreeRoot, type TreeItemToggleEvent } from 'reka-ui'
-import { RouterLink } from 'vue-router'
+import type { ComponentPublicInstance } from 'vue'
+import { RouterLink, type LocationQueryRaw } from 'vue-router'
 import { toast } from 'vue-sonner'
 
+import { api } from '~/api'
 import CreateContentDialog from '~/components/content/CreateContentDialog.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import { AvatarList } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '~/components/ui/dropdown-menu'
 import DropIndicator from '~/components/ui/DropIndicator.vue'
 import RenamableTitle from '~/components/ui/RenamableTitle.vue'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { SimpleTooltip } from '~/components/ui/tooltip'
+import { useContentTreeClipboard } from '~/composables/useContentTreeClipboard'
+import { queryKeys } from '~/composables/useQueryClient'
 import { normalizeLanguageIso } from '~/lib/content-i18n'
+import type {
+  ContentTreeActionContext,
+  ContentTreeClipboardItem,
+  ContentTreeOperationPayload,
+  CreateContentPayload,
+} from '~/types/contents'
 
 type Edge = 'left'
+type MenuOwnerId = string | 'root'
 
 type ContentTreeDragItem = {
   id: string
@@ -31,6 +49,18 @@ type ContentTreeDragData = {
   primaryId: string
 }
 
+type ContentTreeMenuAction = {
+  id: string
+  label: string
+  icon: string
+  disabled?: boolean
+  destructive?: boolean
+  separatorBefore?: boolean
+  onSelect: () => void | Promise<void>
+}
+
+type RenamableTitleInstance = InstanceType<typeof RenamableTitle>
+
 const CONTENT_TREE_DRAG_KIND = 'content-tree'
 
 const props = defineProps<{
@@ -40,27 +70,34 @@ const props = defineProps<{
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
+const queryClient = useQueryClient()
 const { useAccessControl } = useAuthorization()
-
 const { alert } = useAlertDialog()
-const { useSpacesQuery } = useSpaces()
-const { data: spaces } = useSpacesQuery({})
+const { useSpaceQuery } = useSpaces()
+const { data: selectedSpace } = useSpaceQuery(props.spaceId)
 const { useContentMenuQuery, getChildren, getRootItems } = useContentMenu(props.spaceId)
-const { useUpdateContentMutation, useDeleteContentMutation, useMoveContentMutation } = useContent(
-  props.spaceId
-)
+const { useTreeOperationsMutation, useUpdateContentMutation } = useContent(props.spaceId)
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageContent = computed(() => access.hasAbility('content.manage'))
-
-const { mutate: updateContent } = useUpdateContentMutation()
-const { mutate: deleteContent } = useDeleteContentMutation()
-const { mutateAsync: moveContent } = useMoveContentMutation()
-
 const { settings } = useSpaceSettings(props.spaceId)
+const {
+  hasClipboardItem,
+  normalizeRootSelection,
+  normalizeClipboardItems,
+  buildSnapshot,
+  canPasteAfter,
+  canPasteIn,
+  copyItem: copyClipboardItem,
+  cutItem: cutClipboardItem,
+  clearClipboard,
+  getClipboardItem,
+} = useContentTreeClipboard()
+const { mutateAsync: runTreeOperations } = useTreeOperationsMutation()
+const { mutate: updateContent } = useUpdateContentMutation()
 
 const { isLoading, error, data } = useContentMenuQuery()
 const rootItems = computed(() => getRootItems(data.value) || [])
-
 const { getUsersForContent } = useContentMenuPresence(props.spaceId)
 
 const selectedItemId = ref<string | null>(null)
@@ -70,32 +107,43 @@ const showCreateDialog = ref(false)
 const createParentId = ref<string | null>(null)
 const activeDropTargetId = ref<string | null>(null)
 const activeDropEdge = ref<Edge | null>(null)
-const rootDropMode = ref<'root' | 'root-top' | null>(null)
+const rootDropMode = ref<'root' | null>(null)
 const isDragging = ref(false)
 const dragSelectionSnapshot = ref<string[] | null>(null)
+const openMenuId = ref<MenuOwnerId | null>(null)
+const activeClipboardItem = ref<ContentTreeClipboardItem | null>(null)
+const activeMenuAnchor = ref<HTMLElement | null>(null)
+const activeMenuTrigger = ref<HTMLElement | null>(null)
 let lastDragEndedAt = 0
 
 const treeContainerRef = ref<HTMLElement | null>(null)
 const rootDropZoneRef = ref<HTMLElement | null>(null)
 const itemCleanupMap = new Map<string, () => void>()
+const titleRefMap = new Map<string, RenamableTitleInstance | null>()
 
-const selectedSpace = computed(() => {
-  return spaces.value?.find((space) => space.id === props.spaceId) || null
-})
-
-const flatItems = computed(() => {
-  return data.value ? Object.values(data.value) : []
-})
-
-const itemIndexMap = computed(() => {
-  return new Map(flatItems.value.map((item, index) => [item.id, index]))
-})
-
+const flatItems = computed(() => (data.value ? Object.values(data.value) : []))
+const itemIndexMap = computed(() => new Map(flatItems.value.map((item, index) => [item.id, index])))
+const parentIdMap = computed(
+  () => new Map(flatItems.value.map((item) => [item.id, item.pid ?? null]))
+)
 const selectedItemsSet = computed(() => new Set(selectedItemIds.value))
+
+const clipboardValidationContext = computed(() => ({
+  itemsById: new Map(
+    flatItems.value.map((item) => [
+      item.id,
+      {
+        id: item.id,
+        pid: item.pid,
+        block_id: item.block_id,
+        type: item.type,
+      },
+    ])
+  ),
+}))
 
 const childIdMap = computed(() => {
   const map = new Map<string | null, string[]>()
-
   map.set(
     null,
     rootItems.value.map((item) => item.id)
@@ -154,7 +202,77 @@ const descendantIdsMap = computed(() => {
   return map
 })
 
+const effectiveEnvironment = computed(() => {
+  const userEnv = settings.value.content.environment
+  if (userEnv) {
+    return userEnv
+  }
+
+  const defaultName = selectedSpace.value?.settings.default_environment
+  if (!defaultName) {
+    return null
+  }
+
+  return (
+    selectedSpace.value?.settings.environments?.find(
+      (environment: { name: string }) => environment.name === defaultName
+    ) ?? null
+  )
+})
+
+const canOpenRootMenu = computed(
+  () =>
+    canManageContent.value &&
+    hasClipboardItem.value &&
+    canPasteIn(activeClipboardItem.value, props.spaceId, null, clipboardValidationContext.value)
+)
+
 const isItemSelected = (id: string) => selectedItemsSet.value.has(id)
+
+const getNormalizedIds = (ids: string[]) => {
+  return normalizeRootSelection(ids, parentIdMap.value, itemIndexMap.value)
+}
+
+const createClipboardSnapshot = (itemIds: string[]) => {
+  return buildSnapshot(itemIds, {
+    itemsById: clipboardValidationContext.value.itemsById,
+    descendantsById: descendantIdsMap.value,
+    treeOrderById: itemIndexMap.value,
+  })
+}
+
+const syncActiveClipboardItem = async () => {
+  activeClipboardItem.value = await getClipboardItem()
+}
+
+const getActiveClipboardItem = () => activeClipboardItem.value
+
+const cutItemIds = computed(() => {
+  if (!activeClipboardItem.value?._isCut || activeClipboardItem.value.spaceId !== props.spaceId) {
+    return new Set<string>()
+  }
+
+  return new Set(normalizeClipboardItems(activeClipboardItem.value).map((item) => item.id))
+})
+
+const isCutItem = (id: string) => cutItemIds.value.has(id)
+
+const resolveMenuAnchorElement = (value: EventTarget | null) => {
+  return value instanceof HTMLElement ? value : null
+}
+
+const resolveMenuContext = (targetId: string | null): ContentTreeActionContext => {
+  const usesSelection =
+    !!targetId && selectedItemsSet.value.has(targetId) && selectedItemIds.value.length > 0
+  const candidateIds = usesSelection ? selectedItemIds.value : targetId ? [targetId] : []
+
+  return {
+    target_id: targetId,
+    selected_ids: [...selectedItemIds.value],
+    resolved_ids: getNormalizedIds(candidateIds),
+    uses_selection: usesSelection,
+  }
+}
 
 const clearDropState = () => {
   activeDropTargetId.value = null
@@ -223,12 +341,10 @@ function attachClosestEdge(
   }
 ) {
   const rect = options.element.getBoundingClientRect()
-
   const distances = options.allowedEdges.map((edge) => ({
     edge,
     value: Math.abs(options.input.clientX - rect.left),
   }))
-
   const closest = distances.sort((a, b) => a.value - b.value)[0]
 
   return {
@@ -323,10 +439,34 @@ const resolveElement = (value: Element | { $el?: Element } | null): HTMLElement 
   return null
 }
 
+const setTitleRef = (itemId: string) => (value: Element | ComponentPublicInstance | null) => {
+  if (value && typeof value === 'object' && 'startEdit' in value) {
+    titleRefMap.set(itemId, value as unknown as RenamableTitleInstance)
+    return
+  }
+
+  titleRefMap.set(itemId, null)
+}
+
+const openMenu = async (menuId: MenuOwnerId, anchor: HTMLElement | null = null) => {
+  await syncActiveClipboardItem()
+  activeMenuAnchor.value = anchor
+  activeMenuTrigger.value = anchor
+  openMenuId.value = menuId
+}
+
+const closeMenu = () => {
+  openMenuId.value = null
+  activeMenuAnchor.value = null
+  activeMenuTrigger.value?.focus({ preventScroll: true })
+  activeMenuTrigger.value = null
+}
+
 function handleRename(newName: string, contentId: string) {
   if (contentId && newName) {
     updateContent({ id: contentId, payload: { name: newName } })
   }
+
   currentlyEditingId.value = null
 }
 
@@ -341,9 +481,9 @@ function handleEditCancel() {
 const buildLink = (contentId: string) => {
   const currentLanguage =
     typeof route.query.lang === 'string' ? normalizeLanguageIso(route.query.lang) : undefined
-  const query = {
+  const query: LocationQueryRaw = {
     ...route.query,
-  } as Record<string, unknown>
+  }
 
   if (currentLanguage) {
     query.lang = currentLanguage
@@ -411,30 +551,27 @@ watch(
   { immediate: true }
 )
 
-onMounted(() => {
-  setCurrentItemFromRoute()
-})
-
-const initCreate = (parentId: string | null) => {
-  createParentId.value = parentId
-  showCreateDialog.value = true
-}
-
-const initDelete = async (item: { id: string }) => {
-  if (!(await alert.confirm('Are you sure you want to delete this item?'))) {
+watch(hasClipboardItem, async (value) => {
+  if (!value) {
+    activeClipboardItem.value = null
     return
   }
 
-  deleteContent(item.id)
-}
+  await syncActiveClipboardItem()
+})
 
-function selectSingleItem(id: string) {
+onMounted(() => {
+  setCurrentItemFromRoute()
+  void syncActiveClipboardItem()
+})
+
+const selectSingleItem = (id: string) => {
   dragSelectionSnapshot.value = null
   selectedItemId.value = id
   selectedItemIds.value = [id]
 }
 
-function toggleItemSelection(id: string) {
+const toggleItemSelection = (id: string) => {
   dragSelectionSnapshot.value = null
   const next = new Set(selectedItemIds.value)
 
@@ -448,8 +585,381 @@ function toggleItemSelection(id: string) {
   selectedItemId.value = id
 }
 
-function handleItemPointerDown(event: MouseEvent, id: string) {
-  if (currentlyEditingId.value === id || isDragging.value) {
+const resolveLocaleTargetId = (item: FlatContentMenuItem) => {
+  const currentLanguage =
+    typeof route.query.lang === 'string' ? normalizeLanguageIso(route.query.lang) : null
+
+  if (!currentLanguage || currentLanguage === selectedSpace.value?.settings.default_language) {
+    return item.id
+  }
+
+  return (
+    item.i18n.find(
+      (translation) => normalizeLanguageIso(translation.language_iso) === currentLanguage
+    )?.id ?? item.id
+  )
+}
+
+const openViewTarget = async (item: FlatContentMenuItem) => {
+  const environment = effectiveEnvironment.value
+
+  if (!environment?.url) {
+    toast.error(t('labels.contentTree.errors.previewUnavailable') as string)
+    return
+  }
+
+  const contentId = resolveLocaleTargetId(item)
+
+  try {
+    const content = await queryClient.fetchQuery({
+      queryKey: queryKeys.contents(props.spaceId).detail(contentId),
+      queryFn: async () => {
+        const response = await api.forSpace(props.spaceId).contents.get(contentId)
+        return response.data
+      },
+    })
+
+    const slugStrategy = selectedSpace.value?.settings.slug_strategy
+    const needsPrepend =
+      slugStrategy === 'always_prepend' ||
+      (slugStrategy === 'prepend_translations' &&
+        content.language_iso !== selectedSpace.value?.settings.default_language)
+    const prefix = needsPrepend ? `/${content.language_iso}` : ''
+    const url = environment.url.replace(/\/$/, '')
+
+    window.open(`${url}${prefix}${content.full_slug}`, '_blank', 'noopener,noreferrer')
+  } catch {
+    toast.error(t('labels.contentTree.errors.previewFailed') as string)
+  }
+}
+
+const executeTreeOperations = async (operations: ContentTreeOperationPayload[]) => {
+  await runTreeOperations({
+    operations,
+  })
+}
+
+const handleCreateSubmit = async (payload: CreateContentPayload) => {
+  await executeTreeOperations([
+    {
+      type: 'create',
+      temp_id: crypto.randomUUID(),
+      parent_id: payload.parent_id ?? null,
+      block_id: payload.block_id,
+      name: payload.name,
+      slug: payload.slug,
+      settings: payload.settings,
+    },
+  ])
+}
+
+const initCreate = (parentId: string | null) => {
+  createParentId.value = parentId
+  showCreateDialog.value = true
+}
+
+const confirmDelete = async (count: number) => {
+  const single = count === 1
+
+  return alert.confirm(
+    single
+      ? (t('labels.contentTree.confirmations.deleteSingle') as string)
+      : (t('labels.contentTree.confirmations.deleteMany', { count }) as string),
+    {
+      title: t('labels.contentTree.confirmations.deleteTitle') as string,
+      confirmLabel: t('labels.contentTree.actions.delete') as string,
+      variant: 'destructive',
+    }
+  )
+}
+
+const executeDelete = async (context: ContentTreeActionContext) => {
+  if (context.resolved_ids.length === 0) {
+    return
+  }
+
+  if (!(await confirmDelete(context.resolved_ids.length))) {
+    return
+  }
+
+  await executeTreeOperations([
+    {
+      type: 'delete',
+      ids: context.resolved_ids,
+    },
+  ])
+
+  selectedItemId.value = null
+  selectedItemIds.value = []
+}
+
+const copyToClipboard = async (context: ContentTreeActionContext) => {
+  if (context.resolved_ids.length === 0) {
+    return
+  }
+
+  const snapshot = createClipboardSnapshot(context.resolved_ids)
+  await copyClipboardItem(snapshot.length === 1 ? snapshot[0] : snapshot, props.spaceId)
+  await syncActiveClipboardItem()
+}
+
+const cutToClipboard = async (context: ContentTreeActionContext) => {
+  if (context.resolved_ids.length === 0) {
+    return
+  }
+
+  const snapshot = createClipboardSnapshot(context.resolved_ids)
+  await cutClipboardItem(snapshot.length === 1 ? snapshot[0] : snapshot, props.spaceId)
+  await syncActiveClipboardItem()
+}
+
+const isCutPasteNoOp = (
+  activeClipboardItem: ContentTreeClipboardItem | null,
+  target: FlatContentMenuItem | null,
+  mode: 'in' | 'after'
+) => {
+  if (!activeClipboardItem?._isCut) {
+    return false
+  }
+
+  const clipboardItems = normalizeClipboardItems(activeClipboardItem)
+  if (clipboardItems.length === 0) {
+    return false
+  }
+
+  const targetParentId = mode === 'in' ? (target?.id ?? null) : (target?.pid ?? null)
+  const anchorId = mode === 'after' ? (target?.id ?? null) : null
+  const currentOrder = childIdMap.value.get(targetParentId) || []
+  const clipboardIds = clipboardItems.map((item) => item.id)
+  const movingIds = new Set(clipboardIds)
+
+  if (clipboardItems.some((item) => item.parent_id !== targetParentId)) {
+    return false
+  }
+
+  const remaining = currentOrder.filter((id) => !movingIds.has(id))
+  const insertIndex = anchorId ? Math.max(remaining.indexOf(anchorId) + 1, 0) : remaining.length
+  const nextOrder = [
+    ...remaining.slice(0, insertIndex),
+    ...clipboardIds,
+    ...remaining.slice(insertIndex),
+  ]
+
+  return (
+    currentOrder.length === nextOrder.length &&
+    currentOrder.every((id, index) => id === nextOrder[index])
+  )
+}
+
+const pasteClipboard = async (target: FlatContentMenuItem | null, mode: 'in' | 'after') => {
+  const clipboardItem = getActiveClipboardItem()
+  if (!clipboardItem) {
+    return
+  }
+
+  if (
+    mode === 'in' &&
+    !canPasteIn(clipboardItem, props.spaceId, target, clipboardValidationContext.value)
+  ) {
+    return
+  }
+
+  if (
+    mode === 'after' &&
+    !canPasteAfter(clipboardItem, props.spaceId, target, clipboardValidationContext.value)
+  ) {
+    return
+  }
+
+  if (isCutPasteNoOp(clipboardItem, target, mode)) {
+    return
+  }
+
+  const clipboardIds = normalizeClipboardItems(clipboardItem).map((item) => item.id)
+  if (clipboardIds.length === 0) {
+    return
+  }
+
+  const parentId = mode === 'in' ? (target?.id ?? null) : (target?.pid ?? null)
+  const afterId = mode === 'after' ? (target?.id ?? null) : null
+  const operation: ContentTreeOperationPayload = clipboardItem._isCut
+    ? {
+        type: 'move',
+        ids: clipboardIds,
+        parent_id: parentId,
+        after_id: afterId,
+      }
+    : {
+        type: 'duplicate',
+        ids: clipboardIds,
+        parent_id: parentId,
+        after_id: afterId,
+      }
+
+  await executeTreeOperations([operation])
+
+  if (clipboardItem._isCut) {
+    await clearClipboard()
+    activeClipboardItem.value = null
+  }
+}
+
+const openRename = async (itemId: string) => {
+  selectSingleItem(itemId)
+  await router.push(buildLink(itemId))
+  await nextTick()
+  titleRefMap.get(itemId)?.startEdit?.()
+}
+
+const openEdit = async (itemId: string) => {
+  selectSingleItem(itemId)
+  await router.push(buildLink(itemId))
+}
+
+const buildItemMenuActions = (item: FlatContentMenuItem): ContentTreeMenuAction[] => {
+  const context = resolveMenuContext(item.id)
+  const activeClipboardItem = getActiveClipboardItem()
+  const canPasteIntoTarget = canPasteIn(
+    activeClipboardItem,
+    props.spaceId,
+    item,
+    clipboardValidationContext.value
+  )
+  const canPasteAfterTarget = canPasteAfter(
+    activeClipboardItem,
+    props.spaceId,
+    item,
+    clipboardValidationContext.value
+  )
+
+  return [
+    {
+      id: 'view',
+      label: t('labels.contentTree.actions.view') as string,
+      icon: 'eye',
+      onSelect: () => openViewTarget(item),
+    },
+    {
+      id: 'edit',
+      label: t('labels.contentTree.actions.edit') as string,
+      icon: 'pencil',
+      onSelect: () => openEdit(item.id),
+    },
+    {
+      id: 'rename',
+      label: t('labels.contentTree.actions.rename') as string,
+      icon: 'text-cursor-input',
+      disabled: !canManageContent.value,
+      onSelect: () => openRename(item.id),
+    },
+    {
+      id: 'new-sub-item',
+      label: t('labels.contentTree.actions.newSubItem') as string,
+      icon: 'folder-plus',
+      disabled: !canManageContent.value || item.type === 'single',
+      onSelect: () => initCreate(item.id),
+    },
+    {
+      id: 'copy',
+      label: t('labels.contentTree.actions.copy') as string,
+      icon: 'copy',
+      separatorBefore: true,
+      disabled: !canManageContent.value || context.resolved_ids.length === 0,
+      onSelect: () => copyToClipboard(context),
+    },
+    {
+      id: 'cut',
+      label: t('labels.contentTree.actions.cut') as string,
+      icon: 'scissors',
+      disabled: !canManageContent.value || context.resolved_ids.length === 0,
+      onSelect: () => cutToClipboard(context),
+    },
+    {
+      id: 'paste-in',
+      label: t('labels.contentTree.actions.pasteIn') as string,
+      icon: 'clipboard-paste',
+      disabled: !canManageContent.value || !canPasteIntoTarget,
+      onSelect: () => pasteClipboard(item, 'in'),
+    },
+    {
+      id: 'paste-after',
+      label: t('labels.contentTree.actions.pasteAfter') as string,
+      icon: 'between-horizontal-start',
+      disabled: !canManageContent.value || !canPasteAfterTarget,
+      onSelect: () => pasteClipboard(item, 'after'),
+    },
+    {
+      id: 'delete',
+      label: t('labels.contentTree.actions.delete') as string,
+      icon: 'trash-2',
+      disabled: !canManageContent.value || context.resolved_ids.length === 0,
+      destructive: true,
+      onSelect: () => executeDelete(context),
+    },
+  ]
+}
+
+const buildRootMenuActions = (): ContentTreeMenuAction[] => {
+  if (!canOpenRootMenu.value) {
+    return []
+  }
+
+  return [
+    {
+      id: 'paste-root',
+      label: t('labels.contentTree.actions.pasteIn') as string,
+      icon: 'clipboard-paste',
+      onSelect: () => pasteClipboard(null, 'in'),
+    },
+  ]
+}
+
+const activeMenuActions = computed(() => {
+  if (openMenuId.value === 'root') {
+    return buildRootMenuActions()
+  }
+
+  if (!openMenuId.value) {
+    return []
+  }
+
+  const item = data.value?.[openMenuId.value]
+  if (!item) {
+    return []
+  }
+
+  return buildItemMenuActions(item)
+})
+
+watch(activeMenuActions, (actions) => {
+  if (openMenuId.value && actions.length === 0) {
+    closeMenu()
+  }
+})
+
+const clearTreeClipboard = async () => {
+  await clearClipboard()
+  activeClipboardItem.value = null
+  closeMenu()
+}
+
+const handleActionSelect = async (action: ContentTreeMenuAction) => {
+  if (action.disabled) {
+    return
+  }
+
+  closeMenu()
+  await action.onSelect()
+}
+
+const handleMenuOpenChange = (value: boolean) => {
+  if (!value) {
+    closeMenu()
+  }
+}
+
+const handleItemPointerDown = (event: MouseEvent, id: string) => {
+  if (event.button !== 0 || currentlyEditingId.value === id || isDragging.value) {
     return
   }
 
@@ -473,7 +983,42 @@ function handleItemPointerDown(event: MouseEvent, id: string) {
   }
 }
 
-function handleItemNavigate(event: MouseEvent, id: string) {
+const handleItemContextMenu = (event: MouseEvent, id: string) => {
+  event.preventDefault()
+  event.stopPropagation()
+
+  if (!selectedItemsSet.value.has(id) || selectedItemIds.value.length === 0) {
+    selectSingleItem(id)
+  } else {
+    selectedItemId.value = id
+  }
+
+  void openMenu(id, resolveMenuAnchorElement(event.currentTarget))
+}
+
+const handleRootContextMenu = (event: MouseEvent) => {
+  if (!canOpenRootMenu.value) {
+    return
+  }
+
+  event.preventDefault()
+  event.stopPropagation()
+  void openMenu('root', resolveMenuAnchorElement(event.currentTarget))
+}
+
+const handleItemMenuTrigger = (event: MouseEvent, id: string) => {
+  event.preventDefault()
+  event.stopPropagation()
+  void openMenu(id, resolveMenuAnchorElement(event.currentTarget))
+}
+
+const handleRootMenuTrigger = (event: MouseEvent) => {
+  event.preventDefault()
+  event.stopPropagation()
+  void openMenu('root', resolveMenuAnchorElement(event.currentTarget))
+}
+
+const handleItemNavigate = (event: MouseEvent, id: string) => {
   if (Date.now() - lastDragEndedAt < 250) {
     event.preventDefault()
     event.stopPropagation()
@@ -491,34 +1036,38 @@ function handleItemNavigate(event: MouseEvent, id: string) {
   }
 }
 
-function getSelectedDragItemsFor(id: string): ContentTreeDragItem[] {
-  const selection =
+const getSelectedDragItemsFor = (id: string): ContentTreeDragItem[] => {
+  const rawSelection =
     dragSelectionSnapshot.value && dragSelectionSnapshot.value.includes(id)
       ? dragSelectionSnapshot.value
       : selectedItemIds.value
-  const selectionSet = new Set(selection)
 
-  if (!selectionSet.has(id) || selection.length === 0) {
+  if (!rawSelection.includes(id)) {
     return [{ id }]
   }
 
-  return selection.map((selectedId) => ({ id: selectedId }))
+  const normalizedIds = getNormalizedIds(rawSelection)
+  if (normalizedIds.length === 0) {
+    return [{ id }]
+  }
+
+  return normalizedIds.map((selectedId) => ({ id: selectedId }))
 }
 
-function getDragPreviewTitle(item: FlatContentMenuItem, dragItems: ContentTreeDragItem[]) {
+const getDragPreviewTitle = (item: FlatContentMenuItem, dragItems: ContentTreeDragItem[]) => {
   if (dragItems.length > 1) {
-    return `${dragItems.length} pages`
+    return t('labels.contentTree.drag.multiple', { count: dragItems.length }) as string
   }
 
   return item.name
 }
 
-function canDropItemsOnTarget(dragItems: ContentTreeDragItem[], targetId: string | null) {
+const canDropItemsOnTarget = (dragItems: ContentTreeDragItem[], targetId: string | null) => {
   if (!dragItems.length) {
     return false
   }
 
-  const draggedIds = new Set(dragItems.map((item) => item.id))
+  const draggedIds = new Set(getNormalizedIds(dragItems.map((item) => item.id)))
 
   if (targetId === null) {
     return true
@@ -538,74 +1087,64 @@ function canDropItemsOnTarget(dragItems: ContentTreeDragItem[], targetId: string
   return true
 }
 
-function isSelfDrop(dragItems: ContentTreeDragItem[], targetId: string | null) {
+const isSelfDrop = (dragItems: ContentTreeDragItem[], targetId: string | null) => {
   if (!targetId) {
     return false
   }
 
-  return dragItems.some((item) => item.id === targetId)
+  return getNormalizedIds(dragItems.map((item) => item.id)).includes(targetId)
 }
 
-async function moveDraggedItemsToTarget(
+const moveDraggedItemsToTarget = async (
   dragItems: ContentTreeDragItem[],
-  targetId: string | null,
-  edge: Edge | null
-) {
-  if (!dragItems.length) {
+  targetId: string | null
+) => {
+  const orderedDraggedIds = getNormalizedIds(
+    dragItems.map((item) => item.id).filter((id, index, array) => array.indexOf(id) === index)
+  )
+
+  if (!orderedDraggedIds.length) {
     finishDragState()
     return
   }
-
-  const orderedDraggedIds = dragItems
-    .map((item) => item.id)
-    .filter((id, index, array) => array.indexOf(id) === index)
 
   if (orderedDraggedIds.length === 1 && targetId === orderedDraggedIds[0]) {
     finishDragState()
     return
   }
 
-  if (targetId === null) {
-    try {
-      for (const id of orderedDraggedIds) {
-        await moveContent({
-          id,
-          payload: {
-            parent_id: null,
-          },
-        })
-      }
-    } finally {
-      finishDragState()
-    }
-
-    return
-  }
-
-  const target = data.value?.[targetId]
-
-  if (!target) {
-    finishDragState()
-    return
-  }
-
-  const parentId = target.type === 'single' ? (target.pid ?? null) : target.id
-
   try {
-    for (const id of orderedDraggedIds) {
-      await moveContent({
-        id,
-        payload: {
-          parent_id: parentId,
+    if (targetId === null) {
+      await executeTreeOperations([
+        {
+          type: 'move',
+          ids: orderedDraggedIds,
+          parent_id: null,
         },
-      })
+      ])
+
+      return
     }
+
+    const target = data.value?.[targetId]
+    if (!target) {
+      return
+    }
+
+    const parentId = target.type === 'single' ? (target.pid ?? null) : target.id
+    await executeTreeOperations([
+      {
+        type: 'move',
+        ids: orderedDraggedIds,
+        parent_id: parentId,
+      },
+    ])
   } finally {
     finishDragState()
   }
 }
 
-function registerItemInteractions(item: FlatContentMenuItem, element: HTMLElement) {
+const registerItemInteractions = (item: FlatContentMenuItem, element: HTMLElement) => {
   const cleanup = combine(
     draggable({
       element,
@@ -703,19 +1242,18 @@ function registerItemInteractions(item: FlatContentMenuItem, element: HTMLElemen
           activeDropEdge.value = null
         }
       },
-      onDrop: async ({ source, self }) => {
+      onDrop: async ({ source }) => {
         const dragItems = getContentTreeDragItems(source.data)
-        const closestEdge = extractClosestEdge(self.data)
 
         if (!canDropItemsOnTarget(dragItems, item.id)) {
           if (!isSelfDrop(dragItems, item.id)) {
-            toast.error('Invalid move')
+            toast.error(t('labels.contentTree.errors.invalidMove') as string)
           }
           clearDropState()
           return
         }
 
-        await moveDraggedItemsToTarget(dragItems, item.id, closestEdge)
+        await moveDraggedItemsToTarget(dragItems, item.id)
       },
     })
   )
@@ -791,7 +1329,7 @@ watch([treeContainerRef, rootDropZoneRef], ([containerElement, rootElement], _, 
       },
       onDrop: async ({ source }) => {
         const dragItems = getContentTreeDragItems(source.data)
-        await moveDraggedItemsToTarget(dragItems, null, null)
+        await moveDraggedItemsToTarget(dragItems, null)
       },
     })
   )
@@ -821,13 +1359,14 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
   itemCleanupMap.forEach((cleanup) => cleanup())
   itemCleanupMap.clear()
+  titleRefMap.clear()
 })
 </script>
 
 <template>
   <aside
     ref="treeContainerRef"
-    class="flex h-full min-h-0 flex-col overflow-hidden"
+    class="relative flex h-full min-h-0 flex-col overflow-hidden"
   >
     <ScrollArea class="h-full min-h-0 flex-1">
       <div
@@ -866,6 +1405,7 @@ onBeforeUnmount(() => {
             'group relative mb-2 flex w-full items-center gap-2 rounded-md border border-transparent -my-1 px-2 py-1 transition-all duration-150',
             rootDropMode ? 'bg-accent/50 ring-1 ring-info' : '',
           ]"
+          @contextmenu="handleRootContextMenu"
         >
           <button
             type="button"
@@ -899,7 +1439,7 @@ onBeforeUnmount(() => {
             </div>
           </button>
 
-          <div class="ml-auto flex items-center">
+          <div class="ml-auto flex items-center gap-1">
             <Button
               v-if="canManageContent"
               variant="ghost"
@@ -908,13 +1448,23 @@ onBeforeUnmount(() => {
             >
               <Icon name="lucide:plus" />
             </Button>
+
+            <Button
+              v-if="buildRootMenuActions().length > 0"
+              variant="ghost"
+              size="toolbar"
+              class="opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100"
+              @click.stop="handleRootMenuTrigger"
+            >
+              <Icon name="lucide:ellipsis-vertical" />
+            </Button>
           </div>
 
           <DropIndicator
             v-if="rootDropMode === 'root'"
             edge="bottom"
             gap="0px"
-            label="Move to root"
+            :label="$t('labels.contentTree.drop.moveToRoot')"
           />
         </div>
 
@@ -932,6 +1482,7 @@ onBeforeUnmount(() => {
             'transition-colors duration-150 hover:bg-border',
             'cursor-pointer font-semibold',
             item.value.id === selectedItemId ? 'text-primary' : '',
+            isCutItem(item.value.id) ? 'opacity-50' : '',
             isItemSelected(item.value.id) ? 'bg-border text-primary' : '',
             activeDropTargetId === item.value.id && activeDropEdge === 'left'
               ? 'bg-accent/50 ring-1 ring-info/30'
@@ -939,6 +1490,7 @@ onBeforeUnmount(() => {
           ]"
           @pointerdown="handleItemPointerDown($event, item.value.id)"
           @click="handleItemNavigate($event, item.value.id)"
+          @contextmenu="handleItemContextMenu($event, item.value.id)"
           @toggle="handleToggle"
         >
           <DropIndicator
@@ -946,7 +1498,7 @@ onBeforeUnmount(() => {
             :edge="activeDropEdge"
             gap="4px"
             inset="6px"
-            label="Move into"
+            :label="$t('labels.contentTree.drop.moveInto')"
           />
 
           <button
@@ -971,6 +1523,7 @@ onBeforeUnmount(() => {
           />
 
           <RenamableTitle
+            :ref="setTitleRef(item.value.id)"
             :name="item.value.name"
             :disabled="!canManageContent"
             class="w-full truncate text-left"
@@ -990,7 +1543,7 @@ onBeforeUnmount(() => {
             <div
               v-if="!item.value.pat"
               class="h-2 w-2 rounded-full bg-text-muted"
-              title="Draft"
+              :title="$t('labels.contentTree.status.draft')"
             />
             <SimpleTooltip
               v-else
@@ -1000,35 +1553,86 @@ onBeforeUnmount(() => {
             </SimpleTooltip>
           </div>
 
-          <div
-            class="absolute right-6 flex items-center gap-1 overflow-clip bg-border opacity-0 transition-opacity duration-200 group-hover:w-auto group-hover:opacity-100"
-          >
+          <div class="absolute right-4">
             <button
-              v-if="canManageContent && item.value.type !== 'single'"
-              class="flex transform cursor-pointer items-center hover:text-primary"
-              @click.stop.prevent="initCreate(item.value.id)"
-            >
-              <Icon name="lucide:plus" />
-            </button>
-            <button
-              v-if="canManageContent"
               type="button"
-              title="Delete item"
-              class="flex transform cursor-pointer items-center hover:text-red-500"
-              @click.stop.prevent="initDelete(item.value)"
+              :aria-label="$t('labels.contentTree.actions.more')"
+              :class="[
+                'cursor-pointer flex items-center rounded-sm p-1 text-muted transition-opacity duration-200 hover:text-primary focus-visible:opacity-100',
+                isItemSelected(item.value.id) || openMenuId === item.value.id
+                  ? 'opacity-100'
+                  : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
+              ]"
+              @pointerdown.stop.prevent
+              @click.stop.prevent="handleItemMenuTrigger($event, item.value.id)"
             >
-              <Icon name="lucide:trash-2" />
+              <Icon name="lucide:ellipsis-vertical" />
             </button>
           </div>
         </TreeItem>
       </TreeRoot>
     </ScrollArea>
 
+    <DropdownMenu
+      :open="openMenuId !== null"
+      @update:open="handleMenuOpenChange"
+    >
+      <DropdownMenuContent
+        v-if="activeMenuActions.length > 0"
+        align="end"
+        :reference="activeMenuAnchor ?? undefined"
+      >
+        <template
+          v-for="action in activeMenuActions"
+          :key="action.id"
+        >
+          <DropdownMenuSeparator v-if="action.separatorBefore" />
+          <DropdownMenuItem
+            :disabled="action.disabled"
+            :class="action.destructive ? 'text-destructive focus:text-destructive' : ''"
+            @select.prevent="handleActionSelect(action)"
+          >
+            <Icon :name="`lucide:${action.icon}`" />
+            <span>{{ action.label }}</span>
+          </DropdownMenuItem>
+        </template>
+      </DropdownMenuContent>
+    </DropdownMenu>
+
+    <div
+      class="absolute inset-x-4 bottom-0 z-10 flex flex-col items-center gap-3 overflow-clip py-4"
+    >
+      <TransitionGroup
+        enter-active-class="transition duration-150 ease-butter"
+        leave-active-class="transition duration-150 ease-butter"
+        enter-from-class="opacity-0 translate-y-full"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 translate-y-full"
+      >
+        <div
+          v-if="hasClipboardItem"
+          key="clearClipboard"
+        >
+          <Button
+            :title="t('actions.clearClipboard')"
+            size="xs"
+            variant="ghost"
+            @click="clearTreeClipboard"
+          >
+            <Icon name="lucide:trash-2" />
+            <span>{{ t('actions.clearClipboard') }}</span>
+          </Button>
+        </div>
+      </TransitionGroup>
+    </div>
+
     <CreateContentDialog
       v-if="canManageContent"
       v-model:open="showCreateDialog"
       :space-id="props.spaceId"
       :parent-id="createParentId"
+      :on-submit="handleCreateSubmit"
     />
   </aside>
 </template>

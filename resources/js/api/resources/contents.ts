@@ -1,5 +1,11 @@
 import type { ApiResponse, BaseQueryParams } from '~/types'
-import type { ContentResource, CreateContentPayload, UpdateContentPayload } from '~/types/contents'
+import type {
+  ContentResource,
+  ContentTreeOperationPayload,
+  ContentTreeOperationResult,
+  CreateContentPayload,
+  UpdateContentPayload,
+} from '~/types/contents'
 
 type ForceableContentPayload = UpdateContentPayload & {
   force?: boolean
@@ -152,6 +158,15 @@ export class Contents extends BaseResource<
   ): Promise<ApiResponse<ContentResource>> {
     return this.client.post<ApiResponse<ContentResource>>(
       `${this.basePath}/${contentId}/move`,
+      payload
+    )
+  }
+
+  public async treeOperations(payload: {
+    operations: ContentTreeOperationPayload[]
+  }): Promise<ApiResponse<ContentTreeOperationResult>> {
+    return this.client.post<ApiResponse<ContentTreeOperationResult>>(
+      `${this.basePath}/tree-operations`,
       payload
     )
   }

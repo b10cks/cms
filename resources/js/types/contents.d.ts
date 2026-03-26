@@ -67,6 +67,101 @@ export interface ContentBlock {
   color?: string | null
 }
 
+export interface ContentTreeOperationWarning {
+  type: string
+  language_iso?: string | null
+  content_id?: string | null
+  message?: string | null
+}
+
+export interface ContentTreeCreatedReference {
+  temp_id?: string
+  id: string
+}
+
+export interface ContentTreeOperationResult {
+  created: ContentTreeCreatedReference[]
+  warnings: ContentTreeOperationWarning[]
+}
+
+export interface ContentTreeCreateOperation {
+  type: 'create'
+  temp_id: string
+  parent_id?: string | null
+  block_id: string
+  name: string
+  slug: string
+  settings?: Partial<ContentSettings>
+}
+
+export interface ContentTreeMoveOperation {
+  type: 'move'
+  ids: string[]
+  parent_id?: string | null
+  after_id?: string | null
+}
+
+export interface ContentTreeDeleteOperation {
+  type: 'delete'
+  ids: string[]
+}
+
+export interface ContentTreeDuplicateOperation {
+  type: 'duplicate'
+  ids: string[]
+  parent_id?: string | null
+  after_id?: string | null
+}
+
+export interface ContentTreeUpdateBlockOperation {
+  type: 'update_block'
+  id: string
+  block_id: string
+}
+
+export type ContentTreeOperationPayload =
+  | ContentTreeCreateOperation
+  | ContentTreeMoveOperation
+  | ContentTreeDeleteOperation
+  | ContentTreeDuplicateOperation
+  | ContentTreeUpdateBlockOperation
+
+export interface ContentTreeClipboardSnapshotItem {
+  id: string
+  parent_id: string | null
+  block_id: string
+  block_type: ContentBlock['type']
+  tree_index: number
+  descendant_ids: string[]
+}
+
+export interface ContentTreeClipboardSingleItem {
+  type: 'content-tree-clipboard-item'
+  data: ContentTreeClipboardSnapshotItem
+  timestamp: number
+  spaceId: string
+  _isCut?: boolean
+}
+
+export interface ContentTreeClipboardMultipleItems {
+  type: 'content-tree-clipboard-items'
+  data: ContentTreeClipboardSnapshotItem[]
+  timestamp: number
+  spaceId: string
+  _isCut?: boolean
+}
+
+export type ContentTreeClipboardItem =
+  | ContentTreeClipboardSingleItem
+  | ContentTreeClipboardMultipleItems
+
+export interface ContentTreeActionContext {
+  target_id: string | null
+  selected_ids: string[]
+  resolved_ids: string[]
+  uses_selection: boolean
+}
+
 export interface ContentSettings {
   disablePreview: boolean
   i18n_mode_override?: 'inherit' | 'overlay' | 'independent'

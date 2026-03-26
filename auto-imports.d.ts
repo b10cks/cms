@@ -113,6 +113,7 @@ declare global {
   const useContentPresence: typeof import('./resources/js/composables/usePresence').useContentPresence
   const useContentSchemaState: typeof import('./resources/js/composables/useContentSchemaState').useContentSchemaState
   const useContentTree: typeof import('./resources/js/composables/useContentTree').useContentTree
+  const useContentTreeClipboard: typeof import('./resources/js/composables/useContentTreeClipboard').useContentTreeClipboard
   const useContentVersions: typeof import('./resources/js/composables/useContentVersions').useContentVersions
   const useContentWizardApply: typeof import('./resources/js/composables/useContentWizardApply').useContentWizardApply
   const useContentWizardCollaboration: typeof import('./resources/js/composables/useContentWizardCollaboration').useContentWizardCollaboration
@@ -204,6 +205,9 @@ declare global {
   // @ts-ignore
   export type { ContentTreeItem, FindResult } from './resources/js/composables/useContentTree'
   import('./resources/js/composables/useContentTree')
+  // @ts-ignore
+  export type { ContentTreeClipboardValidationContext } from './resources/js/composables/useContentTreeClipboard'
+  import('./resources/js/composables/useContentTreeClipboard')
   // @ts-ignore
   export type { ClipboardSingleItem, ClipboardMultipleItems, ClipboardItem } from './resources/js/composables/useGlobalClipboard'
   import('./resources/js/composables/useGlobalClipboard')
@@ -335,6 +339,7 @@ declare module 'vue' {
     readonly useContentPresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['useContentPresence']>
     readonly useContentSchemaState: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['useContentSchemaState']>
     readonly useContentTree: UnwrapRef<typeof import('./resources/js/composables/useContentTree')['useContentTree']>
+    readonly useContentTreeClipboard: UnwrapRef<typeof import('./resources/js/composables/useContentTreeClipboard')['useContentTreeClipboard']>
     readonly useContentVersions: UnwrapRef<typeof import('./resources/js/composables/useContentVersions')['useContentVersions']>
     readonly useContentWizardApply: UnwrapRef<typeof import('./resources/js/composables/useContentWizardApply')['useContentWizardApply']>
     readonly useContentWizardCollaboration: UnwrapRef<typeof import('./resources/js/composables/useContentWizardCollaboration')['useContentWizardCollaboration']>
