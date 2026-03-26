@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.3.26-858c2de] — 2026-3-26
+
+- ✨ Add ContextMenu to ContentTree
+- ⬆️ Bump versions
+- 👔 Improve Localization and fix some issues
+
 ## [v2026.3.24-7764460] — 2026-3-24
 
 - 🐛 Fix auth guard for new space
