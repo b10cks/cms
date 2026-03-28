@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.3.28-0402bd4] — 2026-3-28
+
+- 🐛 Fix focus fallback for assets
+
 ## [v2026.3.26-858c2de] — 2026-3-26
 
 - ✨ Add ContextMenu to ContentTree
