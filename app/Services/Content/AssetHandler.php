@@ -47,7 +47,7 @@ class AssetHandler
                 $assetTranslationFields = $content->i18n_parent ? data_get($asset, "data.fields.{$content->language_iso}", []) : [];
                 $assetFields = $assetTranslationFields + data_get($asset, 'data.fields._default', []);
                 $result = $assetFields + ($src['data'] ?? []);
-                $result['focus'] = data_get($src, 'data.focus', data_get($src, 'data.focus', null));
+                $result['focus'] = data_get($src, 'data.focus', data_get($asset, 'data.focus', null));
 
                 $src = [
                     'url' => $asset->getUrl(),
