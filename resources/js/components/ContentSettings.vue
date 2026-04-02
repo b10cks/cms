@@ -2,7 +2,12 @@
 import { computed, inject } from 'vue'
 
 import { CheckboxField, InputField, SelectField } from '~/components/ui/form'
+import type { ComboboxOption } from '~/components/ui/form/ComboboxField.vue'
+import ComboboxField from '~/components/ui/form/ComboboxField.vue'
+import { resolveAllowedChildContentBlocks } from '~/lib/content-children'
 import type { ContentResource } from '~/types/contents'
+
+import { Alert } from './ui/alert'
 
 const { t } = useI18n()
 const content = defineModel<ContentResource>()
@@ -12,8 +17,13 @@ const access = useAccessControl(computed(() => ({ space_id: spaceId || undefined
 const canManageContent = computed(() => access.hasAbility('content.manage'))
 const { useSpaceQuery } = useSpaces()
 const { data: space } = useSpaceQuery(spaceId || null)
+const { useBlocksQuery } = useBlocks(spaceId || '')
+const { useBlockTagsQuery } = useBlockTags(spaceId || '')
+const { data: blocks } = useBlocksQuery({ per_page: 1000 })
+const { data: blockTags } = useBlockTagsQuery({ per_page: 1000 })
 
 const isCanonical = computed(() => !!content.value && content.value.i18n_parent_id === null)
+const canManageChildSettings = computed(() => canManageContent.value && isCanonical.value)
 const effectiveMode = computed(
   () => content.value?.effective_i18n_mode || space.value?.settings.i18n_mode || 'overlay'
 )
@@ -26,6 +36,68 @@ const overrideOptions = computed(() => [
     label: t('labels.contents.settings.i18n.override.independent'),
   },
 ])
+
+const childBlockOptions = computed((): ComboboxOption<string>[] =>
+  resolveAllowedChildContentBlocks(blocks.value?.data)
+    .map(({ slug, name }) => ({
+      value: slug,
+      label: name,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+)
+
+const childTagOptions = computed((): ComboboxOption<string>[] =>
+  (blockTags.value?.data || []).map(({ name }) => ({
+    value: name,
+    label: name,
+  }))
+)
+
+const availableDefaultChildBlocks = computed(() =>
+  resolveAllowedChildContentBlocks(blocks.value?.data, content.value?.settings)
+)
+
+const defaultChildBlockOptions = computed(() =>
+  availableDefaultChildBlocks.value.map((block) => ({
+    value: block.id,
+    label: block.name,
+  }))
+)
+
+const filterOptions = (
+  option: ComboboxOption<string>,
+  search: string,
+  selectedValues: string[]
+): boolean => {
+  const searchLower = search.toLowerCase()
+  if (selectedValues.includes(option.value)) {
+    return false
+  }
+
+  return !(
+    search &&
+    !option.value.toLowerCase().includes(searchLower) &&
+    !String(option.label).toLowerCase().includes(searchLower)
+  )
+}
+
+watch(
+  availableDefaultChildBlocks,
+  (nextBlocks) => {
+    if (!content.value?.settings.default_child_block) {
+      return
+    }
+
+    const isCurrentDefaultAllowed = nextBlocks.some(
+      (block) => block.id === content.value?.settings.default_child_block
+    )
+
+    if (!isCurrentDefaultAllowed) {
+      content.value.settings.default_child_block = null
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
@@ -65,11 +137,83 @@ const overrideOptions = computed(() => [
       "
       :options="overrideOptions"
     />
-    <div
+    <Alert
       v-if="content"
-      class="rounded-lg border border-border bg-surface px-4 py-3 text-sm text-muted"
+      variant="modern"
+      color="info"
     >
       {{ $t('labels.contents.settings.i18n.effectiveMode', { mode: effectiveMode }) }}
+    </Alert>
+    <div
+      v-if="content"
+      class="space-y-4 rounded-lg bg-surface px-4 py-4"
+    >
+      <div class="space-y-1">
+        <h3 class="text-sm font-semibold text-primary">
+          {{ $t('labels.contents.settings.children.title') }}
+        </h3>
+        <p class="text-sm text-muted">
+          {{ $t('labels.contents.settings.children.description') }}
+        </p>
+      </div>
+
+      <template v-if="isCanonical">
+        <CheckboxField
+          v-model="content.settings.restrict_child_blocks"
+          :label="$t('labels.contents.settings.children.restrict')"
+          :disabled="!canManageChildSettings"
+          name="restrictChildBlocks"
+          :description="$t('labels.contents.settings.children.restrictDescription')"
+        />
+
+        <ComboboxField
+          v-if="content.settings.restrict_child_blocks"
+          v-model="content.settings.child_block_whitelist"
+          name="childBlockWhitelist"
+          :label="$t('labels.contents.settings.children.blockWhitelist')"
+          :description="$t('labels.contents.settings.children.blockWhitelistDescription')"
+          placeholder="labels.contents.settings.children.blockWhitelistPlaceholder"
+          :disabled="!canManageChildSettings"
+          :options="childBlockOptions"
+          :filter-fn="filterOptions"
+          multiple
+          searchable
+          :empty-text="$t('labels.contents.settings.children.blockWhitelistEmpty')"
+        />
+
+        <ComboboxField
+          v-if="content.settings.restrict_child_blocks"
+          v-model="content.settings.child_tag_whitelist"
+          name="childTagWhitelist"
+          :label="$t('labels.contents.settings.children.tagWhitelist')"
+          :description="$t('labels.contents.settings.children.tagWhitelistDescription')"
+          placeholder="labels.contents.settings.children.tagWhitelistPlaceholder"
+          :disabled="!canManageChildSettings"
+          :options="childTagOptions"
+          :filter-fn="filterOptions"
+          multiple
+          searchable
+          :empty-text="$t('labels.contents.settings.children.tagWhitelistEmpty')"
+        />
+
+        <SelectField
+          v-model="content.settings.default_child_block"
+          name="defaultChildBlock"
+          :label="$t('labels.contents.settings.children.defaultChildBlock')"
+          :description="$t('labels.contents.settings.children.defaultChildBlockDescription')"
+          :readonly="!canManageChildSettings"
+          :options="defaultChildBlockOptions"
+          placeholder="labels.contents.settings.children.defaultChildBlockPlaceholder"
+          clearable
+        />
+      </template>
+
+      <div
+        v-else
+        class="rounded-lg border border-dashed border-border bg-background px-4 py-3 text-sm text-muted"
+      >
+        {{ $t('labels.contents.settings.children.canonicalOnly') }}
+      </div>
     </div>
   </div>
 </template>

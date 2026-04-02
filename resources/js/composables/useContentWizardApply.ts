@@ -133,6 +133,7 @@ export function useContentWizardApply(
               slug: resolveEffectiveSlug(node.title, node.slug),
               block_id: node.blockId,
               parent_id: getNodeReferenceId(node.parentId),
+              settings: node.settings,
             },
           ]
         })

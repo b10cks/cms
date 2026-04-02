@@ -5,6 +5,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/com
 import { FormField, InputField } from '~/components/ui/form'
 import IconName from '~/components/ui/IconName.vue'
 import {
+  resolveCreateContentBlocks,
+  resolvePreferredCreateContentBlock,
+} from '~/lib/content-children'
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -31,6 +35,7 @@ const { data: space } = useSpaceQuery(props.spaceId)
 
 const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
+const { useContentQuery } = useContent(props.spaceId)
 
 const content = ref<CreateContentPayload>({
   block_id: '',
@@ -38,21 +43,32 @@ const content = ref<CreateContentPayload>({
   name: '',
 })
 
+const parentContentId = computed(() => (open.value && props.parentId ? props.parentId : null))
+const { data: parentContent, isLoading: isLoadingParentContent } = useContentQuery(parentContentId)
+const canonicalParentContentId = computed(
+  () =>
+    parentContent.value && parentContent.value.i18n_parent_id
+      ? parentContent.value.i18n_parent_id
+      : null
+)
+const { data: canonicalParentContent, isLoading: isLoadingCanonicalParentContent } =
+  useContentQuery(canonicalParentContentId)
+
 const blockId = computed(() => content.value.block_id)
 const { useBlockTemplatesQuery } = useBlockTemplates(props.spaceId, blockId)
 const selectedTemplate = ref<BlockTemplate | null>(null)
-
-watch(
-  space,
-  (s) => {
-    if (!content.value.block_id || content.value.block_id === '') {
-      content.value.block_id = s?.settings.default_block || ''
-    }
-  },
-  { immediate: true }
+const canonicalParentSettings = computed(
+  () => canonicalParentContent.value?.settings || parentContent.value?.settings || null
+)
+const isLoadingParentRestrictions = computed(
+  () => !!props.parentId && (isLoadingParentContent.value || isLoadingCanonicalParentContent.value)
 )
 
 const handleCreate = async (editContent: CreateContentPayload) => {
+  if (!editContent.block_id) {
+    return
+  }
+
   const payload: CreateContentPayload = {
     ...editContent,
     parent_id: props.parentId,
@@ -69,7 +85,7 @@ const handleCreate = async (editContent: CreateContentPayload) => {
 
 const resetForm = () => {
   content.value = {
-    block_id: content.value.block_id,
+    block_id: '',
     slug: '',
     name: '',
   }
@@ -77,15 +93,23 @@ const resetForm = () => {
 }
 
 const possibleBlocks = computed(() => {
-  return (
-    blocks.value?.data.filter((b: BlockResource) => {
-      return b.type === 'root' || b.type === 'universal' || (!props.parentId && b.type === 'single')
-    }) || []
-  )
+  return resolveCreateContentBlocks({
+    blocks: blocks.value?.data,
+    parentSettings: canonicalParentSettings.value,
+    isChild: !!props.parentId,
+  })
 })
 
 const currentBlock = computed(() => {
   return possibleBlocks.value?.find((b: BlockResource) => b.id === content.value?.block_id)
+})
+
+const preferredBlockId = computed(() => {
+  return resolvePreferredCreateContentBlock({
+    availableBlocks: possibleBlocks.value,
+    parentSettings: props.parentId ? canonicalParentSettings.value : null,
+    spaceDefaultBlockId: space.value?.settings.default_block,
+  })
 })
 
 const { data: templates } = useBlockTemplatesQuery()
@@ -101,6 +125,38 @@ const createSlug = () => {
 const selectTemplate = (template: BlockTemplate | null) => {
   selectedTemplate.value = template
 }
+
+const syncSelectedBlock = () => {
+  const possibleBlockIds = possibleBlocks.value.map((block) => block.id)
+
+  if (possibleBlockIds.length === 0) {
+    content.value.block_id = ''
+    selectedTemplate.value = null
+    return
+  }
+
+  if (possibleBlockIds.includes(content.value.block_id)) {
+    return
+  }
+
+  content.value.block_id = preferredBlockId.value
+  selectedTemplate.value = null
+}
+
+watch([possibleBlocks, preferredBlockId], syncSelectedBlock, { immediate: true })
+watch(blockId, () => {
+  selectedTemplate.value = null
+})
+watch(open, (isOpen, wasOpen) => {
+  if (isOpen) {
+    syncSelectedBlock()
+    return
+  }
+
+  if (wasOpen) {
+    resetForm()
+  }
+})
 </script>
 
 <template>
@@ -115,6 +171,18 @@ const selectTemplate = (template: BlockTemplate | null) => {
       >
         <DialogHeaderCombined :title="$t('labels.contents.createContent')" />
         <div class="grid gap-6">
+          <div
+            v-if="props.parentId && isLoadingParentRestrictions"
+            class="rounded-lg border border-border bg-surface px-4 py-3 text-sm text-muted"
+          >
+            {{ $t('labels.contents.create.loadingRestrictions') }}
+          </div>
+          <div
+            v-else-if="!possibleBlocks.length"
+            class="rounded-lg border border-border bg-surface px-4 py-3 text-sm text-muted"
+          >
+            {{ $t('labels.contents.create.noAllowedChildren') }}
+          </div>
           <InputField
             v-model="content.name"
             :label="$t('labels.contents.fields.name')"
@@ -137,6 +205,7 @@ const selectTemplate = (template: BlockTemplate | null) => {
               <Select
                 :id="id"
                 v-model="content.block_id"
+                :disabled="isLoadingParentRestrictions || !possibleBlocks.length"
               >
                 <SelectTrigger>
                   <div
@@ -150,6 +219,12 @@ const selectTemplate = (template: BlockTemplate | null) => {
                     />
                     <p>{{ currentBlock?.name }}</p>
                   </div>
+                  <span
+                    v-else
+                    class="text-muted"
+                  >
+                    {{ $t('labels.contents.create.selectContentType') }}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
@@ -230,6 +305,7 @@ const selectTemplate = (template: BlockTemplate | null) => {
           <Button
             variant="primary"
             type="submit"
+            :disabled="isLoadingParentRestrictions || !possibleBlocks.length || !content.block_id"
           >
             {{ $t('actions.create') }}
           </Button>

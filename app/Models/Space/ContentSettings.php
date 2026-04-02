@@ -12,6 +12,10 @@ class ContentSettings extends Settings
     protected array $defaults = [
         'disablePreview' => false,
         'i18n_mode_override' => 'inherit',
+        'restrict_child_blocks' => false,
+        'child_block_whitelist' => [],
+        'child_tag_whitelist' => [],
+        'default_child_block' => null,
     ];
 
     /**
@@ -26,6 +30,12 @@ class ContentSettings extends Settings
                 'string',
                 Rule::in(['inherit', 'overlay', 'independent']),
             ],
+            'restrict_child_blocks' => [$partial ? 'sometimes' : 'nullable', 'boolean'],
+            'child_block_whitelist' => [$partial ? 'sometimes' : 'nullable', 'array'],
+            'child_block_whitelist.*' => ['string'],
+            'child_tag_whitelist' => [$partial ? 'sometimes' : 'nullable', 'array'],
+            'child_tag_whitelist.*' => ['string'],
+            'default_child_block' => [$partial ? 'sometimes' : 'nullable', 'string'],
         ];
     }
 
@@ -47,6 +57,20 @@ class ContentSettings extends Settings
                     'overlay' => 'Use translated fields as overlays on top of the default language content.',
                     'independent' => 'Treat translations as fully independent content entries.',
                 ],
+            ],
+            'restrict_child_blocks' => [
+                'description' => 'Whether child content types should be restricted for this content family.',
+                'example' => false,
+            ],
+            'child_block_whitelist' => [
+                'description' => 'Allowed child content type slugs when child restrictions are active.',
+            ],
+            'child_tag_whitelist' => [
+                'description' => 'Allowed child content type tags when child restrictions are active.',
+            ],
+            'default_child_block' => [
+                'description' => 'Default child content block identifier for new children in this family.',
+                'nullable' => true,
             ],
         ];
     }

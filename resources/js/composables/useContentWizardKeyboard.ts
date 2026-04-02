@@ -14,8 +14,7 @@ export function useContentWizardKeyboard(options: {
     deletedReason?: string
   } | null
   focusNode: (nodeId: string) => void
-  createNodeFromSpaceDefault: (nodeId: string) => boolean
-  duplicateWithCurrentBlock: (nodeId: string, position: ContentWizardAddPosition) => boolean
+  createNodeFromPreferredBlock: (nodeId: string, position: ContentWizardAddPosition) => boolean
   openAddMenu: (nodeId: string, position: ContentWizardAddPosition) => boolean
   toggleDelete: (nodeId: string) => void
   startEditing: (nodeId: string, field: ContentWizardEditableField, initialChar?: string) => void
@@ -74,7 +73,7 @@ export function useContentWizardKeyboard(options: {
     if (event.key === 'Tab') {
       event.preventDefault()
       if (node?.isRootVirtual) {
-        if (!options.createNodeFromSpaceDefault(nodeId)) {
+        if (!options.createNodeFromPreferredBlock(nodeId, 'child')) {
           options.openAddMenu(nodeId, 'child')
         }
         return
@@ -85,7 +84,7 @@ export function useContentWizardKeyboard(options: {
         return
       }
 
-      if (!options.duplicateWithCurrentBlock(nodeId, 'child')) {
+      if (!options.createNodeFromPreferredBlock(nodeId, 'child')) {
         options.openAddMenu(nodeId, 'child')
       }
       return
@@ -99,7 +98,7 @@ export function useContentWizardKeyboard(options: {
           return
         }
 
-        if (!options.createNodeFromSpaceDefault(nodeId)) {
+        if (!options.createNodeFromPreferredBlock(nodeId, 'child')) {
           options.openAddMenu(nodeId, 'child')
         }
         return
@@ -110,7 +109,7 @@ export function useContentWizardKeyboard(options: {
         return
       }
 
-      if (!options.duplicateWithCurrentBlock(nodeId, 'sibling')) {
+      if (!options.createNodeFromPreferredBlock(nodeId, 'sibling')) {
         options.openAddMenu(nodeId, 'sibling')
       }
       return

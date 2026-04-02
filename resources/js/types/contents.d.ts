@@ -165,6 +165,10 @@ export interface ContentTreeActionContext {
 export interface ContentSettings {
   disablePreview: boolean
   i18n_mode_override?: 'inherit' | 'overlay' | 'independent'
+  restrict_child_blocks: boolean
+  child_block_whitelist: string[]
+  child_tag_whitelist: string[]
+  default_child_block?: string | null
 }
 
 export interface ContentResource {

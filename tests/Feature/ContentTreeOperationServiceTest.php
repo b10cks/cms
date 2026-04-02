@@ -27,7 +27,7 @@ class ContentTreeOperationServiceTest extends TestCase
         app()->instance('currentSpace', $space);
 
         $block = Block::factory()->create([
-            'type' => 'nestable',
+            'type' => 'root',
         ]);
 
         $root = $this->createContentItem($space, $block, 'Root', 'root');

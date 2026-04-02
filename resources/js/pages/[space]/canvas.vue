@@ -20,6 +20,9 @@ import {
   type TreeOperation,
 } from '~/composables/useAiContentTree'
 import {
+  resolvePreferredCreateContentBlock,
+} from '~/lib/content-children'
+import {
   useContentCanvasCommands,
   type ContentCanvasHistoryEntry,
 } from '~/composables/useContentCanvasCommands'
@@ -1267,23 +1270,10 @@ const broadcastCreatedSubtree = (nodeId: string) => {
   })
 }
 
-const getSpaceDefaultBlock = (availableBlocks: BlockResource[]) => {
-  const defaultBlockId = space.value?.settings?.default_block
-  if (!defaultBlockId) {
-    return null
-  }
-
-  return availableBlocks.find((block) => block.id === defaultBlockId) || null
-}
-
-const createNodeFromContext = (
-  nodeId: string,
-  position: ContentWizardAddPosition,
-  block?: BlockResource
-) => {
+const resolveAddContext = (nodeId: string, position: ContentWizardAddPosition) => {
   const node = treeApi.getNode(nodeId)
   if (!node) {
-    return false
+    return null
   }
 
   const resolvedPosition: ContentWizardAddPosition = node.isRootVirtual ? 'child' : position
@@ -1291,21 +1281,7 @@ const createNodeFromContext = (
     node.isRootVirtual || resolvedPosition === 'sibling'
       ? getBottomBlocks(nodeId)
       : getRightBlocks(nodeId)
-
-  const preferredBlock =
-    block ||
-    (!node.isRootVirtual
-      ? blocks.value.find((candidate) => candidate.id === node.blockId)
-      : null) ||
-    availableBlocks[0] ||
-    null
-
-  if (!preferredBlock || !availableBlocks.some((candidate) => candidate.id === preferredBlock.id)) {
-    toast.error(t('labels.contents.canvas.noBlocksAvailable'))
-    return false
-  }
-
-  const parentId =
+  const targetParentId =
     resolvedPosition === 'child'
       ? node.isRootVirtual
         ? null
@@ -1313,12 +1289,47 @@ const createNodeFromContext = (
       : node.isRootVirtual
         ? null
         : node.parentId
+  const targetParent = targetParentId ? treeApi.getNode(targetParentId) : null
+  const preferredBlockId = resolvePreferredCreateContentBlock({
+    availableBlocks,
+    parentSettings: targetParent?.settings,
+    spaceDefaultBlockId: space.value?.settings?.default_block,
+  })
+  const preferredBlock =
+    availableBlocks.find((candidate) => candidate.id === preferredBlockId) || null
+
+  return {
+    node,
+    resolvedPosition,
+    targetParentId,
+    availableBlocks,
+    preferredBlock,
+  }
+}
+
+const createNodeFromContext = (
+  nodeId: string,
+  position: ContentWizardAddPosition,
+  block?: BlockResource
+) => {
+  const context = resolveAddContext(nodeId, position)
+  if (!context) {
+    return false
+  }
+
+  const { node, resolvedPosition, targetParentId, availableBlocks, preferredBlock } = context
+  const selectedBlock = block || preferredBlock
+
+  if (!selectedBlock || !availableBlocks.some((candidate) => candidate.id === selectedBlock.id)) {
+    toast.error(t('labels.contents.canvas.noBlocksAvailable'))
+    return false
+  }
 
   const commandResult = history.executeCommand({
     label: 'add-node',
     execute: () => {
-      const createdNode = treeApi.addNode(preferredBlock, {
-        parentId,
+      const createdNode = treeApi.addNode(selectedBlock, {
+        parentId: targetParentId,
         position: resolvedPosition,
         referenceNodeId: node.isRootVirtual ? null : node.id,
       })
@@ -1346,42 +1357,16 @@ const createNodeFromContext = (
   return true
 }
 
-const createNodeFromSpaceDefault = (nodeId: string) => {
-  const node = treeApi.getNode(nodeId)
-  if (!node || !node.isRootVirtual) {
-    return false
-  }
-
-  const defaultBlock = getSpaceDefaultBlock(getBottomBlocks(nodeId))
-  if (!defaultBlock) {
-    return false
-  }
-
-  return createNodeFromContext(nodeId, 'child', defaultBlock)
-}
-
-const duplicateWithCurrentBlock = (nodeId: string, position: ContentWizardAddPosition) => {
-  const node = treeApi.getNode(nodeId)
-  if (!node || node.isRootVirtual || node.deletedReason) {
-    return false
-  }
-
-  const currentBlock = blocks.value.find((block) => block.id === node.blockId)
-  if (!currentBlock) {
-    return false
-  }
-
-  return createNodeFromContext(nodeId, position, currentBlock)
-}
+const createNodeFromPreferredBlock = (nodeId: string, position: ContentWizardAddPosition) =>
+  createNodeFromContext(nodeId, position)
 
 const openAddMenu = (nodeId: string, position: ContentWizardAddPosition) => {
-  const node = treeApi.getNode(nodeId)
-  const resolvedPosition: ContentWizardAddPosition =
-    nodeId === CONTENT_WIZARD_ROOT_ID ? 'child' : position
-  const availableBlocks =
-    node?.isRootVirtual || resolvedPosition === 'sibling'
-      ? getBottomBlocks(nodeId)
-      : getRightBlocks(nodeId)
+  const context = resolveAddContext(nodeId, position)
+  if (!context) {
+    return false
+  }
+
+  const { availableBlocks, resolvedPosition } = context
 
   if (availableBlocks.length === 0) {
     toast.error(t('labels.contents.canvas.noBlocksAvailable'))
@@ -1430,8 +1415,7 @@ function handleToggleDelete(nodeId: string) {
 const { handleKeydown } = useContentWizardKeyboard({
   getNode: treeApi.getNode,
   focusNode,
-  createNodeFromSpaceDefault,
-  duplicateWithCurrentBlock,
+  createNodeFromPreferredBlock,
   openAddMenu,
   toggleDelete: handleToggleDelete,
   startEditing,

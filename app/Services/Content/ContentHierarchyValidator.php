@@ -9,6 +9,11 @@ use Illuminate\Validation\ValidationException;
 
 class ContentHierarchyValidator
 {
+    public function __construct(
+        private readonly ChildContentRuleService $childContentRuleService,
+    ) {
+    }
+
     public function validatePlacement(
         Space $space,
         Block $block,
@@ -21,6 +26,12 @@ class ContentHierarchyValidator
         if ($parent?->block?->type === 'single') {
             throw ValidationException::withMessages([
                 'parent_id' => 'Single blocks cannot contain children.',
+            ]);
+        }
+
+        if ($parent !== null && ! $this->childContentRuleService->isBlockAllowedUnderParent($block, $parent)) {
+            throw ValidationException::withMessages([
+                'block_id' => 'This content type is not allowed under the selected parent.',
             ]);
         }
 

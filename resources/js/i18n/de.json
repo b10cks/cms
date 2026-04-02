@@ -553,6 +553,11 @@
         }
       },
       "createContent": "Neuen Inhalt erstellen",
+      "create": {
+        "selectContentType": "Inhaltstyp wählen",
+        "loadingRestrictions": "Child-Content-Einschränkungen werden geladen...",
+        "noAllowedChildren": "Dieses Elternelement erlaubt derzeit keine Child-Content-Typen."
+      },
       "blankTemplate": "Leer",
       "templates": "Vorlagen",
       "status": {
@@ -563,6 +568,24 @@
       "settings": {
         "disablePreview": "Vorschau deaktivieren",
         "disablePreviewDescription": "Deaktiviere das Vorschau-Panel für diesen Inhalt",
+        "children": {
+          "title": "Child Content",
+          "description": "Lege fest, welche Inhaltstypen unter diesem Eintrag erstellt werden dürfen, und wähle einen Standardtyp für Kinder.",
+          "restrict": "Child-Content-Typen einschränken",
+          "restrictDescription": "Begrenzt neue Child-Inhalte auf eine kuratierte Auswahl an Root- und Universal-Inhaltstypen.",
+          "blockWhitelist": "Erlaubte Child-Content-Typen",
+          "blockWhitelistPlaceholder": "Child-Content-Typen auswählen",
+          "blockWhitelistDescription": "Nur diese Inhaltstypen können als Kinder erstellt werden. Leer lassen, um alle Root- und Universal-Inhaltstypen zu erlauben.",
+          "blockWhitelistEmpty": "Keine Child-Content-Typen entsprechen deiner Suche.",
+          "tagWhitelist": "Erlaubte Child-Tags",
+          "tagWhitelistPlaceholder": "Child-Tags auswählen",
+          "tagWhitelistDescription": "Nur Child-Inhaltstypen mit diesen Tags sind erlaubt. Hilfreich für kuratierte Content-Familien.",
+          "tagWhitelistEmpty": "Keine Child-Tags entsprechen deiner Suche.",
+          "defaultChildBlock": "Standard-Child-Content-Typ",
+          "defaultChildBlockPlaceholder": "Standard-Child-Content-Typ auswählen",
+          "defaultChildBlockDescription": "Dieser Inhaltstyp wird beim Erstellen eines Kindelements unter diesem Eintrag vorausgewählt.",
+          "canonicalOnly": "Child-Content-Einstellungen werden auf der kanonischen Seite in der Standardsprache dieser Content-Familie verwaltet."
+        },
         "i18n": {
           "override": {
             "label": "I18n-Modus",

@@ -22,6 +22,7 @@ export function useBlockTemplates(spaceId: MaybeRef<string>, blockId: MaybeRef<s
         })
         return response.data
       },
+      enabled: computed(() => !!toValue(spaceId) && !!toValue(blockId)),
     })
   }
 

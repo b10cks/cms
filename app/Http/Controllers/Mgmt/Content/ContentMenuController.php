@@ -30,7 +30,7 @@ class ContentMenuController extends Controller
             ->withCount(['children'])
             ->with(['block', 'i18n_children']);
 
-        $contents = $query->get(['id', 'parent_id', 'name', 'slug', 'full_slug', 'block_id', 'published_at', 'created_at', 'updated_at'])
+        $contents = $query->get(['id', 'parent_id', 'name', 'slug', 'full_slug', 'block_id', 'settings', 'published_at', 'created_at', 'updated_at'])
             ->keyBy('id');
 
         return ContentMenuResource::collection($contents);

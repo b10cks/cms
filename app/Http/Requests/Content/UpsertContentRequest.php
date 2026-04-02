@@ -6,6 +6,7 @@ use App\Http\Requests\Traits\ExternalIdValidation;
 use App\Models\Space\Content;
 use App\Models\Space\ContentSettings;
 use App\Services\Content\ContentI18nValidator;
+use Illuminate\Support\Arr;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -102,12 +103,28 @@ class UpsertContentRequest extends FormRequest
                 }
 
                 $content = $this->route('content');
-                $errors = app(ContentI18nValidator::class)->validate($space, $this->validated(), $content);
+                $childSettingKeys = array_values(array_filter([
+                    $this->hasChildSetting('restrict_child_blocks') ? 'restrict_child_blocks' : null,
+                    $this->hasChildSetting('child_block_whitelist') ? 'child_block_whitelist' : null,
+                    $this->hasChildSetting('child_tag_whitelist') ? 'child_tag_whitelist' : null,
+                    $this->hasChildSetting('default_child_block') ? 'default_child_block' : null,
+                ]));
+                $errors = app(ContentI18nValidator::class)->validate(
+                    $space,
+                    $this->validated(),
+                    $content,
+                    $childSettingKeys,
+                );
 
                 foreach ($errors as $path => $message) {
                     $validator->errors()->add($path, $message);
                 }
             },
         ];
+    }
+
+    private function hasChildSetting(string $key): bool
+    {
+        return Arr::has($this->input('settings', []), $key);
     }
 }

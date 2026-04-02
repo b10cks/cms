@@ -121,6 +121,7 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
                 color: content.block?.color || null,
                 children: (content?.children_count || 0) > 0,
                 icon: content.block?.icon,
+                settings: content.settings || {},
                 i18n: content?.i18n_translations || [],
                 pat: content.published_at,
                 uat: content.updated_at,

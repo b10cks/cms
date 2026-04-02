@@ -88,9 +88,16 @@ const closeMenu = () => {
 }
 
 const openMenu = () => {
-  if (!props.disabled && props.blocks.length > 0) {
-    open.value = true
+  if (props.disabled || props.blocks.length === 0) {
+    return
   }
+
+  if (props.blocks.length === 1) {
+    selectBlock(props.blocks[0])
+    return
+  }
+
+  open.value = true
 }
 
 const setOptionRef = (index: number) => {

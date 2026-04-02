@@ -7,6 +7,8 @@ import {
   type ContentWizardOperation,
   type ContentWizardValidationError,
 } from '~/types/content-wizard'
+import type { ContentSettings } from '~/types/contents'
+import { resolveAllowedChildContentBlocks } from '~/lib/content-children'
 
 import { useContentWizardLayout } from './useContentWizardLayout'
 import { useContentWizardSlug } from './useContentWizardSlug'
@@ -26,6 +28,12 @@ const EMPTY_BOUNDS: ContentWizardBounds = {
   width: 0,
   height: 0,
 }
+
+const cloneNodeSettings = (settings: Partial<ContentSettings> | null | undefined) => ({
+  ...settings,
+  child_block_whitelist: [...(settings?.child_block_whitelist || [])],
+  child_tag_whitelist: [...(settings?.child_tag_whitelist || [])],
+})
 
 export function useContentWizardTree(
   blocks: Ref<BlockResource[]>,
@@ -51,6 +59,7 @@ export function useContentWizardTree(
     blockId: '__root__',
     blockType: 'root',
     blockName: 'Root',
+    settings: {},
     title: 'Root',
     slug: '',
     slugMode: 'manual',
@@ -80,6 +89,7 @@ export function useContentWizardTree(
 
   const cloneNode = (node: ContentWizardDraftNode): ContentWizardDraftNode => ({
     ...node,
+    settings: cloneNodeSettings(node.settings),
     childrenIds: [...node.childrenIds],
     layout: { ...node.layout },
     changes: { ...node.changes },
@@ -196,6 +206,14 @@ export function useContentWizardTree(
         return {
           valid: false,
           message: 'Single blocks cannot contain children.',
+        }
+      }
+
+      const allowedBlocks = resolveAllowedChildContentBlocks(blocks.value, parent.settings)
+      if (!allowedBlocks.some((candidate) => candidate.id === block.id)) {
+        return {
+          valid: false,
+          message: 'This content type is not allowed under the selected parent.',
         }
       }
     }
@@ -408,6 +426,7 @@ export function useContentWizardTree(
         blockId: item.block_id,
         blockType,
         blockName: block?.name || item.name,
+        settings: cloneNodeSettings(item.settings || {}),
         title: item.name,
         slug: item.slug,
         slugMode: resolveSlugMode(item.name, item.slug),
@@ -470,6 +489,7 @@ export function useContentWizardTree(
       slug?: string
       slugMode?: 'auto' | 'manual'
       title?: string
+      settings?: Partial<ContentSettings>
     }
   ) => {
     const targetParentId =
@@ -491,6 +511,7 @@ export function useContentWizardTree(
       blockId: block.id,
       blockType: block.type,
       blockName: block.name,
+      settings: cloneNodeSettings(options.settings),
       title,
       slug: options.slug ?? slugify(title),
       slugMode: options.slugMode ?? 'auto',
@@ -572,6 +593,7 @@ export function useContentWizardTree(
         parentId,
         position: 'child',
         title: isRootClone ? `${source.title} Copy` : source.title,
+        settings: source.settings,
       })
 
       clonedNode.slug = isRootClone ? slugify(`${source.title} Copy`) : source.slug

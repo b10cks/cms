@@ -9,9 +9,15 @@ class ContentI18nValidator
 {
     public function __construct(
         private readonly ContentI18nService $contentI18nService,
+        private readonly ChildContentRuleService $childContentRuleService,
     ) {}
 
-    public function validate(Space $space, array $data, ?Content $content = null): array
+    public function validate(
+        Space $space,
+        array $data,
+        ?Content $content = null,
+        array $submittedChildSettingKeys = [],
+    ): array
     {
         $errors = [];
         $defaultLanguage = $space->settings->getDefaultLanguage();
@@ -58,6 +64,12 @@ class ContentI18nValidator
             $errors['settings.i18n_mode_override'] = 'Only the canonical page may override the i18n mode.';
         }
 
+        if ($i18nParentId !== null) {
+            foreach ($submittedChildSettingKeys as $key) {
+                $errors["settings.{$key}"] = 'Only the canonical page may update child content settings.';
+            }
+        }
+
         if ($canonicalId !== null) {
             $duplicateExists = Content::query()
                 ->whereNull('deleted_at')
@@ -72,6 +84,10 @@ class ContentI18nValidator
             if ($duplicateExists) {
                 $errors['language_iso'] = 'A content family cannot contain more than one row for the same language.';
             }
+        }
+
+        foreach ($this->childContentRuleService->validateSettings($data['settings'] ?? []) as $path => $message) {
+            $errors[$path] = $message;
         }
 
         return $errors;

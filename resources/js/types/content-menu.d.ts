@@ -8,6 +8,7 @@ interface FlatContentMenuItem {
   pid: string | null
   children: boolean
   icon?: string
+  settings: Partial<ContentSettings>
   i18n: ContentMenuTranslation[]
   pat: string | null
   uat: string

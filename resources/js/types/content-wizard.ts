@@ -1,3 +1,4 @@
+import type { ContentSettings } from '~/types/contents'
 import type { User } from '~/types/users'
 
 export const CONTENT_WIZARD_ROOT_ID = '__root__'
@@ -62,6 +63,7 @@ export interface ContentWizardDraftNode {
   blockId: string
   blockType: ContentWizardBlockType
   blockName: string
+  settings: Partial<ContentSettings>
   title: string
   slug: string
   slugMode: ContentWizardSlugMode

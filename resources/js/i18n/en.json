@@ -558,6 +558,11 @@
         }
       },
       "createContent": "Create New Content",
+      "create": {
+        "selectContentType": "Select content type",
+        "loadingRestrictions": "Loading child content restrictions...",
+        "noAllowedChildren": "This parent does not allow any child content types right now."
+      },
       "blankTemplate": "Blank",
       "templates": "Templates",
       "status": {
@@ -568,6 +573,24 @@
       "settings": {
         "disablePreview": "Disable Preview",
         "disablePreviewDescription": "Disable the preview panel for this content",
+        "children": {
+          "title": "Child content",
+          "description": "Control which content types can be created below this content item and choose a default child type.",
+          "restrict": "Restrict child content types",
+          "restrictDescription": "Limit new child content to a curated set of root and universal content types.",
+          "blockWhitelist": "Allowed child content types",
+          "blockWhitelistPlaceholder": "Choose child content types",
+          "blockWhitelistDescription": "Only these content types can be created as children. Leave empty to allow every root and universal content type.",
+          "blockWhitelistEmpty": "No child content types match your search.",
+          "tagWhitelist": "Allowed child tags",
+          "tagWhitelistPlaceholder": "Choose child content tags",
+          "tagWhitelistDescription": "Only child content types with these tags will be allowed. Helpful for curated content families.",
+          "tagWhitelistEmpty": "No child tags match your search.",
+          "defaultChildBlock": "Default child content type",
+          "defaultChildBlockPlaceholder": "Select default child content type",
+          "defaultChildBlockDescription": "This content type will be preselected when creating a child under this item.",
+          "canonicalOnly": "Child content settings are managed on the canonical default-language page for this content family."
+        },
         "i18n": {
           "override": {
             "label": "I18n Mode",

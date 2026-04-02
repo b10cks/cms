@@ -2,6 +2,7 @@ import type {
   ContentI18nMode,
   ContentLanguageVersion,
   ContentResource,
+  ContentSettings,
   CreateContentPayload,
   UpdateContentPayload,
 } from '~/types/contents'
@@ -194,12 +195,33 @@ export function buildMissingLanguageDraft(
 export function sanitizeContentMutationPayload<
   T extends CreateContentPayload | UpdateContentPayload | ContentResource,
 >(payload: T): T {
-  if (payload.i18n_parent_id == null || !payload.settings?.i18n_mode_override) {
+  if (payload.i18n_parent_id == null) {
     return payload
   }
 
-  const settings = { ...payload.settings }
-  delete settings.i18n_mode_override
+  const settings = { ...(payload.settings || {}) } as Partial<ContentSettings>
+  let changed = false
+
+  if (settings.i18n_mode_override) {
+    delete settings.i18n_mode_override
+    changed = true
+  }
+
+  for (const key of [
+    'restrict_child_blocks',
+    'child_block_whitelist',
+    'child_tag_whitelist',
+    'default_child_block',
+  ] as const) {
+    if (key in settings) {
+      delete settings[key]
+      changed = true
+    }
+  }
+
+  if (!changed) {
+    return payload
+  }
 
   return {
     ...payload,
