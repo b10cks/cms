@@ -86,14 +86,27 @@ const useAlertDialogBase = () => {
     resolve: null,
     reject: null,
   })
+  let closeTimeout: ReturnType<typeof setTimeout> | null = null
+
   const openDialog = (component: Component) => {
+    if (closeTimeout) {
+      clearTimeout(closeTimeout)
+      closeTimeout = null
+    }
+
     state.value.component = markRaw(component)
     state.value.isOpen = true
   }
+
   const closeDialog = () => {
+    if (closeTimeout) {
+      clearTimeout(closeTimeout)
+    }
+
     state.value.isOpen = false
-    setTimeout(() => {
+    closeTimeout = setTimeout(() => {
       state.value.component = null
+      closeTimeout = null
     }, 300)
   }
   const dialog = (options: DialogOptions) => {
