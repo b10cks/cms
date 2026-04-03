@@ -310,6 +310,27 @@ return new class extends Migration {
             $table->index(['comment_id']);
             $table->index(['author_id']);
         });
+
+        Schema::create('audit_logs', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+
+            $table->string('referenced_type')->index();
+            $table->string('referenced_id')->index();
+            $table->string('name');
+
+            $table->ulid('owner_id')->nullable()->index();
+            $table->string('owner_type')->index();
+            $table->string('owner_name')->nullable();
+
+            $table->string('operation')->index();
+            $table->json('meta')->nullable();
+
+            $table->timestamp('created_at')->nullable()->index();
+
+            $table->index(['referenced_type', 'referenced_id']);
+            $table->index(['owner_type', 'owner_id']);
+            $table->index(['operation', 'created_at']);
+        });
     }
 
     /**
@@ -317,6 +338,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        Schema::dropIfExists('audit_logs');
         Schema::dropIfExists('comment_reactions');
         Schema::dropIfExists('comments');
         Schema::dropIfExists('data_entries');

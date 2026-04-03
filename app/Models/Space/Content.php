@@ -9,6 +9,7 @@ use App\Events\Space\ContentDeleted;
 use App\Events\Space\ContentUpdated;
 use App\Jobs\Content\UpdateContentFullSlugsJob;
 use App\Models\Traits\HasPurifiedAttributes;
+use App\Models\Traits\SpaceAuditable;
 use App\Services\Content\LocalizedContentSlugService;
 use App\Services\CustomStr;
 use CodersCantina\Filter\Filterable;
@@ -87,6 +88,7 @@ class Content extends SpaceModel
     use Filterable;
     use HasFactory;
     use HasManyFromArrayTrait;
+    use SpaceAuditable;
     use HasPurifiedAttributes;
     use HasUlids;
     use SoftDeletes;

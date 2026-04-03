@@ -5,6 +5,7 @@ namespace App\Models\Space;
 use App\Database\HasManyFromArray;
 use App\Database\HasManyFromArrayTrait;
 use App\Models\Traits\HasPurifiedAttributes;
+use App\Models\Traits\SpaceAuditable;
 use App\Models\User;
 use App\Services\MentionExtractor;
 use CodersCantina\Filter\Filterable;
@@ -49,6 +50,7 @@ class Comment extends SpaceModel
     use Filterable;
     use HasPurifiedAttributes;
     use HasUlids;
+    use SpaceAuditable;
     use SoftDeletes;
 
     protected $table = 'comments';

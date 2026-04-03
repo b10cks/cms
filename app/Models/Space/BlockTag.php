@@ -3,6 +3,7 @@
 namespace App\Models\Space;
 
 use App\Models\Traits\HasPurifiedAttributes;
+use App\Models\Traits\SpaceAuditable;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -38,6 +39,7 @@ class BlockTag extends SpaceModel
     use Filterable;
     use HasJsonRelationships;
     use HasFactory;
+    use SpaceAuditable;
 
     protected $table = 'block_tags';
     protected $primaryKey = 'name';

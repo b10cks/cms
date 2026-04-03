@@ -9,6 +9,7 @@ use App\Models\Management\SpaceBackup;
 use App\Models\Management\SpaceMigration;
 use App\Models\Management\Team;
 use App\Models\Management\Token;
+use App\Models\Space\AuditLog;
 use App\Models\Space\Block;
 use App\Models\Space\BlockTemplate;
 use App\Models\Space\BlockVersion;
@@ -17,6 +18,7 @@ use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
 use App\Models\Space\Redirect;
 use App\Models\Space\Release;
+use App\Policies\AuditLogPolicy;
 use App\Policies\BlockPolicy;
 use App\Policies\BlockTemplatePolicy;
 use App\Policies\BlockVersionPolicy;
@@ -43,6 +45,7 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
+        AuditLog::class => AuditLogPolicy::class,
         Block::class => BlockPolicy::class,
         BlockTemplate::class => BlockTemplatePolicy::class,
         BlockVersion::class => BlockVersionPolicy::class,

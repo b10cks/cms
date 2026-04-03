@@ -4,6 +4,7 @@ namespace App\Models\Space;
 
 use App\Models\Traits\Auditable;
 use App\Models\Traits\BroadcastsModelEvents;
+use App\Models\Traits\SpaceAuditable;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -46,6 +47,7 @@ class DataEntry extends SpaceModel
     use Filterable;
     use HasFactory;
     use HasUlids;
+    use SpaceAuditable;
 
     protected $table = 'data_entries';
 

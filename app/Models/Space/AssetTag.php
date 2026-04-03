@@ -3,6 +3,7 @@
 namespace App\Models\Space;
 
 use App\Models\Traits\HasPurifiedAttributes;
+use App\Models\Traits\SpaceAuditable;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -42,6 +43,7 @@ class AssetTag extends SpaceModel
     use HasFactory;
     use HasPurifiedAttributes;
     use HasUlids;
+    use SpaceAuditable;
     use SoftDeletes;
 
     protected $table = 'asset_tags';

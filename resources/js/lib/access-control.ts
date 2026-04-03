@@ -147,6 +147,11 @@ export const spaceNavigationItems: NavigationAccessItem[] = [
     routeName: 'space-releases',
   },
   {
+    label: 'labels.navigation.auditLog',
+    icon: 'lucide:scroll-text',
+    routeName: 'space-audit-logs',
+  },
+  {
     label: 'labels.navigation.settings',
     icon: 'lucide:settings',
     routeName: 'space-settings-index',
@@ -182,6 +187,7 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-datasources-dataSourceId': { abilities: 'data_sources.view' },
   'space-releases': { abilities: 'releases.view' },
   'space-redirects': { abilities: 'redirects.view' },
+  'space-audit-logs': { abilities: 'audit_logs.view' },
   'space-settings': { anyRouteOf: spaceSettingsNavigationItems.map((item) => item.routeName) },
   'space-settings-index': { abilities: 'space.update' },
   'space-settings-subscription': { abilities: 'space.billing.view' },

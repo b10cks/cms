@@ -220,6 +220,11 @@ export const queryKeys = {
     details: () => [...queryKeys.backups(spaceId).all(), 'detail'] as const,
     detail: (id: string) => [...queryKeys.backups(spaceId).details(), id] as const,
   }),
+  auditLogs: (spaceId: MaybeRef<string>) => ({
+    all: () => ['spaces', spaceId, 'audit-logs'] as const,
+    lists: () => [...queryKeys.auditLogs(spaceId).all(), 'list'] as const,
+    list: (filters: any = {}) => [...queryKeys.auditLogs(spaceId).lists(), filters] as const,
+  }),
   plans: {
     all: () => ['plans'] as const,
     lists: () => [...queryKeys.plans.all(), 'list'] as const,

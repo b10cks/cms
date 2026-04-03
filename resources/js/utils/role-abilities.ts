@@ -48,6 +48,7 @@ type RoleAbilityResource =
   | 'backups'
   | 'migrations'
   | 'ai'
+  | 'auditLogs'
 
 interface RoleAbilityMeta {
   group: RoleAbilityGroup
@@ -143,6 +144,7 @@ const ROLE_ABILITY_META: Record<string, RoleAbilityMeta> = {
   'migrations.manage': { group: 'operations', action: 'manage', resource: 'migrations' },
   'ai.view': { group: 'ai', action: 'view', resource: 'ai' },
   'ai.manage': { group: 'ai', action: 'manage', resource: 'ai' },
+  'audit_logs.view': { group: 'operations', action: 'view', resource: 'auditLogs' },
 }
 
 export function formatRoleAbilityLabel(ability: string, t: TranslateFn): string {

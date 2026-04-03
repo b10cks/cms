@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Management\ContentResource;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
+use App\Services\Audit\AuditActor;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -31,12 +32,14 @@ class MoveContentController extends Controller
             'position' => 'nullable|integer|min:0',
         ]);
 
+        $content->withoutAudit();
         $action->execute(
             $content,
             $validated['parent_id'] ?? null,
             $validated['position'] ?? null,
             $space
         );
+        $content->auditSpaceEvent('moved', AuditActor::user($request->user()));
 
         $content->load(['block', 'parent', 'i18n_parent', 'i18n_children', 'i18n_siblings', 'current_version']);
 

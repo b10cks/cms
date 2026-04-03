@@ -7,20 +7,24 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Management\ReleaseResource;
 use App\Models\Management\Space;
 use App\Models\Space\Release;
+use App\Services\Audit\AuditActor;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 
 class ReleaseCommitController extends Controller
 {
-    public function __invoke(Space $space, Release $release, CommitRelease $action): ReleaseResource
+    public function __invoke(Request $request, Space $space, Release $release, CommitRelease $action): ReleaseResource
     {
         $this->authorize('commit', [$release, $space]);
 
         try {
+            $release->withoutAudit();
             $release->committed_at = now();
             $release->save();
             $release->loadCount(['versions']);
             $action->execute($release, $space);
+            $release->auditSpaceEvent('committed', AuditActor::user($request->user()));
 
             return new ReleaseResource($release);
         } catch (\Exception $e) {

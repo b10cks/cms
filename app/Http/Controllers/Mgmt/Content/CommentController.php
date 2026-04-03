@@ -10,6 +10,7 @@ use App\Http\Resources\Management\CommentResource;
 use App\Models\Management\Space;
 use App\Models\Space\Comment;
 use App\Models\Space\Content;
+use App\Services\Audit\AuditActor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -52,7 +53,11 @@ class CommentController extends Controller
         $data['content_id'] = $content->id;
         $data['author_id'] = auth()->id();
 
-        $comment = Comment::create($data);
+        $comment = new Comment();
+        $comment->fill($data);
+        $comment->withoutAudit();
+        $comment->save();
+        $comment->auditSpaceEvent('created', AuditActor::user($request->user()), ['content_id' => $content->id]);
 
         return new CommentResource(
             $comment->load([
@@ -139,11 +144,13 @@ class CommentController extends Controller
     /**
      * Resolve a comment
      */
-    public function resolve(Space $space, Content $content, Comment $comment): CommentResource
+    public function resolve(Request $request, Space $space, Content $content, Comment $comment): CommentResource
     {
         $this->authorize('resolve', [$comment, $space]);
 
+        $comment->withoutAudit();
         $comment->update(['resolved_at' => now()]);
+        $comment->auditSpaceEvent('resolved', AuditActor::user($request->user()), ['content_id' => $content->id]);
 
         return new CommentResource($comment->load([
             'author',
@@ -159,11 +166,13 @@ class CommentController extends Controller
     /**
      * Unresolve a comment
      */
-    public function unresolve(Space $space, Content $content, Comment $comment): CommentResource
+    public function unresolve(Request $request, Space $space, Content $content, Comment $comment): CommentResource
     {
         $this->authorize('unresolve', [$comment, $space]);
 
+        $comment->withoutAudit();
         $comment->update(['resolved_at' => null]);
+        $comment->auditSpaceEvent('unresolved', AuditActor::user($request->user()), ['content_id' => $content->id]);
 
         return new CommentResource($comment->load([
             'author',

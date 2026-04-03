@@ -4,6 +4,7 @@ namespace App\Models\Space;
 
 use App\Casts\Content\SchemaCast;
 use App\Models\Traits\HasPurifiedAttributes;
+use App\Models\Traits\SpaceAuditable;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -63,6 +64,7 @@ class Block extends SpaceModel
     use HasPurifiedAttributes;
     use HasUlids;
     use SoftDeletes;
+    use SpaceAuditable;
 
     protected $table = 'blocks';
 

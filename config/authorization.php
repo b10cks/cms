@@ -68,6 +68,7 @@ return [
         'migrations.manage',
         'ai.view',
         'ai.manage',
+        'audit_logs.view',
     ],
 
     'roles' => [
@@ -169,6 +170,7 @@ return [
                     'migrations.manage',
                     'ai.view',
                     'ai.manage',
+                    'audit_logs.view',
                 ],
             ],
             'admin' => [
@@ -223,6 +225,7 @@ return [
                     'migrations.manage',
                     'ai.view',
                     'ai.manage',
+                    'audit_logs.view',
                 ],
             ],
             'editor' => [
@@ -255,6 +258,7 @@ return [
                     'block_versions.view',
                     'asset_folders.view',
                     'asset_tags.view',
+                    'audit_logs.view',
                 ],
             ],
             'member' => [

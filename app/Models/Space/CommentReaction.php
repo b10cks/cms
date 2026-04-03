@@ -2,6 +2,7 @@
 
 namespace App\Models\Space;
 
+use App\Models\Traits\SpaceAuditable;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,6 +23,7 @@ class CommentReaction extends SpaceModel
 {
     use HasFactory;
     use HasUlids;
+    use SpaceAuditable;
 
     public $timestamps = false;
 

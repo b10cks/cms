@@ -49,6 +49,7 @@ Route::get('/{space}/blocks/{block}', AppController::class)->name('space-block')
 Route::get('/{space}/datasources', AppController::class)->name('space-datasources');
 Route::get('/{space}/datasources/{dataSourceId}', AppController::class)->name('space-datasources-dataSourceId');
 Route::get('/{space}/releases', AppController::class)->name('space-releases');
+Route::get('/{space}/audit-logs', AppController::class)->name('space-audit-logs');
 Route::get('/{space}/redirects', AppController::class)->name('space-redirects');
 Route::get('/{space}/settings', AppController::class)->name('space-settings');
 Route::get('/{space}/settings/configuration', AppController::class)->name('space-settings-configuration');

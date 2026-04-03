@@ -214,6 +214,12 @@ const routes: RouteRecordRaw[] = [
     meta: { layout: 'default' },
   },
   {
+    path: '/:space/audit-logs',
+    name: 'space-audit-logs',
+    component: () => import('~/pages/[space]/audit-logs.vue'),
+    meta: { layout: 'default' },
+  },
+  {
     path: '/:space/releases',
     name: 'space-releases',
     component: () => import('~/pages/[space]/releases.vue'),

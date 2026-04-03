@@ -3,6 +3,7 @@
 namespace App\Models\Space;
 
 use App\Models\Traits\HasPurifiedAttributes;
+use App\Models\Traits\SpaceAuditable;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -41,6 +42,7 @@ class Redirect extends SpaceModel
     use HasPurifiedAttributes;
     use HasUlids;
     use Filterable;
+    use SpaceAuditable;
 
     protected $table = 'redirects';
 

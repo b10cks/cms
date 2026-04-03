@@ -4,6 +4,7 @@ namespace App\Models\Space;
 
 use App\Models\Management\Storage;
 use App\Models\Traits\HasPurifiedAttributes;
+use App\Models\Traits\SpaceAuditable;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -59,6 +60,7 @@ class AssetFolder extends SpaceModel
     use HasFactory;
     use SoftDeletes;
     use HasPurifiedAttributes;
+    use SpaceAuditable;
 
     protected $table = 'asset_folders';
 

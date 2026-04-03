@@ -685,8 +685,161 @@
       "datasets": "Data sets",
       "redirects": "Redirects",
       "releases": "Releases",
+      "auditLog": "Audit Log",
       "settings": "Settings",
       "extendedSidebar": "Extended sidebar"
+    },
+    "auditLog": {
+      "title": "Audit Log",
+      "description": "Track all changes and actions performed in this space.",
+      "emptyState": "No audit events found.",
+      "columns": {
+        "time": "Time",
+        "owner": "By",
+        "action": "Action",
+        "item": "Item",
+        "type": "Type"
+      },
+      "filters": {
+        "ownerType": "Actor type",
+        "owner": "Actor",
+        "operation": "Operation",
+        "referencedType": "Item type",
+        "name": "Item name",
+        "createdAt": "Date"
+      },
+      "operations": {
+        "created": "Created",
+        "updated": "Updated",
+        "deleted": "Deleted",
+        "published": "Published",
+        "unpublished": "Unpublished",
+        "scheduled": "Scheduled",
+        "moved": "Moved",
+        "committed": "Committed",
+        "canceled": "Canceled",
+        "restored": "Restored",
+        "version_selected": "Version selected",
+        "assigned": "Assigned",
+        "removed": "Removed",
+        "resolved": "Resolved",
+        "unresolved": "Unresolved",
+        "reset": "Reset"
+      },
+      "types": {
+        "content": "Content",
+        "content_version": "Content version",
+        "block": "Block",
+        "block_version": "Block version",
+        "block_template": "Block template",
+        "block_folder": "Block folder",
+        "block_tag": "Block tag",
+        "asset": "Asset",
+        "asset_folder": "Asset folder",
+        "asset_tag": "Asset tag",
+        "data_source": "Data source",
+        "data_entry": "Data entry",
+        "redirect": "Redirect",
+        "release": "Release",
+        "comment": "Comment",
+        "comment_reaction": "Reaction"
+      },
+      "actions": {
+        "content": {
+          "created": "Created content",
+          "updated": "Updated content",
+          "deleted": "Deleted content",
+          "published": "Published content",
+          "unpublished": "Unpublished content",
+          "scheduled": "Scheduled content",
+          "moved": "Moved content",
+          "version_selected": "Selected content version"
+        },
+        "content_version": {
+          "created": "Created content version",
+          "updated": "Updated content version",
+          "published": "Published content version"
+        },
+        "block": {
+          "created": "Created block",
+          "updated": "Updated block",
+          "deleted": "Deleted block"
+        },
+        "block_version": {
+          "created": "Created block version",
+          "updated": "Updated block version",
+          "deleted": "Deleted block version",
+          "committed": "Committed block version",
+          "restored": "Restored block version"
+        },
+        "block_template": {
+          "created": "Created block template",
+          "updated": "Updated block template",
+          "deleted": "Deleted block template"
+        },
+        "block_folder": {
+          "created": "Created block folder",
+          "updated": "Updated block folder",
+          "deleted": "Deleted block folder"
+        },
+        "block_tag": {
+          "created": "Created block tag",
+          "updated": "Updated block tag",
+          "deleted": "Deleted block tag"
+        },
+        "asset": {
+          "created": "Uploaded asset",
+          "updated": "Updated asset",
+          "deleted": "Deleted asset"
+        },
+        "asset_folder": {
+          "created": "Created asset folder",
+          "updated": "Updated asset folder",
+          "deleted": "Deleted asset folder"
+        },
+        "asset_tag": {
+          "created": "Created asset tag",
+          "updated": "Updated asset tag",
+          "deleted": "Deleted asset tag"
+        },
+        "data_source": {
+          "created": "Created data source",
+          "updated": "Updated data source",
+          "deleted": "Deleted data source"
+        },
+        "data_entry": {
+          "created": "Created data entry",
+          "updated": "Updated data entry",
+          "deleted": "Deleted data entry"
+        },
+        "redirect": {
+          "created": "Created redirect",
+          "updated": "Updated redirect",
+          "deleted": "Deleted redirect",
+          "reset": "Reset redirect stats"
+        },
+        "release": {
+          "created": "Created release",
+          "updated": "Updated release",
+          "deleted": "Deleted release",
+          "committed": "Committed release",
+          "canceled": "Canceled release",
+          "published": "Published release",
+          "assigned": "Assigned version to release",
+          "removed": "Removed version from release"
+        },
+        "comment": {
+          "created": "Added comment",
+          "updated": "Edited comment",
+          "deleted": "Deleted comment",
+          "resolved": "Resolved comment",
+          "unresolved": "Unresolved comment"
+        },
+        "comment_reaction": {
+          "assigned": "Reacted to comment",
+          "removed": "Removed reaction"
+        }
+      }
     },
     "blocks": {
       "title": "Blocks",
@@ -1917,7 +2070,8 @@
         "releases": "releases",
         "backups": "backups",
         "migrations": "migrations",
-        "ai": "AI tools"
+        "ai": "AI tools",
+        "auditLogs": "audit log"
       }
     },
     "fields": {

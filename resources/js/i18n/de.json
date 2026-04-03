@@ -680,8 +680,161 @@
       "datasets": "Datenquellen",
       "redirects": "Redirects",
       "releases": "Releases",
+      "auditLog": "Audit-Log",
       "settings": "Einstellungen",
       "extendedSidebar": "Erweiterte Seitenleiste"
+    },
+    "auditLog": {
+      "title": "Audit-Log",
+      "description": "Verfolge alle Änderungen und Aktionen in diesem Space.",
+      "emptyState": "Keine Audit-Einträge gefunden.",
+      "columns": {
+        "time": "Zeit",
+        "owner": "Von",
+        "action": "Aktion",
+        "item": "Element",
+        "type": "Typ"
+      },
+      "filters": {
+        "ownerType": "Akteur-Typ",
+        "owner": "Akteur",
+        "operation": "Vorgang",
+        "referencedType": "Element-Typ",
+        "name": "Element-Name",
+        "createdAt": "Datum"
+      },
+      "operations": {
+        "created": "Erstellt",
+        "updated": "Aktualisiert",
+        "deleted": "Gelöscht",
+        "published": "Veröffentlicht",
+        "unpublished": "Unveröffentlicht",
+        "scheduled": "Geplant",
+        "moved": "Verschoben",
+        "committed": "Committed",
+        "canceled": "Abgebrochen",
+        "restored": "Wiederhergestellt",
+        "version_selected": "Version ausgewählt",
+        "assigned": "Zugewiesen",
+        "removed": "Entfernt",
+        "resolved": "Aufgelöst",
+        "unresolved": "Nicht aufgelöst",
+        "reset": "Zurückgesetzt"
+      },
+      "types": {
+        "content": "Inhalt",
+        "content_version": "Inhaltsversion",
+        "block": "Block",
+        "block_version": "Block-Version",
+        "block_template": "Block-Vorlage",
+        "block_folder": "Block-Ordner",
+        "block_tag": "Block-Tag",
+        "asset": "Asset",
+        "asset_folder": "Asset-Ordner",
+        "asset_tag": "Asset-Tag",
+        "data_source": "Datenquelle",
+        "data_entry": "Dateneintrag",
+        "redirect": "Weiterleitung",
+        "release": "Release",
+        "comment": "Kommentar",
+        "comment_reaction": "Reaktion"
+      },
+      "actions": {
+        "content": {
+          "created": "Inhalt erstellt",
+          "updated": "Inhalt aktualisiert",
+          "deleted": "Inhalt gelöscht",
+          "published": "Inhalt veröffentlicht",
+          "unpublished": "Inhalt unveröffentlicht",
+          "scheduled": "Inhalt geplant",
+          "moved": "Inhalt verschoben",
+          "version_selected": "Inhaltsversion ausgewählt"
+        },
+        "content_version": {
+          "created": "Inhaltsversion erstellt",
+          "updated": "Inhaltsversion aktualisiert",
+          "published": "Inhaltsversion veröffentlicht"
+        },
+        "block": {
+          "created": "Block erstellt",
+          "updated": "Block aktualisiert",
+          "deleted": "Block gelöscht"
+        },
+        "block_version": {
+          "created": "Block-Version erstellt",
+          "updated": "Block-Version aktualisiert",
+          "deleted": "Block-Version gelöscht",
+          "committed": "Block-Version committed",
+          "restored": "Block-Version wiederhergestellt"
+        },
+        "block_template": {
+          "created": "Block-Vorlage erstellt",
+          "updated": "Block-Vorlage aktualisiert",
+          "deleted": "Block-Vorlage gelöscht"
+        },
+        "block_folder": {
+          "created": "Block-Ordner erstellt",
+          "updated": "Block-Ordner aktualisiert",
+          "deleted": "Block-Ordner gelöscht"
+        },
+        "block_tag": {
+          "created": "Block-Tag erstellt",
+          "updated": "Block-Tag aktualisiert",
+          "deleted": "Block-Tag gelöscht"
+        },
+        "asset": {
+          "created": "Asset hochgeladen",
+          "updated": "Asset aktualisiert",
+          "deleted": "Asset gelöscht"
+        },
+        "asset_folder": {
+          "created": "Asset-Ordner erstellt",
+          "updated": "Asset-Ordner aktualisiert",
+          "deleted": "Asset-Ordner gelöscht"
+        },
+        "asset_tag": {
+          "created": "Asset-Tag erstellt",
+          "updated": "Asset-Tag aktualisiert",
+          "deleted": "Asset-Tag gelöscht"
+        },
+        "data_source": {
+          "created": "Datenquelle erstellt",
+          "updated": "Datenquelle aktualisiert",
+          "deleted": "Datenquelle gelöscht"
+        },
+        "data_entry": {
+          "created": "Dateneintrag erstellt",
+          "updated": "Dateneintrag aktualisiert",
+          "deleted": "Dateneintrag gelöscht"
+        },
+        "redirect": {
+          "created": "Weiterleitung erstellt",
+          "updated": "Weiterleitung aktualisiert",
+          "deleted": "Weiterleitung gelöscht",
+          "reset": "Weiterleitungsstatistik zurückgesetzt"
+        },
+        "release": {
+          "created": "Release erstellt",
+          "updated": "Release aktualisiert",
+          "deleted": "Release gelöscht",
+          "committed": "Release committed",
+          "canceled": "Release abgebrochen",
+          "published": "Release veröffentlicht",
+          "assigned": "Version zu Release zugewiesen",
+          "removed": "Version aus Release entfernt"
+        },
+        "comment": {
+          "created": "Kommentar hinzugefügt",
+          "updated": "Kommentar bearbeitet",
+          "deleted": "Kommentar gelöscht",
+          "resolved": "Kommentar aufgelöst",
+          "unresolved": "Kommentar nicht aufgelöst"
+        },
+        "comment_reaction": {
+          "assigned": "Auf Kommentar reagiert",
+          "removed": "Reaktion entfernt"
+        }
+      }
     },
     "blocks": {
       "title": "Blocks",
@@ -1879,7 +2032,8 @@
         "releases": "Releases",
         "backups": "Backups",
         "migrations": "Migrationen",
-        "ai": "KI-Werkzeuge"
+        "ai": "KI-Werkzeuge",
+        "auditLogs": "Audit-Log"
       }
     },
     "fields": {

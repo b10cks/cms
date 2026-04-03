@@ -6,6 +6,7 @@ use App\Casts\Slug;
 use App\Models\Traits\Auditable;
 use App\Models\Traits\BroadcastsModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
+use App\Models\Traits\SpaceAuditable;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -55,6 +56,7 @@ class DataSource extends SpaceModel
     use HasFactory;
     use HasPurifiedAttributes;
     use HasUlids;
+    use SpaceAuditable;
 
     protected $table = 'data_sources';
 

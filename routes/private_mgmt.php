@@ -9,6 +9,7 @@ use App\Http\Controllers\Mgmt\Ai\SpaceAiConfigController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiSettingsController;
 use App\Http\Controllers\Mgmt\Ai\TranslationController;
 use App\Http\Controllers\Mgmt\Ai\TranslationStreamController;
+use App\Http\Controllers\Mgmt\AuditLogController;
 use App\Http\Controllers\Mgmt\AssetController;
 use App\Http\Controllers\Mgmt\AssetDataExportController;
 use App\Http\Controllers\Mgmt\AssetDataImportController;
@@ -195,6 +196,8 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
         ->name('contents.move');
 
     Route::apiResource('tokens', SpaceTokenController::class)->only(['index', 'store', 'destroy']);
+    Route::get('audit-logs', [AuditLogController::class, 'index'])->name('space-audit-logs');
+
     Route::apiResource('redirects', RedirectController::class);
     Route::post('redirects/{redirect}/reset', RedirectResetController::class)->name('redirects.reset');
 

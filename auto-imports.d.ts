@@ -95,6 +95,7 @@ declare global {
   const useAssetTags: typeof import('./resources/js/composables/useAssetTags').useAssetTags
   const useAssets: typeof import('./resources/js/composables/useAssets').useAssets
   const useAttrs: typeof import('vue').useAttrs
+  const useAuditLogs: typeof import('./resources/js/composables/useAuditLogs').useAuditLogs
   const useAuth: typeof import('./resources/js/composables/useAuth').useAuth
   const useAuthorization: typeof import('./resources/js/composables/useAuthorization').useAuthorization
   const useBackups: typeof import('./resources/js/composables/useBackups').useBackups
@@ -321,6 +322,7 @@ declare module 'vue' {
     readonly useAssetTags: UnwrapRef<typeof import('./resources/js/composables/useAssetTags')['useAssetTags']>
     readonly useAssets: UnwrapRef<typeof import('./resources/js/composables/useAssets')['useAssets']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
+    readonly useAuditLogs: UnwrapRef<typeof import('./resources/js/composables/useAuditLogs')['useAuditLogs']>
     readonly useAuth: UnwrapRef<typeof import('./resources/js/composables/useAuth')['useAuth']>
     readonly useAuthorization: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['useAuthorization']>
     readonly useBackups: UnwrapRef<typeof import('./resources/js/composables/useBackups')['useBackups']>

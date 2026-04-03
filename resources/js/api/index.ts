@@ -1,4 +1,5 @@
 import { Ai } from '~/api/resources/ai'
+import { AuditLogs } from '~/api/resources/audit-logs'
 import { Authorization } from '~/api/resources/authorization'
 import { BlockFolders } from '~/api/resources/block-folders'
 import { BlockTemplates } from '~/api/resources/block-templates'
@@ -108,6 +109,7 @@ export class API {
   public forSpace(spaceId: string) {
     return {
       ai: new Ai(this.client, spaceId),
+      auditLogs: new AuditLogs(this.client, spaceId),
       assetFolders: new AssetFolders(this.client, spaceId),
       assetTags: new AssetTags(this.client, spaceId),
       assets: new Assets(this.client, spaceId),

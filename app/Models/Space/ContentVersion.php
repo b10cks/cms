@@ -4,6 +4,7 @@ namespace App\Models\Space;
 
 use App\Casts\Content\ContentCast;
 use App\Models\Traits\HasPurifiedAttributes;
+use App\Models\Traits\SpaceAuditable;
 use App\Models\User;
 use App\Services\Content\AssetHandler;
 use App\Services\Content\LinkHandler;
@@ -78,6 +79,7 @@ class ContentVersion extends SpaceModel
     use HasJsonRelationships;
     use HasPurifiedAttributes;
     use HasUlids;
+    use SpaceAuditable;
 
     public $timestamps = false;
 
