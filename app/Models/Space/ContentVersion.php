@@ -7,22 +7,23 @@ use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\User;
 use App\Services\Content\AssetHandler;
 use App\Services\Content\LinkHandler;
+use App\Services\Content\RelationHandler;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Staudenmeir\EloquentJsonRelations\HasJsonRelationships;
 use Staudenmeir\EloquentJsonRelations\Relations\BelongsToJson;
 
 /**
- *
- *
  * @property string $id
  * @property string|null $external_id
  * @property string|null $message
- * @property \App\Models\Space\Content|null $content
+ * @property Content|null $content
  * @property array<array-key, mixed>|null $asset_ids
  * @property array<array-key, mixed>|null $relation_ids
  * @property array<array-key, mixed>|null $link_ids
@@ -31,21 +32,22 @@ use Staudenmeir\EloquentJsonRelations\Relations\BelongsToJson;
  * @property string|null $release_id
  * @property string|null $created_by_id
  * @property string|null $published_by_id
- * @property \Illuminate\Support\Carbon|null $published_at
- * @property \Illuminate\Support\Carbon|null $scheduled_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, ContentVersion> $children
+ * @property Carbon|null $published_at
+ * @property Carbon|null $scheduled_at
+ * @property Carbon|null $created_at
+ * @property-read Collection<int, ContentVersion> $children
  * @property-read int|null $children_count
  * @property-read User|null $createdBy
  * @property-read User|null $publishedBy
  * @property-read ContentVersion|null $parent
- * @property-read \App\Models\Space\Release|null $release
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Space\Asset[] $assets
+ * @property-read Release|null $release
+ * @property-read Collection|Asset[] $assets
  * @property-read int|null $assets_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Space\Content[] $links
+ * @property-read Collection|Content[] $links
  * @property-read int|null $links_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Space\Content[] $relations
+ * @property-read Collection|Content[] $relations
  * @property-read int|null $relations_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion filter(\CodersCantina\Filter\Filter $filter)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion newQuery()
@@ -66,15 +68,16 @@ use Staudenmeir\EloquentJsonRelations\Relations\BelongsToJson;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereReleaseId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereScheduledAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContentVersion whereScheduledById($value)
+ *
  * @mixin \Eloquent
  */
 class ContentVersion extends SpaceModel
 {
+    use Filterable;
+    use HasFactory;
     use HasJsonRelationships;
     use HasPurifiedAttributes;
     use HasUlids;
-    use HasFactory;
-    use Filterable;
 
     public $timestamps = false;
 
@@ -108,7 +111,22 @@ class ContentVersion extends SpaceModel
         static::saving(function ($model) {
             $model->prepareLinksForSave();
             $model->prepareAssetsForSave();
+            $model->prepareRelationsForSave();
         });
+    }
+
+    public static function createWithContentContext(array $attributes, ?Content $content = null): self
+    {
+        $version = new self;
+        $version->forceFill($attributes);
+
+        if ($content) {
+            $version->setRelation('contentModel', $content);
+        }
+
+        $version->save();
+
+        return $version;
     }
 
     protected function message(): Attribute
@@ -126,6 +144,35 @@ class ContentVersion extends SpaceModel
     {
         $extractor = app(AssetHandler::class);
         $this->asset_ids = $extractor->extractContentAssets($this->content);
+    }
+
+    protected function prepareRelationsForSave(): void
+    {
+        $content = $this->resolveContentContext();
+
+        if (! $content?->block) {
+            $this->relation_ids = [];
+
+            return;
+        }
+
+        $extractor = app(RelationHandler::class);
+        $this->relation_ids = $extractor->extractContentRelations($content->block, $this->content);
+    }
+
+    protected function resolveContentContext(): ?Content
+    {
+        $content = $this->relationLoaded('contentModel')
+            ? $this->getRelation('contentModel')
+            : $this->contentModel()->first();
+
+        if (! $content) {
+            return null;
+        }
+
+        $content->loadMissing('block');
+
+        return $content;
     }
 
     public function createdBy(): BelongsTo

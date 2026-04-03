@@ -21,25 +21,24 @@ class CreateContent
         private readonly ContentHierarchyValidator $contentHierarchyValidator,
         private readonly ContentI18nValidator $validator,
         private readonly ContentSchemaValidator $contentSchemaValidator,
-    ) {
-    }
+    ) {}
 
     protected function throwIfValidationFails(
         ContentSchemaValidationResult $contentValidation,
         bool $force = false,
     ): void {
-        if (!$contentValidation->isValid()) {
+        if (! $contentValidation->isValid()) {
             throw ValidationException::withMessages($contentValidation->errors);
         }
 
-        if (!$force && $contentValidation->hasWarnings()) {
+        if (! $force && $contentValidation->hasWarnings()) {
             throw ValidationException::withMessages($contentValidation->warnings);
         }
     }
 
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner)
     {
-        if (!(bool) data_get($data, 'force', false)) {
+        if (! (bool) data_get($data, 'force', false)) {
             $errors = $this->validator->validate($space, $data);
             if ($errors !== []) {
                 throw ValidationException::withMessages($errors);
@@ -47,7 +46,7 @@ class CreateContent
         }
 
         \DB::transaction(function () use ($data, $content, $owner, $space) {
-            if (!\Arr::has($data, 'language_iso')) {
+            if (! \Arr::has($data, 'language_iso')) {
                 $data['language_iso'] = $space->settings->getDefaultLanguage();
             }
 
@@ -90,11 +89,11 @@ class CreateContent
             $content->fill($data);
 
             $content->id = strtolower((string) Str::ulid());
-            $version = ContentVersion::forceCreate([
+            $version = ContentVersion::createWithContentContext([
                 'content' => $validatedContent,
                 'content_id' => $content->id,
                 'created_by_id' => $owner->id,
-            ]);
+            ], $content->setRelation('block', $block));
             $content->current_version_id = $version->id;
             $content->save();
 

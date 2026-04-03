@@ -22,25 +22,24 @@ class UpdateContent
         protected ContentHierarchyValidator $contentHierarchyValidator,
         protected ContentI18nValidator $validator,
         protected ContentSchemaValidator $contentSchemaValidator,
-    ) {
-    }
+    ) {}
 
     protected function throwIfValidationFails(
         ContentSchemaValidationResult $contentValidation,
         bool $force = false,
     ): void {
-        if (!$contentValidation->isValid()) {
+        if (! $contentValidation->isValid()) {
             throw ValidationException::withMessages($contentValidation->errors);
         }
 
-        if (!$force && $contentValidation->hasWarnings()) {
+        if (! $force && $contentValidation->hasWarnings()) {
             throw ValidationException::withMessages($contentValidation->warnings);
         }
     }
 
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner)
     {
-        if (!(bool) data_get($data, 'force', false)) {
+        if (! (bool) data_get($data, 'force', false)) {
             $errors = $this->validator->validate($space, $data, $content);
             if ($errors !== []) {
                 throw ValidationException::withMessages($errors);
@@ -92,13 +91,13 @@ class UpdateContent
             $content->load('current_version');
 
             if ($content->current_version?->content != $contentData) {
-                $version = ContentVersion::forceCreate([
+                $version = ContentVersion::createWithContentContext([
                     'message' => $message,
                     'content_id' => $content->id,
                     'parent_id' => $content->current_version_id,
                     'content' => $contentData,
                     'created_by_id' => $owner->id,
-                ]);
+                ], $content);
                 $content->current_version_id = $version->id;
                 $content->published_at = null;
             }

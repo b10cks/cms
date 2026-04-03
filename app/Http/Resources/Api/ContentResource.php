@@ -7,11 +7,14 @@ use App\Services\Content\AssetHandler;
 use App\Services\Content\ContentI18nResolver;
 use App\Services\Content\LinkHandler;
 use App\Services\Content\ResolvedContent;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 
 /**
  * @mixin Content
+ *
  * @resourceProperty id format=uuid Unique content identifier.
  * @resourceProperty name Human-readable content name.
  * @resourceProperty slug URL slug of the resolved content.
@@ -19,6 +22,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @resourceProperty parent_id format=uuid Parent content identifier if this content is nested.
  * @resourceProperty full_slug Full resolved path including all parent slugs.
  * @resourceProperty content type=object additionalProperties=true Effective content payload after i18n, link, and asset resolution.
+ * @resourceProperty relations type=array items=ContentResource First-level related content entries when explicitly requested.
  * @resourceProperty language_iso Requested language ISO code used for content resolution.
  * @resourceProperty translations type=array items=SimpleContentResource Published sibling translations of the resolved content.
  * @resourceProperty published_at format=date-time Publication timestamp in ISO 8601 format.
@@ -28,6 +32,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class ContentResource extends JsonResource
 {
+    public const string RELATION_RESOLUTION_MAX_DEPTH_ATTRIBUTE = 'api.content.resolve_relations.max_depth';
+
+    public const string RELATION_RESOLUTION_DEPTH_ATTRIBUTE = 'api.content.resolve_relations.depth';
+
     public function toArray(Request $request)
     {
         $resolved = $this->resolveContent($request);
@@ -46,6 +54,10 @@ class ContentResource extends JsonResource
             'parent_id' => $row->parent_id,
             'full_slug' => $row->full_slug,
             'content' => $this->getTransformedContent($resolved),
+            'relations' => $this->when(
+                $this->shouldResolveRelations($request),
+                fn(): array => $this->resolveRelations($request, $resolved),
+            ),
             'language_iso' => $resolved->requestedLanguage,
             'translations' => $this->handleTranslations($resolved, $row),
             'published_at' => $row->published_at?->toIso8601String(),
@@ -100,19 +112,19 @@ class ContentResource extends JsonResource
     protected function removeHiddenBlocks(array $content): array
     {
         foreach ($content as $key => $value) {
-            if (!is_array($value)) {
+            if (!\is_array($value)) {
                 continue;
             }
 
-            $isBlocksArray = array_is_list($value) && count($value) > 0 && isset($value[0]['block']);
+            $isBlocksArray = array_is_list($value) && \count($value) > 0 && isset($value[0]['block']);
 
             if ($isBlocksArray) {
                 $content[$key] = array_values(
-                    array_filter($value, fn(mixed $item) => !(is_array($item) && ($item['hidden'] ?? false) === true))
+                    array_filter($value, fn(mixed $item) => !(\is_array($item) && ($item['hidden'] ?? false) === true))
                 );
 
                 foreach ($content[$key] as $i => $item) {
-                    if (is_array($item)) {
+                    if (\is_array($item)) {
                         $content[$key][$i] = $this->removeHiddenBlocks($item);
                     }
                 }
@@ -138,5 +150,68 @@ class ContentResource extends JsonResource
         $content = app(LinkHandler::class)->replaceContentLinks($content, $resolved->effectiveLinks);
         $assetContext = $resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent;
         $content = app(AssetHandler::class)->replaceContentAssets($assetContext, $content, $resolved->effectiveAssets);
+    }
+
+    protected function shouldResolveRelations(Request $request): bool
+    {
+        return $this->relationResolutionDepth($request) < $this->relationResolutionMaxDepth($request);
+    }
+
+    protected function resolveRelations(Request $request, ResolvedContent $resolved): array
+    {
+        if ($resolved->effectiveRelations->isEmpty()) {
+            return [];
+        }
+
+        $versionScope = $request->input('vid', 'published');
+        $resolvedRelations = app(ContentI18nResolver::class)->resolveMany(
+            app('currentSpace'),
+            $resolved->effectiveRelations->map(
+                fn(Content $content): array => [
+                    'content' => $content,
+                    'target_language' => $resolved->requestedLanguage,
+                ]
+            ),
+            $versionScope === 'draft' ? 'current' : $versionScope,
+        );
+
+        $this->preloadResolvedRelationRows($resolvedRelations);
+
+        $nestedRequest = clone $request;
+        $nestedRequest->attributes->set(
+            self::RELATION_RESOLUTION_DEPTH_ATTRIBUTE,
+            $this->relationResolutionDepth($request) + 1,
+        );
+
+        return $resolvedRelations
+            ->map(fn(ResolvedContent $relation): array => (new self($relation))->toArray($nestedRequest))
+            ->values()
+            ->all();
+    }
+
+    protected function preloadResolvedRelationRows(Collection $resolvedRelations): void
+    {
+        $rows = new EloquentCollection(
+            $resolvedRelations
+                ->map(fn(ResolvedContent $relation): ?Content => $relation->targetContent ?? $relation->fallbackContent ?? $relation->canonicalContent)
+                ->filter()
+                ->unique('id')
+                ->values()
+                ->all()
+        );
+
+        if ($rows->isNotEmpty()) {
+            $rows->loadMissing('block');
+        }
+    }
+
+    protected function relationResolutionMaxDepth(Request $request): int
+    {
+        return max((int) $request->attributes->get(self::RELATION_RESOLUTION_MAX_DEPTH_ATTRIBUTE, 0), 0);
+    }
+
+    protected function relationResolutionDepth(Request $request): int
+    {
+        return max((int) $request->attributes->get(self::RELATION_RESOLUTION_DEPTH_ATTRIBUTE, 0), 0);
     }
 }

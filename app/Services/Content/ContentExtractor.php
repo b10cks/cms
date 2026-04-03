@@ -4,36 +4,55 @@ namespace App\Services\Content;
 
 trait ContentExtractor
 {
-    protected function extract(array $data, array $criteria, string $field): array
-    {
-        $results = [];
-        $this->extractRecursive($data, $criteria, $field, $results);
+    use TraversesContent;
 
-        return array_unique($results);
+    /**
+     * @param  callable(array<array-key, mixed>, array<int, int|string>): mixed  $callback
+     * @return array<int, mixed>
+     */
+    protected function extract(array $data, callable $callback): array
+    {
+        return collect(iterator_to_array($this->walkContent($data), false))
+            ->flatMap(
+                fn (array $node): array => $this->normalizeExtractedValues(
+                    $callback($node['value'], $node['path'])
+                )
+            )
+            ->unique()
+            ->values()
+            ->all();
     }
 
-    protected function extractRecursive(array $data, array $criteria, string $field, array &$results): void
+    /**
+     * @param  array<string, mixed>  $criteria
+     * @return array<int, mixed>
+     */
+    protected function extractMatchingField(array $data, array $criteria, string $field): array
     {
-        foreach ($data as $value) {
-            if ($this->isMatchingExtractStructure($value, $criteria, $field)) {
-                $extractedValue = $value[$field] ?? null;
-                if (!empty($extractedValue)) {
-                    $results[] = $extractedValue;
-                }
-            }
-
-            if (is_array($value)) {
-                $this->extractRecursive($value, $criteria, $field, $results);
-            }
-        }
+        return $this->extract(
+            $data,
+            fn (array $value): mixed => $this->matchesContentCriteria($value, $criteria)
+                ? ($value[$field] ?? null)
+                : null,
+        );
     }
 
-    private function isMatchingExtractStructure($value, array $criteria, $field): bool
+    /**
+     * @return array<int, mixed>
+     */
+    protected function normalizeExtractedValues(mixed $value): array
     {
-        if (!is_array($value) || !isset($value[$field])) {
-            return false;
+        if ($value === null) {
+            return [];
         }
 
-        return array_all($criteria, fn ($expected, $key) => isset($value[$key]) && $value[$key] === $expected);
+        $values = \is_array($value) ? $value : [$value];
+
+        return array_values(
+            array_filter(
+                $values,
+                static fn (mixed $item): bool => $item !== null && $item !== '',
+            )
+        );
     }
 }

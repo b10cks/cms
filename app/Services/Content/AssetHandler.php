@@ -2,6 +2,7 @@
 
 namespace App\Services\Content;
 
+use App\Http\Resources\Api\ContentResource;
 use App\Models\Space\Asset;
 use App\Models\Space\Content;
 use Illuminate\Support\Collection;
@@ -13,15 +14,15 @@ class AssetHandler
 
     public function extractContentAssets(array $data): array
     {
-        return $this->extract($data, [
-            'type' => 'asset'
+        return $this->extractMatchingField($data, [
+            'type' => 'asset',
         ], 'id');
     }
 
     public function updateContentAssets(array $data, Collection $assets): array
     {
-        return $this->replace($data, [
-            'type' => 'asset'
+        return $this->replaceMatching($data, [
+            'type' => 'asset',
         ], function ($src) use ($assets) {
             /** @var Asset $asset */
             $asset = $assets->firstWhere('id', $src['id'] ?? null);
@@ -32,15 +33,15 @@ class AssetHandler
                 'extension',
                 'mime_type',
                 'size',
-                'filename'
-            ]) + $src + ['url' => $asset->getUrl(),] : $src;
+                'filename',
+            ]) + $src + ['url' => $asset->getUrl()] : $src;
         });
     }
 
-    public function replaceContentAssets(Content|\App\Http\Resources\Api\ContentResource $content, $data, Collection $assets): array
+    public function replaceContentAssets(Content|ContentResource $content, $data, Collection $assets): array
     {
-        return $this->replace($data, [
-            'type' => 'asset'
+        return $this->replaceMatching($data, [
+            'type' => 'asset',
         ], function ($src) use ($assets, $content) {
             $asset = $assets->firstWhere('id', $src['id'] ?? null);
             if ($asset) {

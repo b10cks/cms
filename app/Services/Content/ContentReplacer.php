@@ -4,34 +4,34 @@ namespace App\Services\Content;
 
 trait ContentReplacer
 {
-    protected function replace(array $data, array $criteria, callable $cb): array
+    use TraversesContent;
+
+    /**
+     * @param  callable(array<array-key, mixed>, array<int, int|string>): bool  $matches
+     * @param  callable(array<array-key, mixed>, array<int, int|string>): array<array-key, mixed>  $cb
+     * @return array<array-key, mixed>
+     */
+    protected function replace(array $data, callable $matches, callable $cb): array
     {
-        return $this->replaceRecursive($data, $criteria, $cb);
+        return $this->transformContent(
+            $data,
+            fn (array $value, array $path): ?array => $matches($value, $path)
+                ? $cb($value, $path)
+                : null,
+        );
     }
 
-    protected function replaceRecursive(array $data, array $criteria, callable $cb): array
+    /**
+     * @param  array<string, mixed>  $criteria
+     * @param  callable(array<array-key, mixed>, array<int, int|string>): array<array-key, mixed>  $cb
+     * @return array<array-key, mixed>
+     */
+    protected function replaceMatching(array $data, array $criteria, callable $cb): array
     {
-        $result = [];
-
-        foreach ($data as $key => $value) {
-            if ($this->isMatchingReplaceStructure($value, $criteria)) {
-                $result[$key] = $cb($value);
-            } elseif (is_array($value)) {
-                $result[$key] = $this->replaceRecursive($value, $criteria, $cb);
-            } else {
-                $result[$key] = $value;
-            }
-        }
-
-        return $result;
-    }
-
-    private function isMatchingReplaceStructure($value, array $criteria): bool
-    {
-        if (!is_array($value)) {
-            return false;
-        }
-
-        return array_all($criteria, fn ($expected, $key) => isset($value[$key]) && $value[$key] === $expected);
+        return $this->replace(
+            $data,
+            fn (array $value): bool => $this->matchesContentCriteria($value, $criteria),
+            $cb,
+        );
     }
 }

@@ -82,6 +82,10 @@ class ContentController
     {
         /** @var Space $space */
         $space = app('currentSpace');
+        $request->attributes->set(
+            ContentResource::RELATION_RESOLUTION_MAX_DEPTH_ATTRIBUTE,
+            $request->boolean('resolve_relations') ? 1 : 0,
+        );
 
         $language = $request->input('language') ?? $request->input('language_iso') ?? $space->settings->getDefaultLanguage();
         if (!\in_array($language, $space->settings->getEnabledLanguages())) {

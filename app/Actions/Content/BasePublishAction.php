@@ -64,12 +64,12 @@ abstract class BasePublishAction
         Content $content,
         Authenticatable|User|null $owner
     ): ContentVersion {
-        return ContentVersion::forceCreate($values + [
+        return ContentVersion::createWithContentContext($values + [
             'content_id' => $content->id,
             'parent_id' => $content->current_version_id,
             'content' => $contentData,
             'created_by_id' => $owner?->id,
-        ]);
+        ], $content);
     }
 
     protected function loadPublishedVersion(Content $content): void
