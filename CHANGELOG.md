@@ -3,6 +3,14 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.3-5ca6a01] — 2026-4-3
+
+- ✨ Add basic space internal audit logs
+- ✨ Handle asset usage tracking
+- ✨ Extract and resolve content relations
+- ✨ Allow to restrict child block types
+- ⬆️ Bump versions
+
 ## [v2026.3.28-0402bd4] — 2026-3-28
 
 - 🐛 Fix focus fallback for assets
