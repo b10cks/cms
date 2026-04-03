@@ -13,6 +13,7 @@ use App\Http\Controllers\Mgmt\AssetController;
 use App\Http\Controllers\Mgmt\AssetDataExportController;
 use App\Http\Controllers\Mgmt\AssetDataImportController;
 use App\Http\Controllers\Mgmt\AssetFolderController;
+use App\Http\Controllers\Mgmt\AssetLinkedContentController;
 use App\Http\Controllers\Mgmt\AssetTagController;
 use App\Http\Controllers\Mgmt\AuthorizationController;
 use App\Http\Controllers\Mgmt\BackupController;
@@ -34,6 +35,8 @@ use App\Http\Controllers\Mgmt\Content\ContentVersionController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionCurrentController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionPublishController;
 use App\Http\Controllers\Mgmt\Content\MoveContentController;
+use App\Http\Controllers\Mgmt\DataEntryController;
+use App\Http\Controllers\Mgmt\DataSourceController;
 use App\Http\Controllers\Mgmt\MigrationController;
 use App\Http\Controllers\Mgmt\PresenceController;
 use App\Http\Controllers\Mgmt\RedirectController;
@@ -205,6 +208,8 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
 
     Route::apiResource('asset-folders', AssetFolderController::class);
     Route::apiResource('asset-tags', AssetTagController::class);
+    Route::get('assets/{asset}/linked-contents', AssetLinkedContentController::class)
+        ->name('assets.linked-contents');
     Route::apiResource('assets', AssetController::class);
 
     Route::apiResource('backups', BackupController::class);
@@ -264,8 +269,8 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::post('/contents/{content}/versions/{version}/current', ContentVersionCurrentController::class)
         ->name('contents.versions.current');
 
-    Route::apiResource('data-sources', \App\Http\Controllers\Mgmt\DataSourceController::class);
-    Route::apiResource('data-sources.entries', \App\Http\Controllers\Mgmt\DataEntryController::class);
+    Route::apiResource('data-sources', DataSourceController::class);
+    Route::apiResource('data-sources.entries', DataEntryController::class);
 
     // Release Management
     Route::apiResource('releases', ReleaseController::class);

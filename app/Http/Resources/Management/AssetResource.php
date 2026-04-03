@@ -28,10 +28,11 @@ class AssetResource extends JsonResource
             'size' => $this->size,
             'full_path' => $this->full_path,
             'folder_id' => $this->folder_id,
-            'folder' => $this->whenLoaded('folder', fn() => new AssetFolderResource($this->folder)),
+            'folder' => $this->whenLoaded('folder', fn () => new AssetFolderResource($this->folder)),
             'metadata' => $this->metadata,
-            'data' => $this->data && count($this->data) ? $this->data : new \StdClass(),
+            'data' => $this->data && count($this->data) ? $this->data : new \StdClass,
             'tags' => $this->tags,
+            'linked_contents_count' => (int) ($this->resource->getAttributes()['linked_contents_count'] ?? 0),
             'effective_asset_fields' => $this->resolveEffectiveAssetFields($request, $space),
             'url' => app(AssetService::class)->getAssetUrl($this->resource),
             'created_at' => $this->created_at?->toIso8601String(),
@@ -41,7 +42,7 @@ class AssetResource extends JsonResource
 
     private function resolveEffectiveAssetFields(Request $request, ?Space $space): array
     {
-        if (!$space instanceof Space) {
+        if (! $space instanceof Space) {
             return [];
         }
 

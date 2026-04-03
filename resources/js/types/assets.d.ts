@@ -1,22 +1,22 @@
-interface AssetFieldOverride {
+export interface AssetFieldOverride {
   key: string
   enabled?: boolean | null
   required?: boolean | null
 }
 
-interface AssetFolderSettings {
+export interface AssetFolderSettings {
   field_overrides?: AssetFieldOverride[]
   additional_fields?: SpaceAssetField[]
 }
 
-interface AssetFolderFieldState extends SpaceAssetField {
+export interface AssetFolderFieldState extends SpaceAssetField {
   enabled: boolean
   custom?: boolean
   inherited?: boolean
   source?: 'space' | 'folder'
 }
 
-interface AssetFolderResource {
+export interface AssetFolderResource {
   id: string
   name: string
   description: string | null
@@ -31,7 +31,7 @@ interface AssetFolderResource {
   updated_at: string
 }
 
-interface AssetResource {
+export interface AssetResource {
   id: string
   filename: string
   extension: string
@@ -43,13 +43,40 @@ interface AssetResource {
   metadata: Record<string, unknown>
   data: Record<string, unknown> & { focus?: { x: number; y: number } }
   tags: string[]
+  linked_contents_count: number
   effective_asset_fields?: SpaceAssetField[]
   url: string
   created_at: string
   updated_at: string
 }
 
-interface AssetValue {
+export interface LinkedAssetContentResource {
+  id: string
+  name: string | null
+  full_slug: string
+  language_iso: string
+  published_at: string | null
+  updated_at: string
+  block: {
+    id: string
+    name: string
+    icon: string
+    slug: string
+  } | null
+  usage: {
+    current: boolean
+    published: boolean
+  }
+}
+
+export interface AssetDeleteConflict {
+  message: string
+  code: 'asset_in_use'
+  linked_contents_count: number
+  can_force_delete: boolean
+}
+
+export interface AssetValue {
   id: string
   type: 'asset'
   full_path: string
@@ -60,7 +87,7 @@ interface AssetValue {
   data: Record<string, unknown> & { focus?: { x: number; y: number } }
 }
 
-interface AssetTagResource {
+export interface AssetTagResource {
   id: string
   name: string
   slug: string
@@ -74,7 +101,7 @@ interface AssetTagResource {
   updated_at: string
 }
 
-interface UpsertAssetFolderPayload {
+export interface UpsertAssetFolderPayload {
   name?: string
   description?: string | null
   icon?: string | null
@@ -83,13 +110,13 @@ interface UpsertAssetFolderPayload {
   settings?: AssetFolderSettings
 }
 
-interface UpsertAssetTagPayload {
+export interface UpsertAssetTagPayload {
   name: string
   icon?: string | null
   color?: string | null
 }
 
-interface UploadAssetPayload {
+export interface UploadAssetPayload {
   file: File
   folder_id?: string | null
   tags?: string[]
@@ -97,7 +124,7 @@ interface UploadAssetPayload {
   data?: Record<string, unknown>
 }
 
-interface UpdateAssetPayload {
+export interface UpdateAssetPayload {
   filename?: string
   folder_id?: string | null
   tags?: string[]
@@ -105,9 +132,9 @@ interface UpdateAssetPayload {
   data?: Record<string, unknown>
 }
 
-type AssetTypes = 'image' | 'document' | 'video' | 'audio' | 'other'
+export type AssetTypes = 'image' | 'document' | 'video' | 'audio' | 'other'
 
-interface UploadFile extends UploadAssetPayload {
+export interface UploadFile extends UploadAssetPayload {
   id: string
   preview?: string
   type: AssetTypes

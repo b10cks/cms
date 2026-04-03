@@ -4,6 +4,7 @@ import { toast } from 'vue-sonner'
 
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
+import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
   Dialog,
@@ -13,10 +14,11 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog'
 import { InputField } from '~/components/ui/form'
-import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { isClient } from '~/lib/env'
-import type { AssetResource } from '~/types/assets'
+import type { AssetResource, LinkedAssetContentResource } from '~/types/assets'
 
+const { t } = useI18n()
 const { formatFileSize, formatDateTime } = useFormat()
 const { getFileIcon } = useFileUtils()
 const props = withDefaults(
@@ -34,6 +36,7 @@ const props = withDefaults(
 )
 
 const { useFolderStructure } = useAssetFolders(props.spaceId)
+const { useAssetLinkedContentsQuery } = useAssets(props.spaceId)
 const { getBreadcrumbs } = useFolderStructure()
 const { getFileType } = useFileUtils()
 const {
@@ -49,9 +52,37 @@ const assetCopy = ref<AssetResource | null>(null)
 const imageContainer = ref<HTMLElement | null>(null)
 const imageRef = useTemplateRef('imageRef')
 const isDraggingFocus = ref(false)
+const selectedPanel = ref<'details' | 'linked'>('details')
 const selectedLanguage = ref<string>('_default')
+const linkedContentsPage = ref(1)
+const linkedContentsItems = ref<LinkedAssetContentResource[]>([])
 const effectiveFields = computed(() => {
   return getEffectiveFieldsForTarget(assetCopy.value)
+})
+const shouldLoadLinkedContents = computed(() => {
+  return selectedPanel.value === 'linked' && props.mode === 'normal' && Boolean(props.asset?.id)
+})
+const { data: linkedContentsResponse, isFetching: isFetchingLinkedContents } =
+  useAssetLinkedContentsQuery(
+    computed(() => props.asset?.id ?? null),
+    linkedContentsPage,
+    shouldLoadLinkedContents
+  )
+const linkedContentsMeta = computed(() => linkedContentsResponse.value?.meta ?? null)
+const hasMoreLinkedContents = computed(() => {
+  const meta = linkedContentsMeta.value
+  return meta ? meta.current_page < meta.last_page : false
+})
+const linkedContentsSummary = computed(() => {
+  if (!props.asset) {
+    return ''
+  }
+
+  return props.asset.linked_contents_count === 1
+    ? String(t('labels.assets.usedInSingleContent'))
+    : String(
+        t('labels.assets.usedInMultipleContents', { count: props.asset.linked_contents_count })
+      )
 })
 
 watch(
@@ -59,10 +90,32 @@ watch(
   (newAsset) => {
     if (newAsset) {
       assetCopy.value = deepClone(newAsset)
+      selectedPanel.value = 'details'
       selectedLanguage.value = '_default'
+      linkedContentsPage.value = 1
+      linkedContentsItems.value = []
     } else {
       assetCopy.value = null
+      linkedContentsItems.value = []
     }
+  },
+  { immediate: true }
+)
+
+watch(
+  linkedContentsResponse,
+  (response) => {
+    if (!response) {
+      return
+    }
+
+    linkedContentsItems.value = [...linkedContentsItems.value]
+
+    response.data.forEach((item) => {
+      if (!linkedContentsItems.value.some((existing) => existing.id === item.id)) {
+        linkedContentsItems.value.push(item)
+      }
+    })
   },
   { immediate: true }
 )
@@ -200,6 +253,14 @@ const onOpenChange = (open: boolean) => {
     emit('close')
   }
 }
+
+const loadMoreLinkedContents = () => {
+  if (!hasMoreLinkedContents.value || isFetchingLinkedContents.value) {
+    return
+  }
+
+  linkedContentsPage.value += 1
+}
 </script>
 
 <template>
@@ -322,86 +383,201 @@ const onOpenChange = (open: boolean) => {
             :disabled="props.readOnly"
           />
 
-          <div
+          <Tabs
             v-if="mode === 'normal'"
-            class="rounded-lg bg-surface p-3 text-sm"
+            :model-value="selectedPanel"
+            @update:model-value="selectedPanel = $event as 'details' | 'linked'"
+            class="space-y-4"
           >
-            <dl class="grid grid-cols-2 gap-2">
-              <dt class="font-semibold">{{ $t('labels.assets.fields.type') }}:</dt>
-              <dd class="truncate">{{ asset.mime_type || $t('labels.assets.unknown') }}</dd>
-              <dt class="font-semibold">{{ $t('labels.assets.size') }}:</dt>
-              <dd class="truncate">{{ formatFileSize(asset.size) }}</dd>
-              <dt class="font-semibold">{{ $t('labels.assets.createdAt') }}:</dt>
-              <dd class="truncate">{{ formatDateTime(asset.created_at) }}</dd>
-              <dt class="font-semibold">{{ $t('labels.assets.updatedAt') }}:</dt>
-              <dd class="truncate">{{ formatDateTime(asset.updated_at) }}</dd>
-            </dl>
+            <TabsList class="grid w-full grid-cols-2">
+              <TabsTrigger value="details">
+                {{ $t('labels.assets.fields.metadata') }}
+              </TabsTrigger>
+              <TabsTrigger value="linked">
+                {{ $t('labels.assets.linkedContents') }}
+              </TabsTrigger>
+            </TabsList>
 
-            <div
-              v-if="asset.metadata && Object.keys(asset.metadata).length"
-              class="mt-4 border-t-2 border-background pt-4"
-            >
-              <dl class="grid grid-cols-2 gap-2">
-                <template
-                  v-for="(value, key) in asset.metadata"
-                  :key="key"
-                >
-                  <dt class="font-semibold">
-                    {{ String($t(`labels.assets.metadata.${key}`) || formatKey(key)) }}:
-                  </dt>
-                  <dd class="wrap-break-word">{{ value }}</dd>
-                </template>
-              </dl>
-            </div>
-          </div>
+            <TabsContent value="details">
+              <div class="rounded-lg bg-surface p-3 text-sm">
+                <dl class="grid grid-cols-2 gap-2">
+                  <dt class="font-semibold">{{ $t('labels.assets.fields.type') }}:</dt>
+                  <dd class="truncate">{{ asset.mime_type || $t('labels.assets.unknown') }}</dd>
+                  <dt class="font-semibold">{{ $t('labels.assets.size') }}:</dt>
+                  <dd class="truncate">{{ formatFileSize(asset.size) }}</dd>
+                  <dt class="font-semibold">{{ $t('labels.assets.createdAt') }}:</dt>
+                  <dd class="truncate">{{ formatDateTime(asset.created_at) }}</dd>
+                  <dt class="font-semibold">{{ $t('labels.assets.updatedAt') }}:</dt>
+                  <dd class="truncate">{{ formatDateTime(asset.updated_at) }}</dd>
+                  <dt class="font-semibold">{{ $t('labels.assets.linkedContents') }}:</dt>
+                  <dd class="truncate">{{ linkedContentsSummary }}</dd>
+                </dl>
 
-          <div
-            v-if="effectiveFields.length > 0 && languageTabs.length > 1"
-            class="space-y-3"
-          >
-            <Tabs
-              :model-value="String(selectedLanguage)"
-              @update:model-value="selectedLanguage = String($event)"
-              class="w-full"
-            >
-              <TabsList class="w-full">
-                <TabsTrigger
-                  v-for="lang in languageTabs"
-                  :key="lang.code"
-                  :value="lang.code || ''"
+                <div
+                  v-if="asset.metadata && Object.keys(asset.metadata).length"
+                  class="mt-4 border-t-2 border-background pt-4"
                 >
-                  {{ lang.name }}
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <div class="space-y-3">
-              <InputField
-                v-for="field in effectiveFields"
-                :key="`${selectedLanguage}-${field.key}`"
-                :model-value="getFieldValue(field.key) as string"
-                :label="String(field.label)"
-                :name="field.key"
-                :required="isFieldRequiredForLanguage(field, selectedLanguage)"
-                :disabled="props.readOnly"
-                @update:model-value="setFieldValue(field.key, $event)"
-              />
-            </div>
-          </div>
-          <div
-            v-else-if="effectiveFields.length > 0"
-            class="space-y-3"
-          >
-            <InputField
-              v-for="field in effectiveFields"
-              :key="field.key"
-              :model-value="getFieldValue(field.key) as string"
-              :label="String(field.label)"
-              :name="field.key"
-              :required="isFieldRequiredForLanguage(field, '_default')"
-              :disabled="props.readOnly"
-              @update:model-value="setFieldValue(field.key, $event)"
-            />
-          </div>
+                  <dl class="grid grid-cols-2 gap-2">
+                    <template
+                      v-for="(value, key) in asset.metadata"
+                      :key="key"
+                    >
+                      <dt class="font-semibold">
+                        {{ String($t(`labels.assets.metadata.${key}`) || formatKey(key)) }}:
+                      </dt>
+                      <dd class="wrap-break-word">{{ value }}</dd>
+                    </template>
+                  </dl>
+                </div>
+              </div>
+              <div
+                v-if="effectiveFields.length > 0 && languageTabs.length > 1"
+                class="space-y-3 mt-3"
+              >
+                <Tabs
+                  :model-value="String(selectedLanguage)"
+                  @update:model-value="selectedLanguage = String($event)"
+                  class="w-full"
+                >
+                  <TabsList class="w-full">
+                    <TabsTrigger
+                      v-for="lang in languageTabs"
+                      :key="lang.code"
+                      :value="lang.code || ''"
+                    >
+                      {{ lang.name }}
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                <div class="space-y-3">
+                  <InputField
+                    v-for="field in effectiveFields"
+                    :key="`${selectedLanguage}-${field.key}`"
+                    :model-value="getFieldValue(field.key) as string"
+                    :label="String(field.label)"
+                    :name="field.key"
+                    :required="isFieldRequiredForLanguage(field, selectedLanguage)"
+                    :disabled="props.readOnly"
+                    @update:model-value="setFieldValue(field.key, $event)"
+                  />
+                </div>
+              </div>
+              <div
+                v-else-if="effectiveFields.length > 0"
+                class="space-y-3"
+              >
+                <InputField
+                  v-for="field in effectiveFields"
+                  :key="field.key"
+                  :model-value="getFieldValue(field.key) as string"
+                  :label="String(field.label)"
+                  :name="field.key"
+                  :required="isFieldRequiredForLanguage(field, '_default')"
+                  :disabled="props.readOnly"
+                  @update:model-value="setFieldValue(field.key, $event)"
+                />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="linked">
+              <div class="rounded-xl bg-surface p-3">
+                <div class="mb-4">
+                  <p class="font-semibold">{{ $t('labels.assets.linkedContents') }}</p>
+                  <p class="text-sm text-muted">{{ linkedContentsSummary }}</p>
+                </div>
+
+                <div
+                  v-if="isFetchingLinkedContents && !linkedContentsItems.length"
+                  class="text-sm text-muted"
+                >
+                  {{ $t('labels.assets.loadingLinkedContents') }}
+                </div>
+
+                <div
+                  v-else-if="!linkedContentsItems.length"
+                  class="text-sm text-muted"
+                >
+                  {{ $t('labels.assets.noLinkedContents') }}
+                </div>
+
+                <div
+                  v-else
+                  class="space-y-3"
+                >
+                  <RouterLink
+                    v-for="item in linkedContentsItems"
+                    :key="item.id"
+                    :to="{
+                      name: 'space-content-contentId',
+                      params: {
+                        space: spaceId,
+                        contentId: item.id,
+                      },
+                    }"
+                    class="block rounded-lg border border-input bg-background p-3 transition-colors hover:bg-input"
+                  >
+                    <div class="flex items-center gap-2">
+                      <Icon
+                        :name="`lucide:${item.block.icon}`"
+                        :style="{ color: item.block.color }"
+                        class="shrink-0"
+                      />
+                      <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2">
+                          <p class="truncate font-semibold">
+                            {{ item.name || $t('labels.assets.unknown') }}
+                          </p>
+                          <div class="flex flex-wrap gap-1">
+                            <Badge
+                              variant="secondary"
+                              size="sm"
+                            >
+                              {{ item.language_iso.toUpperCase() }}
+                            </Badge>
+                            <Badge
+                              v-if="item.usage.current"
+                              variant="warning"
+                              size="sm"
+                            >
+                              {{ $t('labels.assets.draft') }}
+                            </Badge>
+                            <Badge
+                              v-if="item.usage.published"
+                              variant="success"
+                              size="sm"
+                            >
+                              {{ $t('labels.assets.published') }}
+                            </Badge>
+                          </div>
+                        </div>
+                        <p class="truncate text-sm text-muted">
+                          {{ item.full_slug }}
+                        </p>
+                      </div>
+                      <Icon
+                        name="lucide:arrow-up-right"
+                        class="shrink-0 text-muted"
+                      />
+                    </div>
+                  </RouterLink>
+
+                  <Button
+                    v-if="hasMoreLinkedContents"
+                    variant="outline"
+                    class="w-full"
+                    :disabled="isFetchingLinkedContents"
+                    @click="loadMoreLinkedContents"
+                  >
+                    {{
+                      isFetchingLinkedContents
+                        ? $t('labels.assets.loadingLinkedContents')
+                        : $t('actions.loadMore')
+                    }}
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
       <DialogFooter>

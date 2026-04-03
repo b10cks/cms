@@ -10,6 +10,7 @@ use App\Http\Resources\Management\AssetResource;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Models\Space\AssetFolder;
+use App\Services\Asset\AssetUsageService;
 use App\Services\Auth\AuthorizationService;
 use App\Services\Storage\AssetService;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +31,8 @@ class AssetController extends Controller
         $assets = Asset::filter($filter)
             ->with('folder')
             ->paginate($request->get('per_page', 20));
+
+        $this->attachUsageCounts($assets->getCollection(), app(AssetUsageService::class));
 
         return AssetResource::collection($assets);
     }
@@ -83,11 +86,14 @@ class AssetController extends Controller
     /**
      * Display the specified asset.
      */
-    public function show(Space $space, Asset $asset): AssetResource
+    public function show(Space $space, Asset $asset, AssetUsageService $assetUsageService): AssetResource
     {
         abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.view'), 403);
 
-        return new AssetResource($asset->load('folder'));
+        $asset->load('folder');
+        $asset->setAttribute('linked_contents_count', $assetUsageService->getUsageCountForAsset($asset));
+
+        return new AssetResource($asset);
     }
 
     /**
@@ -137,10 +143,26 @@ class AssetController extends Controller
     /**
      * Remove the specified asset.
      */
-    public function destroy(Space $space, Asset $asset, AssetService $assetService): JsonResponse
-    {
+    public function destroy(
+        Space $space,
+        Asset $asset,
+        Request $request,
+        AssetService $assetService,
+        AssetUsageService $assetUsageService
+    ): JsonResponse {
         abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
         try {
+            $linkedContentsCount = $assetUsageService->getUsageCountForAsset($asset);
+
+            if ($linkedContentsCount > 0 && !$request->boolean('force')) {
+                return response()->json([
+                    'message' => 'Asset is currently linked to content.',
+                    'code' => 'asset_in_use',
+                    'linked_contents_count' => $linkedContentsCount,
+                    'can_force_delete' => true,
+                ], 409);
+            }
+
             $result = $assetService->deleteAsset($asset);
 
             if ($result) {
@@ -159,6 +181,16 @@ class AssetController extends Controller
             return response()->json([
                 'message' => 'An error occurred while deleting the asset',
             ], 500);
+        }
+    }
+
+    private function attachUsageCounts(iterable $assets, AssetUsageService $assetUsageService): void
+    {
+        $collection = collect($assets);
+        $counts = $assetUsageService->getUsageCountsForAssets($collection);
+
+        foreach ($collection as $asset) {
+            $asset->setAttribute('linked_contents_count', $counts[$asset->id] ?? 0);
         }
     }
 }

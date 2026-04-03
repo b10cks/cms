@@ -70,6 +70,13 @@ const dragPreviewTitle = computed(() => {
     ? String(t('labels.selectionCount', { count: resolvedDragItems.value.length }))
     : props.asset.filename
 })
+const linkedContentsLabel = computed(() => {
+  return props.asset.linked_contents_count === 1
+    ? String(t('labels.assets.linkedContentsSingle'))
+    : String(
+        t('labels.assets.linkedContentsMultiple', { count: props.asset.linked_contents_count })
+      )
+})
 
 function handleSelect(event: Event) {
   event.stopPropagation()
@@ -190,7 +197,7 @@ watchEffect((onCleanup) => {
           />
         </div>
         <div class="text-sm text-muted">
-          {{ asset.extension }} • {{ formatFileSize(asset.size) }}
+          {{ asset.extension }} • {{ formatFileSize(asset.size) }} • {{ linkedContentsLabel }}
         </div>
       </div>
       <DropdownMenu

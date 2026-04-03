@@ -33,7 +33,7 @@ import {
   TableRow,
 } from '~/components/ui/table'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
-import type { AssetResource } from '~/types/assets'
+import type { AssetDeleteConflict, AssetResource } from '~/types/assets'
 
 export interface AssetListViewProps {
   spaceId: string
@@ -287,9 +287,36 @@ const handleAssetDelete = async (asset: AssetResource) => {
   }
 
   try {
-    await deleteAsset(asset.id)
+    await deleteAsset({ id: asset.id })
     await refetchAssets()
   } catch (error) {
+    const conflict = error as { status?: number; data?: AssetDeleteConflict }
+
+    if (conflict.status === 409 && conflict.data?.code === 'asset_in_use') {
+      const forceDeleteConfirmed = await alert.confirm(
+        String(
+          $t('messages.assets.forceDeleteConfirmation', {
+            name: asset.filename,
+            count: conflict.data.linked_contents_count,
+          })
+        ),
+        {
+          title: String($t('labels.assets.forceDeleteTitle')),
+          confirmLabel: String($t('actions.forceDelete')),
+          cancelLabel: String($t('alertDialog.cancel')),
+          variant: 'destructive',
+        }
+      )
+
+      if (!forceDeleteConfirmed) {
+        return
+      }
+
+      await deleteAsset({ id: asset.id, force: true })
+      await refetchAssets()
+      return
+    }
+
     toast.error(String($t('composables.assets.deleteError', { error: String(error) })))
     console.error('Error deleting asset:', error)
   }
@@ -561,6 +588,15 @@ onMounted(async () => {
                     {{ asset.extension }} • {{ asset.mime_type }}
                   </span>
                 </div>
+                <p class="text-xs text-muted-foreground">
+                  {{
+                    asset.linked_contents_count === 1
+                      ? $t('labels.assets.usedInSingleContent')
+                      : $t('labels.assets.usedInMultipleContents', {
+                          count: asset.linked_contents_count,
+                        })
+                  }}
+                </p>
                 <InputField
                   :label="$t('labels.assets.fields.filename')"
                   :name="`filename-${asset.id}`"

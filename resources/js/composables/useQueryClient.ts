@@ -72,6 +72,10 @@ export const queryKeys = {
     list: (filters: any = {}) => [...queryKeys.assets(spaceId).lists(), filters] as const,
     details: () => [...queryKeys.assets(spaceId).all(), 'detail'] as const,
     detail: (id: MaybeRef<string>) => [...queryKeys.assets(spaceId).details(), id] as const,
+    linkedContents: (id: MaybeRef<string>) =>
+      [...queryKeys.assets(spaceId).detail(id), 'linked-contents'] as const,
+    linkedContentsPage: (id: MaybeRef<string>, page: MaybeRef<number>) =>
+      [...queryKeys.assets(spaceId).linkedContents(id), page] as const,
   }),
   blocks: (spaceId: MaybeRef<string>) => ({
     all: () => ['spaces', spaceId, 'blocks'] as const,

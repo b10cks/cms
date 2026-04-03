@@ -6,6 +6,7 @@ import { api } from '~/api'
 import type { AssetsQueryParams } from '~/api/resources/assets'
 import { getXsrfHeaders } from '~/lib/csrf'
 import type {
+  AssetDeleteConflict,
   AssetResource,
   ExportTypes,
   UpdateAssetPayload,
@@ -41,6 +42,26 @@ export function useAssets(spaceId: MaybeRef<string>) {
         const response = await spaceAPI.value.assets.get(toValue(id))
         return response.data
       },
+    })
+  }
+
+  const useAssetLinkedContentsQuery = (
+    id: MaybeRef<string | null | undefined>,
+    page: MaybeRef<number>,
+    enabled: MaybeRef<boolean> = true,
+    perPage: MaybeRef<number> = 10
+  ) => {
+    return useQuery({
+      queryKey: computed(() =>
+        queryKeys.assets(spaceId).linkedContentsPage(toValue(id) ?? '', toValue(page))
+      ),
+      queryFn: async () => {
+        return await spaceAPI.value.assets.getLinkedContents(toValue(id) ?? '', {
+          page: toValue(page),
+          per_page: toValue(perPage),
+        })
+      },
+      enabled: computed(() => Boolean(toValue(id)) && toValue(enabled)),
     })
   }
 
@@ -160,16 +181,21 @@ export function useAssets(spaceId: MaybeRef<string>) {
 
   const useDeleteAssetMutation = () => {
     return useMutation({
-      mutationFn: async (id: string) => {
-        await spaceAPI.value.assets.delete(id)
-        return id
+      mutationFn: async ({ id, force = false }: { id: string; force?: boolean }) => {
+        await spaceAPI.value.assets.delete(id, { force })
+        return { id }
       },
-      onSuccess: (id) => {
+      onSuccess: ({ id }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
         queryClient.removeQueries({ queryKey: queryKeys.assets(spaceId).detail(id) })
+        queryClient.removeQueries({ queryKey: queryKeys.assets(spaceId).linkedContents(id) })
         toast.success(t('composables.assets.deleteSuccess') as string)
       },
-      onError: (error: Error) => {
+      onError: (error: Error & { data?: AssetDeleteConflict; status?: number }) => {
+        if (error.status === 409 && error.data?.code === 'asset_in_use') {
+          return
+        }
+
         toast.error(
           t('composables.assets.deleteError', {
             error: error.message || 'Unknown error',
@@ -220,6 +246,7 @@ export function useAssets(spaceId: MaybeRef<string>) {
     // Queries
     useAssetQuery,
     useAssetsQuery,
+    useAssetLinkedContentsQuery,
 
     // Mutations
     useUpdateAssetMutation,

@@ -425,11 +425,21 @@
       "size": "Size",
       "createdAt": "Uploaded at",
       "updatedAt": "Last Modified",
+      "linkedContents": "Linked contents",
+      "linkedContentsSingle": "1 content",
+      "linkedContentsMultiple": "{count} contents",
+      "usedInSingleContent": "Used in 1 content",
+      "usedInMultipleContents": "Used in {count} contents",
+      "loadingLinkedContents": "Loading linked contents...",
+      "noLinkedContents": "No linked contents found.",
+      "draft": "Draft",
+      "published": "Published",
       "lastModified": "Last Modified",
       "unknown": "Unknown",
       "uploading": "Uploading...",
       "replaceMedia": "Replace Media",
-      "finish": "Finish"
+      "finish": "Finish",
+      "forceDeleteTitle": "Force Delete Asset"
     },
     "contents": {
       "validationWarning": {
@@ -2088,6 +2098,8 @@
   },
   "actions": {
     "open": "Open",
+    "loadMore": "Load more",
+    "forceDelete": "Force delete",
     "forceSave": "Save anyway",
     "toDashboard": "Go to dashboard",
     "view": {
@@ -2576,6 +2588,7 @@
     },
     "assets": {
       "deleteConfirmation": "Delete \"{name}\"? This cannot be undone.",
+      "forceDeleteConfirmation": "\"{name}\" is still linked in {count} contents. Force delete removes the asset file, but existing content references will remain.",
       "uploadRequirementsConfirm": "Some files are missing required metadata. You can still upload them, but they will stay flagged until the missing values are filled in."
     },
     "references": {

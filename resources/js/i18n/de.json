@@ -420,11 +420,21 @@
       "size": "Größe",
       "createdAt": "Hochgeladen am",
       "updatedAt": "Geändert",
+      "linkedContents": "Verknüpfte Inhalte",
+      "linkedContentsSingle": "1 Inhalt",
+      "linkedContentsMultiple": "{count} Inhalte",
+      "usedInSingleContent": "Verwendet in 1 Inhalt",
+      "usedInMultipleContents": "Verwendet in {count} Inhalten",
+      "loadingLinkedContents": "Verknüpfte Inhalte werden geladen...",
+      "noLinkedContents": "Keine verknüpften Inhalte gefunden.",
+      "draft": "Entwurf",
+      "published": "Veröffentlicht",
       "lastModified": "Zuletzt geändert",
       "unknown": "Unbekannt",
       "uploading": "Wird hochgeladen...",
       "replaceMedia": "Medien ersetzen",
-      "finish": "Fertig"
+      "finish": "Fertig",
+      "forceDeleteTitle": "Löschen erzwingen"
     },
     "contents": {
       "validationWarning": {
@@ -2050,6 +2060,8 @@
   },
   "actions": {
     "open": "Öffnen",
+    "loadMore": "Mehr laden",
+    "forceDelete": "Löschen erzwingen",
     "forceSave": "Trotzdem speichern",
     "toDashboard": "Zum Dashboard",
     "quickActions": "Schnellaktionen",
@@ -2515,6 +2527,7 @@
     },
     "assets": {
       "deleteConfirmation": "Lösche \"{name}\"? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "forceDeleteConfirmation": "\"{name}\" ist noch in {count} Inhalten verknüpft. Beim erzwungenen Löschen wird die Asset-Datei entfernt, bestehende Inhaltsreferenzen bleiben jedoch erhalten.",
       "uploadRequirementsConfirm": "Einige Dateien haben fehlende Pflicht-Metadaten. Du kannst sie trotzdem hochladen, aber sie bleiben markiert, bis die fehlenden Werte ergänzt wurden."
     },
     "references": {

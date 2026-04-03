@@ -314,7 +314,12 @@ const handleAssetDelete = async (asset: AssetResource) => {
     return
   }
 
-  await deleteAsset(asset.id)
+  const deleted = await attemptAssetDelete(asset)
+
+  if (!deleted) {
+    return
+  }
+
   selectedAssets.value.delete(asset.id)
   emitSelectionChange()
 }
@@ -324,8 +329,14 @@ const deleteSelection = async () => {
     return
   }
 
-  await Promise.all(Array.from(selectedAssets.value.keys()).map((id) => deleteAsset(id)))
-  clearSelection()
+  for (const asset of Array.from(selectedAssets.value.values())) {
+    const deleted = await attemptAssetDelete(asset)
+
+    if (deleted) {
+      selectedAssets.value.delete(asset.id)
+      emitSelectionChange()
+    }
+  }
 }
 
 const handleItemsMove = async (targetFolderId: string | null, items: AssetManagerDragItem[]) => {
@@ -355,6 +366,46 @@ const saveAsset = async (asset: AssetResource) => {
   })
 
   detailAsset.value = null
+}
+
+const promptForceDelete = async (
+  asset: AssetResource,
+  linkedContentsCount: number
+): Promise<boolean> => {
+  return await alert.confirm(
+    String(
+      $t('messages.assets.forceDeleteConfirmation', {
+        name: asset.filename,
+        count: linkedContentsCount,
+      })
+    ),
+    {
+      title: String($t('labels.assets.forceDeleteTitle')),
+      confirmLabel: String($t('actions.forceDelete')),
+      cancelLabel: String($t('alertDialog.cancel')),
+      variant: 'destructive',
+    }
+  )
+}
+
+const attemptAssetDelete = async (asset: AssetResource): Promise<boolean> => {
+  try {
+    await deleteAsset({ id: asset.id })
+    return true
+  } catch (error: any) {
+    if (error?.status !== 409 || error?.data?.code !== 'asset_in_use') {
+      throw error
+    }
+
+    const forceDeleteConfirmed = await promptForceDelete(asset, error.data.linked_contents_count)
+
+    if (!forceDeleteConfirmed) {
+      return false
+    }
+
+    await deleteAsset({ id: asset.id, force: true })
+    return true
+  }
 }
 
 const handleKeyNavigation = (

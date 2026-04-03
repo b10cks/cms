@@ -7,11 +7,15 @@ use App\Models\Management\Space;
 use App\Models\Management\Storage;
 use App\Models\Space\Asset;
 use App\Models\Space\AssetFolder;
+use App\Models\Space\Block;
+use App\Models\Space\Content;
+use App\Models\Space\ContentVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage as LaravelStorage;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,6 +34,8 @@ class AssetTest extends TestCase
     protected Space $space;
 
     protected Storage $storage;
+
+    protected Block $block;
 
     protected function setUp(): void
     {
@@ -71,6 +77,14 @@ class AssetTest extends TestCase
         LaravelStorage::fake($this->storage->id);
 
         $this->setUpSpaceTesting($this->space);
+        app()->instance('currentSpace', $this->space);
+
+        $this->block = Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Page',
+            'slug' => 'page',
+            'type' => 'root',
+        ]);
     }
 
     #[Test]
@@ -193,6 +207,27 @@ class AssetTest extends TestCase
     }
 
     #[Test]
+    public function asset_list_includes_linked_contents_count(): void
+    {
+        $linkedAsset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+        $unlinkedAsset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+
+        $this->createContentWithVersions(currentAssetIds: [$linkedAsset->id], publishedAssetIds: [$linkedAsset->id]);
+
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets?sort=+filename&per_page=20");
+
+        $response->assertOk();
+        $assets = collect($response->json('data'))->keyBy('id');
+
+        $this->assertSame(1, $assets[$linkedAsset->id]['linked_contents_count']);
+        $this->assertSame(0, $assets[$unlinkedAsset->id]['linked_contents_count']);
+    }
+
+    #[Test]
     public function user_can_filter_assets_by_mime_type()
     {
         // Create assets with different types
@@ -284,6 +319,7 @@ class AssetTest extends TestCase
                 'author' => 'Test User',
             ],
         ]);
+        $this->createContentWithVersions(currentAssetIds: [$asset->id], publishedAssetIds: [$asset->id]);
 
         $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}");
 
@@ -297,7 +333,63 @@ class AssetTest extends TestCase
                 'description' => 'Test document',
                 'author' => 'Test User',
             ],
+            'linked_contents_count' => 1,
         ]);
+    }
+
+    #[Test]
+    public function linked_contents_count_deduplicates_current_and_published_versions_of_the_same_content(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+
+        $this->createContentWithVersions(
+            currentAssetIds: [$asset->id],
+            publishedAssetIds: [$asset->id],
+        );
+
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}");
+
+        $response->assertOk();
+        $response->assertJsonPath('linked_contents_count', 1);
+    }
+
+    #[Test]
+    public function linked_contents_count_ignores_historical_versions_that_are_not_current_or_published(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+        $content = $this->createContentWithVersions();
+
+        ContentVersion::query()->forceCreate([
+            'content_id' => $content->id,
+            'parent_id' => $content->current_version_id,
+            'asset_ids' => [$asset->id],
+            'content' => ['title' => 'Archived version'],
+            'created_by_id' => $this->user->id,
+        ]);
+
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}");
+
+        $response->assertOk();
+        $response->assertJsonPath('linked_contents_count', 0);
+    }
+
+    #[Test]
+    public function linked_contents_count_ignores_soft_deleted_contents(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+        $content = $this->createContentWithVersions(currentAssetIds: [$asset->id], publishedAssetIds: [$asset->id]);
+        $content->delete();
+
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}");
+
+        $response->assertOk();
+        $response->assertJsonPath('linked_contents_count', 0);
     }
 
     #[Test]
@@ -466,6 +558,83 @@ class AssetTest extends TestCase
     }
 
     #[Test]
+    public function deleting_a_linked_asset_requires_force(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+            'path' => 'test-path/linked.jpg',
+        ]);
+        LaravelStorage::disk($this->storage->id)->put('test-path/linked.jpg', 'test content');
+
+        $this->createContentWithVersions(currentAssetIds: [$asset->id], publishedAssetIds: [$asset->id]);
+
+        $response = $this->deleteJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}");
+
+        $response->assertStatus(409);
+        $response->assertJson([
+            'message' => 'Asset is currently linked to content.',
+            'code' => 'asset_in_use',
+            'linked_contents_count' => 1,
+            'can_force_delete' => true,
+        ]);
+    }
+
+    #[Test]
+    public function linked_assets_can_be_force_deleted(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+            'path' => 'test-path/force.jpg',
+        ]);
+        LaravelStorage::disk($this->storage->id)->put('test-path/force.jpg', 'test content');
+
+        $this->createContentWithVersions(currentAssetIds: [$asset->id], publishedAssetIds: [$asset->id]);
+
+        $response = $this->deleteJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}?force=1");
+
+        $response->assertNoContent();
+        $this->assertSoftDeleted('assets', [
+            'id' => $asset->id,
+        ]);
+    }
+
+    #[Test]
+    public function linked_contents_endpoint_returns_unique_contents_with_usage_flags(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+
+        $bothVersions = $this->createContentWithVersions(
+            currentAssetIds: [$asset->id],
+            publishedAssetIds: [$asset->id],
+        );
+        $draftOnly = $this->createContentWithVersions(
+            currentAssetIds: [$asset->id],
+            publishedAssetIds: [],
+        );
+
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}/linked-contents");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+        $response->assertJsonFragment([
+            'id' => $bothVersions->id,
+            'usage' => [
+                'current' => true,
+                'published' => true,
+            ],
+        ]);
+        $response->assertJsonFragment([
+            'id' => $draftOnly->id,
+            'usage' => [
+                'current' => true,
+                'published' => false,
+            ],
+        ]);
+    }
+
+    #[Test]
     public function pagination_works_for_assets()
     {
         // Create more assets than the default per page
@@ -513,5 +682,52 @@ class AssetTest extends TestCase
         $secondPageIds = $response->json('data.*.id');
 
         $this->assertEmpty(array_intersect($firstPageIds, $secondPageIds));
+    }
+
+    private function createContentWithVersions(
+        array $currentAssetIds = [],
+        ?array $publishedAssetIds = null,
+    ): Content {
+        $slug = strtolower((string) Str::ulid());
+        $content = new Content;
+        $content->forceFill([
+            'block_id' => $this->block->id,
+            'name' => "Page {$slug}",
+            'slug' => $slug,
+            'full_slug' => "/{$slug}",
+            'language_iso' => 'en',
+            'settings' => [],
+        ]);
+        $content->id = strtolower((string) Str::ulid());
+
+        $currentVersion = ContentVersion::query()->forceCreate([
+            'content_id' => $content->id,
+            'content' => ['title' => "Page {$slug}"],
+            'created_by_id' => $this->user->id,
+        ]);
+        ContentVersion::query()->whereKey($currentVersion->id)->update([
+            'asset_ids' => $currentAssetIds,
+        ]);
+
+        $publishedVersion = null;
+        if ($publishedAssetIds !== null) {
+            $publishedVersion = ContentVersion::query()->forceCreate([
+                'content_id' => $content->id,
+                'parent_id' => $currentVersion->id,
+                'content' => ['title' => "Published {$slug}"],
+                'created_by_id' => $this->user->id,
+                'published_at' => now(),
+            ]);
+            ContentVersion::query()->whereKey($publishedVersion->id)->update([
+                'asset_ids' => $publishedAssetIds,
+            ]);
+        }
+
+        $content->current_version_id = $currentVersion->id;
+        $content->published_version_id = $publishedVersion?->id;
+        $content->published_at = $publishedVersion?->published_at;
+        $content->save();
+
+        return $content->fresh();
     }
 }

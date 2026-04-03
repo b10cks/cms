@@ -1,5 +1,5 @@
 import { getXsrfHeaders } from '~/lib/csrf'
-import type { ApiResponse, BaseQueryParams } from '~/types'
+import type { ApiCollectionResponse, ApiResponse, BaseQueryParams } from '~/types'
 import type { ExportTypes } from '~/types/assets'
 
 import type { ApiClient } from '../client'
@@ -15,6 +15,8 @@ export interface AssetsQueryParams extends BaseQueryParams {
   updated_at?: string
   mime_type?: string
 }
+
+export interface LinkedAssetContentsQueryParams extends BaseQueryParams {}
 
 export class Assets extends BaseResource<
   AssetResource,
@@ -95,6 +97,22 @@ export class Assets extends BaseResource<
         // Remove Content-Type header so browser can set it with boundary
         'Content-Type': undefined,
       },
+    })
+  }
+
+  public async getLinkedContents(
+    assetId: string,
+    query: LinkedAssetContentsQueryParams = {}
+  ): Promise<ApiCollectionResponse<LinkedAssetContentResource>> {
+    return this.client.get<ApiCollectionResponse<LinkedAssetContentResource>>(
+      `${this.basePath}/${assetId}/linked-contents`,
+      query as Record<string, unknown>
+    )
+  }
+
+  public async delete(id: string, options: { force?: boolean } = {}): Promise<void> {
+    return this.client.delete(`${this.basePath}/${id}`, {
+      query: options.force ? { force: 1 } : {},
     })
   }
 
