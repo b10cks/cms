@@ -22,6 +22,9 @@ export function useAuditLogs(spaceId: MaybeRef<string>) {
         return response
       },
       enabled: computed(() => !!toValue(spaceId) && !!toValue(enabled)),
+      staleTime: 0,
+      gcTime: 0,
+      refetchOnMount: 'always',
     })
   }
 
