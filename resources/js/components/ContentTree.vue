@@ -24,7 +24,7 @@ import {
 } from '~/components/ui/dropdown-menu'
 import DropIndicator from '~/components/ui/DropIndicator.vue'
 import RenamableTitle from '~/components/ui/RenamableTitle.vue'
-import { ScrollArea } from '~/components/ui/scroll-area'
+import { VerticalScrollArea } from '~/components/ui/scroll-area'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { useContentTreeClipboard } from '~/composables/useContentTreeClipboard'
 import { queryKeys } from '~/composables/useQueryClient'
@@ -1368,7 +1368,7 @@ onBeforeUnmount(() => {
     ref="treeContainerRef"
     class="relative flex h-full min-h-0 flex-col overflow-hidden"
   >
-    <ScrollArea class="h-full min-h-0 flex-1">
+    <VerticalScrollArea class="h-full min-h-0 w-full">
       <div
         v-if="isLoading"
         class="flex items-center justify-center py-4"
@@ -1532,7 +1532,7 @@ onBeforeUnmount(() => {
             @cancel="handleEditCancel"
           />
 
-          <div class="ml-auto flex items-center gap-2">
+          <div class="ml-auto pl-3 flex items-center gap-2">
             <AvatarList
               v-if="getUsersForContent(item.value.id).length > 0"
               :users="getUsersForContent(item.value.id)"
@@ -1571,7 +1571,7 @@ onBeforeUnmount(() => {
           </div>
         </TreeItem>
       </TreeRoot>
-    </ScrollArea>
+    </VerticalScrollArea>
 
     <DropdownMenu
       :open="openMenuId !== null"
