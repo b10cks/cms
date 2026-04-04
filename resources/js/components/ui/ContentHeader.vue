@@ -11,7 +11,8 @@ withDefaults(
 </script>
 
 <template>
-  <header class="grid gap-2 pt-8">
+  <header class="grid pt-8">
+    <slot name="start" />
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
         <slot name="before-header" />

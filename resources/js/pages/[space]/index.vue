@@ -19,7 +19,7 @@ useSeoMeta({
     <div class="content-grid pb-6">
       <div v-if="space">
         <ContentHeader :header="space.name">
-          <template #before-header>
+          <template #start>
             <NuxtImg
               v-if="space.icon"
               :src="space.icon"

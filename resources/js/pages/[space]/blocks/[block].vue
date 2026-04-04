@@ -4,9 +4,9 @@ import { RouterLink } from 'vue-router'
 import { Badge } from '@/components/ui/badge'
 import BlockEdit from '~/components/BlockEdit.vue'
 import BlockMenu from '~/components/BlockMenu.vue'
-import CreateBlockDialog from '~/components/blocks/CreateBlockDialog.vue'
 import BlockTemplatesSheet from '~/components/blocks/BlockTemplatesSheet.vue'
 import BlockVersionsSheet from '~/components/blocks/BlockVersionsSheet.vue'
+import CreateBlockDialog from '~/components/blocks/CreateBlockDialog.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
@@ -68,7 +68,7 @@ const handleDuplicateCreated = (createdBlock: BlockResource) => {
       class="mx-auto flex w-full max-w-5xl flex-col gap-6 pb-6"
     >
       <ContentHeader :header="block.name">
-        <template #before-header>
+        <template #start>
           <Button
             :as="RouterLink"
             :to="overviewRoute"

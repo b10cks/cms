@@ -335,7 +335,7 @@ const isDefaultSelected = computed(() => selectedDimension.value === 'default')
         :header="dataSource?.name || $t('labels.datasets.dataEntries')"
         :description="dataSource?.description"
       >
-        <template #before-header>
+        <template #start>
           <RouterLink
             :to="{ name: 'space-datasources', params: { space: spaceId } }"
             class="flex cursor-pointer items-center gap-2"
