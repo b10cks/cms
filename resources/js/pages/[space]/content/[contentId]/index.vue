@@ -284,13 +284,17 @@ const editorContentModel = computed<ContentTreeItem>({
 })
 const {
   sanitizedContent,
+  validationSummary,
   markFieldDirty,
   setServerErrors,
   clearServerErrors,
   getFieldError,
   shouldShowFieldError,
   getClientErrors,
+  getVisibleValidationEntries,
+  getValidationIssueSignature,
   validateAllForSubmit,
+  revealValidationState,
   focusFirstInvalidField,
   resetValidationState,
   submitAttempted,
@@ -667,8 +671,12 @@ provide('shouldShowFieldError', shouldShowFieldError)
 provide('setValidationErrors', setServerErrors)
 provide('clearValidationErrors', clearServerErrors)
 provide('getClientValidationErrors', getClientErrors)
+provide('getValidationSummary', () => validationSummary.value)
+provide('getVisibleValidationEntries', getVisibleValidationEntries)
+provide('getValidationIssueSignature', getValidationIssueSignature)
 provide('sanitizeContentForSubmit', () => sanitizedContent.value)
 provide('validateContentForSubmit', validateAllForSubmit)
+provide('revealValidationState', revealValidationState)
 provide('submitValidationAttempted', submitAttempted)
 provide('focusFirstValidationError', focusFirstInvalidField)
 </script>

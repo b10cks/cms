@@ -446,6 +446,21 @@
         "title": "Validierungswarnung",
         "description": "Dieser Inhalt hat Validierungswarnungen. Du kannst ihn trotzdem speichern, solltest aber die folgenden Hinweise zuerst prüfen:"
       },
+      "validation": {
+        "status": {
+          "validTooltip": "Keine Validierungsprobleme",
+          "invalidTooltip": "{count} Validierungsproblem | {count} Validierungsprobleme",
+          "validAriaLabel": "Validierungsstatus: keine Probleme gefunden",
+          "invalidAriaLabel": "{count} Validierungsproblem prüfen | {count} Validierungsprobleme prüfen",
+          "noIssuesFound": "Keine Validierungsprobleme gefunden"
+        },
+        "nestedFieldBanner": {
+          "title": "Dieses Feld enthält Validierungsprobleme in verschachtelten Feldern.",
+          "hint": "Öffne den betroffenen Block-Eintrag, um sie zu prüfen und zu beheben."
+        },
+        "needsAttention": "Benötigt Aufmerksamkeit",
+        "nestedItemHint": "Verschachtelte Felder benötigen Aufmerksamkeit."
+      },
       "title": "Inhalt",
       "canvas": {
         "title": "Canvas",

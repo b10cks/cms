@@ -62,14 +62,9 @@ const emit = defineEmits<{
 const getActiveCollaborators = inject<
   (itemId: string, field: string) => CollaborationPresenceUser[]
 >('getActiveCollaborators', () => [])
-const getFieldError = inject<((path: string) => string | null) | undefined>(
-  'getFieldError',
-  undefined
-)
-const shouldShowFieldError = inject<((path: string) => boolean) | undefined>(
-  'shouldShowFieldError',
-  undefined
-)
+const getVisibleValidationEntries = inject<
+  ((prefix?: string) => Array<{ path: string; messages: string[] }>) | undefined
+>('getVisibleValidationEntries', undefined)
 const submitValidationAttempted = inject<Ref<boolean> | undefined>(
   'submitValidationAttempted',
   undefined
@@ -77,6 +72,16 @@ const submitValidationAttempted = inject<Ref<boolean> | undefined>(
 
 const getBlockForContent = (content: Record<string, unknown>) =>
   blocks.value?.data?.find((entry) => entry.slug === (content.block as string))
+
+const getBlockHeaderBlock = (content: Record<string, unknown>) =>
+  (getBlockForContent(content) || {
+    id: '',
+    slug: String(content.block || ''),
+    name: String(content.block || ''),
+    icon: null,
+    color: null,
+    preview_template: null,
+  }) as BlockResource
 
 const blockItems = computed({
   get: () => props.modelValue || [],
@@ -122,7 +127,7 @@ const addItem = (slug: string, index: number = -1, template?: BlockTemplate | nu
       : undefined
 
   if (!block) {
-    insertItem({ block: slug, id: ulid(), ...(templateContent || {}) }, index)
+    insertItem({ block: slug, id: ulid(), ...templateContent }, index)
     return
   }
 
@@ -315,67 +320,41 @@ const getItemFieldPath = (index: number) =>
 
 const getVisibleItemError = (index: number) => {
   const basePath = getItemFieldPath(index)
-  const directError = getFieldError?.(basePath)
-  const showDirectError = shouldShowFieldError?.(basePath)
+  const directEntry = getVisibleValidationEntries?.(basePath)?.[0] || null
 
-  if (directError && showDirectError) return directError
+  if (directEntry?.messages?.[0]) return directEntry.messages[0]
 
-  if (typeof document === 'undefined') return null
+  const descendantEntry = getVisibleValidationEntries?.(`${basePath}.`)?.[0] || null
 
-  const escapedPath =
-    typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
-      ? CSS.escape(`${basePath}.`)
-      : `${basePath}.`
-  const visibleInvalidField = document.querySelector<HTMLElement>(
-    `[data-field-path^="${escapedPath}"][data-validation-visible="true"]`
-  )
+  if (!descendantEntry) return null
 
-  if (visibleInvalidField) {
-    return (
-      visibleInvalidField.querySelector('.text-destructive')?.textContent?.trim() ||
-      'Nested fields need attention.'
-    )
-  }
-
-  const nestedFieldContainers = Array.from(
-    document.querySelectorAll<HTMLElement>(`[data-field-path^="${escapedPath}"]`)
-  )
-  const collapsedInvalidField = nestedFieldContainers.find((container) => {
-    const nestedError = getFieldError?.(container.dataset.fieldPath || '')
-    const shouldShowNestedError = shouldShowFieldError?.(container.dataset.fieldPath || '')
-    return Boolean(nestedError && shouldShowNestedError)
-  })
-
-  if (!collapsedInvalidField) return null
-
-  return (
-    getFieldError?.(collapsedInvalidField.dataset.fieldPath || '') ||
-    'Nested fields need attention.'
-  )
+  return descendantEntry.messages[0] || String($t('labels.contents.validation.nestedItemHint'))
 }
 
 const hasVisibleItemError = (index: number) => Boolean(getVisibleItemError(index))
 
-const ensureInvalidItemsOpen = () => {
-  const invalidValues = blockItems.value
+const invalidAccordionValues = computed(() =>
+  blockItems.value
     .map((content, index) =>
       hasVisibleItemError(index) ? getItemAccordionValue(content, index) : null
     )
     .filter((value): value is string => Boolean(value))
+)
 
-  if (invalidValues.length === 0) return
+const ensureInvalidItemsOpen = () => {
+  if (invalidAccordionValues.value.length === 0) return
 
-  openItems.value = Array.from(new Set([...openItems.value, ...invalidValues]))
+  openItems.value = Array.from(new Set([...openItems.value, ...invalidAccordionValues.value]))
 }
 
 watch(
-  () => blockItems.value,
+  invalidAccordionValues,
   () => {
     nextTick(() => {
       ensureInvalidItemsOpen()
     })
   },
-  { deep: true, immediate: true }
+  { immediate: true }
 )
 
 watch(
@@ -491,28 +470,9 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
             <AccordionTrigger class="flex w-full items-center gap-2">
               <BlockHeader
                 :content="content"
-                :block="
-                  getBlockForContent(content) || {
-                    id: '',
-                    slug: String(content.block || ''),
-                    name: String(content.block || ''),
-                    icon: null,
-                    color: null,
-                    preview_template: null,
-                  }
-                "
+                :block="getBlockHeaderBlock(content)"
               />
               <div class="ml-auto flex items-center gap-2">
-                <div
-                  v-if="hasVisibleItemError(i)"
-                  class="mr-1 flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive"
-                >
-                  <Icon
-                    name="lucide:circle-alert"
-                    size="0.75rem"
-                  />
-                  <span>Needs attention</span>
-                </div>
                 <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100">
                   <button
                     v-if="!props.readOnly"

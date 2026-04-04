@@ -199,7 +199,7 @@ export function sanitizeContentMutationPayload<
     return payload
   }
 
-  const settings = { ...(payload.settings || {}) } as Partial<ContentSettings>
+  const settings = { ...payload.settings } as Partial<ContentSettings>
   let changed = false
 
   if (settings.i18n_mode_override) {

@@ -6,6 +6,8 @@ import type { ContentResource } from '~/types/contents'
 
 type ScopeValue = Record<string, unknown>
 type ValidationErrorMap = Record<string, string[]>
+type ValidationEntry = { path: string; messages: string[] }
+type ValidationSummary = { isValid: boolean; issueCount: number }
 
 type BlocksMap = Record<string, Pick<BlockResource, 'schema' | 'slug' | 'name'>>
 
@@ -178,6 +180,25 @@ const unwrapStructuredValue = (value: unknown): unknown => {
 }
 
 const cloneScope = (value: ScopeValue): ScopeValue => unwrapStructuredValue(value) as ScopeValue
+
+const mergeValidationErrorMaps = (...maps: ValidationErrorMap[]): ValidationErrorMap => {
+  const merged: ValidationErrorMap = {}
+
+  maps.forEach((map) => {
+    Object.entries(map).forEach(([path, messages]) => {
+      const normalizedMessages = Array.from(new Set((messages || []).filter(Boolean)))
+
+      if (!merged[path]) {
+        merged[path] = normalizedMessages
+        return
+      }
+
+      merged[path] = Array.from(new Set([...merged[path], ...normalizedMessages]))
+    })
+  })
+
+  return merged
+}
 
 const warnSchemaState = (context: string, error: unknown) => {
   console.warn(`[content-schema] ${context}`, error)
@@ -609,6 +630,22 @@ export const useContentSchemaState = ({
     }
   })
 
+  const mergedValidationErrors = computed<ValidationErrorMap>(() =>
+    mergeValidationErrorMaps(serverErrors.value, clientErrors.value)
+  )
+  const validationEntries = computed<ValidationEntry[]>(() =>
+    Object.entries(mergedValidationErrors.value)
+      .map(([path, messages]) => ({
+        path,
+        messages,
+      }))
+      .sort((a, b) => a.path.localeCompare(b.path))
+  )
+  const validationSummary = computed<ValidationSummary>(() => ({
+    isValid: validationEntries.value.length === 0,
+    issueCount: validationEntries.value.length,
+  }))
+
   const setServerErrors = (errors: Record<string, string[]>) => {
     serverErrors.value = errors
   }
@@ -628,6 +665,35 @@ export const useContentSchemaState = ({
   const shouldShowFieldError = (path: string) =>
     Boolean(getFieldError(path) && (dirtyFields.value[path] || submitAttempted.value))
 
+  const getVisibleValidationEntries = (prefix?: string): ValidationEntry[] => {
+    const visibleEntries = validationEntries.value.filter(
+      (entry) => dirtyFields.value[entry.path] || submitAttempted.value
+    )
+
+    if (!prefix) return visibleEntries
+    if (prefix.endsWith('.')) {
+      return visibleEntries.filter((entry) => entry.path.startsWith(prefix))
+    }
+
+    return visibleEntries.filter((entry) => entry.path === prefix)
+  }
+
+  const getValidationIssueSignature = () =>
+    validationEntries.value
+      .map((entry) => `${entry.path}:${entry.messages[0] || ''}`)
+      .join('|')
+
+  const revealValidationState = async () => {
+    if (submitAttempted.value) {
+      submitAttempted.value = false
+      await nextTick()
+    }
+
+    submitAttempted.value = true
+    await nextTick()
+    await nextTick()
+  }
+
   const getClientErrors = () => clientErrors.value
 
   const validateAllForSubmit = (options?: { silent?: boolean }) => {
@@ -638,24 +704,40 @@ export const useContentSchemaState = ({
     return Object.keys(clientErrors.value).length === 0
   }
 
-  const getFirstInvalidFieldPath = () => {
-    const allErrors = Object.keys({
-      ...clientErrors.value,
-      ...serverErrors.value,
-    })
-
-    return allErrors.sort()[0] || null
-  }
+  const getFirstInvalidFieldPath = () => validationEntries.value[0]?.path || null
 
   const focusFirstInvalidField = async () => {
     const path = getFirstInvalidFieldPath()
-    if (!path) return
+    if (!path || typeof document === 'undefined') return
 
-    await nextTick()
+    await revealValidationState()
 
-    const escapedPath =
-      typeof CSS !== 'undefined' && typeof CSS.escape === 'function' ? CSS.escape(path) : path
-    const container = document.querySelector<HTMLElement>(`[data-field-path="${escapedPath}"]`)
+    const getFieldContainer = (fieldPath: string) => {
+      let currentPath = fieldPath
+
+      while (currentPath) {
+        const escapedPath =
+          typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+            ? CSS.escape(currentPath)
+            : currentPath
+        const container = document.querySelector<HTMLElement>(`[data-field-path="${escapedPath}"]`)
+
+        if (container) {
+          return container
+        }
+
+        const separatorIndex = currentPath.lastIndexOf('.')
+        if (separatorIndex === -1) {
+          break
+        }
+
+        currentPath = currentPath.slice(0, separatorIndex)
+      }
+
+      return null
+    }
+
+    const container = getFieldContainer(path)
     if (!container) return
 
     container.scrollIntoView({
@@ -681,14 +763,18 @@ export const useContentSchemaState = ({
     sanitizedContent,
     serverErrors,
     submitAttempted,
+    validationSummary,
     markFieldDirty,
     setServerErrors,
     clearServerErrors,
     getFieldError,
     shouldShowFieldError,
     getClientErrors,
+    getVisibleValidationEntries,
+    getValidationIssueSignature,
     validateAllForSubmit,
     getFirstInvalidFieldPath,
+    revealValidationState,
     focusFirstInvalidField,
     resetValidationState,
   }

@@ -34,9 +34,7 @@ const isExtendedSidebar = computed(() => extendedSidebar.value)
 const spaceId = inject<Ref<string | undefined>>('spaceId')
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(
-  computed(() => ({
-    ...(spaceId?.value ? { space_id: spaceId.value } : {}),
-  }))
+  computed(() => ((spaceId?.value ? { space_id: spaceId.value } : {})))
 )
 
 const menu = computed(() =>

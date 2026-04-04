@@ -24,9 +24,7 @@ const { data: spaces } = useSpacesQuery({})
 const { selectedTeam } = useGlobalTeam()
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(
-  computed(() => ({
-    ...(selectedTeam.value?.id ? { team_id: selectedTeam.value.id } : {}),
-  }))
+  computed(() => ((selectedTeam.value?.id ? { team_id: selectedTeam.value.id } : {})))
 )
 const canCreateSpace = computed(() => access.canAccessRoute('spaces-new'))
 

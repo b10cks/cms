@@ -64,6 +64,8 @@ const emit = defineEmits<{
   fieldFocus: [payload: ContentFieldFocusPayload]
 }>()
 
+const { t } = useI18n()
+
 const markFieldDirty = inject<((path: string) => void) | undefined>('markFieldDirty', undefined)
 const getFieldError = inject<((path: string) => string | null) | undefined>(
   'getFieldError',
@@ -73,22 +75,21 @@ const shouldShowFieldError = inject<((path: string) => boolean) | undefined>(
   'shouldShowFieldError',
   undefined
 )
+const getVisibleValidationEntries = inject<
+  ((prefix?: string) => Array<{ path: string; messages: string[] }>) | undefined
+>('getVisibleValidationEntries', undefined)
 const fieldPath = computed(() => `content.${(props.pathSegments || []).map(String).join('.')}`)
 const fieldError = computed(() => getFieldError?.(fieldPath.value) || null)
 const showFieldError = computed(() => shouldShowFieldError?.(fieldPath.value) || false)
-const hasDirectFieldError = computed(() => Boolean(fieldError.value))
 const nestedValidationPrefix = computed(() => `${fieldPath.value}.`)
 const shouldBlockPointerEvents = computed(() => props.readOnly && props.item.type !== 'blocks')
-const hasNestedFieldErrors = computed(() => {
-  if (props.item.type !== 'blocks') return false
-  if (typeof document === 'undefined') return false
 
-  return Boolean(
-    document.querySelector(
-      `[data-field-path^="${nestedValidationPrefix.value.replaceAll('"', '\\"')}"] [data-validation-visible="true"]`
-    )
-  )
+const nestedValidationEntries = computed(() => {
+  if (props.item.type !== 'blocks') return []
+
+  return getVisibleValidationEntries?.(nestedValidationPrefix.value) || []
 })
+const hasNestedFieldErrors = computed(() => nestedValidationEntries.value.length > 0)
 const showValidationState = computed(() => showFieldError.value || hasNestedFieldErrors.value)
 
 // const updatePreviewItem = inject<(data: never) => void>('updatePreviewItem')
@@ -254,15 +255,6 @@ onBeforeUnmount(() => {
         class="rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
       >
         {{ fieldError }}
-      </div>
-      <div
-        v-if="hasNestedFieldErrors"
-        class="flex items-center gap-2 rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
-      >
-        <span class="font-medium">This field contains validation issues in nested fields.</span>
-        <span class="text-destructive/80"
-          >Open the affected block item to review and fix them.</span
-        >
       </div>
     </div>
   </div>

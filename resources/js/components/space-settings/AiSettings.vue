@@ -120,7 +120,7 @@ const saveSettings = async () => {
         settings: {
           ...(props.space.settings as Record<string, unknown>),
           ai: {
-            ...((props.space.settings as Record<string, any>)?.ai || {}),
+            ...(props.space.settings as Record<string, any>)?.ai,
             enabled: enableAI.value,
           },
         } as any,

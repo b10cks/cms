@@ -368,12 +368,16 @@ const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 const blockList = computed(() => blocks.value?.data || [])
 const {
   sanitizedContent,
+  validationSummary,
   setServerErrors,
   clearServerErrors,
   getFieldError,
   shouldShowFieldError,
   getClientErrors,
+  getVisibleValidationEntries,
+  getValidationIssueSignature,
   validateAllForSubmit,
+  revealValidationState,
   focusFirstInvalidField,
   resetValidationState,
   submitAttempted,
@@ -552,8 +556,12 @@ provide('shouldShowFieldError', shouldShowFieldError)
 provide('setValidationErrors', setServerErrors)
 provide('clearValidationErrors', clearServerErrors)
 provide('getClientValidationErrors', getClientErrors)
+provide('getValidationSummary', () => validationSummary.value)
+provide('getVisibleValidationEntries', getVisibleValidationEntries)
+provide('getValidationIssueSignature', getValidationIssueSignature)
 provide('sanitizeContentForSubmit', () => sanitizedContent.value)
 provide('validateContentForSubmit', validateAllForSubmit)
+provide('revealValidationState', revealValidationState)
 provide('submitValidationAttempted', submitAttempted)
 provide('focusFirstValidationError', focusFirstInvalidField)
 

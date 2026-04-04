@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { toast } from 'vue-sonner'
+
 import { ContentModel } from '~/api/resources/content-model'
 import LanguageSwitcher from '~/components/content/LanguageSwitcher.vue'
 import Icon from '~/components/Icon.vue'
@@ -14,6 +16,12 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '~/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '~/components/ui/tooltip'
 import type {
   CollaborationPresenceUser,
   ContentCommitAction,
@@ -69,6 +77,17 @@ const focusFirstValidationError = inject<(() => Promise<void>) | undefined>(
   'focusFirstValidationError',
   undefined
 )
+const getValidationSummary = inject<
+  (() => { isValid: boolean; issueCount: number }) | undefined
+>('getValidationSummary', undefined)
+const getValidationIssueSignature = inject<(() => string) | undefined>(
+  'getValidationIssueSignature',
+  undefined
+)
+const revealValidationState = inject<(() => Promise<void>) | undefined>(
+  'revealValidationState',
+  undefined
+)
 
 const {
   useCreateContentMutation,
@@ -108,6 +127,7 @@ const publishDialogOpen = ref(false)
 const publishType = ref<'now' | 'schedule'>('now')
 const assignReleaseDialogOpen = ref(false)
 const selectedReleaseForAssign = ref<any>(null)
+const lastReviewedValidationSignature = ref<string | null>(null)
 const contentModel = computed(() => new ContentModel(props.content))
 const isSaving = computed(() => isCreating.value || isUpdating.value)
 const isPublishingAction = computed(
@@ -116,11 +136,37 @@ const isPublishingAction = computed(
 const isAnyActionPending = computed(
   () => isSaving.value || isPublishingAction.value || isAssigning.value
 )
+const validationSummary = computed(() => getValidationSummary?.() || { isValid: true, issueCount: 0 })
+const validationStatusTooltip = computed(() =>
+  validationSummary.value.isValid
+    ? (t('labels.contents.validation.status.validTooltip') as string)
+    : (t('labels.contents.validation.status.invalidTooltip', {
+        count: validationSummary.value.issueCount,
+      }) as string)
+)
+const validationStatusAriaLabel = computed(() =>
+  validationSummary.value.isValid
+    ? (t('labels.contents.validation.status.validAriaLabel') as string)
+    : (t('labels.contents.validation.status.invalidAriaLabel', {
+        count: validationSummary.value.issueCount,
+      }) as string)
+)
+
+watch(
+  () => validationSummary.value.isValid,
+  (isValid) => {
+    if (isValid) {
+      lastReviewedValidationSignature.value = null
+    }
+  },
+  { immediate: true }
+)
 
 const handlePersistedContent = (
   nextContent: ContentResource,
   action: ContentCommitAction = 'save'
 ) => {
+  lastReviewedValidationSignature.value = null
   commitPersistedContent?.(nextContent, action)
   resetDirtyState?.()
 }
@@ -177,15 +223,20 @@ const confirmSoftValidation = async (errors: Record<string, string[]>) => {
   })
 }
 
-const guardSubmit = (options?: { silent?: boolean }) => {
+const revealAndFocusValidationIssues = async () => {
+  await revealValidationState?.()
+  await focusFirstValidationError?.()
+}
+
+const guardSubmit = async (options?: { silent?: boolean; revealOnFail?: boolean }) => {
   if (!options?.silent) {
     clearValidationErrors?.()
   }
 
   const isValid = validateContentForSubmit?.(options) ?? true
 
-  if (!isValid && !options?.silent) {
-    focusFirstValidationError?.()
+  if (!isValid && options?.revealOnFail) {
+    await revealAndFocusValidationIssues()
   }
 
   return isValid
@@ -257,15 +308,21 @@ const save = async (force = false) => {
     return
   }
 
-  const isValid = guardSubmit({ silent: false })
+  const isValid = await guardSubmit({ silent: false })
 
   if (!isValid) {
-    await nextTick()
+    const currentValidationSignature = getValidationIssueSignature?.() || null
+
+    if (currentValidationSignature !== lastReviewedValidationSignature.value) {
+      lastReviewedValidationSignature.value = currentValidationSignature
+      await revealAndFocusValidationIssues()
+      return
+    }
 
     const confirmed = await confirmClientValidationWarnings()
 
     if (!confirmed) {
-      focusFirstValidationError?.()
+      await revealAndFocusValidationIssues()
       return
     }
 
@@ -273,6 +330,7 @@ const save = async (force = false) => {
     return
   }
 
+  lastReviewedValidationSignature.value = null
   await performSave(false)
 }
 
@@ -287,8 +345,18 @@ const handleSaveClick = async (event?: MouseEvent) => {
   await save()
 }
 
+const handleValidationStatusClick = async () => {
+  if (validationSummary.value.isValid) {
+    lastReviewedValidationSignature.value = null
+    return
+  }
+
+  lastReviewedValidationSignature.value = getValidationIssueSignature?.() || null
+  await revealAndFocusValidationIssues()
+}
+
 const publishDirectly = async () => {
-  if (!guardSubmit()) return
+  if (!(await guardSubmit({ revealOnFail: true }))) return
 
   try {
     const nextContent = await publishContent({
@@ -301,18 +369,22 @@ const publishDirectly = async () => {
   }
 }
 
-const publishWithMessage = () => {
+const publishWithMessage = async () => {
+  if (!(await guardSubmit({ revealOnFail: true }))) return
+
   publishType.value = 'now'
   publishDialogOpen.value = true
 }
 
-const schedulePublish = () => {
+const schedulePublish = async () => {
+  if (!(await guardSubmit({ revealOnFail: true }))) return
+
   publishType.value = 'schedule'
   publishDialogOpen.value = true
 }
 
 const handlePublish = async (payload: { message?: string; published_at?: string | null }) => {
-  if (!guardSubmit()) return
+  if (!(await guardSubmit({ revealOnFail: true }))) return
 
   const publishPayload = sanitizeContentMutationPayload({
     ...props.content,
@@ -329,7 +401,7 @@ const handlePublish = async (payload: { message?: string; published_at?: string 
 }
 
 const handleSchedule = async (payload: { message?: string; scheduled_at?: string | null }) => {
-  if (!guardSubmit()) return
+  if (!(await guardSubmit({ revealOnFail: true }))) return
 
   const schedulePayload = sanitizeContentMutationPayload({
     ...props.content,
@@ -439,6 +511,28 @@ const handleConfirmAssign = (versionIds: string[]) => {
       :max="3"
       tooltip-side="bottom"
     />
+    <TooltipProvider :delay-duration="300">
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <Button
+            size="icon"
+            :variant="validationSummary.isValid ? 'outline' : 'warning'"
+            :aria-label="validationStatusAriaLabel"
+            :class="
+              validationSummary.isValid
+                ? 'border-success/30 bg-success-background/10 text-success hover:bg-success-background/20 hover:text-success'
+                : undefined
+            "
+            @click="handleValidationStatusClick"
+          >
+            <Icon :name="validationSummary.isValid ? 'lucide:badge-check' : 'lucide:circle-alert'" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>{{ validationStatusTooltip }}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
     <LanguageSwitcher :content="content" />
     <Button
       :variant="isVersions ? 'primary' : 'default'"

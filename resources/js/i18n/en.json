@@ -451,6 +451,21 @@
         "title": "Validation warning",
         "description": "This content has validation warnings. You can still save it, but you should review the following issues first:"
       },
+      "validation": {
+        "status": {
+          "validTooltip": "No validation issues",
+          "invalidTooltip": "{count} validation issue | {count} validation issues",
+          "validAriaLabel": "Validation status: no issues found",
+          "invalidAriaLabel": "Review {count} validation issue | Review {count} validation issues",
+          "noIssuesFound": "No validation issues found"
+        },
+        "nestedFieldBanner": {
+          "title": "This field contains validation issues in nested fields.",
+          "hint": "Open the affected block item to review and fix them."
+        },
+        "needsAttention": "Needs attention",
+        "nestedItemHint": "Nested fields need attention."
+      },
       "title": "Content",
       "canvas": {
         "title": "Canvas",
