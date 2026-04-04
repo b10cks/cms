@@ -12,7 +12,7 @@ import IconName from '~/components/ui/IconName.vue'
 import BlockWithTemplatesSubmenu from './BlockWithTemplatesSubmenu.vue'
 
 const emit = defineEmits<{
-  (e: 'select', blockSlug: string, templateId?: string | null): void
+  (e: 'select', payload: { blockSlug: string; template: BlockTemplate | null }): void
   (e: 'paste'): void
 }>()
 
@@ -64,8 +64,8 @@ const possibleBlocks = computed(() => {
   )
 })
 
-const select = (blockSlug: string, templateId?: string | null) => {
-  emit('select', blockSlug, templateId)
+const select = (payload: { blockSlug: string; template: BlockTemplate | null }) => {
+  emit('select', payload)
   isOpen.value = false
 }
 
@@ -73,7 +73,7 @@ const autofill = (newIsOpen: boolean) => {
   if (newIsOpen && possibleBlocks.value.length === 1) {
     const block = possibleBlocks.value[0]
     type.value = block.slug
-    select(block.slug)
+    select({ blockSlug: block.slug, template: null })
   }
 }
 </script>
@@ -113,12 +113,12 @@ const autofill = (newIsOpen: boolean) => {
             v-if="block.templates_count && block.templates_count > 0"
             :block="block"
             :space-id="spaceId"
-            @select="select(block.slug, $event)"
+            @select="select($event)"
           />
           <DropdownMenuItem
             v-else
             :value="block.slug"
-            @select="select(block.slug)"
+            @select="select({ blockSlug: block.slug, template: null })"
           >
             <IconName
               :icon="block.icon || null"

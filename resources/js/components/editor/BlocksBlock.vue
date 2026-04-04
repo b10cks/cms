@@ -11,10 +11,14 @@ import {
 import AddDropdown from '~/components/editor/AddDropdown.vue'
 import BlockHeader from '~/components/editor/BlockHeader.vue'
 import Icon from '~/components/Icon.vue'
-import { createBlockItemWithDefaults } from '~/composables/useContentDefaults'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
 import Label from '~/components/ui/form/Label.vue'
+import {
+  createBlockItemWithDefaults,
+  createContentDefaultsBlockLookup,
+  hydrateContentWithSchema,
+} from '~/composables/useContentDefaults'
 import type {
   CollaborationPresenceUser,
   ContentFieldFocusPayload,
@@ -94,21 +98,49 @@ const openItems = ref<string[]>([])
 const blocksBySlug = computed(() =>
   Object.fromEntries((blocks.value?.data || []).map((block) => [block.slug, block]))
 )
+const blockLookup = computed<Record<string, Pick<BlockResource, 'slug' | 'schema'>>>(() =>
+  createContentDefaultsBlockLookup(blocks.value?.data || [])
+)
 
-const addItem = (slug: string, index: number = -1) => {
-  const block = blocksBySlug.value[slug]
-  const newItem = block
-    ? createBlockItemWithDefaults(block, blocksBySlug.value)
-    : { block: slug, id: ulid() }
+const insertItem = (item: Record<string, unknown>, index: number = -1) => {
   const updatedItems = [...blockItems.value]
 
   if (index === -1) {
-    updatedItems.push(newItem)
+    updatedItems.push(item)
   } else {
-    updatedItems.splice(index, 0, newItem)
+    updatedItems.splice(index, 0, item)
   }
 
   emit('update:modelValue', updatedItems)
+}
+
+const addItem = (slug: string, index: number = -1, template?: BlockTemplate | null) => {
+  const block = blocksBySlug.value[slug]
+  const templateContent =
+    template && typeof template.content === 'object' && !Array.isArray(template.content)
+      ? template.content
+      : undefined
+
+  if (!block) {
+    insertItem({ block: slug, id: ulid(), ...(templateContent || {}) }, index)
+    return
+  }
+
+  const baseItem = createBlockItemWithDefaults(block, blocksBySlug.value)
+  const hydratedTemplateContent = templateContent
+    ? hydrateContentWithSchema(block.schema, templateContent, blockLookup.value)
+    : null
+
+  const newItem = hydratedTemplateContent
+    ? {
+        ...baseItem,
+        ...hydratedTemplateContent,
+        id: (hydratedTemplateContent.id as string) || baseItem.id,
+        block: slug,
+      }
+    : baseItem
+
+  insertItem(newItem, index)
 }
 
 const deleteItem = (index: number) => {
@@ -436,7 +468,10 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
               :can-mutate="!props.readOnly"
               :has-clipboard-item="hasClipboardItem"
               @paste="() => pasteItems(null, i)"
-              @select="(slug: string) => addItem(slug, i)"
+              @select="
+                ({ blockSlug, template }: { blockSlug: string; template: BlockTemplate | null }) =>
+                  addItem(blockSlug, i, template)
+              "
             />
             <div
               class="absolute left-6 top-1/2 z-10 -translate-y-1/2"
@@ -455,34 +490,18 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
             </div>
             <AccordionTrigger class="flex w-full items-center gap-2">
               <BlockHeader
-                v-if="getBlockForContent(content)"
                 :content="content"
-                :block="getBlockForContent(content)!"
+                :block="
+                  getBlockForContent(content) || {
+                    id: '',
+                    slug: String(content.block || ''),
+                    name: String(content.block || ''),
+                    icon: null,
+                    color: null,
+                    preview_template: null,
+                  }
+                "
               />
-              <div
-                v-else
-                class="flex grow items-center gap-2 pl-6 text-left"
-              >
-                <button
-                  type="button"
-                  draggable
-                  class="flex shrink-0 cursor-ns-resize items-center text-muted-foreground hover:text-primary"
-                  :title="$t('actions.blocks.tooltips.drag')"
-                  @click.stop
-                >
-                  <Icon name="lucide:grip-vertical" />
-                </button>
-                <div class="relative flex size-4 items-center justify-center">
-                  <Icon
-                    name="lucide:box"
-                    class="shrink-0 text-muted-foreground transition-opacity group-hover:opacity-0"
-                  />
-                </div>
-                <div class="grid grow leading-none">
-                  <h4 class="font-semibold text-primary">{{ content.block as string }}</h4>
-                  <div class="flex text-sm text-muted">{{ content.block as string }}</div>
-                </div>
-              </div>
               <div class="ml-auto flex items-center gap-2">
                 <div
                   v-if="hasVisibleItemError(i)"
@@ -589,7 +608,10 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
           :can-mutate="!props.readOnly"
           :has-clipboard-item="hasClipboardItem"
           @paste="pasteItems"
-          @select="(slug: string) => addItem(slug, blockItems.length)"
+          @select="
+            ({ blockSlug, template }: { blockSlug: string; template: BlockTemplate | null }) =>
+              addItem(blockSlug, blockItems.length, template)
+          "
         />
         <div
           v-if="!props.readOnly && hasClipboardItem"

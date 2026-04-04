@@ -15,24 +15,33 @@ const blockTitle = computed(() => {
 
 const guessedTitle = computed(() => {
   if (!props.content) return 'Untitled'
+
   if (props.block?.preview_template) {
     try {
-      return handlebars.render(props.block.preview_template, props.content)
+      const rendered = handlebars.render(props.block.preview_template, props.content)?.trim()
+      if (rendered) {
+        return rendered
+      }
     } catch (_) {
       /* empty */
     }
   }
 
-  const keys = Object.keys(props.content).filter((k) => k !== 'id')
-  if (keys.length > 0 && typeof props.content[keys[0]] === 'string') {
-    return props.content[keys[0]]
+  const keys = Object.keys(props.content).filter((k) => !['id', 'block', 'hidden'].includes(k))
+  const firstStringValue = keys.find((key) => typeof props.content[key] === 'string')
+
+  if (firstStringValue) {
+    const value = String(props.content[firstStringValue]).trim()
+    if (value) {
+      return value
+    }
   }
 
   if (props.content.block) {
-    return props.block?.name || 'Untitled Block'
+    return props.block?.name || props.block?.slug || 'Untitled Block'
   }
 
-  return 'Untitled'
+  return props.block?.name || props.block?.slug || 'Untitled'
 })
 </script>
 

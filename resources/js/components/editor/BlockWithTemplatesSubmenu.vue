@@ -7,7 +7,9 @@ import {
 } from '~/components/ui/dropdown-menu'
 import IconName from '~/components/ui/IconName.vue'
 
-const emit = defineEmits<(e: 'select', blockSlug: string, templateId?: string | null) => void>()
+const emit = defineEmits<{
+  (e: 'select', payload: { blockSlug: string; template: BlockTemplate | null }): void
+}>()
 
 const props = defineProps<{
   block: BlockResource
@@ -20,8 +22,8 @@ const { useBlockTemplatesQuery } = useBlockTemplates(
 )
 const { data: templates } = useBlockTemplatesQuery()
 
-const select = (templateId?: string | null) => {
-  emit('select', props.block.slug, templateId)
+const select = (template: BlockTemplate | null = null) => {
+  emit('select', { blockSlug: props.block.slug, template })
 }
 </script>
 
@@ -35,13 +37,13 @@ const select = (templateId?: string | null) => {
       />
     </DropdownMenuSubTrigger>
     <DropdownMenuSubContent>
-      <DropdownMenuItem @select="select(null)">
+      <DropdownMenuItem @select="select()">
         {{ $t('labels.contents.blankTemplate') }}
       </DropdownMenuItem>
       <DropdownMenuItem
         v-for="template in templates"
         :key="template.id"
-        @select="select(template.id)"
+        @select="select(template)"
       >
         <IconName
           :icon="template.icon"
