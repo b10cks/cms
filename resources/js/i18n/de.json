@@ -923,6 +923,15 @@
         "max": "Maximale Elemente",
         "maxPlaceholder": "z.B. 5",
         "maxDescription": "Leer lassen für unbegrenzt.",
+        "table": {
+          "headerToggle": "Editierbare Kopfzeile",
+          "headerToggleDescription": "Speichere die Header-Texte separat und lass Redakteure die sichtbaren Spaltenüberschriften frei anpassen.",
+          "columnsTitle": "Spalten",
+          "columnsDescription": "Definiere die festen Spalten dieser Tabelle und lege fest, wie sich jede Body-Zelle verhält.",
+          "columnKey": "Spaltenschlüssel",
+          "columnLabel": "Spaltenlabel",
+          "columnType": "Spaltentyp"
+        },
         "createdAt": "Erstellt am",
         "updatedAt": "Geändert",
         "date": {
@@ -1027,6 +1036,10 @@
         "meta": {
           "label": "SEO Meta",
           "description": "SEO- und Social-Media-Metadaten"
+        },
+        "table": {
+          "label": "Tabelle",
+          "description": "Feste Spalten mit editierbaren Zeilen in einem eigenen Tabellen-Editor"
         }
       },
       "options": {
@@ -2373,6 +2386,12 @@
         "add": "Option hinzufügen",
         "delete": "Option löschen"
       },
+      "table": {
+        "addColumn": "Spalte hinzufügen",
+        "addOption": "Auswahl hinzufügen",
+        "addRow": "Zeile hinzufügen",
+        "editTable": "Tabelle bearbeiten"
+      },
       "tooltips": {
         "createTemplate": "Vorlage aus diesem Block erstellen",
         "editNested": "Verschachtelten Content bearbeiten",
@@ -2457,6 +2476,12 @@
       "translate": "KI-Übersetzen",
       "translating": "Wird übersetzt...",
       "translationProgress": "{applied} von {total} Feldern übersetzt..."
+    },
+    "tableBlock": {
+      "columnsBadge": "{count} Spalten",
+      "rowsBadge": "{count} Zeilen",
+      "previewTitle": "Header-Vorschau",
+      "dialogDescription": "Bearbeite Kopfzeile und Body-Zeilen gemeinsam in einem fokussierten Tabellen-Workspace."
     },
     "aiText": {
       "streamError": "KI-Stream-Fehler: {error}",

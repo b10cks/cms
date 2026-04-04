@@ -1,6 +1,9 @@
 import type { ComputedRef, MaybeRef } from 'vue'
 
-type OptionChoiceField = Pick<OptionSchema, 'options' | 'source' | 'data_source_id'> | OptionsSchema
+type OptionChoiceField =
+  | Pick<OptionSchema, 'options' | 'source' | 'data_source_id'>
+  | OptionsSchema
+  | Extract<TableColumn, { type: 'option' }>
 
 export interface ResolvedOptionChoice {
   label: string

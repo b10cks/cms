@@ -20,6 +20,7 @@ class SchemaField implements Arrayable
         'number',
         'link',
         'meta',
+        'table',
     ];
 
     protected const array INDEXABLE_DEFAULTS = [
@@ -38,6 +39,7 @@ class SchemaField implements Arrayable
         'blocks' => false,
         'option' => false,
         'options' => false,
+        'table' => false,
     ];
 
     protected string $key;
@@ -94,7 +96,7 @@ class SchemaField implements Arrayable
     {
         $conditions = $this->attributes['conditions'] ?? null;
 
-        return \is_array($conditions) && ! empty($conditions['rules']) ? $conditions : null;
+        return \is_array($conditions) && !empty($conditions['rules']) ? $conditions : null;
     }
 
     public function getDependencies(): array
@@ -157,6 +159,18 @@ class SchemaField implements Arrayable
             $attributes['data_source_id'] = $attributes['data_source_id'] ?? null;
         }
 
+        if ($attributes['type'] === 'table') {
+            $attributes['has_thead'] = (bool) ($attributes['has_thead'] ?? false);
+            $attributes['min'] = array_key_exists('min', $attributes)
+                ? $attributes['min']
+                : ($attributes['validation']['min'] ?? null);
+            $attributes['max'] = array_key_exists('max', $attributes)
+                ? $attributes['max']
+                : ($attributes['validation']['max'] ?? null);
+            $attributes['columns'] = self::normalizeTableColumns($attributes['columns'] ?? []);
+            $attributes['default'] = self::normalizeTableDefault($attributes['default'] ?? null);
+        }
+
         unset($attributes['dependencies']);
 
         return $attributes;
@@ -166,19 +180,19 @@ class SchemaField implements Arrayable
     {
         $rawConditions = $attributes['conditions'] ?? null;
 
-        if (! \is_array($rawConditions) && isset($attributes['dependencies']) && \is_array($attributes['dependencies'])) {
+        if (!\is_array($rawConditions) && isset($attributes['dependencies']) && \is_array($attributes['dependencies'])) {
             $rawConditions = [
                 'mode' => 'all',
                 'rules' => $attributes['dependencies'],
             ];
         }
 
-        if (! \is_array($rawConditions)) {
+        if (!\is_array($rawConditions)) {
             return null;
         }
 
         $rules = collect($rawConditions['rules'] ?? $rawConditions)
-            ->filter(fn (mixed $rule): bool => \is_array($rule) && isset($rule['field']))
+            ->filter(fn(mixed $rule): bool => \is_array($rule) && isset($rule['field']))
             ->map(function (array $rule): array {
                 $operator = (string) ($rule['operator'] ?? 'equals');
                 $operator = match ($operator) {
@@ -244,7 +258,93 @@ class SchemaField implements Arrayable
 
         return array_filter(
             $validation,
-            static fn (mixed $value): bool => $value !== null && $value !== ''
+            static fn(mixed $value): bool => $value !== null && $value !== ''
         );
+    }
+
+    public static function normalizeTableColumns(mixed $columns): array
+    {
+        if (!\is_array($columns)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            static function (mixed $column): ?array {
+                if (!\is_array($column)) {
+                    return null;
+                }
+
+                $type = (string) ($column['type'] ?? '');
+                $normalizedType = \in_array($type, ['text', 'number', 'option', 'boolean'], true)
+                    ? $type
+                    : $type;
+
+                $normalized = [
+                    'key' => (string) ($column['key'] ?? ''),
+                    'label' => (string) ($column['label'] ?? ''),
+                    'type' => $normalizedType,
+                ];
+
+                if ($normalizedType === 'option') {
+                    $normalized['source'] = ($column['source'] ?? 'self') === 'datasource'
+                        ? 'datasource'
+                        : 'self';
+                    $normalized['options'] = \is_array($column['options'] ?? null)
+                        ? array_values(array_filter(array_map(
+                            static fn(mixed $option): ?array => \is_array($option)
+                            ? [
+                                'name' => (string) ($option['name'] ?? ''),
+                                'value' => (string) ($option['value'] ?? ''),
+                            ]
+                            : null,
+                            $column['options'],
+                        )))
+                        : [];
+                    $normalized['data_source_id'] = $column['data_source_id'] ?? null;
+                }
+
+                return $normalized;
+            },
+            $columns,
+        )));
+    }
+
+    public static function normalizeTableDefault(mixed $default): array
+    {
+        if (!\is_array($default)) {
+            return [
+                'header' => [],
+                'rows' => [],
+            ];
+        }
+
+        $header = \is_array($default['header'] ?? null)
+            ? array_filter(
+                $default['header'],
+                static fn(mixed $value, mixed $key): bool => \is_string($key) && \is_string($value),
+                ARRAY_FILTER_USE_BOTH,
+            )
+            : [];
+
+        $rows = \is_array($default['rows'] ?? null)
+            ? array_values(array_filter(array_map(
+                static function (mixed $row): ?array {
+                    if (!\is_array($row)) {
+                        return null;
+                    }
+
+                    return [
+                        'id' => (string) ($row['id'] ?? ''),
+                        'cells' => \is_array($row['cells'] ?? null) ? $row['cells'] : [],
+                    ];
+                },
+                $default['rows'],
+            )))
+            : [];
+
+        return [
+            'header' => $header,
+            'rows' => $rows,
+        ];
     }
 }

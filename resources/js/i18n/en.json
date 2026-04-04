@@ -931,6 +931,15 @@
         "minDescription": "Leave blank to allow zero.",
         "maxPlaceholder": "e.g., 5",
         "maxDescription": "Leave blank for unlimited.",
+        "table": {
+          "headerToggle": "Editable header row",
+          "headerToggleDescription": "Store header text separately and let editors rename the visible column headings.",
+          "columnsTitle": "Columns",
+          "columnsDescription": "Define the fixed columns for this table and choose how each body cell should behave.",
+          "columnKey": "Column key",
+          "columnLabel": "Column label",
+          "columnType": "Column type"
+        },
         "createdAt": "Created at",
         "updatedAt": "Last updated",
         "date": {
@@ -1027,6 +1036,10 @@
         "meta": {
           "label": "SEO Meta",
           "description": "SEO and social media metadata"
+        },
+        "table": {
+          "label": "Table",
+          "description": "Fixed columns with editable rows in a dedicated table editor"
         }
       },
       "options": {
@@ -2402,6 +2415,12 @@
         "add": "Add Option",
         "delete": "Delete Option"
       },
+      "table": {
+        "addColumn": "Add Column",
+        "addOption": "Add Choice",
+        "addRow": "Add Row",
+        "editTable": "Edit Table"
+      },
       "tooltips": {
         "createTemplate": "Create Template from this block",
         "editNested": "Edit nested content",
@@ -2512,6 +2531,12 @@
       "translate": "AI Translate",
       "translating": "Translating...",
       "translationProgress": "{applied} of {total} fields translated..."
+    },
+    "tableBlock": {
+      "columnsBadge": "{count} columns",
+      "rowsBadge": "{count} rows",
+      "previewTitle": "Header preview",
+      "dialogDescription": "Edit header text and body rows in one focused table workspace."
     },
     "aiText": {
       "thinking": "Thinking...",

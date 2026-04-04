@@ -111,6 +111,126 @@ class ContentI18nResolverTest extends TestCase
         $this->assertSame([], $resolved->effectiveContent);
     }
 
+    #[Test]
+    public function overlay_resolution_merges_translatable_table_cells_by_row_id(): void
+    {
+        $this->block->update([
+            'schema' => [
+                'roster' => [
+                    'type' => 'table',
+                    'name' => 'Roster',
+                    'translatable' => true,
+                    'has_thead' => true,
+                    'min' => null,
+                    'max' => null,
+                    'columns' => [
+                        ['key' => 'title', 'label' => 'Title', 'type' => 'text'],
+                        [
+                            'key' => 'status',
+                            'label' => 'Status',
+                            'type' => 'option',
+                            'source' => 'self',
+                            'options' => [
+                                ['name' => 'Draft', 'value' => 'draft'],
+                                ['name' => 'Review', 'value' => 'review'],
+                            ],
+                            'data_source_id' => null,
+                        ],
+                        ['key' => 'active', 'label' => 'Active', 'type' => 'boolean'],
+                    ],
+                    'default' => [
+                        'header' => ['title' => 'Title', 'status' => 'Status', 'active' => 'Active'],
+                        'rows' => [],
+                    ],
+                ],
+            ],
+            'editor' => [[
+                'header' => 'General',
+                'items' => ['roster'],
+            ]],
+        ]);
+
+        $canonical = $this->createPublishedContent('en', 'team', [
+            'roster' => [
+                'header' => [
+                    'title' => 'Title',
+                    'status' => 'Status',
+                    'active' => 'Active',
+                ],
+                'rows' => [
+                    [
+                        'id' => 'row-b',
+                        'cells' => [
+                            'title' => 'Beta',
+                            'status' => 'review',
+                            'active' => false,
+                        ],
+                    ],
+                    [
+                        'id' => 'row-a',
+                        'cells' => [
+                            'title' => 'Alpha',
+                            'status' => 'draft',
+                            'active' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->createPublishedContent('de', 'team-de', [
+            'roster' => [
+                'header' => [
+                    'title' => 'Titel',
+                ],
+                'rows' => [
+                    [
+                        'id' => 'row-a',
+                        'cells' => [
+                            'title' => 'Alfa',
+                            'status' => 'review',
+                            'active' => false,
+                        ],
+                    ],
+                    [
+                        'id' => 'row-extra',
+                        'cells' => [
+                            'title' => 'Ignored row',
+                        ],
+                    ],
+                ],
+            ],
+        ], $canonical);
+
+        $resolved = app(ContentI18nResolver::class)->resolve($this->space, $canonical, 'fr', 'published');
+
+        $this->assertSame([
+            'header' => [
+                'title' => 'Titel',
+                'status' => 'Status',
+                'active' => 'Active',
+            ],
+            'rows' => [
+                [
+                    'id' => 'row-b',
+                    'cells' => [
+                        'title' => 'Beta',
+                        'status' => 'review',
+                        'active' => false,
+                    ],
+                ],
+                [
+                    'id' => 'row-a',
+                    'cells' => [
+                        'title' => 'Alfa',
+                        'status' => 'draft',
+                        'active' => true,
+                    ],
+                ],
+            ],
+        ], $resolved->effectiveContent['roster']);
+    }
+
     private function createPublishedContent(
         string $languageIso,
         string $slug,

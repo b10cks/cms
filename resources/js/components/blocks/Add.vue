@@ -20,6 +20,7 @@ const types = [
   'asset',
   'multi_assets',
   'meta',
+  'table',
 ]
 
 const slugBlacklist = ['key', 'block']

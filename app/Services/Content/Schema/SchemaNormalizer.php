@@ -35,6 +35,7 @@ class SchemaNormalizer
         'link',
         'date',
         'meta',
+        'table',
     ];
 
     public const array VALIDATION_KEYS_BY_TYPE = [
@@ -49,6 +50,7 @@ class SchemaNormalizer
         'blocks' => ['min', 'max'],
         'option' => ['allowed_values'],
         'options' => ['allowed_values', 'min', 'max'],
+        'table' => ['min', 'max'],
     ];
 
     public function normalizeSchema(array $schema): array
@@ -94,6 +96,12 @@ class SchemaNormalizer
                 ? 'datasource'
                 : 'self';
             $normalized['data_source_id'] = $attributes['data_source_id'] ?? null;
+        }
+
+        if ($type === 'table') {
+            $normalized['has_thead'] = (bool) ($attributes['has_thead'] ?? false);
+            $normalized['columns'] = SchemaField::normalizeTableColumns($attributes['columns'] ?? []);
+            $normalized['default'] = SchemaField::normalizeTableDefault($attributes['default'] ?? null);
         }
 
         foreach ($attributes as $attribute => $value) {
@@ -163,7 +171,7 @@ class SchemaNormalizer
 
     public function supportsIndexing(string $type): bool
     {
-        return !\in_array($type, ['asset', 'multi_assets', 'references', 'boolean', 'options'], true);
+        return !\in_array($type, ['asset', 'multi_assets', 'references', 'boolean', 'options', 'table'], true);
     }
 
     protected function normalizeConditions(array $attributes): ?array
@@ -236,6 +244,10 @@ class SchemaNormalizer
                 'max' => $attributes['max'] ?? $attributes['maximum'] ?? null,
             ],
             'multi_assets', 'references', 'blocks', 'options' => [
+                'min' => $attributes['min'] ?? null,
+                'max' => $attributes['max'] ?? null,
+            ],
+            'table' => [
                 'min' => $attributes['min'] ?? null,
                 'max' => $attributes['max'] ?? null,
             ],

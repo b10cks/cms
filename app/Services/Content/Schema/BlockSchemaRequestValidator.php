@@ -22,6 +22,7 @@ class BlockSchemaRequestValidator
         'date',
         'meta',
         'blocks',
+        'table',
     ];
 
     public function __construct(
@@ -82,6 +83,10 @@ class BlockSchemaRequestValidator
 
             if (\in_array($type, ['option', 'options'], true)) {
                 $errors = $this->validateOptionField($errors, $key, $field, $type);
+            }
+
+            if ($type === 'table') {
+                $errors = $this->validateTableField($errors, $key, $field);
             }
         }
 
@@ -189,5 +194,111 @@ class BlockSchemaRequestValidator
             'number', 'date' => ['equals', 'not_equals', 'gt', 'gte', 'lt', 'lte', 'in', 'not_in', 'is_empty', 'is_not_empty'],
             default => ['equals', 'not_equals', 'in', 'not_in', 'contains', 'is_empty', 'is_not_empty'],
         };
+    }
+
+    /**
+     * @param  array<string, array<int, string>>  $errors
+     * @param  array<string, mixed>  $field
+     * @return array<string, array<int, string>>
+     */
+    protected function validateTableField(array $errors, string $key, array $field): array
+    {
+        $columns = $field['columns'] ?? null;
+
+        if (! \is_array($columns) || $columns === []) {
+            $errors["schema.{$key}.columns"][] = 'The columns field must contain at least one column.';
+
+            return $errors;
+        }
+
+        $seenKeys = [];
+
+        foreach ($columns as $index => $column) {
+            if (! \is_array($column)) {
+                $errors["schema.{$key}.columns.{$index}"][] = 'Each column must be a valid configuration object.';
+                continue;
+            }
+
+            $columnKey = trim((string) ($column['key'] ?? ''));
+
+            if ($columnKey === '') {
+                $errors["schema.{$key}.columns.{$index}.key"][] = 'The column key is required.';
+            } elseif (! preg_match('/^[a-z0-9_-]+$/', $columnKey)) {
+                $errors["schema.{$key}.columns.{$index}.key"][] = 'The column key may only contain lowercase letters, numbers, dashes, and underscores.';
+            } elseif (isset($seenKeys[$columnKey])) {
+                $errors["schema.{$key}.columns.{$index}.key"][] = 'The column key must be unique.';
+            } else {
+                $seenKeys[$columnKey] = true;
+            }
+
+            if (trim((string) ($column['label'] ?? '')) === '') {
+                $errors["schema.{$key}.columns.{$index}.label"][] = 'The column label is required.';
+            }
+
+            $columnType = (string) ($column['type'] ?? '');
+
+            if (! \in_array($columnType, ['text', 'number', 'option', 'boolean'], true)) {
+                $errors["schema.{$key}.columns.{$index}.type"][] = 'The column type is not supported.';
+            }
+
+            if ($columnType === 'option') {
+                $errors = $this->validateTableOptionColumn($errors, $key, $index, $column);
+            }
+        }
+
+        if (! \is_bool($field['has_thead'] ?? null)) {
+            $errors["schema.{$key}.has_thead"][] = 'The table header toggle must be true or false.';
+        }
+
+        $min = $field['min'] ?? ($field['validation']['min'] ?? null);
+        $max = $field['max'] ?? ($field['validation']['max'] ?? null);
+
+        if ($min !== null && filter_var($min, FILTER_VALIDATE_INT) === false) {
+            $errors["schema.{$key}.min"][] = 'The minimum row count must be an integer or null.';
+        }
+
+        if ($max !== null && filter_var($max, FILTER_VALIDATE_INT) === false) {
+            $errors["schema.{$key}.max"][] = 'The maximum row count must be an integer or null.';
+        }
+
+        if (
+            $min !== null &&
+            $max !== null &&
+            filter_var($min, FILTER_VALIDATE_INT) !== false &&
+            filter_var($max, FILTER_VALIDATE_INT) !== false &&
+            (int) $min > (int) $max
+        ) {
+            $errors["schema.{$key}.min"][] = 'The minimum row count may not be greater than the maximum row count.';
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param  array<string, array<int, string>>  $errors
+     * @param  array<string, mixed>  $column
+     * @return array<string, array<int, string>>
+     */
+    protected function validateTableOptionColumn(array $errors, string $key, int $index, array $column): array
+    {
+        $source = $column['source'] ?? 'self';
+
+        if (! \in_array($source, ['self', 'datasource'], true)) {
+            $errors["schema.{$key}.columns.{$index}.source"][] = 'The source must be either self or datasource.';
+
+            return $errors;
+        }
+
+        if ($source === 'datasource') {
+            $dataSourceId = $column['data_source_id'] ?? null;
+
+            if (! \is_string($dataSourceId) || $dataSourceId === '') {
+                $errors["schema.{$key}.columns.{$index}.data_source_id"][] = 'A datasource is required when the source is datasource.';
+            } elseif (! DataSource::query()->whereKey($dataSourceId)->exists()) {
+                $errors["schema.{$key}.columns.{$index}.data_source_id"][] = 'The selected datasource does not exist.';
+            }
+        }
+
+        return $errors;
     }
 }

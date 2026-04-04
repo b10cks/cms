@@ -16,6 +16,7 @@ import OptionBlock from '~/components/blocks/OptionBlock.vue'
 import OptionsBlock from '~/components/blocks/OptionsBlock.vue'
 import ReferencesBlock from '~/components/blocks/ReferencesBlock.vue'
 import RichTextBlock from '~/components/blocks/RichTextBlock.vue'
+import TableBlock from '~/components/blocks/TableBlock.vue'
 import TextareaBlock from '~/components/blocks/TextareaBlock.vue'
 import TextBlock from '~/components/blocks/TextBlock.vue'
 import Icon from '~/components/Icon.vue'
@@ -46,9 +47,9 @@ const props = defineProps<{
 }>()
 
 const localItem = ref<SchemaType>({ ...props.item })
-const translatable = ['text', 'textarea', 'markdown', 'richtext', 'number', 'link', 'meta']
+const translatable = ['text', 'textarea', 'markdown', 'richtext', 'number', 'link', 'meta', 'table']
 const textLike = ['text', 'textarea', 'markdown', 'richtext']
-const countLike = ['blocks', 'references', 'reference', 'multi_assets', 'multiAsset', 'options']
+const countLike = ['blocks', 'references', 'reference', 'multi_assets', 'multiAsset', 'options', 'table']
 const operatorOptions: Array<{ label: string; value: ConditionOperator }> = [
   { label: 'Equals', value: 'equals' },
   { label: 'Does not equal', value: 'not_equals' },
@@ -102,6 +103,7 @@ const schemas = {
   meta: MetaBlock,
   date: DateBlock,
   richtext: RichTextBlock,
+  table: TableBlock,
 } satisfies Partial<Record<CanonicalSchemaTypeName | LegacySchemaTypeName, Component>>
 
 watch(
@@ -113,10 +115,13 @@ watch(
 )
 
 const updateValue = (key: string, value: unknown) => {
-  emit('update:item', {
-    ...deepClone(props.item),
+  const nextItem = {
+    ...deepClone(localItem.value),
     [key]: value,
-  })
+  } as SchemaType
+
+  localItem.value = nextItem
+  emit('update:item', nextItem)
 }
 
 const updateBooleanValue = (key: string, value: unknown) => {
@@ -212,7 +217,7 @@ const getConditionValueKind = (fieldKey?: string) => {
 }
 
 const setValidationValue = (key: keyof FieldValidation, value: unknown) => {
-  const nextValidation = { ...(localItem.value.validation || {}) }
+  const nextValidation = { ...localItem.value.validation }
   const isClearing = value === '' || value === null || value === undefined
 
   if (isClearing) {
@@ -514,7 +519,7 @@ const updateConditionOperator = (index: number, value: unknown) => {
         v-if="schemaComponent"
         :is="schemaComponent"
         :name="name"
-        :value="item as SchemaType"
+        :value="localItem as SchemaType"
         :readonly="readonly"
         @update:item-value="(key: string, value: unknown) => updateValue(key, value)"
       />

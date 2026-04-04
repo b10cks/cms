@@ -1,6 +1,7 @@
 import type { Ref } from 'vue'
 import { isProxy, toRaw } from 'vue'
 
+import { ensureTableValue, getTableColumns } from '~/lib/tableField'
 import type { ContentResource } from '~/types/contents'
 
 type ScopeValue = Record<string, unknown>
@@ -30,6 +31,7 @@ const TRANSLATABLE_TYPES: CanonicalSchemaTypeName[] = [
   'number',
   'link',
   'meta',
+  'table',
 ]
 
 export const normalizeSchemaType = (type?: string | null): CanonicalSchemaTypeName | '' => {
@@ -55,6 +57,7 @@ export const normalizeSchemaType = (type?: string | null): CanonicalSchemaTypeNa
     case 'references':
     case 'date':
     case 'meta':
+    case 'table':
       return type
     default:
       return ''
@@ -72,6 +75,7 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
   const validation = (schemaField.validation || {}) as FieldValidation
   const optionSource = schemaField.source === 'datasource' ? 'datasource' : 'self'
   const isOptionLike = canonicalType === 'option' || canonicalType === 'options'
+  const isTable = canonicalType === 'table'
   const conditions = schemaField.conditions
     ? {
         mode: schemaField.conditions.mode === 'any' ? 'any' : 'all',
@@ -122,6 +126,8 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
         : Boolean(schemaField.indexable),
     source: isOptionLike ? optionSource : undefined,
     data_source_id: isOptionLike ? (schemaField.data_source_id ?? null) : undefined,
+    has_thead: isTable ? Boolean((schemaField as TableSchema).has_thead) : undefined,
+    columns: isTable ? getTableColumns(schemaField as TableSchema) : undefined,
     conditions,
     validation: {
       ...validation,
@@ -140,6 +146,9 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
               .filter(Boolean)
           : validation.allowed_values,
     } satisfies FieldValidation,
+    default: isTable
+      ? ensureTableValue(schemaField as TableSchema, schemaField.default)
+      : schemaField.default,
   }
 }
 
@@ -371,6 +380,114 @@ const validateScope = (
         }
         if (validation.max && timestamp > Date.parse(String(validation.max))) {
           pushError(path, `${field.name || key} must be on or before ${validation.max}.`)
+        }
+      }
+    }
+
+    if (type === 'table') {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        pushError(path, `${field.name || key} must be a table object.`)
+      } else {
+        const tableValue = value as Record<string, unknown>
+        const header = tableValue.header
+        const rows = tableValue.rows
+        const columns = getTableColumns(field as TableSchema)
+        const columnMap = Object.fromEntries(columns.map((column) => [column.key, column])) as Record<
+          string,
+          TableColumn
+        >
+
+        if (!header || typeof header !== 'object' || Array.isArray(header)) {
+          pushError(path, `${field.name || key} must contain a valid header object.`)
+        } else {
+          Object.entries(header as Record<string, unknown>).forEach(([columnKey, headerValue]) => {
+            if (!columnMap[columnKey] || typeof headerValue !== 'string') {
+              pushError(path, `${field.name || key} contains an invalid header value.`)
+            }
+          })
+        }
+
+        if (!Array.isArray(rows)) {
+          pushError(path, `${field.name || key} must contain a valid rows array.`)
+        } else {
+          const rawMinRows = validation.min ?? field.min
+          const rawMaxRows = validation.max ?? field.max
+          const minRows =
+            rawMinRows === null || rawMinRows === undefined || rawMinRows === ''
+              ? null
+              : Number(rawMinRows)
+          const maxRows =
+            rawMaxRows === null || rawMaxRows === undefined || rawMaxRows === ''
+              ? null
+              : Number(rawMaxRows)
+
+          if (minRows !== null && rows.length < minRows) {
+            pushError(path, `${field.name || key} must contain at least ${minRows} rows.`)
+          }
+
+          if (maxRows !== null && rows.length > maxRows) {
+            pushError(path, `${field.name || key} may not contain more than ${maxRows} rows.`)
+          }
+
+          const seenRowIds = new Set<string>()
+
+          rows.forEach((row) => {
+            if (!row || typeof row !== 'object' || Array.isArray(row)) {
+              pushError(path, `${field.name || key} contains an invalid row.`)
+              return
+            }
+
+            const rowId = typeof (row as TableRow).id === 'string' ? (row as TableRow).id : ''
+            if (!rowId || seenRowIds.has(rowId)) {
+              pushError(path, `${field.name || key} rows must have unique ids.`)
+              return
+            }
+
+            seenRowIds.add(rowId)
+            const cells = (row as TableRow).cells
+
+            if (!cells || typeof cells !== 'object' || Array.isArray(cells)) {
+              pushError(path, `${field.name || key} row cells must be an object.`)
+              return
+            }
+
+            Object.entries(cells).forEach(([columnKey, cellValue]) => {
+              const column = columnMap[columnKey]
+              if (!column) {
+                pushError(path, `${field.name || key} contains a cell for an unknown column.`)
+                return
+              }
+
+              switch (column.type) {
+                case 'text':
+                  if (typeof cellValue !== 'string') {
+                    pushError(path, `${field.name || key} text cells must be strings.`)
+                  }
+                  break
+                case 'number':
+                  if (cellValue !== null && typeof cellValue !== 'number') {
+                    pushError(path, `${field.name || key} number cells must be a number or null.`)
+                  }
+                  break
+                case 'boolean':
+                  if (typeof cellValue !== 'boolean') {
+                    pushError(path, `${field.name || key} boolean cells must be true or false.`)
+                  }
+                  break
+                case 'option':
+                  if (
+                    cellValue !== null &&
+                    (typeof cellValue !== 'string' ||
+                      (column.source === 'self' &&
+                        column.options.length > 0 &&
+                        !column.options.some((option) => option.value === cellValue)))
+                  ) {
+                    pushError(path, `${field.name || key} option cells must use an allowed option.`)
+                  }
+                  break
+              }
+            })
+          })
         }
       }
     }

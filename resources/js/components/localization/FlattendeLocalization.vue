@@ -14,6 +14,7 @@ import {
   normalizeSchema,
   normalizeSchemaType,
 } from '~/composables/useContentSchemaState'
+import { ensureTableValue, getTableColumns, mergeLocalizedContentForSchema } from '~/lib/tableField'
 
 import MarkdownLocalization from './MarkdownLocalization.vue'
 import RichTextLocalization from './RichTextLocalization.vue'
@@ -24,12 +25,15 @@ type LocalizableSchema = SchemaType & { translatable?: boolean }
 
 interface TranslatableField {
   key: string
-  path: string[]
+  path: Array<string | number>
   fieldName: string
   schemaItem: LocalizableSchema
   originalValue: unknown
   translatedValue: unknown
   isTranslated: boolean
+  tablePath?: Array<string | number>
+  tableColumnKey?: string
+  tableRowId?: string | null
 }
 
 interface BlockItem {
@@ -168,34 +172,6 @@ const normalizeRichTextValue = (
   return cloneValue(emptyRichTextDocument)
 }
 
-const mergeLocalizedContent = (base: unknown, overlay: unknown): unknown => {
-  if (Array.isArray(base) && Array.isArray(overlay)) {
-    return base.map((item, index) =>
-      index in overlay ? mergeLocalizedContent(item, overlay[index]) : cloneValue(item)
-    )
-  }
-
-  if (Array.isArray(overlay)) {
-    return cloneValue(overlay)
-  }
-
-  if (isObjectRecord(base) && isObjectRecord(overlay)) {
-    const merged = cloneValue(base)
-
-    Object.entries(overlay).forEach(([key, value]) => {
-      merged[key] = key in merged ? mergeLocalizedContent(merged[key], value) : cloneValue(value)
-    })
-
-    return merged
-  }
-
-  if (overlay !== undefined) {
-    return cloneValue(overlay)
-  }
-
-  return cloneValue(base)
-}
-
 const getValueAtPath = (value: unknown, path: Array<string | number>): unknown => {
   let current = value
 
@@ -330,6 +306,37 @@ const normalizeTranslatedFieldValue = (field: TranslatableField, value: unknown)
   return typeof value === 'string' ? value : ''
 }
 
+const createTableTextSchema = (name: string): TextSchema =>
+  ({
+    type: 'text',
+    name,
+    translatable: true,
+  }) as TextSchema
+
+const getTranslatedTableHeaderValue = (value: unknown, columnKey: string): string => {
+  if (!isObjectRecord(value) || !isObjectRecord(value.header)) {
+    return ''
+  }
+
+  return typeof value.header[columnKey] === 'string' ? String(value.header[columnKey]) : ''
+}
+
+const getTranslatedTableCellValue = (value: unknown, rowId: string, columnKey: string): string => {
+  if (!isObjectRecord(value) || !Array.isArray(value.rows)) {
+    return ''
+  }
+
+  const row = value.rows.find(
+    (entry) => isObjectRecord(entry) && typeof entry.id === 'string' && entry.id === rowId
+  ) as Record<string, unknown> | undefined
+
+  if (!row || !isObjectRecord(row.cells)) {
+    return ''
+  }
+
+  return typeof row.cells[columnKey] === 'string' ? String(row.cells[columnKey]) : ''
+}
+
 const buildRichTextTranslationBase = (
   originalValue: unknown,
   translatedValue: unknown
@@ -361,7 +368,7 @@ const traverseContent = (
   translation: Record<string, unknown>,
   effective: Record<string, unknown>,
   schema: Record<string, LocalizableSchema>,
-  currentPath: string[] = [],
+  currentPath: Array<string | number> = [],
   result: TranslatableField[] = []
 ): TranslatableField[] => {
   if (typeof original !== 'object' || original === null) {
@@ -384,7 +391,7 @@ const traverseContent = (
       effectiveValue.forEach((blockItem: BlockItem, index: number) => {
         if (!blockItem || !blockItem.block) return
 
-        const blockPath = [...path, index.toString()]
+        const blockPath = [...path, index]
         const blockSlug = blockItem.block
 
         const blockSchemaItem = props.getBlockSchema ? props.getBlockSchema(blockSlug) : undefined
@@ -394,9 +401,11 @@ const traverseContent = (
         const translatedBlockItems = (translationScope[key] as BlockItem[]) || []
         const originalBlockItem = originalBlockItems[index] || {}
         const translatedBlockItem = translatedBlockItems[index] || {}
-        const effectiveBlockItem = mergeLocalizedContent(
+        const effectiveBlockItem = mergeLocalizedContentForSchema(
           originalBlockItem as Record<string, unknown>,
-          translatedBlockItem as Record<string, unknown>
+          translatedBlockItem as Record<string, unknown>,
+          blockSchemaItem.schema,
+          props.getBlockSchema
         ) as Record<string, unknown>
 
         traverseContent(
@@ -407,6 +416,58 @@ const traverseContent = (
           blockPath,
           result
         )
+      })
+    } else if (schemaItem.type === 'table' && schemaItem.translatable) {
+      const tableSchema = schemaItem as TableSchema
+      const originalTable = ensureTableValue(tableSchema, originalValue)
+      const tablePath = [...path]
+
+      if (tableSchema.has_thead) {
+        getTableColumns(tableSchema).forEach((column) => {
+          const fieldSchema = createTableTextSchema(`${schemaItem.name || key}: ${column.label || column.key}`)
+          const sourceValue = originalTable.header[column.key] || column.label || column.key
+          const translatedHeaderValue = getTranslatedTableHeaderValue(translationScope[key], column.key)
+
+          result.push({
+            key: `${key}-header-${column.key}`,
+            path: [...path, 'header', column.key],
+            fieldName: `${schemaItem.name || key}: ${column.label || column.key}`,
+            schemaItem: fieldSchema,
+            originalValue: sourceValue,
+            translatedValue: translatedHeaderValue,
+            isTranslated: isFieldTranslated(fieldSchema, sourceValue, translatedHeaderValue),
+            tablePath,
+            tableColumnKey: column.key,
+            tableRowId: null,
+          })
+        })
+      }
+
+      originalTable.rows.forEach((row) => {
+        getTableColumns(tableSchema)
+          .filter((column) => column.type === 'text')
+          .forEach((column) => {
+            const fieldSchema = createTableTextSchema(`${schemaItem.name || key}: ${column.label || column.key}`)
+            const sourceValue = typeof row.cells[column.key] === 'string' ? row.cells[column.key] : ''
+            const translatedCellValue = getTranslatedTableCellValue(
+              translationScope[key],
+              row.id,
+              column.key
+            )
+
+            result.push({
+              key: `${key}-row-${row.id}-${column.key}`,
+              path: [...path, 'rows', row.id, column.key],
+              fieldName: `${schemaItem.name || key}: ${column.label || column.key}`,
+              schemaItem: fieldSchema,
+              originalValue: sourceValue,
+              translatedValue: translatedCellValue,
+              isTranslated: isFieldTranslated(fieldSchema, sourceValue, translatedCellValue),
+              tablePath,
+              tableColumnKey: column.key,
+              tableRowId: row.id,
+            })
+          })
       })
     } else if ('translatable' in schemaItem && schemaItem.translatable) {
       const translatedValue = translationScope[key]
@@ -449,9 +510,11 @@ watch(
     translatableFields.value = traverseContent(
       props.originalContent as Record<string, unknown>,
       translationDraft.value,
-      mergeLocalizedContent(
+      mergeLocalizedContentForSchema(
         props.originalContent as Record<string, unknown>,
-        translationDraft.value
+        translationDraft.value,
+        props.blockSchema,
+        props.getBlockSchema
       ) as Record<string, unknown>,
       props.blockSchema
     )
@@ -490,18 +553,54 @@ const applyTranslatedValue = (
   field: TranslatableField,
   newValue: unknown
 ) => {
+  if (field.tablePath && field.tableColumnKey) {
+    const tableValue = getValueAtPath(content, field.tablePath)
+    const nextTableValue = isObjectRecord(tableValue) ? cloneValue(tableValue) : {}
+
+    if (field.tableRowId === null) {
+      const nextHeader = isObjectRecord(nextTableValue.header) ? cloneValue(nextTableValue.header) : {}
+      nextHeader[field.tableColumnKey] = newValue
+      nextTableValue.header = nextHeader
+    } else {
+      const nextRows = Array.isArray(nextTableValue.rows) ? cloneValue(nextTableValue.rows) : []
+      const existingIndex = nextRows.findIndex(
+        (row) => isObjectRecord(row) && row.id === field.tableRowId
+      )
+      const nextRow =
+        existingIndex >= 0 && isObjectRecord(nextRows[existingIndex])
+          ? cloneValue(nextRows[existingIndex] as Record<string, unknown>)
+          : { id: field.tableRowId, cells: {} }
+      const nextCells = isObjectRecord(nextRow.cells) ? cloneValue(nextRow.cells) : {}
+
+      nextCells[field.tableColumnKey] = newValue
+      nextRow.cells = nextCells
+
+      if (existingIndex >= 0) {
+        nextRows[existingIndex] = nextRow
+      } else {
+        nextRows.push(nextRow)
+      }
+
+      nextTableValue.rows = nextRows
+    }
+
+    setValueAtPath(content, field.tablePath, nextTableValue)
+    return
+  }
+
   let current: Record<string, unknown> | unknown[] = content
 
   for (let i = 0; i < field.path.length - 1; i++) {
     const pathPart = field.path[i]
     const nextPathPart = field.path[i + 1]
+    const nextPathSegment = String(nextPathPart)
     const currentValue =
       current instanceof Array
         ? current[Number(pathPart)]
         : (current as Record<string, unknown>)[pathPart]
 
     if (currentValue === undefined) {
-      const nextValue = Number.isInteger(parseInt(nextPathPart, 10)) ? [] : {}
+      const nextValue = Number.isInteger(parseInt(nextPathSegment, 10)) ? [] : {}
       if (current instanceof Array) {
         current[Number(pathPart)] = nextValue
       } else {
@@ -515,7 +614,7 @@ const applyTranslatedValue = (
         : ((current as Record<string, unknown>)[pathPart] as Record<string, unknown> | unknown[])
 
     if (current instanceof Array) {
-      const nextIndex = parseInt(nextPathPart, 10)
+      const nextIndex = parseInt(nextPathSegment, 10)
       if (!Number.isNaN(nextIndex) && nextIndex >= current.length) {
         for (let j = current.length; j <= nextIndex; j++) {
           current.push({})
@@ -530,7 +629,7 @@ const applyTranslatedValue = (
     return
   }
 
-  current[finalKey] = newValue
+  current[String(finalKey)] = newValue
 }
 
 const emitTranslationContent = (nextTranslationContent: Record<string, unknown>) => {
@@ -538,8 +637,19 @@ const emitTranslationContent = (nextTranslationContent: Record<string, unknown>)
   emit('update:translationContent', nextTranslationContent)
 }
 
-const getFieldValue = (content: Record<string, unknown>, field: TranslatableField): unknown =>
-  getValueAtPath(content, field.path)
+const getFieldValue = (content: Record<string, unknown>, field: TranslatableField): unknown => {
+  if (field.tablePath && field.tableColumnKey) {
+    const tableValue = getValueAtPath(content, field.tablePath)
+
+    return field.tableRowId === null
+      ? getTranslatedTableHeaderValue(tableValue, field.tableColumnKey)
+      : field.tableRowId
+        ? getTranslatedTableCellValue(tableValue, field.tableRowId, field.tableColumnKey)
+        : null
+  }
+
+  return getValueAtPath(content, field.path)
+}
 
 const updateTranslatedValue = (field: TranslatableField, newValue: unknown): void => {
   const fieldToUpdate = translatableFields.value.find(

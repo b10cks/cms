@@ -5,12 +5,14 @@ namespace App\Services\Content;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
+use App\Services\Content\Schema\ContentSchemaValueMerger;
 use Illuminate\Support\Collection;
 
 class ContentI18nResolver
 {
     public function __construct(
         private readonly ContentI18nService $contentI18nService,
+        private readonly ContentSchemaValueMerger $contentSchemaValueMerger,
     ) {
     }
 
@@ -116,6 +118,8 @@ class ContentI18nResolver
             $effectiveMode = $effectiveModesByCanonicalId->get($canonical->id, $space->settings->getI18nMode());
             $targetContent = $this->contentI18nService->findLanguageContent($family, $resolvedCanonical, $requestedLanguage);
             $targetVersion = $targetContent ? $versionsByContentId->get($targetContent->id) : null;
+            $resolvedCanonical->loadMissing('block');
+            $blockSchema = $resolvedCanonical->block?->schema?->toArray() ?? [];
 
             $resolvedLanguage = $requestedLanguage;
             $resolvedRow = $targetContent;
@@ -143,7 +147,7 @@ class ContentI18nResolver
             }
 
             $effectiveContent = $effectiveMode === 'overlay'
-                ? $this->mergeContentChain($fallbackChain, $targetVersion, $content)
+                ? $this->mergeContentChain($fallbackChain, $targetVersion, $blockSchema, $resolvedCanonical)
                 : ($targetVersion?->content ?? $content->content ?? []);
 
             return new ResolvedContent(
@@ -354,26 +358,71 @@ class ContentI18nResolver
             ->keyBy('content_id');
     }
 
-    private function mergeContentChain(Collection $fallbackChain, ?ContentVersion $targetVersion, ?Content $selectedContent = null): array
+    private function mergeContentChain(
+        Collection $fallbackChain,
+        ?ContentVersion $targetVersion,
+        array $blockSchema,
+        ?Content $selectedContent = null,
+    ): array
     {
         $contentChain = $fallbackChain
             ->pluck('version')
             ->filter()
             ->reverse();
 
-        if ($targetVersion) {
-            $contentChain->push($targetVersion);
-        } elseif ($selectedContent?->content) {
-            return $contentChain->reduce(
-                fn(array $merged, ContentVersion $version): array => array_replace_recursive($merged, $version->content ?? []),
-                $selectedContent->content ?? []
+        $merged = $targetVersion ? [] : $this->resolveContentPayload($selectedContent);
+
+        foreach ($contentChain as $version) {
+            $merged = $this->contentSchemaValueMerger->mergeForSchema(
+                $blockSchema,
+                $merged,
+                $version->content ?? [],
+                true,
             );
         }
 
-        return $contentChain->reduce(
-            fn(array $merged, ContentVersion $version): array => array_replace_recursive($merged, $version->content ?? []),
-            []
-        );
+        if ($targetVersion) {
+            return $this->contentSchemaValueMerger->mergeForSchema(
+                $blockSchema,
+                $merged,
+                $targetVersion->content ?? [],
+                true,
+            );
+        }
+
+        return $merged;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolveContentPayload(?Content $content): array
+    {
+        if (! $content) {
+            return [];
+        }
+
+        $currentContent = $content->relationLoaded('current_version')
+            ? $content->current_version?->content
+            : null;
+
+        if (\is_array($currentContent)) {
+            return $currentContent;
+        }
+
+        $publishedContent = $content->relationLoaded('published_version')
+            ? $content->published_version?->content
+            : null;
+
+        if (\is_array($publishedContent)) {
+            return $publishedContent;
+        }
+
+        if (\is_array($content->content ?? null)) {
+            return $content->content;
+        }
+
+        return $content->getContent();
     }
 
     private function mergeCollectionChain(Collection $fallbackChain, string $property, ?Collection $target): Collection

@@ -161,6 +161,187 @@ class ContentSchemaValidatorTest extends TestCase
         $this->assertSame([], $result->errors);
     }
 
+    #[Test]
+    public function table_fields_validate_rows_ids_and_cell_types(): void
+    {
+        $block = $this->makeBlock([
+            'roster' => [
+                'type' => 'table',
+                'name' => 'Roster',
+                'translatable' => true,
+                'has_thead' => true,
+                'min' => 1,
+                'max' => 2,
+                'columns' => [
+                    [
+                        'key' => 'name',
+                        'label' => 'Name',
+                        'type' => 'text',
+                    ],
+                    [
+                        'key' => 'count',
+                        'label' => 'Count',
+                        'type' => 'number',
+                    ],
+                    [
+                        'key' => 'status',
+                        'label' => 'Status',
+                        'type' => 'option',
+                        'source' => 'self',
+                        'options' => [
+                            ['name' => 'Draft', 'value' => 'draft'],
+                            ['name' => 'Review', 'value' => 'review'],
+                        ],
+                        'data_source_id' => null,
+                    ],
+                    [
+                        'key' => 'active',
+                        'label' => 'Active',
+                        'type' => 'boolean',
+                    ],
+                ],
+                'default' => [
+                    'header' => [
+                        'name' => 'Name',
+                        'count' => 'Count',
+                        'status' => 'Status',
+                        'active' => 'Active',
+                    ],
+                    'rows' => [],
+                ],
+            ],
+        ]);
+
+        $validResult = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            [
+                'roster' => [
+                    'header' => [
+                        'name' => 'Name',
+                        'count' => 'Count',
+                        'status' => 'Status',
+                        'active' => 'Active',
+                    ],
+                    'rows' => [
+                        [
+                            'id' => 'row-a',
+                            'cells' => [
+                                'name' => 'Alice',
+                                'count' => 12,
+                                'status' => 'draft',
+                                'active' => true,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            null,
+            'en',
+            null,
+            'save',
+        );
+
+        $this->assertSame([], $validResult->errors);
+
+        $invalidRowCount = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            [
+                'roster' => [
+                    'header' => [],
+                    'rows' => [],
+                ],
+            ],
+            null,
+            'en',
+            null,
+            'save',
+        );
+
+        $this->assertArrayHasKey('content.roster', $invalidRowCount->errors);
+
+        $invalidRowIds = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            [
+                'roster' => [
+                    'header' => [],
+                    'rows' => [
+                        [
+                            'id' => 'row-a',
+                            'cells' => ['name' => 'Alice', 'count' => 1, 'status' => 'draft', 'active' => true],
+                        ],
+                        [
+                            'id' => 'row-a',
+                            'cells' => ['name' => 'Bob', 'count' => 2, 'status' => 'review', 'active' => false],
+                        ],
+                    ],
+                ],
+            ],
+            null,
+            'en',
+            null,
+            'save',
+        );
+
+        $this->assertArrayHasKey('content.roster', $invalidRowIds->errors);
+
+        $invalidOption = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            [
+                'roster' => [
+                    'header' => [],
+                    'rows' => [
+                        [
+                            'id' => 'row-a',
+                            'cells' => [
+                                'name' => 'Alice',
+                                'count' => 1,
+                                'status' => 'missing',
+                                'active' => true,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            null,
+            'en',
+            null,
+            'save',
+        );
+
+        $this->assertArrayHasKey('content.roster', $invalidOption->errors);
+
+        $invalidTypes = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            [
+                'roster' => [
+                    'header' => [],
+                    'rows' => [
+                        [
+                            'id' => 'row-a',
+                            'cells' => [
+                                'name' => false,
+                                'count' => 1,
+                                'status' => 'draft',
+                                'active' => 'yes',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            null,
+            'en',
+            null,
+            'save',
+        );
+
+        $this->assertArrayHasKey('content.roster', $invalidTypes->errors);
+    }
+
     protected function ensureOptionTablesExist(): void
     {
         if (! Schema::hasTable('data_sources')) {

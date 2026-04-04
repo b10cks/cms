@@ -42,6 +42,7 @@ const types: Record<string, BlockType> = {
     cls: 'text-yellow-300 border border-yellow-400 bg-yellow-800',
     icon: 'lucide:images',
   },
+  table: { cls: 'text-gray-400 border border-gray-500 bg-gray-800', icon: 'lucide:table' },
   meta: { cls: 'text-gray-400 border border-gray-500 bg-gray-800', icon: 'lucide:search' },
 }
 

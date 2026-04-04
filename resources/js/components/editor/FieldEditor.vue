@@ -14,6 +14,7 @@ import OptionBlock from '~/components/editor/OptionBlock.vue'
 import OptionsBlock from '~/components/editor/OptionsBlock.vue'
 import ReferenceBlock from '~/components/editor/ReferenceBlock.vue'
 import RichTextBlock from '~/components/editor/RichTextBlock.vue'
+import TableBlock from '~/components/editor/TableBlock.vue'
 import TextareaBlock from '~/components/editor/TextareaBlock.vue'
 import TextBlock from '~/components/editor/TextBlock.vue'
 import { AvatarList } from '~/components/ui/avatar'
@@ -43,6 +44,7 @@ const editors = {
   references: ReferenceBlock,
   meta: MetaBlock,
   date: DateBlock,
+  table: TableBlock,
 } satisfies Partial<Record<CanonicalSchemaTypeName | LegacySchemaTypeName, Component>>
 
 const props = defineProps<{

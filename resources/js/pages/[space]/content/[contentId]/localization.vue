@@ -15,6 +15,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/componen
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 import { useContentSchemaState } from '~/composables/useContentSchemaState'
+import { mergeLocalizedContentForSchema } from '~/lib/tableField'
 import {
   buildMissingLanguageDraft,
   getContentDefaultLanguage,
@@ -167,38 +168,6 @@ const clonePreviewValue = <T>(value: T): T => {
   return JSON.parse(JSON.stringify(toRaw(value))) as T
 }
 
-const mergeOverlayContent = (base: unknown, overlay: unknown): unknown => {
-  if (Array.isArray(base) && Array.isArray(overlay)) {
-    return base.map((item, index) =>
-      index in overlay ? mergeOverlayContent(item, overlay[index]) : clonePreviewValue(item)
-    )
-  }
-
-  if (
-    base &&
-    overlay &&
-    typeof base === 'object' &&
-    typeof overlay === 'object' &&
-    !Array.isArray(base) &&
-    !Array.isArray(overlay)
-  ) {
-    const merged: Record<string, unknown> = clonePreviewValue(base as Record<string, unknown>)
-
-    Object.entries(overlay as Record<string, unknown>).forEach(([key, value]) => {
-      merged[key] =
-        key in merged ? mergeOverlayContent(merged[key], value) : clonePreviewValue(value)
-    })
-
-    return merged
-  }
-
-  if (overlay !== undefined) {
-    return clonePreviewValue(overlay)
-  }
-
-  return clonePreviewValue(base)
-}
-
 const nearestSourceContent = computed(
   () => sourceChainContents.value?.[0] || canonicalContent.value || null
 )
@@ -213,17 +182,31 @@ const sourceContentPayload = computed<Record<string, unknown>>(() => {
     .slice()
     .reverse()
     .reduce<Record<string, unknown>>(
-      (merged, content) =>
-        mergeOverlayContent(merged, content.content as Record<string, unknown>) as Record<
-          string,
-          unknown
-        >,
+      (merged, content) => {
+        const schema = (block.value?.schema || {}) as Record<string, SchemaType>
+
+        return mergeLocalizedContentForSchema(
+          merged,
+          (content.content as Record<string, unknown>) || {},
+          schema,
+          getBlockSchemaFn
+        ) as Record<string, unknown>
+      },
       {}
     )
 })
 
 const mergePreviewContent = (source: unknown, overlay: unknown): unknown => {
-  return mergeOverlayContent(source, overlay)
+  if (!source || typeof source !== 'object' || Array.isArray(source)) {
+    return clonePreviewValue(overlay)
+  }
+
+  return mergeLocalizedContentForSchema(
+    source as Record<string, unknown>,
+    ((overlay as Record<string, unknown>) || {}) as Record<string, unknown>,
+    (block.value?.schema || {}) as Record<string, SchemaType>,
+    getBlockSchemaFn
+  )
 }
 
 const previewContentPayload = computed<Record<string, unknown>>(

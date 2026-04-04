@@ -310,6 +310,20 @@ const createDefaultSchemaForType = (type: string, key: string): SchemaType => {
         max: undefined,
         use_current_as_default: false,
       } as DateSchema
+    case 'table':
+      return {
+        ...baseSchema,
+        type: 'table',
+        translatable: true,
+        has_thead: true,
+        min: null,
+        max: null,
+        columns: [],
+        default: {
+          header: {},
+          rows: [],
+        },
+      } as TableSchema
     default:
       return {
         ...baseSchema,

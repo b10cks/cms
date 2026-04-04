@@ -16,6 +16,7 @@ class ContentSchemaValidator
         protected readonly ContentSchemaBuilder $builder,
         protected readonly FieldVisibilityPruner $pruner,
         protected readonly OptionChoiceResolver $optionChoiceResolver,
+        protected readonly ContentSchemaValueMerger $contentSchemaValueMerger,
     ) {
     }
 
@@ -29,16 +30,27 @@ class ContentSchemaValidator
         string $mode = 'save',
     ): ContentSchemaValidationResult {
         $effectiveBase = $this->resolveEffectiveBase($space, $content, $languageIso, $i18nParentId);
+        $effectiveContent = $this->contentSchemaValueMerger->mergeForSchema(
+            $block->schema?->toArray() ?? [],
+            $effectiveBase['content'],
+            $submittedContent,
+            $effectiveBase['mode'] === 'overlay',
+        );
         $tree = $this->builder->build(
             $block,
             $submittedContent,
-            array_replace_recursive($effectiveBase, $submittedContent),
+            $effectiveContent,
         );
         $sanitizedContent = $this->pruner->prune($tree);
         $sanitizedTree = $this->builder->build(
             $block,
             $sanitizedContent,
-            array_replace_recursive($effectiveBase, $sanitizedContent),
+            $this->contentSchemaValueMerger->mergeForSchema(
+                $block->schema?->toArray() ?? [],
+                $effectiveBase['content'],
+                $sanitizedContent,
+                $effectiveBase['mode'] === 'overlay',
+            ),
         );
 
         return new ContentSchemaValidationResult(
@@ -85,7 +97,10 @@ class ContentSchemaValidator
         }
 
         if (!$resolverContent) {
-            return [];
+            return [
+                'content' => [],
+                'mode' => 'independent',
+            ];
         }
 
         $resolved = $this->contentI18nResolver->resolve(
@@ -95,9 +110,12 @@ class ContentSchemaValidator
             'current',
         );
 
-        return $resolved->effectiveMode === 'overlay'
-            ? ($resolved->effectiveContent ?? [])
-            : [];
+        return [
+            'content' => $resolved->effectiveMode === 'overlay'
+                ? ($resolved->effectiveContent ?? [])
+                : [],
+            'mode' => $resolved->effectiveMode,
+        ];
     }
 
     /**
@@ -176,6 +194,7 @@ class ContentSchemaValidator
             'references' => $this->validateReferences($field, $value),
             'blocks' => $this->validateBlocks($field, $value),
             'meta' => $this->validateMeta($field, $value),
+            'table' => $this->validateTable($field, $value),
             default => [],
         };
     }
@@ -437,6 +456,137 @@ class ContentSchemaValidator
         }
 
         return array_values(array_unique($messages));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function validateTable(SchemaField $field, mixed $value): array
+    {
+        if (! is_array($value)) {
+            return [sprintf('%s must be a table object.', $field->getLabel())];
+        }
+
+        if (! is_array($value['header'] ?? null)) {
+            return [sprintf('%s must contain a valid header object.', $field->getLabel())];
+        }
+
+        if (! is_array($value['rows'] ?? null)) {
+            return [sprintf('%s must contain a valid rows array.', $field->getLabel())];
+        }
+
+        $messages = [];
+        $columns = collect($field->getAttribute('columns', []))
+            ->filter(fn (mixed $column): bool => is_array($column) && isset($column['key']))
+            ->mapWithKeys(fn (array $column): array => [(string) $column['key'] => $column])
+            ->all();
+
+        foreach ($value['header'] as $headerKey => $headerValue) {
+            if (! is_string($headerKey) || ! array_key_exists($headerKey, $columns)) {
+                $messages[] = sprintf('%s contains an unknown header column.', $field->getLabel());
+                continue;
+            }
+
+            if (! is_string($headerValue)) {
+                $messages[] = sprintf('%s header values must be strings.', $field->getLabel());
+            }
+        }
+
+        $messages = [
+            ...$messages,
+            ...$this->validateCountBounds(
+                $field,
+                count($value['rows']),
+                $field->getAttribute('min') ?? $field->getValidationValue('min'),
+                $field->getAttribute('max') ?? $field->getValidationValue('max'),
+                'rows',
+            ),
+        ];
+
+        $seenRowIds = [];
+
+        foreach ($value['rows'] as $row) {
+            if (! is_array($row)) {
+                $messages[] = sprintf('%s contains an invalid row.', $field->getLabel());
+                continue;
+            }
+
+            $rowId = $row['id'] ?? null;
+
+            if (! is_string($rowId) || $rowId === '') {
+                $messages[] = sprintf('%s rows must have a unique string id.', $field->getLabel());
+                continue;
+            }
+
+            if (isset($seenRowIds[$rowId])) {
+                $messages[] = sprintf('%s rows must have unique ids.', $field->getLabel());
+            }
+
+            $seenRowIds[$rowId] = true;
+            $cells = $row['cells'] ?? null;
+
+            if (! is_array($cells)) {
+                $messages[] = sprintf('%s row cells must be an object.', $field->getLabel());
+                continue;
+            }
+
+            foreach ($cells as $cellKey => $cellValue) {
+                $column = $columns[$cellKey] ?? null;
+
+                if (! $column) {
+                    $messages[] = sprintf('%s contains a cell for an unknown column.', $field->getLabel());
+                    continue;
+                }
+
+                $messages = [
+                    ...$messages,
+                    ...$this->validateTableCell($field, $column, $cellValue),
+                ];
+            }
+        }
+
+        return array_values(array_unique($messages));
+    }
+
+    /**
+     * @param  array<string, mixed>  $column
+     * @return array<int, string>
+     */
+    protected function validateTableCell(SchemaField $field, array $column, mixed $value): array
+    {
+        return match ($column['type'] ?? 'text') {
+            'text' => is_string($value)
+                ? []
+                : [sprintf('%s text cells must be strings.', $field->getLabel())],
+            'number' => $value === null || is_int($value) || is_float($value)
+                ? []
+                : [sprintf('%s number cells must be a number or null.', $field->getLabel())],
+            'boolean' => is_bool($value)
+                ? []
+                : [sprintf('%s boolean cells must be true or false.', $field->getLabel())],
+            'option' => $this->validateTableOptionCell($field, $column, $value),
+            default => [sprintf('%s contains an unsupported table cell type.', $field->getLabel())],
+        };
+    }
+
+    /**
+     * @param  array<string, mixed>  $column
+     * @return array<int, string>
+     */
+    protected function validateTableOptionCell(SchemaField $field, array $column, mixed $value): array
+    {
+        if ($value === null) {
+            return [];
+        }
+
+        $allowed = $this->optionChoiceResolver->resolveAllowedValues($column);
+        $source = $column['source'] ?? 'self';
+
+        if (! is_string($value) || ((! empty($allowed) || $source === 'datasource') && ! in_array($value, $allowed, true))) {
+            return [sprintf('%s option cells must use an allowed option.', $field->getLabel())];
+        }
+
+        return [];
     }
 
     /**

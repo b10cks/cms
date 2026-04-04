@@ -28,6 +28,7 @@ type CanonicalSchemaTypeName =
   | 'references'
   | 'date'
   | 'meta'
+  | 'table'
 
 type LegacySchemaTypeName = 'multiAsset' | 'reference' | 'block'
 
@@ -189,6 +190,39 @@ interface OptionsSchema extends Schema {
   required: boolean
 }
 
+type TableColumn =
+  | { key: string; label: string; type: 'text' }
+  | { key: string; label: string; type: 'number' }
+  | {
+      key: string
+      label: string
+      type: 'option'
+      source: 'self' | 'datasource'
+      options: OptionItem[]
+      data_source_id: string | null
+    }
+  | { key: string; label: string; type: 'boolean' }
+
+interface TableRow {
+  id: string
+  cells: Record<string, string | number | boolean | null>
+}
+
+interface TableValue {
+  header: Record<string, string>
+  rows: TableRow[]
+}
+
+interface TableSchema extends Schema {
+  type: 'table'
+  translatable: boolean
+  has_thead: boolean
+  min: number | null
+  max: number | null
+  columns: TableColumn[]
+  default: TableValue
+}
+
 type TranslatableSchema =
   | TextSchema
   | TextareaSchema
@@ -196,6 +230,7 @@ type TranslatableSchema =
   | RichTextSchema
   | LinkSchema
   | MetaSchema
+  | TableSchema
 type SchemaType =
   | BlocksSchema
   | LinkSchema
@@ -212,6 +247,7 @@ type SchemaType =
   | ReferencesSchema
   | DateSchema
   | MetaSchema
+  | TableSchema
 
 interface EditorPage {
   header: string

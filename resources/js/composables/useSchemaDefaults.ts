@@ -1,4 +1,5 @@
 import { normalizeSchemaType } from '~/composables/useContentSchemaState'
+import { ensureTableValue } from '~/lib/tableField'
 
 type BlockLookup = Record<string, Pick<BlockResource, 'slug' | 'schema'>>
 type ContentScope = Record<string, unknown>
@@ -82,6 +83,8 @@ export const resolveFieldInitialValue = (field: SchemaType): unknown => {
     case 'asset':
     case 'link':
       return null
+    case 'table':
+      return ensureTableValue(field as TableSchema, defaultValue)
     case 'richtext':
     case 'meta':
       return {}
