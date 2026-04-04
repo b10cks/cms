@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.4-3a44bfa] — 2026-4-4
+
+- ✨ Add table block type
+
 ## [v2026.4.4-88c4b9d] — 2026-4-4
 
 - 👔 Improve template-based block adding
