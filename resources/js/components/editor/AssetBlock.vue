@@ -93,7 +93,10 @@ const handleAssetDetailsUpdate = (asset: AssetResource) => {
 
 <template>
   <div class="grid gap-2">
-    <Label :label="item.name || item.key" />
+    <Label
+      :label="item.name || item.key"
+      :required="item.required"
+    />
     <div
       v-if="!hasAsset"
       :class="[

@@ -6,8 +6,8 @@ interface Schema {
   indexable?: boolean
   order?: number
   default?: unknown
-  min?: number | string
-  max?: number | string
+  min?: number | string | null
+  max?: number | string | null
   conditions?: FieldConditions | null
   validation?: FieldValidation | null
 }
@@ -21,6 +21,7 @@ type CanonicalSchemaTypeName =
   | 'number'
   | 'boolean'
   | 'option'
+  | 'options'
   | 'link'
   | 'asset'
   | 'multi_assets'
@@ -55,8 +56,8 @@ interface FieldConditions {
 }
 
 interface FieldValidation {
-  min?: number | string
-  max?: number | string
+  min?: number | string | null
+  max?: number | string | null
   min_length?: number
   max_length?: number
   min_items?: number
@@ -107,15 +108,15 @@ interface AssetSchema extends Schema {
 interface MultiAssetsSchema extends Schema {
   type: 'multi_assets' | 'multiAsset'
   file_types: FileTypes[]
-  min: number
-  max: number
+  min: number | null
+  max: number | null
 }
 
 interface ReferencesSchema extends Schema {
   type: 'references' | 'reference'
   block_whitelist: string[]
-  min: number
-  max: number
+  min: number | null
+  max: number | null
 }
 
 interface TextSchema extends Schema {
@@ -166,10 +167,26 @@ interface OptionItem {
   value: string
 }
 
+type OptionSource = 'self' | 'datasource'
+
 interface OptionSchema extends Schema {
   type: 'option'
   options: OptionItem[]
+  source: OptionSource
+  data_source_id: string | null
   exclude_empty: boolean
+  default: string | null
+}
+
+interface OptionsSchema extends Schema {
+  type: 'options'
+  options: OptionItem[]
+  source: OptionSource
+  data_source_id: string | null
+  default: string[]
+  min: number | null
+  max: number | null
+  required: boolean
 }
 
 type TranslatableSchema =
@@ -189,6 +206,7 @@ type SchemaType =
   | NumberSchema
   | BooleanSchema
   | OptionSchema
+  | OptionsSchema
   | AssetSchema
   | MultiAssetsSchema
   | ReferencesSchema

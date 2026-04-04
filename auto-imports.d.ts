@@ -11,6 +11,8 @@ declare global {
   const computed: typeof import('vue').computed
   const createAccessEvaluationContext: typeof import('./resources/js/composables/useAuthorization').createAccessEvaluationContext
   const createApp: typeof import('vue').createApp
+  const createBlockItemWithDefaults: typeof import('./resources/js/composables/useSchemaDefaults').createBlockItemWithDefaults
+  const createContentDefaultsBlockLookup: typeof import('./resources/js/composables/useSchemaDefaults').createContentDefaultsBlockLookup
   const customRef: typeof import('vue').customRef
   const defineAsyncComponent: typeof import('vue').defineAsyncComponent
   const defineComponent: typeof import('vue').defineComponent
@@ -24,6 +26,7 @@ declare global {
   const getLocale: typeof import('./resources/js/plugins/i18n').getLocale
   const getPosthog: typeof import('./resources/js/plugins/posthog').getPosthog
   const h: typeof import('vue').h
+  const hydrateContentWithSchema: typeof import('./resources/js/composables/useSchemaDefaults').hydrateContentWithSchema
   const i18n: typeof import('./resources/js/plugins/i18n').i18n
   const initAuth: typeof import('./resources/js/plugins/auth').initAuth
   const inject: typeof import('vue').inject
@@ -41,6 +44,7 @@ declare global {
   const locales: typeof import('./resources/js/plugins/i18n').locales
   const markRaw: typeof import('vue').markRaw
   const nextTick: typeof import('vue').nextTick
+  const normalizeFieldOptionChoices: typeof import('./resources/js/composables/useFieldOptionChoices').normalizeFieldOptionChoices
   const normalizeSchema: typeof import('./resources/js/composables/useContentSchemaState').normalizeSchema
   const normalizeSchemaField: typeof import('./resources/js/composables/useContentSchemaState').normalizeSchemaField
   const normalizeSchemaType: typeof import('./resources/js/composables/useContentSchemaState').normalizeSchemaType
@@ -68,6 +72,7 @@ declare global {
   const readonly: typeof import('vue').readonly
   const ref: typeof import('vue').ref
   const resolveComponent: typeof import('vue').resolveComponent
+  const resolveFieldInitialValue: typeof import('./resources/js/composables/useSchemaDefaults').resolveFieldInitialValue
   const setAlertDialogDefaultLabels: typeof import('./resources/js/composables/useAlertDialog').setAlertDialogDefaultLabels
   const setLocale: typeof import('./resources/js/plugins/i18n').setLocale
   const shallowReactive: typeof import('vue').shallowReactive
@@ -128,6 +133,7 @@ declare global {
   const useDataEntries: typeof import('./resources/js/composables/useDataEntries').useDataEntries
   const useDataSources: typeof import('./resources/js/composables/useDataSources').useDataSources
   const useEcho: typeof import('./resources/js/composables/useEcho').useEcho
+  const useFieldOptionChoices: typeof import('./resources/js/composables/useFieldOptionChoices').useFieldOptionChoices
   const useFileUpload: typeof import('./resources/js/composables/useFileUpload').useFileUpload
   const useFileUtils: typeof import('./resources/js/composables/useFileUtils').default
   const useFormat: typeof import('./resources/js/composables/useFormat').default
@@ -211,6 +217,9 @@ declare global {
   export type { ContentTreeClipboardValidationContext } from './resources/js/composables/useContentTreeClipboard'
   import('./resources/js/composables/useContentTreeClipboard')
   // @ts-ignore
+  export type { ResolvedOptionChoice } from './resources/js/composables/useFieldOptionChoices'
+  import('./resources/js/composables/useFieldOptionChoices')
+  // @ts-ignore
   export type { ClipboardSingleItem, ClipboardMultipleItems, ClipboardItem } from './resources/js/composables/useGlobalClipboard'
   import('./resources/js/composables/useGlobalClipboard')
   // @ts-ignore
@@ -240,6 +249,8 @@ declare module 'vue' {
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createAccessEvaluationContext: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['createAccessEvaluationContext']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
+    readonly createBlockItemWithDefaults: UnwrapRef<typeof import('./resources/js/composables/useSchemaDefaults')['createBlockItemWithDefaults']>
+    readonly createContentDefaultsBlockLookup: UnwrapRef<typeof import('./resources/js/composables/useSchemaDefaults')['createContentDefaultsBlockLookup']>
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
@@ -253,6 +264,7 @@ declare module 'vue' {
     readonly getLocale: UnwrapRef<typeof import('./resources/js/plugins/i18n')['getLocale']>
     readonly getPosthog: UnwrapRef<typeof import('./resources/js/plugins/posthog')['getPosthog']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
+    readonly hydrateContentWithSchema: UnwrapRef<typeof import('./resources/js/composables/useSchemaDefaults')['hydrateContentWithSchema']>
     readonly i18n: UnwrapRef<typeof import('./resources/js/plugins/i18n')['i18n']>
     readonly initAuth: UnwrapRef<typeof import('./resources/js/plugins/auth')['initAuth']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
@@ -270,6 +282,7 @@ declare module 'vue' {
     readonly locales: UnwrapRef<typeof import('./resources/js/plugins/i18n')['locales']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
     readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
+    readonly normalizeFieldOptionChoices: UnwrapRef<typeof import('./resources/js/composables/useFieldOptionChoices')['normalizeFieldOptionChoices']>
     readonly normalizeSchema: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['normalizeSchema']>
     readonly normalizeSchemaField: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['normalizeSchemaField']>
     readonly normalizeSchemaType: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['normalizeSchemaType']>
@@ -297,6 +310,7 @@ declare module 'vue' {
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
+    readonly resolveFieldInitialValue: UnwrapRef<typeof import('./resources/js/composables/useSchemaDefaults')['resolveFieldInitialValue']>
     readonly setAlertDialogDefaultLabels: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['setAlertDialogDefaultLabels']>
     readonly setLocale: UnwrapRef<typeof import('./resources/js/plugins/i18n')['setLocale']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
@@ -356,6 +370,7 @@ declare module 'vue' {
     readonly useDataEntries: UnwrapRef<typeof import('./resources/js/composables/useDataEntries')['useDataEntries']>
     readonly useDataSources: UnwrapRef<typeof import('./resources/js/composables/useDataSources')['useDataSources']>
     readonly useEcho: UnwrapRef<typeof import('./resources/js/composables/useEcho')['useEcho']>
+    readonly useFieldOptionChoices: UnwrapRef<typeof import('./resources/js/composables/useFieldOptionChoices')['useFieldOptionChoices']>
     readonly useFileUpload: UnwrapRef<typeof import('./resources/js/composables/useFileUpload')['useFileUpload']>
     readonly useFileUtils: UnwrapRef<typeof import('./resources/js/composables/useFileUtils')['default']>
     readonly useFormat: UnwrapRef<typeof import('./resources/js/composables/useFormat')['default']>

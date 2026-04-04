@@ -13,6 +13,7 @@ defineProps<{
     v-model="value"
     :name="item.key"
     :label="item.name || item.key"
-    :description="item.description"
+    :description="item.description || undefined"
+    :required="item.required"
   />
 </template>

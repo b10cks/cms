@@ -11,8 +11,10 @@ import {
 import AddDropdown from '~/components/editor/AddDropdown.vue'
 import BlockHeader from '~/components/editor/BlockHeader.vue'
 import Icon from '~/components/Icon.vue'
+import { createBlockItemWithDefaults } from '~/composables/useContentDefaults'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
+import Label from '~/components/ui/form/Label.vue'
 import type {
   CollaborationPresenceUser,
   ContentFieldFocusPayload,
@@ -85,8 +87,19 @@ const accordionContainer = ref<HTMLElement | null>(null)
 const selectedIndexes = ref<number[]>([])
 const openItems = ref<string[]>([])
 
+;(useSortable as any)(accordionContainer, blockItems, {
+  handle: '[draggable]',
+})
+
+const blocksBySlug = computed(() =>
+  Object.fromEntries((blocks.value?.data || []).map((block) => [block.slug, block]))
+)
+
 const addItem = (slug: string, index: number = -1) => {
-  const newItem = { block: slug, id: ulid() }
+  const block = blocksBySlug.value[slug]
+  const newItem = block
+    ? createBlockItemWithDefaults(block, blocksBySlug.value)
+    : { block: slug, id: ulid() }
   const updatedItems = [...blockItems.value]
 
   if (index === -1) {
@@ -226,21 +239,10 @@ const handleTemplateTrigger = (content: Record<string, unknown>) => {
   emit('createTemplate', block.id, content)
 }
 
-const setupSortable = () => {
-  nextTick(() => {
-    if (!accordionContainer.value) return
-
-    ;(useSortable as any)(accordionContainer, blockItems, {
-      handle: '[draggable]',
-    })
-  })
-}
-
 watch(
   () => blockItems.value.length,
   () => {
     selectedIndexes.value = selectedIndexes.value.filter((index) => index < blockItems.value.length)
-    setupSortable()
   },
   { immediate: true }
 )
@@ -362,9 +364,11 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
 
 <template>
   <div class="grid gap-2">
-    <div class="relative z-10 mr-8 text-sm font-semibold text-primary">
-      {{ item.name || item.key || 'Untitled' }}
-    </div>
+    <Label
+      :label="item.name || item.key || 'Untitled'"
+      :required="item.required"
+      class="relative z-10 mr-8"
+    />
     <div class="rounded-2xl border border-border bg-surface px-2">
       <div
         v-if="!props.readOnly && hasSelectedItems"

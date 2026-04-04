@@ -5,11 +5,15 @@ import AssetBlock from '~/components/editor/AssetBlock.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { InputField, TextField } from '~/components/ui/form'
+import Label from '~/components/ui/form/Label.vue'
 import type { ApiResponse } from '~/types'
 import type { AssetValue } from '~/types/assets'
 
 interface MetaSchema {
   key: string
+  name?: string
+  description?: string
+  required?: boolean
   has_og_tags?: boolean
 }
 
@@ -154,7 +158,18 @@ const hasContent = computed((): boolean => {
 
 <template>
   <div class="flex flex-col gap-4">
-    <h3 class="text-sm font-semibold text-primary">Meta Tags</h3>
+    <div class="space-y-1">
+      <Label
+        :label="item.name || item.key"
+        :required="item.required"
+      />
+      <p
+        v-if="item.description"
+        class="text-xs text-muted-foreground"
+      >
+        {{ item.description }}
+      </p>
+    </div>
     <div class="relative rounded-lg border border-input bg-background p-3">
       <div class="mb-2 text-sm text-muted">
         {{ serpUrl }}

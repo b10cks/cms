@@ -13,6 +13,7 @@ const types = [
   'richtext',
   'blocks',
   'option',
+  'options',
   'link',
   'references',
   'boolean',

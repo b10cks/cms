@@ -14,9 +14,10 @@ defineProps<{
     v-model="value"
     :name="item.key"
     :label="item.name || item.key"
-    :description="item.description"
+    :description="item.description || undefined"
+    :required="item.required"
     :type="item.format || 'date'"
-    :min="item.min"
-    :max="item.max"
+    :min="item.min === null ? undefined : item.min"
+    :max="item.max === null ? undefined : item.max"
   />
 </template>

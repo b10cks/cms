@@ -15,6 +15,7 @@ class ContentSchemaValidator
         protected readonly ContentI18nResolver $contentI18nResolver,
         protected readonly ContentSchemaBuilder $builder,
         protected readonly FieldVisibilityPruner $pruner,
+        protected readonly OptionChoiceResolver $optionChoiceResolver,
     ) {
     }
 
@@ -158,7 +159,7 @@ class ContentSchemaValidator
                 : [];
         }
 
-        if ($this->isEmpty($value)) {
+        if ($this->isEmpty($value) && ! $this->shouldValidateEmptyValue($field, $value)) {
             return [];
         }
 
@@ -167,6 +168,7 @@ class ContentSchemaValidator
             'number' => $this->validateNumber($field, $value),
             'boolean' => is_bool($value) ? [] : [sprintf('%s must be true or false.', $field->getLabel())],
             'option' => $this->validateOption($field, $value),
+            'options' => $this->validateOptions($field, $value),
             'link' => $this->validateLink($field, $value),
             'date' => $this->validateDate($field, $value),
             'asset' => $this->validateAsset($field, $value),
@@ -247,17 +249,43 @@ class ContentSchemaValidator
      */
     protected function validateOption(SchemaField $field, mixed $value): array
     {
-        $allowed = collect($field->getAttribute('options', []))
-            ->pluck('value')
-            ->filter()
-            ->values()
-            ->all();
+        $allowed = $this->optionChoiceResolver->resolveAllowedValues($field);
+        $source = $field->getAttribute('source', 'self');
 
-        if ($allowed !== [] && !in_array($value, $allowed, true)) {
+        if ((! empty($allowed) || $source === 'datasource') && !in_array($value, $allowed, true)) {
             return [sprintf('%s must be one of the allowed options.', $field->getLabel())];
         }
 
         return [];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function validateOptions(SchemaField $field, mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [sprintf('%s must be an option collection.', $field->getLabel())];
+        }
+
+        $messages = $this->validateCountBounds(
+            $field,
+            count($value),
+            $field->getAttribute('min') ?? $field->getValidationValue('min_items') ?? $field->getValidationValue('min'),
+            $field->getAttribute('max') ?? $field->getValidationValue('max_items') ?? $field->getValidationValue('max'),
+            'options',
+        );
+
+        $allowed = $this->optionChoiceResolver->resolveAllowedValues($field);
+        $source = $field->getAttribute('source', 'self');
+
+        foreach ($value as $entry) {
+            if (!is_string($entry) || ((! empty($allowed) || $source === 'datasource') && !in_array($entry, $allowed, true))) {
+                $messages[] = sprintf('%s contains an invalid option.', $field->getLabel());
+            }
+        }
+
+        return array_values(array_unique($messages));
     }
 
     /**
@@ -381,8 +409,8 @@ class ContentSchemaValidator
         return $this->validateCountBounds(
             $field,
             count($value),
-            $field->getValidationValue('min_items'),
-            $field->getValidationValue('max_items'),
+            $field->getAttribute('min') ?? $field->getValidationValue('min_items') ?? $field->getValidationValue('min'),
+            $field->getAttribute('max') ?? $field->getValidationValue('max_items') ?? $field->getValidationValue('max'),
             'blocks',
         );
     }
@@ -437,5 +465,11 @@ class ContentSchemaValidator
     protected function isEmpty(mixed $value): bool
     {
         return $value === null || $value === '' || $value === [];
+    }
+
+    protected function shouldValidateEmptyValue(SchemaField $field, mixed $value): bool
+    {
+        return is_array($value)
+            && in_array($field->getType(), ['options', 'multi_assets', 'references', 'blocks'], true);
     }
 }

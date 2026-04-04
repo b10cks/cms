@@ -40,4 +40,18 @@ class SchemaFieldTest extends TestCase
         $this->assertTrue($text->isIndexable());
         $this->assertFalse($asset->isIndexable());
     }
+
+    #[Test]
+    public function it_defaults_option_sources_to_self_and_null_datasource(): void
+    {
+        $field = new SchemaField('status', [
+            'type' => 'option',
+            'options' => [
+                ['name' => 'Draft', 'value' => 'draft'],
+            ],
+        ]);
+
+        $this->assertSame('self', $field->getAttribute('source'));
+        $this->assertNull($field->getAttribute('data_source_id'));
+    }
 }

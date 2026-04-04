@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import Label from '~/components/ui/form/Label.vue'
+
 import LinkEditor from './LinkEditor.vue'
 
 interface UrlLink {
@@ -33,9 +35,10 @@ defineProps<{
 <template>
   <div class="space-y-3">
     <div class="space-y-1">
-      <label class="font-semibold text-primary">
-        {{ item.name || item.key }}
-      </label>
+      <Label
+        :label="item.name || item.key"
+        :required="item.required"
+      />
       <p
         v-if="item.description"
         class="text-muted-foreground text-xs"

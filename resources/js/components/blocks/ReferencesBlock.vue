@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { ComboboxField, InputField } from '~/components/ui/form'
+import { ComboboxField } from '~/components/ui/form'
 import type { ComboboxOption } from '~/components/ui/form/ComboboxField.vue'
 
 defineProps<{ value: ReferencesSchema }>()
@@ -41,30 +41,16 @@ const filterBlocks = (
 
 <template>
   <div class="flex flex-col gap-6">
-    <InputField
-      :model-value="value.min"
-      name="min"
-      type="number"
-      :label="$t('labels.blocks.fields.min')"
-      @update:model-value="emit('update:item-value', 'min', $event)"
-    />
-    <InputField
-      :model-value="value.max"
-      name="max"
-      type="number"
-      :label="$t('labels.blocks.fields.max')"
-      @update:model-value="emit('update:item-value', 'max', $event)"
-    />
     <ComboboxField
       :model-value="value.block_whitelist"
       name="block_whitelist"
-      :label="$t('labels.blocks.fields.block_whitelist')"
-      :placeholder="$t('labels.blocks.fields.block_whitelist_placeholder')"
+      :label="$t('labels.blocks.fields.blockWhitelist')"
+      :placeholder="$t('labels.blocks.fields.blockWhitelistPlaceholder')"
       :options="blockOptions"
       :filter-fn="filterBlocks"
       multiple
       searchable
-      :empty-text="$t('labels.blocks.fields.no_blocks_found')"
+      :empty-text="$t('labels.blocks.fields.blockWhitelistEmpty')"
       @update:model-value="emit('update:item-value', 'block_whitelist', $event)"
     />
   </div>

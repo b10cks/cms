@@ -1,11 +1,22 @@
 <script setup lang="ts">
+import { useFieldOptionChoices } from '~/composables/useFieldOptionChoices'
 import { SelectField } from '~/components/ui/form'
 
-const value = defineModel<string>()
+const modelValue = defineModel<string | null>()
 
-defineProps<{
+const props = defineProps<{
   item: OptionSchema & { key: string }
+  spaceId: string
 }>()
+
+const { choices, isLoading } = useFieldOptionChoices(computed(() => props.spaceId), computed(() => props.item))
+
+const value = computed({
+  get: () => modelValue.value ?? null,
+  set: (nextValue: string | null | undefined) => {
+    modelValue.value = nextValue ?? null
+  },
+})
 </script>
 
 <template>
@@ -13,10 +24,13 @@ defineProps<{
     v-model="value"
     :name="item.key"
     :label="item.name || item.key"
+    :description="item.description ?? undefined"
+    :required="item.required"
     :clearable="!item.required"
-    :options="
-      item.options.map((option) => ({ label: option.name || option.value, value: option.value }))
+    :placeholder="isLoading ? 'labels.blocks.fields.optionPreviewLoading' : 'common.select'"
+    :empty-text="
+      isLoading ? 'labels.blocks.fields.optionPreviewLoading' : 'labels.blocks.fields.optionPreviewEmpty'
     "
-  >
-  </SelectField>
+    :options="choices.map((choice) => ({ label: choice.label, value: choice.value }))"
+  />
 </template>

@@ -14,6 +14,7 @@ class SchemaNormalizer
         'multi_assets' => 'multi_assets',
         'reference' => 'references',
         'references' => 'references',
+        'options' => 'options',
     ];
 
     public const array INDEXABLE_TYPES = [
@@ -47,6 +48,7 @@ class SchemaNormalizer
         'references' => ['min', 'max'],
         'blocks' => ['min', 'max'],
         'option' => ['allowed_values'],
+        'options' => ['allowed_values', 'min', 'max'],
     ];
 
     public function normalizeSchema(array $schema): array
@@ -86,6 +88,13 @@ class SchemaNormalizer
             'conditions' => $conditions,
             'validation' => $validation,
         ];
+
+        if (\in_array($type, ['option', 'options'], true)) {
+            $normalized['source'] = ($attributes['source'] ?? 'self') === 'datasource'
+                ? 'datasource'
+                : 'self';
+            $normalized['data_source_id'] = $attributes['data_source_id'] ?? null;
+        }
 
         foreach ($attributes as $attribute => $value) {
             if (\array_key_exists($attribute, $normalized) || $attribute === 'dependencies' || $attribute === 'label') {
@@ -154,7 +163,7 @@ class SchemaNormalizer
 
     public function supportsIndexing(string $type): bool
     {
-        return !\in_array($type, ['asset', 'multi_assets', 'references', 'boolean'], true);
+        return !\in_array($type, ['asset', 'multi_assets', 'references', 'boolean', 'options'], true);
     }
 
     protected function normalizeConditions(array $attributes): ?array
@@ -226,16 +235,29 @@ class SchemaNormalizer
                 'min' => $attributes['min'] ?? $attributes['minimum'] ?? null,
                 'max' => $attributes['max'] ?? $attributes['maximum'] ?? null,
             ],
-            'multi_assets', 'references', 'blocks' => [
+            'multi_assets', 'references', 'blocks', 'options' => [
                 'min' => $attributes['min'] ?? null,
                 'max' => $attributes['max'] ?? null,
             ],
             'option' => [
-                'allowed_values' => $attributes['allowed_values']
-                    ?? array_values(array_filter(array_map(
-                        static fn($option): ?string => is_array($option) ? ($option['value'] ?? null) : null,
-                        $attributes['options'] ?? []
-                    ))),
+                'allowed_values' => ($attributes['source'] ?? 'self') === 'datasource'
+                    ? null
+                    : ($attributes['allowed_values']
+                        ?? array_values(array_filter(array_map(
+                            static fn($option): ?string => is_array($option) ? ($option['value'] ?? null) : null,
+                            $attributes['options'] ?? []
+                        )))),
+            ],
+            'options' => [
+                'allowed_values' => ($attributes['source'] ?? 'self') === 'datasource'
+                    ? null
+                    : ($attributes['allowed_values']
+                        ?? array_values(array_filter(array_map(
+                            static fn($option): ?string => is_array($option) ? ($option['value'] ?? null) : null,
+                            $attributes['options'] ?? []
+                        )))),
+                'min' => $attributes['min'] ?? null,
+                'max' => $attributes['max'] ?? null,
             ],
             default => [],
         };

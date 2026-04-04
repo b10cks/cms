@@ -13,6 +13,7 @@ import MetaBlock from '~/components/blocks/MetaBlock.vue'
 import MultiAssetBlock from '~/components/blocks/MultiAssetBlock.vue'
 import NumberBlock from '~/components/blocks/NumberBlock.vue'
 import OptionBlock from '~/components/blocks/OptionBlock.vue'
+import OptionsBlock from '~/components/blocks/OptionsBlock.vue'
 import ReferencesBlock from '~/components/blocks/ReferencesBlock.vue'
 import RichTextBlock from '~/components/blocks/RichTextBlock.vue'
 import TextareaBlock from '~/components/blocks/TextareaBlock.vue'
@@ -47,7 +48,7 @@ const props = defineProps<{
 const localItem = ref<SchemaType>({ ...props.item })
 const translatable = ['text', 'textarea', 'markdown', 'richtext', 'number', 'link', 'meta']
 const textLike = ['text', 'textarea', 'markdown', 'richtext']
-const countLike = ['blocks', 'references', 'reference', 'multi_assets', 'multiAsset']
+const countLike = ['blocks', 'references', 'reference', 'multi_assets', 'multiAsset', 'options']
 const operatorOptions: Array<{ label: string; value: ConditionOperator }> = [
   { label: 'Equals', value: 'equals' },
   { label: 'Does not equal', value: 'not_equals' },
@@ -93,6 +94,7 @@ const schemas = {
   markdown: MarkdownBlock,
   number: NumberBlock,
   option: OptionBlock,
+  options: OptionsBlock,
   reference: ReferencesBlock,
   references: ReferencesBlock,
   text: TextBlock,
@@ -199,25 +201,34 @@ const getConditionValueKind = (fieldKey?: string) => {
 
   if (field.type === 'boolean') return 'boolean'
   if (field.type === 'number') return 'number'
-  if (field.type === 'option') return 'option'
+  if (field.type === 'option' || field.type === 'options') {
+    return Array.isArray((field as OptionSchema | OptionsSchema).options) &&
+      (field as OptionSchema | OptionsSchema).options.length > 0
+      ? 'option'
+      : 'text'
+  }
   if (field.type === 'date') return 'date'
   return 'text'
 }
 
 const setValidationValue = (key: keyof FieldValidation, value: unknown) => {
-  const nextValidation = {
-    ...localItem.value.validation,
-    [key]: value === '' ? undefined : value,
+  const nextValidation = { ...(localItem.value.validation || {}) }
+  const isClearing = value === '' || value === null || value === undefined
+
+  if (isClearing) {
+    delete nextValidation[key]
+  } else {
+    nextValidation[key] = value as never
   }
 
-  updateValue('validation', nextValidation)
+  updateValue('validation', Object.keys(nextValidation).length > 0 ? nextValidation : null)
 
   if (['min', 'max'].includes(key)) {
-    updateValue(key, value === '' ? undefined : value)
+    updateValue(key, isClearing ? null : value)
   }
 
   if (['min_items', 'max_items'].includes(key)) {
-    updateValue(key === 'min_items' ? 'min' : 'max', value === '' ? undefined : value)
+    updateValue(key === 'min_items' ? 'min' : 'max', isClearing ? null : value)
   }
 }
 
@@ -586,10 +597,8 @@ const updateConditionOperator = (index: number, value: unknown) => {
               "
               :label="$t('labels.blocks.fields.conditionValue')"
               :options="
-                (
-                  ((getControllerField(condition.field) as OptionSchema | null)?.options ||
-                    []) as OptionItem[]
-                ).map((option) => ({
+                (((getControllerField(condition.field) as OptionSchema | OptionsSchema | null)
+                  ?.options || []) as OptionItem[]).map((option) => ({
                   label: option.name,
                   value: option.value,
                 }))
@@ -666,7 +675,7 @@ const updateConditionOperator = (index: number, value: unknown) => {
           <template v-else-if="localItem.type === 'number' || localItem.type === 'date'">
             <InputField
               :name="`${name}-min`"
-              :model-value="validation.min"
+              :model-value="validation.min === null ? undefined : validation.min"
               :label="$t('labels.blocks.fields.min')"
               :type="localItem.type === 'date' ? 'text' : 'number'"
               :disabled="readonly"
@@ -674,7 +683,7 @@ const updateConditionOperator = (index: number, value: unknown) => {
             />
             <InputField
               :name="`${name}-max`"
-              :model-value="validation.max"
+              :model-value="validation.max === null ? undefined : validation.max"
               :label="$t('labels.blocks.fields.max')"
               :type="localItem.type === 'date' ? 'text' : 'number'"
               :disabled="readonly"

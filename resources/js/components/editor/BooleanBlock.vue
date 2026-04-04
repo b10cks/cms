@@ -11,9 +11,10 @@ defineProps<{
 <template>
   <CheckboxField
     v-model="value"
-    name="item.key"
+    :name="item.key"
     :label="item.name || item.key"
-    :description="item.description"
+    :description="item.description || undefined"
+    :required="item.required"
     class="relative z-10"
   />
 </template>

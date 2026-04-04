@@ -877,6 +877,25 @@
         "conditionTrue": "Wahr",
         "conditionFalse": "Falsch",
         "conditionListPlaceholder": "Kommagetrennte Werte",
+        "validation": "Validierung",
+        "minLength": "Minimale Länge",
+        "maxLength": "Maximale Länge",
+        "pattern": "Muster",
+        "minItems": "Minimale Elemente",
+        "maxItems": "Maximale Elemente",
+        "optionSource": "Quelle der Auswahl",
+        "optionSourceDescription": "Wähle, ob die Werte aus Inline-Optionen oder einer vorhandenen Datenquelle kommen.",
+        "optionSourceSelf": "Manuelle Optionen",
+        "optionSourceDatasource": "Datenquelle",
+        "dataSource": "Datenquelle",
+        "dataSourcePlaceholder": "Wähle eine Datenquelle",
+        "dataSourceDescription": "Aktive Einträge aus dieser Datenquelle werden zu den verfügbaren Optionen.",
+        "dataSourcePreview": "Aufgelöste Optionen",
+        "dataSourcePreviewDescription": "Gespeichert werden die Entry-Keys. Labels nutzen die Entry-Werte und fallen sonst auf den Key zurück.",
+        "dataSourcePreviewLoading": "Datenquellen-Einträge werden geladen...",
+        "dataSourcePreviewEmpty": "Keine aktiven Einträge in der Datenquelle verfügbar.",
+        "optionPreviewLoading": "Optionen werden geladen...",
+        "optionPreviewEmpty": "Noch keine Optionen verfügbar.",
         "color": "Farbe",
         "order": "Reihenfolge",
         "restrict_blocks": "Mögliche Blocks einschränken",
@@ -980,11 +999,19 @@
           "label": "Referenz",
           "description": "Referenz zu anderem Inhalt"
         },
+        "references": {
+          "label": "Referenz",
+          "description": "Referenz zu anderem Inhalt"
+        },
         "asset": {
           "label": "Asset",
           "description": "Referenz zu einem Asset"
         },
         "multiAsset": {
+          "label": "Multi Asset",
+          "description": "Referenziere mehrere Assets"
+        },
+        "multi_assets": {
           "label": "Multi Asset",
           "description": "Referenziere mehrere Assets"
         },

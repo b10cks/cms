@@ -19,6 +19,10 @@ import { ScrollArea } from '~/components/ui/scroll-area'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 import {
+  createContentDefaultsBlockLookup,
+  hydrateContentWithSchema,
+} from '~/composables/useContentDefaults'
+import {
   useContentLiveCollaboration,
   type ContentCommitAction,
 } from '~/composables/useContentLiveCollaboration'
@@ -306,12 +310,35 @@ const aiInteractionRef = useTemplateRef('aiInteractionRef')
 const showAi = ref(false)
 
 const cloneContent = (value: ContentResource): ContentResource => JSON.parse(JSON.stringify(value))
+const hydrationBlockLookup = computed<
+  Record<string, Pick<BlockResource, 'slug' | 'schema' | 'name'>>
+>(() => {
+  const lookup = createContentDefaultsBlockLookup(blocks.value) as Record<
+    string,
+    Pick<BlockResource, 'slug' | 'schema' | 'name'>
+  >
+
+  if (currentContentSource.value?.block?.slug && currentContentSource.value.block_schema) {
+    lookup[currentContentSource.value.block.slug] = {
+      slug: currentContentSource.value.block.slug,
+      schema: currentContentSource.value.block_schema,
+      name: currentContentSource.value.block.name,
+    }
+  }
+
+  return lookup
+})
 
 const syncPersistedContent = (
   nextContent: ContentResource,
   mode: 'replace' | 'preserve-local' = 'replace'
 ) => {
   const cloned = cloneContent(nextContent)
+  cloned.content = hydrateContentWithSchema(
+    cloned.block_schema,
+    cloned.content,
+    hydrationBlockLookup.value
+  )
 
   persistedContent.value = cloned
 
@@ -333,8 +360,8 @@ const syncPersistedContent = (
 }
 
 watch(
-  currentContentSource,
-  (newContent) => {
+  [currentContentSource, hydrationBlockLookup],
+  ([newContent]) => {
     if (newContent) {
       const shouldReplace =
         !content.value ||

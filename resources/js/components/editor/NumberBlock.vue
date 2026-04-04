@@ -4,7 +4,7 @@ import { InputField } from '~/components/ui/form'
 const value = defineModel<string>()
 
 defineProps<{
-  item: NumberSchema & { key: string }
+  item: NumberSchema & { key: string; step?: number | string }
 }>()
 </script>
 
@@ -13,7 +13,8 @@ defineProps<{
     v-model="value"
     :name="item.key"
     :label="item.name || item.key"
-    :description="item.description"
+    :description="item.description || undefined"
+    :required="item.required"
     type="number"
     :min="item.min"
     :max="item.max"

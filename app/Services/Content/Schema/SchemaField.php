@@ -37,6 +37,7 @@ class SchemaField implements Arrayable
         'references' => false,
         'blocks' => false,
         'option' => false,
+        'options' => false,
     ];
 
     protected string $key;
@@ -148,6 +149,13 @@ class SchemaField implements Arrayable
         $attributes['indexable'] = (bool) ($attributes['indexable'] ?? self::defaultIndexable($attributes['type']));
         $attributes['conditions'] = self::normalizeConditions($attributes);
         $attributes['validation'] = self::normalizeValidation($attributes);
+
+        if (\in_array($attributes['type'], ['option', 'options'], true)) {
+            $attributes['source'] = ($attributes['source'] ?? 'self') === 'datasource'
+                ? 'datasource'
+                : 'self';
+            $attributes['data_source_id'] = $attributes['data_source_id'] ?? null;
+        }
 
         unset($attributes['dependencies']);
 

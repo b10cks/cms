@@ -3,11 +3,11 @@ import { useSortable } from '@vueuse/integrations/useSortable'
 
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
-import { SelectField } from '~/components/ui/form'
+import { ComboboxField, SelectField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import { useFieldOptionChoices } from '~/composables/useFieldOptionChoices'
 
-const props = defineProps<{ value: OptionSchema; name: string; readonly?: boolean }>()
+const props = defineProps<{ value: OptionsSchema; name: string; readonly?: boolean }>()
 const list = ref<HTMLDivElement | null>(null)
 const route = useRoute()
 const spaceId = computed(() => String(route.params.space || ''))
@@ -23,7 +23,7 @@ const { choices, isLoading, isEmpty } = useFieldOptionChoices(
   computed(() => props.value)
 )
 
-const resolvedChoiceValues = computed(() => choices.value.map((choice) => choice.value))
+const resolvedChoiceValues = computed(() => new Set(choices.value.map((choice) => choice.value)))
 const dataSourceOptions = computed(
   () =>
     dataSources.value?.data.map((dataSource) => ({
@@ -41,6 +41,13 @@ if (!props.readonly) {
     },
   })
 }
+
+const normalizedDefaultValue = computed({
+  get: () => props.value.default || [],
+  set: (value: string[]) => {
+    emit('update:item-value', 'default', [...value])
+  },
+})
 
 function handleBlur(option: OptionItem) {
   if (option.name && !option.value) {
@@ -125,22 +132,15 @@ function handleKeyDown(event: KeyboardEvent, rowIndex: number, colIndex: number)
   }
 }
 
-const updateSource = (source: unknown) => {
-  emit('update:item-value', 'source', source === 'datasource' ? 'datasource' : 'self')
-}
-
-const updateDataSource = (dataSourceId: unknown) => {
-  emit('update:item-value', 'data_source_id', dataSourceId || null)
-}
-
 watch(
   resolvedChoiceValues,
   (allowedValues) => {
     if ((props.value.source || 'self') === 'datasource' && isLoading.value) return
-    if (props.value.default === null) return
-    if (allowedValues.includes(props.value.default)) return
+    const nextDefault = (props.value.default || []).filter((value) => allowedValues.has(value))
 
-    emit('update:item-value', 'default', null)
+    if (nextDefault.length === (props.value.default || []).length) return
+
+    emit('update:item-value', 'default', nextDefault)
   },
   { immediate: true }
 )
@@ -164,7 +164,9 @@ watch(
           label: $t('labels.blocks.fields.optionSourceDatasource'),
         },
       ]"
-      @update:model-value="updateSource"
+      @update:model-value="
+        emit('update:item-value', 'source', $event === 'datasource' ? 'datasource' : 'self')
+      "
     />
 
     <div
@@ -244,7 +246,7 @@ watch(
         placeholder="labels.blocks.fields.dataSourcePlaceholder"
         :disabled="readonly"
         :options="dataSourceOptions"
-        @update:model-value="updateDataSource"
+        @update:model-value="emit('update:item-value', 'data_source_id', $event || null)"
       />
 
       <div class="rounded-xl border border-border bg-background p-3">
@@ -285,14 +287,17 @@ watch(
       </div>
     </div>
 
-    <SelectField
+    <ComboboxField
+      v-model="normalizedDefaultValue"
       name="default"
-      :model-value="value.default"
       :label="$t('labels.blocks.fields.default')"
-      :clearable="true"
       :disabled="readonly"
       :options="choices.map((choice) => ({ value: choice.value, label: choice.label }))"
-      @update:model-value="emit('update:item-value', 'default', $event ?? null)"
+      multiple
+      searchable
+      :loading="isLoading"
+      empty-text="labels.blocks.fields.optionPreviewEmpty"
+      loading-text="labels.blocks.fields.optionPreviewLoading"
     />
   </div>
 </template>

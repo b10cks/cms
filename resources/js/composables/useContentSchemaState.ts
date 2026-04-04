@@ -48,6 +48,7 @@ export const normalizeSchemaType = (type?: string | null): CanonicalSchemaTypeNa
     case 'number':
     case 'boolean':
     case 'option':
+    case 'options':
     case 'link':
     case 'asset':
     case 'multi_assets':
@@ -69,6 +70,8 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
   const type = normalizeSchemaType(schemaField.type)
   const canonicalType = isCanonicalSchemaType(type) ? type : null
   const validation = (schemaField.validation || {}) as FieldValidation
+  const optionSource = schemaField.source === 'datasource' ? 'datasource' : 'self'
+  const isOptionLike = canonicalType === 'option' || canonicalType === 'options'
   const conditions = schemaField.conditions
     ? {
         mode: schemaField.conditions.mode === 'any' ? 'any' : 'all',
@@ -117,6 +120,8 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
       schemaField.indexable === undefined
         ? Boolean(canonicalType && INDEXABLE_TYPES.includes(canonicalType))
         : Boolean(schemaField.indexable),
+    source: isOptionLike ? optionSource : undefined,
+    data_source_id: isOptionLike ? (schemaField.data_source_id ?? null) : undefined,
     conditions,
     validation: {
       ...validation,
@@ -128,10 +133,12 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
       max_length:
         validation.max_length ?? (schemaField as any).max_length ?? (schemaField as any).maximum,
       allowed_values:
-        validation.allowed_values ||
-        ((schemaField as any).options || [])
-          .map((option: OptionItem) => option?.value)
-          .filter(Boolean),
+        optionSource === 'self'
+          ? validation.allowed_values ||
+            ((schemaField as any).options || [])
+              .map((option: OptionItem) => option?.value)
+              .filter(Boolean)
+          : validation.allowed_values,
     } satisfies FieldValidation,
   }
 }
@@ -338,6 +345,22 @@ const validateScope = (
       }
     }
 
+    if (type === 'options') {
+      if (!Array.isArray(value)) {
+        pushError(path, `${field.name || key} must be a list.`)
+      } else {
+        if (validation.allowed_values?.length) {
+          const invalidValues = value.filter(
+            (entry) => !validation.allowed_values?.includes(String(entry))
+          )
+
+          if (invalidValues.length > 0) {
+            pushError(path, `${field.name || key} must only use allowed options.`)
+          }
+        }
+      }
+    }
+
     if (type === 'date' && typeof value === 'string') {
       const timestamp = Date.parse(value)
       if (Number.isNaN(timestamp)) {
@@ -352,17 +375,25 @@ const validateScope = (
       }
     }
 
-    if (type === 'multi_assets' || type === 'references' || type === 'blocks') {
+    if (type === 'options' || type === 'multi_assets' || type === 'references' || type === 'blocks') {
       if (!Array.isArray(value)) {
         pushError(path, `${field.name || key} must be a list.`)
       } else {
-        const minItems = Number(validation.min_items ?? validation.min ?? field.min ?? 0)
-        const maxItems = Number(validation.max_items ?? validation.max ?? field.max ?? 0)
+        const rawMinItems = validation.min_items ?? validation.min ?? field.min
+        const rawMaxItems = validation.max_items ?? validation.max ?? field.max
+        const minItems =
+          rawMinItems === null || rawMinItems === undefined || rawMinItems === ''
+            ? null
+            : Number(rawMinItems)
+        const maxItems =
+          rawMaxItems === null || rawMaxItems === undefined || rawMaxItems === ''
+            ? null
+            : Number(rawMaxItems)
 
-        if (minItems > 0 && value.length < minItems) {
+        if (minItems !== null && value.length < minItems) {
           pushError(path, `${field.name || key} must contain at least ${minItems} items.`)
         }
-        if (maxItems > 0 && value.length > maxItems) {
+        if (maxItems !== null && value.length > maxItems) {
           pushError(path, `${field.name || key} may not contain more than ${maxItems} items.`)
         }
       }

@@ -241,16 +241,29 @@ const createDefaultSchemaForType = (type: string, key: string): SchemaType => {
         ...baseSchema,
         type: 'option',
         options: [],
+        source: 'self',
+        data_source_id: null,
         exclude_empty: false,
-        default: '',
+        default: null,
       } as OptionSchema
+    case 'options':
+      return {
+        ...baseSchema,
+        type: 'options',
+        options: [],
+        source: 'self',
+        data_source_id: null,
+        min: null,
+        max: null,
+        default: [],
+      } as OptionsSchema
     case 'references':
       return {
         ...baseSchema,
         type: 'references',
         block_whitelist: [],
-        min: 0,
-        max: 0,
+        min: null,
+        max: null,
         default: [],
       } as ReferencesSchema
     case 'asset':
@@ -266,8 +279,8 @@ const createDefaultSchemaForType = (type: string, key: string): SchemaType => {
         ...baseSchema,
         type: 'multi_assets',
         file_types: ['all'],
-        min: 0,
-        max: 0,
+        min: null,
+        max: null,
         default: [],
       } as MultiAssetsSchema
     case 'blocks':

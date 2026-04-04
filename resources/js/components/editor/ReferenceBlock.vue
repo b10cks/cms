@@ -3,6 +3,7 @@ import { useSortable } from '@vueuse/integrations/useSortable'
 import { computed, nextTick, ref, watch } from 'vue'
 
 import Icon from '~/components/Icon.vue'
+import Label from '~/components/ui/form/Label.vue'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 
 import ContentSelect from './ContentSelect.vue'
@@ -149,9 +150,10 @@ watch(
 <template>
   <div class="space-y-4">
     <div class="space-y-1">
-      <label class="text-sm font-medium text-primary">
-        {{ item.name || item.key }}
-      </label>
+      <Label
+        :label="item.name || item.key"
+        :required="item.required"
+      />
       <p
         v-if="item.description"
         class="text-muted-foreground text-xs"

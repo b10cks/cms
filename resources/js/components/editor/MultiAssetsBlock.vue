@@ -26,6 +26,7 @@ const props = defineProps<{
   item: {
     key: string
     name?: string
+    required?: boolean
     max?: number | null
   }
   spaceId: string
@@ -185,7 +186,10 @@ const handleAssetDetailsDialogUpdate = (asset: AssetResource) => {
 
 <template>
   <div class="space-y-3">
-    <Label :label="item.name || item.key" />
+    <Label
+      :label="item.name || item.key"
+      :required="item.required"
+    />
     <div
       v-if="!hasAssets"
       :class="[

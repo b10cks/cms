@@ -22,7 +22,10 @@ export function useDataEntries(spaceId: MaybeRef<string>, dataSourceId: MaybeRef
   /**
    * Query all entries in a data source
    */
-  const useDataEntriesQuery = (params: MaybeRef<DataEntryQueryParams> = {}) => {
+  const useDataEntriesQuery = (
+    params: MaybeRef<DataEntryQueryParams> = {},
+    enabled: MaybeRef<boolean> = true
+  ) => {
     return useQuery({
       queryKey: computed(() => queryKeys.dataEntries(spaceId, dataSourceId).list(params)),
       queryFn: async () => {
@@ -32,6 +35,7 @@ export function useDataEntries(spaceId: MaybeRef<string>, dataSourceId: MaybeRef
         })
         return response
       },
+      enabled: computed(() => !!toValue(spaceId) && !!toValue(dataSourceId) && !!toValue(enabled)),
     })
   }
 
