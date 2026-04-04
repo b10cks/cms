@@ -113,18 +113,23 @@
         "cacheTtlDescription": "Wie lange zu cachen (Sekunden). Auf 0 setzen zum Deaktivieren.",
         "dimensionTranslatable": "Sind Dimensionen übersetzbar",
         "dimensionTranslatableDescription": "Aktiviere dies, wenn Dimensionen übersetzbare Inhalte darstellen. Dies ermöglicht dir KI-Features wie Übersetzung.",
-        "status": "Status",
+        "status": "API-Verfügbarkeit",
         "entries": "Einträge",
-        "active": "Aktiv",
-        "activeDescription": "Stelle diesen Datensatz über die API zur Verfügung.",
+        "active": "Für API verfügbar",
+        "activeDescription": "Erlaube, dass diese Datenquelle über die API verwendet werden kann. Wenn deaktiviert, bleibt sie im CMS für Optionen und interne Nutzung verfügbar.",
+        "apiAvailability": "Für API verfügbar",
+        "apiAvailabilityDescription": "Erlaube, dass diese Datenquelle über die API verwendet werden kann. Wenn deaktiviert, bleibt sie im CMS für Optionen und interne Nutzung verfügbar.",
         "createdAt": "Erstellt",
         "updatedAt": "Geändert",
         "actions": "Aktionen"
       },
       "status": {
         "label": "Status",
+        "apiAvailability": "API-Verfügbarkeit",
         "active": "Aktiv",
-        "inactive": "Inaktiv"
+        "inactive": "Inaktiv",
+        "availableForApi": "Für API verfügbar",
+        "cmsOnly": "Nur im CMS"
       },
       "entries": "Einträge",
       "addEntry": "Eintrag hinzufügen",

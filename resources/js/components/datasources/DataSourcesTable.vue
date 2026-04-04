@@ -66,8 +66,8 @@ const possibleFilters = [
     label: $t('labels.datasets.fields.status'),
     type: 'select',
     options: [
-      { value: true, label: $t('labels.datasets.status.active') },
-      { value: false, label: $t('labels.datasets.status.inactive') },
+      { value: true, label: $t('labels.datasets.status.availableForApi') },
+      { value: false, label: $t('labels.datasets.status.cmsOnly') },
     ],
   },
 ]
@@ -167,7 +167,7 @@ const confirmDelete = async () => {
               v-model="sortBy"
               column="is_active"
             >
-              {{ $t('labels.datasets.status.label') }}
+              {{ $t('labels.datasets.status.apiAvailability') }}
             </TableSortableHead>
             <TableSortableHead
               v-model="sortBy"
@@ -216,13 +216,13 @@ const confirmDelete = async () => {
               <TableCell class="max-w-75 truncate">{{ dataSource.description || '-' }}</TableCell>
               <TableCell>
                 <Badge
-                  :variant="dataSource.is_active ? 'success' : 'destructive'"
+                  :variant="dataSource.is_active ? 'success' : 'secondary'"
                   size="sm"
                 >
                   {{
                     dataSource.is_active
-                      ? $t('labels.datasets.status.active')
-                      : $t('labels.datasets.status.inactive')
+                      ? $t('labels.datasets.status.availableForApi')
+                      : $t('labels.datasets.status.cmsOnly')
                   }}
                 </Badge>
               </TableCell>

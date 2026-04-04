@@ -118,18 +118,23 @@
         "cacheTtlDescription": "How long to cache (seconds). Set to 0 to disable.",
         "dimensionTranslatable": "Are dimensions translatable",
         "dimensionTranslatableDescription": "Enable this if dimensions represent translatable content. This allows you to use AI features like translation.",
-        "status": "Status",
+        "status": "API availability",
         "entries": "Entries",
-        "active": "Active",
-        "activeDescription": "Make this dataset available via API.",
+        "active": "Available for API",
+        "activeDescription": "Allow this data source to be used via API. When disabled, it remains available in the CMS for options and internal use.",
+        "apiAvailability": "Available for API",
+        "apiAvailabilityDescription": "Allow this data source to be used via API. When disabled, it remains available in the CMS for options and internal use.",
         "createdAt": "Created",
         "updatedAt": "Last modified",
         "actions": "Actions"
       },
       "status": {
         "label": "Status",
+        "apiAvailability": "API availability",
         "active": "Active",
-        "inactive": "Inactive"
+        "inactive": "Inactive",
+        "availableForApi": "Available for API",
+        "cmsOnly": "CMS only"
       },
       "entries": "Entries",
       "addEntry": "Add entry",

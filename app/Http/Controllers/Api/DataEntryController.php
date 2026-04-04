@@ -15,10 +15,9 @@ class DataEntryController
      */
     public function index(Request $request, DataSource $source): AnonymousResourceCollection
     {
-        abort_unless($source->is_active, 404, 'Data source not found or inactive.');
+        abort_unless($source?->is_active, 404, 'Data source not found or inactive.');
 
         $entries = DataEntry::where('data_source_id', $source->id)
-            ->where('is_active', true)
             ->paginate(min($request->integer('per_page', 20), 500));
 
         return DataEntryResource::collection($entries);

@@ -73,14 +73,6 @@ const queryParams = computed(() => ({
 const possibleFilters = computed(() => {
   const result = [
     { id: 'key', label: 'Key' },
-    {
-      id: 'active',
-      label: 'Active',
-      items: [
-        { value: 'true', label: $t('labels.common.yes') },
-        { value: 'false', label: $t('labels.common.no') },
-      ],
-    },
     { id: 'value', label: 'Value' },
   ]
 
@@ -447,7 +439,7 @@ const isDefaultSelected = computed(() => selectedDimension.value === 'default')
                 <TableRow>
                   <TableSortableHead
                     v-model="sortBy"
-                    class="w-1/3"
+                    class="w-1/2"
                     column="key"
                     >{{ $t('labels.dataEntries.fields.key') }}
                   </TableSortableHead>
@@ -462,11 +454,6 @@ const isDefaultSelected = computed(() => selectedDimension.value === 'default')
                     class="w-1/2"
                   >
                     {{ dimensionTabs.find((tab) => tab.key === selectedDimension)?.label }}
-                  </TableHead>
-                  <TableHead
-                    v-if="isDefaultSelected"
-                    class="w-16"
-                    >{{ $t('labels.dataEntries.fields.active') }}
                   </TableHead>
                   <TableHead class="w-24">{{ $t('labels.dataEntries.fields.actions') }}</TableHead>
                 </TableRow>
@@ -500,12 +487,6 @@ const isDefaultSelected = computed(() => selectedDimension.value === 'default')
                         dimensionTabs.find((tab) => tab.key === selectedDimension)?.label
                       "
                       @keydown.enter="handleSaveNewEntry"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Switch
-                      v-model:checked="newEntryData.is_active"
-                      :default-value="true"
                     />
                   </TableCell>
                   <TableCell>
@@ -595,16 +576,6 @@ const isDefaultSelected = computed(() => selectedDimension.value === 'default')
                         "
                       />
                       <span v-else>{{ getDimensionValue(entry, selectedDimension) || '-' }}</span>
-                    </TableCell>
-
-                    <TableCell v-if="isDefaultSelected">
-                      <Switch
-                        :disabled="!isEntryEditing(entry.id)"
-                        :model-value="entry.is_active"
-                        @update:model-value="
-                          (value) => handleInputChange(entry, 'is_active', value)
-                        "
-                      />
                     </TableCell>
 
                     <TableCell>

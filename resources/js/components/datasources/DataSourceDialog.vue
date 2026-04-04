@@ -253,8 +253,8 @@ const handleDimensionAdd = (item: Record<string, unknown>) => {
           <CheckboxField
             v-model="formData.is_active"
             name="is_active"
-            :label="$t('labels.datasets.fields.active')"
-            :description="$t('labels.datasets.fields.activeDescription')"
+            :label="$t('labels.datasets.fields.apiAvailability')"
+            :description="$t('labels.datasets.fields.apiAvailabilityDescription')"
             :disabled="isProcessing"
           />
 
