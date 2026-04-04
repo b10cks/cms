@@ -3,6 +3,17 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.4-88c4b9d] — 2026-4-4
+
+- 👔 Improve template-based block adding
+- 🚸 Improve ContentHeader slots
+- 👔 Adapt data source active flag handling
+- ✨ Add multi options block type and allow to use data sets as source
+- 🐛 Disable content tree horizontal scroll
+- 🐛 Fix force deleting used assets
+- ✨ Add space blueprints for reusable space setups
+- 🚸 Prevent audit-log caching
+
 ## [v2026.4.3-5ca6a01] — 2026-4-3
 
 - ✨ Add basic space internal audit logs
