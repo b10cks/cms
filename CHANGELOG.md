@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.6-750723a] — 2026-4-6
+
+- ⬆️ Bump versions
+- 🚸 Improve content validation feedback
+
 ## [v2026.4.4-3a44bfa] — 2026-4-4
 
 - ✨ Add table block type
