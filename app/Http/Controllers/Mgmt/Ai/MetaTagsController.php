@@ -15,7 +15,18 @@ class MetaTagsController extends Controller
     public function __invoke(Request $request, AiStreamService $service)
     {
         $space = $this->getSpaceFromQuery();
-        $aiConfig = $space->defaultAiConfig ?? $space->aiConfig;
+
+        $request->validate([
+            'config_id' => 'sometimes|nullable|string',
+            'context' => 'sometimes|nullable|array',
+        ]);
+
+        $aiConfig = $space->defaultAiConfig;
+
+        if ($configId = $request->input('config_id')) {
+            $aiConfig = $space->aiConfigs()->find($configId) ?? $aiConfig;
+        }
+
         $promptBuilder = new SystemPromptBuilder($aiConfig);
 
         $context = $request->json('context');
@@ -23,11 +34,7 @@ class MetaTagsController extends Controller
 
         $userPrompt = "Language: {$language}\n\nPage content to analyze:\n" . json_encode($context);
 
-        $result = $service->generate(
-            $space,
-            $promptBuilder->forMetaTags(),
-            $userPrompt
-        );
+        $result = $service->generate($space, $promptBuilder->forMetaTags(), $userPrompt, [], $aiConfig);
 
         if ($result === null) {
             return ['data' => []];

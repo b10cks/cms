@@ -4,8 +4,8 @@ namespace App\Services\Ai;
 
 use App\Models\Management\Space;
 use App\Services\Ai\Dto\StreamEvent;
+use App\Services\Ai\Dto\StreamEventType;
 use App\Services\Ai\Prompts\SystemPromptBuilder;
-use App\Services\Ai\StreamEventType;
 use App\Services\Ai\Tools\GetBlockListTool;
 use App\Services\Ai\Tools\GetMentionedContentTool;
 use Generator;
@@ -25,15 +25,15 @@ class ContentTreeAiService
         string $prompt,
         array $tree = [],
         array $mentions = [],
-        $aiConfig = null
+        $aiConfig = null,
     ): Generator {
         app()->offsetSet('currentSpace', $space);
 
-        if (! $aiConfig) {
-            $aiConfig = $space->defaultAiConfig ?? $space->aiConfig;
+        if (!$aiConfig) {
+            $aiConfig = $space->defaultAiConfig;
         }
 
-        if (! $aiConfig) {
+        if (!$aiConfig) {
             yield StreamEvent::error('No AI configuration found for this space');
 
             return;
@@ -44,7 +44,7 @@ class ContentTreeAiService
 
         $driver = $this->registry->getDriverForSpace($driverName, $space);
 
-        if (! $driver) {
+        if (!$driver) {
             yield StreamEvent::error("Driver '{$driverName}' not found or not enabled");
 
             return;
@@ -66,19 +66,16 @@ class ContentTreeAiService
             'temperature' => (float) ($aiConfig->temperature ?? 0.7),
         ];
 
-        yield from $driver->stream(
-            $modelIdentifier,
-            $messages,
-            $toolDefinitions,
-            $options,
-        );
+        yield from $driver->stream($modelIdentifier, $messages, $toolDefinitions, $options);
     }
 
     protected function createTools(Space $space): array
     {
         return [
-            (new GetBlockListTool)->setSpace($space)->setTypes(['root', 'universal', 'single']),
-            (new GetMentionedContentTool)->setSpace($space),
+            new GetBlockListTool()
+                ->setSpace($space)
+                ->setTypes(['root', 'universal', 'single']),
+            new GetMentionedContentTool()->setSpace($space),
         ];
     }
 
@@ -117,7 +114,7 @@ class ContentTreeAiService
         string $prompt,
         array $tree,
         array $mentions,
-        SystemPromptBuilder $promptBuilder
+        SystemPromptBuilder $promptBuilder,
     ): array {
         $systemPrompt = $promptBuilder->forContentTreeGeneration();
 
@@ -132,10 +129,10 @@ class ContentTreeAiService
             'mentions' => $mentions,
         ];
 
-        if (! empty($context)) {
+        if (!empty($context)) {
             $userContent .= "\n\n## Current Content Tree\n" . json_encode($tree, JSON_PRETTY_PRINT);
 
-            if (! empty($mentions)) {
+            if (!empty($mentions)) {
                 $userContent .= "\n\n## Mentioned Items\n" . json_encode($mentions, JSON_PRETTY_PRINT);
             }
         }

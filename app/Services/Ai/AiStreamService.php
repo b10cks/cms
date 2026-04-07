@@ -4,7 +4,7 @@ namespace App\Services\Ai;
 
 use App\Models\Management\Space;
 use App\Services\Ai\Dto\StreamEvent;
-use App\Services\Ai\StreamEventType;
+use App\Services\Ai\Dto\StreamEventType;
 use App\Services\Ai\Prompts\SystemPromptBuilder;
 use App\Services\Ai\Tools\GetBlockListTool;
 use App\Services\Ai\Tools\GetBlockSchemasTool;
@@ -27,15 +27,15 @@ class AiStreamService
         string $prompt,
         array $context = [],
         array $files = [],
-        $aiConfig = null
+        $aiConfig = null,
     ): Generator {
         app()->offsetSet('currentSpace', $space);
 
-        if (! $aiConfig) {
-            $aiConfig = $space->defaultAiConfig ?? $space->aiConfig;
+        if (!$aiConfig) {
+            $aiConfig = $space->defaultAiConfig;
         }
 
-        if (! $aiConfig) {
+        if (!$aiConfig) {
             yield StreamEvent::error('No AI configuration found for this space');
 
             return;
@@ -46,7 +46,7 @@ class AiStreamService
 
         $driver = $this->registry->getDriverForSpace($driverName, $space);
 
-        if (! $driver) {
+        if (!$driver) {
             yield StreamEvent::error("Driver '{$driverName}' not found or not enabled");
 
             return;
@@ -68,21 +68,18 @@ class AiStreamService
             'temperature' => (float) ($aiConfig->temperature ?? 0.7),
         ];
 
-        yield from $driver->stream(
-            $modelIdentifier,
-            $messages,
-            $toolDefinitions,
-            $options,
-        );
+        yield from $driver->stream($modelIdentifier, $messages, $toolDefinitions, $options);
     }
 
     protected function createTools(Space $space): array
     {
         return [
-            (new GetBlockListTool)->setSpace($space)->setTypes(['nestable', 'universal']),
-            (new GetBlockSchemasTool)->setSpace($space),
-            (new SearchAssetsTool)->setSpace($space),
-            (new GetMentionedContentTool)->setSpace($space),
+            new GetBlockListTool()
+                ->setSpace($space)
+                ->setTypes(['nestable', 'universal']),
+            new GetBlockSchemasTool()->setSpace($space),
+            new SearchAssetsTool()->setSpace($space),
+            new GetMentionedContentTool()->setSpace($space),
         ];
     }
 
@@ -121,10 +118,11 @@ class AiStreamService
         Space $space,
         string $systemPrompt,
         string $userPrompt,
-        array $options = []
+        array $options = [],
+        $aiConfig = null,
     ): Generator {
-        $aiConfig = $space->defaultAiConfig ?? $space->aiConfig;
-        if (! $aiConfig) {
+        $aiConfig = $aiConfig ?: $space->defaultAiConfig;
+        if (!$aiConfig) {
             yield StreamEvent::error('No AI configuration found');
 
             return;
@@ -134,7 +132,7 @@ class AiStreamService
         [$driverName, $modelIdentifier] = $this->parseModelId($modelId);
         $driver = $this->registry->getDriverForSpace($driverName, $space);
 
-        if (! $driver) {
+        if (!$driver) {
             yield StreamEvent::error("Driver '{$driverName}' not found");
 
             return;
@@ -155,18 +153,19 @@ class AiStreamService
         Space $space,
         string $systemPrompt,
         string $userPrompt,
-        array $options = []
+        array $options = [],
+        $aiConfig = null,
     ): ?string {
-        $modelId = $this->resolveModelId($space);
+        $aiConfig = $aiConfig ?: $space->defaultAiConfig;
+        $modelId = $this->resolveModelId($space, $aiConfig);
         [$driverName, $modelIdentifier] = $this->parseModelId($modelId);
 
         $driver = $this->registry->getDriverForSpace($driverName, $space);
 
-        if (! $driver) {
+        if (!$driver) {
             return null;
         }
 
-        $aiConfig = $space->aiConfig;
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
             ['role' => 'user', 'content' => $userPrompt],
@@ -196,7 +195,7 @@ class AiStreamService
         string $prompt,
         array $context,
         array $files,
-        SystemPromptBuilder $promptBuilder
+        SystemPromptBuilder $promptBuilder,
     ): array {
         $systemPrompt = $promptBuilder->forContentInteraction();
 
@@ -206,11 +205,11 @@ class AiStreamService
 
         $userContent = $prompt;
 
-        if (! empty($context)) {
+        if (!empty($context)) {
             $userContent .= "\n\n## Context\n" . json_encode($context);
         }
 
-        if (! empty($files)) {
+        if (!empty($files)) {
             $userContent .= "\n\n## Attached Files\n" . json_encode($files, JSON_PRETTY_PRINT);
         }
 

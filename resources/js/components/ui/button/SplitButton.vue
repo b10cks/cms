@@ -16,6 +16,7 @@ interface Props extends PrimitiveProps {
   primaryAction?: () => void
   disabled?: boolean
   menuDisabled?: boolean
+  hasMenu?: boolean
   loading?: boolean
 }
 
@@ -25,12 +26,13 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'default',
   disabled: false,
   menuDisabled: false,
+  hasMenu: true,
 })
 
 const primaryButtonClasses = computed(() => {
   return [
     buttonVariants({ variant: props.variant, size: props.size }),
-    'rounded-r-none',
+    props.hasMenu ? 'rounded-r-none' : null,
     props.class,
   ].filter(Boolean)
 })
@@ -63,6 +65,7 @@ const triggerButtonClasses = computed(() => {
         <slot />
       </button>
       <DropdownMenuTrigger
+        v-if="hasMenu"
         :disabled="menuDisabled || loading"
         :class="triggerButtonClasses"
       >

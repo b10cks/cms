@@ -1,13 +1,18 @@
 <script lang="ts" setup>
 import { toast } from 'vue-sonner'
 
+import type { SpaceAiConfig } from '~/api/resources/ai'
 import AssetBlock from '~/components/editor/AssetBlock.vue'
 import Icon from '~/components/Icon.vue'
-import { Button } from '~/components/ui/button'
+import SplitButton from '~/components/ui/button/SplitButton.vue'
+import { DropdownMenuItem } from '~/components/ui/dropdown-menu'
 import { InputField, TextField } from '~/components/ui/form'
 import Label from '~/components/ui/form/Label.vue'
+import { useAiConfigs } from '~/composables/useAiModels'
 import type { ApiResponse } from '~/types'
 import type { AssetValue } from '~/types/assets'
+
+import { Badge } from '../ui/badge'
 
 interface MetaSchema {
   key: string
@@ -42,6 +47,8 @@ const props = defineProps<{
 
 const content = inject<Ref<ContentValue>>('content', ref({}))
 const { client: apiClient } = useApiClient()
+const { useAiConfigsQuery } = useAiConfigs(toRef(props, 'spaceId'))
+const { data: aiConfigs } = useAiConfigsQuery()
 
 const emit = defineEmits<{
   (e: 'update:model-value', value: unknown): void
@@ -49,6 +56,7 @@ const emit = defineEmits<{
 
 const localValue = ref<MetaValue>((props.modelValue as MetaValue) || {})
 const isGenerating = ref(false)
+const selectedConfigId = ref<string | null>(null)
 
 const updateValue = (key: keyof MetaValue, value: unknown): void => {
   const newValue = {
@@ -100,7 +108,39 @@ const truncatedTitle = computed((): string => {
   return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...'
 })
 
-const generateMetaWithAI = async (): Promise<void> => {
+const defaultAiConfig = computed((): SpaceAiConfig | null => {
+  return aiConfigs.value?.find((config) => config.is_default) ?? null
+})
+
+const selectedAiConfig = computed((): SpaceAiConfig | null => {
+  if (!selectedConfigId.value) {
+    return null
+  }
+
+  return aiConfigs.value?.find((config) => config.id === selectedConfigId.value) ?? null
+})
+
+watch(
+  () => defaultAiConfig.value,
+  (config) => {
+    if (config && !selectedConfigId.value) {
+      selectedConfigId.value = config.id
+    }
+  },
+  { immediate: true }
+)
+
+const canGenerateWithAI = computed((): boolean => {
+  return !!selectedConfigId.value && !!hasContent.value && !props.readOnly && !isGenerating.value
+})
+
+const generateMetaWithAI = async (
+  configId: string | null = selectedConfigId.value
+): Promise<void> => {
+  if (!configId) {
+    toast.error('Please select an AI configuration first.')
+    return
+  }
   try {
     isGenerating.value = true
     const requestData = {
@@ -125,7 +165,11 @@ const generateMetaWithAI = async (): Promise<void> => {
         ogTitle: string
         ogDescription: string
       }>
-    >('/mgmt/v1/ai/meta-tags', { context: requestData }, { query: { spaceId: props.spaceId } })
+    >(
+      '/mgmt/v1/ai/meta-tags',
+      { context: requestData, config_id: configId },
+      { query: { spaceId: props.spaceId } }
+    )
 
     // Update local values and emit changes
     const generatedMeta = response.data
@@ -154,6 +198,11 @@ const generateMetaWithAI = async (): Promise<void> => {
 const hasContent = computed((): boolean => {
   return !!(content.value?.name || content.value?.content)
 })
+
+const handleGenerateWithConfig = (configId: string): void => {
+  selectedConfigId.value = configId
+  void generateMetaWithAI(configId)
+}
 </script>
 
 <template>
@@ -174,24 +223,42 @@ const hasContent = computed((): boolean => {
       <div class="mb-2 text-sm text-muted">
         {{ serpUrl }}
       </div>
-      <Button
-        size="sm"
-        :disabled="props.readOnly || isGenerating || !hasContent"
-        class="absolute top-1 right-1 flex items-center gap-2"
-        @click="generateMetaWithAI"
-      >
-        <Icon
-          v-if="isGenerating"
-          name="lucide:loader"
-          class="animate-spin text-ai"
-        />
-        <Icon
-          v-else
-          name="lucide:wand-sparkles"
-          class="text-ai"
-        />
-        <span>{{ isGenerating ? 'Generating...' : 'AI Generate' }}</span>
-      </Button>
+      <div class="absolute top-1 right-1">
+        <SplitButton
+          size="sm"
+          :disabled="!canGenerateWithAI"
+          :menu-disabled="isGenerating"
+          :has-menu="aiConfigs?.length > 1"
+          :loading="isGenerating"
+          :primary-action="() => generateMetaWithAI()"
+        >
+          <Icon
+            v-if="!isGenerating"
+            name="lucide:wand-sparkles"
+            class="text-ai"
+          />
+          <span>{{ isGenerating ? 'Generating...' : 'AI Generate' }}</span>
+          <template #menu>
+            <DropdownMenuItem
+              v-for="config in aiConfigs"
+              :key="config.id"
+              :disabled="isGenerating"
+              @select="handleGenerateWithConfig(config.id)"
+            >
+              <div class="flex items-center gap-2">
+                <span class="font-medium">
+                  {{ config.name }}
+                </span>
+                <Badge
+                  v-if="config.is_default"
+                  size="sm"
+                  >Default</Badge
+                >
+              </div>
+            </DropdownMenuItem>
+          </template>
+        </SplitButton>
+      </div>
       <h3 class="mb-1 cursor-pointer text-lg leading-tight font-semibold text-info">
         {{ truncatedTitle }}
       </h3>

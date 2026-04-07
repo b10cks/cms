@@ -3,11 +3,14 @@ import type { Component, Ref } from 'vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 
+import type { SpaceAiConfig } from '~/api/resources/ai'
 import Icon from '~/components/Icon.vue'
 import MetaLocalization from '~/components/localization/MetaLocalization.vue'
-import { Button } from '~/components/ui/button'
+import SplitButton from '~/components/ui/button/SplitButton.vue'
+import { DropdownMenuItem } from '~/components/ui/dropdown-menu'
 import { CheckboxField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
+import { useAiConfigs } from '~/composables/useAiModels'
 import { useAiTranslation } from '~/composables/useAiTranslation'
 import {
   isFieldVisible,
@@ -103,6 +106,9 @@ const { data: space } = useSpaceQuery(props.spaceId) as { data: Ref<Space> }
 const showUntranslatedOnly = ref(false)
 const searchQuery = ref('')
 const { t } = useI18n()
+const { useAiConfigsQuery } = useAiConfigs(computed(() => props.spaceId))
+const { data: aiConfigs, isLoading: isLoadingAiConfigs } = useAiConfigsQuery()
+const selectedConfigId = ref<string | null>(null)
 const { streamTranslation, isStreaming: isTranslating } = useAiTranslation(
   computed(() => props.spaceId)
 )
@@ -124,6 +130,29 @@ function extractCompletedTranslations(partial: string): Record<string, string> {
   return result
 }
 const sourceLanguage = computed((): string => space.value?.settings?.default_language || '')
+
+const defaultAiConfig = computed<SpaceAiConfig | null>(() => {
+  return aiConfigs.value?.find((config) => config.is_default) ?? null
+})
+
+const selectedAiConfig = computed<SpaceAiConfig | null>(() => {
+  if (!selectedConfigId.value) return null
+  return aiConfigs.value?.find((config) => config.id === selectedConfigId.value) ?? null
+})
+
+const canTranslateWithAI = computed(() => {
+  return !isTranslating.value && !!selectedConfigId.value
+})
+
+watch(
+  () => defaultAiConfig.value,
+  (config) => {
+    if (config && !selectedConfigId.value) {
+      selectedConfigId.value = config.id
+    }
+  },
+  { immediate: true }
+)
 
 const machineTranslatedFields = ref(new Set<string>())
 const translationDraft = ref<Record<string, unknown>>({})
@@ -424,9 +453,14 @@ const traverseContent = (
 
       if (tableSchema.has_thead) {
         getTableColumns(tableSchema).forEach((column) => {
-          const fieldSchema = createTableTextSchema(`${schemaItem.name || key}: ${column.label || column.key}`)
+          const fieldSchema = createTableTextSchema(
+            `${schemaItem.name || key}: ${column.label || column.key}`
+          )
           const sourceValue = originalTable.header[column.key] || column.label || column.key
-          const translatedHeaderValue = getTranslatedTableHeaderValue(translationScope[key], column.key)
+          const translatedHeaderValue = getTranslatedTableHeaderValue(
+            translationScope[key],
+            column.key
+          )
 
           result.push({
             key: `${key}-header-${column.key}`,
@@ -447,8 +481,11 @@ const traverseContent = (
         getTableColumns(tableSchema)
           .filter((column) => column.type === 'text')
           .forEach((column) => {
-            const fieldSchema = createTableTextSchema(`${schemaItem.name || key}: ${column.label || column.key}`)
-            const sourceValue = typeof row.cells[column.key] === 'string' ? row.cells[column.key] : ''
+            const fieldSchema = createTableTextSchema(
+              `${schemaItem.name || key}: ${column.label || column.key}`
+            )
+            const sourceValue =
+              typeof row.cells[column.key] === 'string' ? row.cells[column.key] : ''
             const translatedCellValue = getTranslatedTableCellValue(
               translationScope[key],
               row.id,
@@ -558,7 +595,9 @@ const applyTranslatedValue = (
     const nextTableValue = isObjectRecord(tableValue) ? cloneValue(tableValue) : {}
 
     if (field.tableRowId === null) {
-      const nextHeader = isObjectRecord(nextTableValue.header) ? cloneValue(nextTableValue.header) : {}
+      const nextHeader = isObjectRecord(nextTableValue.header)
+        ? cloneValue(nextTableValue.header)
+        : {}
       nextHeader[field.tableColumnKey] = newValue
       nextTableValue.header = nextHeader
     } else {
@@ -813,7 +852,11 @@ function findTranslationsObject(parsed: unknown): Record<string, string> | null 
   return null
 }
 
-const translateWithAI = async (): Promise<void> => {
+const translateWithAI = async (configId: string | null = selectedConfigId.value): Promise<void> => {
+  if (!configId) {
+    toast.error(t('components.aiText.noConfigSelected'))
+    return
+  }
   const translationUnits = buildTranslationUnits()
   const fieldsToTranslate = Object.fromEntries(
     translationUnits.map((unit) => [unit.id, unit.source] as const)
@@ -850,6 +893,7 @@ const translateWithAI = async (): Promise<void> => {
       source: sourceLanguage.value,
       target: props.targetLanguage,
       fields: fieldsToTranslate,
+      config_id: configId,
     },
     {
       onDelta: (chunk) => {
@@ -927,18 +971,17 @@ const translationStats = computed(() => {
 
       <div class="flex items-center gap-3">
         <div class="flex flex-col items-end gap-1">
-          <Button
+          <SplitButton
             size="sm"
-            :disabled="isTranslating"
-            @click="translateWithAI"
+            variant="default"
+            :primary-action="() => translateWithAI()"
+            :disabled="!canTranslateWithAI"
+            :has-menu="aiConfigs?.length > 1"
+            :menu-disabled="isLoadingAiConfigs || !aiConfigs?.length"
+            :loading="isTranslating"
           >
             <Icon
-              v-if="isTranslating"
-              name="lucide:loader"
-              class="animate-spin text-ai"
-            />
-            <Icon
-              v-else
+              v-if="!isTranslating"
               name="lucide:sparkles"
               class="text-ai"
             />
@@ -947,7 +990,26 @@ const translationStats = computed(() => {
                 ? $t('components.flattenedLocalization.translating')
                 : $t('components.flattenedLocalization.translate')
             }}</span>
-          </Button>
+            <template #menu>
+              <DropdownMenuItem
+                v-for="config in aiConfigs"
+                :key="config.id"
+                :disabled="isGenerating"
+                @select="handleGenerateWithConfig(config.id)"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="font-medium">
+                    {{ config.name }}
+                  </span>
+                  <Badge
+                    v-if="config.is_default"
+                    size="sm"
+                    >Default</Badge
+                  >
+                </div>
+              </DropdownMenuItem>
+            </template>
+          </SplitButton>
           <Transition
             enter-active-class="transition-all duration-200 ease-out"
             enter-from-class="opacity-0 translate-y-1"

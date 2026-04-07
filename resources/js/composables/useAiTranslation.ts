@@ -7,6 +7,7 @@ export interface TranslationPayload {
   source: string
   target: string
   fields: Record<string, string>
+  config_id?: string | null
 }
 
 export function useAiTranslation(spaceId: MaybeRef<string>) {
@@ -43,7 +44,12 @@ export function useAiTranslation(spaceId: MaybeRef<string>) {
           Accept: 'text/event-stream',
           ...xsrfHeaders,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          source: payload.source,
+          target: payload.target,
+          fields: payload.fields,
+          config_id: payload.config_id ?? null,
+        }),
         signal: abortController.value.signal,
         credentials: 'include',
       })
