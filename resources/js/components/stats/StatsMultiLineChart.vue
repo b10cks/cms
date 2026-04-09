@@ -71,6 +71,8 @@ const chartOptions: ChartOptions<'line'> = {
       position: 'bottom',
       labels: {
         padding: 24,
+        boxWidth: 8,
+        boxHeight: 8,
         color: '#6D7292',
         font: {
           family: '"Inter", ui-sans-serif',
@@ -81,7 +83,13 @@ const chartOptions: ChartOptions<'line'> = {
       },
     },
     tooltip: {
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      backgroundColor: 'oklch(20.63% 0.008 277.83',
+      multiKeyBackground: 'oklch(20.63% 0.008 277.83',
+      titleColor: 'oklch(82.89% 0.012 279)',
+      bodyColor: 'oklch(55.99% 0.04 277.73)',
+      boxWidth: 12,
+      boxHeight: 12,
+      boxPadding: 4,
       padding: 12,
       titleFont: {
         family: '"Inter", ui-sans-serif',

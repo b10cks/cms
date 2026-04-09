@@ -56,6 +56,7 @@ const chartOptions: ChartOptions<'bar'> = {
     },
     tooltip: {
       backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      multiKeyBackground: 'rgba(0, 0, 0, 0.8)',
       padding: 12,
       titleFont: {
         size: 14,

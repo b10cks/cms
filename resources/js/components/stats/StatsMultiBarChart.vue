@@ -57,6 +57,8 @@ const chartOptions: ChartOptions<'bar'> = {
     legend: {
       position: 'bottom',
       labels: {
+        boxWidth: 8,
+        boxHeight: 8,
         padding: 15,
         font: {
           size: 12,
@@ -67,6 +69,11 @@ const chartOptions: ChartOptions<'bar'> = {
     },
     tooltip: {
       backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      multiKeyBackground: 'rgba(0, 0, 0, 0.8)',
+      boxWidth: 12,
+      boxHeight: 12,
+      cornerRadius: 4,
+      boxPadding: 8,
       padding: 12,
       titleFont: {
         size: 14,
