@@ -3,6 +3,13 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.9-596297b] — 2026-4-9
+
+- ⬆️ Bump versions
+- ✨ Improve SEO with advanced meta field and a sitemap API
+- 💄 Improve stats rendering
+- 👔 Prevent auto translation creation
+
 ## [v2026.4.7-4f67b58] — 2026-4-7
 
 - 👔 Bump versions
