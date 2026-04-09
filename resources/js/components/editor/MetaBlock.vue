@@ -3,6 +3,8 @@ import { toast } from 'vue-sonner'
 
 import type { SpaceAiConfig } from '~/api/resources/ai'
 import AssetBlock from '~/components/editor/AssetBlock.vue'
+import LinkEditor from '~/components/editor/LinkEditor.vue'
+import RobotsDirectiveEditor from '~/components/editor/RobotsDirectiveEditor.vue'
 import Icon from '~/components/Icon.vue'
 import SplitButton from '~/components/ui/button/SplitButton.vue'
 import { DropdownMenuItem } from '~/components/ui/dropdown-menu'
@@ -28,10 +30,31 @@ interface ContentValue {
   content?: string | Record<string, unknown>
 }
 
+interface UrlLink {
+  type: 'url'
+  url: string
+  target?: '_self' | '_blank' | '_parent' | '_top'
+  rel?: string
+}
+
+interface EmailLink {
+  type: 'email'
+  email?: string
+}
+
+interface InternalLink {
+  type: 'internal'
+  content: string
+  anchor?: string
+  target?: '_self' | '_blank' | '_parent' | '_top'
+}
+
+type LinkValue = UrlLink | EmailLink | InternalLink
+
 interface MetaValue {
   title?: string
   description?: string
-  canonical?: string
+  canonical?: string | LinkValue | null
   robots?: string
   ogTitle?: string
   ogDescription?: string
@@ -54,9 +77,74 @@ const emit = defineEmits<{
   (e: 'update:model-value', value: unknown): void
 }>()
 
+const isLinkValue = (value: unknown): value is LinkValue => {
+  return typeof value === 'object' && value !== null && typeof (value as LinkValue).type === 'string'
+}
+
+const normalizeCanonicalForEditor = (value: MetaValue['canonical']): LinkValue | null => {
+  if (!value) {
+    return null
+  }
+
+  if (typeof value === 'string') {
+    const url = value.trim()
+
+    return url
+      ? {
+          type: 'url',
+          url,
+        }
+      : null
+  }
+
+  if (!isLinkValue(value)) {
+    return null
+  }
+
+  return { ...value }
+}
+
+const normalizeCanonicalForSave = (value: LinkValue | null): LinkValue | null => {
+  if (!value) {
+    return null
+  }
+
+  if (value.type === 'url') {
+    const url = value.url?.trim()
+
+    return url
+      ? {
+          ...value,
+          url,
+        }
+      : null
+  }
+
+  if (value.type === 'email') {
+    const email = value.email?.trim()
+
+    return email
+      ? {
+          ...value,
+          email,
+        }
+      : null
+  }
+
+  const contentId = value.content?.trim()
+
+  return contentId
+    ? {
+        ...value,
+        content: contentId,
+      }
+    : null
+}
+
 const localValue = ref<MetaValue>((props.modelValue as MetaValue) || {})
 const isGenerating = ref(false)
 const selectedConfigId = ref<string | null>(null)
+const canonicalValue = computed(() => normalizeCanonicalForEditor(localValue.value?.canonical))
 
 const updateValue = (key: keyof MetaValue, value: unknown): void => {
   const newValue = {
@@ -203,6 +291,10 @@ const handleGenerateWithConfig = (configId: string): void => {
   selectedConfigId.value = configId
   void generateMetaWithAI(configId)
 }
+
+const updateCanonicalValue = (value: LinkValue | null): void => {
+  updateValue('canonical', normalizeCanonicalForSave(value))
+}
 </script>
 
 <template>
@@ -228,7 +320,7 @@ const handleGenerateWithConfig = (configId: string): void => {
           size="sm"
           :disabled="!canGenerateWithAI"
           :menu-disabled="isGenerating"
-          :has-menu="aiConfigs?.length > 1"
+          :has-menu="(aiConfigs?.length || 0) > 1"
           :loading="isGenerating"
           :primary-action="() => generateMetaWithAI()"
         >
@@ -292,16 +384,22 @@ const handleGenerateWithConfig = (configId: string): void => {
       auto-size
       @update:model-value="updateValue('description', $event)"
     />
-    <InputField
-      v-model="localValue.canonical"
-      :name="item.key + '-canonical'"
-      :label="$t('labels.contents.fields.meta.canonical')"
-      :tooltip="$t('labels.contents.fields.meta.canonicalDescription')"
-      :disabled="props.readOnly || isGenerating"
-      @update:model-value="updateValue('canonical', $event)"
-    />
-    <InputField
-      v-model="localValue.robots"
+    <div class="space-y-3">
+      <div class="space-y-1">
+        <Label :label="$t('labels.contents.fields.meta.canonical')" />
+        <p class="text-xs text-muted-foreground">
+          {{ $t('labels.contents.fields.meta.canonicalDescription') }}
+        </p>
+      </div>
+      <LinkEditor
+        :model-value="canonicalValue"
+        :space-id="spaceId"
+        :disabled="props.readOnly || isGenerating"
+        @update:model-value="updateCanonicalValue"
+      />
+    </div>
+    <RobotsDirectiveEditor
+      :model-value="localValue.robots"
       :name="item.key + '-robots'"
       :label="$t('labels.contents.fields.meta.robots')"
       :tooltip="$t('labels.contents.fields.meta.robotsDescription')"

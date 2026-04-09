@@ -47,7 +47,7 @@ interface BlockItem {
 interface MetaValue {
   title?: string
   description?: string
-  canonical?: string
+  canonical?: string | Record<string, unknown> | null
   robots?: string
   ogTitle?: string
   ogDescription?: string

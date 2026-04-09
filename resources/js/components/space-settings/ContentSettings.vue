@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { deepClone } from '@vue/devtools-shared'
 
 import { Button } from '~/components/ui/button'
 import {
@@ -18,30 +18,97 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import SettingsTable, { type ColumnDefinition, type TableItem } from '~/components/ui/settings-table.vue'
 import { Switch } from '~/components/ui/switch'
 
 import IconName from '../ui/IconName.vue'
+
+interface SitemapTypeMapping extends TableItem {
+  block: string
+  path: string
+}
+
+interface ContentSettingsSpace {
+  id: string
+  settings: {
+    default_block?: string
+    filter_hidden_blocks?: boolean
+    sitemap?: {
+      types?: SitemapTypeMapping[]
+    }
+  }
+}
 
 const { useUpdateSpaceMutation } = useSpaces()
 const { mutate: updateSpace } = useUpdateSpaceMutation()
 const { useAccessControl } = useAuthorization()
 
-const props = defineProps<{ space: SpaceResource }>()
+const props = defineProps<{ space: ContentSettingsSpace }>()
 const access = useAccessControl(computed(() => ({ space_id: props.space.id })))
 const canUpdateSpace = computed(() => access.hasAbility('space.update'))
 
 const { useBlocksQuery } = useBlocks(props.space.id)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
+const { $t } = useI18n()
 
 const defaultBlockId = ref(props.space.settings.default_block)
 const filterHiddenBlocks = ref(props.space.settings.filter_hidden_blocks ?? false)
+const sitemapTypes = ref<SitemapTypeMapping[]>(deepClone(props.space.settings.sitemap?.types || []))
 
 const availableBlocks = computed(
+  () => blocks.value?.data?.filter(({ type }) => ['root', 'universal'].includes(type)) || []
+)
+const sitemapBlocks = computed(
   () => blocks.value?.data?.filter(({ type }) => ['root', 'universal'].includes(type)) || []
 )
 const defaultBlock = computed(() =>
   availableBlocks.value?.find(({ id }) => id === defaultBlockId.value)
 )
+
+const isBlockTaken = (blockSlug: string, currentBlock?: string): boolean => {
+  return sitemapTypes.value.some(
+    (type) => type.block === blockSlug && type.block !== (currentBlock || '')
+  )
+}
+
+const sitemapColumns = computed<ColumnDefinition[]>(() => [
+  {
+    key: 'block',
+    label: $t('labels.settings.content.sitemap.block'),
+    type: 'select',
+    placeholder: $t('labels.settings.content.sitemap.selectBlock'),
+    required: true,
+    options: (item) =>
+      sitemapBlocks.value.map((block) => ({
+        value: block.slug,
+        label: block.name,
+        disabled: isBlockTaken(block.slug, typeof item.block === 'string' ? item.block : undefined),
+      })),
+  },
+  {
+    key: 'path',
+    label: $t('labels.settings.content.sitemap.path'),
+    type: 'text',
+    placeholder: $t('labels.settings.content.sitemap.pathPlaceholder'),
+    required: true,
+  },
+])
+
+const sitemapNewItemTemplate: SitemapTypeMapping = {
+  block: '',
+  path: '',
+}
+
+const addSitemapType = (item: TableItem): void => {
+  sitemapTypes.value.push({
+    block: String(item.block || ''),
+    path: String(item.path || ''),
+  })
+}
+
+const removeSitemapType = (index: number): void => {
+  sitemapTypes.value.splice(index, 1)
+}
 
 const handleSave = () => {
   updateSpace({
@@ -51,6 +118,14 @@ const handleSave = () => {
         ...props.space.settings,
         default_block: defaultBlockId.value,
         filter_hidden_blocks: filterHiddenBlocks.value,
+        sitemap: {
+          types: sitemapTypes.value
+            .map((type) => ({
+              block: type.block.trim(),
+              path: type.path.trim(),
+            }))
+            .filter((type) => type.block && type.path),
+        },
       },
     },
   })
@@ -113,6 +188,25 @@ const handleSave = () => {
         <p class="text-xs text-muted">
           {{ $t('labels.settings.content.filterHiddenBlocksDescription') }}
         </p>
+      </div>
+      <div class="space-y-4">
+        <div class="space-y-1">
+          <h3 class="text-sm font-semibold">
+            {{ $t('labels.settings.content.sitemap.title') }}
+          </h3>
+          <p class="text-xs text-muted">
+            {{ $t('labels.settings.content.sitemap.description') }}
+          </p>
+        </div>
+        <SettingsTable
+          v-model:items="sitemapTypes"
+          :columns="sitemapColumns"
+          :new-item-template="sitemapNewItemTemplate"
+          :add-button-label="'labels.settings.content.sitemap.addType'"
+          @add="addSitemapType"
+          @remove="removeSitemapType"
+          @update:items="(items) => (sitemapTypes = items as unknown as SitemapTypeMapping[])"
+        />
       </div>
     </CardContent>
     <CardFooter>

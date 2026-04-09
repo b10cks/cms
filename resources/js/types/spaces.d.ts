@@ -15,6 +15,15 @@ interface SpaceAssetField {
   required: boolean
 }
 
+interface SpaceSitemapType {
+  block: string
+  path: string
+}
+
+interface SpaceSitemapSettings {
+  types: SpaceSitemapType[]
+}
+
 interface SpaceSettings {
   visual_editor?: boolean
   default_block?: string
@@ -26,6 +35,8 @@ interface SpaceSettings {
   slug_strategy?: 'never' | 'prepend_translations' | 'always_prepend'
   asset_fields?: SpaceAssetField[]
   languages?: SpaceLanguage[]
+  filter_hidden_blocks?: boolean
+  sitemap?: SpaceSitemapSettings
 }
 
 interface SpacePlanSummary {

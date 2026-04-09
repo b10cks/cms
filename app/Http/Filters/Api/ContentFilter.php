@@ -14,6 +14,7 @@ use CodersCantina\Filter\AdvancedFilter;
  * - Comparisons: `?published_at=>=2024-01-01T00:00:00Z`
  *
  * @filterDescription Filters the content collection by language, content type, parent relation, and timestamps.
+ *
  * @sortDescription Sort by a supported field. Prefix with `-` for descending order.
  */
 class ContentFilter extends AdvancedFilter
@@ -29,8 +30,11 @@ class ContentFilter extends AdvancedFilter
      * - operators: `>=value`, `>value`, `<=value`, `<value`, `<>value`
      *
      * @filterDescription Filter by publication date and time.
+     *
      * @filterType string
+     *
      * @filterFormat date-time
+     *
      * @filterExample >=2024-01-01T00:00:00Z
      */
     public function published_at($value)
@@ -47,8 +51,11 @@ class ContentFilter extends AdvancedFilter
      * - operators: `>=value`, `>value`, `<=value`, `<value`, `<>value`
      *
      * @filterDescription Filter by last update date and time.
+     *
      * @filterType string
+     *
      * @filterFormat date-time
+     *
      * @filterExample 2024-01-01T00:00:00Z...2024-01-31T23:59:59Z
      */
     public function updated_at($value)
@@ -65,8 +72,11 @@ class ContentFilter extends AdvancedFilter
      * - operators: `>=value`, `>value`, `<=value`, `<value`, `<>value`
      *
      * @filterDescription Filter by creation date and time.
+     *
      * @filterType string
+     *
      * @filterFormat date-time
+     *
      * @filterExample <2024-06-01T00:00:00Z
      */
     public function created_at($value)
@@ -81,10 +91,29 @@ class ContentFilter extends AdvancedFilter
      * - `?language=en`
      *
      * @filterDescription Filter by content language ISO code.
+     *
      * @filterType string
+     *
      * @filterExample en
      */
     public function language($value)
+    {
+        $this->builder->where('contents.language_iso', $value);
+    }
+
+    /**
+     * Filter by requested language ISO code using the explicit column name.
+     *
+     * Example:
+     * - `?language_iso=en`
+     *
+     * @filterDescription Filter by content language ISO code.
+     *
+     * @filterType string
+     *
+     * @filterExample en
+     */
+    public function language_iso($value)
     {
         $this->builder->where('contents.language_iso', $value);
     }
@@ -98,12 +127,14 @@ class ContentFilter extends AdvancedFilter
      * - `?content_type=page`
      *
      * @filterDescription Filter by block type slug used by the content entry.
+     *
      * @filterType string
+     *
      * @filterExample page
      */
     public function content_type($value)
     {
-        $this->builder->whereIn('contents.block_id', Block::where('type', $value));
+        $this->builder->whereIn('contents.block_id', Block::query()->where('slug', $value)->select('id'));
     }
 
     /**
@@ -113,7 +144,9 @@ class ContentFilter extends AdvancedFilter
      * - `?parent_id=01J123ABC456DEF789GHIJKLMN`
      *
      * @filterDescription Filter by parent content identifier.
+     *
      * @filterType string
+     *
      * @filterExample 01J123ABC456DEF789GHIJKLMN
      */
     public function parent_id($value)
@@ -128,7 +161,9 @@ class ContentFilter extends AdvancedFilter
      * - `?id=01J123ABC456DEF789GHIJKLMN`
      *
      * @filterDescription Filter by content identifier.
+     *
      * @filterType string
+     *
      * @filterExample 01J123ABC456DEF789GHIJKLMN
      */
     public function id($value)

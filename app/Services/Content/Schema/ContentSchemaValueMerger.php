@@ -11,14 +11,20 @@ class ContentSchemaValueMerger
      */
     protected array $blockSchemaCache = [];
 
+    protected bool $blockSchemaCacheLoaded = false;
+
     /**
      * @param  array<string, mixed>|BlockSchema  $schema
      * @param  array<string, mixed>  $base
      * @param  array<string, mixed>  $overrides
      * @return array<string, mixed>
      */
-    public function mergeForSchema(array|BlockSchema $schema, array $base, array $overrides, bool $localizationOverlay = false): array
-    {
+    public function mergeForSchema(
+        array|BlockSchema $schema,
+        array $base,
+        array $overrides,
+        bool $localizationOverlay = false,
+    ): array {
         $schemaArray = $schema instanceof BlockSchema ? $schema->toArray() : $schema;
         $merged = array_replace_recursive($base, $overrides);
 
@@ -75,11 +81,14 @@ class ContentSchemaValueMerger
             $columnKey = $column['key'];
             $fallbackLabel = $column['label'] !== '' ? $column['label'] : $columnKey;
 
-            $header[$columnKey] = isset($overrideTable['header'][$columnKey]) && \is_string($overrideTable['header'][$columnKey])
+            $header[$columnKey] = isset($overrideTable['header'][$columnKey])
+            && \is_string($overrideTable['header'][$columnKey])
                 ? $overrideTable['header'][$columnKey]
-                : (isset($baseTable['header'][$columnKey]) && \is_string($baseTable['header'][$columnKey])
-                    ? $baseTable['header'][$columnKey]
-                    : $fallbackLabel);
+                : (
+                    isset($baseTable['header'][$columnKey]) && \is_string($baseTable['header'][$columnKey])
+                        ? $baseTable['header'][$columnKey]
+                        : $fallbackLabel
+                );
         }
 
         $rows = [];
@@ -140,26 +149,23 @@ class ContentSchemaValueMerger
             return [];
         }
 
-        return array_values(array_filter(array_map(
-            static function (mixed $column): ?array {
-                if (!\is_array($column)) {
-                    return null;
-                }
+        return array_values(array_filter(array_map(static function (mixed $column): ?array {
+            if (!\is_array($column)) {
+                return null;
+            }
 
-                $key = (string) ($column['key'] ?? '');
+            $key = (string) ($column['key'] ?? '');
 
-                if ($key === '') {
-                    return null;
-                }
+            if ($key === '') {
+                return null;
+            }
 
-                return [
-                    'key' => $key,
-                    'label' => (string) ($column['label'] ?? ''),
-                    'type' => (string) ($column['type'] ?? 'text'),
-                ];
-            },
-            $columns,
-        )));
+            return [
+                'key' => $key,
+                'label' => (string) ($column['label'] ?? ''),
+                'type' => (string) ($column['type'] ?? 'text'),
+            ];
+        }, $columns)));
     }
 
     /**
@@ -183,25 +189,22 @@ class ContentSchemaValueMerger
             : [];
 
         $rows = \is_array($value['rows'] ?? null)
-            ? array_values(array_filter(array_map(
-                static function (mixed $row): ?array {
-                    if (!\is_array($row)) {
-                        return null;
-                    }
+            ? array_values(array_filter(array_map(static function (mixed $row): ?array {
+                if (!\is_array($row)) {
+                    return null;
+                }
 
-                    $rowId = $row['id'] ?? null;
+                $rowId = $row['id'] ?? null;
 
-                    if (!\is_string($rowId) || $rowId === '') {
-                        return null;
-                    }
+                if (!\is_string($rowId) || $rowId === '') {
+                    return null;
+                }
 
-                    return [
-                        'id' => $rowId,
-                        'cells' => \is_array($row['cells'] ?? null) ? $row['cells'] : [],
-                    ];
-                },
-                $value['rows'],
-            )))
+                return [
+                    'id' => $rowId,
+                    'cells' => \is_array($row['cells'] ?? null) ? $row['cells'] : [],
+                ];
+            }, $value['rows'])))
             : [];
 
         return [
@@ -223,6 +226,8 @@ class ContentSchemaValueMerger
         $baseItems = \is_array($baseValue) ? $baseValue : [];
         $overrideItems = \is_array($overrideValue) ? $overrideValue : [];
 
+        $this->loadBlockSchemaCache();
+
         foreach ($mergedValue as $index => $item) {
             if (!\is_array($item)) {
                 continue;
@@ -242,15 +247,27 @@ class ContentSchemaValueMerger
                 continue;
             }
 
-            $mergedValue[$index] = $this->mergeForSchema(
-                $blockSchema,
-                $baseItem,
-                $overrideItem,
-                $localizationOverlay,
-            );
+            $mergedValue[$index] = $this->mergeForSchema($blockSchema, $baseItem, $overrideItem, $localizationOverlay);
         }
 
         return $mergedValue;
+    }
+
+    protected function loadBlockSchemaCache(): void
+    {
+        if ($this->blockSchemaCacheLoaded) {
+            return;
+        }
+
+        $this->blockSchemaCache = Block::query()
+            ->select(['slug', 'schema'])
+            ->get()
+            ->mapWithKeys(static fn(Block $block): array => [
+                $block->slug => $block->schema?->toArray() ?? [],
+            ])
+            ->all();
+
+        $this->blockSchemaCacheLoaded = true;
     }
 
     /**
@@ -258,15 +275,8 @@ class ContentSchemaValueMerger
      */
     protected function resolveBlockSchema(string $slug): array
     {
-        if (array_key_exists($slug, $this->blockSchemaCache)) {
-            return $this->blockSchemaCache[$slug];
-        }
+        $this->loadBlockSchemaCache();
 
-        $block = Block::query()
-            ->select(['id', 'slug', 'schema'])
-            ->where('slug', $slug)
-            ->first();
-
-        return $this->blockSchemaCache[$slug] = $block?->schema?->toArray() ?? [];
+        return $this->blockSchemaCache[$slug] ?? [];
     }
 }

@@ -12,11 +12,12 @@ import {
 } from '~/components/ui/select'
 
 type LinkType = 'url' | 'email' | 'internal'
+type LinkTarget = '_self' | '_blank' | '_parent' | '_top'
 
 interface UrlLink {
   type: 'url'
   url: string
-  target?: '_self' | '_blank' | '_parent' | '_top'
+  target?: LinkTarget
   rel?: string
 }
 
@@ -29,7 +30,7 @@ interface InternalLink {
   type: 'internal'
   content: string
   anchor?: string
-  target?: '_self' | '_blank' | '_parent' | '_top'
+  target?: LinkTarget
 }
 
 type LinkValue = UrlLink | EmailLink | InternalLink
@@ -37,6 +38,7 @@ type LinkValue = UrlLink | EmailLink | InternalLink
 const props = defineProps<{
   modelValue?: LinkValue | null
   spaceId: string
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -79,7 +81,7 @@ const linkTypes = computed(() => [
 ])
 
 const targetOptions = computed(() => [
-  { value: null, label: 'Default' },
+  { value: 'default', label: 'Default' },
   { value: '_self', label: 'Same Window' },
   { value: '_blank', label: 'New Window' },
   { value: '_parent', label: 'Parent Frame' },
@@ -104,13 +106,13 @@ const updateValue = () => {
 const handleTypeChange = (newType: LinkType) => {
   switch (newType) {
     case 'url':
-      localValue.value = { type: 'url', url: '', target: null }
+      localValue.value = { type: 'url', url: '' }
       break
     case 'email':
       localValue.value = { type: 'email', email: '' }
       break
     case 'internal':
-      localValue.value = { type: 'internal', content: '', target: null }
+      localValue.value = { type: 'internal', content: '' }
       break
   }
   updateValue()
@@ -130,9 +132,9 @@ const handleEmailChange = (email: string) => {
   }
 }
 
-const handleTargetChange = (target: '_self' | '_blank' | '_parent' | '_top') => {
+const handleTargetChange = (target: string) => {
   if (localValue.value.type === 'url' || localValue.value.type === 'internal') {
-    localValue.value.target = target
+    localValue.value.target = target === 'default' ? undefined : (target as LinkTarget)
     updateValue()
   }
 }
@@ -184,7 +186,8 @@ const getSelectedContentName = () => {
     >
       <Select
         :model-value="localValue.type"
-        @update:model-value="handleTypeChange"
+        :disabled="disabled"
+        @update:model-value="handleTypeChange(String($event) as LinkType)"
       >
         <SelectTrigger>
           <SelectValue placeholder="Select link type" />
@@ -202,18 +205,21 @@ const getSelectedContentName = () => {
     </FormField>
     <template v-if="localValue.type === 'url'">
       <InputField
+        name="link-url"
         :model-value="localValue.url"
         label="URL"
         placeholder="https://example.com"
-        @update:model-value="handleUrlChange"
+        :disabled="disabled"
+        @update:model-value="handleUrlChange(String($event))"
       />
       <FormField
         name="target"
         label="Target"
       >
         <Select
-          :model-value="localValue.target"
-          @update:model-value="handleTargetChange"
+          :model-value="localValue.target || 'default'"
+          :disabled="disabled"
+          @update:model-value="handleTargetChange(String($event || 'default'))"
         >
           <SelectTrigger>
             <SelectValue />
@@ -221,7 +227,7 @@ const getSelectedContentName = () => {
           <SelectContent>
             <SelectItem
               v-for="option in targetOptions"
-              :key="option.value"
+              :key="String(option.value)"
               :value="option.value"
             >
               {{ option.label }}
@@ -230,19 +236,23 @@ const getSelectedContentName = () => {
         </Select>
       </FormField>
       <InputField
+        name="link-rel"
         :model-value="localValue.rel || ''"
         label="Rel Attribute"
         placeholder="nofollow, noopener, etc."
-        @update:model-value="handleRelChange"
+        :disabled="disabled"
+        @update:model-value="handleRelChange(String($event))"
       />
     </template>
     <template v-if="localValue.type === 'email'">
       <InputField
+        name="link-email"
         :model-value="localValue.email || ''"
         label="Email Address"
         type="email"
         placeholder="example@domain.com"
-        @update:model-value="handleEmailChange"
+        :disabled="disabled"
+        @update:model-value="handleEmailChange(String($event))"
       />
     </template>
     <template v-if="localValue.type === 'internal'">
@@ -252,7 +262,9 @@ const getSelectedContentName = () => {
       >
         <div class="flex gap-2">
           <button
+            type="button"
             class="flex min-h-[2.5rem] flex-1 items-center rounded-md border border-input-border bg-input px-3 py-2"
+            :disabled="disabled"
             @click="showInternalPicker = true"
           >
             <span
@@ -282,8 +294,9 @@ const getSelectedContentName = () => {
         label="Target"
       >
         <Select
-          :model-value="localValue.target"
-          @update:model-value="handleTargetChange"
+          :model-value="localValue.target || 'default'"
+          :disabled="disabled"
+          @update:model-value="handleTargetChange(String($event || 'default'))"
         >
           <SelectTrigger>
             <SelectValue />
@@ -291,7 +304,7 @@ const getSelectedContentName = () => {
           <SelectContent>
             <SelectItem
               v-for="option in targetOptions"
-              :key="option.value"
+              :key="String(option.value)"
               :value="option.value"
             >
               {{ option.label }}

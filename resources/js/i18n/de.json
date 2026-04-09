@@ -563,6 +563,9 @@
           "descriptionPlaceholder": "Gib eine SEO-Beschreibung ein (150-160 Zeichen)",
           "robots": "Robots Meta Tag",
           "robotsDescription": "Kontrolliere, wie Suchmaschinen diesen Inhalt indexieren",
+          "robotsPlaceholder": "Suche Direktiven oder gib eine parametrisierte Direktive ein",
+          "robotsEmpty": "Keine weiteren Direktiven passen zu deiner Suche",
+          "robotsUseCustom": "\"{directive}\" verwenden",
           "canonical": "Kanonische URL",
           "canonicalDescription": "Die kanonische URL für diesen Inhalt. Dies hilft, Duplicate-Content-Probleme zu vermeiden.",
           "ogTitle": "Open Graph Titel",
@@ -578,6 +581,18 @@
         "language": "Sprache",
         "notAvailable": "Dieser Space hat keine Lokalisierung konfiguriert.",
         "available": "Wechsle zum Lokalisierungsmodus",
+        "sourceColumn": "Quelle",
+        "translationColumn": "Übersetzung",
+        "meta": {
+          "originalTitle": "Originaltitel",
+          "translationTitle": "Übersetzter Titel",
+          "originalDescription": "Originalbeschreibung",
+          "translationDescription": "Übersetzte Beschreibung",
+          "originalOgTitle": "Original Open Graph Titel",
+          "translationOgTitle": "Übersetzter Open Graph Titel",
+          "originalOgDescription": "Original Open Graph Beschreibung",
+          "translationOgDescription": "Übersetzte Open Graph Beschreibung"
+        },
         "status": {
           "missing": "Fehlt"
         }
@@ -1482,7 +1497,17 @@
         "selectDefaultBlock": "Wähle Standard Block",
         "defaultBlockDescription": "Dieser Block-Typ wird beim Erstellen neuer Inhalte verwendet.",
         "filterHiddenBlocks": "Versteckte Blöcke aus der Data API filtern",
-        "filterHiddenBlocksDescription": "Wenn aktiviert, werden als versteckt markierte Blöcke aus den Data-API-Antworten entfernt. Standardmäßig deaktiviert."
+        "filterHiddenBlocksDescription": "Wenn aktiviert, werden als versteckt markierte Blöcke aus den Data-API-Antworten entfernt. Standardmäßig deaktiviert.",
+        "sitemap": {
+          "title": "Sitemap-Extraktion",
+          "description": "Lege fest, welche Block-Typen im öffentlichen Sitemap-Feed auftauchen und wo ihr SEO-Metaobjekt liegt.",
+          "block": "Block-Typ",
+          "selectBlock": "Wähle einen Block-Typ",
+          "path": "Meta-Pfad",
+          "pathPlaceholder": "meta",
+          "addType": "Mapping hinzufügen",
+          "empty": "Noch keine Sitemap-Mappings konfiguriert."
+        }
       },
       "dangerZone": {
         "title": "Gefahrenzone",

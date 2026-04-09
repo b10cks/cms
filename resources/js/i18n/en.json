@@ -568,6 +568,9 @@
           "descriptionPlaceholder": "Enter SEO description (150-160 characters)",
           "robots": "Robots Meta Tag",
           "robotsDescription": "Control how search engines index this content",
+          "robotsPlaceholder": "Search directives or enter a parameterized directive",
+          "robotsEmpty": "No more directives match your search",
+          "robotsUseCustom": "Use \"{directive}\"",
           "canonical": "Canonical URL",
           "canonicalDescription": "The canonical URL for this content. This helps prevent duplicate content issues.",
           "ogTitle": "Open Graph Title",
@@ -583,6 +586,18 @@
         "language": "Language",
         "notAvailable": "This space has no localization configured.",
         "available": "Switch to localization mode",
+        "sourceColumn": "Source",
+        "translationColumn": "Translation",
+        "meta": {
+          "originalTitle": "Original title",
+          "translationTitle": "Translation title",
+          "originalDescription": "Original description",
+          "translationDescription": "Translation description",
+          "originalOgTitle": "Original Open Graph title",
+          "translationOgTitle": "Translation Open Graph title",
+          "originalOgDescription": "Original Open Graph description",
+          "translationOgDescription": "Translation Open Graph description"
+        },
         "status": {
           "missing": "Missing"
         }
@@ -1483,7 +1498,17 @@
         "selectDefaultBlock": "Select default block",
         "defaultBlockDescription": "This block type will be used when creating new content.",
         "filterHiddenBlocks": "Filter hidden blocks from Data API",
-        "filterHiddenBlocksDescription": "When enabled, blocks marked as hidden will be stripped from Data API responses. Disabled by default."
+        "filterHiddenBlocksDescription": "When enabled, blocks marked as hidden will be stripped from Data API responses. Disabled by default.",
+        "sitemap": {
+          "title": "Sitemap Extraction",
+          "description": "Choose which block types are exposed in the public sitemap feed and where their SEO meta object lives.",
+          "block": "Block Type",
+          "selectBlock": "Select block type",
+          "path": "Meta Path",
+          "pathPlaceholder": "meta",
+          "addType": "Add mapping",
+          "empty": "No sitemap mappings configured yet."
+        }
       },
       "dangerZone": {
         "title": "Danger Zone",

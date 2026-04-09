@@ -34,6 +34,9 @@ class SpaceSettings extends Settings
         'search_driver' => 'mysql',
         'slug_strategy' => 'prepend_translations',
         'filter_hidden_blocks' => false,
+        'sitemap' => [
+            'types' => [],
+        ],
     ];
 
     /**
@@ -166,6 +169,25 @@ class SpaceSettings extends Settings
             'ai.favourites.*' => [
                 'string',
             ],
+            'sitemap' => [
+                ...$sometimes,
+                'array',
+            ],
+            'sitemap.types' => [
+                'nullable',
+                'array',
+            ],
+            'sitemap.types.*.block' => [
+                ...$required,
+                'string',
+                'max:100',
+                'distinct:ignore_case',
+            ],
+            'sitemap.types.*.path' => [
+                ...$required,
+                'string',
+                'max:255',
+            ],
         ];
     }
 
@@ -277,6 +299,20 @@ class SpaceSettings extends Settings
             'ai.favourites.*' => [
                 'description' => 'AI model identifier.',
             ],
+            'sitemap' => [
+                'description' => 'Sitemap extraction rules for public Data API endpoints.',
+            ],
+            'sitemap.types' => [
+                'description' => 'Mappings of content block slugs to the meta object path used for sitemap extraction.',
+            ],
+            'sitemap.types.*.block' => [
+                'description' => 'Block slug to include in sitemap responses.',
+                'example' => 'page',
+            ],
+            'sitemap.types.*.path' => [
+                'description' => 'Dot path inside the effective content payload where the sitemap meta object lives.',
+                'example' => 'meta',
+            ],
         ];
     }
 
@@ -302,6 +338,19 @@ class SpaceSettings extends Settings
         return (bool) ($this->attributes['filter_hidden_blocks'] ?? false);
     }
 
+    /**
+     * @return array<int, array{block: string, path: string}>
+     */
+    public function getSitemapTypes(): array
+    {
+        return array_values(array_filter(
+            $this->attributes['sitemap']['types'] ?? [],
+            fn (mixed $type): bool => is_array($type)
+                && filled($type['block'] ?? null)
+                && filled($type['path'] ?? null),
+        ));
+    }
+
     public function shouldPrependLocale(string $languageIso): bool
     {
         $strategy = $this->attributes['slug_strategy'] ?? 'prepend_translations';
@@ -319,13 +368,12 @@ class SpaceSettings extends Settings
     {
         return [
             $this->getDefaultLanguage(),
-            ...array_values(array_map(fn($language): string => $language['code'], $this->attributes['languages'] ?? [])),
+            ...array_values(array_map(fn ($language): string => $language['code'], $this->attributes['languages'] ?? [])),
         ];
     }
 
     public function getDefaultLanguage(): string
     {
-        \Log::info('attributes', [$this->attributes['default_language']]);
         return $this->attributes['default_language'] ?? 'en';
     }
 
@@ -365,7 +413,8 @@ class SpaceSettings extends Settings
 
     public static function castUsing(array $arguments): CastsAttributes
     {
-        return new class implements CastsAttributes, SerializesCastableAttributes {
+        return new class implements CastsAttributes, SerializesCastableAttributes
+        {
             public function get($model, string $key, $value, array $attributes)
             {
                 $settings = $value ? json_decode($value, true) : [];

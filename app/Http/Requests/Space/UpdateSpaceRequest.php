@@ -49,6 +49,10 @@ class UpdateSpaceRequest extends FormRequest
             'settings.languages.*.code' => 'required|string|min:2|max:5',
             'settings.languages.*.name' => 'required|string|max:100',
             'settings.languages.*.fallback_language' => 'nullable|string|min:2|max:5',
+            'settings.sitemap' => 'nullable|array',
+            'settings.sitemap.types' => 'nullable|array',
+            'settings.sitemap.types.*.block' => 'required|string|max:100|distinct:ignore_case',
+            'settings.sitemap.types.*.path' => 'required|string|max:255',
             // 'settings.asset_fields' => 'nullable|array',
             // 'settings.asset_fields.*.key' => 'required|string|max:100',
             // 'settings.asset_fields.*.label' => 'required|string|max:100',
@@ -86,6 +90,15 @@ class UpdateSpaceRequest extends FormRequest
 
                 if (count($fieldKeys) !== count(array_unique($fieldKeys))) {
                     $validator->errors()->add('settings.asset_fields', 'Asset field keys must be unique.');
+                }
+
+                $sitemapBlocks = array_filter(array_map(
+                    fn (array $type): ?string => isset($type['block']) ? strtolower((string) $type['block']) : null,
+                    $this->input('settings.sitemap.types', [])
+                ));
+
+                if (count($sitemapBlocks) !== count(array_unique($sitemapBlocks))) {
+                    $validator->errors()->add('settings.sitemap.types', 'Sitemap block mappings must be unique.');
                 }
 
                 if (! $this->has('settings')) {
