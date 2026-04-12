@@ -20,7 +20,7 @@ class StoreAssetRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file' => 'required|file|max:' . (config('filesystems.max_upload_size', 100) * 1024),
+            'file' => 'required|file|max:' . (config('filesystems.max_upload_size', 500) * 1024),
             'external_id' => $this->externalIdRule(Asset::class),
             'folder_id' => [
                 'nullable',
