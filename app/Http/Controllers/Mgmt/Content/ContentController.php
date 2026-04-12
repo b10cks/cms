@@ -28,7 +28,7 @@ class ContentController extends Controller
         $content = Content::filter(ContentFilter::fromRequest($request))
             ->with(['assets'])
             ->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id')
-            ->select('content.*', 'content_versions.asset_ids')
+            ->select('contents.*', 'content_versions.asset_ids')
             ->paginate();
 
         return ContentResource::collection($content);
