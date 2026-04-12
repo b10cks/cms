@@ -165,7 +165,7 @@ const getColumnOptions = (column: ColumnDefinition, item: TableItem) => {
           >
             {{ column.label }}
           </TableHead>
-          <TableHead class="w-12" />
+          <TableHead class="w-16" />
         </TableRow>
       </TableHeader>
       <TableBody ref="tableBodyRef">
@@ -223,7 +223,7 @@ const getColumnOptions = (column: ColumnDefinition, item: TableItem) => {
               :disabled="column.readonly || !canEdit"
             />
           </TableCell>
-          <TableCell class="flex items-center gap-1">
+          <TableCell class="flex items-center gap-1 justify-end">
             <slot
               name="actions"
               :item="item"
@@ -293,13 +293,13 @@ const getColumnOptions = (column: ColumnDefinition, item: TableItem) => {
           </TableCell>
           <TableCell class="text-right">
             <Button
-              variant="ghost"
-              size="icon"
+              size="sm"
+              :variant="canAddItem ? 'primary' : 'ghost'"
               :disabled="!canAddItem"
               @click="addItem"
             >
               <Icon name="lucide:plus" />
-              <span class="sr-only">{{ $t(addButtonLabel) }}</span>
+              {{ $t(addButtonLabel) }}
             </Button>
           </TableCell>
         </TableRow>

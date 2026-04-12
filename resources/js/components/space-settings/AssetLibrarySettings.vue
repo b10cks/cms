@@ -51,6 +51,7 @@ const columns: ColumnDefinition[] = [
   {
     key: 'required',
     label: $t('labels.settings.assetLibrary.required'),
+    width: 'w-16',
     type: 'switch',
   },
 ]

@@ -18,7 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
-import SettingsTable, { type ColumnDefinition, type TableItem } from '~/components/ui/settings-table.vue'
+import SettingsTable, {
+  type ColumnDefinition,
+  type TableItem,
+} from '~/components/ui/settings-table.vue'
 import { Switch } from '~/components/ui/switch'
 
 import IconName from '../ui/IconName.vue'
@@ -202,7 +205,6 @@ const handleSave = () => {
           v-model:items="sitemapTypes"
           :columns="sitemapColumns"
           :new-item-template="sitemapNewItemTemplate"
-          :add-button-label="'labels.settings.content.sitemap.addType'"
           @add="addSitemapType"
           @remove="removeSitemapType"
           @update:items="(items) => (sitemapTypes = items as unknown as SitemapTypeMapping[])"
