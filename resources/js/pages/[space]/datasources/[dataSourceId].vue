@@ -439,13 +439,13 @@ const isDefaultSelected = computed(() => selectedDimension.value === 'default')
                 <TableRow>
                   <TableSortableHead
                     v-model="sortBy"
-                    class="w-1/2"
+                    :class="isDefaultSelected ? 'w-1/2' : 'w-1/4'"
                     column="key"
                     >{{ $t('labels.dataEntries.fields.key') }}
                   </TableSortableHead>
                   <TableSortableHead
                     v-model="sortBy"
-                    class="w-1/2"
+                    :class="isDefaultSelected ? 'w-1/2' : 'w-1/3'"
                     column="value"
                     >{{ $t('labels.dataEntries.fields.value') }}
                   </TableSortableHead>

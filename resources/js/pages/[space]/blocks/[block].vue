@@ -117,7 +117,7 @@ const handleDuplicateCreated = (createdBlock: BlockResource) => {
         </template>
       </ContentHeader>
 
-      <div class="mx-auto max-w-xl">
+      <div class="mx-auto max-w-4xl">
         <BlockEdit
           v-slot="{ editBlock }"
           :block="block"
