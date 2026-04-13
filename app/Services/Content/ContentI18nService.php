@@ -47,6 +47,20 @@ class ContentI18nService
     public function resolveEffectiveMode(Space $space, Content $content): string
     {
         $canonical = $this->getCanonicalContent($content);
+
+        return $this->resolveEffectiveModeForCanonical($space, $canonical);
+    }
+
+    public function buildLanguageVersions(Space $space, Content $content): array
+    {
+        $canonical = $this->getCanonicalContent($content);
+        $family = $this->getFamily($canonical);
+
+        return $this->buildLanguageVersionsFromFamily($space, $content, $family, $canonical);
+    }
+
+    public function resolveEffectiveModeForCanonical(Space $space, Content $canonical): string
+    {
         $override = data_get($canonical->settings?->toArray() ?? [], 'i18n_mode_override');
 
         return \in_array($override, ['overlay', 'independent'], true)
@@ -54,15 +68,19 @@ class ContentI18nService
             : $space->settings->getI18nMode();
     }
 
-    public function buildLanguageVersions(Space $space, Content $content): array
-    {
-        $canonical = $this->getCanonicalContent($content);
-        $family = $this->getFamily($canonical)->keyBy('language_iso');
+    public function buildLanguageVersionsFromFamily(
+        Space $space,
+        Content $content,
+        Collection $family,
+        ?Content $canonical = null,
+    ): array {
+        $canonical ??= $family->firstWhere('id', $this->getCanonicalId($content)) ?? $this->getCanonicalContent($content);
+        $familyByLanguage = $family->keyBy('language_iso');
         $defaultLanguage = $space->settings->getDefaultLanguage();
 
-        return array_map(function (string $languageIso) use ($space, $content, $family, $defaultLanguage): array {
+        return array_map(function (string $languageIso) use ($space, $content, $familyByLanguage, $defaultLanguage): array {
             /** @var Content|null $row */
-            $row = $family->get($languageIso);
+            $row = $familyByLanguage->get($languageIso);
 
             return [
                 'language_iso' => $languageIso,

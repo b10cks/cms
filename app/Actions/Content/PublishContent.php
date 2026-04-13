@@ -21,10 +21,11 @@ class PublishContent extends BasePublishAction
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner): void
     {
         $content->loadMissing('block');
+        $submittedContent = $this->resolveRequestedContent($data, $content);
         $contentValidation = $this->contentSchemaValidator->validateSubmission(
             $space,
             $content->block,
-            data_get($data, 'content', []),
+            $submittedContent,
             $content,
             $data['language_iso'] ?? $content->language_iso,
             $data['i18n_parent_id'] ?? $content->i18n_parent_id,
@@ -65,9 +66,8 @@ class PublishContent extends BasePublishAction
             'published_at' => now()
         ];
 
-        if ($this->shouldUpdateExistingVersion($contentData, $content)) {
-            $content->published_version_id = $content->current_version_id;
-            $this->updateExistingVersion($values, $content);
+        if ($this->shouldReuseCurrentVersion($contentData, $content)) {
+            $this->reuseCurrentVersionForPublish($values, $content);
         } else {
             $this->handleNewVersionPublish($values, $contentData, $content, $owner);
         }
@@ -89,6 +89,15 @@ class PublishContent extends BasePublishAction
         $version = $this->createNewVersion($values, $contentData, $content, $owner);
         $content->current_version_id = $version->id;
         $content->published_version_id = $version->id;
+    }
+
+    private function reuseCurrentVersionForPublish(array $values, Content $content): void
+    {
+        $content->published_version_id = $content->current_version_id;
+
+        if ($this->currentVersionIsDraft($content)) {
+            $this->updateExistingVersion($values, $content);
+        }
     }
 
     private function indexContent(Content $content, Space $space): void

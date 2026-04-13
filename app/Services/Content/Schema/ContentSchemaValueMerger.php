@@ -259,6 +259,18 @@ class ContentSchemaValueMerger
             return;
         }
 
+        $request = ! app()->runningInConsole() && app()->bound('request') ? request() : null;
+        $requestCacheKey = 'content.schema_value_merger.block_schema_cache';
+
+        if ($request?->attributes->has($requestCacheKey)) {
+            /** @var array<string, array<string, mixed>> $cached */
+            $cached = $request->attributes->get($requestCacheKey, []);
+            $this->blockSchemaCache = $cached;
+            $this->blockSchemaCacheLoaded = true;
+
+            return;
+        }
+
         $this->blockSchemaCache = Block::query()
             ->select(['slug', 'schema'])
             ->get()
@@ -268,6 +280,7 @@ class ContentSchemaValueMerger
             ->all();
 
         $this->blockSchemaCacheLoaded = true;
+        $request?->attributes->set($requestCacheKey, $this->blockSchemaCache);
     }
 
     /**

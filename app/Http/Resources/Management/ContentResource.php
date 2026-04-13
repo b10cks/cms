@@ -34,6 +34,21 @@ class ContentResource extends JsonResource
             $resolvedRow->loadMissing(['block', 'parent', 'current_version', 'published_version']);
         }
 
+        $canonicalContent = $resolved?->canonicalContent ?? $this->resource;
+        $effectiveI18nMode = $space
+            ? ($resolved?->effectiveMode ?? $i18nService->resolveEffectiveMode($space, $this->resource))
+            : 'overlay';
+        $languageVersions = $space
+            ? ($resolved
+                ? $i18nService->buildLanguageVersionsFromFamily(
+                    $space,
+                    $this->resource,
+                    $resolved->familyContents,
+                    $canonicalContent,
+                )
+                : $i18nService->buildLanguageVersions($space, $this->resource))
+            : [];
+
         return [
             'id' => $resolvedRow->id,
             'external_id' => $resolvedRow->external_id,
@@ -62,9 +77,9 @@ class ContentResource extends JsonResource
             'full_slug' => $resolvedRow->full_slug,
             'language_iso' => $resolved?->requestedLanguage ?? $resolvedRow->language_iso,
             'i18n_parent_id' => $resolvedRow->i18n_parent_id,
-            'i18n_canonical_id' => $i18nService->getCanonicalId($this->resource),
-            'effective_i18n_mode' => $space ? $i18nService->resolveEffectiveMode($space, $this->resource) : 'overlay',
-            'language_versions' => $space ? $i18nService->buildLanguageVersions($space, $this->resource) : [],
+            'i18n_canonical_id' => $canonicalContent->id,
+            'effective_i18n_mode' => $effectiveI18nMode,
+            'language_versions' => $languageVersions,
             'content' => $this->prepareContent($resolved, $resolvedRow),
             'settings' => $resolvedRow->settings->toArray() ?: new \StdClass,
             'current_version_id' => $resolvedRow->current_version_id,

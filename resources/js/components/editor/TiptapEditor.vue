@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { Link } from '@tiptap/extension-link'
 import { Table } from '@tiptap/extension-table'
 import { TableCell } from '@tiptap/extension-table-cell'
 import { TableHeader } from '@tiptap/extension-table-header'
 import { TableRow } from '@tiptap/extension-table-row'
-import { Underline } from '@tiptap/extension-underline'
 import { StarterKit } from '@tiptap/starter-kit'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
 
@@ -99,11 +97,10 @@ const editor = useEditor({
       heading: {
         levels: [1, 2, 3, 4, 5, 6],
       },
-    }),
-    Underline,
-    Link.configure({
-      openOnClick: false,
-      autolink: true,
+      link: {
+        openOnClick: false,
+        autolink: true,
+      },
     }),
     InternalLink,
     TextClass,

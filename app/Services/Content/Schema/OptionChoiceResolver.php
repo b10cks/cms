@@ -7,6 +7,11 @@ use App\Models\Space\DataEntry;
 class OptionChoiceResolver
 {
     /**
+     * @var array<string, array<int, array{label: string, value: string}>>
+     */
+    protected array $datasourceChoicesCache = [];
+
+    /**
      * @param  array<string, mixed>|SchemaField  $field
      * @return array<int, array{label: string, value: string}>
      */
@@ -76,7 +81,22 @@ class OptionChoiceResolver
             return [];
         }
 
-        return DataEntry::query()
+        if (array_key_exists($dataSourceId, $this->datasourceChoicesCache)) {
+            return $this->datasourceChoicesCache[$dataSourceId];
+        }
+
+        $request = ! app()->runningInConsole() && app()->bound('request') ? request() : null;
+        $requestCacheKey = "content.option_choice_resolver.datasource.{$dataSourceId}";
+
+        if ($request?->attributes->has($requestCacheKey)) {
+            /** @var array<int, array{label: string, value: string}> $cached */
+            $cached = $request->attributes->get($requestCacheKey, []);
+            $this->datasourceChoicesCache[$dataSourceId] = $cached;
+
+            return $cached;
+        }
+
+        $choices = DataEntry::query()
             ->where('data_source_id', $dataSourceId)
             ->where('is_active', true)
             ->orderBy('value')
@@ -87,6 +107,11 @@ class OptionChoiceResolver
                 'value' => $entry->key,
             ])
             ->all();
+
+        $this->datasourceChoicesCache[$dataSourceId] = $choices;
+        $request?->attributes->set($requestCacheKey, $choices);
+
+        return $choices;
     }
 
     /**

@@ -21,10 +21,11 @@ class SchedulePublishContent extends BasePublishAction
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner): void
     {
         $content->loadMissing('block');
+        $submittedContent = $this->resolveRequestedContent($data, $content);
         $contentValidation = $this->contentSchemaValidator->validateSubmission(
             $space,
             $content->block,
-            data_get($data, 'content', []),
+            $submittedContent,
             $content,
             $data['language_iso'] ?? $content->language_iso,
             $data['i18n_parent_id'] ?? $content->i18n_parent_id,
@@ -62,7 +63,7 @@ class SchedulePublishContent extends BasePublishAction
             'scheduled_at' => $scheduledAt,
         ];
 
-        if ($this->shouldUpdateExistingVersion($contentData, $content)) {
+        if ($this->shouldReuseCurrentVersion($contentData, $content) && $this->currentVersionIsDraft($content)) {
             $this->updateExistingVersion($values, $content);
         } else {
             $version = $this->createNewVersion($values, $contentData, $content, $owner);

@@ -317,7 +317,7 @@ class ContentSchemaValidator
         }
 
         return match ($value['type']) {
-            'url' => filter_var($value['url'] ?? null, FILTER_VALIDATE_URL)
+            'url' => $this->isValidLinkUrl($value['url'] ?? null)
             ? []
             : [sprintf('%s must contain a valid URL.', $field->getLabel())],
             'email' => ($field->getAttribute('email_link_type', false) && filter_var($value['email'] ?? null, FILTER_VALIDATE_EMAIL))
@@ -328,6 +328,19 @@ class ContentSchemaValidator
             : [sprintf('%s must reference content.', $field->getLabel())],
             default => [sprintf('%s contains an unsupported link type.', $field->getLabel())],
         };
+    }
+
+    protected function isValidLinkUrl(mixed $url): bool
+    {
+        if (!is_string($url) || trim($url) === '') {
+            return false;
+        }
+
+        if (str_starts_with($url, '/')) {
+            return true;
+        }
+
+        return filter_var($url, FILTER_VALIDATE_URL) !== false;
     }
 
     /**

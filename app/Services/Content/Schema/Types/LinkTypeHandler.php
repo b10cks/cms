@@ -29,7 +29,14 @@ class LinkTypeHandler extends AbstractTypeHandler
             // Validate based on link type
             switch ($value['type']) {
                 case 'url':
-                    if (!filter_var($value['value'], FILTER_VALIDATE_URL)) {
+                    $linkValue = $value['value'];
+
+                    if (!is_string($linkValue) || trim($linkValue) === '') {
+                        $fail('The URL format is invalid.');
+                        break;
+                    }
+
+                    if (!str_starts_with($linkValue, '/') && !filter_var($linkValue, FILTER_VALIDATE_URL)) {
                         $fail('The URL format is invalid.');
                     }
                     break;

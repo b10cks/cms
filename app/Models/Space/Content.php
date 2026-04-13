@@ -201,6 +201,13 @@ class Content extends SpaceModel
         return $this->published_version?->content ?? [];
     }
 
+    public function getCurrentContent(): array
+    {
+        $this->loadMissing('current_version');
+
+        return $this->current_version?->content ?? [];
+    }
+
     public function setPublishedAt($date): void
     {
         $this->published_at = $date;

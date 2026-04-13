@@ -30,6 +30,15 @@ abstract class BasePublishAction
         $content->load('current_version');
     }
 
+    protected function resolveRequestedContent(array $data, Content $content): array
+    {
+        if (! array_key_exists('content', $data)) {
+            return $content->getCurrentContent();
+        }
+
+        return is_array($data['content'] ?? null) ? $data['content'] : [];
+    }
+
     protected function buildBaseValues(?string $message, Authenticatable|User|null $owner): array
     {
         return [
@@ -38,10 +47,18 @@ abstract class BasePublishAction
         ];
     }
 
-    protected function shouldUpdateExistingVersion(?array $contentData, Content $content): bool
+    protected function shouldReuseCurrentVersion(array $contentData, Content $content): bool
     {
-        return $content->current_version?->content == $contentData
-            && $content->current_version?->published_at === null;
+        $content->loadMissing('current_version');
+
+        return $content->current_version?->content == $contentData;
+    }
+
+    protected function currentVersionIsDraft(Content $content): bool
+    {
+        $content->loadMissing('current_version');
+
+        return $content->current_version?->published_at === null;
     }
 
     protected function updateExistingVersion(array $values, Content $content): void

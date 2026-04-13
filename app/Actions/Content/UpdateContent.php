@@ -65,8 +65,8 @@ class UpdateContent
         );
 
         $submission = array_key_exists('content', $data)
-            ? data_get($data, 'content', [])
-            : $content->getContent();
+            ? (is_array($data['content'] ?? null) ? $data['content'] : [])
+            : $content->getCurrentContent();
 
         $contentValidation = $this->contentSchemaValidator->validateSubmission(
             $space,

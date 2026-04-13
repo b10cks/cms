@@ -10,6 +10,8 @@ class ChildContentRuleService
 {
     private const array ELIGIBLE_TYPES = ['root', 'universal'];
 
+    protected ?Collection $eligibleBlocks = null;
+
     public function __construct(
         private readonly ContentI18nService $contentI18nService,
     ) {
@@ -22,10 +24,30 @@ class ChildContentRuleService
 
     public function getEligibleBlocks(): Collection
     {
-        return Block::query()
+        if ($this->eligibleBlocks !== null) {
+            return $this->eligibleBlocks;
+        }
+
+        $request = ! app()->runningInConsole() && app()->bound('request') ? request() : null;
+        $requestCacheKey = 'content.child_content_rule_service.eligible_blocks';
+
+        if ($request?->attributes->has($requestCacheKey)) {
+            /** @var Collection $cached */
+            $cached = $request->attributes->get($requestCacheKey);
+            $this->eligibleBlocks = $cached;
+
+            return $cached;
+        }
+
+        $eligibleBlocks = Block::query()
             ->whereNull('deleted_at')
             ->whereIn('type', self::ELIGIBLE_TYPES)
             ->get();
+
+        $this->eligibleBlocks = $eligibleBlocks;
+        $request?->attributes->set($requestCacheKey, $eligibleBlocks);
+
+        return $eligibleBlocks;
     }
 
     public function resolveAllowedBlocks(array $settings): Collection
