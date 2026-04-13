@@ -417,23 +417,36 @@ class SpaceSettings extends Settings
         {
             public function get($model, string $key, $value, array $attributes)
             {
-                $settings = $value ? json_decode($value, true) : [];
-
-                return SpaceSettings::make(app(SpaceI18nSettingsService::class)->normalize($settings));
+                return SpaceSettings::make($this->normalizeSettings($value));
             }
 
             public function set($model, string $key, mixed $value, array $attributes)
             {
-                $settings = \is_array($value) ? $value : $value->toArray();
+                $settings = $this->normalizeSettings($value);
+                $originalSettings = $this->normalizeSettings($attributes[$key] ?? null);
 
-                return json_encode(app(SpaceI18nSettingsService::class)->normalize($settings));
+                if ($settings === $originalSettings) {
+                    return $attributes[$key] ?? null;
+                }
+
+                return json_encode($settings);
             }
 
             public function serialize($model, string $key, $value, array $attributes)
             {
-                $settings = \is_array($value) ? $value : $value->toArray();
+                return json_encode($this->normalizeSettings($value));
+            }
 
-                return json_encode(app(SpaceI18nSettingsService::class)->normalize($settings));
+            private function normalizeSettings(mixed $value): array
+            {
+                if (\is_string($value)) {
+                    $decoded = json_decode($value, true);
+                    $value = \is_array($decoded) ? $decoded : [];
+                } elseif (! \is_array($value)) {
+                    $value = $value instanceof SpaceSettings ? $value->toArray() : [];
+                }
+
+                return app(SpaceI18nSettingsService::class)->normalize($value);
             }
         };
     }
