@@ -8,13 +8,41 @@ const open = defineModel<boolean>('open')
 
 const props = defineProps<{
   spaceId: string
+  tag?: BlockTagResource | null
 }>()
 
-const { useCreateBlockTagMutation } = useBlockTags(props.spaceId)
+const { $t } = useI18n()
+const { useCreateBlockTagMutation, useUpdateBlockTagMutation } = useBlockTags(props.spaceId)
 const { mutate: createBlockTag } = useCreateBlockTagMutation()
+const { mutate: updateBlockTag } = useUpdateBlockTagMutation()
 
-const handleCreate = async (tag: BlockTagResource) => {
-  await createBlockTag(tag)
+const isEditing = computed(() => !!props.tag?.name)
+const dialogTitle = computed(() =>
+  $t(isEditing.value ? 'labels.blockTags.editTag' : 'labels.blockTags.createTag')
+)
+const submitLabel = computed(() =>
+  $t(isEditing.value ? 'actions.blockTags.save' : 'actions.create')
+)
+const initialTag = computed(() => props.tag ?? undefined)
+
+const toPayload = (tag: BlockTagResource) => ({
+  name: tag.name,
+  icon: tag.icon ?? null,
+  color: tag.color ?? null,
+})
+
+const handleSubmit = async (tag: BlockTagResource) => {
+  const payload = toPayload(tag)
+
+  if (isEditing.value && props.tag) {
+    await updateBlockTag({
+      tagName: props.tag.name,
+      payload,
+    })
+  } else {
+    await createBlockTag(payload)
+  }
+
   open.value = false
 }
 </script>
@@ -25,11 +53,12 @@ const handleCreate = async (tag: BlockTagResource) => {
     @update:open="open = $event"
   >
     <DialogContent>
-      <DialogHeaderCombined :title="$t('labels.blockTags.createTag')" />
+      <DialogHeaderCombined :title="dialogTitle" />
       <BlockTagEdit
+        :key="`${props.tag?.name ?? 'new'}-${open ? 'open' : 'closed'}`"
         v-slot="{ tag }"
-        :tag="{}"
-        is-create
+        :tag="initialTag"
+        :is-create="!isEditing"
       >
         <DialogFooter>
           <Button @click="open = false">
@@ -37,9 +66,9 @@ const handleCreate = async (tag: BlockTagResource) => {
           </Button>
           <Button
             variant="primary"
-            @click="handleCreate(tag)"
+            @click="handleSubmit(tag)"
           >
-            {{ $t('actions.create') }}
+            {{ submitLabel }}
           </Button>
         </DialogFooter>
       </BlockTagEdit>

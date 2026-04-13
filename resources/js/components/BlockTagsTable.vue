@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import type { BlockTagResource } from '~/api/resources/block-tags'
 import CreateBlockTagDialog from '~/components/blocks/CreateBlockTagDialog.vue'
@@ -52,7 +52,8 @@ const { useBlockTagsQuery, useDeleteBlockTagMutation } = useBlockTags(props.spac
 const { data: blockTags, isLoading } = useBlockTagsQuery(queryParams)
 const { mutate: deleteBlockTag } = useDeleteBlockTagMutation()
 
-const showCreateTagDialog = ref(false)
+const showTagDialog = ref(false)
+const selectedTag = ref<BlockTagResource | null>(null)
 
 const pageSizeOptions = [25, 50, 100, 500, 1000]
 const sortOptions = [
@@ -81,6 +82,22 @@ const handleDelete = async (tag: BlockTagResource) => {
     await deleteBlockTag(tag.name)
   }
 }
+
+const handleCreateClick = () => {
+  selectedTag.value = null
+  showTagDialog.value = true
+}
+
+const handleEditClick = (tag: BlockTagResource) => {
+  selectedTag.value = tag
+  showTagDialog.value = true
+}
+
+watch(showTagDialog, (isOpen) => {
+  if (!isOpen) {
+    selectedTag.value = null
+  }
+})
 </script>
 
 <template>
@@ -94,7 +111,7 @@ const handleDelete = async (tag: BlockTagResource) => {
           <Button
             v-if="canManageBlockTags"
             variant="primary"
-            @click="showCreateTagDialog = true"
+            @click="handleCreateClick"
           >
             <Icon name="lucide:plus" />
             {{ $t('actions.blockTags.add') }}
@@ -162,8 +179,10 @@ const handleDelete = async (tag: BlockTagResource) => {
                       <Button
                         variant="ghost"
                         size="icon"
+                        @click="handleEditClick(tag)"
                       >
                         <Icon name="lucide:pencil" />
+                        <span class="sr-only">{{ $t('actions.blockTags.edit') }}</span>
                       </Button>
                       <Button
                         variant="destructive"
@@ -195,8 +214,9 @@ const handleDelete = async (tag: BlockTagResource) => {
 
     <CreateBlockTagDialog
       v-if="canManageBlockTags"
-      v-model:open="showCreateTagDialog"
+      v-model:open="showTagDialog"
       :space-id="spaceId"
+      :tag="selectedTag"
     />
   </div>
 </template>
