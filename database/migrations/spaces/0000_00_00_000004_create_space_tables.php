@@ -170,7 +170,7 @@ return new class extends Migration {
             $table->foreignUlid('parent_id')->nullable();
 
             $table->string('name', 100)->nullable();
-            $table->string('slug', 100)->charset('ascii');
+            $table->string('slug', 70)->charset('ascii');
             $table->string('full_slug')->charset('ascii');
 
             $table->string('language_iso', 5)->charset('ascii');

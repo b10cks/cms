@@ -41,7 +41,7 @@ class ContentTreeOperationsRequest extends FormRequest
                 Rule::exists((new Block())->getConnectionName() . '.blocks', 'id')->whereNull('deleted_at'),
             ],
             'operations.*.name' => ['sometimes', 'required', 'string', 'max:100'],
-            'operations.*.slug' => ['sometimes', 'required', 'string', 'max:100'],
+            'operations.*.slug' => ['sometimes', 'required', 'string', 'max:70'],
             'operations.*.settings' => ['sometimes', 'array'],
         ];
     }

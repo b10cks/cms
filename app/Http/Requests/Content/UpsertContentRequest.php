@@ -43,7 +43,7 @@ class UpsertContentRequest extends FormRequest
                 'sometimes',
                 'required',
                 'string',
-                'max:100',
+                'max:70',
                 Rule::unique($connectionName . '.contents', 'slug')
                     ->when($languageIso, fn($query) => $query->where('language_iso', $languageIso))
                     ->when($parentId, fn($query) => $query->where('parent_id', $parentId))

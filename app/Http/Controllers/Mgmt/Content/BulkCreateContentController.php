@@ -20,7 +20,7 @@ class BulkCreateContentController extends Controller
         $validated = $request->validate([
             'items' => 'required|array|min:1',
             'items.*.name' => 'required|string|max:255',
-            'items.*.slug' => 'required|string|max:255',
+            'items.*.slug' => 'required|string|max:70',
             'items.*.block_id' => ['required','string',Rule::exists("$connectionName.blocks", 'id')
                 ->whereNull('deleted_at')],
             'items.*.parent_id' => 'nullable|string',
