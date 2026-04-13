@@ -108,6 +108,8 @@ return new class extends Migration {
 
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index(['type', 'deleted_at'], 'blocks_type_deleted_at_index');
         });
 
         Schema::create('block_templates', function (Blueprint $table) {
@@ -186,6 +188,8 @@ return new class extends Migration {
             $table->timestamp('first_published_at')->nullable();
 
             $table->index(['full_slug', 'language_iso']);
+            $table->index(['i18n_parent_id', 'deleted_at'], 'contents_i18n_parent_id_deleted_at_index');
+            $table->index(['parent_id', 'language_iso', 'slug', 'deleted_at'], 'contents_parent_language_slug_deleted_at_index');
             // Only create fulltext index for MySQL/MariaDB
             if (DB::getDriverName() !== 'sqlite') {
                 $table->fullText('searchable_content');
@@ -265,7 +269,6 @@ return new class extends Migration {
 
             $table->timestamps();
 
-            $table->index(['data_source_id', 'key']);
             $table->unique(['data_source_id', 'key']);
         });
 
