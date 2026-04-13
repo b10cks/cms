@@ -87,8 +87,8 @@ class UpdateContent
             unset($data['content']);
             unset($data['message']);
             unset($data['force']);
-            $content->update($data);
-            $content->load('current_version');
+            $content->fill($data);
+            $content->loadMissing('current_version');
 
             if ($content->current_version?->content != $contentData) {
                 $version = ContentVersion::createWithContentContext([
