@@ -3,27 +3,6 @@ import Label from '~/components/ui/form/Label.vue'
 
 import LinkEditor from './LinkEditor.vue'
 
-interface UrlLink {
-  type: 'url'
-  url: string
-  target?: '_self' | '_blank' | '_parent' | '_top'
-  rel?: string
-}
-
-interface EmailLink {
-  type: 'email'
-  email?: string
-}
-
-interface InternalLink {
-  type: 'internal'
-  content: string
-  anchor?: string
-  target?: '_self' | '_blank' | '_parent' | '_top'
-}
-
-type LinkValue = UrlLink | EmailLink | InternalLink
-
 const value = defineModel<LinkValue | null>()
 
 defineProps<{

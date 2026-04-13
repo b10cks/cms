@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 
 import ContentPicker from '~/components/editor/ContentPicker.vue'
-import { FormField, InputField } from '~/components/ui/form'
+import { FormField, InputField, TextField } from '~/components/ui/form'
 import {
   Select,
   SelectContent,
@@ -12,28 +12,6 @@ import {
 } from '~/components/ui/select'
 
 type LinkType = 'url' | 'email' | 'internal'
-type LinkTarget = '_self' | '_blank' | '_parent' | '_top'
-
-interface UrlLink {
-  type: 'url'
-  url: string
-  target?: LinkTarget
-  rel?: string
-}
-
-interface EmailLink {
-  type: 'email'
-  email?: string
-}
-
-interface InternalLink {
-  type: 'internal'
-  content: string
-  anchor?: string
-  target?: LinkTarget
-}
-
-type LinkValue = UrlLink | EmailLink | InternalLink
 
 const props = defineProps<{
   modelValue?: LinkValue | null
@@ -45,20 +23,23 @@ const emit = defineEmits<{
   'update:modelValue': [value: LinkValue | null]
 }>()
 
-// Content tree composable - using the same pattern as ContentTree component
-const { useContentMenuQuery, getRootItems, getChildren } = useContentMenu(props.spaceId)
-const { data: contentMenu } = useContentMenuQuery()
-const rootItems = computed(() => getRootItems(contentMenu.value) || [])
+const { t } = useI18n()
 
-// Internal state
-const localValue = ref<LinkValue>({
+const { useContentMenuQuery } = useContentMenu(props.spaceId)
+const { data: contentMenu } = useContentMenuQuery()
+
+const createDefaultUrlLink = (): UrlLinkValue => ({
   type: 'url',
   url: '',
   target: '_self',
 })
 
+// Internal state
+const localValue = ref<LinkValue>({
+  ...createDefaultUrlLink(),
+})
+
 const showInternalPicker = ref(false)
-const showElementsForContent = ref<string | null>(null)
 
 // Sync with prop
 watch(
@@ -67,7 +48,7 @@ watch(
     if (newValue) {
       localValue.value = { ...newValue }
     } else {
-      localValue.value = { type: 'url', url: '', target: '_self' }
+      localValue.value = createDefaultUrlLink()
     }
   },
   { immediate: true, deep: true }
@@ -75,38 +56,28 @@ watch(
 
 // Computed properties
 const linkTypes = computed(() => [
-  { value: 'url', label: 'URL' },
-  { value: 'email', label: 'Email' },
-  { value: 'internal', label: 'Internal Page' },
+  { value: 'url', label: t('labels.link.types.url') },
+  { value: 'email', label: t('labels.link.types.email') },
+  { value: 'internal', label: t('labels.link.types.internal') },
 ])
 
 const targetOptions = computed(() => [
-  { value: 'default', label: 'Default' },
-  { value: '_self', label: 'Same Window' },
-  { value: '_blank', label: 'New Window' },
-  { value: '_parent', label: 'Parent Frame' },
-  { value: '_top', label: 'Top Frame' },
+  { value: 'default', label: t('labels.link.targets.default') },
+  { value: '_self', label: t('labels.link.targets._self') },
+  { value: '_blank', label: t('labels.link.targets._blank') },
+  { value: '_parent', label: t('labels.link.targets._parent') },
+  { value: '_top', label: t('labels.link.targets._top') },
 ])
-
-// Get content elements for selected page (mock implementation)
-const getContentElements = (contentId: string) => {
-  return [
-    { id: 'header', name: 'Header Section' },
-    { id: 'main-content', name: 'Main Content' },
-    { id: 'sidebar', name: 'Sidebar' },
-    { id: 'footer', name: 'Footer Section' },
-  ]
-}
 
 // Event handlers
 const updateValue = () => {
-  emit('update:modelValue', localValue.value)
+  emit('update:modelValue', { ...localValue.value })
 }
 
 const handleTypeChange = (newType: LinkType) => {
   switch (newType) {
     case 'url':
-      localValue.value = { type: 'url', url: '' }
+      localValue.value = createDefaultUrlLink()
       break
     case 'email':
       localValue.value = { type: 'email', email: '' }
@@ -128,6 +99,16 @@ const handleUrlChange = (url: string) => {
 const handleEmailChange = (email: string) => {
   if (localValue.value.type === 'email') {
     localValue.value.email = email
+    updateValue()
+  }
+}
+
+const handleEmailFieldChange = (
+  key: keyof Pick<EmailLinkValue, 'subject' | 'body' | 'cc' | 'bcc'>,
+  value: string
+) => {
+  if (localValue.value.type === 'email') {
+    localValue.value[key] = value
     updateValue()
   }
 }
@@ -162,17 +143,12 @@ const selectContentWithAnchor = (contentId: string, anchorId: string) => {
     updateValue()
   }
   showInternalPicker.value = false
-  showElementsForContent.value = null
-}
-
-const toggleElementsView = (contentId: string) => {
-  showElementsForContent.value = showElementsForContent.value === contentId ? null : contentId
 }
 
 const getSelectedContentName = () => {
   if (localValue.value.type === 'internal' && localValue.value.content && contentMenu.value) {
     const item = contentMenu.value[localValue.value.content]
-    return item?.name || 'Unknown Page'
+    return item?.name || t('labels.references.unknownContent')
   }
   return ''
 }
@@ -182,7 +158,7 @@ const getSelectedContentName = () => {
   <div class="space-y-4 border-l-1 border-l-border pl-3">
     <FormField
       name="link-type"
-      label="Link Type"
+      :label="t('labels.link.type')"
     >
       <Select
         :model-value="localValue.type"
@@ -190,7 +166,7 @@ const getSelectedContentName = () => {
         @update:model-value="handleTypeChange(String($event) as LinkType)"
       >
         <SelectTrigger>
-          <SelectValue placeholder="Select link type" />
+          <SelectValue :placeholder="t('labels.link.typePlaceholder')" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem
@@ -207,14 +183,14 @@ const getSelectedContentName = () => {
       <InputField
         name="link-url"
         :model-value="localValue.url"
-        label="URL"
-        placeholder="https://example.com"
+        :label="t('labels.link.url')"
+        :placeholder="t('labels.link.urlPlaceholder')"
         :disabled="disabled"
         @update:model-value="handleUrlChange(String($event))"
       />
       <FormField
         name="target"
-        label="Target"
+        :label="t('labels.link.target')"
       >
         <Select
           :model-value="localValue.target || 'default'"
@@ -238,8 +214,8 @@ const getSelectedContentName = () => {
       <InputField
         name="link-rel"
         :model-value="localValue.rel || ''"
-        label="Rel Attribute"
-        placeholder="nofollow, noopener, etc."
+        :label="t('labels.link.rel')"
+        :placeholder="t('labels.link.relPlaceholder')"
         :disabled="disabled"
         @update:model-value="handleRelChange(String($event))"
       />
@@ -248,17 +224,50 @@ const getSelectedContentName = () => {
       <InputField
         name="link-email"
         :model-value="localValue.email || ''"
-        label="Email Address"
+        :label="t('labels.link.email')"
         type="email"
-        placeholder="example@domain.com"
+        :placeholder="t('labels.link.emailPlaceholder')"
         :disabled="disabled"
         @update:model-value="handleEmailChange(String($event))"
+      />
+      <InputField
+        name="link-email-subject"
+        :model-value="localValue.subject || ''"
+        :label="t('labels.link.subject')"
+        :placeholder="t('labels.link.subjectPlaceholder')"
+        :disabled="disabled"
+        @update:model-value="handleEmailFieldChange('subject', String($event))"
+      />
+      <TextField
+        name="link-email-body"
+        :model-value="localValue.body || ''"
+        :label="t('labels.link.body')"
+        :placeholder="t('labels.link.bodyPlaceholder')"
+        :disabled="disabled"
+        :rows="4"
+        @update:model-value="handleEmailFieldChange('body', String($event))"
+      />
+      <InputField
+        name="link-email-cc"
+        :model-value="localValue.cc || ''"
+        :label="t('labels.link.cc')"
+        :placeholder="t('labels.link.recipientPlaceholder')"
+        :disabled="disabled"
+        @update:model-value="handleEmailFieldChange('cc', String($event))"
+      />
+      <InputField
+        name="link-email-bcc"
+        :model-value="localValue.bcc || ''"
+        :label="t('labels.link.bcc')"
+        :placeholder="t('labels.link.recipientPlaceholder')"
+        :disabled="disabled"
+        @update:model-value="handleEmailFieldChange('bcc', String($event))"
       />
     </template>
     <template v-if="localValue.type === 'internal'">
       <FormField
         name="content"
-        label="Content"
+        :label="t('labels.link.content')"
       >
         <div class="flex gap-2">
           <button
@@ -280,7 +289,7 @@ const getSelectedContentName = () => {
               v-else
               class="text-muted-foreground text-sm"
             >
-              No content selected
+              {{ t('labels.link.noContentSelected') }}
             </span>
             <Icon
               name="lucide:search"
@@ -291,7 +300,7 @@ const getSelectedContentName = () => {
       </FormField>
       <FormField
         name="target"
-        label="Target"
+        :label="t('labels.link.target')"
       >
         <Select
           :model-value="localValue.target || 'default'"

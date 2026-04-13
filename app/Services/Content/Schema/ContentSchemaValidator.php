@@ -320,9 +320,7 @@ class ContentSchemaValidator
             'url' => $this->isValidLinkUrl($value['url'] ?? null)
             ? []
             : [sprintf('%s must contain a valid URL.', $field->getLabel())],
-            'email' => ($field->getAttribute('email_link_type', false) && filter_var($value['email'] ?? null, FILTER_VALIDATE_EMAIL))
-            ? []
-            : [sprintf('%s must contain a valid email link.', $field->getLabel())],
+            'email' => $this->validateEmailLink($field, $value),
             'internal' => !empty($value['content'])
             ? []
             : [sprintf('%s must reference content.', $field->getLabel())],
@@ -336,11 +334,88 @@ class ContentSchemaValidator
             return false;
         }
 
+        $url = trim($url);
+
         if (str_starts_with($url, '/')) {
             return true;
         }
 
-        return filter_var($url, FILTER_VALIDATE_URL) !== false;
+        if (filter_var($url, FILTER_VALIDATE_URL) !== false) {
+            return true;
+        }
+
+        return preg_match('/^[a-z][a-z0-9+.-]*:[^\s]+$/i', $url) === 1;
+    }
+
+    /**
+     * @param  array<string, mixed>  $value
+     * @return array<int, string>
+     */
+    protected function validateEmailLink(SchemaField $field, array $value): array
+    {
+        if (
+            ! $field->getAttribute('email_link_type', false)
+            || ! filter_var($value['email'] ?? null, FILTER_VALIDATE_EMAIL)
+        ) {
+            return [sprintf('%s must contain a valid email link.', $field->getLabel())];
+        }
+
+        $messages = [];
+
+        foreach (['subject', 'body'] as $attribute) {
+            if (array_key_exists($attribute, $value) && $value[$attribute] !== null && ! is_string($value[$attribute])) {
+                $messages[] = sprintf(
+                    '%s %s must be a string.',
+                    $field->getLabel(),
+                    $attribute,
+                );
+            }
+        }
+
+        foreach (['cc', 'bcc'] as $attribute) {
+            if (! $this->hasValidRecipientList($value[$attribute] ?? null)) {
+                $messages[] = sprintf(
+                    '%s %s must contain valid email addresses.',
+                    $field->getLabel(),
+                    strtoupper($attribute),
+                );
+            }
+        }
+
+        return array_values(array_unique($messages));
+    }
+
+    protected function hasValidRecipientList(mixed $value): bool
+    {
+        if ($value === null) {
+            return true;
+        }
+
+        if (! is_string($value)) {
+            return false;
+        }
+
+        $normalized = trim($value);
+
+        if ($normalized === '') {
+            return true;
+        }
+
+        $entries = preg_split('/[;,]+/', $normalized) ?: [];
+
+        foreach ($entries as $entry) {
+            $email = trim($entry);
+
+            if ($email === '') {
+                continue;
+            }
+
+            if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

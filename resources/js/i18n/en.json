@@ -1388,7 +1388,7 @@
         "description": "Description",
         "descriptionPlaceholder": "Optional description for this backup",
         "recipients": "Recipients",
-        "recipientsPlaceholder": "email1@example.com, email2@example.com",
+        "recipientsPlaceholder": "email1{'@'}example.com, email2{'@'}example.com",
         "recipientsHint": "Separate multiple email addresses with commas",
         "password": "Password Protection",
         "passwordPlaceholder": "Enter password for ZIP encryption",
@@ -1674,7 +1674,7 @@
         "name": "Name",
         "namePlaceholder": "John Doe",
         "email": "Email",
-        "emailPlaceholder": "john@example.com",
+        "emailPlaceholder": "john{'@'}example.com",
         "role": "Role",
         "selectRole": "Select a role",
         "inviting": "Inviting...",
@@ -2291,6 +2291,39 @@
       "duplicateTitle": "Already added",
       "removeReference": "Remove Reference",
       "referencesCount": "{current} of {max}"
+    },
+    "link": {
+      "type": "Link Type",
+      "typePlaceholder": "Select link type",
+      "types": {
+        "url": "URL",
+        "email": "Email",
+        "internal": "Internal Page"
+      },
+      "url": "URL",
+      "urlPlaceholder": "https://example.com",
+      "target": "Target",
+      "targets": {
+        "default": "Default",
+        "_self": "Same Window",
+        "_blank": "New Window",
+        "_parent": "Parent Frame",
+        "_top": "Top Frame"
+      },
+      "rel": "Rel Attribute",
+      "relPlaceholder": "nofollow, noopener, etc.",
+      "email": "Email Address",
+      "emailPlaceholder": "example{'@'}domain.com",
+      "subject": "Subject",
+      "subjectPlaceholder": "How can we help?",
+      "body": "Body",
+      "bodyPlaceholder": "Add a default message...",
+      "cc": "CC",
+      "bcc": "BCC",
+      "recipientPlaceholder": "name{'@'}example.com, other{'@'}example.com",
+      "content": "Content",
+      "selectContent": "Select content...",
+      "noContentSelected": "No content selected"
     }
   },
   "notifications": {

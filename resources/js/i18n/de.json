@@ -222,7 +222,7 @@
       "sending": "Sende Einladung...",
       "fields": {
         "email": "Lade per E-Mail ein",
-        "emailPlaceholder": "name@example.com",
+        "emailPlaceholder": "name{'@'}example.com",
         "message": "Persönliche Nachricht",
         "messagePlaceholder": "Füge eine persönliche Notiz hinzu (optional)",
         "expires": "Einladung läuft ab in",
@@ -1387,7 +1387,7 @@
         "description": "Beschreibung",
         "descriptionPlaceholder": "Optionale Beschreibung für diese Sicherung",
         "recipients": "Empfänger",
-        "recipientsPlaceholder": "email1@example.com, email2@example.com",
+        "recipientsPlaceholder": "email1{'@'}example.com, email2{'@'}example.com",
         "recipientsHint": "Trenne mehrere E-Mail-Adressen mit Kommas",
         "password": "Passwortschutz",
         "passwordPlaceholder": "Gib Passwort für ZIP-Verschlüsselung ein",
@@ -1650,7 +1650,7 @@
         "name": "Name",
         "namePlaceholder": "John Doe",
         "email": "E-Mail",
-        "emailPlaceholder": "john@example.com",
+        "emailPlaceholder": "john{'@'}example.com",
         "role": "Rolle",
         "selectRole": "Wähle eine Rolle",
         "inviting": "Wird eingeladen...",
@@ -2267,6 +2267,39 @@
       "duplicateTitle": "Bereits hinzugefügt",
       "removeReference": "Referenz entfernen",
       "referencesCount": "{current} von {max}"
+    },
+    "link": {
+      "type": "Link-Typ",
+      "typePlaceholder": "Link-Typ auswählen",
+      "types": {
+        "url": "URL",
+        "email": "E-Mail",
+        "internal": "Interne Seite"
+      },
+      "url": "URL",
+      "urlPlaceholder": "https://example.com",
+      "target": "Ziel",
+      "targets": {
+        "default": "Standard",
+        "_self": "Gleiches Fenster",
+        "_blank": "Neues Fenster",
+        "_parent": "Übergeordneter Frame",
+        "_top": "Oberster Frame"
+      },
+      "rel": "Rel-Attribut",
+      "relPlaceholder": "nofollow, noopener usw.",
+      "email": "E-Mail-Adresse",
+      "emailPlaceholder": "beispiel{'@'}domain.com",
+      "subject": "Betreff",
+      "subjectPlaceholder": "Worum geht es?",
+      "body": "Nachricht",
+      "bodyPlaceholder": "Füge eine Standardnachricht hinzu...",
+      "cc": "CC",
+      "bcc": "BCC",
+      "recipientPlaceholder": "name{'@'}example.com, andere{'@'}example.com",
+      "content": "Inhalt",
+      "selectContent": "Inhalt auswählen...",
+      "noContentSelected": "Kein Inhalt ausgewählt"
     }
   },
   "notifications": {

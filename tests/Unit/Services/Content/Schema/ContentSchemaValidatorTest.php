@@ -342,6 +342,115 @@ class ContentSchemaValidatorTest extends TestCase
         $this->assertArrayHasKey('content.roster', $invalidTypes->errors);
     }
 
+    #[Test]
+    public function email_links_accept_optional_mailto_fields_when_their_values_are_valid(): void
+    {
+        $block = $this->makeBlock([
+            'cta' => [
+                'type' => 'link',
+                'name' => 'CTA',
+                'translatable' => true,
+                'asset_link_type' => false,
+                'email_link_type' => true,
+                'allow_target_blank' => true,
+            ],
+        ]);
+
+        $result = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            [
+                'cta' => [
+                    'type' => 'email',
+                    'email' => 'hello@example.com',
+                    'subject' => 'Need help',
+                    'body' => "Hi there,\nI have a question.",
+                    'cc' => 'copy@example.com, second@example.com',
+                    'bcc' => 'hidden@example.com',
+                ],
+            ],
+            null,
+            'en',
+            null,
+            'save',
+        );
+
+        $this->assertSame([], $result->errors);
+    }
+
+    #[Test]
+    public function url_links_accept_protocol_based_targets_like_tel_links(): void
+    {
+        $block = $this->makeBlock([
+            'cta' => [
+                'type' => 'link',
+                'name' => 'CTA',
+                'translatable' => true,
+                'asset_link_type' => false,
+                'email_link_type' => true,
+                'allow_target_blank' => true,
+            ],
+        ]);
+
+        $result = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            [
+                'cta' => [
+                    'type' => 'url',
+                    'url' => 'tel:+436999',
+                ],
+            ],
+            null,
+            'en',
+            null,
+            'save',
+        );
+
+        $this->assertSame([], $result->errors);
+    }
+
+    #[Test]
+    public function email_links_reject_invalid_cc_and_non_string_subject_values(): void
+    {
+        $block = $this->makeBlock([
+            'cta' => [
+                'type' => 'link',
+                'name' => 'CTA',
+                'translatable' => true,
+                'asset_link_type' => false,
+                'email_link_type' => true,
+                'allow_target_blank' => true,
+            ],
+        ]);
+
+        $result = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            [
+                'cta' => [
+                    'type' => 'email',
+                    'email' => 'hello@example.com',
+                    'subject' => ['invalid'],
+                    'cc' => 'valid@example.com, not-an-email',
+                ],
+            ],
+            null,
+            'en',
+            null,
+            'save',
+        );
+
+        $this->assertArrayHasKey('content.cta', $result->errors);
+        $this->assertSame(
+            [
+                'CTA subject must be a string.',
+                'CTA CC must contain valid email addresses.',
+            ],
+            $result->errors['content.cta'],
+        );
+    }
+
     protected function ensureOptionTablesExist(): void
     {
         if (! Schema::hasTable('data_sources')) {

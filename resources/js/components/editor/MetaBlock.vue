@@ -30,27 +30,6 @@ interface ContentValue {
   content?: string | Record<string, unknown>
 }
 
-interface UrlLink {
-  type: 'url'
-  url: string
-  target?: '_self' | '_blank' | '_parent' | '_top'
-  rel?: string
-}
-
-interface EmailLink {
-  type: 'email'
-  email?: string
-}
-
-interface InternalLink {
-  type: 'internal'
-  content: string
-  anchor?: string
-  target?: '_self' | '_blank' | '_parent' | '_top'
-}
-
-type LinkValue = UrlLink | EmailLink | InternalLink
-
 interface MetaValue {
   title?: string
   description?: string
@@ -79,6 +58,20 @@ const emit = defineEmits<{
 
 const isLinkValue = (value: unknown): value is LinkValue => {
   return typeof value === 'object' && value !== null && typeof (value as LinkValue).type === 'string'
+}
+
+const normalizeOptionalString = (
+  value: string | undefined | null,
+  options: { trim?: boolean } = {}
+) => {
+  if (typeof value !== 'string') {
+    return undefined
+  }
+
+  const trim = options.trim ?? true
+  const normalized = trim ? value.trim() : value
+
+  return normalized.trim() === '' ? undefined : normalized
 }
 
 const normalizeCanonicalForEditor = (value: MetaValue['canonical']): LinkValue | null => {
@@ -121,22 +114,34 @@ const normalizeCanonicalForSave = (value: LinkValue | null): LinkValue | null =>
   }
 
   if (value.type === 'email') {
-    const email = value.email?.trim()
+    const email = normalizeOptionalString(value.email)
 
     return email
       ? {
-          ...value,
           email,
+          ...(normalizeOptionalString(value.subject)
+            ? { subject: normalizeOptionalString(value.subject) }
+            : {}),
+          ...(normalizeOptionalString(value.body, { trim: false })
+            ? { body: normalizeOptionalString(value.body, { trim: false }) }
+            : {}),
+          ...(normalizeOptionalString(value.cc) ? { cc: normalizeOptionalString(value.cc) } : {}),
+          ...(normalizeOptionalString(value.bcc)
+            ? { bcc: normalizeOptionalString(value.bcc) }
+            : {}),
+          type: 'email',
         }
       : null
   }
 
-  const contentId = value.content?.trim()
+  const contentId = normalizeOptionalString(value.content)
 
   return contentId
     ? {
-        ...value,
         content: contentId,
+        ...(normalizeOptionalString(value.anchor) ? { anchor: normalizeOptionalString(value.anchor) } : {}),
+        ...(value.target ? { target: value.target } : {}),
+        type: 'internal',
       }
     : null
 }

@@ -92,6 +92,33 @@ interface LinkSchema extends Schema {
   allow_target_blank: boolean
 }
 
+type LinkTarget = '_self' | '_blank' | '_parent' | '_top'
+
+interface UrlLinkValue {
+  type: 'url'
+  url: string
+  target?: LinkTarget
+  rel?: string
+}
+
+interface EmailLinkValue {
+  type: 'email'
+  email?: string
+  subject?: string
+  body?: string
+  cc?: string
+  bcc?: string
+}
+
+interface InternalLinkValue {
+  type: 'internal'
+  content: string
+  anchor?: string
+  target?: LinkTarget
+}
+
+type LinkValue = UrlLinkValue | EmailLinkValue | InternalLinkValue
+
 interface MetaSchema extends Schema {
   type: 'meta'
   translatable: boolean
