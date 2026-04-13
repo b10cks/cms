@@ -3,6 +3,13 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.13-1ec473a] — 2026-4-13
+
+- 💄 Improve UX for production data
+- ✏️ Fix typo in tablename
+- 🔧 Increase acceptable content size to 500mb
+- 🐛 Fix folder validation in UpdateBlockRequest
+
 ## [v2026.4.12-ba9595a] — 2026-4-12
 
 - ⬆️ Bump versions
