@@ -5,6 +5,7 @@ defineProps<{
   icon?: string | null
   color?: string | null
   name?: string
+  showPlaceholder?: boolean
 }>()
 </script>
 
@@ -17,7 +18,7 @@ defineProps<{
       class="mr-1"
     />
     <span
-      v-else
+      v-else-if="showPlaceholder"
       class="size-4 mr-1"
     ></span>
     <span>{{ name }}</span>
