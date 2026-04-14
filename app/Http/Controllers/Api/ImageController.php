@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Services\Image\ImageTransformationService;
+use App\Services\Storage\StorageService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -17,9 +18,12 @@ class ImageController extends Controller
 
     protected ImageTransformationService $imageService;
 
-    public function __construct(ImageTransformationService $imageService)
+    protected StorageService $storageService;
+
+    public function __construct(ImageTransformationService $imageService, StorageService $storageService)
     {
         $this->imageService = $imageService;
+        $this->storageService = $storageService;
     }
 
     public function process(
@@ -28,7 +32,7 @@ class ImageController extends Controller
         string $space,
         string $assetId,
         string $name,
-        ?string $transformations = null
+        ?string $transformations = null,
     ) {
         $fullPath = "{$space}/{$assetId}/{$name}";
         if ($storage !== 'storage') {
@@ -37,20 +41,18 @@ class ImageController extends Controller
             app()->offsetSet('currentSpace', $space);
             $asset = Asset::findOrFail($assetId);
             $mimetype = $asset->mime_type;
+            $disk = $this->storageService->getStorage($space->storages()->find($storage));
         } else {
-            $mimetype = Storage::disk()->mimeType($fullPath);
+            $disk = Storage::disk();
+            $mimetype = $disk->mimeType($fullPath);
         }
 
         if (\str_starts_with($mimetype, 'image/') === false) {
-            return Storage::disk()->response(
-                $fullPath,
-                null,
-                [
-                    'Content-Type' => $mimetype,
-                    'Cache-Control' => 'public, max-age=' . self::CACHE_DURATION . ', immutable',
-                    'Pragma' => 'public',
-                ]
-            );
+            return $disk->response($fullPath, null, [
+                'Content-Type' => $mimetype,
+                'Cache-Control' => 'public, max-age=' . self::CACHE_DURATION . ', immutable',
+                'Pragma' => 'public',
+            ]);
         }
 
         try {
@@ -63,7 +65,7 @@ class ImageController extends Controller
             }
 
             [$operation, $operationParams] = $this->determineOperation($params);
-            $result = $this->imageService->processImage($storage, $fullPath, $operation, $operationParams, $format);
+            $result = $this->imageService->processImage($disk, $fullPath, $operation, $operationParams, $format);
 
             if (!$result) {
                 return response()->json(['error' => 'Image not found or processing failed'], 404);
@@ -73,7 +75,7 @@ class ImageController extends Controller
                 'Content-Type' => $result['mime'],
                 'Content-Length' => \strlen($result['data']),
                 'Cache-Control' => 'public, max-age=' . self::CACHE_DURATION . ', immutable',
-                'Pragma' => 'public'
+                'Pragma' => 'public',
             ]);
         } catch (\Exception $e) {
             Log::error('Image processing error: ' . $e->getMessage(), [
@@ -166,7 +168,7 @@ class ImageController extends Controller
                     break;
 
                 case 'crop':
-                    $operation = (isset($params['tw']) || isset($params['th'])) ? 'cropresize' : 'crop';
+                    $operation = isset($params['tw']) || isset($params['th']) ? 'cropresize' : 'crop';
                     break;
 
                 default:

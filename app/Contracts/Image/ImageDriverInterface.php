@@ -6,7 +6,7 @@ interface ImageDriverInterface
 {
     public function loadFromFile(string $path): ImageInterface;
 
-    public function loadFromBuffer(string $buffer): ImageInterface;
+    public function loadFromBuffer($buffer): ImageInterface;
 
     public function getName(): string;
 

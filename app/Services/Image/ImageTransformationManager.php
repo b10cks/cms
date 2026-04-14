@@ -5,15 +5,15 @@ namespace App\Services\Image;
 use App\Contracts\Image\ImageDriverInterface;
 use App\Models\Management\Storage as StorageModel;
 use App\Services\Storage\StorageService;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Manager;
 
 class ImageTransformationManager extends Manager
 {
     public function __construct(
         $app,
-        private readonly StorageService $storageService
+        private readonly StorageService $storageService,
     ) {
         parent::__construct($app);
     }
@@ -46,27 +46,21 @@ class ImageTransformationManager extends Manager
      * Process an image using the specified operation
      */
     public function processImage(
-        string $storage,
+        FilesystemAdapter $disk,
         string $fullPath,
         string $operation,
         array $params,
-        ?string $format = null
+        ?string $format = null,
     ): ?array {
         try {
-            if ($storage === 'storage') {
-                $disk = Storage::disk();
-            } else {
-                $storageModel = StorageModel::findOrFail($storage);
-                $disk = $this->storageService->getStorage($storageModel);
-            }
-
             if (!$disk->exists($fullPath)) {
                 Log::error("Image not found: {$fullPath}");
                 return null;
             }
 
             // Create temporary file for processing
-            $tempFile = tempnam(sys_get_temp_dir(), md5($fullPath));
+            $ext = pathinfo($fullPath, PATHINFO_EXTENSION);
+            $tempFile = tempnam(sys_get_temp_dir(), md5($fullPath)) . ".$ext";
             $stream = $disk->readStream($fullPath);
             if (!$stream) {
                 Log::error("Failed to get stream for: {$fullPath}");
@@ -76,21 +70,15 @@ class ImageTransformationManager extends Manager
             file_put_contents($tempFile, stream_get_contents($stream));
             fclose($stream);
 
-            // Load image using current driver
             $driver = $this->driver();
             $image = $driver->loadFromFile($tempFile);
 
-            // Apply the operation
             $processedImage = $this->applyOperation($image, $operation, $params);
 
-            // Determine output format
             $outputFormat = $this->determineOutputFormat($format, $fullPath, $driver);
             $options = $this->getFormatOptions($outputFormat);
 
-            // Convert to buffer
             $buffer = $processedImage->toBuffer($outputFormat, $options);
-
-            // Clean up
             unlink($tempFile);
 
             return [
@@ -100,7 +88,6 @@ class ImageTransformationManager extends Manager
             ];
         } catch (\Throwable $e) {
             Log::error("Image processing error: {$e->getMessage()}", [
-                'storage' => $storage,
                 'path' => $fullPath,
                 'operation' => $operation,
                 'params' => $params,
@@ -125,26 +112,16 @@ class ImageTransformationManager extends Manager
             'original' => $image,
             'fit' => $image->fit($params['width'], $params['height']),
             'smartfit' => $image->smartFit($params['width'], $params['height']),
-            'fitfocus' => $image->fitFocus(
-                $params['x'],
-                $params['y'],
-                $params['width'],
-                $params['height']
-            ),
+            'fitfocus' => $image->fitFocus($params['x'], $params['y'], $params['width'], $params['height']),
             'resize' => $image->resize($params['width'], $params['height']),
-            'crop' => $image->crop(
-                $params['x'],
-                $params['y'],
-                $params['width'],
-                $params['height']
-            ),
+            'crop' => $image->crop($params['x'], $params['y'], $params['width'], $params['height']),
             'cropresize' => $image->cropResize(
                 $params['x'],
                 $params['y'],
                 $params['width'],
                 $params['height'],
                 $params['targetWidth'],
-                $params['targetHeight']
+                $params['targetHeight'],
             ),
             default => $image,
         };
@@ -153,8 +130,11 @@ class ImageTransformationManager extends Manager
     /**
      * Determine the output format
      */
-    protected function determineOutputFormat(?string $requestedFormat, string $imagePath, ImageDriverInterface $driver): string
-    {
+    protected function determineOutputFormat(
+        ?string $requestedFormat,
+        string $imagePath,
+        ImageDriverInterface $driver,
+    ): string {
         if ($requestedFormat && \in_array($requestedFormat, $driver->getSupportedFormats())) {
             return $requestedFormat;
         }
