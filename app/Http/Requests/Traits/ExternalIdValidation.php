@@ -21,13 +21,13 @@ trait ExternalIdValidation
     protected function externalIdRule(string $modelClass, ?string $ignoreId = null): array|\Illuminate\Contracts\Validation\ValidationRule|string
     {
         $headerValue = request()->header('x-enforce-external-id');
+        $model = new $modelClass();
 
         if ($headerValue) {
-            $model = new $modelClass();
             $rule = Rule::unique($model->getConnectionName() . '.' . $model->getTable(), 'external_id');
 
             if ($ignoreId) {
-                $rule = $rule->ignore($ignoreId);
+                $rule = $rule->ignore($ignoreId, $model->getKeyName());
             }
 
             $baseRules = ['required', 'string', 'max:36', $rule];

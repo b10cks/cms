@@ -29,7 +29,7 @@ class UpsertBlockTagRequest extends FormRequest
                 'max:100',
                 'regex:/^[a-zA-Z0-9\s\-_]+$/',
                 Rule::unique(new BlockTag()->getConnectionName() . '.block_tags', 'name')
-                    ->ignore($ignoreName),
+                    ->ignore($ignoreName, (new BlockTag())->getKeyName()),
             ],
             'icon' => 'nullable|string|max:50',
             'color' => 'nullable|string|max:7|regex:/^#[a-fA-F0-9]{6}$/',
