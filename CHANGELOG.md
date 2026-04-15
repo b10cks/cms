@@ -3,6 +3,21 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.15-f19e928] — 2026-4-15
+
+- ⬆️ Bump versions
+- 👔 Get disk in image controller and pass down
+- 👔 Expose more data from the merged asset
+- 🐛 Improve block tag validation
+- 👔 Allow to edit block tags
+- 🚸 Hide icon from IconName if not present
+- 🗃️ Harmonize content slug to max 70 chars
+- 👔 Improve link validation and enrich email links
+- ⚡️ Improve mysql indices for content management
+- ⚡️ Reduce DB queries to 1 when saving content
+- 🐛 Prevent storing of space settings when touching
+- 👔 Improve for production-ready data
+
 ## [v2026.4.13-1ec473a] — 2026-4-13
 
 - 💄 Improve UX for production data
