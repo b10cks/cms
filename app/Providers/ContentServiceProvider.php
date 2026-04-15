@@ -11,6 +11,7 @@ use App\Services\Content\Schema\Types\TextTypeHandler;
 use App\Services\Content\Schema\Types\TypeHandlerInterface;
 use App\Services\Database\SpaceModelResolver;
 use App\Services\Image\ImageTransformationManager;
+use App\Services\Image\ImageTransformationResolver;
 use App\Services\Image\ImageTransformationService;
 use Illuminate\Support\ServiceProvider;
 
@@ -48,11 +49,13 @@ class ContentServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(ImageTransformationManager::class, function ($app) {
-            return new ImageTransformationManager($app, $app->make(\App\Services\Storage\StorageService::class));
+            return new ImageTransformationManager($app);
         });
 
         $this->app->singleton(ImageTransformationService::class, function ($app) {
             return new ImageTransformationService($app->make(ImageTransformationManager::class));
         });
+
+        $this->app->singleton(ImageTransformationResolver::class);
     }
 }

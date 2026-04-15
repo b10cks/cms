@@ -22,7 +22,7 @@ class ImagickDriver implements ImageDriverInterface
     /**
      * Load an image from a buffer
      */
-    public function loadFromBuffer(string $buffer): ImageInterface
+    public function loadFromBuffer($buffer): ImageInterface
     {
         $imagick = new Imagick();
         $imagick->readImageBlob($buffer);

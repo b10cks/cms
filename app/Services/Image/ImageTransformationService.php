@@ -2,6 +2,7 @@
 
 namespace App\Services\Image;
 
+use App\Services\Image\Dto\ImageTransformation;
 use Illuminate\Filesystem\FilesystemAdapter;
 
 class ImageTransformationService
@@ -13,10 +14,8 @@ class ImageTransformationService
     public function processImage(
         FilesystemAdapter $storage,
         string $fullPath,
-        string $operation,
-        array $params,
-        ?string $format = null,
+        ImageTransformation $transformation,
     ): ?array {
-        return $this->manager->processImage($storage, $fullPath, $operation, $params, $format);
+        return $this->manager->processImage($storage, $fullPath, $transformation);
     }
 }

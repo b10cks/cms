@@ -23,10 +23,13 @@ class ImagickImage implements ImageInterface
         return $this->imagick->getImageHeight();
     }
 
-    public function resize(int $width, int $height): ImageInterface
+    public function resize(?int $width, ?int $height): ImageInterface
     {
         $cloned = clone $this->imagick;
-        $cloned->resizeImage($width, $height, Imagick::FILTER_LANCZOS, 1);
+
+        [$targetWidth, $targetHeight] = $this->resolveResizeDimensions($width, $height);
+
+        $cloned->resizeImage($targetWidth, $targetHeight, Imagick::FILTER_LANCZOS, 1);
         return new static($cloned);
     }
 
@@ -75,7 +78,7 @@ class ImagickImage implements ImageInterface
         return $this->fit($width, $height);
     }
 
-    public function fitFocus(int $focusX, int $focusY, int $width, int $height): ImageInterface
+    public function fitFocus(float $focusX, float $focusY, int $width, int $height): ImageInterface
     {
         $originalWidth = $this->getWidth();
         $originalHeight = $this->getHeight();
@@ -153,5 +156,28 @@ class ImagickImage implements ImageInterface
     public function getResource(): Imagick
     {
         return $this->imagick;
+    }
+
+    /**
+     * @return array{0: int, 1: int}
+     */
+    private function resolveResizeDimensions(?int $width, ?int $height): array
+    {
+        $originalWidth = $this->getWidth();
+        $originalHeight = $this->getHeight();
+
+        $scale = match (true) {
+            $width !== null && $height !== null => min($width / $originalWidth, $height / $originalHeight),
+            $width !== null => $width / $originalWidth,
+            $height !== null => $height / $originalHeight,
+            default => 1.0,
+        };
+
+        $scale = max(min($scale, 1.0), 0.0001);
+
+        return [
+            max((int) round($originalWidth * $scale), 1),
+            max((int) round($originalHeight * $scale), 1),
+        ];
     }
 }

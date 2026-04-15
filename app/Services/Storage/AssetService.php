@@ -417,7 +417,20 @@ class AssetService
     public function getAssetUrl(Asset $asset): ?string
     {
         try {
-            return route('ilum.full_path', ['storage' => $asset->storage_id, 'full_path' => $asset->path]);
+            $segments = explode('/', (string) $asset->path, 3);
+
+            if (count($segments) !== 3) {
+                throw new \RuntimeException("Unexpected asset path format: {$asset->path}");
+            }
+
+            [$spaceId, $assetId, $name] = $segments;
+
+            return route('ilum.original', [
+                'storage' => $asset->storage_id,
+                'space' => $spaceId,
+                'assetId' => $assetId,
+                'name' => $name,
+            ]);
         } catch (\Throwable $e) {
             Log::error('Failed to get asset URL', [
                 'asset' => $asset->id,

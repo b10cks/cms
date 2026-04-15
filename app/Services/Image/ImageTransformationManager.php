@@ -3,18 +3,15 @@
 namespace App\Services\Image;
 
 use App\Contracts\Image\ImageDriverInterface;
-use App\Models\Management\Storage as StorageModel;
-use App\Services\Storage\StorageService;
+use App\Services\Image\Dto\ImageTransformation;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Manager;
 
 class ImageTransformationManager extends Manager
 {
-    public function __construct(
-        $app,
-        private readonly StorageService $storageService,
-    ) {
+    public function __construct($app)
+    {
         parent::__construct($app);
     }
 
@@ -48,9 +45,7 @@ class ImageTransformationManager extends Manager
     public function processImage(
         FilesystemAdapter $disk,
         string $fullPath,
-        string $operation,
-        array $params,
-        ?string $format = null,
+        ImageTransformation $transformation,
     ): ?array {
         try {
             if (!$disk->exists($fullPath)) {
@@ -58,28 +53,21 @@ class ImageTransformationManager extends Manager
                 return null;
             }
 
-            // Create temporary file for processing
-            $ext = pathinfo($fullPath, PATHINFO_EXTENSION);
-            $tempFile = tempnam(sys_get_temp_dir(), md5($fullPath)) . ".$ext";
-            $stream = $disk->readStream($fullPath);
-            if (!$stream) {
-                Log::error("Failed to get stream for: {$fullPath}");
+            $driver = $this->driver();
+            $outputFormat = $this->determineOutputFormat($transformation->format, $driver);
+            $tempFile = $this->copySourceToTemporaryFile($disk, $fullPath);
+            if ($tempFile === null) {
                 return null;
             }
 
-            file_put_contents($tempFile, stream_get_contents($stream));
-            fclose($stream);
-
-            $driver = $this->driver();
             $image = $driver->loadFromFile($tempFile);
-
-            $processedImage = $this->applyOperation($image, $operation, $params);
-
-            $outputFormat = $this->determineOutputFormat($format, $fullPath, $driver);
-            $options = $this->getFormatOptions($outputFormat);
-
+            $processedImage = $this->applyOperation($image, $transformation);
+            $options = $this->getFormatOptions($outputFormat, $transformation->quality);
             $buffer = $processedImage->toBuffer($outputFormat, $options);
-            unlink($tempFile);
+
+            if (file_exists($tempFile)) {
+                unlink($tempFile);
+            }
 
             return [
                 'data' => $buffer,
@@ -89,8 +77,8 @@ class ImageTransformationManager extends Manager
         } catch (\Throwable $e) {
             Log::error("Image processing error: {$e->getMessage()}", [
                 'path' => $fullPath,
-                'operation' => $operation,
-                'params' => $params,
+                'operation' => $transformation->operation,
+                'params' => $transformation->params,
                 'driver' => $this->getDefaultDriver(),
             ]);
 
@@ -106,13 +94,15 @@ class ImageTransformationManager extends Manager
     /**
      * Apply the specified operation to the image
      */
-    protected function applyOperation($image, string $operation, array $params)
+    protected function applyOperation($image, ImageTransformation $transformation)
     {
-        return match ($operation) {
+        $params = $transformation->params;
+
+        return match ($transformation->operation) {
             'original' => $image,
             'fit' => $image->fit($params['width'], $params['height']),
             'smartfit' => $image->smartFit($params['width'], $params['height']),
-            'fitfocus' => $image->fitFocus($params['x'], $params['y'], $params['width'], $params['height']),
+            'fitfocus' => $image->fitFocus($params['focusX'], $params['focusY'], $params['width'], $params['height']),
             'resize' => $image->resize($params['width'], $params['height']),
             'crop' => $image->crop($params['x'], $params['y'], $params['width'], $params['height']),
             'cropresize' => $image->cropResize(
@@ -132,7 +122,6 @@ class ImageTransformationManager extends Manager
      */
     protected function determineOutputFormat(
         ?string $requestedFormat,
-        string $imagePath,
         ImageDriverInterface $driver,
     ): string {
         if ($requestedFormat && \in_array($requestedFormat, $driver->getSupportedFormats())) {
@@ -145,8 +134,52 @@ class ImageTransformationManager extends Manager
     /**
      * Get format-specific options
      */
-    protected function getFormatOptions(string $format): array
+    protected function getFormatOptions(string $format, ?int $quality = null): array
     {
-        return config("ilum.formats.{$format}", []);
+        $options = config("ilum.formats.{$format}", []);
+
+        if ($quality !== null) {
+            $options['quality'] = $quality;
+        }
+
+        return $options;
+    }
+
+    protected function copySourceToTemporaryFile(FilesystemAdapter $disk, string $fullPath): ?string
+    {
+        $ext = pathinfo($fullPath, PATHINFO_EXTENSION);
+        $tempFile = tempnam(sys_get_temp_dir(), 'ilum_');
+
+        if ($tempFile === false) {
+            Log::error("Failed to create temporary file for: {$fullPath}");
+            return null;
+        }
+
+        $tempPath = $ext !== '' ? "{$tempFile}.{$ext}" : $tempFile;
+
+        if ($tempPath !== $tempFile) {
+            rename($tempFile, $tempPath);
+        }
+
+        $sourceStream = $disk->readStream($fullPath);
+        if (! $sourceStream) {
+            Log::error("Failed to get stream for: {$fullPath}");
+            return null;
+        }
+
+        $tempStream = fopen($tempPath, 'wb');
+
+        if ($tempStream === false) {
+            fclose($sourceStream);
+            Log::error("Failed to open temporary file for: {$fullPath}");
+            return null;
+        }
+
+        stream_copy_to_stream($sourceStream, $tempStream);
+
+        fclose($sourceStream);
+        fclose($tempStream);
+
+        return $tempPath;
     }
 }

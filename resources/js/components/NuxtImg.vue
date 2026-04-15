@@ -1,20 +1,8 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 
+import { buildIlumUrl } from '~/lib/ilum'
 import { runtimeConfig } from '~/lib/runtime-config'
-
-interface IlumModifiers {
-  width?: number
-  height?: number
-  crop?: 'fill' | 'fit' | 'crop'
-  gravity?: 'face' | 'center' | 'auto' | string
-  quality?: number
-  format?: string
-  x?: number
-  y?: number
-  targetWidth?: number
-  targetHeight?: number
-}
 
 const props = defineProps<{
   src: string
@@ -30,66 +18,17 @@ const props = defineProps<{
   decoding?: 'async' | 'auto' | 'sync'
 }>()
 
-const keyMap: Record<string, string> = {
-  width: 'w',
-  height: 'h',
-  crop: 'c',
-  gravity: 'g',
-  quality: 'quality',
-  format: 'format',
-  x: 'x',
-  y: 'y',
-  targetWidth: 'tw',
-  targetHeight: 'th',
-}
-
-function generateOperations(modifiers: IlumModifiers): string {
-  const ops: string[] = []
-
-  for (const [key, value] of Object.entries(modifiers)) {
-    if (value !== undefined) {
-      const mappedKey = keyMap[key]
-      if (mappedKey) {
-        if (mappedKey === 'g' && typeof value === 'string' && value.includes('_')) {
-          ops.push(`${mappedKey}_${value}`)
-        } else {
-          ops.push(`${mappedKey}_${value}`)
-        }
-      }
-    }
-  }
-
-  return ops.join(',')
-}
-
 const imageUrl = computed(() => {
   const baseURL = (runtimeConfig.public.ilum.baseURL || '').replace(/\/$/, '')
-  const { format, quality, ...transformations } = {
+
+  return buildIlumUrl(props.src, {
     width: props.width,
     height: props.height,
     crop: props.crop,
     gravity: props.gravity,
     format: props.format,
     quality: props.quality,
-  }
-
-  let finalPath = props.src.startsWith('/') ? props.src : `/${props.src}`
-  const ops = generateOperations(transformations as IlumModifiers)
-
-  if (ops) {
-    finalPath += `/${ops}`
-  }
-
-  const searchParams = new URLSearchParams()
-  if (format) searchParams.set('format', format)
-  if (quality) searchParams.set('quality', quality.toString())
-
-  const queryString = searchParams.toString()
-  if (queryString) {
-    finalPath += `?${queryString}`
-  }
-
-  return baseURL + finalPath
+  }, baseURL)
 })
 </script>
 

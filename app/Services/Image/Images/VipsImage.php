@@ -23,9 +23,9 @@ class VipsImage implements ImageInterface
         return $this->image->height;
     }
 
-    public function resize(int $width, int $height): ImageInterface
+    public function resize(?int $width, ?int $height): ImageInterface
     {
-        $scale = $width / $this->image->width;
+        $scale = $this->resolveResizeScale($width, $height);
         $resized = $this->image->resize($scale);
         return new static($resized);
     }
@@ -75,7 +75,7 @@ class VipsImage implements ImageInterface
         return new static($thumbnail);
     }
 
-    public function fitFocus(int $focusX, int $focusY, int $width, int $height): ImageInterface
+    public function fitFocus(float $focusX, float $focusY, int $width, int $height): ImageInterface
     {
         $originalWidth = $this->image->width;
         $originalHeight = $this->image->height;
@@ -150,5 +150,20 @@ class VipsImage implements ImageInterface
     public function getResource(): VipsImageLib
     {
         return $this->image;
+    }
+
+    private function resolveResizeScale(?int $width, ?int $height): float
+    {
+        $originalWidth = $this->image->width;
+        $originalHeight = $this->image->height;
+
+        $scale = match (true) {
+            $width !== null && $height !== null => min($width / $originalWidth, $height / $originalHeight),
+            $width !== null => $width / $originalWidth,
+            $height !== null => $height / $originalHeight,
+            default => 1.0,
+        };
+
+        return max(min($scale, 1.0), 0.0001);
     }
 }

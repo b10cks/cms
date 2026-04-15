@@ -8,7 +8,7 @@ interface ImageInterface
 
     public function getHeight(): int;
 
-    public function resize(int $width, int $height): self;
+    public function resize(?int $width, ?int $height): self;
 
     public function crop(int $x, int $y, int $width, int $height): self;
 
@@ -16,7 +16,7 @@ interface ImageInterface
 
     public function smartFit(int $width, int $height): self;
 
-    public function fitFocus(int $focusX, int $focusY, int $width, int $height): self;
+    public function fitFocus(float $focusX, float $focusY, int $width, int $height): self;
 
     public function cropResize(int $x, int $y, int $width, int $height, int $targetWidth, int $targetHeight): self;
 
