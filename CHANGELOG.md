@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.15-8e09cdb] — 2026-4-15
+
+- 👔 Improve ilum endpoints
+- ⬆️ Bump versions
+- ⚡️ Send cache header for web response
+
 ## [v2026.4.15-f19e928] — 2026-4-15
 
 - ⬆️ Bump versions
