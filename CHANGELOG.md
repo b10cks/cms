@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.15-62011cb] — 2026-4-15
+
+- Revert "⚡️ Send cache header for web response"
+
 ## [v2026.4.15-8e09cdb] — 2026-4-15
 
 - 👔 Improve ilum endpoints
