@@ -34,12 +34,9 @@ class ImageController extends Controller
             $space = Space::findOrFail($space);
             $request->route()->setParameter('space', $space);
             app()->offsetSet('currentSpace', $space);
-            
+
             $storageModel = $space->storages()->findOrFail($storage);
-            $asset = Asset::query()
-                ->whereKey($assetId)
-                ->where('storage_id', $storageModel->id)
-                ->firstOrFail();
+            $asset = Asset::query()->whereKey($assetId)->where('storage_id', $storageModel->id)->firstOrFail();
 
             abort_unless($asset->path === $fullPath, 404);
 
@@ -48,7 +45,7 @@ class ImageController extends Controller
         } else {
             $disk = Storage::disk();
 
-            if (! $disk->exists($fullPath)) {
+            if (!$disk->exists($fullPath)) {
                 return response()->json(['error' => 'Image not found'], 404);
             }
 
@@ -64,10 +61,22 @@ class ImageController extends Controller
         }
 
         try {
+            $transformationParameters = $request->transformationParameters();
+            $format = $request->validated('format');
+            $quality = $request->validated('quality');
+
+            if (empty($transformationParameters) && $format === null && $quality === null) {
+                return $disk->response($fullPath, null, [
+                    'Content-Type' => $mimetype,
+                    'Cache-Control' => $this->buildCacheControlHeader(),
+                    'Pragma' => 'public',
+                ]);
+            }
+
             $transformation = app(ImageTransformationResolver::class)->resolve(
-                $request->transformationParameters(),
-                $request->validated('format'),
-                $request->validated('quality'),
+                $transformationParameters,
+                $format,
+                $quality,
             );
             $result = $this->imageService->processImage($disk, $fullPath, $transformation);
 
