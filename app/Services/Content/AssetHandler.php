@@ -67,6 +67,7 @@ class AssetHandler
                         [
                             'url' => $asset->getUrl(),
                             'data' => $result,
+                            'full_path' => $asset->full_path,
                             'filename' => $asset->filename,
                             'extension' => $asset->extension,
                             'mime_type' => $asset->mime_type,
