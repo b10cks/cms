@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.17-22abbb5] — 2026-4-17
+
+- 👔 Response with the original if no transformations are supplied
+- 👔 Expose the full_path from the actual asset
+
 ## [v2026.4.15-62011cb] — 2026-4-15
 
 - Revert "⚡️ Send cache header for web response"
