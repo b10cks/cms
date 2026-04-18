@@ -7,6 +7,7 @@ defineProps<{
   modelValue: string
   isMachineTranslated?: boolean
   disabled?: boolean
+  error?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -38,8 +39,10 @@ const updateValue = (value: string | number) => {
       :label="item.name || item.key"
       :model-value="modelValue"
       :disabled="disabled"
+      :error="error"
       :input-class="[isMachineTranslated && 'ring-1 ring-ai']"
       :placeholder="originalValue || ''"
+      data-validation-target="true"
       hide-label
       @update:model-value="updateValue"
     />

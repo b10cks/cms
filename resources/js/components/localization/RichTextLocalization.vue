@@ -9,6 +9,7 @@ const props = defineProps<{
   isMachineTranslated?: boolean
   spaceId?: string
   disabled?: boolean
+  error?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -67,13 +68,16 @@ const updateValue = (value: Record<string, unknown>) => {
     <FormField
       :name="`${props.item.key}-translation`"
       :label="props.item.name || props.item.key"
+      :error="props.error"
       hide-label
     >
       <div
         :class="[
           '[&_.ProseMirror]:h-auto [&_.ProseMirror]:max-w-none',
+          props.error && 'rounded border border-red-500/60 p-1',
           isMachineTranslated && 'rounded ring-1 ring-violet-500',
         ]"
+        data-validation-target="true"
       >
         <TiptapEditor
           :model-value="normalizedModelValue"

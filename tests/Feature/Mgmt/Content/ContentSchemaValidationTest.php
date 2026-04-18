@@ -247,6 +247,62 @@ class ContentSchemaValidationTest extends TestCase
         $this->assertArrayNotHasKey('promo_title', $translation->current_version->content);
     }
 
+    #[Test]
+    public function publishing_a_localized_overlay_ignores_missing_non_translatable_fields(): void
+    {
+        $this->actingAs($this->owner);
+
+        $translationBlock = Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Localized Page',
+            'slug' => 'localizedPage',
+            'type' => 'root',
+            'schema' => [
+                'media' => [
+                    'type' => 'asset',
+                    'name' => 'Media',
+                    'required' => true,
+                ],
+                'headline' => [
+                    'type' => 'text',
+                    'name' => 'Headline',
+                    'required' => true,
+                    'translatable' => true,
+                ],
+            ],
+            'editor' => [[
+                'header' => 'General',
+                'items' => ['media', 'headline'],
+            ]],
+        ]);
+
+        $canonical = $this->createContent([
+            'headline' => 'Default headline',
+        ], $translationBlock, 'en');
+
+        $translation = $this->createContent([
+            'media' => null,
+            'headline' => 'Lokalisierte Headline',
+        ], $translationBlock, 'de', $canonical);
+
+        $this->postJson(route('mgmt.contents.publish', [
+            'space' => $this->space->id,
+            'content' => $translation->id,
+        ]), [
+            'content' => [
+                'headline' => 'Lokalisierte Headline',
+            ],
+        ])->assertOk();
+
+        $translation->refresh()->load('published_version');
+
+        $this->assertNotNull($translation->published_at);
+        $this->assertSame(
+            ['headline' => 'Lokalisierte Headline'],
+            $translation->published_version?->content
+        );
+    }
+
     protected function createContent(
         array $contentData,
         ?Block $block = null,

@@ -52,12 +52,14 @@ class ContentSchemaValidator
                 $effectiveBase['mode'] === 'overlay',
             ),
         );
+        $ignoreAbsentNonTranslatableFields = $effectiveBase['mode'] === 'overlay'
+            && (($content?->i18n_parent_id ?? null) !== null || $i18nParentId !== null);
 
         return new ContentSchemaValidationResult(
             content: $sanitizedContent,
             tree: $sanitizedTree,
-            errors: $this->collectErrors($sanitizedTree, $mode),
-            warnings: $this->collectWarnings($sanitizedTree, $mode),
+            errors: $this->collectErrors($sanitizedTree, $mode, $ignoreAbsentNonTranslatableFields),
+            warnings: $this->collectWarnings($sanitizedTree, $mode, $ignoreAbsentNonTranslatableFields),
         );
     }
 
@@ -121,7 +123,11 @@ class ContentSchemaValidator
     /**
      * @return array<string, array<int, string>>
      */
-    protected function collectErrors(ContentSchemaTree $tree, string $mode = 'publish'): array
+    protected function collectErrors(
+        ContentSchemaTree $tree,
+        string $mode = 'publish',
+        bool $ignoreAbsentNonTranslatableFields = false,
+    ): array
     {
         $errors = [];
 
@@ -130,7 +136,7 @@ class ContentSchemaValidator
                 continue;
             }
 
-            $messages = $this->validateNode($node, $mode);
+            $messages = $this->validateNode($node, $mode, $ignoreAbsentNonTranslatableFields);
 
             if ($messages !== []) {
                 $errors[$node->dotPath()] = $messages;
@@ -143,7 +149,11 @@ class ContentSchemaValidator
     /**
      * @return array<string, array<int, string>>
      */
-    protected function collectWarnings(ContentSchemaTree $tree, string $mode = 'save'): array
+    protected function collectWarnings(
+        ContentSchemaTree $tree,
+        string $mode = 'save',
+        bool $ignoreAbsentNonTranslatableFields = false,
+    ): array
     {
         $warnings = [];
 
@@ -152,7 +162,7 @@ class ContentSchemaValidator
                 continue;
             }
 
-            $messages = $this->warnNode($node, $mode);
+            $messages = $this->warnNode($node, $mode, $ignoreAbsentNonTranslatableFields);
 
             if ($messages !== []) {
                 $warnings[$node->dotPath()] = $messages;
@@ -165,11 +175,23 @@ class ContentSchemaValidator
     /**
      * @return array<int, string>
      */
-    protected function validateNode(ContentSchemaNode $node, string $mode = 'publish'): array
+    protected function validateNode(
+        ContentSchemaNode $node,
+        string $mode = 'publish',
+        bool $ignoreAbsentNonTranslatableFields = false,
+    ): array
     {
         $field = $node->field;
         $type = $field->getType();
         $value = $node->effectiveValue;
+
+        if (
+            $ignoreAbsentNonTranslatableFields
+            && ! $field->isTranslatable()
+            && ! array_key_exists($field->getKey(), $node->localScope)
+        ) {
+            return [];
+        }
 
         if ($field->isRequired() && $this->isEmpty($value)) {
             return $mode === 'publish'
@@ -202,10 +224,22 @@ class ContentSchemaValidator
     /**
      * @return array<int, string>
      */
-    protected function warnNode(ContentSchemaNode $node, string $mode = 'save'): array
+    protected function warnNode(
+        ContentSchemaNode $node,
+        string $mode = 'save',
+        bool $ignoreAbsentNonTranslatableFields = false,
+    ): array
     {
         $field = $node->field;
         $value = $node->effectiveValue;
+
+        if (
+            $ignoreAbsentNonTranslatableFields
+            && ! $field->isTranslatable()
+            && ! array_key_exists($field->getKey(), $node->localScope)
+        ) {
+            return [];
+        }
 
         if ($mode === 'save' && $field->isRequired() && $this->isEmpty($value)) {
             return [sprintf('%s is required.', $field->getLabel())];

@@ -15,6 +15,7 @@ interface ValidationStateOptions {
   content: Ref<ContentResource | null>
   blocks: Ref<BlockResource[] | undefined>
   effectiveContent?: Ref<Record<string, unknown> | null | undefined>
+  ignoreAbsentNonTranslatableFields?: boolean
 }
 
 const INDEXABLE_TYPES: CanonicalSchemaTypeName[] = [
@@ -252,7 +253,14 @@ export const isFieldVisible = (
         rule.field,
         schema[rule.field] || ({ type: 'text' } as SchemaType)
       )
-      const source = controller.translatable ? effectiveScope : scope
+      const localValue = scope?.[rule.field]
+      const source =
+        controller.translatable ||
+        (localValue === undefined &&
+          Object.prototype.hasOwnProperty.call(effectiveScope, rule.field))
+          ? effectiveScope
+          : scope
+
       return matchesCondition(source?.[rule.field], rule.operator, rule.value)
     })
 
@@ -267,7 +275,8 @@ const pruneScope = (
   values: ScopeValue,
   schema: Record<string, SchemaType>,
   blocksBySlug: BlocksMap,
-  effectiveScope: ScopeValue = values
+  effectiveScope: ScopeValue = values,
+  ignoreAbsentNonTranslatableFields = false
 ) => {
   const next = cloneScope(values)
 
@@ -278,7 +287,14 @@ const pruneScope = (
       continue
     }
 
-    if (normalizeSchemaType(field.type) !== 'blocks') continue
+    const type = normalizeSchemaType(field.type)
+
+    if (ignoreAbsentNonTranslatableFields && !field.translatable && type !== 'blocks') {
+      delete next[key]
+      continue
+    }
+
+    if (type !== 'blocks') continue
     if (!Array.isArray(next[key])) continue
 
     next[key] = next[key].map((item, index) => {
@@ -291,7 +307,13 @@ const pruneScope = (
         ? (effectiveScope[key] as Array<ScopeValue>)[index] || (item as ScopeValue)
         : (item as ScopeValue)
 
-      return pruneScope(item as ScopeValue, block.schema, blocksBySlug, effectiveItem)
+      return pruneScope(
+        item as ScopeValue,
+        block.schema,
+        blocksBySlug,
+        effectiveItem,
+        ignoreAbsentNonTranslatableFields
+      )
     })
   }
 
@@ -303,7 +325,8 @@ const validateScope = (
   schema: Record<string, SchemaType>,
   blocksBySlug: BlocksMap,
   pathPrefix: Array<string | number> = [],
-  effectiveScope: ScopeValue = values
+  effectiveScope: ScopeValue = values,
+  ignoreAbsentNonTranslatableFields = false
 ) => {
   const errors: Record<string, string[]> = {}
   const normalizedSchema = normalizeSchema(schema)
@@ -318,16 +341,22 @@ const validateScope = (
     const path = [...pathPrefix, key]
     if (!isFieldVisible(field, schema, values, effectiveScope)) continue
 
+    const type = normalizeSchemaType(field.type)
+    const ignoreCurrentField = ignoreAbsentNonTranslatableFields && !field.translatable
+
+    if (ignoreCurrentField && type !== 'blocks') {
+      continue
+    }
+
     const value = (effectiveScope as ScopeValue)[key]
     const validation = field.validation || {}
-    const type = normalizeSchemaType(field.type)
 
-    if (field.required && isEmpty(value)) {
+    if (!ignoreCurrentField && field.required && isEmpty(value)) {
       pushError(path, `${field.name || key} is required.`)
       continue
     }
 
-    if (isEmpty(value)) continue
+    if (!ignoreCurrentField && isEmpty(value)) continue
 
     if (['text', 'textarea', 'markdown', 'richtext'].includes(type)) {
       const length = String(typeof value === 'string' ? value : JSON.stringify(value)).length
@@ -413,10 +442,9 @@ const validateScope = (
         const header = tableValue.header
         const rows = tableValue.rows
         const columns = getTableColumns(field as TableSchema)
-        const columnMap = Object.fromEntries(columns.map((column) => [column.key, column])) as Record<
-          string,
-          TableColumn
-        >
+        const columnMap = Object.fromEntries(
+          columns.map((column) => [column.key, column])
+        ) as Record<string, TableColumn>
 
         if (!header || typeof header !== 'object' || Array.isArray(header)) {
           pushError(path, `${field.name || key} must contain a valid header object.`)
@@ -513,7 +541,10 @@ const validateScope = (
       }
     }
 
-    if (type === 'options' || type === 'multi_assets' || type === 'references' || type === 'blocks') {
+    if (
+      !ignoreCurrentField &&
+      (type === 'options' || type === 'multi_assets' || type === 'references' || type === 'blocks')
+    ) {
       if (!Array.isArray(value)) {
         pushError(path, `${field.name || key} must be a list.`)
       } else {
@@ -555,7 +586,8 @@ const validateScope = (
             block.schema,
             blocksBySlug,
             [...path, index],
-            effectiveItem
+            effectiveItem,
+            ignoreAbsentNonTranslatableFields
           )
         )
       })
@@ -569,6 +601,7 @@ export const useContentSchemaState = ({
   content,
   blocks,
   effectiveContent: effectiveContentRef,
+  ignoreAbsentNonTranslatableFields = false,
 }: ValidationStateOptions) => {
   const dirtyFields = ref<Record<string, boolean>>({})
   const submitAttempted = ref(false)
@@ -605,7 +638,8 @@ export const useContentSchemaState = ({
         (content.value.content || {}) as ScopeValue,
         rootSchema.value,
         blocksBySlug.value,
-        effectiveContent.value
+        effectiveContent.value,
+        ignoreAbsentNonTranslatableFields
       )
     } catch (error) {
       warnSchemaState('failed to sanitize content; falling back to raw content', error)
@@ -622,7 +656,8 @@ export const useContentSchemaState = ({
         rootSchema.value,
         blocksBySlug.value,
         [],
-        effectiveContent.value
+        effectiveContent.value,
+        ignoreAbsentNonTranslatableFields
       )
     } catch (error) {
       warnSchemaState('failed to validate content client-side; skipping client errors', error)
@@ -679,9 +714,7 @@ export const useContentSchemaState = ({
   }
 
   const getValidationIssueSignature = () =>
-    validationEntries.value
-      .map((entry) => `${entry.path}:${entry.messages[0] || ''}`)
-      .join('|')
+    validationEntries.value.map((entry) => `${entry.path}:${entry.messages[0] || ''}`).join('|')
 
   const revealValidationState = async () => {
     if (submitAttempted.value) {
@@ -745,9 +778,13 @@ export const useContentSchemaState = ({
       block: 'center',
     })
 
-    const focusable = container.querySelector<HTMLElement>(
-      'input, textarea, select, button, [contenteditable="true"], [tabindex]:not([tabindex="-1"])'
-    )
+    const focusableSelector =
+      'input:not([tabindex="-1"]), textarea:not([tabindex="-1"]), select:not([tabindex="-1"]), button:not([tabindex="-1"]), [contenteditable="true"], [tabindex]:not([tabindex="-1"])'
+    const validationTarget = container.querySelector<HTMLElement>('[data-validation-target="true"]')
+    const focusable =
+      (validationTarget?.matches(focusableSelector) ? validationTarget : null) ||
+      validationTarget?.querySelector<HTMLElement>(focusableSelector) ||
+      container.querySelector<HTMLElement>(focusableSelector)
     focusable?.focus()
   }
 

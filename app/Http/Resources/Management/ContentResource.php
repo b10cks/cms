@@ -81,6 +81,7 @@ class ContentResource extends JsonResource
             'effective_i18n_mode' => $effectiveI18nMode,
             'language_versions' => $languageVersions,
             'content' => $this->prepareContent($resolved, $resolvedRow),
+            'raw_content' => $resolvedRow->current_version?->content ?: new \StdClass,
             'settings' => $resolvedRow->settings->toArray() ?: new \StdClass,
             'current_version_id' => $resolvedRow->current_version_id,
             'current_version' => $resolvedRow->current_version ? new ContentVersionListResource($resolvedRow->current_version) : null,

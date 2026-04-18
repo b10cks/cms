@@ -8,6 +8,7 @@ defineProps<{
   modelValue: string
   isMachineTranslated?: boolean
   disabled?: boolean
+  error?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -42,6 +43,7 @@ const updateValue = (value: string | number) => {
     <FormField
       :name="`${item.key}-translation`"
       :label="item.name || item.key"
+      :error="error"
       hide-label
     >
       <Textarea
@@ -51,6 +53,7 @@ const updateValue = (value: string | number) => {
         rows="4"
         :class="['resize-none', isMachineTranslated && 'ring-1 ring-violet-500']"
         :placeholder="originalValue || ''"
+        data-validation-target="true"
         @update:model-value="updateValue"
       />
     </FormField>

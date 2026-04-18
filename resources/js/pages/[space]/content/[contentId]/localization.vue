@@ -15,7 +15,6 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/componen
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 import { useContentSchemaState } from '~/composables/useContentSchemaState'
-import { mergeLocalizedContentForSchema } from '~/lib/tableField'
 import {
   buildMissingLanguageDraft,
   getContentDefaultLanguage,
@@ -23,6 +22,7 @@ import {
   resolveContentRouteName,
   withContentLanguageQuery,
 } from '~/lib/content-i18n'
+import { mergeLocalizedContentForSchema } from '~/lib/tableField'
 import type { ContentResource } from '~/types/contents'
 
 const route = useRoute()
@@ -181,19 +181,16 @@ const sourceContentPayload = computed<Record<string, unknown>>(() => {
   return chain
     .slice()
     .reverse()
-    .reduce<Record<string, unknown>>(
-      (merged, content) => {
-        const schema = (block.value?.schema || {}) as Record<string, SchemaType>
+    .reduce<Record<string, unknown>>((merged, content) => {
+      const schema = (block.value?.schema || {}) as Record<string, SchemaType>
 
-        return mergeLocalizedContentForSchema(
-          merged,
-          (content.content as Record<string, unknown>) || {},
-          schema,
-          getBlockSchemaFn
-        ) as Record<string, unknown>
-      },
-      {}
-    )
+      return mergeLocalizedContentForSchema(
+        merged,
+        (content.content as Record<string, unknown>) || {},
+        schema,
+        getBlockSchemaFn
+      ) as Record<string, unknown>
+    }, {})
 })
 
 const mergePreviewContent = (source: unknown, overlay: unknown): unknown => {
@@ -218,9 +215,17 @@ const previewContentPayload = computed<Record<string, unknown>>(
 )
 
 const cloneContent = (value: ContentResource): ContentResource => JSON.parse(JSON.stringify(value))
+const getLocalizedDraftContent = (value: ContentResource): Record<string, unknown> => {
+  if (value.raw_content && typeof value.raw_content === 'object') {
+    return JSON.parse(JSON.stringify(value.raw_content)) as Record<string, unknown>
+  }
+
+  return JSON.parse(JSON.stringify((value.content || {}) as Record<string, unknown>))
+}
 
 const syncPersistedContent = (nextContent: ContentResource) => {
   const cloned = cloneContent(nextContent)
+  cloned.content = getLocalizedDraftContent(cloned)
   persistedContent.value = cloned
   translatableContent.value = cloneContent(cloned)
 }
@@ -369,6 +374,7 @@ const blockList = computed(() => blocks.value?.data || [])
 const {
   sanitizedContent,
   validationSummary,
+  markFieldDirty,
   setServerErrors,
   clearServerErrors,
   getFieldError,
@@ -385,6 +391,7 @@ const {
   content: translatableContent,
   blocks: blockList,
   effectiveContent: previewContentPayload,
+  ignoreAbsentNonTranslatableFields: true,
 })
 
 const block = computed(() => {
@@ -551,6 +558,7 @@ provide('resetDirtyState', () => {
   resetValidationState()
 })
 provide('content', previewContentRef)
+provide('markFieldDirty', markFieldDirty)
 provide('getFieldError', getFieldError)
 provide('shouldShowFieldError', shouldShowFieldError)
 provide('setValidationErrors', setServerErrors)

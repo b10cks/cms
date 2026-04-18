@@ -191,6 +191,7 @@ export interface ContentResource {
   i18n_siblings?: ContentMenuTranslation[]
   name: string
   content: Record<string, unknown>
+  raw_content?: Record<string, unknown>
   settings: ContentSettings
   published_version_id: string | null
   published_version?: ContentVersionListResource | null

@@ -57,9 +57,11 @@ class ConditionEvaluator
         $controllerField = $scopeSchema->getField((string) ($rule['field'] ?? ''));
         $operator = (string) ($rule['operator'] ?? 'equals');
 
+        $localValue = data_get($localScope, $rule['field']);
         $value = $controllerField?->isTranslatable()
+            || ($localValue === null && data_get($effectiveScope, $rule['field']) !== null)
             ? data_get($effectiveScope, $rule['field'])
-            : data_get($localScope, $rule['field']);
+            : $localValue;
 
         $expected = $rule['value'] ?? null;
 

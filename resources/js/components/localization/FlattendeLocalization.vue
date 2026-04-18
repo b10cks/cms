@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Component, Ref } from 'vue'
-import { computed, ref, watch } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 
 import type { SpaceAiConfig } from '~/api/resources/ai'
@@ -19,6 +19,7 @@ import {
 } from '~/composables/useContentSchemaState'
 import { ensureTableValue, getTableColumns, mergeLocalizedContentForSchema } from '~/lib/tableField'
 
+import LinkLocalization from './LinkLocalization.vue'
 import MarkdownLocalization from './MarkdownLocalization.vue'
 import RichTextLocalization from './RichTextLocalization.vue'
 import TextareaLocalization from './TextareaLocalization.vue'
@@ -78,6 +79,7 @@ const localizers: Partial<Record<CanonicalSchemaTypeName, Component>> = {
   textarea: TextareaLocalization,
   markdown: MarkdownLocalization,
   richtext: RichTextLocalization,
+  link: LinkLocalization,
   meta: MetaLocalization,
 }
 
@@ -102,6 +104,15 @@ const emit = defineEmits<{
 
 const { useSpaceQuery } = useSpaces()
 const { data: space } = useSpaceQuery(props.spaceId) as { data: Ref<Space> }
+const markFieldDirty = inject<((path: string) => void) | undefined>('markFieldDirty', undefined)
+const getFieldError = inject<((path: string) => string | null) | undefined>(
+  'getFieldError',
+  undefined
+)
+const shouldShowFieldError = inject<((path: string) => boolean) | undefined>(
+  'shouldShowFieldError',
+  undefined
+)
 
 const showUntranslatedOnly = ref(false)
 const searchQuery = ref('')
@@ -182,6 +193,23 @@ const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isRichTextDocument = (value: unknown): value is Record<string, unknown> =>
   isObjectRecord(value) && value.type === 'doc'
+
+const isLinkValue = (value: unknown): value is LinkValue => {
+  if (!isObjectRecord(value) || typeof value.type !== 'string') {
+    return false
+  }
+
+  switch (value.type) {
+    case 'url':
+      return typeof value.url === 'string'
+    case 'email':
+      return true
+    case 'internal':
+      return typeof value.content === 'string'
+    default:
+      return false
+  }
+}
 
 const normalizeMetaValue = (value: unknown): MetaValue =>
   (isObjectRecord(value) ? cloneValue(value as MetaValue) : {}) as MetaValue
@@ -290,6 +318,23 @@ const hasTranslatedValue = (schemaItem: LocalizableSchema, value: unknown): bool
     return collectRichTextSegments(value).length > 0
   }
 
+  if (normalizedType === 'link') {
+    if (!isLinkValue(value)) {
+      return false
+    }
+
+    switch (value.type) {
+      case 'url':
+        return isNonEmptyString(value.url)
+      case 'email':
+        return isNonEmptyString(value.email)
+      case 'internal':
+        return isNonEmptyString(value.content)
+      default:
+        return false
+    }
+  }
+
   return isNonEmptyString(value)
 }
 
@@ -318,6 +363,10 @@ const isFieldTranslated = (
       .every((segment) => isNonEmptyString(getValueAtPath(translatedDocument, segment.path)))
   }
 
+  if (normalizedType === 'link') {
+    return hasTranslatedValue(schemaItem, translatedValue)
+  }
+
   return isNonEmptyString(translatedValue)
 }
 
@@ -330,6 +379,10 @@ const normalizeTranslatedFieldValue = (field: TranslatableField, value: unknown)
 
   if (normalizedType === 'richtext') {
     return normalizeRichTextValue(value, field.originalValue as Record<string, unknown>)
+  }
+
+  if (normalizedType === 'link') {
+    return isLinkValue(value) ? cloneValue(value) : null
   }
 
   return typeof value === 'string' ? value : ''
@@ -581,6 +634,17 @@ const getFieldIdentifier = (field: TranslatableField): string => {
   return `${field.path.join('-')}-${field.key}`
 }
 
+const getValidationPath = (field: TranslatableField): string => {
+  const path = field.tablePath || field.path
+  return `content.${path.join('.')}`
+}
+
+const getValidationError = (field: TranslatableField): string | null =>
+  getFieldError?.(getValidationPath(field)) || null
+
+const shouldShowValidationError = (field: TranslatableField): boolean =>
+  shouldShowFieldError?.(getValidationPath(field)) || false
+
 const isMachineTranslated = (field: TranslatableField): boolean => {
   return machineTranslatedFields.value.has(getFieldIdentifier(field))
 }
@@ -702,6 +766,7 @@ const updateTranslatedValue = (field: TranslatableField, newValue: unknown): voi
 
   const nextTranslationContent = cloneTranslationContent(translationDraft.value)
   applyTranslatedValue(nextTranslationContent, field, newValue)
+  markFieldDirty?.(getValidationPath(field))
   emitTranslationContent(nextTranslationContent)
 }
 
@@ -1043,7 +1108,8 @@ const translationStats = computed(() => {
       <div
         v-for="field in filteredFields"
         :key="`${field.path.join('-')}-${field.key}`"
-        :data-field-path="`content.${field.path.join('.')}`"
+        :data-field-path="getValidationPath(field)"
+        :data-validation-visible="shouldShowValidationError(field) ? 'true' : undefined"
       >
         <div class="-mb-2 pt-2">
           <h4 class="flex items-baseline gap-2">
@@ -1063,6 +1129,7 @@ const translationStats = computed(() => {
             :disabled="isTranslating"
             :is-machine-translated="isMachineTranslated(field)"
             :space-id="props.spaceId"
+            :error="shouldShowValidationError(field) ? getValidationError(field) : null"
             @update:model-value="(newValue: unknown) => updateTranslatedValue(field, newValue)"
           />
           <div
@@ -1084,6 +1151,16 @@ const translationStats = computed(() => {
               </div>
             </div>
           </div>
+        </div>
+        <div
+          v-if="
+            !resolveLocalizerComponent(field.schemaItem.type) &&
+            shouldShowValidationError(field) &&
+            getValidationError(field)
+          "
+          class="mt-2 rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+        >
+          {{ getValidationError(field) }}
         </div>
       </div>
       <div
