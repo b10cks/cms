@@ -8,6 +8,8 @@ interface ImageInterface
 
     public function getHeight(): int;
 
+    public function isAnimated(): bool;
+
     public function resize(?int $width, ?int $height): self;
 
     public function crop(int $x, int $y, int $width, int $height): self;

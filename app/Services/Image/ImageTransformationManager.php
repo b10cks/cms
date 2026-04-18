@@ -54,13 +54,13 @@ class ImageTransformationManager extends Manager
             }
 
             $driver = $this->driver();
-            $outputFormat = $this->determineOutputFormat($transformation->format, $driver);
             $tempFile = $this->copySourceToTemporaryFile($disk, $fullPath);
             if ($tempFile === null) {
                 return null;
             }
 
             $image = $driver->loadFromFile($tempFile);
+            $outputFormat = $this->determineOutputFormat($transformation->format, $driver, $image);
             $processedImage = $this->applyOperation($image, $transformation);
             $options = $this->getFormatOptions($outputFormat, $transformation->quality);
             $buffer = $processedImage->toBuffer($outputFormat, $options);
@@ -72,7 +72,7 @@ class ImageTransformationManager extends Manager
             return [
                 'data' => $buffer,
                 'format' => $outputFormat,
-                'mime' => config("ilum.formats.{$outputFormat}.mime"),
+                'mime' => $this->config->get("ilum.formats.{$outputFormat}.mime"),
             ];
         } catch (\Throwable $e) {
             Log::error("Image processing error: {$e->getMessage()}", [
@@ -123,12 +123,19 @@ class ImageTransformationManager extends Manager
     protected function determineOutputFormat(
         ?string $requestedFormat,
         ImageDriverInterface $driver,
+        \App\Contracts\Image\ImageInterface $image,
     ): string {
         if ($requestedFormat && \in_array($requestedFormat, $driver->getSupportedFormats())) {
             return $requestedFormat;
         }
 
-        return config('ilum.default_format', 'webp');
+        $defaultFormat = $this->config->get('ilum.default_format', 'webp');
+
+        if ($image->isAnimated() && ! $this->supportsAnimation($defaultFormat)) {
+            return 'gif';
+        }
+
+        return $defaultFormat;
     }
 
     /**
@@ -136,13 +143,18 @@ class ImageTransformationManager extends Manager
      */
     protected function getFormatOptions(string $format, ?int $quality = null): array
     {
-        $options = config("ilum.formats.{$format}", []);
+        $options = $this->config->get("ilum.formats.{$format}", []);
 
         if ($quality !== null) {
             $options['quality'] = $quality;
         }
 
         return $options;
+    }
+
+    protected function supportsAnimation(string $format): bool
+    {
+        return \in_array($format, ['gif', 'webp'], true);
     }
 
     protected function copySourceToTemporaryFile(FilesystemAdapter $disk, string $fullPath): ?string

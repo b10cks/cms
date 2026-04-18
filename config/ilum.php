@@ -31,6 +31,9 @@ return [
             'quality' => env('IMAGE_PNG_QUALITY', 90),
             'mime' => 'image/png',
         ],
+        'gif' => [
+            'mime' => 'image/gif',
+        ],
     ],
 
     'cache' => [

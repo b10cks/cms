@@ -4,7 +4,6 @@ namespace App\Services\Image\Images;
 
 use App\Contracts\Image\ImageInterface;
 use Imagick;
-use ImagickPixel;
 
 class ImagickImage implements ImageInterface
 {
@@ -23,25 +22,53 @@ class ImagickImage implements ImageInterface
         return $this->imagick->getImageHeight();
     }
 
+    public function isAnimated(): bool
+    {
+        return $this->imagick->getNumberImages() > 1;
+    }
+
     public function resize(?int $width, ?int $height): ImageInterface
     {
-        $cloned = clone $this->imagick;
-
         [$targetWidth, $targetHeight] = $this->resolveResizeDimensions($width, $height);
 
-        $cloned->resizeImage($targetWidth, $targetHeight, Imagick::FILTER_LANCZOS, 1);
+        $cloned = $this->isAnimated()
+            ? $this->transformAnimatedFrames(function (Imagick $frame) use ($targetWidth, $targetHeight): void {
+                $frame->resizeImage($targetWidth, $targetHeight, Imagick::FILTER_LANCZOS, 1);
+            })
+            : clone $this->imagick;
+
+        if (! $this->isAnimated()) {
+            $cloned->resizeImage($targetWidth, $targetHeight, Imagick::FILTER_LANCZOS, 1);
+        }
+
         return new static($cloned);
     }
 
     public function crop(int $x, int $y, int $width, int $height): ImageInterface
     {
-        $cloned = clone $this->imagick;
-        $cloned->cropImage($width, $height, $x, $y);
+        $cloned = $this->isAnimated()
+            ? $this->transformAnimatedFrames(function (Imagick $frame) use ($x, $y, $width, $height): void {
+                $frame->cropImage($width, $height, $x, $y);
+            })
+            : clone $this->imagick;
+
+        if (! $this->isAnimated()) {
+            $cloned->cropImage($width, $height, $x, $y);
+        }
+
         return new static($cloned);
     }
 
     public function fit(int $width, int $height): ImageInterface
     {
+        if ($this->isAnimated()) {
+            return new static($this->transformAnimatedFrames(
+                function (Imagick $frame) use ($width, $height): void {
+                    $this->applyFitToFrame($frame, $width, $height);
+                }
+            ));
+        }
+
         $originalWidth = $this->getWidth();
         $originalHeight = $this->getHeight();
 
@@ -80,6 +107,14 @@ class ImagickImage implements ImageInterface
 
     public function fitFocus(float $focusX, float $focusY, int $width, int $height): ImageInterface
     {
+        if ($this->isAnimated()) {
+            return new static($this->transformAnimatedFrames(
+                function (Imagick $frame) use ($focusX, $focusY, $width, $height): void {
+                    $this->applyFitFocusToFrame($frame, $focusX, $focusY, $width, $height);
+                }
+            ));
+        }
+
         $originalWidth = $this->getWidth();
         $originalHeight = $this->getHeight();
 
@@ -115,9 +150,18 @@ class ImagickImage implements ImageInterface
 
     public function cropResize(int $x, int $y, int $width, int $height, int $targetWidth, int $targetHeight): ImageInterface
     {
-        $cloned = clone $this->imagick;
-        $cloned->cropImage($width, $height, $x, $y);
-        $cloned->resizeImage($targetWidth, $targetHeight, Imagick::FILTER_LANCZOS, 1);
+        $cloned = $this->isAnimated()
+            ? $this->transformAnimatedFrames(function (Imagick $frame) use ($x, $y, $width, $height, $targetWidth, $targetHeight): void {
+                $frame->cropImage($width, $height, $x, $y);
+                $frame->resizeImage($targetWidth, $targetHeight, Imagick::FILTER_LANCZOS, 1);
+            })
+            : clone $this->imagick;
+
+        if (! $this->isAnimated()) {
+            $cloned->cropImage($width, $height, $x, $y);
+            $cloned->resizeImage($targetWidth, $targetHeight, Imagick::FILTER_LANCZOS, 1);
+        }
+
         return new static($cloned);
     }
 
@@ -125,30 +169,25 @@ class ImagickImage implements ImageInterface
     {
         $cloned = clone $this->imagick;
 
-        // Set format
-        $cloned->setImageFormat($format);
+        if ($this->isAnimated()) {
+            $cloned = $cloned->coalesceImages();
 
-        // Apply format-specific options
-        switch ($format) {
-            case 'webp':
-                if (isset($options['quality'])) {
-                    $cloned->setImageCompressionQuality($options['quality']);
+            if ($this->supportsAnimation($format)) {
+                foreach ($cloned as $frame) {
+                    $this->applyFormatOptionsToFrame($frame, $format, $options);
                 }
-                break;
-            case 'jpg':
-            case 'jpeg':
-                if (isset($options['quality'])) {
-                    $cloned->setImageCompressionQuality($options['quality']);
+
+                if ($format === 'gif') {
+                    $cloned = $cloned->deconstructImages();
                 }
-                break;
-            case 'png':
-                if (isset($options['quality'])) {
-                    // PNG quality in ImageMagick works differently (0-9 scale)
-                    $pngQuality = round((100 - $options['quality']) / 10);
-                    $cloned->setImageCompressionQuality($pngQuality);
-                }
-                break;
+
+                return $cloned->getImagesBlob();
+            }
+
+            $cloned->setFirstIterator();
         }
+
+        $this->applyFormatOptionsToFrame($cloned, $format, $options);
 
         return $cloned->getImageBlob();
     }
@@ -179,5 +218,104 @@ class ImagickImage implements ImageInterface
             max((int) round($originalWidth * $scale), 1),
             max((int) round($originalHeight * $scale), 1),
         ];
+    }
+
+    private function transformAnimatedFrames(callable $transform): Imagick
+    {
+        $sequence = (clone $this->imagick)->coalesceImages();
+
+        foreach ($sequence as $frame) {
+            $transform($frame);
+            $frame->setImagePage(0, 0, 0, 0);
+        }
+
+        return $sequence;
+    }
+
+    private function applyFitToFrame(Imagick $frame, int $width, int $height): void
+    {
+        $originalWidth = $frame->getImageWidth();
+        $originalHeight = $frame->getImageHeight();
+        $ratioOriginal = $originalWidth / $originalHeight;
+        $ratioTarget = $width / $height;
+
+        if ($ratioOriginal > $ratioTarget) {
+            $newHeight = $height;
+            $newWidth = (int) round($height * $ratioOriginal);
+            $frame->resizeImage($newWidth, $newHeight, Imagick::FILTER_LANCZOS, 1);
+
+            $leftOffset = (int) round(($newWidth - $width) / 2);
+            $frame->cropImage($width, $newHeight, $leftOffset, 0);
+
+            return;
+        }
+
+        $newWidth = $width;
+        $newHeight = (int) round($width / $ratioOriginal);
+        $frame->resizeImage($newWidth, $newHeight, Imagick::FILTER_LANCZOS, 1);
+
+        $topOffset = (int) round(($newHeight - $height) / 2);
+        $frame->cropImage($newWidth, $height, 0, $topOffset);
+    }
+
+    private function applyFitFocusToFrame(
+        Imagick $frame,
+        float $focusX,
+        float $focusY,
+        int $width,
+        int $height,
+    ): void {
+        $originalWidth = $frame->getImageWidth();
+        $originalHeight = $frame->getImageHeight();
+
+        $ratioOriginal = $originalWidth / $originalHeight;
+        $ratioTarget = $width / $height;
+
+        if ($ratioOriginal > $ratioTarget) {
+            $newHeight = $height;
+            $newWidth = (int) round($height * $ratioOriginal);
+        } else {
+            $newWidth = $width;
+            $newHeight = (int) round($width / $ratioOriginal);
+        }
+
+        $frame->resizeImage($newWidth, $newHeight, Imagick::FILTER_LANCZOS, 1);
+
+        $focusXPixel = (int) round(($focusX / 100) * $originalWidth);
+        $focusYPixel = (int) round(($focusY / 100) * $originalHeight);
+
+        $focusXPixel = (int) round($focusXPixel * ($newWidth / $originalWidth));
+        $focusYPixel = (int) round($focusYPixel * ($newHeight / $originalHeight));
+
+        $leftOffset = (int) max(0, min($focusXPixel - ($width / 2), $newWidth - $width));
+        $topOffset = (int) max(0, min($focusYPixel - ($height / 2), $newHeight - $height));
+
+        $frame->cropImage($width, $height, $leftOffset, $topOffset);
+    }
+
+    private function applyFormatOptionsToFrame(Imagick $frame, string $format, array $options): void
+    {
+        $frame->setImageFormat($format);
+
+        switch ($format) {
+            case 'webp':
+            case 'jpg':
+            case 'jpeg':
+                if (isset($options['quality'])) {
+                    $frame->setImageCompressionQuality($options['quality']);
+                }
+                break;
+            case 'png':
+                if (isset($options['quality'])) {
+                    $pngQuality = round((100 - $options['quality']) / 10);
+                    $frame->setImageCompressionQuality($pngQuality);
+                }
+                break;
+        }
+    }
+
+    private function supportsAnimation(string $format): bool
+    {
+        return \in_array($format, ['gif', 'webp'], true);
     }
 }

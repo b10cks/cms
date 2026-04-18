@@ -14,7 +14,10 @@ class VipsDriver implements ImageDriverInterface
      */
     public function loadFromFile(string $path): ImageInterface
     {
-        $vipsImage = VipsImageLib::newFromFile($path);
+        $vipsImage = $this->shouldLoadAllPages($path)
+            ? VipsImageLib::newFromFile($path, ['n' => -1])
+            : VipsImageLib::newFromFile($path);
+
         return new VipsImage($vipsImage);
     }
 
@@ -23,7 +26,10 @@ class VipsDriver implements ImageDriverInterface
      */
     public function loadFromBuffer($buffer): ImageInterface
     {
-        $vipsImage = VipsImageLib::newFromBuffer($buffer);
+        $vipsImage = $this->shouldLoadAllPagesFromBuffer($buffer)
+            ? VipsImageLib::newFromBuffer($buffer, '', ['n' => -1])
+            : VipsImageLib::newFromBuffer($buffer);
+
         return new VipsImage($vipsImage);
     }
 
@@ -49,5 +55,20 @@ class VipsDriver implements ImageDriverInterface
     public function getSupportedFormats(): array
     {
         return ['webp', 'avif', 'jpg', 'png', 'gif'];
+    }
+
+    private function shouldLoadAllPages(string $path): bool
+    {
+        return \in_array(strtolower((string) pathinfo($path, PATHINFO_EXTENSION)), ['gif', 'webp'], true);
+    }
+
+    private function shouldLoadAllPagesFromBuffer(string $buffer): bool
+    {
+        return str_starts_with($buffer, 'GIF87a')
+            || str_starts_with($buffer, 'GIF89a')
+            || (
+                str_starts_with($buffer, 'RIFF')
+                && substr($buffer, 8, 4) === 'WEBP'
+            );
     }
 }
