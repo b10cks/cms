@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.18-d344971] — 2026-4-18
+
+- 🩹 Fix some vips based transformations
+- 👔 add lower case access control headers
+- ⬆️ Bump versions
+
 ## [v2026.4.18-5740dd7] — 2026-4-18
 
 - 👔 Improve content publishing and updating with inlined translation support
