@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.18-532d1e5] — 2026-4-18
+
+- 🐳 Add redis as native php module
+
 ## [v2026.4.18-d06979f] — 2026-4-18
 
 - ✨ Add animate image support
