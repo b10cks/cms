@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.18-5740dd7] — 2026-4-18
+
+- 👔 Improve content publishing and updating with inlined translation support
+- 👔 Use fit as default operation if both width and height are supplied
+- 👔 Add link localization and better localization validation
+
 ## [v2026.4.17-22abbb5] — 2026-4-17
 
 - 👔 Response with the original if no transformations are supplied
