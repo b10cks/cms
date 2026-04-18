@@ -9,6 +9,7 @@ RUN apk add --no-cache supervisor ffmpeg libheif vips mariadb-client \
     mysqli \
     pdo_mysql \
     pcntl \
+    redis \
     zlib \
     && rm -rf /var/cache/apk/*
 
