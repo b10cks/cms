@@ -3,6 +3,7 @@
 namespace App\Services\Image\Images;
 
 use App\Contracts\Image\ImageInterface;
+use Jcupitt\Vips\Interesting;
 use Jcupitt\Vips\Image as VipsImageLib;
 
 class VipsImage implements ImageInterface
@@ -38,71 +39,35 @@ class VipsImage implements ImageInterface
 
     public function fit(int $width, int $height): ImageInterface
     {
-        $originalWidth = $this->image->width;
-        $originalHeight = $this->image->height;
-
-        $ratioOriginal = $originalWidth / $originalHeight;
-        $ratioTarget = $width / $height;
-
-        if ($ratioOriginal > $ratioTarget) {
-            // Image is wider than target ratio
-            $newHeight = $height;
-            $newWidth = round($height * $ratioOriginal);
-            $resized = $this->image->thumbnail_image($newWidth, ['height' => $newHeight, 'size' => 'down']);
-
-            $leftOffset = ($newWidth - $width) / 2;
-            $cropped = $resized->crop($leftOffset, 0, $width, $newHeight);
-        } else {
-            // Image is taller than target ratio
-            $newWidth = $width;
-            $newHeight = round($width / $ratioOriginal);
-            $resized = $this->image->thumbnail_image($newWidth, ['height' => $newHeight, 'size' => 'down']);
-
-            $topOffset = ($newHeight - $height) / 2;
-            $cropped = $resized->crop(0, $topOffset, $newWidth, $height);
-        }
+        $resized = $this->resizeToCover($width, $height);
+        $cropped = $this->cropCentered($resized, $width, $height);
 
         return new static($cropped);
     }
 
     public function smartFit(int $width, int $height): ImageInterface
     {
-        $thumbnail = $this->image->thumbnail_image($width, [
-            'height' => $height,
-            'crop' => 'attention',
-            'size' => 'down',
+        $resized = $this->resizeToCover($width, $height);
+        $cropped = $resized->smartcrop($width, $height, [
+            'interesting' => Interesting::ATTENTION,
         ]);
-        return new static($thumbnail);
+
+        return new static($cropped);
     }
 
     public function fitFocus(float $focusX, float $focusY, int $width, int $height): ImageInterface
     {
-        $originalWidth = $this->image->width;
-        $originalHeight = $this->image->height;
-
-        $ratioOriginal = $originalWidth / $originalHeight;
-        $ratioTarget = $width / $height;
-
-        if ($ratioOriginal > $ratioTarget) {
-            $newHeight = $height;
-            $newWidth = round($height * $ratioOriginal);
-        } else {
-            $newWidth = $width;
-            $newHeight = round($width / $ratioOriginal);
-        }
-
-        $resized = $this->image->thumbnail_image($newWidth, ['height' => $newHeight, 'size' => 'down']);
+        $resized = $this->resizeToCover($width, $height);
+        $resizedWidth = $resized->width;
+        $resizedHeight = $resized->height;
 
         // Calculate focus point in new dimensions
-        $focusXPixel = round(($focusX / 100) * $originalWidth);
-        $focusYPixel = round(($focusY / 100) * $originalHeight);
-
-        $focusXPixel = round($focusXPixel * ($newWidth / $originalWidth));
-        $focusYPixel = round($focusYPixel * ($newHeight / $originalHeight));
+        $focusXPixel = (int) round(($focusX / 100) * $resizedWidth);
+        $focusYPixel = (int) round(($focusY / 100) * $resizedHeight);
 
         // Calculate crop position
-        $leftOffset = max(0, min($focusXPixel - ($width / 2), $newWidth - $width));
-        $topOffset = max(0, min($focusYPixel - ($height / 2), $newHeight - $height));
+        $leftOffset = max(0, min((int) round($focusXPixel - ($width / 2)), $resizedWidth - $width));
+        $topOffset = max(0, min((int) round($focusYPixel - ($height / 2)), $resizedHeight - $height));
 
         $cropped = $resized->crop($leftOffset, $topOffset, $width, $height);
         return new static($cropped);
@@ -164,6 +129,21 @@ class VipsImage implements ImageInterface
             default => 1.0,
         };
 
-        return max(min($scale, 1.0), 0.0001);
+        return max($scale, 0.0001);
+    }
+
+    private function resizeToCover(int $width, int $height): VipsImageLib
+    {
+        $scale = max($width / $this->image->width, $height / $this->image->height);
+
+        return $this->image->resize($scale);
+    }
+
+    private function cropCentered(VipsImageLib $image, int $width, int $height): VipsImageLib
+    {
+        $leftOffset = max((int) floor(($image->width - $width) / 2), 0);
+        $topOffset = max((int) floor(($image->height - $height) / 2), 0);
+
+        return $image->crop($leftOffset, $topOffset, $width, $height);
     }
 }
