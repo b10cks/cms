@@ -37,8 +37,13 @@ class ImageTransformationResolver
                 'crop' => isset($params['tw']) || isset($params['th']) ? 'cropresize' : 'crop',
                 default => 'original',
             };
-        } elseif (isset($params['w']) || isset($params['h'])) {
-            $operation = 'resize';
+        } else {
+            if (isset($params['w']) || isset($params['h'])) {
+                $operation = 'resize';
+            }
+            if (isset($params['w']) && isset($params['h'])) {
+                $operation = 'fit';
+            }
         }
 
         return new ImageTransformation($operation, $operationParams, $format, $quality);
