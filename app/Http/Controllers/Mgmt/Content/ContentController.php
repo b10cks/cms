@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Mgmt\Content;
 
 use App\Actions\Content\CreateContent;
+use App\Actions\Content\CreateContentFamily;
 use App\Actions\Content\DeleteContent;
 use App\Actions\Content\UpdateContent;
+use App\Actions\Content\UpdateContentFamily;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\ContentFilter;
 use App\Http\Requests\Content\UpsertContentRequest;
@@ -37,19 +39,27 @@ class ContentController extends Controller
     /**
      * Store a newly created content item in storage.
      */
-    public function store(UpsertContentRequest $request, Space $space, CreateContent $action): ContentResource
+    public function store(
+        UpsertContentRequest $request,
+        Space $space,
+        CreateContent $action,
+        CreateContentFamily $familyAction,
+    ): ContentResource
     {
         $this->authorize('create', [Content::class, $space]);
 
         $data = $request->validated();
-        $content = new Content();
-        $action->execute($data, $content, $space, $request->user());
+        if (($data['translations'] ?? []) !== []) {
+            $content = $familyAction->execute($data, $space, $request->user());
+        } else {
+            $content = new Content();
+            $action->execute($data, $content, $space, $request->user());
 
-        if (!$content->save()) {
-            Log::error('Failed to create content', ['space_id' => $space->id]);
-            abort(500, 'Failed to create content');
+            if (!$content->save()) {
+                Log::error('Failed to create content', ['space_id' => $space->id]);
+                abort(500, 'Failed to create content');
+            }
         }
-
         $content->load(['block', 'parent', 'i18n_parent', 'i18n_children', 'i18n_siblings', 'current_version']);
 
         return new ContentResource($content);
@@ -70,12 +80,22 @@ class ContentController extends Controller
     /**
      * Update the specified content item in storage.
      */
-    public function update(UpsertContentRequest $request, Space $space, Content $content, UpdateContent $action): ContentResource
+    public function update(
+        UpsertContentRequest $request,
+        Space $space,
+        Content $content,
+        UpdateContent $action,
+        UpdateContentFamily $familyAction,
+    ): ContentResource
     {
         $this->authorize('update', [$content, $space]);
 
         $data = $request->validated();
-        $action->execute($data, $content, $space, $request->user());
+        if (($data['translations'] ?? []) !== []) {
+            $content = $familyAction->execute($data, $content, $space, $request->user());
+        } else {
+            $action->execute($data, $content, $space, $request->user());
+        }
 
         $content->load(['block', 'parent', 'i18n_parent', 'i18n_children', 'i18n_siblings', 'current_version']);
 //        broadcast(new ContentUpdated($content, $space));

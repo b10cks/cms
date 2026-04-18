@@ -38,6 +38,7 @@ class ContentSchemaValueMerger
             }
 
             $type = SchemaField::canonicalizeType((string) ($field['type'] ?? ''));
+            $isTranslatable = (bool) ($field['translatable'] ?? false);
 
             if ($type === 'table' && ($field['translatable'] ?? false)) {
                 $merged[$fieldKey] = $this->mergeLocalizedTableValue(
@@ -56,10 +57,25 @@ class ContentSchemaValueMerger
                     $merged[$fieldKey],
                     $localizationOverlay,
                 );
+
+                continue;
+            }
+
+            if (! $isTranslatable && array_key_exists($fieldKey, $overrides) && $this->isEmptyOverlayValue($overrides[$fieldKey])) {
+                if (array_key_exists($fieldKey, $base)) {
+                    $merged[$fieldKey] = $base[$fieldKey];
+                } else {
+                    unset($merged[$fieldKey]);
+                }
             }
         }
 
         return $merged;
+    }
+
+    protected function isEmptyOverlayValue(mixed $value): bool
+    {
+        return $value === null || $value === '' || $value === [];
     }
 
     /**

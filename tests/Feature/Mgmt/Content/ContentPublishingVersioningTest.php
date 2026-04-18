@@ -138,7 +138,109 @@ class ContentPublishingVersioningTest extends TestCase
         $this->assertSame($publishedVersionId, $content->published_version_id);
     }
 
-    private function createVersionedContent(array $publishedContent, ?array $currentContent = null): Content
+    #[Test]
+    public function publish_uses_the_requested_historical_publish_date(): void
+    {
+        $this->actingAs($this->owner);
+
+        $content = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+            currentContent: ['summary' => 'Draft summary'],
+        );
+        $publishedAt = '2024-05-01T12:30:00+00:00';
+
+        $this->postJson(route('mgmt.contents.publish', [
+            'space' => $this->space->id,
+            'content' => $content->id,
+        ]), [
+            'published_at' => $publishedAt,
+        ])->assertOk();
+
+        $content->refresh()->load(['current_version', 'published_version']);
+
+        $this->assertTrue($content->published_at?->equalTo(Carbon::parse($publishedAt)));
+        $this->assertTrue($content->published_version?->published_at?->equalTo(Carbon::parse($publishedAt)) ?? false);
+    }
+
+    #[Test]
+    public function publish_can_publish_a_canonical_content_with_translations_in_one_pass(): void
+    {
+        $this->actingAs($this->owner);
+
+        $canonical = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+            currentContent: ['summary' => 'Draft summary'],
+        );
+        $translation = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Veroeffentlicht'],
+            currentContent: ['summary' => 'Entwurf'],
+            languageIso: 'de',
+            i18nParent: $canonical,
+        );
+
+        $canonicalPublishedAt = '2024-06-01T09:00:00+00:00';
+        $translationPublishedAt = '2024-06-01T09:05:00+00:00';
+
+        $this->postJson(route('mgmt.contents.publish', [
+            'space' => $this->space->id,
+            'content' => $canonical->id,
+        ]), [
+            'published_at' => $canonicalPublishedAt,
+            'translations' => [
+                [
+                    'id' => $translation->id,
+                    'content' => ['summary' => 'Entwurf'],
+                    'published_at' => $translationPublishedAt,
+                ],
+            ],
+        ])->assertOk();
+
+        $canonical->refresh()->load('published_version');
+        $translation->refresh()->load('published_version');
+
+        $this->assertTrue($canonical->published_at?->equalTo(Carbon::parse($canonicalPublishedAt)));
+        $this->assertTrue($translation->published_at?->equalTo(Carbon::parse($translationPublishedAt)));
+        $this->assertSame(['summary' => 'Entwurf'], $translation->published_version?->content);
+    }
+
+    #[Test]
+    public function publish_with_translations_keeps_nested_validation_errors_prefixed(): void
+    {
+        $this->actingAs($this->owner);
+
+        $canonical = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+            currentContent: ['summary' => 'Draft summary'],
+        );
+        $translation = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Veroeffentlicht'],
+            currentContent: ['summary' => 'Entwurf'],
+            languageIso: 'de',
+            i18nParent: $canonical,
+        );
+
+        $response = $this->postJson(route('mgmt.contents.publish', [
+            'space' => $this->space->id,
+            'content' => $canonical->id,
+        ]), [
+            'translations' => [
+                [
+                    'id' => $translation->id,
+                    'published_at' => 'not-a-date',
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['translations.0.published_at']);
+    }
+
+    private function createVersionedContent(
+        array $publishedContent,
+        ?array $currentContent = null,
+        string $languageIso = 'en',
+        ?Content $i18nParent = null,
+    ): Content
     {
         $content = new Content;
         $content->forceFill([
@@ -146,7 +248,8 @@ class ContentPublishingVersioningTest extends TestCase
             'name' => 'Page',
             'slug' => strtolower((string) Str::random(8)),
             'full_slug' => '/' . strtolower((string) Str::random(8)),
-            'language_iso' => 'en',
+            'language_iso' => $languageIso,
+            'i18n_parent_id' => $i18nParent?->id,
         ]);
         $content->id = strtolower((string) Str::ulid());
 

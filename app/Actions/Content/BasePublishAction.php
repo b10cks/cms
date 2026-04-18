@@ -6,6 +6,7 @@ use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 abstract class BasePublishAction
@@ -16,12 +17,14 @@ abstract class BasePublishAction
     {
         $contentData = data_get($data, 'content');
         $message = data_get($data, 'message');
+        $publishedAt = $this->resolvePublishedAt($data);
 
         unset($data['content']);
         unset($data['message']);
+        unset($data['published_at']);
         unset($data['scheduled_at']);
 
-        return compact('contentData', 'message');
+        return compact('contentData', 'message', 'publishedAt');
     }
 
     protected function updateContent(array $data, Content $content): void
@@ -45,6 +48,13 @@ abstract class BasePublishAction
             'message' => $message,
             'published_by_id' => $owner?->id,
         ];
+    }
+
+    protected function resolvePublishedAt(array $data): Carbon
+    {
+        $publishedAt = data_get($data, 'published_at');
+
+        return $publishedAt ? Carbon::parse((string) $publishedAt) : now();
     }
 
     protected function shouldReuseCurrentVersion(array $contentData, Content $content): bool
@@ -71,6 +81,19 @@ abstract class BasePublishAction
         if ($updated === 0) {
             throw new \Exception(
                 'Cannot update version: it has already been published or does not exist.'
+            );
+        }
+    }
+
+    protected function syncCurrentVersionPublication(array $values, Content $content): void
+    {
+        $updated = ContentVersion::where('id', '=', $content->current_version_id)
+            ->where('content_id', $content->id)
+            ->update($values);
+
+        if ($updated === 0) {
+            throw new \Exception(
+                'Cannot update version: it does not exist.'
             );
         }
     }

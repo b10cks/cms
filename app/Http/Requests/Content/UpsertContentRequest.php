@@ -74,6 +74,7 @@ class UpsertContentRequest extends FormRequest
             'language_iso' => 'sometimes|required|string|min:2|max:5',
             'content' => 'nullable|array',
             'force' => 'sometimes|boolean',
+            ...$this->translationRules(),
         ];
     }
 
@@ -111,7 +112,7 @@ class UpsertContentRequest extends FormRequest
                 ]));
                 $errors = app(ContentI18nValidator::class)->validate(
                     $space,
-                    $this->validated(),
+                    $validator->safe()->all(),
                     $content,
                     $childSettingKeys,
                 );
@@ -126,5 +127,27 @@ class UpsertContentRequest extends FormRequest
     private function hasChildSetting(string $key): bool
     {
         return Arr::has($this->input('settings', []), $key);
+    }
+
+    /**
+     * @return array<string, ValidationRule|array<mixed>|string>
+     */
+    protected function translationRules(): array
+    {
+        return [
+            'translations' => 'sometimes|array',
+            'translations.*' => 'array',
+            'translations.*.id' => 'sometimes|string',
+            'translations.*.external_id' => ['sometimes', 'nullable', 'string', 'max:36'],
+            'translations.*.name' => 'sometimes|required|string|max:100',
+            'translations.*.slug' => 'sometimes|required|string|max:70',
+            'translations.*.settings' => 'nullable|array',
+            ...ContentSettings::toValidator('translations.*.settings'),
+            'translations.*.block_id' => 'sometimes|required|string',
+            'translations.*.parent_id' => 'nullable|string',
+            'translations.*.language_iso' => 'sometimes|required|string|min:2|max:5',
+            'translations.*.content' => 'nullable|array',
+            'translations.*.force' => 'sometimes|boolean',
+        ];
     }
 }

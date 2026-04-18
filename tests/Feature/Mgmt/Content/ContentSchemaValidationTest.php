@@ -6,9 +6,12 @@ use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
+use App\Models\System\AuditLog;
 use App\Models\User;
+use App\Services\System\AuditService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Str;
+use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use Tests\Traits\SpaceTestingTrait;
@@ -41,6 +44,9 @@ class ContentSchemaValidationTest extends TestCase
         $this->assignSpaceRole($this->space, $this->owner, 'owner');
         $this->setUpSpaceTesting($this->space);
         app()->instance('currentSpace', $this->space);
+        $auditService = Mockery::mock(AuditService::class);
+        $auditService->shouldReceive('log')->andReturn(new AuditLog);
+        app()->instance(AuditService::class, $auditService);
 
         $this->pageBlock = Block::query()->create([
             'external_id' => (string) Str::uuid(),
@@ -301,6 +307,95 @@ class ContentSchemaValidationTest extends TestCase
             ['headline' => 'Lokalisierte Headline'],
             $translation->published_version?->content
         );
+    }
+
+    #[Test]
+    public function storing_a_localized_overlay_ignores_explicit_non_translatable_values(): void
+    {
+        $this->actingAs($this->owner);
+
+        $heroBlock = Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Localized Hero',
+            'slug' => 'localizedHero',
+            'type' => 'nestable',
+            'schema' => [
+                'media' => [
+                    'type' => 'asset',
+                    'name' => 'Media',
+                    'required' => true,
+                ],
+                'headline' => [
+                    'type' => 'text',
+                    'name' => 'Headline',
+                    'required' => true,
+                    'translatable' => true,
+                ],
+            ],
+            'editor' => [[
+                'header' => 'General',
+                'items' => ['media', 'headline'],
+            ]],
+        ]);
+
+        $compoundBlock = Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Compound Page',
+            'slug' => 'compoundPage',
+            'type' => 'root',
+            'schema' => [
+                'body' => [
+                    'type' => 'blocks',
+                    'name' => 'Body',
+                ],
+            ],
+            'editor' => [[
+                'header' => 'General',
+                'items' => ['body'],
+            ]],
+        ]);
+
+        $canonical = $this->createContent([
+            'body' => [[
+                'id' => (string) Str::uuid(),
+                'block' => 'localizedHero',
+                'media' => [
+                    'type' => 'asset',
+                    'id' => '01assetcanonical0000000000000000',
+                ],
+                'headline' => 'Default headline',
+            ]],
+        ], $compoundBlock, 'en');
+
+        $response = $this->postJson(route('mgmt.contents.store', [
+            'space' => $this->space->id,
+        ]), [
+            'name' => 'Hero DE',
+            'slug' => 'hero-de',
+            'block_id' => $compoundBlock->id,
+            'language_iso' => 'de',
+            'i18n_parent_id' => $canonical->id,
+            'content' => [
+                'body' => [[
+                    'id' => (string) Str::uuid(),
+                    'block' => 'localizedHero',
+                    'media' => null,
+                    'headline' => 'Lokalisierte Headline',
+                ]],
+            ],
+        ]);
+
+        $response->assertCreated();
+
+        $translation = Content::query()
+            ->where('i18n_parent_id', $canonical->id)
+            ->where('language_iso', 'de')
+            ->firstOrFail()
+            ->load('current_version');
+
+        $this->assertSame('Lokalisierte Headline', data_get($translation->current_version?->content, 'body.0.headline'));
+        $this->assertNull(data_get($translation->current_version?->content, 'body.0.media'));
+        $this->assertArrayNotHasKey('media', data_get($translation->current_version?->content, 'body.0', []));
     }
 
     protected function createContent(

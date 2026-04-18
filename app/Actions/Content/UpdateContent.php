@@ -87,6 +87,7 @@ class UpdateContent
             unset($data['content']);
             unset($data['message']);
             unset($data['force']);
+            unset($data['translations']);
             $content->fill($data);
             $content->loadMissing('current_version');
 

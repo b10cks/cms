@@ -7,6 +7,7 @@ use App\Models\Space\Content;
 use App\Models\User;
 use App\Services\Content\Schema\ContentSchemaValidator;
 use App\Services\Search\SearchService;
+use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Validation\ValidationException;
 
@@ -19,6 +20,13 @@ class PublishContent extends BasePublishAction
     }
 
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner): void
+    {
+        $this->executeWithoutIndex($data, $content, $space, $owner);
+        $this->loadPublishedVersion($content);
+        $this->indexContent($content, $space);
+    }
+
+    public function executeWithoutIndex(array $data, Content $content, Space $space, Authenticatable|User|null $owner): void
     {
         $content->loadMissing('block');
         $submittedContent = $this->resolveRequestedContent($data, $content);
@@ -37,16 +45,17 @@ class PublishContent extends BasePublishAction
         }
 
         $success = false;
-        \DB::transaction(function () use ($data, $content, $space, $owner, &$success, $contentValidation) {
+        $publishedAt = $this->resolvePublishedAt($data);
+
+        \DB::transaction(function () use ($data, $content, $space, $owner, &$success, $contentValidation, $publishedAt) {
             $this->clearScheduledVersions($content);
             $this->processPublish($data, $content, $owner, $contentValidation->content);
-            $this->finalizePublish($content, $space);
+            $this->finalizePublish($content, $space, $publishedAt);
             $success = true;
         });
 
         if ($success) {
             $this->loadPublishedVersion($content);
-            $this->indexContent($content, $space);
         }
     }
 
@@ -58,12 +67,13 @@ class PublishContent extends BasePublishAction
     ): void {
         $payload = $this->extractDataFromRequest($data);
         $message = $payload['message'];
+        $publishedAt = $payload['publishedAt'];
         $contentData = $sanitizedContent;
 
         $this->updateContent($data, $content);
 
         $values = $this->buildBaseValues($message, $owner) + [
-            'published_at' => now()
+            'published_at' => $publishedAt,
         ];
 
         if ($this->shouldReuseCurrentVersion($contentData, $content)) {
@@ -73,9 +83,9 @@ class PublishContent extends BasePublishAction
         }
     }
 
-    private function finalizePublish(Content $content, Space $space): void
+    private function finalizePublish(Content $content, Space $space, Carbon $publishedAt): void
     {
-        $content->setPublishedAt(now());
+        $content->setPublishedAt($publishedAt);
         $content->save();
         $space->touch('content_updated_at');
     }
@@ -94,10 +104,7 @@ class PublishContent extends BasePublishAction
     private function reuseCurrentVersionForPublish(array $values, Content $content): void
     {
         $content->published_version_id = $content->current_version_id;
-
-        if ($this->currentVersionIsDraft($content)) {
-            $this->updateExistingVersion($values, $content);
-        }
+        $this->syncCurrentVersionPublication($values, $content);
     }
 
     private function indexContent(Content $content, Space $space): void

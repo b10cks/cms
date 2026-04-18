@@ -41,7 +41,14 @@ class ContentSchemaValidator
             $submittedContent,
             $effectiveContent,
         );
+        $ignoreAbsentNonTranslatableFields = $effectiveBase['mode'] === 'overlay'
+            && (($content?->i18n_parent_id ?? null) !== null || $i18nParentId !== null);
         $sanitizedContent = $this->pruner->prune($tree);
+
+        if ($ignoreAbsentNonTranslatableFields) {
+            $sanitizedContent = $this->stripLocalizedOverlayFields($tree, $sanitizedContent);
+        }
+
         $sanitizedTree = $this->builder->build(
             $block,
             $sanitizedContent,
@@ -52,8 +59,6 @@ class ContentSchemaValidator
                 $effectiveBase['mode'] === 'overlay',
             ),
         );
-        $ignoreAbsentNonTranslatableFields = $effectiveBase['mode'] === 'overlay'
-            && (($content?->i18n_parent_id ?? null) !== null || $i18nParentId !== null);
 
         return new ContentSchemaValidationResult(
             content: $sanitizedContent,
@@ -188,7 +193,7 @@ class ContentSchemaValidator
         if (
             $ignoreAbsentNonTranslatableFields
             && ! $field->isTranslatable()
-            && ! array_key_exists($field->getKey(), $node->localScope)
+            && $this->isEmpty($node->rawValue)
         ) {
             return [];
         }
@@ -236,7 +241,7 @@ class ContentSchemaValidator
         if (
             $ignoreAbsentNonTranslatableFields
             && ! $field->isTranslatable()
-            && ! array_key_exists($field->getKey(), $node->localScope)
+            && $this->isEmpty($node->rawValue)
         ) {
             return [];
         }
@@ -743,5 +748,43 @@ class ContentSchemaValidator
     {
         return is_array($value)
             && in_array($field->getType(), ['options', 'multi_assets', 'references', 'blocks'], true);
+    }
+
+    /**
+     * @param  array<string, mixed>  $content
+     * @return array<string, mixed>
+     */
+    protected function stripLocalizedOverlayFields(ContentSchemaTree $tree, array $content): array
+    {
+        foreach ($tree->nodes as $key => $node) {
+            if (! array_key_exists($key, $content)) {
+                continue;
+            }
+
+            if ($node->field->getType() === 'blocks') {
+                if (! is_array($content[$key])) {
+                    continue;
+                }
+
+                $items = array_values($content[$key]);
+
+                foreach ($items as $index => $item) {
+                    if (! is_array($item) || ! isset($node->childTrees[$index])) {
+                        continue;
+                    }
+
+                    $items[$index] = $this->stripLocalizedOverlayFields($node->childTrees[$index], $item);
+                }
+
+                $content[$key] = $items;
+                continue;
+            }
+
+            if (! $node->field->isTranslatable() && $this->isEmpty($content[$key])) {
+                unset($content[$key]);
+            }
+        }
+
+        return $content;
     }
 }

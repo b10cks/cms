@@ -6,9 +6,12 @@ use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
+use App\Models\System\AuditLog;
 use App\Models\User;
+use App\Services\System\AuditService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Str;
+use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use Tests\Traits\SpaceTestingTrait;
@@ -42,6 +45,9 @@ class ContentI18nTest extends TestCase
         $this->assignSpaceRole($this->space, $this->owner, 'owner');
         $this->setUpSpaceTesting($this->space);
         app()->instance('currentSpace', $this->space);
+        $auditService = Mockery::mock(AuditService::class);
+        $auditService->shouldReceive('log')->andReturn(new AuditLog);
+        app()->instance(AuditService::class, $auditService);
 
         $this->block = Block::query()->create([
             'external_id' => (string) Str::uuid(),
@@ -143,6 +149,165 @@ class ContentI18nTest extends TestCase
 
         $duplicateResponse->assertStatus(422);
         $duplicateResponse->assertJsonValidationErrors(['language_iso']);
+    }
+
+    #[Test]
+    public function storing_a_canonical_content_with_translations_creates_the_family_in_one_pass(): void
+    {
+        $this->actingAs($this->owner);
+
+        $response = $this->postJson(route('mgmt.contents.store', [
+            'space' => $this->space->id,
+        ]), [
+            'name' => 'Home',
+            'slug' => 'home',
+            'block_id' => $this->block->id,
+            'language_iso' => 'en',
+            'content' => ['title' => 'Home'],
+            'translations' => [
+                [
+                    'name' => 'Startseite',
+                    'slug' => 'startseite',
+                    'language_iso' => 'de',
+                    'content' => ['title' => 'Startseite'],
+                ],
+                [
+                    'name' => 'Accueil',
+                    'slug' => 'accueil',
+                    'language_iso' => 'fr',
+                    'content' => ['title' => 'Accueil'],
+                ],
+            ],
+        ]);
+
+        $response->assertCreated();
+        $response->assertJsonPath('data.language_iso', 'en');
+        $response->assertJsonCount(3, 'data.language_versions');
+
+        $canonical = Content::query()
+            ->where('slug', 'home')
+            ->whereNull('i18n_parent_id')
+            ->firstOrFail();
+
+        $this->assertDatabaseHas('contents', [
+            'slug' => 'startseite',
+            'language_iso' => 'de',
+            'i18n_parent_id' => $canonical->id,
+        ]);
+        $this->assertDatabaseHas('contents', [
+            'slug' => 'accueil',
+            'language_iso' => 'fr',
+            'i18n_parent_id' => $canonical->id,
+        ]);
+    }
+
+    #[Test]
+    public function storing_a_canonical_content_with_duplicate_translation_language_returns_a_prefixed_error(): void
+    {
+        $this->actingAs($this->owner);
+
+        $response = $this->postJson(route('mgmt.contents.store', [
+            'space' => $this->space->id,
+        ]), [
+            'name' => 'Home',
+            'slug' => 'home',
+            'block_id' => $this->block->id,
+            'language_iso' => 'en',
+            'content' => ['title' => 'Home'],
+            'translations' => [
+                [
+                    'name' => 'Startseite',
+                    'slug' => 'startseite',
+                    'language_iso' => 'de',
+                    'content' => ['title' => 'Startseite'],
+                ],
+                [
+                    'name' => 'Start',
+                    'slug' => 'start',
+                    'language_iso' => 'de',
+                    'content' => ['title' => 'Start'],
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['translations.1.language_iso']);
+    }
+
+    #[Test]
+    public function updating_a_content_family_persists_translations_in_one_pass(): void
+    {
+        $this->actingAs($this->owner);
+
+        $canonical = $this->createContent(
+            languageIso: 'en',
+            slug: 'about',
+            published: false,
+        );
+        $translation = $this->createContent(
+            languageIso: 'de',
+            slug: 'uber-uns',
+            i18nParent: $canonical,
+            published: false,
+        );
+
+        $response = $this->patchJson(route('mgmt.contents.update', [
+            'space' => $this->space->id,
+            'content' => $canonical->id,
+        ]), [
+            'name' => 'About us',
+            'content' => ['title' => 'About us'],
+            'translations' => [
+                [
+                    'id' => $translation->id,
+                    'name' => 'Uber uns',
+                    'content' => ['title' => 'Uber uns'],
+                ],
+            ],
+        ]);
+
+        $response->assertOk();
+
+        $canonical->refresh()->load('current_version');
+        $translation->refresh()->load('current_version');
+
+        $this->assertSame('About us', $canonical->name);
+        $this->assertSame(['title' => 'About us'], $canonical->current_version?->content);
+        $this->assertSame('Uber uns', $translation->name);
+        $this->assertSame(['title' => 'Uber uns'], $translation->current_version?->content);
+    }
+
+    #[Test]
+    public function updating_a_content_family_keeps_nested_validation_errors_prefixed(): void
+    {
+        $this->actingAs($this->owner);
+
+        $canonical = $this->createContent(
+            languageIso: 'en',
+            slug: 'about',
+            published: false,
+        );
+        $translation = $this->createContent(
+            languageIso: 'de',
+            slug: 'uber-uns',
+            i18nParent: $canonical,
+            published: false,
+        );
+
+        $response = $this->patchJson(route('mgmt.contents.update', [
+            'space' => $this->space->id,
+            'content' => $canonical->id,
+        ]), [
+            'translations' => [
+                [
+                    'id' => $translation->id,
+                    'language_iso' => 'en',
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['translations.0.language_iso']);
     }
 
     private function createContent(

@@ -214,6 +214,7 @@ export interface CreateContentPayload {
   content?: Record<string, unknown>
   settings?: Partial<ContentSettings>
   description?: string
+  translations?: ContentTranslationMutationPayload[]
 }
 
 export interface UpdateContentPayload {
@@ -227,5 +228,23 @@ export interface UpdateContentPayload {
   settings?: Partial<ContentSettings>
   description?: string
   message?: string
+  published_at?: string | null
   scheduled_at?: string | null
+  translations?: ContentTranslationMutationPayload[]
+}
+
+export interface ContentTranslationMutationPayload {
+  id?: string
+  external_id?: string | null
+  parent_id?: string | null
+  block_id?: string
+  name?: string
+  slug?: string
+  language_iso?: string
+  i18n_parent_id?: string | null
+  content?: Record<string, unknown>
+  settings?: Partial<ContentSettings>
+  message?: string
+  published_at?: string | null
+  force?: boolean
 }
