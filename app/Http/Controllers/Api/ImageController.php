@@ -54,9 +54,11 @@ class ImageController extends Controller
 
         if (\str_starts_with($mimetype, 'image/') === false) {
             return $disk->response($fullPath, null, [
-                'Content-Type' => $mimetype,
-                'Cache-Control' => $this->buildCacheControlHeader(),
-                'Pragma' => 'public',
+                'access-control-allow-origin' => '*',
+                'access-control-allow-methods' => 'GET',
+                'content-type' => $mimetype,
+                'cache-control' => $this->buildCacheControlHeader(),
+                'pragma' => 'public',
             ]);
         }
 
@@ -67,9 +69,11 @@ class ImageController extends Controller
 
             if (empty($transformationParameters) && $format === null && $quality === null) {
                 return $disk->response($fullPath, null, [
-                    'Content-Type' => $mimetype,
-                    'Cache-Control' => $this->buildCacheControlHeader(),
-                    'Pragma' => 'public',
+                    'access-control-allow-origin' => '*',
+                    'access-control-allow-methods' => 'GET',
+                    'content-type' => $mimetype,
+                    'cache-control' => $this->buildCacheControlHeader(),
+                    'pragma' => 'public',
                 ]);
             }
 
@@ -85,10 +89,12 @@ class ImageController extends Controller
             }
 
             return new Response($result['data'], 200, [
-                'Content-Type' => $result['mime'],
-                'Content-Length' => \strlen($result['data']),
-                'Cache-Control' => $this->buildCacheControlHeader(),
-                'Pragma' => 'public',
+                'access-control-allow-origin' => '*',
+                'access-control-allow-methods' => 'GET',
+                'content-type' => $result['mime'],
+                'content-length' => \strlen($result['data']),
+                'cache-control' => $this->buildCacheControlHeader(),
+                'pragma' => 'public',
             ]);
         } catch (\Exception $e) {
             Log::error('Image processing error: ' . $e->getMessage(), [
