@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.19-3245924] — 2026-4-19
+
+- ⚡️ Improve canvas performance for large trees
+- 🚸 Improve space icon
+
 ## [v2026.4.19-c01a1c7] — 2026-4-19
 
 - 🍱 Replace favicons
