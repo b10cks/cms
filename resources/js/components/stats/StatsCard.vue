@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { Card, CardContent } from '~/components/ui/card'
 
 defineProps<{
   icon?: string
@@ -11,15 +11,15 @@ defineProps<{
 
 <template>
   <Card class="relative">
-    <CardHeader class="flex flex-row items-center justify-between">
-      <CardTitle class="text-sm">{{ title }}</CardTitle>
+    <div class="flex flex-row items-center justify-between pb-2">
+      <h2>{{ title }}</h2>
       <Icon
         v-if="icon"
         :name="icon"
         :size="18"
         class="shrink-0 text-muted"
       />
-    </CardHeader>
+    </div>
     <CardContent>
       <slot />
       <p
