@@ -7,13 +7,13 @@ import {
 import type { ContentWizardDraftNode, ContentWizardPosition } from '~/types/content-wizard'
 
 const props = defineProps<{
-  nodes: Record<string, ContentWizardDraftNode>
+  nodes: ContentWizardDraftNode[]
   positions: Record<string, ContentWizardPosition>
 }>()
 
 const connectors = computed(() => {
-  return Object.values(props.nodes)
-    .filter((node) => !node.isRootVirtual && node.isVisible && node.parentId !== undefined)
+  return props.nodes
+    .filter((node) => !node.isRootVirtual)
     .flatMap((node) => {
       const parentId = node.parentId || CONTENT_WIZARD_ROOT_ID
       const parent = props.positions[parentId]

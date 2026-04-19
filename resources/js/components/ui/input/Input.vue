@@ -18,10 +18,19 @@ const modelValue = useVModel(props, 'modelValue', emits, {
   passive: true,
   defaultValue: props.defaultValue,
 })
+
+const inputRef = ref<HTMLInputElement | null>(null)
+
+defineExpose({
+  el: inputRef,
+  focus: () => inputRef.value?.focus(),
+  select: () => inputRef.value?.select(),
+})
 </script>
 
 <template>
   <input
+    ref="inputRef"
     v-model="modelValue"
     :class="
       cn(

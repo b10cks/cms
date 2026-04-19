@@ -7,13 +7,10 @@ import { Button } from '~/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '~/components/ui/select'
 import { cn } from '~/lib/utils'
 import type {
-  ContentWizardAddPosition,
   ContentWizardCollaborator,
   ContentWizardDraftNode,
   ContentWizardEditableField,
 } from '~/types/content-wizard'
-
-import ContentWizardAddMenu from './ContentWizardAddMenu.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -26,8 +23,6 @@ const props = withDefaults(
     dropActive?: boolean
     remoteFocusedUsers?: ContentWizardCollaborator[]
     blockOptions?: BlockResource[]
-    blocksForBottom?: BlockResource[]
-    blocksForRight?: BlockResource[]
   }>(),
   {
     canMutate: true,
@@ -37,14 +32,14 @@ const props = withDefaults(
     dropActive: false,
     remoteFocusedUsers: () => [],
     blockOptions: () => [],
-    blocksForBottom: () => [],
-    blocksForRight: () => [],
   }
 )
 
 const emit = defineEmits<{
   (event: 'focus'): void
   (event: 'pointerdown', value: PointerEvent): void
+  (event: 'pointerenter', value: PointerEvent): void
+  (event: 'pointerleave', value: PointerEvent): void
   (event: 'keydown', value: KeyboardEvent): void
   (event: 'start-edit', payload: { field: ContentWizardEditableField; initialChar?: string }): void
   (event: 'input-title', value: string): void
@@ -54,7 +49,6 @@ const emit = defineEmits<{
   (event: 'update-block', value: string): void
   (event: 'toggle-delete'): void
   (event: 'toggle-collapse'): void
-  (event: 'add', payload: { block: BlockResource; position: ContentWizardAddPosition }): void
   (event: 'dragstart', value: DragEvent): void
   (event: 'dragend', value: DragEvent): void
   (event: 'dragenter', value: DragEvent): void
@@ -66,8 +60,7 @@ const emit = defineEmits<{
 const wrapperRef = ref<HTMLElement | null>(null)
 const titleInputRef = useTemplateRef<HTMLInputElement | null>('titleInputRef')
 const slugInputRef = useTemplateRef<HTMLInputElement | null>('slugInputRef')
-const rightAddMenuRef = ref<InstanceType<typeof ContentWizardAddMenu> | null>(null)
-const bottomAddMenuRef = ref<InstanceType<typeof ContentWizardAddMenu> | null>(null)
+const typeSelectOpen = ref(false)
 
 const titleValue = ref(props.node.title)
 const slugValue = ref(props.node.slug)
@@ -123,26 +116,14 @@ const isDeleted = computed(() => props.node.deletedReason)
 const hasRemoteFocus = computed(() => props.remoteFocusedUsers.length > 0)
 const remoteFocusColor = computed(() => props.remoteFocusedUsers[0]?.color || null)
 const canCollapse = computed(() => !props.node.isRootVirtual && props.node.childrenIds.length > 0)
+const shouldRenderTypeSelectContent = computed(() => typeSelectOpen.value)
 
 const focusCard = () => {
   wrapperRef.value?.focus()
 }
 
-const openAddMenu = (position: ContentWizardAddPosition) => {
-  const menu =
-    position === 'child' ? rightAddMenuRef.value || bottomAddMenuRef.value : bottomAddMenuRef.value
-
-  if (!menu) {
-    return false
-  }
-
-  menu.openMenu()
-  return true
-}
-
 defineExpose({
   focusCard,
-  openAddMenu,
 })
 
 const commitTitle = () => emit('commit-title', titleValue.value)
@@ -187,6 +168,8 @@ const handleBlockChange = (value: AcceptableValue) => {
       )
     "
     @pointerdown="emit('pointerdown', $event)"
+    @pointerenter="emit('pointerenter', $event)"
+    @pointerleave="emit('pointerleave', $event)"
     @focus="emit('focus')"
     @keydown="emit('keydown', $event)"
     @dragend="emit('dragend', $event)"
@@ -248,6 +231,7 @@ const handleBlockChange = (value: AcceptableValue) => {
       <div class="flex items-start gap-1">
         <Select
           v-model="selectedBlockId"
+          v-model:open="typeSelectOpen"
           :disabled="!canMutate || !!node.deletedReason"
           @update:model-value="handleBlockChange"
         >
@@ -265,7 +249,7 @@ const handleBlockChange = (value: AcceptableValue) => {
               {{ selectedBlock?.name || $t('labels.contents.fields.block') }}
             </span>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent v-if="shouldRenderTypeSelectContent">
             <SelectItem
               v-for="block in blockOptions"
               :key="block.id"
@@ -361,33 +345,6 @@ const handleBlockChange = (value: AcceptableValue) => {
           {{ error.message }}
         </p>
       </div>
-
-      <ContentWizardAddMenu
-        v-if="canMutate && blocksForRight.length > 0 && !node.deletedReason"
-        ref="rightAddMenuRef"
-        :blocks="blocksForRight"
-        :is-action-active="isActionActive"
-        side="right"
-        @select="emit('add', { block: $event, position: 'child' })"
-      />
-
-      <ContentWizardAddMenu
-        v-if="canMutate && blocksForBottom.length > 0 && !node.deletedReason"
-        ref="bottomAddMenuRef"
-        :blocks="blocksForBottom"
-        :is-action-active="isActionActive"
-        side="bottom"
-        @select="emit('add', { block: $event, position: 'sibling' })"
-      />
     </template>
-
-    <ContentWizardAddMenu
-      v-if="canMutate && node.isRootVirtual && blocksForBottom.length > 0"
-      ref="bottomAddMenuRef"
-      :blocks="blocksForBottom"
-      :is-action-active="isActionActive"
-      side="bottom"
-      @select="emit('add', { block: $event, position: 'child' })"
-    />
   </div>
 </template>

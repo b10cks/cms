@@ -2,7 +2,7 @@ import { useElementSize, useEventListener } from '@vueuse/core'
 
 import type { ContentWizardBounds, ContentWizardViewportState } from '~/types/content-wizard'
 
-const MIN_SCALE = 0.1
+const MIN_SCALE = 0.3
 const MAX_SCALE = 3
 const ZOOM_STEP = 0.1
 const CANVAS_PADDING = 100
@@ -66,6 +66,12 @@ export function useContentWizardViewport(bounds: Ref<ContentWizardBounds>) {
   }))
 
   const zoomPercent = computed(() => Math.round(viewport.scale * 100))
+  const sceneViewport = computed(() => ({
+    left: viewport.x / viewport.scale,
+    top: viewport.y / viewport.scale,
+    right: (viewport.x + containerWidth.value) / viewport.scale,
+    bottom: (viewport.y + containerHeight.value) / viewport.scale,
+  }))
   const clampScale = (scale: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale))
   const getViewportCenterOffset = (element: HTMLElement) => ({
     x: element.clientWidth / 2,
@@ -230,7 +236,11 @@ export function useContentWizardViewport(bounds: Ref<ContentWizardBounds>) {
     }
 
     const target = event.target as HTMLElement | null
-    if (target?.closest('[data-node-card], [data-add-menu], [data-block-select]')) {
+    if (
+      target?.closest(
+        '[data-node-card], [data-add-menu], [data-block-select], [data-shared-add-controls]'
+      )
+    ) {
       return
     }
 
@@ -280,6 +290,7 @@ export function useContentWizardViewport(bounds: Ref<ContentWizardBounds>) {
     dragState,
     canvasOrigin,
     canvasSize,
+    sceneViewport,
     zoomPercent,
     setZoom100,
     zoomIn,

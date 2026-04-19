@@ -96,6 +96,7 @@ const dropTargetId = ref<string | null>(null)
 const rootDropActive = ref(false)
 const isHelpDialogOpen = ref(false)
 const initialized = ref(false)
+const isTreeBooting = ref(false)
 const aiStatus = ref<{
   message: string
   tone: 'info' | 'success' | 'error'
@@ -107,6 +108,7 @@ const pendingRemoteOperations: ContentWizardSyncOperation[] = []
 const liveFieldTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const queuedRemoteOperations = new Map<string, ContentWizardSyncOperation>()
 const editSessionSnapshots = new Map<string, ContentWizardDraftTree>()
+let pendingInitializationFrame: number | null = null
 let preserveSelectionOnNextFocus = false
 
 const isLoading = computed(() => isBlocksLoading.value || isMenuLoading.value)
@@ -419,6 +421,41 @@ const clearEditSessions = () => {
   editSessionSnapshots.clear()
 }
 
+const cancelPendingInitialization = () => {
+  if (pendingInitializationFrame !== null) {
+    cancelAnimationFrame(pendingInitializationFrame)
+    pendingInitializationFrame = null
+  }
+}
+
+const initializeCanvasTree = () => {
+  cancelPendingInitialization()
+  treeApi.initializeFromSource()
+  history.clearHistory()
+  clearEditSessions()
+  focusedNodeId.value = CONTENT_WIZARD_ROOT_ID
+  initialized.value = true
+  isTreeBooting.value = false
+  flushPendingRemoteOperations()
+  flushQueuedRemoteOperations()
+  nextTick(() => canvasRef.value?.fitToView())
+}
+
+const scheduleInitialCanvasInitialization = () => {
+  if (initialized.value || isTreeBooting.value) {
+    return
+  }
+
+  isTreeBooting.value = true
+  cancelPendingInitialization()
+
+  pendingInitializationFrame = requestAnimationFrame(() => {
+    pendingInitializationFrame = requestAnimationFrame(() => {
+      initializeCanvasTree()
+    })
+  })
+}
+
 const serializeHistorySnapshot = (snapshot: ContentWizardDraftTree) => {
   return JSON.stringify({
     rootId: snapshot.rootId,
@@ -705,17 +742,14 @@ watch(
       return
     }
 
-    treeApi.initializeFromSource()
-    history.clearHistory()
-    clearEditSessions()
-    focusedNodeId.value = CONTENT_WIZARD_ROOT_ID
-    initialized.value = true
-    flushPendingRemoteOperations()
-    flushQueuedRemoteOperations()
-    nextTick(() => canvasRef.value?.fitToView())
+    scheduleInitialCanvasInitialization()
   },
   { immediate: true }
 )
+
+onScopeDispose(() => {
+  cancelPendingInitialization()
+})
 
 watch(
   focusedNodeId,
@@ -779,7 +813,11 @@ const handleNodePointerDown = ({ nodeId, event }: { nodeId: string; event: Point
 
 const handleCanvasPointerDown = (event: PointerEvent) => {
   const target = event.target as HTMLElement | null
-  if (target?.closest('[data-node-card]') || event.metaKey || event.ctrlKey) {
+  if (
+    target?.closest('[data-node-card], [data-shared-add-controls], [data-add-menu]') ||
+    event.metaKey ||
+    event.ctrlKey
+  ) {
     return
   }
 
@@ -1901,17 +1939,16 @@ const handleFocusAiWarning = (warning: AiPreviewWarning) => {
 
 const reloadFromServer = async () => {
   cancelStream()
+  cancelPendingInitialization()
   clearAiState()
   clearLiveFieldBroadcasts()
   clearEditSessions()
   history.clearHistory()
   await Promise.all([invalidateContentQueries(), refetchMenu(), refetchBlocks()])
-  treeApi.initializeFromSource()
+  initializeCanvasTree()
   clearTransientState()
   aiStatus.value = null
   focusNode(CONTENT_WIZARD_ROOT_ID)
-  await nextTick()
-  canvasRef.value?.fitToView()
 }
 
 const handleDiscard = async () => {
@@ -2048,7 +2085,7 @@ onBeforeUnmount(() => {
 
     <main class="relative min-h-0 flex-1 overflow-hidden">
       <div
-        v-if="isLoading"
+        v-if="isLoading || isTreeBooting"
         class="flex h-full items-center justify-center"
       >
         <div

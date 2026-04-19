@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue'
 
+import Icon from '~/components/Icon.vue'
 import { useContentWizardViewport } from '~/composables/useContentWizardViewport'
 import {
   CONTENT_WIZARD_CARD_HEIGHT,
   CONTENT_WIZARD_CARD_WIDTH,
+  CONTENT_WIZARD_ROOT_ID,
   type ContentWizardAddPosition,
   type ContentWizardBounds,
   type ContentWizardCollaborator,
@@ -12,6 +14,7 @@ import {
   type ContentWizardEditableField,
 } from '~/types/content-wizard'
 
+import ContentWizardAddMenu from './ContentWizardAddMenu.vue'
 import ContentWizardConnectorLayer from './ContentWizardConnectorLayer.vue'
 import ContentWizardNodeCard from './ContentWizardNodeCard.vue'
 
@@ -83,6 +86,7 @@ const {
   handlePointerMove,
   handlePointerUp,
   resetView,
+  sceneViewport,
   setZoom100,
   viewport,
   zoomIn,
@@ -91,8 +95,25 @@ const {
 } = useContentWizardViewport(toRef(props, 'bounds'))
 
 const AI_DOCK_SAFE_AREA = 220
+const VIRTUALIZATION_OVERSCAN_X = CONTENT_WIZARD_CARD_WIDTH * 1.5
+const VIRTUALIZATION_OVERSCAN_Y = CONTENT_WIZARD_CARD_HEIGHT * 6
+const SHARED_ADD_BUTTON_OFFSET = 24
+const SHARED_ADD_TRIGGER_SIZE = 24
+
+type SceneRect = {
+  left: number
+  top: number
+  right: number
+  bottom: number
+}
+
 const hasFittedInitially = ref(false)
 const nodeRefs = new Map<string, InstanceType<typeof ContentWizardNodeCard>>()
+const hoveredNodeId = ref<string | null>(null)
+const sharedAddMenuOpen = ref(false)
+const sharedAddMenuNodeId = ref<string | null>(null)
+const sharedAddMenuPosition = ref<ContentWizardAddPosition>('child')
+const sharedAddMenuBlocks = ref<BlockResource[]>([])
 const selectedNodeIdSet = computed(() => new Set(props.selectedNodeIds))
 
 const sortedNodes = computed(() =>
@@ -123,6 +144,174 @@ const scaledCanvasSize = computed(() => ({
   width: canvasSize.value.width * viewport.scale,
   height: canvasSize.value.height * viewport.scale,
 }))
+
+const expandSceneRect = (rect: SceneRect, padX: number, padY: number): SceneRect => ({
+  left: rect.left - padX,
+  top: rect.top - padY,
+  right: rect.right + padX,
+  bottom: rect.bottom + padY,
+})
+
+const intersectsSceneRect = (left: number, top: number, right: number, bottom: number) => {
+  const rect = expandSceneRect(
+    sceneViewport.value,
+    VIRTUALIZATION_OVERSCAN_X,
+    VIRTUALIZATION_OVERSCAN_Y
+  )
+
+  return left <= rect.right && right >= rect.left && top <= rect.bottom && bottom >= rect.top
+}
+
+const getNodeSceneRect = (nodeId: string) => {
+  const position = canvasPositions.value[nodeId]
+  if (!position) {
+    return null
+  }
+
+  return {
+    left: position.x,
+    top: position.y,
+    right: position.x + CONTENT_WIZARD_CARD_WIDTH,
+    bottom: position.y + CONTENT_WIZARD_CARD_HEIGHT,
+  }
+}
+
+const shouldAlwaysRenderNode = (nodeId: string) =>
+  nodeId === props.focusedNodeId ||
+  nodeId === props.editingNodeId ||
+  nodeId === props.dropTargetId ||
+  nodeId === sharedAddMenuNodeId.value ||
+  selectedNodeIdSet.value.has(nodeId)
+
+const renderedNodes = computed(() =>
+  sortedNodes.value.filter((node) => {
+    if (node.isRootVirtual || shouldAlwaysRenderNode(node.id)) {
+      return true
+    }
+
+    const rect = getNodeSceneRect(node.id)
+    if (!rect) {
+      return false
+    }
+
+    return intersectsSceneRect(rect.left, rect.top, rect.right, rect.bottom)
+  })
+)
+
+const getConnectorSceneRect = (node: ContentWizardDraftNode) => {
+  if (node.isRootVirtual) {
+    return null
+  }
+
+  const parentId = node.parentId ?? CONTENT_WIZARD_ROOT_ID
+  const parent = canvasPositions.value[parentId]
+  const child = canvasPositions.value[node.id]
+
+  if (!parent || !child) {
+    return null
+  }
+
+  const isRootConnector = parentId === CONTENT_WIZARD_ROOT_ID
+  const startX = isRootConnector
+    ? parent.x + CONTENT_WIZARD_CARD_WIDTH / 2
+    : parent.x + CONTENT_WIZARD_CARD_WIDTH
+  const startY = isRootConnector
+    ? parent.y + CONTENT_WIZARD_CARD_HEIGHT
+    : parent.y + CONTENT_WIZARD_CARD_HEIGHT / 2
+  const endX = child.x
+  const endY = child.y + CONTENT_WIZARD_CARD_HEIGHT / 2
+
+  return {
+    left: Math.min(startX, endX),
+    top: Math.min(startY, endY),
+    right: Math.max(startX, endX),
+    bottom: Math.max(startY, endY),
+  }
+}
+
+const renderedConnectors = computed(() =>
+  sortedNodes.value.filter((node) => {
+    if (node.isRootVirtual) {
+      return false
+    }
+
+    const rect = getConnectorSceneRect(node)
+    if (!rect) {
+      return false
+    }
+
+    return intersectsSceneRect(rect.left, rect.top, rect.right, rect.bottom)
+  })
+)
+
+const activeAddControlsNodeId = computed(
+  () =>
+    (sharedAddMenuOpen.value ? sharedAddMenuNodeId.value : null) ??
+    hoveredNodeId.value ??
+    props.focusedNodeId
+)
+const activeAddControlsNode = computed(() =>
+  activeAddControlsNodeId.value ? props.nodes[activeAddControlsNodeId.value] || null : null
+)
+const activeBottomBlocks = computed(() =>
+  activeAddControlsNodeId.value ? props.getBottomBlocks(activeAddControlsNodeId.value) : []
+)
+const activeRightBlocks = computed(() =>
+  activeAddControlsNodeId.value ? props.getRightBlocks(activeAddControlsNodeId.value) : []
+)
+
+const resolveAddMenuSide = (nodeId: string, position: ContentWizardAddPosition) => {
+  const node = props.nodes[nodeId]
+  if (!node || node.isRootVirtual || position === 'sibling') {
+    return 'bottom' as const
+  }
+
+  return 'right' as const
+}
+
+const getAddAnchorStyle = (nodeId: string, position: ContentWizardAddPosition) => {
+  const canvasPosition = canvasPositions.value[nodeId]
+  if (!canvasPosition) {
+    return null
+  }
+
+  const side = resolveAddMenuSide(nodeId, position)
+
+  if (side === 'right') {
+    return {
+      width: `${SHARED_ADD_TRIGGER_SIZE}px`,
+      height: `${SHARED_ADD_TRIGGER_SIZE}px`,
+      left: `${canvasPosition.x + CONTENT_WIZARD_CARD_WIDTH + SHARED_ADD_BUTTON_OFFSET}px`,
+      top: `${canvasPosition.y + CONTENT_WIZARD_CARD_HEIGHT / 2}px`,
+      transform: 'translate(-120%, -50%)',
+    }
+  }
+
+  return {
+    width: `${SHARED_ADD_TRIGGER_SIZE}px`,
+    height: `${SHARED_ADD_TRIGGER_SIZE}px`,
+    left: `${canvasPosition.x + CONTENT_WIZARD_CARD_WIDTH / 2}px`,
+    top: `${canvasPosition.y + CONTENT_WIZARD_CARD_HEIGHT + SHARED_ADD_BUTTON_OFFSET}px`,
+    transform: 'translate(-50%, -120%)',
+  }
+}
+
+const activeBottomButtonStyle = computed(() =>
+  activeAddControlsNodeId.value ? getAddAnchorStyle(activeAddControlsNodeId.value, 'sibling') : null
+)
+const activeRightButtonStyle = computed(() =>
+  activeAddControlsNodeId.value ? getAddAnchorStyle(activeAddControlsNodeId.value, 'child') : null
+)
+const sharedAddMenuAnchorStyle = computed(() =>
+  sharedAddMenuNodeId.value
+    ? getAddAnchorStyle(sharedAddMenuNodeId.value, sharedAddMenuPosition.value)
+    : null
+)
+const sharedAddMenuSide = computed(() =>
+  sharedAddMenuNodeId.value
+    ? resolveAddMenuSide(sharedAddMenuNodeId.value, sharedAddMenuPosition.value)
+    : 'bottom'
+)
 
 const setNodeRef = (nodeId: string) => {
   return (instance: Element | ComponentPublicInstance | null) => {
@@ -162,14 +351,47 @@ const centerNode = (nodeId: string) => {
   })
 }
 
-const openNodeAddMenu = (nodeId: string, position: ContentWizardAddPosition) => {
-  const nodeRef = nodeRefs.get(nodeId)
-  if (!nodeRef) {
+const openNodeAddMenu = (
+  nodeId: string,
+  position: ContentWizardAddPosition,
+  options: {
+    focusNode?: boolean
+  } = {}
+) => {
+  const node = props.nodes[nodeId]
+  if (!node) {
     return false
   }
 
-  nodeRef.focusCard()
-  return nodeRef.openAddMenu(position)
+  const resolvedPosition: ContentWizardAddPosition = node.isRootVirtual ? 'child' : position
+  const side = resolveAddMenuSide(nodeId, resolvedPosition)
+  const blocks = side === 'right' ? props.getRightBlocks(nodeId) : props.getBottomBlocks(nodeId)
+
+  if (blocks.length === 0) {
+    return false
+  }
+
+  if (options.focusNode !== false) {
+    focusNodeCard(nodeId)
+  }
+
+  if (blocks.length === 1) {
+    sharedAddMenuOpen.value = false
+    emit('add-node', {
+      nodeId,
+      position: resolvedPosition,
+      block: blocks[0],
+    })
+    return true
+  }
+
+  hoveredNodeId.value = nodeId
+  sharedAddMenuNodeId.value = nodeId
+  sharedAddMenuPosition.value = resolvedPosition
+  sharedAddMenuBlocks.value = blocks
+  sharedAddMenuOpen.value = true
+
+  return true
 }
 
 const handleCanvasDragOver = (event: DragEvent) => {
@@ -224,9 +446,77 @@ const handleCanvasPointerMove = (event: PointerEvent) => {
 }
 
 const handleCanvasPointerLeave = () => {
+  hoveredNodeId.value = null
   emitCursorPosition(null)
   handlePointerLeave()
 }
+
+const handleNodePointerEnter = (nodeId: string) => {
+  hoveredNodeId.value = nodeId
+}
+
+const handleNodePointerLeave = (nodeId: string, event: PointerEvent) => {
+  const nextTarget = event.relatedTarget as HTMLElement | null
+  if (nextTarget?.closest('[data-shared-add-controls]')) {
+    return
+  }
+
+  if (hoveredNodeId.value === nodeId) {
+    hoveredNodeId.value = null
+  }
+}
+
+const handleSharedAddControlsPointerEnter = (nodeId: string) => {
+  hoveredNodeId.value = nodeId
+}
+
+const handleSharedAddControlsPointerLeave = (event: PointerEvent) => {
+  const nextTarget = event.relatedTarget as HTMLElement | null
+  if (nextTarget?.closest('[data-node-card], [data-shared-add-controls]')) {
+    return
+  }
+
+  hoveredNodeId.value = null
+}
+
+const handleSharedAddSelect = (block: BlockResource) => {
+  if (!sharedAddMenuNodeId.value) {
+    return
+  }
+
+  emit('add-node', {
+    nodeId: sharedAddMenuNodeId.value,
+    position: sharedAddMenuPosition.value,
+    block,
+  })
+}
+
+watchEffect(() => {
+  if (!sharedAddMenuOpen.value || !sharedAddMenuNodeId.value) {
+    return
+  }
+
+  const side = resolveAddMenuSide(sharedAddMenuNodeId.value, sharedAddMenuPosition.value)
+  const blocks =
+    side === 'right'
+      ? props.getRightBlocks(sharedAddMenuNodeId.value)
+      : props.getBottomBlocks(sharedAddMenuNodeId.value)
+
+  if (blocks.length === 0) {
+    sharedAddMenuOpen.value = false
+    return
+  }
+
+  sharedAddMenuBlocks.value = blocks
+})
+
+watch(sharedAddMenuOpen, (isOpen) => {
+  if (isOpen) {
+    return
+  }
+
+  sharedAddMenuBlocks.value = []
+})
 
 watch(
   () => props.focusedNodeId,
@@ -322,12 +612,12 @@ defineExpose({
         }"
       >
         <ContentWizardConnectorLayer
-          :nodes="props.nodes"
+          :nodes="renderedConnectors"
           :positions="canvasPositions"
         />
 
         <ContentWizardNodeCard
-          v-for="node in sortedNodes"
+          v-for="node in renderedNodes"
           :ref="setNodeRef(node.id)"
           :key="node.id"
           :node="node"
@@ -339,14 +629,14 @@ defineExpose({
           :drop-active="node.isRootVirtual ? props.rootDropActive : props.dropTargetId === node.id"
           :remote-focused-users="props.remoteFocusUsersByNodeId[node.id] || []"
           :block-options="props.getBlockOptions(node.id)"
-          :blocks-for-bottom="props.getBottomBlocks(node.id)"
-          :blocks-for-right="props.getRightBlocks(node.id)"
           :style="{
             width: `${CONTENT_WIZARD_CARD_WIDTH}px`,
             height: `${CONTENT_WIZARD_CARD_HEIGHT}px`,
             transform: `translate(${canvasPositions[node.id]?.x || 0}px, ${canvasPositions[node.id]?.y || 0}px)`,
           }"
           @pointerdown="emit('node-pointerdown', { nodeId: node.id, event: $event })"
+          @pointerenter="handleNodePointerEnter(node.id)"
+          @pointerleave="handleNodePointerLeave(node.id, $event)"
           @focus="emit('focus-node', node.id)"
           @keydown="emit('node-keydown', { nodeId: node.id, event: $event })"
           @start-edit="
@@ -363,15 +653,71 @@ defineExpose({
           @update-block="emit('update-block', { nodeId: node.id, blockId: $event })"
           @toggle-delete="emit('toggle-delete', node.id)"
           @toggle-collapse="emit('toggle-collapse', node.id)"
-          @add="
-            emit('add-node', { nodeId: node.id, position: $event.position, block: $event.block })
-          "
           @dragstart="emit('dragstart', { nodeId: node.id, event: $event })"
           @dragend="emit('dragend')"
           @dragover="handleNodeDragOver(node, $event)"
           @dragenter="emit('dragenter', node.id)"
           @dragleave="emit('dragleave', node.id)"
           @drop="handleNodeDrop(node, $event)"
+        />
+
+        <div
+          v-if="props.canMutate && activeAddControlsNode && activeBottomBlocks.length > 0"
+          data-shared-add-controls
+          class="absolute z-20"
+          :style="activeBottomButtonStyle || undefined"
+          @pointerenter="handleSharedAddControlsPointerEnter(activeAddControlsNode.id)"
+          @pointerleave="handleSharedAddControlsPointerLeave"
+        >
+          <button
+            type="button"
+            class="flex size-6 items-center justify-center rounded-full scale-50 bg-accent text-primary shadow-sm transition-transform hover:scale-100"
+            tabindex="-1"
+            @pointerdown.prevent.stop
+            @click.prevent.stop="
+              openNodeAddMenu(
+                activeAddControlsNode.id,
+                activeAddControlsNode.isRootVirtual ? 'child' : 'sibling',
+                { focusNode: false }
+              )
+            "
+          >
+            <Icon name="lucide:plus" />
+          </button>
+        </div>
+
+        <div
+          v-if="
+            props.canMutate &&
+            activeAddControlsNode &&
+            !activeAddControlsNode.isRootVirtual &&
+            activeRightBlocks.length > 0
+          "
+          data-shared-add-controls
+          class="absolute z-20"
+          :style="activeRightButtonStyle || undefined"
+          @pointerenter="handleSharedAddControlsPointerEnter(activeAddControlsNode.id)"
+          @pointerleave="handleSharedAddControlsPointerLeave"
+        >
+          <button
+            type="button"
+            class="flex size-6 items-center justify-center rounded-full bg-accent text-primary scale-50 shadow-sm transition-transform hover:scale-100"
+            tabindex="-1"
+            @pointerdown.prevent.stop
+            @click.prevent.stop="
+              openNodeAddMenu(activeAddControlsNode.id, 'child', { focusNode: false })
+            "
+          >
+            <Icon name="lucide:plus" />
+          </button>
+        </div>
+
+        <ContentWizardAddMenu
+          v-model="sharedAddMenuOpen"
+          :blocks="sharedAddMenuBlocks"
+          :side="sharedAddMenuSide"
+          :anchor-style="sharedAddMenuAnchorStyle"
+          @select="handleSharedAddSelect"
         />
       </div>
     </div>

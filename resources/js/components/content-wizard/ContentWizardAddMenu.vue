@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { useEventListener, useVModel } from '@vueuse/core'
-import type { ComponentPublicInstance } from 'vue'
+import type { ComponentPublicInstance, CSSProperties } from 'vue'
 
-import Icon from '~/components/Icon.vue'
 import { Input } from '~/components/ui/input'
-import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 
 import IconName from '../ui/IconName.vue'
 
@@ -12,15 +10,13 @@ const props = withDefaults(
   defineProps<{
     modelValue?: boolean
     blocks: BlockResource[]
-    disabled?: boolean
-    isActionActive: boolean
     side?: 'right' | 'bottom'
+    anchorStyle?: CSSProperties | null
   }>(),
   {
     modelValue: false,
-    disabled: false,
-    isActionActive: false,
     side: 'bottom',
+    anchorStyle: null,
   }
 )
 
@@ -33,9 +29,9 @@ const open = useVModel(props, 'modelValue', emit, {
   passive: true,
 })
 const query = ref('')
-const searchRef = ref<HTMLInputElement | null>(null)
-const optionRefs = new Map<number, HTMLButtonElement>()
+const searchRef = ref<InstanceType<typeof Input> | null>(null)
 const activeIndex = ref(0)
+const optionRefs = new Map<number, HTMLButtonElement>()
 
 const filteredBlocks = computed(() => {
   const needle = query.value.trim().toLowerCase()
@@ -85,31 +81,6 @@ const selectBlock = (block: BlockResource) => {
 
 const closeMenu = () => {
   open.value = false
-}
-
-const openMenu = () => {
-  if (props.disabled || props.blocks.length === 0) {
-    return
-  }
-
-  if (props.blocks.length === 1) {
-    selectBlock(props.blocks[0])
-    return
-  }
-
-  open.value = true
-}
-
-const setOptionRef = (index: number) => {
-  return (element: Element | ComponentPublicInstance | null) => {
-    const button = element as HTMLButtonElement | null
-    if (button) {
-      optionRefs.set(index, button)
-      return
-    }
-
-    optionRefs.delete(index)
-  }
 }
 
 const moveActiveIndex = (direction: 'up' | 'down') => {
@@ -162,6 +133,17 @@ const handleMenuKeydown = async (event: KeyboardEvent) => {
   }
 }
 
+const setOptionRef = (index: number) => {
+  return (element: Element | ComponentPublicInstance | null) => {
+    if (element instanceof HTMLButtonElement) {
+      optionRefs.set(index, element)
+      return
+    }
+
+    optionRefs.delete(index)
+  }
+}
+
 useEventListener(window, 'keydown', (event) => {
   if (!open.value || event.key !== 'Escape') {
     return
@@ -172,49 +154,43 @@ useEventListener(window, 'keydown', (event) => {
   closeMenu()
 })
 
-const positionClass = computed(() => {
-  switch (props.side) {
-    case 'right':
-      return 'top-1/2 -right-6 -translate-y-1/2'
-    default:
-      return '-bottom-6 left-1/2 -translate-x-1/2'
+useEventListener(window, 'pointerdown', (event) => {
+  if (!open.value) {
+    return
   }
+
+  const target = event.target as HTMLElement | null
+  if (target?.closest('[data-add-menu-panel], [data-shared-add-controls]')) {
+    return
+  }
+
+  closeMenu()
 })
 
-defineExpose({
-  closeMenu,
-  openMenu,
+const panelPositionClass = computed(() => {
+  switch (props.side) {
+    case 'right':
+      return 'left-full top-1/2 ml-2 -translate-y-1/2'
+    default:
+      return 'left-1/2 top-full mt-2 -translate-x-1/2'
+  }
 })
 </script>
 
 <template>
-  <Popover v-model:open="open">
-    <PopoverTrigger
-      as-child
-      :disabled="disabled"
-      data-add-menu
-    >
-      <slot>
-        <button
-          tabindex="-1"
-          :class="[
-            'absolute flex size-6 items-center justify-center rounded-full bg-accent text-primary transition',
-            positionClass,
-            isActionActive
-              ? 'pointer-events-auto cursor-pointer opacity-100 scale-50 hover:scale-100'
-              : 'pointer-events-none opacity-0 group-hover:pointer-events-auto hover:text-primary',
-          ]"
-          :disabled="disabled"
-        >
-          <Icon name="lucide:plus" />
-        </button>
-      </slot>
-    </PopoverTrigger>
-
-    <PopoverContent
-      :side="side"
-      align="center"
-      class="w-72 border border-border"
+  <div
+    v-if="open && anchorStyle"
+    aria-hidden="true"
+    data-add-menu
+    class="absolute z-30"
+    :style="anchorStyle"
+  >
+    <div
+      data-add-menu-panel
+      :class="[
+        'absolute w-72 rounded-md border border-border bg-background p-3 text-popover-foreground shadow-lg outline-none',
+        panelPositionClass,
+      ]"
       @keydown.capture="handleMenuKeydown"
     >
       <div class="space-y-2">
@@ -256,6 +232,6 @@ defineExpose({
           </button>
         </div>
       </div>
-    </PopoverContent>
-  </Popover>
+    </div>
+  </div>
 </template>
