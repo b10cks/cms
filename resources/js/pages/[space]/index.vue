@@ -24,8 +24,8 @@ useSeoMeta({
               v-if="space.icon"
               :src="space.icon"
               :alt="space.name"
-              :width="40"
-              :height="40"
+              :width="80"
+              :height="80"
               class="size-10 rounded-md object-cover"
             />
           </template>

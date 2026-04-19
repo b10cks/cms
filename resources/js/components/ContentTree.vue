@@ -1369,20 +1369,6 @@ onBeforeUnmount(() => {
     class="relative flex h-full min-h-0 flex-col overflow-hidden"
   >
     <VerticalScrollArea class="h-full min-h-0 w-full">
-      <div
-        v-if="isLoading"
-        class="flex items-center justify-center py-4"
-      >
-        <span class="text-sm text-muted">Loading...</span>
-      </div>
-
-      <div
-        v-else-if="error"
-        class="px-2 py-4 text-sm text-destructive"
-      >
-        {{ error }}
-      </div>
-
       <TreeRoot
         v-slot="{ flattenItems }"
         v-model:expanded="settings.content.expanded"
@@ -1402,7 +1388,7 @@ onBeforeUnmount(() => {
           v-if="selectedSpace"
           ref="rootDropZoneRef"
           :class="[
-            'group relative mb-2 flex w-full items-center gap-2 rounded-md border border-transparent -my-1 px-2 py-1 transition-all duration-150',
+            'group relative mb-1 flex w-full items-center gap-2 rounded-md border border-transparent -my-1 pl-2 py-1 transition-all duration-150',
             rootDropMode ? 'bg-accent/50 ring-1 ring-info' : '',
           ]"
           @contextmenu="handleRootContextMenu"
@@ -1414,22 +1400,22 @@ onBeforeUnmount(() => {
               router.push({ name: 'space-content-index', params: { space: route.params.space } })
             "
           >
+            <NuxtImg
+              v-if="selectedSpace.icon"
+              :src="selectedSpace.icon"
+              :alt="selectedSpace.name"
+              :width="48"
+              :height="48"
+              class="size-6 shrink-0 rounded-sm object-cover"
+            />
             <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <NuxtImg
-                  v-if="selectedSpace.icon"
-                  :src="selectedSpace.icon"
-                  :alt="selectedSpace.name"
-                  :width="20"
-                  :height="20"
-                  class="size-5 shrink-0 rounded-sm object-cover"
-                />
+              <div class="flex items-center gap-2 -mb-1">
                 <Icon
-                  v-else
+                  v-if="!selectedSpace.icon"
                   name="lucide:cuboid"
                   class="shrink-0 text-muted"
                 />
-                <span class="truncate font-semibold">{{ selectedSpace.name }}</span>
+                <span class="truncate font-semibold text-primary">{{ selectedSpace.name }}</span>
               </div>
               <SpaceBadge
                 v-if="selectedSpace.badge"
@@ -1466,6 +1452,20 @@ onBeforeUnmount(() => {
             gap="0px"
             :label="$t('labels.contentTree.drop.moveToRoot')"
           />
+        </div>
+
+        <div
+          v-if="isLoading"
+          class="flex items-center justify-center py-4"
+        >
+          <span class="text-sm text-muted">Loading...</span>
+        </div>
+
+        <div
+          v-else-if="error"
+          class="px-2 py-4 text-sm text-destructive"
+        >
+          {{ error }}
         </div>
 
         <TreeItem
