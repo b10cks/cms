@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DTOs\AssetData;
+namespace App\DTOs\ImportExport;
 
 class ImportResult
 {
@@ -17,7 +17,7 @@ class ImportResult
         return [
             'successes' => $this->successes,
             'changes' => $this->changes,
-            'ignored_fields' => array_unique($this->ignoredFields),
+            'ignored_fields' => array_values(array_unique($this->ignoredFields)),
             'errors' => $this->errors,
             'summary' => [
                 'total_success' => \count($this->successes),

@@ -1,4 +1,12 @@
 import type { ApiResponse, BaseQueryParams } from '~/types'
+import { requestExportBlob, requestImportJson } from '~/lib/import-export'
+import type {
+  CreateRedirectPayload,
+  RedirectDataImportResult,
+  RedirectImportExportFormat,
+  RedirectResource,
+  UpdateRedirectPayload,
+} from '~/types/redirects'
 
 import type { ApiClient } from '../client'
 import { BaseResource } from './base-resource'
@@ -24,5 +32,21 @@ export class Redirects extends BaseResource<
 
   public async reset(id: string): Promise<ApiResponse<RedirectResource>> {
     return this.client.post<ApiResponse<RedirectResource>>(`${this.basePath}/${id}/reset`)
+  }
+
+  public async export(params: RedirectsQueryParams & { as: RedirectImportExportFormat }): Promise<Blob> {
+    return requestExportBlob({
+      client: this.client,
+      endpoint: `${this.basePath}/export`,
+      payload: params,
+    })
+  }
+
+  public async import(file: File): Promise<RedirectDataImportResult> {
+    return requestImportJson<RedirectDataImportResult>({
+      client: this.client,
+      endpoint: `${this.basePath}/import`,
+      file,
+    })
   }
 }

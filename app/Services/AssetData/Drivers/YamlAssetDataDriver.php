@@ -2,7 +2,7 @@
 
 namespace App\Services\AssetData\Drivers;
 
-use App\Enums\AssetDataFormat;
+use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
@@ -106,6 +106,6 @@ class YamlAssetDataDriver extends BaseAssetDataDriver
 
     public function getFormat(): string
     {
-        return AssetDataFormat::YAML->value;
+        return ImportExportFormat::YAML->value;
     }
 }

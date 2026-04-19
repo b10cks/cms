@@ -3,7 +3,7 @@
 namespace App\Services\AssetData\Drivers;
 
 use App\Contracts\AssetData\AssetDataDriver;
-use App\DTOs\AssetData\ImportResult;
+use App\DTOs\ImportExport\ImportResult;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Services\Asset\AssetMetadataFieldResolver;
@@ -44,6 +44,11 @@ abstract class BaseAssetDataDriver implements AssetDataDriver
         array $assetFields,
         array $languages
     ): ImportResult {
+        $this->successes = [];
+        $this->changes = [];
+        $this->ignoredFields = [];
+        $this->errors = [];
+
         try {
             $rows = $this->parseFile($file);
 

@@ -1,10 +1,16 @@
 <script setup lang="ts">
+import Icon from '~/components/Icon.vue'
 import RedirectsTable from '~/components/redirects/RedirectsTable.vue'
+import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 
 const route = useRoute()
 const { t } = useI18n()
 const spaceId = computed(() => route.params.space as string)
+const { useAccessControl } = useAuthorization()
+const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
+const canManageRedirects = computed(() => access.hasAbility('redirects.manage'))
+const redirectsTableRef = ref<InstanceType<typeof RedirectsTable> | null>(null)
 
 useSeoMeta({
   title: computed(() => t('labels.redirects.title')),
@@ -17,8 +23,22 @@ useSeoMeta({
       <ContentHeader
         :header="$t('labels.redirects.title')"
         :description="$t('labels.redirects.description')"
+      >
+        <template #actions>
+          <Button
+            v-if="canManageRedirects"
+            variant="primary"
+            @click="redirectsTableRef?.openCreateDialog()"
+          >
+            <Icon name="lucide:plus" />
+            {{ $t('actions.redirects.add') }}
+          </Button>
+        </template>
+      </ContentHeader>
+      <RedirectsTable
+        ref="redirectsTableRef"
+        :space-id="spaceId"
       />
-      <RedirectsTable :space-id="spaceId" />
     </div>
   </div>
 </template>

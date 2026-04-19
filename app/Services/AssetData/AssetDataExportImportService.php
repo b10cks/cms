@@ -3,8 +3,8 @@
 namespace App\Services\AssetData;
 
 use App\Contracts\AssetData\AssetDataDriver;
-use App\DTOs\AssetData\ImportResult;
-use App\Enums\AssetDataFormat;
+use App\DTOs\ImportExport\ImportResult;
+use App\Enums\ImportExportFormat;
 use App\Http\Filters\Mgmt\AssetFilter;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
@@ -14,16 +14,13 @@ use App\Services\AssetData\Drivers\ExcelAssetDataDriver;
 use App\Services\AssetData\Drivers\JsonAssetDataDriver;
 use App\Services\AssetData\Drivers\XliffAssetDataDriver;
 use App\Services\AssetData\Drivers\YamlAssetDataDriver;
-use App\Services\AssetData\Exceptions\InvalidFormatException;
-use App\Services\AssetData\Exceptions\ImportValidationException;
+use App\Services\ImportExport\ImportExportService;
 use CodersCantina\Filter\Filter;
 use Illuminate\Http\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
 
-class AssetDataExportImportService
+class AssetDataExportImportService extends ImportExportService
 {
-    protected array $drivers = [];
-
     public function __construct(
         private readonly AssetMetadataFieldResolver $fieldResolver,
         CsvAssetDataDriver $csvDriver,
@@ -32,21 +29,21 @@ class AssetDataExportImportService
         XliffAssetDataDriver $xliffDriver,
         YamlAssetDataDriver $yamlDriver,
     ) {
-        $this->drivers = [
-            AssetDataFormat::CSV->value => $csvDriver,
-            AssetDataFormat::EXCEL->value => $excelDriver,
-            AssetDataFormat::JSON->value => $jsonDriver,
-            AssetDataFormat::XLIFF->value => $xliffDriver,
-            AssetDataFormat::YAML->value => $yamlDriver,
-        ];
+        $this->registerDrivers(
+            $csvDriver,
+            $excelDriver,
+            $jsonDriver,
+            $xliffDriver,
+            $yamlDriver,
+        );
     }
 
     public function exportAssets(
         Space $space,
-        AssetDataFormat $format,
+        ImportExportFormat $format,
         ?Filter $filter = null
     ): Response {
-        $driver = $this->getDriver($format);
+        $driver = $this->getAssetDriver($format);
 
         $assetFields = $space->settings->asset_fields ?? [];
         $languages = $space->settings->languages ?? [];
@@ -66,32 +63,23 @@ class AssetDataExportImportService
     public function importAssets(
         Space $space,
         UploadedFile $file,
-        AssetDataFormat $format
+        ImportExportFormat $format
     ): ImportResult {
-        $driver = $this->getDriver($format);
+        $driver = $this->getAssetDriver($format);
 
         $assetFields = $this->fieldResolver->getAllPossibleFields($space);
         $languages = $space->settings->languages ?? [];
 
-        $validationErrors = $driver->validate($file, $assetFields, $languages);
-
-        if (!empty($validationErrors)) {
-            throw new ImportValidationException(
-                'File validation failed: ' . implode(', ', $validationErrors)
-            );
-        }
+        $this->ensureImportIsValid(fn (): array => $driver->validate($file, $assetFields, $languages));
 
         return $driver->import($space, $file, $assetFields, $languages);
     }
 
-    protected function getDriver(AssetDataFormat $format): AssetDataDriver
+    protected function getAssetDriver(ImportExportFormat $format): AssetDataDriver
     {
-        if (!isset($this->drivers[$format->value])) {
-            throw new InvalidFormatException(
-                "Format [{$format->value}] is not supported."
-            );
-        }
+        /** @var AssetDataDriver $driver */
+        $driver = $this->getDriver($format);
 
-        return $this->drivers[$format->value];
+        return $driver;
     }
 }

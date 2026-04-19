@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Asset;
 
-use App\Enums\AssetDataFormat;
+use App\Enums\ImportExportFormat;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ImportAssetDataRequest extends FormRequest
@@ -32,17 +32,10 @@ class ImportAssetDataRequest extends FormRequest
         ];
     }
 
-    public function getAssetDataFormat(): AssetDataFormat
+    public function getAssetDataFormat(): ImportExportFormat
     {
-        $extension = strtolower($this->file('file')->getClientOriginalExtension());
-
-        return match ($extension) {
-            'csv' => AssetDataFormat::CSV,
-            'xlsx', 'xls' => AssetDataFormat::EXCEL,
-            'json' => AssetDataFormat::JSON,
-            'xlf', 'xliff', 'xml' => AssetDataFormat::XLIFF,
-            'yaml', 'yml' => AssetDataFormat::YAML,
-            default => throw new \InvalidArgumentException("Unsupported file format: .{$extension}. Supported formats: csv, xlsx, xls, json, xlf, xliff, yaml, yml"),
-        };
+        return ImportExportFormat::fromExtension(
+            strtolower($this->file('file')->getClientOriginalExtension())
+        );
     }
 }

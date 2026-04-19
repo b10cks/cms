@@ -110,6 +110,7 @@ export class ApiClient {
   public async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const { query, body, ...fetchOptions } = options
     const method = (fetchOptions.method || 'GET').toString().toUpperCase()
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
 
     if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
       await this.ensureCsrfCookie()
@@ -122,10 +123,14 @@ export class ApiClient {
         ...fetchOptions,
         credentials: fetchOptions.credentials || 'include',
         headers: {
-          ...headers,
+          ...(isFormData
+            ? Object.fromEntries(
+                Object.entries(headers).filter(([key]) => key.toLowerCase() !== 'content-type')
+              )
+            : headers),
           ...fetchOptions.headers,
         },
-        body: body !== undefined ? JSON.stringify(body) : undefined,
+        body: body !== undefined ? (isFormData ? body : JSON.stringify(body)) : undefined,
       })
       return this.parseResponse<T>(response)
     }

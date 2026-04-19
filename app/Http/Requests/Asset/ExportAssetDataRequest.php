@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Asset;
 
-use App\Enums\AssetDataFormat;
+use App\Enums\ImportExportFormat;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,7 +19,7 @@ class ExportAssetDataRequest extends FormRequest
             'as' => [
                 'required',
                 'string',
-                Rule::enum(AssetDataFormat::class),
+                Rule::enum(ImportExportFormat::class),
             ],
         ];
     }

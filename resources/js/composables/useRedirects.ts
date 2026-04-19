@@ -3,6 +3,11 @@ import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { RedirectsQueryParams } from '~/api/resources/redirects'
+import type {
+  CreateRedirectPayload,
+  RedirectImportExportFormat,
+  UpdateRedirectPayload,
+} from '~/types/redirects'
 
 import { queryKeys } from './useQueryClient'
 
@@ -129,6 +134,40 @@ export function useRedirects(spaceId: MaybeRef<string>) {
     })
   }
 
+  const useExportRedirectsMutation = () => {
+    return useMutation({
+      mutationFn: async (params: RedirectsQueryParams & { as: RedirectImportExportFormat }) => {
+        return spaceAPI.value.redirects.export(params)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.redirects.exportError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
+  const useImportRedirectsMutation = () => {
+    return useMutation({
+      mutationFn: async (file: File) => {
+        return spaceAPI.value.redirects.import(file)
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.redirects(spaceId).lists() })
+        toast.success(t('composables.redirects.importSuccess') as string)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.redirects.importError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
   return {
     // Queries
     useRedirectsQuery,
@@ -139,5 +178,7 @@ export function useRedirects(spaceId: MaybeRef<string>) {
     useUpdateRedirectMutation,
     useDeleteRedirectMutation,
     useResetRedirectStatsMutation,
+    useExportRedirectsMutation,
+    useImportRedirectsMutation,
   }
 }

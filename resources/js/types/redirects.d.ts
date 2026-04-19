@@ -1,5 +1,8 @@
-interface RedirectResource {
+import type { ImportError, ImportExportFormat, ImportSummary } from './import-export'
+
+export interface RedirectResource {
   id: string
+  external_id?: string | null
   source: string
   target: string
   status_code: number
@@ -9,14 +12,43 @@ interface RedirectResource {
   updated_at: string
 }
 
-interface CreateRedirectPayload {
+export interface CreateRedirectPayload {
+  external_id?: string | null
   source: string
   target: string
   status_code: number
 }
 
-interface UpdateRedirectPayload {
+export interface UpdateRedirectPayload {
+  external_id?: string | null
   source?: string
   target?: string
   status_code?: number
+}
+
+export type RedirectImportExportFormat = Extract<ImportExportFormat, 'csv' | 'excel' | 'json' | 'yaml'>
+
+export interface RedirectChange {
+  field: string
+  old: string | number | null
+  new: string | number | null
+}
+
+export interface ImportedRedirectChanges {
+  id: string
+  source: string
+  changes: RedirectChange[]
+}
+
+export interface RedirectImportSuccess {
+  id: string
+  source: string
+}
+
+export interface RedirectDataImportResult {
+  successes: RedirectImportSuccess[]
+  changes: ImportedRedirectChanges[]
+  ignored_fields: string[]
+  errors: ImportError[]
+  summary: ImportSummary
 }

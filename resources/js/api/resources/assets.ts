@@ -1,6 +1,14 @@
 import { getXsrfHeaders } from '~/lib/csrf'
+import { requestExportBlob, requestImportJson } from '~/lib/import-export'
 import type { ApiCollectionResponse, ApiResponse, BaseQueryParams } from '~/types'
-import type { ExportTypes } from '~/types/assets'
+import type {
+  AssetDataImportResult,
+  AssetResource,
+  ExportTypes,
+  LinkedAssetContentResource,
+  UpdateAssetPayload,
+  UploadAssetPayload,
+} from '~/types/assets'
 
 import type { ApiClient } from '../client'
 import { BaseResource } from './base-resource'
@@ -92,12 +100,7 @@ export class Assets extends BaseResource<
       })
     }
 
-    return this.client.post<ApiResponse<AssetResource>>(this.basePath, formData, {
-      headers: {
-        // Remove Content-Type header so browser can set it with boundary
-        'Content-Type': undefined,
-      },
-    })
+    return this.client.post<ApiResponse<AssetResource>>(this.basePath, formData)
   }
 
   public async getLinkedContents(
@@ -122,32 +125,11 @@ export class Assets extends BaseResource<
    * @returns Blob of the exported data
    */
   public async export(params: AssetsQueryParams & { as: ExportTypes }): Promise<Blob> {
-    // Use native fetch for proper blob handling
-    if (typeof window === 'undefined') {
-      throw new Error('Export is only available in the browser')
-    }
-
-    const authHeaders = this.client.getAuthHeaders()
-    const baseURL = (this.client as any).baseURL || ''
-    const url = `${baseURL}${this.basePath}/export`
-
-    await this.client.ensureCsrfCookie()
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        ...authHeaders,
-        ...getXsrfHeaders(),
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(params),
+    return requestExportBlob({
+      client: this.client,
+      endpoint: `${this.basePath}/export`,
+      payload: params,
     })
-
-    if (!response.ok) {
-      throw new Error(`Export failed with status ${response.status}: ${response.statusText}`)
-    }
-
-    return await response.blob()
   }
 
   /**
@@ -156,34 +138,12 @@ export class Assets extends BaseResource<
    * @returns Import result with successes, changes, and errors
    */
   public async import(file: File): Promise<AssetDataImportResult> {
-    // Use native fetch for proper FormData handling with Laravel/PHP backend
-    if (typeof window === 'undefined') {
-      throw new Error('Import is only available in the browser')
-    }
-
-    const formData = new FormData()
-    formData.append('file', file)
-
-    const authHeaders = this.client.getAuthHeaders()
-    const baseURL = (this.client as any).baseURL || ''
-    const url = `${baseURL}${this.basePath}/import`
-
-    await this.client.ensureCsrfCookie()
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        ...authHeaders,
-        ...getXsrfHeaders(),
-      },
-      credentials: 'include',
-      body: formData,
+    const data = await requestImportJson<AssetDataImportResult | { data: AssetDataImportResult }>({
+      client: this.client,
+      endpoint: `${this.basePath}/import`,
+      file,
     })
 
-    if (!response.ok) {
-      throw new Error(`Import failed with status ${response.status}: ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    return data.data || data
+    return 'data' in data ? data.data : data
   }
 }

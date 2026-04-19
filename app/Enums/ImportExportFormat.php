@@ -2,13 +2,29 @@
 
 namespace App\Enums;
 
-enum AssetDataFormat: string
+use InvalidArgumentException;
+
+enum ImportExportFormat: string
 {
     case CSV = 'csv';
     case EXCEL = 'excel';
     case JSON = 'json';
     case XLIFF = 'xliff';
     case YAML = 'yaml';
+
+    public static function fromExtension(string $extension): self
+    {
+        return match (strtolower($extension)) {
+            'csv' => self::CSV,
+            'xlsx', 'xls' => self::EXCEL,
+            'json' => self::JSON,
+            'xlf', 'xliff', 'xml' => self::XLIFF,
+            'yaml', 'yml' => self::YAML,
+            default => throw new InvalidArgumentException(
+                "Unsupported file format: .{$extension}. Supported formats: csv, xlsx, xls, json, xlf, xliff, yaml, yml"
+            ),
+        };
+    }
 
     public function getExtension(): string
     {

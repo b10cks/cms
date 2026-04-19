@@ -2,7 +2,7 @@
 
 namespace App\Services\AssetData\Drivers;
 
-use App\Enums\AssetDataFormat;
+use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use App\Services\Asset\AssetMetadataFieldResolver;
 use App\Services\AssetData\DataMapper;
@@ -118,6 +118,6 @@ class ExcelAssetDataDriver extends BaseAssetDataDriver
 
     public function getFormat(): string
     {
-        return AssetDataFormat::EXCEL->value;
+        return ImportExportFormat::EXCEL->value;
     }
 }

@@ -42,6 +42,8 @@ use App\Http\Controllers\Mgmt\DataSourceController;
 use App\Http\Controllers\Mgmt\MigrationController;
 use App\Http\Controllers\Mgmt\PresenceController;
 use App\Http\Controllers\Mgmt\RedirectController;
+use App\Http\Controllers\Mgmt\RedirectDataExportController;
+use App\Http\Controllers\Mgmt\RedirectDataImportController;
 use App\Http\Controllers\Mgmt\RedirectResetController;
 use App\Http\Controllers\Mgmt\Release\ReleaseCancelController;
 use App\Http\Controllers\Mgmt\Release\ReleaseCommitController;
@@ -207,6 +209,8 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
 
     Route::apiResource('redirects', RedirectController::class);
     Route::post('redirects/{redirect}/reset', RedirectResetController::class)->name('redirects.reset');
+    Route::post('redirects/export', RedirectDataExportController::class)->name('redirects.data.export');
+    Route::post('redirects/import', RedirectDataImportController::class)->name('redirects.data.import');
 
     Route::get('content-menu', ContentMenuController::class);
     Route::get('stats', SpaceStatsController::class);

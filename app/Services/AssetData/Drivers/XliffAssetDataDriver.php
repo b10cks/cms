@@ -2,7 +2,7 @@
 
 namespace App\Services\AssetData\Drivers;
 
-use App\Enums\AssetDataFormat;
+use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use DOMDocument;
 use Illuminate\Http\UploadedFile;
@@ -149,6 +149,6 @@ class XliffAssetDataDriver extends BaseAssetDataDriver
 
     public function getFormat(): string
     {
-        return AssetDataFormat::XLIFF->value;
+        return ImportExportFormat::XLIFF->value;
     }
 }

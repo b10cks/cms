@@ -1285,10 +1285,19 @@
       "description": "Manage URL redirects for your site",
       "createRedirect": "Create Redirect",
       "editRedirect": "Edit Redirect",
+      "createDescription": "Add a redirect rule with a source path, target path, and status code.",
+      "editDescription": "Update the redirect target or status code for an existing rule.",
       "deleteConfirmTitle": "Delete Redirect",
       "deleteConfirmMessage": "Are you sure you want to delete the redirect from \"{from}\"?",
+      "resetConfirmTitle": "Reset Redirect Stats",
+      "resetConfirmMessage": "Reset the usage statistics for the redirect from \"{from}\"?",
+      "bulkDeleteConfirmTitle": "Delete Selected Redirects",
+      "bulkDeleteConfirmMessage": "Delete {count} selected redirects?",
+      "bulkResetConfirmTitle": "Reset Selected Redirects",
+      "bulkResetConfirmMessage": "Reset usage statistics for {count} selected redirects?",
       "noRedirects": "No redirects found",
       "loading": "Loading redirects...",
+      "neverUsed": "Never",
       "openMenu": "Open menu",
       "selectStatusCode": "Select a status code",
       "statusCodes": {
@@ -1307,13 +1316,43 @@
         "statusCode": "Status Code",
         "statusCodeDescription": "HTTP status code for the redirect"
       },
+      "placeholders": {
+        "source": "/from-path",
+        "target": "/to-path"
+      },
       "columns": {
         "source": "Source Path",
         "target": "Target Path",
         "statusCode": "Status Code",
         "hits": "Hits",
         "lastUsedAt": "Last Used",
-        "createdAt": "Created At"
+        "createdAt": "Created At",
+        "updatedAt": "Updated At"
+      },
+      "exportDialog": {
+        "title": "Export Redirects",
+        "description": "Download the current redirect set in your preferred format.",
+        "formatLabel": "Export Format"
+      },
+      "importDialog": {
+        "title": "Import Redirects",
+        "description": "Upload a redirects file to create or update redirect rules in bulk.",
+        "selectFileAction": "Choose a file",
+        "supportedFormats": "Supported formats: JSON, CSV, Excel, YAML",
+        "selectFileError": "Please select a file to import.",
+        "summaryTitle": "Import Summary",
+        "summaryDescription": "Review the redirects that were imported, changed, or skipped.",
+        "summary": {
+          "success": "Successful",
+          "changes": "Changes",
+          "errors": "Errors"
+        },
+        "modifiedRedirects": "Modified Redirects",
+        "ignoredFields": "Ignored Fields",
+        "errorsTitle": "Import Errors",
+        "rowLabel": "Row {row}",
+        "changeCount": "{count} change(s)",
+        "emptyValue": "empty"
       }
     },
     "migrations": {
@@ -2809,7 +2848,10 @@
       "deleteSuccess": "Redirect deleted successfully",
       "deleteError": "Failed to delete redirect: {error}",
       "resetStatsSuccess": "Statistics for redirect \"{source}\" reset successfully",
-      "resetStatsError": "Failed to reset redirect statistics: {error}"
+      "resetStatsError": "Failed to reset redirect statistics: {error}",
+      "exportError": "Failed to export redirects: {error}",
+      "importSuccess": "Redirects imported successfully",
+      "importError": "Failed to import redirects: {error}"
     },
     "releases": {
       "createSuccess": "Release \"{name}\" created successfully",

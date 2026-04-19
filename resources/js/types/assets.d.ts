@@ -1,3 +1,5 @@
+import type { ImportError, ImportExportFormat, ImportSummary } from './import-export'
+
 export interface AssetFieldOverride {
   key: string
   enabled?: boolean | null
@@ -140,7 +142,7 @@ export interface UploadFile extends UploadAssetPayload {
   type: AssetTypes
 }
 
-export type ExportTypes = 'csv' | 'excel' | 'json' | 'xliff' | 'yaml'
+export type ExportTypes = ImportExportFormat
 
 export interface AssetChange {
   field: string
@@ -158,18 +160,6 @@ export interface ImportedAssetChanges {
   id: string
   filename: string
   changes: AssetChange[]
-}
-
-export interface ImportError {
-  row?: number
-  id?: string
-  message: string
-}
-
-export interface ImportSummary {
-  total_success: number
-  total_changes: number
-  total_errors: number
 }
 
 export interface AssetDataImportResult {

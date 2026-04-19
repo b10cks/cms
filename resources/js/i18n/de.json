@@ -1284,10 +1284,19 @@
       "description": "Verwalte URL-Redirects für deine Website",
       "createRedirect": "Redirect erstellen",
       "editRedirect": "Redirect bearbeiten",
+      "createDescription": "Lege eine Redirect-Regel mit Quellpfad, Zielpfad und Status-Code an.",
+      "editDescription": "Aktualisiere Zielpfad oder Status-Code einer bestehenden Regel.",
       "deleteConfirmTitle": "Redirect löschen",
       "deleteConfirmMessage": "Bist du sicher, dass du den Redirect von \"{from}\" löschen möchtest?",
+      "resetConfirmTitle": "Redirect-Statistiken zurücksetzen",
+      "resetConfirmMessage": "Möchtest du die Nutzungsstatistiken für den Redirect von \"{from}\" zurücksetzen?",
+      "bulkDeleteConfirmTitle": "Ausgewählte Redirects löschen",
+      "bulkDeleteConfirmMessage": "{count} ausgewählte Redirects löschen?",
+      "bulkResetConfirmTitle": "Ausgewählte Redirects zurücksetzen",
+      "bulkResetConfirmMessage": "Nutzungsstatistiken für {count} ausgewählte Redirects zurücksetzen?",
       "noRedirects": "Keine Redirects gefunden",
       "loading": "Lädt Redirects...",
+      "neverUsed": "Nie",
       "openMenu": "Menü öffnen",
       "selectStatusCode": "Wähle einen Status-Code",
       "statusCodes": {
@@ -1306,13 +1315,43 @@
         "statusCode": "Status-Code",
         "statusCodeDescription": "HTTP-Status-Code für den Redirect"
       },
+      "placeholders": {
+        "source": "/alter-pfad",
+        "target": "/neuer-pfad"
+      },
       "columns": {
         "source": "Quellpfad",
         "target": "Zielpfad",
         "statusCode": "Status-Code",
         "hits": "Aufrufe",
         "lastUsedAt": "Zuletzt verwendet",
-        "createdAt": "Erstellt"
+        "createdAt": "Erstellt",
+        "updatedAt": "Aktualisiert"
+      },
+      "exportDialog": {
+        "title": "Redirects exportieren",
+        "description": "Lade die aktuelle Redirect-Auswahl in deinem gewünschten Format herunter.",
+        "formatLabel": "Exportformat"
+      },
+      "importDialog": {
+        "title": "Redirects importieren",
+        "description": "Lade eine Redirect-Datei hoch, um Regeln gesammelt anzulegen oder zu aktualisieren.",
+        "selectFileAction": "Datei auswählen",
+        "supportedFormats": "Unterstützte Formate: JSON, CSV, Excel, YAML",
+        "selectFileError": "Bitte wähle eine Datei für den Import aus.",
+        "summaryTitle": "Import-Zusammenfassung",
+        "summaryDescription": "Prüfe, welche Redirects importiert, geändert oder übersprungen wurden.",
+        "summary": {
+          "success": "Erfolgreich",
+          "changes": "Änderungen",
+          "errors": "Fehler"
+        },
+        "modifiedRedirects": "Geänderte Redirects",
+        "ignoredFields": "Ignorierte Felder",
+        "errorsTitle": "Importfehler",
+        "rowLabel": "Zeile {row}",
+        "changeCount": "{count} Änderung(en)",
+        "emptyValue": "leer"
       }
     },
     "migrations": {
@@ -2762,7 +2801,10 @@
       "deleteSuccess": "Redirect erfolgreich gelöscht",
       "deleteError": "Fehler beim Löschen des Redirects: {error}",
       "resetStatsSuccess": "Statistiken für Redirect \"{source}\" erfolgreich zurückgesetzt",
-      "resetStatsError": "Fehler beim Zurücksetzen der Redirect-Statistiken: {error}"
+      "resetStatsError": "Fehler beim Zurücksetzen der Redirect-Statistiken: {error}",
+      "exportError": "Fehler beim Exportieren der Redirects: {error}",
+      "importSuccess": "Redirects erfolgreich importiert",
+      "importError": "Fehler beim Importieren der Redirects: {error}"
     },
     "releases": {
       "createSuccess": "Release \"{name}\" erfolgreich erstellt",

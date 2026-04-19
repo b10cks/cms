@@ -3,6 +3,7 @@ import type { AssetsQueryParams } from '~/api/resources/assets'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
+import { buildTimestampedExportFilename, downloadBlob } from '~/lib/import-export'
 import type { ExportTypes } from '~/types/assets'
 
 import SelectField from '../ui/form/SelectField.vue'
@@ -42,20 +43,7 @@ const handleExport = async () => {
 
     exportAssets(params, {
       onSuccess: (blob) => {
-        // Generate filename with timestamp
-        const timestamp = new Date().toISOString().split('T')[0]
-        const extension = format.value === 'excel' ? 'xlsx' : format.value
-        const filename = `assets-export-${timestamp}.${extension}`
-
-        // Download the file
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = filename
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
+        downloadBlob(blob, buildTimestampedExportFilename('assets-export', format.value))
 
         open.value = false
       },

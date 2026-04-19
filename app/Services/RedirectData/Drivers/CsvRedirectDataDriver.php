@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\AssetData\Drivers;
+namespace App\Services\RedirectData\Drivers;
 
 use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
@@ -9,27 +9,27 @@ use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class CsvAssetDataDriver extends BaseAssetDataDriver
+class CsvRedirectDataDriver extends BaseRedirectDataDriver
 {
-    public function export(
-        Space $space,
-        Collection $assets,
-        array $assetFields,
-        array $languages
-    ): Response {
-        $headers = $this->mapper->getColumnHeaders($assetFields, $languages);
+    private const HEADERS = ['id', 'external_id', 'source', 'target', 'status_code'];
+
+    public function export(Space $space, Collection $redirects): Response
+    {
         $filename = $this->generateFilename($space, 'csv');
 
-        return new StreamedResponse(function () use ($space, $assets, $languages, $headers) {
+        return new StreamedResponse(function () use ($redirects) {
             $handle = fopen('php://output', 'w');
 
-            fputcsv($handle, $headers);
+            fputcsv($handle, self::HEADERS);
 
-            foreach ($assets as $asset) {
-                $rowFields = $this->fieldResolver->getEffectiveFieldsForAsset($space, $asset);
-                $row = $this->mapper->flattenAsset($asset, $rowFields, $languages);
-                $orderedRow = array_map(fn($header) => $row[$header] ?? '', $headers);
-                fputcsv($handle, $orderedRow);
+            foreach ($redirects as $redirect) {
+                fputcsv($handle, [
+                    $redirect->id,
+                    $redirect->external_id,
+                    $redirect->source,
+                    $redirect->target,
+                    $redirect->status_code,
+                ]);
             }
 
             fclose($handle);
@@ -43,7 +43,7 @@ class CsvAssetDataDriver extends BaseAssetDataDriver
     {
         $rows = [];
         $handle = fopen($file->getRealPath(), 'r');
-        $headers = fgetcsv($handle);
+        $headers = array_map('trim', fgetcsv($handle) ?: []);
 
         while (($row = fgetcsv($handle)) !== false) {
             $rows[] = array_combine($headers, $row);
@@ -54,32 +54,28 @@ class CsvAssetDataDriver extends BaseAssetDataDriver
         return $rows;
     }
 
-    public function validate(
-        UploadedFile $file,
-        array $assetFields,
-        array $languages
-    ): array {
+    public function validate(UploadedFile $file): array
+    {
         $errors = [];
 
-        if ($file->getClientOriginalExtension() !== 'csv') {
+        if (strtolower($file->getClientOriginalExtension()) !== 'csv') {
             $errors[] = 'File must be a CSV file';
 
             return $errors;
         }
 
         $handle = @fopen($file->getRealPath(), 'r');
-
         if (!$handle) {
             $errors[] = 'Unable to read CSV file';
 
             return $errors;
         }
 
-        $headers = fgetcsv($handle);
+        $headers = array_map('trim', fgetcsv($handle) ?: []);
         fclose($handle);
 
-        if (!\in_array('id', $headers) && !\in_array('filename', $headers)) {
-            $errors[] = 'CSV must contain either "id" or "filename" column for asset identification';
+        if (!in_array('source', $headers, true) || !in_array('target', $headers, true)) {
+            $errors[] = 'CSV must contain both "source" and "target" columns';
         }
 
         return $errors;

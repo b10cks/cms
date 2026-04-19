@@ -3,28 +3,30 @@
 namespace App\Http\Controllers\Mgmt;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Asset\ImportAssetDataRequest;
+use App\Http\Requests\Redirect\ImportRedirectDataRequest;
 use App\Models\Management\Space;
-use App\Services\AssetData\AssetDataExportImportService;
+use App\Models\Space\Redirect;
 use App\Services\ImportExport\Exceptions\ImportValidationException;
+use App\Services\RedirectData\RedirectDataImportExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
-class AssetDataImportController extends Controller
+class RedirectDataImportController extends Controller
 {
     public function __invoke(
-        ImportAssetDataRequest $request,
+        ImportRedirectDataRequest $request,
         Space $space,
-        AssetDataExportImportService $service
+        RedirectDataImportExportService $service,
     ): JsonResponse {
+        $this->authorize('create', [Redirect::class, $space]);
+
         try {
-            $format = $request->getAssetDataFormat();
+            $format = $request->getRedirectDataFormat();
             $file = $request->file('file');
 
-            $result = $service->importAssets($space, $file, $format);
+            $result = $service->importRedirects($space, $file, $format);
 
             return response()->json($result->toArray());
-
         } catch (ImportValidationException $e) {
             return response()->json([
                 'message' => $e->getMessage(),
@@ -35,17 +37,16 @@ class AssetDataImportController extends Controller
                 'message' => $e->getMessage(),
                 'errors' => [],
             ], 422);
-
         } catch (\Throwable $e) {
-            Log::error('Asset data import failed', [
+            Log::error('Redirect import failed', [
                 'space_id' => $space->id,
-                'file' => $request->file('file')->getClientOriginalName(),
+                'file' => $request->file('file')?->getClientOriginalName(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
-                'message' => 'Failed to import asset data: ' . $e->getMessage(),
+                'message' => 'Failed to import redirects: ' . $e->getMessage(),
             ], 500);
         }
     }

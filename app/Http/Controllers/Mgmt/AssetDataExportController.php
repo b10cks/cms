@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Mgmt;
 
-use App\Enums\AssetDataFormat;
+use App\Enums\ImportExportFormat;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\AssetFilter;
 use App\Http\Requests\Asset\ExportAssetDataRequest;
@@ -19,7 +19,7 @@ class AssetDataExportController extends Controller
         AssetDataExportImportService $service
     ): Response {
         try {
-            $format = AssetDataFormat::from($request->validated('as'));
+            $format = ImportExportFormat::from($request->validated('as'));
             $filter = new AssetFilter($request->all());
 
             return $service->exportAssets($space, $format, $filter);
