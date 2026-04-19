@@ -68,7 +68,10 @@ const guessedTitle = computed(() => {
     </div>
   </div>
   <div class="grid grow text-left leading-none">
-    <h4 class="font-semibold text-primary">{{ guessedTitle }}</h4>
+    <h4
+      class="font-semibold text-primary"
+      v-html="guessedTitle"
+    ></h4>
     <div class="flex text-sm text-muted">{{ blockTitle }}</div>
   </div>
 </template>
