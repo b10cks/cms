@@ -30,6 +30,24 @@ abstract class Settings implements Castable
         return $this->attributes + $this->defaults;
     }
 
+    /**
+     * Return only values that differ from the configured defaults.
+     *
+     * @return array<string, mixed>
+     */
+    public function toNonDefaultArray(): array
+    {
+        return collect($this->toArray())
+            ->reject(function (mixed $value, string $key): bool {
+                if (! \array_key_exists($key, $this->defaults)) {
+                    return false;
+                }
+
+                return $value === $this->defaults[$key];
+            })
+            ->all();
+    }
+
     public function apply($attributes): void
     {
         $this->attributes = [...$this->attributes, ...(is_array($attributes) ? $attributes : [])];

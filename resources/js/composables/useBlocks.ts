@@ -62,6 +62,7 @@ export function useBlocks(spaceId: MaybeRef<string>) {
       },
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.blocks(spaceId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
         toast.success(t('composables.blocks.createSuccess', { slug: data.slug }) as string)
       },
       onError: (error: { message: string }) => {
@@ -87,6 +88,7 @@ export function useBlocks(spaceId: MaybeRef<string>) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.blockVersions(spaceId, data.id).lists(),
         })
+        queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
 
         toast.success(t('composables.blocks.updateSuccess', { slug: data.slug }) as string)
       },
@@ -109,6 +111,7 @@ export function useBlocks(spaceId: MaybeRef<string>) {
       onSuccess: (id) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.blocks(spaceId).lists() })
         queryClient.removeQueries({ queryKey: queryKeys.blocks(spaceId).detail(id) })
+        queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
         toast.success(t('composables.blocks.deleteSuccess') as string)
       },
       onError: (error: { message: string }) => {

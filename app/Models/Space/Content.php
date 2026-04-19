@@ -10,6 +10,7 @@ use App\Events\Space\ContentUpdated;
 use App\Jobs\Content\UpdateContentFullSlugsJob;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\Traits\SpaceAuditable;
+use App\Services\Content\ContentMenuCache;
 use App\Services\Content\LocalizedContentSlugService;
 use App\Services\CustomStr;
 use CodersCantina\Filter\Filterable;
@@ -21,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @property string $id
@@ -136,11 +138,27 @@ class Content extends SpaceModel
                 UpdateContentFullSlugsJob::dispatch($content, request('space') ?? app()->get('currentSpace'));
             }
 
+            self::scheduleContentMenuInvalidation();
             event(new ContentUpdated($content, request('space') ?? app('currentSpace')));
         });
 
         static::softDeleted(function (Content $content) {
+            self::scheduleContentMenuInvalidation();
             event(new ContentDeleted($content, request('space') ?? app('currentSpace')));
+        });
+    }
+
+    protected static function scheduleContentMenuInvalidation(): void
+    {
+        $spaceId = request('space')?->id
+            ?? (app()->bound('currentSpace') ? app('currentSpace')->id : null);
+
+        if (! $spaceId) {
+            return;
+        }
+
+        DB::afterCommit(static function () use ($spaceId): void {
+            app(ContentMenuCache::class)->invalidate($spaceId);
         });
     }
 

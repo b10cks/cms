@@ -5,6 +5,7 @@ namespace App\Models\Space;
 use App\Casts\Content\SchemaCast;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\Traits\SpaceAuditable;
+use App\Services\Content\ContentMenuCache;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 /**
  *
@@ -89,6 +91,15 @@ class Block extends SpaceModel
         'schema' => SchemaCast::class,
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saved(fn () => self::scheduleContentMenuInvalidation());
+        static::deleted(fn () => self::scheduleContentMenuInvalidation());
+        static::restored(fn () => self::scheduleContentMenuInvalidation());
+    }
+
     protected function name(): Attribute
     {
         return $this->makePurifiedAttribute('removeAll');
@@ -119,4 +130,17 @@ class Block extends SpaceModel
         return $this->hasMany(BlockVersion::class, 'block_id', 'id');
     }
 
+    protected static function scheduleContentMenuInvalidation(): void
+    {
+        $spaceId = request('space')?->id
+            ?? (app()->bound('currentSpace') ? app('currentSpace')->id : null);
+
+        if (! $spaceId) {
+            return;
+        }
+
+        DB::afterCommit(static function () use ($spaceId): void {
+            app(ContentMenuCache::class)->invalidate($spaceId);
+        });
+    }
 }
