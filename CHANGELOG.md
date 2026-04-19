@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.19-4def5d2] — 2026-4-19
+
+- 💄 Improve StatsCard
+- 👔 Improve redirects management with add and import/export
+
 ## [v2026.4.18-532d1e5] — 2026-4-18
 
 - 🐳 Add redis as native php module
