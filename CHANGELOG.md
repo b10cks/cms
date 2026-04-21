@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.21-e5c4b22] — 2026-4-21
+
+- 🚸 Improve Stats
+- 🔧 Pass public ENV based config via laravel to vue
+
 ## [v2026.4.21-c4f5a59] — 2026-4-21
 
 - ✨ Add provider specific notes and help menu
