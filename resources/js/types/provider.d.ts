@@ -1,6 +1,6 @@
 interface ProviderSummaryMetric {
   total: number
-  created_in_period: number
+  new: number
 }
 
 interface ProviderStats {

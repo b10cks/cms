@@ -55,6 +55,8 @@ class SpaceStatsService
         $contents = Content::count();
         $published = Content::whereNotNull('published_at')->count();
         $draft = Content::whereNull('published_at')->count();
+        $newContent = Content::whereBetween('created_at', [$startDate, $endDate])->count();
+        $newBlocks = Block::whereBetween('created_at', [$startDate, $endDate])->count();
 
         $contentByType = Content::select('block_id', DB::raw('count(*) as count'))
             ->whereHas('block')
@@ -91,9 +93,11 @@ class SpaceStatsService
         return [
             'count' => [
                 'total' => $contents,
+                'new' => $newContent,
                 'published' => $published,
                 'draft' => $draft,
                 'blocks' => $blocks,
+                'new_blocks' => $newBlocks,
             ],
             'by_type' => $contentByType,
             'creation_trend' => $contentCreationTrend,
@@ -107,6 +111,7 @@ class SpaceStatsService
     public function getAssetStats(Space $space, Carbon $startDate, Carbon $endDate): array
     {
         $totalAssets = Asset::count();
+        $newAssetSize = (int) (Asset::whereBetween('created_at', [$startDate, $endDate])->sum('size') ?? 0);
 
         $assetsByType = Asset::select('mime_type', DB::raw('count(*) as count'))
             ->groupBy('mime_type')
@@ -177,6 +182,7 @@ class SpaceStatsService
             ],
             'storage' => [
                 'total_size' => (int) ($storageStats->total_size ?? 0),
+                'new_size' => $newAssetSize,
                 'avg_size' => (int) ($storageStats->avg_size ?? 0),
                 'max_size' => (int) ($storageStats->max_size ?? 0),
             ],
@@ -191,6 +197,7 @@ class SpaceStatsService
     public function getRedirectStats(Space $space, Carbon $startDate, Carbon $endDate): array
     {
         $totalRedirects = Redirect::count();
+        $newRedirects = Redirect::whereBetween('created_at', [$startDate, $endDate])->count();
         //        $activeRedirects = Redirect::where('is_active', true)->count();
         //        $inactiveRedirects = Redirect::where('is_active', false)->count();
 
@@ -242,6 +249,7 @@ class SpaceStatsService
         return [
             'count' => [
                 'total' => $totalRedirects,
+                'new' => $newRedirects,
                 //                'active' => $activeRedirects,
                 //                'inactive' => $inactiveRedirects,
             ],
@@ -259,6 +267,7 @@ class SpaceStatsService
     {
         $totalDataSources = DataSource::count();
         $activeDataSources = DataSource::where('is_active', true)->count();
+        $newDataSources = DataSource::whereBetween('created_at', [$startDate, $endDate])->count();
 
         $dataSourcesWithEntryCount = DataSource::withCount('entries')
             ->orderByDesc('entries_count')
@@ -315,6 +324,7 @@ class SpaceStatsService
             'data_sources' => [
                 'count' => [
                     'total' => $totalDataSources,
+                    'new' => $newDataSources,
                     'active' => $activeDataSources,
                     'inactive' => $totalDataSources - $activeDataSources,
                 ],
@@ -338,6 +348,10 @@ class SpaceStatsService
     {
         $users = $space->users;
         $userIds = $users->pluck('id')->toArray();
+        $newUsers = DB::table('space_user')
+            ->where('space_id', $space->id)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
 
         $recentLogins = User::whereIn('id', $userIds)
             ->whereNotNull('last_login_at')
@@ -363,6 +377,7 @@ class SpaceStatsService
 
         return [
             'total_users' => $users->count(),
+            'new_users' => $newUsers,
             'recent_logins' => $recentLogins,
             'role_distribution' => $roleDistribution,
         ];

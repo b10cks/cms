@@ -9,6 +9,7 @@ use App\Models\Management\Space;
 use App\Models\Management\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -22,20 +23,38 @@ class ProviderAdminTest extends TestCase
     #[Test]
     public function root_user_can_view_provider_stats(): void
     {
-        $rootUser = User::factory()->create(['is_root' => true]);
+        $startDate = Carbon::parse('2026-04-10 00:00:00');
+        $endDate = Carbon::parse('2026-04-20 23:59:59');
 
-        Team::factory()->count(2)->create();
-        Space::factory()->count(3)->create();
-        User::factory()->count(4)->create();
+        $rootUser = User::factory()->create([
+            'is_root' => true,
+            'created_at' => '2026-04-01 10:00:00',
+        ]);
+
+        Team::factory()->create(['created_at' => '2026-04-05 10:00:00']);
+        Team::factory()->create(['created_at' => '2026-04-15 10:00:00']);
+
+        Space::factory()->create(['created_at' => '2026-04-06 10:00:00']);
+        Space::factory()->create(['created_at' => '2026-04-16 10:00:00']);
+        Space::factory()->create(['created_at' => '2026-04-18 10:00:00']);
+
+        User::factory()->create(['created_at' => '2026-04-07 10:00:00']);
+        User::factory()->count(3)->create(['created_at' => '2026-04-17 10:00:00']);
 
         $this->actingAs($rootUser);
 
-        $response = $this->getJson(route('mgmt.provider.stats'));
+        $response = $this->getJson(route('mgmt.provider.stats', [
+            'start_date' => $startDate->toIso8601String(),
+            'end_date' => $endDate->toIso8601String(),
+        ]));
 
         $response->assertOk();
         $response->assertJsonPath('data.summary.teams.total', 2);
+        $response->assertJsonPath('data.summary.teams.new', 1);
         $response->assertJsonPath('data.summary.spaces.total', 3);
+        $response->assertJsonPath('data.summary.spaces.new', 2);
         $response->assertJsonPath('data.summary.users.total', 5);
+        $response->assertJsonPath('data.summary.users.new', 3);
     }
 
     #[Test]

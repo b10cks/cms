@@ -58,21 +58,21 @@ const cards = computed(() => {
       title: t('labels.provider.dashboard.cards.teams'),
       icon: 'lucide:users-round',
       total: stats.value.summary.teams.total,
-      created: stats.value.summary.teams.created_in_period,
+      new: stats.value.summary.teams.new,
     },
     {
       key: 'spaces',
       title: t('labels.provider.dashboard.cards.spaces'),
       icon: 'lucide:boxes',
       total: stats.value.summary.spaces.total,
-      created: stats.value.summary.spaces.created_in_period,
+      new: stats.value.summary.spaces.new,
     },
     {
       key: 'users',
       title: t('labels.provider.dashboard.cards.users'),
       icon: 'lucide:user-round',
       total: stats.value.summary.users.total,
-      created: stats.value.summary.users.created_in_period,
+      new: stats.value.summary.users.new,
     },
   ]
 })
@@ -143,19 +143,16 @@ const cards = computed(() => {
             :key="card.key"
             :title="card.title"
             :icon="card.icon"
+            :delta="formatNumber(card.new)"
+            :show-delta="card.new > 0"
           >
-            <div class="text-3xl font-bold text-primary">
-              {{ formatNumber(card.total) }}
-            </div>
+            <template #value>
+              <div class="text-3xl font-bold text-primary leading-none">
+                {{ formatNumber(card.total) }}
+              </div>
+            </template>
             <p class="text-sm text-muted">
               {{ t('labels.provider.dashboard.cards.total') }}
-            </p>
-            <p class="text-sm text-muted">
-              {{
-                t('labels.provider.dashboard.cards.createdInTimeframe', {
-                  count: formatNumber(card.created),
-                })
-              }}
             </p>
           </StatsCard>
         </div>

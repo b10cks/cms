@@ -26,7 +26,7 @@ class ProviderStatsController extends Controller
         $buildStat = static function (string $modelClass) use ($startDate, $endDate) {
             return [
                 'total' => $modelClass::query()->count(),
-                'created_in_period' => $modelClass::query()
+                'new' => $modelClass::query()
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->count(),
             ];

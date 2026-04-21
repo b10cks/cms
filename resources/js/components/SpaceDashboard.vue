@@ -265,10 +265,14 @@ watch(
         <StatsCard
           icon="lucide:book-open"
           :title="t('dashboard.cards.total_content')"
+          :delta="formatNumber(stats.content.count.new)"
+          :show-delta="stats.content.count.new > 0"
         >
-          <div class="text-3xl font-bold text-primary">
-            {{ formatNumber(stats.content.count.total) }}
-          </div>
+          <template #value>
+            <div class="text-3xl font-bold text-primary leading-none">
+              {{ formatNumber(stats.content.count.total) }}
+            </div>
+          </template>
           <p class="text-sm text-muted">
             {{ formatNumber(stats.content.count.published) }} {{ t('dashboard.cards.published') }},
             {{ formatNumber(stats.content.count.draft) }} {{ t('dashboard.cards.draft') }}
@@ -278,10 +282,14 @@ watch(
         <StatsCard
           icon="lucide:images"
           :title="t('dashboard.cards.assets')"
+          :delta="formatFileSize(stats.assets.storage.new_size)"
+          :show-delta="stats.assets.storage.new_size > 0"
         >
-          <div class="text-3xl font-bold text-primary">
-            {{ formatFileSize(stats.assets.storage.total_size) }}
-          </div>
+          <template #value>
+            <div class="text-3xl font-bold text-primary leading-none">
+              {{ formatFileSize(stats.assets.storage.total_size) }}
+            </div>
+          </template>
           <p class="text-sm text-muted">
             {{ formatNumber(stats.assets.count.total) }} {{ t('dashboard.cards.assets_count') }}
           </p>
@@ -290,28 +298,40 @@ watch(
         <StatsCard
           icon="lucide:blocks"
           :title="t('dashboard.cards.blocks')"
+          :delta="formatNumber(stats.content.count.new_blocks)"
+          :show-delta="stats.content.count.new_blocks > 0"
         >
-          <div class="text-3xl font-bold text-primary">
-            {{ formatNumber(stats.content.count.blocks) }}
-          </div>
+          <template #value>
+            <div class="text-3xl font-bold text-primary leading-none">
+              {{ formatNumber(stats.content.count.blocks) }}
+            </div>
+          </template>
         </StatsCard>
 
         <StatsCard
           icon="lucide:database-zap"
           :title="t('dashboard.cards.data_sources')"
+          :delta="formatNumber(stats.data_sources.data_sources.count.new)"
+          :show-delta="stats.data_sources.data_sources.count.new > 0"
         >
-          <div class="text-3xl font-bold text-primary">
-            {{ formatNumber(stats.data_sources.data_sources.count.total) }}
-          </div>
+          <template #value>
+            <div class="text-3xl font-bold text-primary leading-none">
+              {{ formatNumber(stats.data_sources.data_sources.count.total) }}
+            </div>
+          </template>
         </StatsCard>
 
         <StatsCard
           icon="lucide:split"
           :title="t('dashboard.cards.redirects')"
+          :delta="formatNumber(stats.redirects.count.new)"
+          :show-delta="stats.redirects.count.new > 0"
         >
-          <div class="text-3xl font-bold text-primary">
-            {{ formatNumber(stats.redirects.count.total) }}
-          </div>
+          <template #value>
+            <div class="text-3xl font-bold text-primary leading-none">
+              {{ formatNumber(stats.redirects.count.total) }}
+            </div>
+          </template>
         </StatsCard>
       </div>
 
@@ -337,9 +357,11 @@ watch(
           icon="lucide:cloud-download"
           :title="t('dashboard.cards.traffic_usage')"
         >
-          <div class="text-3xl font-bold text-primary">
-            {{ formatTrafficSize(stats.system.traffic.total_bytes, 'MB') }}
-          </div>
+          <template #value>
+            <div class="text-3xl font-bold text-primary">
+              {{ formatTrafficSize(stats.system.traffic.total_bytes, 'MB') }}
+            </div>
+          </template>
           <p class="text-sm text-muted">
             {{ formatNumber(stats.system.traffic.cache_hit_rate, 2) }}%
             {{ t('dashboard.cards.cache_hit_rate') }}
@@ -350,9 +372,11 @@ watch(
           icon="lucide:server"
           :title="t('dashboard.cards.api_requests')"
         >
-          <div class="text-3xl font-bold text-primary">
-            {{ formatNumber(stats.system.api.total_requests) }}
-          </div>
+          <template #value>
+            <div class="text-3xl font-bold text-primary">
+              {{ formatNumber(stats.system.api.total_requests) }}
+            </div>
+          </template>
           <p class="text-sm text-muted">
             {{ formatNumber(stats.system.api.success_rate, 2) }}%
             {{ t('dashboard.cards.success_rate') }}
@@ -364,9 +388,11 @@ watch(
           :title="t('dashboard.cards.avg_response_time')"
           :description="t('dashboard.cards.api_response_time')"
         >
-          <div class="text-3xl font-bold text-primary">
-            {{ formatDuration(stats.system.api.avg_response_time_ms) }}
-          </div>
+          <template #value>
+            <div class="text-3xl font-bold text-primary">
+              {{ formatDuration(stats.system.api.avg_response_time_ms) }}
+            </div>
+          </template>
         </StatsCard>
       </div>
 
@@ -409,19 +435,25 @@ watch(
           icon="lucide:users"
           :title="t('dashboard.cards.total_users')"
           :description="formatRoleDistribution(stats.user_activity.role_distribution)"
+          :delta="formatNumber(stats.user_activity.new_users)"
+          :show-delta="stats.user_activity.new_users > 0"
         >
-          <div class="text-3xl font-bold text-primary">
-            {{ formatNumber(stats.user_activity.total_users) }}
-          </div>
+          <template #value>
+            <div class="text-3xl font-bold text-primary leading-none">
+              {{ formatNumber(stats.user_activity.total_users) }}
+            </div>
+          </template>
         </StatsCard>
 
         <StatsCard
           icon="lucide:globe"
           :title="t('dashboard.cards.languages')"
         >
-          <div class="text-3xl font-bold text-primary">
-            {{ formatNumber(Object.keys(stats.content.languages).length) }}
-          </div>
+          <template #value>
+            <div class="text-3xl font-bold text-primary">
+              {{ formatNumber(Object.keys(stats.content.languages).length) }}
+            </div>
+          </template>
         </StatsCard>
       </div>
     </template>
