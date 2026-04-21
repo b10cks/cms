@@ -3,6 +3,8 @@
 return [
     'default_format' => env('IMAGE_DEFAULT_FORMAT', 'webp'),
 
+    'base_url' => env('IMAGE_BASE_URL', 'https://api.b10cks.com/ilum'),
+
     'driver' => env('IMAGE_DRIVER', 'vips'),
 
     'drivers' => [
