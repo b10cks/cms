@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.21-c4f5a59] — 2026-4-21
+
+- ✨ Add provider specific notes and help menu
+- ⬆️ Bump versions
+- 👔 improve handlebars preview
+
 ## [v2026.4.19-3245924] — 2026-4-19
 
 - ⚡️ Improve canvas performance for large trees
