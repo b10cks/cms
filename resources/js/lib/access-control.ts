@@ -105,6 +105,19 @@ export const teamNavigationItems: NavigationAccessItem[] = [
   },
 ]
 
+export const providerNavigationItems: NavigationAccessItem[] = [
+  {
+    label: 'labels.provider.dashboard.title',
+    icon: 'lucide:layout-dashboard',
+    routeName: 'provider-dashboard',
+  },
+  {
+    label: 'labels.provider.notes.title',
+    icon: 'lucide:notebook-pen',
+    routeName: 'provider-notes',
+  },
+]
+
 export const spaceNavigationItems: NavigationAccessItem[] = [
   {
     label: 'labels.navigation.home',
@@ -174,6 +187,12 @@ export const actionAccessRequirements: Record<string, RouteAccessRequirement> = 
 }
 
 export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequirement> = {
+  'provider-dashboard': {
+    check: ({ authorization }) => Boolean(authorization?.is_root),
+  },
+  'provider-notes': {
+    check: ({ authorization }) => Boolean(authorization?.is_root),
+  },
   space: { abilities: 'space.view' },
   'space-content-index': { abilities: 'content.view' },
   'space-content-contentId': { abilities: 'content.view' },

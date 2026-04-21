@@ -35,6 +35,10 @@ Route::get('/account/settings', AppController::class)->name('account-settings');
 Route::get('/account/settings/invites', AppController::class)->name('account-settings-invites');
 Route::get('/account/settings/security', AppController::class)->name('account-settings-security');
 
+// Provider routes
+Route::get('/provider', AppController::class)->name('provider-dashboard');
+Route::get('/provider/notes', AppController::class)->name('provider-notes');
+
 // Space routes (must come last to avoid shadowing more specific routes)
 Route::get('/{space}', AppController::class)->name('space');
 Route::get('/{space}/content', AppController::class)->name('space-content');

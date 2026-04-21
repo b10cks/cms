@@ -149,6 +149,7 @@ declare global {
   const usePersonalAccessTokens: typeof import('./resources/js/composables/usePersonalAccessTokens').usePersonalAccessTokens
   const usePlans: typeof import('./resources/js/composables/usePlans').usePlans
   const usePresence: typeof import('./resources/js/composables/usePresence').usePresence
+  const useProvider: typeof import('./resources/js/composables/useProvider').useProvider
   const useRedirects: typeof import('./resources/js/composables/useRedirects').useRedirects
   const useReleases: typeof import('./resources/js/composables/useReleases').useReleases
   const useRoute: typeof import('vue-router').useRoute
@@ -386,6 +387,7 @@ declare module 'vue' {
     readonly usePersonalAccessTokens: UnwrapRef<typeof import('./resources/js/composables/usePersonalAccessTokens')['usePersonalAccessTokens']>
     readonly usePlans: UnwrapRef<typeof import('./resources/js/composables/usePlans')['usePlans']>
     readonly usePresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['usePresence']>
+    readonly useProvider: UnwrapRef<typeof import('./resources/js/composables/useProvider')['useProvider']>
     readonly useRedirects: UnwrapRef<typeof import('./resources/js/composables/useRedirects')['useRedirects']>
     readonly useReleases: UnwrapRef<typeof import('./resources/js/composables/useReleases')['useReleases']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>

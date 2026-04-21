@@ -7,6 +7,12 @@
     <meta name="theme-color" content="#ffffff" />
     <link rel="manifest" href="/build/manifest.webmanifest" />
     <title>{{ env('APP_NAME') }}</title>
+    <script>
+      window.__APP_CONFIG__ = {{ Js::from([
+        'version' => config('app.version'),
+        'sidebarMenu' => config('app.sidebar_menu', []),
+        ])}};
+    </script>
     @vite(['resources/js/main.ts'])
   </head>
   <body>

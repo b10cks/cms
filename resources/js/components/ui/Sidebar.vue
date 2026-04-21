@@ -9,6 +9,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
@@ -20,36 +21,41 @@ import {
 import { Switch } from '~/components/ui/switch'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { spaceNavigationItems } from '~/lib/access-control'
+import { runtimeConfig } from '~/lib/runtime-config'
 import { getLocale, locales } from '~/plugins/i18n'
 
 const router = useRouter()
+const { t } = useI18n()
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
 
 const { user, logout } = useAuth()
 const { settings, extendedSidebar } = useUserSettings()
+const { useProviderNotesQuery } = useProvider()
 
 const isExtendedSidebar = computed(() => extendedSidebar.value)
 
 const spaceId = inject<Ref<string | undefined>>('spaceId')
 const { useAccessControl } = useAuthorization()
-const access = useAccessControl(
-  computed(() => ((spaceId?.value ? { space_id: spaceId.value } : {})))
-)
+const access = useAccessControl(computed(() => (spaceId?.value ? { space_id: spaceId.value } : {})))
 
-const menu = computed(() =>
-  access.filterVisibleItems(spaceNavigationItems).filter((item) => {
+const menu = computed(() => {
+  if (!spaceId?.value) {
+    return []
+  }
+
+  return access.filterVisibleItems(spaceNavigationItems).filter((item) => {
     if (item.routeName !== 'space-settings-index') {
       return true
     }
 
     return access.canAccessRoute('space-settings-index')
   })
-)
+})
 
 const buildLink = (name: string) => {
   if (!spaceId?.value) {
-    return { name: 'index' }
+    return { name }
   }
   return {
     name,
@@ -61,6 +67,27 @@ const buildLink = (name: string) => {
 
 const handleLanguageChange = (lang: string) => {
   settings.languageIso = lang
+}
+
+const menuLabel = (label: string) => {
+  return label.startsWith('labels.') ? String(t(label)) : label
+}
+
+const appVersion = computed(() => runtimeConfig.public.appVersion || '')
+const sidebarMenu = computed(() => runtimeConfig.public.sidebarMenu || [])
+const { data: providerNotesResponse } = useProviderNotesQuery(computed(() => ({ per_page: 10 })))
+const providerNotes = computed(() => (providerNotesResponse.value?.data ?? []).slice(0, 10))
+
+const openSidebarLink = (href?: string) => {
+  if (!href) {
+    return
+  }
+
+  window.open(href, href.startsWith('/') ? '_self' : '_blank', 'noopener,noreferrer')
+}
+
+const noteLabel = (note: ProviderNote) => {
+  return note.title?.trim() || note.url?.trim() || String(t('labels.provider.sidebar.untitledNote'))
 }
 
 const currentLocale = computed(() => getLocale())
@@ -82,7 +109,7 @@ const availableLocales = locales
           :is="isExtendedSidebar ? 'div' : SimpleTooltip"
           v-for="m in menu"
           :key="m.label"
-          v-bind="isExtendedSidebar ? {} : { tooltip: $t(m.label), side: 'right' }"
+          v-bind="isExtendedSidebar ? {} : { tooltip: menuLabel(m.label), side: 'right' }"
         >
           <RouterLink
             :to="buildLink(m.routeName)"
@@ -98,15 +125,86 @@ const availableLocales = locales
             />
             <span
               v-if="isExtendedSidebar"
-              class="line-clamp-2 text-[10px] leading-tight"
+              class="line-clamp-2 text-2xs leading-tight"
             >
-              {{ $t(m.label) }}
+              {{ menuLabel(m.label) }}
             </span>
           </RouterLink>
         </component>
       </div>
     </div>
     <div class="flex flex-col items-center gap-2">
+      <DropdownMenu class="px-2">
+        <DropdownMenuTrigger
+          :class="[
+            'w-full flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-border',
+            isExtendedSidebar ? 'flex-col gap-1 text-center py-2' : 'size-8',
+          ]"
+        >
+          <Icon name="lucide:circle-question-mark" />
+          <span
+            v-if="isExtendedSidebar"
+            class="line-clamp-2 text-2xs leading-tight"
+          >
+            {{ t('labels.provider.sidebar.help') }}
+          </span>
+          <DropdownMenuContent
+            class="min-w-48"
+            align="end"
+          >
+            <DropdownMenuLabel v-if="appVersion">
+              <h4 class="text-primary font-semibold">b10cks</h4>
+              <span>v{{ appVersion }}</span>
+            </DropdownMenuLabel>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <Icon name="lucide:megaphone" />
+                <span>{{ t('labels.provider.notes.title') }}</span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent
+                side="right"
+                align="start"
+                class="min-w-56"
+              >
+                <DropdownMenuItem
+                  v-for="note in providerNotes"
+                  :key="note.id"
+                  @select="openSidebarLink(note.url || undefined)"
+                >
+                  <Icon
+                    v-if="note.icon"
+                    :name="`lucide:${note.icon}`"
+                    :style="note.color ? { color: note.color } : undefined"
+                  />
+                  <span class="truncate">
+                    {{ noteLabel(note) }}
+                  </span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  v-if="providerNotes.length === 0"
+                  disabled
+                >
+                  <span>{{ t('labels.provider.sidebar.noNotes') }}</span>
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <template v-if="sidebarMenu.length > 0">
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                v-for="item in sidebarMenu"
+                :key="`${item.label}-${item.href}`"
+                @select="openSidebarLink(item.href)"
+              >
+                <Icon
+                  v-if="item.icon"
+                  :name="item.icon"
+                />
+                <span>{{ item.label }}</span>
+              </DropdownMenuItem>
+            </template>
+          </DropdownMenuContent>
+        </DropdownMenuTrigger>
+      </DropdownMenu>
       <div class="flex flex-col items-center border-t-2 border-t-border pt-3">
         <DropdownMenu>
           <DropdownMenuTrigger>

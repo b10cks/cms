@@ -8,6 +8,7 @@ import { Comments } from '~/api/resources/comments'
 import { DataSources } from '~/api/resources/data-sources'
 import { PersonalAccessTokens } from '~/api/resources/personal-access-tokens'
 import { Plans } from '~/api/resources/plans'
+import { Provider } from '~/api/resources/provider'
 import { Redirects } from '~/api/resources/redirects'
 import { Releases } from '~/api/resources/releases'
 import { SpaceMembers } from '~/api/resources/space-members'
@@ -38,6 +39,7 @@ export class API {
   private readonly _ai: Ai
   private readonly _authorization: Authorization
   private readonly _plans: Plans
+  private readonly _provider: Provider
   private readonly _spaces: Spaces
   private readonly _spaceBlueprints: SpaceBlueprints
   private readonly _teams: Teams
@@ -56,6 +58,7 @@ export class API {
     this._ai = new Ai(this.client)
     this._authorization = new Authorization(this.client)
     this._plans = new Plans(this.client)
+    this._provider = new Provider(this.client)
     this._spaces = new Spaces(this.client)
     this._spaceBlueprints = new SpaceBlueprints(this.client)
     this._teams = new Teams(this.client)
@@ -83,6 +86,10 @@ export class API {
 
   public get plans(): Plans {
     return this._plans
+  }
+
+  public get provider(): Provider {
+    return this._provider
   }
 
   public get spaces(): Spaces {

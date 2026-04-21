@@ -41,6 +41,8 @@ use App\Http\Controllers\Mgmt\DataEntryController;
 use App\Http\Controllers\Mgmt\DataSourceController;
 use App\Http\Controllers\Mgmt\MigrationController;
 use App\Http\Controllers\Mgmt\PresenceController;
+use App\Http\Controllers\Mgmt\Provider\ProviderNoteController;
+use App\Http\Controllers\Mgmt\Provider\ProviderStatsController;
 use App\Http\Controllers\Mgmt\RedirectController;
 use App\Http\Controllers\Mgmt\RedirectDataExportController;
 use App\Http\Controllers\Mgmt\RedirectDataImportController;
@@ -104,6 +106,9 @@ Route::group(['prefix' => 'users'], function () {
 });
 
 Route::get('authorization', AuthorizationController::class)->name('authorization.show');
+Route::get('provider/stats', ProviderStatsController::class)->name('provider.stats');
+Route::apiResource('provider/notes', ProviderNoteController::class)
+    ->parameters(['notes' => 'providerNote']);
 
 Route::group(['prefix' => 'ai'], function () {
     Route::get('available-models', AvailableModelsController::class)

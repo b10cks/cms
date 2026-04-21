@@ -33,6 +33,7 @@ const access = useAccessControl(
 )
 
 const canCreateSpace = computed(() => access.canAccessRoute('spaces-new'))
+const isRootUser = computed(() => access.authorization.value?.is_root ?? false)
 
 useSeoMeta({
   title: computed(() => {
@@ -176,6 +177,16 @@ const getSpacePlanLabel = (plan: SpacePlanSummary) => {
     </div>
     <template #headerActions>
       <div class="flex items-center gap-3">
+        <Button
+          v-if="isRootUser"
+          size="sm"
+          variant="outline"
+          :as="RouterLink"
+          :to="{ name: 'provider-dashboard' }"
+        >
+          <Icon name="lucide:shield-check" />
+          <span>{{ $t('labels.provider.title') }}</span>
+        </Button>
         <template v-if="selectedTeam">
           <Button
             v-if="selectedTeam.can_view_detail"

@@ -122,6 +122,18 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: '/provider',
+    name: 'provider-dashboard',
+    component: () => import('~/pages/provider/index.vue'),
+    meta: { layout: 'default' },
+  },
+  {
+    path: '/provider/notes',
+    name: 'provider-notes',
+    component: () => import('~/pages/provider/notes.vue'),
+    meta: { layout: 'default' },
+  },
+  {
     path: '/:space',
     name: 'space',
     component: () => import('~/pages/[space]/index.vue'),
@@ -353,6 +365,8 @@ router.beforeEach(async (to) => {
         ...(spaceId ? { space_id: spaceId } : {}),
         ...(teamId ? { team_id: teamId } : {}),
       })
+    } else {
+      authorization = await ensureAuthorizationContext()
     }
 
     if (

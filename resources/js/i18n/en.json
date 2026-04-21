@@ -722,7 +722,64 @@
       "releases": "Releases",
       "auditLog": "Audit Log",
       "settings": "Settings",
+      "provider": "Provider",
       "extendedSidebar": "Extended sidebar"
+    },
+    "provider": {
+      "title": "Provider",
+      "dashboard": {
+        "title": "Provider Dashboard",
+        "description": "A root-level overview for your hosted or self-hosted deployment.",
+        "sections": {
+          "summary": "Provider stats"
+        },
+        "cards": {
+          "teams": "Teams",
+          "spaces": "Spaces",
+          "users": "Users",
+          "total": "Total",
+          "createdInTimeframe": "{count} created in timeframe"
+        }
+      },
+      "notes": {
+        "title": "Announcements",
+        "description": "Publish rollout announcements, reminders, and useful links for the root admin team.",
+        "create": "Create announcement",
+        "pinned": "Pinned",
+        "noLink": "No link",
+        "openMenu": "Open menu",
+        "empty": "No announcements yet.",
+        "columns": {
+          "note": "Announcement",
+          "link": "Link",
+          "updated": "Updated"
+        },
+        "confirmDelete": {
+          "title": "Delete announcement",
+          "message": "Delete \"{title}\"?"
+        },
+        "dialog": {
+          "createTitle": "Create announcement",
+          "editTitle": "Edit announcement",
+          "createDescription": "Create a shared announcement for rollout context, reminders, or useful links.",
+          "editDescription": "Update a shared announcement for the root admin team."
+        },
+        "fields": {
+          "title": "Title",
+          "titlePlaceholder": "Deployment checklist",
+          "link": "Link",
+          "linkPlaceholder": "https://example.com",
+          "color": "Color",
+          "colorPlaceholder": "#F97316",
+          "body": "Body",
+          "pinned": "Pinned"
+        }
+      },
+      "sidebar": {
+        "help": "Help",
+        "noNotes": "No announcements yet",
+        "untitledNote": "Untitled announcement"
+      }
     },
     "auditLog": {
       "title": "Audit Log",

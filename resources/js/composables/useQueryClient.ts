@@ -59,6 +59,12 @@ export const queryKeys = {
       list: (filters: any = {}) => [...queryKeys.teams.users(teamId).lists(), filters] as const,
     }),
   },
+  provider: {
+    all: () => ['provider'] as const,
+    stats: (params: any = {}) => [...queryKeys.provider.all(), 'stats', params] as const,
+    notes: () => [...queryKeys.provider.all(), 'notes'] as const,
+    notesList: (params: any = {}) => [...queryKeys.provider.notes(), 'list', params] as const,
+  },
   redirects: (spaceId: MaybeRef<string>) => ({
     all: () => ['spaces', spaceId, 'redirects'] as const,
     lists: () => [...queryKeys.redirects(spaceId).all(), 'list'] as const,

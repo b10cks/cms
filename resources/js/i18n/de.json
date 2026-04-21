@@ -717,7 +717,64 @@
       "releases": "Releases",
       "auditLog": "Audit-Log",
       "settings": "Einstellungen",
+      "provider": "Provider",
       "extendedSidebar": "Erweiterte Seitenleiste"
+    },
+    "provider": {
+      "title": "Provider",
+      "dashboard": {
+        "title": "Provider-Dashboard",
+        "description": "Eine Root-Ansicht für deine gehostete oder selbst gehostete Bereitstellung.",
+        "sections": {
+          "summary": "Provider-Statistiken"
+        },
+        "cards": {
+          "teams": "Teams",
+          "spaces": "Spaces",
+          "users": "Benutzer",
+          "total": "Gesamt",
+          "createdInTimeframe": "{count} im Zeitraum erstellt"
+        }
+      },
+      "notes": {
+        "title": "Ankündigungen",
+        "description": "Veröffentliche Rollout-Ankündigungen, Erinnerungen und hilfreiche Links für das Root-Admin-Team.",
+        "create": "Ankündigung erstellen",
+        "pinned": "Angeheftet",
+        "noLink": "Kein Link",
+        "openMenu": "Menü öffnen",
+        "empty": "Noch keine Ankündigungen vorhanden.",
+        "columns": {
+          "note": "Ankündigung",
+          "link": "Link",
+          "updated": "Aktualisiert"
+        },
+        "confirmDelete": {
+          "title": "Ankündigung löschen",
+          "message": "\"{title}\" löschen?"
+        },
+        "dialog": {
+          "createTitle": "Ankündigung erstellen",
+          "editTitle": "Ankündigung bearbeiten",
+          "createDescription": "Erstelle eine geteilte Ankündigung für Rollout-Kontext, Erinnerungen oder hilfreiche Links.",
+          "editDescription": "Aktualisiere eine geteilte Ankündigung für das Root-Admin-Team."
+        },
+        "fields": {
+          "title": "Titel",
+          "titlePlaceholder": "Deployment-Checkliste",
+          "link": "Link",
+          "linkPlaceholder": "https://example.com",
+          "color": "Farbe",
+          "colorPlaceholder": "#F97316",
+          "body": "Inhalt",
+          "pinned": "Angeheftet"
+        }
+      },
+      "sidebar": {
+        "help": "Hilfe",
+        "noNotes": "Noch keine Ankündigungen",
+        "untitledNote": "Unbenannte Ankündigung"
+      }
     },
     "auditLog": {
       "title": "Audit-Log",
