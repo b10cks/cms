@@ -9,9 +9,9 @@ class PublishContentRequest extends UpsertContentRequest
     {
         return parent::rules() + [
             'message' => 'sometimes|string|max:255',
-            'published_at' => 'sometimes|date',
+            'published_at' => 'sometimes|nullable|date',
             'translations.*.message' => 'sometimes|string|max:255',
-            'translations.*.published_at' => 'sometimes|date',
+            'translations.*.published_at' => 'sometimes|nullable|date',
         ];
     }
 }

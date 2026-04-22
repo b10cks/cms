@@ -163,6 +163,29 @@ class ContentPublishingVersioningTest extends TestCase
     }
 
     #[Test]
+    public function publish_allows_a_nullable_published_at_payload(): void
+    {
+        $this->actingAs($this->owner);
+
+        $content = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+            currentContent: ['summary' => 'Draft summary'],
+        );
+
+        $this->postJson(route('mgmt.contents.publish', [
+            'space' => $this->space->id,
+            'content' => $content->id,
+        ]), [
+            'published_at' => null,
+        ])->assertOk();
+
+        $content->refresh()->load(['current_version', 'published_version']);
+
+        $this->assertNotNull($content->published_at);
+        $this->assertNotNull($content->published_version?->published_at);
+    }
+
+    #[Test]
     public function publish_can_publish_a_canonical_content_with_translations_in_one_pass(): void
     {
         $this->actingAs($this->owner);
@@ -200,6 +223,44 @@ class ContentPublishingVersioningTest extends TestCase
 
         $this->assertTrue($canonical->published_at?->equalTo(Carbon::parse($canonicalPublishedAt)));
         $this->assertTrue($translation->published_at?->equalTo(Carbon::parse($translationPublishedAt)));
+        $this->assertSame(['summary' => 'Entwurf'], $translation->published_version?->content);
+    }
+
+    #[Test]
+    public function publish_with_translations_allows_nullable_published_at_values(): void
+    {
+        $this->actingAs($this->owner);
+
+        $canonical = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+            currentContent: ['summary' => 'Draft summary'],
+        );
+        $translation = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Veroeffentlicht'],
+            currentContent: ['summary' => 'Entwurf'],
+            languageIso: 'de',
+            i18nParent: $canonical,
+        );
+
+        $this->postJson(route('mgmt.contents.publish', [
+            'space' => $this->space->id,
+            'content' => $canonical->id,
+        ]), [
+            'published_at' => null,
+            'translations' => [
+                [
+                    'id' => $translation->id,
+                    'content' => ['summary' => 'Entwurf'],
+                    'published_at' => null,
+                ],
+            ],
+        ])->assertOk();
+
+        $canonical->refresh()->load('published_version');
+        $translation->refresh()->load('published_version');
+
+        $this->assertNotNull($canonical->published_at);
+        $this->assertNotNull($translation->published_at);
         $this->assertSame(['summary' => 'Entwurf'], $translation->published_version?->content);
     }
 

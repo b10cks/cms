@@ -65,7 +65,7 @@ class ContentMutationPayloadValidator
 
         if ($publish) {
             $rules['message'] = 'sometimes|string|max:255';
-            $rules['published_at'] = 'sometimes|date';
+            $rules['published_at'] = 'sometimes|nullable|date';
         }
 
         return Validator::make($data, $rules, [
