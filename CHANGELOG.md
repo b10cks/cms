@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.22-52a3f55] — 2026-4-22
+
+- 🩹 Fix publish date issue
+
 ## [v2026.4.21-e5c4b22] — 2026-4-21
 
 - 🚸 Improve Stats
