@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.25-f3cd59b] — 2026-4-25
+
+- ✨ Add social logins
+
 ## [v2026.4.25-f47f71a] — 2026-4-25
 
 - ⬆️ Bump versions
