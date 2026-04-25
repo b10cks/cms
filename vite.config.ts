@@ -142,8 +142,8 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       assetsDir: 'assets',
-      target: 'esnext',
-      minify: 'esbuild',
+      target: 'baseline-widely-available',
+      minify: 'oxc',
     },
     define: {
       __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production'),
