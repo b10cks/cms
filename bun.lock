@@ -10,7 +10,7 @@
         "@iconify-json/lucide": "^1.2.103",
         "@iconify/vue": "^5.0.0",
         "@internationalized/date": "^3.12.1",
-        "@tanstack/vue-query": "^5.100.1",
+        "@tanstack/vue-query": "^5.100.3",
         "@tanstack/vue-table": "^8.21.3",
         "@tiptap/core": "^3.22.4",
         "@tiptap/extension-blockquote": "^3.22.4",
@@ -41,7 +41,7 @@
         "laravel-echo": "^2.3.4",
         "marked": "^17.0.6",
         "mini-handlebars": "^0.1.1",
-        "posthog-js": "^1.371.3",
+        "posthog-js": "^1.372.1",
         "pusher-js": "^8.5.0",
         "qrcode": "^1.5.4",
         "reka-ui": "^2.9.6",
@@ -878,13 +878,13 @@
 
     "@tanstack/match-sorter-utils": ["@tanstack/match-sorter-utils@8.19.4", "", { "dependencies": { "remove-accents": "0.5.0" } }, "sha512-Wo1iKt2b9OT7d+YGhvEPD3DXvPv2etTusIMhMUoG7fbhmxcXCtIjJDEygy91Y2JFlwGyjqiBPRozme7UD8hoqg=="],
 
-    "@tanstack/query-core": ["@tanstack/query-core@5.100.3", "", {}, "sha512-oMO1imV4qStH+GqddafkI7Q7r2ktPL7/0Mu74W1XEhfHHd3oTIrwP3OOIsbtpnnbe8y/IU+8Lm7Bi2LlMhVdNA=="],
+    "@tanstack/query-core": ["@tanstack/query-core@5.100.4", "", {}, "sha512-LdW/DDImiw9g4ukyndlrifIXPFpoQjNybCAIDBcPvdYu9iUIhAKwhznfAATe2dJBonhm0O3ksoCMmVTUxN89uA=="],
 
     "@tanstack/table-core": ["@tanstack/table-core@8.21.3", "", {}, "sha512-ldZXEhOBb8Is7xLs01fR3YEc3DERiz5silj8tnGkFZytt1abEvl/GhUmCE0PMLaMPTa3Jk4HbKmRlHmu+gCftg=="],
 
     "@tanstack/virtual-core": ["@tanstack/virtual-core@3.13.18", "", {}, "sha512-Mx86Hqu1k39icq2Zusq+Ey2J6dDWTjDvEv43PJtRCoEYTLyfaPnxIQ6iy7YAOK0NV/qOEmZQ/uCufrppZxTgcg=="],
 
-    "@tanstack/vue-query": ["@tanstack/vue-query@5.100.3", "", { "dependencies": { "@tanstack/match-sorter-utils": "^8.19.4", "@tanstack/query-core": "5.100.3", "@vue/devtools-api": "^6.6.3", "vue-demi": "^0.14.10" }, "peerDependencies": { "@vue/composition-api": "^1.1.2", "vue": "^2.6.0 || ^3.3.0" }, "optionalPeers": ["@vue/composition-api"] }, "sha512-vI5Km1Uh26hp+/0TQEOE7NpNrrnqf4j5PER4Obv3RN1YRmxkXEyYzHcyCL9AynBB42CQ9MLTM8qd1ttGeGb93A=="],
+    "@tanstack/vue-query": ["@tanstack/vue-query@5.100.4", "", { "dependencies": { "@tanstack/match-sorter-utils": "^8.19.4", "@tanstack/query-core": "5.100.4", "@vue/devtools-api": "^6.6.3", "vue-demi": "^0.14.10" }, "peerDependencies": { "@vue/composition-api": "^1.1.2", "vue": "^2.6.0 || ^3.3.0" }, "optionalPeers": ["@vue/composition-api"] }, "sha512-ZI6ZCxOczJSv1E1aaEZIpfvthvwY5k/Nly/BpWJidxL3C6L7SM6IjBHfzn7YcWflFaeRr1C9dyhoDteefZ3oIQ=="],
 
     "@tanstack/vue-table": ["@tanstack/vue-table@8.21.3", "", { "dependencies": { "@tanstack/table-core": "8.21.3" }, "peerDependencies": { "vue": ">=3.2" } }, "sha512-rusRyd77c5tDPloPskctMyPLFEQUeBzxdQ+2Eow4F7gDPlPOB1UnnhzfpdvqZ8ZyX2rRNGmqNnQWm87OI2OQPw=="],
 
