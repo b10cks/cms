@@ -36,6 +36,9 @@ return [
     'cannotImpersonate' => 'You cannot perform this action while impersonating another user.',
     'not_impersonating' => 'You are not currently impersonating another user.',
     'login_successful' => 'Login successful.',
+    'login_session_expired' => 'Login session expired. Please try again.',
     'registration_successful' => 'Registration successful.',
     'registration_failed' => 'An error occurred during registration.',
+    'social_email_missing' => 'We could not read an email address from this social account.',
+    'social_link_already_used' => 'This social profile is already linked to another account.',
 ];

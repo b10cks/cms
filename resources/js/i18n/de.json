@@ -37,6 +37,13 @@
       "invite": "**Du bist dabei!**\n\n**{inviter}** hat dich gerade zu **{name}** eingeladen.",
       "signup": "Neu hier? [Erstelle ein Konto]({url})",
       "login": "Bereits Mitglied? [Melde dich an]({url})",
+      "social": {
+        "or": "oder weiter mit",
+        "google": "Mit Google fortfahren",
+        "github": "Mit GitHub fortfahren",
+        "googleProvider": "Google",
+        "githubProvider": "GitHub"
+      },
       "terms": "Ich akzeptiere die [Nutzungsbedingungen](https://www.b10cks.com/en/legal/terms-of-service) und die [Datenschutzerklärung](https://www.b10cks.com/en/legal/privacy-policy) von b10cks",
       "forgotPassword": "Passwort vergessen?",
       "passwordResetDescription": "Gib deine E-Mail-Adresse ein und wir schicken dir einen Link zum Zurücksetzen deines Passworts.",
@@ -1818,6 +1825,27 @@
           "passwordChangeFailed": "Fehler beim Ändern des Passworts: {error}"
         }
       },
+      "social": {
+        "title": "Social-Profile",
+        "description": "Verknüpfe Anbieter, damit du dich schneller anmelden kannst, ohne deinen E-Mail-Login zu ändern.",
+        "empty": "Aktuell sind keine Social-Login-Anbieter konfiguriert.",
+        "linked": "Mit diesem Konto verknüpft",
+        "notLinked": "Noch nicht verknüpft",
+        "link": "Verknüpfen",
+        "unlink": "Trennen",
+        "unlinkConfirm": {
+          "title": "Social-Profil trennen",
+          "message": "{provider} von deinem Konto trennen?",
+          "confirmLabel": "Trennen"
+        },
+        "toast": {
+          "linked": "{provider} ist jetzt mit deinem Konto verknüpft.",
+          "unlinked": "{provider} wurde von deinem Konto getrennt.",
+          "conflict": "{provider} ist bereits mit einem anderen Konto verknüpft.",
+          "linkFailed": "{provider} konnte nicht verknüpft werden. Bitte versuche es erneut.",
+          "unlinkFailed": "Social-Profil konnte nicht getrennt werden: {error}"
+        }
+      },
       "apiTokens": {
         "title": "API-Token",
         "description": "Erstelle persönliche Tokens für Integrationen, Skripte und Automatisierungen.",
@@ -2937,6 +2965,7 @@
       "loginSessionExpired": "Die Anmeldesitzung ist abgelaufen. Bitte erneut versuchen.",
       "emailExists": "Ein Konto mit dieser E-Mail existiert bereits.",
       "registerFailed": "Registrierung fehlgeschlagen. Bitte erneut versuchen.",
+      "socialLoginFailed": "Die Anmeldung über den Anbieter wurde nicht abgeschlossen. Bitte versuche es erneut.",
       "forgotPasswordFailed": "Der Link zum Zurücksetzen konnte nicht gesendet werden. Bitte versuche es erneut.",
       "resetPasswordFailed": "Das Passwort konnte nicht zurückgesetzt werden. Bitte versuche es erneut.",
       "tokenRefreshFailed": "Sitzung abgelaufen. Bitte melde dich erneut an.",

@@ -54,6 +54,7 @@ return new class extends Migration {
             $table->foreignUlid('user_id');
 
             $table->timestamps();
+            $table->unique(['service', 'external_id']);
         });
 
         Schema::create('sessions', function (Blueprint $table) {

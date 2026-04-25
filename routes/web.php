@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\Web\AppController;
 use App\Http\Controllers\Web\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +14,18 @@ Route::get('/login/signup', AppController::class)->name('login-signup');
 Route::get('/login/password', AppController::class)->name('login-password');
 Route::get('/login/password/request', AppController::class)->name('password.request');
 Route::get('/login/password/reset', AppController::class)->name('password.reset');
+Route::get('/auth/v1/social/{provider}/redirect', [SocialLoginController::class, 'redirect'])
+    ->middleware('throttle:login')
+    ->name('auth.social.redirect');
+Route::get('/auth/v1/social/{provider}/callback', [SocialLoginController::class, 'callback'])
+    ->middleware('throttle:login')
+    ->name('auth.social.callback');
+Route::get('/auth/v1/social/{provider}/link', [SocialLoginController::class, 'linkRedirect'])
+    ->middleware(['auth', 'throttle:login'])
+    ->name('auth.social.link.redirect');
+Route::get('/auth/v1/social/{provider}/link/callback', [SocialLoginController::class, 'linkCallback'])
+    ->middleware(['auth', 'throttle:login'])
+    ->name('auth.social.link.callback');
 
 // Email verification (special handling)
 Route::get('auth/v1/email/verify/{id}/{hash}', VerifyEmailController::class)

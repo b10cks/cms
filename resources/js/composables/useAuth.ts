@@ -165,6 +165,36 @@ export function useAuth() {
     return await login(pendingLoginPayload.value, code)
   }
 
+  const verifySocialTwoFactorAndLogin = async (code: string): Promise<boolean> => {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const { api } = await import('~/api')
+      await ensureCsrfCookie()
+      await api.client.post<AuthResponse>('/auth/v1/social/2fa', { code })
+
+      return await handleAuthResponse(() => {
+        const currentRoute = router.currentRoute.value
+        router.push((currentRoute.query.return as string) || '/')
+      })
+    } catch (err: any) {
+      const { status, errorCode, message } = parseErrorResponse(err)
+
+      if (status === 403 && errorCode === 'INVALID_TOTP_CODE') {
+        error.value = t('composables.auth.invalidTotpCode') as string
+      } else if (status === 401 && errorCode === 'SOCIAL_LOGIN_SESSION_EXPIRED') {
+        error.value = t('composables.auth.loginSessionExpired') as string
+      } else {
+        error.value = message ?? (t('composables.auth.loginFailed') as string)
+      }
+
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   const cancelTwoFactorLogin = () => {
     requiresTwoFactor.value = false
     pendingLoginPayload.value = null
@@ -305,6 +335,7 @@ export function useAuth() {
 
     login,
     verifyTwoFactorAndLogin,
+    verifySocialTwoFactorAndLogin,
     cancelTwoFactorLogin,
     forgotPassword,
     resetPassword,

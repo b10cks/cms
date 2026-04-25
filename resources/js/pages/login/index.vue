@@ -1,12 +1,20 @@
 <script setup lang="ts">
 import Logo from '~/assets/logo.svg'
 import Markdown from '~/components/Markdown.vue'
+import SocialLoginButtons from '~/components/SocialLoginButtons.vue'
 import TwoFactorVerifyDialog from '~/components/TwoFactorVerifyDialog.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
 
-const { login, error, requiresTwoFactor, verifyTwoFactorAndLogin, cancelTwoFactorLogin } = useAuth()
+const {
+  login,
+  error,
+  requiresTwoFactor,
+  verifyTwoFactorAndLogin,
+  verifySocialTwoFactorAndLogin,
+  cancelTwoFactorLogin,
+} = useAuth()
 const { t } = useI18n()
 const route = useRoute()
 
@@ -23,16 +31,26 @@ const formData = ref<{
 })
 
 const twoFactorDialogOpen = ref(false)
+const isSocialTwoFactor = ref(false)
 
 watch(requiresTwoFactor, (value) => {
+  if (value) {
+    isSocialTwoFactor.value = false
+  }
+
   twoFactorDialogOpen.value = value
 })
 
 const handleVerify = async (code: string): Promise<boolean> => {
+  if (isSocialTwoFactor.value) {
+    return await verifySocialTwoFactorAndLogin(code)
+  }
+
   return await verifyTwoFactorAndLogin(code)
 }
 
 const handleCancel = () => {
+  isSocialTwoFactor.value = false
   cancelTwoFactorLogin()
 }
 
@@ -63,9 +81,16 @@ onMounted(() => {
   if (route.query.message === 'session_expired') {
     error.value = 'Your session has expired. Please log in again.'
   }
-})
 
-const e = ref(null)
+  if (route.query.social_error === '1') {
+    error.value = t('composables.auth.socialLoginFailed') as string
+  }
+
+  if (route.query.social_2fa === '1') {
+    isSocialTwoFactor.value = true
+    twoFactorDialogOpen.value = true
+  }
+})
 </script>
 
 <template>
@@ -118,6 +143,7 @@ const e = ref(null)
       </div>
       <Button variant="primary">{{ $t('actions.login') }}</Button>
       <Markdown :content="$t('labels.login.signup', { url: signupUrl })" />
+      <SocialLoginButtons />
     </form>
   </div>
   <TwoFactorVerifyDialog

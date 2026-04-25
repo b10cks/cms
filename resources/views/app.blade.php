@@ -12,6 +12,16 @@
         'version' => config('app.version'),
         'sidebarMenu' => config('app.sidebar_menu', []),
         'apiBaseUrl' => config('app.api_url', ''),
+        'socialAuth' => [
+          'providers' => collect(\App\Models\User\UserSocialLink::SOCIAL_SERVICES)
+            ->filter(fn (string $provider) => filled(config("services.{$provider}.client_id")) && filled(config("services.{$provider}.client_secret")))
+            ->map(fn (string $provider) => [
+              'key' => $provider,
+              'url' => route('auth.social.redirect', ['provider' => $provider]),
+              'linkUrl' => route('auth.social.link.redirect', ['provider' => $provider]),
+            ])
+            ->values(),
+        ],
         'posthog' => [
           'key' => config('services.posthog.api_key'),
           'host' => config('services.posthog.settings.host'),

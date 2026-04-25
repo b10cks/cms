@@ -9,13 +9,13 @@ use App\Http\Controllers\Mgmt\Ai\SpaceAiConfigController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiSettingsController;
 use App\Http\Controllers\Mgmt\Ai\TranslationController;
 use App\Http\Controllers\Mgmt\Ai\TranslationStreamController;
-use App\Http\Controllers\Mgmt\AuditLogController;
 use App\Http\Controllers\Mgmt\AssetController;
 use App\Http\Controllers\Mgmt\AssetDataExportController;
 use App\Http\Controllers\Mgmt\AssetDataImportController;
 use App\Http\Controllers\Mgmt\AssetFolderController;
 use App\Http\Controllers\Mgmt\AssetLinkedContentController;
 use App\Http\Controllers\Mgmt\AssetTagController;
+use App\Http\Controllers\Mgmt\AuditLogController;
 use App\Http\Controllers\Mgmt\AuthorizationController;
 use App\Http\Controllers\Mgmt\AvailableSpaceBlueprintController;
 use App\Http\Controllers\Mgmt\BackupController;
@@ -76,6 +76,7 @@ use App\Http\Controllers\Mgmt\User\UserController;
 use App\Http\Controllers\Mgmt\User\UserInviteController;
 use App\Http\Controllers\Mgmt\User\UserPasswordController;
 use App\Http\Controllers\Mgmt\User\UserSettingsController;
+use App\Http\Controllers\Mgmt\User\UserSocialLinkController;
 use App\Http\Controllers\Mgmt\User\UserTokenController;
 use App\Http\Controllers\SpaceAiUsageController;
 
@@ -85,6 +86,12 @@ Route::group(['prefix' => 'users'], function () {
         Route::patch('/', [UserController::class, 'update'])->name('users.me.update');
         Route::post('/settings', UserSettingsController::class)->name('users.me.settings');
         Route::post('/avatar', UserAvatarController::class)->name('users.me.avatar');
+
+        Route::get('/social-links', [UserSocialLinkController::class, 'index'])
+            ->name('users.me.social-links.index');
+        Route::delete('/social-links/{provider}', [UserSocialLinkController::class, 'destroy'])
+            ->middleware(['throttle:crucial'])
+            ->name('users.me.social-links.destroy');
 
         Route::post('/password', UserPasswordController::class)
             ->middleware(['throttle:crucial'])

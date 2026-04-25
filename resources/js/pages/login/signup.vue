@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Logo from '~/assets/logo.svg'
 import Markdown from '~/components/Markdown.vue'
+import SocialLoginButtons from '~/components/SocialLoginButtons.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
@@ -220,6 +221,7 @@ const handleSignup = async () => {
       />
       <Button variant="primary">{{ $t('actions.signup') }}</Button>
       <Markdown :content="$t('labels.login.login', { url: loginUrl })" />
+      <SocialLoginButtons />
     </form>
   </div>
 </template>

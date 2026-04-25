@@ -37,6 +37,13 @@
       "invite": "**You're in!**\n\n**{inviter}** just invited you to join **{name}**.",
       "signup": "New here? [Create an account]({url})",
       "login": "Already a member? [Log back in]({url})",
+      "social": {
+        "or": "or continue with",
+        "google": "Continue with Google",
+        "github": "Continue with GitHub",
+        "googleProvider": "Google",
+        "githubProvider": "GitHub"
+      },
       "terms": "I agree to b10cks [Terms of Service](https://www.b10cks.com/en/legal/terms-of-service) and [Privacy Policy](https://www.b10cks.com/en/legal/privacy-policy)",
       "forgotPassword": "Forgot your password?",
       "forgotPasswordTitle": "Reset your password",
@@ -1842,6 +1849,27 @@
           "passwordChangeFailed": "Failed to change password: {error}"
         }
       },
+      "social": {
+        "title": "Social profiles",
+        "description": "Link social providers so you can sign in faster without changing your email login.",
+        "empty": "No social login providers are configured right now.",
+        "linked": "Linked to this account",
+        "notLinked": "Not linked yet",
+        "link": "Link",
+        "unlink": "Unlink",
+        "unlinkConfirm": {
+          "title": "Unlink social profile",
+          "message": "Unlink {provider} from your account?",
+          "confirmLabel": "Unlink"
+        },
+        "toast": {
+          "linked": "{provider} is now linked to your account.",
+          "unlinked": "{provider} has been unlinked from your account.",
+          "conflict": "{provider} is already linked to another account.",
+          "linkFailed": "Could not link {provider}. Please try again.",
+          "unlinkFailed": "Could not unlink social profile: {error}"
+        }
+      },
       "apiTokens": {
         "title": "API Tokens",
         "description": "Create personal tokens for integrations, scripts, and automation.",
@@ -2984,6 +3012,7 @@
       "loginSessionExpired": "Login session expired. Please try again.",
       "emailExists": "An account with this email already exists.",
       "registerFailed": "Registration failed. Please try again.",
+      "socialLoginFailed": "Social login did not complete. Please try again.",
       "forgotPasswordFailed": "We couldn't send the reset link. Please try again.",
       "resetPasswordFailed": "We couldn't reset your password. Please try again.",
       "tokenRefreshFailed": "Session expired. Please log in again.",

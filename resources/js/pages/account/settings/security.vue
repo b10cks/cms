@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ApiTokenSettings from '~/components/account/ApiTokenSettings.vue'
+import SocialProfileSettings from '~/components/account/SocialProfileSettings.vue'
 import BackupCodesDisplay from '~/components/BackupCodesDisplay.vue'
 import Icon from '~/components/Icon.vue'
 import TwoFactorSetupDialog from '~/components/TwoFactorSetupDialog.vue'
@@ -165,6 +166,8 @@ const handleRegenerateBackupCodes = async () => {
       </Card>
 
       <ApiTokenSettings />
+
+      <SocialProfileSettings />
 
       <Card variant="none">
         <CardHeaderCombined

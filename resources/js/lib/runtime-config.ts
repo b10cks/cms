@@ -3,6 +3,13 @@ declare global {
     __APP_CONFIG__?: {
       version?: string
       apiBaseUrl?: string
+      socialAuth?: {
+        providers?: Array<{
+          key: string
+          url: string
+          linkUrl?: string
+        }>
+      }
       sidebarMenu?: Array<{
         label?: string
         icon?: string
@@ -34,6 +41,9 @@ export const runtimeConfig = {
   public: {
     apiBaseUrl: appConfig?.apiBaseUrl || '',
     appVersion: appConfig?.version || '',
+    socialAuth: {
+      providers: appConfig?.socialAuth?.providers || [],
+    },
     sidebarMenu: appConfig?.sidebarMenu || [],
     posthog: {
       key: appConfig?.posthog?.key,

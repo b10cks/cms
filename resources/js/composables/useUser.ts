@@ -87,10 +87,41 @@ export function useUser() {
     })
   }
 
+  const useSocialLinksQuery = () => {
+    return useQuery({
+      queryKey: queryKeys.users.socialLinks(),
+      queryFn: async () => {
+        const response = await api.users.socialLinks()
+        return response.data
+      },
+    })
+  }
+
+  const useUnlinkSocialProviderMutation = () => {
+    return useMutation({
+      mutationFn: async (provider: string) => {
+        await api.users.unlinkSocialProvider(provider)
+      },
+      onSuccess: async (_data, provider) => {
+        await queryClient.invalidateQueries({ queryKey: queryKeys.users.socialLinks() })
+        toast.success(t('labels.account.social.toast.unlinked', { provider }) as string)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('labels.account.social.toast.unlinkFailed', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
   return {
     useUserQuery,
     useUpdateUserMutation,
     useChangePasswordMutation,
     useUploadAvatarMutation,
+    useSocialLinksQuery,
+    useUnlinkSocialProviderMutation,
   }
 }

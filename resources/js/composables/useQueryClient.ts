@@ -192,6 +192,7 @@ export const queryKeys = {
   users: {
     all: () => ['users'] as const,
     me: () => [...queryKeys.users.all(), 'me'] as const,
+    socialLinks: () => [...queryKeys.users.me(), 'social-links'] as const,
   },
   authorization: {
     all: () => ['authorization'] as const,
