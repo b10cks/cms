@@ -49,7 +49,7 @@ class TranslationStreamController extends Controller
         $systemPrompt = $promptBuilder->forTranslation();
 
         return new StreamedResponse(
-            function () use ($space, $systemPrompt, $userPrompt) {
+            function () use ($space, $systemPrompt, $userPrompt, $aiConfig) {
                 if (ob_get_level() == 0) {
                     ob_start();
                 }
@@ -66,6 +66,7 @@ class TranslationStreamController extends Controller
                         $space,
                         $systemPrompt,
                         $userPrompt,
+                        aiConfig: $aiConfig,
                     ) as $event) {
                         $now = time();
 

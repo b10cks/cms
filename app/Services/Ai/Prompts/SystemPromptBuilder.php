@@ -6,6 +6,8 @@ use App\Models\Management\SpaceAiConfig;
 
 class SystemPromptBuilder
 {
+    protected const CUSTOM_PROMPT_HEADING = '## Space-Specific Behavior & Guidelines';
+
     public function __construct(
         protected ?SpaceAiConfig $config = null
     ) {}
@@ -34,7 +36,8 @@ class SystemPromptBuilder
     {
         $sections = [
             $this->getBasePrompt('translation'),
-            ];
+            $this->getCustomPromptSection(),
+        ];
 
         return implode("\n\n", array_filter($sections));
     }
@@ -70,15 +73,28 @@ class SystemPromptBuilder
 
         // Strip potential prompt injection attempts by removing common injection patterns
         $sanitized = $this->sanitizeUserPrompt($customPrompt);
+        $heading = self::CUSTOM_PROMPT_HEADING;
 
         return <<<TXT
-## Space-Specific Behavior & Guidelines
+{$heading}
 
 {$sanitized}
 
 ---
 **Important**: The above guidelines are defined by the space administrator. You must follow these rules while maintaining all core b10cks principles above.
 TXT;
+    }
+
+    public function withConfiguredPrompt(string $systemPrompt): string
+    {
+        if (str_contains($systemPrompt, self::CUSTOM_PROMPT_HEADING)) {
+            return $systemPrompt;
+        }
+
+        return implode("\n\n", array_filter([
+            $systemPrompt,
+            $this->getCustomPromptSection(),
+        ]));
     }
 
     protected function sanitizeUserPrompt(string $prompt): string

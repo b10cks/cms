@@ -138,6 +138,8 @@ class AiStreamService
             return;
         }
 
+        $systemPrompt = (new SystemPromptBuilder($aiConfig))->withConfiguredPrompt($systemPrompt);
+
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
             ['role' => 'user', 'content' => $userPrompt],
@@ -165,6 +167,8 @@ class AiStreamService
         if (!$driver) {
             return null;
         }
+
+        $systemPrompt = (new SystemPromptBuilder($aiConfig))->withConfiguredPrompt($systemPrompt);
 
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
