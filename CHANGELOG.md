@@ -3,6 +3,14 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.26-2f85293] — 2026-4-26
+
+- 👔 Use system prompt for each AI interaction
+- 🚸 Prevent default values spill into new localization
+- 🚸 Fix conten tree padding/overlap
+- ⬆️ Upgrade to Laravel v13
+- ✨ Add SAML2 auth self service
+
 ## [v2026.4.25-46a9994] — 2026-4-25
 
 - ⬇️ Downgrade vite due to build errors
