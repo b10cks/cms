@@ -1373,6 +1373,7 @@ onBeforeUnmount(() => {
         v-slot="{ flattenItems }"
         v-model:expanded="settings.content.expanded"
         class="w-full list-none p-2 select-none"
+        :class="{ 'pb-8': hasClipboardItem }"
         :items="rootItems"
         :get-children="(item) => getChildren(data, item.id)"
         :get-key="({ id }) => id"
@@ -1599,9 +1600,7 @@ onBeforeUnmount(() => {
       </DropdownMenuContent>
     </DropdownMenu>
 
-    <div
-      class="absolute inset-x-4 bottom-0 z-10 flex flex-col items-center gap-3 overflow-clip py-4"
-    >
+    <div class="absolute inset-x-4 bottom-0 z-10 flex flex-col items-center gap-3 overflow-clip">
       <TransitionGroup
         enter-active-class="transition duration-150 ease-butter"
         leave-active-class="transition duration-150 ease-butter"
