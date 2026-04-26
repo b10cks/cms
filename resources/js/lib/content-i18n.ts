@@ -181,6 +181,8 @@ export function buildMissingLanguageDraft(
       ...version,
       is_current: version.language_iso === languageIso,
     })),
+    content: {},
+    raw_content: {},
     current_version_id: null,
     current_version: null,
     published_version_id: null,
