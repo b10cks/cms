@@ -56,7 +56,7 @@ class ContentResource extends JsonResource
             'content' => $this->getTransformedContent($resolved),
             'relations' => $this->when(
                 $this->shouldResolveRelations($request),
-                fn(): array => $this->resolveRelations($request, $resolved),
+                fn (): array => $this->resolveRelations($request, $resolved),
             ),
             'language_iso' => $resolved->requestedLanguage,
             'translations' => $this->handleTranslations($resolved, $row),
@@ -90,7 +90,7 @@ class ContentResource extends JsonResource
     protected function getTransformedContent(ResolvedContent $resolved): array|\stdClass
     {
         $content = $resolved->effectiveContent;
-        if (!$content) {
+        if (! $content) {
             return new \stdClass;
         }
 
@@ -105,14 +105,14 @@ class ContentResource extends JsonResource
             'block' => ($resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent)
                 ->loadMissing('block')
                 ->block
-                    ?->slug,
+                ?->slug,
         ];
     }
 
     protected function removeHiddenBlocks(array $content): array
     {
         foreach ($content as $key => $value) {
-            if (!\is_array($value)) {
+            if (! \is_array($value)) {
                 continue;
             }
 
@@ -120,7 +120,7 @@ class ContentResource extends JsonResource
 
             if ($isBlocksArray) {
                 $content[$key] = array_values(
-                    array_filter($value, fn(mixed $item) => !(\is_array($item) && ($item['hidden'] ?? false) === true))
+                    array_filter($value, fn (mixed $item) => ! (\is_array($item) && ($item['hidden'] ?? false) === true))
                 );
 
                 foreach ($content[$key] as $i => $item) {
@@ -140,14 +140,19 @@ class ContentResource extends JsonResource
     {
         return SimpleContentResource::collection(
             $resolved->familyContents
-                ->filter(fn(Content $content) => $content->published_at !== null && $content->id !== $currentRow->id)
+                ->filter(fn (Content $content) => $content->published_at !== null && $content->id !== $currentRow->id)
                 ->values()
         );
     }
 
     protected function injectData(ResolvedContent $resolved, array &$content)
     {
-        $content = app(LinkHandler::class)->replaceContentLinks($content, $resolved->effectiveLinks);
+        $content = app(LinkHandler::class)->replaceContentLinks(
+            $content,
+            $resolved->effectiveLinks,
+            $resolved->requestedLanguage,
+            app('currentSpace')->settings->getDefaultLanguage(),
+        );
         $assetContext = $resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent;
         $content = app(AssetHandler::class)->replaceContentAssets($assetContext, $content, $resolved->effectiveAssets);
     }
@@ -167,7 +172,7 @@ class ContentResource extends JsonResource
         $resolvedRelations = app(ContentI18nResolver::class)->resolveMany(
             app('currentSpace'),
             $resolved->effectiveRelations->map(
-                fn(Content $content): array => [
+                fn (Content $content): array => [
                     'content' => $content,
                     'target_language' => $resolved->requestedLanguage,
                 ]
@@ -184,7 +189,7 @@ class ContentResource extends JsonResource
         );
 
         return $resolvedRelations
-            ->map(fn(ResolvedContent $relation): array => (new self($relation))->toArray($nestedRequest))
+            ->map(fn (ResolvedContent $relation): array => (new self($relation))->toArray($nestedRequest))
             ->values()
             ->all();
     }
@@ -193,7 +198,7 @@ class ContentResource extends JsonResource
     {
         $rows = new EloquentCollection(
             $resolvedRelations
-                ->map(fn(ResolvedContent $relation): ?Content => $relation->targetContent ?? $relation->fallbackContent ?? $relation->canonicalContent)
+                ->map(fn (ResolvedContent $relation): ?Content => $relation->targetContent ?? $relation->fallbackContent ?? $relation->canonicalContent)
                 ->filter()
                 ->unique('id')
                 ->values()

@@ -33,6 +33,7 @@ class ContentRelationsTest extends TestCase
                 'default_language' => 'en',
                 'languages' => [
                     ['code' => 'en', 'name' => 'English', 'fallback_language' => null],
+                    ['code' => 'de', 'name' => 'German', 'fallback_language' => 'en'],
                 ],
             ],
         ]);
@@ -125,6 +126,64 @@ class ContentRelationsTest extends TestCase
         $this->assertArrayNotHasKey('relations', $resolvedRelationA);
     }
 
+    #[Test]
+    public function data_api_show_resolves_internal_links_to_translated_content_urls(): void
+    {
+        $linkTarget = $this->createPublishedContent('linked-page', [
+            'title' => 'Linked page',
+        ]);
+        $this->createPublishedContent('verlinkte-seite', [
+            'title' => 'Verlinkte Seite',
+        ], languageIso: 'de', i18nParentId: $linkTarget->id);
+
+        $home = $this->createPublishedContent('home', [
+            'title' => 'Home',
+        ]);
+        $this->createPublishedContent('startseite', [
+            'title' => 'Startseite',
+            'cta' => [
+                'type' => 'internal',
+                'content' => $linkTarget->id,
+            ],
+        ], languageIso: 'de', i18nParentId: $home->id);
+
+        $response = $this->getJson($this->showUrl('startseite', [
+            'language' => 'de',
+        ]));
+
+        $response->assertOk();
+        $this->assertSame('/verlinkte-seite', $response->json('data.content.cta.url'));
+        $this->assertSame('Verlinkte Seite', $response->json('data.content.cta.title'));
+        $this->assertSame($linkTarget->id, $response->json('data.content.cta.content'));
+    }
+
+    #[Test]
+    public function data_api_show_falls_back_to_default_content_for_missing_link_translations(): void
+    {
+        $linkTarget = $this->createPublishedContent('linked-page', [
+            'title' => 'Linked page',
+        ]);
+
+        $home = $this->createPublishedContent('home', [
+            'title' => 'Home',
+        ]);
+        $this->createPublishedContent('startseite', [
+            'title' => 'Startseite',
+            'cta' => [
+                'type' => 'internal',
+                'content' => $linkTarget->id,
+            ],
+        ], languageIso: 'de', i18nParentId: $home->id);
+
+        $response = $this->getJson($this->showUrl('startseite', [
+            'language' => 'de',
+        ]));
+
+        $response->assertOk();
+        $this->assertSame('/linked-page', $response->json('data.content.cta.url'));
+        $this->assertSame('Linked Page', $response->json('data.content.cta.title'));
+    }
+
     private function showUrl(string $slug, array $query = []): string
     {
         return route('api.contents.show', [
@@ -135,15 +194,20 @@ class ContentRelationsTest extends TestCase
         ]);
     }
 
-    private function createPublishedContent(string $slug, array $content): Content
-    {
+    private function createPublishedContent(
+        string $slug,
+        array $content,
+        string $languageIso = 'en',
+        ?string $i18nParentId = null,
+    ): Content {
         $model = new Content;
         $model->forceFill([
             'block_id' => $this->pageBlock->id,
             'name' => Str::headline($slug),
             'slug' => $slug,
             'full_slug' => "/{$slug}",
-            'language_iso' => 'en',
+            'language_iso' => $languageIso,
+            'i18n_parent_id' => $i18nParentId,
             'settings' => [],
         ]);
         $model->id = strtolower((string) Str::ulid());
