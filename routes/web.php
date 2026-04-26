@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\SocialLoginController;
+use App\Http\Controllers\Auth\SamlLoginController;
 use App\Http\Controllers\Web\AppController;
 use App\Http\Controllers\Web\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,18 @@ Route::get('/auth/v1/social/{provider}/link', [SocialLoginController::class, 'li
 Route::get('/auth/v1/social/{provider}/link/callback', [SocialLoginController::class, 'linkCallback'])
     ->middleware(['auth', 'throttle:login'])
     ->name('auth.social.link.callback');
+Route::get('/auth/v1/saml/{team}/redirect', [SamlLoginController::class, 'redirect'])
+    ->middleware('throttle:login')
+    ->name('auth.saml.redirect');
+Route::post('/auth/v1/saml/{team}/acs', [SamlLoginController::class, 'acs'])
+    ->middleware('throttle:login')
+    ->name('auth.saml.acs');
+Route::match(['get', 'post'], '/auth/v1/saml/{team}/sls', [SamlLoginController::class, 'sls'])
+    ->middleware('throttle:login')
+    ->name('auth.saml.sls');
+Route::get('/auth/v1/saml/{team}/metadata', [SamlLoginController::class, 'metadata'])
+    ->middleware('throttle:login')
+    ->name('auth.saml.metadata');
 
 // Email verification (special handling)
 Route::get('auth/v1/email/verify/{id}/{hash}', VerifyEmailController::class)

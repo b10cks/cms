@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -139,5 +140,10 @@ class Team extends GlobalModel
     public function invites(): HasMany
     {
         return $this->hasMany(Invite::class, 'team_id', 'id');
+    }
+
+    public function samlProvider(): HasOne
+    {
+        return $this->hasOne(TeamSamlProvider::class, 'team_id', 'id');
     }
 }

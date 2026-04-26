@@ -96,6 +96,11 @@ const routes: RouteRecordRaw[] = [
         name: 'team-roles',
         component: () => import('~/pages/teams/[team].vue'),
       },
+      {
+        path: ':team/saml',
+        name: 'team-saml',
+        component: () => import('~/pages/teams/[team].vue'),
+      },
     ],
   },
   {

@@ -9,6 +9,9 @@ import type {
   CreateTeamPayload,
   UpdateTeamPayload,
   TeamHierarchyItem,
+  TeamSamlProviderPayload,
+  TeamSamlProviderResource,
+  TeamSamlProviderResponse,
   TeamResource,
   TeamUserQueryParams,
   TeamUserResource,
@@ -102,5 +105,23 @@ export class Teams extends BaseResource<
 
   public async deleteSpaceRole(teamId: string, roleId: string): Promise<void> {
     return this.client.delete(`/mgmt/v1/teams/${teamId}/roles/space/${roleId}`)
+  }
+
+  public async getSamlProvider(teamId: string): Promise<TeamSamlProviderResponse> {
+    return this.client.get<TeamSamlProviderResponse>(`/mgmt/v1/teams/${teamId}/saml-provider`)
+  }
+
+  public async upsertSamlProvider(
+    teamId: string,
+    payload: TeamSamlProviderPayload
+  ): Promise<ApiResponse<TeamSamlProviderResource>> {
+    return this.client.put<ApiResponse<TeamSamlProviderResource>>(
+      `/mgmt/v1/teams/${teamId}/saml-provider`,
+      payload
+    )
+  }
+
+  public async deleteSamlProvider(teamId: string): Promise<void> {
+    return this.client.delete(`/mgmt/v1/teams/${teamId}/saml-provider`)
   }
 }

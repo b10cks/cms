@@ -59,4 +59,9 @@ class TeamPolicy
     {
         return $this->canInTeam($user, $team, 'team.members.manage');
     }
+
+    public function manageSaml(User $user, Team $team): bool
+    {
+        return $user->is_root || $this->hasAnyTeamRole($user, $team, ['owner']);
+    }
 }

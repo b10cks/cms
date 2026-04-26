@@ -7,6 +7,7 @@ import type { CreateTeamSpaceRolePayload, UpdateTeamSpaceRolePayload } from '~/t
 import type {
   AddTeamUserPayload,
   CreateTeamPayload,
+  TeamSamlProviderPayload,
   TeamHierarchyItem,
   TeamUserQueryParams,
   UpdateTeamPayload,
@@ -83,6 +84,21 @@ export function useTeams() {
       queryFn: async () => {
         const response = await api.teams.getSpaceRoles(toValue(teamId))
         return response.data
+      },
+      enabled: computed(
+        () => !!toValue(isAuthenticated) && !!toValue(teamId) && !!toValue(enabled)
+      ),
+    })
+  }
+
+  const useTeamSamlProviderQuery = (
+    teamId: MaybeRef<string>,
+    enabled: MaybeRef<boolean> = true
+  ) => {
+    return useQuery({
+      queryKey: computed(() => queryKeys.teams.samlProvider(teamId)),
+      queryFn: async () => {
+        return await api.teams.getSamlProvider(toValue(teamId))
       },
       enabled: computed(
         () => !!toValue(isAuthenticated) && !!toValue(teamId) && !!toValue(enabled)
@@ -311,6 +327,53 @@ export function useTeams() {
     })
   }
 
+  const useUpsertTeamSamlProviderMutation = () => {
+    return useMutation({
+      mutationFn: async ({
+        teamId,
+        payload,
+      }: {
+        teamId: string
+        payload: TeamSamlProviderPayload
+      }) => {
+        const response = await api.teams.upsertSamlProvider(teamId, payload)
+        return { teamId, provider: response.data }
+      },
+      onSuccess: ({ teamId }) => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.teams.samlProvider(teamId) })
+        queryClient.invalidateQueries({ queryKey: queryKeys.authorization.all() })
+        toast.success(t('composables.teams.samlSaveSuccess') as string)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.teams.samlSaveError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
+  const useDeleteTeamSamlProviderMutation = () => {
+    return useMutation({
+      mutationFn: async (teamId: string) => {
+        await api.teams.deleteSamlProvider(teamId)
+        return teamId
+      },
+      onSuccess: (teamId) => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.teams.samlProvider(teamId) })
+        toast.success(t('composables.teams.samlDeleteSuccess') as string)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.teams.samlDeleteError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
   // Utility functions
   const findTeamInHierarchy = (
     hierarchy: MaybeRef<TeamHierarchyItem[] | undefined>,
@@ -407,6 +470,7 @@ export function useTeams() {
     // Team User Queries
     useTeamUsersQuery,
     useTeamSpaceRolesQuery,
+    useTeamSamlProviderQuery,
 
     // Team Mutations
     useCreateTeamMutation,
@@ -420,6 +484,8 @@ export function useTeams() {
     useCreateTeamSpaceRoleMutation,
     useUpdateTeamSpaceRoleMutation,
     useDeleteTeamSpaceRoleMutation,
+    useUpsertTeamSamlProviderMutation,
+    useDeleteTeamSamlProviderMutation,
 
     // Utility Functions
     findTeamInHierarchy,

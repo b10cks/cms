@@ -103,6 +103,11 @@ export const teamNavigationItems: NavigationAccessItem[] = [
     icon: 'lucide:shield',
     routeName: 'team-roles',
   },
+  {
+    label: 'labels.teams.tabs.saml',
+    icon: 'lucide:key-round',
+    routeName: 'team-saml',
+  },
 ]
 
 export const providerNavigationItems: NavigationAccessItem[] = [
@@ -228,6 +233,7 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
     abilities: { anyOf: ['team.members.view', 'team.invites.view'] },
   },
   'team-roles': { abilities: 'team.members.manage' },
+  'team-saml': { abilities: 'team.saml.manage' },
   'spaces-new': actionAccessRequirements['team.spaces.create'],
 }
 

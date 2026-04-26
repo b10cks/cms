@@ -49,6 +49,8 @@ export const queryKeys = {
     details: () => [...queryKeys.teams.all(), 'detail'] as const,
     detail: (id: MaybeRef<string>) => [...queryKeys.teams.details(), id] as const,
     hierarchy: () => [...queryKeys.teams.all(), 'hierarchy'] as const,
+    samlProvider: (teamId: MaybeRef<string>) =>
+      [...queryKeys.teams.detail(teamId), 'saml-provider'] as const,
     roles: (teamId: MaybeRef<string>) => ({
       all: () => [...queryKeys.teams.detail(teamId), 'roles'] as const,
       space: () => [...queryKeys.teams.roles(teamId).all(), 'space'] as const,

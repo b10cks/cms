@@ -6,6 +6,7 @@ import TeamInvitesList from '~/components/invites/TeamInvitesList.vue'
 import TeamMembersList from '~/components/teams/TeamMembersList.vue'
 import TeamRoleDialog from '~/components/teams/TeamRoleDialog.vue'
 import TeamRolesList from '~/components/teams/TeamRolesList.vue'
+import TeamSamlProviderSettings from '~/components/teams/TeamSamlProviderSettings.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
@@ -13,7 +14,7 @@ import IconName from '~/components/ui/IconName.vue'
 import { useAuthorization } from '~/composables/useAuthorization'
 import { teamNavigationItems } from '~/lib/access-control'
 import type { CreateTeamSpaceRolePayload, RoleCatalogEntry } from '~/types/authorization'
-import type { TeamUserQueryParams, UpdateTeamUserPayload } from '~/types/teams'
+import type { TeamSamlProviderPayload, TeamUserQueryParams, UpdateTeamUserPayload } from '~/types/teams'
 
 const route = useRoute()
 const router = useRouter()
@@ -27,9 +28,12 @@ const {
   useUpdateTeamUserMutation,
   useRemoveTeamUserMutation,
   useTeamSpaceRolesQuery,
+  useTeamSamlProviderQuery,
   useCreateTeamSpaceRoleMutation,
   useUpdateTeamSpaceRoleMutation,
   useDeleteTeamSpaceRoleMutation,
+  useUpsertTeamSamlProviderMutation,
+  useDeleteTeamSamlProviderMutation,
 } = useTeams()
 
 const { useDeleteTeamInviteMutation, useResendTeamInviteMutation } = useInvites()
@@ -58,6 +62,7 @@ const activeView = computed(() => {
   const routeName = route.name as string | undefined
 
   if (routeName === 'team-roles') return 'roles'
+  if (routeName === 'team-saml') return 'saml'
 
   return 'people'
 })
@@ -69,6 +74,7 @@ const canViewMembers = computed(() => access.hasAbility('team.members.view'))
 const canViewInvites = computed(() => access.hasAbility('team.invites.view'))
 const canManageInvites = computed(() => access.hasAbility('team.invites.manage'))
 const canManageRoles = computed(() => access.canAccessRoute('team-roles'))
+const canManageSaml = computed(() => access.canAccessRoute('team-saml'))
 const canViewPeople = computed(() => access.canAccessRoute('team'))
 
 const queryParams = computed<TeamUserQueryParams>(() => ({
@@ -87,12 +93,18 @@ const { data: teamRoles, isLoading: isLoadingRoles } = useTeamSpaceRolesQuery(
   teamId,
   canManageRoles
 )
+const { data: samlProviderResponse, isLoading: isLoadingSamlProvider } = useTeamSamlProviderQuery(
+  teamId,
+  canManageSaml
+)
 
 const updateUserMutation = useUpdateTeamUserMutation()
 const removeUserMutation = useRemoveTeamUserMutation()
 const createRoleMutation = useCreateTeamSpaceRoleMutation()
 const updateRoleMutation = useUpdateTeamSpaceRoleMutation()
 const deleteRoleMutation = useDeleteTeamSpaceRoleMutation()
+const upsertSamlProviderMutation = useUpsertTeamSamlProviderMutation()
+const deleteSamlProviderMutation = useDeleteTeamSamlProviderMutation()
 
 const deleteInviteMutation = useDeleteTeamInviteMutation()
 const resendInviteMutation = useResendTeamInviteMutation()
@@ -115,7 +127,8 @@ watch(
   (views) => {
     if (views.length === 0) return
 
-    const currentView = activeView.value === 'roles' ? 'team-roles' : 'team'
+    const currentView =
+      activeView.value === 'roles' ? 'team-roles' : activeView.value === 'saml' ? 'team-saml' : 'team'
 
     if (!views.includes(currentView)) {
       router.replace({
@@ -208,12 +221,27 @@ const handleDeleteRole = (role: RoleCatalogEntry) => {
   deleteRoleMutation.mutate({ teamId: teamId.value, roleId: role.id })
 }
 
+const handleSaveSamlProvider = (payload: TeamSamlProviderPayload) => {
+  upsertSamlProviderMutation.mutate({
+    teamId: teamId.value,
+    payload,
+  })
+}
+
+const handleDeleteSamlProvider = () => {
+  deleteSamlProviderMutation.mutate(teamId.value)
+}
+
 const navigateToPeople = () => {
   router.push({ name: 'team', params: { team: teamId.value } })
 }
 
 const navigateToRoles = () => {
   router.push({ name: 'team-roles', params: { team: teamId.value } })
+}
+
+const navigateToSaml = () => {
+  router.push({ name: 'team-saml', params: { team: teamId.value } })
 }
 
 const navigateBack = () => {
@@ -305,6 +333,17 @@ const navigateBack = () => {
               class="mr-2 h-4 w-4"
             />
             {{ $t('labels.teams.tabs.roles') }}
+          </Button>
+          <Button
+            v-if="canManageSaml"
+            :variant="activeView === 'saml' ? 'default' : 'outline'"
+            @click="navigateToSaml"
+          >
+            <Icon
+              name="lucide:key-round"
+              class="mr-2 h-4 w-4"
+            />
+            {{ $t('labels.teams.tabs.saml') }}
           </Button>
         </div>
 
@@ -399,6 +438,30 @@ const navigateBack = () => {
             @edit="handleViewRole"
             @delete="handleDeleteRole"
           />
+        </template>
+
+        <template v-else-if="activeView === 'saml' && canManageSaml">
+          <TeamSamlProviderSettings
+            v-if="samlProviderResponse"
+            :team-id="teamId"
+            :provider="samlProviderResponse.data"
+            :defaults="samlProviderResponse.defaults"
+            :is-loading="isLoadingSamlProvider"
+            :is-saving="upsertSamlProviderMutation.isPending.value"
+            :is-deleting="deleteSamlProviderMutation.isPending.value"
+            @save="handleSaveSamlProvider"
+            @delete="handleDeleteSamlProvider"
+          />
+          <div
+            v-else
+            class="flex items-center gap-2 py-6"
+          >
+            <Icon
+              name="lucide:loader-2"
+              class="animate-spin"
+            />
+            {{ $t('labels.loading') }}
+          </div>
         </template>
       </div>
 

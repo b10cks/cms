@@ -70,6 +70,7 @@ use App\Http\Controllers\Mgmt\TeamHierarchyController;
 use App\Http\Controllers\Mgmt\TeamInviteController;
 use App\Http\Controllers\Mgmt\TeamInviteResendController;
 use App\Http\Controllers\Mgmt\TeamMemberController;
+use App\Http\Controllers\Mgmt\TeamSamlProviderController;
 use App\Http\Controllers\Mgmt\TeamUserController;
 use App\Http\Controllers\Mgmt\User\UserAvatarController;
 use App\Http\Controllers\Mgmt\User\UserController;
@@ -154,6 +155,10 @@ Route::group(['prefix' => 'teams/{team}'], function () {
     Route::post('invites', [TeamInviteController::class, 'store'])->name('teams.invites.store');
     Route::delete('invites/{invite}', [TeamInviteController::class, 'destroy'])->name('teams.invites.destroy');
     Route::post('invites/{invite}/resend', TeamInviteResendController::class)->name('teams.invites.resend');
+
+    Route::get('saml-provider', [TeamSamlProviderController::class, 'show'])->name('teams.saml-provider.show');
+    Route::put('saml-provider', [TeamSamlProviderController::class, 'upsert'])->name('teams.saml-provider.upsert');
+    Route::delete('saml-provider', [TeamSamlProviderController::class, 'destroy'])->name('teams.saml-provider.destroy');
 
     Route::apiResource('blueprints', SpaceBlueprintController::class);
 

@@ -2,6 +2,58 @@ export interface TeamSettings {
   [key: string]: unknown
 }
 
+export interface TeamSamlLinks {
+  login_url: string
+  acs_url: string
+  sls_url: string
+  metadata_url: string
+  sp_entity_id: string
+}
+
+export interface TeamSamlProviderPayload {
+  enabled: boolean
+  idp_entity_id: string
+  sso_url: string
+  slo_url?: string | null
+  idp_x509_cert: string
+  sp_x509_cert?: string | null
+  sp_private_key?: string | null
+  name_id_format: string
+  attribute_mapping: {
+    email: string
+    first_name?: string | null
+    last_name?: string | null
+    external_id?: string | null
+  }
+  role_attribute?: string | null
+  role_mapping?: Record<string, string>
+  default_role: string
+  allow_jit: boolean
+  strict: boolean
+  sign_authn_requests: boolean
+  sign_logout_requests: boolean
+  want_assertions_signed: boolean
+  want_messages_signed: boolean
+  want_assertions_encrypted: boolean
+  digest_algorithm: string
+  signature_algorithm: string
+}
+
+export interface TeamSamlProviderResource extends TeamSamlProviderPayload {
+  id: string
+  team_id: string
+  has_sp_private_key: boolean
+  last_login_at?: string | null
+  created_at: string
+  updated_at: string
+  links: TeamSamlLinks
+}
+
+export interface TeamSamlProviderResponse {
+  data: TeamSamlProviderResource | null
+  defaults: Omit<TeamSamlProviderPayload, 'sp_private_key'> & { links: TeamSamlLinks }
+}
+
 export interface TeamParent {
   id: string
   name: string
