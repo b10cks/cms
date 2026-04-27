@@ -1,73 +1,74 @@
-# b10cks - An opinionated headless CMS
+# b10cks CMS
 
 <div align="center">
 
-<h3>Build the future of content, block by block.</h3>
-
-An opinionated headless CMS based on Laravel and Vue.js
+An opinionated headless CMS built with Laravel and Vue.js.
 
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
-[![Laravel](https://img.shields.io/badge/Laravel-12.x-orange.svg)](https://laravel.com/)
+[![Laravel](https://img.shields.io/badge/Laravel-13.x-orange.svg)](https://laravel.com/)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.x-brightgreen.svg)](https://vuejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 
 </div>
 
-## Why Choose b10cks?
+![b10cks CMS](/docs/b10cks.png)
 
-b10cks is a modern API-first headless CMS built on Laravel and Vue.js that gives developers the freedom to create without constraints while providing content editors with powerful visual tools.
+## Overview
 
-- **Content, your way**: Structure your content with a flexible block-based architecture that adapts to your needs, not the other way around.
-- **API-first, future-ready**: Rest easy knowing your content can be delivered to any platform, now or in the future.
-- **Developer experience first**: We obsess over the developer experience so you can focus on building, not fighting with your CMS.
+b10cks is an API-first headless CMS for teams that model content as reusable blocks and deliver it through APIs. The repository contains the self-hosted CMS application, including the Laravel backend, Vue-based admin UI, content editing tools, asset handling, search integrations, and multi-tenant space management.
+
+Hosted SaaS options are available separately:
+
+- Website: [www.b10cks.com](https://www.b10cks.com)
+- Hosted app: [app.b10cks.com](https://app.b10cks.com)
 
 ## Features
 
 ### Content Editing
 
-- **🧩 Block-Based Content Modeling**: Define and compose content structures with reusable, versioned blocks
-- **🗺️ Canvas Editor**: Visual drag-and-drop canvas for structuring content hierarchically as a tree — pan, zoom, and rearrange nodes with full keyboard support and undo/redo history
-- **📝 Content Versioning**: Full version history with selective publishing and scheduled publication
-- **🚀 Release Management**: Batch multiple content versions into a release and publish them together atomically
-- **💬 Comments & Reviews**: Threaded comments on content items with resolution tracking and emoji reactions
+- **Block-based content modeling**: Define reusable, versioned blocks and compose them into content structures.
+- **Canvas editor**: Visual tree editor with drag-and-drop, pan and zoom, keyboard support, and undo/redo history.
+- **Content versioning**: Version history with selective publishing and scheduled publication.
+- **Release management**: Group multiple content versions into a release and publish them atomically.
+- **Comments and reviews**: Threaded comments on content items with resolution tracking and reactions.
 
 ### Search
 
-- **🔍 Full-Text Search**: Dual-driver search supporting both **MySQL** (fulltext indexes, natural language mode) and **OpenSearch** for flexible deployment — switch drivers per space without changing your API
-- Multi-language filtering and relevance scoring out of the box
+- **Full-text search**: MySQL fulltext indexes by default, with OpenSearch support for larger or relevance-tuned deployments.
+- **Localization-aware filtering**: Multi-language filtering and relevance scoring.
 
 ### Collaboration
 
-- **👥 Real-Time Collaboration**: Live presence tracking per space, content item, and canvas — see who is editing what in real time with cursor positions
-- **🤖 AI Assistance**: Multi-model AI integration for content generation, translation, meta-tag generation, and intelligent canvas structuring — all with streaming responses
+- **Real-time collaboration**: Presence tracking per space, content item, and canvas, including cursor positions.
+- **AI assistance**: Multi-model integration for content generation, translation, meta tag generation, and canvas structuring, with streaming responses.
 
 ### Assets & Media
 
-- **🌇 Asset Management**: Hierarchical asset library with folders, tags, and bulk import/export
-- **🖼️ Image Transformations**: On-the-fly image processing (resize, crop, smart-fit with face detection) via the built-in Ilum service — WebP, AVIF, JPG, PNG output with long-term HTTP caching
+- **Asset management**: Hierarchical asset library with folders, tags, and bulk import/export.
+- **Image transformations**: On-the-fly resize, crop, and smart-fit transformations via the built-in Ilum service, with WebP, AVIF, JPG, and PNG output.
 
 ### Infrastructure
 
-- **🌍 Internationalization**: Built-in support for content localization across multiple languages
-- **🔌 API-First**: Powerful REST API for seamless integration with any frontend
-- **🏢 Multi-Tenant Spaces**: Isolated per-space databases with full team and role management
-- **📊 Data Sources**: Structured dynamic data management with dimension support
-- **🔀 Redirects**: URL redirect management with hit tracking
-- **💾 Backups & Migrations**: Space backups and direct DB-to-DB space migration with configurable conflict resolution (skip, overwrite, merge newer)
-- **💳 Subscription Billing**: LemonSqueezy integration for plan-based subscriptions
+- **Internationalization**: Content localization across multiple languages.
+- **REST API**: API endpoints for integrating content into frontend applications and other services.
+- **Multi-tenant spaces**: Isolated per-space databases with team and role management.
+- **Data sources**: Structured dynamic data management with dimension support.
+- **Redirects**: URL redirect management with hit tracking.
+- **Backups and migrations**: Space backups and direct DB-to-DB space migration with configurable conflict resolution.
+- **Subscription billing**: LemonSqueezy integration for plan-based subscriptions.
 
 ## Technical Architecture
 
-b10cks CMS is built with a modern stack optimized for performance and developer experience:
+b10cks CMS uses the following main components:
 
-- **Backend**: Powered by Laravel, offering robust reliability and security
+- **Backend**: Laravel
 - **Admin UI**: Vue.js-based interface with TanStack Query, Tailwind CSS, Shadcn UI, and Vue Router
-- **Database**: Flexible with support for PostgreSQL, MySQL, MariaDB, and SQLite
-- **Storage**: Local and cloud storage options for assets, including S3 and Google Cloud Storage
-- **Caching**: Intelligent multi-level caching strategy with Redis support
-- **Real-time Updates**: Laravel Echo + Pusher for real-time updates and collaboration
+- **Database**: PostgreSQL, MySQL, MariaDB, or SQLite
+- **Storage**: Local filesystem, S3, or Google Cloud Storage
+- **Caching**: Redis-supported caching and queues
+- **Real-time updates**: Laravel Echo + Pusher for real-time updates and collaboration
 - **Search**: MySQL fulltext or OpenSearch — configurable per space
-- **API**: RESTful endpoints with comprehensive documentation and SDKs
+- **API**: REST endpoints for content delivery and management workflows
 
 ## Getting Started
 
@@ -110,7 +111,7 @@ After switching drivers, trigger a reindex from the space settings.
 
 ### Self-Hosted
 
-Deploy b10cks on your infrastructure, your way:
+Deploy b10cks on your own infrastructure:
 
 - AWS, Azure, Google Cloud
 - Docker
@@ -120,11 +121,10 @@ Deploy b10cks on your infrastructure, your way:
 
 ### b10cks CMS Cloud
 
-Save time with our managed hosted SaaS offerings:
+Managed SaaS hosting is available for teams that do not want to operate the CMS themselves.
 
-- Automatic scaling and updates
-- Global CDN distribution
-- 99.9% uptime guarantee
+- Product website: [www.b10cks.com](https://www.b10cks.com)
+- Hosted application: [app.b10cks.com](https://app.b10cks.com)
 
 ## Security Vulnerabilities
 
@@ -133,33 +133,31 @@ All security vulnerabilities will be promptly addressed.
 
 ## Contributing
 
-We love contributions! Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
+See the [Contributing Guide](CONTRIBUTING.md) before opening a pull request.
 
 1. Fork the repository
-2. Create your feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m '✨ Add some amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
+2. Create your feature branch: `git checkout -b feature/example`
+3. Commit your changes: `git commit -m 'Add example feature'`
+4. Push to the branch: `git push origin feature/example`
 5. Open a Pull Request
 
 ## Community Support
 
-Join our growing community:
-
-- [Discord](https://discord.gg/UT6GrvhvBx) - Get help and share your knowledge
+- [Discord](https://discord.gg/zAz6sBDpHT) - Get help and share your knowledge
 - [GitHub Discussions](https://github.com/b10cks/cms/discussions) - Feature requests and technical discussions
 
 ## License
 
-b10cks CMS is 100% open-source software licensed under the [GNU AGPLv3](LICENSE).
+b10cks CMS is licensed under the [GNU AGPLv3](LICENSE).
 
 ## Acknowledgements
 
-- Taylor Otwell and contributors for their incredible framework Laravel
-- Evan You and contributors for their incredible framework Vue.js
-- The open source community for the numerous other libraries that made this possible
+- Taylor Otwell and contributors for Laravel
+- Evan You and contributors for Vue.js
+- The open source community behind the libraries used by this project
 
 ---
 
 <div align="center">
-  <p>Built with 🖤️ by <a href="https://github.com/badmike">Michael Wallner</a></p>
+  <p>Maintained by <a href="https://github.com/badmike">Michael Wallner</a></p>
 </div>
