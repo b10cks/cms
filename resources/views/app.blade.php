@@ -29,7 +29,7 @@
         'echo' => [
           'broadcaster' => 'reverb',
           'key' => config('reverb.apps.apps.0.key'),
-          'wsHost' => config('reverb.apps.apps.0.options.hostname'),
+          'wsHost' => config('reverb.apps.apps.0.options.host'),
           'wsPort' => (string) config('reverb.apps.apps.0.options.port'),
           'wssPort' => (string) config('reverb.apps.apps.0.options.port'),
           'forceTLS' => (bool) config('reverb.apps.apps.0.options.useTLS', true),
