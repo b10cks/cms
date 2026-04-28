@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.28-0e6c23c] — 2026-4-28
+
+- ⬇️ downgrade versions
+
 ## [v2026.4.28-f743be2] — 2026-4-28
 
 - 🔧 use correct public host
