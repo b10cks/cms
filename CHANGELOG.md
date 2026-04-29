@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.4.29-acc876f] — 2026-4-29
+
+- 🧑🏻‍💻 Improve example .env
+- 💡 Address pitfalls for local development in readme
+- 🗃️ Make role_id nullable to accomodate `nullOnDelete`
+
 ## [v2026.4.28-11a614f] — 2026-4-28
 
 - 🔧 Rename echo host
