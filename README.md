@@ -90,8 +90,29 @@ composer install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate
+```
+
+### Running the Application Locally
+
+Start the Laravel backend:
+
+```bash
 php artisan serve
 ```
+
+In a second terminal, start the Vite development server for the Vue admin UI:
+
+```bash
+bun run dev
+```
+
+In a third terminal, start Laravel Reverb for WebSocket-based real-time features:
+
+```bash
+php artisan reverb:start
+```
+
+All processes need to keep running while developing locally. The Laravel server handles the backend, `bun run dev` serves the frontend assets used by the admin UI, and Reverb powers real-time updates and collaboration.
 
 #### Optional
 
