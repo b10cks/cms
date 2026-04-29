@@ -73,7 +73,7 @@ return new class extends Migration {
         Schema::create('team_user', function (Blueprint $table) {
             $table->foreignUlid('team_id')->constrained()->onDelete('cascade');
             $table->foreignUlid('user_id')->constrained()->onDelete('cascade');
-            $table->foreignUlid('role_id')->constrained('roles')->nullOnDelete();
+            $table->foreignUlid('role_id')->nullable()->constrained('roles')->nullOnDelete();
 
             $table->timestamps();
 
@@ -156,7 +156,7 @@ return new class extends Migration {
         Schema::create('space_user', function (Blueprint $table) {
             $table->foreignUlid('space_id')->constrained()->onDelete('cascade');
             $table->foreignUlid('user_id')->constrained()->onDelete('cascade');
-            $table->foreignUlid('role_id')->constrained('roles')->nullOnDelete();
+            $table->foreignUlid('role_id')->nullable()->constrained('roles')->nullOnDelete();
 
             $table->timestamps();
 
@@ -186,7 +186,7 @@ return new class extends Migration {
             $table->foreignUlid('team_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignUlid('invited_by')->constrained('users')->onDelete('cascade');
             $table->foreignUlid('invitee_id')->nullable()->constrained('users')->onDelete('cascade');
-            $table->foreignUlid('role_id')->constrained('roles')->nullOnDelete();
+            $table->foreignUlid('role_id')->nullable()->constrained('roles')->nullOnDelete();
 
             $table->text('message')->nullable();
             $table->string('email');
