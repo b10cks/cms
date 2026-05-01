@@ -18,15 +18,15 @@ return [
 
     'formats' => [
         'webp' => [
-            'quality' => env('IMAGE_WEBP_QUALITY', 85),
+            'quality' => env('IMAGE_WEBP_QUALITY', 65),
             'mime' => 'image/webp',
         ],
         'avif' => [
-            'quality' => env('IMAGE_AVIF_QUALITY', 80),
+            'quality' => env('IMAGE_AVIF_QUALITY', 65),
             'mime' => 'image/avif',
         ],
         'jpg' => [
-            'quality' => env('IMAGE_JPG_QUALITY', 85),
+            'quality' => env('IMAGE_JPG_QUALITY', 80),
             'mime' => 'image/jpeg',
         ],
         'png' => [
