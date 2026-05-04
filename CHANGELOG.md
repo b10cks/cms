@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.5.4-afc4b8d] — 2026-5-4
+
+- 👔 Link to software sites
+- 🍱 Add marketing assets
+- ⬆️ Bump versions
+
 ## [v2026.5.1-4609454] — 2026-5-1
 
 - 🔧 Increase sensible defaults for images
