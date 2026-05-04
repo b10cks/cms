@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import GithubLogo from '~/assets/images/partners/github.svg?component'
-import YoutubeLogo from '~/assets/images/partners/youtube.svg?component'
+import PeerListLogo from '~/assets/images/partners/peerlist.svg?component'
+import SALogo from '~/assets/images/partners/sa-logo.svg?component'
+import SFLogo from '~/assets/images/partners/sf-logo.svg?component'
 import Markdown from '~/components/Markdown.vue'
 import GradientText from '~/components/ui/GradientText.vue'
 </script>
@@ -29,9 +31,29 @@ import GradientText from '~/components/ui/GradientText.vue'
             class="mt-8 text-sm font-medium text-foreground"
             :content="$t('labels.login.marketing.asFeatured')"
           />
-          <div class="flex items-center gap-4 text-muted/50">
-            <GithubLogo class="h-5 w-auto" />
-            <YoutubeLogo class="h-5 w-auto" />
+          <div class="flex flex-wrap items-center gap-4 text-muted/50">
+            <a
+              href="https://github.com/b10cks/cms"
+              target="_blank"
+              ><GithubLogo class="h-5 w-auto"
+            /></a>
+            <a
+              href="https://peerlist.io/badmike/project/b10cks"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <PeerListLogo class="h-5 w-auto" />
+            </a>
+            <a
+              href="https://www.softwareadvice.com/product/548836-b10cks/"
+              target="_blank"
+              ><SALogo class="h-5 w-auto"
+            /></a>
+            <a
+              href="https://softwarefinder.com/content-management-software/b10cks"
+              target="_blank"
+              ><SFLogo class="h-5 w-auto"
+            /></a>
           </div>
         </div>
       </div>
