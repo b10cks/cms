@@ -21,7 +21,15 @@ use CodersCantina\Filter\ExtendedFilter;
  */
 class ContentFilter extends ExtendedFilter
 {
-    protected array $sortableColumns = ['name', 'slug', 'language_iso', 'external_id', 'published_at', 'created_at', 'updated_at'];
+    protected array $sortableColumns = [
+        'name',
+        'slug',
+        'language_iso',
+        'external_id',
+        'published_at',
+        'created_at',
+        'updated_at',
+    ];
 
     /**
      * Filter by content name using a partial match.
@@ -53,7 +61,7 @@ class ContentFilter extends ExtendedFilter
      */
     public function external_id($value)
     {
-        $this->builder->where('external_id', $value);
+        $this->builder->where('contents.external_id', $value);
     }
 
     /**
