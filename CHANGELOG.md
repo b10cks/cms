@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.5.6-2779ba4] — 2026-5-6
+
+- ⬆️ Bump versions
+- 👔 Redirect to app.url if otherwise reached web frontend
+
 ## [v2026.5.6-da0dde8] — 2026-5-6
 
 - 👔 Expose external_id in content api
