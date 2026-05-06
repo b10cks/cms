@@ -555,6 +555,8 @@
       "fields": {
         "name": "Name",
         "type": "Typ",
+        "externalId": "Externe ID",
+        "externalIdInfo": "Die Externe ID wird zur Synchronisation mit externen Systemen verwendet.",
         "firstPublishedAt": "Erstmals veröffentlicht am",
         "publishedAt": "Veröffentlicht am",
         "updatedAt": "Geändert",

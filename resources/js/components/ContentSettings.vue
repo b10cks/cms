@@ -116,6 +116,14 @@ watch(
       :readonly="!canManageContent"
       name="slug"
     />
+    <InputField
+      v-if="content"
+      v-model="content.external_id"
+      :tooltip="$t('labels.contents.fields.externalIdInfo')"
+      :label="$t('labels.contents.fields.externalId')"
+      :readonly="!canManageContent"
+      name="slug"
+    />
     <CheckboxField
       v-if="content"
       v-model="content.settings.disablePreview"
