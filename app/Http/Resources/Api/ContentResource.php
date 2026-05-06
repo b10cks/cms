@@ -51,6 +51,7 @@ class ContentResource extends JsonResource
             'name' => $row->name,
             'slug' => $row->slug,
             'block' => $row->block?->slug,
+            'external_id' => $row->external_id,
             'parent_id' => $row->parent_id,
             'full_slug' => $row->full_slug,
             'content' => $this->getTransformedContent($resolved),
