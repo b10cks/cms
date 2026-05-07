@@ -10,7 +10,10 @@ class AppController extends Controller
     public function __invoke(Request $request)
     {
         $base = config('app.url');
-        if (request()->getSchemeAndHttpHost() !== $base) {
+        $requestHost = $request->getHost();
+        $baseHost = parse_url($base, PHP_URL_HOST);
+
+        if ($baseHost && $requestHost !== $baseHost) {
             return redirect($base, 301);
         }
 
