@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.5.7-0378c26] — 2026-5-7
+
+- ⬆️ Bump versions
+- 🩹 Fix redirect
+
 ## [v2026.5.6-2779ba4] — 2026-5-6
 
 - ⬆️ Bump versions
