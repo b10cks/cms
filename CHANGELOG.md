@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.5.17-127a21f] — 2026-5-17
+
+- ⬆️ Bump PHP versions
+
 ## [v2026.5.17-52e9db2] — 2026-5-17
 
 - ⬆️ Bump versions
