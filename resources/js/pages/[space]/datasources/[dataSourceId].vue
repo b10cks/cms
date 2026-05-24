@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRouteQuery } from '@vueuse/router'
 import { computed, nextTick, ref } from 'vue'
+import { toast } from 'vue-sonner'
 
 import DataEntriesIcon from '~/assets/images/data-entries.svg?component'
 import Icon from '~/components/Icon.vue'
@@ -8,6 +9,7 @@ import SearchFilter from '~/components/SearchFilter.vue'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { Input } from '~/components/ui/input'
+import { Progress } from '~/components/ui/progress'
 import SortSelect from '~/components/ui/SortSelect.vue'
 import { Switch } from '~/components/ui/switch'
 import {
@@ -24,6 +26,7 @@ import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Textarea } from '~/components/ui/textarea'
 import { useDataEntries } from '~/composables/useDataEntries'
+import { useDataEntryTranslation } from '~/composables/useDataEntryTranslation'
 import { useDataSources } from '~/composables/useDataSources'
 import type {
   CreateDataEntryPayload,
@@ -92,9 +95,14 @@ const possibleFilters = computed(() => {
 
 const { data: dataEntriesResponse, isLoading: isLoadingEntries } = useDataEntriesQuery(queryParams)
 
-const { mutate: createEntry, isPending: isCreatingEntry } = useCreateDataEntryMutation()
-const { mutate: updateEntry, isPending: isUpdatingEntry } = useUpdateDataEntryMutation()
-const { mutate: deleteEntry } = useDeleteDataEntryMutation()
+const { mutateAsync: createEntry, isPending: isCreatingEntry } = useCreateDataEntryMutation()
+const { mutateAsync: updateEntry, isPending: isUpdatingEntry } = useUpdateDataEntryMutation()
+const { mutateAsync: deleteEntry } = useDeleteDataEntryMutation()
+const {
+  streamMissingDimensionsTranslation,
+  cancelStream,
+  isStreaming: isTranslatingDimensions,
+} = useDataEntryTranslation(spaceId, dataSourceId)
 
 const selectedDimension = useRouteQuery('dimension', 'default', {
   transform: (value: string) => value || 'default',
@@ -127,6 +135,18 @@ const dimensionTabs = computed(() => {
 })
 
 const showDimensionTabs = computed(() => dataSource.value?.dimensions?.length > 0)
+
+const defaultDimensionLocale = computed(() => {
+  return dataSource.value?.settings?.default_dimension_locale || 'default'
+})
+
+const canTranslateCurrentDimension = computed(() => {
+  return Boolean(
+    dataSource.value?.settings?.dimensions_translatable &&
+    selectedDimension.value !== 'default' &&
+    selectedDimension.value !== defaultDimensionLocale.value
+  )
+})
 
 const newEntryData = ref<CreateDataEntryPayload>({
   key: '',
@@ -326,6 +346,132 @@ const hasEntryPendingChanges = (entryId: string) => {
 }
 
 const isDefaultSelected = computed(() => selectedDimension.value === 'default')
+
+const translationProgress = ref<{
+  processed: number
+  translated: number
+  skipped: number
+  total: number
+  stage: string
+} | null>(null)
+
+const translationProgressPercent = computed(() => {
+  if (!translationProgress.value?.total) return 0
+  return Math.round((translationProgress.value.processed / translationProgress.value.total) * 100)
+})
+
+const currentDimensionLabel = computed(() => {
+  return (
+    dimensionTabs.value.find((tab) => tab.key === selectedDimension.value)?.label ||
+    selectedDimension.value
+  )
+})
+
+const parseStatusPayload = (message: string) => {
+  try {
+    return JSON.parse(message) as {
+      stage: string
+      processed: number
+      translated: number
+      skipped: number
+      total: number
+      target_dimension: string
+    }
+  } catch {
+    return null
+  }
+}
+
+const handleTranslateMissingDimensions = async () => {
+  if (!dataSource.value || !canTranslateCurrentDimension.value) {
+    return
+  }
+
+  const loadingToast = toast.loading(
+    t('labels.dataEntries.translation.inProgress', {
+      dimension: currentDimensionLabel.value,
+    }) as string,
+    { duration: Number.POSITIVE_INFINITY }
+  )
+
+  translationProgress.value = {
+    processed: 0,
+    translated: 0,
+    skipped: 0,
+    total: 0,
+    stage: 'preparing',
+  }
+
+  await streamMissingDimensionsTranslation(selectedDimension.value, {
+    onStatus: (message) => {
+      const payload = parseStatusPayload(message)
+      if (!payload) return
+
+      translationProgress.value = {
+        processed: payload.processed,
+        translated: payload.translated,
+        skipped: payload.skipped,
+        total: payload.total,
+        stage: payload.stage,
+      }
+
+      toast.loading(
+        t('labels.dataEntries.translation.progress', {
+          processed: payload.processed,
+          total: payload.total,
+          translated: payload.translated,
+          dimension: currentDimensionLabel.value,
+        }) as string,
+        {
+          id: loadingToast,
+          duration: Number.POSITIVE_INFINITY,
+        }
+      )
+    },
+    onDone: async (_, data) => {
+      toast.dismiss(loadingToast)
+
+      const result = data as {
+        translated_count: number
+        skipped_count: number
+        processed_count: number
+        total_candidates: number
+        target_dimension: string
+      }
+
+      translationProgress.value = result
+        ? {
+            processed: result.processed_count,
+            translated: result.translated_count,
+            skipped: result.skipped_count,
+            total: result.total_candidates,
+            stage: 'done',
+          }
+        : null
+
+      if (result?.translated_count > 0) {
+        toast.success(
+          t('composables.dataEntries.translationSuccess', {
+            translated: result.translated_count,
+            total: result.total_candidates,
+            dimension: currentDimensionLabel.value,
+          }) as string
+        )
+      } else {
+        toast.info(
+          t('composables.dataEntries.translationNoop', {
+            dimension: currentDimensionLabel.value,
+          }) as string
+        )
+      }
+    },
+    onError: (message) => {
+      toast.dismiss(loadingToast)
+      translationProgress.value = null
+      toast.error(t('composables.dataEntries.translationError', { error: message }) as string)
+    },
+  })
+}
 </script>
 
 <template>
@@ -417,6 +563,30 @@ const isDefaultSelected = computed(() => selectedDimension.value === 'default')
               </TabsList>
             </Tabs>
             <div class="ml-auto flex items-center gap-2">
+              <Button
+                v-if="canTranslateCurrentDimension && !isTranslatingDimensions"
+                variant="outline"
+                size="sm"
+                @click="handleTranslateMissingDimensions"
+              >
+                <Icon
+                  name="lucide:languages"
+                  class="h-4 w-4"
+                />
+                {{ $t('labels.dataEntries.translation.action') }}
+              </Button>
+              <Button
+                v-else-if="isTranslatingDimensions"
+                variant="outline"
+                size="sm"
+                @click="cancelStream"
+              >
+                <Icon
+                  name="lucide:square"
+                  class="h-4 w-4"
+                />
+                {{ $t('actions.cancel') }}
+              </Button>
               <SearchFilter
                 v-model="filters"
                 :filterable-fields="possibleFilters"
@@ -431,6 +601,35 @@ const isDefaultSelected = computed(() => selectedDimension.value === 'default')
                 :placeholder="$t('labels.sortBy')"
               />
             </div>
+          </div>
+
+          <div
+            v-if="translationProgress"
+            class="rounded-md border border-input bg-elevated p-4"
+          >
+            <div class="mb-2 flex items-center justify-between gap-4">
+              <div>
+                <div class="text-sm font-medium">
+                  {{
+                    $t('labels.dataEntries.translation.progressTitle', {
+                      dimension: currentDimensionLabel,
+                    })
+                  }}
+                </div>
+                <div class="text-xs text-muted">
+                  {{
+                    $t('labels.dataEntries.translation.progress', {
+                      processed: translationProgress.processed,
+                      total: translationProgress.total,
+                      translated: translationProgress.translated,
+                      dimension: currentDimensionLabel,
+                    })
+                  }}
+                </div>
+              </div>
+              <div class="text-xs font-medium text-muted">{{ translationProgressPercent }}%</div>
+            </div>
+            <Progress :model-value="translationProgressPercent" />
           </div>
 
           <div class="overflow-hidden rounded-md border border-input">

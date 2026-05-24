@@ -174,6 +174,12 @@
         "deleteEntry": "Delete",
         "addEntry": "Add entry"
       },
+      "translation": {
+        "action": "Translate missing entries",
+        "inProgress": "Translating missing entries for {dimension}...",
+        "progressTitle": "AI translation in progress for {dimension}",
+        "progress": "Processed {processed} of {total} entries, translated {translated}"
+      },
       "actions": {
         "edit": "Edit",
         "delete": "Delete",
@@ -2976,7 +2982,10 @@
       "deleteSuccess": "Data entry deleted successfully",
       "deleteError": "Failed to delete data entry: {error}",
       "batchUpdateSuccess": "Batch update completed successfully",
-      "batchUpdateError": "Failed to batch update entries: {error}"
+      "batchUpdateError": "Failed to batch update entries: {error}",
+      "translationSuccess": "Translated {translated} of {total} missing entries for {dimension}",
+      "translationNoop": "No missing entries found for {dimension}",
+      "translationError": "Failed to translate missing entries: {error}"
     },
     "dataSources": {
       "createSuccess": "Data source \"{name}\" created successfully",

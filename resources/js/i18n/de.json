@@ -169,6 +169,12 @@
         "deleteEntry": "Löschen",
         "addEntry": "Eintrag hinzufügen"
       },
+      "translation": {
+        "action": "Fehlende Einträge übersetzen",
+        "inProgress": "Fehlende Einträge für {dimension} werden übersetzt...",
+        "progressTitle": "KI-Übersetzung für {dimension} läuft",
+        "progress": "{processed} von {total} Einträgen verarbeitet, {translated} übersetzt"
+      },
       "actions": {
         "edit": "Bearbeiten",
         "delete": "Löschen",
@@ -2929,7 +2935,10 @@
       "deleteSuccess": "Dateneintrag erfolgreich gelöscht",
       "deleteError": "Fehler beim Löschen des Dateneintrags: {error}",
       "batchUpdateSuccess": "Batch-Aktualisierung erfolgreich abgeschlossen",
-      "batchUpdateError": "Fehler beim Batch-Aktualisieren von Einträgen: {error}"
+      "batchUpdateError": "Fehler beim Batch-Aktualisieren von Einträgen: {error}",
+      "translationSuccess": "{translated} von {total} fehlenden Einträgen für {dimension} wurden übersetzt",
+      "translationNoop": "Keine fehlenden Einträge für {dimension} gefunden",
+      "translationError": "Fehler beim Übersetzen fehlender Einträge: {error}"
     },
     "dataSources": {
       "createSuccess": "Datenquelle \"{name}\" erfolgreich erstellt",

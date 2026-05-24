@@ -131,6 +131,7 @@ declare global {
   const useCssModule: typeof import('vue').useCssModule
   const useCssVars: typeof import('vue').useCssVars
   const useDataEntries: typeof import('./resources/js/composables/useDataEntries').useDataEntries
+  const useDataEntryTranslation: typeof import('./resources/js/composables/useDataEntryTranslation').useDataEntryTranslation
   const useDataSources: typeof import('./resources/js/composables/useDataSources').useDataSources
   const useEcho: typeof import('./resources/js/composables/useEcho').useEcho
   const useFieldOptionChoices: typeof import('./resources/js/composables/useFieldOptionChoices').useFieldOptionChoices
@@ -369,6 +370,7 @@ declare module 'vue' {
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
     readonly useDataEntries: UnwrapRef<typeof import('./resources/js/composables/useDataEntries')['useDataEntries']>
+    readonly useDataEntryTranslation: UnwrapRef<typeof import('./resources/js/composables/useDataEntryTranslation')['useDataEntryTranslation']>
     readonly useDataSources: UnwrapRef<typeof import('./resources/js/composables/useDataSources')['useDataSources']>
     readonly useEcho: UnwrapRef<typeof import('./resources/js/composables/useEcho')['useEcho']>
     readonly useFieldOptionChoices: UnwrapRef<typeof import('./resources/js/composables/useFieldOptionChoices')['useFieldOptionChoices']>
