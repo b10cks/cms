@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.5.26-46dd30a] — 2026-5-26
+
+- 🩹 Use crop=fit for asset detail dialog
+
 ## [v2026.5.24-d8ee419] — 2026-5-24
 
 - ✨ Implement data entries translations
