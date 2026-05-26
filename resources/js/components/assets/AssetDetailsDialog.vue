@@ -299,6 +299,7 @@ const loadMoreLinkedContents = () => {
               <NuxtImg
                 ref="imageRef"
                 :src="asset.full_path"
+                crop="fit"
                 :alt="String(assetCopy?.data?.altText || asset.filename)"
                 :height="600"
                 :width="600"
