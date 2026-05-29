@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/u
 import Label from '~/components/ui/form/Label.vue'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { useAlertDialog } from '~/composables/useAlertDialog'
+import useSpaceSettings from '~/composables/useSpaceSettings'
 import { AssetResource, AssetValue } from '~/types/assets'
 
 const props = defineProps<{
@@ -22,6 +23,7 @@ const emit = defineEmits<{
 }>()
 
 const { alert } = useAlertDialog()
+const { settings } = useSpaceSettings(props.spaceId)
 const { $t } = useI18n()
 const { getFileIcon, getFileType } = useFileUtils()
 
@@ -48,6 +50,14 @@ const isImage = computed(() => {
 
 const updateValue = () => {
   emit('update:modelValue', localValue.value)
+}
+
+const initialFolderId = computed(
+  () => settings.value.assets.lastDialogFolderId ?? props.item.folder_id ?? null
+)
+
+const handleFolderChange = (folderId: string | null) => {
+  settings.value.assets.lastDialogFolderId = folderId
 }
 
 const handleAssetSelect = (asset: AssetResource) => {
@@ -193,10 +203,11 @@ const handleAssetDetailsUpdate = (asset: AssetResource) => {
         <ScrollArea class="flex-1">
           <AssetGrid
             :space-id="spaceId"
-            :folder-id="item.folder_id || null"
+            :initial-folder-id="initialFolderId"
             mode="select"
             class="mt-2"
             @asset-select="handleAssetSelect"
+            @folder-change="handleFolderChange"
           />
         </ScrollArea>
       </DialogContent>

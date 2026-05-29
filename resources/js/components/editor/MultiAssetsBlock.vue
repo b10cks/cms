@@ -6,6 +6,7 @@ import NuxtImg from '~/components/NuxtImg.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { useAlertDialog } from '~/composables/useAlertDialog'
+import useSpaceSettings from '~/composables/useSpaceSettings'
 import type { AssetResource } from '~/types/assets'
 
 import Label from '../ui/form/Label.vue'
@@ -38,6 +39,7 @@ const emit = defineEmits<{
 }>()
 
 const { alert } = useAlertDialog()
+const { settings } = useSpaceSettings(props.spaceId)
 const { $t } = useI18n()
 const { getFileIcon, getFileType } = useFileUtils()
 
@@ -65,6 +67,8 @@ const remainingSlots = computed(() => {
   if (!props.item.max) return null
   return props.item.max - localValue.value.length
 })
+
+const initialFolderId = computed(() => settings.value.assets.lastDialogFolderId)
 
 const updateValue = () => {
   emit('update:modelValue', localValue.value.length > 0 ? localValue.value : null)
@@ -181,6 +185,10 @@ const editingAssetResource = computed(() => editingAsset.value as unknown as Ass
 
 const handleAssetDetailsDialogUpdate = (asset: AssetResource) => {
   handleAssetDetailsUpdate(asset as unknown as AssetValue)
+}
+
+const handleFolderChange = (folderId: string | null) => {
+  settings.value.assets.lastDialogFolderId = folderId
 }
 </script>
 
@@ -347,8 +355,10 @@ const handleAssetDetailsDialogUpdate = (asset: AssetResource) => {
         <div class="flex-1">
           <AssetGrid
             :space-id="spaceId"
+            :initial-folder-id="initialFolderId"
             mode="select"
             @asset-select="handleAssetSelectForReplace"
+            @folder-change="handleFolderChange"
           />
         </div>
       </DialogContent>
