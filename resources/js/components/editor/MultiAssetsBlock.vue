@@ -193,7 +193,7 @@ const handleFolderChange = (folderId: string | null) => {
 </script>
 
 <template>
-  <div class="space-y-3">
+  <div class="space-y-3 flex flex-col w-full relative">
     <Label
       :label="item.name || item.key"
       :required="item.required"
@@ -225,9 +225,9 @@ const handleFolderChange = (folderId: string | null) => {
     </div>
     <div
       v-else
-      class="space-y-2"
+      class="space-y-2 flex-1"
     >
-      <div class="flex flex-col gap-2">
+      <div class="flex w-full flex-col gap-2">
         <div
           v-for="(asset, index) in localValue"
           :key="asset.id"

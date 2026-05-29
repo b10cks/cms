@@ -2568,6 +2568,7 @@
   },
   "actions": {
     "open": "Öffnen",
+    "addMore": "Mehr hinzufügen",
     "loadMore": "Mehr laden",
     "forceDelete": "Löschen erzwingen",
     "forceSave": "Trotzdem speichern",

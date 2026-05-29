@@ -380,7 +380,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
       :required="item.required"
       class="relative z-10 mr-8"
     />
-    <div class="rounded-2xl border border-border bg-surface px-2">
+    <div class="min-w-0 rounded-2xl border border-border bg-surface px-2">
       <div
         v-if="!props.readOnly && hasSelectedItems"
         class="flex items-center justify-between pt-2"
@@ -435,7 +435,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
           :key="(content.id as string) || i"
           :value="getItemAccordionValue(content, i)"
           :class="[
-            'relative mb-2 rounded-lg border bg-background p-2 transition-colors',
+            'relative mb-2 min-w-0 rounded-lg border bg-background p-2 transition-colors',
             hasVisibleItemError(i) ? 'border-destructive/40 bg-destructive/5' : 'border-border',
             content.hidden ? 'opacity-50' : '',
           ]"
