@@ -3,6 +3,14 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.5.29-f1cd026] — 2026-5-29
+
+- ⬆️ Bump versions
+- 🐛 Fix creating content from templates
+- 🐛 Fix option field validation
+- 🚸 Improve MultiAssets
+- 🚸 Remember last folder locations for asset selection
+
 ## [v2026.5.26-46dd30a] — 2026-5-26
 
 - 🩹 Use crop=fit for asset detail dialog
