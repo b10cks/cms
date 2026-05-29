@@ -11,6 +11,23 @@ type ValidationSummary = { isValid: boolean; issueCount: number }
 
 type BlocksMap = Record<string, Pick<BlockResource, 'schema' | 'slug' | 'name'>>
 
+type OptionLikeField =
+  | (OptionSchema & { key?: string; validation?: FieldValidation | null })
+  | (OptionsSchema & { key?: string; validation?: FieldValidation | null })
+  | (Extract<TableColumn, { type: 'option' }> & { validation?: FieldValidation | null })
+
+const resolveAllowedOptionValues = (field: OptionLikeField): string[] => {
+  const source = field.source === 'datasource' ? 'datasource' : 'self'
+
+  if (source !== 'self') {
+    return (field.validation?.allowed_values || []).map(String)
+  }
+
+  return ((field.options || []) as OptionItem[])
+    .map((option) => String(option?.value || '').trim())
+    .filter((value, index, values) => value.length > 0 && values.indexOf(value) === index)
+}
+
 interface ValidationStateOptions {
   content: Ref<ContentResource | null>
   blocks: Ref<BlockResource[] | undefined>
@@ -398,8 +415,10 @@ const validateScope = (
       }
     }
 
-    if (type === 'option' && validation.allowed_values?.length) {
-      if (!validation.allowed_values.includes(String(value))) {
+    if (type === 'option') {
+      const allowedValues = resolveAllowedOptionValues(field as OptionLikeField)
+
+      if (allowedValues.length && !allowedValues.includes(String(value))) {
         pushError(path, `${field.name || key} must use an allowed option.`)
       }
     }
@@ -408,10 +427,10 @@ const validateScope = (
       if (!Array.isArray(value)) {
         pushError(path, `${field.name || key} must be a list.`)
       } else {
-        if (validation.allowed_values?.length) {
-          const invalidValues = value.filter(
-            (entry) => !validation.allowed_values?.includes(String(entry))
-          )
+        const allowedValues = resolveAllowedOptionValues(field as OptionLikeField)
+
+        if (allowedValues.length) {
+          const invalidValues = value.filter((entry) => !allowedValues.includes(String(entry)))
 
           if (invalidValues.length > 0) {
             pushError(path, `${field.name || key} must only use allowed options.`)
