@@ -35,7 +35,7 @@ class ContentTreeOperationService
             $parentFamily = $parent ? $this->contentI18nService->getFamily($parent)->keyBy('language_iso') : collect();
             $canonicalParent = $parent ? $parentFamily->get($defaultLanguage) ?? $parent : null;
 
-            $canonical = new Content();
+            $canonical = new Content;
             $this->createContent->execute(
                 [
                     'block_id' => $attributes['block_id'],
@@ -43,7 +43,7 @@ class ContentTreeOperationService
                     'name' => $attributes['name'],
                     'slug' => $this->makeUniqueSlug($attributes['slug'], $canonicalParent?->id, $defaultLanguage),
                     'language_iso' => $defaultLanguage,
-                    'content' => [],
+                    'content' => $attributes['content'] ?? [],
                     'settings' => $attributes['settings'] ?? [],
                 ],
                 $canonical,
@@ -71,7 +71,7 @@ class ContentTreeOperationService
                 ->keyBy('id');
 
             $orderedItems = collect($normalizedIds)
-                ->map(fn(string $id) => $items->get($id))
+                ->map(fn (string $id) => $items->get($id))
                 ->filter()
                 ->values();
 
@@ -99,7 +99,7 @@ class ContentTreeOperationService
                 : collect();
             $afterFamily = $after ? $this->contentI18nService->getFamily($after)->keyBy('language_iso') : collect();
             $languages = $enabledLanguages
-                ->reject(fn(string $languageIso) => $languageIso === $defaultLanguage)
+                ->reject(fn (string $languageIso) => $languageIso === $defaultLanguage)
                 ->values();
 
             foreach ($languages as $languageIso) {
@@ -117,24 +117,26 @@ class ContentTreeOperationService
                 }
 
                 $translatedParent = $targetParent ? $parentFamily->get($languageIso) : null;
-                if ($targetParent && !$translatedParent) {
+                if ($targetParent && ! $translatedParent) {
                     $warnings[] = $this->makeWarning(
                         'missing-parent-translation',
                         $languageIso,
                         null,
                         'Skipped a translated move because the destination parent does not exist in that language.',
                     );
+
                     continue;
                 }
 
                 $translatedAfter = $after ? $afterFamily->get($languageIso) : null;
-                if ($after && !$translatedAfter) {
+                if ($after && ! $translatedAfter) {
                     $warnings[] = $this->makeWarning(
                         'missing-after-translation',
                         $languageIso,
                         null,
                         'Skipped a translated move because the sibling anchor does not exist in that language.',
                     );
+
                     continue;
                 }
 
@@ -201,7 +203,7 @@ class ContentTreeOperationService
 
             foreach ($normalizedIds as $sourceId) {
                 $source = $sources->get($sourceId);
-                if (!$source) {
+                if (! $source) {
                     continue;
                 }
 
@@ -225,7 +227,7 @@ class ContentTreeOperationService
             }
 
             return [
-                'created' => $createdRoots->map(fn(Content $content) => $content->fresh())->all(),
+                'created' => $createdRoots->map(fn (Content $content) => $content->fresh())->all(),
                 'warnings' => [],
             ];
         });
@@ -259,7 +261,7 @@ class ContentTreeOperationService
     {
         $items = Content::query()->whereIn('id', $ids)->whereNull('deleted_at')->get()->keyBy('id');
 
-        $selectedIds = collect($ids)->filter(fn(string $id) => $items->has($id))->values();
+        $selectedIds = collect($ids)->filter(fn (string $id) => $items->has($id))->values();
 
         return $selectedIds
             ->filter(function (string $id) use ($selectedIds, $items): bool {
@@ -292,7 +294,7 @@ class ContentTreeOperationService
             'children',
         ]);
 
-        $copy = new Content();
+        $copy = new Content;
         $baseSlug = $this->makeCopySlugBase($source->slug);
         $this->createContent->execute(
             [
@@ -335,7 +337,7 @@ class ContentTreeOperationService
             ->where('language_iso', $languageIso)
             ->where('slug', $slug)
             ->whereNull('deleted_at')
-            ->when($ignoreId, fn($query) => $query->where('id', '!=', $ignoreId))
+            ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
             ->exists()) {
             $slug = Str::slug("{$baseSlug}-{$suffix}");
             $suffix++;
@@ -382,7 +384,7 @@ class ContentTreeOperationService
         ?Content $after,
         array $movingIds = [],
     ): void {
-        if (!$after) {
+        if (! $after) {
             return;
         }
 
@@ -403,7 +405,7 @@ class ContentTreeOperationService
 
         foreach ($items as $item) {
             $canonicalId = $this->contentI18nService->getCanonicalId($item);
-            if (!isset($cache[$canonicalId])) {
+            if (! isset($cache[$canonicalId])) {
                 $cache[$canonicalId] = $this->contentI18nService->getFamily($item)->keyBy('language_iso');
             }
         }

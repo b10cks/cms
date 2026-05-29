@@ -26,22 +26,23 @@ class ContentTreeOperationsRequest extends FormRequest
             'operations.*.id' => [
                 'sometimes',
                 'string',
-                Rule::exists($connectionName . '.contents', 'id')->whereNull('deleted_at'),
+                Rule::exists($connectionName.'.contents', 'id')->whereNull('deleted_at'),
             ],
             'operations.*.ids' => ['sometimes', 'array', 'min:1'],
             'operations.*.ids.*' => [
                 'string',
-                Rule::exists($connectionName . '.contents', 'id')->whereNull('deleted_at'),
+                Rule::exists($connectionName.'.contents', 'id')->whereNull('deleted_at'),
             ],
             'operations.*.parent_id' => ['sometimes', 'nullable', 'string'],
             'operations.*.after_id' => ['sometimes', 'nullable', 'string'],
             'operations.*.block_id' => [
                 'sometimes',
                 'string',
-                Rule::exists((new Block())->getConnectionName() . '.blocks', 'id')->whereNull('deleted_at'),
+                Rule::exists((new Block)->getConnectionName().'.blocks', 'id')->whereNull('deleted_at'),
             ],
             'operations.*.name' => ['sometimes', 'required', 'string', 'max:100'],
             'operations.*.slug' => ['sometimes', 'required', 'string', 'max:70'],
+            'operations.*.content' => ['sometimes', 'array'],
             'operations.*.settings' => ['sometimes', 'array'],
         ];
     }

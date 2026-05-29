@@ -648,6 +648,7 @@ const handleCreateSubmit = async (payload: CreateContentPayload) => {
       block_id: payload.block_id,
       name: payload.name,
       slug: payload.slug,
+      content: payload.content,
       settings: payload.settings,
     },
   ])

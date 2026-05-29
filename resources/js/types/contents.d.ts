@@ -91,6 +91,7 @@ export interface ContentTreeCreateOperation {
   block_id: string
   name: string
   slug: string
+  content?: Record<string, unknown>
   settings?: Partial<ContentSettings>
 }
 

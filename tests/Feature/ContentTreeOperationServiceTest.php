@@ -18,6 +18,52 @@ class ContentTreeOperationServiceTest extends TestCase
     use SpaceTestingTrait;
 
     #[Test]
+    public function it_creates_items_with_the_provided_initial_content(): void
+    {
+        $this->createAndActAs();
+
+        $space = Space::factory()->create();
+        $this->setUpSpaceTesting($space);
+        app()->instance('currentSpace', $space);
+
+        $block = Block::factory()->create([
+            'type' => 'root',
+            'schema' => [
+                'headline' => ['type' => 'text'],
+                'meta' => [
+                    'type' => 'object',
+                    'fields' => [
+                        'featured' => ['type' => 'checkbox'],
+                    ],
+                ],
+            ],
+        ]);
+
+        $result = app(ContentTreeOperationService::class)->createItem(
+            null,
+            [
+                'block_id' => $block->id,
+                'name' => 'Template content',
+                'slug' => 'template-content',
+                'content' => [
+                    'headline' => 'Hello template',
+                    'meta' => ['featured' => true],
+                ],
+            ],
+            $space,
+            $this->user,
+        );
+
+        /** @var Content $created */
+        $created = $result['created'][0]->fresh(['current_version']);
+
+        $this->assertSame([
+            'headline' => 'Hello template',
+            'meta' => ['featured' => true],
+        ], $created->current_version->content);
+    }
+
+    #[Test]
     public function it_moves_items_under_a_nested_parent_without_lazy_loading_the_parent_relation(): void
     {
         $this->createAndActAs();
@@ -46,7 +92,7 @@ class ContentTreeOperationServiceTest extends TestCase
         string $slug,
         ?Content $parent = null,
     ): Content {
-        $content = new Content();
+        $content = new Content;
 
         app(CreateContent::class)->execute([
             'block_id' => $block->id,
