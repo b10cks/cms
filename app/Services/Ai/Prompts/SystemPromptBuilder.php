@@ -189,6 +189,8 @@ Rules:
 - OG title and description: Optimized for social sharing
 - Use active voice, avoid keyword stuffing
 - All fields required (use empty string if content is insufficient)
+- The values of `title`, `description`, `ogTitle`, and `ogDescription` must all be in the requested target language
+- Keep the language consistent across all returned fields
 TXT;
     }
 

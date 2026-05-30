@@ -11,8 +11,10 @@ import { DropdownMenuItem } from '~/components/ui/dropdown-menu'
 import { InputField, TextField } from '~/components/ui/form'
 import Label from '~/components/ui/form/Label.vue'
 import { useAiConfigs } from '~/composables/useAiModels'
+import { normalizeLanguageIso } from '~/lib/content-i18n'
 import type { ApiResponse } from '~/types'
 import type { AssetValue } from '~/types/assets'
+import type { ContentResource } from '~/types/contents'
 
 import { Badge } from '../ui/badge'
 
@@ -24,11 +26,9 @@ interface MetaSchema {
   has_og_tags?: boolean
 }
 
-interface ContentValue {
-  name?: string
-  full_slug?: string
-  content?: string | Record<string, unknown>
-}
+type ContentValue = Partial<
+  Pick<ContentResource, 'name' | 'full_slug' | 'content' | 'language_iso'>
+>
 
 interface MetaValue {
   title?: string
@@ -57,7 +57,9 @@ const emit = defineEmits<{
 }>()
 
 const isLinkValue = (value: unknown): value is LinkValue => {
-  return typeof value === 'object' && value !== null && typeof (value as LinkValue).type === 'string'
+  return (
+    typeof value === 'object' && value !== null && typeof (value as LinkValue).type === 'string'
+  )
 }
 
 const normalizeOptionalString = (
@@ -139,7 +141,9 @@ const normalizeCanonicalForSave = (value: LinkValue | null): LinkValue | null =>
   return contentId
     ? {
         content: contentId,
-        ...(normalizeOptionalString(value.anchor) ? { anchor: normalizeOptionalString(value.anchor) } : {}),
+        ...(normalizeOptionalString(value.anchor)
+          ? { anchor: normalizeOptionalString(value.anchor) }
+          : {}),
         ...(value.target ? { target: value.target } : {}),
         type: 'internal',
       }
@@ -223,6 +227,10 @@ watch(
   { immediate: true }
 )
 
+const currentLanguage = computed((): string | undefined => {
+  return normalizeLanguageIso(content.value?.language_iso)
+})
+
 const canGenerateWithAI = computed((): boolean => {
   return !!selectedConfigId.value && !!hasContent.value && !props.readOnly && !isGenerating.value
 })
@@ -260,7 +268,7 @@ const generateMetaWithAI = async (
       }>
     >(
       '/mgmt/v1/ai/meta-tags',
-      { context: requestData, config_id: configId },
+      { context: requestData, config_id: configId, language: currentLanguage.value },
       { query: { spaceId: props.spaceId } }
     )
 

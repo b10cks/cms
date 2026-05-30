@@ -19,6 +19,7 @@ class MetaTagsController extends Controller
         $request->validate([
             'config_id' => 'sometimes|nullable|string',
             'context' => 'sometimes|nullable|array',
+            'language' => 'sometimes|nullable|string|max:20',
         ]);
 
         $aiConfig = $space->defaultAiConfig;
@@ -30,9 +31,17 @@ class MetaTagsController extends Controller
         $promptBuilder = new SystemPromptBuilder($aiConfig);
 
         $context = $request->json('context');
-        $language = data_get($space->settings, 'default_language.iso', 'en');
+        $language = strtolower(trim((string) $request->input('language', '')));
 
-        $userPrompt = "Language: {$language}\n\nPage content to analyze:\n" . json_encode($context);
+        if ($language === '') {
+            $language = data_get($space->settings, 'default_language.iso', 'en');
+        }
+
+        $userPrompt = "Target language: {$language}\n"
+            ."Important: All generated meta tag fields must be written strictly in {$language}. "
+            ."Do not return English unless {$language} is English.\n\n"
+            ."Page content to analyze:\n"
+            .json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         $result = $service->generate($space, $promptBuilder->forMetaTags(), $userPrompt, [], $aiConfig);
 
