@@ -5,14 +5,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/com
 import { FormField, InputField } from '~/components/ui/form'
 import IconName from '~/components/ui/IconName.vue'
 import {
-  createContentDefaultsBlockLookup,
-  hydrateContentWithSchema,
-} from '~/composables/useContentDefaults'
-import {
-  resolveCreateContentBlocks,
-  resolvePreferredCreateContentBlock,
-} from '~/lib/content-children'
-import {
   Select,
   SelectContent,
   SelectGroup,
@@ -20,6 +12,14 @@ import {
   SelectLabel,
   SelectTrigger,
 } from '~/components/ui/select'
+import {
+  createContentDefaultsBlockLookup,
+  hydrateContentWithSchema,
+} from '~/composables/useContentDefaults'
+import {
+  resolveCreateContentBlocks,
+  resolvePreferredCreateContentBlock,
+} from '~/lib/content-children'
 import type { CreateContentPayload } from '~/types/contents'
 
 const open = defineModel<boolean>('open')
@@ -49,11 +49,10 @@ const content = ref<CreateContentPayload>({
 
 const parentContentId = computed(() => (open.value && props.parentId ? props.parentId : null))
 const { data: parentContent, isLoading: isLoadingParentContent } = useContentQuery(parentContentId)
-const canonicalParentContentId = computed(
-  () =>
-    parentContent.value && parentContent.value.i18n_parent_id
-      ? parentContent.value.i18n_parent_id
-      : null
+const canonicalParentContentId = computed(() =>
+  parentContent.value && parentContent.value.i18n_parent_id
+    ? parentContent.value.i18n_parent_id
+    : null
 )
 const { data: canonicalParentContent, isLoading: isLoadingCanonicalParentContent } =
   useContentQuery(canonicalParentContentId)
@@ -67,8 +66,8 @@ const canonicalParentSettings = computed(
 const isLoadingParentRestrictions = computed(
   () => !!props.parentId && (isLoadingParentContent.value || isLoadingCanonicalParentContent.value)
 )
-const blockLookup = computed<Record<string, Pick<BlockResource, 'slug' | 'schema'>>>(
-  () => createContentDefaultsBlockLookup(blocks.value?.data || [])
+const blockLookup = computed<Record<string, Pick<BlockResource, 'slug' | 'schema'>>>(() =>
+  createContentDefaultsBlockLookup(blocks.value?.data || [])
 )
 
 const handleCreate = async (editContent: CreateContentPayload) => {
@@ -81,10 +80,10 @@ const handleCreate = async (editContent: CreateContentPayload) => {
     parent_id: props.parentId,
   }
 
-  if (currentBlock.value?.schema) {
+  if (currentBlock.value?.schema && selectedTemplate.value) {
     payload.content = hydrateContentWithSchema(
       currentBlock.value.schema,
-      selectedTemplate.value?.content || {},
+      selectedTemplate.value.content || {},
       blockLookup.value
     )
   }
