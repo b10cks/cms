@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.5.30-1e5475e] — 2026-5-30
+
+- 🐛 Prevent empty defaults on tree operations
+
 ## [v2026.5.30-5f16a48] — 2026-5-30
 
 - 👔 Improve meta tags generation
