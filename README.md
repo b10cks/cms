@@ -8,6 +8,7 @@ An opinionated headless CMS built with Laravel and Vue.js.
 [![Laravel](https://img.shields.io/badge/Laravel-13.x-orange.svg)](https://laravel.com/)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.x-brightgreen.svg)](https://vuejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[![MadeWithVueJs.com shield](https://madewithvuejs.com/storage/repo-shields/6367-shield.svg)](https://madewithvuejs.com/p/b10cks/shield-link)
 
 </div>
 
