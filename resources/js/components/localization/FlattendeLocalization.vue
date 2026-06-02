@@ -315,7 +315,9 @@ const hasTranslatedValue = (schemaItem: LocalizableSchema, value: unknown): bool
   }
 
   if (normalizedType === 'richtext') {
-    return collectRichTextSegments(value).length > 0
+    return collectRichTextSegments(normalizeRichTextValue(value)).some((segment) =>
+      isNonEmptyString(segment.text)
+    )
   }
 
   if (normalizedType === 'link') {
@@ -356,11 +358,14 @@ const isFieldTranslated = (
 
   if (normalizedType === 'richtext') {
     const originalDocument = normalizeRichTextValue(originalValue)
-    const translatedDocument = normalizeRichTextValue(translatedValue, originalDocument)
+    const translatedDocument = normalizeRichTextValue(translatedValue)
 
     return collectRichTextSegments(originalDocument)
       .filter((segment) => isNonEmptyString(segment.text))
-      .every((segment) => isNonEmptyString(getValueAtPath(translatedDocument, segment.path)))
+      .every((segment) => {
+        const translatedText = getValueAtPath(translatedDocument, segment.path)
+        return isNonEmptyString(translatedText) && translatedText !== segment.text
+      })
   }
 
   if (normalizedType === 'link') {
@@ -425,13 +430,16 @@ const buildRichTextTranslationBase = (
 ): Record<string, unknown> => {
   const originalDocument = normalizeRichTextValue(originalValue)
   const nextDocument = cloneValue(originalDocument)
-  const currentDocument = normalizeRichTextValue(translatedValue, originalDocument)
+  const currentDocument = normalizeRichTextValue(translatedValue)
 
   collectRichTextSegments(originalDocument).forEach((segment) => {
     const currentText = getValueAtPath(currentDocument, segment.path)
-    if (isNonEmptyString(currentText)) {
+    if (isNonEmptyString(currentText) && currentText !== segment.text) {
       setValueAtPath(nextDocument, segment.path, currentText)
+      return
     }
+
+    setValueAtPath(nextDocument, segment.path, '')
   })
 
   return nextDocument
