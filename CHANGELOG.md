@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.2-c26b1db] — 2026-6-2
+
+- ⬆️ Bump versions
+- 👔 Handle richtext translation values
+- 💡 Add madewithvue badge
+
 ## [v2026.5.30-1e5475e] — 2026-5-30
 
 - 🐛 Prevent empty defaults on tree operations
