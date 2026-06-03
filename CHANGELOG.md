@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.3-6798c90] — 2026-6-3
+
+- 🔧 Fix crashes
+
 ## [v2026.6.3-7fe0765] — 2026-6-3
 
 - 🔊 Log php errors
