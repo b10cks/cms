@@ -123,17 +123,46 @@ jobs:
           container-name: ${{ env.ECS_TASK_DEFINITION }}
           image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:main-${{ steps.version.outputs.version }}
 
+      - name: Download reverb task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition b10cks-reverb \
+            --query taskDefinition > reverb-task-definition.json
+
+      - name: Update reverb task definition with new image
+        id: reverb-task-def-image
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: reverb-task-definition.json
+          container-name: b10cks-reverb
+          image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:main-${{ steps.version.outputs.version }}
+
+      - name: Switch reverb task definition to supervisord config
+        id: reverb-task-def
+        run: |
+          jq '.containerDefinitions[0].entryPoint = ["/usr/bin/supervisord", "-c", "/etc/supervisord-reverb.conf", "-n"]' \
+            ${{ steps.reverb-task-def-image.outputs.task-definition }} > reverb-task-definition-final.json
+          echo "task-definition=reverb-task-definition-final.json" >> $GITHUB_OUTPUT
+
       - name: Sync static assets to S3
         run: |
           aws s3 sync public/build/ "s3://${{ env.VITE_S3_BUCKET }}/build" \
             --delete \
             --cache-control "max-age=7776000,s-maxage=604800,public"
 
-      - name: Deploy to Amazon ECS service
+      - name: Deploy CMS service to Amazon ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: false
+
+      - name: Deploy Reverb service to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.reverb-task-def.outputs.task-definition }}
+          service: b10cks-reverb
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: false
 
