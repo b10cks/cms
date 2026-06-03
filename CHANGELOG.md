@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.3-09f6480] — 2026-6-3
+
+- 🧱 Switch to a single instance reverb setup
+
 ## [v2026.6.3-6798c90] — 2026-6-3
 
 - 🔧 Fix crashes
