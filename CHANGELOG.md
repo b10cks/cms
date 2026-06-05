@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.5-a61c25e] — 2026-6-5
+
+- 🐛 Don't trim text from tiptap
+- 🐛 Remove whitespace preserve
+
 ## [v2026.6.5-7090359] — 2026-6-5
 
 - 🐛 Preserve whitespace in TipTap
