@@ -3,6 +3,7 @@ import { Table } from '@tiptap/extension-table'
 import { TableCell } from '@tiptap/extension-table-cell'
 import { TableHeader } from '@tiptap/extension-table-header'
 import { TableRow } from '@tiptap/extension-table-row'
+import { DOMParser as ProseMirrorDOMParser } from '@tiptap/pm/model'
 import { StarterKit } from '@tiptap/starter-kit'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
 
@@ -92,9 +93,6 @@ const headingDisplayLabel = computed(() => {
 const editor = useEditor({
   content: props.modelValue,
   editable: !props.disabled,
-  parseOptions: {
-    preserveWhitespace: 'full',
-  },
   extensions: [
     StarterKit.configure({
       heading: {
