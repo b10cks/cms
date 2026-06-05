@@ -307,9 +307,17 @@ const previewSource = computed(() => {
   const envUrl = effectiveEnvironment.value?.url
   if (!envUrl) return null
 
-  const normalizedUrl = envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl
+  const slugStrategy = currentSpace.value?.settings.slug_strategy
+  const languageIso = props.content.language_iso
+  const needsPrepend =
+    slugStrategy === 'always_prepend' ||
+    (slugStrategy === 'prepend_translations' &&
+      languageIso !== currentSpace.value?.settings.default_language)
+  const prefix = needsPrepend && languageIso ? `/${languageIso}` : ''
 
-  return `${normalizedUrl}${props.content.full_slug}?b10cks_rv=${new Date(selectedVersion.value.created_at).getTime()}&b10cks_vid=${selectedVersion.value.id}`
+  const url = envUrl.replace(/\/$/, '')
+
+  return `${url}${prefix}${props.content.full_slug}?b10cks_rv=${new Date(selectedVersion.value.created_at).getTime()}&b10cks_vid=${selectedVersion.value.id}`
 })
 
 const openInTab = () => {
