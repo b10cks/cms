@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.5-7090359] — 2026-6-5
+
+- 🐛 Preserve whitespace in TipTap
+
 ## [v2026.6.3-09f6480] — 2026-6-3
 
 - 🧱 Switch to a single instance reverb setup
