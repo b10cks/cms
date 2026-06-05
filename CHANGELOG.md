@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.6-1a7446c] — 2026-6-6
+
+- 👔 Handle local links within richtext
+
 ## [v2026.6.6-548594d] — 2026-6-6
 
 - 🐛 Dedupe prosemirror to avoid issues
