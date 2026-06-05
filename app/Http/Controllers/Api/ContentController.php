@@ -28,6 +28,12 @@ class ContentController
      */
     public function index(Request $request): ContentResourceCollection
     {
+        abort_if(
+            $request->has('take') && $request->has('except'),
+            422,
+            'Parameters "take" and "except" are mutually exclusive.',
+        );
+
         $query = Content::filter(ContentFilter::fromRequest($request))
             ->select([
                 'contents.*',

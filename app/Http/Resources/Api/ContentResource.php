@@ -4,6 +4,7 @@ namespace App\Http\Resources\Api;
 
 use App\Models\Space\Content;
 use App\Services\Content\AssetHandler;
+use App\Services\Content\ContentFieldSelector;
 use App\Services\Content\ContentI18nResolver;
 use App\Services\Content\LinkHandler;
 use App\Services\Content\ResolvedContent;
@@ -54,7 +55,7 @@ class ContentResource extends JsonResource
             'external_id' => $row->external_id,
             'parent_id' => $row->parent_id,
             'full_slug' => $row->full_slug,
-            'content' => $this->getTransformedContent($resolved),
+            'content' => $this->getTransformedContent($resolved, $request),
             'relations' => $this->when(
                 $this->shouldResolveRelations($request),
                 fn (): array => $this->resolveRelations($request, $resolved),
@@ -88,7 +89,7 @@ class ContentResource extends JsonResource
         );
     }
 
-    protected function getTransformedContent(ResolvedContent $resolved): array|\stdClass
+    protected function getTransformedContent(ResolvedContent $resolved, Request $request): array|\stdClass
     {
         $content = $resolved->effectiveContent;
         if (! $content) {
@@ -101,13 +102,27 @@ class ContentResource extends JsonResource
 
         $this->injectData($resolved, $content);
 
-        return [
+        $result = [
             ...$content,
             'block' => ($resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent)
                 ->loadMissing('block')
                 ->block
                 ?->slug,
         ];
+
+        if ($request->has('take')) {
+            $paths = ContentFieldSelector::parsePaths($request->input('take', ''));
+            if (!empty($paths)) {
+                $result = ContentFieldSelector::take($result, $paths);
+            }
+        } elseif ($request->has('except')) {
+            $paths = ContentFieldSelector::parsePaths($request->input('except', ''));
+            if (!empty($paths)) {
+                $result = ContentFieldSelector::except($result, $paths);
+            }
+        }
+
+        return $result;
     }
 
     protected function removeHiddenBlocks(array $content): array
