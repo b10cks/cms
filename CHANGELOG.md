@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.5-9608e66] — 2026-6-5
+
+- 🐛 Disable trim text
+
 ## [v2026.6.5-a61c25e] — 2026-6-5
 
 - 🐛 Don't trim text from tiptap
