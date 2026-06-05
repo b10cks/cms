@@ -107,6 +107,16 @@ export default defineConfig(({ mode }) => {
         '~': resolve(__dirname, 'resources/js'),
         '@': resolve(__dirname, 'resources/js'),
       },
+      dedupe: [
+        '@tiptap/pm',
+        'prosemirror-model',
+        'prosemirror-state',
+        'prosemirror-view',
+        'prosemirror-transform',
+        'prosemirror-keymap',
+        'prosemirror-commands',
+        'prosemirror-schema-list',
+      ],
     },
     css: {
       devSourcemap: true,
