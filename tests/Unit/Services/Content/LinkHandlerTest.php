@@ -235,4 +235,160 @@ class LinkHandlerTest extends TestCase
         $this->assertSame('Linked Page', $payload['title']);
         $this->assertSame('link-01', $payload['content']);
     }
+
+    #[Test]
+    public function it_extracts_from_a_richtext_internallink_mark(): void
+    {
+        $extractor = new LinkHandler;
+
+        $data = [
+            'type' => 'internalLink',
+            'attrs' => [
+                'content' => 'link-01',
+                'anchor' => null,
+            ],
+        ];
+
+        $links = $extractor->extractContentLinks($data);
+
+        $this->assertSame(['link-01'], $links);
+    }
+
+    #[Test]
+    public function it_extracts_internallink_marks_from_nested_tiptap_json(): void
+    {
+        $extractor = new LinkHandler;
+
+        $data = [
+            'richtext' => [
+                'type' => 'doc',
+                'content' => [
+                    [
+                        'type' => 'paragraph',
+                        'content' => [
+                            [
+                                'type' => 'text',
+                                'text' => 'Click here',
+                                'marks' => [
+                                    [
+                                        'type' => 'internalLink',
+                                        'attrs' => [
+                                            'content' => 'link-01',
+                                            'anchor' => null,
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $links = $extractor->extractContentLinks($data);
+
+        $this->assertSame(['link-01'], $links);
+    }
+
+    #[Test]
+    public function it_replaces_internallink_marks_with_url_and_title(): void
+    {
+        $extractor = new LinkHandler;
+
+        $data = [
+            'type' => 'doc',
+            'content' => [
+                [
+                    'type' => 'paragraph',
+                    'content' => [
+                        [
+                            'type' => 'text',
+                            'text' => 'Click here',
+                            'marks' => [
+                                [
+                                    'type' => 'internalLink',
+                                    'attrs' => [
+                                        'content' => 'link-01',
+                                        'anchor' => null,
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $result = $extractor->replaceContentLinks($data, collect([
+            tap(new Content, function ($content) {
+                $content->forceFill([
+                    'id' => 'link-01',
+                    'name' => 'Linked Page',
+                    'full_slug' => '/linked-page',
+                ]);
+            }),
+        ]));
+
+        $mark = $result['content'][0]['content'][0]['marks'][0];
+        $this->assertSame('internalLink', $mark['type']);
+        $this->assertSame('/linked-page', $mark['attrs']['url']);
+        $this->assertSame('Linked Page', $mark['attrs']['title']);
+        $this->assertSame('link-01', $mark['attrs']['content']);
+        $this->assertNull($mark['attrs']['anchor']);
+    }
+
+    #[Test]
+    public function it_deduplicates_ids_across_link_blocks_and_richtext_marks(): void
+    {
+        $extractor = new LinkHandler;
+
+        $data = [
+            'link' => [
+                'type' => 'internal',
+                'content' => 'link-01',
+            ],
+            'richtext' => [
+                'type' => 'doc',
+                'content' => [
+                    [
+                        'type' => 'paragraph',
+                        'content' => [
+                            [
+                                'type' => 'text',
+                                'text' => 'Also link-01',
+                                'marks' => [
+                                    [
+                                        'type' => 'internalLink',
+                                        'attrs' => [
+                                            'content' => 'link-01',
+                                            'anchor' => null,
+                                        ],
+                                    ],
+                                ],
+                            ],
+                            [
+                                'type' => 'text',
+                                'text' => 'And link-02',
+                                'marks' => [
+                                    [
+                                        'type' => 'internalLink',
+                                        'attrs' => [
+                                            'content' => 'link-02',
+                                            'anchor' => null,
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $links = $extractor->extractContentLinks($data);
+
+        $this->assertCount(2, $links);
+        $this->assertContains('link-01', $links);
+        $this->assertContains('link-02', $links);
+    }
 }

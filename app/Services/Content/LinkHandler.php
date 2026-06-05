@@ -12,9 +12,18 @@ class LinkHandler
 
     public function extractContentLinks(array $data): array
     {
-        return $this->extractMatchingField($data, [
+        $regularLinks = $this->extractMatchingField($data, [
             'type' => 'internal',
         ], 'content');
+
+        $richtextLinks = $this->extract(
+            $data,
+            fn (array $value): mixed => $this->matchesContentCriteria($value, ['type' => 'internalLink'])
+                ? ($value['attrs']['content'] ?? null)
+                : null,
+        );
+
+        return array_values(array_unique(array_merge($regularLinks, $richtextLinks)));
     }
 
     public function replaceContentLinks(
@@ -25,7 +34,7 @@ class LinkHandler
     ): array {
         $resolvedLinks = $this->resolveLocalizedLinks($links, $languageIso, $defaultLanguageIso);
 
-        return $this->replaceMatching($data, [
+        $data = $this->replaceMatching($data, [
             'type' => 'internal',
         ], function ($src) use ($resolvedLinks) {
             $link = $resolvedLinks->get($src['content'] ?? null);
@@ -34,6 +43,20 @@ class LinkHandler
                     'url' => $link->full_slug,
                     'title' => $link->name,
                 ] + $src;
+            }
+
+            return $src;
+        });
+
+        return $this->replaceMatching($data, [
+            'type' => 'internalLink',
+        ], function ($src) use ($resolvedLinks) {
+            $link = $resolvedLinks->get($src['attrs']['content'] ?? null);
+            if ($link) {
+                $src['attrs'] = array_merge(
+                    ['url' => $link->full_slug, 'title' => $link->name],
+                    $src['attrs'] ?? [],
+                );
             }
 
             return $src;
