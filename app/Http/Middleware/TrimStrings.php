@@ -15,5 +15,6 @@ class TrimStrings extends Middleware
         'current_password',
         'password',
         'password_confirmation',
+        'text', // TipTap/ProseMirror text nodes carry meaningful leading/trailing whitespace
     ];
 }
