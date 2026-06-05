@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.5-85f1aa2] — 2026-6-5
+
+- ✨ Allow to reduce resultset with take or except query params
+- ✨ Allow to sort contents against a content field
+
 ## [v2026.6.5-cefdda1] — 2026-6-5
 
 - 🐛 Another use of parent_id in slug uniqueness validation
