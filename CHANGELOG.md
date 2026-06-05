@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.5-506ee9b] — 2026-6-5
+
+- 🐛 Correctly handle unsaved watcher
+- 🐛 Correctly build the history preview URL
+- 🐛 Fix the diff history view
+
 ## [v2026.6.5-85f1aa2] — 2026-6-5
 
 - ✨ Allow to reduce resultset with take or except query params
