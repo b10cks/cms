@@ -2,7 +2,7 @@
 
 namespace App\Services\Content\Diff;
 
-readonly class DiffEntry
+readonly class DiffEntry implements \JsonSerializable
 {
     public function __construct(
         public string $path,
@@ -19,5 +19,10 @@ readonly class DiffEntry
             'old_value' => $this->oldValue,
             'new_value' => $this->newValue,
         ];
+    }
+
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

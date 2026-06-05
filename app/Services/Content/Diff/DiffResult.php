@@ -2,7 +2,7 @@
 
 namespace App\Services\Content\Diff;
 
-readonly class DiffResult
+readonly class DiffResult implements \JsonSerializable
 {
     public function __construct(
         public array $entries
@@ -13,6 +13,11 @@ readonly class DiffResult
     public function toArray(): array
     {
         return array_map(fn ($entry) => $entry->toArray(), $this->entries);
+    }
+
+    public function jsonSerialize(): array
+    {
+        return ['entries' => $this->entries];
     }
 
     public function hasChanges(): bool
