@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.5-cefdda1] — 2026-6-5
+
+- 🐛 Another use of parent_id in slug uniqueness validation
+
 ## [v2026.6.5-0614244] — 2026-6-5
 
 - ⬆️ Bump versions
