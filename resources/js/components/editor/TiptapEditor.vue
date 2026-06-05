@@ -92,6 +92,9 @@ const headingDisplayLabel = computed(() => {
 const editor = useEditor({
   content: props.modelValue,
   editable: !props.disabled,
+  parseOptions: {
+    preserveWhitespace: 'full',
+  },
   extensions: [
     StarterKit.configure({
       heading: {
