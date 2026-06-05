@@ -22,6 +22,44 @@ class ContentFilter extends AdvancedFilter
     protected array $sortableColumns = ['published_at', 'updated_at', 'created_at'];
 
     /**
+     * Extends default sorting with support for `content.{field}` which extracts
+     * a top-level JSON key from `content_versions.content`.
+     *
+     * Example: `?sort=content.publishedAt` or `?sort=-content.publishedAt`
+     *
+     * Only one level of nesting is allowed; the field name must match [a-zA-Z0-9_]+.
+     */
+    public function sort($sortString = null): void
+    {
+        if (!$sortString || !is_string($sortString)) {
+            return;
+        }
+
+        $regularSortItems = [];
+        $sortItems = array_slice(explode(',', $sortString), 0, $this->maxSortColumns);
+
+        foreach ($sortItems as $sortItem) {
+            $direction = str_starts_with($sortItem, '-') ? 'desc' : 'asc';
+            $bare = ltrim($sortItem, '+-');
+
+            // content.{field} -> JSON_EXTRACT from content_versions.content (one level deep only)
+            if (preg_match('/^content\.([a-zA-Z0-9_]+)$/', $bare, $matches)) {
+                $this->builder->orderByRaw(
+                    "JSON_UNQUOTE(JSON_EXTRACT(`content_versions`.`content`, ?)) {$direction}",
+                    ['$.' . $matches[1]],
+                );
+                continue;
+            }
+
+            $regularSortItems[] = $sortItem;
+        }
+
+        if (!empty($regularSortItems)) {
+            parent::sort(implode(',', $regularSortItems));
+        }
+    }
+
+    /**
      * Filter by publication timestamp.
      *
      * Supports:
