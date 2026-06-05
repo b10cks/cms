@@ -415,6 +415,13 @@ const isDirty = computed(() => {
   return JSON.stringify(content.value) !== JSON.stringify(persistedContent.value)
 })
 
+const discardLocalContentChanges = () => {
+  if (persistedContent.value) {
+    content.value = cloneContent(persistedContent.value)
+    editorContentTree.value = buildEditorContentTree(content.value)
+  }
+}
+
 async function guardLeave(to: any, from: any, next: any) {
   if (to && from && to.path === from.path) {
     return next()
@@ -428,6 +435,7 @@ async function guardLeave(to: any, from: any, next: any) {
       )
     )
     if (answer) {
+      discardLocalContentChanges()
       discardOwnDrafts()
       next()
     } else {
