@@ -54,7 +54,7 @@ class Action
         return $this->type;
     }
 
-    public function config(string $key = null, $default = null)
+    public function config(?string $key = null, mixed $default = null)
     {
         return data_get($this->config, $key, $default);
     }
