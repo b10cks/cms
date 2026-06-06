@@ -19,6 +19,7 @@ use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
 use App\Models\Space\Redirect;
 use App\Models\Space\Release;
+use App\Services\Automation\Enums\TriggerType;
 use App\Services\Database\DatabaseConnectionService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -171,5 +172,26 @@ class TriggerCatalog
             'label' => $this->labelForTable($table),
             'description' => $this->descriptionForTable($table),
         ]);
+    }
+
+    /**
+     * @return array<string, array{label: string, description: string, table: string}>
+     */
+    public function contentLifecycleTriggers(): array
+    {
+        return [
+            TriggerType::CONTENT_PUBLISHED->value => [
+                'trigger_type' => TriggerType::CONTENT_PUBLISHED->value,
+                'table' => 'contents',
+                'label' => 'Content Published',
+                'description' => 'Fires when a content entry transitions from unpublished to published.',
+            ],
+            TriggerType::CONTENT_UNPUBLISHED->value => [
+                'trigger_type' => TriggerType::CONTENT_UNPUBLISHED->value,
+                'table' => 'contents',
+                'label' => 'Content Unpublished',
+                'description' => 'Fires when a published content entry is taken offline.',
+            ],
+        ];
     }
 }

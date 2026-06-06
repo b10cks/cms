@@ -19,6 +19,7 @@ class AutomationTriggerCatalogController extends Controller
         return response()->json([
             'data' => [
                 'tables' => $triggerCatalog->forSpace($space),
+                'content_lifecycle' => array_values($triggerCatalog->contentLifecycleTriggers()),
             ],
         ]);
     }

@@ -2495,7 +2495,13 @@
         "on_update": "On update",
         "on_delete": "On delete",
         "time_based": "Time based",
-        "manual": "Manual"
+        "manual": "Manual",
+        "content_published": "Content published",
+        "content_unpublished": "Content unpublished"
+      },
+      "contentLifecycle": {
+        "publishedDescription": "Fires when a content entry transitions from unpublished to published. The context includes the full record, previous state, and publishing timestamps.",
+        "unpublishedDescription": "Fires when a published content entry is taken offline. The context includes the record state before and after unpublishing."
       },
       "status": {
         "active": "Active",

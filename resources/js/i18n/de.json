@@ -2471,7 +2471,13 @@
         "on_update": "Bei Änderung",
         "on_delete": "Bei Löschung",
         "time_based": "Zeitbasiert",
-        "manual": "Manuell"
+        "manual": "Manuell",
+        "content_published": "Inhalt veröffentlicht",
+        "content_unpublished": "Inhalt depubliziert"
+      },
+      "contentLifecycle": {
+        "publishedDescription": "Wird ausgelöst, wenn ein Inhalt von unveröffentlicht auf veröffentlicht wechselt. Der Kontext enthält den vollständigen Datensatz, den Vorherigen Zustand und den Veröffentlichungszeitpunkt.",
+        "unpublishedDescription": "Wird ausgelöst, wenn ein veröffentlichter Inhalt offline genommen wird. Der Kontext enthält den Zustand des Datensatzes vor und nach der Depublizierung."
       },
       "status": {
         "active": "Aktiv",

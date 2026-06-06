@@ -10,6 +10,7 @@ use App\Events\Space\ContentUpdated;
 use App\Jobs\Content\UpdateContentFullSlugsJob;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\Traits\SpaceAuditable;
+use App\Services\Automation\Enums\TriggerType;
 use App\Services\Content\ContentMenuCache;
 use App\Services\Content\LocalizedContentSlugService;
 use App\Services\CustomStr;
@@ -123,6 +124,22 @@ class Content extends SpaceModel
     protected static function boot()
     {
         parent::boot();
+
+        static::updated(function (Content $content) {
+            $before = data_get($content->automationBeforeSnapshot, 'published_at');
+            $after = data_get($content->automationAfterSnapshot, 'published_at');
+
+            if ($before === $after) {
+                return;
+            }
+
+            if ($before === null && $after !== null) {
+                $content->dispatchAutomationTrigger(TriggerType::CONTENT_PUBLISHED);
+            } elseif ($before !== null && $after === null) {
+                $content->dispatchAutomationTrigger(TriggerType::CONTENT_UNPUBLISHED);
+            }
+        });
+
         static::saving(function (Content $content) {
             $slugService = app(LocalizedContentSlugService::class);
             $oldFullSlug = $slugService->updateFullSlug($content);

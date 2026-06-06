@@ -11,6 +11,8 @@ use App\Services\Automation\AutomationEngine;
 use App\Services\Automation\AutomationUsageService;
 use App\Services\Automation\Contracts\AutomationEngine as AutomationEngineContract;
 use App\Services\Automation\TriggerCatalog;
+use App\Services\Automation\Triggers\ContentPublishedTriggerHandler;
+use App\Services\Automation\Triggers\ContentUnpublishedTriggerHandler;
 use App\Services\Automation\Triggers\ManualTriggerHandler;
 use App\Services\Automation\Triggers\OnDeleteTriggerHandler;
 use App\Services\Automation\Triggers\OnInsertTriggerHandler;
@@ -35,6 +37,8 @@ class AutomationServiceProvider extends ServiceProvider
             $engine->registerTriggerHandler($app->make(OnDeleteTriggerHandler::class));
             $engine->registerTriggerHandler($app->make(TimeBasedTriggerHandler::class));
             $engine->registerTriggerHandler($app->make(ManualTriggerHandler::class));
+            $engine->registerTriggerHandler($app->make(ContentPublishedTriggerHandler::class));
+            $engine->registerTriggerHandler($app->make(ContentUnpublishedTriggerHandler::class));
 
             $engine->registerActionHandler($app->make(WebhookActionHandler::class));
             $engine->registerActionHandler($app->make(EmailActionHandler::class));

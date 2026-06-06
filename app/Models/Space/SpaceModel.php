@@ -73,7 +73,7 @@ abstract class SpaceModel extends Model
             return;
         }
 
-        if (! app(TriggerCatalog::class)->supportsTable($this->getTable())) {
+        if (! $triggerType->isContentLifecycle() && ! app(TriggerCatalog::class)->supportsTable($this->getTable())) {
             return;
         }
 

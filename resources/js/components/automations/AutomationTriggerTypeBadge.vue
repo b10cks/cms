@@ -20,6 +20,12 @@ const variant = computed(() => {
       return 'warning'
     case 'manual':
       return 'accent'
+    case 'content_published':
+      return 'success'
+    case 'content_unpublished':
+      return 'warning'
+    default:
+      return 'secondary'
   }
 })
 </script>

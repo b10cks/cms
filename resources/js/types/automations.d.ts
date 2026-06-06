@@ -1,5 +1,12 @@
 type AutomationActionType = 'webhook' | 'email' | 'void'
-type AutomationTriggerType = 'on_insert' | 'on_update' | 'on_delete' | 'time_based' | 'manual'
+type AutomationTriggerType =
+  | 'on_insert'
+  | 'on_update'
+  | 'on_delete'
+  | 'time_based'
+  | 'manual'
+  | 'content_published'
+  | 'content_unpublished'
 type AutomationExecutionStatus = 'queued' | 'completed' | 'failed' | 'running'
 type AutomationConditionOperator =
   | 'eq'
@@ -148,6 +155,14 @@ interface AutomationTriggerTableDefinition {
   columns: string[]
 }
 
+interface AutomationContentLifecycleTrigger {
+  trigger_type: 'content_published' | 'content_unpublished'
+  table: 'contents'
+  label: string
+  description: string
+}
+
 interface AutomationTriggerCatalogResource {
   tables: AutomationTriggerTableDefinition[]
+  content_lifecycle: AutomationContentLifecycleTrigger[]
 }

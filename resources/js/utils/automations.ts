@@ -134,6 +134,12 @@ export function defaultTriggerConfig(type: AutomationTriggerType): AutomationTri
         payload: {},
         conditions: [],
       }
+    case 'content_published':
+    case 'content_unpublished':
+      return {
+        payload: {},
+        conditions: [],
+      }
     default:
       return {
         table: '',
@@ -146,6 +152,10 @@ export function defaultTriggerConfig(type: AutomationTriggerType): AutomationTri
 
 export function isEventTrigger(type: AutomationTriggerType): boolean {
   return ['on_insert', 'on_update', 'on_delete'].includes(type)
+}
+
+export function isContentLifecycleTrigger(type: AutomationTriggerType): boolean {
+  return ['content_published', 'content_unpublished'].includes(type)
 }
 
 export function getTriggerTable(config?: AutomationTriggerConfig | null): string {

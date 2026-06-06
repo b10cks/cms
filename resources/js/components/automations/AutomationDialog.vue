@@ -30,6 +30,7 @@ import {
   findTriggerTableDefinition,
   getTriggerTable,
   getTriggerTypeLabel,
+  isContentLifecycleTrigger,
   isEventTrigger,
   objectToRows,
   rowsToConditions,
@@ -62,6 +63,8 @@ const triggerTypeOptions: AutomationTriggerType[] = [
   'on_delete',
   'time_based',
   'manual',
+  'content_published',
+  'content_unpublished',
 ]
 
 const keyValueColumns = computed(() => [
@@ -97,6 +100,7 @@ const isHydrating = ref(false)
 
 const isEditing = computed(() => !!props.automation)
 const isEventTriggerSelected = computed(() => isEventTrigger(form.value.trigger_type))
+const isContentLifecycleTriggerSelected = computed(() => isContentLifecycleTrigger(form.value.trigger_type))
 
 const selectedAction = computed(
   () => props.actions.find((action) => action.id === form.value.action_id) || null
@@ -563,6 +567,19 @@ const summaryText = computed(() => {
                 :options="watchColumnOptions"
                 multiple
               />
+            </template>
+
+            <template v-if="isContentLifecycleTriggerSelected">
+              <div class="rounded-xl border border-border bg-surface/70 px-4 py-3">
+                <p class="font-medium text-sm">{{ $t(`labels.automations.triggerTypes.${form.trigger_type}`) }}</p>
+                <p class="text-muted-foreground mt-1 text-sm">
+                  {{
+                    form.trigger_type === 'content_published'
+                      ? $t('labels.automations.contentLifecycle.publishedDescription')
+                      : $t('labels.automations.contentLifecycle.unpublishedDescription')
+                  }}
+                </p>
+              </div>
             </template>
 
             <template v-if="form.trigger_type === 'time_based'">
