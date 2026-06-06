@@ -3,6 +3,15 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.6-f212e59] — 2026-6-6
+
+- ✨ Add content.published and content.unpublished automation triggers
+- 🐛 Fix boot-time circular instantiation in BroadcastsModelEvents trait
+- 👔 Fix PHP 8.4 deprecation: explicit nullable type in Action value object
+- 👔 Fix rebase: remove incompatible laravel-finite dep, add navigation i18n keys
+- ✨ Add automations engine
+- 👔 Improve redirects import
+
 ## [v2026.6.6-1a7446c] — 2026-6-6
 
 - 👔 Handle local links within richtext
