@@ -28,6 +28,8 @@ export interface UpdateRedirectPayload {
 
 export type RedirectImportExportFormat = Extract<ImportExportFormat, 'csv' | 'excel' | 'json' | 'yaml'>
 
+export type RedirectImportMode = 'addition' | 'replacement'
+
 export interface RedirectChange {
   field: string
   old: string | number | null
@@ -45,10 +47,16 @@ export interface RedirectImportSuccess {
   source: string
 }
 
+export interface DeletedRedirect {
+  id: string
+  source: string
+}
+
 export interface RedirectDataImportResult {
   successes: RedirectImportSuccess[]
   changes: ImportedRedirectChanges[]
   ignored_fields: string[]
   errors: ImportError[]
-  summary: ImportSummary
+  deleted: DeletedRedirect[]
+  summary: ImportSummary & { total_deleted: number }
 }

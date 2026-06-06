@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Redirect;
 
 use App\Enums\ImportExportFormat;
+use App\Enums\RedirectImportMode;
 use Illuminate\Foundation\Http\FormRequest;
 use InvalidArgumentException;
 
@@ -21,7 +22,17 @@ class ImportRedirectDataRequest extends FormRequest
                 'file',
                 'max:102400',
             ],
+            'import_mode' => [
+                'nullable',
+                'string',
+                'in:addition,replacement',
+            ],
         ];
+    }
+
+    public function getImportMode(): RedirectImportMode
+    {
+        return RedirectImportMode::from($this->input('import_mode', 'addition'));
     }
 
     public function getRedirectDataFormat(): ImportExportFormat

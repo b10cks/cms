@@ -433,6 +433,26 @@
       },
       "export": "Exportieren",
       "import": "Importieren",
+      "importDialog": {
+        "title": "Assets importieren",
+        "description": "Asset-Metadaten aus einer Datei importieren.",
+        "supportedFormats": "Unterstützte Formate: JSON, CSV, Excel, XLIFF, YAML",
+        "selectFileError": "Bitte wähle eine Datei für den Import aus.",
+        "importError": "Import fehlgeschlagen",
+        "summaryTitle": "Import-Zusammenfassung",
+        "summaryDescription": "Prüfe, welche Assets importiert, geändert oder übersprungen wurden.",
+        "summary": {
+          "success": "Erfolgreich",
+          "changes": "Änderungen",
+          "errors": "Fehler"
+        },
+        "modifiedAssets": "Geänderte Assets",
+        "ignoredFields": "Ignorierte Felder",
+        "errorsTitle": "Importfehler",
+        "rowLabel": "Zeile {row}",
+        "changeCount": "{count} Änderung(en)",
+        "emptyValue": "leer"
+      },
       "describeContent": "Beschreibe den Inhalt der Datei",
       "addDetailedDescription": "Füge eine detaillierte Beschreibung hinzu",
       "size": "Größe",
@@ -1408,17 +1428,26 @@
       "importDialog": {
         "title": "Redirects importieren",
         "description": "Lade eine Redirect-Datei hoch, um Regeln gesammelt anzulegen oder zu aktualisieren.",
-        "selectFileAction": "Datei auswählen",
         "supportedFormats": "Unterstützte Formate: JSON, CSV, Excel, YAML",
         "selectFileError": "Bitte wähle eine Datei für den Import aus.",
         "summaryTitle": "Import-Zusammenfassung",
         "summaryDescription": "Prüfe, welche Redirects importiert, geändert oder übersprungen wurden.",
+        "importMode": {
+          "label": "Importmodus",
+          "addition": "Hinzufügen / Aktualisieren",
+          "additionDescription": "Neue Redirects anlegen und bestehende aktualisieren. Vorhandene Redirects werden nicht gelöscht.",
+          "replacement": "Alle ersetzen",
+          "replacementDescription": "Der Import ersetzt alle vorhandenen Redirects. Redirects, die nicht in der Datei enthalten sind, werden gelöscht.",
+          "replacementWarning": "Alle Redirects, die nicht in der importierten Datei enthalten sind, werden dauerhaft gelöscht."
+        },
         "summary": {
           "success": "Erfolgreich",
           "changes": "Änderungen",
+          "deleted": "Gelöscht",
           "errors": "Fehler"
         },
         "modifiedRedirects": "Geänderte Redirects",
+        "deletedRedirects": "Gelöschte Redirects",
         "ignoredFields": "Ignorierte Felder",
         "errorsTitle": "Importfehler",
         "rowLabel": "Zeile {row}",
@@ -2728,6 +2757,12 @@
     "clearClipboard": "Zwischenablage löschen"
   },
   "components": {
+    "fileDropZone": {
+      "selectFileAction": "Datei auswählen",
+      "orDragDrop": " oder hier ablegen",
+      "dropFileAction": "Datei hier ablegen",
+      "unsupportedFileError": "Nicht unterstützter Dateityp."
+    },
     "aiModelSelector": {
       "selectModel": "KI-Modell auswählen",
       "loadError": "Modelle konnten nicht geladen werden",

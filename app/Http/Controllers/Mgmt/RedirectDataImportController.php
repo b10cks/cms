@@ -23,8 +23,9 @@ class RedirectDataImportController extends Controller
         try {
             $format = $request->getRedirectDataFormat();
             $file = $request->file('file');
+            $mode = $request->getImportMode();
 
-            $result = $service->importRedirects($space, $file, $format);
+            $result = $service->importRedirects($space, $file, $format, $mode);
 
             return response()->json($result->toArray());
         } catch (ImportValidationException $e) {

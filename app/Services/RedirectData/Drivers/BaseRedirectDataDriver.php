@@ -4,11 +4,13 @@ namespace App\Services\RedirectData\Drivers;
 
 use App\Contracts\RedirectData\RedirectDataDriver;
 use App\DTOs\ImportExport\ImportResult;
+use App\Enums\RedirectImportMode;
 use App\Models\Management\Space;
 use App\Models\Space\Redirect;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -26,17 +28,21 @@ abstract class BaseRedirectDataDriver implements RedirectDataDriver
     protected array $changes = [];
     protected array $ignoredFields = [];
     protected array $errors = [];
+    protected array $deleted = [];
+    protected array $touchedIds = [];
 
     abstract public function export(Space $space, Collection $redirects): Response;
 
     abstract public function parseFile(UploadedFile $file): array;
 
-    public function import(Space $space, UploadedFile $file): ImportResult
+    public function import(Space $space, UploadedFile $file, RedirectImportMode $mode = RedirectImportMode::Addition): ImportResult
     {
         $this->successes = [];
         $this->changes = [];
         $this->ignoredFields = [];
         $this->errors = [];
+        $this->deleted = [];
+        $this->touchedIds = [];
 
         try {
             $rows = $this->parseFile($file);
@@ -49,9 +55,15 @@ abstract class BaseRedirectDataDriver implements RedirectDataDriver
                 array_keys($rows[0] ?? [])
             );
 
-            foreach ($rows as $rowNumber => $rowData) {
-                $this->importRow($space, $rowNumber, $rowData);
-            }
+            DB::transaction(function () use ($space, $rows, $mode): void {
+                foreach ($rows as $rowNumber => $rowData) {
+                    $this->importRow($space, $rowNumber, $rowData);
+                }
+
+                if ($mode === RedirectImportMode::Replacement && $this->errors === []) {
+                    $this->deleteUntouchedRedirects($space);
+                }
+            });
         } catch (\Throwable $e) {
             Log::error('Redirect import parsing error', [
                 'format' => $this->getFormat(),
@@ -61,7 +73,22 @@ abstract class BaseRedirectDataDriver implements RedirectDataDriver
             return new ImportResult([], [], [], [['message' => 'Failed to parse file: ' . $e->getMessage()]]);
         }
 
-        return new ImportResult($this->successes, $this->changes, $this->ignoredFields, $this->errors);
+        return new ImportResult($this->successes, $this->changes, $this->ignoredFields, $this->errors, $this->deleted);
+    }
+
+    protected function deleteUntouchedRedirects(Space $space): void
+    {
+        $redirectsToDelete = Redirect::query()
+            ->whereNotIn('id', $this->touchedIds)
+            ->get();
+
+        foreach ($redirectsToDelete as $redirect) {
+            $this->deleted[] = [
+                'id' => $redirect->id,
+                'source' => $redirect->source,
+            ];
+            $redirect->delete();
+        }
     }
 
     protected function importRow(Space $space, int $rowNumber, array $rowData): void
@@ -113,6 +140,8 @@ abstract class BaseRedirectDataDriver implements RedirectDataDriver
 
             $redirect->fill($payload);
             $redirect->save();
+
+            $this->touchedIds[] = $redirect->id;
 
             $changes = $this->detectChanges($existingValues, $this->extractTrackedValues($redirect));
             if ($changes !== []) {

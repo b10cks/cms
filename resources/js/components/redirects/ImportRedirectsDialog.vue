@@ -2,8 +2,9 @@
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
+import FileDropZone from '~/components/ui/FileDropZone.vue'
 import { ScrollArea } from '~/components/ui/scroll-area'
-import type { RedirectDataImportResult } from '~/types/redirects'
+import type { RedirectDataImportResult, RedirectImportMode } from '~/types/redirects'
 
 const props = defineProps<{
   spaceId: string
@@ -14,18 +15,13 @@ const open = defineModel<boolean>('open', { default: false })
 const { t } = useI18n()
 const { useImportRedirectsMutation } = useRedirects(props.spaceId)
 
-const fileInputRef = ref<HTMLInputElement | null>(null)
 const selectedFile = ref<File | null>(null)
+const importMode = ref<RedirectImportMode>('addition')
 const errorMessage = ref('')
 const importResult = ref<RedirectDataImportResult | null>(null)
 const expandedRedirects = ref<Set<string>>(new Set())
 
 const importMutation = useImportRedirectsMutation()
-
-const handleFileChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  selectedFile.value = target.files?.[0] ?? null
-}
 
 const handleImport = async () => {
   if (!selectedFile.value) {
@@ -37,7 +33,10 @@ const handleImport = async () => {
   importResult.value = null
 
   try {
-    importResult.value = await importMutation.mutateAsync(selectedFile.value)
+    importResult.value = await importMutation.mutateAsync({
+      file: selectedFile.value,
+      mode: importMode.value,
+    })
   } catch (error) {
     errorMessage.value =
       error instanceof Error
@@ -48,13 +47,10 @@ const handleImport = async () => {
 
 const resetState = () => {
   selectedFile.value = null
+  importMode.value = 'addition'
   errorMessage.value = ''
   importResult.value = null
   expandedRedirects.value.clear()
-
-  if (fileInputRef.value) {
-    fileInputRef.value.value = ''
-  }
 }
 
 const handleOpenChange = (value: boolean) => {
@@ -92,45 +88,71 @@ const showSummary = computed(() => importResult.value !== null)
         />
 
         <div class="space-y-4 py-4">
-          <div class="rounded-lg border-2 border-dashed border-border p-6 text-center">
-            <input
-              ref="fileInputRef"
-              type="file"
-              accept=".json,.csv,.xlsx,.xls,.yaml,.yml"
-              class="hidden"
-              @change="handleFileChange"
-            />
+          <FileDropZone
+            v-model="selectedFile"
+            accept=".json,.csv,.xlsx,.xls,.yaml,.yml"
+            :hint="$t('labels.redirects.importDialog.supportedFormats')"
+            @error="errorMessage = $event"
+          />
 
-            <div class="flex flex-col items-center gap-2">
-              <Icon
-                name="lucide:upload-cloud"
-                class="h-8 w-8 text-muted-foreground"
-              />
-
-              <div class="space-y-1">
-                <p
-                  v-if="!selectedFile"
-                  class="text-sm font-medium text-foreground"
-                >
-                  <button
-                    type="button"
-                    class="text-primary hover:underline"
-                    @click="fileInputRef?.click()"
-                  >
-                    {{ $t('labels.redirects.importDialog.selectFileAction') }}
-                  </button>
+          <div class="space-y-2">
+            <p class="text-sm font-medium text-foreground">
+              {{ $t('labels.redirects.importDialog.importMode.label') }}
+            </p>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                :class="[
+                  'rounded-lg border p-3 text-left transition-colors',
+                  importMode === 'addition'
+                    ? 'border-primary bg-primary/5 text-foreground'
+                    : 'border-border text-muted-foreground hover:border-muted-foreground',
+                ]"
+                @click="importMode = 'addition'"
+              >
+                <div class="flex items-center gap-2">
+                  <Icon
+                    name="lucide:plus-circle"
+                    class="h-4 w-4 shrink-0"
+                  />
+                  <span class="text-sm font-medium">
+                    {{ $t('labels.redirects.importDialog.importMode.addition') }}
+                  </span>
+                </div>
+                <p class="mt-1 text-xs">
+                  {{ $t('labels.redirects.importDialog.importMode.additionDescription') }}
                 </p>
-                <p
-                  v-else
-                  class="text-sm font-medium text-foreground"
-                >
-                  {{ selectedFile.name }}
+              </button>
+              <button
+                type="button"
+                :class="[
+                  'rounded-lg border p-3 text-left transition-colors',
+                  importMode === 'replacement'
+                    ? 'border-primary bg-primary/5 text-foreground'
+                    : 'border-border text-muted-foreground hover:border-muted-foreground',
+                ]"
+                @click="importMode = 'replacement'"
+              >
+                <div class="flex items-center gap-2">
+                  <Icon
+                    name="lucide:replace"
+                    class="h-4 w-4 shrink-0"
+                  />
+                  <span class="text-sm font-medium">
+                    {{ $t('labels.redirects.importDialog.importMode.replacement') }}
+                  </span>
+                </div>
+                <p class="mt-1 text-xs">
+                  {{ $t('labels.redirects.importDialog.importMode.replacementDescription') }}
                 </p>
-                <p class="text-xs text-muted-foreground">
-                  {{ $t('labels.redirects.importDialog.supportedFormats') }}
-                </p>
-              </div>
+              </button>
             </div>
+            <p
+              v-if="importMode === 'replacement'"
+              class="rounded-md bg-destructive/10 p-2 text-xs text-destructive"
+            >
+              {{ $t('labels.redirects.importDialog.importMode.replacementWarning') }}
+            </p>
           </div>
 
           <div
@@ -176,7 +198,7 @@ const showSummary = computed(() => importResult.value !== null)
             v-if="importResult"
             class="space-y-6 p-1"
           >
-            <div class="grid gap-4 md:grid-cols-3">
+            <div :class="['grid gap-4', importResult.summary.total_deleted > 0 ? 'md:grid-cols-4' : 'md:grid-cols-3']">
               <div class="rounded-lg border p-4">
                 <div class="text-sm font-medium text-muted-foreground">
                   {{ $t('labels.redirects.importDialog.summary.success') }}
@@ -191,6 +213,17 @@ const showSummary = computed(() => importResult.value !== null)
                 </div>
                 <div class="text-2xl font-semibold text-foreground">
                   {{ importResult.summary.total_changes }}
+                </div>
+              </div>
+              <div
+                v-if="importResult.summary.total_deleted > 0"
+                class="rounded-lg border p-4"
+              >
+                <div class="text-sm font-medium text-muted-foreground">
+                  {{ $t('labels.redirects.importDialog.summary.deleted') }}
+                </div>
+                <div class="text-2xl font-semibold text-destructive">
+                  {{ importResult.summary.total_deleted }}
                 </div>
               </div>
               <div class="rounded-lg border p-4">
@@ -253,6 +286,24 @@ const showSummary = computed(() => importResult.value !== null)
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              v-if="importResult.deleted.length > 0"
+              class="space-y-2"
+            >
+              <h3 class="font-medium text-foreground">
+                {{ $t('labels.redirects.importDialog.deletedRedirects') }}
+              </h3>
+              <div class="flex flex-col gap-1">
+                <div
+                  v-for="redirect in importResult.deleted"
+                  :key="redirect.id"
+                  class="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                >
+                  {{ redirect.source }}
                 </div>
               </div>
             </div>

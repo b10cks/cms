@@ -438,6 +438,26 @@
       },
       "export": "Export",
       "import": "Import",
+      "importDialog": {
+        "title": "Import Assets",
+        "description": "Import asset metadata from a file.",
+        "supportedFormats": "Supported formats: JSON, CSV, Excel, XLIFF, YAML",
+        "selectFileError": "Please select a file to import.",
+        "importError": "Import failed",
+        "summaryTitle": "Import Summary",
+        "summaryDescription": "Review the assets that were imported, changed, or skipped.",
+        "summary": {
+          "success": "Successful",
+          "changes": "Changes",
+          "errors": "Errors"
+        },
+        "modifiedAssets": "Modified Assets",
+        "ignoredFields": "Ignored Fields",
+        "errorsTitle": "Import Errors",
+        "rowLabel": "Row {row}",
+        "changeCount": "{count} change(s)",
+        "emptyValue": "empty"
+      },
       "describeContent": "Describe the content of the file",
       "addDetailedDescription": "Add a detailed description",
       "size": "Size",
@@ -1409,17 +1429,26 @@
       "importDialog": {
         "title": "Import Redirects",
         "description": "Upload a redirects file to create or update redirect rules in bulk.",
-        "selectFileAction": "Choose a file",
         "supportedFormats": "Supported formats: JSON, CSV, Excel, YAML",
         "selectFileError": "Please select a file to import.",
         "summaryTitle": "Import Summary",
         "summaryDescription": "Review the redirects that were imported, changed, or skipped.",
+        "importMode": {
+          "label": "Import Mode",
+          "addition": "Add / Update",
+          "additionDescription": "Create new redirects and update existing ones. Does not remove any existing redirects.",
+          "replacement": "Replace All",
+          "replacementDescription": "Import replaces all existing redirects. Redirects not in the file will be deleted.",
+          "replacementWarning": "All redirects not present in the imported file will be permanently deleted."
+        },
         "summary": {
           "success": "Successful",
           "changes": "Changes",
+          "deleted": "Deleted",
           "errors": "Errors"
         },
         "modifiedRedirects": "Modified Redirects",
+        "deletedRedirects": "Deleted Redirects",
         "ignoredFields": "Ignored Fields",
         "errorsTitle": "Import Errors",
         "rowLabel": "Row {row}",
@@ -2753,6 +2782,12 @@
     "clearClipboard": "Clear Clipboard"
   },
   "components": {
+    "fileDropZone": {
+      "selectFileAction": "Choose a file",
+      "orDragDrop": " or drag and drop",
+      "dropFileAction": "Drop file here",
+      "unsupportedFileError": "Unsupported file type."
+    },
     "aiModelSelector": {
       "selectModel": "Select AI model",
       "loadError": "Failed to load models",

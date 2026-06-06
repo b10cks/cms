@@ -4,6 +4,7 @@ import type {
   CreateRedirectPayload,
   RedirectDataImportResult,
   RedirectImportExportFormat,
+  RedirectImportMode,
   RedirectResource,
   UpdateRedirectPayload,
 } from '~/types/redirects'
@@ -42,11 +43,12 @@ export class Redirects extends BaseResource<
     })
   }
 
-  public async import(file: File): Promise<RedirectDataImportResult> {
+  public async import(file: File, mode: RedirectImportMode = 'addition'): Promise<RedirectDataImportResult> {
     return requestImportJson<RedirectDataImportResult>({
       client: this.client,
       endpoint: `${this.basePath}/import`,
       file,
+      extraFields: { import_mode: mode },
     })
   }
 }

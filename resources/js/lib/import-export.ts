@@ -56,10 +56,12 @@ export async function requestImportJson<T>({
   client,
   endpoint,
   file,
+  extraFields,
 }: {
   client: ApiClient
   endpoint: string
   file: File
+  extraFields?: Record<string, string>
 }): Promise<T> {
   if (typeof window === 'undefined') {
     throw new Error('Import is only available in the browser')
@@ -67,6 +69,12 @@ export async function requestImportJson<T>({
 
   const formData = new FormData()
   formData.append('file', file)
+
+  if (extraFields) {
+    for (const [key, value] of Object.entries(extraFields)) {
+      formData.append(key, value)
+    }
+  }
 
   await client.ensureCsrfCookie()
 

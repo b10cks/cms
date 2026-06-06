@@ -5,6 +5,7 @@ namespace App\Services\RedirectData;
 use App\Contracts\RedirectData\RedirectDataDriver;
 use App\DTOs\ImportExport\ImportResult;
 use App\Enums\ImportExportFormat;
+use App\Enums\RedirectImportMode;
 use App\Models\Management\Space;
 use App\Models\Space\Redirect;
 use App\Services\ImportExport\ImportExportService;
@@ -52,12 +53,13 @@ class RedirectDataImportExportService extends ImportExportService
         Space $space,
         UploadedFile $file,
         ImportExportFormat $format,
+        RedirectImportMode $mode = RedirectImportMode::Addition,
     ): ImportResult {
         $driver = $this->getRedirectDriver($format);
 
         $this->ensureImportIsValid(fn (): array => $driver->validate($file));
 
-        return $driver->import($space, $file);
+        return $driver->import($space, $file, $mode);
     }
 
     protected function getRedirectDriver(ImportExportFormat $format): RedirectDataDriver

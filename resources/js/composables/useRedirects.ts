@@ -6,6 +6,7 @@ import type { RedirectsQueryParams } from '~/api/resources/redirects'
 import type {
   CreateRedirectPayload,
   RedirectImportExportFormat,
+  RedirectImportMode,
   UpdateRedirectPayload,
 } from '~/types/redirects'
 
@@ -151,8 +152,8 @@ export function useRedirects(spaceId: MaybeRef<string>) {
 
   const useImportRedirectsMutation = () => {
     return useMutation({
-      mutationFn: async (file: File) => {
-        return spaceAPI.value.redirects.import(file)
+      mutationFn: async ({ file, mode }: { file: File; mode: RedirectImportMode }) => {
+        return spaceAPI.value.redirects.import(file, mode)
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.redirects(spaceId).lists() })
