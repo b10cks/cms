@@ -32,9 +32,7 @@ trait BroadcastsModelEvents
      */
     protected static function bootBroadcastsModelEvents(): void
     {
-        static::resolveResourceClass();
-
-        $events = (new static)->getBroadcastEvents();
+        $events = static::defaultBroadcastEvents();
 
         foreach ($events as $event) {
             static::{$event}(function (Model $model) use ($event) {
@@ -46,17 +44,26 @@ trait BroadcastsModelEvents
     }
 
     /**
-     * Resolve the resource class from the model name if not set.
+     * Default events registered at boot time without instantiating the model.
+     *
+     * @return array<string>
      */
-    protected static function resolveResourceClass(): void
+    protected static function defaultBroadcastEvents(): array
     {
-        $instance = new static;
+        return ['created', 'updated', 'deleted'];
+    }
 
-        if ($instance->broadcastResource !== null) {
+    /**
+     * Resolve the resource class from the model name if not set.
+     * Called lazily at broadcast time, not during boot.
+     */
+    protected function resolveResourceClass(): void
+    {
+        if ($this->broadcastResource !== null) {
             return;
         }
 
-        $modelClass = (new ReflectionClass($instance))->getShortName();
+        $modelClass = (new ReflectionClass($this))->getShortName();
         $resourceClass = "App\\Http\\Resources\\{$modelClass}Resource";
 
         if (!class_exists($resourceClass)) {
@@ -72,7 +79,7 @@ trait BroadcastsModelEvents
             );
         }
 
-        $instance->broadcastResource = $resourceClass;
+        $this->broadcastResource = $resourceClass;
     }
 
     /**
@@ -94,7 +101,10 @@ trait BroadcastsModelEvents
         ?string $channel = null
     ): void
     {
-        $resourceClass ??= $this->broadcastResource;
+        if ($resourceClass === null) {
+            $this->resolveResourceClass();
+            $resourceClass = $this->broadcastResource;
+        }
         $channel ??= $this->broadcastChannel;
 
         if (!$resourceClass) {
