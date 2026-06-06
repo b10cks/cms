@@ -126,16 +126,16 @@ class Content extends SpaceModel
         parent::boot();
 
         static::updated(function (Content $content) {
-            $before = data_get($content->automationBeforeSnapshot, 'published_at');
-            $after = data_get($content->automationAfterSnapshot, 'published_at');
-
-            if ($before === $after) {
+            if (! $content->wasChanged('published_at')) {
                 return;
             }
 
-            if ($before === null && $after !== null) {
+            $before = $content->getOriginal('published_at');
+            $isNowPublished = $content->getAttribute('published_at') !== null;
+
+            if ($before === null && $isNowPublished) {
                 $content->dispatchAutomationTrigger(TriggerType::CONTENT_PUBLISHED);
-            } elseif ($before !== null && $after === null) {
+            } elseif ($before !== null && ! $isNowPublished) {
                 $content->dispatchAutomationTrigger(TriggerType::CONTENT_UNPUBLISHED);
             }
         });
