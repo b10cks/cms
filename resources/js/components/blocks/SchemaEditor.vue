@@ -232,7 +232,7 @@ const createDefaultSchemaForType = (type: string, key: string): SchemaType => {
         type: 'link',
         translatable: true,
         asset_link_type: true,
-        email_link_type: false,
+        email_link_type: true,
         allow_target_blank: true,
         default: '',
       } as LinkSchema

@@ -393,7 +393,7 @@ class ContentSchemaValidator
     protected function validateEmailLink(SchemaField $field, array $value): array
     {
         if (
-            ! $field->getAttribute('email_link_type', false)
+            ! $field->getAttribute('email_link_type', true)
             || ! filter_var($value['email'] ?? null, FILTER_VALIDATE_EMAIL)
         ) {
             return [sprintf('%s must contain a valid email link.', $field->getLabel())];

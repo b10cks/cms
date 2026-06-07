@@ -29,6 +29,7 @@ defineProps<{
     <LinkEditor
       v-model="value"
       :space-id="spaceId"
+      :allow-email="item.email_link_type !== false"
     />
   </div>
 </template>

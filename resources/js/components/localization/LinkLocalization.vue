@@ -34,6 +34,7 @@ const updateValue = (value: LinkValue | null) => {
       <LinkEditor
         :model-value="props.originalValue || null"
         :space-id="spaceId"
+        :allow-email="item.email_link_type !== false"
         disabled
       />
     </div>
@@ -41,6 +42,7 @@ const updateValue = (value: LinkValue | null) => {
       <LinkEditor
         :model-value="displayedTranslationValue"
         :space-id="spaceId"
+        :allow-email="item.email_link_type !== false"
         :disabled="disabled"
         @update:model-value="updateValue"
       />

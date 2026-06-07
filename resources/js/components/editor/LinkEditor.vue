@@ -17,6 +17,7 @@ const props = defineProps<{
   modelValue?: LinkValue | null
   spaceId: string
   disabled?: boolean
+  allowEmail?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -57,7 +58,9 @@ watch(
 // Computed properties
 const linkTypes = computed(() => [
   { value: 'url', label: t('labels.link.types.url') },
-  { value: 'email', label: t('labels.link.types.email') },
+  ...(props.allowEmail !== false
+    ? [{ value: 'email', label: t('labels.link.types.email') }]
+    : []),
   { value: 'internal', label: t('labels.link.types.internal') },
 ])
 
@@ -89,9 +92,14 @@ const handleTypeChange = (newType: LinkType) => {
   updateValue()
 }
 
+const isEmailAddress = (value: string): boolean => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
 const handleUrlChange = (url: string) => {
   if (localValue.value.type === 'url') {
-    localValue.value.url = url
+    const trimmed = url.trim()
+    localValue.value.url = isEmailAddress(trimmed) ? `mailto:${trimmed}` : url
     updateValue()
   }
 }
