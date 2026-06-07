@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.7-5b653ea] — 2026-6-7
+
+- 🚸 Improve Link handling for emails
+
 ## [v2026.6.6-9bb7340] — 2026-6-6
 
 - 🐛 Fix content publish/unpublish triggers: use wasChanged/getOriginal
