@@ -377,8 +377,14 @@
       "pageTitle": "Asset-Bibliothek",
       "addAsset": "Asset hinzufügen",
       "addAssetDescription": "Wähle ein Asset aus deiner Bibliothek",
+      "addAssetDescriptionWithLimit": "Wähle bis zu {max} Assets aus deiner Bibliothek",
       "allAssets": "Alle Assets",
       "selectAsset": "Wähle ein Asset",
+      "selectAssets": "Assets auswählen",
+      "replaceAsset": "Asset ersetzen",
+      "removeAsset": "Asset entfernen",
+      "deleteAsset": "Asset löschen",
+      "assetsCount": "{current} von {max} Assets",
       "noAssetsFound": "Keine Assets gefunden",
       "noAssetsFoundDescription": "Deine Asset-Bibliothek ist leer. Lade dein erstes Asset hoch zum Starten.",
       "asset": "Asset",
@@ -2912,6 +2918,7 @@
   "actions": {
     "open": "Öffnen",
     "addMore": "Mehr hinzufügen",
+    "addMoreAmount": "{remaining} weitere hinzufügen",
     "loadMore": "Mehr laden",
     "forceDelete": "Löschen erzwingen",
     "forceSave": "Trotzdem speichern",
@@ -2989,7 +2996,12 @@
       "account": "Konto"
     },
     "assets": {
-      "upload": "Asset hochladen"
+      "upload": "Asset hochladen",
+      "replace": "Ersetzen",
+      "edit": "Bearbeiten",
+      "remove": "Entfernen",
+      "delete": "Löschen",
+      "reorder": "Sortieren"
     },
     "assetFolders": {
       "create": "Neuen Ordner erstellen"
@@ -3460,7 +3472,9 @@
     "assets": {
       "deleteConfirmation": "Lösche \"{name}\"? Diese Aktion kann nicht rückgängig gemacht werden.",
       "forceDeleteConfirmation": "\"{name}\" ist noch in {count} Inhalten verknüpft. Beim erzwungenen Löschen wird die Asset-Datei entfernt, bestehende Inhaltsreferenzen bleiben jedoch erhalten.",
-      "uploadRequirementsConfirm": "Einige Dateien haben fehlende Pflicht-Metadaten. Du kannst sie trotzdem hochladen, aber sie bleiben markiert, bis die fehlenden Werte ergänzt wurden."
+      "uploadRequirementsConfirm": "Einige Dateien haben fehlende Pflicht-Metadaten. Du kannst sie trotzdem hochladen, aber sie bleiben markiert, bis die fehlenden Werte ergänzt wurden.",
+      "confirmDelete": "Dieses Asset löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "confirmDeleteFromCollection": "Dieses Asset aus der Sammlung entfernen?"
     },
     "references": {
       "duplicateReference": "Dieser Inhalt wurde bereits zu den Referenzen hinzugefügt.",

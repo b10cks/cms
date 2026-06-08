@@ -382,8 +382,14 @@
       "pageTitle": "Asset Library",
       "addAsset": "Add Asset",
       "addAssetDescription": "Select an asset from your library",
+      "addAssetDescriptionWithLimit": "Select up to {max} assets from your library",
       "allAssets": "All Assets",
       "selectAsset": "Select an Asset",
+      "selectAssets": "Select Assets",
+      "replaceAsset": "Replace Asset",
+      "removeAsset": "Remove Asset",
+      "deleteAsset": "Delete Asset",
+      "assetsCount": "{current} of {max} assets",
       "noAssetsFound": "No Assets found",
       "noAssetsFoundDescription": "Your asset library is empty. Upload your first asset to get started.",
       "asset": "Asset",
@@ -2936,6 +2942,7 @@
   "actions": {
     "open": "Open",
     "addMore": "Add More",
+    "addMoreAmount": "Add {remaining} more",
     "loadMore": "Load more",
     "forceDelete": "Force delete",
     "forceSave": "Save anyway",
@@ -3017,7 +3024,12 @@
       "account": "Account"
     },
     "assets": {
-      "upload": "Upload asset"
+      "upload": "Upload asset",
+      "replace": "Replace",
+      "edit": "Edit",
+      "remove": "Remove",
+      "delete": "Delete",
+      "reorder": "Reorder"
     },
     "assetFolders": {
       "create": "Create new folder"
@@ -3507,7 +3519,9 @@
     "assets": {
       "deleteConfirmation": "Delete \"{name}\"? This cannot be undone.",
       "forceDeleteConfirmation": "\"{name}\" is still linked in {count} contents. Force delete removes the asset file, but existing content references will remain.",
-      "uploadRequirementsConfirm": "Some files are missing required metadata. You can still upload them, but they will stay flagged until the missing values are filled in."
+      "uploadRequirementsConfirm": "Some files are missing required metadata. You can still upload them, but they will stay flagged until the missing values are filled in.",
+      "confirmDelete": "Delete this asset? This cannot be undone.",
+      "confirmDeleteFromCollection": "Remove this asset from the collection?"
     },
     "references": {
       "duplicateReference": "This content has already been added to the references.",

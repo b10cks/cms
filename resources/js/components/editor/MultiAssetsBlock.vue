@@ -5,6 +5,7 @@ import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
+import { ScrollArea } from '~/components/ui/scroll-area'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 import useSpaceSettings from '~/composables/useSpaceSettings'
 import type { AssetResource } from '~/types/assets'
@@ -352,7 +353,7 @@ const handleFolderChange = (folderId: string | null) => {
           </DialogTitle>
         </DialogHeader>
 
-        <div class="flex-1">
+        <ScrollArea class="flex-1">
           <AssetGrid
             :space-id="spaceId"
             :initial-folder-id="initialFolderId"
@@ -360,7 +361,7 @@ const handleFolderChange = (folderId: string | null) => {
             @asset-select="handleAssetSelectForReplace"
             @folder-change="handleFolderChange"
           />
-        </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
 
