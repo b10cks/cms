@@ -717,7 +717,7 @@ provide('focusFirstValidationError', focusFirstInvalidField)
     >
       <TabsContent
         value="edit"
-        :class="['p-4', showPreview ? '' : 'mx-auto max-w-4xl', showAi ? 'pb-52' : '']"
+        :class="['p-4', showPreview ? '' : 'mx-auto max-w-4xl', showAi ? 'pb-52' : 'pb-8']"
       >
         <EditorComponent
           v-if="content.block"
@@ -736,7 +736,7 @@ provide('focusFirstValidationError', focusFirstInvalidField)
         <div
           :class="[
             showPreview ? 'inset-x-4' : 'w-full max-w-4xl',
-            'py-4 overflow-clip absolute bottom-0 flex flex-col items-center gap-3 z-10',
+            'py-2 overflow-clip absolute bottom-0 flex flex-col items-center gap-3 z-10',
           ]"
         >
           <TransitionGroup
