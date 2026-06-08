@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.8-d05190f] — 2026-6-8
+
+- ⬆️ Bump versions
+- 🚸 Improve multi assets UX
+- 🚸 Add padding to prevent AI overlap
+
 ## [v2026.6.7-5b653ea] — 2026-6-7
 
 - 🚸 Improve Link handling for emails
