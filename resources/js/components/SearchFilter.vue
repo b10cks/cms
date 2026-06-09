@@ -62,6 +62,9 @@ const emit = defineEmits<{
 // Initialize i18n
 const { $t } = useI18n()
 
+// Operators that carry no additional value — the operator itself is the complete filter
+const NO_VALUE_OPERATORS = ['null', '!null', 'empty', '!empty']
+
 // State variables
 const inputValue = ref('')
 const dropdownOpen = ref(false)
@@ -228,7 +231,7 @@ const handleOperatorSelect = (operator: FilterableOperator): void => {
   selectedOperator.value = operator
   inputValue.value = ''
 
-  if (['null', '!null', 'empty', '!empty'].includes(String(operator.value))) {
+  if (NO_VALUE_OPERATORS.includes(String(operator.value))) {
     handleValueSelect()
     return
   }
@@ -272,11 +275,10 @@ const handleValueSelect = (item?: FilterableItem): void => {
     newFilter.valueLabel = inputValue.value
   }
 
-  if (
-    newFilter.value !== undefined &&
-    newFilter.value !== null &&
-    String(newFilter.value).trim() !== ''
-  ) {
+  const isNoValueOperator = newFilter.operator && NO_VALUE_OPERATORS.includes(newFilter.operator)
+  const hasValue = newFilter.value !== undefined && newFilter.value !== null && String(newFilter.value).trim() !== ''
+
+  if (isNoValueOperator || hasValue) {
     if (editingFilterIndex.value === null) {
       activeFilters.value.push(newFilter)
       announceToScreenReader(

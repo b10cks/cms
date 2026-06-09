@@ -172,7 +172,8 @@
         "active": "Active",
         "editEntry": "Edit",
         "deleteEntry": "Delete",
-        "addEntry": "Add entry"
+        "addEntry": "Add entry",
+        "missingTranslation": "Missing translation"
       },
       "translation": {
         "action": "Translate missing entries",
@@ -2878,6 +2879,10 @@
       "paramValue": "Value",
       "paramKeyPlaceholder": "e.g. utm_source",
       "paramValuePlaceholder": "e.g. newsletter"
+    },
+    "common": {
+      "is": "is",
+      "isNot": "is not"
     }
   },
   "notifications": {

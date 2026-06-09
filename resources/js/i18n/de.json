@@ -167,7 +167,8 @@
         "active": "Aktiv",
         "editEntry": "Bearbeiten",
         "deleteEntry": "Löschen",
-        "addEntry": "Eintrag hinzufügen"
+        "addEntry": "Eintrag hinzufügen",
+        "missingTranslation": "Fehlende Übersetzung"
       },
       "translation": {
         "action": "Fehlende Einträge übersetzen",
@@ -2854,6 +2855,10 @@
       "paramValue": "Wert",
       "paramKeyPlaceholder": "z. B. utm_source",
       "paramValuePlaceholder": "z. B. newsletter"
+    },
+    "common": {
+      "is": "ist",
+      "isNot": "ist nicht"
     }
   },
   "notifications": {

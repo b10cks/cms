@@ -83,16 +83,21 @@ const possibleFilters = computed(() => {
     { id: 'value', label: 'Value' },
   ]
 
-  // if (selectedDimension.value !== 'default') {
-  //   result.push({
-  //     id: `dimension.${selectedDimension.value}`,
-  //     label: 'translated',
-  //     operators: [
-  //       { value: 'empty', label: $t('labels.common.is') },
-  //       { value: '!empty', label: $t('labels.common.isNot') },
-  //     ]
-  //   })
-  // }
+  if (selectedDimension.value !== 'default') {
+    const dimensionLabel =
+      dimensionTabs.value.find((tab) => tab.key === selectedDimension.value)?.label ||
+      selectedDimension.value
+
+    result.push({
+      // PHP converts `dimension.en` → `dimension_en` in query strings, so use underscore
+      id: `dimension_${selectedDimension.value}`,
+      label: `${dimensionLabel} — ${$t('labels.dataEntries.fields.missingTranslation')}`,
+      operators: [
+        { value: 'empty', label: $t('labels.common.is') },
+        { value: '!empty', label: $t('labels.common.isNot') },
+      ],
+    })
+  }
 
   return result
 })
@@ -162,6 +167,14 @@ const newEntryData = ref<CreateDataEntryPayload>({
 const handleDimensionChange = (dimension: string) => {
   selectedDimension.value = dimension
   clearEditingState()
+  // Clear dimension filters that no longer apply to the newly selected dimension
+  const newFilters: Record<string, unknown> = {}
+  for (const [key, val] of Object.entries(filters.value)) {
+    if (!key.startsWith('dimension_')) {
+      newFilters[key] = val
+    }
+  }
+  filters.value = newFilters
 }
 
 const handleEditModeChange = (mode: 'grid' | 'single') => {
