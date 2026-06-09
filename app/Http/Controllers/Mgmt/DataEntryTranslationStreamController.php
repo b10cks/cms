@@ -72,9 +72,9 @@ class DataEntryTranslationStreamController extends Controller
             ->get();
 
         $candidates = $entries
-            ->filter(function (DataEntry $entry) use ($targetDimension): bool {
+            ->filter(function (DataEntry $entry) use ($targetDimension, $sourceLocale): bool {
                 $dimensions = is_array($entry->dimensions) ? $entry->dimensions : [];
-                $sourceValue = trim((string) ($entry->value ?? ''));
+                $sourceValue = trim((string) ($dimensions[$sourceLocale] ?? $entry->value ?? ''));
                 $targetValue = trim((string) ($dimensions[$targetDimension] ?? ''));
 
                 return $sourceValue !== '' && $targetValue === '';
@@ -152,7 +152,8 @@ class DataEntryTranslationStreamController extends Controller
                         $fields = [];
 
                         foreach ($chunk as $entry) {
-                            $fields[$entry->id] = (string) ($entry->value ?? '');
+                            $dimensions = is_array($entry->dimensions) ? $entry->dimensions : [];
+                            $fields[$entry->key] = trim((string) ($dimensions[$sourceLocale] ?? $entry->value ?? ''));
                         }
 
                         $emit(StreamEvent::status(sprintf(
@@ -181,7 +182,8 @@ class DataEntryTranslationStreamController extends Controller
                             ]);
                         }
 
-                        $decoded = json_decode($result, true);
+                        $cleaned = trim(preg_replace('/^```(?:json)?\s*/i', '', preg_replace('/\s*```\s*$/i', '', trim($result))));
+                        $decoded = json_decode($cleaned, true);
 
                         if (! is_array($decoded)) {
                             throw ValidationException::withMessages([
@@ -199,7 +201,7 @@ class DataEntryTranslationStreamController extends Controller
                         ): void {
                             foreach ($chunk as $entry) {
                                 $processedCount++;
-                                $translatedValue = $decoded[$entry->id] ?? null;
+                                $translatedValue = $decoded[$entry->key] ?? null;
 
                                 if (! is_string($translatedValue) || trim($translatedValue) === '') {
                                     $skippedCount++;

@@ -25,9 +25,12 @@ import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Textarea } from '~/components/ui/textarea'
+import { useQueryClient } from '@tanstack/vue-query'
+
 import { useDataEntries } from '~/composables/useDataEntries'
 import { useDataEntryTranslation } from '~/composables/useDataEntryTranslation'
 import { useDataSources } from '~/composables/useDataSources'
+import { queryKeys } from '~/composables/useQueryClient'
 import type {
   CreateDataEntryPayload,
   DataEntryResource,
@@ -37,6 +40,7 @@ import type {
 const route = useRoute()
 const { alert } = useAlertDialog()
 const { $t, t } = useI18n()
+const queryClient = useQueryClient()
 const spaceId = computed(() => route.params.space as string)
 const dataSourceId = computed(() => route.params.dataSourceId as string)
 
@@ -430,6 +434,10 @@ const handleTranslateMissingDimensions = async () => {
     },
     onDone: async (_, data) => {
       toast.dismiss(loadingToast)
+
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.dataEntries(spaceId, dataSourceId).lists(),
+      })
 
       const result = data as {
         translated_count: number
