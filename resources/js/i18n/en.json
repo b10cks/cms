@@ -710,6 +710,9 @@
       "actions": {
         "view": "View",
         "edit": "Edit",
+        "publish": "Publish",
+        "publishWithMessage": "Publish with Message",
+        "schedule": "Schedule",
         "rename": "Rename",
         "newSubItem": "New sub item",
         "copy": "Copy",

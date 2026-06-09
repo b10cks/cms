@@ -11,6 +11,7 @@ import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import CreateContentDialog from '~/components/content/CreateContentDialog.vue'
+import PublishDialog from '~/components/content/PublishDialog.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
@@ -77,9 +78,10 @@ const { alert } = useAlertDialog()
 const { useSpaceQuery } = useSpaces()
 const { data: selectedSpace } = useSpaceQuery(props.spaceId)
 const { useContentMenuQuery, getChildren, getRootItems } = useContentMenu(props.spaceId)
-const { useTreeOperationsMutation, useUpdateContentMutation } = useContent(props.spaceId)
+const { useTreeOperationsMutation, useUpdateContentMutation, usePublishContentMutation, useScheduleContentMutation } = useContent(props.spaceId)
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageContent = computed(() => access.hasAbility('content.manage'))
+const canPublishContent = computed(() => access.hasAbility('content.publish'))
 const { settings } = useSpaceSettings(props.spaceId)
 const {
   hasClipboardItem,
@@ -95,6 +97,8 @@ const {
 } = useContentTreeClipboard()
 const { mutateAsync: runTreeOperations } = useTreeOperationsMutation()
 const { mutate: updateContent } = useUpdateContentMutation()
+const { mutateAsync: publishContent, isPending: isPublishing } = usePublishContentMutation()
+const { mutateAsync: scheduleContent, isPending: isScheduling } = useScheduleContentMutation()
 
 const { isLoading, error, data } = useContentMenuQuery()
 const rootItems = computed(() => getRootItems(data.value) || [])
@@ -105,6 +109,9 @@ const selectedItemIds = ref<string[]>([])
 const currentlyEditingId = ref<string | null>(null)
 const showCreateDialog = ref(false)
 const createParentId = ref<string | null>(null)
+const publishDialogOpen = ref(false)
+const publishDialogType = ref<'now' | 'schedule'>('now')
+const publishDialogItem = ref<FlatContentMenuItem | null>(null)
 const activeDropTargetId = ref<string | null>(null)
 const activeDropEdge = ref<Edge | null>(null)
 const rootDropMode = ref<'root' | null>(null)
@@ -817,6 +824,38 @@ const openEdit = async (itemId: string) => {
   await router.push(buildLink(itemId))
 }
 
+const isPublishingAction = computed(() => isPublishing.value || isScheduling.value)
+
+const executePublish = async (item: FlatContentMenuItem) => {
+  await publishContent({ id: item.id, payload: {} })
+}
+
+const openPublishWithMessage = (item: FlatContentMenuItem) => {
+  publishDialogItem.value = item
+  publishDialogType.value = 'now'
+  publishDialogOpen.value = true
+}
+
+const openSchedulePublish = (item: FlatContentMenuItem) => {
+  publishDialogItem.value = item
+  publishDialogType.value = 'schedule'
+  publishDialogOpen.value = true
+}
+
+const handlePublishDialog = async (payload: { message?: string; published_at?: string | null }) => {
+  if (!publishDialogItem.value) return
+  await publishContent({ id: publishDialogItem.value.id, payload })
+  publishDialogOpen.value = false
+  publishDialogItem.value = null
+}
+
+const handleScheduleDialog = async (payload: { message?: string; scheduled_at?: string | null }) => {
+  if (!publishDialogItem.value) return
+  await scheduleContent({ id: publishDialogItem.value.id, payload })
+  publishDialogOpen.value = false
+  publishDialogItem.value = null
+}
+
 const buildItemMenuActions = (item: FlatContentMenuItem): ContentTreeMenuAction[] => {
   const context = resolveMenuContext(item.id)
   const activeClipboardItem = getActiveClipboardItem()
@@ -847,9 +886,32 @@ const buildItemMenuActions = (item: FlatContentMenuItem): ContentTreeMenuAction[
       onSelect: () => openEdit(item.id),
     },
     {
+      id: 'publish',
+      label: t('labels.contentTree.actions.publish') as string,
+      icon: 'send',
+      separatorBefore: true,
+      disabled: !canPublishContent.value || isPublishingAction.value || !!item.pat,
+      onSelect: () => executePublish(item),
+    },
+    {
+      id: 'publish-with-message',
+      label: t('labels.contentTree.actions.publishWithMessage') as string,
+      icon: 'message-square-share',
+      disabled: !canPublishContent.value || isPublishingAction.value || !!item.pat,
+      onSelect: () => openPublishWithMessage(item),
+    },
+    {
+      id: 'schedule',
+      label: t('labels.contentTree.actions.schedule') as string,
+      icon: 'clock-fading',
+      disabled: !canPublishContent.value || isPublishingAction.value || !!item.pat,
+      onSelect: () => openSchedulePublish(item),
+    },
+    {
       id: 'rename',
       label: t('labels.contentTree.actions.rename') as string,
       icon: 'text-cursor-input',
+      separatorBefore: true,
       disabled: !canManageContent.value,
       onSelect: () => openRename(item.id),
     },
@@ -1633,6 +1695,16 @@ onBeforeUnmount(() => {
       :space-id="props.spaceId"
       :parent-id="createParentId"
       :on-submit="handleCreateSubmit"
+    />
+    <PublishDialog
+      v-if="publishDialogItem"
+      :open="publishDialogOpen"
+      :content="publishDialogItem as any"
+      :loading="isPublishingAction"
+      :publish-type="publishDialogType"
+      @update:open="publishDialogOpen = $event"
+      @publish="handlePublishDialog"
+      @schedule="handleScheduleDialog"
     />
   </aside>
 </template>

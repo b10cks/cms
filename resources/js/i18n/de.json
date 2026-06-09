@@ -705,6 +705,9 @@
       "actions": {
         "view": "Ansehen",
         "edit": "Bearbeiten",
+        "publish": "Veröffentlichen",
+        "publishWithMessage": "Mit Nachricht veröffentlichen",
+        "schedule": "Zeitgesteuert veröffentlichen",
         "rename": "Umbenennen",
         "newSubItem": "Neues Unterelement",
         "copy": "Kopieren",
