@@ -74,7 +74,7 @@ interface Props {
   disabled?: boolean
   required?: boolean
   emptyMessage?: string
-  addButtonText?: string
+  addButtonText?: string | null
   showAddButton?: boolean
   showRemoveButton?: boolean
   sortable?: boolean
@@ -472,7 +472,7 @@ const handleKeyPress = (event: KeyboardEvent): void => {
                 @click="addItem"
               >
                 <Icon name="lucide:plus" />
-                <span>{{ String(addButtonText) }}</span>
+                <span v-if="addButtonText">{{ String(addButtonText) }}</span>
               </Button>
             </TableCell>
           </TableRow>

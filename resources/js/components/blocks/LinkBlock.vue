@@ -28,5 +28,11 @@ const emit = defineEmits<{
       :label="$t('labels.blocks.fields.allow_target_blank')"
       @update:model-value="emit('update:item-value', 'allow_target_blank', $event)"
     />
+    <CheckboxField
+      :model-value="value.allow_query_params"
+      name="allow_query_params"
+      :label="$t('labels.blocks.fields.allow_query_params')"
+      @update:model-value="emit('update:item-value', 'allow_query_params', $event)"
+    />
   </div>
 </template>

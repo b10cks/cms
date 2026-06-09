@@ -1046,6 +1046,7 @@
         "asset_link_type": "Allow asset links",
         "email_link_type": "Allow email links",
         "allow_target_blank": "Allow target blank",
+        "allow_query_params": "Allow query params",
         "blockWhitelist": "Allowed blocks",
         "blockWhitelistPlaceholder": "Choose which blocks can go inside this one",
         "blockWhitelistDescription": "Only blocks you select here can be used inside this block. Leave empty to allow all.",
@@ -2867,7 +2868,13 @@
       "recipientPlaceholder": "name{'@'}example.com, other{'@'}example.com",
       "content": "Content",
       "selectContent": "Select content...",
-      "noContentSelected": "No content selected"
+      "noContentSelected": "No content selected",
+      "params": "Query Params",
+      "addParam": "Add Param",
+      "paramKey": "Key",
+      "paramValue": "Value",
+      "paramKeyPlaceholder": "e.g. utm_source",
+      "paramValuePlaceholder": "e.g. newsletter"
     }
   },
   "notifications": {

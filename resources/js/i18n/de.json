@@ -1036,6 +1036,7 @@
         "asset_link_type": "Erlaube Asset-Links",
         "email_link_type": "Erlaube E-Mail-Links",
         "allow_target_blank": "Erlaube Target Blank",
+        "allow_query_params": "Query-Parameter erlauben",
         "blockWhitelist": "Zulässige Blocks",
         "blockWhitelistPlaceholder": "Wähle aus, welche Blocks in diesem enthalten sein können",
         "blockWhitelistDescription": "Nur Blocks, die du hier auswählst, können in diesem Block verwendet werden. Leer lassen, um alle zu erlauben.",
@@ -2843,7 +2844,13 @@
       "recipientPlaceholder": "name{'@'}example.com, andere{'@'}example.com",
       "content": "Inhalt",
       "selectContent": "Inhalt auswählen...",
-      "noContentSelected": "Kein Inhalt ausgewählt"
+      "noContentSelected": "Kein Inhalt ausgewählt",
+      "params": "Query-Parameter",
+      "addParam": "Parameter hinzufügen",
+      "paramKey": "Schlüssel",
+      "paramValue": "Wert",
+      "paramKeyPlaceholder": "z. B. utm_source",
+      "paramValuePlaceholder": "z. B. newsletter"
     }
   },
   "notifications": {

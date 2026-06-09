@@ -30,6 +30,7 @@ defineProps<{
       v-model="value"
       :space-id="spaceId"
       :allow-email="item.email_link_type !== false"
+      :allow-query-params="item.allow_query_params === true"
     />
   </div>
 </template>

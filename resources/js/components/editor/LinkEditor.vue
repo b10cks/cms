@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 
 import ContentPicker from '~/components/editor/ContentPicker.vue'
-import { FormField, InputField, TextField } from '~/components/ui/form'
+import { ArrayInputField, FormField, InputField, TextField } from '~/components/ui/form'
 import {
   Select,
   SelectContent,
@@ -18,6 +18,7 @@ const props = defineProps<{
   spaceId: string
   disabled?: boolean
   allowEmail?: boolean
+  allowQueryParams?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -58,9 +59,7 @@ watch(
 // Computed properties
 const linkTypes = computed(() => [
   { value: 'url', label: t('labels.link.types.url') },
-  ...(props.allowEmail !== false
-    ? [{ value: 'email', label: t('labels.link.types.email') }]
-    : []),
+  ...(props.allowEmail !== false ? [{ value: 'email', label: t('labels.link.types.email') }] : []),
   { value: 'internal', label: t('labels.link.types.internal') },
 ])
 
@@ -134,6 +133,27 @@ const handleRelChange = (rel: string) => {
     updateValue()
   }
 }
+
+const paramsToRows = (params?: Record<string, string>): Record<string, unknown>[] =>
+  Object.entries(params ?? {}).map(([key, value]) => ({ key, value }))
+
+const rowsToParams = (rows: Record<string, unknown>[]): Record<string, string> =>
+  Object.fromEntries(rows.map((r) => [String(r.key), String(r.value)]))
+
+const paramsRows = computed({
+  get: () => {
+    if (localValue.value.type === 'internal' || localValue.value.type === 'url') {
+      return paramsToRows(localValue.value.params)
+    }
+    return []
+  },
+  set: (rows: Record<string, unknown>[]) => {
+    if (localValue.value.type === 'internal' || localValue.value.type === 'url') {
+      localValue.value.params = rows.length ? rowsToParams(rows) : undefined
+      updateValue()
+    }
+  },
+})
 
 const selectContent = (contentId: string) => {
   if (localValue.value.type === 'internal') {
@@ -226,6 +246,29 @@ const getSelectedContentName = () => {
         :placeholder="t('labels.link.relPlaceholder')"
         :disabled="disabled"
         @update:model-value="handleRelChange(String($event))"
+      />
+      <ArrayInputField
+        v-if="allowQueryParams"
+        v-model="paramsRows"
+        name="link-params"
+        :label="t('labels.link.params')"
+        :add-button-text="null"
+        :disabled="disabled"
+        :columns="[
+          {
+            key: 'key',
+            label: t('labels.link.paramKey'),
+            type: 'text',
+            placeholder: t('labels.link.paramKeyPlaceholder'),
+            required: true,
+          },
+          {
+            key: 'value',
+            label: t('labels.link.paramValue'),
+            type: 'text',
+            placeholder: t('labels.link.paramValuePlaceholder'),
+          },
+        ]"
       />
     </template>
     <template v-if="localValue.type === 'email'">
@@ -329,6 +372,29 @@ const getSelectedContentName = () => {
           </SelectContent>
         </Select>
       </FormField>
+      <ArrayInputField
+        v-if="allowQueryParams"
+        v-model="paramsRows"
+        name="link-params"
+        :label="t('labels.link.params')"
+        :add-button-text="null"
+        :disabled="disabled"
+        :columns="[
+          {
+            key: 'key',
+            label: t('labels.link.paramKey'),
+            type: 'text',
+            placeholder: t('labels.link.paramKeyPlaceholder'),
+            required: true,
+          },
+          {
+            key: 'value',
+            label: t('labels.link.paramValue'),
+            type: 'text',
+            placeholder: t('labels.link.paramValuePlaceholder'),
+          },
+        ]"
+      />
     </template>
     <ContentPicker
       v-model:open="showInternalPicker"

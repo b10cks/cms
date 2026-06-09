@@ -90,6 +90,7 @@ interface LinkSchema extends Schema {
   asset_link_type: boolean
   email_link_type: boolean
   allow_target_blank: boolean
+  allow_query_params: boolean
 }
 
 type LinkTarget = '_self' | '_blank' | '_parent' | '_top'
@@ -99,6 +100,7 @@ interface UrlLinkValue {
   url: string
   target?: LinkTarget
   rel?: string
+  params?: Record<string, string>
 }
 
 interface EmailLinkValue {
@@ -115,6 +117,7 @@ interface InternalLinkValue {
   content: string
   anchor?: string
   target?: LinkTarget
+  params?: Record<string, string>
 }
 
 type LinkValue = UrlLinkValue | EmailLinkValue | InternalLinkValue
