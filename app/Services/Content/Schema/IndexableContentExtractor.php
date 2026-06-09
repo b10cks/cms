@@ -48,8 +48,32 @@ class IndexableContentExtractor
                 data_get($node->effectiveValue, 'ogTitle'),
                 data_get($node->effectiveValue, 'ogDescription'),
             ]),
+            'richtext' => $this->extractProseMirrorText($node->effectiveValue),
             default => $this->extractStrings([$node->effectiveValue]),
         };
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function extractProseMirrorText(mixed $node): array
+    {
+        if (!\is_array($node)) {
+            return [];
+        }
+
+        if (($node['type'] ?? null) === 'text' && isset($node['text']) && \is_string($node['text'])) {
+            $clean = trim($node['text']);
+
+            return $clean !== '' ? [$clean] : [];
+        }
+
+        $parts = [];
+        foreach ($node['content'] ?? [] as $child) {
+            $parts = [...$parts, ...$this->extractProseMirrorText($child)];
+        }
+
+        return $parts;
     }
 
     /**
