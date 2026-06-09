@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.10-5f6d2e7] — 2026-6-10
+
+- ✨ Add quick publish action to content tree
+
 ## [v2026.6.9-265a8ed] — 2026-6-9
 
 - ✨ Allow to use params with internal links
