@@ -55,11 +55,11 @@ class ContentSitemapController
             ->whereNotNull('contents.published_version_id')
             ->whereIn('contents.block_id', $blockIds);
 
-        if (!$request->filled('sort')) {
+        if (! $request->filled('sort')) {
             $query->orderBy('contents.full_slug');
         }
 
-        if (!$this->hasExplicitLanguageFilter($request)) {
+        if (! $this->hasExplicitLanguageFilter($request)) {
             $query
                 ->where('contents.language_iso', $space->settings->getDefaultLanguage())
                 ->whereNull('contents.i18n_parent_id');
@@ -70,7 +70,7 @@ class ContentSitemapController
 
         $resolvedContents = $this->resolver->resolveMany(
             $space,
-            $query->get()->map(fn(Content $content): array => [
+            $query->get()->map(fn (Content $content): array => [
                 'content' => $content,
                 'target_language' => $requestedLanguage,
             ]),
@@ -78,7 +78,7 @@ class ContentSitemapController
         );
 
         $items = $resolvedContents
-            ->map(fn(ResolvedContent $resolved): ?array => $this->transformResolvedContent($space, $resolved))
+            ->map(fn (ResolvedContent $resolved): ?array => $this->transformResolvedContent($space, $resolved))
             ->filter()
             ->values();
 
@@ -95,7 +95,6 @@ class ContentSitemapController
     private function transformResolvedContent($space, ResolvedContent $resolved): ?array
     {
         $row = $resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent;
-        $row->loadMissing('block');
 
         $effectiveContent = $this->linkHandler->replaceContentLinks(
             $resolved->effectiveContent,
@@ -103,7 +102,7 @@ class ContentSitemapController
         );
         $meta = $this->sitemapContentService->extractNormalizedMeta($space, $resolved, $effectiveContent);
 
-        if (!$this->sitemapContentService->isIndexable($meta)) {
+        if (! $this->sitemapContentService->isIndexable($meta)) {
             return null;
         }
 

@@ -13,8 +13,7 @@ class ContentI18nResolver
     public function __construct(
         private readonly ContentI18nService $contentI18nService,
         private readonly ContentSchemaValueMerger $contentSchemaValueMerger,
-    ) {
-    }
+    ) {}
 
     public function resolve(
         Space $space,
@@ -28,7 +27,7 @@ class ContentI18nResolver
                 [
                     'content' => $content,
                     'target_language' => $targetLanguage,
-                ]
+                ],
             ]),
             $versionScope,
         )->first();
@@ -61,7 +60,7 @@ class ContentI18nResolver
         $canonicalsById = $this->resolveCanonicals($contents);
         $familiesByCanonicalId = $this->resolveFamilies($canonicalsById);
         $effectiveModesByCanonicalId = $canonicalsById->mapWithKeys(
-            fn(Content $canonical, string $canonicalId): array => [
+            fn (Content $canonical, string $canonicalId): array => [
                 $canonicalId => $this->resolveEffectiveModeForCanonical($space, $canonical),
             ]
         );
@@ -85,7 +84,7 @@ class ContentI18nResolver
                 ? $content
                 : $contentByLanguage->get($canonical->language_iso, $canonical);
 
-            if ($resolvedCanonical->relationLoaded('block') && !$canonical->relationLoaded('block')) {
+            if ($resolvedCanonical->relationLoaded('block') && ! $canonical->relationLoaded('block')) {
                 $canonical->setRelation('block', $resolvedCanonical->getRelation('block'));
             }
 
@@ -118,7 +117,6 @@ class ContentI18nResolver
             $effectiveMode = $effectiveModesByCanonicalId->get($canonical->id, $space->settings->getI18nMode());
             $targetContent = $this->contentI18nService->findLanguageContent($family, $resolvedCanonical, $requestedLanguage);
             $targetVersion = $targetContent ? $versionsByContentId->get($targetContent->id) : null;
-            $resolvedCanonical->loadMissing('block');
             $blockSchema = $resolvedCanonical->block?->schema?->toArray() ?? [];
 
             $resolvedLanguage = $requestedLanguage;
@@ -210,7 +208,7 @@ class ContentI18nResolver
         $visited = [$requestedLanguage => true];
         $fallbackLanguage = $space->settings->getFallbackLanguage($requestedLanguage);
 
-        while ($fallbackLanguage !== null && !isset($visited[$fallbackLanguage])) {
+        while ($fallbackLanguage !== null && ! isset($visited[$fallbackLanguage])) {
             $visited[$fallbackLanguage] = true;
             $content = $this->contentI18nService->findLanguageContent($family, $canonical, $fallbackLanguage);
 
@@ -263,16 +261,16 @@ class ContentI18nResolver
     private function resolveCanonicals(Collection $contents): Collection
     {
         $canonicalIds = $contents
-            ->map(fn(Content $content): string => $this->contentI18nService->getCanonicalId($content))
+            ->map(fn (Content $content): string => $this->contentI18nService->getCanonicalId($content))
             ->unique()
             ->values();
 
         $alreadyLoadedCanonicals = $contents
-            ->filter(fn(Content $content): bool => $content->i18n_parent_id === null)
+            ->filter(fn (Content $content): bool => $content->i18n_parent_id === null)
             ->keyBy('id');
 
         $missingCanonicalIds = $canonicalIds
-            ->reject(fn(string $canonicalId): bool => $alreadyLoadedCanonicals->has($canonicalId))
+            ->reject(fn (string $canonicalId): bool => $alreadyLoadedCanonicals->has($canonicalId))
             ->values();
 
         $loadedCanonicals = $missingCanonicalIds->isEmpty()
@@ -280,6 +278,7 @@ class ContentI18nResolver
             : Content::query()
                 ->whereIn('id', $missingCanonicalIds)
                 ->whereNull('deleted_at')
+                ->with('block')
                 ->get()
                 ->keyBy('id');
 
@@ -300,8 +299,9 @@ class ContentI18nResolver
                     ->orWhereIn('i18n_parent_id', $canonicalIds);
             })
             ->whereNull('deleted_at')
+            ->with('block')
             ->get()
-            ->groupBy(fn(Content $content): string => $content->i18n_parent_id ?: $content->id);
+            ->groupBy(fn (Content $content): string => $content->i18n_parent_id ?: $content->id);
     }
 
     private function resolveEffectiveModeForCanonical(Space $space, Content $canonical): string
@@ -317,7 +317,7 @@ class ContentI18nResolver
     {
         $familyContents = new \Illuminate\Database\Eloquent\Collection(
             $familiesByCanonicalId
-                ->flatMap(fn(Collection $family): Collection => $family)
+                ->flatMap(fn (Collection $family): Collection => $family)
                 ->keyBy('id')
                 ->all()
         );
@@ -334,7 +334,7 @@ class ContentI18nResolver
             ]);
 
             return $familyContents->mapWithKeys(
-                fn(Content $content): array => [$content->id => $content->published_version]
+                fn (Content $content): array => [$content->id => $content->published_version]
             );
         }
 
@@ -346,7 +346,7 @@ class ContentI18nResolver
             ]);
 
             return $familyContents->mapWithKeys(
-                fn(Content $content): array => [$content->id => $content->current_version]
+                fn (Content $content): array => [$content->id => $content->current_version]
             );
         }
 
@@ -363,8 +363,7 @@ class ContentI18nResolver
         ?ContentVersion $targetVersion,
         array $blockSchema,
         ?Content $selectedContent = null,
-    ): array
-    {
+    ): array {
         $contentChain = $fallbackChain
             ->pluck('version')
             ->filter()
@@ -431,7 +430,7 @@ class ContentI18nResolver
             ->pluck('version')
             ->filter()
             ->reverse()
-            ->map(fn(ContentVersion $version): Collection => $version->{$property} ?? collect())
+            ->map(fn (ContentVersion $version): Collection => $version->{$property} ?? collect())
             ->pipe(function (Collection $collections) use ($target): Collection {
                 if ($target) {
                     $collections->push($target);
@@ -440,7 +439,7 @@ class ContentI18nResolver
                 return $collections;
             })
             ->reduce(
-                fn(Collection $merged, Collection $items): Collection => $merged->merge($items),
+                fn (Collection $merged, Collection $items): Collection => $merged->merge($items),
                 collect()
             )
             ->filter()

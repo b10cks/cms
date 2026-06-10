@@ -7,12 +7,15 @@ use Illuminate\Support\Collection;
 
 class SitemapContentService
 {
+    /** @var array<string, Collection<string, string>> */
+    private array $configuredMetaPathsCache = [];
+
     /**
      * @return Collection<string, string>
      */
     public function configuredMetaPathsByBlock(Space $space): Collection
     {
-        return collect($space->settings->getSitemapTypes())
+        return $this->configuredMetaPathsCache[$space->id] ??= collect($space->settings->getSitemapTypes())
             ->filter(fn (array $type): bool => filled($type['block'] ?? null) && filled($type['path'] ?? null))
             ->mapWithKeys(fn (array $type): array => [(string) $type['block'] => (string) $type['path']]);
     }
