@@ -2829,6 +2829,10 @@
         "mergeCells": "Merge Cells",
         "splitCell": "Split Cell",
         "toggleHeaderCell": "Toggle Header Cell"
+      },
+      "brokenDocument": {
+        "title": "Document appears corrupted and could not be loaded.",
+        "reset": "Reset to empty document"
       }
     },
     "references": {

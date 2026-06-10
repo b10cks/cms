@@ -60,6 +60,15 @@ const { t } = useI18n()
 const contentPickerOpen = ref(false)
 const linkInSelection = ref<InternalLinkAttrs | null>(null)
 const isApplyingExternalContent = ref(false)
+const isBroken = ref(false)
+
+const emptyDoc = { type: 'doc', content: [{ type: 'paragraph', content: [] }] }
+
+const isValidDoc = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' &&
+  value !== null &&
+  !Array.isArray(value) &&
+  (value as Record<string, unknown>).type === 'doc'
 
 const getHeadingLabel = (level: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'): string => {
   if (level === 'p') return t('labels.tiptap.headings.paragraph')
@@ -174,14 +183,36 @@ watch(
   { immediate: true }
 )
 
+const resetDocument = () => {
+  if (!editor.value) return
+  isApplyingExternalContent.value = true
+  editor.value.commands.setContent(emptyDoc)
+  isBroken.value = false
+  nextTick(() => {
+    isApplyingExternalContent.value = false
+    emit('update:modelValue', emptyDoc as Record<string, unknown>)
+  })
+}
+
 watch(
   () => props.modelValue,
   (newValue) => {
     if (!editor.value) return
+
+    if (!isValidDoc(newValue)) {
+      isBroken.value = true
+      return
+    }
+
     const isSame = JSON.stringify(editor.value.getJSON()) === JSON.stringify(newValue)
     if (!isSame) {
       isApplyingExternalContent.value = true
-      editor.value.commands.setContent(newValue)
+      try {
+        editor.value.commands.setContent(newValue)
+        isBroken.value = false
+      } catch {
+        isBroken.value = true
+      }
       nextTick(() => {
         isApplyingExternalContent.value = false
       })
@@ -199,7 +230,7 @@ onBeforeUnmount(() => {
   <div class="flex flex-col rounded border border-input bg-surface">
     <div
       v-if="!props.disabled"
-      class="flex flex-wrap gap-1 border-b border-input p-2"
+      class="sticky top-0 z-10 flex flex-wrap gap-1 rounded-t border-b border-input bg-surface p-2"
     >
       <Button
         type="button"
@@ -595,6 +626,24 @@ onBeforeUnmount(() => {
       </Button>
     </div>
 
+    <div
+      v-if="isBroken"
+      class="flex items-center gap-3 border-b border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+    >
+      <Icon
+        name="lucide:alert-triangle"
+        class="shrink-0"
+      />
+      <span class="flex-1">{{ $t('labels.tiptap.brokenDocument.title') }}</span>
+      <Button
+        type="button"
+        size="xs"
+        variant="destructive"
+        @click="resetDocument"
+      >
+        {{ $t('labels.tiptap.brokenDocument.reset') }}
+      </Button>
+    </div>
     <EditorContent
       :editor="editor"
       :tabindex="props.disabled ? -1 : undefined"

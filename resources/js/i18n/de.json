@@ -2805,6 +2805,10 @@
         "mergeCells": "Zellen zusammenführen",
         "splitCell": "Zelle trennen",
         "toggleHeaderCell": "Kopfzelle umschalten"
+      },
+      "brokenDocument": {
+        "title": "Das Dokument scheint beschädigt zu sein und konnte nicht geladen werden.",
+        "reset": "Auf leeres Dokument zurücksetzen"
       }
     },
     "references": {

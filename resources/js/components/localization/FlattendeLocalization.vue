@@ -436,10 +436,8 @@ const buildRichTextTranslationBase = (
     const currentText = getValueAtPath(currentDocument, segment.path)
     if (isNonEmptyString(currentText) && currentText !== segment.text) {
       setValueAtPath(nextDocument, segment.path, currentText)
-      return
     }
-
-    setValueAtPath(nextDocument, segment.path, '')
+    // untranslated segments retain original text from the clone
   })
 
   return nextDocument
@@ -814,21 +812,17 @@ const buildTranslationUnits = (): TranslationUnit[] => {
 
     if (normalizedType === 'richtext') {
       const originalDocument = normalizeRichTextValue(field.originalValue)
-      const translatedDocument = buildRichTextTranslationBase(
-        field.originalValue,
-        field.translatedValue
-      )
-      const translatedSegments = new Map(
-        collectRichTextSegments(translatedDocument).map(
-          (segment) => [JSON.stringify(segment.path), segment.text] as const
-        )
+      const currentTranslatedDoc = normalizeRichTextValue(
+        field.translatedValue as Record<string, unknown>
       )
 
       collectRichTextSegments(originalDocument).forEach((segment) => {
-        const translatedText = translatedSegments.get(JSON.stringify(segment.path))
-        if (!isNonEmptyString(segment.text) || isNonEmptyString(translatedText)) {
-          return
-        }
+        // Skip whitespace-only source segments
+        if (!isNonEmptyString(segment.text) || !segment.text.trim()) return
+
+        const translatedText = getValueAtPath(currentTranslatedDoc, segment.path)
+        // Skip if already genuinely translated (non-empty and different from source)
+        if (isNonEmptyString(translatedText) && (translatedText as string) !== segment.text) return
 
         units.push({
           id: nextUnitId(),
