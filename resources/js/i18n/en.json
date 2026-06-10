@@ -190,6 +190,40 @@
         "title": "Delete this entry?",
         "description": "This action can't be undone.",
         "confirmText": "Delete it"
+      },
+      "exportDialog": {
+        "title": "Export Data Entries",
+        "description": "Download all entries for this data source in your preferred format.",
+        "formatLabel": "Export Format"
+      },
+      "importDialog": {
+        "title": "Import Data Entries",
+        "description": "Upload a file to create or update data entries in bulk.",
+        "supportedFormats": "Supported formats: JSON, CSV, Excel, YAML",
+        "selectFileError": "Please select a file to import.",
+        "summaryTitle": "Import Summary",
+        "summaryDescription": "Review the data entries that were imported, changed, or skipped.",
+        "importMode": {
+          "label": "Import Mode",
+          "addition": "Add / Update",
+          "additionDescription": "Create new entries and update existing ones. Does not remove any existing entries.",
+          "replacement": "Replace All",
+          "replacementDescription": "Import replaces all existing entries. Entries not in the file will be deleted.",
+          "replacementWarning": "All entries not present in the imported file will be permanently deleted."
+        },
+        "summary": {
+          "success": "Successful",
+          "changes": "Changes",
+          "deleted": "Deleted",
+          "errors": "Errors"
+        },
+        "modifiedEntries": "Modified Entries",
+        "deletedEntries": "Deleted Entries",
+        "ignoredFields": "Ignored Fields",
+        "errorsTitle": "Import Errors",
+        "rowLabel": "Row {row}",
+        "changeCount": "{count} change(s)",
+        "emptyValue": "empty"
       }
     },
     "assetTags": {
@@ -3412,7 +3446,10 @@
       "batchUpdateError": "Failed to batch update entries: {error}",
       "translationSuccess": "Translated {translated} of {total} missing entries for {dimension}",
       "translationNoop": "No missing entries found for {dimension}",
-      "translationError": "Failed to translate missing entries: {error}"
+      "translationError": "Failed to translate missing entries: {error}",
+      "exportError": "Failed to export data entries: {error}",
+      "importSuccess": "Data entries imported successfully",
+      "importError": "Failed to import data entries: {error}"
     },
     "dataSources": {
       "createSuccess": "Data source \"{name}\" created successfully",

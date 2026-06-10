@@ -185,6 +185,40 @@
         "title": "Diesen Eintrag löschen?",
         "description": "Diese Aktion kann nicht rückgängig gemacht werden.",
         "confirmText": "Löschen"
+      },
+      "exportDialog": {
+        "title": "Dateneinträge exportieren",
+        "description": "Alle Einträge dieser Datenquelle im gewünschten Format herunterladen.",
+        "formatLabel": "Exportformat"
+      },
+      "importDialog": {
+        "title": "Dateneinträge importieren",
+        "description": "Eine Datei hochladen, um Dateneinträge in großen Mengen zu erstellen oder zu aktualisieren.",
+        "supportedFormats": "Unterstützte Formate: JSON, CSV, Excel, YAML",
+        "selectFileError": "Bitte wählen Sie eine Datei zum Importieren aus.",
+        "summaryTitle": "Importzusammenfassung",
+        "summaryDescription": "Prüfen Sie die importierten, geänderten oder übersprungenen Dateneinträge.",
+        "importMode": {
+          "label": "Importmodus",
+          "addition": "Hinzufügen / Aktualisieren",
+          "additionDescription": "Neue Einträge erstellen und bestehende aktualisieren. Entfernt keine vorhandenen Einträge.",
+          "replacement": "Alle ersetzen",
+          "replacementDescription": "Import ersetzt alle vorhandenen Einträge. Einträge, die nicht in der Datei vorhanden sind, werden gelöscht.",
+          "replacementWarning": "Alle Einträge, die nicht in der importierten Datei vorhanden sind, werden dauerhaft gelöscht."
+        },
+        "summary": {
+          "success": "Erfolgreich",
+          "changes": "Änderungen",
+          "deleted": "Gelöscht",
+          "errors": "Fehler"
+        },
+        "modifiedEntries": "Geänderte Einträge",
+        "deletedEntries": "Gelöschte Einträge",
+        "ignoredFields": "Ignorierte Felder",
+        "errorsTitle": "Importfehler",
+        "rowLabel": "Zeile {row}",
+        "changeCount": "{count} Änderung(en)",
+        "emptyValue": "leer"
       }
     },
     "assetTags": {
@@ -3365,7 +3399,10 @@
       "batchUpdateError": "Fehler beim Batch-Aktualisieren von Einträgen: {error}",
       "translationSuccess": "{translated} von {total} fehlenden Einträgen für {dimension} wurden übersetzt",
       "translationNoop": "Keine fehlenden Einträge für {dimension} gefunden",
-      "translationError": "Fehler beim Übersetzen fehlender Einträge: {error}"
+      "translationError": "Fehler beim Übersetzen fehlender Einträge: {error}",
+      "exportError": "Fehler beim Exportieren von Dateneinträgen: {error}",
+      "importSuccess": "Dateneinträge erfolgreich importiert",
+      "importError": "Fehler beim Importieren von Dateneinträgen: {error}"
     },
     "dataSources": {
       "createSuccess": "Datenquelle \"{name}\" erfolgreich erstellt",

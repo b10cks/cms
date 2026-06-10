@@ -128,8 +128,9 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
               } as FlatContentMenuItem)
 
           if (!item) return
+          const targetId = content.i18n_parent_id ?? content.id
           const newContentTree = { ...contentTree }
-          newContentTree[content.id] = item
+          newContentTree[targetId] = item
           queryClient.setQueryData(queryKeys.contentMenu(spaceId).all(), newContentTree)
         })
     } catch {

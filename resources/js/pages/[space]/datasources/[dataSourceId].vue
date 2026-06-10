@@ -27,6 +27,8 @@ import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Textarea } from '~/components/ui/textarea'
 import { useQueryClient } from '@tanstack/vue-query'
 
+import ExportDataEntriesDialog from '~/components/datasources/ExportDataEntriesDialog.vue'
+import ImportDataEntriesDialog from '~/components/datasources/ImportDataEntriesDialog.vue'
 import { useDataEntries } from '~/composables/useDataEntries'
 import { useDataEntryTranslation } from '~/composables/useDataEntryTranslation'
 import { useDataSources } from '~/composables/useDataSources'
@@ -50,6 +52,9 @@ const { data: dataSource, isLoading: isLoadingDataSource } = useDataSourceQuery(
 useSeoMeta({
   title: computed(() => dataSource.value?.name || $t('labels.datasets.title')),
 })
+
+const showExportDialog = ref(false)
+const showImportDialog = ref(false)
 
 const {
   useDataEntriesQuery,
@@ -896,4 +901,32 @@ const handleTranslateMissingDimensions = async () => {
       </div>
     </div>
   </div>
+
+  <ExportDataEntriesDialog
+    v-model:open="showExportDialog"
+    :space-id="spaceId"
+    :data-source-id="dataSourceId"
+  />
+
+  <ImportDataEntriesDialog
+    v-model:open="showImportDialog"
+    :space-id="spaceId"
+    :data-source-id="dataSourceId"
+  />
+
+  <Teleport
+    defer
+    to="#appHeaderActions"
+  >
+    <div class="flex gap-2">
+      <Button @click="showImportDialog = true">
+        <Icon name="lucide:upload" />
+        {{ $t('labels.assets.import') }}
+      </Button>
+      <Button @click="showExportDialog = true">
+        <Icon name="lucide:download" />
+        {{ $t('labels.assets.export') }}
+      </Button>
+    </div>
+  </Teleport>
 </template>

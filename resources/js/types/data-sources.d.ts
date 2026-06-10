@@ -72,3 +72,27 @@ export interface DataEntryQueryParams {
   page?: number
   per_page?: number
 }
+
+export type DataEntryImportExportFormat = 'csv' | 'excel' | 'json' | 'yaml'
+
+export type DataEntryImportMode = 'addition' | 'replacement'
+
+export interface DataEntryChange {
+  field: string
+  old: unknown
+  new: unknown
+}
+
+export interface DataEntryImportResult {
+  successes: Array<{ id: string; key: string }>
+  changes: Array<{ id: string; key: string; changes: DataEntryChange[] }>
+  ignored_fields: string[]
+  errors: Array<{ row?: number; id?: string; message: string }>
+  deleted: Array<{ id: string; key: string }>
+  summary: {
+    total_success: number
+    total_changes: number
+    total_errors: number
+    total_deleted: number
+  }
+}

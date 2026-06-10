@@ -5,6 +5,9 @@ import { api } from '~/api'
 import type { ApiResponse } from '~/types'
 import type {
   CreateDataEntryPayload,
+  DataEntryImportExportFormat,
+  DataEntryImportMode,
+  DataEntryImportResult,
   DataEntryQueryParams,
   DataEntryResource,
   UpdateDataEntryPayload,
@@ -181,6 +184,45 @@ export function useDataEntries(spaceId: MaybeRef<string>, dataSourceId: MaybeRef
     })
   }
 
+  const useExportDataEntriesMutation = () => {
+    return useMutation({
+      mutationFn: async (params: { as: DataEntryImportExportFormat }) => {
+        return spaceAPI.value.dataSources.exportEntries(toValue(dataSourceId), params)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.dataEntries.exportError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
+  const useImportDataEntriesMutation = () => {
+    return useMutation({
+      mutationFn: async ({ file, mode }: { file: File; mode: DataEntryImportMode }) => {
+        return spaceAPI.value.dataSources.importEntries(toValue(dataSourceId), file, mode)
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dataEntries(spaceId, dataSourceId).lists(),
+        })
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dataSources(spaceId).detail(dataSourceId),
+        })
+        toast.success(t('composables.dataEntries.importSuccess') as string)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.dataEntries.importError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
   const useTranslateMissingDimensionsMutation = () => {
     return useMutation({
       mutationFn: async (targetDimension: string) => {
@@ -211,6 +253,8 @@ export function useDataEntries(spaceId: MaybeRef<string>, dataSourceId: MaybeRef
     useUpdateDataEntryMutation,
     useDeleteDataEntryMutation,
     useBatchUpdateEntriesMutation,
+    useExportDataEntriesMutation,
+    useImportDataEntriesMutation,
     useTranslateMissingDimensionsMutation,
   }
 }

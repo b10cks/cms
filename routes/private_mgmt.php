@@ -48,6 +48,8 @@ use App\Http\Controllers\Mgmt\Content\ContentVersionCurrentController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionPublishController;
 use App\Http\Controllers\Mgmt\Content\MoveContentController;
 use App\Http\Controllers\Mgmt\DataEntryController;
+use App\Http\Controllers\Mgmt\DataEntryDataExportController;
+use App\Http\Controllers\Mgmt\DataEntryDataImportController;
 use App\Http\Controllers\Mgmt\DataEntryTranslationController;
 use App\Http\Controllers\Mgmt\DataEntryTranslationStreamController;
 use App\Http\Controllers\Mgmt\DataSourceController;
@@ -313,6 +315,8 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
         ->name('contents.versions.current');
 
     Route::apiResource('data-sources', DataSourceController::class);
+    Route::post('data-sources/{data_source}/entries/export', DataEntryDataExportController::class)->name('data-sources.entries.data.export');
+    Route::post('data-sources/{data_source}/entries/import', DataEntryDataImportController::class)->name('data-sources.entries.data.import');
     Route::post('data-sources/{data_source}/entries/translate-missing-dimensions', DataEntryTranslationController::class)
         ->name('data-sources.entries.translate-missing-dimensions');
     Route::post('data-sources/{data_source}/entries/translate-missing-dimensions/stream', DataEntryTranslationStreamController::class)

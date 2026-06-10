@@ -1,7 +1,11 @@
 import type { ApiCollectionResponse, ApiResponse, BaseQueryParams } from '~/types'
+import { requestExportBlob, requestImportJson } from '~/lib/import-export'
 import type {
   CreateDataEntryPayload,
   CreateDataSourcePayload,
+  DataEntryImportExportFormat,
+  DataEntryImportMode,
+  DataEntryImportResult,
   DataEntryQueryParams,
   DataEntryResource,
   DataSourceResource,
@@ -10,7 +14,6 @@ import type {
 } from '~/types/data-sources'
 
 import type { ApiClient } from '../client'
-// api/resources/data-sources.ts
 import { BaseResource } from './base-resource'
 
 export interface DataSourcesQueryParams extends BaseQueryParams {
@@ -74,6 +77,30 @@ export class DataSources extends BaseResource<
       }>
     >(`${this.basePath}/${dataSourceId}/entries/translate-missing-dimensions`, {
       target_dimension: targetDimension,
+    })
+  }
+
+  public async exportEntries(
+    dataSourceId: string,
+    params: { as: DataEntryImportExportFormat }
+  ): Promise<Blob> {
+    return requestExportBlob({
+      client: this.client,
+      endpoint: `${this.basePath}/${dataSourceId}/entries/export`,
+      payload: params,
+    })
+  }
+
+  public async importEntries(
+    dataSourceId: string,
+    file: File,
+    mode: DataEntryImportMode = 'addition'
+  ): Promise<DataEntryImportResult> {
+    return requestImportJson<DataEntryImportResult>({
+      client: this.client,
+      endpoint: `${this.basePath}/${dataSourceId}/entries/import`,
+      file,
+      extraFields: { import_mode: mode },
     })
   }
 }
