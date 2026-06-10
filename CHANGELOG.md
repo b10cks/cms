@@ -3,6 +3,14 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.10-94e87b3] — 2026-6-10
+
+- ✨ Add import/export to data entries
+- 👔 Improve RTE experience
+- ✨ Allow to filter for missing data entries translations
+- 👔 Improve rich text search indexing
+- 🐛 Fix data entries translation not handling all
+
 ## [v2026.6.10-5f6d2e7] — 2026-6-10
 
 - ✨ Add quick publish action to content tree
