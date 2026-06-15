@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.15-5dc4c52] — 2026-6-15
+
+- 👔 Adapt slug handling for translated content
+- ⚡️ Improve sitemap generation
+
 ## [v2026.6.10-94e87b3] — 2026-6-10
 
 - ✨ Add import/export to data entries
