@@ -244,13 +244,27 @@ class ContentSchemaValueMerger
 
         $this->loadBlockSchemaCache();
 
+        $overrideById = [];
+        foreach ($overrideItems as $overrideItem) {
+            if (\is_array($overrideItem) && isset($overrideItem['id']) && \is_string($overrideItem['id']) && $overrideItem['id'] !== '') {
+                $overrideById[$overrideItem['id']] = $overrideItem;
+            }
+        }
+
         foreach ($mergedValue as $index => $item) {
             if (!\is_array($item)) {
                 continue;
             }
 
             $baseItem = \is_array($baseItems[$index] ?? null) ? $baseItems[$index] : [];
-            $overrideItem = \is_array($overrideItems[$index] ?? null) ? $overrideItems[$index] : [];
+
+            $baseId = isset($baseItem['id']) && \is_string($baseItem['id']) && $baseItem['id'] !== '' ? $baseItem['id'] : null;
+            if ($baseId !== null && isset($overrideById[$baseId])) {
+                $overrideItem = $overrideById[$baseId];
+            } else {
+                $overrideItem = \is_array($overrideItems[$index] ?? null) ? $overrideItems[$index] : [];
+            }
+
             $blockSlug = (string) ($item['block'] ?? $baseItem['block'] ?? $overrideItem['block'] ?? '');
 
             if ($blockSlug === '') {
