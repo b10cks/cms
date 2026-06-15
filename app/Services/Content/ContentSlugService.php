@@ -32,6 +32,11 @@ class ContentSlugService
         return ($oldFullSlug !== $content->full_slug) ? $oldFullSlug : null;
     }
 
+    protected function formatChildRedirectSlug(string $basePath, Content $child): string
+    {
+        return $basePath;
+    }
+
     /**
      * Create a redirect from old full_slug to new full_slug.
      *
@@ -96,7 +101,10 @@ class ContentSlugService
 
                     // Create redirect if needed
                     if (!empty($oldFullSlug)) {
-                        $redirect = $this->createRedirect($oldFullSlug, $child->full_slug);
+                        $redirect = $this->createRedirect(
+                            $this->formatChildRedirectSlug($oldFullSlug, $child),
+                            $this->formatChildRedirectSlug($child->full_slug, $child),
+                        );
                         if ($redirect) {
                             $stats['redirects_created']++;
                         }

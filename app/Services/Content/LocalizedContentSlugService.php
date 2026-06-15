@@ -34,11 +34,34 @@ class LocalizedContentSlugService extends ContentSlugService
         }
 
         if ($content->parent) {
-            $parentBasePath = $this->stripLocaleFromPath($content->parent->full_slug);
+            $parent = $this->resolveTranslatedParent($content->parent, $content->language_iso);
+            $parentBasePath = $this->stripLocaleFromPath($parent->full_slug);
             return "{$parentBasePath}/{$content->slug}";
         }
 
         return "/{$content->slug}";
+    }
+
+    protected function resolveTranslatedParent(Content $parent, string $languageIso): Content
+    {
+        if ($parent->language_iso === $languageIso) {
+            return $parent;
+        }
+
+        $canonicalId = $parent->i18n_parent_id ?? $parent->id;
+
+        $translatedParent = Content::query()
+            ->where('i18n_parent_id', $canonicalId)
+            ->where('language_iso', $languageIso)
+            ->whereNull('deleted_at')
+            ->first();
+
+        return $translatedParent ?? $parent;
+    }
+
+    protected function formatChildRedirectSlug(string $basePath, Content $child): string
+    {
+        return $this->formatRedirectSlug($basePath, $child->language_iso);
     }
 
     public function applyLocalizationStrategy(string $basePath, string $languageIso): string
