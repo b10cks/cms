@@ -42,6 +42,8 @@ interface TranslatableField {
   originalValue: unknown
   translatedValue: unknown
   isTranslated: boolean
+  isOrphaned: boolean
+  isOrphanedBlock?: boolean
   tablePath?: Array<string | number>
   tableColumnKey?: string
   tableRowId?: string | null
@@ -527,6 +529,36 @@ const traverseContent = (
           nextBlockStamps
         )
       })
+
+      // Detect orphaned blocks: present in translation but not in source (by ID)
+      const originalBlockIds = new Set<string>()
+      originalBlockItems.forEach((item) => {
+        const id = getBlockItemId(item)
+        if (id) originalBlockIds.add(id)
+      })
+
+      translatedBlockItems.forEach((translatedBlockItem, translatedItemIndex) => {
+        const translatedBlockId = getBlockItemId(translatedBlockItem)
+        if (!translatedBlockId || originalBlockIds.has(translatedBlockId)) return
+
+        const blockSlug =
+          typeof translatedBlockItem.block === 'string' ? translatedBlockItem.block : ''
+        const blockSchemaItem = props.getBlockSchema ? props.getBlockSchema(blockSlug) : undefined
+        const blockName = blockSchemaItem?.name || blockSlug || 'Block'
+
+        result.push({
+          key: `orphaned-block-${translatedBlockId}`,
+          path: [...path, translatedItemIndex],
+          fieldName: blockName,
+          schemaItem: { type: 'text', name: blockName, translatable: true } as LocalizableSchema,
+          originalValue: null,
+          translatedValue: translatedBlockItem,
+          isTranslated: false,
+          isOrphaned: true,
+          isOrphanedBlock: true,
+          blockStamps,
+        })
+      })
     } else if (schemaItem.type === 'table' && schemaItem.translatable) {
       const tableSchema = schemaItem as TableSchema
       const originalTable = ensureTableValue(tableSchema, originalValue)
@@ -551,6 +583,7 @@ const traverseContent = (
             originalValue: sourceValue,
             translatedValue: translatedHeaderValue,
             isTranslated: isFieldTranslated(fieldSchema, sourceValue, translatedHeaderValue),
+            isOrphaned: !hasTranslatedValue(fieldSchema, sourceValue) && hasTranslatedValue(fieldSchema, translatedHeaderValue),
             tablePath,
             tableColumnKey: column.key,
             tableRowId: null,
@@ -582,6 +615,7 @@ const traverseContent = (
               originalValue: sourceValue,
               translatedValue: translatedCellValue,
               isTranslated: isFieldTranslated(fieldSchema, sourceValue, translatedCellValue),
+              isOrphaned: !hasTranslatedValue(fieldSchema, sourceValue) && hasTranslatedValue(fieldSchema, translatedCellValue),
               tablePath,
               tableColumnKey: column.key,
               tableRowId: row.id,
@@ -612,6 +646,7 @@ const traverseContent = (
         originalValue,
         translatedValue: normalizedTranslatedValue,
         isTranslated: isFieldTranslated(schemaItem, originalValue, normalizedTranslatedValue),
+        isOrphaned: !hasTranslatedValue(schemaItem, originalValue) && hasTranslatedValue(schemaItem, normalizedTranslatedValue),
         blockStamps,
       })
     }
@@ -639,7 +674,7 @@ watch(
 
 const filteredFields = computed(() => {
   return translatableFields.value.filter((field) => {
-    if (showUntranslatedOnly.value && field.isTranslated) {
+    if (showUntranslatedOnly.value && field.isTranslated && !field.isOrphaned) {
       return false
     }
 
@@ -774,6 +809,25 @@ const applyTranslatedValue = (
   }
 
   applyBlockStamps(content, field.path, field.blockStamps)
+}
+
+const removeOrphanedBlock = (field: TranslatableField): void => {
+  const arrayPath = field.path.slice(0, -1)
+  const itemIndex = field.path[field.path.length - 1] as number
+  const nextDraft = cloneTranslationContent(translationDraft.value)
+  const array = getValueAtPath(nextDraft, arrayPath)
+  if (!Array.isArray(array)) return
+  array.splice(itemIndex, 1)
+  markFieldDirty?.(getValidationPath(field))
+  emitTranslationContent(nextDraft)
+}
+
+const removeOrphanedEntry = (field: TranslatableField): void => {
+  if (field.isOrphanedBlock) {
+    removeOrphanedBlock(field)
+  } else {
+    updateTranslatedValue(field, normalizeTranslatedFieldValue(field, null))
+  }
 }
 
 const emitTranslationContent = (nextTranslationContent: Record<string, unknown>) => {
@@ -1151,6 +1205,7 @@ const translationStats = computed(() => {
         :key="`${field.path.join('-')}-${field.key}`"
         :data-field-path="getValidationPath(field)"
         :data-validation-visible="shouldShowValidationError(field) ? 'true' : undefined"
+        :class="field.isOrphaned ? 'rounded-md border border-amber-500/40 bg-amber-500/5 px-3 pb-1' : undefined"
       >
         <div class="-mb-2 pt-2">
           <h4 class="flex items-baseline gap-2">
@@ -1158,12 +1213,38 @@ const translationStats = computed(() => {
             <span class="text-2xs opacity-50 font-mono">
               {{ field.path.join('.') }}
             </span>
+            <span
+              v-if="field.isOrphaned"
+              class="ml-auto flex items-center gap-2"
+            >
+              <span class="rounded bg-amber-500/15 px-1.5 py-0.5 text-2xs font-medium text-amber-500">
+                {{ $t('components.flattenedLocalization.orphanedField') }}
+              </span>
+              <button
+                type="button"
+                class="flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-medium text-amber-500 hover:bg-amber-500/15 transition-colors"
+                :title="$t('components.flattenedLocalization.removeOrphanedField')"
+                @click="removeOrphanedEntry(field)"
+              >
+                <Icon
+                  name="lucide:trash-2"
+                  class="size-3"
+                />
+                {{ $t('components.flattenedLocalization.removeOrphanedField') }}
+              </button>
+            </span>
           </h4>
         </div>
         <div>
+          <div
+            v-if="field.isOrphanedBlock"
+            class="py-2 text-sm text-muted"
+          >
+            {{ $t('components.flattenedLocalization.orphanedBlockDescription') }}
+          </div>
           <component
             :is="resolveLocalizerComponent(field.schemaItem.type)"
-            v-if="resolveLocalizerComponent(field.schemaItem.type)"
+            v-else-if="resolveLocalizerComponent(field.schemaItem.type)"
             :item="field.schemaItem"
             :original-value="field.originalValue"
             :model-value="field.translatedValue"

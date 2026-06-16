@@ -311,10 +311,38 @@ const pruneScope = (
       continue
     }
 
+    // Clear orphaned translatable field values: source has no value but translation does
+    if (ignoreAbsentNonTranslatableFields && field.translatable && type !== 'blocks') {
+      const sourceValue = effectiveScope?.[key]
+      if (sourceValue === null || sourceValue === undefined) {
+        delete next[key]
+      }
+    }
+
     if (type !== 'blocks') continue
     if (!Array.isArray(next[key])) continue
 
-    next[key] = next[key].map((item, index) => {
+    // Remove orphaned block items: present in translation but not in source (by ID)
+    if (ignoreAbsentNonTranslatableFields && Array.isArray(effectiveScope?.[key])) {
+      const sourceIds = new Set(
+        (effectiveScope[key] as Array<unknown>)
+          .map((item) => {
+            if (typeof item !== 'object' || item === null || Array.isArray(item)) return null
+            const id = (item as Record<string, unknown>).id
+            return typeof id === 'string' && id !== '' ? id : null
+          })
+          .filter((id): id is string => id !== null)
+      )
+      if (sourceIds.size > 0) {
+        next[key] = (next[key] as Array<unknown>).filter((item) => {
+          if (typeof item !== 'object' || item === null || Array.isArray(item)) return false
+          const id = (item as Record<string, unknown>).id
+          return typeof id !== 'string' || id === '' || sourceIds.has(id)
+        })
+      }
+    }
+
+    next[key] = (next[key] as Array<unknown>).map((item, index) => {
       if (!item || typeof item !== 'object') return item
       const blockSlug = String((item as any).block || '')
       const block = blocksBySlug[blockSlug]

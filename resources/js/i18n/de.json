@@ -3182,7 +3182,10 @@
     "flattenedLocalization": {
       "translate": "KI-Übersetzen",
       "translating": "Wird übersetzt...",
-      "translationProgress": "{applied} von {total} Feldern übersetzt..."
+      "translationProgress": "{applied} von {total} Feldern übersetzt...",
+      "orphanedField": "Kein Quellwert",
+      "removeOrphanedField": "Entfernen",
+      "orphanedBlockDescription": "Dieser Block wurde aus dem Quellinhalt entfernt. Die Übersetzungsdaten werden nicht mehr benötigt."
     },
     "tableBlock": {
       "columnsBadge": "{count} Spalten",
