@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.16-68da2b0] — 2026-6-16
+
+- 🐛 Improve translation handling
+- 🐛 Fix overflow for multi assets
+
 ## [v2026.6.15-1b3690a] — 2026-6-15
 
 - 👔 Handle language overlay via id
