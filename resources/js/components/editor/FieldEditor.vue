@@ -212,7 +212,7 @@ onBeforeUnmount(() => {
     :data-field-path="fieldPath"
     :data-validation-visible="showFieldError ? 'true' : undefined"
     :class="[
-      'relative group/field flex-1',
+      'relative group/field flex-1 min-w-0',
       showContainerHighlight ? 'collaboration-field-active' : '',
     ]"
     :style="collaborationStyle"

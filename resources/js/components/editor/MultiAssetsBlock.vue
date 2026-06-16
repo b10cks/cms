@@ -194,7 +194,7 @@ const handleFolderChange = (folderId: string | null) => {
 </script>
 
 <template>
-  <div class="space-y-3 flex flex-col w-full relative">
+  <div class="space-y-3 flex flex-col w-full min-w-0 max-w-full relative">
     <Label
       :label="item.name || item.key"
       :required="item.required"
@@ -228,17 +228,17 @@ const handleFolderChange = (folderId: string | null) => {
       v-else
       class="space-y-2 flex-1"
     >
-      <div class="flex w-full flex-col gap-2">
+      <div class="flex w-full min-w-0 flex-col gap-2">
         <div
           v-for="(asset, index) in localValue"
           :key="asset.id"
-          class="group relative overflow-hidden rounded-lg border border-input bg-surface"
+          class="group relative w-full min-w-0 overflow-hidden rounded-lg border border-input bg-surface"
           :draggable="!props.readOnly"
           @dragstart="!props.readOnly && handleDragStart(index)"
           @dragover="!props.readOnly && handleDragOver($event)"
           @drop="!props.readOnly && handleDrop($event, index)"
         >
-          <div class="flex items-center gap-3 p-2">
+          <div class="flex min-w-0 items-center gap-3 p-2">
             <div
               v-if="!props.readOnly"
               class="cursor-ns-resize opacity-0 group-hover:opacity-100"
