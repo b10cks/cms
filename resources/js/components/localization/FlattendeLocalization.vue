@@ -6,6 +6,7 @@ import { toast } from 'vue-sonner'
 import type { SpaceAiConfig } from '~/api/resources/ai'
 import Icon from '~/components/Icon.vue'
 import MetaLocalization from '~/components/localization/MetaLocalization.vue'
+import { Badge } from '~/components/ui/badge'
 import SplitButton from '~/components/ui/button/SplitButton.vue'
 import { DropdownMenuItem } from '~/components/ui/dropdown-menu'
 import { CheckboxField } from '~/components/ui/form'
@@ -17,7 +18,7 @@ import {
   normalizeSchema,
   normalizeSchemaType,
 } from '~/composables/useContentSchemaState'
-import { ensureTableValue, getTableColumns, mergeLocalizedContentForSchema } from '~/lib/tableField'
+import { ensureTableValue, getTableColumns } from '~/lib/tableField'
 
 import LinkLocalization from './LinkLocalization.vue'
 import MarkdownLocalization from './MarkdownLocalization.vue'
@@ -26,6 +27,12 @@ import TextareaLocalization from './TextareaLocalization.vue'
 import TextLocalization from './TextLocalization.vue'
 
 type LocalizableSchema = SchemaType & { translatable?: boolean }
+
+interface BlockStamp {
+  pathIndex: number
+  id: string
+  block: string
+}
 
 interface TranslatableField {
   key: string
@@ -38,6 +45,7 @@ interface TranslatableField {
   tablePath?: Array<string | number>
   tableColumnKey?: string
   tableRowId?: string | null
+  blockStamps?: BlockStamp[]
 }
 
 interface BlockItem {
@@ -359,13 +367,16 @@ const isFieldTranslated = (
   if (normalizedType === 'richtext') {
     const originalDocument = normalizeRichTextValue(originalValue)
     const translatedDocument = normalizeRichTextValue(translatedValue)
+    const originalSegments = collectRichTextSegments(originalDocument).filter((segment) =>
+      isNonEmptyString(segment.text)
+    )
 
-    return collectRichTextSegments(originalDocument)
-      .filter((segment) => isNonEmptyString(segment.text))
-      .every((segment) => {
-        const translatedText = getValueAtPath(translatedDocument, segment.path)
-        return isNonEmptyString(translatedText) && translatedText !== segment.text
-      })
+    if (originalSegments.length === 0) return false
+
+    return originalSegments.every((segment) => {
+      const translatedText = getValueAtPath(translatedDocument, segment.path)
+      return isNonEmptyString(translatedText) && translatedText !== segment.text
+    })
   }
 
   if (normalizedType === 'link') {
@@ -383,7 +394,7 @@ const normalizeTranslatedFieldValue = (field: TranslatableField, value: unknown)
   }
 
   if (normalizedType === 'richtext') {
-    return normalizeRichTextValue(value, field.originalValue as Record<string, unknown>)
+    return normalizeRichTextValue(value)
   }
 
   if (normalizedType === 'link') {
@@ -451,13 +462,16 @@ watch(
   { immediate: true }
 )
 
+const getBlockItemId = (item: unknown): string | null =>
+  isObjectRecord(item) && typeof item.id === 'string' && item.id !== '' ? item.id : null
+
 const traverseContent = (
   original: Record<string, unknown>,
   translation: Record<string, unknown>,
-  effective: Record<string, unknown>,
   schema: Record<string, LocalizableSchema>,
   currentPath: Array<string | number> = [],
-  result: TranslatableField[] = []
+  result: TranslatableField[] = [],
+  blockStamps: BlockStamp[] = []
 ): TranslatableField[] => {
   if (typeof original !== 'object' || original === null) {
     return result
@@ -466,43 +480,51 @@ const traverseContent = (
   const normalizedSchema = normalizeSchema(schema)
   const originalScope = original as Record<string, unknown>
   const translationScope = translation as Record<string, unknown>
-  const effectiveScope = effective as Record<string, unknown>
 
   Object.entries(normalizedSchema).forEach(([key, schemaItem]) => {
     const path = [...currentPath, key]
-    if (!isFieldVisible(schemaItem, normalizedSchema, originalScope, effectiveScope)) return
+    if (!isFieldVisible(schemaItem, normalizedSchema, originalScope, originalScope)) return
 
     const originalValue = originalScope[key]
-    const effectiveValue = effectiveScope[key]
 
-    if (schemaItem.type === 'blocks' && Array.isArray(effectiveValue)) {
-      effectiveValue.forEach((blockItem: BlockItem, index: number) => {
-        if (!blockItem || !blockItem.block) return
+    if (schemaItem.type === 'blocks' && Array.isArray(originalScope[key])) {
+      const originalBlockItems = (originalScope[key] as BlockItem[]) || []
+      const translatedBlockItems = (translationScope[key] as BlockItem[]) || []
+      const translatedIndexById = new Map<string, number>()
+      translatedBlockItems.forEach((item, index) => {
+        const id = getBlockItemId(item)
+        if (id) translatedIndexById.set(id, index)
+      })
+      let nextAppendIndex = translatedBlockItems.length
 
-        const blockPath = [...path, index]
-        const blockSlug = blockItem.block
+      originalBlockItems.forEach((originalBlockItem: BlockItem) => {
+        if (!originalBlockItem || !originalBlockItem.block) return
 
+        const blockSlug = originalBlockItem.block
         const blockSchemaItem = props.getBlockSchema ? props.getBlockSchema(blockSlug) : undefined
         if (!blockSchemaItem?.schema) return
 
-        const originalBlockItems = (originalScope[key] as BlockItem[]) || []
-        const translatedBlockItems = (translationScope[key] as BlockItem[]) || []
-        const originalBlockItem = originalBlockItems[index] || {}
-        const translatedBlockItem = translatedBlockItems[index] || {}
-        const effectiveBlockItem = mergeLocalizedContentForSchema(
-          originalBlockItem as Record<string, unknown>,
-          translatedBlockItem as Record<string, unknown>,
-          blockSchemaItem.schema,
-          props.getBlockSchema
-        ) as Record<string, unknown>
+        const originalBlockId = getBlockItemId(originalBlockItem)
+        const existingTranslatedIndex = originalBlockId
+          ? translatedIndexById.get(originalBlockId)
+          : undefined
+        const translatedIndex =
+          existingTranslatedIndex !== undefined ? existingTranslatedIndex : nextAppendIndex
+        if (existingTranslatedIndex === undefined) nextAppendIndex += 1
+
+        const blockPath = [...path, translatedIndex]
+        const translatedBlockItem = translatedBlockItems[translatedIndex] || {}
+        const nextBlockStamps = originalBlockId
+          ? [...blockStamps, { pathIndex: blockPath.length - 1, id: originalBlockId, block: blockSlug }]
+          : blockStamps
 
         traverseContent(
           originalBlockItem as Record<string, unknown>,
           translatedBlockItem as Record<string, unknown>,
-          effectiveBlockItem,
           blockSchemaItem.schema,
           blockPath,
-          result
+          result,
+          nextBlockStamps
         )
       })
     } else if (schemaItem.type === 'table' && schemaItem.translatable) {
@@ -532,6 +554,7 @@ const traverseContent = (
             tablePath,
             tableColumnKey: column.key,
             tableRowId: null,
+            blockStamps,
           })
         })
       }
@@ -562,6 +585,7 @@ const traverseContent = (
               tablePath,
               tableColumnKey: column.key,
               tableRowId: row.id,
+              blockStamps,
             })
           })
       })
@@ -588,6 +612,7 @@ const traverseContent = (
         originalValue,
         translatedValue: normalizedTranslatedValue,
         isTranslated: isFieldTranslated(schemaItem, originalValue, normalizedTranslatedValue),
+        blockStamps,
       })
     }
   })
@@ -606,12 +631,6 @@ watch(
     translatableFields.value = traverseContent(
       props.originalContent as Record<string, unknown>,
       translationDraft.value,
-      mergeLocalizedContentForSchema(
-        props.originalContent as Record<string, unknown>,
-        translationDraft.value,
-        props.blockSchema,
-        props.getBlockSchema
-      ) as Record<string, unknown>,
       props.blockSchema
     )
   },
@@ -655,6 +674,20 @@ const isMachineTranslated = (field: TranslatableField): boolean => {
   return machineTranslatedFields.value.has(getFieldIdentifier(field))
 }
 
+const applyBlockStamps = (
+  content: Record<string, unknown>,
+  path: Array<string | number>,
+  blockStamps?: BlockStamp[]
+) => {
+  blockStamps?.forEach((stamp) => {
+    const item = getValueAtPath(content, path.slice(0, stamp.pathIndex + 1))
+    if (isObjectRecord(item)) {
+      if (item.id === undefined) item.id = stamp.id
+      if (item.block === undefined) item.block = stamp.block
+    }
+  })
+}
+
 const applyTranslatedValue = (
   content: Record<string, unknown>,
   field: TranslatableField,
@@ -694,6 +727,7 @@ const applyTranslatedValue = (
     }
 
     setValueAtPath(content, field.tablePath, nextTableValue)
+    applyBlockStamps(content, field.tablePath, field.blockStamps)
     return
   }
 
@@ -708,7 +742,7 @@ const applyTranslatedValue = (
         ? current[Number(pathPart)]
         : (current as Record<string, unknown>)[pathPart]
 
-    if (currentValue === undefined) {
+    if (currentValue == null) {
       const nextValue = Number.isInteger(parseInt(nextPathSegment, 10)) ? [] : {}
       if (current instanceof Array) {
         current[Number(pathPart)] = nextValue
@@ -735,10 +769,11 @@ const applyTranslatedValue = (
   const finalKey = field.path[field.path.length - 1]
   if (current instanceof Array) {
     current[Number(finalKey)] = newValue
-    return
+  } else {
+    current[String(finalKey)] = newValue
   }
 
-  current[String(finalKey)] = newValue
+  applyBlockStamps(content, field.path, field.blockStamps)
 }
 
 const emitTranslationContent = (nextTranslationContent: Record<string, unknown>) => {
@@ -875,9 +910,13 @@ const applyTranslatedValues = (
       return
     }
 
-    machineTranslatedFields.value.add(unit.fieldIdentifier)
-    unit.apply(nextTranslationContent, translation)
-    hasUpdates = true
+    try {
+      unit.apply(nextTranslationContent, translation)
+      machineTranslatedFields.value.add(unit.fieldIdentifier)
+      hasUpdates = true
+    } catch {
+      // silently skip units that fail to apply
+    }
   })
 
   if (hasUpdates) {
@@ -1061,8 +1100,8 @@ const translationStats = computed(() => {
               <DropdownMenuItem
                 v-for="config in aiConfigs"
                 :key="config.id"
-                :disabled="isGenerating"
-                @select="handleGenerateWithConfig(config.id)"
+                :disabled="isTranslating"
+                @select="translateWithAI(config.id)"
               >
                 <div class="flex items-center gap-2">
                   <span class="font-medium">

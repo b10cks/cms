@@ -283,25 +283,36 @@ export const mergeLocalizedContentForSchema = (
     const overlayItems = Array.isArray(overlay?.[key])
       ? (overlay[key] as Array<Record<string, unknown>>)
       : []
+    const overlayById = new Map(
+      overlayItems
+        .filter(
+          (overlayItem): overlayItem is Record<string, unknown> =>
+            isObjectRecord(overlayItem) &&
+            typeof overlayItem.id === 'string' &&
+            overlayItem.id !== ''
+        )
+        .map((overlayItem) => [overlayItem.id as string, overlayItem] as const)
+    )
 
     merged[key] = (merged[key] as Array<Record<string, unknown>>).map((item, index) => {
       if (!isObjectRecord(item)) {
         return item
       }
 
-      const blockSlug = String(item.block || baseItems[index]?.block || overlayItems[index]?.block || '')
+      const baseItem = isObjectRecord(baseItems[index]) ? baseItems[index] : {}
+      const baseId = typeof baseItem.id === 'string' && baseItem.id !== '' ? baseItem.id : null
+      const overlayItem =
+        (baseId ? overlayById.get(baseId) : undefined) ??
+        (isObjectRecord(overlayItems[index]) ? overlayItems[index] : {})
+
+      const blockSlug = String(item.block || baseItem.block || overlayItem.block || '')
       const nestedSchema = blockSlug ? getBlockSchema?.(blockSlug)?.schema : undefined
 
       if (!nestedSchema) {
         return item
       }
 
-      return mergeLocalizedContentForSchema(
-        isObjectRecord(baseItems[index]) ? baseItems[index] : {},
-        isObjectRecord(overlayItems[index]) ? overlayItems[index] : {},
-        nestedSchema,
-        getBlockSchema
-      )
+      return mergeLocalizedContentForSchema(baseItem, overlayItem, nestedSchema, getBlockSchema)
     })
   })
 

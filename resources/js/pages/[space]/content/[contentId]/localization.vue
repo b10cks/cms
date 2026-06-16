@@ -352,7 +352,10 @@ watch(
     }
 
     if (existingTranslation) {
-      syncPersistedContent(existingTranslation)
+      const isNewContent = !persistedContent.value || persistedContent.value.id !== existingTranslation.id
+      if (isNewContent || !isDirty.value) {
+        syncPersistedContent(existingTranslation)
+      }
       return
     }
 
@@ -363,7 +366,9 @@ watch(
     draft.slug = seedSource.slug
     draft.content = {}
 
-    syncPersistedContent(draft)
+    if (!persistedContent.value || !isDirty.value) {
+      syncPersistedContent(draft)
+    }
   },
   { immediate: true }
 )
@@ -390,7 +395,7 @@ const {
 } = useContentSchemaState({
   content: translatableContent,
   blocks: blockList,
-  effectiveContent: previewContentPayload,
+  effectiveContent: sourceContentPayload,
   ignoreAbsentNonTranslatableFields: true,
 })
 
@@ -421,20 +426,6 @@ watch(
   { immediate: true }
 )
 
-watch(
-  sanitizedContent,
-  (nextSanitized) => {
-    if (!translatableContent.value) return
-
-    const currentSerialized = JSON.stringify(translatableContent.value.content || {})
-    const sanitizedSerialized = JSON.stringify(nextSanitized || {})
-
-    if (currentSerialized === sanitizedSerialized) return
-
-    translatableContent.value.content = JSON.parse(sanitizedSerialized)
-  },
-  { deep: true }
-)
 
 const isLoading = computed(
   () =>
