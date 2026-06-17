@@ -33,6 +33,7 @@ class EmailVerificationController extends AuthController
             ], 429);
         }
 
+        Cache::forget(self::CACHE_PREFIX . $user->id);
         $verificationUrl = $this->generateVerificationUrl($user);
         $user->notify(new VerifyEmailNotification($verificationUrl));
 
