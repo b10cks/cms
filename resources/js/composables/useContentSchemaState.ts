@@ -344,16 +344,40 @@ const pruneScope = (
 
     next[key] = (next[key] as Array<unknown>).map((item, index) => {
       if (!item || typeof item !== 'object') return item
-      const blockSlug = String((item as any).block || '')
-      const block = blocksBySlug[blockSlug]
-      if (!block?.schema) return item
 
-      const effectiveItem = Array.isArray(effectiveScope[key])
-        ? (effectiveScope[key] as Array<ScopeValue>)[index] || (item as ScopeValue)
-        : (item as ScopeValue)
+      const effectiveItems = Array.isArray(effectiveScope[key])
+        ? (effectiveScope[key] as Array<ScopeValue>)
+        : []
+      const itemId =
+        typeof (item as any).id === 'string' && (item as any).id !== ''
+          ? ((item as any).id as string)
+          : null
+      const effectiveItem: ScopeValue =
+        (itemId ? effectiveItems.find((ei) => (ei as any)?.id === itemId) : undefined) ??
+        effectiveItems[index] ??
+        (item as ScopeValue)
+
+      // Stamp block references that are missing id/block by copying them from the
+      // matched source item — prevents unstamped stubs from persisting across saves.
+      let resolvedItem = item as Record<string, unknown>
+      if (ignoreAbsentNonTranslatableFields && effectiveItem) {
+        const needsId = typeof resolvedItem.id !== 'string' || resolvedItem.id === ''
+        const needsBlock = typeof resolvedItem.block !== 'string' || resolvedItem.block === ''
+        if (needsId || needsBlock) {
+          resolvedItem = { ...resolvedItem }
+          if (needsId && typeof (effectiveItem as any).id === 'string')
+            resolvedItem.id = (effectiveItem as any).id
+          if (needsBlock && typeof (effectiveItem as any).block === 'string')
+            resolvedItem.block = (effectiveItem as any).block
+        }
+      }
+
+      const blockSlug = String(resolvedItem.block || (effectiveItem as any)?.block || '')
+      const block = blocksBySlug[blockSlug]
+      if (!block?.schema) return resolvedItem
 
       return pruneScope(
-        item as ScopeValue,
+        resolvedItem,
         block.schema,
         blocksBySlug,
         effectiveItem,

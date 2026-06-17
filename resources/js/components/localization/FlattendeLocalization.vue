@@ -499,7 +499,7 @@ const traverseContent = (
       })
       let nextAppendIndex = translatedBlockItems.length
 
-      originalBlockItems.forEach((originalBlockItem: BlockItem) => {
+      originalBlockItems.forEach((originalBlockItem: BlockItem, originalIndex) => {
         if (!originalBlockItem || !originalBlockItem.block) return
 
         const blockSlug = originalBlockItem.block
@@ -510,9 +510,21 @@ const traverseContent = (
         const existingTranslatedIndex = originalBlockId
           ? translatedIndexById.get(originalBlockId)
           : undefined
-        const translatedIndex =
-          existingTranslatedIndex !== undefined ? existingTranslatedIndex : nextAppendIndex
-        if (existingTranslatedIndex === undefined) nextAppendIndex += 1
+
+        let translatedIndex: number
+        if (existingTranslatedIndex !== undefined) {
+          translatedIndex = existingTranslatedIndex
+        } else {
+          // Positional fallback: if the item at the same position has no id it is the
+          // un-stamped counterpart of this source block, not a new slot to append.
+          const itemAtPosition = translatedBlockItems[originalIndex]
+          if (isObjectRecord(itemAtPosition) && !getBlockItemId(itemAtPosition)) {
+            translatedIndex = originalIndex
+          } else {
+            translatedIndex = nextAppendIndex
+            nextAppendIndex += 1
+          }
+        }
 
         const blockPath = [...path, translatedIndex]
         const translatedBlockItem = translatedBlockItems[translatedIndex] || {}
