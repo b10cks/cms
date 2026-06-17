@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.17-2f1b405] — 2026-6-17
+
+- 👔 Improve content filtering for canonicals
+
 ## [v2026.6.17-4c66f78] — 2026-6-17
 
 - ✨ Add canonical_id and canonical_parent_id as content filter
