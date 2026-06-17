@@ -234,10 +234,26 @@ class ContentFilter extends AdvancedFilter
      */
     public function canonical_id($value)
     {
-        $this->builder->where(function ($query) use ($value) {
-            $query->where('contents.id', $value)
-                ->orWhere('contents.i18n_parent_id', $value);
-        });
+        [$operator, $filterValue] = $this->parseOperatorAndValue(is_string($value) ? $value : 'eq:' . $value);
+
+        if ($operator === 'in') {
+            $ids = $this->parseArrayValue($filterValue);
+            $this->builder->where(fn ($q) => $q
+                ->whereIn('contents.id', $ids)
+                ->orWhereIn('contents.i18n_parent_id', $ids)
+            );
+        } elseif ($operator === '!in') {
+            $ids = $this->parseArrayValue($filterValue);
+            $this->builder->where(fn ($q) => $q
+                ->whereNotIn('contents.id', $ids)
+                ->whereNotIn('contents.i18n_parent_id', $ids)
+            );
+        } else {
+            $this->builder->where(fn ($q) => $q
+                ->where('contents.id', $filterValue)
+                ->orWhere('contents.i18n_parent_id', $filterValue)
+            );
+        }
     }
 
     /**
@@ -257,12 +273,18 @@ class ContentFilter extends AdvancedFilter
      */
     public function canonical_parent_id($value)
     {
-        $this->builder->whereIn('contents.parent_id', function ($query) use ($value) {
+        [$operator, $filterValue] = $this->parseOperatorAndValue(is_string($value) ? $value : 'eq:' . $value);
+
+        $this->builder->whereIn('contents.parent_id', function ($query) use ($operator, $filterValue) {
             $query->select('id')
                 ->from('contents')
-                ->where(function ($q) use ($value) {
-                    $q->where('id', $value)
-                        ->orWhere('i18n_parent_id', $value);
+                ->where(function ($q) use ($operator, $filterValue) {
+                    if ($operator === 'in') {
+                        $ids = $this->parseArrayValue($filterValue);
+                        $q->whereIn('id', $ids)->orWhereIn('i18n_parent_id', $ids);
+                    } else {
+                        $q->where('id', $filterValue)->orWhere('i18n_parent_id', $filterValue);
+                    }
                 })
                 ->whereNull('deleted_at');
         });
