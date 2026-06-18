@@ -3240,7 +3240,8 @@
       "translationProgress": "{applied} of {total} fields translated...",
       "orphanedField": "No source value",
       "removeOrphanedField": "Remove",
-      "orphanedBlockDescription": "This block was removed from the source content. Its translation data is no longer needed."
+      "orphanedBlockDescription": "This block was removed from the source content. Its translation data is no longer needed.",
+      "removeAllOrphanedBlocks": "Remove {count} orphaned block(s)"
     },
     "tableBlock": {
       "columnsBadge": "{count} columns",

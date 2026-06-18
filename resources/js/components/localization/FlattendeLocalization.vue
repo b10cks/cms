@@ -498,6 +498,8 @@ const traverseContent = (
         if (id) translatedIndexById.set(id, index)
       })
       let nextAppendIndex = translatedBlockItems.length
+      // Track which translation indices are claimed by a source block (for orphan detection).
+      const claimedTranslationIndices = new Set<number>()
 
       originalBlockItems.forEach((originalBlockItem: BlockItem, originalIndex) => {
         if (!originalBlockItem || !originalBlockItem.block) return
@@ -526,6 +528,11 @@ const traverseContent = (
           }
         }
 
+        // Mark this translation slot as claimed (only for existing items, not newly appended ones)
+        if (translatedIndex < translatedBlockItems.length) {
+          claimedTranslationIndices.add(translatedIndex)
+        }
+
         const blockPath = [...path, translatedIndex]
         const translatedBlockItem = translatedBlockItems[translatedIndex] || {}
         const nextBlockStamps = originalBlockId
@@ -542,24 +549,20 @@ const traverseContent = (
         )
       })
 
-      // Detect orphaned blocks: present in translation but not in source (by ID)
-      const originalBlockIds = new Set<string>()
-      originalBlockItems.forEach((item) => {
-        const id = getBlockItemId(item)
-        if (id) originalBlockIds.add(id)
-      })
-
+      // Detect orphaned blocks: any translation item not claimed by a source block.
+      // This catches both blocks with foreign IDs and duplicates (same ID used twice).
       translatedBlockItems.forEach((translatedBlockItem, translatedItemIndex) => {
-        const translatedBlockId = getBlockItemId(translatedBlockItem)
-        if (!translatedBlockId || originalBlockIds.has(translatedBlockId)) return
+        if (claimedTranslationIndices.has(translatedItemIndex)) return
+        if (!isObjectRecord(translatedBlockItem)) return
 
+        const translatedBlockId = getBlockItemId(translatedBlockItem)
         const blockSlug =
           typeof translatedBlockItem.block === 'string' ? translatedBlockItem.block : ''
         const blockSchemaItem = props.getBlockSchema ? props.getBlockSchema(blockSlug) : undefined
         const blockName = blockSchemaItem?.name || blockSlug || 'Block'
 
         result.push({
-          key: `orphaned-block-${translatedBlockId}`,
+          key: `orphaned-block-${translatedBlockId ?? translatedItemIndex}`,
           path: [...path, translatedItemIndex],
           fieldName: blockName,
           schemaItem: { type: 'text', name: blockName, translatable: true } as LocalizableSchema,
@@ -1109,14 +1112,40 @@ const translationStats = computed(() => {
   const translated = translatableFields.value.filter((f) => f.isTranslated).length
   const percentage = total > 0 ? Math.round((translated / total) * 100) : 0
   const machineTranslated = machineTranslatedFields.value.size
+  const orphanedBlocks = translatableFields.value.filter((f) => f.isOrphanedBlock).length
 
   return {
     total,
     translated,
     percentage,
     machineTranslated,
+    orphanedBlocks,
   }
 })
+
+const removeAllOrphanedBlocks = (): void => {
+  const orphaned = translatableFields.value.filter((f) => f.isOrphanedBlock)
+  if (orphaned.length === 0) return
+
+  // Sort by path descending so splicing higher indices first doesn't shift lower ones
+  const sorted = [...orphaned].sort((a, b) => {
+    const aIdx = a.path[a.path.length - 1] as number
+    const bIdx = b.path[b.path.length - 1] as number
+    return bIdx - aIdx
+  })
+
+  let nextDraft = cloneTranslationContent(translationDraft.value)
+  for (const field of sorted) {
+    const arrayPath = field.path.slice(0, -1)
+    const itemIndex = field.path[field.path.length - 1] as number
+    const array = getValueAtPath(nextDraft, arrayPath)
+    if (Array.isArray(array)) {
+      array.splice(itemIndex, 1)
+    }
+  }
+
+  emitTranslationContent(nextDraft)
+}
 </script>
 
 <template>
@@ -1139,6 +1168,18 @@ const translationStats = computed(() => {
             </span>
           </div>
         </div>
+        <button
+          v-if="translationStats.orphanedBlocks > 0"
+          type="button"
+          class="flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium text-amber-500 hover:bg-amber-500/15 transition-colors border border-amber-500/30"
+          @click="removeAllOrphanedBlocks"
+        >
+          <Icon
+            name="lucide:trash-2"
+            class="size-3"
+          />
+          {{ $t('components.flattenedLocalization.removeAllOrphanedBlocks', { count: translationStats.orphanedBlocks }) }}
+        </button>
       </div>
 
       <div class="flex items-center gap-3">

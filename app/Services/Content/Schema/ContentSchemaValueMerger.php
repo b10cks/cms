@@ -295,6 +295,40 @@ class ContentSchemaValueMerger
             }
         }
 
+        // In overlay mode enforce strict 1:1 mapping from base: iterate base items only so
+        // that extra or duplicate items in the override cannot bleed into the result.
+        // Only applies when base has items — when base is empty (e.g. first step of a chain
+        // merge starting from []) fall through to the positional merge so overrides are kept.
+        if ($localizationOverlay && !empty($baseItems)) {
+            $result = [];
+
+            foreach ($baseItems as $index => $baseItem) {
+                if (!\is_array($baseItem)) {
+                    continue;
+                }
+
+                $baseId = isset($baseItem['id']) && \is_string($baseItem['id']) && $baseItem['id'] !== '' ? $baseItem['id'] : null;
+                $overrideItem = ($baseId !== null && isset($overrideById[$baseId]))
+                    ? $overrideById[$baseId]
+                    : (\is_array($overrideItems[$index] ?? null) ? $overrideItems[$index] : []);
+
+                $blockSlug = (string) ($baseItem['block'] ?? '');
+
+                if ($blockSlug === '') {
+                    $result[] = $baseItem;
+                    continue;
+                }
+
+                $blockSchema = $this->resolveBlockSchema($blockSlug);
+
+                $result[] = $blockSchema !== []
+                    ? $this->mergeForSchema($blockSchema, $baseItem, $overrideItem, $localizationOverlay)
+                    : $baseItem;
+            }
+
+            return $result;
+        }
+
         foreach ($mergedValue as $index => $item) {
             if (!\is_array($item)) {
                 continue;
