@@ -40,16 +40,7 @@ class ContentSchemaValueMerger
             $type = SchemaField::canonicalizeType((string) ($field['type'] ?? ''));
             $isTranslatable = (bool) ($field['translatable'] ?? false);
 
-            if ($type === 'table' && ($field['translatable'] ?? false)) {
-                $merged[$fieldKey] = $this->mergeLocalizedTableValue(
-                    $base[$fieldKey] ?? null,
-                    $overrides[$fieldKey] ?? null,
-                    $field,
-                );
-
-                continue;
-            }
-
+            // blocks: nested schema-aware merge, handles its own recursion
             if ($type === 'blocks' && array_key_exists($fieldKey, $merged)) {
                 $merged[$fieldKey] = $this->mergeNestedBlockItems(
                     $base[$fieldKey] ?? null,
@@ -61,12 +52,49 @@ class ContentSchemaValueMerger
                 continue;
             }
 
-            if (! $isTranslatable && array_key_exists($fieldKey, $overrides) && $this->isEmptyOverlayValue($overrides[$fieldKey])) {
-                if (array_key_exists($fieldKey, $base)) {
-                    $merged[$fieldKey] = $base[$fieldKey];
-                } else {
-                    unset($merged[$fieldKey]);
+            // table (translatable): row-level merge preserving non-text columns from base
+            if ($type === 'table' && $isTranslatable) {
+                $merged[$fieldKey] = $this->mergeLocalizedTableValue(
+                    $base[$fieldKey] ?? null,
+                    $overrides[$fieldKey] ?? null,
+                    $field,
+                );
+
+                continue;
+            }
+
+            // All remaining types are resolved atomically — never deep-merged.
+            // Complex fields like richtext (ProseMirror), link, and meta are complete
+            // values and must be substituted as a whole, not structurally merged.
+            $hasBase = array_key_exists($fieldKey, $base);
+            $hasOverride = array_key_exists($fieldKey, $overrides);
+            $baseVal = $hasBase ? $base[$fieldKey] : null;
+            $overrideVal = $hasOverride ? $overrides[$fieldKey] : null;
+
+            if (! $isTranslatable) {
+                // Non-translatable fields: base wins only when it has a concrete non-null
+                // value. A null or missing base means this layer didn't contribute (e.g. an
+                // overlay language that stores null for non-translatable fields, or a field
+                // added to the schema after the base variant was created). In those cases
+                // the array_replace_recursive result (override's value) is kept instead.
+                if ($hasBase && $baseVal !== null) {
+                    $merged[$fieldKey] = $baseVal;
                 }
+
+                continue;
+            }
+
+            // Translatable fields: use override atomically if non-empty, else fall back to base
+            $isEmptyOverride = $type === 'richtext'
+                ? $this->isEmptyRichtextValue($overrideVal)
+                : $this->isEmptyOverlayValue($overrideVal);
+
+            if (! $isEmptyOverride) {
+                $merged[$fieldKey] = $overrideVal;
+            } elseif ($hasBase) {
+                $merged[$fieldKey] = $baseVal;
+            } else {
+                unset($merged[$fieldKey]);
             }
         }
 
@@ -76,6 +104,22 @@ class ContentSchemaValueMerger
     protected function isEmptyOverlayValue(mixed $value): bool
     {
         return $value === null || $value === '' || $value === [];
+    }
+
+    protected function isEmptyRichtextValue(mixed $value): bool
+    {
+        if ($this->isEmptyOverlayValue($value)) {
+            return true;
+        }
+
+        // ProseMirror doc with no content nodes at all
+        if (\is_array($value) && ($value['type'] ?? null) === 'doc') {
+            $content = $value['content'] ?? [];
+
+            return ! \is_array($content) || $content === [];
+        }
+
+        return false;
     }
 
     /**
