@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.18-93f2f31] — 2026-6-18
+
+- 👔 Further improve translation handling
+- 👔 Improve translation overlay handling in data API
+
 ## [v2026.6.17-2f1b405] — 2026-6-17
 
 - 👔 Improve content filtering for canonicals
