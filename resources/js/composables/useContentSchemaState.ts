@@ -51,6 +51,7 @@ const TRANSLATABLE_TYPES: CanonicalSchemaTypeName[] = [
   'number',
   'link',
   'meta',
+  'date',
   'table',
 ]
 

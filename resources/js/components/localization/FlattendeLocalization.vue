@@ -20,6 +20,7 @@ import {
 } from '~/composables/useContentSchemaState'
 import { ensureTableValue, getTableColumns } from '~/lib/tableField'
 
+import DateLocalization from './DateLocalization.vue'
 import LinkLocalization from './LinkLocalization.vue'
 import MarkdownLocalization from './MarkdownLocalization.vue'
 import RichTextLocalization from './RichTextLocalization.vue'
@@ -91,6 +92,7 @@ const localizers: Partial<Record<CanonicalSchemaTypeName, Component>> = {
   richtext: RichTextLocalization,
   link: LinkLocalization,
   meta: MetaLocalization,
+  date: DateLocalization,
 }
 
 function resolveLocalizerComponent(fieldType: string): Component | null {
