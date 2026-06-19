@@ -350,12 +350,28 @@ class ContentI18nResolver
             );
         }
 
-        return ContentVersion::query()
+        $result = ContentVersion::query()
             ->whereIn('content_id', $familyContents->modelKeys())
             ->where('id', $versionScope)
             ->with(['assets', 'links', 'relations'])
             ->get()
             ->keyBy('content_id');
+
+        $missingContents = $familyContents->filter(fn (Content $c) => ! $result->has($c->id));
+        if ($missingContents->isNotEmpty()) {
+            $missingContents->load([
+                'published_version.assets',
+                'published_version.links',
+                'published_version.relations',
+            ]);
+            foreach ($missingContents as $content) {
+                if ($content->published_version) {
+                    $result->put($content->id, $content->published_version);
+                }
+            }
+        }
+
+        return $result;
     }
 
     private function mergeContentChain(

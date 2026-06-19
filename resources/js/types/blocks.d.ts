@@ -260,6 +260,7 @@ type TranslatableSchema =
   | RichTextSchema
   | LinkSchema
   | MetaSchema
+  | DateSchema
   | TableSchema
 type SchemaType =
   | BlocksSchema

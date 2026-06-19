@@ -47,7 +47,7 @@ const props = defineProps<{
 }>()
 
 const localItem = ref<SchemaType>({ ...props.item })
-const translatable = ['text', 'textarea', 'markdown', 'richtext', 'number', 'link', 'meta', 'table']
+const translatable = ['text', 'textarea', 'markdown', 'richtext', 'number', 'link', 'meta', 'date', 'table']
 const textLike = ['text', 'textarea', 'markdown', 'richtext']
 const countLike = ['blocks', 'references', 'reference', 'multi_assets', 'multiAsset', 'options', 'table']
 const operatorOptions: Array<{ label: string; value: ConditionOperator }> = [

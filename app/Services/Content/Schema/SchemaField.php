@@ -20,6 +20,7 @@ class SchemaField implements Arrayable
         'number',
         'link',
         'meta',
+        'date',
         'table',
     ];
 
