@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.19-b2fab75] — 2026-6-19
+
+- 👔 Allow date fields to be translated
+
 ## [v2026.6.18-93f2f31] — 2026-6-18
 
 - 👔 Further improve translation handling
