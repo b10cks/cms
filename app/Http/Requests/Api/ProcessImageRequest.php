@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Api;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 
 class ProcessImageRequest extends FormRequest
@@ -15,6 +17,13 @@ class ProcessImageRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function failedValidation(Validator $validator): never
+    {
+        throw new HttpResponseException(
+            response()->json(['error' => 'Invalid transformation parameters', 'details' => $validator->errors()], 422)
+        );
     }
 
     public function rules(): array
