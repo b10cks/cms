@@ -16,7 +16,28 @@ class AuditLogFilter extends AdvancedFilter
 
     public function created_at($value): void
     {
-        $this->applyRangeFilter('created_at', $value);
+        if (! is_string($value)) {
+            return;
+        }
+
+        // Datetime range from the date-range picker: "<start>...<end>".
+        // Either side may be empty for an open-ended range.
+        if (str_contains($value, '...')) {
+            [$start, $end] = array_pad(explode('...', $value, 2), 2, '');
+
+            if ($start !== '') {
+                $this->builder->where('created_at', '>=', $this->formatDate($start, true));
+            }
+
+            if ($end !== '') {
+                $this->builder->where('created_at', '<=', $this->formatDate($end, false));
+            }
+
+            return;
+        }
+
+        // Operator-prefixed form (e.g. "gte:2026-06-26"), with date normalization.
+        $this->applyAdvancedDateFilter('created_at', $value);
     }
 
     public function owner_type($value): void

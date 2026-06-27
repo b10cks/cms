@@ -2774,6 +2774,28 @@
       "updatedAt": "Last updated at",
       "lastUpdated": "Last updated {timeAgo}"
     },
+    "dateRange": {
+      "label": "Filter by date range",
+      "placeholder": "Any time",
+      "from": "From",
+      "to": "To",
+      "fromDate": "Start date",
+      "fromTime": "Start time",
+      "toDate": "End date",
+      "toTime": "End time",
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "clear": "Clear",
+      "presets": {
+        "last15m": "Last 15 minutes",
+        "last1h": "Last 1 hour",
+        "last3h": "Last 3 hours",
+        "last24h": "Last 24 hours",
+        "last3d": "Last 3 days",
+        "last7d": "Last 7 days",
+        "last30d": "Last 30 days"
+      }
+    },
     "sortBy": "Sort by",
     "selectionCount": "Selected {count} items",
     "showingEntries": "Showing {from} to {to} of {total} items",

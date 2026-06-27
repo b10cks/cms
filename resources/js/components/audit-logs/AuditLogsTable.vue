@@ -4,6 +4,8 @@ import SearchFilter from '~/components/SearchFilter.vue'
 import type { FilterableField } from '~/components/SearchFilter.vue'
 import { Avatar } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
+import { DateRangePicker } from '~/components/ui/date-range-picker'
+import type { DateRangeValue } from '~/components/ui/date-range-picker'
 import SortSelect from '~/components/ui/SortSelect.vue'
 import {
   Table,
@@ -33,6 +35,15 @@ const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
 })
 
 const filters = ref<Record<string, unknown>>({})
+const dateRange = ref<DateRangeValue>({ start: null, end: null, preset: null })
+
+const createdAtFilter = computed<string | undefined>(() => {
+  const { start, end } = dateRange.value
+  if (!start && !end) {
+    return undefined
+  }
+  return `${start ?? ''}...${end ?? ''}`
+})
 
 const operationKeys = [
   'created',
@@ -136,23 +147,20 @@ const auditLogFilters = computed<FilterableField[]>(() => [
       { value: 'eq', label: 'Equals' },
     ],
   },
-  {
-    id: 'created_at',
-    label: $t('labels.auditLog.filters.createdAt') as string,
-    operators: [
-      { value: 'gte', label: 'After' },
-      { value: 'lte', label: 'Before' },
-    ],
-    datepicker: {},
-  },
 ])
 
 const queryParams = computed<AuditLogsQueryParams>(() => ({
   ...filters.value,
+  ...(createdAtFilter.value ? { created_at: createdAtFilter.value } : {}),
   sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
   page: currentPage.value,
   per_page: perPage.value,
 }))
+
+// Reset to the first page whenever the active filters change
+watch([filters, dateRange], () => {
+  currentPage.value = 1
+}, { deep: true })
 
 const { useAuditLogsQuery } = useAuditLogs(props.spaceId)
 const { data: logs, isLoading } = useAuditLogsQuery(queryParams)
@@ -234,6 +242,7 @@ function buildItemRoute(row: AuditLogResource): object | null {
         :filterable-fields="auditLogFilters"
         class="lg:min-w-xs 2xl:min-w-md"
       />
+      <DateRangePicker v-model="dateRange" />
       <SortSelect
         v-model="sortBy"
         :options="sortOptions"

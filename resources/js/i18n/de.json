@@ -2750,6 +2750,28 @@
       "updatedAt": "Aktualisiert am",
       "lastUpdated": "Aktualisiert {timeAgo}"
     },
+    "dateRange": {
+      "label": "Nach Zeitraum filtern",
+      "placeholder": "Jederzeit",
+      "from": "Von",
+      "to": "Bis",
+      "fromDate": "Startdatum",
+      "fromTime": "Startzeit",
+      "toDate": "Enddatum",
+      "toTime": "Endzeit",
+      "apply": "Anwenden",
+      "cancel": "Abbrechen",
+      "clear": "Zurücksetzen",
+      "presets": {
+        "last15m": "Letzte 15 Minuten",
+        "last1h": "Letzte Stunde",
+        "last3h": "Letzte 3 Stunden",
+        "last24h": "Letzte 24 Stunden",
+        "last3d": "Letzte 3 Tage",
+        "last7d": "Letzte 7 Tage",
+        "last30d": "Letzte 30 Tage"
+      }
+    },
     "sortBy": "Sortiere nach",
     "selectionCount": "Habe {count} Elemente ausgewählt",
     "showingEntries": "Zeige {from} bis {to} von {total} Elementen",
