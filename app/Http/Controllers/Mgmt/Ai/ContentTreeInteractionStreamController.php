@@ -33,19 +33,7 @@ class ContentTreeInteractionStreamController extends Controller
         $this->authorizeSpaceAbility($space, 'content.manage');
         app()->offsetSet('currentSpace', $space);
 
-        $aiConfig = null;
-
-        if ($configId = $request->input('config_id')) {
-            $aiConfig = $space->aiConfigs()->find($configId);
-
-            if (! $aiConfig) {
-                $aiConfig = $space->defaultAiConfig;
-            }
-        }
-
-        if (! $aiConfig) {
-            $aiConfig = $space->defaultAiConfig;
-        }
+        $aiConfig = $this->resolveAiConfig($space, $request->input('config_id'));
 
         $prompt = $request->string('prompt');
         $tree = $request->input('tree', []);

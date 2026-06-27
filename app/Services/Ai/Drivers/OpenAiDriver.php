@@ -275,15 +275,8 @@ class OpenAiDriver extends BaseAiDriver
         }
     }
 
-    protected function supportsTools(string $modelId): bool
+    protected function resetClient(): void
     {
-        $models = $this->getModels();
-        foreach ($models as $model) {
-            if ($model->id === $modelId) {
-                return $model->supportsTools;
-            }
-        }
-
-        return true;
+        $this->client = null;
     }
 }

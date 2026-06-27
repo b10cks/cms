@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Traits\SpaceFromQuery;
 use App\Services\Ai\AiStreamService;
 use App\Services\Ai\Prompts\SystemPromptBuilder;
+use App\Services\Ai\Prompts\UserPromptBuilder;
 use App\Services\Ai\Support\AiSseStream;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -31,24 +32,15 @@ class TranslationStreamController extends Controller
         $this->authorizeSpaceAbility($space, 'content.manage');
         app()->offsetSet('currentSpace', $space);
 
-        $aiConfig = $space->defaultAiConfig;
+        $aiConfig = $this->resolveAiConfig($space, $request->input('config_id'));
 
-        if ($configId = $request->input('config_id')) {
-            $aiConfig = $space->aiConfigs()->find($configId) ?? $aiConfig;
-        }
+        $userPrompt = UserPromptBuilder::translation(
+            (string) $request->string('source'),
+            (string) $request->string('target'),
+            $request->input('fields'),
+        );
 
-        $promptBuilder = new SystemPromptBuilder($aiConfig);
-
-        $source = $request->string('source');
-        $target = $request->string('target');
-        $fields = $request->input('fields');
-
-        $userPrompt =
-            "Translate the following texts from {$source} to {$target}.\n"
-            ."Return only the translated flat JSON object.\n\n"
-            .json_encode($fields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-        $systemPrompt = $promptBuilder->forTranslation();
+        $systemPrompt = (new SystemPromptBuilder($aiConfig))->forTranslation();
 
         return AiSseStream::response(
             fn () => $this->streamService->streamWithSystemPrompt(

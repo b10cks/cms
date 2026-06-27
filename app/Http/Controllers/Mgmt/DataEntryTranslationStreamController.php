@@ -10,17 +10,21 @@ use App\Services\Ai\AiStreamService;
 use App\Services\Ai\Dto\StreamEvent;
 use App\Services\Ai\Exceptions\AiServiceException;
 use App\Services\Ai\Prompts\SystemPromptBuilder;
+use App\Services\Ai\Prompts\UserPromptBuilder;
+use App\Services\Ai\Support\AiSseStream;
 use App\Services\Ai\Support\JsonExtractor;
+use Generator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DataEntryTranslationStreamController extends Controller
 {
+    private const CHUNK_SIZE = 25;
+
     public function __invoke(
         Request $request,
         Space $space,
@@ -34,8 +38,44 @@ class DataEntryTranslationStreamController extends Controller
         ]);
 
         $targetDimension = (string) $validated['target_dimension'];
-        $availableDimensions = collect($dataSource->dimensions ?? []);
-        $dimensionKeys = $availableDimensions->pluck('key')->filter()->values();
+
+        // Preconditions run before the stream opens, so a failure here is a plain
+        // 422 JSON response rather than an error event mid-stream.
+        $sourceLocale = $this->validatePreconditions($dataSource, $targetDimension);
+
+        $aiConfig = $space->defaultAiConfig;
+
+        if (! $aiConfig) {
+            throw ValidationException::withMessages([
+                'target_dimension' => ['No default AI configuration found for this space.'],
+            ]);
+        }
+
+        $candidates = $this->candidates($dataSource, $sourceLocale, $targetDimension);
+
+        return AiSseStream::response(
+            fn () => $this->translate(
+                $space,
+                $dataSource,
+                $targetDimension,
+                $sourceLocale,
+                $candidates,
+                $aiConfig,
+                $aiStreamService,
+            ),
+            ['endpoint' => 'data-entry-translation', 'space' => $space->id, 'data_source' => $dataSource->id],
+        );
+    }
+
+    /**
+     * Validate the data source can be translated and return the resolved source
+     * locale.
+     *
+     * @throws ValidationException
+     */
+    private function validatePreconditions(DataSource $dataSource, string $targetDimension): string
+    {
+        $dimensionKeys = collect($dataSource->dimensions ?? [])->pluck('key')->filter()->values();
 
         if (! $dimensionKeys->contains($targetDimension)) {
             throw ValidationException::withMessages([
@@ -63,19 +103,20 @@ class DataEntryTranslationStreamController extends Controller
             ]);
         }
 
-        $aiConfig = $space->defaultAiConfig;
+        return $sourceLocale;
+    }
 
-        if (! $aiConfig) {
-            throw ValidationException::withMessages([
-                'target_dimension' => ['No default AI configuration found for this space.'],
-            ]);
-        }
-
-        $entries = DataEntry::query()
+    /**
+     * Entries with a non-empty source value but no value yet in the target
+     * dimension — the ones worth translating.
+     *
+     * @return Collection<int, DataEntry>
+     */
+    private function candidates(DataSource $dataSource, string $sourceLocale, string $targetDimension): Collection
+    {
+        return DataEntry::query()
             ->where('data_source_id', $dataSource->id)
-            ->get();
-
-        $candidates = $entries
+            ->get()
             ->filter(function (DataEntry $entry) use ($targetDimension, $sourceLocale): bool {
                 $dimensions = is_array($entry->dimensions) ? $entry->dimensions : [];
                 $sourceValue = trim((string) ($dimensions[$sourceLocale] ?? $entry->value ?? ''));
@@ -84,202 +125,121 @@ class DataEntryTranslationStreamController extends Controller
                 return $sourceValue !== '' && $targetValue === '';
             })
             ->values();
+    }
 
-        return new StreamedResponse(
-            function () use ($space, $dataSource, $targetDimension, $sourceLocale, $candidates, $aiConfig, $aiStreamService) {
-                @set_time_limit(0);
-                @ini_set('max_execution_time', '0');
-                @ignore_user_abort(true);
+    /**
+     * Translate the candidates in chunks, emitting progress as it goes. A chunk
+     * that yields no usable JSON aborts the run via {@see AiServiceException},
+     * which the SSE transport surfaces as a coded error event.
+     *
+     * @param  Collection<int, DataEntry>  $candidates
+     * @return Generator<StreamEvent>
+     */
+    private function translate(
+        Space $space,
+        DataSource $dataSource,
+        string $targetDimension,
+        string $sourceLocale,
+        Collection $candidates,
+        $aiConfig,
+        AiStreamService $aiStreamService,
+    ): Generator {
+        $total = $candidates->count();
+        $translated = 0;
+        $skipped = 0;
+        $processed = 0;
+        $systemPrompt = (new SystemPromptBuilder($aiConfig))->forTranslation();
 
-                if (ob_get_level() === 0) {
-                    ob_start();
-                }
+        yield StreamEvent::status('Preparing translations...');
+        yield $this->progress('preparing', $processed, $translated, $skipped, $total, $targetDimension);
 
-                $emit = static function (StreamEvent $event): void {
-                    echo $event->toJsonLine()."\n\n";
+        if ($total === 0) {
+            yield $this->summary($translated, $skipped, $processed, $total, $targetDimension, $sourceLocale);
 
-                    if (ob_get_level() > 0) {
-                        ob_flush();
+            return;
+        }
+
+        $batches = (int) ceil($total / self::CHUNK_SIZE);
+
+        foreach ($candidates->chunk(self::CHUNK_SIZE) as $index => $chunk) {
+            yield StreamEvent::status(sprintf('Translating batch %d of %d...', $index + 1, $batches));
+
+            $fields = [];
+            foreach ($chunk as $entry) {
+                $dimensions = is_array($entry->dimensions) ? $entry->dimensions : [];
+                $fields[$entry->key] = trim((string) ($dimensions[$sourceLocale] ?? $entry->value ?? ''));
+            }
+
+            $result = $aiStreamService->generate(
+                $space,
+                $systemPrompt,
+                UserPromptBuilder::translation($sourceLocale, $targetDimension, $fields),
+                [],
+                $aiConfig,
+            );
+
+            $decoded = JsonExtractor::decode($result, true);
+
+            if (! is_array($decoded)) {
+                throw AiServiceException::noResult();
+            }
+
+            DB::transaction(function () use ($chunk, $decoded, $targetDimension, &$translated, &$skipped, &$processed): void {
+                foreach ($chunk as $entry) {
+                    $processed++;
+                    $value = $decoded[$entry->key] ?? null;
+
+                    if (! is_string($value) || trim($value) === '') {
+                        $skipped++;
+
+                        continue;
                     }
 
-                    flush();
-                };
+                    $dimensions = is_array($entry->dimensions) ? $entry->dimensions : [];
 
-                $ping = static function (): void {
-                    echo ": ping\n\n";
+                    if (trim((string) ($dimensions[$targetDimension] ?? '')) !== '') {
+                        $skipped++;
 
-                    if (ob_get_level() > 0) {
-                        ob_flush();
+                        continue;
                     }
 
-                    flush();
-                };
-
-                $totalCandidates = $candidates->count();
-                $translatedCount = 0;
-                $skippedCount = 0;
-                $processedCount = 0;
-                $chunkSize = 25;
-                $promptBuilder = new SystemPromptBuilder($aiConfig);
-
-                $ping();
-                $emit(StreamEvent::status('Preparing translations...'));
-                $emit(StreamEvent::status(json_encode([
-                    'stage' => 'preparing',
-                    'processed' => 0,
-                    'translated' => 0,
-                    'skipped' => 0,
-                    'total' => $totalCandidates,
-                    'target_dimension' => $targetDimension,
-                ], JSON_UNESCAPED_UNICODE)));
-
-                if ($totalCandidates === 0) {
-                    $emit(StreamEvent::done('', [
-                        'translated_count' => 0,
-                        'skipped_count' => 0,
-                        'processed_count' => 0,
-                        'total_candidates' => 0,
-                        'target_dimension' => $targetDimension,
-                        'source_dimension' => 'default',
-                        'source_locale' => $sourceLocale,
-                    ]));
-
-                    if (ob_get_level() > 0) {
-                        ob_end_flush();
-                    }
-
-                    return;
+                    $dimensions[$targetDimension] = $value;
+                    $entry->dimensions = $dimensions;
+                    $entry->save();
+                    $translated++;
                 }
+            });
 
-                try {
-                    foreach ($candidates->chunk($chunkSize) as $chunkIndex => $chunk) {
-                        $fields = [];
+            Cache::forget("data_source:{$dataSource->id}:entries");
 
-                        foreach ($chunk as $entry) {
-                            $dimensions = is_array($entry->dimensions) ? $entry->dimensions : [];
-                            $fields[$entry->key] = trim((string) ($dimensions[$sourceLocale] ?? $entry->value ?? ''));
-                        }
+            yield $this->progress('processing', $processed, $translated, $skipped, $total, $targetDimension);
+        }
 
-                        $emit(StreamEvent::status(sprintf(
-                            'Translating batch %d of %d...',
-                            $chunkIndex + 1,
-                            (int) ceil($totalCandidates / $chunkSize),
-                        )));
-                        $ping();
+        yield $this->summary($translated, $skipped, $processed, $total, $targetDimension, $sourceLocale);
+    }
 
-                        $userPrompt =
-                            "Translate the following texts from {$sourceLocale} to {$targetDimension}.\n"
-                            ."Return only the translated flat JSON object.\n\n"
-                            .json_encode($fields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    private function progress(string $stage, int $processed, int $translated, int $skipped, int $total, string $targetDimension): StreamEvent
+    {
+        return StreamEvent::status(json_encode([
+            'stage' => $stage,
+            'processed' => $processed,
+            'translated' => $translated,
+            'skipped' => $skipped,
+            'total' => $total,
+            'target_dimension' => $targetDimension,
+        ], JSON_UNESCAPED_UNICODE));
+    }
 
-                        $result = $aiStreamService->generate(
-                            $space,
-                            $promptBuilder->forTranslation(),
-                            $userPrompt,
-                            [],
-                            $aiConfig,
-                        );
-
-                        if (! is_string($result) || trim($result) === '') {
-                            throw ValidationException::withMessages([
-                                'target_dimension' => ['The AI service did not return any translation output.'],
-                            ]);
-                        }
-
-                        $decoded = JsonExtractor::decode($result, true);
-
-                        if (! is_array($decoded)) {
-                            throw ValidationException::withMessages([
-                                'target_dimension' => ['The AI service returned an invalid translation payload.'],
-                            ]);
-                        }
-
-                        DB::transaction(function () use (
-                            $chunk,
-                            $decoded,
-                            $targetDimension,
-                            &$translatedCount,
-                            &$skippedCount,
-                            &$processedCount
-                        ): void {
-                            foreach ($chunk as $entry) {
-                                $processedCount++;
-                                $translatedValue = $decoded[$entry->key] ?? null;
-
-                                if (! is_string($translatedValue) || trim($translatedValue) === '') {
-                                    $skippedCount++;
-
-                                    continue;
-                                }
-
-                                $dimensions = is_array($entry->dimensions) ? $entry->dimensions : [];
-                                $currentTargetValue = trim((string) ($dimensions[$targetDimension] ?? ''));
-
-                                if ($currentTargetValue !== '') {
-                                    $skippedCount++;
-
-                                    continue;
-                                }
-
-                                $dimensions[$targetDimension] = $translatedValue;
-                                $entry->dimensions = $dimensions;
-                                $entry->save();
-                                $translatedCount++;
-                            }
-                        });
-
-                        Cache::forget("data_source:{$dataSource->id}:entries");
-
-                        $emit(StreamEvent::status(json_encode([
-                            'stage' => 'processing',
-                            'processed' => $processedCount,
-                            'translated' => $translatedCount,
-                            'skipped' => $skippedCount,
-                            'total' => $totalCandidates,
-                            'target_dimension' => $targetDimension,
-                        ], JSON_UNESCAPED_UNICODE)));
-                        $ping();
-                    }
-
-                    $emit(StreamEvent::done('', [
-                        'translated_count' => $translatedCount,
-                        'skipped_count' => $skippedCount,
-                        'processed_count' => $processedCount,
-                        'total_candidates' => $totalCandidates,
-                        'target_dimension' => $targetDimension,
-                        'source_dimension' => 'default',
-                        'source_locale' => $sourceLocale,
-                    ]));
-                } catch (AiServiceException $e) {
-                    $emit(StreamEvent::error($e->getMessage(), $e->reason));
-                } catch (ValidationException $e) {
-                    // Precondition failures carry safe, author-written messages.
-                    $emit(StreamEvent::error($e->validator->errors()->first() ?: 'The translation request was invalid.'));
-                } catch (\Throwable $e) {
-                    $ref = (string) Str::uuid();
-
-                    Log::error('Data entry translation stream failed', [
-                        'space' => $space->id,
-                        'data_source' => $dataSource->id,
-                        'ref' => $ref,
-                        'message' => $e->getMessage(),
-                        'exception' => $e,
-                    ]);
-
-                    $emit(StreamEvent::error("Something went wrong while translating. Reference: {$ref}"));
-                }
-
-                if (ob_get_level() > 0) {
-                    ob_end_flush();
-                }
-            },
-            200,
-            [
-                'Content-Type' => 'text/event-stream',
-                'Cache-Control' => 'no-cache, no-store, must-revalidate',
-                'X-Accel-Buffering' => 'no',
-                'Connection' => 'close',
-            ],
-        );
+    private function summary(int $translated, int $skipped, int $processed, int $total, string $targetDimension, string $sourceLocale): StreamEvent
+    {
+        return StreamEvent::done('', [
+            'translated_count' => $translated,
+            'skipped_count' => $skipped,
+            'processed_count' => $processed,
+            'total_candidates' => $total,
+            'target_dimension' => $targetDimension,
+            'source_dimension' => 'default',
+            'source_locale' => $sourceLocale,
+        ]);
     }
 }

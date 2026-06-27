@@ -18,18 +18,20 @@ class OpenRouterDriver extends BaseAiDriver
 
     protected ?Client $client = null;
 
+    /**
+     * OpenRouter exposes a long tail of models, many without tool support, so an
+     * unknown model is assumed not tool-capable rather than the base default.
+     */
+    protected bool $toolsSupportedByDefault = false;
+
     public function isConfigured(): bool
     {
         return ! empty($this->config['api_key']);
     }
 
-    public function withApiKey(string $apiKey): static
+    protected function resetClient(): void
     {
-        $clone = clone $this;
-        $clone->config['api_key'] = $apiKey;
-        $clone->client = null;
-
-        return $clone;
+        $this->client = null;
     }
 
     protected function getClient(): Client
@@ -238,15 +240,4 @@ class OpenRouterDriver extends BaseAiDriver
         ];
     }
 
-    protected function supportsTools(string $modelId): bool
-    {
-        $models = $this->getModels();
-        foreach ($models as $model) {
-            if ($model->id === $modelId) {
-                return $model->supportsTools;
-            }
-        }
-
-        return false;
-    }
 }

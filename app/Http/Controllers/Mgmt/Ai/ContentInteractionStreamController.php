@@ -42,19 +42,7 @@ class ContentInteractionStreamController extends Controller
         $contentId = $request->input('content_id') ?? $request->input('contentId');
         $content = $contentId ? Content::find($contentId) : null;
 
-        $aiConfig = null;
-
-        if ($configId = $request->input('config_id')) {
-            $aiConfig = $space->aiConfigs()->find($configId);
-
-            if (! $aiConfig) {
-                $aiConfig = $space->defaultAiConfig;
-            }
-        }
-
-        if (! $aiConfig) {
-            $aiConfig = $space->defaultAiConfig;
-        }
+        $aiConfig = $this->resolveAiConfig($space, $request->input('config_id'));
 
         $prompt = $request->string('prompt');
         $context = [

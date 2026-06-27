@@ -73,6 +73,7 @@ readonly class StreamEvent
     {
         return [
             'type' => $this->type->value,
+            'message' => $this->message,
             'content' => $this->content,
             'data' => $this->data,
         ];

@@ -18,6 +18,13 @@ abstract class BaseAiDriver implements AiDriverInterface
 
     protected string $name = '';
 
+    /**
+     * Fallback used by {@see supportsTools()} when the model is not in the
+     * catalogue. Drivers whose providers cannot be assumed tool-capable (e.g.
+     * OpenRouter's long tail of models) override this to false.
+     */
+    protected bool $toolsSupportedByDefault = true;
+
     protected array $statusMessages = [
         'get_block_list' => 'Discovering available blocks...',
         'get_block_schemas' => 'Analyzing block structures...',
@@ -33,8 +40,22 @@ abstract class BaseAiDriver implements AiDriverInterface
     {
         $clone = clone $this;
         $clone->config['api_key'] = $apiKey;
+        // `clone` is shallow, so the copy keeps a reference to any client built
+        // with the old key. Drop it, or the new key is silently ignored and the
+        // space streams on the previous (often platform) key — bypassing the
+        // per-space spend cap.
+        $clone->resetClient();
 
         return $clone;
+    }
+
+    /**
+     * Discard any cached provider client so the next call rebuilds it with the
+     * current config. Drivers that lazily memoise a client override this.
+     */
+    protected function resetClient(): void
+    {
+        // no-op by default
     }
 
     public function getName(): string
@@ -122,12 +143,13 @@ abstract class BaseAiDriver implements AiDriverInterface
     }
 
     /**
-     * Whether the given model can be sent tool definitions. Concrete drivers
-     * override this against their model catalogue; the base default is true.
+     * Whether the given model can be sent tool definitions, looked up against
+     * the driver's model catalogue and falling back to
+     * {@see $toolsSupportedByDefault} for unknown models.
      */
     protected function supportsTools(string $modelId): bool
     {
-        return true;
+        return $this->findModelDto($modelId)?->supportsTools ?? $this->toolsSupportedByDefault;
     }
 
     protected function emitStatus(string $message): StreamEvent
@@ -143,11 +165,6 @@ abstract class BaseAiDriver implements AiDriverInterface
     protected function emitDone(string $content, ?array $data = null): StreamEvent
     {
         return StreamEvent::done($content, $data);
-    }
-
-    protected function emitError(string $message): StreamEvent
-    {
-        return StreamEvent::error($message);
     }
 
     protected function getHumanStatus(string $toolName): string
