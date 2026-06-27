@@ -46,6 +46,14 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
 
+        // Close billing periods that rolled over via the hourly LS sync and
+        // open any missing ones (safety net for the event-driven reconcile).
+        $schedule->command('subscriptions:reconcile-periods')
+            ->dailyAt('03:00')
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
         $schedule->command('automations:run-scheduled')
             ->everyMinute()
             ->onOneServer()

@@ -29,7 +29,7 @@ class OpenRouterKeyManager
         }
 
         $payload = [
-            'name' => "b10cks-{$space->id}-" . now()->format('Ymd'),
+            'name' => "b10cks-{$space->id}-".now()->format('Ymd'),
         ];
 
         if ($limit !== null) {
@@ -45,7 +45,7 @@ class OpenRouterKeyManager
             'Content-Type' => 'application/json',
         ])->post("{$this->baseUrl}/keys", $payload);
 
-        if (!$response->created()) {
+        if (! $response->created()) {
             throw new \RuntimeException(
                 "Failed to provision OpenRouter key: HTTP {$response->status()} - {$response->body()}"
             );
@@ -55,7 +55,7 @@ class OpenRouterKeyManager
         $apiKey = $data['key'] ?? $data['data']['key'] ?? null;
         $keyHash = $data['key_hash'] ?? $data['data']['hash'] ?? null;
 
-        if (!$apiKey) {
+        if (! $apiKey) {
             throw new \RuntimeException('OpenRouter API did not return a key.');
         }
 
@@ -72,6 +72,36 @@ class OpenRouterKeyManager
         ]);
     }
 
+    /**
+     * Fetch the live usage/limit snapshot for a provisioned key from
+     * OpenRouter's provisioning API. Returns the `data` object, which includes
+     * `usage`, `limit`, `limit_remaining`, `limit_reset`, `disabled` and the
+     * `usage_daily`/`usage_weekly`/`usage_monthly` breakdown (all USD).
+     *
+     * @return array<string, mixed>
+     */
+    public function getKeyUsage(SpaceAiKey $key): array
+    {
+        if (empty($this->managementKey)) {
+            throw new \RuntimeException('OpenRouter management key is not configured.');
+        }
+
+        $hash = $key->external_key_hash ?? $key->key_hash;
+
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer {$this->managementKey}",
+            'Content-Type' => 'application/json',
+        ])->timeout(15)->get("{$this->baseUrl}/keys/{$hash}");
+
+        if (! $response->ok()) {
+            throw new \RuntimeException(
+                "Failed to fetch OpenRouter key usage: HTTP {$response->status()}"
+            );
+        }
+
+        return $response->json('data') ?? [];
+    }
+
     public function revokeKey(SpaceAiKey $key): void
     {
         if (empty($this->managementKey)) {
@@ -85,7 +115,7 @@ class OpenRouterKeyManager
             'Content-Type' => 'application/json',
         ])->delete("{$this->baseUrl}/keys/{$hash}");
 
-        if (!$response->ok() && $response->status() !== 404) {
+        if (! $response->ok() && $response->status() !== 404) {
             throw new \RuntimeException(
                 "Failed to revoke OpenRouter key: HTTP {$response->status()}"
             );
@@ -115,7 +145,7 @@ class OpenRouterKeyManager
             'Content-Type' => 'application/json',
         ])->patch("{$this->baseUrl}/keys/{$hash}", $payload);
 
-        if (!$response->ok()) {
+        if (! $response->ok()) {
             throw new \RuntimeException(
                 "Failed to update OpenRouter key: HTTP {$response->status()}"
             );

@@ -158,6 +158,11 @@ class Space extends GlobalModel
         return $this->hasMany(Subscription::class, 'space_id', 'id');
     }
 
+    public function subscriptionPeriods(): HasMany
+    {
+        return $this->hasMany(SubscriptionPeriod::class, 'space_id', 'id');
+    }
+
     public function resolveCurrentSubscription(?Collection $subscriptions = null): ?Subscription
     {
         $subscriptions ??= $this->relationLoaded('subscriptions')

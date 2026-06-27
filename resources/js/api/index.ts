@@ -32,7 +32,9 @@ import { ContentModel } from './resources/content-model'
 import { ContentVersions } from './resources/content-versions'
 import { Contents } from './resources/contents'
 import { Invites } from './resources/invites'
+import { Invoices } from './resources/invoices'
 import { Migrations } from './resources/migrations'
+import { Usage } from './resources/usage'
 import { SpaceBlueprints } from './resources/space-blueprints'
 import { Spaces } from './resources/spaces'
 import { Teams } from './resources/teams'
@@ -149,6 +151,8 @@ export class API {
       contentVersions: (contentId: string) => new ContentVersions(this.client, spaceId, contentId),
       comments: (contentId: string) => new Comments(this.client, spaceId, contentId),
       subscriptions: new Subscriptions(this.client, spaceId),
+      usage: new Usage(this.client, spaceId),
+      invoices: new Invoices(this.client, spaceId),
       members: new SpaceMembers(this.client, spaceId),
     }
   }

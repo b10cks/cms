@@ -22,12 +22,16 @@ class SpaceAiKey extends GlobalModel
         'external_key_hash',
         'limit',
         'limit_reset',
+        'final_usage_usd',
+        'usage_captured_at',
         'expires_at',
         'disabled_at',
     ];
 
     protected $casts = [
         'limit' => 'decimal:2',
+        'final_usage_usd' => 'decimal:6',
+        'usage_captured_at' => 'datetime',
         'expires_at' => 'datetime',
         'disabled_at' => 'datetime',
     ];

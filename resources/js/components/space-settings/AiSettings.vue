@@ -17,28 +17,22 @@ import {
 import { Progress } from '~/components/ui/progress'
 import { Switch } from '~/components/ui/switch'
 import SimpleTooltip from '~/components/ui/tooltip/SimpleTooltip.vue'
-import { useAiConfigs, useAiModels, useAiSettings } from '~/composables/useAiModels'
+import { useAiConfigs, useAiModels, useAiSettings, useAiUsage } from '~/composables/useAiModels'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 
 const props = defineProps<{ space: SpaceResource }>()
-
-interface SpaceAiUsageResource {
-  used_tokens: number
-  max_tokens: number
-  valid_to: string | null
-}
 
 const { t } = useI18n()
 const { alert } = useAlertDialog()
 const { useUpdateSpaceMutation } = useSpaces()
 const { mutate: updateSpace, isPending: isUpdating } = useUpdateSpaceMutation()
-const { client: apiClient } = useApiClient()
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.space.id })))
 const canManageAi = computed(() => access.hasAbility('ai.manage'))
 
 const { useModelsQuery } = useAiModels(computed(() => props.space.id))
 const { useAiSettingsQuery } = useAiSettings(computed(() => props.space.id))
+const { useAiUsageQuery, forceRefresh } = useAiUsage(computed(() => props.space.id))
 const {
   useAiConfigsQuery,
   useCreateAiConfigMutation,
@@ -49,52 +43,50 @@ const {
 const { data: groupedModels } = useModelsQuery()
 const { data: aiSettings } = useAiSettingsQuery()
 const { data: aiConfigs, isLoading: isLoadingConfigs } = useAiConfigsQuery()
+const {
+  data: aiUsage,
+  isLoading: isLoadingUsage,
+  isFetching: isFetchingUsage,
+  isError: isUsageError,
+  refetch: refetchUsage,
+} = useAiUsageQuery()
 const { mutate: createConfig, isPending: isCreating } = useCreateAiConfigMutation()
 const { mutate: updateConfig, isPending: isUpdatingConfig } = useUpdateAiConfigMutation()
 const { mutate: deleteConfig, isPending: isDeleting } = useDeleteAiConfigMutation()
 
 const enableAI = ref(aiSettings.value?.enabled ?? true)
 
-const aiUsage = ref<SpaceAiUsageResource | null>(null)
-const isLoadingUsage = ref(false)
-const usageError = ref<string | null>(null)
-
 const isDialogOpen = ref(false)
 const editingConfig = ref<SpaceAiConfig | null>(null)
 
-const usagePercentage = computed(() => {
-  if (!aiUsage.value || aiUsage.value.max_tokens === 0) return 0
-  return Math.round((aiUsage.value.used_tokens / aiUsage.value.max_tokens) * 100)
-})
+const formatAmount = (value: number | null): string => {
+  if (value === null) return '—'
+
+  if (aiUsage.value?.unit === 'usd') {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: value > 0 && value < 1 ? 4 : 2,
+    }).format(value)
+  }
+
+  return value.toLocaleString()
+}
 
 const resetDate = computed(() => {
-  if (!aiUsage.value?.valid_to) return null
+  if (!aiUsage.value?.resets_at) return null
   try {
-    return new Date(aiUsage.value.valid_to).toLocaleDateString()
+    return new Date(aiUsage.value.resets_at).toLocaleDateString()
   } catch {
     return null
   }
 })
 
-const fetchAiUsage = async () => {
-  isLoadingUsage.value = true
-  usageError.value = null
-
-  try {
-    const response = await apiClient.get<{ data: SpaceAiUsageResource }>(
-      `/mgmt/v1/spaces/${props.space.id}/ai-usage`
-    )
-    aiUsage.value = response.data
-  } catch (error: any) {
-    usageError.value = error.message || 'Failed to load AI usage data'
-  } finally {
-    isLoadingUsage.value = false
-  }
+const refreshUsage = () => {
+  forceRefresh.value = true
+  refetchUsage()
 }
-
-onMounted(() => {
-  fetchAiUsage()
-})
 
 watch(
   () => aiSettings.value,
@@ -228,9 +220,29 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
           class="space-y-4"
         >
           <div class="space-y-4">
-            <div>
-              <h4 class="font-medium">{{ $t('labels.settings.ai.usage') }}</h4>
-              <p class="text-sm text-muted">{{ $t('labels.settings.ai.usageDescription') }}</p>
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <h4 class="font-medium">{{ $t('labels.settings.ai.usage') }}</h4>
+                <p class="text-sm text-muted">{{ $t('labels.settings.ai.usageDescription') }}</p>
+              </div>
+              <SimpleTooltip
+                v-if="aiUsage?.available"
+                :tooltip="$t('actions.refresh')"
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  :disabled="isFetchingUsage"
+                  @click="refreshUsage"
+                >
+                  <Icon
+                    name="lucide:refresh-cw"
+                    class="h-4 w-4"
+                    :class="{ 'animate-spin': isFetchingUsage }"
+                  />
+                  <span class="sr-only">{{ $t('actions.refresh') }}</span>
+                </Button>
+              </SimpleTooltip>
             </div>
 
             <div
@@ -244,42 +256,84 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
             </div>
 
             <div
-              v-else-if="usageError"
+              v-else-if="isUsageError"
               class="text-sm text-destructive"
             >
-              {{ usageError }}
+              {{ $t('labels.settings.ai.usageError') }}
               <Button
                 variant="link"
                 size="sm"
                 class="ml-2 h-auto p-0"
-                @click="fetchAiUsage"
+                @click="refreshUsage"
               >
                 {{ $t('actions.retry') }}
               </Button>
             </div>
 
             <div
+              v-else-if="aiUsage && !aiUsage.available"
+              class="text-muted-foreground text-sm"
+            >
+              {{ $t('labels.settings.ai.notAvailable') }}
+            </div>
+
+            <div
+              v-else-if="aiUsage && aiUsage.unlimited"
+              class="space-y-2"
+            >
+              <div class="flex items-center gap-2">
+                <span class="text-sm">
+                  {{ formatAmount(aiUsage.used) }} {{ $t('labels.settings.ai.spent') }}
+                </span>
+                <Badge size="xs">{{ $t('labels.settings.ai.unlimited') }}</Badge>
+                <Badge
+                  v-if="aiUsage.live"
+                  size="xs"
+                  variant="success"
+                >
+                  {{ $t('labels.settings.ai.live') }}
+                </Badge>
+              </div>
+            </div>
+
+            <div
               v-else-if="aiUsage"
               class="space-y-2"
             >
-              <div class="flex items-center justify-between">
-                <span class="text-sm">
-                  {{ aiUsage.used_tokens.toLocaleString() }} {{ $t('labels.settings.ai.of') }}
-                  {{ aiUsage.max_tokens.toLocaleString() }}
-                  {{ $t('labels.settings.ai.tokensUsed') }}
+              <div class="flex items-center justify-between gap-2">
+                <span class="flex items-center gap-2 text-sm">
+                  <span>
+                    {{ formatAmount(aiUsage.used) }} {{ $t('labels.settings.ai.of') }}
+                    {{ formatAmount(aiUsage.limit) }} {{ $t('labels.settings.ai.spent') }}
+                  </span>
+                  <Badge
+                    v-if="aiUsage.live"
+                    size="xs"
+                    variant="success"
+                  >
+                    {{ $t('labels.settings.ai.live') }}
+                  </Badge>
                 </span>
-                <span class="text-sm text-muted">{{ usagePercentage }}%</span>
+                <span class="text-sm text-muted">{{ aiUsage.percentage }}%</span>
               </div>
               <Progress
-                :model-value="usagePercentage"
+                :model-value="aiUsage.percentage"
                 class="h-2"
               />
-              <p
-                v-if="resetDate"
-                class="text-sm text-muted"
-              >
-                {{ $t('labels.settings.ai.resetInfo', { date: resetDate }) }}
-              </p>
+              <div class="flex items-center justify-between gap-2">
+                <p
+                  v-if="aiUsage.remaining !== null"
+                  class="text-sm text-muted"
+                >
+                  {{ formatAmount(aiUsage.remaining) }} {{ $t('labels.settings.ai.remaining') }}
+                </p>
+                <p
+                  v-if="resetDate"
+                  class="text-sm text-muted"
+                >
+                  {{ $t('labels.settings.ai.resetInfo', { date: resetDate }) }}
+                </p>
+              </div>
             </div>
 
             <div

@@ -265,6 +265,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('~/pages/[space]/settings/subscription.vue'),
       },
       {
+        path: 'usage',
+        name: 'space-settings-usage',
+        component: () => import('~/pages/[space]/settings/usage.vue'),
+      },
+      {
         path: 'configuration',
         name: 'space-settings-configuration',
         component: () => import('~/pages/[space]/settings/configuration.vue'),

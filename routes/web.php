@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\Auth\SamlLoginController;
+use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\Web\AppController;
 use App\Http\Controllers\Web\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
@@ -92,3 +92,4 @@ Route::get('/{space}/settings/people', AppController::class)->name('space-settin
 Route::get('/{space}/settings/backups', AppController::class)->name('space-settings-backups');
 Route::get('/{space}/settings/migrations', AppController::class)->name('space-settings-migrations');
 Route::get('/{space}/settings/subscription', AppController::class)->name('space-settings-subscription');
+Route::get('/{space}/settings/usage', AppController::class)->name('space-settings-usage');

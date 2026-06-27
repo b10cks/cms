@@ -236,7 +236,7 @@ export const queryKeys = {
     config: () => ['ai-config', spaceId] as const,
     models: () => ['ai-models', spaceId] as const,
     settings: () => ['ai-settings', spaceId] as const,
-    usage: () => ['spaces', spaceId, 'ai-usage'] as const,
+    usage: () => ['ai-usage', spaceId] as const,
   }),
   migrations: (spaceId: string) => ({
     all: () => ['spaces', spaceId, 'migrations'] as const,
@@ -265,5 +265,15 @@ export const queryKeys = {
     all: () => ['spaces', spaceId, 'subscriptions'] as const,
     lists: () => [...queryKeys.subscriptions(spaceId).all(), 'list'] as const,
     current: () => [...queryKeys.subscriptions(spaceId).all(), 'current'] as const,
+  }),
+  usageHistory: (spaceId: string) => ({
+    all: () => ['spaces', spaceId, 'usage-history'] as const,
+    lists: () => [...queryKeys.usageHistory(spaceId).all(), 'list'] as const,
+    timeseries: (periodId: string, metric: string) =>
+      [...queryKeys.usageHistory(spaceId).all(), 'timeseries', periodId, metric] as const,
+  }),
+  invoices: (spaceId: string) => ({
+    all: () => ['spaces', spaceId, 'invoices'] as const,
+    lists: () => [...queryKeys.invoices(spaceId).all(), 'list'] as const,
   }),
 }

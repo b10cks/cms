@@ -4,17 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\Management\SpaceAiUsageResource;
 use App\Models\Management\Space;
-use App\Models\Management\SpaceAiUsage;
+use App\Services\Ai\SpaceAiUsageService;
+use Illuminate\Http\Request;
 
 class SpaceAiUsageController extends Controller
 {
-    public function __invoke(Space $space)
+    public function __invoke(Request $request, Space $space, SpaceAiUsageService $usage): SpaceAiUsageResource
     {
-        $usage = SpaceAiUsage::forSpace($space->id)
-            ->active()
-            ->orderBy('valid_to', 'desc')
-            ->firstOrFail();
-
-        return new SpaceAiUsageResource($usage);
+        return new SpaceAiUsageResource(
+            $usage->forSpace($space, $request->boolean('refresh'))
+        );
     }
 }

@@ -101,6 +101,55 @@ class LemonSqueezyService
         return $subscriptions;
     }
 
+    /**
+     * List subscription invoices for the store, optionally filtered (e.g. by
+     * customer or subscription). Follows pagination links.
+     *
+     * @param  array<string, mixed>  $filters  LS filter params, e.g. ['filter[customer_id]' => 123]
+     * @return array<int, array<string, mixed>>
+     */
+    public function listInvoices(array $filters = []): array
+    {
+        $invoices = [];
+        $url = 'subscription-invoices?'.http_build_query(['filter[store_id]' => $this->storeId, ...$filters]);
+
+        do {
+            $response = $this->client->get($url);
+            $payload = json_decode($response->getBody()->getContents(), true);
+
+            $invoices = [...$invoices, ...($payload['data'] ?? [])];
+            $url = $payload['links']['next'] ?? null;
+        } while ($url);
+
+        return $invoices;
+    }
+
+    /**
+     * Flatten a LemonSqueezy subscription-invoice into the shape the app exposes.
+     *
+     * @param  array<string, mixed>  $lsInvoice
+     * @return array<string, mixed>
+     */
+    public function normalizeInvoice(array $lsInvoice): array
+    {
+        $attrs = $lsInvoice['attributes'] ?? [];
+
+        return [
+            'id' => (string) ($lsInvoice['id'] ?? ''),
+            'total' => (int) data_get($attrs, 'total', 0),
+            'total_formatted' => data_get($attrs, 'total_formatted'),
+            'currency' => data_get($attrs, 'currency'),
+            'status' => data_get($attrs, 'status'),
+            'status_formatted' => data_get($attrs, 'status_formatted'),
+            'refunded' => (bool) data_get($attrs, 'refunded', false),
+            'card_brand' => data_get($attrs, 'card_brand'),
+            'card_last_four' => data_get($attrs, 'card_last_four'),
+            'billing_reason' => data_get($attrs, 'billing_reason'),
+            'invoice_url' => data_get($attrs, 'urls.invoice_url'),
+            'created_at' => $this->parseDate(data_get($attrs, 'created_at'))?->toIso8601String(),
+        ];
+    }
+
     public function cancelSubscription(string $subscriptionId): array
     {
         $response = $this->client->delete("subscriptions/{$subscriptionId}");

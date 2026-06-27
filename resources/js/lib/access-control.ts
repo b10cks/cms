@@ -66,6 +66,11 @@ export const spaceSettingsNavigationItems: NavigationAccessItem[] = [
     routeName: 'space-settings-subscription',
   },
   {
+    label: 'labels.usage.history.title',
+    icon: 'lucide:chart-line',
+    routeName: 'space-settings-usage',
+  },
+  {
     label: 'labels.settings.configuration.title',
     icon: 'lucide:sliders',
     routeName: 'space-settings-configuration',
@@ -223,6 +228,7 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-settings': { anyRouteOf: spaceSettingsNavigationItems.map((item) => item.routeName) },
   'space-settings-index': { abilities: 'space.update' },
   'space-settings-subscription': { abilities: 'space.billing.view' },
+  'space-settings-usage': { abilities: 'space.billing.view' },
   'space-settings-configuration': { abilities: 'space.update' },
   'space-settings-ai': { abilities: 'ai.view' },
   'space-settings-people': {

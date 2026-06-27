@@ -4,6 +4,7 @@ namespace App\Services\Ai;
 
 use App\Models\Management\Space;
 use App\Models\Management\SpaceAiKey;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -17,8 +18,7 @@ class SpaceAiKeyProvisioner
     public function __construct(
         private readonly PlanAiKeyResolver $resolver,
         private readonly OpenRouterKeyManager $keys,
-    ) {
-    }
+    ) {}
 
     public function syncForSpace(Space $space, bool $forceReissue = false): ?SpaceAiKey
     {
@@ -113,6 +113,11 @@ class SpaceAiKeyProvisioner
 
     private function safeRevoke(SpaceAiKey $key): void
     {
+        // Capture the final OpenRouter spend before the key is deleted, so the
+        // period's AI usage survives key rotation. Best-effort: never block the
+        // revoke on a failed fetch.
+        $this->captureFinalUsage($key);
+
         try {
             $this->keys->revokeKey($key);
         } catch (\Throwable $e) {
@@ -124,6 +129,32 @@ class SpaceAiKeyProvisioner
             // Ensure the key is no longer used locally even if the remote
             // revoke failed (e.g. already deleted upstream).
             $key->update(['disabled_at' => now()]);
+        }
+    }
+
+    /**
+     * Persist the key's final OpenRouter spend (USD) before revoking, so the
+     * spend attributed to the now-ending period is not lost when the key is
+     * deleted. Skips keys whose usage was already captured.
+     */
+    private function captureFinalUsage(SpaceAiKey $key): void
+    {
+        if ($key->usage_captured_at !== null) {
+            return;
+        }
+
+        try {
+            $usage = $this->keys->getKeyUsage($key);
+
+            $key->update([
+                'final_usage_usd' => (float) ($usage['usage'] ?? 0.0),
+                'usage_captured_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to capture OpenRouter key usage before revoke', [
+                'key_id' => $key->id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
@@ -140,7 +171,7 @@ class SpaceAiKeyProvisioner
         return $key->created_at->lt($this->currentPeriodStart());
     }
 
-    private function currentPeriodStart(): \Illuminate\Support\Carbon
+    private function currentPeriodStart(): Carbon
     {
         return match (config('ai.drivers.openrouter.key_reset', 'monthly')) {
             'daily' => now()->startOfDay(),

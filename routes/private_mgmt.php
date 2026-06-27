@@ -77,6 +77,7 @@ use App\Http\Controllers\Mgmt\SpaceMemberController;
 use App\Http\Controllers\Mgmt\SpaceRoleController;
 use App\Http\Controllers\Mgmt\SpaceSearchController;
 use App\Http\Controllers\Mgmt\SpaceStatsController;
+use App\Http\Controllers\Mgmt\SpaceInvoiceController;
 use App\Http\Controllers\Mgmt\SpaceSubscriptionController;
 use App\Http\Controllers\Mgmt\SpaceTokenController;
 use App\Http\Controllers\Mgmt\TeamController;
@@ -94,6 +95,8 @@ use App\Http\Controllers\Mgmt\User\UserSettingsController;
 use App\Http\Controllers\Mgmt\User\UserSocialLinkController;
 use App\Http\Controllers\Mgmt\User\UserTokenController;
 use App\Http\Controllers\SpaceAiUsageController;
+use App\Http\Controllers\SpaceUsageController;
+use App\Http\Controllers\SpaceUsageHistoryController;
 
 Route::group(['prefix' => 'users'], function () {
     Route::group(['prefix' => 'me'], function () {
@@ -187,6 +190,9 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::post('icon', SpaceIconController::class)->name('spaces.icon');
     Route::post('archive', SpaceArchiveController::class)->name('spaces.archive');
     Route::get('ai-usage', SpaceAiUsageController::class)->name('spaces.ai-usage');
+    Route::get('usage', SpaceUsageController::class)->name('spaces.usage');
+    Route::get('usage/history', [SpaceUsageHistoryController::class, 'index'])->name('spaces.usage.history');
+    Route::get('usage/history/{period}/timeseries', [SpaceUsageHistoryController::class, 'timeseries'])->name('spaces.usage.history.timeseries');
     Route::get('ai-settings', [SpaceAiSettingsController::class, 'show'])->name('spaces.ai-settings.show');
     Route::patch('ai-settings', [SpaceAiSettingsController::class, 'update'])->name('spaces.ai-settings.update');
 
@@ -265,6 +271,8 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::post('subscriptions/checkout', [SpaceSubscriptionController::class, 'checkout'])->name('spaces.subscriptions.checkout');
     Route::post('subscriptions/reinit', [SpaceSubscriptionController::class, 'reinit'])->name('spaces.subscriptions.reinit');
     Route::post('subscriptions/cancel', [SpaceSubscriptionController::class, 'cancel'])->name('spaces.subscriptions.cancel');
+
+    Route::get('invoices', SpaceInvoiceController::class)->name('spaces.invoices');
 
     Route::post('assets/export', AssetDataExportController::class)
         ->name('assets.data.export');

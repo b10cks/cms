@@ -18,10 +18,12 @@ const {
   useCancelMutation,
 } = useSubscription(spaceId)
 const { usePlansQuery } = usePlans()
+const { useUsageQuery } = useSpaceUsage(spaceId)
 
 const { data: current, isLoading: currentLoading } = useCurrentSubscriptionQuery()
 const { data: history } = useSubscriptionsQuery()
 const { data: plans } = usePlansQuery()
+const { data: usage } = useUsageQuery()
 const { mutate: checkout, isPending: isCheckingOut } = useCheckoutMutation()
 const { mutate: reinitPayment, isPending: isReiniting } = useReinitPaymentMutation()
 const { mutate: cancelSub, isPending: isCancelling } = useCancelMutation()
@@ -49,18 +51,65 @@ const statusVariant = computed(() => {
   }
 })
 
-function formatBytes(bytes: number | null | undefined): string {
-  if (bytes == null) return t('labels.plans.unlimited')
-  const gb = bytes / (1024 * 1024 * 1024)
-  if (gb >= 1) return `${gb.toFixed(0)} GB`
-  const mb = bytes / (1024 * 1024)
-  return `${mb.toFixed(0)} MB`
-}
+const { formatUnit } = useUsageFormatters()
 
-function formatNumber(n: number | null | undefined): string {
-  if (n == null) return t('labels.plans.unlimited')
-  return new Intl.NumberFormat().format(n)
-}
+// Maps each plan quota to its live consumption for the progress bars. Falls back
+// to quota-only display (no usage) while the usage request is still loading.
+const usageRows = computed(() => {
+  const quotas = current.value?.quotas
+  if (!quotas) return []
+
+  const u = usage.value
+  const defs = [
+    {
+      key: 'requests',
+      label: t('labels.plans.quotas.requests'),
+      unit: 'count' as UsageUnit,
+      perMonth: true,
+      quota: quotas.requests,
+      metric: u?.requests,
+    },
+    {
+      key: 'storage',
+      label: t('labels.plans.quotas.storage'),
+      unit: 'bytes' as UsageUnit,
+      perMonth: false,
+      quota: quotas.storage,
+      metric: u?.storage,
+    },
+    {
+      key: 'traffic',
+      label: t('labels.plans.quotas.traffic'),
+      unit: 'bytes' as UsageUnit,
+      perMonth: true,
+      quota: quotas.traffic,
+      metric: u?.traffic,
+    },
+    {
+      key: 'ai',
+      label: t('labels.plans.quotas.aiCredit'),
+      unit: 'usd' as UsageUnit,
+      perMonth: true,
+      quota: quotas.aiCredit,
+      metric: u?.ai,
+    },
+  ]
+
+  return defs
+    .filter((d) => d.quota != null)
+    .map((d) => {
+      const unit = d.metric?.unit ?? d.unit
+      const limit = d.metric?.limit ?? d.quota
+      return {
+        key: d.key,
+        label: d.label,
+        perMonth: d.perMonth,
+        usedLabel: d.metric ? formatUnit(d.metric.used, unit) : null,
+        limitLabel: formatUnit(limit, unit),
+        percentage: d.metric?.percentage ?? 0,
+      }
+    })
+})
 
 // States where re-entering the checkout flow via generic checkout() makes sense.
 // 'pending' is intentionally excluded — it must use reinitPayment() exclusively.
@@ -202,53 +251,39 @@ const upgradablePlans = computed(() =>
             </template>
           </div>
 
-          <!-- Quota overview -->
+          <!-- Quota usage -->
           <div
-            v-if="current.quotas"
-            class="grid gap-4 sm:grid-cols-2"
+            v-if="usageRows.length"
+            class="space-y-4"
           >
-            <div
-              v-if="current.quotas.requests != null"
-              class="space-y-1"
-            >
-              <div class="flex justify-between text-sm">
-                <span class="font-medium">{{ $t('labels.plans.quotas.requests') }}</span>
-                <span class="text-muted">{{ formatNumber(current.quotas.requests) }} / mo</span>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div
+                v-for="row in usageRows"
+                :key="row.key"
+                class="space-y-1"
+              >
+                <div class="flex justify-between text-sm">
+                  <span class="font-medium">{{ row.label }}</span>
+                  <span class="text-muted">
+                    <template v-if="row.usedLabel">{{ row.usedLabel }} / </template
+                    >{{ row.limitLabel }}<template v-if="row.perMonth">
+                      {{ $t('labels.plans.perMonth') }}</template
+                    >
+                  </span>
+                </div>
+                <Progress :model-value="row.percentage" />
               </div>
-              <Progress :model-value="0" />
             </div>
-            <div
-              v-if="current.quotas.storage != null"
-              class="space-y-1"
+            <p
+              v-if="usage?.period?.resets_at"
+              class="text-xs text-muted"
             >
-              <div class="flex justify-between text-sm">
-                <span class="font-medium">{{ $t('labels.plans.quotas.storage') }}</span>
-                <span class="text-muted">{{ formatBytes(current.quotas.storage) }}</span>
-              </div>
-              <Progress :model-value="0" />
-            </div>
-            <div
-              v-if="current.quotas.traffic != null"
-              class="space-y-1"
-            >
-              <div class="flex justify-between text-sm">
-                <span class="font-medium">{{ $t('labels.plans.quotas.traffic') }}</span>
-                <span class="text-muted">{{ formatBytes(current.quotas.traffic) }} / mo</span>
-              </div>
-              <Progress :model-value="0" />
-            </div>
-            <div
-              v-if="current.quotas.aiCredit != null"
-              class="space-y-1"
-            >
-              <div class="flex justify-between text-sm">
-                <span class="font-medium">{{ $t('labels.plans.quotas.aiCredit') }}</span>
-                <span class="text-muted"
-                  >{{ formatNumber(current.quotas.aiCredit) }} tokens / mo</span
-                >
-              </div>
-              <Progress :model-value="0" />
-            </div>
+              {{
+                $t('labels.plans.usageResets', {
+                  date: new Date(usage.period.resets_at).toLocaleDateString(),
+                })
+              }}
+            </p>
           </div>
 
           <!-- Actions -->

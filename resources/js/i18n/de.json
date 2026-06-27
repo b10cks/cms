@@ -1599,6 +1599,8 @@
       "unlimited": "Unbegrenzt",
       "onRequest": "Auf Anfrage",
       "contactForPricing": "Preis auf Anfrage",
+      "perMonth": "/ Mon.",
+      "usageResets": "Monatliche Nutzung wird am {date} zurückgesetzt.",
       "period": {
         "month": "pro Monat",
         "year": "pro Jahr",
@@ -1635,6 +1637,32 @@
         "cancelled": "Gekündigt",
         "expired": "Abgelaufen"
       }
+    },
+    "usage": {
+      "history": {
+        "title": "Nutzung & Abrechnung",
+        "description": "Verfolge die Nutzung je Plan-Zeitraum im Zeitverlauf und greife auf deine Rechnungen zu.",
+        "periods": "Plan-Zeiträume",
+        "empty": "Noch keine Abrechnungszeiträume erfasst.",
+        "current": "Aktuell",
+        "currentHint": "Dieser Zeitraum läuft noch — die Live-Nutzung findest du in der Abonnement-Übersicht.",
+        "present": "Heute",
+        "trend": "Nutzungsverlauf",
+        "noTrend": "In diesem Zeitraum wurde keine Nutzung erfasst.",
+        "trafficMb": "Traffic (MB)",
+        "reason": {
+          "created": "Gestartet",
+          "renewed": "Verlängert",
+          "upgraded": "Upgrade",
+          "downgraded": "Downgrade",
+          "cancelled": "Gekündigt",
+          "expired": "Abgelaufen"
+        }
+      }
+    },
+    "invoices": {
+      "title": "Rechnungen",
+      "empty": "Noch keine Rechnungen."
     },
     "settings": {
       "general": {
@@ -1811,10 +1839,16 @@
         "enableAIFeatures": "KI-Features aktivieren",
         "featuresDescription": "KI-Features beinhalten Content-Vorschläge, automatische Tagging und intelligente Suche.",
         "usage": "KI-Nutzung",
-        "usageDescription": "Deine aktuelle Token-Nutzung für diese Abrechnungsperiode.",
+        "usageDescription": "Deine aktuelle KI-Nutzung für diese Abrechnungsperiode.",
         "of": "von",
         "tokensUsed": "Tokens verwendet",
-        "resetInfo": "Dein Plan wird am {date} zurückgesetzt. Brauchst du mehr Tokens?",
+        "spent": "ausgegeben",
+        "remaining": "übrig",
+        "unlimited": "Unbegrenzt",
+        "live": "Live",
+        "notAvailable": "Die Nutzungsverfolgung ist für deinen aktuellen Plan nicht verfügbar.",
+        "usageError": "Nutzungsdaten konnten nicht geladen werden.",
+        "resetInfo": "Wird am {date} zurückgesetzt.",
         "upgradePlan": "Upgrade deinen Plan",
         "modelSelection": "KI-Modell",
         "modelSelectionDescription": "Wähle das KI-Modell zur Verwendung für Content-Generierung und -Verarbeitung",
@@ -3067,6 +3101,9 @@
     "plans": {
       "contactUs": "Kontakt aufnehmen"
     },
+    "invoices": {
+      "view": "Rechnung anzeigen"
+    },
     "user": {
       "account": "Konto"
     },
@@ -3168,6 +3205,7 @@
     "login": "Anmelden",
     "logout": "Abmelden",
     "retry": "Erneut versuchen",
+    "refresh": "Aktualisieren",
     "clearClipboard": "Zwischenablage löschen"
   },
   "navigation": {

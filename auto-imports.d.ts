@@ -92,6 +92,7 @@ declare global {
   const useAiModels: typeof import('./resources/js/composables/useAiModels').useAiModels
   const useAiSettings: typeof import('./resources/js/composables/useAiModels').useAiSettings
   const useAiTranslation: typeof import('./resources/js/composables/useAiTranslation').useAiTranslation
+  const useAiUsage: typeof import('./resources/js/composables/useAiModels').useAiUsage
   const useAlertDialog: typeof import('./resources/js/composables/useAlertDialog').useAlertDialog
   const useApiClient: typeof import('./resources/js/composables/useApiClient').useApiClient
   const useAssetFolders: typeof import('./resources/js/composables/useAssetFolders').useAssetFolders
@@ -147,6 +148,7 @@ declare global {
   const useI18n: typeof import('./resources/js/plugins/i18n').useI18n
   const useId: typeof import('vue').useId
   const useInvites: typeof import('./resources/js/composables/useInvites').useInvites
+  const useInvoices: typeof import('./resources/js/composables/useInvoices').useInvoices
   const useLink: typeof import('vue-router').useLink
   const useMigrations: typeof import('./resources/js/composables/useMigrations').useMigrations
   const useModel: typeof import('vue').useModel
@@ -166,6 +168,7 @@ declare global {
   const useSpacePresence: typeof import('./resources/js/composables/usePresence').useSpacePresence
   const useSpacePresencePeek: typeof import('./resources/js/composables/useSpacePresencePeek').useSpacePresencePeek
   const useSpaceSettings: typeof import('./resources/js/composables/useSpaceSettings').default
+  const useSpaceUsage: typeof import('./resources/js/composables/useSpaceUsage').useSpaceUsage
   const useSpaces: typeof import('./resources/js/composables/useSpace').useSpaces
   const useSubscription: typeof import('./resources/js/composables/useSubscription').useSubscription
   const useTeams: typeof import('./resources/js/composables/useTeams').useTeams
@@ -176,6 +179,8 @@ declare global {
   const useTwoFactorAuth: typeof import('./resources/js/composables/useTwoFactorAuth').useTwoFactorAuth
   const useUlid: typeof import('./resources/js/composables/useUlid').useUlid
   const useUrlNotifications: typeof import('./resources/js/composables/useUrlNotifications').useUrlNotifications
+  const useUsageFormatters: typeof import('./resources/js/composables/useUsageFormatters').useUsageFormatters
+  const useUsageHistory: typeof import('./resources/js/composables/useUsageHistory').useUsageHistory
   const useUser: typeof import('./resources/js/composables/useUser').useUser
   const useUserSettings: typeof import('./resources/js/composables/useUserSettings').useUserSettings
   const watch: typeof import('vue').watch
@@ -195,7 +200,7 @@ declare global {
   export type { AiContentTreeNode, CreateTreeOperation, MoveTreeOperation, UpdateTreeOperation, DeleteTreeOperation, RestoreTreeOperation, TreeOperation, ContentTreePayload, TreeOperationsResult } from './resources/js/composables/useAiContentTree'
   import('./resources/js/composables/useAiContentTree')
   // @ts-ignore
-  export type { AiModel, GroupedModels, SpaceAiSettings } from './resources/js/composables/useAiModels'
+  export type { AiModel, GroupedModels, SpaceAiSettings, SpaceAiUsage } from './resources/js/composables/useAiModels'
   import('./resources/js/composables/useAiModels')
   // @ts-ignore
   export type { TranslationPayload } from './resources/js/composables/useAiTranslation'
@@ -334,6 +339,7 @@ declare module 'vue' {
     readonly useAiModels: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiModels']>
     readonly useAiSettings: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiSettings']>
     readonly useAiTranslation: UnwrapRef<typeof import('./resources/js/composables/useAiTranslation')['useAiTranslation']>
+    readonly useAiUsage: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiUsage']>
     readonly useAlertDialog: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['useAlertDialog']>
     readonly useApiClient: UnwrapRef<typeof import('./resources/js/composables/useApiClient')['useApiClient']>
     readonly useAssetFolders: UnwrapRef<typeof import('./resources/js/composables/useAssetFolders')['useAssetFolders']>
@@ -389,6 +395,7 @@ declare module 'vue' {
     readonly useI18n: UnwrapRef<typeof import('./resources/js/plugins/i18n')['useI18n']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useInvites: UnwrapRef<typeof import('./resources/js/composables/useInvites')['useInvites']>
+    readonly useInvoices: UnwrapRef<typeof import('./resources/js/composables/useInvoices')['useInvoices']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
     readonly useMigrations: UnwrapRef<typeof import('./resources/js/composables/useMigrations')['useMigrations']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
@@ -408,6 +415,7 @@ declare module 'vue' {
     readonly useSpacePresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['useSpacePresence']>
     readonly useSpacePresencePeek: UnwrapRef<typeof import('./resources/js/composables/useSpacePresencePeek')['useSpacePresencePeek']>
     readonly useSpaceSettings: UnwrapRef<typeof import('./resources/js/composables/useSpaceSettings')['default']>
+    readonly useSpaceUsage: UnwrapRef<typeof import('./resources/js/composables/useSpaceUsage')['useSpaceUsage']>
     readonly useSpaces: UnwrapRef<typeof import('./resources/js/composables/useSpace')['useSpaces']>
     readonly useSubscription: UnwrapRef<typeof import('./resources/js/composables/useSubscription')['useSubscription']>
     readonly useTeams: UnwrapRef<typeof import('./resources/js/composables/useTeams')['useTeams']>
@@ -418,6 +426,8 @@ declare module 'vue' {
     readonly useTwoFactorAuth: UnwrapRef<typeof import('./resources/js/composables/useTwoFactorAuth')['useTwoFactorAuth']>
     readonly useUlid: UnwrapRef<typeof import('./resources/js/composables/useUlid')['useUlid']>
     readonly useUrlNotifications: UnwrapRef<typeof import('./resources/js/composables/useUrlNotifications')['useUrlNotifications']>
+    readonly useUsageFormatters: UnwrapRef<typeof import('./resources/js/composables/useUsageFormatters')['useUsageFormatters']>
+    readonly useUsageHistory: UnwrapRef<typeof import('./resources/js/composables/useUsageHistory')['useUsageHistory']>
     readonly useUser: UnwrapRef<typeof import('./resources/js/composables/useUser')['useUser']>
     readonly useUserSettings: UnwrapRef<typeof import('./resources/js/composables/useUserSettings')['useUserSettings']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>

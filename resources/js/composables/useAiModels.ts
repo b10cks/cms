@@ -223,3 +223,53 @@ export interface SpaceAiSettings {
   model: string | null
   favourites: string[]
 }
+
+export interface SpaceAiUsage {
+  provider: string
+  unit: 'usd' | 'tokens'
+  available: boolean
+  unlimited: boolean
+  live: boolean
+  used: number
+  limit: number | null
+  remaining: number | null
+  percentage: number
+  reset: string | null
+  resets_at: string | null
+  breakdown: { daily: number; weekly: number; monthly: number } | null
+  message: string | null
+}
+
+export function useAiUsage(spaceId: MaybeRefOrGetter<string | null>) {
+  const { client: apiClient } = useApiClient()
+
+  // When set, the next fetch bypasses the server-side usage cache so the
+  // refresh button always pulls a fresh snapshot from the provider.
+  const forceRefresh = ref(false)
+
+  const useAiUsageQuery = () => {
+    return useQuery({
+      queryKey: computed(() => ['ai-usage', toValue(spaceId)]),
+      queryFn: async (): Promise<SpaceAiUsage | null> => {
+        const id = toValue(spaceId)
+        if (!id) return null
+
+        const refresh = forceRefresh.value
+        forceRefresh.value = false
+
+        const response = await apiClient.get<{ data: SpaceAiUsage }>(
+          `/mgmt/v1/spaces/${id}/ai-usage${refresh ? '?refresh=1' : ''}`
+        )
+        return response.data
+      },
+      enabled: computed(() => !!toValue(spaceId)),
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+    })
+  }
+
+  return {
+    useAiUsageQuery,
+    forceRefresh,
+  }
+}

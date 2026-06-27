@@ -2,11 +2,13 @@
 
 namespace App\Models\Management;
 
+use App\Jobs\Space\ReconcileSubscriptionPeriods;
 use App\Jobs\Space\SyncSpaceAiKey;
 use App\Models\Traits\Auditable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\Management\Subscription
@@ -23,14 +25,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $product_id
  * @property int $quantity
  * @property array<array-key, mixed>|null $quotas
- * @property \Illuminate\Support\Carbon|null $renews_at
- * @property \Illuminate\Support\Carbon|null $ends_at
- * @property \Illuminate\Support\Carbon|null $trial_ends_at
+ * @property Carbon|null $renews_at
+ * @property Carbon|null $ends_at
+ * @property Carbon|null $trial_ends_at
  * @property array<array-key, mixed>|null $attributes
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Management\Space $space
- * @property-read \App\Models\Management\Plan|null $plan
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Space $space
+ * @property-read Plan|null $plan
  *
  * @method static \Database\Factories\Management\SubscriptionFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Subscription newModelQuery()
@@ -98,12 +100,14 @@ class Subscription extends GlobalModel
                 return;
             }
 
-            if (! $subscription->wasRecentlyCreated
-                && ! $subscription->wasChanged(['status', 'plan_id', 'quotas', 'lemon_squeezy_id'])) {
+            $relevant = ['status', 'plan_id', 'quotas', 'lemon_squeezy_id', 'renews_at', 'ends_at'];
+
+            if (! $subscription->wasRecentlyCreated && ! $subscription->wasChanged($relevant)) {
                 return;
             }
 
             SyncSpaceAiKey::dispatch($subscription->space_id)->afterCommit();
+            ReconcileSubscriptionPeriods::dispatch($subscription->space_id)->afterCommit();
         });
     }
 

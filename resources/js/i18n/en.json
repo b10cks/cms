@@ -1600,6 +1600,8 @@
       "unlimited": "Unlimited",
       "onRequest": "On Request",
       "contactForPricing": "Contact us for pricing",
+      "perMonth": "/ mo",
+      "usageResets": "Monthly usage resets on {date}.",
       "period": {
         "month": "per month",
         "year": "per year",
@@ -1636,6 +1638,32 @@
         "cancelled": "Cancelled",
         "expired": "Expired"
       }
+    },
+    "usage": {
+      "history": {
+        "title": "Usage & billing",
+        "description": "Track usage per plan period over time and access your invoices.",
+        "periods": "Plan periods",
+        "empty": "No billing periods recorded yet.",
+        "current": "Current",
+        "currentHint": "This period is still running — see the subscription overview for live usage.",
+        "present": "Present",
+        "trend": "Usage trend",
+        "noTrend": "No usage recorded in this period.",
+        "trafficMb": "Traffic (MB)",
+        "reason": {
+          "created": "Started",
+          "renewed": "Renewed",
+          "upgraded": "Upgraded",
+          "downgraded": "Downgraded",
+          "cancelled": "Cancelled",
+          "expired": "Expired"
+        }
+      }
+    },
+    "invoices": {
+      "title": "Invoices",
+      "empty": "No invoices yet."
     },
     "settings": {
       "general": {
@@ -1812,10 +1840,16 @@
         "enableAIFeatures": "Enable AI Features",
         "featuresDescription": "AI features include content suggestions, auto-tagging, and smart search.",
         "usage": "AI Usage",
-        "usageDescription": "Your current token usage for this billing period.",
+        "usageDescription": "Your current AI usage for this billing period.",
         "of": "of",
         "tokensUsed": "tokens used",
-        "resetInfo": "Your plan resets on {date}. Need more tokens?",
+        "spent": "spent",
+        "remaining": "remaining",
+        "unlimited": "Unlimited",
+        "live": "Live",
+        "notAvailable": "AI usage tracking isn't available for your current plan.",
+        "usageError": "Failed to load AI usage data.",
+        "resetInfo": "Resets on {date}.",
         "upgradePlan": "Upgrade your plan",
         "modelSelection": "AI Model",
         "modelSelectionDescription": "Choose the AI model to use for content generation and processing",
@@ -3095,6 +3129,9 @@
     "plans": {
       "contactUs": "Contact us"
     },
+    "invoices": {
+      "view": "View invoice"
+    },
     "user": {
       "account": "Account"
     },
@@ -3193,6 +3230,7 @@
     "login": "Login",
     "logout": "Logout",
     "retry": "Retry",
+    "refresh": "Refresh",
     "clearClipboard": "Clear Clipboard"
   },
   "navigation": {
