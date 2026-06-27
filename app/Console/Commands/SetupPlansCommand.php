@@ -16,8 +16,9 @@ class SetupPlansCommand extends Command
 
     /**
      * Default plan definitions.
-     * quotas: requests (count/mo), traffic (bytes/mo), storage (bytes), aiCredit (tokens/mo)
-     * null = unlimited
+     * quotas: requests (count/mo), traffic (bytes/mo), storage (bytes), aiCredit (USD spend/mo)
+     * aiCredit is the monthly OpenRouter spend cap in dollars for the space's key.
+     * null quotas = unlimited tier. Adjust the dollar amounts to your real pricing.
      */
     private function defaultPlans(): array
     {
@@ -61,7 +62,7 @@ class SetupPlansCommand extends Command
                     'requests' => 5_000,
                     'traffic' => 5 * $GB,
                     'storage' => 500 * $MB,
-                    'aiCredit' => 5_000,
+                    'aiCredit' => 1.0,
                 ],
                 'is_free' => true,
                 'sort_order' => 10,
@@ -102,7 +103,7 @@ class SetupPlansCommand extends Command
                     'requests' => 100_000,
                     'traffic' => 50 * $GB,
                     'storage' => 5 * $GB,
-                    'aiCredit' => 100_000,
+                    'aiCredit' => 5.0,
                 ],
                 'is_free' => false,
                 'sort_order' => 20,
@@ -146,7 +147,7 @@ class SetupPlansCommand extends Command
                     'requests' => 500_000,
                     'traffic' => 250 * $GB,
                     'storage' => 25 * $GB,
-                    'aiCredit' => 500_000,
+                    'aiCredit' => 15.0,
                 ],
                 'is_free' => false,
                 'sort_order' => 30,
@@ -190,7 +191,7 @@ class SetupPlansCommand extends Command
                     'requests' => 1_500_000,
                     'traffic' => 500 * $GB,
                     'storage' => 50 * $GB,
-                    'aiCredit' => 1_500_000,
+                    'aiCredit' => 40.0,
                 ],
                 'is_free' => false,
                 'sort_order' => 40,
@@ -234,7 +235,7 @@ class SetupPlansCommand extends Command
                     'requests' => 10_000_000,
                     'traffic' => 1000 * $GB,
                     'storage' => 100 * $GB,
-                    'aiCredit' => 10_000_000,
+                    'aiCredit' => 150.0,
                 ],
                 'is_free' => false,
                 'sort_order' => 50,

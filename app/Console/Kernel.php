@@ -38,6 +38,14 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
 
+        // Reconcile OpenRouter keys with each space's plan/subscription and
+        // reissue them at the start of every reset period to refresh budgets.
+        $schedule->command('ai:reissue-keys')
+            ->dailyAt('02:30')
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
         $schedule->command('automations:run-scheduled')
             ->everyMinute()
             ->onOneServer()

@@ -9,7 +9,7 @@ use App\Models\Management\SpaceBlueprint;
 use App\Models\Management\SpaceConnection;
 use App\Services\Database\DatabaseConnectionException;
 use App\Services\Database\DatabaseConnectionService;
-use Illuminate\Support\Facades\Artisan;
+use App\Services\Database\SpaceDatabaseMigrator;
 use Illuminate\Support\Str;
 use PDO;
 
@@ -181,13 +181,14 @@ class SetupConnection extends QueuedJob
         $pdo->exec($sql);
     }
 
-    public function migrateDatabase(string $connectionName)
+    /**
+     * Migrate the freshly created space database. Delegates to the shared
+     * migrator, which runs with administrative credentials and verifies the
+     * schema so a space is never marked live with an empty database.
+     */
+    public function migrateDatabase(string $connectionName): void
     {
-        Artisan::call('migrate', [
-            '--path' => 'database/migrations/spaces',
-            '--force' => true,
-            '--database' => $connectionName,
-        ]);
+        app(SpaceDatabaseMigrator::class)->migrate($this->spaceConnection);
     }
 
     protected function escapeIdentifier(string $identifier): string

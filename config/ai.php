@@ -126,9 +126,9 @@ return [
             'site_url' => env('OPENROUTER_SITE_URL', config('app.url')),
             'site_name' => env('OPENROUTER_SITE_NAME', config('app.name')),
             'models' => [],
-            'provision_demo_keys' => env('OPENROUTER_PROVISION_DEMO_KEYS', true),
-            'demo_key_limit' => env('OPENROUTER_DEMO_KEY_LIMIT', 2.0),
-            'demo_key_expiry_days' => env('OPENROUTER_DEMO_KEY_EXPIRY_DAYS', 30),
+            // Reset cadence for per-space spend limits. The reissue command
+            // refreshes keys at the start of each period: daily|weekly|monthly|annually.
+            'key_reset' => env('OPENROUTER_KEY_RESET', 'monthly'),
         ],
     ],
 

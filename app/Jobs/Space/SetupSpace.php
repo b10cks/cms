@@ -4,8 +4,6 @@ namespace App\Jobs\Space;
 
 use App\Jobs\QueuedJob;
 use App\Models\Management\Space;
-use App\Services\Ai\OpenRouterKeyManager;
-use Carbon\Carbon;
 use Log;
 
 class SetupSpace extends QueuedJob
@@ -20,7 +18,10 @@ class SetupSpace extends QueuedJob
     {
         $this->createDefaultStorage($this->space);
         $this->createLocalDefaultConnection($this->space);
-        $this->provisionDemoAiKey($this->space);
+
+        // OpenRouter keys are provisioned from the space's subscription/plan
+        // (see SyncSpaceAiKey, dispatched when the subscription is created),
+        // not unconditionally at space creation.
 
         $this->space->update(['state' => 'live']);
     }
@@ -71,62 +72,6 @@ class SetupSpace extends QueuedJob
         ]);
 
         SetupStorage::dispatchSync($storage);
-    }
-
-    protected function provisionDemoAiKey(Space $space): void
-    {
-        // Check if OpenRouter is enabled and if demo key provisioning is enabled
-        if (!config('ai.drivers.openrouter.enabled', false)) {
-            Log::info('OpenRouter is not enabled, skipping demo AI key provisioning', [
-                'space' => $space->id,
-            ]);
-            return;
-        }
-
-        // Check if demo key provisioning is enabled
-        if (!config('ai.drivers.openrouter.provision_demo_keys', true)) {
-            Log::info('Demo AI key provisioning is disabled, skipping', [
-                'space' => $space->id,
-            ]);
-            return;
-        }
-
-        // Check if the space already has an active AI key
-        if ($space->aiKeys()->active()->exists()) {
-            Log::info('Space already has an active AI key, skipping demo AI key provisioning', [
-                'space' => $space->id,
-            ]);
-            return;
-        }
-
-        try {
-            $manager = new OpenRouterKeyManager();
-
-            // Get configuration values
-            $limit = (float) config('ai.drivers.openrouter.demo_key_limit', 2.0);
-            $expiryDays = (int) config('ai.drivers.openrouter.demo_key_expiry_days', 30);
-
-            // Provision a demo key with configured limit and expiry
-            $key = $manager->provisionKey(
-                space: $space,
-                limit: $limit,
-                limitReset: 'monthly',
-                expiresAt: Carbon::now()->addDays($expiryDays)
-            );
-
-            Log::info('Demo AI key provisioned successfully', [
-                'space' => $space->id,
-                'key_id' => $key->id,
-                'limit' => $limit,
-                'expires_at' => $key->expires_at->toDateString(),
-            ]);
-        } catch (\Exception $e) {
-            // Don't fail the entire setup if demo key provisioning fails
-            Log::warning('Failed to provision demo AI key', [
-                'space' => $space->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 
     protected function handleFailure(\Exception $e): void

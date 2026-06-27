@@ -2,6 +2,7 @@
 
 namespace App\Models\Management;
 
+use App\Jobs\Space\SyncSpaceAiKey;
 use App\Models\Traits\Auditable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -86,6 +87,26 @@ class Subscription extends GlobalModel
         'trial_ends_at' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        // Keep the space's OpenRouter key in sync with its subscription state:
+        // provision on activation, reconcile limits on plan change, revoke when
+        // it lapses. Deferred until after commit so it runs outside the
+        // webhook/sync transaction.
+        static::saved(function (Subscription $subscription): void {
+            if (! $subscription->space_id) {
+                return;
+            }
+
+            if (! $subscription->wasRecentlyCreated
+                && ! $subscription->wasChanged(['status', 'plan_id', 'quotas', 'lemon_squeezy_id'])) {
+                return;
+            }
+
+            SyncSpaceAiKey::dispatch($subscription->space_id)->afterCommit();
+        });
+    }
+
     public function space(): BelongsTo
     {
         return $this->belongsTo(Space::class, 'space_id', 'id');
@@ -104,6 +125,15 @@ class Subscription extends GlobalModel
     public function isFree(): bool
     {
         return $this->lemon_squeezy_id === null && $this->ls_customer_id === null;
+    }
+
+    /**
+     * A paid, live subscription: backed by a LemonSqueezy subscription and in
+     * an active state. This is the gate for provisioning paid-plan resources.
+     */
+    public function isPaid(): bool
+    {
+        return $this->lemon_squeezy_id !== null && $this->isActive();
     }
 
     public function effectiveQuotas(): array
