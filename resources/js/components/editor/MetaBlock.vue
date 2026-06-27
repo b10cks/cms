@@ -11,8 +11,8 @@ import { DropdownMenuItem } from '~/components/ui/dropdown-menu'
 import { InputField, TextField } from '~/components/ui/form'
 import Label from '~/components/ui/form/Label.vue'
 import { useAiConfigs } from '~/composables/useAiModels'
+import { parseAiJson } from '~/lib/aiJson'
 import { normalizeLanguageIso } from '~/lib/content-i18n'
-import type { ApiResponse } from '~/types'
 import type { AssetValue } from '~/types/assets'
 import type { ContentResource } from '~/types/contents'
 
@@ -48,7 +48,9 @@ const props = defineProps<{
 }>()
 
 const content = inject<Ref<ContentValue>>('content', ref({}))
-const { client: apiClient } = useApiClient()
+const { t } = useI18n()
+const { streamMetaTags } = useAiMetaTags(toRef(props, 'spaceId'))
+const { showAiError } = useAiErrorToast()
 const { useAiConfigsQuery } = useAiConfigs(toRef(props, 'spaceId'))
 const { data: aiConfigs } = useAiConfigsQuery()
 
@@ -242,58 +244,66 @@ const generateMetaWithAI = async (
     toast.error('Please select an AI configuration first.')
     return
   }
-  try {
-    isGenerating.value = true
-    const requestData = {
-      name: content.value?.name || '',
-      slug: content.value?.full_slug || '',
-      body:
-        typeof content.value?.content === 'string'
-          ? content.value.content
-          : JSON.stringify(content.value?.content || {}),
-      current_meta: {
-        title: localValue.value?.title || '',
-        description: localValue.value?.description || '',
-        ogTitle: localValue.value?.ogTitle || '',
-        ogDescription: localValue.value?.ogDescription || '',
+  isGenerating.value = true
+
+  const requestData = {
+    name: content.value?.name || '',
+    slug: content.value?.full_slug || '',
+    body:
+      typeof content.value?.content === 'string'
+        ? content.value.content
+        : JSON.stringify(content.value?.content || {}),
+    current_meta: {
+      title: localValue.value?.title || '',
+      description: localValue.value?.description || '',
+      ogTitle: localValue.value?.ogTitle || '',
+      ogDescription: localValue.value?.ogDescription || '',
+    },
+  }
+
+  let accumulated = ''
+
+  await streamMetaTags(
+    { context: requestData, config_id: configId, language: currentLanguage.value },
+    {
+      onDelta: (chunk) => {
+        accumulated += chunk
+      },
+      onDone: (streamContent) => {
+        const generatedMeta = parseAiJson<{
+          title?: string
+          description?: string
+          ogTitle?: string
+          ogDescription?: string
+        }>(streamContent || accumulated)
+
+        if (!generatedMeta) {
+          showAiError('no_result')
+          return
+        }
+
+        const newValue = {
+          ...localValue.value,
+          title: generatedMeta.title ?? localValue.value?.title ?? '',
+          description: generatedMeta.description ?? localValue.value?.description ?? '',
+          ...(props.item.has_og_tags && {
+            ogTitle: generatedMeta.ogTitle ?? localValue.value?.ogTitle ?? '',
+            ogDescription: generatedMeta.ogDescription ?? localValue.value?.ogDescription ?? '',
+          }),
+        }
+
+        localValue.value = newValue
+        emit('update:model-value', newValue)
+
+        toast.success(t('composables.aiMeta.success') as string)
+      },
+      onError: (message, reason) => {
+        showAiError(reason, message)
       },
     }
+  )
 
-    const response = await apiClient.post<
-      ApiResponse<{
-        title: string
-        description: string
-        ogTitle: string
-        ogDescription: string
-      }>
-    >(
-      '/mgmt/v1/ai/meta-tags',
-      { context: requestData, config_id: configId, language: currentLanguage.value },
-      { query: { spaceId: props.spaceId } }
-    )
-
-    // Update local values and emit changes
-    const generatedMeta = response.data
-    const newValue = {
-      ...localValue.value,
-      title: generatedMeta.title,
-      description: generatedMeta.description,
-      ...(props.item.has_og_tags && {
-        ogTitle: generatedMeta.ogTitle,
-        ogDescription: generatedMeta.ogDescription,
-      }),
-    }
-
-    localValue.value = newValue
-    emit('update:model-value', newValue)
-
-    toast.success('Meta tags generated successfully!')
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    toast.error(`Meta generation failed: ${errorMessage}`)
-  } finally {
-    isGenerating.value = false
-  }
+  isGenerating.value = false
 }
 
 const hasContent = computed((): boolean => {

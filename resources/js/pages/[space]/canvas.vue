@@ -20,9 +20,6 @@ import {
   type TreeOperation,
 } from '~/composables/useAiContentTree'
 import {
-  resolvePreferredCreateContentBlock,
-} from '~/lib/content-children'
-import {
   useContentCanvasCommands,
   type ContentCanvasHistoryEntry,
 } from '~/composables/useContentCanvasCommands'
@@ -30,6 +27,8 @@ import { useContentWizardApply } from '~/composables/useContentWizardApply'
 import { useContentWizardCollaboration } from '~/composables/useContentWizardCollaboration'
 import { useContentWizardKeyboard } from '~/composables/useContentWizardKeyboard'
 import { useContentWizardTree } from '~/composables/useContentWizardTree'
+import { aiErrorMessage } from '~/lib/aiErrors'
+import { resolvePreferredCreateContentBlock } from '~/lib/content-children'
 import {
   CONTENT_WIZARD_ROOT_ID,
   type ContentWizardAddPosition,
@@ -47,6 +46,7 @@ type AiPreviewWarning = {
 
 const route = useRoute()
 const { t } = useI18n()
+const { showAiError } = useAiErrorToast()
 const { alert } = useAlertDialog()
 const { useAccessControl } = useAuthorization()
 const spaceId = computed(() => route.params.space as string)
@@ -1903,10 +1903,13 @@ const handleAiSubmit = async ({
         }
         clearAiStreamState()
       },
-      onError: (message) => {
+      onError: (message, reason) => {
         restoreAiSnapshot()
-        aiStatus.value = { message, tone: 'error' }
+        aiStatus.value = { message: aiErrorMessage(t, reason, message), tone: 'error' }
         clearAiStreamState()
+        if (reason === 'plan_excluded') {
+          showAiError(reason, message)
+        }
       },
     }
   )

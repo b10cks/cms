@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { toast } from 'vue-sonner'
-
 import type { MentionItem } from '~/api/resources/ai'
 import type { AiMentionItem } from '~/components/editor/extensions/AiMention'
 import Icon from '~/components/Icon.vue'
@@ -58,6 +56,7 @@ const props = withDefaults(
 )
 
 const { t } = useI18n()
+const { showAiError } = useAiErrorToast()
 const { streamContentInteraction, cancelStream, isStreaming } = useAiContent(
   toRef(props, 'spaceId')
 )
@@ -207,8 +206,8 @@ const handleSend = async () => {
       )
       emit('streamEnd')
     },
-    onError: (message) => {
-      toast.error(t('components.aiText.streamError', { error: message }) as string)
+    onError: (message, reason) => {
+      showAiError(reason, message)
       statusMessage.value = null
       previewContent.value = null
       isThinking.value = false

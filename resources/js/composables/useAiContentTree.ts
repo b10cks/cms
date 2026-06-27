@@ -1,7 +1,5 @@
-import { toast } from 'vue-sonner'
-
 import { ensureCsrfToken, getXsrfHeaders } from '~/lib/csrf'
-import { consumeSseStream, type SseCallbacks } from '~/lib/sse'
+import { consumeSseStream, parseStreamErrorResponse, type SseCallbacks } from '~/lib/sse'
 
 export interface AiContentTreeNode {
   id: string
@@ -101,7 +99,6 @@ function isTreeOperation(value: unknown): value is TreeOperation {
 }
 
 export function useAiContentTree(spaceId: MaybeRef<string>) {
-  const { t } = useI18n()
   const abortController = ref<AbortController | null>(null)
 
   const streamTreeInteraction = async (
@@ -140,21 +137,9 @@ export function useAiContentTree(spaceId: MaybeRef<string>) {
       })
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unknown error')
-        let errorMessage = `HTTP error! status: ${response.status}`
-
-        try {
-          const errorJson = JSON.parse(errorText)
-          errorMessage = errorJson.message || errorMessage
-        } catch {
-          if (errorText) errorMessage = errorText
-        }
-
-        if (response.status === 419) {
-          errorMessage = 'CSRF token mismatch. Please refresh the page and try again.'
-        }
-
-        throw new Error(errorMessage)
+        const { message, reason } = await parseStreamErrorResponse(response)
+        callbacks.onError?.(message, reason)
+        return
       }
 
       const reader = response.body?.getReader()
@@ -164,11 +149,7 @@ export function useAiContentTree(spaceId: MaybeRef<string>) {
     } catch (error: any) {
       if (error.name === 'AbortError') return
 
-      const errorMessage = error.message || 'Unknown error'
-      callbacks.onError?.(errorMessage)
-      toast.error(
-        t('composables.aiContentTree.interactionError', { error: errorMessage }) as string
-      )
+      callbacks.onError?.(error.message || 'Unknown error')
     } finally {
       abortController.value = null
     }

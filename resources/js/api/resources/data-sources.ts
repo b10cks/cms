@@ -1,5 +1,5 @@
-import type { ApiCollectionResponse, ApiResponse, BaseQueryParams } from '~/types'
 import { requestExportBlob, requestImportJson } from '~/lib/import-export'
+import type { ApiCollectionResponse, ApiResponse, BaseQueryParams } from '~/types'
 import type {
   CreateDataEntryPayload,
   CreateDataSourcePayload,
@@ -64,20 +64,6 @@ export class DataSources extends BaseResource<
 
   public async deleteEntry(dataSourceId: string, entryId: string) {
     return this.client.delete(`${this.basePath}/${dataSourceId}/entries/${entryId}`)
-  }
-
-  public async translateMissingDimensions(dataSourceId: string, targetDimension: string) {
-    return this.client.post<
-      ApiResponse<{
-        translated_count: number
-        skipped_count: number
-        total_candidates: number
-        target_dimension: string
-        source_dimension: string
-      }>
-    >(`${this.basePath}/${dataSourceId}/entries/translate-missing-dimensions`, {
-      target_dimension: targetDimension,
-    })
   }
 
   public async exportEntries(

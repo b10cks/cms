@@ -3586,7 +3586,20 @@
       "publishError": "Fehler beim Veröffentlichen der Version: {error}"
     },
     "ai": {
-      "interactionError": "KI-Interaktion fehlgeschlagen: {error}"
+      "interactionError": "KI-Interaktion fehlgeschlagen: {error}",
+      "errors": {
+        "not_configured": "Für diesen Space ist noch keine KI konfiguriert. Lege in den KI-Einstellungen des Space eine Konfiguration an, um KI-Funktionen zu nutzen.",
+        "provider_unavailable": "Der KI-Anbieter ist derzeit nicht verfügbar. Bitte versuche es später erneut.",
+        "not_provisioned": "Dein KI-Zugang wird gerade eingerichtet. Bitte versuche es in einem Moment erneut.",
+        "plan_excluded": "Dein aktueller Tarif enthält keine KI-Funktionen. Führe ein Upgrade durch, um sie zu nutzen.",
+        "no_result": "Die KI hat kein verwertbares Ergebnis geliefert. Bitte versuche es erneut.",
+        "generic": "Bei der KI-Anfrage ist etwas schiefgelaufen. Bitte versuche es erneut."
+      },
+      "upgradeAction": "Tarife ansehen"
+    },
+    "aiMeta": {
+      "success": "Meta-Tags erfolgreich generiert",
+      "error": "Meta-Generierung fehlgeschlagen: {error}"
     },
     "aiTranslation": {
       "error": "Übersetzung fehlgeschlagen: {error}"

@@ -129,6 +129,7 @@ const shouldShowFieldError = inject<((path: string) => boolean) | undefined>(
 const showUntranslatedOnly = ref(false)
 const searchQuery = ref('')
 const { t } = useI18n()
+const { showAiError } = useAiErrorToast()
 const { useAiConfigsQuery } = useAiConfigs(computed(() => props.spaceId))
 const { data: aiConfigs, isLoading: isLoadingAiConfigs } = useAiConfigsQuery()
 const selectedConfigId = ref<string | null>(null)
@@ -538,7 +539,10 @@ const traverseContent = (
         const blockPath = [...path, translatedIndex]
         const translatedBlockItem = translatedBlockItems[translatedIndex] || {}
         const nextBlockStamps = originalBlockId
-          ? [...blockStamps, { pathIndex: blockPath.length - 1, id: originalBlockId, block: blockSlug }]
+          ? [
+              ...blockStamps,
+              { pathIndex: blockPath.length - 1, id: originalBlockId, block: blockSlug },
+            ]
           : blockStamps
 
         traverseContent(
@@ -600,7 +604,9 @@ const traverseContent = (
             originalValue: sourceValue,
             translatedValue: translatedHeaderValue,
             isTranslated: isFieldTranslated(fieldSchema, sourceValue, translatedHeaderValue),
-            isOrphaned: !hasTranslatedValue(fieldSchema, sourceValue) && hasTranslatedValue(fieldSchema, translatedHeaderValue),
+            isOrphaned:
+              !hasTranslatedValue(fieldSchema, sourceValue) &&
+              hasTranslatedValue(fieldSchema, translatedHeaderValue),
             tablePath,
             tableColumnKey: column.key,
             tableRowId: null,
@@ -632,7 +638,9 @@ const traverseContent = (
               originalValue: sourceValue,
               translatedValue: translatedCellValue,
               isTranslated: isFieldTranslated(fieldSchema, sourceValue, translatedCellValue),
-              isOrphaned: !hasTranslatedValue(fieldSchema, sourceValue) && hasTranslatedValue(fieldSchema, translatedCellValue),
+              isOrphaned:
+                !hasTranslatedValue(fieldSchema, sourceValue) &&
+                hasTranslatedValue(fieldSchema, translatedCellValue),
               tablePath,
               tableColumnKey: column.key,
               tableRowId: row.id,
@@ -663,7 +671,9 @@ const traverseContent = (
         originalValue,
         translatedValue: normalizedTranslatedValue,
         isTranslated: isFieldTranslated(schemaItem, originalValue, normalizedTranslatedValue),
-        isOrphaned: !hasTranslatedValue(schemaItem, originalValue) && hasTranslatedValue(schemaItem, normalizedTranslatedValue),
+        isOrphaned:
+          !hasTranslatedValue(schemaItem, originalValue) &&
+          hasTranslatedValue(schemaItem, normalizedTranslatedValue),
         blockStamps,
       })
     }
@@ -1101,9 +1111,9 @@ const translateWithAI = async (configId: string | null = selectedConfigId.value)
         }
         translationProgress.value = null
       },
-      onError: (error) => {
+      onError: (error, reason) => {
         translationProgress.value = null
-        toast.error(t('composables.aiTranslation.error', { error }))
+        showAiError(reason, error)
       },
     }
   )
@@ -1180,7 +1190,11 @@ const removeAllOrphanedBlocks = (): void => {
             name="lucide:trash-2"
             class="size-3"
           />
-          {{ $t('components.flattenedLocalization.removeAllOrphanedBlocks', { count: translationStats.orphanedBlocks }) }}
+          {{
+            $t('components.flattenedLocalization.removeAllOrphanedBlocks', {
+              count: translationStats.orphanedBlocks,
+            })
+          }}
         </button>
       </div>
 
@@ -1260,7 +1274,11 @@ const removeAllOrphanedBlocks = (): void => {
         :key="`${field.path.join('-')}-${field.key}`"
         :data-field-path="getValidationPath(field)"
         :data-validation-visible="shouldShowValidationError(field) ? 'true' : undefined"
-        :class="field.isOrphaned ? 'rounded-md border border-amber-500/40 bg-amber-500/5 px-3 pb-1' : undefined"
+        :class="
+          field.isOrphaned
+            ? 'rounded-md border border-amber-500/40 bg-amber-500/5 px-3 pb-1'
+            : undefined
+        "
       >
         <div class="-mb-2 pt-2">
           <h4 class="flex items-baseline gap-2">
@@ -1272,7 +1290,9 @@ const removeAllOrphanedBlocks = (): void => {
               v-if="field.isOrphaned"
               class="ml-auto flex items-center gap-2"
             >
-              <span class="rounded bg-amber-500/15 px-1.5 py-0.5 text-2xs font-medium text-amber-500">
+              <span
+                class="rounded bg-amber-500/15 px-1.5 py-0.5 text-2xs font-medium text-amber-500"
+              >
                 {{ $t('components.flattenedLocalization.orphanedField') }}
               </span>
               <button

@@ -8,10 +8,14 @@ use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
 use App\Services\Ai\AiStreamService;
 use App\Services\Ai\Dto\StreamEvent;
+use App\Services\Ai\Exceptions\AiServiceException;
 use App\Services\Ai\Prompts\SystemPromptBuilder;
+use App\Services\Ai\Support\JsonExtractor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -182,8 +186,7 @@ class DataEntryTranslationStreamController extends Controller
                             ]);
                         }
 
-                        $cleaned = trim(preg_replace('/^```(?:json)?\s*/i', '', preg_replace('/\s*```\s*$/i', '', trim($result))));
-                        $decoded = json_decode($cleaned, true);
+                        $decoded = JsonExtractor::decode($result, true);
 
                         if (! is_array($decoded)) {
                             throw ValidationException::withMessages([
@@ -247,8 +250,23 @@ class DataEntryTranslationStreamController extends Controller
                         'source_dimension' => 'default',
                         'source_locale' => $sourceLocale,
                     ]));
+                } catch (AiServiceException $e) {
+                    $emit(StreamEvent::error($e->getMessage(), $e->reason));
+                } catch (ValidationException $e) {
+                    // Precondition failures carry safe, author-written messages.
+                    $emit(StreamEvent::error($e->validator->errors()->first() ?: 'The translation request was invalid.'));
                 } catch (\Throwable $e) {
-                    $emit(StreamEvent::error($e->getMessage()));
+                    $ref = (string) Str::uuid();
+
+                    Log::error('Data entry translation stream failed', [
+                        'space' => $space->id,
+                        'data_source' => $dataSource->id,
+                        'ref' => $ref,
+                        'message' => $e->getMessage(),
+                        'exception' => $e,
+                    ]);
+
+                    $emit(StreamEvent::error("Something went wrong while translating. Reference: {$ref}"));
                 }
 
                 if (ob_get_level() > 0) {

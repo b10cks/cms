@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { useQueryClient } from '@tanstack/vue-query'
 import { useRouteQuery } from '@vueuse/router'
 import { computed, nextTick, ref } from 'vue'
 import { toast } from 'vue-sonner'
 
 import DataEntriesIcon from '~/assets/images/data-entries.svg?component'
+import ExportDataEntriesDialog from '~/components/datasources/ExportDataEntriesDialog.vue'
+import ImportDataEntriesDialog from '~/components/datasources/ImportDataEntriesDialog.vue'
 import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
 import { Button } from '~/components/ui/button'
@@ -25,10 +28,6 @@ import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Textarea } from '~/components/ui/textarea'
-import { useQueryClient } from '@tanstack/vue-query'
-
-import ExportDataEntriesDialog from '~/components/datasources/ExportDataEntriesDialog.vue'
-import ImportDataEntriesDialog from '~/components/datasources/ImportDataEntriesDialog.vue'
 import { useDataEntries } from '~/composables/useDataEntries'
 import { useDataEntryTranslation } from '~/composables/useDataEntryTranslation'
 import { useDataSources } from '~/composables/useDataSources'
@@ -42,6 +41,7 @@ import type {
 const route = useRoute()
 const { alert } = useAlertDialog()
 const { $t, t } = useI18n()
+const { showAiError } = useAiErrorToast()
 const queryClient = useQueryClient()
 const spaceId = computed(() => route.params.space as string)
 const dataSourceId = computed(() => route.params.dataSourceId as string)
@@ -491,10 +491,10 @@ const handleTranslateMissingDimensions = async () => {
         )
       }
     },
-    onError: (message) => {
+    onError: (message, reason) => {
       toast.dismiss(loadingToast)
       translationProgress.value = null
-      toast.error(t('composables.dataEntries.translationError', { error: message }) as string)
+      showAiError(reason, message)
     },
   })
 }

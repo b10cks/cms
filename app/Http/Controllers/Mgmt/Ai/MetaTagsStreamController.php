@@ -6,15 +6,23 @@ use App\Http\Controllers\Controller;
 use App\Models\Traits\SpaceFromQuery;
 use App\Services\Ai\AiStreamService;
 use App\Services\Ai\Prompts\SystemPromptBuilder;
+use App\Services\Ai\Support\AiSseStream;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class MetaTagsController extends Controller
+class MetaTagsStreamController extends Controller
 {
     use SpaceFromQuery;
 
-    public function __invoke(Request $request, AiStreamService $service)
+    public function __construct(
+        protected AiStreamService $streamService,
+    ) {}
+
+    public function __invoke(Request $request): StreamedResponse
     {
         $space = $this->getSpaceFromQuery();
+        $this->authorizeSpaceAbility($space, 'content.manage');
+        app()->offsetSet('currentSpace', $space);
 
         $request->validate([
             'config_id' => 'sometimes|nullable|string',
@@ -27,8 +35,6 @@ class MetaTagsController extends Controller
         if ($configId = $request->input('config_id')) {
             $aiConfig = $space->aiConfigs()->find($configId) ?? $aiConfig;
         }
-
-        $promptBuilder = new SystemPromptBuilder($aiConfig);
 
         $context = $request->json('context');
         $language = strtolower(trim((string) $request->input('language', '')));
@@ -43,14 +49,16 @@ class MetaTagsController extends Controller
             ."Page content to analyze:\n"
             .json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-        $result = $service->generate($space, $promptBuilder->forMetaTags(), $userPrompt, [], $aiConfig);
+        $systemPrompt = (new SystemPromptBuilder($aiConfig))->forMetaTags();
 
-        if ($result === null) {
-            return ['data' => []];
-        }
-
-        return [
-            'data' => json_decode($result, false) ?? [],
-        ];
+        return AiSseStream::response(
+            fn () => $this->streamService->streamWithSystemPrompt(
+                $space,
+                $systemPrompt,
+                $userPrompt,
+                aiConfig: $aiConfig,
+            ),
+            ['endpoint' => 'meta-tags', 'space' => $space->id],
+        );
     }
 }

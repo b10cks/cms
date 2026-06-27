@@ -3632,7 +3632,20 @@
       "publishError": "Failed to publish version: {error}"
     },
     "ai": {
-      "interactionError": "AI interaction failed: {error}"
+      "interactionError": "AI interaction failed: {error}",
+      "errors": {
+        "not_configured": "This space has no AI configuration yet. Add one in the space AI settings to use AI features.",
+        "provider_unavailable": "The AI provider is currently unavailable. Please try again later.",
+        "not_provisioned": "Your AI access is still being set up. Please try again in a moment.",
+        "plan_excluded": "Your current plan doesn't include AI features. Upgrade your plan to use them.",
+        "no_result": "The AI service didn't return a usable result. Please try again.",
+        "generic": "Something went wrong with the AI request. Please try again."
+      },
+      "upgradeAction": "View plans"
+    },
+    "aiMeta": {
+      "success": "Meta tags generated successfully",
+      "error": "Meta generation failed: {error}"
     },
     "aiTranslation": {
       "error": "Translation failed: {error}"

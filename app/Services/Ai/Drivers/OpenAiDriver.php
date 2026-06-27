@@ -4,6 +4,7 @@ namespace App\Services\Ai\Drivers;
 
 use App\Services\Ai\Dto\AiModelDto;
 use Generator;
+use GuzzleHttp\Client as GuzzleClient;
 use OpenAI;
 use OpenAI\Client;
 
@@ -19,10 +20,33 @@ class OpenAiDriver extends BaseAiDriver
             $this->client = OpenAI::factory()
                 ->withApiKey($this->config['api_key'] ?? config('openai.api_key'))
                 ->withOrganization($this->config['organization'] ?? null)
+                ->withHttpClient($this->makeHttpClient())
                 ->make();
         }
 
         return $this->client;
+    }
+
+    /**
+     * A Guzzle client with bounded connect/idle timeouts so a hung provider
+     * cannot stall a streamed request forever. No total `timeout` is set, so
+     * legitimately long generations are never truncated mid-stream.
+     */
+    protected function makeHttpClient(): GuzzleClient
+    {
+        return new GuzzleClient([
+            'connect_timeout' => (float) ($this->config['connect_timeout'] ?? 10),
+            'read_timeout' => (float) ($this->config['stream_idle_timeout'] ?? 120),
+        ]);
+    }
+
+    protected function shouldShapeForReasoning(string $modelId, ?AiModelDto $model): bool
+    {
+        if ($model && in_array('reasoning', $model->capabilities, true)) {
+            return true;
+        }
+
+        return (bool) preg_match('/^o\d/i', $modelId);
     }
 
     public function isConfigured(): bool
@@ -72,6 +96,7 @@ class OpenAiDriver extends BaseAiDriver
                     supportsStreaming: $modelInfo['supports_streaming'] ?? true,
                     supportsTools: $modelInfo['supports_tools'] ?? true,
                     supportsVision: $modelInfo['supports_vision'] ?? false,
+                    supportsJsonMode: $modelInfo['supports_json_mode'] ?? ! (bool) preg_match('/^o\d/i', $model->id),
                 );
             }
 
@@ -159,6 +184,7 @@ class OpenAiDriver extends BaseAiDriver
                 supportsStreaming: $modelConfig['supports_streaming'] ?? true,
                 supportsTools: $modelConfig['supports_tools'] ?? true,
                 supportsVision: $modelConfig['supports_vision'] ?? false,
+                supportsJsonMode: $modelConfig['supports_json_mode'] ?? ! (bool) preg_match('/^o\d/i', $modelConfig['id']),
             );
         }
 
@@ -173,23 +199,7 @@ class OpenAiDriver extends BaseAiDriver
     ): Generator {
         $client = $this->getClient();
 
-        $params = [
-            'model' => $modelId,
-            'messages' => $messages,
-            'stream' => true,
-        ];
-
-        if (! empty($tools) && $this->supportsTools($modelId)) {
-            $params['tools'] = $tools;
-        }
-
-        if (isset($options['max_tokens'])) {
-            $params['max_tokens'] = $options['max_tokens'];
-        }
-
-        if (isset($options['temperature'])) {
-            $params['temperature'] = $options['temperature'];
-        }
+        $params = $this->buildChatParams($modelId, $messages, $tools, $options);
 
         try {
             $stream = $client->chat()->createStreamed($params);
@@ -245,7 +255,7 @@ class OpenAiDriver extends BaseAiDriver
                                 'content' => json_encode($toolResult),
                             ];
                         } catch (\Throwable $e) {
-                            yield $this->emitError("Tool '{$toolName}' failed: {$e->getMessage()}");
+                            yield $this->reportError($e, 'A tool call failed.', ['tool' => $toolName]);
 
                             return;
                         }
@@ -261,7 +271,7 @@ class OpenAiDriver extends BaseAiDriver
 
             yield $this->emitDone($fullContent);
         } catch (\Throwable $e) {
-            yield $this->emitError($e->getMessage());
+            yield $this->reportError($e, 'The AI provider returned an error.', ['model' => $modelId]);
         }
     }
 

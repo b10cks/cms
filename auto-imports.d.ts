@@ -89,7 +89,9 @@ declare global {
   const useAiConfigs: typeof import('./resources/js/composables/useAiModels').useAiConfigs
   const useAiContent: typeof import('./resources/js/composables/useAiContent').useAiContent
   const useAiContentTree: typeof import('./resources/js/composables/useAiContentTree').useAiContentTree
+  const useAiErrorToast: typeof import('./resources/js/composables/useAiErrorToast').useAiErrorToast
   const useAiMentions: typeof import('./resources/js/composables/useAiMentions').useAiMentions
+  const useAiMetaTags: typeof import('./resources/js/composables/useAiMetaTags').useAiMetaTags
   const useAiModels: typeof import('./resources/js/composables/useAiModels').useAiModels
   const useAiSettings: typeof import('./resources/js/composables/useAiModels').useAiSettings
   const useAiTranslation: typeof import('./resources/js/composables/useAiTranslation').useAiTranslation
@@ -206,6 +208,9 @@ declare global {
   // @ts-ignore
   export type { AiContentTreeNode, CreateTreeOperation, MoveTreeOperation, UpdateTreeOperation, DeleteTreeOperation, RestoreTreeOperation, TreeOperation, ContentTreePayload, TreeOperationsResult } from './resources/js/composables/useAiContentTree'
   import('./resources/js/composables/useAiContentTree')
+  // @ts-ignore
+  export type { MetaTagsPayload } from './resources/js/composables/useAiMetaTags'
+  import('./resources/js/composables/useAiMetaTags')
   // @ts-ignore
   export type { AiModel, GroupedModels, SpaceAiSettings, SpaceAiUsage } from './resources/js/composables/useAiModels'
   import('./resources/js/composables/useAiModels')
@@ -349,7 +354,9 @@ declare module 'vue' {
     readonly useAiConfigs: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiConfigs']>
     readonly useAiContent: UnwrapRef<typeof import('./resources/js/composables/useAiContent')['useAiContent']>
     readonly useAiContentTree: UnwrapRef<typeof import('./resources/js/composables/useAiContentTree')['useAiContentTree']>
+    readonly useAiErrorToast: UnwrapRef<typeof import('./resources/js/composables/useAiErrorToast')['useAiErrorToast']>
     readonly useAiMentions: UnwrapRef<typeof import('./resources/js/composables/useAiMentions')['useAiMentions']>
+    readonly useAiMetaTags: UnwrapRef<typeof import('./resources/js/composables/useAiMetaTags')['useAiMetaTags']>
     readonly useAiModels: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiModels']>
     readonly useAiSettings: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiSettings']>
     readonly useAiTranslation: UnwrapRef<typeof import('./resources/js/composables/useAiTranslation')['useAiTranslation']>

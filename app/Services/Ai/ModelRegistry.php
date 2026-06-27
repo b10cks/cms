@@ -53,6 +53,7 @@ class ModelRegistry
             return null;
         }
 
+        // Single-key mode: every space shares the platform key by design.
         if (config('ai.mode') !== 'space') {
             return $driver;
         }
@@ -63,18 +64,22 @@ class ModelRegistry
             ->active()
             ->first();
 
-        if ($spaceKey) {
-            return $driver->withApiKey($spaceKey->getDecryptedKey());
+        // Fail closed: in per-space mode a space may only stream on its own
+        // provisioned, spend-capped key. Falling back to the platform key here
+        // would bypass the per-space cap entirely (and bill ineligible or
+        // over-quota spaces to the global key), so return no driver instead.
+        if (! $spaceKey) {
+            return null;
         }
 
-        return $driver;
+        return $driver->withApiKey($spaceKey->getDecryptedKey());
     }
 
     public function getEnabledDrivers(): array
     {
         return array_filter(
             $this->drivers,
-            fn(AiDriverInterface $driver) => $driver->isEnabled()
+            fn (AiDriverInterface $driver) => $driver->isEnabled()
         );
     }
 
@@ -120,7 +125,7 @@ class ModelRegistry
     {
         $driver = $this->getDriver($driverName);
 
-        if (!$driver || !$driver->isEnabled()) {
+        if (! $driver || ! $driver->isEnabled()) {
             return [];
         }
 
@@ -131,13 +136,13 @@ class ModelRegistry
     {
         [$driverName, $modelId] = explode(':', $fullId, 2) + [null, null];
 
-        if (!$driverName || !$modelId) {
+        if (! $driverName || ! $modelId) {
             return null;
         }
 
         $driver = $this->getDriver($driverName);
 
-        if (!$driver) {
+        if (! $driver) {
             return null;
         }
 
@@ -161,7 +166,7 @@ class ModelRegistry
 
         return array_values(array_filter(
             $favourites,
-            fn(string $id) => in_array($id, $validModelIds)
+            fn (string $id) => in_array($id, $validModelIds)
         ));
     }
 

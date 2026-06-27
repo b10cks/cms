@@ -1,5 +1,5 @@
 import { ensureCsrfToken, getXsrfHeaders } from '~/lib/csrf'
-import { consumeSseStream, type SseCallbacks } from '~/lib/sse'
+import { consumeSseStream, parseStreamErrorResponse, type SseCallbacks } from '~/lib/sse'
 
 export function useDataEntryTranslation(spaceId: MaybeRef<string>, dataSourceId: MaybeRef<string>) {
   const abortController = ref<AbortController | null>(null)
@@ -45,21 +45,9 @@ export function useDataEntryTranslation(spaceId: MaybeRef<string>, dataSourceId:
       })
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unknown error')
-        let errorMessage = `HTTP error! status: ${response.status}`
-
-        try {
-          const errorJson = JSON.parse(errorText)
-          errorMessage = errorJson.message || errorMessage
-        } catch {
-          if (errorText) errorMessage = errorText
-        }
-
-        if (response.status === 419) {
-          errorMessage = 'CSRF token mismatch. Please refresh the page and try again.'
-        }
-
-        throw new Error(errorMessage)
+        const { message, reason } = await parseStreamErrorResponse(response)
+        callbacks.onError?.(message, reason)
+        return
       }
 
       const reader = response.body?.getReader()

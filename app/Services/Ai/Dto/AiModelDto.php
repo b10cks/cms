@@ -16,6 +16,7 @@ readonly class AiModelDto
         public bool $supportsStreaming = true,
         public bool $supportsTools = true,
         public bool $supportsVision = false,
+        public bool $supportsJsonMode = false,
     ) {}
 
     public function getFullId(): string
@@ -38,6 +39,7 @@ readonly class AiModelDto
             'supports_streaming' => $this->supportsStreaming,
             'supports_tools' => $this->supportsTools,
             'supports_vision' => $this->supportsVision,
+            'supports_json_mode' => $this->supportsJsonMode,
         ];
     }
 }

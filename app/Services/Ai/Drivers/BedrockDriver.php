@@ -72,7 +72,7 @@ class BedrockDriver extends BaseAiDriver
 
         $body = [
             'anthropic_version' => 'bedrock-2023-05-31',
-            'max_tokens' => $options['max_tokens'] ?? 4096,
+            'max_tokens' => $this->clampMaxTokens((int) ($options['max_tokens'] ?? 4096), $this->findModelDto($modelId)),
             'messages' => $this->convertMessages($messages),
         ];
 
@@ -160,7 +160,7 @@ class BedrockDriver extends BaseAiDriver
                                 ],
                             ];
                         } catch (\Throwable $e) {
-                            yield $this->emitError("Tool '{$toolName}' failed: {$e->getMessage()}");
+                            yield $this->reportError($e, 'A tool call failed.', ['tool' => $toolName]);
 
                             return;
                         }
@@ -176,7 +176,7 @@ class BedrockDriver extends BaseAiDriver
 
             yield $this->emitDone($fullContent);
         } catch (\Throwable $e) {
-            yield $this->emitError($e->getMessage());
+            yield $this->reportError($e, 'The AI provider returned an error.', ['model' => $modelId]);
         }
     }
 

@@ -4,10 +4,9 @@ use App\Http\Controllers\Mgmt\Ai\AiModelsController;
 use App\Http\Controllers\Mgmt\Ai\AvailableModelsController;
 use App\Http\Controllers\Mgmt\Ai\ContentInteractionStreamController;
 use App\Http\Controllers\Mgmt\Ai\ContentTreeInteractionStreamController;
-use App\Http\Controllers\Mgmt\Ai\MetaTagsController;
+use App\Http\Controllers\Mgmt\Ai\MetaTagsStreamController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiConfigController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiSettingsController;
-use App\Http\Controllers\Mgmt\Ai\TranslationController;
 use App\Http\Controllers\Mgmt\Ai\TranslationStreamController;
 use App\Http\Controllers\Mgmt\AssetController;
 use App\Http\Controllers\Mgmt\AssetDataExportController;
@@ -50,7 +49,6 @@ use App\Http\Controllers\Mgmt\Content\MoveContentController;
 use App\Http\Controllers\Mgmt\DataEntryController;
 use App\Http\Controllers\Mgmt\DataEntryDataExportController;
 use App\Http\Controllers\Mgmt\DataEntryDataImportController;
-use App\Http\Controllers\Mgmt\DataEntryTranslationController;
 use App\Http\Controllers\Mgmt\DataEntryTranslationStreamController;
 use App\Http\Controllers\Mgmt\DataSourceController;
 use App\Http\Controllers\Mgmt\IconController;
@@ -153,10 +151,8 @@ Route::group(['prefix' => 'ai'], function () {
         ->name('ai.available-models');
     Route::get('models', AiModelsController::class)
         ->name('ai.models');
-    Route::post('meta-tags', MetaTagsController::class)
-        ->name('ai.meta-tags');
-    Route::post('translate', TranslationController::class)
-        ->name('ai.translate');
+    Route::post('meta-tags/stream', MetaTagsStreamController::class)
+        ->name('ai.meta-tags.stream');
     Route::post('translate/stream', TranslationStreamController::class)
         ->name('ai.translate.stream');
     Route::post('content-interaction/stream', ContentInteractionStreamController::class)
@@ -341,8 +337,6 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::apiResource('data-sources', DataSourceController::class);
     Route::post('data-sources/{data_source}/entries/export', DataEntryDataExportController::class)->name('data-sources.entries.data.export');
     Route::post('data-sources/{data_source}/entries/import', DataEntryDataImportController::class)->name('data-sources.entries.data.import');
-    Route::post('data-sources/{data_source}/entries/translate-missing-dimensions', DataEntryTranslationController::class)
-        ->name('data-sources.entries.translate-missing-dimensions');
     Route::post('data-sources/{data_source}/entries/translate-missing-dimensions/stream', DataEntryTranslationStreamController::class)
         ->name('data-sources.entries.translate-missing-dimensions.stream');
     Route::apiResource('data-sources.entries', DataEntryController::class);

@@ -1,14 +1,17 @@
-import type { ContentInteractionPayload } from '~/api/resources/ai'
 import { ensureCsrfToken, getXsrfHeaders } from '~/lib/csrf'
 import { consumeSseStream, parseStreamErrorResponse, type SseCallbacks } from '~/lib/sse'
 
-export type { SseCallbacks as StreamCallbacks }
+export interface MetaTagsPayload {
+  context: Record<string, unknown>
+  config_id?: string | null
+  language?: string | null
+}
 
-export function useAiContent(spaceId: MaybeRef<string>) {
+export function useAiMetaTags(spaceId: MaybeRef<string>) {
   const abortController = ref<AbortController | null>(null)
 
-  const streamContentInteraction = async (
-    payload: ContentInteractionPayload,
+  const streamMetaTags = async (
+    payload: MetaTagsPayload,
     callbacks: SseCallbacks
   ): Promise<void> => {
     const id = toValue(spaceId)
@@ -21,7 +24,7 @@ export function useAiContent(spaceId: MaybeRef<string>) {
 
     abortController.value = new AbortController()
 
-    const url = `/mgmt/v1/ai/content-interaction/stream?spaceId=${id}`
+    const url = `/mgmt/v1/ai/meta-tags/stream?spaceId=${id}`
     const xsrfHeaders = getXsrfHeaders()
 
     if (Object.keys(xsrfHeaders).length === 0) {
@@ -37,7 +40,11 @@ export function useAiContent(spaceId: MaybeRef<string>) {
           Accept: 'text/event-stream',
           ...xsrfHeaders,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          context: payload.context,
+          config_id: payload.config_id ?? null,
+          language: payload.language ?? null,
+        }),
         signal: abortController.value.signal,
         credentials: 'include',
       })
@@ -71,7 +78,7 @@ export function useAiContent(spaceId: MaybeRef<string>) {
   const isStreaming = computed(() => abortController.value !== null)
 
   return {
-    streamContentInteraction,
+    streamMetaTags,
     cancelStream,
     isStreaming,
   }

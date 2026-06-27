@@ -17,8 +17,7 @@ readonly class StreamEvent
         public ?string $message = null,
         public ?string $content = null,
         public ?array $data = null,
-    ) {
-    }
+    ) {}
 
     public static function status(string $message): self
     {
@@ -35,9 +34,13 @@ readonly class StreamEvent
         return new self(StreamEventType::Done, content: $content, data: $data);
     }
 
-    public static function error(string $message): self
+    public static function error(string $message, ?string $reason = null): self
     {
-        return new self(StreamEventType::Error, message: $message);
+        return new self(
+            StreamEventType::Error,
+            message: $message,
+            data: $reason !== null ? ['reason' => $reason] : null,
+        );
     }
 
     public function toJsonLine(): string
@@ -56,13 +59,14 @@ readonly class StreamEvent
                 'content' => $this->content,
                 'data' => $this->data,
             ],
-            StreamEventType::Error => [
+            StreamEventType::Error => array_filter([
                 'type' => $this->type->value,
                 'message' => $this->message,
-            ],
+                'reason' => $this->data['reason'] ?? null,
+            ], static fn ($value) => $value !== null),
         };
 
-        return 'data: ' . json_encode($payload, JSON_UNESCAPED_UNICODE);
+        return 'data: '.json_encode($payload, JSON_UNESCAPED_UNICODE);
     }
 
     public function toArray(): array

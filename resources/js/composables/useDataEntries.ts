@@ -223,26 +223,6 @@ export function useDataEntries(spaceId: MaybeRef<string>, dataSourceId: MaybeRef
     })
   }
 
-  const useTranslateMissingDimensionsMutation = () => {
-    return useMutation({
-      mutationFn: async (targetDimension: string) => {
-        const response = await spaceAPI.value.dataSources.translateMissingDimensions(
-          toValue(dataSourceId),
-          targetDimension
-        )
-        return response.data
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.dataEntries(spaceId, dataSourceId).lists(),
-        })
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.dataSources(spaceId).detail(dataSourceId),
-        })
-      },
-    })
-  }
-
   return {
     // Queries
     useDataEntriesQuery,
@@ -255,6 +235,5 @@ export function useDataEntries(spaceId: MaybeRef<string>, dataSourceId: MaybeRef
     useBatchUpdateEntriesMutation,
     useExportDataEntriesMutation,
     useImportDataEntriesMutation,
-    useTranslateMissingDimensionsMutation,
   }
 }

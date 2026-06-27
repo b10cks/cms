@@ -5,6 +5,7 @@ namespace App\Services\Ai\Drivers;
 use App\Services\Ai\Dto\AiModelDto;
 use Arr;
 use Generator;
+use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Support\Facades\Http;
 use OpenAI;
 use OpenAI\Client;
@@ -19,7 +20,7 @@ class OpenRouterDriver extends BaseAiDriver
 
     public function isConfigured(): bool
     {
-        return !empty($this->config['api_key']);
+        return ! empty($this->config['api_key']);
     }
 
     public function withApiKey(string $apiKey): static
@@ -37,6 +38,10 @@ class OpenRouterDriver extends BaseAiDriver
             $factory = OpenAI::factory()
                 ->withBaseUri($this->baseUrl)
                 ->withApiKey($this->config['api_key'])
+                ->withHttpClient(new GuzzleClient([
+                    'connect_timeout' => (float) ($this->config['connect_timeout'] ?? 10),
+                    'read_timeout' => (float) ($this->config['stream_idle_timeout'] ?? 120),
+                ]))
                 ->withHttpHeader('HTTP-Referer', $this->config['site_url'] ?? config('app.url'))
                 ->withHttpHeader('X-Title', $this->config['site_name'] ?? config('app.name'));
 
@@ -46,6 +51,16 @@ class OpenRouterDriver extends BaseAiDriver
         return $this->client;
     }
 
+    /**
+     * OpenRouter normalises sampling/length parameters server-side and caps the
+     * output to each model's real limit, so clamping against our (often
+     * guessed) catalogue ceiling would only shrink valid budgets. Pass through.
+     */
+    protected function clampMaxTokens(int $requested, ?AiModelDto $model): int
+    {
+        return max(1, $requested);
+    }
+
     protected function fetchModels(): array
     {
         try {
@@ -53,7 +68,7 @@ class OpenRouterDriver extends BaseAiDriver
                 ->timeout(30)
                 ->get("{$this->baseUrl}/models");
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 return [];
             }
 
@@ -76,10 +91,12 @@ class OpenRouterDriver extends BaseAiDriver
                     supportsStreaming: true,
                     supportsTools: \in_array('tools', $supportedParams),
                     supportsVision: ($modelData['architecture']['modality'] ?? '') === 'text+image->text',
+                    supportsJsonMode: \in_array('response_format', $supportedParams)
+                        || \in_array('structured_outputs', $supportedParams),
                 );
             }
 
-            return Arr::sort($models, fn(AiModelDto $model) => $model->name);
+            return Arr::sort($models, fn (AiModelDto $model) => $model->name);
         } catch (\Throwable $e) {
             return [];
         }
@@ -117,23 +134,7 @@ class OpenRouterDriver extends BaseAiDriver
     ): Generator {
         $client = $this->getClient();
 
-        $params = [
-            'model' => $modelId,
-            'messages' => $messages,
-            'stream' => true,
-        ];
-
-        $supportsTools = $this->supportsTools($modelId);
-
-        if (!empty($tools) && $supportsTools) {
-            $params['tools'] = $tools;
-        }
-        if (isset($options['max_tokens'])) {
-            $params['max_tokens'] = $options['max_tokens'];
-        }
-        if (isset($options['temperature'])) {
-            $params['temperature'] = $options['temperature'];
-        }
+        $params = $this->buildChatParams($modelId, $messages, $tools, $options);
 
         try {
             $stream = $client->chat()->createStreamed($params);
@@ -145,7 +146,7 @@ class OpenRouterDriver extends BaseAiDriver
             foreach ($stream as $response) {
                 $delta = $response->choices[0]->delta ?? null;
 
-                if (isset($delta->reasoning_content) && !empty($delta->reasoning_content)) {
+                if (isset($delta->reasoning_content) && ! empty($delta->reasoning_content)) {
                     $reasoningContent .= $delta->reasoning_content;
                     yield $this->emitStatus($delta->reasoning_content);
                 }
@@ -159,9 +160,9 @@ class OpenRouterDriver extends BaseAiDriver
                     foreach ($delta->toolCalls as $toolCallDelta) {
                         $index = $toolCallDelta->index;
 
-                        if (!isset($toolCalls[$index])) {
+                        if (! isset($toolCalls[$index])) {
                             $toolCalls[$index] = [
-                                'id' => $toolCallDelta->id ?? ('call_' . uniqid()),
+                                'id' => $toolCallDelta->id ?? ('call_'.uniqid()),
                                 'type' => $toolCallDelta->type ?? 'function',
                                 'function' => [
                                     'name' => $toolCallDelta->function?->name ?? '',
@@ -170,7 +171,7 @@ class OpenRouterDriver extends BaseAiDriver
                             ];
                         }
 
-                        if (!empty($toolCallDelta->id)) {
+                        if (! empty($toolCallDelta->id)) {
                             $toolCalls[$index]['id'] = $toolCallDelta->id;
                         }
 
@@ -184,7 +185,7 @@ class OpenRouterDriver extends BaseAiDriver
                     }
                 }
 
-                if ($response->choices[0]->finishReason === 'tool_calls' && !empty($toolCalls)) {
+                if ($response->choices[0]->finishReason === 'tool_calls' && ! empty($toolCalls)) {
                     $toolCalls = array_values($toolCalls);
 
                     foreach ($toolCalls as $toolCall) {
@@ -207,7 +208,7 @@ class OpenRouterDriver extends BaseAiDriver
                                 'content' => json_encode($toolResult),
                             ];
                         } catch (\Throwable $e) {
-                            yield $this->emitError("Tool '{$toolName}' failed: {$e->getMessage()}");
+                            yield $this->reportError($e, 'A tool call failed.', ['tool' => $toolName]);
 
                             return;
                         }
@@ -223,7 +224,7 @@ class OpenRouterDriver extends BaseAiDriver
 
             yield $this->emitDone($fullContent);
         } catch (\Throwable $e) {
-            yield $this->emitError($e->getMessage());
+            yield $this->reportError($e, 'The AI provider returned an error.', ['model' => $modelId]);
         }
     }
 
