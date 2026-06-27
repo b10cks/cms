@@ -3046,6 +3046,11 @@
     "clearSelection": "Auswahl löschen",
     "rename": "Umbenennen",
     "archive": "Archivieren",
+    "accessDenied": {
+      "spaceFallback": "Verfügbare Space-Seite öffnen",
+      "spaceHome": "Zurück zur Space-Startseite",
+      "teamOverview": "Zurück zur Team-Übersicht"
+    },
     "settings": "Einstellungen",
     "inviteMember": "Mitglied einladen",
     "signup": "Registrieren",
@@ -3055,6 +3060,7 @@
     "create": "Erstellen",
     "cancel": "Abbrechen",
     "paste": "Einfügen",
+    "creating": "Wird erstellt...",
     "content": {
       "publish": "Veröffentlichen",
       "publishNow": "Jetzt veröffentlichen",
@@ -3130,6 +3136,7 @@
     },
     "blocks": {
       "add": "Block hinzufügen",
+      "addCondition": "Bedingung hinzufügen",
       "delete": "Block löschen",
       "edit": "Block bearbeiten",
       "save": "Block speichern",
@@ -3190,6 +3197,9 @@
     "view": {
       "all": "Alle",
       "archived": "Archiviert"
+    },
+    "schema": {
+      "delete": "Seite löschen"
     },
     "saveChanges": "Änderungen speichern",
     "saving": "Speichere...",

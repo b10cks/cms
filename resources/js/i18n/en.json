@@ -3074,6 +3074,11 @@
     "clearSelection": "Clear Selection",
     "rename": "Rename",
     "archive": "Archive",
+    "accessDenied": {
+      "spaceFallback": "Open available space page",
+      "spaceHome": "Back to space home",
+      "teamOverview": "Back to team overview"
+    },
     "settings": "Settings",
     "inviteMember": "Invite Member",
     "signup": "Sign Up",
@@ -3083,6 +3088,7 @@
     "create": "Create",
     "cancel": "Cancel",
     "paste": "Paste",
+    "creating": "Creating...",
     "content": {
       "publish": "Publish",
       "publishNow": "Publish Now",
@@ -3215,6 +3221,9 @@
         "select": "select {name}",
         "continueWith": "Continue with {name}"
       }
+    },
+    "schema": {
+      "delete": "Delete page"
     },
     "saveChanges": "Save Changes",
     "saving": "Saving...",
