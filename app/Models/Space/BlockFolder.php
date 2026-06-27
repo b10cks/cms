@@ -2,6 +2,7 @@
 
 namespace App\Models\Space;
 
+use App\Models\Traits\BroadcastsSpaceModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\Traits\SpaceAuditable;
 use CodersCantina\Filter\Filterable;
@@ -43,11 +44,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class BlockFolder extends SpaceModel
 {
+    use BroadcastsSpaceModelEvents;
     use Filterable;
     use HasFactory;
     use HasPurifiedAttributes;
     use HasUlids;
     use SpaceAuditable;
+
+    protected string $spaceChannel = 'blocks';
 
     protected $table = 'block_folders';
 

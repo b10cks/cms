@@ -2,6 +2,7 @@
 
 namespace App\Models\Space;
 
+use App\Models\Traits\BroadcastsSpaceModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\Traits\SpaceAuditable;
 use CodersCantina\Filter\Filterable;
@@ -35,11 +36,14 @@ use Staudenmeir\EloquentJsonRelations\Relations\HasManyJson;
  */
 class BlockTag extends SpaceModel
 {
+    use BroadcastsSpaceModelEvents;
     use HasPurifiedAttributes;
     use Filterable;
     use HasJsonRelationships;
     use HasFactory;
     use SpaceAuditable;
+
+    protected string $spaceChannel = 'blocks';
 
     protected $table = 'block_tags';
     protected $primaryKey = 'name';

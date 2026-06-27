@@ -3,6 +3,7 @@
 namespace App\Models\Space;
 
 use App\Models\Management\Storage;
+use App\Models\Traits\BroadcastsSpaceModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\Traits\SpaceAuditable;
 use CodersCantina\Filter\Filterable;
@@ -55,12 +56,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class AssetFolder extends SpaceModel
 {
+    use BroadcastsSpaceModelEvents;
     use Filterable;
     use HasUlids;
     use HasFactory;
     use SoftDeletes;
     use HasPurifiedAttributes;
     use SpaceAuditable;
+
+    protected string $spaceChannel = 'assets';
 
     protected $table = 'asset_folders';
 

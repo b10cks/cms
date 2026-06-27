@@ -2,6 +2,7 @@
 
 namespace App\Models\Space;
 
+use App\Models\Traits\BroadcastsSpaceModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\Traits\SpaceAuditable;
 use CodersCantina\Filter\Filterable;
@@ -39,12 +40,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class AssetTag extends SpaceModel
 {
+    use BroadcastsSpaceModelEvents;
     use Filterable;
     use HasFactory;
     use HasPurifiedAttributes;
     use HasUlids;
     use SpaceAuditable;
     use SoftDeletes;
+
+    protected string $spaceChannel = 'assets';
 
     protected $table = 'asset_tags';
 

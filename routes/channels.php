@@ -16,6 +16,12 @@ Broadcast::channel('spaces.{space}.content', function (User $user, Space $space)
     return true;
 });
 
+foreach (['blocks', 'assets', 'icons', 'redirects'] as $resource) {
+    Broadcast::channel("spaces.{space}.{$resource}", function (User $user, Space $space) {
+        return $space && $user->spaces()->where('spaces.id', $space->id)->exists();
+    });
+}
+
 Broadcast::channel('presence-spaces.{spaceId}', function (User $user, string $spaceId) {
     $space = Space::find($spaceId);
 

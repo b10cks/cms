@@ -3,6 +3,7 @@
 namespace App\Models\Space;
 
 use App\Casts\Content\SchemaCast;
+use App\Models\Traits\BroadcastsSpaceModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\Traits\SpaceAuditable;
 use App\Services\Content\ContentMenuCache;
@@ -61,12 +62,15 @@ use Illuminate\Support\Facades\DB;
  */
 class Block extends SpaceModel
 {
+    use BroadcastsSpaceModelEvents;
     use Filterable;
     use HasFactory;
     use HasPurifiedAttributes;
     use HasUlids;
     use SoftDeletes;
     use SpaceAuditable;
+
+    protected string $spaceChannel = 'blocks';
 
     protected $table = 'blocks';
 

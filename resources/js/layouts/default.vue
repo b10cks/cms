@@ -21,6 +21,8 @@ useSeoMeta({
 })
 
 provide('spaceId', spaceId)
+
+useSpaceBroadcasts(spaceId)
 </script>
 
 <template>

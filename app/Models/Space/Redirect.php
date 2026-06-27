@@ -2,6 +2,7 @@
 
 namespace App\Models\Space;
 
+use App\Models\Traits\BroadcastsSpaceModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\Traits\SpaceAuditable;
 use CodersCantina\Filter\Filterable;
@@ -38,11 +39,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  */
 class Redirect extends SpaceModel
 {
+    use BroadcastsSpaceModelEvents;
     use HasFactory;
     use HasPurifiedAttributes;
     use HasUlids;
     use Filterable;
     use SpaceAuditable;
+
+    protected string $spaceChannel = 'redirects';
 
     protected $table = 'redirects';
 
