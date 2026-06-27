@@ -10,22 +10,30 @@ import {
 } from '~/components/ui/dialog'
 import { SelectField, TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
+import { useTeamTypes } from '~/composables/useTeamTypes'
 import type { CreateTeamPayload, TeamHierarchyItem } from '~/types/teams'
 
-const props = defineProps<{
-  hierarchy: TeamHierarchyItem[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    hierarchy: TeamHierarchyItem[]
+    isRoot?: boolean
+  }>(),
+  {
+    isRoot: false,
+  }
+)
 
 const emit = defineEmits<{
   submit: [payload: CreateTeamPayload]
 }>()
 
 const { t } = useI18n()
+const { teamTypeOptions } = useTeamTypes()
 
 const open = ref(false)
 const isSubmitting = ref(false)
 
-const formData = ref<CreateTeamPayload>({
+const createDefaults = (): CreateTeamPayload => ({
   name: '',
   description: '',
   type: 'partner',
@@ -35,17 +43,22 @@ const formData = ref<CreateTeamPayload>({
   settings: {},
 })
 
+const formData = ref<CreateTeamPayload>(createDefaults())
+
+// Only teams the user may add children to are offered as parents. The
+// top-level ("No parent") option is reserved for root.
 const parentOptions = computed(() => {
-  const options: { value: string | null; label: string }[] = [
-    { value: null, label: t('labels.teams.noParent') },
-  ]
+  const options: { value: string | null; label: string }[] = []
+
+  if (props.isRoot) {
+    options.push({ value: null, label: t('labels.teams.noParent') })
+  }
 
   const flattenHierarchy = (items: TeamHierarchyItem[], prefix = '') => {
     for (const item of items) {
-      options.push({
-        value: item.id,
-        label: prefix + item.name,
-      })
+      if (item.can_create_child) {
+        options.push({ value: item.id, label: prefix + item.name })
+      }
       if (item.children?.length) {
         flattenHierarchy(item.children, `${prefix}  `)
       }
@@ -70,15 +83,7 @@ const handleSubmit = async () => {
 }
 
 const resetForm = () => {
-  formData.value = {
-    name: '',
-    description: '',
-    type: 'partner',
-    parent_id: null,
-    icon: null,
-    color: null,
-    settings: {},
-  }
+  formData.value = createDefaults()
 }
 
 const handleOpenChange = (value: boolean) => {
@@ -126,6 +131,15 @@ const handleOpenChange = (value: boolean) => {
         />
 
         <SelectField
+          v-model="formData.type"
+          name="type"
+          :label="$t('labels.teams.fields.type')"
+          :placeholder="$t('labels.teams.fields.typePlaceholder')"
+          :options="teamTypeOptions"
+        />
+
+        <SelectField
+          v-if="parentOptions.length > 0"
           v-model="formData.parent_id"
           name="parent"
           :label="$t('labels.teams.fields.parent')"

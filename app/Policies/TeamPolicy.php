@@ -22,7 +22,12 @@ class TeamPolicy
 
     public function create(User $user): bool
     {
-        return true;
+        return $user->is_root;
+    }
+
+    public function createChild(User $user, Team $parent): bool
+    {
+        return $this->canInTeam($user, $parent, 'team.children.manage');
     }
 
     public function update(User $user, Team $team): bool

@@ -23,9 +23,11 @@ class StoreTeamRequest extends FormRequest
                 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'
             ],
             'description' => 'nullable|string',
+            'type' => 'nullable|string|max:50|in:partner,reseller,affiliate',
             'parent_id' => [
                 'nullable',
-                'string'
+                'string',
+                Rule::exists('teams', 'id')->whereNull('deleted_at'),
             ],
             'settings' => 'nullable|array'
         ];

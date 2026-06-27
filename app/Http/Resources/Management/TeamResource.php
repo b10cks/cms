@@ -31,6 +31,7 @@ class TeamResource extends JsonResource
                     'name' => $this->parent->name,
                 ];
             }),
+            'children' => TeamResource::collection($this->whenLoaded('children')),
             'settings' => $this->settings,
             'user_count' => $this->whenCounted('users'),
             'spaces_count' => $this->whenCounted('spaces'),
@@ -40,6 +41,18 @@ class TeamResource extends JsonResource
                 : false,
             'can_create_space' => $user
                 ? $authorization->canInTeam($user, $this->resource, 'team.spaces.create')
+                : false,
+            'can_update' => $user
+                ? $authorization->canInTeam($user, $this->resource, 'team.update')
+                : false,
+            'can_delete' => $user
+                ? $authorization->canInTeam($user, $this->resource, 'team.delete')
+                : false,
+            'can_manage_members' => $user
+                ? $authorization->canInTeam($user, $this->resource, 'team.members.manage')
+                : false,
+            'can_create_child' => $user
+                ? $authorization->canInTeam($user, $this->resource, 'team.children.manage')
                 : false,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

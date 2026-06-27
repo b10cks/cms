@@ -20,11 +20,17 @@ import { groupRoleAbilitySections } from '~/utils/role-abilities'
 
 const open = defineModel<boolean>('open', { required: true })
 
-const props = defineProps<{
-  role: RoleCatalogEntry | null
-  availableAbilities: string[]
-  isSubmitting: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    role: RoleCatalogEntry | null
+    availableAbilities: string[]
+    isSubmitting: boolean
+    existingKeys?: string[]
+  }>(),
+  {
+    existingKeys: () => [],
+  }
+)
 
 const emit = defineEmits<{
   submit: [payload: CreateTeamSpaceRolePayload]
@@ -70,11 +76,29 @@ const filteredAbilitySections = computed(() => {
     .filter((section) => section.resources.length > 0)
 })
 
+// Slug format: lowercase alphanumerics separated by single - or _.
+const KEY_PATTERN = /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/
+
+const keyError = computed(() => {
+  const key = formData.value.key.trim()
+  if (!key) return ''
+  if (!KEY_PATTERN.test(key)) return t('labels.teamRoles.fields.keyInvalid')
+
+  // Uniqueness only applies when creating a new role (editing keeps its key).
+  if (!props.role) {
+    const taken = props.existingKeys.some((existing) => existing.toLowerCase() === key.toLowerCase())
+    if (taken) return t('labels.teamRoles.fields.keyTaken')
+  }
+
+  return ''
+})
+
 const isFormValid = computed(() => {
   return (
     formData.value.key.trim().length > 0 &&
     formData.value.name.trim().length > 0 &&
-    formData.value.abilities.length > 0
+    formData.value.abilities.length > 0 &&
+    !keyError.value
   )
 })
 
@@ -243,6 +267,7 @@ const handleOpenChange = (value: boolean) => {
                 :label="$t('labels.teamRoles.fields.key')"
                 :placeholder="$t('labels.teamRoles.fields.keyPlaceholder')"
                 :description="$t('labels.teamRoles.fields.keyDescription')"
+                :error="keyError"
                 :disabled="isReadOnly"
                 required
               />

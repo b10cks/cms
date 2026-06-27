@@ -309,44 +309,50 @@ const navigateBack = () => {
 
       <div
         v-if="availableViews.length > 0"
-        class="space-y-6"
+        class="flex flex-col gap-6 lg:flex-row"
       >
-        <div class="flex flex-wrap gap-2">
-          <Button
-            v-if="canViewPeople"
-            :variant="activeView === 'people' ? 'default' : 'outline'"
-            @click="navigateToPeople"
-          >
-            <Icon
-              name="lucide:users"
-              class="mr-2 h-4 w-4"
-            />
-            {{ $t('labels.teams.tabs.people') }}
-          </Button>
-          <Button
-            v-if="canManageRoles"
-            :variant="activeView === 'roles' ? 'default' : 'outline'"
-            @click="navigateToRoles"
-          >
-            <Icon
-              name="lucide:shield"
-              class="mr-2 h-4 w-4"
-            />
-            {{ $t('labels.teams.tabs.roles') }}
-          </Button>
-          <Button
-            v-if="canManageSaml"
-            :variant="activeView === 'saml' ? 'default' : 'outline'"
-            @click="navigateToSaml"
-          >
-            <Icon
-              name="lucide:key-round"
-              class="mr-2 h-4 w-4"
-            />
-            {{ $t('labels.teams.tabs.saml') }}
-          </Button>
-        </div>
+        <aside class="lg:w-56 lg:shrink-0">
+          <nav class="flex flex-col gap-1 lg:sticky lg:top-20">
+            <Button
+              v-if="canViewPeople"
+              :variant="activeView === 'people' ? 'default' : 'ghost'"
+              class="justify-start"
+              @click="navigateToPeople"
+            >
+              <Icon
+                name="lucide:users"
+                class="mr-2 h-4 w-4"
+              />
+              {{ $t('labels.teams.tabs.people') }}
+            </Button>
+            <Button
+              v-if="canManageRoles"
+              :variant="activeView === 'roles' ? 'default' : 'ghost'"
+              class="justify-start"
+              @click="navigateToRoles"
+            >
+              <Icon
+                name="lucide:shield"
+                class="mr-2 h-4 w-4"
+              />
+              {{ $t('labels.teams.tabs.roles') }}
+            </Button>
+            <Button
+              v-if="canManageSaml"
+              :variant="activeView === 'saml' ? 'default' : 'ghost'"
+              class="justify-start"
+              @click="navigateToSaml"
+            >
+              <Icon
+                name="lucide:key-round"
+                class="mr-2 h-4 w-4"
+              />
+              {{ $t('labels.teams.tabs.saml') }}
+            </Button>
+          </nav>
+        </aside>
 
+        <div class="flex-1 space-y-6">
         <template v-if="activeView === 'people' && canViewPeople">
           <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div class="space-y-1">
@@ -463,6 +469,7 @@ const navigateBack = () => {
             {{ $t('labels.loading') }}
           </div>
         </template>
+        </div>
       </div>
 
       <Card
@@ -482,6 +489,7 @@ const navigateBack = () => {
         v-model:open="isRoleDialogOpen"
         :role="selectedRole"
         :available-abilities="availableSpaceAbilities"
+        :existing-keys="spaceRoles.map((role) => role.key)"
         :is-submitting="isRoleSubmitting"
         @submit="handleSaveRole"
       />

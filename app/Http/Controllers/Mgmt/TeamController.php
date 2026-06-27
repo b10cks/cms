@@ -56,10 +56,18 @@ class TeamController extends Controller
      */
     public function store(StoreTeamRequest $request): TeamResource|JsonResponse
     {
-        $this->authorize('create', Team::class);
+        $data = $request->validated();
+        $parentId = $data['parent_id'] ?? null;
+
+        if ($parentId) {
+            $this->authorize('createChild', Team::findOrFail($parentId));
+        } else {
+            // Top-level teams may only be created by root.
+            $this->authorize('create', Team::class);
+        }
 
         try {
-            $team = $this->teamService->createTeam($request->validated());
+            $team = $this->teamService->createTeam($data, $request->user());
 
             $team->load(['parent'])
                 ->loadCount(['users', 'spaces', 'children']);
@@ -93,8 +101,20 @@ class TeamController extends Controller
     {
         $this->authorize('update', $team);
 
+        $data = $request->validated();
+
+        // Re-parenting must be authorized against the destination, not just the
+        // team being moved. Only root may move a team to / from the top level.
+        if (array_key_exists('parent_id', $data) && $data['parent_id'] !== $team->parent_id) {
+            if ($data['parent_id'] === null) {
+                abort_unless($request->user()->is_root, 403);
+            } else {
+                $this->authorize('createChild', Team::findOrFail($data['parent_id']));
+            }
+        }
+
         try {
-            $team = $this->teamService->updateTeam($team, $request->validated());
+            $team = $this->teamService->updateTeam($team, $data);
 
             $team->load(['parent'])
                 ->loadCount(['users', 'spaces', 'children']);

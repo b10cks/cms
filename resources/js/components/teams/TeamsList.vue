@@ -18,15 +18,15 @@ import {
 } from '~/components/ui/table'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
+import { useTeamTypes } from '~/composables/useTeamTypes'
 import type { LaravelMeta } from '~/types'
-import type { TeamHierarchyItem, TeamResource } from '~/types/teams'
+import type { TeamResource } from '~/types/teams'
 
 import TableEmptyRow from '../ui/TableEmptyRow.vue'
 
 const props = withDefaults(
   defineProps<{
     teams: TeamResource[]
-    hierarchy: TeamHierarchyItem[]
     isLoading: boolean
     meta?: LaravelMeta
     currentPage: number
@@ -54,12 +54,7 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const { alert } = useAlertDialog()
 const { formatDateTime, formatRelativeTime } = useFormat()
-
-const teamTypeOptions = computed(() => [
-  { value: 'partner', label: t('labels.teams.types.partner') },
-  { value: 'reseller', label: t('labels.teams.types.reseller') },
-  { value: 'affiliate', label: t('labels.teams.types.affiliate') },
-])
+const { teamTypeOptions, getTeamTypeLabel } = useTeamTypes()
 
 const teamFilters = computed(() => [
   {
@@ -89,14 +84,19 @@ const sortOptions = computed(() => [
 const filters = ref<Record<string, unknown>>({})
 const selectedTeams = ref<Map<string, TeamResource>>(new Map())
 
+// Only teams the user may delete can be selected for bulk actions.
+const deletableTeams = computed(() => props.teams.filter((team) => team.can_delete))
+
 const selectionCount = computed(() => selectedTeams.value.size)
 const isAllSelected = computed(() => {
-  return selectionCount.value > 0 && props.teams.length === selectionCount.value
+  return (
+    selectionCount.value > 0 && deletableTeams.value.length === selectionCount.value
+  )
 })
 
 const handleSelectAll = (checked: boolean) => {
   if (checked) {
-    props.teams.forEach((team) => {
+    deletableTeams.value.forEach((team) => {
       selectedTeams.value.set(team.id, team)
     })
   } else {
@@ -105,7 +105,7 @@ const handleSelectAll = (checked: boolean) => {
 }
 
 const handleTeamSelect = (team: TeamResource, selected: boolean) => {
-  if (selected) {
+  if (selected && team.can_delete) {
     selectedTeams.value.set(team.id, team)
   } else {
     selectedTeams.value.delete(team.id)
@@ -164,27 +164,6 @@ const handleBulkDelete = async () => {
   }
 }
 
-const getParentName = (parentId: string | null | undefined): string => {
-  if (!parentId) return ''
-
-  const findInHierarchy = (items: TeamHierarchyItem[]): string => {
-    for (const item of items) {
-      if (item.id === parentId) return item.name
-      if (item.children?.length) {
-        const found = findInHierarchy(item.children)
-        if (found) return found
-      }
-    }
-    return ''
-  }
-
-  return findInHierarchy(props.hierarchy)
-}
-
-const getTeamColorStyle = (color: string | null | undefined) => {
-  if (!color) return {}
-  return { backgroundColor: color }
-}
 </script>
 
 <template>
@@ -240,6 +219,7 @@ const getTeamColorStyle = (color: string | null | undefined) => {
               <Checkbox
                 :checked="isAllSelected"
                 :indeterminate="selectionCount > 0 && !isAllSelected"
+                :disabled="deletableTeams.length === 0"
                 @update:checked="handleSelectAll"
               />
             </TableHead>
@@ -290,6 +270,7 @@ const getTeamColorStyle = (color: string | null | undefined) => {
               >
                 <Checkbox
                   :checked="isTeamSelected(team)"
+                  :disabled="!team.can_delete"
                   @update:checked="(checked: boolean) => handleTeamSelect(team, checked)"
                 />
               </TableCell>
@@ -313,10 +294,10 @@ const getTeamColorStyle = (color: string | null | undefined) => {
               <TableCell>
                 <Badge
                   v-if="team.type"
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                 >
-                  {{ team.type }}
+                  {{ getTeamTypeLabel(team.type) }}
                 </Badge>
                 <span
                   v-else
@@ -331,7 +312,7 @@ const getTeamColorStyle = (color: string | null | undefined) => {
                   v-if="team.parent_id"
                   class="text-sm"
                 >
-                  {{ getParentName(team.parent_id) }}
+                  {{ team.parent?.name }}
                 </span>
                 <span
                   v-else
@@ -369,6 +350,7 @@ const getTeamColorStyle = (color: string | null | undefined) => {
               >
                 <div class="flex justify-end gap-1">
                   <Button
+                    v-if="team.can_update"
                     size="icon"
                     variant="ghost"
                     :title="$t('labels.teams.tooltip.edit')"
@@ -377,6 +359,7 @@ const getTeamColorStyle = (color: string | null | undefined) => {
                     <Icon name="lucide:pencil" />
                   </Button>
                   <Button
+                    v-if="team.can_delete"
                     size="icon"
                     variant="ghost"
                     :title="$t('labels.teams.tooltip.delete')"

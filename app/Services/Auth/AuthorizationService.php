@@ -169,6 +169,29 @@ class AuthorizationService
         $this->invalidateUsers($userIds);
     }
 
+    /**
+     * Invalidate the authorization cache for everyone affected by creating or
+     * re-parenting a team. Team roles inherit *downward*, so the members whose
+     * resolved access changes are those of the source/destination ancestor
+     * chains (they gain/lose the moved subtree), plus the subtree's own members.
+     */
+    public function invalidateTeamReparent(Team $team, ?string $oldParentId, ?string $newParentId): void
+    {
+        $teamIds = array_values(array_unique([
+            ...$this->descendantTeamIds($team->id),
+            ...$this->ancestorTeamIds($oldParentId),
+            ...$this->ancestorTeamIds($newParentId),
+        ]));
+
+        $spaceIds = DB::table('spaces')->whereIn('team_id', $teamIds)->pluck('id');
+        $userIds = DB::table('team_user')->whereIn('team_id', $teamIds)->pluck('user_id')
+            ->merge(DB::table('space_user')->whereIn('space_id', $spaceIds)->pluck('user_id'))
+            ->unique()
+            ->values();
+
+        $this->invalidateUsers($userIds);
+    }
+
     public function invalidateSpace(Space $space): void
     {
         $userIds = DB::table('space_user')
@@ -326,6 +349,35 @@ class AuthorizationService
             ->groupBy('parent_id');
 
         return $this->collectDescendantTeamIds($teamId, $teams);
+    }
+
+    /**
+     * Returns the given team plus all of its ancestors (walking parent_id up to
+     * the root). Returns an empty array when $teamId is null.
+     *
+     * @return array<int, string>
+     */
+    private function ancestorTeamIds(?string $teamId): array
+    {
+        if ($teamId === null) {
+            return [];
+        }
+
+        $teamsById = DB::table('teams')
+            ->select('id', 'parent_id')
+            ->whereNull('deleted_at')
+            ->get()
+            ->keyBy('id');
+
+        $ids = [];
+        $current = $teamId;
+
+        while ($current !== null && $teamsById->has($current)) {
+            $ids[] = $current;
+            $current = $teamsById->get($current)->parent_id;
+        }
+
+        return array_values(array_unique($ids));
     }
 
     private function collectDescendantTeamIds(string $teamId, Collection $childrenByParent): array

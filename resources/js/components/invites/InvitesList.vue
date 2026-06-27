@@ -104,7 +104,7 @@ const selectedInvites = ref<Map<string, InviteResource>>(new Map())
 
 const getStatusVariant = (
   status: InviteStatus
-): 'warning' | 'success' | 'destructive' | 'outline' => {
+): 'warning' | 'success' | 'destructive' | 'secondary' => {
   switch (status) {
     case InviteStatus.PENDING:
       return 'warning'
@@ -113,7 +113,7 @@ const getStatusVariant = (
     case InviteStatus.EXPIRED:
       return 'destructive'
     default:
-      return 'outline'
+      return 'secondary'
   }
 }
 
@@ -343,7 +343,7 @@ const handleBulkResend = async () => {
                   :variant="getStatusVariant(invite.status)"
                   size="sm"
                 >
-                  {{ invite.status }}
+                  {{ $t(`labels.invites.status.${invite.status}`) }}
                 </Badge>
               </TableCell>
 
@@ -365,8 +365,11 @@ const handleBulkResend = async () => {
                   v-else
                   :tooltip="formatDateTime(invite.expires_at)"
                 >
-                  {{ $t('labels.invites.tooltip.expiresIn') }}
-                  {{ getExpiresInDays(invite.expires_at) }} days
+                  {{
+                    $t('labels.invites.tooltip.expiresInDays', {
+                      count: getExpiresInDays(invite.expires_at),
+                    })
+                  }}
                 </SimpleTooltip>
               </TableCell>
 

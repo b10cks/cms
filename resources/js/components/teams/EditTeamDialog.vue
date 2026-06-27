@@ -4,13 +4,20 @@ import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { SelectField, TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
+import { useTeamTypes } from '~/composables/useTeamTypes'
 import type { TeamHierarchyItem, TeamResource, UpdateTeamPayload } from '~/types/teams'
 
-const props = defineProps<{
-  team: TeamResource | null
-  hierarchy: TeamHierarchyItem[]
-  open: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    team: TeamResource | null
+    hierarchy: TeamHierarchyItem[]
+    open: boolean
+    isRoot?: boolean
+  }>(),
+  {
+    isRoot: false,
+  }
+)
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
@@ -18,6 +25,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { teamTypeOptions } = useTeamTypes()
 
 const isSubmitting = ref(false)
 
@@ -31,24 +39,22 @@ const formData = ref<UpdateTeamPayload>({
   settings: {},
 })
 
-const teamTypes = computed(() => [
-  { value: 'partner', label: t('labels.teams.types.partner') },
-  { value: 'reseller', label: t('labels.teams.types.reseller') },
-  { value: 'affiliate', label: t('labels.teams.types.affiliate') },
-])
-
+// Valid re-parent destinations: teams the user may add children to, excluding
+// the team itself and its descendants (skipping its subtree during the walk).
+// "No parent" (top level) is reserved for root.
 const parentOptions = computed(() => {
-  const options: { value: string | null; label: string }[] = [
-    { value: null, label: t('labels.teams.noParent') },
-  ]
+  const options: { value: string | null; label: string }[] = []
+
+  if (props.isRoot) {
+    options.push({ value: null, label: t('labels.teams.noParent') })
+  }
 
   const flattenHierarchy = (items: TeamHierarchyItem[], prefix = '') => {
     for (const item of items) {
       if (item.id === props.team?.id) continue
-      options.push({
-        value: item.id,
-        label: prefix + item.name,
-      })
+      if (item.can_create_child) {
+        options.push({ value: item.id, label: prefix + item.name })
+      }
       if (item.children?.length) {
         flattenHierarchy(item.children, `${prefix}  `)
       }
@@ -141,10 +147,11 @@ const handleOpenChange = (value: boolean) => {
           name="edit-type"
           :label="$t('labels.teams.fields.type')"
           :placeholder="$t('labels.teams.fields.typePlaceholder')"
-          :options="teamTypes"
+          :options="teamTypeOptions"
         />
 
         <SelectField
+          v-if="parentOptions.length > 0"
           v-model="formData.parent_id"
           name="edit-parent"
           :label="$t('labels.teams.fields.parent')"

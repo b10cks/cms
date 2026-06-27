@@ -77,6 +77,18 @@ const roleOptions = computed(() => [
 
 const links = computed(() => props.provider?.links ?? props.defaults.links)
 
+// When SAML is enabled the IdP identifier, SSO URL, and signing certificate are
+// required for it to work. A disabled provider may be saved with empty details.
+const requiredFieldsComplete = computed(() => {
+  if (!form.value.enabled) return true
+
+  return (
+    form.value.idp_entity_id.trim() !== '' &&
+    form.value.sso_url.trim() !== '' &&
+    form.value.idp_x509_cert.trim() !== ''
+  )
+})
+
 watch(
   () => [props.provider, props.defaults] as const,
   ([provider, defaults]) => {
@@ -132,6 +144,8 @@ const removeRoleMapping = (id: string) => {
 }
 
 const handleSave = () => {
+  if (!requiredFieldsComplete.value) return
+
   const roleMapping = Object.fromEntries(
     roleRows.value
       .filter((row) => row.value.trim() !== '')
@@ -273,7 +287,10 @@ const handleDelete = async () => {
           :description="$t('labels.teams.saml.fields.enabledDescription')"
         />
 
-        <div class="grid gap-4 lg:grid-cols-2">
+        <div
+          class="grid gap-4 lg:grid-cols-2"
+          :class="{ 'pointer-events-none opacity-60': !form.enabled }"
+        >
           <InputField
             v-model="form.idp_entity_id"
             name="idp-entity-id"
@@ -306,12 +323,16 @@ const handleDelete = async () => {
           name="idp-cert"
           required
           :rows="6"
+          :class="{ 'pointer-events-none opacity-60': !form.enabled }"
           :label="$t('labels.teams.saml.fields.idpCert')"
           :placeholder="$t('labels.teams.saml.fields.certPlaceholder')"
         />
       </section>
 
-      <section class="space-y-4">
+      <section
+        class="space-y-4"
+        :class="{ 'pointer-events-none opacity-60': !form.enabled }"
+      >
         <div class="space-y-1">
           <h3 class="font-semibold">{{ $t('labels.teams.saml.mappingTitle') }}</h3>
           <p class="text-muted-foreground text-sm">
@@ -401,7 +422,10 @@ const handleDelete = async () => {
         </div>
       </section>
 
-      <section class="space-y-4">
+      <section
+        class="space-y-4"
+        :class="{ 'pointer-events-none opacity-60': !form.enabled }"
+      >
         <div class="space-y-1">
           <h3 class="font-semibold">{{ $t('labels.teams.saml.securityTitle') }}</h3>
           <p class="text-muted-foreground text-sm">
@@ -503,21 +527,29 @@ const handleDelete = async () => {
         </Button>
         <span v-else></span>
 
-        <Button
-          type="submit"
-          :disabled="isSaving"
-        >
-          <Icon
-            v-if="isSaving"
-            name="lucide:loader-2"
-            class="animate-spin"
-          />
-          <Icon
-            v-else
-            name="lucide:save"
-          />
-          {{ $t('labels.teams.saml.save') }}
-        </Button>
+        <div class="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+          <span
+            v-if="form.enabled && !requiredFieldsComplete"
+            class="text-muted-foreground text-sm"
+          >
+            {{ $t('labels.teams.saml.requiredHint') }}
+          </span>
+          <Button
+            type="submit"
+            :disabled="isSaving || !requiredFieldsComplete"
+          >
+            <Icon
+              v-if="isSaving"
+              name="lucide:loader-2"
+              class="animate-spin"
+            />
+            <Icon
+              v-else
+              name="lucide:save"
+            />
+            {{ $t('labels.teams.saml.save') }}
+          </Button>
+        </div>
       </div>
     </form>
   </div>

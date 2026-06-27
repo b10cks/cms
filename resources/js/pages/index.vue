@@ -26,7 +26,7 @@ const { useSpacesQuery, useArchiveSpaceMutation } = useSpaces()
 const { formatRelativeTime } = useFormat()
 const route = useRoute()
 const router = useRouter()
-const { selectedTeam } = useGlobalTeam()
+const { selectedTeam, hasTeams } = useGlobalTeam()
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(
   computed(() => (selectedTeam.value?.id ? { team_id: selectedTeam.value.id } : {}))
@@ -198,9 +198,12 @@ const getSpacePlanLabel = (plan: SpacePlanSummary) => {
             <span>{{ selectedTeam.user_count }}</span>
           </Button>
           <Button
+            v-if="selectedTeam.can_manage_members"
             size="sm"
-            disabled
+            :as="RouterLink"
+            :to="{ name: 'team', params: { team: selectedTeam.id } }"
           >
+            <Icon name="lucide:user-plus" />
             {{ $t('actions.inviteMember') }}
           </Button>
           <Button
@@ -227,8 +230,25 @@ const getSpacePlanLabel = (plan: SpacePlanSummary) => {
   <div class="flex w-full grow bg-background pt-14">
     <aside class="w-56 shrink-0 bg-surface">
       <div class="flex flex-col gap-4 p-3">
-        <div />
-        <hr class="border-border" />
+        <div
+          v-if="isRootUser || hasTeams"
+          class="flex flex-col gap-px text-sm"
+        >
+          <h4 class="mb-2 font-semibold text-primary">
+            {{ $t('labels.teams.pageTitle') }}
+          </h4>
+          <RouterLink
+            class="flex items-center gap-1 rounded-md p-2 font-medium"
+            :to="{ name: 'teams-index' }"
+          >
+            <Icon name="lucide:users" />
+            <span>{{ $t('labels.teams.listTitle') }}</span>
+          </RouterLink>
+        </div>
+        <hr
+          v-if="isRootUser || hasTeams"
+          class="border-border"
+        />
         <div class="flex flex-col gap-px text-sm">
           <h4 class="mb-2 font-semibold text-primary">
             {{ $t('labels.spaces.title') }}

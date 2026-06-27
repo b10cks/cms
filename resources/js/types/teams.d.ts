@@ -80,6 +80,10 @@ export interface TeamResource {
   children_count?: number
   can_view_detail: boolean
   can_create_space: boolean
+  can_update: boolean
+  can_delete: boolean
+  can_manage_members: boolean
+  can_create_child: boolean
   created_at: string
   updated_at: string
 }
@@ -109,11 +113,20 @@ export interface TeamHierarchyItem {
   name: string
   icon?: string | null
   color?: string | null
+  description?: string | null
   type: string
   parent_id?: string | null
+  parent?: TeamParent
   children: TeamHierarchyItem[]
   user_count?: number
   spaces_count?: number
+  children_count?: number
+  can_view_detail?: boolean
+  can_create_space?: boolean
+  can_update?: boolean
+  can_delete?: boolean
+  can_manage_members?: boolean
+  can_create_child?: boolean
 }
 
 export interface TeamUserResource {

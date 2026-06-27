@@ -16,9 +16,11 @@ class TeamUserControllerTest extends TestCase
     #[Test]
     public function team_user_index_includes_direct_members_and_space_only_members(): void
     {
-        $admin = User::factory()->create();
-        $directMember = User::factory()->create();
-        $spaceOnlyMember = User::factory()->create();
+        // Deterministic firstnames so the default '+firstname' sort is stable
+        // (the directory merges direct + space-only members, then sorts).
+        $admin = User::factory()->create(['firstname' => 'Aaron']);
+        $directMember = User::factory()->create(['firstname' => 'Bianca']);
+        $spaceOnlyMember = User::factory()->create(['firstname' => 'Zoe']);
         $team = Team::factory()->create();
         $space = Space::factory()->create(['team_id' => $team->id]);
 
