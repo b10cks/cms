@@ -3593,6 +3593,10 @@
         "not_provisioned": "Dein KI-Zugang wird gerade eingerichtet. Bitte versuche es in einem Moment erneut.",
         "plan_excluded": "Dein aktueller Tarif enthält keine KI-Funktionen. Führe ein Upgrade durch, um sie zu nutzen.",
         "no_result": "Die KI hat kein verwertbares Ergebnis geliefert. Bitte versuche es erneut.",
+        "csrf": "Deine Sitzung ist abgelaufen. Bitte lade die Seite neu und versuche es erneut.",
+        "csrfUnavailable": "Sicherheitstoken nicht verfügbar. Bitte lade die Seite neu und versuche es erneut.",
+        "noSpace": "Kein Space ausgewählt. Bitte lade die Seite neu und versuche es erneut.",
+        "noSpaceOrDataSource": "Space oder Datenquelle fehlt. Bitte lade die Seite neu und versuche es erneut.",
         "generic": "Bei der KI-Anfrage ist etwas schiefgelaufen. Bitte versuche es erneut."
       },
       "upgradeAction": "Tarife ansehen"

@@ -1,11 +1,13 @@
 import type { ContentInteractionPayload } from '~/api/resources/ai'
-import { ensureCsrfToken, getXsrfHeaders } from '~/lib/csrf'
-import { consumeSseStream, parseStreamErrorResponse, type SseCallbacks } from '~/lib/sse'
+import type { SseCallbacks } from '~/lib/sse'
+
+import { useAiStream } from './useAiStream'
 
 export type { SseCallbacks as StreamCallbacks }
 
 export function useAiContent(spaceId: MaybeRef<string>) {
-  const abortController = ref<AbortController | null>(null)
+  const { t } = useI18n()
+  const { stream, cancelStream, isStreaming } = useAiStream()
 
   const streamContentInteraction = async (
     payload: ContentInteractionPayload,
@@ -13,62 +15,12 @@ export function useAiContent(spaceId: MaybeRef<string>) {
   ): Promise<void> => {
     const id = toValue(spaceId)
     if (!id) {
-      callbacks.onError?.('No space ID provided')
+      callbacks.onError?.(t('composables.ai.errors.noSpace') as string)
       return
     }
 
-    await ensureCsrfToken()
-
-    abortController.value = new AbortController()
-
-    const url = `/mgmt/v1/ai/content-interaction/stream?spaceId=${id}`
-    const xsrfHeaders = getXsrfHeaders()
-
-    if (Object.keys(xsrfHeaders).length === 0) {
-      callbacks.onError?.('CSRF token not available. Please refresh the page.')
-      return
-    }
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'text/event-stream',
-          ...xsrfHeaders,
-        },
-        body: JSON.stringify(payload),
-        signal: abortController.value.signal,
-        credentials: 'include',
-      })
-
-      if (!response.ok) {
-        const { message, reason } = await parseStreamErrorResponse(response)
-        callbacks.onError?.(message, reason)
-        return
-      }
-
-      const reader = response.body?.getReader()
-      if (!reader) throw new Error('No response body')
-
-      await consumeSseStream(reader, callbacks)
-    } catch (error: any) {
-      if (error.name === 'AbortError') return
-
-      callbacks.onError?.(error.message || 'Unknown error')
-    } finally {
-      abortController.value = null
-    }
+    await stream(`/mgmt/v1/ai/content-interaction/stream?spaceId=${id}`, payload, callbacks)
   }
-
-  const cancelStream = () => {
-    if (abortController.value) {
-      abortController.value.abort()
-      abortController.value = null
-    }
-  }
-
-  const isStreaming = computed(() => abortController.value !== null)
 
   return {
     streamContentInteraction,

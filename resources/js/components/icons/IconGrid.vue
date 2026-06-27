@@ -55,28 +55,12 @@ const handleClick = (icon: IconResource) => {
 <template>
   <div class="flex h-full min-h-0 flex-col gap-4">
     <div class="flex shrink-0 flex-col gap-3">
-      <div class="relative w-full">
-        <input
-          v-model="search"
-          type="text"
-          name="icon-search"
-          :placeholder="t('labels.icons.searchPlaceholder')"
-          class="w-full h-9 flex items-center gap-2 rounded-md bg-input py-1 pr-6 pl-2 text-primary shadow-sm transition-colors placeholder:text-muted focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 border-none"
-        />
-        <button
-          v-if="search"
-          type="button"
-          class="absolute top-2 right-1 h-5 w-5 rounded-full p-0.5 hover:bg-elevated focus:ring-2 focus:ring-ring focus:outline-none flex items-center justify-center"
-          :aria-label="t('labels.clear')"
-          @click="search = ''"
-        >
-          <Icon
-            name="lucide:x"
-            class="text-muted"
-            size="16"
-          />
-        </button>
-      </div>
+      <InputField
+        v-model="search"
+        name="icon-search"
+        :placeholder="t('labels.icons.searchPlaceholder')"
+        :actions="['clear']"
+      />
 
       <div
         v-if="tags && tags.length"

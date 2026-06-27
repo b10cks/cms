@@ -36,35 +36,24 @@ export function parseAiJson<T = unknown>(raw: string | null | undefined): T | nu
   return null
 }
 
-function extractBalancedJson(text: string): string | null {
-  let start = -1
-  let open = '{'
-  let close = '}'
-
-  for (let i = 0; i < text.length; i++) {
-    if (text[i] === '{') {
-      start = i
-      open = '{'
-      close = '}'
-      break
-    }
-    if (text[i] === '[') {
-      start = i
-      open = '['
-      close = ']'
-      break
-    }
-  }
-
-  if (start === -1) {
-    return null
-  }
-
+/**
+ * Iterates over the top-level balanced spans delimited by `open`/`close` in
+ * `text`, skipping delimiters that appear inside JSON string literals (respecting
+ * escapes). Yields the inclusive `[start, end]` index of each complete span;
+ * unterminated trailing spans are not yielded. Shared by the whole-value extractor
+ * below and the streaming tree-operation parser in `useAiContentTree`.
+ */
+export function* balancedSpans(
+  text: string,
+  open: string,
+  close: string
+): Generator<{ start: number; end: number }> {
   let depth = 0
+  let start = -1
   let inString = false
   let escaped = false
 
-  for (let i = start; i < text.length; i++) {
+  for (let i = 0; i < text.length; i++) {
     const char = text[i]
 
     if (inString) {
@@ -84,13 +73,38 @@ function extractBalancedJson(text: string): string | null {
     }
 
     if (char === open) {
+      if (depth === 0) start = i
       depth++
-    } else if (char === close) {
+    } else if (char === close && depth > 0) {
       depth--
-      if (depth === 0) {
-        return text.slice(start, i + 1)
+      if (depth === 0 && start !== -1) {
+        yield { start, end: i }
+        start = -1
       }
     }
+  }
+}
+
+function extractBalancedJson(text: string): string | null {
+  let open = '{'
+  let close = '}'
+  let firstIndex = -1
+
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '{' || text[i] === '[') {
+      firstIndex = i
+      open = text[i]
+      close = text[i] === '{' ? '}' : ']'
+      break
+    }
+  }
+
+  if (firstIndex === -1) {
+    return null
+  }
+
+  for (const { start, end } of balancedSpans(text, open, close)) {
+    return text.slice(start, end + 1)
   }
 
   return null

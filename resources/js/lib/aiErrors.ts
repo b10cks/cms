@@ -9,6 +9,7 @@ export type AiErrorReason =
   | 'not_provisioned'
   | 'plan_excluded'
   | 'no_result'
+  | 'csrf'
   | 'generic'
 
 const KNOWN_REASONS: ReadonlySet<string> = new Set<AiErrorReason>([
@@ -17,6 +18,7 @@ const KNOWN_REASONS: ReadonlySet<string> = new Set<AiErrorReason>([
   'not_provisioned',
   'plan_excluded',
   'no_result',
+  'csrf',
   'generic',
 ])
 

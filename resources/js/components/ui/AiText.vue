@@ -11,6 +11,7 @@ import {
 } from '~/components/ui/input-group'
 import type { StreamCallbacks } from '~/composables/useAiContent'
 import { useAiContent } from '~/composables/useAiContent'
+import { stripAiCodeFences } from '~/lib/aiJson'
 import { useAiMentions } from '~/composables/useAiMentions'
 import { useAiConfigs } from '~/composables/useAiModels'
 
@@ -133,13 +134,6 @@ const dynamicPlaceholder = computed(() => {
   return t('components.aiText.placeholderDefault', { name: selectedConfig.value.name })
 })
 
-function stripCodeFences(content: string): string {
-  return content
-    .replace(/^```(?:json|javascript|js)?\s*\n?/i, '')
-    .replace(/\n?```\s*$/i, '')
-    .trim()
-}
-
 const clear = () => {
   modelValue.value = null
   statusMessage.value = null
@@ -194,7 +188,7 @@ const handleSend = async () => {
       isThinking.value = false
       emit(
         'send',
-        stripCodeFences(content),
+        stripAiCodeFences(content),
         [],
         selectedConfigId.value,
         editorMentions.map((m) => ({

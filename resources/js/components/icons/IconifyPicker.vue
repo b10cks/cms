@@ -4,6 +4,7 @@ import { refDebounced } from '@vueuse/core'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
+import { fetchIconifyCollection, searchIconifyIcons, splitIconName } from '~/lib/iconify'
 
 const props = defineProps<{
   source: 'all' | 'collections'
@@ -14,7 +15,6 @@ const emit = defineEmits<{ select: [iconName: string] }>()
 
 const { t } = useI18n()
 
-const ICONIFY_HOST = 'https://api.iconify.design'
 const PAGE_SIZE = 120
 
 const collections = computed(() =>
@@ -44,31 +44,7 @@ const results = ref<string[]>([]) // fully-qualified names, e.g. "mdi:home"
 const total = ref(0)
 const browseLimit = ref(PAGE_SIZE)
 
-// Cache full name lists per collection prefix so switching chips is instant.
-const browseCache = new Map<string, string[]>()
 let controller: AbortController | null = null
-
-const fetchCollection = async (prefix: string, signal: AbortSignal): Promise<string[]> => {
-  const cached = browseCache.get(prefix)
-  if (cached) return cached
-
-  const response = await fetch(`${ICONIFY_HOST}/collection?prefix=${encodeURIComponent(prefix)}`, {
-    signal,
-  })
-  const data = await response.json()
-
-  const names: string[] = []
-  if (Array.isArray(data.uncategorized)) names.push(...data.uncategorized)
-  if (data.categories && typeof data.categories === 'object') {
-    for (const value of Object.values(data.categories)) {
-      if (Array.isArray(value)) names.push(...(value as string[]))
-    }
-  }
-
-  const full = names.map((name) => `${prefix}:${name}`)
-  browseCache.set(prefix, full)
-  return full
-}
 
 const load = async () => {
   controller?.abort()
@@ -80,22 +56,21 @@ const load = async () => {
 
   try {
     if (isSearching.value) {
-      const params = new URLSearchParams({ query: query.value, limit: '120' })
       const scope =
         props.source === 'collections'
           ? activeCollection.value
             ? [activeCollection.value]
             : collections.value
           : []
-      if (scope.length === 1) params.set('prefix', scope[0])
-      else if (scope.length > 1) params.set('prefixes', scope.join(','))
-
-      const response = await fetch(`${ICONIFY_HOST}/search?${params.toString()}`, { signal })
-      const data = await response.json()
-      results.value = Array.isArray(data.icons) ? data.icons : []
-      total.value = typeof data.total === 'number' ? data.total : results.value.length
+      const { icons, total: matched } = await searchIconifyIcons(
+        query.value,
+        scope.length === 1 ? { prefix: scope[0] } : scope.length > 1 ? { prefixes: scope } : {},
+        signal
+      )
+      results.value = icons
+      total.value = matched
     } else if (activeCollection.value) {
-      const full = await fetchCollection(activeCollection.value, signal)
+      const full = await fetchIconifyCollection(activeCollection.value, signal)
       results.value = full
       total.value = full.length
     } else {
@@ -126,7 +101,7 @@ const displayed = computed(() =>
 const canLoadMore = computed(() => !isSearching.value && browseLimit.value < results.value.length)
 const showPrompt = computed(() => !isSearching.value && !activeCollection.value)
 
-const nameOf = (full: string) => (full.includes(':') ? full.split(':')[1] : full)
+const nameOf = (full: string) => splitIconName(full).name
 </script>
 
 <template>

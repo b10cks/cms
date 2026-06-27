@@ -18,6 +18,7 @@ import {
   normalizeSchema,
   normalizeSchemaType,
 } from '~/composables/useContentSchemaState'
+import { stripAiCodeFences } from '~/lib/aiJson'
 import { ensureTableValue, getTableColumns } from '~/lib/tableField'
 
 import DateLocalization from './DateLocalization.vue'
@@ -1005,13 +1006,6 @@ const applyTranslatedValues = (
   }
 }
 
-function stripCodeFences(content: string): string {
-  return content
-    .replace(/^```(?:json|javascript|js)?\s*\n?/i, '')
-    .replace(/\n?```\s*$/i, '')
-    .trim()
-}
-
 // Unwrap AI responses that may nest translations under a wrapper key
 // e.g. { "translations": { ... } } or { "data": { ... } }
 function findTranslationsObject(parsed: unknown): Record<string, string> | null {
@@ -1089,7 +1083,7 @@ const translateWithAI = async (configId: string | null = selectedConfigId.value)
       },
       onDone: (content) => {
         try {
-          const raw = JSON.parse(stripCodeFences(content || accumulated))
+          const raw = JSON.parse(stripAiCodeFences(content || accumulated))
           const translations = findTranslationsObject(raw)
           if (translations) {
             applyNew(translations)

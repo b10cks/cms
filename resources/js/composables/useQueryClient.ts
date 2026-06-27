@@ -62,8 +62,8 @@ export const queryKeys = {
   }),
   tokens: (spaceId: MaybeRef<string>) => ({
     all: () => ['spaces', spaceId, 'tokens'] as const,
-    lists: () => [...queryKeys.assetTags(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.assetTags(spaceId).lists(), filters] as const,
+    lists: () => [...queryKeys.tokens(spaceId).all(), 'list'] as const,
+    list: (filters: any = {}) => [...queryKeys.tokens(spaceId).lists(), filters] as const,
   }),
   teams: {
     all: () => ['teams'] as const,

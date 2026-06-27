@@ -13,10 +13,6 @@ const props = defineProps<{
   initialFiles?: File[]
 }>()
 
-const emit = defineEmits<{
-  uploaded: []
-}>()
-
 const open = defineModel<boolean>('open', { default: false })
 
 const { t } = useI18n()
@@ -197,13 +193,11 @@ const submit = async () => {
 
   isUploading.value = false
 
-  const allDone = queue.value.every((item) => item.status === 'done')
-  if (allDone) {
-    emit('uploaded')
+  // The upload mutation invalidates the icon queries itself, so success only needs
+  // to reset and close once every item landed.
+  if (queue.value.every((item) => item.status === 'done')) {
     reset()
     open.value = false
-  } else {
-    emit('uploaded')
   }
 }
 

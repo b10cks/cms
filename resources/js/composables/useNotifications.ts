@@ -37,6 +37,7 @@ export function useNotifications() {
     return useMutation({
       mutationFn: (id: string) => api.notifications.markAsRead(id),
       onSuccess: invalidateAll,
+      onError: () => toast.error(t('notifications.toast.actionFailed') as string),
     })
   }
 
@@ -44,6 +45,7 @@ export function useNotifications() {
     return useMutation({
       mutationFn: (id: string) => api.notifications.markAsUnread(id),
       onSuccess: invalidateAll,
+      onError: () => toast.error(t('notifications.toast.actionFailed') as string),
     })
   }
 

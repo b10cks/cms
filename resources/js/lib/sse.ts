@@ -24,7 +24,10 @@ export async function parseStreamErrorResponse(
   response: Response
 ): Promise<{ message: string; reason?: string }> {
   if (response.status === 419) {
-    return { message: 'CSRF token mismatch. Please refresh the page and try again.' }
+    return {
+      message: 'CSRF token mismatch. Please refresh the page and try again.',
+      reason: 'csrf',
+    }
   }
 
   const errorText = await response.text().catch(() => '')

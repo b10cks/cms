@@ -94,6 +94,7 @@ declare global {
   const useAiMetaTags: typeof import('./resources/js/composables/useAiMetaTags').useAiMetaTags
   const useAiModels: typeof import('./resources/js/composables/useAiModels').useAiModels
   const useAiSettings: typeof import('./resources/js/composables/useAiModels').useAiSettings
+  const useAiStream: typeof import('./resources/js/composables/useAiStream').useAiStream
   const useAiTranslation: typeof import('./resources/js/composables/useAiTranslation').useAiTranslation
   const useAiUsage: typeof import('./resources/js/composables/useAiModels').useAiUsage
   const useAlertDialog: typeof import('./resources/js/composables/useAlertDialog').useAlertDialog
@@ -157,6 +158,7 @@ declare global {
   const useLink: typeof import('vue-router').useLink
   const useMigrations: typeof import('./resources/js/composables/useMigrations').useMigrations
   const useModel: typeof import('vue').useModel
+  const useNotificationPresentation: typeof import('./resources/js/composables/useNotificationPresentation').useNotificationPresentation
   const useNotifications: typeof import('./resources/js/composables/useNotifications').useNotifications
   const usePersonalAccessTokens: typeof import('./resources/js/composables/usePersonalAccessTokens').usePersonalAccessTokens
   const usePlans: typeof import('./resources/js/composables/usePlans').usePlans
@@ -359,6 +361,7 @@ declare module 'vue' {
     readonly useAiMetaTags: UnwrapRef<typeof import('./resources/js/composables/useAiMetaTags')['useAiMetaTags']>
     readonly useAiModels: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiModels']>
     readonly useAiSettings: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiSettings']>
+    readonly useAiStream: UnwrapRef<typeof import('./resources/js/composables/useAiStream')['useAiStream']>
     readonly useAiTranslation: UnwrapRef<typeof import('./resources/js/composables/useAiTranslation')['useAiTranslation']>
     readonly useAiUsage: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiUsage']>
     readonly useAlertDialog: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['useAlertDialog']>
@@ -422,6 +425,7 @@ declare module 'vue' {
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
     readonly useMigrations: UnwrapRef<typeof import('./resources/js/composables/useMigrations')['useMigrations']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
+    readonly useNotificationPresentation: UnwrapRef<typeof import('./resources/js/composables/useNotificationPresentation')['useNotificationPresentation']>
     readonly useNotifications: UnwrapRef<typeof import('./resources/js/composables/useNotifications')['useNotifications']>
     readonly usePersonalAccessTokens: UnwrapRef<typeof import('./resources/js/composables/usePersonalAccessTokens')['usePersonalAccessTokens']>
     readonly usePlans: UnwrapRef<typeof import('./resources/js/composables/usePlans')['usePlans']>

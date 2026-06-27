@@ -4,11 +4,12 @@ import { computed, ref } from 'vue'
 import Icon from '~/components/Icon.vue'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { ScrollArea } from '~/components/ui/scroll-area'
-import type { NotificationData, NotificationResource } from '~/types/notifications'
+import { useNotificationPresentation } from '~/composables/useNotificationPresentation'
+import type { NotificationResource } from '~/types/notifications'
 
-const { t } = useI18n()
 const router = useRouter()
 const { formatRelativeTime } = useFormat()
+const { iconFor, titleFor, bodyFor, routeFor } = useNotificationPresentation()
 
 const {
   useNotificationsQuery,
@@ -30,60 +31,6 @@ const badgeLabel = computed(() => {
   const count = unreadCount.value ?? 0
   return count > 99 ? '99+' : String(count)
 })
-
-const typeKeyMap: Record<string, string> = {
-  'comment.mention': 'commentMention',
-  'comment.reply': 'commentReply',
-  'invite.space': 'inviteToSpace',
-  'invite.team': 'inviteToTeam',
-}
-
-const typeIconMap: Record<string, string> = {
-  commentMention: 'lucide:at-sign',
-  commentReply: 'lucide:reply',
-  inviteToSpace: 'lucide:user-plus',
-  inviteToTeam: 'lucide:users',
-  unknown: 'lucide:bell',
-}
-
-const typeKey = (type: string): string => typeKeyMap[type] ?? 'unknown'
-
-const titleFor = (n: NotificationResource): string => {
-  const d: NotificationData = n.data ?? {}
-  const params = {
-    author: d.author?.display_name ?? '',
-    inviter: d.inviter?.display_name ?? '',
-    content: d.content?.name ?? d.space?.name ?? '',
-    space: d.space?.name ?? '',
-    team: d.team?.name ?? '',
-  }
-  return t(`notifications.items.${typeKey(n.type)}.title`, params) as string
-}
-
-const bodyFor = (n: NotificationResource): string => {
-  const d: NotificationData = n.data ?? {}
-  const params = {
-    content: d.content?.name ?? d.space?.name ?? '',
-    space: d.space?.name ?? '',
-    team: d.team?.name ?? '',
-    inviter: d.inviter?.display_name ?? '',
-  }
-  return t(`notifications.items.${typeKey(n.type)}.body`, params) as string
-}
-
-const routeFor = (n: NotificationResource) => {
-  const d: NotificationData = n.data ?? {}
-
-  if ((n.type === 'comment.mention' || n.type === 'comment.reply') && d.space?.id && d.content?.id) {
-    return { name: 'space-content-contentId', params: { space: d.space.id, contentId: d.content.id } }
-  }
-
-  if (n.type === 'invite.space' || n.type === 'invite.team') {
-    return { name: 'account-settings-invites' }
-  }
-
-  return null
-}
 
 const onSelect = async (n: NotificationResource) => {
   if (!n.read_at) {
@@ -170,7 +117,7 @@ const onMarkAllRead = () => {
                 class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-muted"
               >
                 <Icon
-                  :name="typeIconMap[typeKey(n.type)]"
+                  :name="iconFor(n)"
                   class="size-3.5"
                 />
               </span>

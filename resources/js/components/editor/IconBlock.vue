@@ -6,6 +6,7 @@ import IconPreview from '~/components/icons/IconPreview.vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { Label } from '~/components/ui/form'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
+import { splitIconName } from '~/lib/iconify'
 import type { IconResource, IconValue } from '~/types/icons'
 
 const props = defineProps<{
@@ -61,11 +62,10 @@ const handleRegistrySelect = (icon: IconResource) => {
 }
 
 const handleIconifySelect = (iconName: string) => {
-  const namePart = iconName.includes(':') ? iconName.split(':')[1] : iconName
   setValue({
     source: 'iconify',
     key: iconName,
-    name: namePart.replace(/-/g, ' '),
+    name: splitIconName(iconName).name.replace(/-/g, ' '),
   })
   pickerOpen.value = false
 }
