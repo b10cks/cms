@@ -223,7 +223,7 @@ export function useAssets(spaceId: MaybeRef<string>) {
   const useImportAssetsMutation = () => {
     return useMutation({
       mutationFn: async (file: File) => {
-        return await spaceAPI.value.assets.import(file)
+        return await spaceAPI.value.assets.importData(file)
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })

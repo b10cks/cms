@@ -1046,7 +1046,7 @@
           "sourceAll": "Registry + public Iconify",
           "sourceCollections": "Registry + specific collections",
           "allowedCollections": "Allowed Iconify collections",
-          "allowedCollectionsPlaceholder": "e.g. mdi, lucide, tabler"
+          "allowedCollectionsPlaceholder": "Search collections (e.g. mdi, lucide, tabler)"
         },
         "templates": "Templates",
         "previewTemplate": "Preview template",
@@ -3027,8 +3027,20 @@
       "deleteTitle": "Delete icon",
       "replaceSvg": "Replace SVG",
       "replaceHint": "Upload a new SVG to replace the current one",
+      "useCurrentColor": "Use currentColor",
+      "editSvgSource": "Edit SVG source",
+      "svgSource": "SVG source",
+      "width": "Width",
+      "height": "Height",
+      "previewBg": "Background",
+      "colorCheck": "Color check",
+      "bg": {
+        "light": "Light",
+        "dark": "Dark",
+        "checkered": "Transparent"
+      },
       "field": {
-        "add": "Add icon",
+        "add": "Assign icon",
         "addHint": "Pick an icon from the registry",
         "selectTitle": "Select an icon",
         "tabRegistry": "Registry",

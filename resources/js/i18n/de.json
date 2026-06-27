@@ -1038,7 +1038,7 @@
           "sourceAll": "Registry + öffentliches Iconify",
           "sourceCollections": "Registry + bestimmte Sammlungen",
           "allowedCollections": "Erlaubte Iconify-Sammlungen",
-          "allowedCollectionsPlaceholder": "z. B. mdi, lucide, tabler"
+          "allowedCollectionsPlaceholder": "Sammlungen suchen (z. B. mdi, lucide, tabler)"
         },
         "templates": "Vorlagen",
         "previewTemplate": "Vorschau-Vorlage",
@@ -3003,6 +3003,18 @@
       "deleteTitle": "Icon löschen",
       "replaceSvg": "SVG ersetzen",
       "replaceHint": "Lade ein neues SVG hoch, um das aktuelle zu ersetzen",
+      "useCurrentColor": "currentColor verwenden",
+      "editSvgSource": "SVG-Quellcode bearbeiten",
+      "svgSource": "SVG-Quellcode",
+      "width": "Breite",
+      "height": "Höhe",
+      "previewBg": "Hintergrund",
+      "colorCheck": "Farbtest",
+      "bg": {
+        "light": "Hell",
+        "dark": "Dunkel",
+        "checkered": "Transparent"
+      },
       "field": {
         "add": "Icon hinzufügen",
         "addHint": "Wähle ein Icon aus der Registry",

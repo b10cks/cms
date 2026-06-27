@@ -29,6 +29,7 @@ type CanonicalSchemaTypeName =
   | 'date'
   | 'meta'
   | 'table'
+  | 'icon'
 
 type LegacySchemaTypeName = 'multiAsset' | 'reference' | 'block'
 
@@ -141,6 +142,18 @@ interface MultiAssetsSchema extends Schema {
   file_types: FileTypes[]
   min: number | null
   max: number | null
+}
+
+// Where the `icon` field may pick from:
+// - 'registry'    : only the space's own uploaded icons
+// - 'all'         : the registry plus any public Iconify collection
+// - 'collections' : the registry plus the allow-listed Iconify collections
+type IconFieldSource = 'registry' | 'all' | 'collections'
+
+interface IconSchema extends Schema {
+  type: 'icon'
+  source: IconFieldSource
+  allowed_collections: string[]
 }
 
 interface ReferencesSchema extends Schema {
@@ -279,6 +292,7 @@ type SchemaType =
   | DateSchema
   | MetaSchema
   | TableSchema
+  | IconSchema
 
 interface EditorPage {
   header: string

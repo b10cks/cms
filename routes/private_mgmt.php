@@ -29,6 +29,7 @@ use App\Http\Controllers\Mgmt\AuditLogController;
 use App\Http\Controllers\Mgmt\AuthorizationController;
 use App\Http\Controllers\Mgmt\AvailableSpaceBlueprintController;
 use App\Http\Controllers\Mgmt\BackupController;
+use App\Http\Controllers\Mgmt\IconController;
 use App\Http\Controllers\Mgmt\BlockController;
 use App\Http\Controllers\Mgmt\BlockFolderController;
 use App\Http\Controllers\Mgmt\BlockTagController;
@@ -262,6 +263,9 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::get('assets/{asset}/linked-contents', AssetLinkedContentController::class)
         ->name('assets.linked-contents');
     Route::apiResource('assets', AssetController::class);
+
+    Route::get('icons/tags', [IconController::class, 'tags'])->name('icons.tags');
+    Route::apiResource('icons', IconController::class);
 
     Route::apiResource('backups', BackupController::class);
     Route::apiResource('migrations', MigrationController::class)->only(['index', 'show', 'store', 'destroy']);

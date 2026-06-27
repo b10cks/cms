@@ -63,6 +63,29 @@ return new class extends Migration
             $table->softDeletes();
         });
 
+        Schema::create('icons', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->string('external_id', 36)->nullable();
+
+            // Iconify icon name (e.g. "arrow-left"). Uniqueness among non-deleted
+            // rows is enforced at the application layer (see StoreIconRequest).
+            $table->string('key', 100)->charset('ascii');
+            $table->string('name', 100);
+            $table->text('description')->nullable();
+
+            // Sanitized inner SVG markup (Iconify "body") + viewBox dimensions.
+            $table->text('body');
+            $table->unsignedSmallInteger('width')->default(24);
+            $table->unsignedSmallInteger('height')->default(24);
+
+            $table->json('tags')->nullable();
+
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->index('key');
+        });
+
         Schema::create('block_folders', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->string('external_id', 36)->nullable();
@@ -358,6 +381,7 @@ return new class extends Migration
         Schema::dropIfExists('blocks');
         Schema::dropIfExists('block_tags');
         Schema::dropIfExists('block_folders');
+        Schema::dropIfExists('icons');
         Schema::dropIfExists('assets');
         Schema::dropIfExists('asset_folders');
         Schema::dropIfExists('asset_tags');

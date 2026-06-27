@@ -153,7 +153,7 @@ export function useRedirects(spaceId: MaybeRef<string>) {
   const useImportRedirectsMutation = () => {
     return useMutation({
       mutationFn: async ({ file, mode }: { file: File; mode: RedirectImportMode }) => {
-        return spaceAPI.value.redirects.import(file, mode)
+        return spaceAPI.value.redirects.importData(file, mode)
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.redirects(spaceId).lists() })

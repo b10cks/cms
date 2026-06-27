@@ -283,6 +283,14 @@ const createDefaultSchemaForType = (type: string, key: string): SchemaType => {
         max: null,
         default: [],
       } as MultiAssetsSchema
+    case 'icon':
+      return {
+        ...baseSchema,
+        type: 'icon',
+        source: 'all',
+        allowed_collections: [],
+        default: null,
+      } as IconSchema
     case 'blocks':
       return {
         ...baseSchema,

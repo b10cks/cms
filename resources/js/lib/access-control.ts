@@ -155,6 +155,11 @@ export const spaceNavigationItems: NavigationAccessItem[] = [
     routeName: 'space-assets-index',
   },
   {
+    label: 'labels.navigation.icons',
+    icon: 'lucide:shapes',
+    routeName: 'space-icons-index',
+  },
+  {
     label: 'labels.navigation.datasets',
     icon: 'lucide:database-zap',
     routeName: 'space-datasources',
@@ -215,6 +220,7 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-content-contentId-versions': { abilities: 'content.history.view' },
   'space-canvas': { abilities: { allOf: ['content.view', 'blocks.view'] } },
   'space-assets-index': { abilities: 'assets.view' },
+  'space-icons-index': { abilities: 'icons.view' },
   'space-blocks-index': { abilities: 'blocks.view' },
   'space-block': { abilities: 'blocks.view' },
   'space-datasources': { abilities: 'data_sources.view' },

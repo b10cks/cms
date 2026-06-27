@@ -35,6 +35,7 @@ type RoleAbilityResource =
   | 'assets'
   | 'assetFolders'
   | 'assetTags'
+  | 'icons'
   | 'blocks'
   | 'blockTemplates'
   | 'blockVersions'
@@ -115,6 +116,8 @@ const ROLE_ABILITY_META: Record<string, RoleAbilityMeta> = {
   'asset_folders.manage': { group: 'assets', action: 'manage', resource: 'assetFolders' },
   'asset_tags.view': { group: 'assets', action: 'view', resource: 'assetTags' },
   'asset_tags.manage': { group: 'assets', action: 'manage', resource: 'assetTags' },
+  'icons.view': { group: 'assets', action: 'view', resource: 'icons' },
+  'icons.manage': { group: 'assets', action: 'manage', resource: 'icons' },
   'blocks.view': { group: 'blocks', action: 'view', resource: 'blocks' },
   'blocks.manage': { group: 'blocks', action: 'manage', resource: 'blocks' },
   'block_templates.view': { group: 'blocks', action: 'view', resource: 'blockTemplates' },

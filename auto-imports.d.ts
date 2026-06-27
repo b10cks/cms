@@ -8,6 +8,7 @@ export {}
 declare global {
   const AlertDialogProvider: typeof import('./resources/js/composables/useAlertDialog').AlertDialogProvider
   const EffectScope: typeof import('vue').EffectScope
+  const TEAM_TYPE_KEYS: typeof import('./resources/js/composables/useTeamTypes').TEAM_TYPE_KEYS
   const computed: typeof import('vue').computed
   const createAccessEvaluationContext: typeof import('./resources/js/composables/useAuthorization').createAccessEvaluationContext
   const createApp: typeof import('vue').createApp
@@ -146,6 +147,8 @@ declare global {
   const useGlobalTeam: typeof import('./resources/js/composables/useGlobalTeam').useGlobalTeam
   const useHandlebars: typeof import('./resources/js/composables/useHandlebars').default
   const useI18n: typeof import('./resources/js/plugins/i18n').useI18n
+  const useIconifyCollections: typeof import('./resources/js/composables/useIconifyCollections').useIconifyCollections
+  const useIcons: typeof import('./resources/js/composables/useIcons').useIcons
   const useId: typeof import('vue').useId
   const useInvites: typeof import('./resources/js/composables/useInvites').useInvites
   const useInvoices: typeof import('./resources/js/composables/useInvoices').useInvoices
@@ -164,6 +167,7 @@ declare global {
   const useSeoMeta: typeof import('./resources/js/composables/useSeoMeta').useSeoMeta
   const useSlots: typeof import('vue').useSlots
   const useSpaceBlueprints: typeof import('./resources/js/composables/useSpaceBlueprints').useSpaceBlueprints
+  const useSpaceBroadcasts: typeof import('./resources/js/composables/useSpaceBroadcasts').useSpaceBroadcasts
   const useSpaceMembers: typeof import('./resources/js/composables/useSpaceMembers').useSpaceMembers
   const useSpacePresence: typeof import('./resources/js/composables/usePresence').useSpacePresence
   const useSpacePresencePeek: typeof import('./resources/js/composables/useSpacePresencePeek').useSpacePresencePeek
@@ -171,6 +175,7 @@ declare global {
   const useSpaceUsage: typeof import('./resources/js/composables/useSpaceUsage').useSpaceUsage
   const useSpaces: typeof import('./resources/js/composables/useSpace').useSpaces
   const useSubscription: typeof import('./resources/js/composables/useSubscription').useSubscription
+  const useTeamTypes: typeof import('./resources/js/composables/useTeamTypes').useTeamTypes
   const useTeams: typeof import('./resources/js/composables/useTeams').useTeams
   const useTemplateRef: typeof import('vue').useTemplateRef
   const useTokens: typeof import('./resources/js/composables/useTokens').useTokens
@@ -245,6 +250,9 @@ declare global {
   export type { MaybeRefOrComputed } from './resources/js/composables/useSubscription'
   import('./resources/js/composables/useSubscription')
   // @ts-ignore
+  export type { TeamType } from './resources/js/composables/useTeamTypes'
+  import('./resources/js/composables/useTeamTypes')
+  // @ts-ignore
   export type { MessageSchema, LocaleCode } from './resources/js/plugins/i18n'
   import('./resources/js/plugins/i18n')
 }
@@ -256,6 +264,7 @@ declare module 'vue' {
   interface ComponentCustomProperties {
     readonly AlertDialogProvider: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['AlertDialogProvider']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
+    readonly TEAM_TYPE_KEYS: UnwrapRef<typeof import('./resources/js/composables/useTeamTypes')['TEAM_TYPE_KEYS']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createAccessEvaluationContext: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['createAccessEvaluationContext']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
@@ -393,6 +402,8 @@ declare module 'vue' {
     readonly useGlobalTeam: UnwrapRef<typeof import('./resources/js/composables/useGlobalTeam')['useGlobalTeam']>
     readonly useHandlebars: UnwrapRef<typeof import('./resources/js/composables/useHandlebars')['default']>
     readonly useI18n: UnwrapRef<typeof import('./resources/js/plugins/i18n')['useI18n']>
+    readonly useIconifyCollections: UnwrapRef<typeof import('./resources/js/composables/useIconifyCollections')['useIconifyCollections']>
+    readonly useIcons: UnwrapRef<typeof import('./resources/js/composables/useIcons')['useIcons']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useInvites: UnwrapRef<typeof import('./resources/js/composables/useInvites')['useInvites']>
     readonly useInvoices: UnwrapRef<typeof import('./resources/js/composables/useInvoices')['useInvoices']>
@@ -411,6 +422,7 @@ declare module 'vue' {
     readonly useSeoMeta: UnwrapRef<typeof import('./resources/js/composables/useSeoMeta')['useSeoMeta']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
     readonly useSpaceBlueprints: UnwrapRef<typeof import('./resources/js/composables/useSpaceBlueprints')['useSpaceBlueprints']>
+    readonly useSpaceBroadcasts: UnwrapRef<typeof import('./resources/js/composables/useSpaceBroadcasts')['useSpaceBroadcasts']>
     readonly useSpaceMembers: UnwrapRef<typeof import('./resources/js/composables/useSpaceMembers')['useSpaceMembers']>
     readonly useSpacePresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['useSpacePresence']>
     readonly useSpacePresencePeek: UnwrapRef<typeof import('./resources/js/composables/useSpacePresencePeek')['useSpacePresencePeek']>
@@ -418,6 +430,7 @@ declare module 'vue' {
     readonly useSpaceUsage: UnwrapRef<typeof import('./resources/js/composables/useSpaceUsage')['useSpaceUsage']>
     readonly useSpaces: UnwrapRef<typeof import('./resources/js/composables/useSpace')['useSpaces']>
     readonly useSubscription: UnwrapRef<typeof import('./resources/js/composables/useSubscription')['useSubscription']>
+    readonly useTeamTypes: UnwrapRef<typeof import('./resources/js/composables/useTeamTypes')['useTeamTypes']>
     readonly useTeams: UnwrapRef<typeof import('./resources/js/composables/useTeams')['useTeams']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly useTokens: UnwrapRef<typeof import('./resources/js/composables/useTokens')['useTokens']>

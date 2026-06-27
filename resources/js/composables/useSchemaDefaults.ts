@@ -50,7 +50,7 @@ export const resolveFieldInitialValue = (field: SchemaType): unknown => {
   }
 
   if (defaultValue === null) {
-    if (type === 'option' || type === 'asset' || type === 'link') {
+    if (type === 'option' || type === 'asset' || type === 'icon' || type === 'link') {
       return null
     }
 

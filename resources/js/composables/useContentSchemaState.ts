@@ -75,6 +75,7 @@ export const normalizeSchemaType = (type?: string | null): CanonicalSchemaTypeNa
     case 'link':
     case 'asset':
     case 'multi_assets':
+    case 'icon':
     case 'references':
     case 'date':
     case 'meta':
@@ -96,6 +97,7 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
   const validation = (schemaField.validation || {}) as FieldValidation
   const optionSource = schemaField.source === 'datasource' ? 'datasource' : 'self'
   const isOptionLike = canonicalType === 'option' || canonicalType === 'options'
+  const isIcon = canonicalType === 'icon'
   const isTable = canonicalType === 'table'
   const conditions = schemaField.conditions
     ? {
@@ -145,7 +147,11 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
       schemaField.indexable === undefined
         ? Boolean(canonicalType && INDEXABLE_TYPES.includes(canonicalType))
         : Boolean(schemaField.indexable),
-    source: isOptionLike ? optionSource : undefined,
+    source: isOptionLike
+      ? optionSource
+      : isIcon
+        ? ((schemaField.source as IconFieldSource | undefined) ?? 'all')
+        : undefined,
     data_source_id: isOptionLike ? (schemaField.data_source_id ?? null) : undefined,
     has_thead: isTable ? Boolean((schemaField as TableSchema).has_thead) : undefined,
     columns: isTable ? getTableColumns(schemaField as TableSchema) : undefined,

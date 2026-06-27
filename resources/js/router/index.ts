@@ -202,6 +202,18 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: '/:space/icons',
+    name: 'space-icons',
+    meta: { layout: 'default' },
+    children: [
+      {
+        path: '',
+        name: 'space-icons-index',
+        component: () => import('~/pages/[space]/icons/index.vue'),
+      },
+    ],
+  },
+  {
     path: '/:space/blocks',
     name: 'space-blocks',
     meta: { layout: 'default' },

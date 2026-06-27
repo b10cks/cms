@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\BlockController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\DataEntryController;
 use App\Http\Controllers\Api\DataSourceController;
+use App\Http\Controllers\Api\IconifyController;
 use App\Http\Controllers\Api\RedirectController;
 use App\Http\Controllers\Api\RedirectLookupController;
 use App\Http\Controllers\Api\SearchController;
@@ -36,3 +37,14 @@ Route::get('datasources', [DataSourceController::class, 'index'])->middleware(['
 Route::get('datasources/{source:slug}/entries', [DataEntryController::class, 'index'])->middleware([
     'cache.data:60,60',
 ])->name('dataentries.index');
+
+// Iconify-compatible icon API. The space is scoped by the `?token=` (auth.data); `{space}` in the
+// path must match the token's space. Static routes are registered before the `{prefix}.json` /
+// `.svg` catch-alls so they win route matching.
+Route::prefix('iconify/{space}')->name('iconify.')->middleware(['cache.data:60,60'])->group(function () {
+    Route::get('collections', [IconifyController::class, 'collections'])->name('collections');
+    Route::get('last-modified', [IconifyController::class, 'lastModified'])->name('last-modified');
+    Route::get('search', [IconifyController::class, 'search'])->name('search');
+    Route::get('{prefix}.json', [IconifyController::class, 'iconData'])->name('data');
+    Route::get('{prefix}/{name}.svg', [IconifyController::class, 'iconSvg'])->name('svg');
+});

@@ -18,6 +18,7 @@ class BlockSchemaRequestValidator
         'link',
         'asset',
         'multi_assets',
+        'icon',
         'references',
         'date',
         'meta',

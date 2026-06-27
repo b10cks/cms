@@ -3,6 +3,7 @@ import type { Component } from 'vue'
 
 import AssetBlock from '~/components/editor/AssetBlock.vue'
 import BlocksBlock from '~/components/editor/BlocksBlock.vue'
+import IconBlock from '~/components/editor/IconBlock.vue'
 import BooleanBlock from '~/components/editor/BooleanBlock.vue'
 import DateBlock from '~/components/editor/DateBlockEditor.vue'
 import LinkBlock from '~/components/editor/LinkBlock.vue'
@@ -40,6 +41,7 @@ const editors = {
   asset: AssetBlock,
   multiAsset: MultiAssetsBlock,
   multi_assets: MultiAssetsBlock,
+  icon: IconBlock,
   reference: ReferenceBlock,
   references: ReferenceBlock,
   meta: MetaBlock,

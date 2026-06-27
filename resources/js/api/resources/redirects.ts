@@ -43,7 +43,7 @@ export class Redirects extends BaseResource<
     })
   }
 
-  public async import(file: File, mode: RedirectImportMode = 'addition'): Promise<RedirectDataImportResult> {
+  public async importData(file: File, mode: RedirectImportMode = 'addition'): Promise<RedirectDataImportResult> {
     return requestImportJson<RedirectDataImportResult>({
       client: this.client,
       endpoint: `${this.basePath}/import`,

@@ -137,7 +137,7 @@ export class Assets extends BaseResource<
    * @param file The file containing asset data to import
    * @returns Import result with successes, changes, and errors
    */
-  public async import(file: File): Promise<AssetDataImportResult> {
+  public async importData(file: File): Promise<AssetDataImportResult> {
     const data = await requestImportJson<AssetDataImportResult | { data: AssetDataImportResult }>({
       client: this.client,
       endpoint: `${this.basePath}/import`,

@@ -28,6 +28,7 @@ import { Backups } from './resources/backups'
 import { BlockTags } from './resources/block-tags'
 import { Blocks } from './resources/blocks'
 import { ContentMenu } from './resources/content-menu'
+import { Icons } from './resources/icons'
 import { ContentModel } from './resources/content-model'
 import { ContentVersions } from './resources/content-versions'
 import { Contents } from './resources/contents'
@@ -135,6 +136,7 @@ export class API {
       assetFolders: new AssetFolders(this.client, spaceId),
       assetTags: new AssetTags(this.client, spaceId),
       assets: new Assets(this.client, spaceId),
+      icons: new Icons(this.client, spaceId),
       backups: new Backups(this.client, spaceId),
       migrations: new Migrations(this.client, spaceId),
       blocks: new Blocks(this.client, spaceId),

@@ -19,6 +19,7 @@ const types = [
   'boolean',
   'asset',
   'multi_assets',
+  'icon',
   'meta',
   'table',
 ]

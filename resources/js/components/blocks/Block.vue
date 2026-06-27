@@ -5,6 +5,7 @@ import type { Component } from 'vue'
 
 import AssetBlock from '~/components/blocks/AssetBlock.vue'
 import BlocksBlock from '~/components/blocks/BlocksBlock.vue'
+import IconBlock from '~/components/blocks/IconBlock.vue'
 import BooleanBlock from '~/components/blocks/BooleanBlock.vue'
 import DateBlock from '~/components/blocks/DateBlock.vue'
 import LinkBlock from '~/components/blocks/LinkBlock.vue'
@@ -89,6 +90,7 @@ const schemas = {
   asset: AssetBlock,
   multiAsset: MultiAssetBlock,
   multi_assets: MultiAssetBlock,
+  icon: IconBlock,
   blocks: BlocksBlock,
   boolean: BooleanBlock,
   link: LinkBlock,

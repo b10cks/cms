@@ -75,6 +75,7 @@ Route::get('/{space}/content/{contentId}/localization', AppController::class)->n
 Route::get('/{space}/content/{contentId}/versions', AppController::class)->name('space-content-contentId-versions');
 Route::get('/{space}/assets', AppController::class)->name('space-assets');
 Route::get('/{space}/blocks', AppController::class)->name('space-blocks');
+Route::get('/{space}/icons', AppController::class)->name('space-icons');
 Route::get('/{space}/blocks/{block}', AppController::class)->name('space-block');
 Route::get('/{space}/datasources', AppController::class)->name('space-datasources');
 Route::get('/{space}/datasources/{dataSourceId}', AppController::class)->name('space-datasources-dataSourceId');
