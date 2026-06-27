@@ -31,4 +31,12 @@ interface AiDriverInterface
     public function callTool(string $toolName, array $input): mixed;
 
     public function getToolDefinitions(): array;
+
+    /**
+     * Whether a request for this model will actually carry tool definitions.
+     * False when the model is shaped for the reasoning API contract (which
+     * forbids tools) or simply does not support tool calling, so callers can
+     * build a prompt that does not instruct the model to use tools it lacks.
+     */
+    public function supportsToolCalls(string $modelId): bool;
 }

@@ -93,11 +93,14 @@ trait InteractsWithAiDriver
     /**
      * @return array<string, mixed>
      */
-    protected function buildAiOptions($aiConfig, int $defaultMaxTokens): array
+    protected function buildAiOptions($aiConfig, int $defaultMaxTokens, float $defaultTemperature = 0.3): array
     {
         return [
             'max_tokens' => $aiConfig?->max_tokens ?? $defaultMaxTokens,
-            'temperature' => (float) ($aiConfig?->temperature ?? 0.7),
+            // Every current use case asks for strict, schema-shaped JSON, so the
+            // fallback temperature is low for reliable structure; a space may
+            // still raise it via its AI config when it wants more variation.
+            'temperature' => (float) ($aiConfig?->temperature ?? $defaultTemperature),
             // Every current use case asks the model for strict JSON; drivers
             // upgrade this to native JSON mode where the model supports it.
             'json' => true,

@@ -110,6 +110,26 @@ abstract class BaseAiDriver implements AiDriverInterface
         return $this->tools[$toolName]->execute($input);
     }
 
+    public function supportsToolCalls(string $modelId): bool
+    {
+        $model = $this->findModelDto($modelId);
+
+        // Mirrors the gate in buildChatParams (and the Bedrock body builder):
+        // reasoning-shaped requests drop tools, and some models never support
+        // them at all. Tool definitions are only sent when both checks pass.
+        return ! $this->shouldShapeForReasoning($modelId, $model)
+            && $this->supportsTools($modelId);
+    }
+
+    /**
+     * Whether the given model can be sent tool definitions. Concrete drivers
+     * override this against their model catalogue; the base default is true.
+     */
+    protected function supportsTools(string $modelId): bool
+    {
+        return true;
+    }
+
     protected function emitStatus(string $message): StreamEvent
     {
         return StreamEvent::status($message);
@@ -163,6 +183,11 @@ abstract class BaseAiDriver implements AiDriverInterface
         $model = $this->findModelDto($modelId);
         $reasoning = $this->shouldShapeForReasoning($modelId, $model);
 
+        // Prompt caching on this (OpenAI-compatible) path is automatic: OpenAI
+        // caches identical prompt prefixes ≥1024 tokens, and OpenRouter applies
+        // provider caching for the models that support it. The static system
+        // prompt is sent first so it forms a stable, cacheable prefix — no
+        // explicit cache_control field is needed here (unlike Anthropic).
         $params = [
             'model' => $modelId,
             'messages' => $reasoning ? $this->demoteSystemMessages($messages) : $messages,

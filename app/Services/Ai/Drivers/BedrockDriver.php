@@ -70,11 +70,27 @@ class BedrockDriver extends BaseAiDriver
             'accept' => 'application/json',
         ];
 
+        ['system' => $systemPrompt, 'messages' => $converted] = $this->convertMessages($messages);
+
         $body = [
             'anthropic_version' => 'bedrock-2023-05-31',
             'max_tokens' => $this->clampMaxTokens((int) ($options['max_tokens'] ?? 4096), $this->findModelDto($modelId)),
-            'messages' => $this->convertMessages($messages),
+            'messages' => $converted,
         ];
+
+        if ($systemPrompt !== '') {
+            // Send the system prompt as a cacheable block. Our system prompts
+            // are large and identical across requests, so an ephemeral cache
+            // breakpoint lets Anthropic reuse it instead of re-reading it every
+            // call. Sub-minimum prompts simply are not cached — no downside.
+            $body['system'] = [
+                [
+                    'type' => 'text',
+                    'text' => $systemPrompt,
+                    'cache_control' => ['type' => 'ephemeral'],
+                ],
+            ];
+        }
 
         if (isset($options['temperature'])) {
             $body['temperature'] = $options['temperature'];
@@ -180,6 +196,14 @@ class BedrockDriver extends BaseAiDriver
         }
     }
 
+    /**
+     * Split chat-style messages into the Anthropic shape: a single `system`
+     * string (Anthropic carries it outside the message list) plus the user and
+     * assistant turns.
+     *
+     * @param  array<int, array<string, mixed>>  $messages
+     * @return array{system: string, messages: array<int, array<string, mixed>>}
+     */
     protected function convertMessages(array $messages): array
     {
         $converted = [];
@@ -211,7 +235,7 @@ class BedrockDriver extends BaseAiDriver
             }
         }
 
-        return $converted;
+        return ['system' => $systemPrompt, 'messages' => $converted];
     }
 
     protected function convertTools(array $tools): array

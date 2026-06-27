@@ -133,4 +133,9 @@ class CapturingAiDriver implements AiDriverInterface
     {
         return [];
     }
+
+    public function supportsToolCalls(string $modelId): bool
+    {
+        return false;
+    }
 }
