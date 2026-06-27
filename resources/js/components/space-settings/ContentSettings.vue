@@ -36,6 +36,7 @@ interface ContentSettingsSpace {
   settings: {
     default_block?: string
     filter_hidden_blocks?: boolean
+    content_sorting?: boolean
     sitemap?: {
       types?: SitemapTypeMapping[]
     }
@@ -56,6 +57,7 @@ const { $t } = useI18n()
 
 const defaultBlockId = ref(props.space.settings.default_block)
 const filterHiddenBlocks = ref(props.space.settings.filter_hidden_blocks ?? false)
+const contentSorting = ref(props.space.settings.content_sorting ?? false)
 const sitemapTypes = ref<SitemapTypeMapping[]>(deepClone(props.space.settings.sitemap?.types || []))
 
 const availableBlocks = computed(
@@ -121,6 +123,7 @@ const handleSave = () => {
         ...props.space.settings,
         default_block: defaultBlockId.value,
         filter_hidden_blocks: filterHiddenBlocks.value,
+        content_sorting: contentSorting.value,
         sitemap: {
           types: sitemapTypes.value
             .map((type) => ({
@@ -190,6 +193,23 @@ const handleSave = () => {
         </div>
         <p class="text-xs text-muted">
           {{ $t('labels.settings.content.filterHiddenBlocksDescription') }}
+        </p>
+      </div>
+      <div class="space-y-2">
+        <div class="flex items-center space-x-2">
+          <Switch
+            id="content-sorting"
+            v-model="contentSorting"
+            aria-label="Enable manual content sorting"
+          />
+          <Label
+            for="content-sorting"
+            class="text-sm font-medium"
+            :label="$t('labels.settings.content.contentSorting')"
+          />
+        </div>
+        <p class="text-xs text-muted">
+          {{ $t('labels.settings.content.contentSortingDescription') }}
         </p>
       </div>
       <div class="space-y-4">

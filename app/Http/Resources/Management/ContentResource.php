@@ -64,6 +64,7 @@ class ContentResource extends JsonResource
             'block_schema' => $resolvedRow->block?->schema?->toArray(),
             'block_editor' => $resolvedRow->block?->editor ?? [],
             'parent_id' => $resolvedRow->parent_id,
+            'position' => $resolvedRow->position,
             'parent' => $resolvedRow->parent
                 ? [
                     'id' => $resolvedRow->parent->id,
@@ -72,7 +73,7 @@ class ContentResource extends JsonResource
                 ]
                 : null,
             'name' => $resolvedRow->name,
-            'children_count' => $this->whenCounted('children', fn() => $this->children_count),
+            'children_count' => $this->whenCounted('children', fn () => $this->children_count),
             'slug' => $resolvedRow->slug,
             'full_slug' => $resolvedRow->full_slug,
             'language_iso' => $resolved?->requestedLanguage ?? $resolvedRow->language_iso,
@@ -93,15 +94,15 @@ class ContentResource extends JsonResource
             'updated_at' => $resolvedRow->updated_at?->toIso8601String(),
             'i18n_parent' => $this->whenLoaded(
                 'i18n_parent',
-                fn() => new ContentTranslationResource($this->i18n_parent)
+                fn () => new ContentTranslationResource($this->i18n_parent)
             ),
             'i18n_translations' => $this->whenLoaded(
                 'i18n_children',
-                fn() => ContentTranslationResource::collection($this->i18n_children)
+                fn () => ContentTranslationResource::collection($this->i18n_children)
             ),
             'i18n_siblings' => $this->whenLoaded(
                 'i18n_siblings',
-                fn() => ContentTranslationResource::collection($this->i18n_siblings)
+                fn () => ContentTranslationResource::collection($this->i18n_siblings)
             ),
         ];
     }
@@ -111,7 +112,7 @@ class ContentResource extends JsonResource
         if ($resolved && $resolvedRow) {
             $content = $resolved->effectiveContent;
 
-            return !empty($content) ? $this->injectResolvedData($resolved, $resolvedRow, $content) : new \StdClass;
+            return ! empty($content) ? $this->injectResolvedData($resolved, $resolvedRow, $content) : new \StdClass;
         }
 
         $content = $resolvedRow?->current_version?->content ?? $this->current_version?->content;
@@ -121,7 +122,7 @@ class ContentResource extends JsonResource
 
     protected function injectData(array $content)
     {
-        $assets = $this->whenLoaded('assets', fn() => $this->assets, $this->current_version?->assets);
+        $assets = $this->whenLoaded('assets', fn () => $this->assets, $this->current_version?->assets);
 
         return app(AssetHandler::class)->updateContentAssets($content, $assets);
     }

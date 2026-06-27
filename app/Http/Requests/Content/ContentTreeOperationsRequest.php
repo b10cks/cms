@@ -35,6 +35,7 @@ class ContentTreeOperationsRequest extends FormRequest
             ],
             'operations.*.parent_id' => ['sometimes', 'nullable', 'string'],
             'operations.*.after_id' => ['sometimes', 'nullable', 'string'],
+            'operations.*.position' => ['sometimes', 'integer', 'min:0'],
             'operations.*.block_id' => [
                 'sometimes',
                 'string',

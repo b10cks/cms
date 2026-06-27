@@ -21,6 +21,7 @@ use Illuminate\Support\Collection;
  * @resourceProperty slug URL slug of the resolved content.
  * @resourceProperty block Slug of the assigned block definition.
  * @resourceProperty parent_id format=uuid Parent content identifier if this content is nested.
+ * @resourceProperty position 0-based sort position within the parent.
  * @resourceProperty full_slug Full resolved path including all parent slugs.
  * @resourceProperty content type=object additionalProperties=true Effective content payload after i18n, link, and asset resolution.
  * @resourceProperty relations type=array items=ContentResource First-level related content entries when explicitly requested.
@@ -54,6 +55,7 @@ class ContentResource extends JsonResource
             'block' => $row->block?->slug,
             'external_id' => $row->external_id,
             'parent_id' => $row->parent_id,
+            'position' => $row->position,
             'full_slug' => $row->full_slug,
             'content' => $this->getTransformedContent($resolved, $request),
             'relations' => $this->when(
@@ -112,12 +114,12 @@ class ContentResource extends JsonResource
 
         if ($request->has('take')) {
             $paths = ContentFieldSelector::parsePaths($request->input('take', ''));
-            if (!empty($paths)) {
+            if (! empty($paths)) {
                 $result = ContentFieldSelector::take($result, $paths);
             }
         } elseif ($request->has('except')) {
             $paths = ContentFieldSelector::parsePaths($request->input('except', ''));
-            if (!empty($paths)) {
+            if (! empty($paths)) {
                 $result = ContentFieldSelector::except($result, $paths);
             }
         }

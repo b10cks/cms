@@ -38,13 +38,18 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
     menuData: Record<string, FlatContentMenuItem> | undefined
   ): FlatContentMenuItem[] => {
     if (!menuData) return []
+    const compareByPosition = (a: FlatContentMenuItem, b: FlatContentMenuItem) =>
+      (a.position ?? 0) - (b.position ?? 0) ||
+      (a.name || '').localeCompare(b.name || '') ||
+      a.id.localeCompare(b.id)
+
     return [
       ...Object.values(menuData)
         .filter((item) => !item.pid && item.type !== 'single')
-        .sort((a, b) => (a.name || '').localeCompare(b.name || '')),
+        .sort(compareByPosition),
       ...Object.values(menuData)
         .filter((item) => !item.pid && item.type === 'single')
-        .sort((a, b) => (a.name || '').localeCompare(b.name || '')),
+        .sort(compareByPosition),
     ]
   }
 
@@ -56,7 +61,12 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
     if (!menuData) return []
     return Object.values(menuData)
       .filter((item) => item.pid === parentId)
-      .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+      .sort(
+        (a, b) =>
+          (a.position ?? 0) - (b.position ?? 0) ||
+          (a.name || '').localeCompare(b.name || '') ||
+          a.id.localeCompare(b.id)
+      )
   }
 
   const buildBreadcrumbs = (
@@ -116,6 +126,7 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
                 name: content.name,
                 slug: content.slug,
                 block_id: content.block_id,
+                position: content.position,
                 pid: content.parent_id,
                 type: content.block?.type || 'universal',
                 color: content.block?.color || null,

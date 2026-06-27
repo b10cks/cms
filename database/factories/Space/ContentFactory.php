@@ -18,6 +18,7 @@ class ContentFactory extends Factory
             'external_id' => Str::uuid(),
             'block_id' => Block::factory(),
             'parent_id' => null,
+            'position' => 0,
             'name' => $this->faker->word(),
             'slug' => $this->faker->slug(),
             'full_slug' => $this->faker->slug(),

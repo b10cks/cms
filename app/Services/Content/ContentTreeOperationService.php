@@ -19,6 +19,7 @@ class ContentTreeOperationService
     public function __construct(
         protected ContentI18nService $contentI18nService,
         protected ContentHierarchyValidator $contentHierarchyValidator,
+        protected ContentPositionService $contentPositionService,
         protected CreateContent $createContent,
         protected UpdateContent $updateContent,
         protected SearchService $searchService,
@@ -45,6 +46,7 @@ class ContentTreeOperationService
                     'language_iso' => $defaultLanguage,
                     'content' => $attributes['content'] ?? [],
                     'settings' => $attributes['settings'] ?? [],
+                    'position' => $attributes['position'] ?? null,
                 ],
                 $canonical,
                 $space,
@@ -58,10 +60,16 @@ class ContentTreeOperationService
         });
     }
 
-    public function moveItems(array $orderedIds, ?string $parentId, ?string $afterId, Space $space): array
-    {
-        return DB::transaction(function () use ($orderedIds, $parentId, $afterId, $space): array {
+    public function moveItems(
+        array $orderedIds,
+        ?string $parentId,
+        ?string $afterId,
+        Space $space,
+        ?int $position = null,
+    ): array {
+        return DB::transaction(function () use ($orderedIds, $parentId, $afterId, $space, $position): array {
             $warnings = [];
+            $sortingEnabled = $space->settings->isContentSortingEnabled();
             $normalizedIds = $this->resolveOrderedRootSelection($orderedIds);
             $items = Content::query()
                 ->with(['block'])
@@ -87,6 +95,9 @@ class ContentTreeOperationService
             $this->ensureAfterTargetIsCompatible($orderedItems, $targetParent?->id, $after);
             $this->validateBatchPlacement($orderedItems, $targetParent, $space);
             $this->reassignParent($orderedItems, $targetParent?->id);
+            if ($sortingEnabled) {
+                $this->contentPositionService->moveItems($orderedItems, $targetParent?->id, $after?->id, $position);
+            }
 
             $familyCache = $this->buildFamilyCache($orderedItems);
             $defaultLanguage = $space->settings->getDefaultLanguage();
@@ -143,9 +154,18 @@ class ContentTreeOperationService
                 $this->ensureAfterTargetIsCompatible($translatedItems, $translatedParent?->id, $translatedAfter);
                 $this->validateBatchPlacement($translatedItems, $translatedParent, $space);
                 $this->reassignParent($translatedItems, $translatedParent?->id);
+                if ($sortingEnabled) {
+                    $this->contentPositionService->moveItems(
+                        $translatedItems,
+                        $translatedParent?->id,
+                        $translatedAfter?->id,
+                        $position,
+                    );
+                }
             }
 
             $space->touch('content_updated_at');
+            DB::afterCommit(static fn (): mixed => app(ContentMenuCache::class)->invalidate($space->id));
 
             return [
                 'warnings' => $warnings,
@@ -183,8 +203,9 @@ class ContentTreeOperationService
         ?string $afterId,
         Space $space,
         Authenticatable|User|null $owner,
+        ?int $position = null,
     ): array {
-        return DB::transaction(function () use ($orderedIds, $parentId, $afterId, $space, $owner): array {
+        return DB::transaction(function () use ($orderedIds, $parentId, $afterId, $space, $owner, $position): array {
             $normalizedIds = $this->resolveOrderedRootSelection($orderedIds);
             $sources = Content::query()
                 ->with(['block', 'current_version', 'children'])
@@ -223,7 +244,11 @@ class ContentTreeOperationService
             }
 
             if ($createdRoots->isNotEmpty()) {
+                if ($space->settings->isContentSortingEnabled()) {
+                    $this->contentPositionService->moveItems($createdRoots, $targetParent?->id, $after?->id, $position);
+                }
                 $space->touch('content_updated_at');
+                DB::afterCommit(static fn (): mixed => app(ContentMenuCache::class)->invalidate($space->id));
             }
 
             return [
@@ -349,6 +374,10 @@ class ContentTreeOperationService
     protected function reassignParent(Collection $items, ?string $parentId): void
     {
         foreach ($items->unique('id') as $item) {
+            if ($item->parent_id === $parentId) {
+                continue;
+            }
+
             $item->forceFill([
                 'parent_id' => $parentId,
             ])->save();

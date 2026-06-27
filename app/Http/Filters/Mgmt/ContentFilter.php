@@ -17,6 +17,7 @@ use CodersCantina\Filter\ExtendedFilter;
  *   range syntax handled by the shared filter base implementation.
  *
  * @filterDescription Filter management content entries.
+ *
  * @sortDescription Sort results by field. Prefix with `-` for descending order.
  */
 class ContentFilter extends ExtendedFilter
@@ -26,6 +27,7 @@ class ContentFilter extends ExtendedFilter
         'slug',
         'language_iso',
         'external_id',
+        'position',
         'published_at',
         'created_at',
         'updated_at',
@@ -35,6 +37,7 @@ class ContentFilter extends ExtendedFilter
      * Filter by content name using a partial match.
      *
      * @filterDescription Filter by content name using a partial match.
+     *
      * @filterExample homepage
      */
     public function name($value)
@@ -46,6 +49,7 @@ class ContentFilter extends ExtendedFilter
      * Filter by content slug using a partial match.
      *
      * @filterDescription Filter by content slug using a partial match.
+     *
      * @filterExample home
      */
     public function slug($value)
@@ -57,6 +61,7 @@ class ContentFilter extends ExtendedFilter
      * Filter by external identifier.
      *
      * @filterDescription Filter by external identifier.
+     *
      * @filterExample ext-home-001
      */
     public function external_id($value)
@@ -68,6 +73,7 @@ class ContentFilter extends ExtendedFilter
      * Filter by block identifier.
      *
      * @filterDescription Filter by block identifier.
+     *
      * @filterExample 01HZX2K9J7YQ8V3M4N5P6R7S8T
      */
     public function block_id($value)
@@ -81,6 +87,7 @@ class ContentFilter extends ExtendedFilter
      * Use the literal string `null` to return root-level entries.
      *
      * @filterDescription Filter by parent content identifier. Use `null` to return only root-level entries.
+     *
      * @filterExample null
      */
     public function parent_id($value)
@@ -96,6 +103,7 @@ class ContentFilter extends ExtendedFilter
      * Filter by content language ISO code.
      *
      * @filterDescription Filter by content language ISO code.
+     *
      * @filterExample en
      */
     public function language_iso($value)
@@ -109,6 +117,7 @@ class ContentFilter extends ExtendedFilter
      * Use the literal string `null` to return canonical entries without an i18n parent.
      *
      * @filterDescription Filter by i18n parent content identifier. Use `null` to return canonical entries without an i18n parent.
+     *
      * @filterExample null
      */
     public function i18n_parent_id($value)
@@ -128,7 +137,9 @@ class ContentFilter extends ExtendedFilter
      * - `false` or `0`: only unpublished entries
      *
      * @filterDescription Filter by publication state. Accepted values: `true` / `1` for published, `false` / `0` for unpublished.
+     *
      * @filterType boolean
+     *
      * @filterExample true
      */
     public function published($value)
@@ -148,7 +159,9 @@ class ContentFilter extends ExtendedFilter
      * - `from...to`
      *
      * @filterDescription Filter by publication timestamp. Supports range syntax like `2024-01-01...2024-12-31`.
+     *
      * @filterFormat date-time
+     *
      * @filterExample 2024-01-01...2024-12-31
      */
     public function published_at($value)
@@ -164,7 +177,9 @@ class ContentFilter extends ExtendedFilter
      * - `from...to`
      *
      * @filterDescription Filter by creation timestamp. Supports range syntax like `2024-01-01...2024-12-31`.
+     *
      * @filterFormat date-time
+     *
      * @filterExample 2024-01-01...2024-12-31
      */
     public function created_at($value)
@@ -180,7 +195,9 @@ class ContentFilter extends ExtendedFilter
      * - `from...to`
      *
      * @filterDescription Filter by last update timestamp. Supports range syntax like `2024-01-01...2024-12-31`.
+     *
      * @filterFormat date-time
+     *
      * @filterExample 2024-01-01...2024-12-31
      */
     public function updated_at($value)

@@ -5,14 +5,15 @@ namespace App\Actions\Content;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Services\Content\ContentHierarchyValidator;
+use App\Services\Content\ContentPositionService;
 use Illuminate\Support\Facades\DB;
 
 class MoveContent
 {
     public function __construct(
         protected ContentHierarchyValidator $contentHierarchyValidator,
-    ) {
-    }
+        protected ContentPositionService $contentPositionService,
+    ) {}
 
     public function execute(Content $content, ?string $parentId, ?int $position, Space $space): void
     {
@@ -23,7 +24,7 @@ class MoveContent
             $parent = null;
             if ($parentId !== null) {
                 $parent = Content::query()->with('block')->find($parentId);
-                if (!$parent || $parent->id === $content->id) {
+                if (! $parent || $parent->id === $content->id) {
                     throw new \InvalidArgumentException('Invalid parent content');
                 }
 
@@ -44,6 +45,12 @@ class MoveContent
             // Update parent
             $content->parent_id = $parentId;
             $content->save();
+
+            // Resequence siblings only when manual sorting is enabled for the space;
+            // otherwise the move is a pure reparent and ordering stays alphabetical.
+            if ($space->settings->isContentSortingEnabled()) {
+                $this->contentPositionService->moveItemToPosition($content, $parentId, $position);
+            }
 
             $space->touch('content_updated_at');
         });

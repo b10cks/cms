@@ -37,7 +37,7 @@ import type {
   CreateContentPayload,
 } from '~/types/contents'
 
-type Edge = 'left'
+type Edge = 'top' | 'bottom' | 'left'
 type MenuOwnerId = string | 'root'
 
 type ContentTreeDragItem = {
@@ -82,6 +82,9 @@ const { useTreeOperationsMutation, useUpdateContentMutation, usePublishContentMu
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageContent = computed(() => access.hasAbility('content.manage'))
 const canPublishContent = computed(() => access.hasAbility('content.publish'))
+// Manual drag-to-reorder is opt-in per space. When disabled, dragging may only
+// reparent items (the "into" gesture); before/after reordering is suppressed.
+const sortingEnabled = computed(() => !!selectedSpace.value?.settings?.content_sorting)
 const { settings } = useSpaceSettings(props.spaceId)
 const {
   hasClipboardItem,
@@ -128,7 +131,21 @@ const rootDropZoneRef = ref<HTMLElement | null>(null)
 const itemCleanupMap = new Map<string, () => void>()
 const titleRefMap = new Map<string, RenamableTitleInstance | null>()
 
-const flatItems = computed(() => (data.value ? Object.values(data.value) : []))
+const flatItems = computed(() => {
+  const menuData = data.value
+  if (!menuData) {
+    return []
+  }
+
+  const orderedItems: FlatContentMenuItem[] = []
+  const visit = (item: FlatContentMenuItem) => {
+    orderedItems.push(item)
+    getChildren(menuData, item.id).forEach(visit)
+  }
+
+  getRootItems(menuData).forEach(visit)
+  return orderedItems
+})
 const itemIndexMap = computed(() => new Map(flatItems.value.map((item, index) => [item.id, index])))
 const parentIdMap = computed(
   () => new Map(flatItems.value.map((item) => [item.id, item.pid ?? null]))
@@ -208,6 +225,47 @@ const descendantIdsMap = computed(() => {
 
   return map
 })
+
+// 1-based depth per item (root items = 1), matching the rendered row indentation.
+const levelMap = computed(() => {
+  const map = new Map<string, number>()
+  const parents = parentIdMap.value
+
+  const depthOf = (id: string): number => {
+    const cached = map.get(id)
+    if (cached !== undefined) {
+      return cached
+    }
+
+    const parentId = parents.get(id) ?? null
+    const level = parentId === null ? 1 : depthOf(parentId) + 1
+    map.set(id, level)
+    return level
+  }
+
+  flatItems.value.forEach((item) => depthOf(item.id))
+  return map
+})
+
+const expandedSet = computed(() => new Set(settings.value.content.expanded || []))
+const hasVisibleChildren = (id: string): boolean => (childIdMap.value.get(id)?.length ?? 0) > 0
+const isRowExpanded = (id: string): boolean => expandedSet.value.has(id) && hasVisibleChildren(id)
+
+// The deepest, last visible row belonging to `id`'s subtree — i.e. the row a new
+// sibling placed *after* `id` will visually appear under. Equals `id` itself when
+// it is collapsed or a leaf.
+const lastVisibleDescendant = (id: string): string => {
+  let current = id
+  while (isRowExpanded(current)) {
+    const children = childIdMap.value.get(current) || []
+    const last = children[children.length - 1]
+    if (!last) {
+      break
+    }
+    current = last
+  }
+  return current
+}
 
 const effectiveEnvironment = computed(() => {
   const userEnv = settings.value.content.environment
@@ -339,29 +397,47 @@ function getContentTreeDragItems(
   })
 }
 
-function attachClosestEdge(
-  value: Record<string, unknown>,
-  options: {
-    input: { clientX: number; clientY: number }
-    element: HTMLElement
-    allowedEdges: Edge[]
+// Predictable vertical-region hitbox. The pointer's vertical position within the
+// row maps to an intent: top band → before, bottom band → after, and (for
+// containers) the middle band → nest. Using vertical bands instead of mixing
+// horizontal/vertical distances makes the zones stable and easy to hit.
+//   'top'    → reorder before the row
+//   'bottom' → reorder after the row (or first child when the row is expanded)
+//   'left'   → nest into the row
+function computeDropEdge(
+  element: HTMLElement,
+  input: { clientY: number },
+  item: FlatContentMenuItem
+): Edge {
+  // Sorting disabled: only reparenting (nesting) is permitted, never reordering.
+  if (!sortingEnabled.value) {
+    return 'left'
   }
-) {
-  const rect = options.element.getBoundingClientRect()
-  const distances = options.allowedEdges.map((edge) => ({
-    edge,
-    value: Math.abs(options.input.clientX - rect.left),
-  }))
-  const closest = distances.sort((a, b) => a.value - b.value)[0]
 
-  return {
-    ...value,
-    closestEdge: closest?.edge ?? null,
+  const rect = element.getBoundingClientRect()
+  const ratio = rect.height > 0 ? (input.clientY - rect.top) / rect.height : 0.5
+  const isContainer = item.type !== 'single'
+
+  if (isContainer) {
+    if (ratio <= 0.3) {
+      return 'top'
+    }
+    if (ratio >= 0.7) {
+      return 'bottom'
+    }
+    return 'left'
   }
+
+  return ratio < 0.5 ? 'top' : 'bottom'
 }
 
 function extractClosestEdge(value: Record<string, unknown>): Edge | null {
-  if ('closestEdge' in value && value.closestEdge === 'left') {
+  if (
+    'closestEdge' in value &&
+    (value.closestEdge === 'top' ||
+      value.closestEdge === 'bottom' ||
+      value.closestEdge === 'left')
+  ) {
     return value.closestEdge
   }
 
@@ -1158,9 +1234,140 @@ const isSelfDrop = (dragItems: ContentTreeDragItem[], targetId: string | null) =
   return getNormalizedIds(dragItems.map((item) => item.id)).includes(targetId)
 }
 
+// A fully-resolved drop: the concrete destination (parent + index) plus exactly
+// where the indicator should render. Both the live indicator and the committed
+// move derive from this single function, so what the user sees is always what
+// lands. The indicator is always anchored to the hovered row because every
+// outcome (before / after / first-child) lands adjacent to it.
+type DropResolution = {
+  parentId: string | null
+  insertIndex: number
+  afterId: string | null
+  rowId: string
+  side: 'top' | 'bottom'
+  level: number
+  nest: boolean
+  label: string
+}
+
+const resolveDrop = (
+  targetId: string,
+  edge: Edge,
+  draggedIds: string[]
+): DropResolution | null => {
+  const target = data.value?.[targetId]
+  if (!target) {
+    return null
+  }
+
+  const moving = new Set(draggedIds)
+  const targetLevel = levelMap.value.get(targetId) ?? 1
+  const targetParentId = target.pid ?? null
+  const isContainer = target.type !== 'single'
+
+  const siblingsOf = (parentId: string | null): string[] =>
+    (childIdMap.value.get(parentId) || []).filter((id) => !moving.has(id))
+
+  const reorderBefore = (): DropResolution => {
+    const siblings = siblingsOf(targetParentId)
+    const index = Math.max(siblings.indexOf(targetId), 0)
+    return {
+      parentId: targetParentId,
+      insertIndex: index,
+      afterId: index > 0 ? (siblings[index - 1] ?? null) : null,
+      rowId: targetId,
+      side: 'top',
+      level: targetLevel,
+      nest: false,
+      label: t('labels.contentTree.drop.moveBefore') as string,
+    }
+  }
+
+  const reorderAfter = (): DropResolution => {
+    const siblings = siblingsOf(targetParentId)
+    const targetIndex = siblings.indexOf(targetId)
+    const insertIndex = targetIndex < 0 ? siblings.length : targetIndex + 1
+    return {
+      parentId: targetParentId,
+      insertIndex,
+      afterId: insertIndex > 0 ? (siblings[insertIndex - 1] ?? null) : null,
+      // Anchor below the target's whole visible subtree so the line sits exactly
+      // where the new sibling will appear, not under the (expanded) parent header.
+      rowId: lastVisibleDescendant(targetId),
+      side: 'bottom',
+      level: targetLevel,
+      nest: false,
+      label: t('labels.contentTree.drop.moveAfter') as string,
+    }
+  }
+
+  // Nest as the first child so the indicator (drawn one level deeper, just below
+  // the row) always sits exactly where the item will appear.
+  const nestAsFirstChild = (): DropResolution => ({
+    parentId: targetId,
+    insertIndex: 0,
+    afterId: null,
+    rowId: targetId,
+    side: 'bottom',
+    level: targetLevel + 1,
+    nest: true,
+    label: t('labels.contentTree.drop.moveInto') as string,
+  })
+
+  if (edge === 'top') {
+    return reorderBefore()
+  }
+
+  // The middle band ('left') nests into a container; for a leaf it falls back to
+  // reordering after, since a leaf cannot hold children.
+  if (edge === 'left') {
+    return isContainer ? nestAsFirstChild() : reorderAfter()
+  }
+
+  // edge === 'bottom' always reorders after the row (same parent), so items can be
+  // moved past an expanded container without being captured as its child.
+  return reorderAfter()
+}
+
+const currentDragIds = computed(() => getNormalizedIds(dragSelectionSnapshot.value ?? []))
+
+const dropResolution = computed<DropResolution | null>(() => {
+  const targetId = activeDropTargetId.value
+  const edge = activeDropEdge.value
+  if (!targetId || !edge) {
+    return null
+  }
+
+  return resolveDrop(targetId, edge, currentDragIds.value)
+})
+
+const moveDraggedItemsToRoot = async (dragItems: ContentTreeDragItem[]) => {
+  const orderedDraggedIds = getNormalizedIds(
+    dragItems.map((item) => item.id).filter((id, index, array) => array.indexOf(id) === index)
+  )
+
+  if (!orderedDraggedIds.length) {
+    finishDragState()
+    return
+  }
+
+  try {
+    await executeTreeOperations([
+      {
+        type: 'move',
+        ids: orderedDraggedIds,
+        parent_id: null,
+      },
+    ])
+  } finally {
+    finishDragState()
+  }
+}
+
 const moveDraggedItemsToTarget = async (
   dragItems: ContentTreeDragItem[],
-  targetId: string | null
+  targetId: string,
+  edge: Edge
 ) => {
   const orderedDraggedIds = getNormalizedIds(
     dragItems.map((item) => item.id).filter((id, index, array) => array.indexOf(id) === index)
@@ -1177,29 +1384,23 @@ const moveDraggedItemsToTarget = async (
   }
 
   try {
-    if (targetId === null) {
-      await executeTreeOperations([
-        {
-          type: 'move',
-          ids: orderedDraggedIds,
-          parent_id: null,
-        },
-      ])
-
+    // Resolve through the exact same function that drives the indicator, so the
+    // committed move always matches the line the user was shown.
+    const resolution = resolveDrop(targetId, edge, orderedDraggedIds)
+    if (!resolution) {
       return
     }
 
-    const target = data.value?.[targetId]
-    if (!target) {
-      return
-    }
-
-    const parentId = target.type === 'single' ? (target.pid ?? null) : target.id
+    // Always commit the move — including reorders within the same parent. The
+    // backend resequence is idempotent, so it is the source of truth; suppressing
+    // "looks unchanged" drops on the client previously dropped same-parent reorders.
     await executeTreeOperations([
       {
         type: 'move',
         ids: orderedDraggedIds,
-        parent_id: parentId,
+        parent_id: resolution.parentId,
+        after_id: resolution.afterId,
+        position: resolution.insertIndex,
       },
     ])
   } finally {
@@ -1238,19 +1439,11 @@ const registerItemInteractions = (item: FlatContentMenuItem, element: HTMLElemen
         const dragItems = getContentTreeDragItems(source.data)
         return canDropItemsOnTarget(dragItems, item.id)
       },
-      getData: ({ input }) => {
-        return attachClosestEdge(
-          {
-            id: item.id,
-            kind: CONTENT_TREE_DRAG_KIND,
-          },
-          {
-            element,
-            input,
-            allowedEdges: ['left'],
-          }
-        )
-      },
+      getData: ({ input }) => ({
+        id: item.id,
+        kind: CONTENT_TREE_DRAG_KIND,
+        closestEdge: computeDropEdge(element, input, item),
+      }),
       getIsSticky: () => true,
       onDragEnter: ({ self, source }) => {
         const dragItems = getContentTreeDragItems(source.data)
@@ -1305,7 +1498,7 @@ const registerItemInteractions = (item: FlatContentMenuItem, element: HTMLElemen
           activeDropEdge.value = null
         }
       },
-      onDrop: async ({ source }) => {
+      onDrop: async ({ source, self }) => {
         const dragItems = getContentTreeDragItems(source.data)
 
         if (!canDropItemsOnTarget(dragItems, item.id)) {
@@ -1316,7 +1509,12 @@ const registerItemInteractions = (item: FlatContentMenuItem, element: HTMLElemen
           return
         }
 
-        await moveDraggedItemsToTarget(dragItems, item.id)
+        // Read the edge from the drop event's own payload — it is authoritative
+        // for this drop. The reactive `activeDropEdge` can be cleared by an
+        // onDragLeave race, and its 'bottom' fallback would silently turn an
+        // intended "move before" (top) into a "move after".
+        const edge = extractClosestEdge(self.data) ?? activeDropEdge.value ?? 'bottom'
+        await moveDraggedItemsToTarget(dragItems, item.id, edge)
       },
     })
   )
@@ -1392,7 +1590,7 @@ watch([treeContainerRef, rootDropZoneRef], ([containerElement, rootElement], _, 
       },
       onDrop: async ({ source }) => {
         const dragItems = getContentTreeDragItems(source.data)
-        await moveDraggedItemsToTarget(dragItems, null)
+        await moveDraggedItemsToRoot(dragItems)
       },
     })
   )
@@ -1548,7 +1746,7 @@ onBeforeUnmount(() => {
             item.value.id === selectedItemId ? 'text-primary' : '',
             isCutItem(item.value.id) ? 'opacity-50' : '',
             isItemSelected(item.value.id) ? 'bg-border text-primary' : '',
-            activeDropTargetId === item.value.id && activeDropEdge === 'left'
+            dropResolution?.nest && dropResolution.rowId === item.value.id
               ? 'bg-accent/50 ring-1 ring-info/30'
               : '',
           ]"
@@ -1558,11 +1756,12 @@ onBeforeUnmount(() => {
           @toggle="handleToggle"
         >
           <DropIndicator
-            v-if="activeDropTargetId === item.value.id && activeDropEdge"
-            :edge="activeDropEdge"
+            v-if="dropResolution && dropResolution.rowId === item.value.id"
+            :edge="dropResolution.side"
             gap="4px"
             inset="6px"
-            :label="$t('labels.contentTree.drop.moveInto')"
+            :indent="`${dropResolution.level - 0.5}rem`"
+            :label="dropResolution.label"
           />
 
           <button

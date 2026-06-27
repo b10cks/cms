@@ -5,11 +5,14 @@ const {
   edge,
   gap = '0px',
   inset = '0px',
+  indent,
   label,
 } = defineProps<{
   edge: Edge
   gap?: string
   inset?: string
+  /** Leading (left) offset for horizontal lines, used to reflect tree depth. Falls back to `inset`. */
+  indent?: string
   label?: string
 }>()
 
@@ -24,7 +27,7 @@ const edgeToOrientationMap: Record<Edge, Orientation> = {
 
 const orientationStyles: Record<Orientation, string> = {
   horizontal:
-    'h-[--line-thickness] left-[--indicator-inset] right-[--indicator-inset] before:left-0 before:-translate-x-1/2',
+    'h-[--line-thickness] left-[--indicator-leading] right-[--indicator-inset] before:left-0 before:-translate-x-1/2',
   vertical:
     'w-[--line-thickness] top-[--indicator-inset] bottom-[--indicator-inset] before:top-0 before:-translate-y-1/2',
 }
@@ -66,6 +69,7 @@ const glowSize = 8
         '--terminal-size': `${terminalSize}px`,
         '--glow-size': `${glowSize}px`,
         '--indicator-inset': inset,
+        '--indicator-leading': indent ?? inset,
       }"
     />
     <div

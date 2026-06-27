@@ -18,12 +18,19 @@ class RunSpaceMigration extends QueuedJob
     public $tries = 1;
 
     private array $blockFolderIdMap = [];
+
     private array $blockIdMap = [];
+
     private array $blockSlugToIdMap = [];
+
     private array $assetFolderIdMap = [];
+
     private array $assetIdMap = [];
+
     private array $contentIdMap = [];
+
     private array $dataSourceIdMap = [];
+
     private MigrationResult $result;
 
     public function __construct(
@@ -33,7 +40,7 @@ class RunSpaceMigration extends QueuedJob
     protected function execute(): void
     {
         $this->migration->markAsProcessing();
-        $this->result = new MigrationResult();
+        $this->result = new MigrationResult;
 
         /** @var DatabaseConnectionService $dbService */
         $dbService = app(DatabaseConnectionService::class);
@@ -157,10 +164,12 @@ class RunSpaceMigration extends QueuedJob
             if ($existing) {
                 if ($strategy === 'skip') {
                     $this->result->incrementSkipped('block_tags');
+
                     continue;
                 }
                 if ($strategy === 'merge_newer' && $row['updated_at'] <= $existing->updated_at) {
                     $this->result->incrementSkipped('block_tags');
+
                     continue;
                 }
                 $tgt->table('block_tags')->where('name', $name)->update($data);
@@ -283,10 +292,12 @@ class RunSpaceMigration extends QueuedJob
             if ($existing) {
                 if ($strategy === 'skip') {
                     $this->result->incrementSkipped('block_templates');
+
                     continue;
                 }
                 if ($strategy === 'merge_newer' && $tpl['updated_at'] <= $existing->updated_at) {
                     $this->result->incrementSkipped('block_templates');
+
                     continue;
                 }
                 $tgt->table('block_templates')->where('id', $existing->id)->update($data);
@@ -368,7 +379,7 @@ class RunSpaceMigration extends QueuedJob
                 ->first();
 
             // Also try matching by name as fallback
-            if (!$existing) {
+            if (! $existing) {
                 $existing = $tgt->table('asset_tags')
                     ->where('name', $row['name'])
                     ->whereNull('deleted_at')
@@ -524,6 +535,7 @@ class RunSpaceMigration extends QueuedJob
                 'path' => $sourceDir,
                 'error' => $e->getMessage(),
             ]);
+
             return;
         }
 
@@ -559,16 +571,16 @@ class RunSpaceMigration extends QueuedJob
         string $sourceSpaceId,
         string $targetSpaceId
     ): mixed {
-        if (!$metadata) {
+        if (! $metadata) {
             return $metadata;
         }
 
         $decoded = is_string($metadata) ? json_decode($metadata, true) : $metadata;
-        if (!is_array($decoded)) {
+        if (! is_array($decoded)) {
             return $metadata;
         }
 
-        if (!empty($decoded['thumbnails']) && is_array($decoded['thumbnails'])) {
+        if (! empty($decoded['thumbnails']) && is_array($decoded['thumbnails'])) {
             foreach ($decoded['thumbnails'] as &$thumbnail) {
                 if (isset($thumbnail['path']) && is_string($thumbnail['path'])) {
                     $thumbnail['path'] = str_replace(
@@ -604,7 +616,7 @@ class RunSpaceMigration extends QueuedJob
 
             // Resolve target block_id via the block map
             $targetBlockId = $this->blockIdMap[$row['block_id']] ?? null;
-            if (!$targetBlockId) {
+            if (! $targetBlockId) {
                 // Try slug-based fallback
                 $sourceBlock = $src->table('blocks')->where('id', $row['block_id'])->first();
                 if ($sourceBlock) {
@@ -612,8 +624,9 @@ class RunSpaceMigration extends QueuedJob
                 }
             }
 
-            if (!$targetBlockId) {
+            if (! $targetBlockId) {
                 $this->result->addError('contents', $externalId, "Block not found in target space for block_id={$row['block_id']}");
+
                 continue;
             }
 
@@ -629,10 +642,12 @@ class RunSpaceMigration extends QueuedJob
                 $this->contentIdMap[$externalId] = $existing->id;
                 if ($strategy === 'skip') {
                     $this->result->incrementSkipped('contents');
+
                     continue;
                 }
                 if ($strategy === 'merge_newer' && $row['updated_at'] <= $existing->updated_at) {
                     $this->result->incrementSkipped('contents');
+
                     continue;
                 }
 
@@ -645,6 +660,7 @@ class RunSpaceMigration extends QueuedJob
                     'external_id' => $externalId,
                     'block_id' => $targetBlockId,
                     'parent_id' => $targetParentId,
+                    'position' => $row['position'] ?? 0,
                     'name' => $row['name'],
                     'slug' => $row['slug'],
                     'full_slug' => $row['full_slug'],
@@ -674,6 +690,7 @@ class RunSpaceMigration extends QueuedJob
                     'external_id' => $externalId,
                     'block_id' => $targetBlockId,
                     'parent_id' => $targetParentId,
+                    'position' => $row['position'] ?? 0,
                     'name' => $row['name'],
                     'slug' => $row['slug'],
                     'full_slug' => $row['full_slug'],
@@ -714,7 +731,7 @@ class RunSpaceMigration extends QueuedJob
 
         foreach ($versionIds as $sourceVersionId) {
             $version = $src->table('content_versions')->where('id', $sourceVersionId)->first();
-            if (!$version) {
+            if (! $version) {
                 continue;
             }
             $version = (array) $version;
@@ -852,10 +869,12 @@ class RunSpaceMigration extends QueuedJob
             if ($existing) {
                 if ($strategy === 'skip') {
                     $this->result->incrementSkipped('data_entries');
+
                     continue;
                 }
                 if ($strategy === 'merge_newer' && $entry['updated_at'] <= $existing->updated_at) {
                     $this->result->incrementSkipped('data_entries');
+
                     continue;
                 }
                 $tgt->table('data_entries')->where('id', $existing->id)->update($data);
@@ -902,10 +921,12 @@ class RunSpaceMigration extends QueuedJob
             if ($existing) {
                 if ($strategy === 'skip') {
                     $this->result->incrementSkipped('redirects');
+
                     continue;
                 }
                 if ($strategy === 'merge_newer' && $row['updated_at'] <= $existing->updated_at) {
                     $this->result->incrementSkipped('redirects');
+
                     continue;
                 }
                 $tgt->table('redirects')->where('id', $existing->id)->update($data);
@@ -981,6 +1002,7 @@ class RunSpaceMigration extends QueuedJob
         }
 
         $tgt->table($table)->where('id', $targetId)->update($data);
+
         return 'updated';
     }
 
@@ -1016,9 +1038,9 @@ class RunSpaceMigration extends QueuedJob
     public function tags(): array
     {
         return [
-            'migration:' . $this->migration->id,
-            'source-space:' . $this->migration->source_space_id,
-            'target-space:' . $this->migration->target_space_id,
+            'migration:'.$this->migration->id,
+            'source-space:'.$this->migration->source_space_id,
+            'target-space:'.$this->migration->target_space_id,
         ];
     }
 }

@@ -153,7 +153,8 @@ export function useContentWizardApply(
 
         const backendId = node.backendId
         const shouldUpdateBlock = node.blockId !== node.original?.blockId
-        const shouldMove = node.parentId !== node.original?.parentId
+        const shouldMove =
+          node.parentId !== node.original?.parentId || node.position !== node.original?.position
 
         if (!shouldUpdateBlock && !shouldMove) {
           continue

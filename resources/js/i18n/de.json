@@ -762,6 +762,8 @@
       },
       "drop": {
         "moveInto": "Hier hinein verschieben",
+        "moveBefore": "Davor verschieben",
+        "moveAfter": "Danach verschieben",
         "moveToRoot": "Auf Root-Ebene verschieben"
       },
       "errors": {
@@ -1720,6 +1722,8 @@
         "defaultBlockDescription": "Dieser Block-Typ wird beim Erstellen neuer Inhalte verwendet.",
         "filterHiddenBlocks": "Versteckte Blöcke aus der Data API filtern",
         "filterHiddenBlocksDescription": "Wenn aktiviert, werden als versteckt markierte Blöcke aus den Data-API-Antworten entfernt. Standardmäßig deaktiviert.",
+        "contentSorting": "Manuelle Inhaltssortierung aktivieren",
+        "contentSortingDescription": "Wenn aktiviert, können Inhalte per Drag-and-drop manuell sortiert werden. Wenn deaktiviert, werden Inhalte alphabetisch nach Namen sortiert. Standardmäßig deaktiviert.",
         "sitemap": {
           "title": "Sitemap-Extraktion",
           "description": "Lege fest, welche Block-Typen im öffentlichen Sitemap-Feed auftauchen und wo ihr SEO-Metaobjekt liegt.",

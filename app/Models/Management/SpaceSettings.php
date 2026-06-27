@@ -34,6 +34,7 @@ class SpaceSettings extends Settings
         'search_driver' => 'mysql',
         'slug_strategy' => 'prepend_translations',
         'filter_hidden_blocks' => false,
+        'content_sorting' => false,
         'sitemap' => [
             'types' => [],
         ],
@@ -147,6 +148,10 @@ class SpaceSettings extends Settings
                 Rule::in(['prepend_translations', 'always_prepend', 'never']),
             ],
             'filter_hidden_blocks' => [
+                ...$sometimes,
+                'boolean',
+            ],
+            'content_sorting' => [
                 ...$sometimes,
                 'boolean',
             ],
@@ -283,6 +288,10 @@ class SpaceSettings extends Settings
             'filter_hidden_blocks' => [
                 'description' => 'Whether hidden blocks should be filtered from resolved API content responses.',
             ],
+            'content_sorting' => [
+                'description' => 'Whether manual drag-and-drop ordering of content is enabled for the space. '
+                    .'When disabled, content is ordered alphabetically by name.',
+            ],
             'ai' => [
                 'description' => 'AI-related defaults and preferences for the space.',
             ],
@@ -336,6 +345,11 @@ class SpaceSettings extends Settings
     public function shouldFilterHiddenBlocks(): bool
     {
         return (bool) ($this->attributes['filter_hidden_blocks'] ?? false);
+    }
+
+    public function isContentSortingEnabled(): bool
+    {
+        return (bool) ($this->attributes['content_sorting'] ?? false);
     }
 
     /**

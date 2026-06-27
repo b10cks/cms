@@ -767,6 +767,8 @@
       },
       "drop": {
         "moveInto": "Move into",
+        "moveBefore": "Move before",
+        "moveAfter": "Move after",
         "moveToRoot": "Move to root"
       },
       "errors": {
@@ -1721,6 +1723,8 @@
         "defaultBlockDescription": "This block type will be used when creating new content.",
         "filterHiddenBlocks": "Filter hidden blocks from Data API",
         "filterHiddenBlocksDescription": "When enabled, blocks marked as hidden will be stripped from Data API responses. Disabled by default.",
+        "contentSorting": "Enable manual content sorting",
+        "contentSortingDescription": "When enabled, content can be ordered manually via drag-and-drop. When disabled, content is ordered alphabetically by name. Disabled by default.",
         "sitemap": {
           "title": "Sitemap Extraction",
           "description": "Choose which block types are exposed in the public sitemap feed and where their SEO meta object lives.",

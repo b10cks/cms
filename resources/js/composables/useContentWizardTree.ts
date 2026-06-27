@@ -130,12 +130,11 @@ export function useContentWizardTree(
       }
     }
 
-    const nameResult = left.name.localeCompare(right.name)
-    if (nameResult !== 0) {
-      return nameResult
-    }
-
-    return left.id.localeCompare(right.id)
+    return (
+      (left.position ?? 0) - (right.position ?? 0) ||
+      left.name.localeCompare(right.name) ||
+      left.id.localeCompare(right.id)
+    )
   }
 
   const applyLayout = () => {
@@ -757,6 +756,7 @@ export function useContentWizardTree(
         block_id: node.blockId,
         block_name: node.blockName,
         block_type: node.blockType,
+        position: node.position,
         deleted_reason: node.deletedReason ?? null,
         is_deleted: !!node.deletedReason,
       }))
@@ -1017,7 +1017,9 @@ export function useContentWizardTree(
     const moves = nodes
       .filter(
         (node) =>
-          !!node.backendId && !node.deletedReason && node.parentId !== node.original?.parentId
+          !!node.backendId &&
+          !node.deletedReason &&
+          (node.parentId !== node.original?.parentId || node.position !== node.original?.position)
       )
       .sort((left, right) => left.depth - right.depth)
       .map((node) => ({

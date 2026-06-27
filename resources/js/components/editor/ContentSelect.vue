@@ -36,12 +36,14 @@ const flatItems = computed(() => {
     result.push({ ...item, level })
     Object.values(menuData)
       .filter((i) => i.pid === item.id)
-      .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+      .sort(sort)
       .forEach((child) => addItem(child, level + 1))
   }
 
   const sort = (a: FlatContentMenuItem, b: FlatContentMenuItem) =>
-    (a.name || '').localeCompare(b.name || '')
+    (a.position ?? 0) - (b.position ?? 0) ||
+    (a.name || '').localeCompare(b.name || '') ||
+    a.id.localeCompare(b.id)
 
   const roots = Object.values(menuData)
     .filter((i) => !i.pid && i.type !== 'single')

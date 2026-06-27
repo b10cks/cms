@@ -23,14 +23,15 @@ class ContentMenuResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'block_id' => $this->block_id,
-            'type' => $this->whenLoaded('block', fn() => $this->block->type),
-            'children' => $this->whenCounted('children', fn() => $this->children_count > 0),
-            'icon' => $this->whenLoaded('block', fn() => $this->block->icon),
-            'color' => $this->whenLoaded('block', fn() => $this->block->color),
+            'position' => $this->position,
+            'type' => $this->whenLoaded('block', fn () => $this->block->type),
+            'children' => $this->whenCounted('children', fn () => $this->children_count > 0),
+            'icon' => $this->whenLoaded('block', fn () => $this->block->icon),
+            'color' => $this->whenLoaded('block', fn () => $this->block->color),
             'settings' => $settings !== [] ? $settings : new \StdClass,
-            'i18n' => $this->whenLoaded('i18n_children', fn() => ContentTranslationResource::collection($this->i18n_children)),
+            'i18n' => $this->whenLoaded('i18n_children', fn () => ContentTranslationResource::collection($this->i18n_children)),
             'pat' => $this->published_at?->toIso8601String(),
-            'uat' => $this->updated_at?->toIso8601String()
+            'uat' => $this->updated_at?->toIso8601String(),
         ];
     }
 }

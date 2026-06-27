@@ -9,6 +9,7 @@ use App\Models\Space\ContentVersion;
 use App\Models\User;
 use App\Services\Content\ContentHierarchyValidator;
 use App\Services\Content\ContentI18nValidator;
+use App\Services\Content\ContentPositionService;
 use App\Services\Content\Schema\ContentSchemaValidationResult;
 use App\Services\Content\Schema\ContentSchemaValidator;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -21,6 +22,7 @@ class CreateContent
         private readonly ContentHierarchyValidator $contentHierarchyValidator,
         private readonly ContentI18nValidator $validator,
         private readonly ContentSchemaValidator $contentSchemaValidator,
+        private readonly ContentPositionService $contentPositionService,
     ) {}
 
     protected function throwIfValidationFails(
@@ -48,6 +50,17 @@ class CreateContent
         \DB::transaction(function () use ($data, $content, $owner, $space) {
             if (! \Arr::has($data, 'language_iso')) {
                 $data['language_iso'] = $space->settings->getDefaultLanguage();
+            }
+            $sortingEnabled = $space->settings->isContentSortingEnabled();
+            $requestedPosition = $sortingEnabled && array_key_exists('position', $data) && $data['position'] !== null
+                ? (int) $data['position']
+                : null;
+            if ($sortingEnabled) {
+                $data['position'] = $requestedPosition
+                    ?? $this->contentPositionService->nextPosition($data['parent_id'] ?? null, $data['language_iso']);
+            } else {
+                // Sorting disabled: leave position at the column default (0) so ordering falls back to name.
+                unset($data['position']);
             }
 
             /** @var Block $block */
@@ -96,6 +109,10 @@ class CreateContent
             ], $content->setRelation('block', $block));
             $content->current_version_id = $version->id;
             $content->save();
+
+            if ($sortingEnabled && $requestedPosition !== null) {
+                $this->contentPositionService->placeNewContent($content, $requestedPosition);
+            }
 
             $space->touch('content_updated_at');
         });

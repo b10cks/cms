@@ -13,6 +13,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @resourceProperty name Human-readable content name.
  * @resourceProperty slug URL-safe content slug.
  * @resourceProperty full_slug Full resolved slug including parent path segments.
+ * @resourceProperty position 0-based sort position within the parent.
  * @resourceProperty language_iso ISO language code of the content entry.
  * @resourceProperty published_at format=date-time Publication timestamp in ISO 8601 format.
  * @resourceProperty created_at format=date-time Creation timestamp in ISO 8601 format.
@@ -27,6 +28,7 @@ class SimpleContentResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'full_slug' => $this->full_slug,
+            'position' => $this->position,
             'language_iso' => $this->language_iso,
             'published_at' => $this->published_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),

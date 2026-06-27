@@ -36,6 +36,7 @@ interface SpaceSettings {
   asset_fields?: SpaceAssetField[]
   languages?: SpaceLanguage[]
   filter_hidden_blocks?: boolean
+  content_sorting?: boolean
   sitemap?: SpaceSitemapSettings
 }
 

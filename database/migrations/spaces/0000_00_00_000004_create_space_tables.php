@@ -5,7 +5,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -168,6 +169,7 @@ return new class extends Migration {
 
             $table->foreignUlid('block_id');
             $table->foreignUlid('parent_id')->nullable();
+            $table->unsignedInteger('position')->default(0);
 
             $table->string('name', 100)->nullable();
             $table->string('slug', 70)->charset('ascii');
@@ -189,6 +191,7 @@ return new class extends Migration {
 
             $table->index(['full_slug', 'language_iso']);
             $table->index(['i18n_parent_id', 'deleted_at'], 'contents_i18n_parent_id_deleted_at_index');
+            $table->index(['parent_id', 'language_iso', 'position'], 'contents_parent_language_position_index');
             $table->index(['parent_id', 'language_iso', 'slug', 'deleted_at'], 'contents_parent_language_slug_deleted_at_index');
             // Only create fulltext index for MySQL/MariaDB
             if (DB::getDriverName() !== 'sqlite') {

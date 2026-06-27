@@ -3,6 +3,7 @@ interface FlatContentMenuItem {
   name: string
   slug: string
   block_id: string
+  position: number
   type: 'root' | 'nestable' | 'single' | 'universal'
   color: string | null
   pid: string | null

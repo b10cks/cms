@@ -19,7 +19,7 @@ use CodersCantina\Filter\AdvancedFilter;
  */
 class ContentFilter extends AdvancedFilter
 {
-    protected array $sortableColumns = ['published_at', 'updated_at', 'created_at'];
+    protected array $sortableColumns = ['position', 'published_at', 'updated_at', 'created_at'];
 
     /**
      * Extends default sorting with support for `content.{field}` which extracts
@@ -31,7 +31,7 @@ class ContentFilter extends AdvancedFilter
      */
     public function sort($sortString = null): void
     {
-        if (!$sortString || !is_string($sortString)) {
+        if (! $sortString || ! is_string($sortString)) {
             return;
         }
 
@@ -46,15 +46,16 @@ class ContentFilter extends AdvancedFilter
             if (preg_match('/^content\.([a-zA-Z0-9_]+)$/', $bare, $matches)) {
                 $this->builder->orderByRaw(
                     "JSON_UNQUOTE(JSON_EXTRACT(`content_versions`.`content`, ?)) {$direction}",
-                    ['$.' . $matches[1]],
+                    ['$.'.$matches[1]],
                 );
+
                 continue;
             }
 
             $regularSortItems[] = $sortItem;
         }
 
-        if (!empty($regularSortItems)) {
+        if (! empty($regularSortItems)) {
             parent::sort(implode(',', $regularSortItems));
         }
     }
@@ -234,7 +235,7 @@ class ContentFilter extends AdvancedFilter
      */
     public function canonical_id($value)
     {
-        [$operator, $filterValue] = $this->parseOperatorAndValue(is_string($value) ? $value : 'eq:' . $value);
+        [$operator, $filterValue] = $this->parseOperatorAndValue(is_string($value) ? $value : 'eq:'.$value);
 
         if ($operator === 'in') {
             $ids = $this->parseArrayValue($filterValue);
@@ -273,7 +274,7 @@ class ContentFilter extends AdvancedFilter
      */
     public function canonical_parent_id($value)
     {
-        [$operator, $filterValue] = $this->parseOperatorAndValue(is_string($value) ? $value : 'eq:' . $value);
+        [$operator, $filterValue] = $this->parseOperatorAndValue(is_string($value) ? $value : 'eq:'.$value);
 
         $this->builder->whereIn('contents.parent_id', function ($query) use ($operator, $filterValue) {
             $query->select('id')

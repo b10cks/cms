@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\DB;
  * @property string|null $external_id
  * @property string $block_id
  * @property string|null $parent_id
+ * @property int $position
  * @property string|null $name
  * @property string $slug
  * @property string $full_slug
@@ -76,6 +77,7 @@ use Illuminate\Support\Facades\DB;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Content whereLanguageIso($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Content whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Content whereParentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Content wherePosition($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Content wherePublishedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Content wherePublishedVersionId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Content whereSettings($value)
@@ -91,10 +93,10 @@ class Content extends SpaceModel
     use Filterable;
     use HasFactory;
     use HasManyFromArrayTrait;
-    use SpaceAuditable;
     use HasPurifiedAttributes;
     use HasUlids;
     use SoftDeletes;
+    use SpaceAuditable;
 
     protected $table = 'contents';
 
@@ -106,6 +108,7 @@ class Content extends SpaceModel
         'description',
         'block_id',
         'parent_id',
+        'position',
         'i18n_parent_id',
         'settings',
         'published_at',
@@ -115,11 +118,12 @@ class Content extends SpaceModel
     protected $casts = [
         'settings' => ContentSettings::class,
         'slug' => Slug::class,
+        'position' => 'integer',
         'published_at' => 'datetime',
         'first_published_at' => 'datetime',
     ];
 
-    protected const array REDUCED_FIELDSET = ['id', 'name', 'slug', 'full_slug', 'language_iso', 'published_at', 'first_published_at', 'created_at', 'updated_at', 'i18n_parent_id'];
+    protected const array REDUCED_FIELDSET = ['id', 'name', 'slug', 'full_slug', 'language_iso', 'position', 'published_at', 'first_published_at', 'created_at', 'updated_at', 'i18n_parent_id'];
 
     protected static function boot()
     {
@@ -197,7 +201,10 @@ class Content extends SpaceModel
 
     public function children(): HasMany
     {
-        return $this->hasMany(Content::class, 'parent_id', 'id');
+        return $this->hasMany(Content::class, 'parent_id', 'id')
+            ->orderBy('position')
+            ->orderBy('name')
+            ->orderBy('id');
     }
 
     public function parent(): BelongsTo

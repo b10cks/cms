@@ -88,6 +88,7 @@ export interface ContentTreeCreateOperation {
   type: 'create'
   temp_id: string
   parent_id?: string | null
+  position?: number
   block_id: string
   name: string
   slug: string
@@ -100,6 +101,7 @@ export interface ContentTreeMoveOperation {
   ids: string[]
   parent_id?: string | null
   after_id?: string | null
+  position?: number
 }
 
 export interface ContentTreeDeleteOperation {
@@ -112,6 +114,7 @@ export interface ContentTreeDuplicateOperation {
   ids: string[]
   parent_id?: string | null
   after_id?: string | null
+  position?: number
 }
 
 export interface ContentTreeUpdateBlockOperation {
@@ -177,6 +180,7 @@ export interface ContentResource {
   slug: string
   full_slug: string
   parent_id: string | null
+  position: number
   children_count?: number
   block_id: string
   block?: ContentBlock
@@ -207,6 +211,7 @@ export interface ContentResource {
 
 export interface CreateContentPayload {
   parent_id?: string | null
+  position?: number
   block_id: string
   name: string
   slug: string
@@ -220,6 +225,7 @@ export interface CreateContentPayload {
 
 export interface UpdateContentPayload {
   parent_id?: string | null
+  position?: number
   block_id?: string
   name?: string
   slug?: string
@@ -238,6 +244,7 @@ export interface ContentTranslationMutationPayload {
   id?: string
   external_id?: string | null
   parent_id?: string | null
+  position?: number
   block_id?: string
   name?: string
   slug?: string

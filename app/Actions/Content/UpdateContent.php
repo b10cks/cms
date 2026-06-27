@@ -9,6 +9,7 @@ use App\Models\Space\ContentVersion;
 use App\Models\User;
 use App\Services\Content\ContentHierarchyValidator;
 use App\Services\Content\ContentI18nValidator;
+use App\Services\Content\ContentPositionService;
 use App\Services\Content\Schema\ContentSchemaValidationResult;
 use App\Services\Content\Schema\ContentSchemaValidator;
 use App\Services\Search\SearchService;
@@ -22,6 +23,7 @@ class UpdateContent
         protected ContentHierarchyValidator $contentHierarchyValidator,
         protected ContentI18nValidator $validator,
         protected ContentSchemaValidator $contentSchemaValidator,
+        protected ContentPositionService $contentPositionService,
     ) {}
 
     protected function throwIfValidationFails(
@@ -83,11 +85,21 @@ class UpdateContent
         \DB::transaction(function () use ($data, $content, $space, $owner, $contentValidation) {
             $contentData = $contentValidation->content;
             $message = data_get($data, 'message');
+            $sortingEnabled = $space->settings->isContentSortingEnabled();
+            $shouldReposition = $sortingEnabled
+                && (array_key_exists('position', $data) || array_key_exists('parent_id', $data));
+            $requestedPosition = $sortingEnabled && array_key_exists('position', $data) && $data['position'] !== null
+                ? (int) $data['position']
+                : null;
 
             unset($data['content']);
             unset($data['message']);
             unset($data['force']);
             unset($data['translations']);
+            if (! $sortingEnabled) {
+                // Never let a direct write change the stored position while sorting is disabled.
+                unset($data['position']);
+            }
             $content->fill($data);
             $content->loadMissing('current_version');
 
@@ -103,6 +115,14 @@ class UpdateContent
                 $content->published_at = null;
             }
             $content->save();
+
+            if ($shouldReposition) {
+                $this->contentPositionService->moveItemToPosition(
+                    $content,
+                    $content->parent_id,
+                    $requestedPosition,
+                );
+            }
 
             $space->touch('content_updated_at');
         });

@@ -16,8 +16,8 @@ class ContentMenuController extends Controller
     /**
      * Get the content tree structure for menu navigation.
      *
-     * @param Space $space The space to get content from
-     * @param Request $request The request with filter parameters
+     * @param  Space  $space  The space to get content from
+     * @param  Request  $request  The request with filter parameters
      * @return JsonResponse Collection of top-level content with their children
      */
     public function __invoke(
@@ -40,6 +40,7 @@ class ContentMenuController extends Controller
                 ->get([
                     'id',
                     'parent_id',
+                    'position',
                     'name',
                     'slug',
                     'block_id',

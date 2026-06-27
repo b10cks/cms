@@ -49,7 +49,13 @@ class ContentTreeOperationsController extends Controller
                     $space,
                     $request->user(),
                 ),
-                'move' => $service->moveItems($resolvedSelection, $resolvedParentId, $resolvedAfterId, $space),
+                'move' => $service->moveItems(
+                    $resolvedSelection,
+                    $resolvedParentId,
+                    $resolvedAfterId,
+                    $space,
+                    data_get($operation, 'position'),
+                ),
                 'delete' => $service->deleteSubtrees($resolvedSelection, $space),
                 'duplicate' => $service->duplicateSubtrees(
                     $resolvedSelection,
@@ -57,6 +63,7 @@ class ContentTreeOperationsController extends Controller
                     $resolvedAfterId,
                     $space,
                     $request->user(),
+                    data_get($operation, 'position'),
                 ),
                 'update_block' => $service->updateBlock(
                     Content::query()->whereNull('deleted_at')->findOrFail($resolvedIds[0]),

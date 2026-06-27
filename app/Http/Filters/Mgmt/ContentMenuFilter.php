@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 
 class ContentMenuFilter extends ExtendedFilter
 {
-    protected array $sortableColumns = ['name', 'slug', 'language_iso', 'published_at', 'created_at', 'updated_at'];
+    protected array $sortableColumns = ['name', 'slug', 'language_iso', 'position', 'published_at', 'created_at', 'updated_at'];
 
     protected Space $space;
 
@@ -48,7 +48,7 @@ class ContentMenuFilter extends ExtendedFilter
 
         $filters = $this->getFilters();
 
-        if (!array_key_exists('language_iso', $filters)) {
+        if (! array_key_exists('language_iso', $filters)) {
             $builder->where('language_iso', $this->space->settings->getDefaultLanguage());
         }
 
