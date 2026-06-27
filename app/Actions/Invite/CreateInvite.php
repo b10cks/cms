@@ -60,13 +60,19 @@ class CreateInvite
     private function sendNotification(Invite $invite): void
     {
         if ($invite->space_id) {
-            $space = $invite->space;
-            Notification::route('mail', $invite->email)
-                ->notify(new InviteToSpaceNotification($invite, $space, $invite->inviter));
+            $notification = new InviteToSpaceNotification($invite, $invite->space, $invite->inviter);
         } elseif ($invite->team_id) {
-            $team = $invite->team;
-            Notification::route('mail', $invite->email)
-                ->notify(new InviteToTeamNotification($invite, $team, $invite->inviter));
+            $notification = new InviteToTeamNotification($invite, $invite->team, $invite->inviter);
+        } else {
+            return;
+        }
+
+        // Registered invitees get the notification in-app, with a read-gated
+        // email fallback. Invites to addresses without an account are mailed.
+        if ($invite->invitee_id && ($invitee = $invite->invitee)) {
+            $invitee->notify($notification);
+        } else {
+            Notification::route('mail', $invite->email)->notify($notification);
         }
     }
 }

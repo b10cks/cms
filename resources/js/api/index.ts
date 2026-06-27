@@ -35,6 +35,7 @@ import { Contents } from './resources/contents'
 import { Invites } from './resources/invites'
 import { Invoices } from './resources/invoices'
 import { Migrations } from './resources/migrations'
+import { Notifications } from './resources/notifications'
 import { Usage } from './resources/usage'
 import { SpaceBlueprints } from './resources/space-blueprints'
 import { Spaces } from './resources/spaces'
@@ -50,6 +51,7 @@ export class API {
   private readonly _spaceBlueprints: SpaceBlueprints
   private readonly _teams: Teams
   private readonly _invites: Invites
+  private readonly _notifications: Notifications
   private readonly _users: Users
   private readonly _twoFactor: TwoFactorAuth
   private readonly _personalAccessTokens: PersonalAccessTokens
@@ -69,6 +71,7 @@ export class API {
     this._spaceBlueprints = new SpaceBlueprints(this.client)
     this._teams = new Teams(this.client)
     this._invites = new Invites(this.client)
+    this._notifications = new Notifications(this.client)
     this._users = new Users(this.client)
     this._twoFactor = new TwoFactorAuth(this.client)
     this._personalAccessTokens = new PersonalAccessTokens(this.client)
@@ -112,6 +115,10 @@ export class API {
 
   public get invites(): Invites {
     return this._invites
+  }
+
+  public get notifications(): Notifications {
+    return this._notifications
   }
 
   public get users(): Users {

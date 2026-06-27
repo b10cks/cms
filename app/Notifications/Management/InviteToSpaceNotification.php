@@ -2,9 +2,11 @@
 
 namespace App\Notifications\Management;
 
+use App\Enums\NotificationType;
 use App\Models\Management\Invite;
 use App\Models\Management\Space;
 use App\Models\User;
+use App\Notifications\Concerns\DeliversInApp;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -13,6 +15,7 @@ use Illuminate\Support\HtmlString;
 
 class InviteToSpaceNotification extends Notification implements ShouldQueue
 {
+    use DeliversInApp;
     use Queueable;
 
     public function __construct(
@@ -21,9 +24,30 @@ class InviteToSpaceNotification extends Notification implements ShouldQueue
         public User $inviter
     ) {}
 
-    public function via(object $notifiable): array
+    public function notificationType(): NotificationType
     {
-        return ['mail'];
+        return NotificationType::InviteToSpace;
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'invite' => [
+                'id' => $this->invite->id,
+            ],
+            'space' => [
+                'id' => $this->space->id,
+                'name' => $this->space->name,
+            ],
+            'team' => $this->space->team ? [
+                'id' => $this->space->team->id,
+                'name' => $this->space->team->name,
+            ] : null,
+            'inviter' => [
+                'id' => $this->inviter->id,
+                'display_name' => $this->inviter->display_name,
+            ],
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

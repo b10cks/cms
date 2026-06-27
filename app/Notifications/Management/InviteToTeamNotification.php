@@ -2,9 +2,11 @@
 
 namespace App\Notifications\Management;
 
+use App\Enums\NotificationType;
 use App\Models\Management\Invite;
 use App\Models\Management\Team;
 use App\Models\User;
+use App\Notifications\Concerns\DeliversInApp;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -13,6 +15,7 @@ use Illuminate\Support\HtmlString;
 
 class InviteToTeamNotification extends Notification implements ShouldQueue
 {
+    use DeliversInApp;
     use Queueable;
 
     public function __construct(
@@ -21,9 +24,26 @@ class InviteToTeamNotification extends Notification implements ShouldQueue
         public User $inviter
     ) {}
 
-    public function via(object $notifiable): array
+    public function notificationType(): NotificationType
     {
-        return ['mail'];
+        return NotificationType::InviteToTeam;
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'invite' => [
+                'id' => $this->invite->id,
+            ],
+            'team' => [
+                'id' => $this->team->id,
+                'name' => $this->team->name,
+            ],
+            'inviter' => [
+                'id' => $this->inviter->id,
+                'display_name' => $this->inviter->display_name,
+            ],
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

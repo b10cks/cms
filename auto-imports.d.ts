@@ -155,6 +155,7 @@ declare global {
   const useLink: typeof import('vue-router').useLink
   const useMigrations: typeof import('./resources/js/composables/useMigrations').useMigrations
   const useModel: typeof import('vue').useModel
+  const useNotifications: typeof import('./resources/js/composables/useNotifications').useNotifications
   const usePersonalAccessTokens: typeof import('./resources/js/composables/usePersonalAccessTokens').usePersonalAccessTokens
   const usePlans: typeof import('./resources/js/composables/usePlans').usePlans
   const usePresence: typeof import('./resources/js/composables/usePresence').usePresence
@@ -187,6 +188,7 @@ declare global {
   const useUsageFormatters: typeof import('./resources/js/composables/useUsageFormatters').useUsageFormatters
   const useUsageHistory: typeof import('./resources/js/composables/useUsageHistory').useUsageHistory
   const useUser: typeof import('./resources/js/composables/useUser').useUser
+  const useUserNotifications: typeof import('./resources/js/composables/useUserNotifications').useUserNotifications
   const useUserSettings: typeof import('./resources/js/composables/useUserSettings').useUserSettings
   const watch: typeof import('vue').watch
   const watchEffect: typeof import('vue').watchEffect
@@ -237,6 +239,9 @@ declare global {
   // @ts-ignore
   export type { ClipboardSingleItem, ClipboardMultipleItems, ClipboardItem } from './resources/js/composables/useGlobalClipboard'
   import('./resources/js/composables/useGlobalClipboard')
+  // @ts-ignore
+  export type { IconifyCollectionOption } from './resources/js/composables/useIconifyCollections'
+  import('./resources/js/composables/useIconifyCollections')
   // @ts-ignore
   export type { PresenceUser, PresenceState, UsePresenceOptions } from './resources/js/composables/usePresence'
   import('./resources/js/composables/usePresence')
@@ -410,6 +415,7 @@ declare module 'vue' {
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
     readonly useMigrations: UnwrapRef<typeof import('./resources/js/composables/useMigrations')['useMigrations']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
+    readonly useNotifications: UnwrapRef<typeof import('./resources/js/composables/useNotifications')['useNotifications']>
     readonly usePersonalAccessTokens: UnwrapRef<typeof import('./resources/js/composables/usePersonalAccessTokens')['usePersonalAccessTokens']>
     readonly usePlans: UnwrapRef<typeof import('./resources/js/composables/usePlans')['usePlans']>
     readonly usePresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['usePresence']>
@@ -442,6 +448,7 @@ declare module 'vue' {
     readonly useUsageFormatters: UnwrapRef<typeof import('./resources/js/composables/useUsageFormatters')['useUsageFormatters']>
     readonly useUsageHistory: UnwrapRef<typeof import('./resources/js/composables/useUsageHistory')['useUsageHistory']>
     readonly useUser: UnwrapRef<typeof import('./resources/js/composables/useUser')['useUser']>
+    readonly useUserNotifications: UnwrapRef<typeof import('./resources/js/composables/useUserNotifications')['useUserNotifications']>
     readonly useUserSettings: UnwrapRef<typeof import('./resources/js/composables/useUserSettings')['useUserSettings']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>

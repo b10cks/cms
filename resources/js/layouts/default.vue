@@ -23,6 +23,7 @@ useSeoMeta({
 provide('spaceId', spaceId)
 
 useSpaceBroadcasts(spaceId)
+useUserNotifications()
 </script>
 
 <template>

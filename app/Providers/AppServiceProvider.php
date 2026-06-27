@@ -2,10 +2,8 @@
 
 namespace App\Providers;
 
-use Dedoc\Scramble\Scramble;
-use Dedoc\Scramble\Support\Generator\OpenApi;
-use Dedoc\Scramble\Support\Generator\SecurityRequirement;
-use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use App\Models\Space\Comment;
+use App\Observers\Space\CommentObserver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
 use PostHog\PostHog;
@@ -29,7 +27,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Model::shouldBeStrict(!$this->app->isProduction());
+        Model::shouldBeStrict(! $this->app->isProduction());
+
+        Comment::observe(CommentObserver::class);
 
         if (config('services.posthog.api_key')) {
             PostHog::init(

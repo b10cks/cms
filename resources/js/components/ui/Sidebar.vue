@@ -3,20 +3,21 @@ import { useDark, useToggle } from '@vueuse/core'
 import type { Ref } from 'vue'
 
 import Icon from '~/components/Icon.vue'
+import NotificationBell from '~/components/notifications/NotificationBell.vue'
 import { Avatar } from '~/components/ui/avatar'
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
+    DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { Switch } from '~/components/ui/switch'
 import { SimpleTooltip } from '~/components/ui/tooltip'
@@ -205,7 +206,8 @@ const availableLocales = locales
           </DropdownMenuContent>
         </DropdownMenuTrigger>
       </DropdownMenu>
-      <div class="flex flex-col items-center border-t-2 border-t-border pt-3">
+      <NotificationBell />
+      <div class="flex flex-col items-center gap-2 border-t-2 border-t-border pt-3">
         <DropdownMenu v-if="user">
           <DropdownMenuTrigger>
             <Avatar

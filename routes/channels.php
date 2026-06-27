@@ -5,11 +5,11 @@ use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('App.Models.User.{id}', function (User $user, $id) {
-    return (int) $user->id === (int) $id;
+    return (string) $user->id === (string) $id;
 });
 
 Broadcast::channel('spaces.{space}.content', function (User $user, Space $space) {
-    if (!$space || !$user->spaces()->where('spaces.id', $space->id)->exists()) {
+    if (! $space || ! $user->spaces()->where('spaces.id', $space->id)->exists()) {
         return false;
     }
 
@@ -25,7 +25,7 @@ foreach (['blocks', 'assets', 'icons', 'redirects'] as $resource) {
 Broadcast::channel('presence-spaces.{spaceId}', function (User $user, string $spaceId) {
     $space = Space::find($spaceId);
 
-    if (!$space || !$user->spaces()->where('spaces.id', $space->id)->exists()) {
+    if (! $space || ! $user->spaces()->where('spaces.id', $space->id)->exists()) {
         return false;
     }
 
@@ -40,7 +40,7 @@ Broadcast::channel('presence-spaces.{spaceId}', function (User $user, string $sp
 });
 
 Broadcast::channel('presence-spaces.{space}.content', function (User $user, Space $space) {
-    if (!$space || !$user->spaces()->where('spaces.id', $space->id)->exists()) {
+    if (! $space || ! $user->spaces()->where('spaces.id', $space->id)->exists()) {
         return false;
     }
 
@@ -55,7 +55,7 @@ Broadcast::channel('presence-spaces.{space}.content', function (User $user, Spac
 });
 
 Broadcast::channel('presence-spaces.{space}.content.{contentId}', function (User $user, Space $space, string $contentId) {
-    if (!$space || !$user->spaces()->where('spaces.id', $space->id)->exists()) {
+    if (! $space || ! $user->spaces()->where('spaces.id', $space->id)->exists()) {
         return false;
     }
 
@@ -70,7 +70,7 @@ Broadcast::channel('presence-spaces.{space}.content.{contentId}', function (User
 });
 
 Broadcast::channel('presence-spaces.{space}.content-canvas', function (User $user, Space $space) {
-    if (!$space || !$user->spaces()->where('spaces.id', $space->id)->exists()) {
+    if (! $space || ! $user->spaces()->where('spaces.id', $space->id)->exists()) {
         return false;
     }
 

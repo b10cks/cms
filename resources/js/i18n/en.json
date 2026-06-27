@@ -3082,6 +3082,35 @@
     },
     "preview": {
       "copied": "Link copied to clipboard"
+    },
+    "title": "Notifications",
+    "tooltip": "Notifications",
+    "empty": "You're all caught up",
+    "markAllRead": "Mark all as read",
+    "toast": {
+      "actionFailed": "Something went wrong. Please try again."
+    },
+    "items": {
+      "commentMention": {
+        "title": "{author} mentioned you",
+        "body": "in {content}"
+      },
+      "commentReply": {
+        "title": "{author} replied to your comment",
+        "body": "in {content}"
+      },
+      "inviteToSpace": {
+        "title": "Invitation to {space}",
+        "body": "{inviter} invited you to collaborate"
+      },
+      "inviteToTeam": {
+        "title": "Invitation to {team}",
+        "body": "{inviter} invited you to join"
+      },
+      "unknown": {
+        "title": "Notification",
+        "body": ""
+      }
     }
   },
   "dashboard": {

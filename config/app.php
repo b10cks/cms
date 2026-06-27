@@ -86,6 +86,8 @@ return [
 
     'api_url' => env('APP_API_BASE_URL', ''),
 
+    'frontend_url' => env('APP_FRONTEND_URL', env('APP_URL', 'http://localhost')),
+
     'domain' => env('APP_DOMAIN', 'localhost'),
 
     'asset_url' => env('ASSET_URL'),

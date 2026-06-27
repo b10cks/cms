@@ -16,6 +16,16 @@ return [
         'outro' => 'This invitation will expire :expires.',
 
     ],
+    'commentMention' => [
+        'subject' => ':author mentioned you in a comment',
+        'intro' => '<strong>:author</strong> mentioned you in a comment on <strong>:content</strong>.',
+        'action' => 'View Comment',
+    ],
+    'commentReply' => [
+        'subject' => ':author replied to your comment',
+        'intro' => '<strong>:author</strong> replied to your comment on <strong>:content</strong>.',
+        'action' => 'View Reply',
+    ],
     'oneTimeToken' => [
         'subject' => 'Your one-time login code: :code',
         'greeting' => 'Hello',

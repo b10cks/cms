@@ -209,11 +209,10 @@ const isSpaceSelected = computed(() => !!selectedSpace.value)
     <slot>
       <div id="appHeader" />
     </slot>
-    <div
-      id="appHeaderActions"
-      class="ml-auto"
-    >
-      <slot name="headerActions" />
+    <div class="ml-auto flex items-center gap-2">
+      <div id="appHeaderActions">
+        <slot name="headerActions" />
+      </div>
     </div>
   </div>
 </template>

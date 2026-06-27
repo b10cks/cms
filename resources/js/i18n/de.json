@@ -3058,6 +3058,35 @@
     },
     "preview": {
       "copied": "Link in Zwischenablage kopiert"
+    },
+    "title": "Benachrichtigungen",
+    "tooltip": "Benachrichtigungen",
+    "empty": "Alles erledigt",
+    "markAllRead": "Alle als gelesen markieren",
+    "toast": {
+      "actionFailed": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+    },
+    "items": {
+      "commentMention": {
+        "title": "{author} hat dich erwähnt",
+        "body": "in {content}"
+      },
+      "commentReply": {
+        "title": "{author} hat auf deinen Kommentar geantwortet",
+        "body": "in {content}"
+      },
+      "inviteToSpace": {
+        "title": "Einladung zu {space}",
+        "body": "{inviter} hat dich zur Zusammenarbeit eingeladen"
+      },
+      "inviteToTeam": {
+        "title": "Einladung zu {team}",
+        "body": "{inviter} hat dich eingeladen"
+      },
+      "unknown": {
+        "title": "Benachrichtigung",
+        "body": ""
+      }
     }
   },
   "dashboard": {

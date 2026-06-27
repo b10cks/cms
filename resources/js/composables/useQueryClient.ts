@@ -227,6 +227,12 @@ export const queryKeys = {
     me: () => [...queryKeys.users.all(), 'me'] as const,
     socialLinks: () => [...queryKeys.users.me(), 'social-links'] as const,
   },
+  notifications: {
+    all: () => ['notifications'] as const,
+    lists: () => [...queryKeys.notifications.all(), 'list'] as const,
+    list: (filters: any = {}) => [...queryKeys.notifications.lists(), filters] as const,
+    unreadCount: () => [...queryKeys.notifications.all(), 'unread-count'] as const,
+  },
   authorization: {
     all: () => ['authorization'] as const,
     context: (params: any = {}) => [...queryKeys.authorization.all(), params] as const,
