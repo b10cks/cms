@@ -237,7 +237,16 @@ export interface UpdateContentPayload {
   message?: string
   published_at?: string | null
   scheduled_at?: string | null
+  force?: boolean
+  parent_version_id?: string | null
+  force_conflict?: boolean
   translations?: ContentTranslationMutationPayload[]
+}
+
+export interface ContentVersionConflictResponse {
+  conflict: true
+  current_version: ContentVersionResource
+  current_content: Record<string, unknown> | null
 }
 
 export interface ContentTranslationMutationPayload {

@@ -339,6 +339,7 @@
       "tooltip": {
         "acceptedOn": "Akzeptiert am",
         "expiresIn": "Läuft ab in",
+        "expiresInDays": "Läuft in {count} Tagen ab | Läuft in {count} Tag ab | Läuft in {count} Tagen ab",
         "resend": "Einladung erneut senden",
         "delete": "Einladung löschen"
       },
@@ -800,7 +801,8 @@
       "automations": "Automationen",
       "settings": "Einstellungen",
       "provider": "Provider",
-      "extendedSidebar": "Erweiterte Seitenleiste"
+      "extendedSidebar": "Erweiterte Seitenleiste",
+      "icons": "Icons"
     },
     "provider": {
       "title": "Provider",
@@ -1030,7 +1032,14 @@
         "tagsEmpty": "Keine Tags gefunden. Erstelle Tags, um deine Blocks zu organisieren.",
         "type": "Typ",
         "default": "Standardwert",
-        "icon": "Symbol",
+        "icon": {
+          "source": "Icon-Quelle",
+          "sourceRegistry": "Nur Space-Registry",
+          "sourceAll": "Registry + öffentliches Iconify",
+          "sourceCollections": "Registry + bestimmte Sammlungen",
+          "allowedCollections": "Erlaubte Iconify-Sammlungen",
+          "allowedCollectionsPlaceholder": "z. B. mdi, lucide, tabler"
+        },
         "templates": "Vorlagen",
         "previewTemplate": "Vorschau-Vorlage",
         "previewTemplateDescription": "Nutze Handlebars-Syntax, um eine Vorschau-Vorlage zu erstellen.",
@@ -1210,6 +1219,10 @@
         "table": {
           "label": "Tabelle",
           "description": "Feste Spalten mit editierbaren Zeilen in einem eigenen Tabellen-Editor"
+        },
+        "icon": {
+          "label": "Icon",
+          "description": "Icon-Auswahl mit Schlüssel-/Namenssuche"
         }
       },
       "options": {
@@ -2106,6 +2119,10 @@
       "limitedAccessTitle": "Du kannst dieses Team sehen, aber hier noch nichts verwalten.",
       "limitedAccessDescription": "Deine aktuelle Team-Rolle erlaubt Sichtbarkeit, aber keinen Zugriff auf Mitglieder, Einladungen oder die Rollenverwaltung.",
       "empty": "Keine Teams gefunden. Erstelle dein erstes Team, um loszulegen.",
+      "loadError": {
+        "title": "Teams konnten nicht geladen werden",
+        "description": "Beim Laden deiner Teams ist etwas schiefgelaufen. Bitte aktualisiere die Seite oder versuche es gleich noch einmal."
+      },
       "noType": "Kein Typ",
       "noParent": "Kein übergeordnetes Team",
       "tabs": {
@@ -2120,6 +2137,7 @@
         "description": "Erlaube Mitgliedern, sich über den Identity Provider dieses Teams anzumelden. Neue Benutzer können beim ersten Login erstellt und per Mapping einer Team-Rolle zugewiesen werden.",
         "metadata": "Metadaten",
         "testLogin": "Login testen",
+        "requiredHint": "Gib IdP-Entity-ID, SSO-URL und Zertifikat an, um SAML zu aktivieren.",
         "save": "SAML-Provider speichern",
         "delete": "Provider löschen",
         "spTitle": "Service Provider",
@@ -2722,6 +2740,8 @@
         "key": "Rollenschlüssel",
         "keyPlaceholder": "translator",
         "keyDescription": "Verwende nur Kleinbuchstaben, Zahlen, Bindestriche oder Unterstriche.",
+        "keyInvalid": "Verwende nur Kleinbuchstaben, Zahlen, Bindestriche oder Unterstriche.",
+        "keyTaken": "Eine Rolle mit diesem Schlüssel existiert bereits.",
         "description": "Beschreibung",
         "descriptionPlaceholder": "Hilft dem Team zu verstehen, wann diese Rolle sinnvoll ist.",
         "level": "Level",
@@ -2780,7 +2800,8 @@
         "automationActions": "Automations-Aktionen",
         "automations": "Automationen",
         "ai": "KI-Werkzeuge",
-        "auditLogs": "Audit-Log"
+        "auditLogs": "Audit-Log",
+        "icons": "Icons"
       }
     },
     "fields": {
@@ -2957,6 +2978,44 @@
     "common": {
       "is": "ist",
       "isNot": "ist nicht"
+    },
+    "icons": {
+      "pageTitle": "Icons",
+      "pageDescription": "SVG-Icons für diesen Space hochladen und verwalten.",
+      "searchPlaceholder": "Icons nach Schlüssel oder Name suchen…",
+      "allTags": "Alle",
+      "empty": "Noch keine Icons. Lade SVGs hoch, um zu starten.",
+      "loadError": "Icons konnten nicht geladen werden.",
+      "totalCount": "{count} Icons",
+      "key": "Schlüssel",
+      "name": "Name",
+      "description": "Beschreibung",
+      "tags": "Tags",
+      "tagsForBatch": "Tags (für alle übernehmen)",
+      "tagsPlaceholder": "Tags durch Komma getrennt",
+      "uploadTitle": "Icons hochladen",
+      "dropHint": "SVG-Dateien hierher ziehen oder zum Auswählen klicken",
+      "dropSubHint": "Nur .svg-Dateien werden unterstützt",
+      "invalidKey": "Der Schlüssel darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten.",
+      "duplicateKeyInBatch": "Doppelter Schlüssel in diesem Upload.",
+      "keyTaken": "Ein Icon mit diesem Schlüssel existiert bereits.",
+      "editTitle": "Icon bearbeiten",
+      "deleteTitle": "Icon löschen",
+      "replaceSvg": "SVG ersetzen",
+      "replaceHint": "Lade ein neues SVG hoch, um das aktuelle zu ersetzen",
+      "field": {
+        "add": "Icon hinzufügen",
+        "addHint": "Wähle ein Icon aus der Registry",
+        "selectTitle": "Icon auswählen",
+        "tabRegistry": "Registry",
+        "tabIconify": "Iconify",
+        "iconifyPlaceholder": "Iconify durchsuchen (z. B. home, arrow)…",
+        "iconifyEmpty": "Gib mindestens 2 Zeichen ein, um zu suchen.",
+        "iconifyError": "Iconify ist nicht erreichbar. Bitte erneut versuchen.",
+        "searchAllHint": "Tippe, um die gesamte Iconify-Bibliothek zu durchsuchen.",
+        "loadMore": "Mehr laden",
+        "showingCount": "{shown} von {total} werden angezeigt"
+      }
     }
   },
   "notifications": {
@@ -3220,7 +3279,13 @@
     "logout": "Abmelden",
     "retry": "Erneut versuchen",
     "refresh": "Aktualisieren",
-    "clearClipboard": "Zwischenablage löschen"
+    "clearClipboard": "Zwischenablage löschen",
+    "previous": "Zurück",
+    "icons": {
+      "uploadNew": "Icons hochladen",
+      "upload": "{count} hochladen",
+      "replace": "Ersetzen"
+    }
   },
   "navigation": {
     "home": "Start",
@@ -3591,6 +3656,23 @@
       "tokenRefreshFailed": "Sitzung abgelaufen. Bitte melde dich erneut an.",
       "sessionExpired": "Deine Sitzung ist abgelaufen. Lass mich dich erneut anmelden.",
       "failedToLoadUser": "Konnte dein Profil nicht laden. Aktualisiere die Seite?"
+    },
+    "icons": {
+      "updateSuccess": "Icon „{name}“ aktualisiert",
+      "updateError": "Icon konnte nicht aktualisiert werden: {error}",
+      "deleteSuccess": "Icon gelöscht",
+      "deleteError": "Icon konnte nicht gelöscht werden: {error}"
+    }
+  },
+  "content": {
+    "conflict": {
+      "dialogTitle": "Versionskonflikt",
+      "dialogBody": "Während deiner Bearbeitung wurde eine neuere Version gespeichert von",
+      "saveBranch": "Als Abzweigung speichern",
+      "reloadServer": "Serverversion laden",
+      "diffToggle": "Unterschiede anzeigen",
+      "noDiff": "Keine Unterschiede gefunden.",
+      "driftTooltip": "Eine neuere Version existiert auf dem Server. Speichern zum Verzweigen oder neu laden."
     }
   },
   "messages": {
@@ -3613,6 +3695,9 @@
     "references": {
       "duplicateReference": "Dieser Inhalt wurde bereits zu den Referenzen hinzugefügt.",
       "confirmDelete": "Referenz zu \"{name}\" entfernen?"
+    },
+    "icons": {
+      "confirmDelete": "Möchtest du dieses Icon wirklich löschen? Dies kann nicht rückgängig gemacht werden."
     }
   }
 }

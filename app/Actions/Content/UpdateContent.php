@@ -2,6 +2,7 @@
 
 namespace App\Actions\Content;
 
+use App\Exceptions\ContentVersionConflictException;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
@@ -82,7 +83,17 @@ class UpdateContent
 
         $this->throwIfValidationFails($contentValidation, (bool) data_get($data, 'force', false));
 
-        \DB::transaction(function () use ($data, $content, $space, $owner, $contentValidation) {
+        $content->loadMissing('current_version');
+        $clientParentVersionId = data_get($data, 'parent_version_id');
+        if (
+            $clientParentVersionId !== null
+            && $clientParentVersionId !== $content->current_version_id
+            && ! (bool) data_get($data, 'force_conflict', false)
+        ) {
+            throw new ContentVersionConflictException($content->current_version);
+        }
+
+        \DB::transaction(function () use ($data, $content, $space, $owner, $contentValidation, $clientParentVersionId) {
             $contentData = $contentValidation->content;
             $message = data_get($data, 'message');
             $sortingEnabled = $space->settings->isContentSortingEnabled();
@@ -95,19 +106,20 @@ class UpdateContent
             unset($data['content']);
             unset($data['message']);
             unset($data['force']);
+            unset($data['parent_version_id']);
+            unset($data['force_conflict']);
             unset($data['translations']);
             if (! $sortingEnabled) {
                 // Never let a direct write change the stored position while sorting is disabled.
                 unset($data['position']);
             }
             $content->fill($data);
-            $content->loadMissing('current_version');
 
             if ($content->current_version?->content != $contentData) {
                 $version = ContentVersion::createWithContentContext([
                     'message' => $message,
                     'content_id' => $content->id,
-                    'parent_id' => $content->current_version_id,
+                    'parent_id' => $clientParentVersionId ?? $content->current_version_id,
                     'content' => $contentData,
                     'created_by_id' => $owner->id,
                 ], $content);

@@ -344,6 +344,7 @@
       "tooltip": {
         "acceptedOn": "Accepted on",
         "expiresIn": "Expires in",
+        "expiresInDays": "Expires in {count} days | Expires in {count} day | Expires in {count} days",
         "resend": "Resend invite",
         "delete": "Delete invite"
       },
@@ -805,7 +806,8 @@
       "automations": "Automations",
       "settings": "Settings",
       "provider": "Provider",
-      "extendedSidebar": "Extended sidebar"
+      "extendedSidebar": "Extended sidebar",
+      "icons": "Icons"
     },
     "provider": {
       "title": "Provider",
@@ -1038,7 +1040,14 @@
         "tagsEmpty": "No tags found. Create tags to organize your blocks.",
         "type": "Type",
         "default": "Default value",
-        "icon": "Icon",
+        "icon": {
+          "source": "Icon source",
+          "sourceRegistry": "Space registry only",
+          "sourceAll": "Registry + public Iconify",
+          "sourceCollections": "Registry + specific collections",
+          "allowedCollections": "Allowed Iconify collections",
+          "allowedCollectionsPlaceholder": "e.g. mdi, lucide, tabler"
+        },
         "templates": "Templates",
         "previewTemplate": "Preview template",
         "previewTemplateDescription": "Use handlebars syntax to create a preview template.",
@@ -1210,6 +1219,10 @@
         "table": {
           "label": "Table",
           "description": "Fixed columns with editable rows in a dedicated table editor"
+        },
+        "icon": {
+          "label": "Icon",
+          "description": "Icon picker with key/name search"
         }
       },
       "options": {
@@ -2130,6 +2143,10 @@
       "limitedAccessTitle": "You can see this team, but there is nothing to manage here yet.",
       "limitedAccessDescription": "Your current team role gives you visibility without member, invite, or role-management access.",
       "empty": "No teams found. Create your first team to get started.",
+      "loadError": {
+        "title": "Couldn't load teams",
+        "description": "Something went wrong while loading your teams. Please refresh the page or try again in a moment."
+      },
       "noType": "No type",
       "noParent": "No parent team",
       "tabs": {
@@ -2144,6 +2161,7 @@
         "description": "Let members sign in through this team's identity provider. New users can be created on first login and assigned a team role from your mappings.",
         "metadata": "Metadata",
         "testLogin": "Test login",
+        "requiredHint": "Add the IdP entity ID, SSO URL, and certificate to enable SAML.",
         "save": "Save SAML provider",
         "delete": "Delete provider",
         "spTitle": "Service provider",
@@ -2746,6 +2764,8 @@
         "key": "Role key",
         "keyPlaceholder": "translator",
         "keyDescription": "Use lowercase letters, numbers, dashes, or underscores.",
+        "keyInvalid": "Use lowercase letters, numbers, dashes, or underscores.",
+        "keyTaken": "A role with this key already exists.",
         "description": "Description",
         "descriptionPlaceholder": "Helps the team understand when to use this role.",
         "level": "Level",
@@ -2804,7 +2824,8 @@
         "automationActions": "automation actions",
         "automations": "automations",
         "ai": "AI tools",
-        "auditLogs": "audit log"
+        "auditLogs": "audit log",
+        "icons": "icons"
       }
     },
     "fields": {
@@ -2981,6 +3002,44 @@
     "common": {
       "is": "is",
       "isNot": "is not"
+    },
+    "icons": {
+      "pageTitle": "Icons",
+      "pageDescription": "Upload and manage SVG icons for this space.",
+      "searchPlaceholder": "Search icons by key or name…",
+      "allTags": "All",
+      "empty": "No icons yet. Upload SVGs to get started.",
+      "loadError": "Failed to load icons.",
+      "totalCount": "{count} icons",
+      "key": "Key",
+      "name": "Name",
+      "description": "Description",
+      "tags": "Tags",
+      "tagsForBatch": "Tags (applied to all)",
+      "tagsPlaceholder": "Comma-separated tags",
+      "uploadTitle": "Upload icons",
+      "dropHint": "Drop SVG files here or click to browse",
+      "dropSubHint": "Only .svg files are supported",
+      "invalidKey": "Key may only contain lowercase letters, numbers and hyphens.",
+      "duplicateKeyInBatch": "Duplicate key in this upload.",
+      "keyTaken": "An icon with this key already exists.",
+      "editTitle": "Edit icon",
+      "deleteTitle": "Delete icon",
+      "replaceSvg": "Replace SVG",
+      "replaceHint": "Upload a new SVG to replace the current one",
+      "field": {
+        "add": "Add icon",
+        "addHint": "Pick an icon from the registry",
+        "selectTitle": "Select an icon",
+        "tabRegistry": "Registry",
+        "tabIconify": "Iconify",
+        "iconifyPlaceholder": "Search Iconify (e.g. home, arrow)…",
+        "iconifyEmpty": "Type at least 2 characters to search.",
+        "iconifyError": "Could not reach Iconify. Please try again.",
+        "searchAllHint": "Type to search the full Iconify library.",
+        "loadMore": "Load more",
+        "showingCount": "Showing {shown} of {total}"
+      }
     }
   },
   "notifications": {
@@ -3244,7 +3303,13 @@
     "logout": "Logout",
     "retry": "Retry",
     "refresh": "Refresh",
-    "clearClipboard": "Clear Clipboard"
+    "clearClipboard": "Clear Clipboard",
+    "previous": "Previous",
+    "icons": {
+      "uploadNew": "Upload icons",
+      "upload": "Upload {count}",
+      "replace": "Replace"
+    }
   },
   "navigation": {
     "home": "Home",
@@ -3637,6 +3702,23 @@
       "tokenRefreshFailed": "Session expired. Please log in again.",
       "sessionExpired": "Your session timed out. Let's log you back in.",
       "failedToLoadUser": "Couldn't load your profile. Refresh the page?"
+    },
+    "icons": {
+      "updateSuccess": "Icon \"{name}\" updated",
+      "updateError": "Failed to update icon: {error}",
+      "deleteSuccess": "Icon deleted",
+      "deleteError": "Failed to delete icon: {error}"
+    }
+  },
+  "content": {
+    "conflict": {
+      "dialogTitle": "Version conflict",
+      "dialogBody": "A newer version was saved while you were editing by",
+      "saveBranch": "Save as branch",
+      "reloadServer": "Reload server version",
+      "diffToggle": "Show diff",
+      "noDiff": "No differences detected.",
+      "driftTooltip": "A newer version exists on the server. Save to branch or reload."
     }
   },
   "messages": {
@@ -3659,6 +3741,9 @@
     "references": {
       "duplicateReference": "This content has already been added to the references.",
       "confirmDelete": "Remove the reference to \"{name}\"?"
+    },
+    "icons": {
+      "confirmDelete": "Are you sure you want to delete this icon? This cannot be undone."
     }
   }
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useQueryClient } from '@tanstack/vue-query'
 import { useRouteQuery } from '@vueuse/router'
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
 import { TransitionGroup } from 'vue'
@@ -36,10 +37,12 @@ import {
   resolveContentRouteName,
   withContentLanguageQuery,
 } from '~/lib/content-i18n'
+import { queryKeys } from '~/composables/useQueryClient'
 import type { ContentResource } from '~/types/contents'
 
 const { t } = useI18n()
 const { alert } = useAlertDialog()
+const queryClient = useQueryClient()
 const route = useRoute()
 const router = useRouter()
 const { useAccessControl } = useAuthorization()
@@ -245,6 +248,17 @@ const currentContentSource = computed<ContentResource | null>(() => {
 const content = ref<ContentResource | null>(null)
 const persistedContent = ref<ContentResource | null>(null)
 const editorContentTree = ref<ContentTreeItem | null>(null)
+const editingFromVersionId = ref<string | null>(null)
+
+watch(
+  () => currentContentSource.value?.current_version_id,
+  (id) => {
+    if (editingFromVersionId.value === null && id) {
+      editingFromVersionId.value = id
+    }
+  },
+  { immediate: true }
+)
 
 const buildEditorContentTree = (value: ContentResource | null): ContentTreeItem | null => {
   if (!value) return null
@@ -592,6 +606,7 @@ const commitPersistedContent = (
   nextContent: ContentResource,
   action: ContentCommitAction = 'save'
 ) => {
+  editingFromVersionId.value = nextContent.current_version_id ?? null
   syncPersistedContent(nextContent, 'replace')
   clearServerErrors()
   resetValidationState()
@@ -687,6 +702,32 @@ provide('validateContentForSubmit', validateAllForSubmit)
 provide('revealValidationState', revealValidationState)
 provide('submitValidationAttempted', submitAttempted)
 provide('focusFirstValidationError', focusFirstInvalidField)
+provide('editingFromVersionId', editingFromVersionId)
+provide(
+  'serverVersionDrifted',
+  computed(
+    () =>
+      editingFromVersionId.value !== null &&
+      currentContentSource.value?.current_version_id !== null &&
+      currentContentSource.value?.current_version_id !== editingFromVersionId.value,
+  ),
+)
+provide('serverCurrentVersion', computed(() => currentContentSource.value?.current_version))
+
+const reloadServerContent = () => {
+  editingFromVersionId.value = null
+  discardLocalContentChanges()
+  const contentIdToInvalidate = activeContentId.value || canonicalContentId.value
+  queryClient.invalidateQueries({
+    queryKey: queryKeys.contents(spaceId).detail(contentIdToInvalidate),
+  })
+  if (canonicalContentId.value !== contentIdToInvalidate) {
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.contents(spaceId).detail(canonicalContentId.value),
+    })
+  }
+}
+provide('reloadServerContent', reloadServerContent)
 </script>
 
 <template>

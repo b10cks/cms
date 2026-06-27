@@ -7,10 +7,12 @@ use App\Actions\Content\CreateContentFamily;
 use App\Actions\Content\DeleteContent;
 use App\Actions\Content\UpdateContent;
 use App\Actions\Content\UpdateContentFamily;
+use App\Exceptions\ContentVersionConflictException;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\ContentFilter;
 use App\Http\Requests\Content\UpsertContentRequest;
 use App\Http\Resources\Management\ContentResource;
+use App\Http\Resources\Management\ContentVersionResource;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use Illuminate\Http\JsonResponse;
@@ -86,15 +88,24 @@ class ContentController extends Controller
         Content $content,
         UpdateContent $action,
         UpdateContentFamily $familyAction,
-    ): ContentResource
+    ): ContentResource|JsonResponse
     {
         $this->authorize('update', [$content, $space]);
 
         $data = $request->validated();
-        if (($data['translations'] ?? []) !== []) {
-            $content = $familyAction->execute($data, $content, $space, $request->user());
-        } else {
-            $action->execute($data, $content, $space, $request->user());
+        try {
+            if (($data['translations'] ?? []) !== []) {
+                $content = $familyAction->execute($data, $content, $space, $request->user());
+            } else {
+                $action->execute($data, $content, $space, $request->user());
+            }
+        } catch (ContentVersionConflictException $e) {
+            $e->currentVersion->loadMissing('createdBy', 'parent');
+            return response()->json([
+                'conflict' => true,
+                'current_version' => new ContentVersionResource($e->currentVersion),
+                'current_content' => $e->currentVersion->content,
+            ], 409);
         }
 
         $content->load(['block', 'parent', 'i18n_parent', 'i18n_children', 'i18n_siblings', 'current_version']);

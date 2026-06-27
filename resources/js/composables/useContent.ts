@@ -125,7 +125,8 @@ export function useContent(spaceId: MaybeRef<string>) {
 
         toast.success(t('composables.content.updateSuccess', { name: data.name }) as string)
       },
-      onError: (error: Error) => {
+      onError: (error: any) => {
+        if (error?.status === 409 && error?.data?.conflict) return
         toast.error(
           t('composables.content.updateError', {
             error: error.message || 'Unknown error',

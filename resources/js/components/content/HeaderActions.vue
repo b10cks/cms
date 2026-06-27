@@ -3,9 +3,11 @@ import { toast } from 'vue-sonner'
 
 import { ContentModel } from '~/api/resources/content-model'
 import LanguageSwitcher from '~/components/content/LanguageSwitcher.vue'
+import VersionConflictDialog from '~/components/content/VersionConflictDialog.vue'
 import Icon from '~/components/Icon.vue'
 import AssignToReleaseDialog from '~/components/releases/AssignToReleaseDialog.vue'
 import { AvatarList } from '~/components/ui/avatar'
+import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import SplitButton from '~/components/ui/button/SplitButton.vue'
 import {
@@ -31,7 +33,7 @@ import {
   sanitizeContentMutationPayload,
   withContentLanguageQuery,
 } from '~/lib/content-i18n'
-import type { ContentResource } from '~/types/contents'
+import type { ContentResource, ContentVersionConflictResponse } from '~/types/contents'
 
 import PublishDialog from './PublishDialog.vue'
 
@@ -88,6 +90,15 @@ const revealValidationState = inject<(() => Promise<void>) | undefined>(
   'revealValidationState',
   undefined
 )
+const editingFromVersionId = inject<Ref<string | null>>('editingFromVersionId')
+const serverVersionDrifted = inject<ComputedRef<boolean>>('serverVersionDrifted')
+const serverCurrentVersion = inject<ComputedRef<ContentVersionListResource | null | undefined>>(
+  'serverCurrentVersion'
+)
+const reloadServerContent = inject<(() => void) | undefined>('reloadServerContent', undefined)
+
+const conflictDialogOpen = ref(false)
+const conflictData = ref<ContentVersionConflictResponse | null>(null)
 
 const {
   useCreateContentMutation,
@@ -175,6 +186,7 @@ const mutationPayload = computed(() =>
   sanitizeContentMutationPayload({
     ...props.content,
     content: sanitizeContentForSubmit?.() || props.content.content,
+    parent_version_id: editingFromVersionId?.value ?? undefined,
   })
 )
 
@@ -204,6 +216,11 @@ const isSoftValidationError = (error: unknown): boolean => {
     !!getValidationErrorData(error) &&
     Object.keys(getValidationErrorData(error) || {}).length > 0
   )
+}
+
+const isConflictError = (error: unknown): error is { status: 409; data: ContentVersionConflictResponse } => {
+  return (error as { status?: number })?.status === 409 &&
+    !!(error as { data?: { conflict?: boolean } })?.data?.conflict
 }
 
 const getValidationWarningMessage = (errors: Record<string, string[]>): string => {
@@ -259,10 +276,11 @@ const confirmClientValidationWarnings = async () => {
   )
 }
 
-const performSave = async (force = false) => {
+const performSave = async (force = false, forceConflict = false) => {
   const payload = {
     ...mutationPayload.value,
     ...(force ? { force: true } : {}),
+    ...(forceConflict ? { force_conflict: true } : {}),
   }
 
   if (props.content.id) {
@@ -273,6 +291,12 @@ const performSave = async (force = false) => {
       })
       handlePersistedContent(nextContent, 'save')
     } catch (error) {
+      if (isConflictError(error)) {
+        conflictData.value = error.data
+        conflictDialogOpen.value = true
+        return
+      }
+
       if (!force && isSoftValidationError(error)) {
         const validationErrors = getValidationErrorData(error)
         if (validationErrors && (await confirmSoftValidation(validationErrors))) {
@@ -300,6 +324,18 @@ const performSave = async (force = false) => {
 
     handleMutationError(error)
   }
+}
+
+const handleSaveBranch = async () => {
+  conflictDialogOpen.value = false
+  conflictData.value = null
+  await performSave(false, true)
+}
+
+const handleConflictReload = () => {
+  conflictDialogOpen.value = false
+  conflictData.value = null
+  reloadServerContent?.()
 }
 
 const save = async (force = false) => {
@@ -534,13 +570,32 @@ const handleConfirmAssign = (versionIds: string[]) => {
       </Tooltip>
     </TooltipProvider>
     <LanguageSwitcher :content="content" />
-    <Button
-      :variant="isVersions ? 'primary' : 'default'"
-      size="icon"
-      @click="switchVersions"
-    >
-      <Icon name="lucide:history" />
-    </Button>
+    <TooltipProvider :delay-duration="300">
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <Button
+            :variant="isVersions ? 'primary' : 'default'"
+            size="icon"
+            class="relative"
+            @click="switchVersions"
+          >
+            <Icon name="lucide:history" />
+            <Badge
+              v-if="serverVersionDrifted"
+              variant="warning"
+              size="dot"
+              class="absolute -top-1 -right-1"
+            />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent
+          v-if="serverVersionDrifted"
+          side="bottom"
+        >
+          <p>{{ $t('content.conflict.driftTooltip') }}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
     <Button
       v-if="canSaveContent"
       :disabled="disabled || isAnyActionPending || (!!content.id && !isDirty)"
@@ -659,6 +714,16 @@ const handleConfirmAssign = (versionIds: string[]) => {
       :loading="isAssigning"
       @update:open="assignReleaseDialogOpen = $event"
       @assign="handleConfirmAssign"
+    />
+    <VersionConflictDialog
+      v-if="conflictData"
+      :open="conflictDialogOpen"
+      :server-version="conflictData.current_version"
+      :server-content="conflictData.current_content"
+      :my-content="(sanitizeContentForSubmit?.() || props.content.content) as Record<string, unknown>"
+      @update:open="conflictDialogOpen = $event"
+      @save-branch="handleSaveBranch"
+      @reload="handleConflictReload"
     />
   </div>
 </template>

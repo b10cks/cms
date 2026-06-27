@@ -75,6 +75,8 @@ class UpsertContentRequest extends FormRequest
             'language_iso' => 'sometimes|required|string|min:2|max:5',
             'content' => 'nullable|array',
             'force' => 'sometimes|boolean',
+            'parent_version_id' => 'sometimes|nullable|string',
+            'force_conflict' => 'sometimes|boolean',
             ...$this->translationRules(),
         ];
     }
