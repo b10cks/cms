@@ -30,6 +30,7 @@ type CanonicalSchemaTypeName =
   | 'meta'
   | 'table'
   | 'icon'
+  | 'geo'
 
 type LegacySchemaTypeName = 'multiAsset' | 'reference' | 'block'
 
@@ -154,6 +155,19 @@ interface IconSchema extends Schema {
   type: 'icon'
   source: IconFieldSource
   allowed_collections: string[]
+}
+
+// Storage-key preset for the `geo` field — decides the JSON keys the value is stored under:
+// - 'latitude_longitude' : { latitude, longitude, altitude }
+// - 'lat_lng'            : { lat, lng, alt }
+// - 'lat_lon'            : { lat, lon, alt }
+type GeoKeyStyle = 'latitude_longitude' | 'lat_lng' | 'lat_lon'
+
+interface GeoSchema extends Schema {
+  type: 'geo'
+  key_style: GeoKeyStyle
+  altitude: boolean
+  map: boolean
 }
 
 interface ReferencesSchema extends Schema {
@@ -293,6 +307,7 @@ type SchemaType =
   | MetaSchema
   | TableSchema
   | IconSchema
+  | GeoSchema
 
 interface EditorPage {
   header: string

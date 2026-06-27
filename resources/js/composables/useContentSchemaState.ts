@@ -76,6 +76,7 @@ export const normalizeSchemaType = (type?: string | null): CanonicalSchemaTypeNa
     case 'asset':
     case 'multi_assets':
     case 'icon':
+    case 'geo':
     case 'references':
     case 'date':
     case 'meta':
@@ -98,6 +99,7 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
   const optionSource = schemaField.source === 'datasource' ? 'datasource' : 'self'
   const isOptionLike = canonicalType === 'option' || canonicalType === 'options'
   const isIcon = canonicalType === 'icon'
+  const isGeo = canonicalType === 'geo'
   const isTable = canonicalType === 'table'
   const conditions = schemaField.conditions
     ? {
@@ -153,6 +155,11 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
         ? ((schemaField.source as IconFieldSource | undefined) ?? 'all')
         : undefined,
     data_source_id: isOptionLike ? (schemaField.data_source_id ?? null) : undefined,
+    key_style: isGeo
+      ? ((schemaField.key_style as GeoKeyStyle | undefined) ?? 'lat_lng')
+      : undefined,
+    altitude: isGeo ? Boolean(schemaField.altitude) : undefined,
+    map: isGeo ? ((schemaField.map as boolean | undefined) ?? true) : undefined,
     has_thead: isTable ? Boolean((schemaField as TableSchema).has_thead) : undefined,
     columns: isTable ? getTableColumns(schemaField as TableSchema) : undefined,
     conditions,

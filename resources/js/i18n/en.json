@@ -1048,6 +1048,17 @@
           "allowedCollections": "Allowed Iconify collections",
           "allowedCollectionsPlaceholder": "Search collections (e.g. mdi, lucide, tabler)"
         },
+        "geo": {
+          "keyStyle": "Coordinate key style",
+          "keyStyleDescription": "Choose which JSON keys the stored value uses.",
+          "keyStyleLatLng": "lat / lng / alt",
+          "keyStyleLatLon": "lat / lon / alt",
+          "keyStyleLatitudeLongitude": "latitude / longitude / altitude",
+          "altitude": "Handle altitude?",
+          "altitudeDescription": "Capture an altitude value alongside latitude and longitude.",
+          "map": "Show map picker?",
+          "mapDescription": "Let editors drop a pin on an interactive map to set the coordinates."
+        },
         "templates": "Templates",
         "previewTemplate": "Preview template",
         "previewTemplateDescription": "Use handlebars syntax to create a preview template.",
@@ -1223,6 +1234,10 @@
         "icon": {
           "label": "Icon",
           "description": "Icon picker with key/name search"
+        },
+        "geo": {
+          "label": "Geo Coordinates",
+          "description": "Latitude/longitude point with optional altitude and map picker"
         }
       },
       "options": {
@@ -3051,6 +3066,13 @@
         "searchAllHint": "Type to search the full Iconify library.",
         "loadMore": "Load more",
         "showingCount": "Showing {shown} of {total}"
+      }
+    },
+    "geo": {
+      "field": {
+        "latitude": "Latitude",
+        "longitude": "Longitude",
+        "altitude": "Altitude"
       }
     }
   },

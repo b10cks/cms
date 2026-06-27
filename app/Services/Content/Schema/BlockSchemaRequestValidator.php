@@ -19,12 +19,15 @@ class BlockSchemaRequestValidator
         'asset',
         'multi_assets',
         'icon',
+        'geo',
         'references',
         'date',
         'meta',
         'blocks',
         'table',
     ];
+
+    protected const array GEO_KEY_STYLES = ['latitude_longitude', 'lat_lng', 'lat_lon'];
 
     public function __construct(
         protected SchemaNormalizer $schemaNormalizer,
@@ -88,6 +91,10 @@ class BlockSchemaRequestValidator
 
             if ($type === 'table') {
                 $errors = $this->validateTableField($errors, $key, $field);
+            }
+
+            if ($type === 'geo') {
+                $errors = $this->validateGeoField($errors, $key, $field);
             }
         }
 
@@ -270,6 +277,30 @@ class BlockSchemaRequestValidator
             (int) $min > (int) $max
         ) {
             $errors["schema.{$key}.min"][] = 'The minimum row count may not be greater than the maximum row count.';
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param  array<string, array<int, string>>  $errors
+     * @param  array<string, mixed>  $field
+     * @return array<string, array<int, string>>
+     */
+    protected function validateGeoField(array $errors, string $key, array $field): array
+    {
+        $keyStyle = $field['key_style'] ?? 'lat_lng';
+
+        if (! in_array($keyStyle, self::GEO_KEY_STYLES, true)) {
+            $errors["schema.{$key}.key_style"][] = 'The key style is not supported.';
+        }
+
+        if (array_key_exists('altitude', $field) && ! is_bool($field['altitude'])) {
+            $errors["schema.{$key}.altitude"][] = 'The altitude toggle must be true or false.';
+        }
+
+        if (array_key_exists('map', $field) && ! is_bool($field['map'])) {
+            $errors["schema.{$key}.map"][] = 'The map toggle must be true or false.';
         }
 
         return $errors;

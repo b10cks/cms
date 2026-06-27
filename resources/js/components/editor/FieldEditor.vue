@@ -6,6 +6,7 @@ import BlocksBlock from '~/components/editor/BlocksBlock.vue'
 import IconBlock from '~/components/editor/IconBlock.vue'
 import BooleanBlock from '~/components/editor/BooleanBlock.vue'
 import DateBlock from '~/components/editor/DateBlockEditor.vue'
+import GeoBlock from '~/components/editor/GeoBlock.vue'
 import LinkBlock from '~/components/editor/LinkBlock.vue'
 import MarkdownBlock from '~/components/editor/MarkdownBlock.vue'
 import MetaBlock from '~/components/editor/MetaBlock.vue'
@@ -47,6 +48,7 @@ const editors = {
   meta: MetaBlock,
   date: DateBlock,
   table: TableBlock,
+  geo: GeoBlock,
 } satisfies Partial<Record<CanonicalSchemaTypeName | LegacySchemaTypeName, Component>>
 
 const props = defineProps<{

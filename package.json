@@ -47,6 +47,7 @@
     "class-variance-authority": "^0.7.1",
     "dayjs": "^1.11.21",
     "laravel-echo": "^2.3.7",
+    "leaflet": "^1.9.4",
     "marked": "^17.0.6",
     "mini-handlebars": "^0.1.1",
     "posthog-js": "^1.395.0",
@@ -64,6 +65,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.1",
     "@tailwindcss/vite": "^4.3.1",
+    "@types/leaflet": "^1.9.21",
     "@types/postmate": "^1.5.4",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vueuse/core": "^14.3.0",

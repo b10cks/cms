@@ -20,6 +20,7 @@ const types = [
   'asset',
   'multi_assets',
   'icon',
+  'geo',
   'meta',
   'table',
 ]

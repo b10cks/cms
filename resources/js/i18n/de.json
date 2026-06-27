@@ -1040,6 +1040,17 @@
           "allowedCollections": "Erlaubte Iconify-Sammlungen",
           "allowedCollectionsPlaceholder": "Sammlungen suchen (z. B. mdi, lucide, tabler)"
         },
+        "geo": {
+          "keyStyle": "Koordinaten-Schlüsselformat",
+          "keyStyleDescription": "Lege fest, welche JSON-Schlüssel der gespeicherte Wert verwendet.",
+          "keyStyleLatLng": "lat / lng / alt",
+          "keyStyleLatLon": "lat / lon / alt",
+          "keyStyleLatitudeLongitude": "latitude / longitude / altitude",
+          "altitude": "Höhe erfassen?",
+          "altitudeDescription": "Erfasse zusätzlich zur geografischen Breite und Länge einen Höhenwert.",
+          "map": "Kartenauswahl anzeigen?",
+          "mapDescription": "Ermögliche es Redakteuren, die Koordinaten per Pin auf einer interaktiven Karte zu setzen."
+        },
         "templates": "Vorlagen",
         "previewTemplate": "Vorschau-Vorlage",
         "previewTemplateDescription": "Nutze Handlebars-Syntax, um eine Vorschau-Vorlage zu erstellen.",
@@ -1223,6 +1234,10 @@
         "icon": {
           "label": "Icon",
           "description": "Icon-Auswahl mit Schlüssel-/Namenssuche"
+        },
+        "geo": {
+          "label": "Geo-Koordinaten",
+          "description": "Breiten-/Längengrad-Punkt mit optionaler Höhe und Kartenauswahl"
         }
       },
       "options": {
@@ -3027,6 +3042,13 @@
         "searchAllHint": "Tippe, um die gesamte Iconify-Bibliothek zu durchsuchen.",
         "loadMore": "Mehr laden",
         "showingCount": "{shown} von {total} werden angezeigt"
+      }
+    },
+    "geo": {
+      "field": {
+        "latitude": "Breitengrad",
+        "longitude": "Längengrad",
+        "altitude": "Höhe"
       }
     }
   },

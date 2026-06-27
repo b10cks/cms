@@ -222,6 +222,7 @@ class ContentSchemaValidator
             'blocks' => $this->validateBlocks($field, $value),
             'meta' => $this->validateMeta($field, $value),
             'table' => $this->validateTable($field, $value),
+            'geo' => $this->validateGeo($field, $value, $mode),
             default => [],
         };
     }
@@ -297,6 +298,55 @@ class ContentSchemaValidator
 
         if (($max = Arr::get($validation, 'max')) !== null && $number > (float) $max) {
             $messages[] = sprintf('%s may not be greater than %s.', $field->getLabel(), $max);
+        }
+
+        return $messages;
+    }
+
+    protected const array GEO_KEY_STYLES = [
+        'latitude_longitude' => ['lat' => 'latitude', 'lon' => 'longitude', 'alt' => 'altitude'],
+        'lat_lng' => ['lat' => 'lat', 'lon' => 'lng', 'alt' => 'alt'],
+        'lat_lon' => ['lat' => 'lat', 'lon' => 'lon', 'alt' => 'alt'],
+    ];
+
+    /**
+     * @return array<int, string>
+     */
+    protected function validateGeo(SchemaField $field, mixed $value, string $mode = 'publish'): array
+    {
+        if (! is_array($value)) {
+            return [sprintf('%s must be a geo coordinate.', $field->getLabel())];
+        }
+
+        $keys = self::GEO_KEY_STYLES[$field->getAttribute('key_style', 'lat_lng')]
+            ?? self::GEO_KEY_STYLES['lat_lng'];
+        $messages = [];
+
+        $latitude = $value[$keys['lat']] ?? null;
+        $longitude = $value[$keys['lon']] ?? null;
+
+        if (! is_numeric($latitude)) {
+            $messages[] = sprintf('%s latitude must be a number.', $field->getLabel());
+        } elseif ((float) $latitude < -90 || (float) $latitude > 90) {
+            $messages[] = sprintf('%s latitude must be between -90 and 90.', $field->getLabel());
+        }
+
+        if (! is_numeric($longitude)) {
+            $messages[] = sprintf('%s longitude must be a number.', $field->getLabel());
+        } elseif ((float) $longitude < -180 || (float) $longitude > 180) {
+            $messages[] = sprintf('%s longitude must be between -180 and 180.', $field->getLabel());
+        }
+
+        if ($field->getAttribute('altitude')) {
+            $altitude = $value[$keys['alt']] ?? null;
+
+            if ($altitude === null) {
+                if ($field->isRequired() && $mode === 'publish') {
+                    $messages[] = sprintf('%s altitude is required.', $field->getLabel());
+                }
+            } elseif (! is_numeric($altitude)) {
+                $messages[] = sprintf('%s altitude must be a number.', $field->getLabel());
+            }
         }
 
         return $messages;

@@ -8,6 +8,7 @@ import BlocksBlock from '~/components/blocks/BlocksBlock.vue'
 import IconBlock from '~/components/blocks/IconBlock.vue'
 import BooleanBlock from '~/components/blocks/BooleanBlock.vue'
 import DateBlock from '~/components/blocks/DateBlock.vue'
+import GeoBlock from '~/components/blocks/GeoBlock.vue'
 import LinkBlock from '~/components/blocks/LinkBlock.vue'
 import MarkdownBlock from '~/components/blocks/MarkdownBlock.vue'
 import MetaBlock from '~/components/blocks/MetaBlock.vue'
@@ -106,6 +107,7 @@ const schemas = {
   date: DateBlock,
   richtext: RichTextBlock,
   table: TableBlock,
+  geo: GeoBlock,
 } satisfies Partial<Record<CanonicalSchemaTypeName | LegacySchemaTypeName, Component>>
 
 watch(

@@ -291,6 +291,15 @@ const createDefaultSchemaForType = (type: string, key: string): SchemaType => {
         allowed_collections: [],
         default: null,
       } as IconSchema
+    case 'geo':
+      return {
+        ...baseSchema,
+        type: 'geo',
+        key_style: 'lat_lng',
+        altitude: false,
+        map: true,
+        default: null,
+      } as GeoSchema
     case 'blocks':
       return {
         ...baseSchema,

@@ -451,6 +451,133 @@ class ContentSchemaValidatorTest extends TestCase
         );
     }
 
+    #[Test]
+    public function geo_fields_accept_valid_points_and_reject_out_of_range_coordinates(): void
+    {
+        $block = $this->makeBlock([
+            'location' => [
+                'type' => 'geo',
+                'name' => 'Location',
+                'key_style' => 'lat_lng',
+                'altitude' => false,
+            ],
+        ]);
+
+        $valid = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            ['location' => ['lat' => 48.2, 'lng' => 16.37]],
+            null,
+            'en',
+            null,
+            'save',
+        );
+
+        $this->assertSame([], $valid->errors);
+
+        $outOfRange = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            ['location' => ['lat' => 200, 'lng' => 16.37]],
+            null,
+            'en',
+            null,
+            'save',
+        );
+
+        $this->assertArrayHasKey('content.location', $outOfRange->errors);
+    }
+
+    #[Test]
+    public function geo_fields_read_coordinates_using_the_configured_key_style(): void
+    {
+        $block = $this->makeBlock([
+            'location' => [
+                'type' => 'geo',
+                'name' => 'Location',
+                'key_style' => 'latitude_longitude',
+                'altitude' => false,
+            ],
+        ]);
+
+        $matchingKeys = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            ['location' => ['latitude' => 48.2, 'longitude' => 16.37]],
+            null,
+            'en',
+            null,
+            'save',
+        );
+
+        $this->assertSame([], $matchingKeys->errors);
+
+        // Keys from a different style are not recognised for this field's configuration.
+        $mismatchedKeys = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            ['location' => ['lat' => 48.2, 'lng' => 16.37]],
+            null,
+            'en',
+            null,
+            'save',
+        );
+
+        $this->assertArrayHasKey('content.location', $mismatchedKeys->errors);
+    }
+
+    #[Test]
+    public function geo_fields_require_altitude_only_when_required_and_publishing(): void
+    {
+        $block = $this->makeBlock([
+            'location' => [
+                'type' => 'geo',
+                'name' => 'Location',
+                'key_style' => 'lat_lng',
+                'altitude' => true,
+                'required' => true,
+            ],
+        ]);
+
+        $blankAltitude = ['location' => ['lat' => 48.2, 'lng' => 16.37, 'alt' => null]];
+
+        $saveResult = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            $blankAltitude,
+            null,
+            'en',
+            null,
+            'save',
+        );
+
+        $this->assertSame([], $saveResult->errors);
+
+        $publishResult = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            $blankAltitude,
+            null,
+            'en',
+            null,
+            'publish',
+        );
+
+        $this->assertArrayHasKey('content.location', $publishResult->errors);
+
+        $completeResult = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            ['location' => ['lat' => 48.2, 'lng' => 16.37, 'alt' => 190]],
+            null,
+            'en',
+            null,
+            'publish',
+        );
+
+        $this->assertSame([], $completeResult->errors);
+    }
+
     protected function ensureOptionTablesExist(): void
     {
         if (! Schema::hasTable('data_sources')) {
