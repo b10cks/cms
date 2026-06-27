@@ -28,7 +28,7 @@ const canViewContent = computed(() =>
 )
 
 const { useSpacesQuery } = useSpaces()
-const { data: spaces } = useSpacesQuery({})
+const { data: spaces } = useSpacesQuery({ per_page: 1000 })
 const { useBlocksQuery } = useBlocks(spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 }, canViewBlocks)
 const { useContentMenuQuery } = useContentMenu(spaceId)

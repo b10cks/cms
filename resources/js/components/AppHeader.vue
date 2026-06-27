@@ -20,7 +20,7 @@ import {
 } from '~/components/ui/dropdown-menu'
 
 const { useSpacesQuery } = useSpaces()
-const { data: spaces } = useSpacesQuery({})
+const { data: spaces } = useSpacesQuery({ per_page: 1000 })
 const { selectedTeam } = useGlobalTeam()
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(

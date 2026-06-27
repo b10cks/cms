@@ -40,7 +40,7 @@ class SpaceController extends Controller
                 'subscriptions' => fn($query) => $query->with('plan')->latest('created_at'),
             ])
             ->withCount(['users'])
-            ->paginate();
+            ->paginate(min($request->per_page ?? 20, 1000));
 
         return SpaceResource::collection($spaces);
     }

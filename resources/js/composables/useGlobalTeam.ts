@@ -45,7 +45,7 @@ export function useGlobalTeam() {
     data: teams,
     isLoading: isLoadingTeams,
     error: teamsError,
-  } = useTeamsQuery({ include_space_context: true })
+  } = useTeamsQuery({ include_space_context: true, per_page: 1000 })
 
   const availableTeams = computed<TeamResource[]>(() => teams.value?.data ?? [])
 
