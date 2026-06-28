@@ -6,7 +6,7 @@ import { api } from '~/api'
 
 import { queryKeys } from './useQueryClient'
 
-export type MaybeRefOrComputed<T> = MaybeRef<T> | ComputedRef<T>
+type MaybeRefOrComputed<T> = MaybeRef<T> | ComputedRef<T>
 
 export function useSubscription(spaceIdRef: MaybeRefOrComputed<string>) {
   const queryClient = useQueryClient()

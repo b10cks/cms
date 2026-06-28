@@ -7,7 +7,7 @@ import type { MigrationsQueryParams } from '~/api/resources/migrations'
 
 import { queryKeys } from './useQueryClient'
 
-export type MaybeRefOrComputed<T> = MaybeRef<T> | ComputedRef<T>
+type MaybeRefOrComputed<T> = MaybeRef<T> | ComputedRef<T>
 
 export function useMigrations(spaceIdRef: MaybeRefOrComputed<string>) {
   const queryClient = useQueryClient()

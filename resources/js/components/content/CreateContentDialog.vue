@@ -15,7 +15,7 @@ import {
 import {
   createContentDefaultsBlockLookup,
   hydrateContentWithSchema,
-} from '~/composables/useContentDefaults'
+} from '~/composables/useSchemaDefaults'
 import {
   resolveCreateContentBlocks,
   resolvePreferredCreateContentBlock,

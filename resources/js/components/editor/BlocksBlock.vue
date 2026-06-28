@@ -18,7 +18,7 @@ import {
   createBlockItemWithDefaults,
   createContentDefaultsBlockLookup,
   hydrateContentWithSchema,
-} from '~/composables/useContentDefaults'
+} from '~/composables/useSchemaDefaults'
 import type {
   CollaborationPresenceUser,
   ContentFieldFocusPayload,

@@ -259,9 +259,6 @@ declare global {
   export type { SpacePresenceInfo } from './resources/js/composables/useSpacePresencePeek'
   import('./resources/js/composables/useSpacePresencePeek')
   // @ts-ignore
-  export type { MaybeRefOrComputed } from './resources/js/composables/useSubscription'
-  import('./resources/js/composables/useSubscription')
-  // @ts-ignore
   export type { TeamType } from './resources/js/composables/useTeamTypes'
   import('./resources/js/composables/useTeamTypes')
   // @ts-ignore

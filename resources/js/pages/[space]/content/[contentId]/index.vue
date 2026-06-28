@@ -22,7 +22,7 @@ import { useAlertDialog } from '~/composables/useAlertDialog'
 import {
   createContentDefaultsBlockLookup,
   hydrateContentWithSchema,
-} from '~/composables/useContentDefaults'
+} from '~/composables/useSchemaDefaults'
 import {
   useContentLiveCollaboration,
   type ContentCommitAction,
