@@ -18,7 +18,7 @@
     "@iconify-json/lucide": "^1.2.114",
     "@iconify/vue": "^5.0.1",
     "@internationalized/date": "^3.12.2",
-    "@tanstack/vue-query": "^5.101.1",
+    "@tanstack/vue-query": "^5.101.2",
     "@tanstack/vue-table": "^8.21.3",
     "@tiptap/core": "^3.27.1",
     "@tiptap/extension-blockquote": "^3.27.1",
