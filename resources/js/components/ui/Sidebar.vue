@@ -135,20 +135,11 @@ const availableLocales = locales
       </div>
     </div>
     <div class="flex flex-col items-center gap-2">
-      <DropdownMenu class="px-2">
+      <DropdownMenu>
         <DropdownMenuTrigger
-          :class="[
-            'w-full flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-border',
-            isExtendedSidebar ? 'flex-col gap-1 text-center py-2' : 'size-8',
-          ]"
+          class="relative flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted transition-colors duration-200 hover:bg-elevated hover:text-primary data-[state=open]:bg-elevated"
         >
           <Icon name="lucide:circle-question-mark" />
-          <span
-            v-if="isExtendedSidebar"
-            class="line-clamp-2 text-2xs leading-tight"
-          >
-            {{ t('labels.provider.sidebar.help') }}
-          </span>
           <DropdownMenuContent
             class="min-w-48"
             align="end"
