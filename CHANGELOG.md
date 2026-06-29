@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.29-763806e] — 2026-6-29
+
+- 🩹 Fix saving issue
+
 ## [v2026.6.29-1408b7c] — 2026-6-29
 
 - 👔 Improve icon handling
