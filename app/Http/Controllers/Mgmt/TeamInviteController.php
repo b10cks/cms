@@ -22,7 +22,7 @@ class TeamInviteController extends Controller
 
         $invites = Invite::filter(InviteFilter::fromRequest($request))
             ->leftJoin('roles', 'roles.id', '=', 'invites.role_id')
-            ->where('team_id', $team->id)
+            ->where('invites.team_id', $team->id)
             ->with(['inviter', 'invitee', 'roleDefinition'])
             ->select('invites.*', 'roles.key as role_key')
             ->paginate();

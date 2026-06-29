@@ -13,12 +13,18 @@ class SpaceModelChanged implements ShouldBroadcast
 {
     use SerializesModels;
 
+    private string $modelKey;
+    private string $modelBaseClass;
+
     public function __construct(
-        protected Model $model,
         protected Space $space,
         protected string $resourceType,
-        protected string $action
-    ) {}
+        protected string $action,
+        Model $model,
+    ) {
+        $this->modelKey = $model->getKey();
+        $this->modelBaseClass = class_basename($model);
+    }
 
     public function broadcastOn(): array
     {
@@ -29,13 +35,13 @@ class SpaceModelChanged implements ShouldBroadcast
 
     public function broadcastAs(): string
     {
-        return Str::snake(class_basename($this->model)) . ':' . $this->action;
+        return Str::snake($this->modelBaseClass) . ':' . $this->action;
     }
 
     public function broadcastWith(): array
     {
         return [
-            'id' => $this->model->getKey(),
+            'id' => $this->modelKey,
             'action' => $this->action,
         ];
     }

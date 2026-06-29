@@ -53,6 +53,8 @@ class ImageTransformationManager extends Manager
                 return null;
             }
 
+            set_time_limit(0);
+
             $driver = $this->driver();
             $tempFile = $this->copySourceToTemporaryFile($disk, $fullPath);
             if ($tempFile === null) {

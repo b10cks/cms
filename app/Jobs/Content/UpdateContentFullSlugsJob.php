@@ -43,10 +43,12 @@ class UpdateContentFullSlugsJob implements ShouldQueue
      *
      * @return void
      */
-    public function handle(LocalizedContentSlugService $slugService)
+    public function handle()
     {
         try {
             app()->offsetSet('currentSpace', $this->space);
+
+            $slugService = new LocalizedContentSlugService($this->space);
 
             $content = Content::query()->find($this->contentId);
 

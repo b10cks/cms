@@ -15,7 +15,7 @@ trait BroadcastsSpaceModelEvents
                 if (!$space) {
                     return;
                 }
-                broadcast(new SpaceModelChanged($model, $space, $model->spaceChannel, $event))->toOthers();
+                broadcast(new SpaceModelChanged($space, $model->spaceChannel, $event, $model))->toOthers();
             });
         }
     }
