@@ -618,11 +618,6 @@ const commitPersistedContent = (
 ) => {
   editingFromVersionId.value = nextContent.current_version_id ?? null
   syncPersistedContent(nextContent, 'replace')
-  // Immediately sync the cache so currentContentSource reflects the saved version,
-  // preventing serverVersionDrifted from falsely triggering until the re-fetch lands.
-  if (nextContent.id) {
-    queryClient.setQueryData(queryKeys.contents(spaceId).detail(nextContent.id), nextContent)
-  }
   clearServerErrors()
   resetValidationState()
   broadcastPersistedContent(nextContent, action)
@@ -723,8 +718,8 @@ provide(
   computed(
     () =>
       editingFromVersionId.value !== null &&
-      currentContentSource.value?.current_version_id !== null &&
-      currentContentSource.value?.current_version_id !== editingFromVersionId.value,
+      persistedContent.value?.current_version_id != null &&
+      persistedContent.value?.current_version_id !== editingFromVersionId.value,
   ),
 )
 provide('serverCurrentVersion', computed(() => currentContentSource.value?.current_version))
