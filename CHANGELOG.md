@@ -3,6 +3,32 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.29-1408b7c] — 2026-6-29
+
+- 👔 Improve icon handling
+- ♻️ Fix import issues
+- 🚸 Simplify sidebar
+- ⬆️ Bump versions
+- ♻️ Extract shared AI-stream, Iconify & notification frontend modules
+- ♻️ Harden AI drivers & de-duplicate stream controllers
+- ✨ Improve AI system prompts and fix Bedrock system prompt
+- ✨ Stream all AI features with fail-closed quota & coded error UX
+- ✨ Add in-app notifications with read-gated email fallback
+- ✨ Add geo coordinates field type
+- ✨ Make Teams Management production-ready
+- ✨ Add icon registry field with Iconify integration
+- ✨ Broadcast space model changes via Reverb for real-time cache invalidation
+- ✨ Detect and handle content version conflicts on save
+- 🩹 Fix teams and spaces dropdowns
+- 🌍 Add missing translations to i18n files
+- ✨ Implement content sorting
+- 🔒 Fix roles
+- ✨ Track historic subscription data
+- ✨ Add proper date range filter to audit log
+- ⬆️ Bump versions
+- 👔 Handle space subscriptions
+- 👔 Improve handling of malformed ilum request
+
 ## [v2026.6.19-5abee4b] — 2026-6-19
 
 - 👔 Allow to actually translate date fields
