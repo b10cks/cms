@@ -123,7 +123,7 @@ const handleClick = (icon: IconResource) => {
           :key="icon.id"
           type="button"
           :title="`${icon.name} (${icon.key}) — ${icon.width}×${icon.height}`"
-          class="group flex flex-col items-center justify-center gap-1.5 rounded-lg border border-input bg-surface p-2 pb-2.5 text-primary transition-colors hover:border-primary hover:bg-surface/80"
+          class="group flex flex-col items-center justify-center gap-2 cursor-pointer rounded-lg border border-input bg-surface p-2 pb-2.5 text-primary transition-colors hover:border-primary hover:bg-surface/80"
           style="min-height: 96px"
           @click="handleClick(icon)"
         >
@@ -133,8 +133,10 @@ const handleClick = (icon: IconResource) => {
             :height="icon.height"
             size="28"
           />
-          <span class="w-full truncate text-center text-xs text-muted">{{ icon.key }}</span>
-          <span class="text-[10px] leading-none text-muted/60">{{ icon.width }}×{{ icon.height }}</span>
+          <div class="flex flex-col items-center gap-0.5 w-full">
+          <span class="w-full truncate text-center text-sm">{{ icon.key }}</span>
+          <span class="text-xs leading-none text-muted">{{ icon.width }}×{{ icon.height }}</span>
+          </div>
         </button>
       </div>
     </div>

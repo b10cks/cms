@@ -38,13 +38,14 @@ Route::get('datasources/{source:slug}/entries', [DataEntryController::class, 'in
     'cache.data:60,60',
 ])->name('dataentries.index');
 
-// Iconify-compatible icon API. The space is scoped by the `?token=` (auth.data); `{space}` in the
-// path must match the token's space. Static routes are registered before the `{prefix}.json` /
-// `.svg` catch-alls so they win route matching.
-Route::prefix('iconify/{space}')->name('iconify.')->middleware(['cache.data:60,60'])->group(function () {
+// Iconify-compatible icon API. Space is resolved from the ?token= (AuthenticateDataApi).
+// Static routes are declared before catch-all patterns so they win matching.
+Route::prefix('iconify')->name('iconify.')->middleware(['cache.data:60,60'])->group(function () {
     Route::get('collections', [IconifyController::class, 'collections'])->name('collections');
     Route::get('last-modified', [IconifyController::class, 'lastModified'])->name('last-modified');
     Route::get('search', [IconifyController::class, 'search'])->name('search');
     Route::get('{prefix}.json', [IconifyController::class, 'iconData'])->name('data');
+    Route::get('{prefix}.css', [IconifyController::class, 'iconCss'])->name('css');
     Route::get('{prefix}/{name}.svg', [IconifyController::class, 'iconSvg'])->name('svg');
+    Route::get('{prefix}/{name}.css', [IconifyController::class, 'iconCssSingle'])->name('css.single');
 });

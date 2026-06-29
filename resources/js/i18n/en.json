@@ -1042,9 +1042,9 @@
         "default": "Default value",
         "icon": {
           "source": "Icon source",
-          "sourceRegistry": "Space registry only",
-          "sourceAll": "Registry + public Iconify",
-          "sourceCollections": "Registry + specific collections",
+          "sourceRegistry": "Space icons only",
+          "sourceAll": "Space icons + public Iconify",
+          "sourceCollections": "Space icons + specific collections",
           "allowedCollections": "Allowed Iconify collections",
           "allowedCollectionsPlaceholder": "Search collections (e.g. mdi, lucide, tabler)"
         },
@@ -3031,7 +3031,7 @@
       "description": "Description",
       "tags": "Tags",
       "tagsForBatch": "Tags (applied to all)",
-      "tagsPlaceholder": "Comma-separated tags",
+      "tagsPlaceholder": "Add tag…",
       "uploadTitle": "Upload icons",
       "dropHint": "Drop SVG files here or click to browse",
       "dropSubHint": "Only .svg files are supported",
@@ -3042,7 +3042,8 @@
       "deleteTitle": "Delete icon",
       "replaceSvg": "Replace SVG",
       "replaceHint": "Upload a new SVG to replace the current one",
-      "useCurrentColor": "Use currentColor",
+      "useCurrentColor": "Replace colors",
+      "useCurrentColorHint": "Replaces all fixed fill and stroke colors in this icon with the current foreground color — this changes the SVG source",
       "editSvgSource": "Edit SVG source",
       "svgSource": "SVG source",
       "width": "Width",
@@ -3056,9 +3057,9 @@
       },
       "field": {
         "add": "Assign icon",
-        "addHint": "Pick an icon from the registry",
+        "addHint": "Pick an icon from your icon library",
         "selectTitle": "Select an icon",
-        "tabRegistry": "Registry",
+        "tabRegistry": "Icons",
         "tabIconify": "Iconify",
         "iconifyPlaceholder": "Search Iconify (e.g. home, arrow)…",
         "iconifyEmpty": "Type at least 2 characters to search.",
@@ -3066,7 +3067,9 @@
         "searchAllHint": "Type to search the full Iconify library.",
         "loadMore": "Load more",
         "showingCount": "Showing {shown} of {total}"
-      }
+      },
+      "tagsEmpty": "No tags found",
+      "tagsCreate": "Create '{tag}'"
     },
     "geo": {
       "field": {

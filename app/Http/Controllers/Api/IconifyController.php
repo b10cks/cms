@@ -8,31 +8,38 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * Iconify-compatible icon API for a space's icon registry.
  *
- * The space is resolved from the `?token=` data-API token (see AuthenticateDataApi) and echoed in
- * the URL path for clarity + cache keying. Every space exposes a single, fixed-prefix collection
- * (`b10cks`) so consumers reference icons as `b10cks:<key>`.
+ * The space is resolved from the `?token=` data-API token (AuthenticateDataApi middleware).
+ * All icons are served under the fixed `b10cks` prefix.
+ *
+ * Endpoints:
+ *   GET /api/v1/iconify/collections
+ *   GET /api/v1/iconify/last-modified
+ *   GET /api/v1/iconify/search?query=...
+ *   GET /api/v1/iconify/{prefix}.json[?icons=a,b]          — Iconify JSON
+ *   GET /api/v1/iconify/{prefix}.css?icons=a,b             — CSS for multiple icons
+ *   GET /api/v1/iconify/{prefix}/{name}.svg                 — SVG file
+ *   GET /api/v1/iconify/{prefix}/{name}.css                 — CSS for a single icon
  *
  * @see https://iconify.design/docs/api/
  */
 class IconifyController
 {
-    /** Fixed Iconify collection prefix exposed for every space. */
     private const PREFIX = 'b10cks';
 
-    /** Safety cap when a consumer requests the full set (no `icons=` filter). */
     private const MAX_ICONS = 5000;
 
-    /**
-     * GET /api/v1/iconify/{space}/{prefix}.json[?icons=a,b]
-     * Returns icon data in IconifyJSON format.
-     */
-    public function iconData(Request $request, string $space, string $prefix): JsonResponse
+    // -------------------------------------------------------------------------
+    // JSON / metadata endpoints
+    // -------------------------------------------------------------------------
+
+    public function iconData(Request $request, string $prefix): JsonResponse
     {
-        $this->resolveSpace($space);
+        $this->abortIfUnknownPrefix($prefix);
 
         $requested = $this->parseIconList($request->query('icons'));
 
@@ -49,15 +56,15 @@ class IconifyController
         }
 
         $payload = [
-            'prefix' => $prefix,
-            'icons' => $iconData === [] ? new \stdClass() : $iconData,
-            'width' => 24,
-            'height' => 24,
+            'prefix'       => $prefix,
+            'icons'        => $iconData === [] ? new \stdClass() : $iconData,
+            'width'        => 24,
+            'height'       => 24,
             'lastModified' => $this->lastModifiedTimestamp(),
         ];
 
         if ($requested !== null) {
-            $notFound = array_values(array_filter($requested, fn (string $key) => !isset($iconData[$key])));
+            $notFound = array_values(array_filter($requested, fn ($k) => !isset($iconData[$k])));
             if ($notFound !== []) {
                 $payload['not_found'] = $notFound;
             }
@@ -66,28 +73,18 @@ class IconifyController
         return response()->json($payload);
     }
 
-    /**
-     * GET /api/v1/iconify/{space}/collections
-     */
-    public function collections(string $space): JsonResponse
+    public function collections(): JsonResponse
     {
-        $current = $this->resolveSpace($space);
-
         return response()->json([
             self::PREFIX => [
-                'name' => $current->name,
+                'name'  => $this->currentSpace()->name,
                 'total' => Icon::query()->count(),
             ],
         ]);
     }
 
-    /**
-     * GET /api/v1/iconify/{space}/last-modified
-     */
-    public function lastModified(string $space): JsonResponse
+    public function lastModified(): JsonResponse
     {
-        $this->resolveSpace($space);
-
         return response()->json([
             'lastModified' => [
                 self::PREFIX => $this->lastModifiedTimestamp(),
@@ -95,14 +92,9 @@ class IconifyController
         ]);
     }
 
-    /**
-     * GET /api/v1/iconify/{space}/search?query=...
-     */
-    public function search(Request $request, string $space): JsonResponse
+    public function search(Request $request): JsonResponse
     {
-        $this->resolveSpace($space);
-
-        $term = trim((string) $request->query('query', ''));
+        $term  = trim((string) $request->query('query', ''));
         $limit = min(max((int) $request->query('limit', 64), 1), 999);
 
         $query = Icon::query();
@@ -118,51 +110,331 @@ class IconifyController
         $icons = $query->orderBy('key')
             ->limit($limit)
             ->pluck('key')
-            ->map(fn (string $key) => self::PREFIX . ':' . $key)
+            ->map(fn ($key) => self::PREFIX . ':' . $key)
             ->all();
 
-        return response()->json([
-            'icons' => $icons,
-            'total' => $total,
-            'limit' => $limit,
-        ]);
+        return response()->json(['icons' => $icons, 'total' => $total, 'limit' => $limit]);
     }
 
+    // -------------------------------------------------------------------------
+    // SVG endpoint
+    // -------------------------------------------------------------------------
+
     /**
-     * GET /api/v1/iconify/{space}/{prefix}/{name}.svg[?color=&width=&height=]
+     * Render a single icon as an SVG document.
+     *
+     * Query params:
+     *   width  — output width  (default: 1em)
+     *   height — output height (default: 1em)
+     *   color  — sets CSS `color` on the SVG root so `currentColor` inherits it
+     *   flip   — 'horizontal', 'vertical', or 'horizontal,vertical'
+     *   rotate — quarter turns: 1=90°, 2=180°, 3=270°; or '90deg' / '180deg' / '270deg'
+     *   box    — 1/true adds an invisible bounding <rect> (forces height in some renderers)
      */
-    public function iconSvg(Request $request, string $space, string $prefix, string $name): Response
+    public function iconSvg(Request $request, string $prefix, string $name): Response
     {
-        $this->resolveSpace($space);
+        $this->abortIfUnknownPrefix($prefix);
 
         $icon = Icon::query()->where('key', $name)->first();
         abort_unless($icon !== null, 404);
 
-        $color = $request->query('color');
-        $width = $request->filled('width') ? (int) $request->query('width') : null;
-        $height = $request->filled('height') ? (int) $request->query('height') : null;
+        $color  = is_string($request->query('color')) ? $request->query('color') : null;
+        $width  = $request->filled('width') ? $request->query('width') : null;
+        $height = $request->filled('height') ? $request->query('height') : null;
+        $flip   = (string) $request->query('flip', '');
+        $rotate = $this->parseRotate($request->query('rotate'));
+        $box    = $this->parseBool($request->query('box'));
 
-        $svg = $icon->toSvg(\is_string($color) ? $color : null, $width, $height);
+        $body = $icon->body;
+
+        if ($box) {
+            $body = sprintf('<rect width="%d" height="%d" fill="none"/>%s', $icon->width, $icon->height, $body);
+        }
+
+        [$transformedBody, $viewW, $viewH] = $this->applyTransforms($body, $icon->width, $icon->height, $rotate, $flip);
+
+        $attrs = [
+            'xmlns'   => 'http://www.w3.org/2000/svg',
+            'width'   => (string) ($width ?? '1em'),
+            'height'  => (string) ($height ?? '1em'),
+            'viewBox' => "0 0 {$viewW} {$viewH}",
+        ];
+
+        if ($color !== null) {
+            $attrs['color'] = $color;
+        }
+
+        $svg = sprintf('<svg %s>%s</svg>', $this->attrString($attrs), $transformedBody);
 
         return response($svg, 200, ['Content-Type' => 'image/svg+xml; charset=utf-8']);
     }
 
+    // -------------------------------------------------------------------------
+    // CSS endpoints
+    // -------------------------------------------------------------------------
+
     /**
-     * Ensure the `{space}` path segment matches the space the token resolved to.
+     * Render CSS for multiple icons in a single stylesheet.
+     *
+     * Required: ?icons=name1,name2,...
+     *
+     * Query params:
+     *   mode     — 'mask' (default for currentColor icons) or 'background' (colorful icons)
+     *   color    — replaces currentColor in the embedded SVG (default: 'black' for mask mode)
+     *   selector — per-icon selector template; supports {prefix} and {name} (default: .icon--{prefix}--{name})
+     *   common   — shared selector for size+mode props (default: .icon--{prefix})
+     *   var      — CSS variable name for the SVG data URL, without '--' (default: svg → --svg)
+     *   flip, rotate — same as SVG endpoint
      */
-    private function resolveSpace(string $space): Space
+    public function iconCss(Request $request, string $prefix): Response
     {
-        $current = app()->bound('currentSpace') ? app('currentSpace') : null;
+        $this->abortIfUnknownPrefix($prefix);
 
-        abort_unless($current instanceof Space, 404);
-        abort_unless($space === $current->id || $space === (string) $current->slug, 404);
+        $requested = $this->parseIconList($request->query('icons'));
+        abort_if($requested === null || $requested === [], 400);
 
-        return $current;
+        $byKey = Icon::query()->whereIn('key', $requested)->get()->keyBy('key');
+
+        // Preserve requested order; silently drop keys not found
+        $icons = collect($requested)
+            ->map(fn ($k) => $byKey->get($k))
+            ->filter()
+            ->values();
+
+        return $this->cssResponse($icons, $request);
     }
 
     /**
-     * @return array<int, string>|null  null when no `icons` filter was supplied (full set requested)
+     * Render CSS for a single icon.
+     * Same query params as iconCss() except `icons` is not needed.
      */
+    public function iconCssSingle(Request $request, string $prefix, string $name): Response
+    {
+        $this->abortIfUnknownPrefix($prefix);
+
+        $icon = Icon::query()->where('key', $name)->first();
+        abort_unless($icon !== null, 404);
+
+        return $this->cssResponse(collect([$icon]), $request);
+    }
+
+    // -------------------------------------------------------------------------
+    // CSS rendering
+    // -------------------------------------------------------------------------
+
+    private function cssResponse(Collection $icons, Request $request): Response
+    {
+        $opts = [
+            'color'    => $request->query('color') ?: null,
+            'flip'     => (string) $request->query('flip', ''),
+            'rotate'   => $this->parseRotate($request->query('rotate')),
+            'mode'     => in_array($request->query('mode'), ['mask', 'background'], true)
+                            ? $request->query('mode')
+                            : null,
+            'selector' => (string) ($request->query('selector') ?: '.icon--{prefix}--{name}'),
+            'common'   => (string) ($request->query('common') ?: '.icon--{prefix}'),
+            'var'      => preg_replace('/[^a-z0-9-]/i', '', (string) $request->query('var', 'svg')) ?: 'svg',
+        ];
+
+        return response($this->renderCss($icons, $opts), 200, ['Content-Type' => 'text/css; charset=utf-8']);
+    }
+
+    private function renderCss(Collection $icons, array $opts): string
+    {
+        if ($icons->isEmpty()) {
+            return '';
+        }
+
+        $prefix  = self::PREFIX;
+        $varName = '--' . $opts['var'];
+        $commonSel = str_replace('{prefix}', $prefix, $opts['common']);
+
+        // Group by rendering mode; each group shares a common rule
+        $grouped = $icons->groupBy(fn (Icon $icon) => $this->detectMode($icon->body, $opts['mode']));
+
+        $parts = [];
+
+        foreach ($grouped as $mode => $modeIcons) {
+            // Common rule: shared display + mode properties
+            $block  = "{$commonSel} {\n";
+            $block .= "  display: inline-block;\n";
+            $block .= "  width: 1em;\n";
+            $block .= "  height: 1em;\n";
+
+            if ($mode === 'mask') {
+                $block .= "  background-color: currentColor;\n";
+                $block .= "  -webkit-mask-image: var({$varName});\n";
+                $block .= "  mask-image: var({$varName});\n";
+                $block .= "  -webkit-mask-repeat: no-repeat;\n";
+                $block .= "  mask-repeat: no-repeat;\n";
+                $block .= "  -webkit-mask-size: 100% 100%;\n";
+                $block .= "  mask-size: 100% 100%;\n";
+            } else {
+                $block .= "  background-repeat: no-repeat;\n";
+                $block .= "  background-size: 100% 100%;\n";
+            }
+
+            $block .= '}';
+            $parts[] = $block;
+
+            // Per-icon rule: only the --svg variable (and background-image for background mode)
+            foreach ($modeIcons as $icon) {
+                $sel     = str_replace(['{prefix}', '{name}'], [$prefix, $icon->key], $opts['selector']);
+                $dataUrl = $this->buildCssDataUrl($icon, $opts);
+
+                $iconBlock  = "{$sel} {\n";
+                $iconBlock .= "  {$varName}: url(\"{$dataUrl}\");\n";
+
+                if ($mode === 'background') {
+                    $iconBlock .= "  background-image: var({$varName});\n";
+                }
+
+                $iconBlock .= '}';
+                $parts[] = $iconBlock;
+            }
+        }
+
+        return implode("\n\n", $parts) . "\n";
+    }
+
+    /**
+     * Build a percent-encoded SVG data URL for embedding in CSS url() values.
+     *
+     * currentColor is replaced with the specified color (default: black) because CSS
+     * mask/background contexts cannot inherit it from the surrounding document.
+     * Single quotes are used in SVG attributes so < > # are the only chars needing encoding.
+     */
+    private function buildCssDataUrl(Icon $icon, array $opts): string
+    {
+        [$body, $viewW, $viewH] = $this->applyTransforms(
+            $icon->body, $icon->width, $icon->height, $opts['rotate'], $opts['flip']
+        );
+
+        $color = $opts['color'] ?? 'black';
+        $body  = str_replace('currentColor', $color, $body);
+
+        $svg = "<svg xmlns='http://www.w3.org/2000/svg'"
+            . " viewBox='0 0 {$viewW} {$viewH}'"
+            . " width='{$viewW}' height='{$viewH}'>"
+            . $body
+            . '</svg>';
+
+        // Convert all remaining double quotes to single quotes (body attributes),
+        // then percent-encode the characters that must be encoded in CSS url() values.
+        $svg     = str_replace('"', "'", $svg);
+        $encoded = str_replace(['<', '>', '#'], ['%3C', '%3E', '%23'], $svg);
+
+        return 'data:image/svg+xml,' . $encoded;
+    }
+
+    // -------------------------------------------------------------------------
+    // Transform logic — mirrors the @iconify/utils iconToSVG implementation
+    // -------------------------------------------------------------------------
+
+    /**
+     * Apply flip and rotate transforms to the SVG body, returning the transformed body
+     * and the resulting viewBox dimensions (which may swap for 90°/270° rotations).
+     *
+     * Transform order (matching Iconify):
+     *  - flip transforms are pushed (applied first to content in SVG right-to-left evaluation)
+     *  - rotation is unshifted to front (applied after flips)
+     *
+     * @return array{0: string, 1: int|float, 2: int|float}
+     */
+    private function applyTransforms(string $body, int $w, int $h, int $rotate, string $flip): array
+    {
+        $flipH = str_contains($flip, 'horizontal');
+        $flipV = str_contains($flip, 'vertical');
+
+        $transformations = [];
+        $outW = $w;
+        $outH = $h;
+
+        // hFlip + vFlip together == 180° rotation (Iconify convention)
+        if ($flipH && $flipV) {
+            $rotate = ($rotate + 2) % 4;
+            $flipH  = false;
+            $flipV  = false;
+        }
+
+        // Flip transforms: pushed (rightmost in transform string = applied first)
+        if ($flipH) {
+            $transformations[] = "translate({$w} 0) scale(-1 1)";
+        } elseif ($flipV) {
+            $transformations[] = "translate(0 {$h}) scale(1 -1)";
+        }
+
+        // Rotation: unshifted (leftmost in transform string = applied last)
+        switch ($rotate) {
+            case 1: // 90° CW
+                $t = $h / 2;
+                array_unshift($transformations, "rotate(90 {$t} {$t})");
+                [$outW, $outH] = [$h, $w];
+                break;
+
+            case 2: // 180°
+                array_unshift($transformations, sprintf('rotate(180 %s %s)', $w / 2, $h / 2));
+                break;
+
+            case 3: // 270° CW (= 90° CCW)
+                $t = $w / 2;
+                array_unshift($transformations, "rotate(-90 {$t} {$t})");
+                [$outW, $outH] = [$h, $w];
+                break;
+        }
+
+        if (empty($transformations)) {
+            return [$body, $outW, $outH];
+        }
+
+        return [
+            sprintf('<g transform="%s">%s</g>', implode(' ', $transformations), $body),
+            $outW,
+            $outH,
+        ];
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Parse the `rotate` query parameter.
+     * Accepts quarter-turn integers (1, 2, 3) or degree strings ('90deg', '180deg', '270deg').
+     * Returns 0–3 (quarter turns).
+     */
+    private function parseRotate(mixed $value): int
+    {
+        $str = trim((string) ($value ?? ''));
+
+        if ($str === '' || $str === '0') {
+            return 0;
+        }
+
+        if (str_ends_with($str, 'deg')) {
+            $deg = (int) substr($str, 0, -3);
+            // Convert degrees to quarter turns (0–3)
+            return (int) round(((($deg % 360) + 360) % 360) / 90) % 4;
+        }
+
+        return ((int) $str % 4 + 4) % 4;
+    }
+
+    private function parseBool(mixed $value): bool
+    {
+        return in_array((string) ($value ?? ''), ['1', 'true', 'yes'], true);
+    }
+
+    private function detectMode(string $body, ?string $requested): string
+    {
+        if ($requested === 'mask' || $requested === 'background') {
+            return $requested;
+        }
+
+        return str_contains($body, 'currentColor') ? 'mask' : 'background';
+    }
+
+    /** @return string[]|null  null = no filter (return all icons) */
     private function parseIconList(?string $icons): ?array
     {
         if ($icons === null || trim($icons) === '') {
@@ -170,11 +442,18 @@ class IconifyController
         }
 
         return collect(explode(',', $icons))
-            ->map(fn (string $key) => trim($key))
+            ->map(fn ($k) => trim($k))
             ->filter()
             ->unique()
             ->values()
             ->all();
+    }
+
+    private function attrString(array $attrs): string
+    {
+        return collect($attrs)
+            ->map(fn ($v, $k) => sprintf('%s="%s"', $k, htmlspecialchars((string) $v, ENT_QUOTES | ENT_XML1)))
+            ->implode(' ');
     }
 
     private function lastModifiedTimestamp(): int
@@ -182,5 +461,15 @@ class IconifyController
         $latest = Icon::query()->max('updated_at');
 
         return $latest ? Carbon::parse($latest)->getTimestamp() : 0;
+    }
+
+    private function currentSpace(): Space
+    {
+        return app('currentSpace');
+    }
+
+    private function abortIfUnknownPrefix(string $prefix): void
+    {
+        abort_unless($prefix === self::PREFIX, 404);
     }
 }

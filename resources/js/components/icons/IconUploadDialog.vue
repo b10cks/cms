@@ -2,6 +2,7 @@
 import { api } from '~/api'
 import Icon from '~/components/Icon.vue'
 import IconPreview from '~/components/icons/IconPreview.vue'
+import IconTagsInput from '~/components/icons/IconTagsInput.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { InputField } from '~/components/ui/form'
@@ -37,7 +38,7 @@ interface QueueItem {
 }
 
 const queue = ref<QueueItem[]>([])
-const sharedTags = ref('')
+const sharedTags = ref<string[]>([])
 const isDragging = ref(false)
 const isUploading = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -137,13 +138,6 @@ const checkKeyTaken = async (item: QueueItem) => {
   }
 }
 
-const parsedTags = computed(() =>
-  sharedTags.value
-    .split(',')
-    .map((tag) => tag.trim())
-    .filter(Boolean)
-)
-
 const toggleCurrentColor = (item: QueueItem) => {
   item.useCurrentColor = !item.useCurrentColor
   item.body = item.useCurrentColor
@@ -177,7 +171,7 @@ const submit = async () => {
           body: item.useCurrentColor ? item.body : undefined,
           key: item.key,
           name: item.name,
-          tags: parsedTags.value.length ? parsedTags.value : undefined,
+          tags: sharedTags.value.length ? sharedTags.value : undefined,
         },
         (progress) => {
           item.progress = progress
@@ -203,7 +197,7 @@ const submit = async () => {
 
 const reset = () => {
   queue.value = []
-  sharedTags.value = ''
+  sharedTags.value = []
 }
 
 watch(open, (value) => {
@@ -327,12 +321,12 @@ watch(open, (value) => {
         </div>
       </ScrollArea>
 
-      <InputField
+      <IconTagsInput
         v-if="queue.length"
         v-model="sharedTags"
+        :space-id="spaceId"
         name="tags"
         :label="t('labels.icons.tagsForBatch')"
-        :placeholder="t('labels.icons.tagsPlaceholder')"
       />
 
       <DialogFooter>

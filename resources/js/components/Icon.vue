@@ -3,25 +3,20 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import type { HTMLAttributes } from 'vue'
 
 const props = defineProps<{
-  name: string
+  name?: string | null
   size?: string | number
   class?: HTMLAttributes['class']
 }>()
 
 const iconData = computed(() => {
   const icon = props.name
+  if (!icon) return null
 
-  if (icon.startsWith('lucide:')) {
-    return icon
-  }
-
-  if (icon.startsWith('flag:')) {
-    return icon
-  }
+  if (icon.startsWith('lucide:')) return icon
+  if (icon.startsWith('flag:')) return icon
 
   if (icon.startsWith('b10cks:')) {
-    const iconName = icon.replace('b10cks:', '')
-    return `custom:${iconName}`
+    return `custom:${icon.slice('b10cks:'.length)}`
   }
 
   return icon
@@ -37,6 +32,7 @@ const iconSize = computed(() => {
 
 <template>
   <IconifyIcon
+    v-if="iconData"
     :icon="iconData"
     :width="iconSize"
     :height="iconSize"

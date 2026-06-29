@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useQuery } from '@tanstack/vue-query'
 import Icon from '~/components/Icon.vue'
 import IconGrid from '~/components/icons/IconGrid.vue'
 import IconifyPicker from '~/components/icons/IconifyPicker.vue'
@@ -7,28 +8,29 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/u
 import { Label } from '~/components/ui/form'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { splitIconName } from '~/lib/iconify'
-import type { IconResource, IconValue } from '~/types/icons'
+import { api } from '~/api'
+import type { IconResource } from '~/types/icons'
 
 const props = defineProps<{
   item: IconSchema & { key: string }
-  modelValue?: IconValue | null
+  modelValue?: string | null
   spaceId: string
   readOnly?: boolean
 }>()
 
 const emit = defineEmits<{
-  'update:modelValue': [value: IconValue | null]
+  'update:modelValue': [value: string | null]
 }>()
 
 const { t } = useI18n()
 
-const localValue = ref<IconValue | null>(null)
+const localValue = ref<string | null>(null)
 watch(
   () => props.modelValue,
   (value) => {
-    localValue.value = value ? { ...value } : null
+    localValue.value = value ?? null
   },
-  { immediate: true, deep: true }
+  { immediate: true }
 )
 
 const hasValue = computed(() => !!localValue.value)
@@ -39,36 +41,49 @@ const iconifySource = computed<'all' | 'collections'>(() =>
   props.item.source === 'collections' ? 'collections' : 'all'
 )
 
+const isRegistry = computed(() => localValue.value?.startsWith('b10cks:') ?? false)
+const registryKey = computed(() =>
+  isRegistry.value ? localValue.value!.slice('b10cks:'.length) : null
+)
+
+// Load registry icon body on-demand for display (not stored in content)
+const registryIconQuery = useQuery({
+  queryKey: computed(() => queryKeys.icons(props.spaceId).list({ key: registryKey.value })),
+  queryFn: async () => {
+    const response = await api.forSpace(props.spaceId).icons.index({
+      sort: '+key',
+      key: registryKey.value!,
+      per_page: 1,
+    })
+    return response.data[0] ?? null
+  },
+  enabled: isRegistry,
+})
+const registryIcon = computed<IconResource | null>(() => registryIconQuery.data.value ?? null)
+
 const pickerOpen = ref(false)
 const activeTab = ref<'registry' | 'iconify'>('registry')
 
-const setValue = (value: IconValue | null) => {
+const setValue = (value: string | null) => {
   localValue.value = value
   emit('update:modelValue', value)
 }
 
 const handleRegistrySelect = (icon: IconResource) => {
-  setValue({
-    source: 'registry',
-    id: icon.id,
-    external_id: icon.external_id,
-    key: `b10cks:${icon.key}`,
-    name: icon.name,
-    body: icon.body,
-    width: icon.width,
-    height: icon.height,
-  })
+  setValue(`b10cks:${icon.key}`)
   pickerOpen.value = false
 }
 
 const handleIconifySelect = (iconName: string) => {
-  setValue({
-    source: 'iconify',
-    key: iconName,
-    name: splitIconName(iconName).name.replace(/-/g, ' '),
-  })
+  setValue(iconName)
   pickerOpen.value = false
 }
+
+const displayName = computed(() => {
+  if (!localValue.value) return ''
+  if (isRegistry.value && registryIcon.value) return registryIcon.value.name
+  return splitIconName(localValue.value).name.replace(/-/g, ' ')
+})
 
 const clear = () => setValue(null)
 
@@ -107,21 +122,21 @@ const openPicker = () => {
     >
       <div class="flex size-12 shrink-0 items-center justify-center rounded border border-input bg-background text-primary">
         <IconPreview
-          v-if="localValue.source === 'registry'"
-          :body="localValue.body"
-          :width="localValue.width"
-          :height="localValue.height"
+          v-if="isRegistry && registryIcon"
+          :body="registryIcon.body"
+          :width="registryIcon.width"
+          :height="registryIcon.height"
           size="28"
         />
         <Icon
-          v-else
-          :name="localValue.key"
+          v-else-if="!isRegistry"
+          :name="localValue"
           size="28"
         />
       </div>
       <div class="min-w-0 flex-1">
-        <p class="truncate font-semibold text-primary">{{ localValue.name }}</p>
-        <p class="truncate text-sm text-muted">{{ localValue.key }}</p>
+        <p class="truncate font-semibold text-primary">{{ displayName }}</p>
+        <p class="truncate text-sm text-muted">{{ localValue }}</p>
       </div>
       <div class="ml-auto flex items-center gap-2 opacity-0 group-hover:opacity-100">
         <button

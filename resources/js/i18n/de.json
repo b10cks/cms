@@ -1034,9 +1034,9 @@
         "default": "Standardwert",
         "icon": {
           "source": "Icon-Quelle",
-          "sourceRegistry": "Nur Space-Registry",
-          "sourceAll": "Registry + öffentliches Iconify",
-          "sourceCollections": "Registry + bestimmte Sammlungen",
+          "sourceRegistry": "Nur Space-Icons",
+          "sourceAll": "Space-Icons + öffentliches Iconify",
+          "sourceCollections": "Space-Icons + bestimmte Sammlungen",
           "allowedCollections": "Erlaubte Iconify-Sammlungen",
           "allowedCollectionsPlaceholder": "Sammlungen suchen (z. B. mdi, lucide, tabler)"
         },
@@ -3007,7 +3007,7 @@
       "description": "Beschreibung",
       "tags": "Tags",
       "tagsForBatch": "Tags (für alle übernehmen)",
-      "tagsPlaceholder": "Tags durch Komma getrennt",
+      "tagsPlaceholder": "Tag hinzufügen…",
       "uploadTitle": "Icons hochladen",
       "dropHint": "SVG-Dateien hierher ziehen oder zum Auswählen klicken",
       "dropSubHint": "Nur .svg-Dateien werden unterstützt",
@@ -3018,7 +3018,8 @@
       "deleteTitle": "Icon löschen",
       "replaceSvg": "SVG ersetzen",
       "replaceHint": "Lade ein neues SVG hoch, um das aktuelle zu ersetzen",
-      "useCurrentColor": "currentColor verwenden",
+      "useCurrentColor": "Farben ersetzen",
+      "useCurrentColorHint": "Ersetzt alle festen Füll- und Strichfarben in diesem Icon durch die aktuelle Vordergrundfarbe – das ändert den SVG-Quellcode",
       "editSvgSource": "SVG-Quellcode bearbeiten",
       "svgSource": "SVG-Quellcode",
       "width": "Breite",
@@ -3032,9 +3033,9 @@
       },
       "field": {
         "add": "Icon hinzufügen",
-        "addHint": "Wähle ein Icon aus der Registry",
+        "addHint": "Wähle ein Icon aus deiner Icon-Bibliothek",
         "selectTitle": "Icon auswählen",
-        "tabRegistry": "Registry",
+        "tabRegistry": "Icons",
         "tabIconify": "Iconify",
         "iconifyPlaceholder": "Iconify durchsuchen (z. B. home, arrow)…",
         "iconifyEmpty": "Gib mindestens 2 Zeichen ein, um zu suchen.",
@@ -3042,7 +3043,9 @@
         "searchAllHint": "Tippe, um die gesamte Iconify-Bibliothek zu durchsuchen.",
         "loadMore": "Mehr laden",
         "showingCount": "{shown} von {total} werden angezeigt"
-      }
+      },
+      "tagsEmpty": "Keine Tags gefunden",
+      "tagsCreate": "'{tag}' erstellen"
     },
     "geo": {
       "field": {

@@ -15,26 +15,12 @@ export interface IconResource {
 /**
  * Value stored by the `icon` content field.
  *
- * Registry icons keep a denormalized SVG snapshot (so delivered content renders without a lookup)
- * and a `b10cks:`-prefixed key. Public Iconify icons only store the fully-qualified key
- * (e.g. `mdi:home`) and render through `@iconify/vue` directly.
+ * Always a fully-qualified icon name: `b10cks:{key}` for space registry icons,
+ * or `{collection}:{name}` for any public Iconify icon (e.g. `mdi:home`).
+ * The SVG body is never stored here — it is fetched from the Iconify-compatible
+ * delivery API at render time.
  */
-export type IconValue =
-  | {
-      source: 'registry'
-      id: string
-      external_id?: string | null
-      key: string
-      name: string
-      body: string
-      width: number
-      height: number
-    }
-  | {
-      source: 'iconify'
-      key: string
-      name: string
-    }
+export type IconValue = string
 
 export interface UploadIconPayload {
   file?: File

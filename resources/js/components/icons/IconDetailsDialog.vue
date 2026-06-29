@@ -3,14 +3,15 @@ import Icon from '~/components/Icon.vue'
 import IconPreview from '~/components/icons/IconPreview.vue'
 import { Button } from '~/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from '~/components/ui/dialog'
 import FileDropZone from '~/components/ui/FileDropZone.vue'
 import { InputField, Label, TextField } from '~/components/ui/form'
+import IconTagsInput from '~/components/icons/IconTagsInput.vue'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 import type { IconResource, UpdateIconPayload } from '~/types/icons'
 import { replaceColorsWithCurrentColor } from '~/utils/svg'
@@ -48,7 +49,7 @@ const form = reactive({
   key: '',
   name: '',
   description: '',
-  tags: '',
+  tags: [] as string[],
   body: '',
   width: 24,
   height: 24,
@@ -62,7 +63,7 @@ const resetForm = () => {
   form.key = props.icon?.key ?? ''
   form.name = props.icon?.name ?? ''
   form.description = props.icon?.description ?? ''
-  form.tags = (props.icon?.tags ?? []).join(', ')
+  form.tags = props.icon?.tags ?? []
   form.body = props.icon?.body ?? ''
   form.width = props.icon?.width ?? 24
   form.height = props.icon?.height ?? 24
@@ -84,17 +85,12 @@ watch(replacementFile, async (file) => {
 const previewBody = computed(() => form.body || props.icon?.body || '')
 const bodyChanged = computed(() => !!props.icon && form.body !== props.icon.body)
 
+const selectedColor = ref<string | null>(null)
+
 const applyCurrentColor = () => {
   form.body = replaceColorsWithCurrentColor(previewBody.value)
   svgEditorOpen.value = true
 }
-
-const parsedTags = computed(() =>
-  form.tags
-    .split(',')
-    .map((tag) => tag.trim())
-    .filter(Boolean),
-)
 
 const save = async () => {
   if (!props.icon) return
@@ -103,7 +99,7 @@ const save = async () => {
     key: form.key,
     name: form.name,
     description: form.description || null,
-    tags: parsedTags.value,
+    tags: form.tags,
   }
 
   if (bodyChanged.value) {
@@ -150,7 +146,7 @@ const remove = async () => {
           <!-- Main preview on selected background -->
           <div
             class="flex size-24 shrink-0 items-center justify-center rounded-md transition-colors"
-            :class="BG_CLASSES[previewBg]"
+            :class="[BG_CLASSES[previewBg], selectedColor ?? '']"
           >
             <IconPreview
               :body="previewBody"
@@ -161,10 +157,10 @@ const remove = async () => {
           </div>
 
           <!-- Controls column -->
-          <div class="flex flex-1 flex-col justify-between gap-3">
+          <div class="flex flex-1 flex-col gap-3">
             <!-- Background switcher -->
             <div class="flex items-center gap-2">
-              <span class="text-xs text-muted">{{ t('labels.icons.previewBg') }}</span>
+              <span class="text-sm text-muted">{{ t('labels.icons.previewBg') }}</span>
               <div class="flex gap-1">
                 <button
                   v-for="(cls, bg) in BG_CLASSES"
@@ -172,7 +168,7 @@ const remove = async () => {
                   type="button"
                   :title="t(`labels.icons.bg.${bg}`)"
                   :class="[
-                    'size-5 rounded border-2 transition-colors',
+                    'size-5 rounded border-2 transition-colors cursor-pointer',
                     cls,
                     previewBg === bg ? 'border-primary' : 'border-input hover:border-muted',
                     bg === 'checkered' ? 'bg-checkered' : '',
@@ -184,13 +180,20 @@ const remove = async () => {
 
             <!-- Color swatches: visual currentColor check -->
             <div class="flex items-center gap-2">
-              <span class="text-xs text-muted">{{ t('labels.icons.colorCheck') }}</span>
+              <span class="text-sm text-muted">{{ t('labels.icons.colorCheck') }}</span>
               <div class="flex gap-1">
-                <div
+                <button
                   v-for="swatch in COLOR_SWATCHES"
                   :key="swatch.color"
+                  type="button"
                   :title="swatch.label"
-                  :class="['flex size-7 items-center justify-center rounded border border-input bg-white', swatch.color]"
+                  :class="[
+                    'flex size-7 items-center justify-center rounded border-2 transition-colors cursor-pointer',
+                    BG_CLASSES[previewBg],
+                    swatch.color,
+                    selectedColor === swatch.color ? 'border-primary' : 'border-input hover:border-muted',
+                  ]"
+                  @click="selectedColor = selectedColor === swatch.color ? null : swatch.color"
                 >
                   <IconPreview
                     :body="previewBody"
@@ -198,59 +201,78 @@ const remove = async () => {
                     :height="form.height"
                     size="18"
                   />
-                </div>
+                </button>
               </div>
             </div>
 
-            <!-- Action buttons -->
-            <div class="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                @click="applyCurrentColor"
-              >
-                <Icon name="lucide:pipette" />
-                {{ t('labels.icons.useCurrentColor') }}
-              </Button>
-              <button
-                type="button"
-                class="flex items-center gap-1 text-xs text-muted hover:text-primary"
-                @click="svgEditorOpen = !svgEditorOpen"
-              >
-                <Icon
-                  :name="svgEditorOpen ? 'lucide:chevron-up' : 'lucide:chevron-down'"
-                  size="14"
-                />
-                {{ t('labels.icons.editSvgSource') }}
-              </button>
+            <!-- Dimensions -->
+            <div class="flex items-center gap-1.5 text-sm text-muted">
+              <Icon
+                name="lucide:ruler"
+              />
+              <span>{{ form.width }}×{{ form.height }}</span>
             </div>
           </div>
         </div>
 
-        <!-- Size bar -->
-        <div class="flex items-center gap-1.5 border-t border-input bg-surface px-4 py-1.5 text-xs text-muted">
-          <Icon
-            name="lucide:ruler"
-            size="12"
-          />
-          <span>{{ form.width }}×{{ form.height }}</span>
-        </div>
       </div>
 
-      <Transition name="slide-down">
-        <div
-          v-if="svgEditorOpen"
-          class="grid gap-1"
-        >
-          <Label :label="t('labels.icons.svgSource')" />
-          <textarea
-            v-model="form.body"
-            rows="8"
-            spellcheck="false"
-            class="w-full resize-y rounded-md border border-input bg-background px-3 py-2 font-mono text-xs text-primary focus:outline-none focus:ring-2 focus:ring-ring"
-          />
+      <!-- SVG editing group -->
+      <div class="overflow-hidden rounded-lg border border-input">
+        <div class="flex items-center justify-between px-3 py-2">
+          <button
+            type="button"
+            class="flex items-center gap-1.5 text-sm text-muted hover:text-primary"
+            @click="svgEditorOpen = !svgEditorOpen"
+          >
+            <Icon
+              :name="svgEditorOpen ? 'lucide:chevron-up' : 'lucide:chevron-down'"
+              size="14"
+            />
+            {{ t('labels.icons.editSvgSource') }}
+          </button>
+          <Button
+            variant="outline"
+            size="sm"
+            :title="t('labels.icons.useCurrentColorHint')"
+            @click="applyCurrentColor"
+          >
+            <Icon name="lucide:replace" />
+            {{ t('labels.icons.useCurrentColor') }}
+          </Button>
         </div>
-      </Transition>
+
+        <Transition name="slide-down">
+          <div
+            v-if="svgEditorOpen"
+            class="grid gap-3 border-t border-input p-3"
+          >
+            <div class="grid gap-1">
+              <Label :label="t('labels.icons.svgSource')" />
+              <textarea
+                v-model="form.body"
+                rows="8"
+                spellcheck="false"
+                class="w-full resize-y rounded-md border border-input bg-background px-3 py-2 font-mono text-sm text-primary focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <InputField
+                v-model.number="form.width"
+                name="width"
+                type="number"
+                :label="t('labels.icons.width')"
+              />
+              <InputField
+                v-model.number="form.height"
+                name="height"
+                type="number"
+                :label="t('labels.icons.height')"
+              />
+            </div>
+          </div>
+        </Transition>
+      </div>
 
       <div class="grid grid-cols-2 gap-3">
         <InputField
@@ -265,21 +287,6 @@ const remove = async () => {
         />
       </div>
 
-      <div class="grid grid-cols-2 gap-3">
-        <InputField
-          v-model.number="form.width"
-          name="width"
-          type="number"
-          :label="t('labels.icons.width')"
-        />
-        <InputField
-          v-model.number="form.height"
-          name="height"
-          type="number"
-          :label="t('labels.icons.height')"
-        />
-      </div>
-
       <TextField
         v-model="form.description"
         name="description"
@@ -287,11 +294,11 @@ const remove = async () => {
         :rows="2"
       />
 
-      <InputField
+      <IconTagsInput
         v-model="form.tags"
+        :space-id="spaceId"
         name="tags"
         :label="t('labels.icons.tags')"
-        :placeholder="t('labels.icons.tagsPlaceholder')"
       />
 
       <div class="grid gap-2">
