@@ -413,6 +413,15 @@ watch(
 
     if (currentSerialized === sanitizedSerialized) return
 
+    // If persisted was in sync with content before pruning (no user changes), keep them in sync.
+    // This prevents schema-driven pruning of hidden conditional fields from creating false dirty state.
+    if (
+      persistedContent.value &&
+      JSON.stringify(persistedContent.value.content) === currentSerialized
+    ) {
+      persistedContent.value.content = JSON.parse(sanitizedSerialized)
+    }
+
     content.value.content = JSON.parse(sanitizedSerialized)
   },
   { deep: true }
