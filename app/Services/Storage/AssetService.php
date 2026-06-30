@@ -557,6 +557,73 @@ class AssetService
     }
 
     /**
+     * Replace the physical file of an existing asset, keeping the same ID and content references.
+     * A unique suffix is appended to the filename to bust CDN caches.
+     */
+    public function replaceFile(Asset $asset, UploadedFile $file, Space $space): Asset
+    {
+        $storage = StorageModel::findOrFail($asset->storage_id);
+        $filesystem = $this->storageService->getStorage($storage);
+
+        $originalFilename = $file->getClientOriginalName();
+        $extension = $file->getClientOriginalExtension();
+        $mimeType = $file->getMimeType();
+        $uniqueFilename = $asset->filename.'_'.Str::random(8);
+        $relativePath = "{$space->id}/{$asset->id}/{$uniqueFilename}.{$extension}";
+
+        $stream = fopen($file->getRealPath(), 'r');
+        $filesystem->writeStream($relativePath, $stream);
+        if (is_resource($stream)) {
+            fclose($stream);
+        }
+
+        $newMetadata = array_merge(
+            $this->extractMetadata($file, $mimeType),
+            ['original_filename' => $originalFilename]
+        );
+
+        if (Str::startsWith($mimeType, 'video/')) {
+            $thumbnailPaths = $this->generateVideoThumbnails($file, $space->id, $asset->id, $uniqueFilename, $filesystem);
+            if (! empty($thumbnailPaths)) {
+                $newMetadata['thumbnails'] = $thumbnailPaths;
+            }
+        }
+
+        $oldPath = $asset->path;
+        $oldThumbnails = $asset->metadata['thumbnails'] ?? [];
+
+        // filename (display name) is intentionally preserved
+        $asset->extension = $extension;
+        $asset->mime_type = $mimeType;
+        $asset->size = $file->getSize();
+        $asset->path = $relativePath;
+        $asset->metadata = $newMetadata;
+        $asset->save();
+
+        // Remove old files after successful save
+        $filesToDelete = array_filter(array_merge(
+            [$oldPath],
+            array_column($oldThumbnails, 'path')
+        ));
+
+        foreach (array_unique($filesToDelete) as $oldFile) {
+            try {
+                if ($filesystem->fileExists($oldFile)) {
+                    $filesystem->delete($oldFile);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to delete old file during asset replacement', [
+                    'asset' => $asset->id,
+                    'path' => $oldFile,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $asset;
+    }
+
+    /**
      * Rename an asset file and update its path.
      *
      * @param  string  $newFilename  (without extension)

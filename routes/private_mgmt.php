@@ -270,6 +270,8 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::apiResource('asset-tags', AssetTagController::class);
     Route::get('assets/{asset}/linked-contents', AssetLinkedContentController::class)
         ->name('assets.linked-contents');
+    Route::post('assets/{asset}/replace-file', [AssetController::class, 'replaceFile'])
+        ->name('assets.replace-file');
     Route::apiResource('assets', AssetController::class);
 
     Route::get('icons/tags', [IconController::class, 'tags'])->name('icons.tags');

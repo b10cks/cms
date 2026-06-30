@@ -52,6 +52,38 @@ const {
 
 const ilumBaseUrl = (runtimeConfig.public.ilum.baseURL || '').replace(/\/$/, '')
 
+const { useReplaceAssetFileMutation } = useAssets(props.spaceId)
+const { mutate: replaceFile, isPending: isReplacing } = useReplaceAssetFileMutation()
+const replaceProgress = ref(0)
+const replaceFileInputRef = useTemplateRef<HTMLInputElement>('replaceFileInput')
+
+const triggerReplaceFile = () => replaceFileInputRef.value?.click()
+
+const onReplaceFileSelected = (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file || !assetCopy.value) return
+  const targetId = assetCopy.value.id
+  replaceProgress.value = 0
+  replaceFile(
+    {
+      id: targetId,
+      file,
+      onProgress: (p) => { replaceProgress.value = p },
+    },
+    {
+      onSuccess: (updated) => {
+        if (updated) assetCopy.value = deepClone(updated)
+        replaceProgress.value = 0
+        if (replaceFileInputRef.value) replaceFileInputRef.value.value = ''
+      },
+      onError: () => {
+        replaceProgress.value = 0
+        if (replaceFileInputRef.value) replaceFileInputRef.value.value = ''
+      },
+    }
+  )
+}
+
 const assetCopy = ref<AssetResource | null>(null)
 const imageContainer = ref<HTMLElement | null>(null)
 const imageRef = useTemplateRef('imageRef')
@@ -374,6 +406,31 @@ const loadMoreLinkedContents = () => {
             </div>
           </div>
           <div
+            v-else-if="getFileType(asset.mime_type) === 'audio'"
+            class="flex w-full flex-col items-center gap-4 py-8"
+          >
+            <Icon
+              name="lucide:file-audio"
+              size="3rem"
+              class="text-muted"
+            />
+            <audio
+              controls
+              :src="asset.url ?? undefined"
+              class="w-full"
+            />
+          </div>
+          <div
+            v-else-if="asset.mime_type === 'application/pdf'"
+            class="w-full"
+          >
+            <iframe
+              :src="asset.url ?? undefined"
+              class="h-[60svh] w-full rounded-lg border-0"
+              :title="asset.filename"
+            />
+          </div>
+          <div
             v-else
             class="flex h-75 w-full flex-col items-center justify-center gap-4"
           >
@@ -419,6 +476,26 @@ const loadMoreLinkedContents = () => {
                   : $t('labels.assets.setFocusPoint')
               }}</span>
             </Button>
+            <template v-if="!props.readOnly">
+              <input
+                ref="replaceFileInput"
+                type="file"
+                class="hidden"
+                @change="onReplaceFileSelected"
+              />
+              <Button
+                variant="outline"
+                class="ml-auto flex items-center gap-2"
+                :disabled="isReplacing"
+                @click="triggerReplaceFile"
+              >
+                <Icon
+                  :name="isReplacing ? 'lucide:loader-circle' : 'lucide:refresh-cw'"
+                  :class="{ 'animate-spin': isReplacing }"
+                />
+                <span>{{ isReplacing ? `${replaceProgress}%` : $t('labels.assets.replaceMedia') }}</span>
+              </Button>
+            </template>
           </div>
         </div>
         <div class="space-y-4 md:col-span-4">

@@ -103,6 +103,47 @@ export class Assets extends BaseResource<
     return this.client.post<ApiResponse<AssetResource>>(this.basePath, formData)
   }
 
+  public async replaceFile(
+    assetId: string,
+    file: File,
+    onProgress?: (progress: number) => void
+  ): Promise<AssetResource | null> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+
+      if (onProgress) {
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            onProgress(Math.round((event.loaded / event.total) * 100))
+          }
+        })
+      }
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText)
+            resolve(response.data ?? null)
+          } catch {
+            reject(new Error('Failed to parse server response'))
+          }
+        } else {
+          reject(new Error(`Replace failed with status ${xhr.status}: ${xhr.statusText}`))
+        }
+      })
+      xhr.addEventListener('error', () => reject(new Error('Network error during file replace')))
+      xhr.addEventListener('abort', () => reject(new Error('File replace was aborted')))
+
+      xhr.open('POST', `${this.basePath}/${assetId}/replace-file`)
+      xhr.withCredentials = true
+      Object.entries(getXsrfHeaders()).forEach(([k, v]) => xhr.setRequestHeader(k, v))
+      xhr.send(formData)
+    })
+  }
+
   public async getLinkedContents(
     assetId: string,
     query: LinkedAssetContentsQueryParams = {}

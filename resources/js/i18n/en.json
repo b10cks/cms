@@ -3566,7 +3566,9 @@
       "exportError": "Failed to export assets: {error}",
       "importSuccess": "Assets imported successfully",
       "importError": "Failed to import assets: {error}",
-      "uploadError": "Failed to upload asset"
+      "uploadError": "Failed to upload asset",
+      "replaceSuccess": "Asset file replaced successfully",
+      "replaceError": "Failed to replace asset file: {error}"
     },
     "blockFolders": {
       "createSuccess": "Folder \"{name}\" created successfully",

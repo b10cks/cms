@@ -205,6 +205,34 @@ export function useAssets(spaceId: MaybeRef<string>) {
     })
   }
 
+  const useReplaceAssetFileMutation = () => {
+    return useMutation({
+      mutationFn: async ({
+        id,
+        file,
+        onProgress,
+      }: {
+        id: string
+        file: File
+        onProgress?: (progress: number) => void
+      }) => {
+        return await spaceAPI.value.assets.replaceFile(id, file, onProgress)
+      },
+      onSuccess: (data) => {
+        if (data) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
+          queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).detail(data.id) })
+          toast.success(t('composables.assets.replaceSuccess') as string)
+        }
+      },
+      onError: (err: Error) => {
+        toast.error(
+          t('composables.assets.replaceError', { error: err.message || 'Unknown error' }) as string
+        )
+      },
+    })
+  }
+
   const useExportAssetsMutation = () => {
     return useMutation({
       mutationFn: async (params: AssetsQueryParams & { as: ExportTypes }) => {
@@ -251,6 +279,7 @@ export function useAssets(spaceId: MaybeRef<string>) {
     // Mutations
     useUpdateAssetMutation,
     useDeleteAssetMutation,
+    useReplaceAssetFileMutation,
     useExportAssetsMutation,
     useImportAssetsMutation,
     uploadAsset,

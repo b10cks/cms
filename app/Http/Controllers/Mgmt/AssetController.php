@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Mgmt;
 
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\AssetFilter;
+use App\Http\Requests\Asset\ReplaceAssetFileRequest;
 use App\Http\Requests\Asset\StoreAssetRequest;
 use App\Http\Requests\Asset\UpdateAssetRequest;
 use App\Http\Resources\Management\AssetResource;
@@ -138,6 +139,31 @@ class AssetController extends Controller
         $asset->save();
 
         return new AssetResource($asset->load('folder'));
+    }
+
+    /**
+     * Replace the physical file of an existing asset (keeps ID, busts CDN cache via new filename).
+     */
+    public function replaceFile(
+        Space $space,
+        Asset $asset,
+        ReplaceAssetFileRequest $request,
+        AssetService $assetService
+    ): AssetResource|JsonResponse {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
+
+        try {
+            $asset = $assetService->replaceFile($asset, $request->file('file'), $space);
+
+            return new AssetResource($asset->load('folder'));
+        } catch (\Exception $e) {
+            Log::error('Failed to replace asset file', [
+                'asset_id' => $asset->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['message' => 'Failed to replace asset file: '.$e->getMessage()], 500);
+        }
     }
 
     /**

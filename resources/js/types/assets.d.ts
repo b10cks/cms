@@ -48,7 +48,7 @@ export interface AssetResource {
   full_path: string
   folder_id: string | null
   folder?: AssetFolderResource
-  metadata: Record<string, unknown> & { thumbnails?: AssetVideoThumbnail[] }
+  metadata: Record<string, unknown> & { thumbnails?: AssetVideoThumbnail[]; duration?: number }
   data: Record<string, unknown> & { focus?: { x: number; y: number } }
   tags: string[]
   linked_contents_count: number

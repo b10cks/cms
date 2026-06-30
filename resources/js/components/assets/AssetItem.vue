@@ -61,6 +61,33 @@ const isSelectMode = computed(() => props.mode === 'select')
 const isManageMode = computed(() => props.mode === 'manage')
 const enableDragAndDrop = computed(() => props.draggable && isManageMode.value)
 const displayCheckbox = computed(() => props.showCheckbox && isManageMode.value)
+
+const hoverThumbnailIndex = ref(0)
+let thumbnailInterval: ReturnType<typeof setInterval> | null = null
+
+const startThumbnailCycle = () => {
+  const thumbs = props.asset.metadata.thumbnails
+  if (!thumbs || thumbs.length <= 1) return
+  thumbnailInterval = setInterval(() => {
+    hoverThumbnailIndex.value = (hoverThumbnailIndex.value + 1) % thumbs.length
+  }, 900)
+}
+
+const stopThumbnailCycle = () => {
+  if (thumbnailInterval) {
+    clearInterval(thumbnailInterval)
+    thumbnailInterval = null
+  }
+  hoverThumbnailIndex.value = 0
+}
+
+const formatVideoDuration = (seconds: number): string => {
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+onUnmounted(() => stopThumbnailCycle())
 const rootElement = ref<HTMLElement | null>(null)
 const resolvedDragItems = computed(() => {
   return props.dragItems.length ? props.dragItems : [{ id: props.asset.id, type: 'asset' as const }]
@@ -166,15 +193,19 @@ watchEffect((onCleanup) => {
         :modifiers="{ crop: 'fill' }"
         class="pointer-events-none h-full w-full object-cover"
       />
-      <template v-else-if="getFileType(asset.mime_type) === 'video'">
+      <template
+        v-else-if="getFileType(asset.mime_type) === 'video'"
+        @mouseenter="startThumbnailCycle"
+        @mouseleave="stopThumbnailCycle"
+      >
         <NuxtImg
-          v-if="asset.metadata.thumbnails?.[0]"
-          :src="asset.metadata.thumbnails[0].path"
+          v-if="asset.metadata.thumbnails?.[hoverThumbnailIndex]"
+          :src="asset.metadata.thumbnails[hoverThumbnailIndex].path"
           :alt="asset.filename"
           :width="size"
           :height="size"
           :modifiers="{ crop: 'fill' }"
-          class="pointer-events-none h-full w-full object-cover"
+          class="pointer-events-none h-full w-full object-cover transition-opacity duration-300"
         />
         <div
           v-else
@@ -226,7 +257,9 @@ watchEffect((onCleanup) => {
           />
         </div>
         <div class="text-sm text-muted">
-          {{ asset.extension }} • {{ formatFileSize(asset.size) }} • {{ linkedContentsLabel }}
+          {{ asset.extension }} • {{ formatFileSize(asset.size) }}<template
+            v-if="asset.metadata.duration"
+          > • {{ formatVideoDuration(asset.metadata.duration) }}</template> • {{ linkedContentsLabel }}
         </div>
       </div>
       <DropdownMenu

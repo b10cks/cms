@@ -3520,7 +3520,9 @@
       "exportError": "Fehler beim Exportieren von Assets: {error}",
       "importSuccess": "Assets erfolgreich importiert",
       "importError": "Fehler beim Importieren von Assets: {error}",
-      "uploadError": "Fehler beim Hochladen des Assets"
+      "uploadError": "Fehler beim Hochladen des Assets",
+      "replaceSuccess": "Asset-Datei erfolgreich ersetzt",
+      "replaceError": "Fehler beim Ersetzen der Asset-Datei: {error}"
     },
     "blockFolders": {
       "createSuccess": "Ordner \"{name}\" erfolgreich erstellt",
