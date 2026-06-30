@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.6.30-e1188f35] — 2026-6-30
+
+- 👔 Improve Asset Manager
+- 🚸 Handle video assets better
+
 ## [v2026.6.30-3fc583f9] — 2026-6-30
 
 - ⬆️ Bump versions
