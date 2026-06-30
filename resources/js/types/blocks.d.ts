@@ -31,6 +31,7 @@ type CanonicalSchemaTypeName =
   | 'table'
   | 'icon'
   | 'geo'
+  | 'price'
 
 type LegacySchemaTypeName = 'multiAsset' | 'reference' | 'block'
 
@@ -168,6 +169,12 @@ interface GeoSchema extends Schema {
   key_style: GeoKeyStyle
   altitude: boolean
   map: boolean
+}
+
+interface PriceSchema extends Schema {
+  type: 'price'
+  base_currency: string
+  currencies: string[]
 }
 
 interface ReferencesSchema extends Schema {
@@ -308,6 +315,7 @@ type SchemaType =
   | TableSchema
   | IconSchema
   | GeoSchema
+  | PriceSchema
 
 interface EditorPage {
   header: string

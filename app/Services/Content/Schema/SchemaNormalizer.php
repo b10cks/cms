@@ -171,7 +171,7 @@ class SchemaNormalizer
 
     public function supportsIndexing(string $type): bool
     {
-        return !\in_array($type, ['asset', 'multi_assets', 'icon', 'geo', 'references', 'boolean', 'options', 'table'], true);
+        return !\in_array($type, ['asset', 'multi_assets', 'icon', 'geo', 'price', 'references', 'boolean', 'options', 'table'], true);
     }
 
     protected function normalizeConditions(array $attributes): ?array

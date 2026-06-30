@@ -300,6 +300,14 @@ const createDefaultSchemaForType = (type: string, key: string): SchemaType => {
         map: true,
         default: null,
       } as GeoSchema
+    case 'price':
+      return {
+        ...baseSchema,
+        type: 'price',
+        base_currency: 'EUR',
+        currencies: [],
+        default: null,
+      } as PriceSchema
     case 'blocks':
       return {
         ...baseSchema,

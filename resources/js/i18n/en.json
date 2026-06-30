@@ -1059,6 +1059,13 @@
           "map": "Show map picker?",
           "mapDescription": "Let editors drop a pin on an interactive map to set the coordinates."
         },
+        "price": {
+          "baseCurrency": "Base currency",
+          "baseCurrencyDescription": "ISO 4217 code of the primary currency (e.g. EUR). This currency is always required when the field is required.",
+          "currencies": "Additional currencies",
+          "currenciesDescription": "Optional extra currencies editors can fill in. No automatic conversion.",
+          "currenciesPlaceholder": "USD"
+        },
         "templates": "Templates",
         "previewTemplate": "Preview template",
         "previewTemplateDescription": "Use handlebars syntax to create a preview template.",
@@ -1238,6 +1245,10 @@
         "geo": {
           "label": "Geo Coordinates",
           "description": "Latitude/longitude point with optional altitude and map picker"
+        },
+        "price": {
+          "label": "Price",
+          "description": "Structured price with a base currency and optional additional currencies"
         }
       },
       "options": {
@@ -3076,6 +3087,11 @@
         "latitude": "Latitude",
         "longitude": "Longitude",
         "altitude": "Altitude"
+      }
+    },
+    "price": {
+      "field": {
+        "amount": "Amount"
       }
     }
   },

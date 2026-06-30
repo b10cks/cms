@@ -20,6 +20,7 @@ class BlockSchemaRequestValidator
         'multi_assets',
         'icon',
         'geo',
+        'price',
         'references',
         'date',
         'meta',
@@ -95,6 +96,10 @@ class BlockSchemaRequestValidator
 
             if ($type === 'geo') {
                 $errors = $this->validateGeoField($errors, $key, $field);
+            }
+
+            if ($type === 'price') {
+                $errors = $this->validatePriceField($errors, $key, $field);
             }
         }
 
@@ -301,6 +306,34 @@ class BlockSchemaRequestValidator
 
         if (array_key_exists('map', $field) && ! is_bool($field['map'])) {
             $errors["schema.{$key}.map"][] = 'The map toggle must be true or false.';
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param  array<string, array<int, string>>  $errors
+     * @param  array<string, mixed>  $field
+     * @return array<string, array<int, string>>
+     */
+    protected function validatePriceField(array $errors, string $key, array $field): array
+    {
+        $baseCurrency = $field['base_currency'] ?? '';
+
+        if (! is_string($baseCurrency) || ! preg_match('/^[A-Z]{1,3}$/', $baseCurrency)) {
+            $errors["schema.{$key}.base_currency"][] = 'The base currency must be a 1–3 letter ISO 4217 code (uppercase).';
+        }
+
+        if (array_key_exists('currencies', $field)) {
+            if (! is_array($field['currencies'])) {
+                $errors["schema.{$key}.currencies"][] = 'The currencies must be an array.';
+            } else {
+                foreach ($field['currencies'] as $index => $code) {
+                    if (! is_string($code) || ! preg_match('/^[A-Z]{1,3}$/', $code)) {
+                        $errors["schema.{$key}.currencies.{$index}"][] = 'Each currency must be a 1–3 letter ISO 4217 code (uppercase).';
+                    }
+                }
+            }
         }
 
         return $errors;

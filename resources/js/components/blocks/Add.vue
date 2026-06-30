@@ -21,6 +21,7 @@ const types = [
   'multi_assets',
   'icon',
   'geo',
+  'price',
   'meta',
   'table',
 ]

@@ -1051,6 +1051,13 @@
           "map": "Kartenauswahl anzeigen?",
           "mapDescription": "Ermögliche es Redakteuren, die Koordinaten per Pin auf einer interaktiven Karte zu setzen."
         },
+        "price": {
+          "baseCurrency": "Basiswährung",
+          "baseCurrencyDescription": "ISO-4217-Code der primären Währung (z. B. EUR). Diese Währung ist Pflicht, wenn das Feld als erforderlich markiert ist.",
+          "currencies": "Weitere Währungen",
+          "currenciesDescription": "Optionale Zusatzwährungen, die Redakteure befüllen können. Keine automatische Umrechnung.",
+          "currenciesPlaceholder": "USD"
+        },
         "templates": "Vorlagen",
         "previewTemplate": "Vorschau-Vorlage",
         "previewTemplateDescription": "Nutze Handlebars-Syntax, um eine Vorschau-Vorlage zu erstellen.",
@@ -1238,6 +1245,10 @@
         "geo": {
           "label": "Geo-Koordinaten",
           "description": "Breiten-/Längengrad-Punkt mit optionaler Höhe und Kartenauswahl"
+        },
+        "price": {
+          "label": "Preis",
+          "description": "Strukturierter Preis mit einer Basiswährung und optionalen weiteren Währungen"
         }
       },
       "options": {
@@ -3052,6 +3063,11 @@
         "latitude": "Breitengrad",
         "longitude": "Längengrad",
         "altitude": "Höhe"
+      }
+    },
+    "price": {
+      "field": {
+        "amount": "Betrag"
       }
     }
   },

@@ -44,6 +44,7 @@ const types: Record<string, BlockType> = {
   },
   icon: { cls: 'text-yellow-300 border border-yellow-400 bg-yellow-800', icon: 'lucide:shapes' },
   geo: { cls: 'text-blue-400 border border-accent bg-blue-900', icon: 'lucide:map-pin' },
+  price: { cls: 'text-emerald-400 border border-emerald-500 bg-emerald-900', icon: 'lucide:coins' },
   table: { cls: 'text-gray-400 border border-gray-500 bg-gray-800', icon: 'lucide:table' },
   meta: { cls: 'text-gray-400 border border-gray-500 bg-gray-800', icon: 'lucide:search' },
 }

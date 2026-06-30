@@ -223,6 +223,7 @@ class ContentSchemaValidator
             'meta' => $this->validateMeta($field, $value),
             'table' => $this->validateTable($field, $value),
             'geo' => $this->validateGeo($field, $value, $mode),
+            'price' => $this->validatePrice($field, $value, $mode),
             default => [],
         };
     }
@@ -346,6 +347,43 @@ class ContentSchemaValidator
                 }
             } elseif (! is_numeric($altitude)) {
                 $messages[] = sprintf('%s altitude must be a number.', $field->getLabel());
+            }
+        }
+
+        return $messages;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function validatePrice(SchemaField $field, mixed $value, string $mode = 'publish'): array
+    {
+        if (! is_array($value)) {
+            return [sprintf('%s must be a price object.', $field->getLabel())];
+        }
+
+        $baseCurrency = $field->getAttribute('base_currency', '');
+        $currencies = array_filter(
+            array_merge([$baseCurrency], $field->getAttribute('currencies', []) ?? []),
+            static fn ($c) => is_string($c) && $c !== ''
+        );
+        $messages = [];
+
+        foreach ($value as $code => $amount) {
+            if (! in_array($code, $currencies, true)) {
+                $messages[] = sprintf('%s contains an unexpected currency "%s".', $field->getLabel(), $code);
+                continue;
+            }
+
+            if ($amount !== null && (! is_numeric($amount) || (float) $amount < 0)) {
+                $messages[] = sprintf('%s amount for %s must be a non-negative number.', $field->getLabel(), $code);
+            }
+        }
+
+        if ($field->isRequired() && $mode === 'publish') {
+            $baseAmount = $value[$baseCurrency] ?? null;
+            if ($baseAmount === null || ! is_numeric($baseAmount)) {
+                $messages[] = sprintf('%s requires a price in %s.', $field->getLabel(), $baseCurrency);
             }
         }
 
