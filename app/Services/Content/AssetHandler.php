@@ -63,6 +63,15 @@ class AssetHandler
                     $result = $assetFields + ($src['data'] ?? []);
                     $result['focus'] = data_get($src, 'data.focus', data_get($asset, 'data.focus', null));
 
+                    $metadata = \Arr::only($asset->metadata, ['width', 'height', 'thumbnails', 'duration']);
+                    if (! empty($metadata['thumbnails'])) {
+                        $metadata['thumbnails'] = array_map(function (array $thumb) use ($asset) {
+                            $thumb['full_path'] = $asset->storage_id.'/'.$thumb['path'];
+
+                            return $thumb;
+                        }, $metadata['thumbnails']);
+                    }
+
                     $src =
                         [
                             'url' => $asset->getUrl(),
@@ -72,7 +81,7 @@ class AssetHandler
                             'extension' => $asset->extension,
                             'mime_type' => $asset->mime_type,
                             'size' => $asset->size,
-                            'metadata' => \Arr::only($asset->metadata, ['width', 'height', 'thumbnails', 'duration']),
+                            'metadata' => $metadata,
                         ] + $src;
                 }
 

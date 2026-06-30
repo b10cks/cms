@@ -12,13 +12,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
+import IconName from '~/components/ui/IconName.vue'
 import type { AssetRequirementIssue } from '~/composables/useAssetRequirements'
 import {
   createAssetManagerDragData,
   setAssetManagerDragPreview,
   type AssetManagerDragItem,
 } from '~/lib/assets/assetDragAndDrop'
-import type { AssetResource } from '~/types/assets'
+import type { AssetResource, AssetTagResource } from '~/types/assets'
 
 const { t } = useI18n()
 const { formatFileSize } = useFormat()
@@ -36,6 +37,7 @@ export interface AssetItemProps {
   showCheckbox?: boolean
   dragItems?: AssetManagerDragItem[]
   complianceIssues?: AssetRequirementIssue[]
+  resolvedTags?: AssetTagResource[]
 }
 
 const props = withDefaults(defineProps<AssetItemProps>(), {
@@ -49,6 +51,7 @@ const props = withDefaults(defineProps<AssetItemProps>(), {
   showCheckbox: true,
   dragItems: () => [],
   complianceIssues: () => [],
+  resolvedTags: () => [],
 })
 
 const emit = defineEmits<{
@@ -200,11 +203,11 @@ watchEffect((onCleanup) => {
       >
         <NuxtImg
           v-if="asset.metadata.thumbnails?.[hoverThumbnailIndex]"
-          :src="asset.metadata.thumbnails[hoverThumbnailIndex].path"
+          :src="asset.metadata.thumbnails[hoverThumbnailIndex].full_path"
           :alt="asset.filename"
           :width="size"
           :height="size"
-          :modifiers="{ crop: 'fill' }"
+          crop="fill"
           class="pointer-events-none h-full w-full object-cover transition-opacity duration-300"
         />
         <div
@@ -246,8 +249,27 @@ watchEffect((onCleanup) => {
           class="rounded-full border-2 border-accent bg-background p-1 text-accent"
         />
       </div>
+
+      <div
+        v-if="resolvedTags.length"
+        class="absolute bottom-2 left-2 right-2 flex flex-wrap gap-1"
+      >
+        <span
+          v-for="tag in resolvedTags"
+          :key="tag.id"
+          class="inline-flex max-w-full items-center rounded-md px-1.5 py-0.5 text-xs font-medium shadow-sm backdrop-blur-sm"
+          :style="tag.color ? { backgroundColor: tag.color + 'cc', color: '#fff' } : {}"
+          :class="tag.color ? '' : 'bg-black/60 text-white'"
+        >
+          <IconName
+            :icon="tag.icon"
+            :name="tag.name"
+            class="truncate"
+          />
+        </span>
+      </div>
     </div>
-    <div class="flex items-center gap-2 p-2">
+    <div class="flex items-center gap-2 p-2 select-none">
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2 truncate font-semibold">
           <span class="truncate">{{ asset.filename }}</span>
@@ -257,9 +279,11 @@ watchEffect((onCleanup) => {
           />
         </div>
         <div class="text-sm text-muted">
-          {{ asset.extension }} • {{ formatFileSize(asset.size) }}<template
-            v-if="asset.metadata.duration"
-          > • {{ formatVideoDuration(asset.metadata.duration) }}</template> • {{ linkedContentsLabel }}
+          {{ asset.extension }} • {{ formatFileSize(asset.size)
+          }}<template v-if="asset.metadata.duration">
+            • {{ formatVideoDuration(asset.metadata.duration) }}</template
+          >
+          • {{ linkedContentsLabel }}
         </div>
       </div>
       <DropdownMenu

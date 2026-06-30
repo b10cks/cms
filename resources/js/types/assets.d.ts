@@ -35,6 +35,7 @@ export interface AssetFolderResource {
 
 export interface AssetVideoThumbnail {
   path: string
+  full_path: string
   position: number
   position_formatted: string
 }
@@ -97,14 +98,11 @@ export interface AssetValue {
 
 export interface AssetTagResource {
   id: string
+  external_id: string | null
   name: string
-  slug: string
   icon: string | null
   color: string | null
-  description: string | null
-  space_id: string
   assets_count?: number
-  assets?: AssetResource[] | number | null
   created_at: string
   updated_at: string
 }

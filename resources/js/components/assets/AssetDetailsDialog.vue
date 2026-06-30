@@ -15,7 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog'
-import { InputField } from '~/components/ui/form'
+import { ComboboxField, InputField } from '~/components/ui/form'
+import IconName from '~/components/ui/IconName.vue'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { isClient } from '~/lib/env'
 import type { AssetResource, LinkedAssetContentResource } from '~/types/assets'
@@ -38,6 +39,16 @@ const props = withDefaults(
 )
 
 const { useFolderStructure } = useAssetFolders(props.spaceId)
+const { useAssetTagsQuery } = useAssetTags(props.spaceId)
+const { data: allTagsResponse } = useAssetTagsQuery({ per_page: 500 })
+const tagOptions = computed(() =>
+  (allTagsResponse.value?.data ?? []).map((tag) => ({
+    value: tag.id,
+    label: tag.name,
+    icon: tag.icon,
+    color: tag.color,
+  }))
+)
 const { useAssetLinkedContentsQuery } = useAssets(props.spaceId)
 const { getBreadcrumbs } = useFolderStructure()
 const { getFileType } = useFileUtils()
@@ -313,7 +324,7 @@ const loadMoreLinkedContents = () => {
   >
     <DialogContent
       v-if="asset && assetCopy"
-      class="max-w-11/12!"
+      class="max-w-11/12! max-h-[90vh] flex flex-col overflow-hidden"
     >
       <DialogHeader>
         <p
@@ -329,7 +340,7 @@ const loadMoreLinkedContents = () => {
         <DialogTitle>{{ asset.filename }}</DialogTitle>
         <p>.{{ asset.extension }}</p>
       </DialogHeader>
-      <div class="grid gap-6 py-4 md:grid-cols-12">
+      <div class="grid gap-6 py-4 md:grid-cols-12 flex-1 min-h-0 overflow-hidden">
         <div
           class="checkerboard flex flex-col items-center justify-center rounded-xl p-4 md:col-span-8"
         >
@@ -378,7 +389,7 @@ const loadMoreLinkedContents = () => {
               ref="videoRef"
               controls
               :src="asset.url ?? undefined"
-              :poster="asset.metadata.thumbnails?.[0]?.path ? buildIlumUrl(asset.metadata.thumbnails[0].path, { width: 1200, crop: 'fit' }, ilumBaseUrl) : undefined"
+              :poster="asset.metadata.thumbnails?.[0]?.full_path ? buildIlumUrl(asset.metadata.thumbnails[0].full_path, { width: 1200, crop: 'fit' }, ilumBaseUrl) : undefined"
               class="max-h-[calc(60svh)] w-full rounded-lg object-contain"
             />
             <div
@@ -393,7 +404,7 @@ const loadMoreLinkedContents = () => {
                 @click="seekVideoTo(thumb.position)"
               >
                 <NuxtImg
-                  :src="thumb.path"
+                  :src="thumb.full_path"
                   :width="120"
                   :height="68"
                   crop="fill"
@@ -498,7 +509,7 @@ const loadMoreLinkedContents = () => {
             </template>
           </div>
         </div>
-        <div class="space-y-4 md:col-span-4">
+        <div class="space-y-4 md:col-span-4 overflow-y-auto">
           <InputField
             v-model="assetCopy.filename"
             name="filename"
@@ -506,6 +517,34 @@ const loadMoreLinkedContents = () => {
             required
             :disabled="props.readOnly"
           />
+
+          <ComboboxField
+            v-if="tagOptions.length"
+            v-model="assetCopy.tags"
+            name="asset_tags"
+            :label="$t('labels.assetTags.title')"
+            :placeholder="$t('labels.assetTags.fields.namePlaceholder')"
+            :options="tagOptions"
+            :readonly="props.readOnly"
+            multiple
+            searchable
+            :empty-text="$t('labels.assetTags.noTags')"
+          >
+            <template #option="{ option }">
+              <IconName
+                :icon="option.icon"
+                :color="option.color"
+                :name="option.label"
+              />
+            </template>
+            <template #selected="{ option }">
+              <IconName
+                :icon="option?.icon"
+                :color="option?.color"
+                :name="option?.label ?? String(option?.value)"
+              />
+            </template>
+          </ComboboxField>
 
           <Tabs
             v-if="mode === 'normal'"
@@ -546,10 +585,12 @@ const loadMoreLinkedContents = () => {
                       v-for="(value, key) in asset.metadata"
                       :key="key"
                     >
-                      <dt class="font-semibold">
-                        {{ String($t(`labels.assets.metadata.${key}`) || formatKey(key)) }}:
-                      </dt>
-                      <dd class="wrap-break-word">{{ value }}</dd>
+                      <template v-if="key !== 'thumbnails'">
+                        <dt class="font-semibold">
+                          {{ String($t(`labels.assets.metadata.${key}`) || formatKey(key)) }}:
+                        </dt>
+                        <dd class="wrap-break-word">{{ value }}</dd>
+                      </template>
                     </template>
                   </dl>
                 </div>

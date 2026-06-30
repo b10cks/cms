@@ -228,13 +228,20 @@
     },
     "assetTags": {
       "title": "Asset Tags",
-      "create": "New tag",
-      "createDescription": "Organize your assets into tags.",
+      "description": "Tag your assets to organize and filter them.",
+      "createTag": "New tag",
+      "editTag": "Edit tag",
+      "deleteTitle": "Delete this tag?",
+      "deleteConfirmation": "Delete \"{name}\"? This won't affect the assets — just removes the tag.",
+      "noTags": "No tags yet. Create one to organize your assets.",
       "fields": {
         "name": "Tag name",
-        "namePlaceholder": "My awesome tag",
-        "description": "Description",
-        "descriptionPlaceholder": "What goes in here?"
+        "namePlaceholder": "Enter a tag name",
+        "color": "Color",
+        "icon": "Icon",
+        "assetsCount": "Assets tagged",
+        "createdAt": "Created",
+        "updatedAt": "Last updated"
       }
     },
     "assetFolders": {
@@ -3391,6 +3398,12 @@
       "uploadNew": "Upload icons",
       "upload": "Upload {count}",
       "replace": "Replace"
+    },
+    "assetTags": {
+      "add": "New Tag",
+      "edit": "Edit Tag",
+      "delete": "Delete Tag",
+      "save": "Save tag"
     }
   },
   "navigation": {
@@ -3555,7 +3568,9 @@
       "updateSuccess": "Tag \"{name}\" updated successfully",
       "updateError": "Failed to update tag: {error}",
       "deleteSuccess": "Tag deleted successfully",
-      "deleteError": "Failed to delete tag: {error}"
+      "deleteError": "Failed to delete tag: {error}",
+      "assignSuccess": "Tag assigned successfully",
+      "assignError": "Failed to assign tag: {error}"
     },
     "assets": {
       "uploadSuccess": "Assets uploaded successfully",

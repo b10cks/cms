@@ -1,98 +1,118 @@
 <script setup lang="ts">
-import { TreeItem, TreeRoot } from 'reka-ui'
+import { TreeRoot } from 'reka-ui'
 
+import CreateAssetTagDialog from '~/components/assets/CreateAssetTagDialog.vue'
+import AssetTagTreeItem from '~/components/assets/AssetTagTreeItem.vue'
 import Icon from '~/components/Icon.vue'
-import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
-import IconGrid from '~/components/ui/IconGrid.vue'
-import { Input } from '~/components/ui/input'
-import { UpsertAssetTagPayload } from '~/types/assets'
+import type { AssetTagResource } from '~/types/assets'
 
-const route = useRoute()
+const props = defineProps<{
+  spaceId: string
+}>()
+
+const { $t } = useI18n()
+const { alert } = useAlertDialog()
 const { useAccessControl } = useAuthorization()
-const { useAssetTagsQuery } = useAssetTags(route.params.spaceId as string)
-const { data: tags } = useAssetTagsQuery({
-  per_page: 500,
-  sort: '+name',
-})
+const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
+const canManageTags = computed(() => access.hasAbility('asset_tags.manage'))
+
+const {
+  useAssetTagsQuery,
+  useUpdateAssetTagMutation,
+  useDeleteAssetTagMutation,
+  useAssignTagToAssetsMutation,
+} = useAssetTags(props.spaceId)
+const { data: tags } = useAssetTagsQuery({ per_page: 500, sort: '+name' })
+const { mutate: updateTag } = useUpdateAssetTagMutation()
+const { mutate: deleteTag } = useDeleteAssetTagMutation()
+const { mutate: assignTagToAssets } = useAssignTagToAssetsMutation()
 
 const selectedTagId = defineModel<string | null>()
 
-const showNewTag = ref(false)
-const newTag = ref<UpsertAssetTagPayload>({
-  name: '',
-  color: null,
-  icon: 'tag',
-})
+const tagDialogOpen = ref(false)
+const editingTag = ref<AssetTagResource | null>(null)
 
-const { useCreateAssetTagMutation } = useAssetTags(route.params.spaceId as string)
-const { mutate: createTag } = useCreateAssetTagMutation()
-const access = useAccessControl(computed(() => ({ space_id: route.params.spaceId as string })))
-const canManageTags = computed(() => access.hasAbility('asset_tags.manage'))
+function openCreateDialog() {
+  editingTag.value = null
+  tagDialogOpen.value = true
+}
 
-function create() {
-  if (newTag.value.name) {
-    createTag(newTag.value)
-    newTag.value = { name: '', color: null, icon: 'tag' }
-    showNewTag.value = false
+function openEditDialog(tag: AssetTagResource) {
+  editingTag.value = tag
+  tagDialogOpen.value = true
+}
+
+function handleRename(newName: string, tag: AssetTagResource) {
+  if (!newName || newName === tag.name) return
+  updateTag({ id: tag.id, payload: { name: newName, icon: tag.icon, color: tag.color } })
+}
+
+function handleAssignDrop(tagId: string, assetIds: string[]) {
+  assignTagToAssets({ tagId, assetIds })
+}
+
+async function handleDelete(tag: AssetTagResource) {
+  const confirmed = await alert.confirm(
+    $t('labels.assetTags.deleteConfirmation', { name: tag.name }),
+    {
+      title: $t('labels.assetTags.deleteTitle'),
+      confirmLabel: $t('actions.delete'),
+      variant: 'destructive',
+    }
+  )
+  if (confirmed) {
+    deleteTag(tag.id)
+    if (selectedTagId.value === tag.id) {
+      selectedTagId.value = null
+    }
   }
 }
 </script>
 
 <template>
-  <TreeRoot
-    v-slot="{ flattenItems }"
-    class="w-full list-none select-none"
-    :items="tags"
-    :get-key="(item) => item?.id"
-    :get-children="() => undefined"
-  >
-    <div class="flex">
-      <h2 class="px-2 pt-1 pb-3 text-sm font-semibold text-primary">
-        {{ $t('labels.assetTags.title') }}
-      </h2>
-      <Button
-        v-if="canManageTags"
-        class="ml-auto"
-        variant="ghost"
-        size="xs"
-        @click="showNewTag = !showNewTag"
-      >
-        <Icon name="lucide:plus" />
-      </Button>
-    </div>
-    <div
-      v-if="canManageTags && showNewTag"
-      class="flex gap-2"
+  <div>
+    <TreeRoot
+      v-slot="{ flattenItems }"
+      class="w-full list-none select-none"
+      :items="tags?.data ?? []"
+      :get-key="(item) => item?.id"
+      :get-children="() => undefined"
     >
-      <IconGrid v-model="newTag.icon" />
-      <Input v-model="newTag.name" />
-      <Button @click="create">
-        <Icon name="lucide:plus" />
-      </Button>
-    </div>
-    <TreeItem
-      v-for="item in flattenItems"
-      :key="item._id"
-      :style="{ 'padding-left': `${item.level - 0.5}rem` }"
-      v-bind="item.bind"
-      :class="[
-        'my-0.5 flex items-center gap-2 rounded-md px-2 py-2 outline-none',
-        'transition-colors duration-200 hover:bg-input',
-        'cursor-pointer font-semibold',
-        item.value.id === selectedTagId ? 'bg-input text-primary' : '',
-      ]"
-      @select="selectedTagId = item.value.id"
-    >
-      <Icon
-        v-if="item.value.icon"
-        :name="`lucide:${item.value.icon}`"
-        :style="{ color: item.value.color }"
-      />
-      <div class="truncate">
-        {{ item.value.name }}
+      <div class="my-2 flex items-center px-2">
+        <h2 class="text-sm font-semibold text-primary">
+          {{ $t('labels.assetTags.title') }}
+        </h2>
+        <Button
+          v-if="canManageTags"
+          class="ml-auto"
+          size="xs"
+          @click="openCreateDialog"
+        >
+          <Icon name="lucide:plus" />
+        </Button>
       </div>
-      <Badge>{{ item.value.assets_count || 0 }}</Badge>
-    </TreeItem>
-  </TreeRoot>
+
+      <AssetTagTreeItem
+        v-for="item in flattenItems"
+        :key="item._id"
+        :item="item"
+        :selected-tag-id="selectedTagId ?? null"
+        :can-manage-tags="canManageTags"
+        class="my-0.5"
+        @select="selectedTagId = $event"
+        @rename="(name, tag) => handleRename(name, tag)"
+        @edit="openEditDialog"
+        @delete="handleDelete"
+        @assign-drop="handleAssignDrop"
+      />
+    </TreeRoot>
+
+    <CreateAssetTagDialog
+      v-if="canManageTags"
+      v-model:open="tagDialogOpen"
+      :space-id="spaceId"
+      :tag="editingTag"
+    />
+  </div>
 </template>

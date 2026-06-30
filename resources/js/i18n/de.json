@@ -223,13 +223,20 @@
     },
     "assetTags": {
       "title": "Asset-Tags",
-      "create": "Neuer Tag",
-      "createDescription": "Organisiere deine Assets in Tags.",
+      "description": "Markiere deine Assets mit Tags, um sie zu organisieren und zu filtern.",
+      "createTag": "Neuer Tag",
+      "editTag": "Tag bearbeiten",
+      "deleteTitle": "Diesen Tag löschen?",
+      "deleteConfirmation": "\"{name}\" löschen? Das betrifft die Assets nicht — der Tag wird nur entfernt.",
+      "noTags": "Noch keine Tags. Erstelle einen, um deine Assets zu organisieren.",
       "fields": {
         "name": "Tag-Name",
-        "namePlaceholder": "Mein großartiger Tag",
-        "description": "Beschreibung",
-        "descriptionPlaceholder": "Was gehört hier rein?"
+        "namePlaceholder": "Tag-Namen eingeben",
+        "color": "Farbe",
+        "icon": "Symbol",
+        "assetsCount": "Markierte Assets",
+        "createdAt": "Erstellt",
+        "updatedAt": "Zuletzt aktualisiert"
       }
     },
     "assetFolders": {
@@ -3367,6 +3374,12 @@
       "uploadNew": "Icons hochladen",
       "upload": "{count} hochladen",
       "replace": "Ersetzen"
+    },
+    "assetTags": {
+      "add": "Neuer Tag",
+      "edit": "Tag bearbeiten",
+      "delete": "Tag löschen",
+      "save": "Tag speichern"
     }
   },
   "navigation": {
@@ -3509,7 +3522,9 @@
       "updateSuccess": "Tag \"{name}\" erfolgreich aktualisiert",
       "updateError": "Fehler beim Aktualisieren des Tags: {error}",
       "deleteSuccess": "Tag erfolgreich gelöscht",
-      "deleteError": "Fehler beim Löschen des Tags: {error}"
+      "deleteError": "Fehler beim Löschen des Tags: {error}",
+      "assignSuccess": "Tag erfolgreich zugewiesen",
+      "assignError": "Fehler beim Zuweisen des Tags: {error}"
     },
     "assets": {
       "uploadSuccess": "Assets erfolgreich hochgeladen",

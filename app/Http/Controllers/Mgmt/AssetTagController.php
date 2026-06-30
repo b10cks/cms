@@ -7,6 +7,7 @@ use App\Http\Filters\Mgmt\AssetTagFilter;
 use App\Http\Requests\Asset\UpsertAssetTagRequest;
 use App\Http\Resources\Management\AssetTagResource;
 use App\Models\Management\Space;
+use App\Models\Space\Asset;
 use App\Models\Space\AssetTag;
 use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\JsonResponse;
@@ -16,59 +17,65 @@ use Illuminate\Support\Facades\Log;
 
 class AssetTagController extends Controller
 {
-    /**
-     * Display a listing of the tags.
-     */
     public function index(Space $space, Request $request): ResourceCollection
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_tags.view'), 403);
         $filter = new AssetTagFilter($request->all());
 
-        $tags = AssetTag::filter($filter)->get();
+        $tags = AssetTag::filter($filter)
+            ->withCount(['assets'])
+            ->paginate(min($request->per_page ?? 25, 500));
 
         return AssetTagResource::collection($tags);
     }
 
-    /**
-     * Store a newly created tag.
-     */
     public function store(Space $space, UpsertAssetTagRequest $request): AssetTagResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_tags.manage'), 403);
         $tag = new AssetTag($request->validated());
-        abort_unless($tag->save(), 500, 'Failed to create tag');
+        abort_unless($tag->save(), 500, 'Failed to create asset tag');
 
-        return new AssetTagResource($tag);
+        return new AssetTagResource($tag->loadCount(['assets']));
     }
 
-    /**
-     * Display the specified tag.
-     */
     public function show(Space $space, AssetTag $tag): AssetTagResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_tags.view'), 403);
-
-        return new AssetTagResource($tag);
+        return new AssetTagResource($tag->loadCount(['assets']));
     }
 
-    /**
-     * Update the specified tag.
-     */
     public function update(UpsertAssetTagRequest $request, Space $space, AssetTag $tag): AssetTagResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_tags.manage'), 403);
         $tag->fill($request->validated());
-        $tag->save();
+        abort_unless($tag->save(), 500, 'Failed to update asset tag');
 
-        return new AssetTagResource($tag);
+        return new AssetTagResource($tag->loadCount(['assets']));
     }
 
-    /**
-     * Remove the specified tag.
-     */
+    public function assignAssets(Request $request, Space $space, AssetTag $tag): JsonResponse
+    {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
+
+        $request->validate([
+            'asset_ids' => ['required', 'array', 'min:1'],
+            'asset_ids.*' => ['required', 'string'],
+        ]);
+
+        foreach ($request->input('asset_ids') as $assetId) {
+            $asset = Asset::find($assetId);
+            if (!$asset) {
+                continue;
+            }
+            $tags = $asset->tags ?? [];
+            if (!in_array($tag->id, $tags)) {
+                $tags[] = $tag->id;
+                $asset->tags = $tags;
+                $asset->save();
+            }
+        }
+
+        return response()->json(null, 204);
+    }
+
     public function destroy(Space $space, AssetTag $tag): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_tags.manage'), 403);
         try {
             $tag->delete();
 
@@ -80,7 +87,7 @@ class AssetTagController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'An error occurred while deleting the tag',
+                'message' => 'An error occurred while deleting the asset tag',
             ], 500);
         }
     }

@@ -17,16 +17,14 @@ export function useAssetTags(spaceId: MaybeRef<string>) {
     return useQuery({
       queryKey: computed(() => queryKeys.assetTags(spaceId).list(params)),
       queryFn: async () => {
-        const response = await spaceAPI.value.assetTags.index({
+        return await spaceAPI.value.assetTags.index({
+          sort: '+name',
           ...toValue(params),
-          sort: '+name', // Default sorting
         })
-        return response.data
       },
     })
   }
 
-  // Query to fetch a single asset tag
   const useAssetTagQuery = (id: MaybeRef<string>) => {
     return useQuery({
       queryKey: computed(() => queryKeys.assetTags(spaceId).detail(id)),
@@ -37,7 +35,6 @@ export function useAssetTags(spaceId: MaybeRef<string>) {
     })
   }
 
-  // Mutation to create an asset tag
   const useCreateAssetTagMutation = () => {
     return useMutation({
       mutationFn: async (payload: UpsertAssetTagPayload) => {
@@ -45,7 +42,6 @@ export function useAssetTags(spaceId: MaybeRef<string>) {
         return response.data
       },
       onSuccess: (data) => {
-        // Invalidate the asset tags list query to trigger a refetch
         queryClient.invalidateQueries({ queryKey: queryKeys.assetTags(spaceId).lists() })
         toast.success(t('composables.assetTags.createSuccess', { name: data.name }) as string)
       },
@@ -59,7 +55,6 @@ export function useAssetTags(spaceId: MaybeRef<string>) {
     })
   }
 
-  // Mutation to update an asset tag
   const useUpdateAssetTagMutation = () => {
     return useMutation({
       mutationFn: async ({ id, payload }: { id: string; payload: UpsertAssetTagPayload }) => {
@@ -67,7 +62,6 @@ export function useAssetTags(spaceId: MaybeRef<string>) {
         return response.data
       },
       onSuccess: (data) => {
-        // Invalidate the asset tags list and the specific tag detail
         queryClient.invalidateQueries({ queryKey: queryKeys.assetTags(spaceId).lists() })
         queryClient.invalidateQueries({
           queryKey: queryKeys.assetTags(spaceId).detail(data.id),
@@ -84,7 +78,6 @@ export function useAssetTags(spaceId: MaybeRef<string>) {
     })
   }
 
-  // Mutation to delete an asset tag
   const useDeleteAssetTagMutation = () => {
     return useMutation({
       mutationFn: async (id: string) => {
@@ -92,10 +85,8 @@ export function useAssetTags(spaceId: MaybeRef<string>) {
         return id
       },
       onSuccess: (id) => {
-        // Invalidate the asset tags list and remove the deleted tag from cache
         queryClient.invalidateQueries({ queryKey: queryKeys.assetTags(spaceId).lists() })
         queryClient.removeQueries({ queryKey: queryKeys.assetTags(spaceId).detail(id) })
-        // Also invalidate assets that might have used this tag
         queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
         toast.success(t('composables.assetTags.deleteSuccess') as string)
       },
@@ -109,22 +100,27 @@ export function useAssetTags(spaceId: MaybeRef<string>) {
     })
   }
 
-  // Helper to find a tag by slug
-  const useTagBySlug = (slug: MaybeRef<string>) => {
-    const { data: tags, isLoading } = useAssetTagsQuery({})
-
-    const tag = computed(() => {
-      if (!tags.value) return null
-      return tags.value.find((t) => t.slug === toValue(slug)) || null
+  const useAssignTagToAssetsMutation = () => {
+    return useMutation({
+      mutationFn: async ({ tagId, assetIds }: { tagId: string; assetIds: string[] }) => {
+        await spaceAPI.value.assetTags.assign(tagId, assetIds)
+        return { tagId, assetIds }
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.assetTags(spaceId).lists() })
+        toast.success(t('composables.assetTags.assignSuccess') as string)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.assetTags.assignError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
     })
-
-    return {
-      tag,
-      isLoading,
-    }
   }
 
-  // Query to fetch assets for a specific tag
   const useAssetsForTagQuery = (tagId: MaybeRef<string>) => {
     return useQuery({
       queryKey: computed(() => [...queryKeys.assets(spaceId).lists(), { tag: toValue(tagId) }]),
@@ -138,17 +134,12 @@ export function useAssetTags(spaceId: MaybeRef<string>) {
   }
 
   return {
-    // Queries
     useAssetTagsQuery,
     useAssetTagQuery,
     useAssetsForTagQuery,
-
-    // Helpers
-    useTagBySlug,
-
-    // Mutations
     useCreateAssetTagMutation,
     useUpdateAssetTagMutation,
     useDeleteAssetTagMutation,
+    useAssignTagToAssetsMutation,
   }
 }

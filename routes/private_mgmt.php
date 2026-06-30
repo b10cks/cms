@@ -267,7 +267,11 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
     Route::delete('contents/{content}/presence', [PresenceController::class, 'leaveContentPresence'])->name('spaces.contents.presence.leave');
 
     Route::apiResource('asset-folders', AssetFolderController::class);
-    Route::apiResource('asset-tags', AssetTagController::class);
+    Route::apiResource('asset-tags', AssetTagController::class)->parameters([
+        'asset-tags' => 'tag',
+    ]);
+    Route::post('asset-tags/{tag}/assign', [AssetTagController::class, 'assignAssets'])
+        ->name('asset-tags.assign');
     Route::get('assets/{asset}/linked-contents', AssetLinkedContentController::class)
         ->name('assets.linked-contents');
     Route::post('assets/{asset}/replace-file', [AssetController::class, 'replaceFile'])

@@ -23,4 +23,8 @@ export class AssetTags extends BaseResource<
     super(client)
     this.basePath = `/mgmt/v1/spaces/${spaceId}/asset-tags`
   }
+
+  async assign(tagId: string, assetIds: string[]): Promise<void> {
+    await this.client.post(`${this.basePath}/${tagId}/assign`, { asset_ids: assetIds })
+  }
 }

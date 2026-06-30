@@ -29,7 +29,7 @@ class AssetResource extends JsonResource
             'full_path' => $this->full_path,
             'folder_id' => $this->folder_id,
             'folder' => $this->whenLoaded('folder', fn () => new AssetFolderResource($this->folder)),
-            'metadata' => $this->metadata,
+            'metadata' => $this->enrichMetadata($this->metadata),
             'data' => $this->data && count($this->data) ? $this->data : new \StdClass,
             'tags' => $this->tags,
             'linked_contents_count' => (int) ($this->resource->getAttributes()['linked_contents_count'] ?? 0),
@@ -38,6 +38,21 @@ class AssetResource extends JsonResource
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
+    }
+
+    private function enrichMetadata(?array $metadata): ?array
+    {
+        if (empty($metadata['thumbnails'])) {
+            return $metadata;
+        }
+
+        $metadata['thumbnails'] = array_map(function (array $thumb) {
+            $thumb['full_path'] = $this->storage_id . '/' . $thumb['path'];
+
+            return $thumb;
+        }, $metadata['thumbnails']);
+
+        return $metadata;
     }
 
     private function resolveEffectiveAssetFields(Request $request, ?Space $space): array

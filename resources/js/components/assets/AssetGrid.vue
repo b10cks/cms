@@ -55,6 +55,8 @@ const { useAccessControl } = useAuthorization()
 const { settings } = useSpaceSettings(props.spaceId)
 const { useFolderStructure, useDeleteAssetFolderMutation } = useAssetFolders(props.spaceId)
 const { useAssetsQuery, useDeleteAssetMutation, useUpdateAssetMutation } = useAssets(props.spaceId)
+const { useAssetTagsQuery } = useAssetTags(props.spaceId)
+const { data: allTagsResponse } = useAssetTagsQuery({ per_page: 500 })
 const { getBreadcrumbs, getChildrenOfFolder } = useFolderStructure()
 const { canMoveItems, moveItemsToFolder } = useAssetLibraryMoves(props.spaceId)
 const { getMissingRequiredFields, isCompliant } = useAssetRequirements(props.spaceId)
@@ -161,6 +163,18 @@ const folders = computed(() => {
 })
 
 const assets = computed(() => assetResponse.value?.data || [])
+
+const tagMap = computed(() => {
+  const map = new Map()
+  for (const tag of allTagsResponse.value?.data ?? []) {
+    map.set(tag.id, tag)
+  }
+  return map
+})
+
+const resolvedTagsFor = (tagIds: string[]) => {
+  return tagIds.map((id) => tagMap.value.get(id)).filter(Boolean)
+}
 
 const nonCompliantAssets = computed(() => {
   return assets.value.filter((asset) => !isCompliant(asset))
@@ -802,6 +816,7 @@ onUnmounted(() => {
             :size="imageSize"
             :drag-items="getDragItemsFor('asset', asset.id)"
             :compliance-issues="getMissingRequiredFields(asset)"
+            :resolved-tags="resolvedTagsFor(asset.tags)"
             :data-id="asset.id"
             v-bind="assetItemProps"
             @select="handleAssetSelect"

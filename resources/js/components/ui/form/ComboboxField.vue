@@ -26,6 +26,9 @@ export interface ComboboxOption<T = unknown> {
   value: T
   label: string
   disabled?: boolean
+  icon?: string | null
+  color?: string | null
+  [key: string]: unknown
 }
 
 const props = defineProps<{
@@ -190,9 +193,15 @@ const emptyTextComputed = computed(() => {
               :key="value"
               :value="value"
             >
-              <TagsInputItemText>{{
-                getOptionByValue(value)?.label || String(value)
-              }}</TagsInputItemText>
+              <slot
+                name="selected"
+                :option="getOptionByValue(value)"
+                :value="value"
+              >
+                <TagsInputItemText>{{
+                  getOptionByValue(value)?.label || String(value)
+                }}</TagsInputItemText>
+              </slot>
               <TagsInputItemDelete @click="handleRemove(value)" />
             </TagsInputItem>
             <ComboboxInput
@@ -227,7 +236,10 @@ const emptyTextComputed = computed(() => {
               :disabled="option.disabled || loading"
               @select.prevent="handleSelect(option)"
             >
-              {{ getDisplayValue(option) }}
+              <slot
+                name="option"
+                :option="option"
+              >{{ getDisplayValue(option) }}</slot>
             </ComboboxItem>
           </ComboboxGroup>
         </ComboboxList>

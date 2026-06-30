@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Staudenmeir\EloquentJsonRelations\HasJsonRelationships;
+use Staudenmeir\EloquentJsonRelations\Relations\HasManyJson;
 
 /**
  *
@@ -43,6 +45,7 @@ class AssetTag extends SpaceModel
     use BroadcastsSpaceModelEvents;
     use Filterable;
     use HasFactory;
+    use HasJsonRelationships;
     use HasPurifiedAttributes;
     use HasUlids;
     use SpaceAuditable;
@@ -62,5 +65,10 @@ class AssetTag extends SpaceModel
     protected function name(): Attribute
     {
         return $this->makePurifiedAttribute('removeAll');
+    }
+
+    public function assets(): HasManyJson
+    {
+        return $this->hasManyJson(Asset::class, 'tags');
     }
 }
