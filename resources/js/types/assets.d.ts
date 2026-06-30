@@ -33,6 +33,12 @@ export interface AssetFolderResource {
   updated_at: string
 }
 
+export interface AssetVideoThumbnail {
+  path: string
+  position: number
+  position_formatted: string
+}
+
 export interface AssetResource {
   id: string
   filename: string
@@ -42,7 +48,7 @@ export interface AssetResource {
   full_path: string
   folder_id: string | null
   folder?: AssetFolderResource
-  metadata: Record<string, unknown>
+  metadata: Record<string, unknown> & { thumbnails?: AssetVideoThumbnail[] }
   data: Record<string, unknown> & { focus?: { x: number; y: number } }
   tags: string[]
   linked_contents_count: number

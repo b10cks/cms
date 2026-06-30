@@ -166,6 +166,35 @@ watchEffect((onCleanup) => {
         :modifiers="{ crop: 'fill' }"
         class="pointer-events-none h-full w-full object-cover"
       />
+      <template v-else-if="getFileType(asset.mime_type) === 'video'">
+        <NuxtImg
+          v-if="asset.metadata.thumbnails?.[0]"
+          :src="asset.metadata.thumbnails[0].path"
+          :alt="asset.filename"
+          :width="size"
+          :height="size"
+          :modifiers="{ crop: 'fill' }"
+          class="pointer-events-none h-full w-full object-cover"
+        />
+        <div
+          v-else
+          class="flex h-full items-center justify-center"
+        >
+          <Icon
+            name="lucide:file-video"
+            size="3rem"
+          />
+        </div>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="rounded-full bg-black/50 p-2">
+            <Icon
+              name="lucide:play"
+              size="1.5rem"
+              class="text-white"
+            />
+          </div>
+        </div>
+      </template>
       <div
         v-else
         class="flex h-full items-center justify-center"

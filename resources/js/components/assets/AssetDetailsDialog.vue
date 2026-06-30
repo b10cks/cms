@@ -4,6 +4,8 @@ import { toast } from 'vue-sonner'
 
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
+import { buildIlumUrl } from '~/lib/ilum'
+import { runtimeConfig } from '~/lib/runtime-config'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
@@ -48,9 +50,12 @@ const {
   setFieldValue: setAssetFieldValue,
 } = useAssetRequirements(props.spaceId)
 
+const ilumBaseUrl = (runtimeConfig.public.ilum.baseURL || '').replace(/\/$/, '')
+
 const assetCopy = ref<AssetResource | null>(null)
 const imageContainer = ref<HTMLElement | null>(null)
 const imageRef = useTemplateRef('imageRef')
+const videoRef = useTemplateRef<HTMLVideoElement>('videoRef')
 const isDraggingFocus = ref(false)
 const selectedPanel = ref<'details' | 'linked'>('details')
 const selectedLanguage = ref<string>('_default')
@@ -235,6 +240,12 @@ const handleMouseMove = (event: MouseEvent) => {
   }
 }
 
+const seekVideoTo = (position: number) => {
+  if (videoRef.value) {
+    videoRef.value.currentTime = position
+  }
+}
+
 const handleFinish = async () => {
   if (props.readOnly) {
     emit('close')
@@ -325,6 +336,41 @@ const loadMoreLinkedContents = () => {
                 class="absolute inset-0 cursor-crosshair"
                 @mousedown="startDragging"
               />
+            </div>
+          </div>
+          <div
+            v-else-if="getFileType(asset.mime_type) === 'video'"
+            class="flex w-full flex-col gap-3"
+          >
+            <video
+              ref="videoRef"
+              controls
+              :src="asset.url ?? undefined"
+              :poster="asset.metadata.thumbnails?.[0]?.path ? buildIlumUrl(asset.metadata.thumbnails[0].path, { width: 1200, crop: 'fit' }, ilumBaseUrl) : undefined"
+              class="max-h-[calc(60svh)] w-full rounded-lg object-contain"
+            />
+            <div
+              v-if="asset.metadata.thumbnails?.length"
+              class="flex gap-2 overflow-x-auto pb-1"
+            >
+              <button
+                v-for="thumb in asset.metadata.thumbnails"
+                :key="thumb.position"
+                type="button"
+                class="group relative shrink-0 overflow-hidden rounded"
+                @click="seekVideoTo(thumb.position)"
+              >
+                <NuxtImg
+                  :src="thumb.path"
+                  :width="120"
+                  :height="68"
+                  crop="fill"
+                  class="pointer-events-none block h-[68px] w-[120px] object-cover"
+                />
+                <span class="absolute bottom-0 left-0 right-0 bg-black/60 py-0.5 text-center text-xs text-white">
+                  {{ thumb.position_formatted }}
+                </span>
+              </button>
             </div>
           </div>
           <div
