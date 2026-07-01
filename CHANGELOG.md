@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.1-b53c31a2] — 2026-7-1
+
+- 🩹 Fix video thumbnail delivery
+
 ## [v2026.7.1-34fcbe4a] — 2026-7-1
 
 - ✨ Add asset versioning and rights management
