@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.1-1c53254b] — 2026-7-1
+
+- 🚸 Streamline asset manager UX
+- 🐛 Fix asset manager issues
+
 ## [v2026.6.30-d66b553b] — 2026-6-30
 
 - 👔 Further improve the asset manager
