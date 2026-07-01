@@ -378,6 +378,84 @@ class IconifyTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // Sprite endpoint
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function sprite_endpoint_returns_symbol_sprite(): void
+    {
+        $response = $this->get($this->url('/b10cks.svg?token=iconify-token&icons=home,arrow'));
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+
+        $svg = $response->getContent();
+        $this->assertStringStartsWith('<svg width="0" height="0" class="hidden">', $svg);
+        $this->assertStringContainsString('<symbol xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="b10cks--home">', $svg);
+        $this->assertStringContainsString('<symbol xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" id="b10cks--arrow">', $svg);
+    }
+
+    #[Test]
+    public function sprite_endpoint_preserves_requested_order_and_drops_missing(): void
+    {
+        $svg = $this->get($this->url('/b10cks.svg?token=iconify-token&icons=arrow,missing,home'))->getContent();
+
+        $this->assertLessThan(strpos($svg, 'id="b10cks--home"'), strpos($svg, 'id="b10cks--arrow"'));
+        $this->assertStringNotContainsString('missing', $svg);
+    }
+
+    #[Test]
+    public function sprite_endpoint_returns_404_for_unknown_prefix(): void
+    {
+        $this->get($this->url('/unknown.svg?token=iconify-token'))->assertNotFound();
+    }
+
+    // -------------------------------------------------------------------------
+    // stroke-width passthrough
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function svg_endpoint_injects_stroke_width(): void
+    {
+        $svg = $this->get($this->url('/b10cks/home.svg?token=iconify-token&stroke-width=1.5'))->getContent();
+
+        $this->assertStringContainsString('stroke-width="1.5"', $svg);
+    }
+
+    #[Test]
+    public function svg_endpoint_ignores_non_numeric_stroke_width(): void
+    {
+        $svg = $this->get($this->url('/b10cks/home.svg?token=iconify-token&stroke-width=abc'))->getContent();
+
+        $this->assertStringNotContainsString('stroke-width', $svg);
+    }
+
+    #[Test]
+    public function json_endpoint_wraps_body_with_stroke_width(): void
+    {
+        $response = $this->getJson($this->url('/b10cks.json?token=iconify-token&icons=home&stroke-width=1.25'));
+
+        $response->assertOk();
+        $response->assertJsonPath('icons.home.body', '<g stroke-width="1.25"><path d="M1 1"/></g>');
+    }
+
+    #[Test]
+    public function css_endpoint_injects_stroke_width_into_data_url(): void
+    {
+        $css = $this->get($this->url('/b10cks.css?token=iconify-token&icons=home&stroke-width=2'))->getContent();
+
+        $this->assertStringContainsString("stroke-width='2'", $css);
+    }
+
+    #[Test]
+    public function sprite_endpoint_injects_stroke_width(): void
+    {
+        $svg = $this->get($this->url('/b10cks.svg?token=iconify-token&icons=home&stroke-width=1.75'))->getContent();
+
+        $this->assertStringContainsString('stroke-width="1.75"', $svg);
+    }
+
+    // -------------------------------------------------------------------------
     // Auth
     // -------------------------------------------------------------------------
 

@@ -45,6 +45,7 @@ Route::prefix('iconify')->name('iconify.')->middleware(['cache.data:60,60'])->gr
     Route::get('last-modified', [IconifyController::class, 'lastModified'])->name('last-modified');
     Route::get('search', [IconifyController::class, 'search'])->name('search');
     Route::get('{prefix}.json', [IconifyController::class, 'iconData'])->name('data');
+    Route::get('{prefix}.svg', [IconifyController::class, 'iconSprite'])->name('sprite');
     Route::get('{prefix}.css', [IconifyController::class, 'iconCss'])->name('css');
     Route::get('{prefix}/{name}.svg', [IconifyController::class, 'iconSvg'])->name('svg');
     Route::get('{prefix}/{name}.css', [IconifyController::class, 'iconCssSingle'])->name('css.single');

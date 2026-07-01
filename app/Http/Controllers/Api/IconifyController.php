@@ -21,6 +21,7 @@ use Illuminate\Support\Collection;
  *   GET /api/v1/iconify/last-modified
  *   GET /api/v1/iconify/search?query=...
  *   GET /api/v1/iconify/{prefix}.json[?icons=a,b]          — Iconify JSON
+ *   GET /api/v1/iconify/{prefix}.svg[?icons=a,b]           — SVG <symbol> sprite
  *   GET /api/v1/iconify/{prefix}.css?icons=a,b             — CSS for multiple icons
  *   GET /api/v1/iconify/{prefix}/{name}.svg                 — SVG file
  *   GET /api/v1/iconify/{prefix}/{name}.css                 — CSS for a single icon
@@ -41,7 +42,8 @@ class IconifyController
     {
         $this->abortIfUnknownPrefix($prefix);
 
-        $requested = $this->parseIconList($request->query('icons'));
+        $requested    = $this->parseIconList($request->query('icons'));
+        $strokeWidth  = $this->parseStrokeWidth($request->query('stroke-width'));
 
         $query = Icon::query();
         if ($requested !== null) {
@@ -52,7 +54,11 @@ class IconifyController
 
         $iconData = [];
         foreach ($query->get() as $icon) {
-            $iconData[$icon->key] = $icon->toIconifyData();
+            $data = $icon->toIconifyData();
+            if ($strokeWidth !== null) {
+                $data['body'] = $this->wrapStrokeWidth($data['body'], $strokeWidth);
+            }
+            $iconData[$icon->key] = $data;
         }
 
         $payload = [
@@ -130,6 +136,7 @@ class IconifyController
      *   flip   — 'horizontal', 'vertical', or 'horizontal,vertical'
      *   rotate — quarter turns: 1=90°, 2=180°, 3=270°; or '90deg' / '180deg' / '270deg'
      *   box    — 1/true adds an invisible bounding <rect> (forces height in some renderers)
+     *   stroke-width — raw SVG stroke width (viewBox userspace units) for outline icons
      */
     public function iconSvg(Request $request, string $prefix, string $name): Response
     {
@@ -144,6 +151,7 @@ class IconifyController
         $flip   = (string) $request->query('flip', '');
         $rotate = $this->parseRotate($request->query('rotate'));
         $box    = $this->parseBool($request->query('box'));
+        $stroke = $this->parseStrokeWidth($request->query('stroke-width'));
 
         $body = $icon->body;
 
@@ -164,7 +172,56 @@ class IconifyController
             $attrs['color'] = $color;
         }
 
+        if ($stroke !== null) {
+            $attrs['stroke-width'] = $stroke;
+        }
+
         $svg = sprintf('<svg %s>%s</svg>', $this->attrString($attrs), $transformedBody);
+
+        return response($svg, 200, ['Content-Type' => 'image/svg+xml; charset=utf-8']);
+    }
+
+    /**
+     * Render a collection of icons as a single SVG sprite of <symbol> elements.
+     *
+     * Each icon becomes a `<symbol id="{prefix}--{name}">` that can be referenced
+     * elsewhere with `<svg><use href="#{prefix}--{name}"/></svg>`. The sprite root
+     * is hidden so it can be inlined at the top of a document without rendering.
+     *
+     * Query params:
+     *   icons — comma-separated list of icon keys (optional; defaults to all icons)
+     */
+    public function iconSprite(Request $request, string $prefix): Response
+    {
+        $this->abortIfUnknownPrefix($prefix);
+
+        $requested = $this->parseIconList($request->query('icons'));
+        $stroke    = $this->parseStrokeWidth($request->query('stroke-width'));
+
+        $query = Icon::query();
+        if ($requested !== null) {
+            $byKey = $query->whereIn('key', $requested)->get()->keyBy('key');
+            // Preserve requested order; silently drop keys not found
+            $icons = collect($requested)->map(fn ($k) => $byKey->get($k))->filter()->values();
+        } else {
+            $icons = $query->limit(self::MAX_ICONS)->get();
+        }
+
+        $symbols = $icons->map(function (Icon $icon) use ($stroke) {
+            $attrs = [
+                'xmlns'   => 'http://www.w3.org/2000/svg',
+                'viewBox' => "0 0 {$icon->width} {$icon->height}",
+                'id'      => self::PREFIX . '--' . $icon->key,
+            ];
+
+            if ($stroke !== null) {
+                $attrs['stroke-width'] = $stroke;
+            }
+
+            return sprintf('<symbol %s>%s</symbol>', $this->attrString($attrs), $icon->body);
+        })->implode('');
+
+        $svg = sprintf('<svg width="0" height="0" class="hidden">%s</svg>', $symbols);
 
         return response($svg, 200, ['Content-Type' => 'image/svg+xml; charset=utf-8']);
     }
@@ -185,6 +242,7 @@ class IconifyController
      *   common   — shared selector for size+mode props (default: .icon--{prefix})
      *   var      — CSS variable name for the SVG data URL, without '--' (default: svg → --svg)
      *   flip, rotate — same as SVG endpoint
+     *   stroke-width — raw SVG stroke width (viewBox userspace units) for outline icons
      */
     public function iconCss(Request $request, string $prefix): Response
     {
@@ -234,6 +292,7 @@ class IconifyController
             'selector' => (string) ($request->query('selector') ?: '.icon--{prefix}--{name}'),
             'common'   => (string) ($request->query('common') ?: '.icon--{prefix}'),
             'var'      => preg_replace('/[^a-z0-9-]/i', '', (string) $request->query('var', 'svg')) ?: 'svg',
+            'stroke'   => $this->parseStrokeWidth($request->query('stroke-width')),
         ];
 
         return response($this->renderCss($icons, $opts), 200, ['Content-Type' => 'text/css; charset=utf-8']);
@@ -313,9 +372,15 @@ class IconifyController
         $color = $opts['color'] ?? 'black';
         $body  = str_replace('currentColor', $color, $body);
 
+        $strokeAttr = isset($opts['stroke']) && $opts['stroke'] !== null
+            ? " stroke-width='{$opts['stroke']}'"
+            : '';
+
         $svg = "<svg xmlns='http://www.w3.org/2000/svg'"
             . " viewBox='0 0 {$viewW} {$viewH}'"
-            . " width='{$viewW}' height='{$viewH}'>"
+            . " width='{$viewW}' height='{$viewH}'"
+            . $strokeAttr
+            . '>'
             . $body
             . '</svg>';
 
@@ -423,6 +488,33 @@ class IconifyController
     private function parseBool(mixed $value): bool
     {
         return in_array((string) ($value ?? ''), ['1', 'true', 'yes'], true);
+    }
+
+    /**
+     * Parse the `stroke-width` query parameter.
+     *
+     * The value is a raw SVG stroke width expressed in the icon's viewBox userspace
+     * units — it is written verbatim into the output (SVG root, CSS data URL, JSON body
+     * wrapper, sprite symbol). Consumers own any size→stroke mapping; the platform stays
+     * tenant-agnostic. Returns null for empty/non-numeric input (no stroke override).
+     */
+    private function parseStrokeWidth(mixed $value): ?string
+    {
+        if ($value === null || trim((string) $value) === '' || !is_numeric($value)) {
+            return null;
+        }
+
+        return rtrim(rtrim(number_format((float) $value, 4, '.', ''), '0'), '.');
+    }
+
+    /**
+     * Wrap an Iconify body in a <g stroke-width="..."> so the width cascades to the
+     * outline paths. Used for the JSON endpoint, where the icon-data object has no
+     * dedicated stroke-width field.
+     */
+    private function wrapStrokeWidth(string $body, string $strokeWidth): string
+    {
+        return sprintf('<g stroke-width="%s">%s</g>', $strokeWidth, $body);
     }
 
     private function detectMode(string $body, ?string $requested): string
