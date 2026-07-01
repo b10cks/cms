@@ -32,6 +32,7 @@ class StoreAssetRequest extends FormRequest
             'data' => 'nullable|array',
             'tags' => 'nullable|array',
             'tags.*' => 'string',
+            'force' => 'sometimes|boolean',
         ];
     }
 

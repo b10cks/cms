@@ -5,8 +5,10 @@ import { Alert, AlertDescription } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { ScrollArea } from '~/components/ui/scroll-area'
+import type { AssetUploadDuplicate } from '~/types/assets'
 import { UploadFile } from '~/types/assets'
 
+import DuplicateAssetDialog from './DuplicateAssetDialog.vue'
 import UploadDetailsDialog from './UploadDetailsDialog.vue'
 
 const { t } = useI18n()
@@ -165,6 +167,81 @@ const updateFileStatus = (
   }
 }
 
+type DuplicateDecision = 'use-existing' | 'upload-anyway' | 'cancel'
+
+const duplicatePrompt = ref<{
+  filename: string
+  duplicate: AssetUploadDuplicate
+  resolve: (decision: DuplicateDecision) => void
+} | null>(null)
+
+const promptDuplicate = (filename: string, duplicate: AssetUploadDuplicate) => {
+  return new Promise<DuplicateDecision>((resolve) => {
+    duplicatePrompt.value = { filename, duplicate, resolve }
+  })
+}
+
+const resolveDuplicatePrompt = (decision: DuplicateDecision) => {
+  duplicatePrompt.value?.resolve(decision)
+  duplicatePrompt.value = null
+}
+
+const markFileComplete = (file: UploadFileWithProgress) => {
+  updateFileStatus(file.id, 'complete')
+  if (file.preview) {
+    URL.revokeObjectURL(file.preview)
+  }
+}
+
+const performUpload = async (file: UploadFileWithProgress) => {
+  updateFileStatus(file.id, 'uploading')
+
+  try {
+    // Upload with progress tracking
+    const result = await uploadAsset(file, (progress) => {
+      updateFileProgress(file.id, progress)
+    })
+
+    if (result?.status === 'success') {
+      markFileComplete(file)
+      return
+    }
+
+    if (result?.status === 'duplicate') {
+      const decision = await promptDuplicate(file.file.name, result.duplicate)
+
+      if (decision === 'upload-anyway') {
+        const forced = await uploadAsset(
+          file,
+          (progress) => updateFileProgress(file.id, progress),
+          { force: true }
+        )
+
+        if (forced?.status === 'success') {
+          markFileComplete(file)
+        } else {
+          updateFileStatus(file.id, 'error', String(t('composables.assets.uploadError')))
+        }
+      } else if (decision === 'use-existing') {
+        // The existing asset already satisfies the intent of this upload.
+        markFileComplete(file)
+      } else {
+        updateFileStatus(file.id, 'pending')
+        updateFileProgress(file.id, 0)
+      }
+      return
+    }
+
+    updateFileStatus(file.id, 'error', String(t('composables.assets.uploadError')))
+  } catch (error) {
+    updateFileStatus(
+      file.id,
+      'error',
+      error instanceof Error ? error.message : String(t('composables.assets.uploadError'))
+    )
+  }
+}
+
 const handleUpload = async () => {
   if (filesWithMissingRequirements.value.length) {
     const confirmed = await alert.confirm(String(t('messages.assets.uploadRequirementsConfirm')), {
@@ -184,31 +261,7 @@ const handleUpload = async () => {
     // Skip already completed uploads
     if (file.status === 'complete') continue
 
-    updateFileStatus(file.id, 'uploading')
-
-    try {
-      // Upload with progress tracking
-      const result = await uploadAsset(file, (progress) => {
-        updateFileProgress(file.id, progress)
-      })
-
-      if (result) {
-        updateFileStatus(file.id, 'complete')
-
-        // Release object URL if it exists
-        if (file.preview) {
-          URL.revokeObjectURL(file.preview)
-        }
-      } else {
-        updateFileStatus(file.id, 'error', String(t('composables.assets.uploadError')))
-      }
-    } catch (error) {
-      updateFileStatus(
-        file.id,
-        'error',
-        error instanceof Error ? error.message : String(t('composables.assets.uploadError'))
-      )
-    }
+    await performUpload(file)
   }
 
   isUploading.value = false
@@ -333,31 +386,8 @@ const getProgressColor = (status: 'pending' | 'uploading' | 'error' | 'complete'
 
 // Retry uploading a failed file
 const retryUpload = async (file: UploadFileWithProgress) => {
-  updateFileStatus(file.id, 'uploading')
   updateFileProgress(file.id, 0)
-
-  try {
-    const result = await uploadAsset(file, (progress) => {
-      updateFileProgress(file.id, progress)
-    })
-
-    if (result) {
-      updateFileStatus(file.id, 'complete')
-
-      // Release object URL if it exists
-      if (file.preview) {
-        URL.revokeObjectURL(file.preview)
-      }
-    } else {
-      updateFileStatus(file.id, 'error', String(t('composables.assets.uploadError')))
-    }
-  } catch (error) {
-    updateFileStatus(
-      file.id,
-      'error',
-      error instanceof Error ? error.message : String(t('composables.assets.uploadError'))
-    )
-  }
+  await performUpload(file)
 }
 </script>
 
@@ -578,5 +608,15 @@ const retryUpload = async (file: UploadFileWithProgress) => {
     :folder-id="folderId"
     :space-id="spaceId"
     @update:file="handleFileDetailsSave"
+  />
+
+  <DuplicateAssetDialog
+    v-if="duplicatePrompt"
+    :open="true"
+    :filename="duplicatePrompt.filename"
+    :duplicate="duplicatePrompt.duplicate"
+    @update:open="resolveDuplicatePrompt('cancel')"
+    @use-existing="resolveDuplicatePrompt('use-existing')"
+    @upload-anyway="resolveDuplicatePrompt('upload-anyway')"
   />
 </template>

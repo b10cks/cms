@@ -122,6 +122,21 @@ const assetFilters = computed(() => [
       { value: 'eq' as const, label: '=' },
     ],
   },
+  {
+    id: 'rights_status',
+    label: String($t('labels.assets.rights.filterLabel')),
+    operators: [{ value: 'eq' as const, label: 'Equals' }],
+    items: [
+      { value: 'restricted', label: String($t('labels.assets.rights.status.restricted')) },
+      { value: 'expired', label: String($t('labels.assets.rights.status.expired')) },
+      { value: 'unrestricted', label: String($t('labels.assets.rights.status.unrestricted')) },
+    ],
+  },
+  {
+    id: 'expiring_before',
+    label: String($t('labels.assets.rights.filterExpiringBefore')),
+    datepicker: {},
+  },
 ])
 
 const assetQueryParams = computed<AssetsQueryParams>(() => {

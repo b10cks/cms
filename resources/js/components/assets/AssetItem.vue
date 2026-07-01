@@ -5,6 +5,7 @@ import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 import AssetComplianceIndicator from '~/components/assets/AssetComplianceIndicator.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
+import { Badge } from '~/components/ui/badge'
 import { Checkbox } from '~/components/ui/checkbox'
 import {
   DropdownMenu,
@@ -248,6 +249,18 @@ watchEffect((onCleanup) => {
           size="2rem"
           class="rounded-full border-2 border-accent bg-background p-1 text-accent"
         />
+      </div>
+
+      <div
+        v-if="asset.rights_status === 'expired'"
+        class="absolute top-2 right-2"
+      >
+        <Badge
+          variant="destructive"
+          class="shadow-sm backdrop-blur-sm"
+        >
+          {{ $t('labels.assets.rights.status.expired') }}
+        </Badge>
       </div>
 
       <div

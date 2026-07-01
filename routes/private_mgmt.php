@@ -14,6 +14,7 @@ use App\Http\Controllers\Mgmt\AssetDataImportController;
 use App\Http\Controllers\Mgmt\AssetFolderController;
 use App\Http\Controllers\Mgmt\AssetLinkedContentController;
 use App\Http\Controllers\Mgmt\AssetTagController;
+use App\Http\Controllers\Mgmt\AssetVersionController;
 use App\Http\Controllers\Mgmt\AuditLogController;
 use App\Http\Controllers\Mgmt\AuthorizationController;
 use App\Http\Controllers\Mgmt\AutomationActionController;
@@ -276,6 +277,10 @@ Route::group(['prefix' => 'spaces/{space}'], function () {
         ->name('assets.linked-contents');
     Route::post('assets/{asset}/replace-file', [AssetController::class, 'replaceFile'])
         ->name('assets.replace-file');
+    Route::get('assets/{asset}/versions', [AssetVersionController::class, 'index'])
+        ->name('assets.versions.index');
+    Route::post('assets/{asset}/versions/{version}/restore', [AssetVersionController::class, 'restore'])
+        ->name('assets.versions.restore');
     Route::apiResource('assets', AssetController::class);
 
     Route::get('icons/tags', [IconController::class, 'tags'])->name('icons.tags');

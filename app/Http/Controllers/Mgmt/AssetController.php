@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Mgmt;
 
+use App\Exceptions\DuplicateAssetException;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\AssetFilter;
 use App\Http\Requests\Asset\ReplaceAssetFileRequest;
@@ -63,7 +64,8 @@ class AssetController extends Controller
                 (object) ($validated['metadata'] ?? []),
                 (object) ($validated['data'] ?? []),
                 $folder,
-                $validated['external_id'] ?? null
+                $validated['external_id'] ?? null,
+                (bool) ($validated['force'] ?? false)
             );
 
             if (array_key_exists('tags', $validated)) {
@@ -72,6 +74,12 @@ class AssetController extends Controller
             }
 
             return new AssetResource($asset->load('folder'));
+        } catch (DuplicateAssetException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'code' => 'duplicate_asset',
+                'existing_asset' => new AssetResource($e->existingAsset->load('folder')),
+            ], 409);
         } catch (\Exception $e) {
             Log::error('Failed to store asset', [
                 'space_id' => $space->id,
@@ -134,6 +142,10 @@ class AssetController extends Controller
 
         if (array_key_exists('external_id', $validated)) {
             $asset->external_id = $validated['external_id'];
+        }
+
+        if (array_key_exists('license_expires_at', $validated)) {
+            $asset->license_expires_at = $validated['license_expires_at'];
         }
 
         $asset->save();

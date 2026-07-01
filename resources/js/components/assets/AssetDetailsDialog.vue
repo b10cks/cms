@@ -15,11 +15,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog'
-import { ComboboxField, InputField } from '~/components/ui/form'
+import { ComboboxField, DateTimeField, InputField, SelectField } from '~/components/ui/form'
 import IconName from '~/components/ui/IconName.vue'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { isClient } from '~/lib/env'
-import type { AssetResource, LinkedAssetContentResource } from '~/types/assets'
+import type { AssetResource, AssetVersionResource, LinkedAssetContentResource } from '~/types/assets'
+
+const RIGHTS_FIELD_KEYS = ['copyright_holder', 'license_type', 'license_notes', 'usage_restrictions']
 
 const { t } = useI18n()
 const { formatFileSize, formatDateTime } = useFormat()
@@ -63,9 +65,16 @@ const {
 
 const ilumBaseUrl = (runtimeConfig.public.ilum.baseURL || '').replace(/\/$/, '')
 
+const { alert } = useAlertDialog()
 const { useReplaceAssetFileMutation } = useAssets(props.spaceId)
 const { mutate: replaceFile, isPending: isReplacing } = useReplaceAssetFileMutation()
 const replaceProgress = ref(0)
+const { useAssetVersionsQuery, useRestoreAssetVersionMutation } = useAssetVersions(
+  props.spaceId,
+  computed(() => props.asset?.id ?? null)
+)
+const { mutate: restoreVersion, isPending: isRestoringVersion } = useRestoreAssetVersionMutation()
+const restoringVersionId = ref<string | null>(null)
 const replaceFileInputRef = useTemplateRef<HTMLInputElement>('replaceFileInput')
 
 const triggerReplaceFile = () => replaceFileInputRef.value?.click()
@@ -100,12 +109,42 @@ const imageContainer = ref<HTMLElement | null>(null)
 const imageRef = useTemplateRef('imageRef')
 const videoRef = useTemplateRef<HTMLVideoElement>('videoRef')
 const isDraggingFocus = ref(false)
-const selectedPanel = ref<'details' | 'linked'>('details')
+const selectedPanel = ref<'details' | 'rights' | 'versions' | 'linked'>('details')
 const selectedLanguage = ref<string>('_default')
 const linkedContentsPage = ref(1)
 const linkedContentsItems = ref<LinkedAssetContentResource[]>([])
 const effectiveFields = computed(() => {
   return getEffectiveFieldsForTarget(assetCopy.value)
+})
+const generalFields = computed(() => {
+  return effectiveFields.value.filter((field) => !RIGHTS_FIELD_KEYS.includes(field.key))
+})
+const rightsFields = computed(() => {
+  return effectiveFields.value.filter((field) => RIGHTS_FIELD_KEYS.includes(field.key))
+})
+const licenseTypeOptions = computed(() => [
+  { value: 'proprietary', label: String(t('labels.assets.rights.licenseTypes.proprietary')) },
+  { value: 'cc0', label: String(t('labels.assets.rights.licenseTypes.cc0')) },
+  { value: 'cc-by', label: String(t('labels.assets.rights.licenseTypes.ccBy')) },
+  { value: 'cc-by-sa', label: String(t('labels.assets.rights.licenseTypes.ccBySa')) },
+  { value: 'custom', label: String(t('labels.assets.rights.licenseTypes.custom')) },
+])
+const licenseExpiresAtDate = computed({
+  get: () => (assetCopy.value?.license_expires_at ? assetCopy.value.license_expires_at.slice(0, 10) : ''),
+  set: (value: string) => {
+    if (!assetCopy.value) return
+    assetCopy.value.license_expires_at = value || null
+  },
+})
+const rightsStatusBadgeVariant = computed(() => {
+  switch (assetCopy.value?.rights_status) {
+    case 'expired':
+      return 'destructive'
+    case 'restricted':
+      return 'warning'
+    default:
+      return null
+  }
 })
 const shouldLoadLinkedContents = computed(() => {
   return selectedPanel.value === 'linked' && props.mode === 'normal' && Boolean(props.asset?.id)
@@ -132,6 +171,15 @@ const linkedContentsSummary = computed(() => {
         t('labels.assets.usedInMultipleContents', { count: props.asset.linked_contents_count })
       )
 })
+
+const shouldLoadVersions = computed(() => {
+  return selectedPanel.value === 'versions' && props.mode === 'normal' && Boolean(props.asset?.id)
+})
+const { data: versionsResponse, isFetching: isFetchingVersions } = useAssetVersionsQuery(
+  {},
+  shouldLoadVersions
+)
+const versionItems = computed<AssetVersionResource[]>(() => versionsResponse.value?.data ?? [])
 
 watch(
   () => props.asset,
@@ -190,6 +238,26 @@ const setFieldValue = (fieldKey: string, value: string | number) => {
 
   ensureAssetFieldData(assetCopy.value)
   setAssetFieldValue(assetCopy.value, fieldKey, selectedLanguage.value, String(value))
+}
+
+// Rights & Licensing fields are not language-tabbed; they always read/write
+// the default language bucket regardless of which language is selected in
+// the metadata tab.
+const getRightsFieldValue = (fieldKey: string): string => {
+  if (!assetCopy.value) {
+    return ''
+  }
+
+  return getAssetFieldValue(assetCopy.value, fieldKey, '_default')
+}
+
+const setRightsFieldValue = (fieldKey: string, value: string | number) => {
+  if (!assetCopy.value) {
+    return
+  }
+
+  ensureAssetFieldData(assetCopy.value)
+  setAssetFieldValue(assetCopy.value, fieldKey, '_default', String(value))
 }
 
 const formatKey = (key: string): string => {
@@ -314,6 +382,34 @@ const loadMoreLinkedContents = () => {
   }
 
   linkedContentsPage.value += 1
+}
+
+const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
+  const confirmed = await alert.confirm(
+    String(t('labels.assets.versions.restoreConfirmMessage', { version: version.version_number })),
+    {
+      title: String(t('labels.assets.versions.restoreConfirmTitle')),
+      confirmLabel: String(t('labels.assets.versions.restore')),
+      variant: 'destructive',
+    }
+  )
+
+  if (!confirmed || !assetCopy.value) {
+    return
+  }
+
+  restoringVersionId.value = version.id
+  restoreVersion(version.id, {
+    onSuccess: (updated) => {
+      if (updated) {
+        assetCopy.value = deepClone(updated)
+      }
+      restoringVersionId.value = null
+    },
+    onError: () => {
+      restoringVersionId.value = null
+    },
+  })
 }
 </script>
 
@@ -549,12 +645,18 @@ const loadMoreLinkedContents = () => {
           <Tabs
             v-if="mode === 'normal'"
             :model-value="selectedPanel"
-            @update:model-value="selectedPanel = $event as 'details' | 'linked'"
+            @update:model-value="selectedPanel = $event as 'details' | 'rights' | 'versions' | 'linked'"
             class="space-y-4"
           >
-            <TabsList class="grid w-full grid-cols-2">
+            <TabsList class="grid w-full grid-cols-4">
               <TabsTrigger value="details">
                 {{ $t('labels.assets.fields.metadata') }}
+              </TabsTrigger>
+              <TabsTrigger value="rights">
+                {{ $t('labels.assets.rights.title') }}
+              </TabsTrigger>
+              <TabsTrigger value="versions">
+                {{ $t('labels.assets.versions.title') }}
               </TabsTrigger>
               <TabsTrigger value="linked">
                 {{ $t('labels.assets.linkedContents') }}
@@ -596,7 +698,7 @@ const loadMoreLinkedContents = () => {
                 </div>
               </div>
               <div
-                v-if="effectiveFields.length > 0 && languageTabs.length > 1"
+                v-if="generalFields.length > 0 && languageTabs.length > 1"
                 class="space-y-3 mt-3"
               >
                 <Tabs
@@ -616,7 +718,7 @@ const loadMoreLinkedContents = () => {
                 </Tabs>
                 <div class="space-y-3">
                   <InputField
-                    v-for="field in effectiveFields"
+                    v-for="field in generalFields"
                     :key="`${selectedLanguage}-${field.key}`"
                     :model-value="getFieldValue(field.key) as string"
                     :label="String(field.label)"
@@ -628,11 +730,11 @@ const loadMoreLinkedContents = () => {
                 </div>
               </div>
               <div
-                v-else-if="effectiveFields.length > 0"
+                v-else-if="generalFields.length > 0"
                 class="space-y-3"
               >
                 <InputField
-                  v-for="field in effectiveFields"
+                  v-for="field in generalFields"
                   :key="field.key"
                   :model-value="getFieldValue(field.key) as string"
                   :label="String(field.label)"
@@ -641,6 +743,158 @@ const loadMoreLinkedContents = () => {
                   :disabled="props.readOnly"
                   @update:model-value="setFieldValue(field.key, $event)"
                 />
+              </div>
+            </TabsContent>
+
+            <TabsContent
+              value="rights"
+              class="space-y-4"
+            >
+              <div
+                v-if="rightsStatusBadgeVariant"
+                class="rounded-lg bg-surface p-3"
+              >
+                <Badge :variant="rightsStatusBadgeVariant">
+                  {{ $t(`labels.assets.rights.status.${assetCopy.rights_status}`) }}
+                </Badge>
+                <p
+                  v-if="assetCopy.license_expires_at"
+                  class="mt-2 text-sm text-muted"
+                >
+                  {{
+                    $t('labels.assets.rights.expiresOn', {
+                      date: formatDateTime(assetCopy.license_expires_at),
+                    })
+                  }}
+                </p>
+                <p class="mt-1 text-xs text-muted">
+                  {{ $t('labels.assets.rights.softWarningHint') }}
+                </p>
+              </div>
+
+              <DateTimeField
+                v-model="licenseExpiresAtDate"
+                type="date"
+                name="license_expires_at"
+                :label="$t('labels.assets.rights.expiresAt')"
+                :disabled="props.readOnly"
+              />
+
+              <div
+                v-if="rightsFields.length > 0"
+                class="space-y-3"
+              >
+                <template v-for="field in rightsFields" :key="field.key">
+                  <SelectField
+                    v-if="field.key === 'license_type'"
+                    :model-value="getRightsFieldValue(field.key)"
+                    :label="String(field.label)"
+                    :name="field.key"
+                    :options="licenseTypeOptions"
+                    :required="isFieldRequiredForLanguage(field, '_default')"
+                    :disabled="props.readOnly"
+                    clearable
+                    @update:model-value="setRightsFieldValue(field.key, $event as string)"
+                  />
+                  <InputField
+                    v-else
+                    :model-value="getRightsFieldValue(field.key)"
+                    :label="String(field.label)"
+                    :name="field.key"
+                    :required="isFieldRequiredForLanguage(field, '_default')"
+                    :disabled="props.readOnly"
+                    @update:model-value="setRightsFieldValue(field.key, $event)"
+                  />
+                </template>
+              </div>
+              <p
+                v-else
+                class="text-sm text-muted"
+              >
+                {{ $t('labels.assets.rights.noFieldsConfigured') }}
+              </p>
+            </TabsContent>
+
+            <TabsContent value="versions">
+              <div class="rounded-xl bg-surface p-3">
+                <div class="mb-4">
+                  <p class="font-semibold">{{ $t('labels.assets.versions.title') }}</p>
+                  <p class="text-sm text-muted">{{ $t('labels.assets.versions.description') }}</p>
+                </div>
+
+                <div
+                  v-if="isFetchingVersions && !versionItems.length"
+                  class="text-sm text-muted"
+                >
+                  {{ $t('labels.assets.versions.loading') }}
+                </div>
+
+                <div
+                  v-else-if="!versionItems.length"
+                  class="text-sm text-muted"
+                >
+                  {{ $t('labels.assets.versions.empty') }}
+                </div>
+
+                <div
+                  v-else
+                  class="space-y-3"
+                >
+                  <div
+                    v-for="version in versionItems"
+                    :key="version.id"
+                    class="flex items-center gap-3 rounded-lg border border-input bg-background p-3"
+                  >
+                    <div class="checkerboard flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded">
+                      <NuxtImg
+                        v-if="getFileType(version.mime_type) === 'image' && version.full_path"
+                        :src="version.full_path"
+                        :width="80"
+                        :height="80"
+                        crop="fill"
+                        class="h-full w-full object-cover"
+                      />
+                      <Icon
+                        v-else
+                        :name="getFileIcon(getFileType(version.mime_type))"
+                        class="h-4 w-4"
+                      />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-2">
+                        <p class="font-semibold">
+                          {{ $t('labels.assets.versions.versionNumber', { number: version.version_number }) }}
+                        </p>
+                        <Badge
+                          variant="secondary"
+                          size="sm"
+                        >
+                          {{ formatFileSize(version.size) }}
+                        </Badge>
+                      </div>
+                      <p class="truncate text-sm text-muted">
+                        {{ version.created_at ? formatDateTime(version.created_at) : '' }}
+                        <template v-if="version.created_by">
+                          &middot; {{ version.created_by.name }}
+                        </template>
+                      </p>
+                    </div>
+                    <Button
+                      v-if="!props.readOnly"
+                      variant="outline"
+                      size="sm"
+                      :disabled="isRestoringVersion"
+                      @click="restoreVersionWithConfirm(version)"
+                    >
+                      <Icon
+                        v-if="isRestoringVersion && restoringVersionId === version.id"
+                        name="lucide:loader-circle"
+                        class="animate-spin"
+                      />
+                      {{ $t('labels.assets.versions.restore') }}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </TabsContent>
 

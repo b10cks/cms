@@ -8,12 +8,17 @@ import { getXsrfHeaders } from '~/lib/csrf'
 import type {
   AssetDeleteConflict,
   AssetResource,
+  AssetUploadDuplicate,
   ExportTypes,
   UpdateAssetPayload,
   UploadAssetPayload,
 } from '~/types/assets'
 
 import { queryKeys } from './useQueryClient'
+
+export type UploadAssetOutcome =
+  | { status: 'success'; asset: AssetResource }
+  | { status: 'duplicate'; duplicate: AssetUploadDuplicate }
 
 export function useAssets(spaceId: MaybeRef<string>) {
   const { t } = useI18n()
@@ -67,12 +72,16 @@ export function useAssets(spaceId: MaybeRef<string>) {
   }
 
   /**
-   * Upload a new asset
+   * Upload a new asset. When the backend detects a checksum match against an
+   * existing asset in the space, the request is not silently accepted -
+   * the caller gets a `{ status: 'duplicate' }` outcome back and can decide
+   * to re-call with `{ force: true }` to upload anyway.
    */
   const uploadAsset = async (
     payload: UploadAssetPayload,
-    onProgress?: (progress: number) => void
-  ): Promise<AssetResource | null> => {
+    onProgress?: (progress: number) => void,
+    options: { force?: boolean } = {}
+  ): Promise<UploadAssetOutcome | null> => {
     const debouncedInvalidateQueries = useDebounceFn(() => {
       queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
       toast.success(t('composables.assets.uploadSuccess') as string)
@@ -95,11 +104,14 @@ export function useAssets(spaceId: MaybeRef<string>) {
       if (payload.data) {
         formData.append('data', JSON.stringify(payload.data))
       }
+      if (options.force) {
+        formData.append('force', '1')
+      }
 
       // Use XMLHttpRequest for progress tracking
       const xhr = new XMLHttpRequest()
 
-      const promise = new Promise<AssetResource | null>((resolve, reject) => {
+      const promise = new Promise<UploadAssetOutcome | null>((resolve, reject) => {
         xhr.upload.addEventListener('progress', (event) => {
           if (event.lengthComputable && onProgress) {
             const percentComplete = Math.round((event.loaded / event.total) * 100)
@@ -108,22 +120,34 @@ export function useAssets(spaceId: MaybeRef<string>) {
         })
 
         xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const response = JSON.parse(xhr.responseText)
+          try {
+            const response = JSON.parse(xhr.responseText)
+
+            if (xhr.status >= 200 && xhr.status < 300) {
               const assetData = response.data
 
               if (assetData) {
                 debouncedInvalidateQueries()
-                resolve(assetData)
+                resolve({ status: 'success', asset: assetData })
               } else {
                 resolve(null)
               }
-            } catch {
-              reject(new Error('Failed to parse server response'))
+            } else if (xhr.status === 409 && response.code === 'duplicate_asset') {
+              resolve({
+                status: 'duplicate',
+                duplicate: {
+                  code: 'duplicate_asset',
+                  message: response.message,
+                  existing_asset: response.existing_asset,
+                },
+              })
+            } else {
+              reject(
+                new Error(response.message || `Upload failed with status ${xhr.status}: ${xhr.statusText}`)
+              )
             }
-          } else {
-            reject(new Error(`Upload failed with status ${xhr.status}: ${xhr.statusText}`))
+          } catch {
+            reject(new Error('Failed to parse server response'))
           }
         })
 

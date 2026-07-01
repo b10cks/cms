@@ -54,13 +54,43 @@ return new class extends Migration
             $table->foreignUlid('folder_id')->nullable();
 
             $table->unsignedInteger('size');
+            $table->char('checksum', 64)->charset('ascii')->nullable();
 
             $table->json('metadata')->nullable();
             $table->json('data')->nullable();
             $table->json('tags')->nullable();
 
+            $table->timestamp('license_expires_at')->nullable();
+            $table->string('rights_status', 20)->charset('ascii')->default('unrestricted');
+
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index('checksum');
+            $table->index('license_expires_at');
+            $table->index('rights_status');
+        });
+
+        Schema::create('asset_versions', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->string('external_id', 36)->nullable();
+
+            $table->foreignUlid('asset_id');
+            $table->unsignedInteger('version_number');
+
+            $table->string('filename', 100);
+            $table->string('extension', 10)->charset('ascii');
+            $table->string('mime_type', 100)->charset('ascii');
+            $table->string('path')->charset('ascii')->nullable();
+            $table->unsignedInteger('size');
+            $table->char('checksum', 64)->charset('ascii')->nullable();
+            $table->json('metadata')->nullable();
+
+            $table->foreignUlid('created_by_id')->nullable();
+            $table->timestamp('created_at')->nullable();
+
+            $table->index(['asset_id']);
+            $table->index(['asset_id', 'version_number']);
         });
 
         Schema::create('icons', function (Blueprint $table) {
@@ -382,6 +412,7 @@ return new class extends Migration
         Schema::dropIfExists('block_tags');
         Schema::dropIfExists('block_folders');
         Schema::dropIfExists('icons');
+        Schema::dropIfExists('asset_versions');
         Schema::dropIfExists('assets');
         Schema::dropIfExists('asset_folders');
         Schema::dropIfExists('asset_tags');

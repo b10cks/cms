@@ -2,6 +2,7 @@
 
 namespace App\Models\Space;
 
+use App\Enums\AssetRightsStatus;
 use App\Models\Management\Storage;
 use App\Models\Traits\BroadcastsSpaceModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -25,15 +27,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $storage_id
  * @property string|null $folder_id
  * @property int $size
+ * @property string|null $checksum
  * @property array<array-key, mixed>|null $metadata
  * @property array<array-key, mixed>|null $data
  * @property array<array-key, mixed>|null $tags
+ * @property \Illuminate\Support\Carbon|null $license_expires_at
+ * @property string $rights_status
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
  * @property-read \App\Models\Space\AssetFolder|null $folder
  * @property-read string $full_path
  * @property-read Storage|null $storage
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, AssetVersion> $versions
+ * @property-read int|null $versions_count
  * @method static \Database\Factories\Space\AssetFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Asset filter(\CodersCantina\Filter\Filter $filter)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Asset newModelQuery()
@@ -81,16 +88,30 @@ class Asset extends SpaceModel
         'storage_id',
         'folder_id',
         'size',
+        'checksum',
         'metadata',
         'data',
         'tags',
+        'license_expires_at',
     ];
 
     protected $casts = [
         'metadata' => 'array',
         'data' => 'array',
         'tags' => 'array',
+        'license_expires_at' => 'datetime',
     ];
+
+    public static function boot()
+    {
+        parent::boot();
+
+        static::saving(function (self $asset) {
+            if ($asset->isDirty('license_expires_at')) {
+                $asset->rights_status = AssetRightsStatus::fromExpiry($asset->license_expires_at)->value;
+            }
+        });
+    }
 
     protected function filename(): Attribute
     {
@@ -105,6 +126,11 @@ class Asset extends SpaceModel
     public function folder(): BelongsTo
     {
         return $this->belongsTo(AssetFolder::class, 'folder_id', 'id');
+    }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(AssetVersion::class, 'asset_id', 'id')->orderByDesc('version_number');
     }
 
     public function getFullPathAttribute(): string

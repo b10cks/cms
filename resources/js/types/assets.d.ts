@@ -46,17 +46,44 @@ export interface AssetResource {
   extension: string
   mime_type: string
   size: number
+  checksum: string | null
   full_path: string
   folder_id: string | null
   folder?: AssetFolderResource
   metadata: Record<string, unknown> & { thumbnails?: AssetVideoThumbnail[]; duration?: number }
   data: Record<string, unknown> & { focus?: { x: number; y: number } }
   tags: string[]
+  license_expires_at: string | null
+  rights_status: AssetRightsStatus
   linked_contents_count: number
   effective_asset_fields?: SpaceAssetField[]
   url: string
   created_at: string
   updated_at: string
+}
+
+export type AssetRightsStatus = 'unrestricted' | 'restricted' | 'expired'
+
+export interface AssetVersionResource {
+  id: string
+  external_id: string | null
+  asset_id: string
+  version_number: number
+  filename: string
+  extension: string
+  mime_type: string
+  size: number
+  checksum: string | null
+  full_path: string | null
+  metadata: Record<string, unknown> & { thumbnails?: AssetVideoThumbnail[]; duration?: number }
+  created_by?: { id: string; name: string } | null
+  created_at: string | null
+}
+
+export interface AssetUploadDuplicate {
+  code: 'duplicate_asset'
+  message: string
+  existing_asset: AssetResource
 }
 
 export interface LinkedAssetContentResource {
@@ -136,6 +163,8 @@ export interface UpdateAssetPayload {
   tags?: string[]
   metadata?: Record<string, unknown>
   data?: Record<string, unknown>
+  license_expires_at?: string | null
+  rights_status?: AssetRightsStatus
 }
 
 export type AssetTypes = 'image' | 'document' | 'video' | 'audio' | 'other'

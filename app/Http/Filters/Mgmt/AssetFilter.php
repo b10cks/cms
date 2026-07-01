@@ -7,7 +7,7 @@ use CodersCantina\Filter\ExtendedFilter;
 
 class AssetFilter extends AdvancedFilter
 {
-    protected array $sortableColumns = ['filename', 'size', 'extension', 'mime_type', 'external_id', 'created_at', 'updated_at'];
+    protected array $sortableColumns = ['filename', 'size', 'extension', 'mime_type', 'external_id', 'created_at', 'updated_at', 'license_expires_at', 'rights_status'];
 
     public function filename($value)
     {
@@ -75,5 +75,17 @@ class AssetFilter extends AdvancedFilter
     public function updated_at($value)
     {
         $this->applyRangeFilter('updated_at', $value);
+    }
+
+    public function rights_status($value)
+    {
+        $this->applyDynamicFilter('rights_status', $value);
+    }
+
+    public function expiring_before($value)
+    {
+        $this->builder
+            ->whereNotNull('license_expires_at')
+            ->where('license_expires_at', '<=', $value);
     }
 }

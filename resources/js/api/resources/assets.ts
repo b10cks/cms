@@ -4,6 +4,7 @@ import type { ApiCollectionResponse, ApiResponse, BaseQueryParams } from '~/type
 import type {
   AssetDataImportResult,
   AssetResource,
+  AssetRightsStatus,
   ExportTypes,
   LinkedAssetContentResource,
   UpdateAssetPayload,
@@ -22,6 +23,8 @@ export interface AssetsQueryParams extends BaseQueryParams {
   created_at?: string
   updated_at?: string
   mime_type?: string
+  rights_status?: AssetRightsStatus | AssetRightsStatus[]
+  expiring_before?: string
 }
 
 export interface LinkedAssetContentsQueryParams extends BaseQueryParams {}

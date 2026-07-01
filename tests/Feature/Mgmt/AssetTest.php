@@ -180,6 +180,65 @@ class AssetTest extends TestCase
     }
 
     #[Test]
+    public function checksum_is_computed_on_upload(): void
+    {
+        $file = UploadedFile::fake()->image('checksum-test.jpg', 200, 200);
+        $expectedChecksum = hash_file('sha256', $file->getRealPath());
+
+        $response = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", [
+            'file' => $file,
+        ]);
+
+        $response->assertCreated();
+
+        $asset = Asset::query()->firstOrFail();
+        $this->assertSame($expectedChecksum, $asset->checksum);
+    }
+
+    #[Test]
+    public function uploading_a_duplicate_file_returns_existing_asset_info_instead_of_creating_a_new_one(): void
+    {
+        $original = UploadedFile::fake()->createWithContent('original.txt', 'identical content');
+        $firstResponse = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", [
+            'file' => $original,
+        ]);
+        $firstResponse->assertCreated();
+        $existingAssetId = $firstResponse->json('id');
+
+        $duplicate = UploadedFile::fake()->createWithContent('duplicate.txt', 'identical content');
+        $secondResponse = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", [
+            'file' => $duplicate,
+        ]);
+
+        $secondResponse->assertStatus(409);
+        $secondResponse->assertJson([
+            'code' => 'duplicate_asset',
+        ]);
+        $this->assertSame($existingAssetId, $secondResponse->json('existing_asset.id'));
+
+        // No new asset row (or orphaned file) should have been left behind.
+        $this->assertSame(1, Asset::query()->count());
+    }
+
+    #[Test]
+    public function uploading_a_duplicate_file_with_force_creates_a_second_asset(): void
+    {
+        $original = UploadedFile::fake()->createWithContent('original.txt', 'identical content');
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", [
+            'file' => $original,
+        ])->assertCreated();
+
+        $duplicate = UploadedFile::fake()->createWithContent('duplicate.txt', 'identical content');
+        $response = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", [
+            'file' => $duplicate,
+            'force' => true,
+        ]);
+
+        $response->assertCreated();
+        $this->assertSame(2, Asset::query()->count());
+    }
+
+    #[Test]
     public function user_can_list_assets()
     {
         // Create a few assets
@@ -257,6 +316,99 @@ class AssetTest extends TestCase
         foreach ($data as $asset) {
             $this->assertStringStartsWith('image/', $asset['mime_type']);
         }
+    }
+
+    #[Test]
+    public function asset_resource_exposes_rights_and_licensing_fields(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+        Asset::query()->whereKey($asset->id)->update([
+            'license_expires_at' => now()->addWeek(),
+            'rights_status' => 'restricted',
+        ]);
+
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}");
+
+        $response->assertOk();
+        $response->assertJsonPath('rights_status', 'restricted');
+        $this->assertNotNull($response->json('license_expires_at'));
+    }
+
+    #[Test]
+    public function updating_license_expires_at_recomputes_rights_status(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+        $this->assertSame('unrestricted', $asset->fresh()->rights_status);
+
+        $response = $this->patchJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}", [
+            'license_expires_at' => now()->subDay()->toIso8601String(),
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('rights_status', 'expired');
+        $this->assertSame('expired', $asset->fresh()->rights_status);
+
+        $response = $this->patchJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}", [
+            'license_expires_at' => null,
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('rights_status', 'unrestricted');
+        $this->assertSame('unrestricted', $asset->fresh()->rights_status);
+    }
+
+    #[Test]
+    public function user_can_filter_assets_by_rights_status(): void
+    {
+        $restricted = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+        Asset::query()->whereKey($restricted->id)->update([
+            'license_expires_at' => now()->addWeek(),
+            'rights_status' => 'restricted',
+        ]);
+
+        Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets?rights_status=restricted");
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        $this->assertEquals($restricted->id, $response->json('data.0.id'));
+    }
+
+    #[Test]
+    public function user_can_filter_assets_by_expiring_before(): void
+    {
+        $expiringSoon = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+        Asset::query()->whereKey($expiringSoon->id)->update([
+            'license_expires_at' => now()->addDay(),
+            'rights_status' => 'restricted',
+        ]);
+
+        $expiringLater = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+        Asset::query()->whereKey($expiringLater->id)->update([
+            'license_expires_at' => now()->addMonth(),
+            'rights_status' => 'restricted',
+        ]);
+
+        $response = $this->getJson(
+            "/mgmt/v1/spaces/{$this->space->id}/assets?expiring_before=" . now()->addWeek()->toIso8601String()
+        );
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        $this->assertEquals($expiringSoon->id, $response->json('data.0.id'));
     }
 
     #[Test]

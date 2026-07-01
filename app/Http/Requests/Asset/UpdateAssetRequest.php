@@ -35,6 +35,7 @@ class UpdateAssetRequest extends FormRequest
             'data' => 'sometimes|nullable|array',
             'tags' => 'sometimes|nullable|array',
             'tags.*' => 'string',
+            'license_expires_at' => 'sometimes|nullable|date',
         ];
     }
 

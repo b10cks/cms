@@ -32,6 +32,23 @@ const newItemTemplate = {
 
 const defaultFields = ['alt', 'description']
 
+const rightsLicensingFields = [
+  { key: 'copyright_holder', label: $t('labels.settings.assetLibrary.rights.copyrightHolder'), required: false },
+  { key: 'license_type', label: $t('labels.settings.assetLibrary.rights.licenseType'), required: false },
+  { key: 'license_notes', label: $t('labels.settings.assetLibrary.rights.licenseNotes'), required: false },
+  { key: 'usage_restrictions', label: $t('labels.settings.assetLibrary.rights.usageRestrictions'), required: false },
+]
+
+const hasAllRightsLicensingFields = computed(() =>
+  rightsLicensingFields.every((field) =>
+    assetFields.value.some((existing: { key: string }) => existing.key === field.key)
+  )
+)
+
+const addRightsLicensingGroup = () => {
+  rightsLicensingFields.forEach((field) => addField(field))
+}
+
 const columns: ColumnDefinition[] = [
   {
     key: 'key',
@@ -91,7 +108,16 @@ const saveSettings = async () => {
     </CardHeader>
     <CardContent class="space-y-6">
       <div class="space-y-2">
-        <h4 class="text-sm font-medium">{{ $t('labels.settings.assetLibrary.metadataFields') }}</h4>
+        <div class="flex items-center justify-between gap-2">
+          <h4 class="text-sm font-medium">{{ $t('labels.settings.assetLibrary.metadataFields') }}</h4>
+          <Button
+            v-if="canUpdateSpace && !hasAllRightsLicensingFields"
+            variant="outline"
+            size="sm"
+            @click="addRightsLicensingGroup"
+            >{{ $t('labels.settings.assetLibrary.rights.addGroup') }}
+          </Button>
+        </div>
         <p class="text-xs text-muted-foreground">
           {{ $t('labels.settings.assetLibrary.requiredHint') }}
         </p>

@@ -23,6 +23,7 @@ import { Users } from '~/api/resources/users'
 import { ApiClient } from './client'
 import { AssetFolders } from './resources/asset-folders'
 import { AssetTags } from './resources/asset-tags'
+import { AssetVersions } from './resources/asset-versions'
 import { Assets } from './resources/assets'
 import { Backups } from './resources/backups'
 import { BlockTags } from './resources/block-tags'
@@ -143,6 +144,7 @@ export class API {
       assetFolders: new AssetFolders(this.client, spaceId),
       assetTags: new AssetTags(this.client, spaceId),
       assets: new Assets(this.client, spaceId),
+      assetVersions: (assetId: string) => new AssetVersions(this.client, spaceId, assetId),
       icons: new Icons(this.client, spaceId),
       backups: new Backups(this.client, spaceId),
       migrations: new Migrations(this.client, spaceId),

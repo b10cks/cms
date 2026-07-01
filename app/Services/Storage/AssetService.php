@@ -2,14 +2,18 @@
 
 namespace App\Services\Storage;
 
+use App\Exceptions\DuplicateAssetException;
 use App\Models\Management\Space;
 use App\Models\Management\Storage as StorageModel;
 use App\Models\Space\Asset;
 use App\Models\Space\AssetFolder;
+use App\Models\Space\AssetVersion;
+use App\Services\Storage\Filters\HashingStreamFilter;
 use FFMpeg\Coordinate\TimeCode;
 use FFMpeg\FFMpeg;
 use FFMpeg\FFProbe;
 use getID3;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -20,7 +24,7 @@ class AssetService
         private readonly StorageService $storageService
     ) {}
 
-    public function storeAsset(Space $space, UploadedFile $file, object $metadata, object $data, ?AssetFolder $folder = null, ?string $externalId = null): Asset
+    public function storeAsset(Space $space, UploadedFile $file, object $metadata, object $data, ?AssetFolder $folder = null, ?string $externalId = null, bool $force = false): Asset
     {
         try {
             $storage = $space->storages()->where('is_default', true)->firstOrFail();
@@ -56,11 +60,9 @@ class AssetService
                 'original_filename' => $originalFilename,
             ]);
 
-            $stream = fopen($file->getRealPath(), 'r');
-            $filesystem->writeStream($relativePath, $stream);
-            if (is_resource($stream)) {
-                fclose($stream);
-            }
+            // Compute the sha256 checksum as part of the same read that streams
+            // the file into storage, so no second pass over the file is needed.
+            $asset->checksum = $this->writeStreamWithChecksum($file, $filesystem, $relativePath);
 
             if (Str::startsWith($mimeType, 'video/')) {
                 $thumbnailPaths = $this->generateVideoThumbnails($file, $space->id, $asset->id, $sanitizedFilename, $filesystem);
@@ -70,9 +72,21 @@ class AssetService
                 }
             }
 
+            if (! $force) {
+                $duplicate = $this->findDuplicateByChecksum($asset->checksum, $asset->id);
+
+                if ($duplicate) {
+                    $this->discardUnsavedAsset($asset, $filesystem);
+
+                    throw new DuplicateAssetException($duplicate);
+                }
+            }
+
             $asset->save();
 
             return $asset;
+        } catch (DuplicateAssetException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             Log::error('Failed to store asset', [
                 'space' => $space->id,
@@ -83,6 +97,70 @@ class AssetService
 
             throw $e;
         }
+    }
+
+    /**
+     * Stream a local (temp) file into storage while computing its sha256
+     * checksum via a hashing stream filter, so hashing does not require a
+     * second read pass over the file.
+     */
+    private function writeStreamWithChecksum(UploadedFile $file, Filesystem $filesystem, string $relativePath): string
+    {
+        HashingStreamFilter::register();
+
+        $hashContext = hash_init('sha256');
+
+        $stream = fopen($file->getRealPath(), 'r');
+        stream_filter_append($stream, HashingStreamFilter::NAME, STREAM_FILTER_READ, $hashContext);
+
+        $filesystem->writeStream($relativePath, $stream);
+
+        if (is_resource($stream)) {
+            fclose($stream);
+        }
+
+        return hash_final($hashContext);
+    }
+
+    /**
+     * Find another asset in the current space with the same checksum.
+     */
+    private function findDuplicateByChecksum(?string $checksum, string $excludeAssetId): ?Asset
+    {
+        if (! $checksum) {
+            return null;
+        }
+
+        return Asset::query()
+            ->where('checksum', $checksum)
+            ->where('id', '!=', $excludeAssetId)
+            ->first();
+    }
+
+    /**
+     * Clean up a freshly created asset (row + written files) that turned out
+     * to be a duplicate and was not force-uploaded.
+     */
+    private function discardUnsavedAsset(Asset $asset, Filesystem $filesystem): void
+    {
+        try {
+            if ($asset->path && $filesystem->fileExists($asset->path)) {
+                $filesystem->delete($asset->path);
+            }
+
+            foreach (($asset->metadata['thumbnails'] ?? []) as $thumbnail) {
+                if (! empty($thumbnail['path']) && $filesystem->fileExists($thumbnail['path'])) {
+                    $filesystem->delete($thumbnail['path']);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to clean up discarded duplicate asset files', [
+                'asset' => $asset->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        $asset->forceDelete();
     }
 
     /**
@@ -559,11 +637,17 @@ class AssetService
     /**
      * Replace the physical file of an existing asset, keeping the same ID and content references.
      * A unique suffix is appended to the filename to bust CDN caches.
+     *
+     * Before the new file is written, the asset's current file + metadata are
+     * snapshotted into a new `asset_versions` row and the old physical file is
+     * moved (not deleted) to a versioned path, so it can be restored later.
      */
     public function replaceFile(Asset $asset, UploadedFile $file, Space $space): Asset
     {
         $storage = StorageModel::findOrFail($asset->storage_id);
         $filesystem = $this->storageService->getStorage($storage);
+
+        $this->snapshotVersion($asset, $filesystem, $space);
 
         $originalFilename = $file->getClientOriginalName();
         $extension = $file->getClientOriginalExtension();
@@ -571,11 +655,7 @@ class AssetService
         $uniqueFilename = $asset->filename.'_'.Str::random(8);
         $relativePath = "{$space->id}/{$asset->id}/{$uniqueFilename}.{$extension}";
 
-        $stream = fopen($file->getRealPath(), 'r');
-        $filesystem->writeStream($relativePath, $stream);
-        if (is_resource($stream)) {
-            fclose($stream);
-        }
+        $checksum = $this->writeStreamWithChecksum($file, $filesystem, $relativePath);
 
         $newMetadata = array_merge(
             $this->extractMetadata($file, $mimeType),
@@ -589,30 +669,26 @@ class AssetService
             }
         }
 
-        $oldPath = $asset->path;
         $oldThumbnails = $asset->metadata['thumbnails'] ?? [];
 
         // filename (display name) is intentionally preserved
         $asset->extension = $extension;
         $asset->mime_type = $mimeType;
         $asset->size = $file->getSize();
+        $asset->checksum = $checksum;
         $asset->path = $relativePath;
         $asset->metadata = $newMetadata;
         $asset->save();
 
-        // Remove old files after successful save
-        $filesToDelete = array_filter(array_merge(
-            [$oldPath],
-            array_column($oldThumbnails, 'path')
-        ));
-
-        foreach (array_unique($filesToDelete) as $oldFile) {
+        // The old main file was already moved into the version's versioned path
+        // by snapshotVersion(); only the (unversioned) old thumbnails need cleanup.
+        foreach (array_unique(array_filter(array_column($oldThumbnails, 'path'))) as $oldFile) {
             try {
                 if ($filesystem->fileExists($oldFile)) {
                     $filesystem->delete($oldFile);
                 }
             } catch (\Throwable $e) {
-                Log::warning('Failed to delete old file during asset replacement', [
+                Log::warning('Failed to delete old thumbnail during asset replacement', [
                     'asset' => $asset->id,
                     'path' => $oldFile,
                     'error' => $e->getMessage(),
@@ -621,6 +697,93 @@ class AssetService
         }
 
         return $asset;
+    }
+
+    /**
+     * Restore an asset to a previous version's file + metadata. The current
+     * state is itself snapshotted first (via snapshotVersion), so restoring
+     * is non-destructive and can be undone by restoring again.
+     */
+    public function restoreVersion(Asset $asset, AssetVersion $version, Space $space): Asset
+    {
+        if ($version->asset_id !== $asset->id) {
+            throw new \InvalidArgumentException('The version does not belong to this asset.');
+        }
+
+        if (! $version->path) {
+            throw new \RuntimeException("No versioned file is available for asset version: {$version->id}");
+        }
+
+        $storage = StorageModel::findOrFail($asset->storage_id);
+        $filesystem = $this->storageService->getStorage($storage);
+
+        if (! $filesystem->fileExists($version->path)) {
+            throw new \RuntimeException("Versioned file not found in storage for asset version: {$version->id}");
+        }
+
+        // Snapshot the state we're about to overwrite, so it isn't lost.
+        $this->snapshotVersion($asset, $filesystem, $space);
+
+        $uniqueFilename = $asset->filename.'_'.Str::random(8);
+        $relativePath = "{$space->id}/{$asset->id}/{$uniqueFilename}.{$version->extension}";
+
+        // Copy (not move) so the version's file remains available for future restores.
+        $filesystem->copy($version->path, $relativePath);
+
+        $asset->extension = $version->extension;
+        $asset->mime_type = $version->mime_type;
+        $asset->size = $version->size;
+        $asset->checksum = $version->checksum;
+        $asset->path = $relativePath;
+        $asset->metadata = $version->metadata ?? [];
+        $asset->save();
+
+        return $asset;
+    }
+
+    /**
+     * Snapshot the asset's current physical file + metadata into a new,
+     * immutable asset_versions row, moving the current file to a versioned
+     * path so it is preserved (not overwritten/deleted) by the caller.
+     */
+    private function snapshotVersion(Asset $asset, Filesystem $filesystem, Space $space): ?AssetVersion
+    {
+        if (! $asset->path) {
+            return null;
+        }
+
+        $nextVersionNumber = ((int) AssetVersion::query()->where('asset_id', $asset->id)->max('version_number')) + 1;
+        $versionedPath = "{$space->id}/{$asset->id}/versions/{$nextVersionNumber}-".basename($asset->path);
+
+        try {
+            if ($filesystem->fileExists($asset->path)) {
+                $filesystem->move($asset->path, $versionedPath);
+            } else {
+                $versionedPath = null;
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to move asset file to versioned path', [
+                'asset' => $asset->id,
+                'path' => $asset->path,
+                'error' => $e->getMessage(),
+            ]);
+            $versionedPath = null;
+        }
+
+        $version = new AssetVersion;
+        $version->asset_id = $asset->id;
+        $version->version_number = $nextVersionNumber;
+        $version->filename = $asset->filename;
+        $version->extension = $asset->extension;
+        $version->mime_type = $asset->mime_type;
+        $version->path = $versionedPath;
+        $version->size = $asset->size;
+        $version->checksum = $asset->checksum;
+        $version->metadata = $asset->metadata;
+        $version->created_by_id = auth()->id();
+        $version->save();
+
+        return $version;
     }
 
     /**

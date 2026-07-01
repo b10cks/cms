@@ -59,6 +59,22 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping()
             ->runInBackground();
+
+        // Recompute asset rights_status (unrestricted/restricted/expired) from
+        // license_expires_at across all spaces.
+        $schedule->command('assets:sync-rights-status')
+            ->dailyAt('04:00')
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
+        // Prune old asset version snapshots (files + rows), keeping at most 10
+        // recent versions no older than 90 days per asset.
+        $schedule->command('assets:prune-versions')
+            ->dailyAt('04:30')
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     /**

@@ -521,7 +521,45 @@
       "uploading": "Wird hochgeladen...",
       "replaceMedia": "Medien ersetzen",
       "finish": "Fertig",
-      "forceDeleteTitle": "Löschen erzwingen"
+      "forceDeleteTitle": "Löschen erzwingen",
+      "rights": {
+        "title": "Rechte & Lizenzierung",
+        "filterLabel": "Rechtestatus",
+        "filterExpiringBefore": "Läuft ab vor",
+        "status": {
+          "unrestricted": "Uneingeschränkt",
+          "restricted": "Eingeschränkt",
+          "expired": "Abgelaufen"
+        },
+        "expiresAt": "Lizenz läuft ab am",
+        "expiresOn": "Lizenz läuft ab am {date}",
+        "softWarningHint": "Dies dient nur zur Information und verhindert nicht die Verwendung dieses Assets in Inhalten.",
+        "noFieldsConfigured": "Für diesen Space sind noch keine Felder für Rechte & Lizenzierung konfiguriert.",
+        "licenseTypes": {
+          "proprietary": "Proprietär",
+          "cc0": "CC0 (Gemeinfrei)",
+          "ccBy": "CC BY",
+          "ccBySa": "CC BY-SA",
+          "custom": "Benutzerdefiniert"
+        }
+      },
+      "versions": {
+        "title": "Versionsverlauf",
+        "description": "Frühere Versionen dieser Datei werden aufbewahrt, damit du sie wiederherstellen kannst.",
+        "loading": "Versionsverlauf wird geladen...",
+        "empty": "Noch keine früheren Versionen. Versionen werden erstellt, sobald die Datei ersetzt wird.",
+        "versionNumber": "Version {number}",
+        "restore": "Wiederherstellen",
+        "restoreConfirmTitle": "Diese Version wiederherstellen?",
+        "restoreConfirmMessage": "Das Wiederherstellen von Version {version} ersetzt die aktuelle Datei. Die aktuelle Datei wird selbst als neue Version gespeichert, sodass dies rückgängig gemacht werden kann."
+      },
+      "duplicate": {
+        "title": "Mögliches Duplikat erkannt",
+        "description": "\"{filename}\" scheint identisch mit einer bereits vorhandenen Datei in deiner Asset-Bibliothek zu sein.",
+        "hint": "Du kannst das vorhandene Asset wiederverwenden, anstatt ein Duplikat hochzuladen, oder es trotzdem hochladen.",
+        "useExisting": "Vorhandenes Asset verwenden",
+        "uploadAnyway": "Trotzdem hochladen"
+      }
     },
     "contents": {
       "validationWarning": {
@@ -1881,7 +1919,14 @@
         "key": "Schlüssel",
         "label": "Label",
         "defaultField": "Standard-Felder können nicht entfernt werden",
-        "noMetadataFields": "Keine Metadaten-Felder definiert"
+        "noMetadataFields": "Keine Metadaten-Felder definiert",
+        "rights": {
+          "copyrightHolder": "Urheberrechtsinhaber",
+          "licenseType": "Lizenztyp",
+          "licenseNotes": "Lizenzhinweise",
+          "usageRestrictions": "Nutzungsbeschränkungen",
+          "addGroup": "Rechte & Lizenzierung-Felder hinzufügen"
+        }
       },
       "ai": {
         "title": "KI-Einstellungen",
@@ -3538,6 +3583,10 @@
       "uploadError": "Fehler beim Hochladen des Assets",
       "replaceSuccess": "Asset-Datei erfolgreich ersetzt",
       "replaceError": "Fehler beim Ersetzen der Asset-Datei: {error}"
+    },
+    "assetVersions": {
+      "restoreSuccess": "Asset-Version erfolgreich wiederhergestellt",
+      "restoreError": "Fehler beim Wiederherstellen der Asset-Version: {error}"
     },
     "blockFolders": {
       "createSuccess": "Ordner \"{name}\" erfolgreich erstellt",

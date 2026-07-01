@@ -108,6 +108,11 @@ export const queryKeys = {
     linkedContentsPage: (id: MaybeRef<string>, page: MaybeRef<number>) =>
       [...queryKeys.assets(spaceId).linkedContents(id), page] as const,
   }),
+  assetVersions: (spaceId: MaybeRef<string>, assetId: MaybeRef<string>) => ({
+    all: () => ['spaces', spaceId, 'assets', assetId, 'versions'] as const,
+    lists: () => [...queryKeys.assetVersions(spaceId, assetId).all(), 'list'] as const,
+    list: (filters: any = {}) => [...queryKeys.assetVersions(spaceId, assetId).lists(), filters] as const,
+  }),
   icons: (spaceId: MaybeRef<string>) => ({
     all: () => ['spaces', spaceId, 'icons'] as const,
     lists: () => [...queryKeys.icons(spaceId).all(), 'list'] as const,

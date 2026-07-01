@@ -103,6 +103,7 @@ declare global {
   const useAssetLibraryMoves: typeof import('./resources/js/composables/useAssetLibraryMoves').useAssetLibraryMoves
   const useAssetRequirements: typeof import('./resources/js/composables/useAssetRequirements').useAssetRequirements
   const useAssetTags: typeof import('./resources/js/composables/useAssetTags').useAssetTags
+  const useAssetVersions: typeof import('./resources/js/composables/useAssetVersions').useAssetVersions
   const useAssets: typeof import('./resources/js/composables/useAssets').useAssets
   const useAttrs: typeof import('vue').useAttrs
   const useAuditLogs: typeof import('./resources/js/composables/useAuditLogs').useAuditLogs
@@ -225,6 +226,9 @@ declare global {
   // @ts-ignore
   export type { AssetRequirementIssue } from './resources/js/composables/useAssetRequirements'
   import('./resources/js/composables/useAssetRequirements')
+  // @ts-ignore
+  export type { UploadAssetOutcome } from './resources/js/composables/useAssets'
+  import('./resources/js/composables/useAssets')
   // @ts-ignore
   export type { ContentCanvasCommand, ContentCanvasHistoryEntry } from './resources/js/composables/useContentCanvasCommands'
   import('./resources/js/composables/useContentCanvasCommands')
@@ -367,6 +371,7 @@ declare module 'vue' {
     readonly useAssetLibraryMoves: UnwrapRef<typeof import('./resources/js/composables/useAssetLibraryMoves')['useAssetLibraryMoves']>
     readonly useAssetRequirements: UnwrapRef<typeof import('./resources/js/composables/useAssetRequirements')['useAssetRequirements']>
     readonly useAssetTags: UnwrapRef<typeof import('./resources/js/composables/useAssetTags')['useAssetTags']>
+    readonly useAssetVersions: UnwrapRef<typeof import('./resources/js/composables/useAssetVersions')['useAssetVersions']>
     readonly useAssets: UnwrapRef<typeof import('./resources/js/composables/useAssets')['useAssets']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
     readonly useAuditLogs: UnwrapRef<typeof import('./resources/js/composables/useAuditLogs')['useAuditLogs']>

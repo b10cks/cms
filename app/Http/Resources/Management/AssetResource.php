@@ -32,6 +32,8 @@ class AssetResource extends JsonResource
             'metadata' => $this->enrichMetadata($this->metadata),
             'data' => $this->data && count($this->data) ? $this->data : new \StdClass,
             'tags' => $this->tags,
+            'license_expires_at' => $this->license_expires_at?->toIso8601String(),
+            'rights_status' => $this->rights_status,
             'linked_contents_count' => (int) ($this->resource->getAttributes()['linked_contents_count'] ?? 0),
             'effective_asset_fields' => $this->resolveEffectiveAssetFields($request, $space),
             'url' => app(AssetService::class)->getAssetUrl($this->resource),

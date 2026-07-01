@@ -116,6 +116,21 @@ const assetFilters = computed(() => [
       { value: 'eq' as const, label: '=' },
     ],
   },
+  {
+    id: 'rights_status',
+    label: String($t('labels.assets.rights.filterLabel')),
+    operators: [{ value: 'eq' as const, label: 'Equals' }],
+    items: [
+      { value: 'restricted', label: String($t('labels.assets.rights.status.restricted')) },
+      { value: 'expired', label: String($t('labels.assets.rights.status.expired')) },
+      { value: 'unrestricted', label: String($t('labels.assets.rights.status.unrestricted')) },
+    ],
+  },
+  {
+    id: 'expiring_before',
+    label: String($t('labels.assets.rights.filterExpiringBefore')),
+    datepicker: {},
+  },
 ])
 
 const assetQueryParams = computed<AssetsQueryParams>(() => {
@@ -192,8 +207,8 @@ const tagMap = computed(() => {
   return map
 })
 
-const resolvedTagsFor = (tagIds: string[]) => {
-  return tagIds.map((id) => tagMap.value.get(id)).filter(Boolean)
+const resolvedTagsFor = (tagIds: string[] | null | undefined) => {
+  return (tagIds ?? []).map((id) => tagMap.value.get(id)).filter(Boolean)
 }
 
 const nonCompliantAssets = computed(() => {
@@ -400,6 +415,7 @@ const saveAsset = async (asset: AssetResource) => {
       metadata: asset.metadata,
       data: asset.data,
       tags: asset.tags,
+      license_expires_at: asset.license_expires_at,
     },
   })
 

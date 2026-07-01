@@ -526,7 +526,45 @@
       "uploading": "Uploading...",
       "replaceMedia": "Replace Media",
       "finish": "Finish",
-      "forceDeleteTitle": "Force Delete Asset"
+      "forceDeleteTitle": "Force Delete Asset",
+      "rights": {
+        "title": "Rights & Licensing",
+        "filterLabel": "Rights Status",
+        "filterExpiringBefore": "Expiring Before",
+        "status": {
+          "unrestricted": "Unrestricted",
+          "restricted": "Restricted",
+          "expired": "Expired"
+        },
+        "expiresAt": "License Expires On",
+        "expiresOn": "License expires on {date}",
+        "softWarningHint": "This is informational only and does not block usage of this asset in content.",
+        "noFieldsConfigured": "No rights & licensing fields are configured for this space yet.",
+        "licenseTypes": {
+          "proprietary": "Proprietary",
+          "cc0": "CC0 (Public Domain)",
+          "ccBy": "CC BY",
+          "ccBySa": "CC BY-SA",
+          "custom": "Custom"
+        }
+      },
+      "versions": {
+        "title": "Version History",
+        "description": "Previous versions of this file are kept so you can restore them.",
+        "loading": "Loading version history...",
+        "empty": "No previous versions yet. Versions are created whenever the file is replaced.",
+        "versionNumber": "Version {number}",
+        "restore": "Restore",
+        "restoreConfirmTitle": "Restore this version?",
+        "restoreConfirmMessage": "Restoring version {version} will replace the current file. The current file will itself be saved as a new version, so this can be undone."
+      },
+      "duplicate": {
+        "title": "Possible duplicate detected",
+        "description": "\"{filename}\" looks identical to a file already in your asset library.",
+        "hint": "You can reuse the existing asset instead of uploading a duplicate, or upload it anyway.",
+        "useExisting": "Use Existing Asset",
+        "uploadAnyway": "Upload Anyway"
+      }
     },
     "contents": {
       "validationWarning": {
@@ -1882,7 +1920,14 @@
         "key": "Key",
         "label": "Label",
         "defaultField": "Default Fields can't be removed",
-        "noMetadataFields": "No metadata fields defined"
+        "noMetadataFields": "No metadata fields defined",
+        "rights": {
+          "copyrightHolder": "Copyright Holder",
+          "licenseType": "License Type",
+          "licenseNotes": "License Notes",
+          "usageRestrictions": "Usage Restrictions",
+          "addGroup": "Add Rights & Licensing Fields"
+        }
       },
       "ai": {
         "title": "AI Settings",
@@ -3585,6 +3630,10 @@
       "uploadError": "Failed to upload asset",
       "replaceSuccess": "Asset file replaced successfully",
       "replaceError": "Failed to replace asset file: {error}"
+    },
+    "assetVersions": {
+      "restoreSuccess": "Asset version restored successfully",
+      "restoreError": "Failed to restore asset version: {error}"
     },
     "blockFolders": {
       "createSuccess": "Folder \"{name}\" created successfully",
