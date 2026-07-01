@@ -20,7 +20,7 @@ export const badgeVariants = cva(
         secondary: 'border-transparent bg-secondary text-secondary-foreground',
         primary: 'border-transparent bg-primary text-primary-foreground',
       },
-      variant_style: {
+      type: {
         default: '',
         outline: 'border-border bg-transparent',
       },
@@ -37,58 +37,58 @@ export const badgeVariants = cva(
     compoundVariants: [
       {
         variant: 'ai',
-        variant_style: 'outline',
-        class: 'border-ai text-ai',
+        type: 'outline',
+        class: '!border-ai text-ai',
       },
       {
         variant: 'destructive',
-        variant_style: 'outline',
-        class: 'border-destructive-background text-destructive-foreground',
+        type: 'outline',
+        class: '!border-destructive-background text-destructive-foreground',
       },
       {
         variant: 'accent',
-        variant_style: 'outline',
-        class: 'border-accent text-accent',
+        type: 'outline',
+        class: '!border-accent text-accent',
       },
       {
         variant: 'warning',
-        variant_style: 'outline',
-        class: 'border-warning-background text-warning-foreground',
+        type: 'outline',
+        class: '!border-warning-background text-warning-foreground',
       },
       {
         variant: 'info',
-        variant_style: 'outline',
-        class: 'border-info-background text-info-foreground',
+        type: 'outline',
+        class: '!border-info-background text-info-foreground',
       },
       {
         variant: 'success',
-        variant_style: 'outline',
-        class: 'border-success-background text-success-foreground',
+        type: 'outline',
+        class: '!border-success-background text-success-foreground',
       },
       {
         variant: 'surface',
-        variant_style: 'outline',
-        class: 'border-surface text-foreground',
+        type: 'outline',
+        class: '!border-surface text-foreground',
       },
       {
         variant: 'secondary',
-        variant_style: 'outline',
-        class: 'border-secondary text-secondary-foreground',
+        type: 'outline',
+        class: '!border-secondary text-secondary-foreground',
       },
       {
         variant: 'primary',
-        variant_style: 'outline',
-        class: 'border-primary text-primary',
+        type: 'outline',
+        class: '!border-primary text-primary',
       },
       {
         variant: 'default',
-        variant_style: 'outline',
-        class: 'border-secondary text-secondary-foreground',
+        type: 'outline',
+        class: '!border-secondary text-secondary-foreground',
       },
     ],
     defaultVariants: {
       variant: 'default',
-      variant_style: 'default',
+      type: 'default',
       size: 'default',
     },
   }

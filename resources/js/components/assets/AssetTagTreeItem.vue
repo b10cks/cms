@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 import { TreeItem } from 'reka-ui'
+import type { LocationQueryRaw } from 'vue-router'
+import { RouterLink } from 'vue-router'
 
 import Icon from '~/components/Icon.vue'
 import { Badge } from '~/components/ui/badge'
@@ -28,8 +30,16 @@ const emit = defineEmits<{
   assignDrop: [tagId: string, assetIds: string[]]
 }>()
 
+const route = useRoute()
 const wrapperEl = ref<HTMLElement | null>(null)
 const isDraggedOver = ref(false)
+
+const tagLink = computed(() => {
+  const query: LocationQueryRaw = { ...route.query }
+  delete query.folder
+  query.tag = props.item.value.id
+  return { name: route.name ?? undefined, params: { space: route.params.space }, query }
+})
 
 watchEffect((onCleanup) => {
   if (!wrapperEl.value) return
@@ -73,6 +83,8 @@ watchEffect((onCleanup) => {
     <TreeItem
       :style="{ 'padding-left': `${item.level - 0.5}rem` }"
       v-bind="item.bind"
+      :as="RouterLink"
+      :to="tagLink"
       :class="[
         'group flex w-full items-center gap-2 rounded-md px-2 py-1 outline-none',
         'cursor-pointer font-semibold transition-colors duration-200 hover:bg-input',
@@ -95,7 +107,8 @@ watchEffect((onCleanup) => {
         @update="$emit('rename', $event, item.value)"
       />
       <Badge
-        variant="secondary"
+        size="sm"
+        type="outline"
         class="shrink-0"
       >
         {{ item.value.assets_count ?? 0 }}
@@ -110,7 +123,7 @@ watchEffect((onCleanup) => {
         <DropdownMenuContent>
           <DropdownMenuItem @select="$emit('select', item.value.id)">
             <Icon name="lucide:eye" />
-            <span>{{ $t('actions.view') }}</span>
+            <span>{{ $t('actions.view.view') }}</span>
           </DropdownMenuItem>
           <DropdownMenuItem @select="$emit('edit', item.value)">
             <Icon name="lucide:edit" />

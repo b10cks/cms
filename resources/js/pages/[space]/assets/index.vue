@@ -8,6 +8,7 @@ const { t } = useI18n()
 
 const spaceId = computed<string>(() => route.params.space as string)
 const folderId = useRouteQuery('folder', undefined) as Ref<string | undefined>
+const tagId = useRouteQuery('tag', undefined) as Ref<string | undefined>
 const assetId = useRouteQuery('asset', undefined) as Ref<string | undefined>
 
 useSeoMeta({
@@ -18,6 +19,7 @@ useSeoMeta({
 <template>
   <AssetManager
     v-model:folder-id="folderId"
+    v-model:tag-id="tagId"
     v-model:asset-id="assetId"
     :space-id="spaceId"
   />

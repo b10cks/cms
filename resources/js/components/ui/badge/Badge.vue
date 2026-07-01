@@ -8,13 +8,14 @@ import { badgeVariants } from '.'
 
 const props = defineProps<{
   variant?: BadgeVariants['variant']
+  type?: BadgeVariants['type']
   size?: BadgeVariants['size']
   class?: HTMLAttributes['class']
 }>()
 </script>
 
 <template>
-  <div :class="cn(badgeVariants({ variant, size }), props.class)">
+  <div :class="cn(badgeVariants({ variant, size, type }), props.class)">
     <slot />
   </div>
 </template>

@@ -3209,6 +3209,7 @@
     "forceSave": "Save anyway",
     "toDashboard": "Go to dashboard",
     "view": {
+      "view": "View",
       "all": "All",
       "archived": "Archived"
     },

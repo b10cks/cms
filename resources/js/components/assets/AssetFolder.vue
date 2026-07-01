@@ -176,7 +176,7 @@ watchEffect((onCleanup) => {
       <DropdownMenuContent>
         <DropdownMenuItem @select="handleClick">
           <Icon name="lucide:eye" />
-          <span>{{ $t('actions.view') }}</span>
+          <span>{{ $t('actions.view.view') }}</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           v-if="canEdit"

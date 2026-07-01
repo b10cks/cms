@@ -2,10 +2,13 @@
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
 import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 import { TreeItem, type TreeItemToggleEvent, TreeRoot } from 'reka-ui'
+import type { LocationQueryRaw } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { toast } from 'vue-sonner'
 
 import CreateFolderDialog from '~/components/assets/CreateFolderDialog.vue'
 import Icon from '~/components/Icon.vue'
+import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
   DropdownMenu,
@@ -23,9 +26,15 @@ import type { AssetFolderResource } from '~/types/assets'
 
 const props = defineProps<{
   spaceId: string
+  hasActiveTag?: boolean
+}>()
+
+const emit = defineEmits<{
+  selectAll: []
 }>()
 
 const { $t } = useI18n()
+const route = useRoute()
 const { alert } = useAlertDialog()
 const { useAccessControl } = useAuthorization()
 const { settings } = useSpaceSettings(props.spaceId)
@@ -64,6 +73,19 @@ const resolveElement = (value: Element | { $el?: Element } | null): HTMLElement 
 const clearDropState = () => {
   activeDropTargetId.value = null
   isRootDraggedOver.value = false
+}
+
+const buildFolderLink = (folderId: string | null) => {
+  const query: LocationQueryRaw = { ...route.query }
+  delete query.tag
+
+  if (folderId) {
+    query.folder = folderId
+  } else {
+    delete query.folder
+  }
+
+  return { name: route.name ?? undefined, params: { space: route.params.space }, query }
 }
 
 const handleFolderRename = async (newName: string, folderId: string) => {
@@ -246,28 +268,38 @@ const toggleExpanded = (folderId: string) => {
       :get-key="(item) => item?.id"
       :get-children="({ id }) => getChildrenOfFolder(id)"
     >
-      <button
-        type="button"
+      <RouterLink
+        :to="buildFolderLink(null)"
         :class="[
           'group relative my-0.5 flex w-full items-center gap-2 rounded-md py-1 pr-2 pl-2 outline-none',
           'cursor-pointer font-semibold transition-colors duration-200 hover:bg-input',
-          !selectedFolderId ? 'bg-input text-primary' : '',
+          !selectedFolderId && !hasActiveTag ? 'bg-input text-primary' : '',
           isRootDraggedOver ? 'bg-input/70 ring-1 ring-border' : '',
         ]"
-        @click="selectedFolderId = null"
+        @click="
+          () => {
+            selectedFolderId = null
+            emit('selectAll')
+          }
+        "
       >
         <Icon name="lucide:home" />
         <span>{{ $t('labels.assets.allAssets') }}</span>
-      </button>
+      </RouterLink>
 
-      <div class="my-2 flex items-center px-2">
+      <div class="group my-2 flex items-center gap-2 px-2">
+        <Icon
+          name="lucide:folder"
+          class="text-muted-foreground"
+          aria-hidden="true"
+        />
         <h2 class="text-sm font-semibold text-primary">
           {{ $t('labels.assetFolders.title') }}
         </h2>
         <Button
           v-if="canManageFolders"
-          class="ml-auto"
-          size="xs"
+          class="ml-auto opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+          size="toolbar"
           @click="openCreateFolderDialog(null)"
         >
           <Icon name="lucide:plus" />
@@ -280,6 +312,8 @@ const toggleExpanded = (folderId: string) => {
         v-slot="{ isExpanded }"
         :key="item._id"
         v-bind="item.bind"
+        :as="RouterLink"
+        :to="buildFolderLink(item.value.id)"
         :style="{ 'padding-left': `${item.level - 0.5}rem` }"
         :class="[
           'group my-0.5 flex items-center rounded-md px-2 py-1 outline-none',
@@ -313,6 +347,7 @@ const toggleExpanded = (folderId: string) => {
             :name="`lucide:${item.value.icon}`"
             :style="{ color: item.value.color }"
             aria-hidden="true"
+            class="shrink-0"
           />
           <RenamableTitle
             :name="item.value.name"
@@ -322,6 +357,13 @@ const toggleExpanded = (folderId: string) => {
             @cancel="currentlyEditingId = null"
           />
         </div>
+        <Badge
+          size="sm"
+          type="outline"
+          class="shrink-0"
+        >
+          {{ item.value.assets_count ?? 0 }}
+        </Badge>
         <DropdownMenu v-if="canManageFolders">
           <DropdownMenuTrigger
             class="opacity-0 transition-all duration-200 group-hover:opacity-100 hover:text-primary data-[state=open]:opacity-100"
@@ -331,7 +373,7 @@ const toggleExpanded = (folderId: string) => {
           <DropdownMenuContent>
             <DropdownMenuItem @select="selectedFolderId = item.value.id">
               <Icon name="lucide:eye" />
-              <span>{{ $t('actions.view') }}</span>
+              <span>{{ $t('actions.view.view') }}</span>
             </DropdownMenuItem>
             <DropdownMenuItem @select="openEditFolderDialog(item.value)">
               <Icon name="lucide:edit" />

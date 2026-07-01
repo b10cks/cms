@@ -14,17 +14,6 @@ import { TabsList, TabsTrigger } from '~/components/ui/tabs'
 import ExportAssetsDialog from './assets/ExportAssetsDialog.vue'
 import ImportAssetsDialog from './assets/ImportAssetsDialog.vue'
 
-const tabs = {
-  folders: {
-    icon: 'lucide:folder',
-    label: 'Folders',
-  },
-  tags: {
-    icon: 'lucide:tag',
-    label: 'Tags',
-  },
-}
-
 const modes = {
   grid: {
     icon: 'lucide:grid-3x3',
@@ -55,14 +44,16 @@ const selectedAsset = defineModel<string | null>('assetId', {
 })
 
 const viewMode = useRouteQuery('view', 'grid') as Ref<'grid' | 'list'>
-const sidebarMode = ref<'folders' | 'tags'>('folders')
 const exportDialogOpen = ref(false)
 const importDialogOpen = ref(false)
 
-watch(sidebarMode, (newMode) => {
-  if (newMode === 'folders') {
+watch(selectedFolder, (folderId) => {
+  if (folderId !== null) {
     selectedTag.value = null
-  } else {
+  }
+})
+watch(selectedTag, (tagId) => {
+  if (tagId !== null) {
     selectedFolder.value = null
   }
 })
@@ -72,36 +63,21 @@ watch(sidebarMode, (newMode) => {
   <div class="flex h-full w-full flex-col">
     <div class="flex flex-1 overflow-hidden">
       <div class="sticky top-0 flex h-full w-xs shrink-0 flex-col overflow-hidden bg-surface p-2">
-        <TabsRoot
-          v-model="sidebarMode"
-          default-value="folders"
-        >
-          <TabsList class="mb-4 w-full">
-            <TabsTrigger
-              v-for="({ icon, label }, key) in tabs"
-              :key="key"
-              :value="key"
-              class="grow"
-            >
-              <Icon :name="icon" />
-              <span class="hidden sm:inline">{{ label }}</span>
-            </TabsTrigger>
-          </TabsList>
-          <ScrollArea class="flex-1 overflow-y-auto">
-            <TabsContent value="folders">
-              <AssetFolderTree
-                v-model="selectedFolder"
-                :space-id="spaceId"
-              />
-            </TabsContent>
-            <TabsContent value="tags">
-              <AssetTagTree
-                v-model="selectedTag"
-                :space-id="spaceId"
-              />
-            </TabsContent>
-          </ScrollArea>
-        </TabsRoot>
+        <ScrollArea class="flex-1 overflow-y-auto">
+          <div class="flex flex-col">
+            <AssetFolderTree
+              v-model="selectedFolder"
+              :space-id="spaceId"
+              :has-active-tag="Boolean(selectedTag)"
+              @select-all="selectedTag = null"
+            />
+            <AssetTagTree
+              v-model="selectedTag"
+              :space-id="spaceId"
+              class="mt-4"
+            />
+          </div>
+        </ScrollArea>
       </div>
       <TabsRoot
         v-model="viewMode"

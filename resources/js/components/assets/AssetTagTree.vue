@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { TreeRoot } from 'reka-ui'
 
-import CreateAssetTagDialog from '~/components/assets/CreateAssetTagDialog.vue'
 import AssetTagTreeItem from '~/components/assets/AssetTagTreeItem.vue'
+import CreateAssetTagDialog from '~/components/assets/CreateAssetTagDialog.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import type { AssetTagResource } from '~/types/assets'
@@ -79,14 +79,19 @@ async function handleDelete(tag: AssetTagResource) {
       :get-key="(item) => item?.id"
       :get-children="() => undefined"
     >
-      <div class="my-2 flex items-center px-2">
+      <div class="group my-2 flex items-center gap-2 px-2">
+        <Icon
+          name="lucide:tag"
+          class="text-muted-foreground"
+          aria-hidden="true"
+        />
         <h2 class="text-sm font-semibold text-primary">
           {{ $t('labels.assetTags.title') }}
         </h2>
         <Button
           v-if="canManageTags"
-          class="ml-auto"
-          size="xs"
+          class="ml-auto opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+          size="toolbar"
           @click="openCreateDialog"
         >
           <Icon name="lucide:plus" />
