@@ -36,16 +36,19 @@ class ImageController extends Controller
             app()->offsetSet('currentSpace', $space);
 
             $storageModel = $space->storages()->findOrFail($storage);
+
             $asset = Asset::query()->whereKey($assetId)->where('storage_id', $storageModel->id)->firstOrFail();
-
-            abort_unless($asset->path === $fullPath, 404);
-
-            $mimetype = $asset->mime_type;
             $disk = $this->storageService->getStorage($storageModel);
+
+            if ($asset->path === $fullPath) {
+                $mimetype = $asset->mime_type;
+            } else {
+                $mimetype = $disk->mimeType($fullPath);
+            }
         } else {
             $disk = Storage::disk();
 
-            if (!$disk->exists($fullPath)) {
+            if (! $disk->exists($fullPath)) {
                 return response()->json(['error' => 'Image not found'], 404);
             }
 
@@ -84,7 +87,7 @@ class ImageController extends Controller
             );
             $result = $this->imageService->processImage($disk, $fullPath, $transformation);
 
-            if (!$result) {
+            if (! $result) {
                 return response()->json(['error' => 'Image not found or processing failed'], 404);
             }
 
@@ -97,7 +100,7 @@ class ImageController extends Controller
                 'pragma' => 'public',
             ]);
         } catch (\Exception $e) {
-            Log::error('Image processing error: ' . $e->getMessage(), [
+            Log::error('Image processing error: '.$e->getMessage(), [
                 'storage' => $storage,
                 'path' => $fullPath,
                 'transformations' => $transformations,
@@ -113,6 +116,6 @@ class ImageController extends Controller
         $duration = (int) config('ilum.cache.duration', 31_536_000);
         $immutable = (bool) config('ilum.cache.immutable', true);
 
-        return 'public, max-age=' . $duration . ($immutable ? ', immutable' : '');
+        return 'public, max-age='.$duration.($immutable ? ', immutable' : '');
     }
 }
