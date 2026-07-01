@@ -22,7 +22,7 @@ export default function useSpaceSettings(spaceId: string) {
       expanded: [] as string[],
       visibleFields: [] as string[],
       visibleLanguages: [] as string[],
-      lastDialogFolderId: null as string | null,
+      lastDialogFolderId: undefined as string | null | undefined,
       autoSave: true,
     },
     dataEntries: {

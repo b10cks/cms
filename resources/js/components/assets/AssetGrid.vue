@@ -54,7 +54,8 @@ const { alert } = useAlertDialog()
 const { useAccessControl } = useAuthorization()
 const { settings } = useSpaceSettings(props.spaceId)
 const { useFolderStructure, useDeleteAssetFolderMutation } = useAssetFolders(props.spaceId)
-const { useAssetsQuery, useDeleteAssetMutation, useUpdateAssetMutation } = useAssets(props.spaceId)
+const { useAssetsQuery, useAssetQuery, useDeleteAssetMutation, useUpdateAssetMutation } =
+  useAssets(props.spaceId)
 const { useAssetTagsQuery } = useAssetTags(props.spaceId)
 const { data: allTagsResponse } = useAssetTagsQuery({ per_page: 500 })
 const { getBreadcrumbs, getChildrenOfFolder } = useFolderStructure()
@@ -69,6 +70,7 @@ const canManageFolders = computed(() => access.hasAbility('asset_folders.manage'
 
 const folderId = defineModel<string | null>('folderId')
 const tagId = defineModel<string | null>('tagId')
+const assetId = defineModel<string | null>('assetId', { default: null })
 
 const showUploadDialog = ref(false)
 const droppedFiles = ref<File[]>([])
@@ -129,6 +131,24 @@ const assetQueryParams = computed<AssetsQueryParams>(() => {
 })
 
 const { data: assetResponse } = useAssetsQuery(assetQueryParams)
+
+const shouldLoadDeepLinkedAsset = computed(() => {
+  return props.mode === 'manage' && Boolean(assetId.value) && assetId.value !== detailAsset.value?.id
+})
+const { data: deepLinkedAsset } = useAssetQuery(
+  computed(() => assetId.value ?? ''),
+  shouldLoadDeepLinkedAsset
+)
+
+watch(deepLinkedAsset, (asset) => {
+  if (asset && asset.id === assetId.value) {
+    detailAsset.value = asset
+  }
+})
+
+watch(detailAsset, (asset) => {
+  assetId.value = asset?.id ?? null
+})
 
 const selectedGridSize = computed(() => {
   const key = settings.value.assets.gridSize as keyof typeof gridSizes
@@ -278,9 +298,13 @@ const handleFolderSelect = (folder: AssetFolderResource, selected: boolean) => {
   emitSelectionChange()
 }
 
+const navigateToFolder = (id: string | null) => {
+  folderId.value = id
+  emit('folder-change', id)
+}
+
 const handleFolderClick = (folder: AssetFolderResource) => {
-  folderId.value = folder.id
-  emit('folder-change', folder.id)
+  navigateToFolder(folder.id)
 }
 
 const openCreateFolderDialog = (parentId: string | null = activeFolderId.value) => {
@@ -552,14 +576,14 @@ onUnmounted(() => {
   <main class="flex flex-col gap-6">
     <header class="flex h-5 items-center justify-between">
       <Breadcrumb class="flex gap-2">
-        <BreadcrumbItem @click="folderId = null">
+        <BreadcrumbItem @click="navigateToFolder(null)">
           <button
             ref="rootBreadcrumbRef"
             :class="[
               'flex cursor-pointer items-center gap-2 rounded-md py-1 transition-colors hover:text-primary',
               isRootDropActive ? 'bg-input/70 ring-1 ring-border' : '',
             ]"
-            @click="folderId = null"
+            @click="navigateToFolder(null)"
           >
             <Icon name="lucide:home" />
             <span>{{ $t('labels.assets.allAssets') }}</span>
@@ -580,7 +604,7 @@ onUnmounted(() => {
           <BreadcrumbItem>
             <button
               class="flex cursor-pointer items-center gap-2 hover:text-primary"
-              @click="folderId = id"
+              @click="navigateToFolder(id)"
             >
               <Icon
                 :name="`lucide:${icon}`"

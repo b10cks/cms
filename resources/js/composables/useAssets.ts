@@ -35,13 +35,14 @@ export function useAssets(spaceId: MaybeRef<string>) {
     })
   }
 
-  const useAssetQuery = (id: MaybeRef<string>) => {
+  const useAssetQuery = (id: MaybeRef<string>, enabled: MaybeRef<boolean> = true) => {
     return useQuery({
       queryKey: computed(() => queryKeys.assets(spaceId).detail(id)),
       queryFn: async () => {
         const response = await spaceAPI.value.assets.get(toValue(id))
         return response.data
       },
+      enabled: computed(() => Boolean(toValue(id)) && toValue(enabled)),
     })
   }
 

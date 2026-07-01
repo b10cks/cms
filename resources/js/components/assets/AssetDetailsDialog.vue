@@ -340,9 +340,9 @@ const loadMoreLinkedContents = () => {
         <DialogTitle>{{ asset.filename }}</DialogTitle>
         <p>.{{ asset.extension }}</p>
       </DialogHeader>
-      <div class="grid gap-6 py-4 md:grid-cols-12 flex-1 min-h-0 overflow-hidden">
+      <div class="grid gap-6 py-4 md:grid-cols-12 md:grid-rows-[minmax(0,1fr)] flex-1 min-h-0 overflow-hidden">
         <div
-          class="checkerboard flex flex-col items-center justify-center rounded-xl p-4 md:col-span-8"
+          class="checkerboard flex flex-col items-center justify-center overflow-y-auto rounded-xl p-4 md:col-span-8 min-h-0"
         >
           <div
             v-if="getFileType(asset.mime_type) === 'image'"
@@ -509,7 +509,7 @@ const loadMoreLinkedContents = () => {
             </template>
           </div>
         </div>
-        <div class="space-y-4 md:col-span-4 overflow-y-auto">
+        <div class="space-y-4 md:col-span-4 min-h-0 overflow-y-auto">
           <InputField
             v-model="assetCopy.filename"
             name="filename"

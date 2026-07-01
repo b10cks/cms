@@ -52,9 +52,10 @@ const updateValue = () => {
   emit('update:modelValue', localValue.value)
 }
 
-const initialFolderId = computed(
-  () => settings.value.assets.lastDialogFolderId ?? props.item.folder_id ?? null
-)
+const initialFolderId = computed(() => {
+  const lastFolderId = settings.value.assets.lastDialogFolderId
+  return lastFolderId !== undefined ? lastFolderId : (props.item.folder_id ?? null)
+})
 
 const handleFolderChange = (folderId: string | null) => {
   settings.value.assets.lastDialogFolderId = folderId

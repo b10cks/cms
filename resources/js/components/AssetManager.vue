@@ -50,6 +50,9 @@ const selectedFolder = defineModel<string | null>('folderId', {
 const selectedTag = defineModel<string | null>('tagId', {
   default: null,
 })
+const selectedAsset = defineModel<string | null>('assetId', {
+  default: null,
+})
 
 const viewMode = useRouteQuery('view', 'grid') as Ref<'grid' | 'list'>
 const sidebarMode = ref<'folders' | 'tags'>('folders')
@@ -109,6 +112,7 @@ watch(sidebarMode, (newMode) => {
             <AssetGrid
               v-model:folder-id="selectedFolder"
               v-model:tag-id="selectedTag"
+              v-model:asset-id="selectedAsset"
               :space-id="spaceId"
               :allow-upload="canManageAssets"
               :allow-folder-creation="canManageAssetFolders"
