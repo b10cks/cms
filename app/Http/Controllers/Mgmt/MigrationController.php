@@ -35,8 +35,16 @@ class MigrationController extends Controller
     {
         $this->authorize('create', [SpaceMigration::class, $space]);
 
+        $validated = $request->validated();
+
+        // The caller must also be authorized to write to the *target* space —
+        // otherwise an admin of space A could overwrite the contents of space B
+        // simply by pointing a migration at it.
+        $targetSpace = Space::findOrFail($validated['target_space_id']);
+        $this->authorize('create', [SpaceMigration::class, $targetSpace]);
+
         $migration = $action->execute(
-            $request->validated(),
+            $validated,
             $space,
             auth()->user()
         );

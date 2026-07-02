@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Space\UpdateSpaceAiSettingsRequest;
 use App\Models\Management\Space;
 use App\Services\Ai\ModelRegistry;
+use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 
 class SpaceAiSettingsController extends Controller
@@ -17,6 +18,8 @@ class SpaceAiSettingsController extends Controller
 
     public function update(UpdateSpaceAiSettingsRequest $request, Space $space): JsonResponse
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'ai.manage'), 403);
+
         $validated = $request->validated();
 
         $settings = $space->settings;
@@ -54,6 +57,8 @@ class SpaceAiSettingsController extends Controller
 
     public function show(Space $space): JsonResponse
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'ai.view'), 403);
+
         return response()->json([
             'data' => [
                 'ai' => $space->settings->ai ?? [

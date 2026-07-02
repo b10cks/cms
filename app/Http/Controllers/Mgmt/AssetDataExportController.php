@@ -8,6 +8,7 @@ use App\Http\Filters\Mgmt\AssetFilter;
 use App\Http\Requests\Asset\ExportAssetDataRequest;
 use App\Models\Management\Space;
 use App\Services\AssetData\AssetDataExportImportService;
+use App\Services\Auth\AuthorizationService;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -18,6 +19,8 @@ class AssetDataExportController extends Controller
         Space $space,
         AssetDataExportImportService $service
     ): Response {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.view'), 403);
+
         try {
             $format = ImportExportFormat::from($request->validated('as'));
             $filter = new AssetFilter($request->all());

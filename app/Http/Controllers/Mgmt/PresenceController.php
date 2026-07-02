@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Mgmt;
 use App\Events\Space\ContentPresenceUpdated;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
+use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\Request;
 
 class PresenceController
@@ -23,6 +24,8 @@ class PresenceController
         Space $space,
         ?Content $content = null
     ): array {
+        abort_unless(app(AuthorizationService::class)->canInSpace($request->user(), $space, 'content.view'), 403);
+
         $request->validate([
             'previous_content_id' => 'nullable|string',
             'action' => 'required|in:join,leave',
@@ -75,6 +78,8 @@ class PresenceController
         Space $space,
         Content $content
     ): array {
+        abort_unless(app(AuthorizationService::class)->canInSpace($request->user(), $space, 'content.view'), 403);
+
         $user = $request->user();
 
         broadcast(new ContentPresenceUpdated(

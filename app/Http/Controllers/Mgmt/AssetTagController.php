@@ -19,6 +19,8 @@ class AssetTagController extends Controller
 {
     public function index(Space $space, Request $request): ResourceCollection
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_tags.view'), 403);
+
         $filter = new AssetTagFilter($request->all());
 
         $tags = AssetTag::filter($filter)
@@ -30,6 +32,8 @@ class AssetTagController extends Controller
 
     public function store(Space $space, UpsertAssetTagRequest $request): AssetTagResource
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_tags.manage'), 403);
+
         $tag = new AssetTag($request->validated());
         abort_unless($tag->save(), 500, 'Failed to create asset tag');
 
@@ -38,11 +42,15 @@ class AssetTagController extends Controller
 
     public function show(Space $space, AssetTag $tag): AssetTagResource
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_tags.view'), 403);
+
         return new AssetTagResource($tag->loadCount(['assets']));
     }
 
     public function update(UpsertAssetTagRequest $request, Space $space, AssetTag $tag): AssetTagResource
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_tags.manage'), 403);
+
         $tag->fill($request->validated());
         abort_unless($tag->save(), 500, 'Failed to update asset tag');
 
@@ -76,6 +84,8 @@ class AssetTagController extends Controller
 
     public function destroy(Space $space, AssetTag $tag): JsonResponse
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_tags.manage'), 403);
+
         try {
             $tag->delete();
 

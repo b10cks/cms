@@ -9,6 +9,7 @@ use App\Http\Middleware\CacheDataApi;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\EnsureEmailIsVerified;
 use App\Http\Middleware\EnsureRevision;
+use App\Http\Middleware\EnsureSpaceMembership;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\RequirePasswordVerification;
@@ -106,6 +107,7 @@ class Kernel extends HttpKernel
         'throttle' => ThrottleRequests::class,
         'verified' => EnsureEmailIsVerified::class,
         'revision' => EnsureRevision::class,
+        'space.member' => EnsureSpaceMembership::class,
         '2fa' => RequireTotpVerification::class,
         'stateful' => EnsureFrontendRequestsAreStateful::class,
         'password' => RequirePasswordVerification::class,

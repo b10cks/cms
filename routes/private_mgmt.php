@@ -196,7 +196,7 @@ Route::group(['prefix' => 'teams/{team}'], function () {
 });
 
 Route::apiResource('spaces', SpaceController::class);
-Route::group(['prefix' => 'spaces/{space}'], function () {
+Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], function () {
     Route::post('icon', SpaceIconController::class)->name('spaces.icon');
     Route::post('archive', SpaceArchiveController::class)->name('spaces.archive');
     Route::get('ai-usage', SpaceAiUsageController::class)->name('spaces.ai-usage');
