@@ -289,13 +289,35 @@ class IconifyController
             'mode'     => in_array($request->query('mode'), ['mask', 'background'], true)
                             ? $request->query('mode')
                             : null,
-            'selector' => (string) ($request->query('selector') ?: '.icon--{prefix}--{name}'),
-            'common'   => (string) ($request->query('common') ?: '.icon--{prefix}'),
+            'selector' => $this->sanitizeCssSelector($request->query('selector'), '.icon--{prefix}--{name}'),
+            'common'   => $this->sanitizeCssSelector($request->query('common'), '.icon--{prefix}'),
             'var'      => preg_replace('/[^a-z0-9-]/i', '', (string) $request->query('var', 'svg')) ?: 'svg',
             'stroke'   => $this->parseStrokeWidth($request->query('stroke-width')),
         ];
 
         return response($this->renderCss($icons, $opts), 200, ['Content-Type' => 'text/css; charset=utf-8']);
+    }
+
+    /**
+     * Sanitize a client-supplied CSS selector before it is interpolated into a
+     * text/css response. Only characters that can appear in a plain selector are
+     * allowed (plus the {prefix}/{name} placeholders); anything that could break
+     * out of the rule — braces, parentheses, semicolons, at-signs — forces the
+     * safe default so the endpoint can't be used for CSS injection.
+     */
+    private function sanitizeCssSelector(mixed $value, string $default): string
+    {
+        $value = (string) ($value ?: $default);
+
+        // Validate the value with the placeholders removed, so their braces
+        // don't count against the "no braces" rule.
+        $withoutPlaceholders = str_replace(['{prefix}', '{name}'], '', $value);
+
+        if ($withoutPlaceholders === '' || preg_match('/[^a-z0-9_\-.#:>~+\s,]/i', $withoutPlaceholders)) {
+            return $default;
+        }
+
+        return $value;
     }
 
     private function renderCss(Collection $icons, array $opts): string
