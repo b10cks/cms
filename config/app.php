@@ -90,6 +90,9 @@ return [
 
     'domain' => env('APP_DOMAIN', 'localhost'),
 
+    // Per-user/IP request cap per minute for the authenticated management API.
+    'mgmt_rate_limit' => env('MGMT_RATE_LIMIT', 1000),
+
     'asset_url' => env('ASSET_URL'),
 
     /*

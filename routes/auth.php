@@ -61,6 +61,7 @@ Route::post('one-time-token/create', CreateOneTimeTokenController::class)
     ->name('one-time-token.create');
 
 Route::post('one-time-token/login', LoginOneTimeTokenController::class)
+    ->middleware('throttle:one-time')
     ->name('one-time-token.login');
 
 Route::post('email/verify/send', [EmailVerificationController::class, 'send'])
