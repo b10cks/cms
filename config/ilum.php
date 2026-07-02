@@ -7,6 +7,10 @@ return [
 
     'driver' => env('IMAGE_DRIVER', 'vips'),
 
+    // Reject source images whose pixel count (width × height) exceeds this cap
+    // before decoding, to guard against decompression bombs. 0 disables it.
+    'max_source_pixels' => (int) env('IMAGE_MAX_SOURCE_PIXELS', 100_000_000),
+
     'drivers' => [
         'vips' => [
             'class' => \App\Services\Image\Drivers\VipsDriver::class,

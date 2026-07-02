@@ -40,6 +40,28 @@ class ImageTransformationManager extends Manager
     }
 
     /**
+     * Whether the source image's pixel count is within the configured cap.
+     * Returns true when the dimensions can't be read (unknown format) so the
+     * driver can still attempt formats getimagesize doesn't understand.
+     */
+    private function sourceWithinPixelLimit(string $tempFile): bool
+    {
+        $maxPixels = (int) $this->config->get('ilum.max_source_pixels', 100_000_000);
+
+        if ($maxPixels <= 0) {
+            return true;
+        }
+
+        $info = @getimagesize($tempFile);
+
+        if ($info === false || !isset($info[0], $info[1])) {
+            return true;
+        }
+
+        return ($info[0] * $info[1]) <= $maxPixels;
+    }
+
+    /**
      * Process an image using the specified operation
      */
     public function processImage(
@@ -58,6 +80,18 @@ class ImageTransformationManager extends Manager
             $driver = $this->driver();
             $tempFile = $this->copySourceToTemporaryFile($disk, $fullPath);
             if ($tempFile === null) {
+                return null;
+            }
+
+            // Guard against decompression bombs: a tiny compressed file can
+            // declare enormous dimensions that blow up memory when decoded.
+            // getimagesize only reads the header, so this is cheap.
+            if (!$this->sourceWithinPixelLimit($tempFile)) {
+                Log::warning('Rejected oversized source image (possible decompression bomb)', [
+                    'path' => $fullPath,
+                ]);
+                unlink($tempFile);
+
                 return null;
             }
 
