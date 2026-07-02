@@ -46,6 +46,7 @@
     "chart.js": "^4.5.1",
     "class-variance-authority": "^0.7.1",
     "dayjs": "^1.11.21",
+    "dompurify": "^3.4.11",
     "laravel-echo": "^2.3.7",
     "leaflet": "^1.9.4",
     "marked": "^17.0.6",

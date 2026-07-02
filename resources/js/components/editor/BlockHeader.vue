@@ -13,6 +13,19 @@ const blockTitle = computed(() => {
   return props.block.name || props.block.slug || 'Untitled'
 })
 
+// guessedTitle is rendered with v-html because the handlebars preview template
+// may legitimately emit markup (e.g. the {{image}} helper). The template
+// renderer already HTML-escapes every interpolated content value, but the
+// non-template fallbacks below use raw content/block strings, so they must be
+// escaped here to avoid stored XSS.
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+
 const guessedTitle = computed(() => {
   if (!props.content) return 'Untitled'
 
@@ -33,15 +46,15 @@ const guessedTitle = computed(() => {
   if (firstStringValue) {
     const value = String(props.content[firstStringValue]).trim()
     if (value) {
-      return value
+      return escapeHtml(value)
     }
   }
 
   if (props.content.block) {
-    return props.block?.name || props.block?.slug || 'Untitled Block'
+    return escapeHtml(props.block?.name || props.block?.slug || 'Untitled Block')
   }
 
-  return props.block?.name || props.block?.slug || 'Untitled'
+  return escapeHtml(props.block?.name || props.block?.slug || 'Untitled')
 })
 </script>
 

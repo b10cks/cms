@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import NotesIcon from '~/assets/images/space.svg?component'
 import Icon from '~/components/Icon.vue'
+import { safeHref } from '~/lib/sanitize'
 import { Button } from '~/components/ui/button'
 import {
   DropdownMenu,
@@ -166,10 +167,10 @@ defineExpose({
 
               <TableCell class="align-top">
                 <a
-                  v-if="note.url"
-                  :href="note.url"
+                  v-if="safeHref(note.url)"
+                  :href="safeHref(note.url)"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   class="text-sm text-info underline-offset-2 hover:underline"
                 >
                   {{ note.url }}

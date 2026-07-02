@@ -4,6 +4,7 @@ import { toast } from 'vue-sonner'
 
 import Icon from '~/components/Icon.vue'
 import Markdown from '~/components/Markdown.vue'
+import { isSafeFrameUrl } from '~/lib/sanitize'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,7 +71,9 @@ const baseSrc = computed(() => {
   const env = effectiveEnvironment.value
   const currentContent = content.value
 
-  if (!env?.url || !currentContent?.language_iso || !props.fullSlug) {
+  // env.url is space-configured; reject anything that isn't http(s) so a
+  // `javascript:` URL can never end up as the iframe src.
+  if (!env?.url || !isSafeFrameUrl(env.url) || !currentContent?.language_iso || !props.fullSlug) {
     return null
   }
 
@@ -339,6 +342,7 @@ const handleMouseMove = (event: MouseEvent) => {
           :key="iframeKey"
           :src="src"
           :title="fullSlug"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-top-navigation-by-user-activation"
           class="grow bg-white"
           @load="handleLoad()"
         />

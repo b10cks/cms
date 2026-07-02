@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
+import { sanitizeSvgBody } from '~/lib/sanitize'
 
 const props = defineProps<{
   body: string
@@ -9,7 +10,9 @@ const props = defineProps<{
 }>()
 
 const iconData = computed(() => ({
-  body: props.body,
+  // Uploaded SVG markup is injected into the DOM by Iconify — sanitize it
+  // client-side so any embedded script/event handler cannot execute.
+  body: sanitizeSvgBody(props.body),
   width: props.width ?? 24,
   height: props.height ?? 24,
 }))

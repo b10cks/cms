@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { marked } from 'marked'
+import { sanitizeHtml } from '~/lib/sanitize'
 
 const props = defineProps<{ content: string }>()
 const router = useRouter()
 
 const html = computed(() => {
-  return marked.parse(props.content as string)
+  // marked passes raw HTML through untouched, so sanitize before v-html.
+  return sanitizeHtml(marked.parse(props.content as string) as string)
 })
 
 function onClick(e: MouseEvent) {
@@ -21,7 +23,7 @@ function onClick(e: MouseEvent) {
   e.preventDefault()
   if (url.host !== location.host) {
     // open href in new window
-    window.open(url, '_blank')
+    window.open(url, '_blank', 'noopener,noreferrer')
     return
   }
 

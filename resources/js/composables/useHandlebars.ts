@@ -143,7 +143,7 @@ function renderImage(expression: string, scope: RenderScope): string {
   const baseURL = (runtimeConfig.public.ilum.baseURL || '').replace(/\/$/, '')
   const imgUrl = buildIlumUrl(source, { width: 64, height: 64 }, baseURL)
 
-  return `<img src="${imgUrl}" alt="" />`
+  return `<img src="${escapeHtml(imgUrl)}" alt="" />`
 }
 
 function findMatchingBlock(
@@ -317,8 +317,6 @@ function resolveImageSource(value: unknown): string | null {
     return null
   }
 
-  console.log(value)
-
   for (const key of ['full_path', 'url', 'src', 'path']) {
     const candidate = value[key]
 
@@ -330,17 +328,30 @@ function resolveImageSource(value: unknown): string | null {
   return null
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+// Values resolved from content are interpolated into an HTML string that the
+// caller renders with v-html, so — like Handlebars' own `{{ }}` — every
+// interpolated value must be HTML-escaped. Only the static template markup
+// authored around the tokens is emitted verbatim.
 function stringifyValue(value: unknown): string {
   if (value == null) {
     return ''
   }
 
   if (typeof value === 'string') {
-    return value
+    return escapeHtml(value)
   }
 
   if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
-    return String(value)
+    return escapeHtml(String(value))
   }
 
   return ''
