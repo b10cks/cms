@@ -605,6 +605,10 @@ class RunSpaceMigration extends QueuedJob
         $rows = $src->table('contents')->whereNull('deleted_at')->get()->all();
         $sorted = $this->sortByParentDepth($rows, 'id', 'parent_id');
 
+        // Preload source block id → slug once instead of querying per content in
+        // the slug-based fallback below.
+        $sourceBlockSlugById = $src->table('blocks')->pluck('slug', 'id')->all();
+
         foreach ($sorted as $row) {
             $row = (array) $row;
             $externalId = $row['id'];
@@ -618,9 +622,9 @@ class RunSpaceMigration extends QueuedJob
             $targetBlockId = $this->blockIdMap[$row['block_id']] ?? null;
             if (! $targetBlockId) {
                 // Try slug-based fallback
-                $sourceBlock = $src->table('blocks')->where('id', $row['block_id'])->first();
-                if ($sourceBlock) {
-                    $targetBlockId = $this->blockSlugToIdMap[$sourceBlock->slug] ?? null;
+                $sourceBlockSlug = $sourceBlockSlugById[$row['block_id']] ?? null;
+                if ($sourceBlockSlug !== null) {
+                    $targetBlockId = $this->blockSlugToIdMap[$sourceBlockSlug] ?? null;
                 }
             }
 

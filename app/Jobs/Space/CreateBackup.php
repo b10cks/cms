@@ -80,15 +80,18 @@ class CreateBackup extends QueuedJob
             $config['database'],
         ];
 
-        $process = new Process($command);
+        // Redirect the dump's stdout straight to the file at the OS level so the
+        // (potentially very large) SQL never has to be buffered in PHP memory.
+        $shellCommand = implode(' ', array_map('escapeshellarg', $command))
+            . ' > ' . escapeshellarg($dumpFile);
+
+        $process = Process::fromShellCommandline($shellCommand);
         $process->setTimeout(300);
         $process->run();
 
         if (!$process->isSuccessful()) {
             throw new \Exception('Database dump failed: ' . $process->getErrorOutput());
         }
-
-        file_put_contents($dumpFile, $process->getOutput());
 
         $this->backup->updateProgress(10);
     }
@@ -111,11 +114,29 @@ class CreateBackup extends QueuedJob
 
         foreach ($allFiles as $file) {
             try {
-                $content = $filesystem->get($file);
                 $targetPath = "{$assetsPath}/{$file}";
-
                 File::makeDirectory(dirname($targetPath), 0755, true, true);
-                file_put_contents($targetPath, $content);
+
+                // Stream the source file to disk instead of loading it fully
+                // into memory — assets can be large videos.
+                $source = $filesystem->readStream($file);
+                if ($source === null || $source === false) {
+                    throw new \RuntimeException("Unable to read source file: {$file}");
+                }
+
+                $target = fopen($targetPath, 'w');
+                if ($target === false) {
+                    if (\is_resource($source)) {
+                        fclose($source);
+                    }
+                    throw new \RuntimeException("Unable to open backup target: {$targetPath}");
+                }
+
+                stream_copy_to_stream($source, $target);
+                fclose($target);
+                if (\is_resource($source)) {
+                    fclose($source);
+                }
 
                 $processedFiles++;
                 $progress = 10 + (int) (($processedFiles / $totalFiles) * 90);
