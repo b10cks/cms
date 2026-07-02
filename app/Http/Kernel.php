@@ -10,6 +10,7 @@ use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\EnsureEmailIsVerified;
 use App\Http\Middleware\EnsureRevision;
 use App\Http\Middleware\EnsureSpaceMembership;
+use App\Http\Middleware\HandleManagementCors;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\RequirePasswordVerification;
@@ -48,6 +49,7 @@ class Kernel extends HttpKernel
         VersionHeader::class,
         TrustProxies::class,
         HandleCors::class,
+        HandleManagementCors::class,
         PreventRequestsDuringMaintenance::class,
         ValidatePostSize::class,
         // \App\Http\Middleware\TrimStrings::class,
