@@ -4,6 +4,7 @@ namespace App\Services\Ai;
 
 use App\Models\Management\Space;
 use App\Services\Ai\Concerns\InteractsWithAiDriver;
+use App\Support\SpaceContext;
 use App\Services\Ai\Dto\StreamEvent;
 use App\Services\Ai\Dto\StreamEventType;
 use App\Services\Ai\Exceptions\AiServiceException;
@@ -30,38 +31,42 @@ class AiStreamService
         array $files = [],
         $aiConfig = null,
     ): Generator {
-        app()->offsetSet('currentSpace', $space);
-
-        $aiConfig ??= $space->defaultAiConfig;
+        $restore = SpaceContext::enter($space);
 
         try {
-            [$driver, $modelIdentifier] = $this->resolveSpaceDriver($space, $aiConfig);
-        } catch (AiServiceException $e) {
-            yield StreamEvent::error($e->getMessage(), $e->reason);
+            $aiConfig ??= $space->defaultAiConfig;
 
-            return;
-        }
+            try {
+                [$driver, $modelIdentifier] = $this->resolveSpaceDriver($space, $aiConfig);
+            } catch (AiServiceException $e) {
+                yield StreamEvent::error($e->getMessage(), $e->reason);
 
-        // Reasoning models (and any model without tool support) never receive
-        // tool definitions, so skip registration and build a prompt that does
-        // not instruct the model to call tools it cannot use.
-        $toolsAvailable = $driver->supportsToolCalls($modelIdentifier);
-
-        if ($toolsAvailable) {
-            foreach ($this->createTools($space) as $tool) {
-                $driver->registerTool($tool);
+                return;
             }
+
+            // Reasoning models (and any model without tool support) never receive
+            // tool definitions, so skip registration and build a prompt that does
+            // not instruct the model to call tools it cannot use.
+            $toolsAvailable = $driver->supportsToolCalls($modelIdentifier);
+
+            if ($toolsAvailable) {
+                foreach ($this->createTools($space) as $tool) {
+                    $driver->registerTool($tool);
+                }
+            }
+
+            $promptBuilder = new SystemPromptBuilder($aiConfig);
+            $messages = $this->buildMessages($prompt, $context, $files, $promptBuilder, $toolsAvailable);
+
+            yield from $driver->stream(
+                $modelIdentifier,
+                $messages,
+                $driver->getToolDefinitions(),
+                $this->buildAiOptions($aiConfig, 32768),
+            );
+        } finally {
+            $restore();
         }
-
-        $promptBuilder = new SystemPromptBuilder($aiConfig);
-        $messages = $this->buildMessages($prompt, $context, $files, $promptBuilder, $toolsAvailable);
-
-        yield from $driver->stream(
-            $modelIdentifier,
-            $messages,
-            $driver->getToolDefinitions(),
-            $this->buildAiOptions($aiConfig, 32768),
-        );
     }
 
     protected function createTools(Space $space): array

@@ -2,6 +2,7 @@
 
 namespace App\Services\Search;
 
+use App\Support\SpaceContext;
 use App\Contracts\Search\SearchDriverInterface;
 use App\Enums\SearchDriver;
 use App\Models\Management\Space;
@@ -65,9 +66,14 @@ class SearchService
 
     public function reindexSpace(Space $space): void
     {
-        app()->offsetSet('currentSpace', $space);
-        $driver = $this->getDriver($space);
-        $driver->reindexSpace($space);
+        $restore = SpaceContext::enter($space);
+
+        try {
+            $driver = $this->getDriver($space);
+            $driver->reindexSpace($space);
+        } finally {
+            $restore();
+        }
     }
 
     public function search(Space $space, string $query, string $language, int $limit = 20, int $offset = 0): array

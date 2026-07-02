@@ -4,6 +4,7 @@ namespace App\Services\Automation;
 
 use App\Models\Management\Automation;
 use App\Models\Management\AutomationExecution;
+use App\Support\SpaceContext;
 use App\Services\Automation\Contracts\AutomationEngine as AutomationEngineInterface;
 use App\Services\Automation\Enums\ActionType;
 use InvalidArgumentException;
@@ -21,13 +22,15 @@ class BaseAutomationProcessor
 
     public function process(string $automationId, array $context = []): void
     {
+        $restoreSpace = null;
+
         try {
             $this->automation = Automation::query()
                 ->with(['action', 'space'])
                 ->findOrFail($automationId);
 
             if ($this->automation->space) {
-                app()->offsetSet('currentSpace', $this->automation->space);
+                $restoreSpace = SpaceContext::enter($this->automation->space);
             }
 
             $executionId = $context['execution_id'] ?? null;
@@ -108,6 +111,10 @@ class BaseAutomationProcessor
             ]);
 
             throw $e;
+        } finally {
+            if ($restoreSpace !== null) {
+                $restoreSpace();
+            }
         }
     }
 
