@@ -191,6 +191,50 @@ class LemonSqueezyWebhookControllerTest extends TestCase
         $this->assertSame('past_due', $subscription->status);
     }
 
+    #[Test]
+    public function it_ignores_a_replayed_webhook_with_the_same_id(): void
+    {
+        $space = Space::factory()->withLive()->create();
+        $starter = $this->createPlan('Starter', '1374000', '872800');
+        $scale = $this->createPlan('Scale', '1374497', '872809');
+
+        $subscription = Subscription::create([
+            'space_id' => $space->id,
+            'plan_id' => $starter->id,
+            'name' => 'Starter',
+            'status' => 'active',
+            'lemon_squeezy_id' => '1949171',
+            'variant_id' => $starter->ls_variant_id,
+            'product_id' => $starter->ls_product_id,
+            'quantity' => 1,
+            'quotas' => $starter->quotas,
+        ]);
+
+        $payload = $this->subscriptionPayload(
+            event: 'subscription_plan_changed',
+            subscriptionId: '1949171',
+            spaceId: $space->id,
+            localSubscriptionId: $subscription->id,
+            variantId: $scale->ls_variant_id,
+            productId: $scale->ls_product_id,
+            status: 'active',
+        );
+
+        // First delivery applies the change.
+        $this->postSignedWebhook($payload)->assertOk();
+        $this->assertSame($scale->id, $subscription->fresh()->plan_id);
+
+        // Revert locally, then replay the identical (same webhook_id) payload.
+        // Refresh first so the in-memory model reflects the webhook's write,
+        // otherwise the revert would not be seen as a change and skipped.
+        $subscription->refresh();
+        $subscription->update(['plan_id' => $starter->id, 'variant_id' => $starter->ls_variant_id]);
+        $this->postSignedWebhook($payload)->assertOk();
+
+        // The replay must be ignored — the revert stands.
+        $this->assertSame($starter->id, $subscription->fresh()->plan_id);
+    }
+
     private function postSignedWebhook(array $payload): TestResponse
     {
         $body = json_encode($payload, JSON_THROW_ON_ERROR);
@@ -246,7 +290,9 @@ class LemonSqueezyWebhookControllerTest extends TestCase
                     'space_id' => $spaceId,
                     'subscription_id' => $localSubscriptionId,
                 ],
-                'webhook_id' => 'a1423b1c-4ca7-46d5-8f86-2444357c02cc',
+                // LemonSqueezy sends a unique webhook_id per delivery; generate
+                // one per payload so replay-dedup doesn't collapse distinct events.
+                'webhook_id' => (string) \Illuminate\Support\Str::uuid(),
             ],
             'data' => [
                 'type' => 'subscriptions',

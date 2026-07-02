@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Mgmt;
 use App\Actions\Subscription\SyncSubscriptionFromLemonSqueezy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class LemonSqueezyWebhookController
@@ -19,6 +20,16 @@ class LemonSqueezyWebhookController
             'event' => $event,
             'webhook_id' => $webhookId,
         ]);
+
+        // Replay protection: the payload is signature-verified upstream, but a
+        // captured signed request could be re-sent to re-trigger a sync. Process
+        // each webhook_id at most once. Cache::add is atomic, so concurrent
+        // duplicates also collapse to a single run.
+        if ($webhookId && ! Cache::add('ls_webhook:' . $webhookId, true, now()->addDays(7))) {
+            Log::info('Ignoring duplicate LemonSqueezy webhook', ['webhook_id' => $webhookId]);
+
+            return response()->json(['message' => 'OK']);
+        }
 
         try {
             match ($event) {
@@ -44,6 +55,12 @@ class LemonSqueezyWebhookController
                 ]),
             };
         } catch (\Throwable $e) {
+            // Release the dedup marker so LemonSqueezy's retry of this same
+            // webhook_id is processed rather than silently ignored.
+            if ($webhookId) {
+                Cache::forget('ls_webhook:' . $webhookId);
+            }
+
             Log::error('LemonSqueezy webhook processing failed', [
                 'event' => $event,
                 'webhook_id' => $webhookId,

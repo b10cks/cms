@@ -156,7 +156,12 @@ class CloudfrontLogParser
 
             return $spaceId;
         } catch (\Exception $e) {
-            Log::warning("Failed to lookup token: {$token}", ['error' => $e->getMessage()]);
+            // Never log the raw delivery token — it grants API access. A short
+            // hash prefix is enough to correlate log lines.
+            Log::warning('Failed to lookup token', [
+                'token_hash' => substr(hash('sha256', $token), 0, 12),
+                'error' => $e->getMessage(),
+            ]);
             return null;
         }
     }
