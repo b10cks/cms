@@ -4,8 +4,8 @@ import IconDetailsDialog from '~/components/icons/IconDetailsDialog.vue'
 import IconGrid from '~/components/icons/IconGrid.vue'
 import IconUploadDialog from '~/components/icons/IconUploadDialog.vue'
 import ImportIconsDialog from '~/components/icons/ImportIconsDialog.vue'
-import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { Button } from '~/components/ui/button'
+import ContentHeader from '~/components/ui/ContentHeader.vue'
 import type { IconResource } from '~/types/icons'
 
 const props = defineProps<{
@@ -80,22 +80,24 @@ onUnmounted(() => {
       :description="t('labels.icons.pageDescription')"
     >
       <template #actions>
-        <Button
-          v-if="canManage"
-          variant="outline"
-          @click="importOpen = true"
-        >
-          <Icon name="lucide:file-json" />
-          {{ t('actions.icons.import') }}
-        </Button>
-        <Button
-          v-if="canManage"
-          variant="primary"
-          @click="uploadOpen = true"
-        >
-          <Icon name="lucide:upload" />
-          {{ t('actions.icons.uploadNew') }}
-        </Button>
+        <div class="ml-auto flex items-center gap-2">
+          <Button
+            v-if="canManage"
+            variant="outline"
+            @click="importOpen = true"
+          >
+            <Icon name="lucide:file-json" />
+            {{ t('actions.icons.import') }}
+          </Button>
+          <Button
+            v-if="canManage"
+            variant="primary"
+            @click="uploadOpen = true"
+          >
+            <Icon name="lucide:upload" />
+            {{ t('actions.icons.uploadNew') }}
+          </Button>
+        </div>
       </template>
     </ContentHeader>
 
@@ -130,7 +132,11 @@ onUnmounted(() => {
       v-model:open="uploadOpen"
       :space-id="spaceId"
       :initial-files="droppedFiles"
-      @update:open="(open) => { if (!open) droppedFiles = [] }"
+      @update:open="
+        (open) => {
+          if (!open) droppedFiles = []
+        }
+      "
     />
 
     <ImportIconsDialog

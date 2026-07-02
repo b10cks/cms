@@ -14,7 +14,7 @@ withDefaults(
   <header class="grid pt-8">
     <slot name="start" />
     <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2">
+      <div class="flex flex-1 items-center gap-2">
         <slot name="before-header" />
         <div>
           <h1 class="text-2xl font-bold text-primary">{{ header }}</h1>
