@@ -3,6 +3,30 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.2-f76d4f36] — 2026-7-2
+
+- 🐛 Commit icon files hidden by a broken global gitignore rule
+- ✨ Add icon-set import UX to the icon manager
+- ✨ Add Iconify icon-set import API for spaces
+- 🩹 Introduce SubscriptionStatus enum as billing status source of truth
+- 🧹 Remove unused frontend dependencies
+- 🔒 Split CORS: open public delivery API, lock down management API
+- 🔒 Guard image processing against decompression bombs
+- 🔒 Harden icon CSS params and constrain ilum name segment
+- 🔒 Stop account enumeration on one-time-token endpoints
+- 🩹 Restore currentSpace after space-scoped services run
+- ⏪ Revert CORS allowlist — delivery API serves unknown tenant origins
+- ✅ Add tenant-isolation regression tests
+- 🩹 Cap per_page on list endpoints to bound query cost
+- 🩹 Fix QueuedJob failure semantics, tenant leak and runtime env()
+- ⚡ Stream backups and drop a per-row query in space migration
+- ⚡ Add indexes for redirect lookups and cross-space identity
+- 🔒 Block SSRF, webhook replay, token log leak and invite over-disclosure
+- 🔒 Restrict CORS to an allowlist and throttle OTP login
+- 🔒 Sanitize CMS-controlled markup in the editor UI
+- 🔒 Block active-content uploads and harden asset delivery
+- 🔒 Enforce tenant isolation on space-scoped routes
+
 ## [v2026.7.1-aa61a000] — 2026-7-1
 
 - 👔 Allow to define a stroke width
