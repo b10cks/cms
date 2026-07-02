@@ -53,6 +53,7 @@ use App\Http\Controllers\Mgmt\DataEntryDataImportController;
 use App\Http\Controllers\Mgmt\DataEntryTranslationStreamController;
 use App\Http\Controllers\Mgmt\DataSourceController;
 use App\Http\Controllers\Mgmt\IconController;
+use App\Http\Controllers\Mgmt\IconDataImportController;
 use App\Http\Controllers\Mgmt\MigrationController;
 use App\Http\Controllers\Mgmt\NotificationController;
 use App\Http\Controllers\Mgmt\PresenceController;
@@ -284,6 +285,7 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::apiResource('assets', AssetController::class);
 
     Route::get('icons/tags', [IconController::class, 'tags'])->name('icons.tags');
+    Route::post('icons/import', IconDataImportController::class)->name('icons.import');
     Route::apiResource('icons', IconController::class);
 
     Route::apiResource('backups', BackupController::class);
