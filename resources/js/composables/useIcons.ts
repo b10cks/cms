@@ -3,7 +3,12 @@ import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { IconsQueryParams } from '~/api/resources/icons'
-import type { IconResource, UpdateIconPayload, UploadIconPayload } from '~/types/icons'
+import type {
+  IconImportMode,
+  IconResource,
+  UpdateIconPayload,
+  UploadIconPayload,
+} from '~/types/icons'
 
 import { queryKeys } from './useQueryClient'
 
@@ -101,6 +106,23 @@ export function useIcons(spaceId: MaybeRef<string>) {
     })
   }
 
+  const useImportIconsMutation = () => {
+    return useMutation({
+      mutationFn: async ({ file, mode }: { file: File; mode: IconImportMode }) => {
+        return spaceAPI.value.icons.importData(file, mode)
+      },
+      onSuccess: () => {
+        invalidateLists()
+        toast.success(t('composables.icons.importSuccess') as string)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.icons.importError', { error: error.message || 'Unknown error' }) as string
+        )
+      },
+    })
+  }
+
   return {
     // Queries
     useIconsQuery,
@@ -111,5 +133,6 @@ export function useIcons(spaceId: MaybeRef<string>) {
     uploadIcon,
     useUpdateIconMutation,
     useDeleteIconMutation,
+    useImportIconsMutation,
   }
 }

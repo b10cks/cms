@@ -3,6 +3,7 @@ import Icon from '~/components/Icon.vue'
 import IconDetailsDialog from '~/components/icons/IconDetailsDialog.vue'
 import IconGrid from '~/components/icons/IconGrid.vue'
 import IconUploadDialog from '~/components/icons/IconUploadDialog.vue'
+import ImportIconsDialog from '~/components/icons/ImportIconsDialog.vue'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { Button } from '~/components/ui/button'
 import type { IconResource } from '~/types/icons'
@@ -17,6 +18,7 @@ const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManage = computed(() => access.hasAbility('icons.manage'))
 
 const uploadOpen = ref(false)
+const importOpen = ref(false)
 const detailsOpen = ref(false)
 const selectedIcon = ref<IconResource | null>(null)
 const droppedFiles = ref<File[]>([])
@@ -80,6 +82,14 @@ onUnmounted(() => {
       <template #actions>
         <Button
           v-if="canManage"
+          variant="outline"
+          @click="importOpen = true"
+        >
+          <Icon name="lucide:file-json" />
+          {{ t('actions.icons.import') }}
+        </Button>
+        <Button
+          v-if="canManage"
           variant="primary"
           @click="uploadOpen = true"
         >
@@ -121,6 +131,11 @@ onUnmounted(() => {
       :space-id="spaceId"
       :initial-files="droppedFiles"
       @update:open="(open) => { if (!open) droppedFiles = [] }"
+    />
+
+    <ImportIconsDialog
+      v-model:open="importOpen"
+      :space-id="spaceId"
     />
 
     <IconDetailsDialog

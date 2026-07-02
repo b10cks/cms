@@ -1,3 +1,5 @@
+import type { ImportError, ImportSummary } from './import-export'
+
 export interface IconResource {
   id: string
   external_id: string | null
@@ -44,4 +46,32 @@ export interface UpdateIconPayload {
   external_id?: string | null
   width?: number
   height?: number
+}
+
+export type IconImportMode = 'addition' | 'replacement'
+
+export interface IconImportChange {
+  field: string
+  old: string | number | string[] | null
+  new: string | number | string[] | null
+}
+
+export interface ImportedIconChanges {
+  id: string
+  key: string
+  changes: IconImportChange[]
+}
+
+export interface IconImportRef {
+  id: string
+  key: string
+}
+
+export interface IconDataImportResult {
+  successes: IconImportRef[]
+  changes: ImportedIconChanges[]
+  ignored_fields: string[]
+  errors: ImportError[]
+  deleted: IconImportRef[]
+  summary: ImportSummary & { total_deleted: number }
 }

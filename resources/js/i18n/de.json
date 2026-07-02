@@ -3108,7 +3108,33 @@
         "showingCount": "{shown} von {total} werden angezeigt"
       },
       "tagsEmpty": "Keine Tags gefunden",
-      "tagsCreate": "'{tag}' erstellen"
+      "tagsCreate": "'{tag}' erstellen",
+      "importDialog": {
+        "title": "Icon-Set importieren",
+        "description": "Importiere ein Iconify-JSON-Icon-Set in diesen Space.",
+        "selectFileError": "Bitte wähle eine Datei zum Importieren aus.",
+        "supportedFormats": "Iconify JSON (.json)",
+        "importMode": {
+          "label": "Importmodus",
+          "addition": "Hinzufügen / überschreiben",
+          "additionDescription": "Neue Icons hinzufügen und bestehende mit gleichem Schlüssel überschreiben.",
+          "replacement": "Ersetzen",
+          "replacementDescription": "Zuerst alle bestehenden Icons löschen, dann das Set importieren.",
+          "replacementWarning": "Dadurch werden vor dem Import alle aktuellen Icons in diesem Space dauerhaft entfernt."
+        },
+        "summaryTitle": "Import abgeschlossen",
+        "summaryDescription": "Das wurde in deiner Icon-Verwaltung geändert.",
+        "summary": {
+          "success": "Importiert",
+          "changes": "Aktualisiert",
+          "deleted": "Entfernt",
+          "errors": "Fehler"
+        },
+        "modifiedIcons": "Aktualisierte Icons",
+        "deletedIcons": "Entfernte Icons",
+        "errorsTitle": "Fehler",
+        "changeCount": "{count} Änderung(en)"
+      }
     },
     "geo": {
       "field": {
@@ -3418,7 +3444,8 @@
     "icons": {
       "uploadNew": "Icons hochladen",
       "upload": "{count} hochladen",
-      "replace": "Ersetzen"
+      "replace": "Ersetzen",
+      "import": "Set importieren"
     },
     "assetTags": {
       "add": "Neuer Tag",
@@ -3826,7 +3853,9 @@
       "updateSuccess": "Icon „{name}“ aktualisiert",
       "updateError": "Icon konnte nicht aktualisiert werden: {error}",
       "deleteSuccess": "Icon gelöscht",
-      "deleteError": "Icon konnte nicht gelöscht werden: {error}"
+      "deleteError": "Icon konnte nicht gelöscht werden: {error}",
+      "importSuccess": "Icons erfolgreich importiert",
+      "importError": "Icons konnten nicht importiert werden: {error}"
     }
   },
   "content": {

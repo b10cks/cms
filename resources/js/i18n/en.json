@@ -3132,7 +3132,33 @@
         "showingCount": "Showing {shown} of {total}"
       },
       "tagsEmpty": "No tags found",
-      "tagsCreate": "Create '{tag}'"
+      "tagsCreate": "Create '{tag}'",
+      "importDialog": {
+        "title": "Import icon set",
+        "description": "Import an Iconify JSON icon set into this space.",
+        "selectFileError": "Please select a file to import.",
+        "supportedFormats": "Iconify JSON (.json)",
+        "importMode": {
+          "label": "Import mode",
+          "addition": "Add / overwrite",
+          "additionDescription": "Add new icons and overwrite existing ones with the same key.",
+          "replacement": "Prune & replace",
+          "replacementDescription": "Delete all existing icons first, then import the set.",
+          "replacementWarning": "This permanently removes all current icons in this space before importing."
+        },
+        "summaryTitle": "Import complete",
+        "summaryDescription": "Here is what changed in your icon registry.",
+        "summary": {
+          "success": "Imported",
+          "changes": "Updated",
+          "deleted": "Pruned",
+          "errors": "Errors"
+        },
+        "modifiedIcons": "Updated icons",
+        "deletedIcons": "Pruned icons",
+        "errorsTitle": "Errors",
+        "changeCount": "{count} change(s)"
+      }
     },
     "geo": {
       "field": {
@@ -3443,7 +3469,8 @@
     "icons": {
       "uploadNew": "Upload icons",
       "upload": "Upload {count}",
-      "replace": "Replace"
+      "replace": "Replace",
+      "import": "Import set"
     },
     "assetTags": {
       "add": "New Tag",
@@ -3873,7 +3900,9 @@
       "updateSuccess": "Icon \"{name}\" updated",
       "updateError": "Failed to update icon: {error}",
       "deleteSuccess": "Icon deleted",
-      "deleteError": "Failed to delete icon: {error}"
+      "deleteError": "Failed to delete icon: {error}",
+      "importSuccess": "Icons imported successfully",
+      "importError": "Failed to import icons: {error}"
     }
   },
   "content": {

@@ -1,6 +1,13 @@
 import { getXsrfHeaders } from '~/lib/csrf'
+import { requestImportJson } from '~/lib/import-export'
 import type { ApiResponse, BaseQueryParams } from '~/types'
-import type { IconResource, UpdateIconPayload, UploadIconPayload } from '~/types/icons'
+import type {
+  IconDataImportResult,
+  IconImportMode,
+  IconResource,
+  UpdateIconPayload,
+  UploadIconPayload,
+} from '~/types/icons'
 
 import type { ApiClient } from '../client'
 import { BaseResource } from './base-resource'
@@ -110,5 +117,20 @@ export class Icons extends BaseResource<
    */
   public async tags(): Promise<{ data: string[] }> {
     return this.client.get<{ data: string[] }>(`${this.basePath}/tags`)
+  }
+
+  /**
+   * Import an Iconify JSON icon set into the space.
+   */
+  public async importData(
+    file: File,
+    mode: IconImportMode = 'addition'
+  ): Promise<IconDataImportResult> {
+    return requestImportJson<IconDataImportResult>({
+      client: this.client,
+      endpoint: `${this.basePath}/import`,
+      file,
+      extraFields: { import_mode: mode },
+    })
   }
 }
