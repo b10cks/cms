@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\SubscriptionStatus;
+
 use App\Models\Management\Plan;
 use App\Models\Management\Space;
 use App\Models\Management\Subscription;
@@ -66,7 +68,7 @@ class BackfillFreeSubscriptionsCommand extends Command
                     'space_id' => $space->id,
                     'plan_id' => $plan->id,
                     'name' => $name,
-                    'status' => 'active',
+                    'status' => SubscriptionStatus::Active->value,
                     'lemon_squeezy_id' => null,
                     'variant_id' => $plan->ls_variant_id ?? '',
                     'product_id' => $plan->ls_product_id ?? '',

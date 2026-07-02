@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Mgmt;
 
+use App\Enums\SubscriptionStatus;
+
 use App\Actions\Space\CreateSpace;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\SpaceFilter;
@@ -76,7 +78,7 @@ class SpaceController extends Controller
                         'space_id' => $space->id,
                         'plan_id' => $plan->id,
                         'name' => $plan->getTranslatedName() ?? 'Free',
-                        'status' => 'active',
+                        'status' => SubscriptionStatus::Active->value,
                         'lemon_squeezy_id' => null,
                         'variant_id' => $plan->ls_variant_id ?? '',
                         'product_id' => $plan->ls_product_id ?? '',
@@ -90,7 +92,7 @@ class SpaceController extends Controller
                         'space_id' => $space->id,
                         'plan_id' => $plan->id,
                         'name' => $plan->getTranslatedName() ?? 'Subscription',
-                        'status' => 'pending',
+                        'status' => SubscriptionStatus::Pending->value,
                         'lemon_squeezy_id' => null,
                         'variant_id' => $plan->ls_variant_id,
                         'product_id' => $plan->ls_product_id ?? '',

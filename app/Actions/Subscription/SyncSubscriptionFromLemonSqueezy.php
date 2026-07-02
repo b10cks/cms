@@ -2,6 +2,8 @@
 
 namespace App\Actions\Subscription;
 
+use App\Enums\SubscriptionStatus;
+
 use App\Models\Management\Plan;
 use App\Models\Management\Space;
 use App\Models\Management\Subscription;
@@ -154,7 +156,7 @@ class SyncSubscriptionFromLemonSqueezy
         $plan = $this->resolvePlan($variantId, $productId);
 
         $subscription = Subscription::where('space_id', $space->id)
-            ->where('status', 'pending')
+            ->where('status', SubscriptionStatus::Pending->value)
             ->whereNull('lemon_squeezy_id')
             ->when($plan, fn ($query) => $query->where('plan_id', $plan->id))
             ->when(! $plan && $variantId !== '', fn ($query) => $query->where('variant_id', $variantId))
@@ -167,7 +169,7 @@ class SyncSubscriptionFromLemonSqueezy
 
         return new Subscription([
             'space_id' => $space->id,
-            'status' => 'pending',
+            'status' => SubscriptionStatus::Pending->value,
             'quantity' => 1,
         ]);
     }
@@ -194,11 +196,11 @@ class SyncSubscriptionFromLemonSqueezy
             ->where('space_id', $subscription->space_id)
             ->whereKeyNot($subscription->id)
             ->where(function ($query) {
-                $query->where('status', 'pending')
-                    ->orWhereIn('status', ['active', 'on_trial', 'past_due', 'unpaid', 'paused']);
+                $query->where('status', SubscriptionStatus::Pending->value)
+                    ->orWhereIn('status', SubscriptionStatus::liveValues());
             })
             ->update([
-                'status' => 'cancelled',
+                'status' => SubscriptionStatus::Cancelled->value,
                 'ends_at' => now(),
             ]);
     }

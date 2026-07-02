@@ -2,6 +2,8 @@
 
 namespace App\Models\Management;
 
+use App\Enums\SubscriptionStatus;
+
 use App\Jobs\Space\ReconcileSubscriptionPeriods;
 use App\Jobs\Space\SyncSpaceAiKey;
 use App\Models\Traits\Auditable;
@@ -123,7 +125,7 @@ class Subscription extends GlobalModel
 
     public function isActive(): bool
     {
-        return \in_array($this->status, ['active', 'on_trial'], true);
+        return \in_array($this->status, SubscriptionStatus::activeValues(), true);
     }
 
     public function isFree(): bool
@@ -147,6 +149,6 @@ class Subscription extends GlobalModel
 
     public function scopeActive($query)
     {
-        return $query->whereIn('status', ['active', 'on_trial']);
+        return $query->whereIn('status', SubscriptionStatus::activeValues());
     }
 }

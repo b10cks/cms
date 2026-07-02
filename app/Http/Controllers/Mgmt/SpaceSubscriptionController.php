@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Mgmt;
 
+use App\Enums\SubscriptionStatus;
+
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Management\SubscriptionResource;
 use App\Models\Management\Plan;
@@ -47,7 +49,7 @@ class SpaceSubscriptionController extends Controller
             ->latest()
             ->first()
             ?? Subscription::where('space_id', $space->id)
-                ->where('status', 'pending')
+                ->where('status', SubscriptionStatus::Pending->value)
                 ->with('plan')
                 ->latest()
                 ->first()
@@ -93,7 +95,7 @@ class SpaceSubscriptionController extends Controller
                         'error' => $e->getMessage(),
                     ]);
                 }
-                $existing->update(['status' => 'cancelled', 'ends_at' => now()]);
+                $existing->update(['status' => SubscriptionStatus::Cancelled->value, 'ends_at' => now()]);
             }
 
             // Create or update free subscription
@@ -101,7 +103,7 @@ class SpaceSubscriptionController extends Controller
                 ['space_id' => $space->id, 'plan_id' => $plan->id],
                 [
                     'name' => $plan->getTranslatedName() ?? 'Free',
-                    'status' => 'active',
+                    'status' => SubscriptionStatus::Active->value,
                     'lemon_squeezy_id' => null,
                     'ls_customer_id' => null,
                     'variant_id' => '',
@@ -126,7 +128,7 @@ class SpaceSubscriptionController extends Controller
         // Use POST /subscriptions/reinit to resume a pending checkout for the same plan.
         // The user must cancel the pending subscription first before switching plans.
         $existingPending = Subscription::where('space_id', $space->id)
-            ->where('status', 'pending')
+            ->where('status', SubscriptionStatus::Pending->value)
             ->whereNull('lemon_squeezy_id')
             ->first();
 
@@ -184,7 +186,7 @@ class SpaceSubscriptionController extends Controller
         // its local ID in customData — this is the stable key used to link the LS
         // subscription back to this record during webhook processing and CLI sync.
         $pending = Subscription::updateOrCreate(
-            ['space_id' => $space->id, 'status' => 'pending', 'plan_id' => $plan->id],
+            ['space_id' => $space->id, 'status' => SubscriptionStatus::Pending->value, 'plan_id' => $plan->id],
             [
                 'name' => $plan->getTranslatedName() ?? 'Subscription',
                 'lemon_squeezy_id' => null,
@@ -228,7 +230,7 @@ class SpaceSubscriptionController extends Controller
         $this->authorize('manageBilling', $space);
 
         $pending = Subscription::where('space_id', $space->id)
-            ->where('status', 'pending')
+            ->where('status', SubscriptionStatus::Pending->value)
             ->whereNull('lemon_squeezy_id')
             ->with('plan')
             ->latest()
@@ -295,7 +297,7 @@ class SpaceSubscriptionController extends Controller
 
         try {
             $this->ls->cancelSubscription($subscription->lemon_squeezy_id);
-            $subscription->update(['status' => 'cancelled']);
+            $subscription->update(['status' => SubscriptionStatus::Cancelled->value]);
 
             return response()->json(['message' => 'Subscription cancelled. Access continues until the end of the billing period.']);
         } catch (\Throwable $e) {

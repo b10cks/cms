@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\SubscriptionStatus;
+
 use App\Actions\Subscription\SyncSubscriptionFromLemonSqueezy;
 use App\Services\LemonSqueezy\LemonSqueezyService;
 use Illuminate\Console\Command;
@@ -48,7 +50,7 @@ class SyncLemonSqueezySubscriptions extends Command
                     $spaceId = data_get($lsSub, 'attributes.custom_data.space_id');
                     $pendingMatch = ! $local && $spaceId
                         ? \App\Models\Management\Subscription::where('space_id', $spaceId)
-                            ->where('status', 'pending')
+                            ->where('status', SubscriptionStatus::Pending->value)
                             ->whereNull('lemon_squeezy_id')
                             ->first()
                         : null;
