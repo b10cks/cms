@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.2-862c1a1b] — 2026-7-2
+
+- 🩹 Fix icon issues
+
 ## [v2026.7.2-f76d4f36] — 2026-7-2
 
 - 🐛 Commit icon files hidden by a broken global gitignore rule
