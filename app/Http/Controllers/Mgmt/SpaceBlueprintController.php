@@ -30,7 +30,7 @@ class SpaceBlueprintController extends Controller
                     ->orWhereIn('team_id', $teamIds);
             })
             ->with(['creator', 'team'])
-            ->paginate($request->get('per_page', 20));
+            ->paginate($this->perPage($request));
 
         return SpaceBlueprintListResource::collection($blueprints);
     }

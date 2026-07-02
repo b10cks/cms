@@ -46,7 +46,7 @@ class TeamController extends Controller
             })
             ->with(['parent'])
             ->withCount(['users', 'spaces', 'children'])
-            ->paginate($request->get('per_page', 20));
+            ->paginate($this->perPage($request));
 
         return TeamResource::collection($teams);
     }

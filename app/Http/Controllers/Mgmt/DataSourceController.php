@@ -33,7 +33,7 @@ class DataSourceController extends Controller
                 'entries',
             ])
             ->orderBy('name')
-            ->paginate($request->get('per_page', 20));
+            ->paginate($this->perPage($request));
 
         return DataSourceResource::collection($dataSources);
     }

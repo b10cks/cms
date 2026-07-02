@@ -20,7 +20,7 @@ class RedirectController extends Controller
         $this->authorize('viewAny', [Redirect::class, $space]);
 
         $redirects = Redirect::filter(RedirectFilter::fromRequest($request))
-            ->paginate($request->get('per_page', 20));
+            ->paginate($this->perPage($request));
 
         return RedirectResource::collection($redirects);
     }

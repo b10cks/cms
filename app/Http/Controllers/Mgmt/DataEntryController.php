@@ -32,7 +32,7 @@ class DataEntryController extends Controller
 
         $entries = DataEntry::filter(new DataEntryFilter($request->all()))
             ->where('data_source_id', $dataSource->id)
-            ->paginate($request->get('per_page', 50));
+            ->paginate($this->perPage($request, 50));
 
         return DataEntryResource::collection($entries);
     }

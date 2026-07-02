@@ -32,7 +32,7 @@ class AssetController extends Controller
 
         $assets = Asset::filter($filter)
             ->with('folder')
-            ->paginate($request->get('per_page', 20));
+            ->paginate($this->perPage($request));
 
         $this->attachUsageCounts($assets->getCollection(), app(AssetUsageService::class));
 
