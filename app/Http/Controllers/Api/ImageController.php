@@ -62,6 +62,7 @@ class ImageController extends Controller
                 'content-type' => $mimetype,
                 'cache-control' => $this->buildCacheControlHeader(),
                 'pragma' => 'public',
+                ...$this->securityHeaders(),
             ]);
         }
 
@@ -77,6 +78,7 @@ class ImageController extends Controller
                     'content-type' => $mimetype,
                     'cache-control' => $this->buildCacheControlHeader(),
                     'pragma' => 'public',
+                    ...$this->securityHeaders(),
                 ]);
             }
 
@@ -98,6 +100,7 @@ class ImageController extends Controller
                 'content-length' => \strlen($result['data']),
                 'cache-control' => $this->buildCacheControlHeader(),
                 'pragma' => 'public',
+                ...$this->securityHeaders(),
             ]);
         } catch (\Exception $e) {
             Log::error('Image processing error: '.$e->getMessage(), [
@@ -109,6 +112,22 @@ class ImageController extends Controller
 
             return response()->json(['error' => 'Error processing image'], 500);
         }
+    }
+
+    /**
+     * Headers that make it safe to serve user-uploaded files inline from the
+     * delivery origin. `nosniff` stops browsers from re-interpreting a file as
+     * HTML, and the restrictive CSP + sandbox neutralize any script embedded in
+     * an otherwise-legitimate SVG/XML asset while still letting it render.
+     *
+     * @return array<string, string>
+     */
+    private function securityHeaders(): array
+    {
+        return [
+            'x-content-type-options' => 'nosniff',
+            'content-security-policy' => "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; sandbox",
+        ];
     }
 
     private function buildCacheControlHeader(): string

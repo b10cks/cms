@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Asset;
 
 use App\Http\Requests\Traits\ExternalIdValidation;
+use App\Http\Requests\Traits\RejectsActiveContentUploads;
 use App\Models\Space\Asset;
 use App\Models\Space\AssetFolder;
 use Illuminate\Foundation\Http\FormRequest;
@@ -11,6 +12,7 @@ use Illuminate\Validation\Rule;
 class StoreAssetRequest extends FormRequest
 {
     use ExternalIdValidation;
+    use RejectsActiveContentUploads;
 
     public function authorize(): bool
     {
@@ -20,7 +22,12 @@ class StoreAssetRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file' => 'required|file|max:' . (config('filesystems.max_upload_size', 500) * 1024),
+            'file' => [
+                'required',
+                'file',
+                'max:' . (config('filesystems.max_upload_size', 500) * 1024),
+                $this->rejectActiveContentRule(),
+            ],
             'external_id' => $this->externalIdRule(Asset::class),
             'folder_id' => [
                 'nullable',
