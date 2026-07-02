@@ -20,11 +20,17 @@ export function sanitizeHtml(html: string): string {
  * stripped while the drawing primitives are preserved.
  */
 export function sanitizeSvgBody(body: string): string {
-  return DOMPurify.sanitize(body, {
+  // The body is an SVG fragment; sanitizing it bare would parse it as HTML,
+  // put the elements in the wrong namespace and strip them all. Wrap it in an
+  // <svg> root for sanitization and return the sanitized inner content.
+  const fragment = DOMPurify.sanitize(`<svg>${body}</svg>`, {
     USE_PROFILES: { svg: true, svgFilters: true },
     FORBID_TAGS: ['script', 'foreignObject', 'a'],
     FORBID_ATTR: ['href', 'xlink:href'],
+    RETURN_DOM_FRAGMENT: true,
   })
+
+  return fragment.firstElementChild?.innerHTML ?? ''
 }
 
 const SAFE_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'tel:'])

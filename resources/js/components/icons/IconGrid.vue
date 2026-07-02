@@ -4,6 +4,7 @@ import Icon from '~/components/Icon.vue'
 import IconPreview from '~/components/icons/IconPreview.vue'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
+import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type { IconResource } from '~/types/icons'
 
 const props = withDefaults(
@@ -25,8 +26,9 @@ const { useIconsQuery, useIconTagsQuery } = useIcons(props.spaceId)
 const search = ref('')
 const selectedTag = ref<string | null>(null)
 const page = ref(1)
+const perPage = ref(60)
 
-watch([search, selectedTag], () => {
+watch([search, selectedTag, perPage], () => {
   page.value = 1
 })
 
@@ -34,7 +36,7 @@ const queryParams = computed<IconsQueryParams>(() => ({
   q: search.value || undefined,
   tags: selectedTag.value ? [selectedTag.value] : undefined,
   page: page.value,
-  per_page: 60,
+  per_page: perPage.value,
 }))
 
 const { data, isLoading, isError } = useIconsQuery(queryParams)
@@ -141,30 +143,15 @@ const handleClick = (icon: IconResource) => {
       </div>
     </div>
 
-    <div
-      v-if="meta && meta.last_page > 1"
-      class="flex shrink-0 items-center justify-between border-t border-input pt-3 text-sm text-muted"
-    >
-      <span>{{ t('labels.icons.totalCount', { count: meta.total }) }}</span>
-      <div class="flex items-center gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          :disabled="meta.current_page <= 1"
-          @click="page = Math.max(1, page - 1)"
-        >
-          {{ t('actions.previous') }}
-        </Button>
-        <span>{{ meta.current_page }} / {{ meta.last_page }}</span>
-        <Button
-          size="sm"
-          variant="outline"
-          :disabled="meta.current_page >= meta.last_page"
-          @click="page = Math.min(meta.last_page, page + 1)"
-        >
-          {{ t('actions.next') }}
-        </Button>
-      </div>
-    </div>
+    <TablePaginationFooter
+      v-if="meta"
+      class="shrink-0"
+      :meta="meta"
+      :current-page="page"
+      :per-page="perPage"
+      :page-size-options="[30, 60, 120, 200]"
+      @update:current-page="(value) => (page = value)"
+      @update:per-page="(value) => (perPage = value)"
+    />
   </div>
 </template>
