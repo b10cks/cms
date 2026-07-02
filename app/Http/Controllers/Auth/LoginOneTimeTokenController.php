@@ -11,11 +11,17 @@ class LoginOneTimeTokenController extends AuthController
     public function __invoke(Request $request)
     {
         $request->validate([
-            'email' => 'required|email:rfc,filter|exists:users,email',
+            'email' => 'required|email:rfc,filter',
             'token' => 'required|string|min:6|max:6',
         ]);
 
-        $user = User::where('email', $request->email)->firstOrFail();
+        // Unknown email and wrong token return the same 401 so the endpoint
+        // can't be used to tell whether an address is registered.
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return response(['message' => __('auth.failed')], 401);
+        }
+
         $cacheKey = 'user:' . $user->id . ':one-time-token';
 
         $tokens = \Cache::get($cacheKey, []);

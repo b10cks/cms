@@ -13,9 +13,13 @@ class CreateOneTimeTokenController extends Controller
     {
         $request->validate(['email' => 'required|string|email:rfc,filter']);
         $user = User::where('email', $request->email)->first();
-        $tokens = $this->createToken($user);
 
-        $user->notify(new OneTimeTokenNotification(end($tokens)));
+        // Always return the same response whether or not the email is
+        // registered, so this endpoint can't be used to enumerate accounts.
+        if ($user) {
+            $tokens = $this->createToken($user);
+            $user->notify(new OneTimeTokenNotification(end($tokens)));
+        }
 
         return response(null, 204);
     }
