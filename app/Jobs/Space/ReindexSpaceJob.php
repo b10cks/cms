@@ -20,7 +20,7 @@ class ReindexSpaceJob extends QueuedJob
         $searchService->reindexSpace($this->space);
     }
 
-    protected function handleFailure(\Exception $e): void
+    protected function handleFailure(\Throwable $e): void
     {
         Log::error('Failed to reindex space', [
             'space_id' => $this->space->id,

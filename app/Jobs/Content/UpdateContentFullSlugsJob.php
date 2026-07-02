@@ -45,6 +45,11 @@ class UpdateContentFullSlugsJob implements ShouldQueue
      */
     public function handle()
     {
+        // Snapshot/restore the tenant binding so this per-space context does not
+        // leak into the next job on a long-lived worker.
+        $hadSpace = app()->bound('currentSpace');
+        $priorSpace = $hadSpace ? app('currentSpace') : null;
+
         try {
             app()->offsetSet('currentSpace', $this->space);
 
@@ -66,6 +71,12 @@ class UpdateContentFullSlugsJob implements ShouldQueue
         } catch (\Exception $e) {
             Log::error("Error processing children for content {$this->contentId}: " . $e->getMessage());
             throw $e;
+        } finally {
+            if ($hadSpace) {
+                app()->offsetSet('currentSpace', $priorSpace);
+            } else {
+                app()->offsetUnset('currentSpace');
+            }
         }
     }
 }

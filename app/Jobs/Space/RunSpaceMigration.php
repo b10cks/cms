@@ -1026,7 +1026,7 @@ class RunSpaceMigration extends QueuedJob
         ];
     }
 
-    protected function handleFailure(\Exception $e): void
+    protected function handleFailure(\Throwable $e): void
     {
         Log::error('Space migration failed', [
             'migration_id' => $this->migration->id,

@@ -29,7 +29,7 @@ class ReconcileSubscriptionPeriods extends QueuedJob
         app(SubscriptionPeriodService::class)->reconcile($space);
     }
 
-    protected function handleFailure(\Exception $e): void
+    protected function handleFailure(\Throwable $e): void
     {
         Log::error('Failed to reconcile subscription periods', [
             'space' => $this->spaceId,

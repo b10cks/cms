@@ -221,7 +221,7 @@ class SetupConnection extends QueuedJob
         app(ApplySpaceBlueprintData::class)->execute($blueprint, $space);
     }
 
-    protected function handleFailure(\Exception $e): void
+    protected function handleFailure(\Throwable $e): void
     {
         \Log::error('Failed to setup space connection', [
             'spaceConnection' => $this->spaceConnection->id,

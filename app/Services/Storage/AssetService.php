@@ -183,15 +183,15 @@ class AssetService
 
             // Create FFMpeg instance
             $ffmpeg = FFMpeg::create([
-                'ffmpeg.binaries' => env('FFMPEG_PATH', '/usr/bin/ffmpeg'),
-                'ffprobe.binaries' => env('FFPROBE_PATH', '/usr/bin/ffprobe'),
+                'ffmpeg.binaries' => config('services.ffmpeg.binary'),
+                'ffprobe.binaries' => config('services.ffmpeg.probe'),
                 'timeout' => 60,
                 'ffmpeg.threads' => 2,
             ]);
 
             // Create FFProbe instance to get video duration
             $ffprobe = FFProbe::create([
-                'ffprobe.binaries' => env('FFPROBE_PATH', '/usr/bin/ffprobe'),
+                'ffprobe.binaries' => config('services.ffmpeg.probe'),
                 'timeout' => 60,
             ]);
 

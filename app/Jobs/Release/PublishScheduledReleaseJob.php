@@ -82,7 +82,7 @@ class PublishScheduledReleaseJob extends QueuedJob
         ]);
     }
 
-    protected function handleFailure(\Exception $e): void
+    protected function handleFailure(\Throwable $e): void
     {
         Log::error('Failed to publish scheduled release', [
             'release_id' => $this->releaseId,

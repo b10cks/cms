@@ -118,7 +118,7 @@ class BackfillAssetChecksumsJob extends QueuedJob
         return "asset-checksum-backfill:{$this->space->id}:progress";
     }
 
-    protected function handleFailure(\Exception $e): void
+    protected function handleFailure(\Throwable $e): void
     {
         Log::error('Failed to backfill asset checksums', [
             'space_id' => $this->space->id,

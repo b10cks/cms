@@ -31,7 +31,7 @@ class SyncSpaceAiKey extends QueuedJob
         app(SpaceAiKeyProvisioner::class)->syncForSpace($space, $this->forceReissue);
     }
 
-    protected function handleFailure(\Exception $e): void
+    protected function handleFailure(\Throwable $e): void
     {
         Log::error('Failed to sync space AI key', [
             'space' => $this->spaceId,

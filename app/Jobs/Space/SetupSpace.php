@@ -74,7 +74,7 @@ class SetupSpace extends QueuedJob
         SetupStorage::dispatchSync($storage);
     }
 
-    protected function handleFailure(\Exception $e): void
+    protected function handleFailure(\Throwable $e): void
     {
         Log::error('Failed to setup space', [
             'space' => $this->space->id,

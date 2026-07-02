@@ -84,7 +84,7 @@ class PublishScheduledContentJob extends QueuedJob
         ]);
     }
 
-    protected function handleFailure(\Exception $e): void
+    protected function handleFailure(\Throwable $e): void
     {
         Log::error('Failed to publish scheduled content version', [
             'content_version_id' => $this->contentVersionId,
