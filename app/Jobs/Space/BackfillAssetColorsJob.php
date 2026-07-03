@@ -4,6 +4,7 @@ namespace App\Jobs\Space;
 
 use App\Jobs\QueuedJob;
 use App\Models\Management\Space;
+use App\Models\Management\Storage as StorageModel;
 use App\Models\Space\Asset;
 use App\Services\Asset\DominantColorExtractor;
 use App\Services\Storage\AssetService;
@@ -66,7 +67,10 @@ class BackfillAssetColorsJob extends QueuedJob
         }
 
         $extractor = app(DominantColorExtractor::class);
-        $filesystem = null;
+        // Assets can live on different storages within one space, so the
+        // filesystem is resolved per asset (cached per storage id) instead
+        // of assuming the space default.
+        $filesystems = [];
         $processed = 0;
         $updated = 0;
         $failed = 0;
@@ -74,11 +78,12 @@ class BackfillAssetColorsJob extends QueuedJob
 
         $query()
             ->orderBy('id')
-            ->chunkById(50, function ($assets) use (&$processed, &$updated, &$failed, &$skipped, $total, &$filesystem, $extractor) {
-                $filesystem ??= app(StorageService::class)->getDefaultStorage($this->space);
-
+            ->chunkById(50, function ($assets) use (&$processed, &$updated, &$failed, &$skipped, $total, &$filesystems, $extractor) {
                 foreach ($assets as $asset) {
                     try {
+                        $filesystem = $filesystems[$asset->storage_id] ??= app(StorageService::class)
+                            ->getStorage(StorageModel::findOrFail($asset->storage_id));
+
                         match ($this->backfillAsset($asset, $filesystem, $extractor)) {
                             'updated' => $updated++,
                             'skipped' => $skipped++,

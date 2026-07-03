@@ -4,6 +4,7 @@ namespace App\Jobs\Space;
 
 use App\Jobs\QueuedJob;
 use App\Models\Management\Space;
+use App\Models\Management\Storage as StorageModel;
 use App\Models\Space\Asset;
 use App\Services\Storage\StorageService;
 use Illuminate\Contracts\Filesystem\Filesystem;
@@ -39,7 +40,10 @@ class BackfillAssetChecksumsJob extends QueuedJob
             return;
         }
 
-        $filesystem = null;
+        // Assets can live on different storages within one space, so the
+        // filesystem is resolved per asset (cached per storage id) instead
+        // of assuming the space default.
+        $filesystems = [];
         $processed = 0;
         $updated = 0;
         $failed = 0;
@@ -47,11 +51,12 @@ class BackfillAssetChecksumsJob extends QueuedJob
         Asset::query()
             ->whereNull('checksum')
             ->orderBy('id')
-            ->chunkById(50, function ($assets) use (&$processed, &$updated, &$failed, $total, &$filesystem) {
-                $filesystem ??= app(StorageService::class)->getDefaultStorage($this->space);
-
+            ->chunkById(50, function ($assets) use (&$processed, &$updated, &$failed, $total, &$filesystems) {
                 foreach ($assets as $asset) {
                     try {
+                        $filesystem = $filesystems[$asset->storage_id] ??= app(StorageService::class)
+                            ->getStorage(StorageModel::findOrFail($asset->storage_id));
+
                         $checksum = $this->computeChecksum($asset, $filesystem);
 
                         if ($checksum) {

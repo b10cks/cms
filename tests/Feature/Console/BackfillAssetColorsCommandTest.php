@@ -212,6 +212,36 @@ class BackfillAssetColorsCommandTest extends TestCase
     }
 
     #[Test]
+    public function it_backfills_assets_stored_on_a_non_default_storage(): void
+    {
+        $secondary = Storage::withoutEvents(fn () => Storage::factory()->create([
+            'space_id' => $this->space->id,
+            'is_default' => false,
+            'config' => [
+                'root' => storage_path('framework/testing/color-backfill-secondary-'.$this->space->id),
+            ],
+            'driver' => 'local',
+            'state' => 'live',
+        ]));
+
+        $path = 'space/asset/elsewhere.png';
+        app(StorageFactory::class)->make($secondary)->put($path, $this->makeSolidPng(40, 120, 220));
+
+        $asset = Asset::factory()->create([
+            'storage_id' => $secondary->id,
+            'path' => $path,
+            'mime_type' => 'image/png',
+            'metadata' => ['type' => 'image'],
+        ]);
+
+        $this->artisan('assets:backfill-colors', ['--sync' => true])
+            ->expectsOutputToContain('1 updated, 0 skipped, 0 failed of 1')
+            ->assertExitCode(0);
+
+        $this->assertMatchesRegularExpression('/^#[0-9a-f]{6}$/', $asset->fresh()->metadata['dominant_color']);
+    }
+
+    #[Test]
     public function dry_run_does_not_modify_assets(): void
     {
         $path = 'space/asset/legacy.png';
