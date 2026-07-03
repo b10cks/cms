@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.3-429e75bb] — 2026-7-3
+
+- 👔 Improve asset color detection
+
 ## [v2026.7.3-94da03e9] — 2026-7-3
 
 - 🚸 Improve overflowing issues
