@@ -19,7 +19,10 @@ const delegatedProps = computed(() => {
   <TabsList
     v-bind="delegatedProps"
     :class="
-      cn('inline-flex items-center justify-center gap-1 rounded-lg bg-input p-1', props.class)
+      cn(
+        'scroll-fade-x inline-flex max-w-full items-center justify-start gap-1 rounded-lg bg-input p-1',
+        props.class
+      )
     "
   >
     <slot />

@@ -777,7 +777,7 @@ provide('reloadServerContent', reloadServerContent)
     >
       <TabsContent
         value="edit"
-        :class="['p-4', showPreview ? '' : 'mx-auto max-w-4xl', showAi ? 'pb-52' : 'pb-8']"
+        :class="['min-w-0! p-4', showPreview ? '' : 'mx-auto max-w-4xl', showAi ? 'pb-52' : 'pb-8']"
       >
         <EditorComponent
           v-if="content.block"

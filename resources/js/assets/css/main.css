@@ -511,6 +511,55 @@
   }
 }
 
+/* Horizontal scroller that hides its scrollbar and fades out clipped content
+   at the edges. The fades are driven by the scroll position (scroll-driven
+   animation), so they only appear when there is actually content to scroll
+   to on that side; browsers without scroll-timeline support get a plain
+   scroller without fades. */
+@utility scroll-fade-x {
+  --scroll-fade-size: 1.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  @supports (animation-timeline: scroll(self x)) {
+    animation: scroll-fade-x linear both;
+    animation-timeline: scroll(self x);
+  }
+}
+
+@keyframes scroll-fade-x {
+  0% {
+    mask-image: linear-gradient(
+      to right,
+      black,
+      black var(--scroll-fade-size, 1.5rem),
+      black calc(100% - var(--scroll-fade-size, 1.5rem)),
+      transparent
+    );
+  }
+  15%,
+  85% {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black var(--scroll-fade-size, 1.5rem),
+      black calc(100% - var(--scroll-fade-size, 1.5rem)),
+      transparent
+    );
+  }
+  100% {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black var(--scroll-fade-size, 1.5rem),
+      black calc(100% - var(--scroll-fade-size, 1.5rem)),
+      black
+    );
+  }
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.15s ease;

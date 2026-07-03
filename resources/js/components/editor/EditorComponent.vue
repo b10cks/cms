@@ -352,13 +352,13 @@ const removeAllOutOfSchemaKeys = (): void => {
     >
       <TabsList
         v-if="currentPages.length > 1"
-        class="mb-4 flex w-full items-center gap-1 rounded-xl bg-input p-1"
+        class="scroll-fade-x mb-4 flex w-full max-w-full items-center gap-1 rounded-xl bg-input p-1"
       >
         <TabsTrigger
           v-for="(page, i) in currentPages"
           :key="i"
           :value="`${id}-page-${i}`"
-          class="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold transition-colors hover:text-primary data-[state=active]:bg-background data-[state=active]:text-primary"
+          class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold whitespace-nowrap transition-colors hover:text-primary data-[state=active]:bg-background data-[state=active]:text-primary"
         >
           {{ page.header }}
           <Badge

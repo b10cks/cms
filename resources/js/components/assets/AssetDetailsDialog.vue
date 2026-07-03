@@ -460,12 +460,12 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
   >
     <DialogContent
       v-if="asset && assetCopy"
-      class="max-w-11/12! max-h-[90vh] flex flex-col overflow-hidden"
+      class="max-w-11/12! max-h-[90dvh] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden"
     >
-      <DialogHeader>
+      <DialogHeader class="min-w-0 pr-8">
         <p
           v-if="mode === 'normal'"
-          class="text-sm"
+          class="truncate text-sm"
         >
           /<span
             v-for="crumb in asset.folder_id ? getBreadcrumbs(asset.folder_id) : []"
@@ -473,14 +473,14 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
             >{{ crumb.name }}/</span
           >
         </p>
-        <DialogTitle>{{ asset.filename }}</DialogTitle>
+        <DialogTitle class="truncate">{{ asset.filename }}</DialogTitle>
         <p>.{{ asset.extension }}</p>
       </DialogHeader>
       <div
-        class="grid gap-6 py-4 md:grid-cols-12 md:grid-rows-[minmax(0,1fr)] flex-1 min-h-0 overflow-hidden"
+        class="grid gap-6 py-4 md:grid-cols-12 md:grid-rows-[minmax(0,1fr)] min-h-0 overflow-y-auto md:overflow-hidden"
       >
         <div
-          class="checkerboard flex flex-col items-center justify-center overflow-y-auto rounded-xl p-4 md:col-span-8 min-h-0"
+          class="checkerboard flex flex-col items-center justify-center-safe rounded-xl p-4 md:col-span-8 min-h-0 md:overflow-y-auto"
         >
           <div
             v-if="getFileType(asset.mime_type) === 'image'"
@@ -603,7 +603,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
             </div>
           </div>
           <div
-            class="mt-4 flex w-full gap-2"
+            class="mt-4 flex w-full flex-wrap gap-2"
             aria-label="Asset actions"
           >
             <Button
@@ -659,7 +659,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
             </template>
           </div>
         </div>
-        <div class="space-y-4 md:col-span-4 min-h-0 overflow-y-auto">
+        <div class="flex flex-col gap-4 md:col-span-4 min-h-0 min-w-0">
           <InputField
             v-model="assetCopy.filename"
             name="filename"
@@ -698,13 +698,13 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
 
           <Tabs
             v-if="mode === 'normal'"
+            class="flex min-h-0 flex-1 flex-col"
             :model-value="selectedPanel"
             @update:model-value="
               selectedPanel = $event as 'details' | 'rights' | 'versions' | 'linked'
             "
-            class="space-y-4"
           >
-            <TabsList class="grid w-full grid-cols-4">
+            <TabsList class="w-full shrink-0 *:flex-1">
               <TabsTrigger value="details">
                 {{ $t('labels.assets.fields.metadata') }}
               </TabsTrigger>
@@ -719,7 +719,10 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="details">
+            <TabsContent
+              value="details"
+              class="min-h-0 flex-1 space-y-4 overflow-y-auto"
+            >
               <div class="rounded-lg bg-surface p-3 text-sm">
                 <dl class="grid grid-cols-2 gap-2">
                   <dt class="font-semibold">{{ $t('labels.assets.fields.type') }}:</dt>
@@ -875,7 +878,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
 
             <TabsContent
               value="rights"
-              class="space-y-4"
+              class="min-h-0 flex-1 space-y-4 overflow-y-auto"
             >
               <div
                 v-if="rightsStatusBadgeVariant"
@@ -945,7 +948,10 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
               </p>
             </TabsContent>
 
-            <TabsContent value="versions">
+            <TabsContent
+              value="versions"
+              class="min-h-0 flex-1 overflow-y-auto"
+            >
               <div class="rounded-xl bg-surface p-3">
                 <div class="mb-4">
                   <p class="font-semibold">{{ $t('labels.assets.versions.title') }}</p>
@@ -1034,7 +1040,10 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
               </div>
             </TabsContent>
 
-            <TabsContent value="linked">
+            <TabsContent
+              value="linked"
+              class="min-h-0 flex-1 overflow-y-auto"
+            >
               <div class="rounded-xl bg-surface p-3">
                 <div class="mb-4">
                   <p class="font-semibold">{{ $t('labels.assets.linkedContents') }}</p>
