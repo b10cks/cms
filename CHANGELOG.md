@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.3-4aa88e17] — 2026-7-3
+
+- ⬆️ Bump versions
+- ✨ Add a11y image meta data and dominant color
+
 ## [v2026.7.2-862c1a1b] — 2026-7-2
 
 - 🩹 Fix icon issues
