@@ -19,6 +19,7 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Jcupitt\Vips\Image;
 use League\Flysystem\FilesystemOperator;
 
 class AssetService
@@ -338,6 +339,58 @@ class AssetService
     }
 
     /**
+     * Re-run metadata extraction against an asset's stored file, e.g. to
+     * repair assets whose original extraction failed (`extraction_error`
+     * in metadata). Returns the freshly extracted metadata, or null when
+     * the file is missing/unreadable.
+     */
+    public function reextractMetadata(Asset $asset, Filesystem $filesystem): ?array
+    {
+        if (! $asset->path || ! $filesystem->fileExists($asset->path)) {
+            return null;
+        }
+
+        $extension = pathinfo($asset->path, PATHINFO_EXTENSION);
+        $tempFile = tempnam(sys_get_temp_dir(), 'asset_meta_');
+
+        if ($tempFile === false) {
+            return null;
+        }
+
+        $tempPath = $extension !== '' ? "{$tempFile}.{$extension}" : $tempFile;
+
+        if ($tempPath !== $tempFile) {
+            rename($tempFile, $tempPath);
+        }
+
+        try {
+            $source = $filesystem->readStream($asset->path);
+
+            if (! is_resource($source)) {
+                return null;
+            }
+
+            $target = fopen($tempPath, 'wb');
+            stream_copy_to_stream($source, $target);
+            fclose($source);
+            fclose($target);
+
+            $file = new UploadedFile($tempPath, basename($asset->path), $asset->mime_type, null, true);
+
+            return $this->extractMetadata($file, $file->getMimeType() ?: $asset->mime_type);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to re-extract asset metadata', [
+                'asset' => $asset->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        } finally {
+            @unlink($tempPath);
+        }
+    }
+
+    /**
      * Extract metadata from a file based on its type
      */
     protected function extractMetadata(UploadedFile $file, string $mimeType): array
@@ -390,10 +443,16 @@ class AssetService
         }
 
         // Use getimagesize to get basic image info
-        $imageInfo = getimagesize($file->getRealPath());
+        $imageInfo = @getimagesize($file->getRealPath());
 
         $width = $imageInfo[0] ?? null;
         $height = $imageInfo[1] ?? null;
+
+        // getimagesize can't read every format GD/vips can decode (e.g.
+        // HEIC); fall back to a vips header read for the dimensions.
+        if (! $width || ! $height) {
+            [$width, $height] = $this->probeImageDimensions($file->getRealPath());
+        }
 
         $metadata = [
             'type' => 'image',
@@ -441,6 +500,27 @@ class AssetService
         }
 
         return $metadata;
+    }
+
+    /**
+     * Read image dimensions via a lazy libvips header read, for formats
+     * getimagesize doesn't understand.
+     *
+     * @return array{int|null, int|null}
+     */
+    protected function probeImageDimensions(string $path): array
+    {
+        try {
+            if (class_exists(Image::class)) {
+                $image = Image::newFromFile($path);
+
+                return [$image->width, $image->height];
+            }
+        } catch (\Throwable) {
+            // Not decodable by vips either — dimensions stay unknown.
+        }
+
+        return [null, null];
     }
 
     /**

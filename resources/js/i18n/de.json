@@ -481,7 +481,8 @@
         "original_filename": "Ursprünglicher Dateiname",
         "dominant_color": "Dominante Farbe",
         "palette": "Farbpalette",
-        "animated": "Animiert"
+        "animated": "Animiert",
+        "extraction_error": "Extraktionsfehler"
       },
       "export": "Exportieren",
       "import": "Importieren",

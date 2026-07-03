@@ -4,8 +4,6 @@ import { toast } from 'vue-sonner'
 
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
-import { buildIlumUrl } from '~/lib/ilum'
-import { runtimeConfig } from '~/lib/runtime-config'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
@@ -19,9 +17,20 @@ import { ComboboxField, DateTimeField, InputField, SelectField } from '~/compone
 import IconName from '~/components/ui/IconName.vue'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { isClient } from '~/lib/env'
-import type { AssetResource, AssetVersionResource, LinkedAssetContentResource } from '~/types/assets'
+import { buildIlumUrl } from '~/lib/ilum'
+import { runtimeConfig } from '~/lib/runtime-config'
+import type {
+  AssetResource,
+  AssetVersionResource,
+  LinkedAssetContentResource,
+} from '~/types/assets'
 
-const RIGHTS_FIELD_KEYS = ['copyright_holder', 'license_type', 'license_notes', 'usage_restrictions']
+const RIGHTS_FIELD_KEYS = [
+  'copyright_holder',
+  'license_type',
+  'license_notes',
+  'usage_restrictions',
+]
 
 const { t } = useI18n()
 const { formatFileSize, formatDateTime } = useFormat()
@@ -88,7 +97,9 @@ const onReplaceFileSelected = (event: Event) => {
     {
       id: targetId,
       file,
-      onProgress: (p) => { replaceProgress.value = p },
+      onProgress: (p) => {
+        replaceProgress.value = p
+      },
     },
     {
       onSuccess: (updated) => {
@@ -130,7 +141,8 @@ const licenseTypeOptions = computed(() => [
   { value: 'custom', label: String(t('labels.assets.rights.licenseTypes.custom')) },
 ])
 const licenseExpiresAtDate = computed({
-  get: () => (assetCopy.value?.license_expires_at ? assetCopy.value.license_expires_at.slice(0, 10) : ''),
+  get: () =>
+    assetCopy.value?.license_expires_at ? assetCopy.value.license_expires_at.slice(0, 10) : '',
   set: (value: string) => {
     if (!assetCopy.value) return
     assetCopy.value.license_expires_at = value || null
@@ -464,7 +476,9 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
         <DialogTitle>{{ asset.filename }}</DialogTitle>
         <p>.{{ asset.extension }}</p>
       </DialogHeader>
-      <div class="grid gap-6 py-4 md:grid-cols-12 md:grid-rows-[minmax(0,1fr)] flex-1 min-h-0 overflow-hidden">
+      <div
+        class="grid gap-6 py-4 md:grid-cols-12 md:grid-rows-[minmax(0,1fr)] flex-1 min-h-0 overflow-hidden"
+      >
         <div
           class="checkerboard flex flex-col items-center justify-center overflow-y-auto rounded-xl p-4 md:col-span-8 min-h-0"
         >
@@ -513,7 +527,15 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
               ref="videoRef"
               controls
               :src="asset.url ?? undefined"
-              :poster="asset.metadata.thumbnails?.[0]?.full_path ? buildIlumUrl(asset.metadata.thumbnails[0].full_path, { width: 1200, crop: 'fit' }, ilumBaseUrl) : undefined"
+              :poster="
+                asset.metadata.thumbnails?.[0]?.full_path
+                  ? buildIlumUrl(
+                      asset.metadata.thumbnails[0].full_path,
+                      { width: 1200, crop: 'fit' },
+                      ilumBaseUrl
+                    )
+                  : undefined
+              "
               class="max-h-[calc(60svh)] w-full rounded-lg object-contain"
             />
             <div
@@ -534,7 +556,9 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                   crop="fill"
                   class="pointer-events-none block h-[68px] w-[120px] object-cover"
                 />
-                <span class="absolute bottom-0 left-0 right-0 bg-black/60 py-0.5 text-center text-xs text-white">
+                <span
+                  class="absolute bottom-0 left-0 right-0 bg-black/60 py-0.5 text-center text-xs text-white"
+                >
                   {{ thumb.position_formatted }}
                 </span>
               </button>
@@ -628,7 +652,9 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                   :name="isReplacing ? 'lucide:loader-circle' : 'lucide:refresh-cw'"
                   :class="{ 'animate-spin': isReplacing }"
                 />
-                <span>{{ isReplacing ? `${replaceProgress}%` : $t('labels.assets.replaceMedia') }}</span>
+                <span>{{
+                  isReplacing ? `${replaceProgress}%` : $t('labels.assets.replaceMedia')
+                }}</span>
               </Button>
             </template>
           </div>
@@ -673,7 +699,9 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
           <Tabs
             v-if="mode === 'normal'"
             :model-value="selectedPanel"
-            @update:model-value="selectedPanel = $event as 'details' | 'rights' | 'versions' | 'linked'"
+            @update:model-value="
+              selectedPanel = $event as 'details' | 'rights' | 'versions' | 'linked'
+            "
             class="space-y-4"
           >
             <TabsList class="grid w-full grid-cols-4">
@@ -751,13 +779,11 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                   <dl class="grid grid-cols-2 gap-2">
                     <dt class="font-semibold">{{ $t('labels.assets.a11y.overlay') }}:</dt>
                     <dd>
-                      <Badge variant="secondary">
-                        {{
-                          colorA11y.scheme === 'dark'
-                            ? $t('labels.assets.a11y.overlayLight')
-                            : $t('labels.assets.a11y.overlayDark')
-                        }}
-                      </Badge>
+                      {{
+                        colorA11y.scheme === 'dark'
+                          ? $t('labels.assets.a11y.overlayLight')
+                          : $t('labels.assets.a11y.overlayDark')
+                      }}
                     </dd>
                     <template
                       v-for="row in contrastRows"
@@ -773,7 +799,10 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                               color: row.swatch,
                             }"
                             aria-hidden="true"
-                            ><span class="flex h-full items-center justify-center text-[0.6rem] leading-none">A</span></span
+                            ><span
+                              class="flex h-full items-center justify-center text-[0.6rem] leading-none"
+                              >A</span
+                            ></span
                           >
                           {{ row.ratio }}:1
                         </span>
@@ -882,7 +911,10 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                 v-if="rightsFields.length > 0"
                 class="space-y-3"
               >
-                <template v-for="field in rightsFields" :key="field.key">
+                <template
+                  v-for="field in rightsFields"
+                  :key="field.key"
+                >
                   <SelectField
                     v-if="field.key === 'license_type'"
                     :model-value="getRightsFieldValue(field.key)"
@@ -943,7 +975,9 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                     :key="version.id"
                     class="flex items-center gap-3 rounded-lg border border-input bg-background p-3"
                   >
-                    <div class="checkerboard flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded">
+                    <div
+                      class="checkerboard flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded"
+                    >
                       <NuxtImg
                         v-if="getFileType(version.mime_type) === 'image' && version.full_path"
                         :src="version.full_path"
@@ -961,7 +995,11 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
                         <p class="font-semibold">
-                          {{ $t('labels.assets.versions.versionNumber', { number: version.version_number }) }}
+                          {{
+                            $t('labels.assets.versions.versionNumber', {
+                              number: version.version_number,
+                            })
+                          }}
                         </p>
                         <Badge
                           variant="secondary"

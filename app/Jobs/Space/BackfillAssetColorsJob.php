@@ -6,6 +6,7 @@ use App\Jobs\QueuedJob;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Services\Asset\DominantColorExtractor;
+use App\Services\Storage\AssetService;
 use App\Services\Storage\StorageService;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Cache;
@@ -15,14 +16,24 @@ use Illuminate\Support\Facades\Log;
  * Backfills `metadata.dominant_color` / `metadata.palette` /
  * `metadata.a11y` (WCAG contrast stats) for image and video assets uploaded
  * before dominant-color extraction existed, across a single space's
- * database. Videos use their first generated thumbnail as the color source;
- * assets that already have a color get only the a11y stats topped up (no
- * file read). Follows the same cache-based progress convention as
- * BackfillAssetChecksumsJob.
+ * database. Also repairs assets whose original metadata extraction failed
+ * (`extraction_error` in metadata) by re-running the current extraction
+ * pipeline against the stored file. Videos use their first generated
+ * thumbnail as the color source; assets that already have a color get only
+ * the a11y stats topped up (no file read). Follows the same cache-based
+ * progress convention as BackfillAssetChecksumsJob.
  */
 class BackfillAssetColorsJob extends QueuedJob
 {
     public int $timeout = 3600;
+
+    /**
+     * Result counters from the last run, so synchronous callers (the
+     * backfill command with --sync) can report what happened.
+     *
+     * @var array{total: int, updated: int, failed: int}|null
+     */
+    public ?array $stats = null;
 
     /** Source files larger than this are skipped to bound memory usage. */
     private const MAX_FILE_SIZE = 100 * 1024 * 1024;
@@ -45,6 +56,7 @@ class BackfillAssetColorsJob extends QueuedJob
         $total = $query()->count();
 
         if ($total === 0) {
+            $this->stats = ['total' => 0, 'updated' => 0, 'failed' => 0];
             $this->updateProgress(100);
 
             return;
@@ -80,6 +92,8 @@ class BackfillAssetColorsJob extends QueuedJob
                 }
             });
 
+        $this->stats = ['total' => $total, 'updated' => $updated, 'failed' => $failed];
+
         $this->updateProgress(100);
 
         Log::info('Asset dominant-color backfill finished', [
@@ -92,27 +106,45 @@ class BackfillAssetColorsJob extends QueuedJob
 
     private function backfillAsset(Asset $asset, Filesystem $filesystem, DominantColorExtractor $extractor): bool
     {
-        $existingColor = $asset->metadata['dominant_color'] ?? null;
+        $metadata = $asset->metadata ?? [];
+        $changed = false;
 
-        if ($existingColor && isset($asset->metadata['a11y'])) {
-            return false;
+        // Repair assets whose original extraction failed (legacy uploads
+        // stored the PHP error under `extraction_error`); re-extraction uses
+        // the current, fixed extraction pipeline and yields dimensions,
+        // colors and a11y stats in one pass. Custom metadata keys supplied
+        // at upload are preserved.
+        if (isset($metadata['extraction_error'])) {
+            $reextracted = app(AssetService::class)->reextractMetadata($asset, $filesystem);
+
+            if ($reextracted !== null && ! isset($reextracted['extraction_error'])) {
+                unset($metadata['extraction_error']);
+                $metadata = [...$metadata, ...$reextracted];
+                $changed = true;
+            }
         }
 
-        // Assets that already have a color only need the a11y stats, which
-        // derive from the stored hex — no file read required.
-        $colors = $existingColor
-            ? ['a11y' => DominantColorExtractor::a11yStats($existingColor)]
-            : (str_starts_with((string) $asset->mime_type, 'video/')
+        if (! isset($metadata['dominant_color'])) {
+            $colors = str_starts_with((string) $asset->mime_type, 'video/')
                 ? $this->extractFromThumbnail($asset, $filesystem, $extractor)
-                : $this->extractFromOriginal($asset, $filesystem, $extractor));
+                : $this->extractFromOriginal($asset, $filesystem, $extractor);
 
-        if (! $colors) {
+            if ($colors) {
+                $metadata = [...$metadata, ...$colors];
+                $changed = true;
+            }
+        } elseif (! isset($metadata['a11y'])) {
+            // Assets that already have a color only need the a11y stats,
+            // which derive from the stored hex — no file read required.
+            $metadata['a11y'] = DominantColorExtractor::a11yStats($metadata['dominant_color']);
+            $changed = true;
+        }
+
+        if (! $changed) {
             return false;
         }
 
-        $asset->forceFill([
-            'metadata' => [...($asset->metadata ?? []), ...$colors],
-        ])->saveQuietly();
+        $asset->forceFill(['metadata' => $metadata])->saveQuietly();
 
         return true;
     }

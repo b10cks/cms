@@ -51,18 +51,27 @@ class BackfillAssetColorsCommand extends Command
                                 ->orWhere('mime_type', 'like', 'video/%'))
                             ->get()
                             ->filter(fn (Asset $asset) => ! isset($asset->metadata['dominant_color'])
-                                || ! isset($asset->metadata['a11y']))
+                                || ! isset($asset->metadata['a11y'])
+                                || isset($asset->metadata['extraction_error']))
                             ->count();
 
                         if ($missing > 0) {
-                            $this->line("  {$space->id}  {$missing} asset(s) missing dominant color or a11y stats");
+                            $this->line("  {$space->id}  {$missing} asset(s) missing dominant color/a11y stats or with failed extraction");
                         }
 
                         continue;
                     }
 
                     if ($sync) {
-                        (new BackfillAssetColorsJob($space))->handle();
+                        $job = new BackfillAssetColorsJob($space);
+                        $job->handle();
+
+                        $stats = $job->stats;
+                        $this->line(
+                            "  {$space->id}  ".($stats
+                                ? "{$stats['updated']} updated, {$stats['failed']} failed of {$stats['total']} image/video asset(s)"
+                                : 'done')
+                        );
                     } else {
                         BackfillAssetColorsJob::dispatch($space);
                     }
@@ -84,7 +93,8 @@ class BackfillAssetColorsCommand extends Command
         if ($dryRun) {
             $this->info('Dry run complete.');
         } else {
-            $this->info("Queued {$spacesQueued} space(s); {$failed} failed.");
+            $verb = $sync ? 'Processed' : 'Queued';
+            $this->info("{$verb} {$spacesQueued} space(s); {$failed} failed.");
         }
 
         return $failed > 0 ? self::FAILURE : self::SUCCESS;

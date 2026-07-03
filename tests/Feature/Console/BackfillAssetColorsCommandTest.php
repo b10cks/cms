@@ -112,6 +112,62 @@ class BackfillAssetColorsCommandTest extends TestCase
     }
 
     #[Test]
+    public function it_repairs_svg_assets_with_a_failed_legacy_extraction(): void
+    {
+        $path = 'space/asset/logo.svg';
+        $this->filesystem->put(
+            $path,
+            '<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><rect width="320" height="180" fill="red"/></svg>'
+        );
+
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+            'path' => $path,
+            'mime_type' => 'image/svg+xml',
+            'metadata' => [
+                'type' => 'image',
+                'subtype' => 'image/svg+xml',
+                'extraction_error' => 'Trying to access array offset on false',
+                'alt_text' => 'Custom alt',
+            ],
+        ]);
+
+        $this->artisan('assets:backfill-colors', ['--sync' => true])->assertExitCode(0);
+
+        $metadata = $asset->fresh()->metadata;
+
+        $this->assertArrayNotHasKey('extraction_error', $metadata);
+        $this->assertSame('svg', $metadata['subtype']);
+        $this->assertEquals(320, $metadata['width']);
+        $this->assertEquals(180, $metadata['height']);
+        // Custom metadata supplied at upload survives the repair.
+        $this->assertSame('Custom alt', $metadata['alt_text']);
+    }
+
+    #[Test]
+    public function repairing_a_raster_asset_also_yields_colors_in_one_pass(): void
+    {
+        $path = 'space/asset/broken-meta.png';
+        $this->filesystem->put($path, $this->makeSolidPng(10, 200, 30));
+
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+            'path' => $path,
+            'mime_type' => 'image/png',
+            'metadata' => ['extraction_error' => 'boom'],
+        ]);
+
+        $this->artisan('assets:backfill-colors', ['--sync' => true])->assertExitCode(0);
+
+        $metadata = $asset->fresh()->metadata;
+
+        $this->assertArrayNotHasKey('extraction_error', $metadata);
+        $this->assertEquals(50, $metadata['width']);
+        $this->assertMatchesRegularExpression('/^#[0-9a-f]{6}$/', $metadata['dominant_color']);
+        $this->assertContains($metadata['a11y']['scheme'], ['dark', 'light']);
+    }
+
+    #[Test]
     public function dry_run_does_not_modify_assets(): void
     {
         $path = 'space/asset/legacy.png';

@@ -77,7 +77,8 @@ class BackfillAssetChecksumsCommand extends Command
         if ($dryRun) {
             $this->info('Dry run complete.');
         } else {
-            $this->info("Queued {$spacesQueued} space(s); {$failed} failed.");
+            $verb = $sync ? 'Processed' : 'Queued';
+            $this->info("{$verb} {$spacesQueued} space(s); {$failed} failed.");
         }
 
         return $failed > 0 ? self::FAILURE : self::SUCCESS;
