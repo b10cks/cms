@@ -264,6 +264,34 @@ const formatKey = (key: string): string => {
   return key.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
 }
 
+const colorA11y = computed(() => props.asset?.metadata?.a11y)
+
+const wcagChecks = (ratio: number) => [
+  { label: 'AA Large', threshold: 3, passed: ratio >= 3 },
+  { label: 'AA', threshold: 4.5, passed: ratio >= 4.5 },
+  { label: 'AAA', threshold: 7, passed: ratio >= 7 },
+]
+
+const contrastRows = computed(() => {
+  if (!colorA11y.value) return []
+  return [
+    {
+      key: 'white',
+      label: t('labels.assets.a11y.contrastWhite'),
+      swatch: '#ffffff',
+      ratio: colorA11y.value.contrast_white,
+      checks: wcagChecks(colorA11y.value.contrast_white),
+    },
+    {
+      key: 'black',
+      label: t('labels.assets.a11y.contrastBlack'),
+      swatch: '#000000',
+      ratio: colorA11y.value.contrast_black,
+      checks: wcagChecks(colorA11y.value.contrast_black),
+    },
+  ]
+})
+
 const copyAssetUrl = () => {
   if (!assetCopy.value) {
     return
@@ -687,13 +715,83 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                       v-for="(value, key) in asset.metadata"
                       :key="key"
                     >
-                      <template v-if="key !== 'thumbnails'">
+                      <template v-if="key === 'dominant_color' || key === 'palette'">
+                        <dt class="font-semibold">
+                          {{ String($t(`labels.assets.metadata.${key}`) || formatKey(key)) }}:
+                        </dt>
+                        <dd class="flex flex-wrap items-center gap-2">
+                          <span
+                            v-for="color in Array.isArray(value) ? value : [value]"
+                            :key="String(color)"
+                            class="inline-flex items-center gap-1"
+                          >
+                            <span
+                              class="inline-block size-4 rounded border border-input"
+                              :style="{ backgroundColor: String(color) }"
+                            />
+                            <span class="text-xs">{{ color }}</span>
+                          </span>
+                        </dd>
+                      </template>
+                      <template v-else-if="key !== 'thumbnails' && key !== 'a11y'">
                         <dt class="font-semibold">
                           {{ String($t(`labels.assets.metadata.${key}`) || formatKey(key)) }}:
                         </dt>
                         <dd class="wrap-break-word">{{ value }}</dd>
                       </template>
                     </template>
+                  </dl>
+                </div>
+
+                <div
+                  v-if="colorA11y"
+                  class="mt-4 border-t-2 border-background pt-4"
+                >
+                  <h4 class="mb-2 font-semibold">{{ $t('labels.assets.a11y.title') }}</h4>
+                  <dl class="grid grid-cols-2 gap-2">
+                    <dt class="font-semibold">{{ $t('labels.assets.a11y.overlay') }}:</dt>
+                    <dd>
+                      <Badge variant="secondary">
+                        {{
+                          colorA11y.scheme === 'dark'
+                            ? $t('labels.assets.a11y.overlayLight')
+                            : $t('labels.assets.a11y.overlayDark')
+                        }}
+                      </Badge>
+                    </dd>
+                    <template
+                      v-for="row in contrastRows"
+                      :key="row.key"
+                    >
+                      <dt class="font-semibold">{{ row.label }}:</dt>
+                      <dd class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center gap-1">
+                          <span
+                            class="inline-block size-4 rounded border border-input"
+                            :style="{
+                              backgroundColor: asset.metadata.dominant_color,
+                              color: row.swatch,
+                            }"
+                            aria-hidden="true"
+                            ><span class="flex h-full items-center justify-center text-[0.6rem] leading-none">A</span></span
+                          >
+                          {{ row.ratio }}:1
+                        </span>
+                        <span
+                          v-for="check in row.checks"
+                          :key="check.label"
+                          class="rounded px-1.5 py-0.5 text-xs font-medium"
+                          :class="
+                            check.passed ? 'bg-success/15 text-success' : 'bg-muted/20 text-muted'
+                          "
+                          :title="`≥ ${check.threshold}:1`"
+                        >
+                          {{ check.label }} {{ check.passed ? '✓' : '✗' }}
+                        </span>
+                      </dd>
+                    </template>
+                    <dt class="font-semibold">{{ $t('labels.assets.a11y.luminance') }}:</dt>
+                    <dd>{{ colorA11y.luminance }}</dd>
                   </dl>
                 </div>
               </div>

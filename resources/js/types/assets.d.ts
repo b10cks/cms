@@ -38,6 +38,29 @@ export interface AssetVideoThumbnail {
   full_path: string
   position: number
   position_formatted: string
+  dominant_color?: string
+}
+
+export interface AssetColorA11y {
+  /** 'dark' = treat the image as a dark surface (use light overlays/text) */
+  scheme: 'dark' | 'light'
+  /** WCAG relative luminance of the dominant color (0–1) */
+  luminance: number
+  /** Contrast ratio of white text against the dominant color */
+  contrast_white: number
+  /** Contrast ratio of black text against the dominant color */
+  contrast_black: number
+}
+
+export interface AssetMediaMetadata {
+  width?: number
+  height?: number
+  thumbnails?: AssetVideoThumbnail[]
+  duration?: number
+  dominant_color?: string
+  palette?: string[]
+  animated?: boolean
+  a11y?: AssetColorA11y
 }
 
 export interface AssetResource {
@@ -50,7 +73,7 @@ export interface AssetResource {
   full_path: string
   folder_id: string | null
   folder?: AssetFolderResource
-  metadata: Record<string, unknown> & { thumbnails?: AssetVideoThumbnail[]; duration?: number }
+  metadata: Record<string, unknown> & AssetMediaMetadata
   data: Record<string, unknown> & { focus?: { x: number; y: number } }
   tags: string[]
   license_expires_at: string | null
@@ -75,7 +98,7 @@ export interface AssetVersionResource {
   size: number
   checksum: string | null
   full_path: string | null
-  metadata: Record<string, unknown> & { thumbnails?: AssetVideoThumbnail[]; duration?: number }
+  metadata: Record<string, unknown> & AssetMediaMetadata
   created_by?: { id: string; name: string } | null
   created_at: string | null
 }
@@ -120,6 +143,7 @@ export interface AssetValue {
   mime_type: string
   size: number
   filename: string
+  metadata?: AssetMediaMetadata
   data: Record<string, unknown> & { focus?: { x: number; y: number } }
 }
 

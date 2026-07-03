@@ -35,13 +35,13 @@ class AssetHandler
                 $asset = $assets->firstWhere('id', $src['id'] ?? null);
 
                 return $asset ? \Arr::only($asset->append(['full_path'])->toArray(), [
-                        'id',
-                        'full_path',
-                        'extension',
-                        'mime_type',
-                        'size',
-                        'filename',
-                    ]) + $src + ['url' => $asset->getUrl()] : $src;
+                    'id',
+                    'full_path',
+                    'extension',
+                    'mime_type',
+                    'size',
+                    'filename',
+                ]) + $src + ['url' => $asset->getUrl()] : $src;
             },
         );
     }
@@ -63,7 +63,7 @@ class AssetHandler
                     $result = $assetFields + ($src['data'] ?? []);
                     $result['focus'] = data_get($src, 'data.focus', data_get($asset, 'data.focus', null));
 
-                    $metadata = \Arr::only($asset->metadata, ['width', 'height', 'thumbnails', 'duration']);
+                    $metadata = \Arr::only($asset->metadata, ['width', 'height', 'thumbnails', 'duration', 'dominant_color', 'a11y']);
                     if (! empty($metadata['thumbnails'])) {
                         $metadata['thumbnails'] = array_map(function (array $thumb) use ($asset) {
                             $thumb['full_path'] = $asset->storage_id.'/'.$thumb['path'];

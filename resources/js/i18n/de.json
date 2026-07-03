@@ -478,7 +478,10 @@
         "width": "Breite",
         "height": "Höhe",
         "duration": "Dauer",
-        "original_filename": "Ursprünglicher Dateiname"
+        "original_filename": "Ursprünglicher Dateiname",
+        "dominant_color": "Dominante Farbe",
+        "palette": "Farbpalette",
+        "animated": "Animiert"
       },
       "export": "Exportieren",
       "import": "Importieren",
@@ -559,6 +562,15 @@
         "hint": "Du kannst das vorhandene Asset wiederverwenden, anstatt ein Duplikat hochzuladen, oder es trotzdem hochladen.",
         "useExisting": "Vorhandenes Asset verwenden",
         "uploadAnyway": "Trotzdem hochladen"
+      },
+      "a11y": {
+        "title": "Barrierefreiheit",
+        "overlay": "Empfohlenes Overlay",
+        "overlayLight": "Heller Text / Icons",
+        "overlayDark": "Dunkler Text / Icons",
+        "contrastWhite": "Kontrast zu Weiß",
+        "contrastBlack": "Kontrast zu Schwarz",
+        "luminance": "Relative Luminanz"
       }
     },
     "contents": {

@@ -2,25 +2,25 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\Space\BackfillAssetChecksumsJob;
+use App\Jobs\Space\BackfillAssetColorsJob;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Dispatches a BackfillAssetChecksumsJob for every space (or a single one)
- * to compute the sha256 `checksum` for assets that were uploaded before
- * checksum computation existed.
+ * Dispatches a BackfillAssetColorsJob for every space (or a single one) to
+ * extract `metadata.dominant_color` for image/video assets uploaded before
+ * dominant-color extraction existed.
  */
-class BackfillAssetChecksumsCommand extends Command
+class BackfillAssetColorsCommand extends Command
 {
-    protected $signature = 'assets:backfill-checksums
+    protected $signature = 'assets:backfill-colors
         {--space= : Limit to a single space (id or slug)}
         {--sync : Run the backfill synchronously instead of dispatching a queued job}
-        {--dry-run : Report how many assets are missing a checksum without doing any work}';
+        {--dry-run : Report how many assets are missing a dominant color without doing any work}';
 
-    protected $description = 'Backfill the checksum column for pre-existing assets across space databases';
+    protected $description = 'Backfill metadata.dominant_color for pre-existing image/video assets across space databases';
 
     public function handle(): int
     {
@@ -45,26 +45,33 @@ class BackfillAssetChecksumsCommand extends Command
                 try {
                     if ($dryRun) {
                         app()->offsetSet('currentSpace', $space);
-                        $missing = Asset::query()->whereNull('checksum')->count();
+                        $missing = Asset::query()
+                            ->where(fn ($q) => $q
+                                ->where('mime_type', 'like', 'image/%')
+                                ->orWhere('mime_type', 'like', 'video/%'))
+                            ->get()
+                            ->filter(fn (Asset $asset) => ! isset($asset->metadata['dominant_color'])
+                                || ! isset($asset->metadata['a11y']))
+                            ->count();
 
                         if ($missing > 0) {
-                            $this->line("  {$space->id}  {$missing} asset(s) missing checksum");
+                            $this->line("  {$space->id}  {$missing} asset(s) missing dominant color or a11y stats");
                         }
 
                         continue;
                     }
 
                     if ($sync) {
-                        (new BackfillAssetChecksumsJob($space))->handle();
+                        (new BackfillAssetColorsJob($space))->handle();
                     } else {
-                        BackfillAssetChecksumsJob::dispatch($space);
+                        BackfillAssetColorsJob::dispatch($space);
                     }
 
                     $spacesQueued++;
                 } catch (\Throwable $e) {
                     $failed++;
                     $this->error("  {$space->id}: {$e->getMessage()}");
-                    Log::error('Failed to queue asset checksum backfill for space', [
+                    Log::error('Failed to queue asset color backfill for space', [
                         'space' => $space->id,
                         'error' => $e->getMessage(),
                     ]);

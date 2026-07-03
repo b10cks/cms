@@ -4,10 +4,12 @@ namespace App\Services\Storage;
 
 use App\Exceptions\DuplicateAssetException;
 use App\Models\Management\Space;
+use App\Models\Management\Storage;
 use App\Models\Management\Storage as StorageModel;
 use App\Models\Space\Asset;
 use App\Models\Space\AssetFolder;
 use App\Models\Space\AssetVersion;
+use App\Services\Asset\DominantColorExtractor;
 use App\Services\Storage\Filters\HashingStreamFilter;
 use FFMpeg\Coordinate\TimeCode;
 use FFMpeg\FFMpeg;
@@ -17,6 +19,7 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use League\Flysystem\FilesystemOperator;
 
 class AssetService
 {
@@ -64,14 +67,8 @@ class AssetService
             // the file into storage, so no second pass over the file is needed.
             $asset->checksum = $this->writeStreamWithChecksum($file, $filesystem, $relativePath);
 
-            if (Str::startsWith($mimeType, 'video/')) {
-                $thumbnailPaths = $this->generateVideoThumbnails($file, $space->id, $asset->id, $sanitizedFilename, $filesystem);
-
-                if (! empty($thumbnailPaths)) {
-                    $asset->metadata = [...$asset->metadata, 'thumbnails' => $thumbnailPaths];
-                }
-            }
-
+            // Check for duplicates before generating video thumbnails so a
+            // rejected duplicate never pays the ffmpeg cost.
             if (! $force) {
                 $duplicate = $this->findDuplicateByChecksum($asset->checksum, $asset->id);
 
@@ -79,6 +76,18 @@ class AssetService
                     $this->discardUnsavedAsset($asset, $filesystem);
 
                     throw new DuplicateAssetException($duplicate);
+                }
+            }
+
+            if (Str::startsWith($mimeType, 'video/')) {
+                $thumbnailPaths = $this->generateVideoThumbnails($file, $space->id, $asset->id, $sanitizedFilename, $filesystem);
+
+                if (! empty($thumbnailPaths)) {
+                    $asset->metadata = [
+                        ...$asset->metadata,
+                        'thumbnails' => $thumbnailPaths,
+                        ...$this->videoColorMetadata($thumbnailPaths),
+                    ];
                 }
             }
 
@@ -169,7 +178,7 @@ class AssetService
      * @param  string  $spaceId
      * @param  string  $assetId
      * @param  string  $baseName
-     * @param  \League\Flysystem\FilesystemOperator  $filesystem
+     * @param  FilesystemOperator  $filesystem
      */
     protected function generateVideoThumbnails(UploadedFile $file, $spaceId, $assetId, $baseName, $filesystem): array
     {
@@ -240,12 +249,16 @@ class AssetService
                         fclose($thumbnailStream);
                     }
 
+                    $thumbnailColors = app(DominantColorExtractor::class)
+                        ->extract($tempThumbnailPath, 'image/jpeg');
+
                     // Add the thumbnail path to our result
-                    $thumbnailPaths[$index] = [
+                    $thumbnailPaths[$index] = array_filter([
                         'path' => $relativeThumbnailPath,
                         'position' => $position,
                         'position_formatted' => $this->formatDuration($position),
-                    ];
+                        'dominant_color' => $thumbnailColors['dominant_color'] ?? null,
+                    ], fn ($value) => $value !== null);
 
                     // Clean up temp file
                     @unlink($tempThumbnailPath);
@@ -265,6 +278,28 @@ class AssetService
 
             return [];
         }
+    }
+
+    /**
+     * Promote the first video thumbnail's dominant color (plus its WCAG
+     * contrast stats) to asset-level metadata so videos get a placeholder
+     * color and overlay guidance just like images.
+     *
+     * @param  array<int|string, array<string, mixed>>  $thumbnailPaths
+     * @return array{dominant_color?: string, a11y?: array<string, mixed>}
+     */
+    protected function videoColorMetadata(array $thumbnailPaths): array
+    {
+        $first = reset($thumbnailPaths);
+
+        if (! empty($first['dominant_color'])) {
+            return [
+                'dominant_color' => $first['dominant_color'],
+                'a11y' => DominantColorExtractor::a11yStats($first['dominant_color']),
+            ];
+        }
+
+        return [];
     }
 
     /**
@@ -348,20 +383,24 @@ class AssetService
      */
     protected function extractImageMetadata(UploadedFile $file): array
     {
+        $mimeType = $file->getMimeType();
+
+        if (in_array($mimeType, ['image/svg+xml', 'image/svg'], true)) {
+            return $this->extractSvgMetadata($file);
+        }
+
         // Use getimagesize to get basic image info
         $imageInfo = getimagesize($file->getRealPath());
 
+        $width = $imageInfo[0] ?? null;
+        $height = $imageInfo[1] ?? null;
+
         $metadata = [
             'type' => 'image',
-            'width' => $imageInfo[0] ?? null,
-            'height' => $imageInfo[1] ?? null,
-            'aspectRatio' => ($imageInfo[0] && $imageInfo[1])
-                ? round($imageInfo[0] / $imageInfo[1], 4)
-                : null,
         ];
 
         // If exif data is available, extract it
-        if (function_exists('exif_read_data') && in_array($file->getMimeType(), ['image/jpeg', 'image/tiff'])) {
+        if (function_exists('exif_read_data') && in_array($mimeType, ['image/jpeg', 'image/tiff'])) {
             $exif = @exif_read_data($file->getRealPath());
             if ($exif) {
                 // Extract only the most important EXIF data
@@ -374,10 +413,101 @@ class AssetService
                     'dateTaken' => $exif['DateTimeOriginal'] ?? null,
                     'orientation' => $exif['Orientation'] ?? null,
                 ];
+
+                // Orientations 5-8 rotate the image by 90°, so the pixel
+                // dimensions are swapped relative to how browsers display it.
+                if (($exif['Orientation'] ?? 1) >= 5 && $width && $height) {
+                    [$width, $height] = [$height, $width];
+                }
             }
         }
 
+        $metadata['width'] = $width;
+        $metadata['height'] = $height;
+        $metadata['aspectRatio'] = ($width && $height)
+            ? round($width / $height, 4)
+            : null;
+
+        if ($animated = $this->isAnimatedImage($file, $mimeType)) {
+            $metadata['animated'] = $animated;
+        }
+
+        $colors = app(DominantColorExtractor::class)->extract($file->getRealPath(), $mimeType);
+
+        if ($colors) {
+            $metadata['dominant_color'] = $colors['dominant_color'];
+            $metadata['palette'] = $colors['palette'];
+            $metadata['a11y'] = $colors['a11y'];
+        }
+
         return $metadata;
+    }
+
+    /**
+     * Extract dimensions from an SVG's width/height attributes or viewBox.
+     * getimagesize can't read SVGs, so without this they'd fall through to
+     * the extraction-error branch.
+     */
+    protected function extractSvgMetadata(UploadedFile $file): array
+    {
+        $metadata = [
+            'type' => 'image',
+            'subtype' => 'svg',
+        ];
+
+        $contents = @file_get_contents($file->getRealPath(), false, null, 0, 64 * 1024);
+
+        if ($contents === false) {
+            return $metadata;
+        }
+
+        $width = null;
+        $height = null;
+
+        if (preg_match('/<svg[^>]*>/i', $contents, $tag)) {
+            if (preg_match('/\bwidth\s*=\s*["\']?([\d.]+)(?:px)?["\']?/i', $tag[0], $w)) {
+                $width = (float) $w[1];
+            }
+            if (preg_match('/\bheight\s*=\s*["\']?([\d.]+)(?:px)?["\']?/i', $tag[0], $h)) {
+                $height = (float) $h[1];
+            }
+
+            if ((! $width || ! $height)
+                && preg_match('/\bviewBox\s*=\s*["\']?\s*[\d.-]+[\s,]+[\d.-]+[\s,]+([\d.]+)[\s,]+([\d.]+)/i', $tag[0], $vb)) {
+                $width ??= (float) $vb[1];
+                $height ??= (float) $vb[2];
+            }
+        }
+
+        if ($width && $height) {
+            $metadata['width'] = $width;
+            $metadata['height'] = $height;
+            $metadata['aspectRatio'] = round($width / $height, 4);
+        }
+
+        return $metadata;
+    }
+
+    /**
+     * Detect multi-frame GIFs and WebPs so the UI can badge them and image
+     * delivery can preserve animation.
+     */
+    protected function isAnimatedImage(UploadedFile $file, string $mimeType): bool
+    {
+        if ($mimeType === 'image/gif') {
+            // Count graphic control extension blocks; more than one = animated.
+            $contents = @file_get_contents($file->getRealPath(), false, null, 0, 5 * 1024 * 1024);
+
+            return $contents !== false && substr_count($contents, "\x21\xF9\x04") > 1;
+        }
+
+        if ($mimeType === 'image/webp') {
+            $header = @file_get_contents($file->getRealPath(), false, null, 0, 1024);
+
+            return $header !== false && str_contains($header, 'ANIM');
+        }
+
+        return false;
     }
 
     /**
@@ -666,6 +796,7 @@ class AssetService
             $thumbnailPaths = $this->generateVideoThumbnails($file, $space->id, $asset->id, $uniqueFilename, $filesystem);
             if (! empty($thumbnailPaths)) {
                 $newMetadata['thumbnails'] = $thumbnailPaths;
+                $newMetadata = [...$newMetadata, ...$this->videoColorMetadata($thumbnailPaths)];
             }
         }
 
@@ -794,7 +925,7 @@ class AssetService
     public function rename(Asset &$asset, string $newFilename): bool
     {
         try {
-            $storage = \App\Models\Management\Storage::findOrFail($asset->storage_id);
+            $storage = Storage::findOrFail($asset->storage_id);
             $filesystem = $this->storageService->getStorage($storage);
 
             $oldPath = $asset->path;
@@ -818,7 +949,7 @@ class AssetService
 
             return false;
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Failed to rename asset', [
+            Log::error('Failed to rename asset', [
                 'asset' => $asset->id,
                 'error' => $e->getMessage(),
             ]);

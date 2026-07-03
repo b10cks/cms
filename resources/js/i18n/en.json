@@ -483,7 +483,10 @@
         "width": "Width",
         "height": "Height",
         "duration": "Duration",
-        "original_filename": "Original File Name"
+        "original_filename": "Original File Name",
+        "dominant_color": "Dominant Color",
+        "palette": "Color Palette",
+        "animated": "Animated"
       },
       "export": "Export",
       "import": "Import",
@@ -564,6 +567,15 @@
         "hint": "You can reuse the existing asset instead of uploading a duplicate, or upload it anyway.",
         "useExisting": "Use Existing Asset",
         "uploadAnyway": "Upload Anyway"
+      },
+      "a11y": {
+        "title": "Accessibility",
+        "overlay": "Recommended overlay",
+        "overlayLight": "Light text / icons",
+        "overlayDark": "Dark text / icons",
+        "contrastWhite": "Contrast vs. white",
+        "contrastBlack": "Contrast vs. black",
+        "luminance": "Relative luminance"
       }
     },
     "contents": {

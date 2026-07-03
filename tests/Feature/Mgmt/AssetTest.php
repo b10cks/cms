@@ -180,6 +180,53 @@ class AssetTest extends TestCase
     }
 
     #[Test]
+    public function dominant_color_is_extracted_on_image_upload(): void
+    {
+        $file = UploadedFile::fake()->image('color-test.png', 120, 120);
+
+        $response = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", [
+            'file' => $file,
+        ]);
+
+        $response->assertCreated();
+
+        $asset = Asset::query()->firstOrFail();
+
+        $this->assertMatchesRegularExpression('/^#[0-9a-f]{6}$/', $asset->metadata['dominant_color']);
+        $this->assertNotEmpty($asset->metadata['palette']);
+        $this->assertSame($asset->metadata['dominant_color'], $asset->metadata['palette'][0]);
+
+        $a11y = $asset->metadata['a11y'];
+        $this->assertContains($a11y['scheme'], ['dark', 'light']);
+        $this->assertGreaterThanOrEqual(1, $a11y['contrast_white']);
+        $this->assertGreaterThanOrEqual(1, $a11y['contrast_black']);
+        $this->assertGreaterThanOrEqual(0, $a11y['luminance']);
+        $this->assertLessThanOrEqual(1, $a11y['luminance']);
+    }
+
+    #[Test]
+    public function svg_uploads_get_dimensions_from_the_viewbox(): void
+    {
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><rect width="320" height="180" fill="red"/></svg>';
+        $file = UploadedFile::fake()->createWithContent('logo.svg', $svg);
+
+        $response = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/assets", [
+            'file' => $file,
+        ]);
+
+        $response->assertCreated();
+
+        $asset = Asset::query()->firstOrFail();
+
+        $this->assertSame('image', $asset->metadata['type']);
+        $this->assertSame('svg', $asset->metadata['subtype']);
+        $this->assertEquals(320, $asset->metadata['width']);
+        $this->assertEquals(180, $asset->metadata['height']);
+        $this->assertEqualsWithDelta(1.7778, $asset->metadata['aspectRatio'], 0.001);
+        $this->assertArrayNotHasKey('dominant_color', $asset->metadata);
+    }
+
+    #[Test]
     public function checksum_is_computed_on_upload(): void
     {
         $file = UploadedFile::fake()->image('checksum-test.jpg', 200, 200);
@@ -403,7 +450,7 @@ class AssetTest extends TestCase
         ]);
 
         $response = $this->getJson(
-            "/mgmt/v1/spaces/{$this->space->id}/assets?expiring_before=" . now()->addWeek()->toIso8601String()
+            "/mgmt/v1/spaces/{$this->space->id}/assets?expiring_before=".now()->addWeek()->toIso8601String()
         );
 
         $response->assertOk();

@@ -42,11 +42,24 @@ class VipsDriver implements ImageDriverInterface
     }
 
     /**
-     * Check if the driver is available
+     * Check if the driver is available. php-vips 2.x talks to libvips via
+     * FFI, so extension_loaded('vips') is false even on working installs —
+     * the only reliable check is to actually touch libvips once.
      */
     public function isAvailable(): bool
     {
-        return extension_loaded('vips');
+        static $available = null;
+
+        if ($available === null) {
+            try {
+                VipsImageLib::black(1, 1);
+                $available = true;
+            } catch (\Throwable) {
+                $available = false;
+            }
+        }
+
+        return $available;
     }
 
     /**
