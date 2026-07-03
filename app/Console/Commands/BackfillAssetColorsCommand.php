@@ -45,18 +45,15 @@ class BackfillAssetColorsCommand extends Command
                 try {
                     if ($dryRun) {
                         app()->offsetSet('currentSpace', $space);
-                        $missing = Asset::query()
+                        $pending = Asset::query()
                             ->where(fn ($q) => $q
                                 ->where('mime_type', 'like', 'image/%')
                                 ->orWhere('mime_type', 'like', 'video/%'))
                             ->get()
-                            ->filter(fn (Asset $asset) => ! isset($asset->metadata['dominant_color'])
-                                || ! isset($asset->metadata['a11y'])
-                                || isset($asset->metadata['extraction_error']))
-                            ->count();
+                            ->filter(fn (Asset $asset) => BackfillAssetColorsJob::needsWork($asset->metadata ?? [], $asset->mime_type));
 
-                        if ($missing > 0) {
-                            $this->line("  {$space->id}  {$missing} asset(s) missing dominant color/a11y stats or with failed extraction");
+                        foreach ($pending as $asset) {
+                            $this->line("  {$space->id}  {$asset->id}  {$asset->filename}.{$asset->extension} ({$asset->mime_type}): ".implode(', ', $this->pendingReasons($asset)));
                         }
 
                         continue;
@@ -69,7 +66,7 @@ class BackfillAssetColorsCommand extends Command
                         $stats = $job->stats;
                         $this->line(
                             "  {$space->id}  ".($stats
-                                ? "{$stats['updated']} updated, {$stats['failed']} failed of {$stats['total']} image/video asset(s)"
+                                ? "{$stats['updated']} updated, {$stats['skipped']} skipped, {$stats['failed']} failed of {$stats['total']} image/video asset(s)"
                                 : 'done')
                         );
                     } else {
@@ -98,5 +95,26 @@ class BackfillAssetColorsCommand extends Command
         }
 
         return $failed > 0 ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function pendingReasons(Asset $asset): array
+    {
+        $metadata = $asset->metadata ?? [];
+        $reasons = [];
+
+        if (isset($metadata['extraction_error'])) {
+            $reasons[] = "failed extraction ({$metadata['extraction_error']})";
+        }
+
+        if (! isset($metadata['dominant_color'])) {
+            $reasons[] = 'missing dominant color';
+        } elseif (! isset($metadata['a11y'])) {
+            $reasons[] = 'missing a11y stats';
+        }
+
+        return $reasons;
     }
 }

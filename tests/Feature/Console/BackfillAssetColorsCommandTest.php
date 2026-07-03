@@ -168,6 +168,50 @@ class BackfillAssetColorsCommandTest extends TestCase
     }
 
     #[Test]
+    public function repaired_svgs_without_colors_are_complete_not_pending(): void
+    {
+        // SVGs never get a dominant color; once they carry no extraction
+        // error they must not show up as pending in dry-run nor be counted
+        // as skipped by the job.
+        Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+            'path' => 'space/asset/logo.svg',
+            'mime_type' => 'image/svg+xml',
+            'metadata' => ['type' => 'image', 'subtype' => 'svg', 'width' => 320, 'height' => 180],
+        ]);
+
+        $this->artisan('assets:backfill-colors', ['--dry-run' => true])
+            ->doesntExpectOutputToContain('logo.svg')
+            ->assertExitCode(0);
+
+        $this->artisan('assets:backfill-colors', ['--sync' => true])
+            ->expectsOutputToContain('0 updated, 0 skipped, 0 failed of 1')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function unrepairable_assets_are_reported_as_skipped(): void
+    {
+        // File missing from storage: the extraction error can't be repaired
+        // and no color can be extracted — the job must surface this instead
+        // of silently doing nothing.
+        Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+            'path' => 'space/asset/gone.png',
+            'mime_type' => 'image/png',
+            'metadata' => ['extraction_error' => 'boom'],
+        ]);
+
+        $this->artisan('assets:backfill-colors', ['--dry-run' => true])
+            ->expectsOutputToContain('failed extraction (boom)')
+            ->assertExitCode(0);
+
+        $this->artisan('assets:backfill-colors', ['--sync' => true])
+            ->expectsOutputToContain('0 updated, 1 skipped, 0 failed of 1')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
     public function dry_run_does_not_modify_assets(): void
     {
         $path = 'space/asset/legacy.png';

@@ -67,6 +67,13 @@ class DominantColorExtractor
 
     public static function supports(?string $mimeType): bool
     {
+        // The histogram reads pixels via GD even on the vips path (vips
+        // downscales, GD decodes the small sample), so without GD no format
+        // is extractable at all.
+        if (! function_exists('imagecreatefromstring')) {
+            return false;
+        }
+
         return match ($mimeType) {
             'image/jpeg', 'image/pjpeg', 'image/png', 'image/gif',
             'image/bmp', 'image/x-ms-bmp' => true,
@@ -77,9 +84,25 @@ class DominantColorExtractor
         };
     }
 
+    /**
+     * php-vips talks to libvips via FFI, so the class always exists —
+     * whether it actually works depends on libvips being installed and FFI
+     * being enabled. Probe once and cache the answer.
+     */
     private static function vipsAvailable(): bool
     {
-        return class_exists(VipsImage::class);
+        static $available = null;
+
+        if ($available === null) {
+            try {
+                VipsImage::black(1, 1);
+                $available = true;
+            } catch (\Throwable) {
+                $available = false;
+            }
+        }
+
+        return $available;
     }
 
     /**

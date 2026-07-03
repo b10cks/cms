@@ -5,6 +5,7 @@ RUN apk add --no-cache supervisor ffmpeg libheif vips mariadb-client \
     bcmath \
     exif \
     ffi \
+    gd \
     intl \
     mysqli \
     pdo_mysql \

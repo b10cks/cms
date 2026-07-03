@@ -29,9 +29,12 @@ class BackfillAssetColorsJob extends QueuedJob
 
     /**
      * Result counters from the last run, so synchronous callers (the
-     * backfill command with --sync) can report what happened.
+     * backfill command with --sync) can report what happened. `skipped`
+     * counts assets that need work but could not be updated (unsupported
+     * format, missing file, undecodable content) — details are logged per
+     * asset at warning level.
      *
-     * @var array{total: int, updated: int, failed: int}|null
+     * @var array{total: int, updated: int, failed: int, skipped: int}|null
      */
     public ?array $stats = null;
 
@@ -56,7 +59,7 @@ class BackfillAssetColorsJob extends QueuedJob
         $total = $query()->count();
 
         if ($total === 0) {
-            $this->stats = ['total' => 0, 'updated' => 0, 'failed' => 0];
+            $this->stats = ['total' => 0, 'updated' => 0, 'failed' => 0, 'skipped' => 0];
             $this->updateProgress(100);
 
             return;
@@ -67,17 +70,20 @@ class BackfillAssetColorsJob extends QueuedJob
         $processed = 0;
         $updated = 0;
         $failed = 0;
+        $skipped = 0;
 
         $query()
             ->orderBy('id')
-            ->chunkById(50, function ($assets) use (&$processed, &$updated, &$failed, $total, &$filesystem, $extractor) {
+            ->chunkById(50, function ($assets) use (&$processed, &$updated, &$failed, &$skipped, $total, &$filesystem, $extractor) {
                 $filesystem ??= app(StorageService::class)->getDefaultStorage($this->space);
 
                 foreach ($assets as $asset) {
                     try {
-                        if ($this->backfillAsset($asset, $filesystem, $extractor)) {
-                            $updated++;
-                        }
+                        match ($this->backfillAsset($asset, $filesystem, $extractor)) {
+                            'updated' => $updated++,
+                            'skipped' => $skipped++,
+                            default => null,
+                        };
                     } catch (\Throwable $e) {
                         $failed++;
                         Log::warning('Failed to backfill dominant color for asset', [
@@ -92,7 +98,7 @@ class BackfillAssetColorsJob extends QueuedJob
                 }
             });
 
-        $this->stats = ['total' => $total, 'updated' => $updated, 'failed' => $failed];
+        $this->stats = ['total' => $total, 'updated' => $updated, 'failed' => $failed, 'skipped' => $skipped];
 
         $this->updateProgress(100);
 
@@ -101,10 +107,15 @@ class BackfillAssetColorsJob extends QueuedJob
             'total' => $total,
             'updated' => $updated,
             'failed' => $failed,
+            'skipped' => $skipped,
         ]);
     }
 
-    private function backfillAsset(Asset $asset, Filesystem $filesystem, DominantColorExtractor $extractor): bool
+    /**
+     * @return 'updated'|'unchanged'|'skipped' `skipped` = the asset needs
+     *                                         work but nothing could be extracted; diagnostics are logged.
+     */
+    private function backfillAsset(Asset $asset, Filesystem $filesystem, DominantColorExtractor $extractor): string
     {
         $metadata = $asset->metadata ?? [];
         $changed = false;
@@ -140,13 +151,48 @@ class BackfillAssetColorsJob extends QueuedJob
             $changed = true;
         }
 
-        if (! $changed) {
+        if ($changed) {
+            $asset->forceFill(['metadata' => $metadata])->saveQuietly();
+
+            return 'updated';
+        }
+
+        if (! self::needsWork($metadata, $asset->mime_type)) {
+            return 'unchanged';
+        }
+
+        Log::warning('Asset color/metadata backfill could not update asset', [
+            'space_id' => $this->space->id,
+            'asset_id' => $asset->id,
+            'mime_type' => $asset->mime_type,
+            'path' => $asset->path,
+            'file_exists' => (bool) ($asset->path && $filesystem->fileExists($asset->path)),
+            'has_extraction_error' => isset($metadata['extraction_error']),
+            'color_extraction_supported' => DominantColorExtractor::supports($asset->mime_type),
+        ]);
+
+        return 'skipped';
+    }
+
+    /**
+     * Whether an asset's metadata is still missing something this job is
+     * responsible for. Formats that never get colors (e.g. SVG) count as
+     * complete once they carry no extraction error. Shared with the
+     * backfill command so dry-run reporting matches what the job would do.
+     */
+    public static function needsWork(array $metadata, ?string $mimeType): bool
+    {
+        if (isset($metadata['extraction_error'])) {
+            return true;
+        }
+
+        $isVideo = str_starts_with((string) $mimeType, 'video/');
+
+        if (! $isVideo && ! DominantColorExtractor::supports($mimeType)) {
             return false;
         }
 
-        $asset->forceFill(['metadata' => $metadata])->saveQuietly();
-
-        return true;
+        return ! isset($metadata['dominant_color']) || ! isset($metadata['a11y']);
     }
 
     /**
