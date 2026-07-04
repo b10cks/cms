@@ -57,6 +57,17 @@ class BlockTag extends SpaceModel
         'color',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (BlockTag $tag) {
+            $tag->blocks()->each(function (Block $block) use ($tag) {
+                $block->update([
+                    'tags' => array_values(array_diff($block->tags ?? [], [$tag->name])),
+                ]);
+            });
+        });
+    }
+
     protected function name(): Attribute
     {
         return $this->makePurifiedAttribute('removeAll');
