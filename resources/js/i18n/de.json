@@ -1437,6 +1437,20 @@
         "older": "Früher"
       },
       "noCommitMessage": "[Keine Notizen]",
+      "diff": {
+        "tabChanges": "Änderungen",
+        "tabPreview": "Vorschau",
+        "hint": "Unterschiede zwischen dieser Version und dem aktuellen Block.",
+        "noChanges": "Diese Version entspricht dem aktuellen Block.",
+        "settings": "Block-Einstellungen",
+        "fields": "Felder",
+        "layout": "Editor-Layout",
+        "layoutChanged": "Die Feldreihenfolge oder Seitenaufteilung wurde geändert.",
+        "added": "Hinzugefügt",
+        "removed": "Entfernt",
+        "modified": "Geändert",
+        "icon": "Icon"
+      },
       "restore": {
         "title": "Diese Version wiederherstellen?",
         "message": "Wir erstellen zuerst ein Backup der aktuellen Version. Deine aktuelle Arbeit wird gespeichert.",

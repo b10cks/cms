@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { RadioGroupItem, RadioGroupRoot } from 'reka-ui'
 
 import BlockEdit from '~/components/BlockEdit.vue'
+import BlockVersionDiff from '~/components/blocks/BlockVersionDiff.vue'
 import Icon from '~/components/Icon.vue'
 import { Avatar } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
@@ -10,6 +11,7 @@ import RenamableTitle from '~/components/ui/RenamableTitle.vue'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/components/ui/resizable'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetHeaderCombined } from '~/components/ui/sheet'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 
 const open = defineModel<boolean>('open')
@@ -27,6 +29,7 @@ const { user } = useAuth()
 const { $t } = useI18n()
 
 const selectedVersionId = ref<string | null>(null)
+const viewMode = ref<'changes' | 'preview'>('changes')
 
 const {
   useBlockVersionsQuery,
@@ -181,23 +184,28 @@ const selectedVersion = computed(() => {
   return versions.value.find((v) => v.id === selectedVersionId.value) || null
 })
 
-const previewBlock = computed<BlockResource | null>(() => {
+const selectedVersionSnapshot = computed<BlockVersionData | null>(() => {
   const version = selectedVersionData.value ?? selectedVersion.value
-  if (!version) return null
+  return version?.data ?? null
+})
+
+const previewBlock = computed<BlockResource | null>(() => {
+  const data = selectedVersionSnapshot.value
+  if (!data) return null
 
   return {
     id: props.block.id,
-    slug: version.slug,
-    icon: version.icon ?? null,
-    color: version.color ?? null,
-    name: version.name,
-    description: version.description ?? '',
-    type: version.type,
-    preview_template: version.preview_template ?? '',
-    schema: version.schema ?? {},
-    editor: version.editor ?? [],
-    tags: version.tags ?? [],
-    folder_id: version.folder_id ?? null,
+    slug: data.slug,
+    icon: data.icon ?? null,
+    color: data.color ?? null,
+    name: data.name,
+    description: data.description ?? '',
+    type: data.type,
+    preview_template: data.preview_template ?? '',
+    schema: data.schema ?? {},
+    editor: data.editor ?? [],
+    tags: data.tags ?? [],
+    folder_id: data.folder_id ?? null,
     templates_count: props.block.templates_count,
     created_at: props.block.created_at,
     updated_at: props.block.updated_at,
@@ -394,26 +402,52 @@ watch(
           :default-size="50"
           class="flex h-full flex-col"
         >
-          <ScrollArea>
-            <div
-              v-if="!previewBlock"
-              class="flex h-full items-center justify-center text-muted"
+          <div
+            v-if="!previewBlock || !selectedVersionSnapshot"
+            class="flex h-full items-center justify-center text-muted"
+          >
+            {{ $t('labels.blockVersions.selectVersion') }}
+          </div>
+          <Tabs
+            v-else
+            v-model="viewMode"
+            class="flex h-full min-h-0 flex-col"
+          >
+            <TabsList class="self-start">
+              <TabsTrigger value="changes">
+                {{ $t('labels.blockVersions.diff.tabChanges') }}
+              </TabsTrigger>
+              <TabsTrigger value="preview">
+                {{ $t('labels.blockVersions.diff.tabPreview') }}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent
+              value="changes"
+              class="min-h-0 flex-1"
             >
-              {{ $t('labels.blockVersions.selectVersion') }}
-            </div>
-            <div
-              v-else
-              class="flex h-full flex-1 flex-col"
+              <ScrollArea class="h-full">
+                <BlockVersionDiff
+                  :key="`diff-${selectedVersionId}`"
+                  :current="block"
+                  :version-data="selectedVersionSnapshot"
+                />
+              </ScrollArea>
+            </TabsContent>
+            <TabsContent
+              value="preview"
+              class="min-h-0 flex-1"
             >
-              <BlockEdit
-                :key="selectedVersionId ?? 'preview'"
-                :readonly="true"
-                :space-id="spaceId"
-                :block="previewBlock"
-                show-schema
-              />
-            </div>
-          </ScrollArea>
+              <ScrollArea class="h-full">
+                <BlockEdit
+                  :key="selectedVersionId ?? 'preview'"
+                  :readonly="true"
+                  :space-id="spaceId"
+                  :block="previewBlock"
+                  show-schema
+                />
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
         </ResizablePanel>
       </ResizablePanelGroup>
     </SheetContent>

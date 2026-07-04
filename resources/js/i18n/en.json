@@ -1437,6 +1437,20 @@
         "older": "Earlier"
       },
       "noCommitMessage": "[No notes]",
+      "diff": {
+        "tabChanges": "Changes",
+        "tabPreview": "Preview",
+        "hint": "Differences between this version and the current block.",
+        "noChanges": "This version matches the current block.",
+        "settings": "Block settings",
+        "fields": "Fields",
+        "layout": "Editor layout",
+        "layoutChanged": "The field order or page arrangement changed.",
+        "added": "Added",
+        "removed": "Removed",
+        "modified": "Changed",
+        "icon": "Icon"
+      },
       "restore": {
         "title": "Restore this version?",
         "message": "We'll create a backup of the current version first. Your current work will be saved.",
