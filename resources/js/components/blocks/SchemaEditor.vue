@@ -6,6 +6,7 @@ import type { ComponentPublicInstance, Ref } from 'vue'
 import { toast } from 'vue-sonner'
 
 import Add from '~/components/blocks/Add.vue'
+import { useFieldClipboard } from '~/composables/useFieldClipboard'
 import Block from '~/components/blocks/Block.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
