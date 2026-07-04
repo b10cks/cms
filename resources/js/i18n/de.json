@@ -1355,7 +1355,15 @@
         "label": "Benutzerfreundliches Label",
         "value": "Technischer Wert"
       },
-      "createBlock": "Block erstellen"
+      "createBlock": "Block erstellen",
+      "usedIn": {
+        "title": "Verwendung",
+        "description": "Wo dieser Block eingesetzt werden kann, basierend auf den Feldeinstellungen anderer Blöcke.",
+        "nestedIn": "Kann verschachtelt werden in",
+        "referencedBy": "Kann referenziert werden von",
+        "notNestable": "{type}-Blöcke können nicht in andere Blöcke verschachtelt werden.",
+        "emptyNested": "Kein anderer Block erlaubt diesen Block aktuell als Inhalt."
+      }
     },
     "blockTags": {
       "title": "Block Tags",

@@ -1355,7 +1355,15 @@
         "label": "User friendly label",
         "value": "Technical value"
       },
-      "createBlock": "Create Block"
+      "createBlock": "Create Block",
+      "usedIn": {
+        "title": "Usage",
+        "description": "Where this block can appear, based on the field settings of other blocks.",
+        "nestedIn": "Can be nested inside",
+        "referencedBy": "Can be referenced by",
+        "notNestable": "{type} blocks can't be nested inside other blocks.",
+        "emptyNested": "No other block currently allows this block inside."
+      }
     },
     "blockTags": {
       "title": "Block Tags",

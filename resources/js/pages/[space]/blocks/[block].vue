@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import BlockEdit from '~/components/BlockEdit.vue'
 import BlockMenu from '~/components/BlockMenu.vue'
 import BlockTemplatesSheet from '~/components/blocks/BlockTemplatesSheet.vue'
+import BlockUsedIn from '~/components/blocks/BlockUsedIn.vue'
 import BlockVersionsSheet from '~/components/blocks/BlockVersionsSheet.vue'
 import CreateBlockDialog from '~/components/blocks/CreateBlockDialog.vue'
 import Icon from '~/components/Icon.vue'
@@ -138,6 +139,12 @@ const handleDuplicateCreated = (createdBlock: BlockResource) => {
             </Button>
           </div>
         </BlockEdit>
+
+        <BlockUsedIn
+          class="mt-6"
+          :space-id="spaceId"
+          :block="block"
+        />
       </div>
     </div>
   </ScrollArea>
