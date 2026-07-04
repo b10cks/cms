@@ -3,6 +3,7 @@ import { deepClone } from '@vue/devtools-shared'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import { AccordionRoot } from 'reka-ui'
 import type { ComponentPublicInstance, Ref } from 'vue'
+import { toast } from 'vue-sonner'
 
 import Add from '~/components/blocks/Add.vue'
 import Block from '~/components/blocks/Block.vue'
@@ -26,6 +27,8 @@ const emit = defineEmits<{
   (e: 'update:editor', payload: EditorPage[]): void
 }>()
 const { alert } = useAlertDialog()
+const { $t } = useI18n()
+const { copyField: copyFieldToClipboard, clipboardField, hasField } = useFieldClipboard()
 
 const localSchema = ref<Record<string, SchemaType>>(
   deepClone(props.schema ?? {}) as Record<string, SchemaType>
@@ -154,6 +157,58 @@ const addField = async (payload: AddFieldPayload): Promise<boolean> => {
 const handleAddField = async (payload: AddFieldPayload & { resolve: (value: boolean) => void }) => {
   const result = await addField(payload)
   payload.resolve(result)
+}
+
+const ensureUniqueKey = (desired: string): string => {
+  if (!localSchema.value[desired]) return desired
+
+  let candidate = `${desired}Copy`
+  let index = 2
+  while (localSchema.value[candidate]) {
+    candidate = `${desired}Copy${index++}`
+  }
+
+  return candidate
+}
+
+const insertField = (key: string, field: SchemaType, pageIndex: number, atIndex?: number) => {
+  updateSchemaItem(key, field)
+
+  const items = localEditor.value[pageIndex].items
+  items.splice(atIndex ?? items.length, 0, key)
+
+  emitEditorUpdate()
+}
+
+const duplicateField = (key: string) => {
+  const source = localSchema.value[key]
+  if (!source) return
+
+  const newKey = ensureUniqueKey(`${key}Copy`)
+  const pageIndex = localEditor.value.findIndex((page) => page.items.includes(key))
+  const targetPage = pageIndex === -1 ? activeTab.value : pageIndex
+  const position =
+    pageIndex === -1 ? undefined : localEditor.value[pageIndex].items.indexOf(key) + 1
+
+  insertField(newKey, deepClone(source) as SchemaType, targetPage, position)
+}
+
+const copyField = async (key: string) => {
+  const field = localSchema.value[key]
+  if (!field) return
+
+  await copyFieldToClipboard(key, deepClone(field) as SchemaType)
+  toast.success(
+    $t('labels.blocks.fieldClipboard.copied', { name: field.name || key }) as string
+  )
+}
+
+const pasteField = () => {
+  const item = clipboardField.value
+  if (!item) return
+
+  const key = ensureUniqueKey(item.key)
+  insertField(key, deepClone(item.field) as SchemaType, activeTab.value)
 }
 
 const moveFieldToPage = (key: string, pageIndex: number) => {
@@ -538,14 +593,31 @@ watch(
             class="rounded-md border border-border bg-surface p-2"
             @update:item="(v: SchemaType) => updateSchemaItem(key, v)"
             @to-page="moveFieldToPage(key, $event)"
+            @duplicate="duplicateField(key)"
+            @copy="copyField(key)"
             @delete="deleteField(key)"
           />
         </AccordionRoot>
 
-        <Add
+        <div
           v-if="!readonly"
-          @add="handleAddField"
-        />
+          class="flex items-start gap-2"
+        >
+          <Add
+            class="grow"
+            @add="handleAddField"
+          />
+          <Button
+            v-if="hasField && clipboardField"
+            type="button"
+            variant="outline"
+            :title="String($t('labels.blocks.fieldClipboard.paste', { name: clipboardField.field.name || clipboardField.key }))"
+            @click="pasteField"
+          >
+            <Icon name="lucide:clipboard-paste" />
+            {{ $t('actions.blocks.pasteField') }}
+          </Button>
+        </div>
       </div>
     </div>
   </div>

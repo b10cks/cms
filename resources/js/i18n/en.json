@@ -1356,6 +1356,10 @@
         "value": "Technical value"
       },
       "createBlock": "Create Block",
+      "fieldClipboard": {
+        "copied": "Field \"{name}\" copied.",
+        "paste": "Paste \"{name}\""
+      },
       "usedIn": {
         "title": "Usage",
         "description": "Where this block can appear, based on the field settings of other blocks.",
@@ -3466,6 +3470,10 @@
     "blocks": {
       "add": "Add Block",
       "addCondition": "Add Condition",
+      "duplicateField": "Duplicate field",
+      "copyField": "Copy field",
+      "pasteField": "Paste field",
+      "deleteField": "Delete field",
       "delete": "Delete Block",
       "edit": "Edit Block",
       "save": "Save Block",

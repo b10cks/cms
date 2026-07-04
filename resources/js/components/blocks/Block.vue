@@ -36,7 +36,7 @@ import { CheckboxField, InputField, SelectField, TextField } from '~/components/
 import { Switch } from '~/components/ui/switch'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 
-const emit = defineEmits(['delete', 'to-page', 'update:name', 'update:item'])
+const emit = defineEmits(['delete', 'to-page', 'update:name', 'update:item', 'duplicate', 'copy'])
 const { $t } = useI18n()
 
 const props = defineProps<{
@@ -461,8 +461,28 @@ const updateConditionOperator = (index: number, value: unknown) => {
         </DropdownMenu>
         <button
           v-if="!readonly"
+          class="cursor-pointer hover:text-primary focus:text-primary"
+          type="button"
+          :title="$t('actions.blocks.duplicateField')"
+          @click="$emit('duplicate', name)"
+        >
+          <Icon name="lucide:copy-plus" />
+          <span class="sr-only">{{ $t('actions.blocks.duplicateField') }}</span>
+        </button>
+        <button
+          class="cursor-pointer hover:text-primary focus:text-primary"
+          type="button"
+          :title="$t('actions.blocks.copyField')"
+          @click="$emit('copy', name)"
+        >
+          <Icon name="lucide:clipboard-copy" />
+          <span class="sr-only">{{ $t('actions.blocks.copyField') }}</span>
+        </button>
+        <button
+          v-if="!readonly"
           class="cursor-pointer hover:text-destructive focus:text-destructive"
           type="button"
+          :title="$t('actions.blocks.deleteField')"
           @click="$emit('delete', name)"
         >
           <Icon name="lucide:trash-2" />

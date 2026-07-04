@@ -145,6 +145,7 @@ declare global {
   const useDataEntryTranslation: typeof import('./resources/js/composables/useDataEntryTranslation').useDataEntryTranslation
   const useDataSources: typeof import('./resources/js/composables/useDataSources').useDataSources
   const useEcho: typeof import('./resources/js/composables/useEcho').useEcho
+  const useFieldClipboard: typeof import('./resources/js/composables/useFieldClipboard').useFieldClipboard
   const useFieldOptionChoices: typeof import('./resources/js/composables/useFieldOptionChoices').useFieldOptionChoices
   const useFileUpload: typeof import('./resources/js/composables/useFileUpload').useFileUpload
   const useFileUtils: typeof import('./resources/js/composables/useFileUtils').default
@@ -252,6 +253,9 @@ declare global {
   // @ts-ignore
   export type { ContentTreeClipboardValidationContext } from './resources/js/composables/useContentTreeClipboard'
   import('./resources/js/composables/useContentTreeClipboard')
+  // @ts-ignore
+  export type { SchemaFieldClipboardItem } from './resources/js/composables/useFieldClipboard'
+  import('./resources/js/composables/useFieldClipboard')
   // @ts-ignore
   export type { ResolvedOptionChoice } from './resources/js/composables/useFieldOptionChoices'
   import('./resources/js/composables/useFieldOptionChoices')
