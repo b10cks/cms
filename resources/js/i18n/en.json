@@ -1360,6 +1360,13 @@
         "copied": "Field \"{name}\" copied.",
         "paste": "Paste \"{name}\""
       },
+      "renameField": {
+        "title": "Rename field key",
+        "message": "Rename \"{from}\" to \"{to}\"? The API name changes immediately when you save the block. Existing content keeps its data under \"{from}\" and won't be migrated, so frontends reading the old key will break. Conditions in this block that reference the field will be updated automatically.",
+        "confirmLabel": "Rename",
+        "invalidKey": "Keys must start with a lowercase letter and contain only letters and numbers (camelCase).",
+        "duplicateKey": "A field with key \"{key}\" already exists."
+      },
       "usedIn": {
         "title": "Usage",
         "description": "Where this block can appear, based on the field settings of other blocks.",
@@ -3471,6 +3478,8 @@
       "add": "Add Block",
       "addCondition": "Add Condition",
       "duplicateField": "Duplicate field",
+      "renameField": "Rename",
+      "renameFieldConfirm": "Apply new API name",
       "copyField": "Copy field",
       "pasteField": "Paste field",
       "deleteField": "Delete field",

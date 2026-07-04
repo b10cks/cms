@@ -160,6 +160,68 @@ const handleAddField = async (payload: AddFieldPayload & { resolve: (value: bool
   payload.resolve(result)
 }
 
+const FIELD_KEY_PATTERN = /^[a-z][a-z0-9A-Z]+$/
+const FIELD_KEY_BLACKLIST = ['key', 'block']
+
+const renameField = async (oldKey: string, newKey: string): Promise<boolean> => {
+  if (!FIELD_KEY_PATTERN.test(newKey) || FIELD_KEY_BLACKLIST.includes(newKey)) {
+    await alert.message($t('labels.blocks.renameField.invalidKey') as string, {
+      title: $t('labels.blocks.renameField.title') as string,
+    })
+    return false
+  }
+
+  if (localSchema.value[newKey]) {
+    await alert.message($t('labels.blocks.renameField.duplicateKey', { key: newKey }) as string, {
+      title: $t('labels.blocks.renameField.title') as string,
+    })
+    return false
+  }
+
+  const confirmed = await alert.confirm(
+    $t('labels.blocks.renameField.message', { from: oldKey, to: newKey }) as string,
+    {
+      title: $t('labels.blocks.renameField.title') as string,
+      confirmLabel: $t('labels.blocks.renameField.confirmLabel') as string,
+    }
+  )
+
+  if (!confirmed) return false
+
+  const updatedSchema = Object.fromEntries(
+    Object.entries(deepClone(localSchema.value) as Record<string, SchemaType>).map(
+      ([key, field]) => {
+        if (field.conditions?.rules?.some((rule) => rule.field === oldKey)) {
+          field.conditions = {
+            ...field.conditions,
+            rules: field.conditions.rules.map((rule) =>
+              rule.field === oldKey ? { ...rule, field: newKey } : rule
+            ),
+          }
+        }
+
+        return [key === oldKey ? newKey : key, field]
+      }
+    )
+  ) as Record<string, SchemaType>
+
+  localEditor.value.forEach((page) => {
+    page.items = page.items.map((item) => (item === oldKey ? newKey : item))
+  })
+
+  emitSchemaUpdate(updatedSchema)
+  emitEditorUpdate()
+
+  return true
+}
+
+const handleRenameField = async (
+  oldKey: string,
+  payload: { key: string; resolve: (value: boolean) => void }
+) => {
+  payload.resolve(await renameField(oldKey, payload.key))
+}
+
 const ensureUniqueKey = (desired: string): string => {
   if (!localSchema.value[desired]) return desired
 
@@ -594,6 +656,7 @@ watch(
             class="rounded-md border border-border bg-surface p-2"
             @update:item="(v: SchemaType) => updateSchemaItem(key, v)"
             @to-page="moveFieldToPage(key, $event)"
+            @rename="handleRenameField(key, $event)"
             @duplicate="duplicateField(key)"
             @copy="copyField(key)"
             @delete="deleteField(key)"

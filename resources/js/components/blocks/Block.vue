@@ -5,11 +5,10 @@ import type { Component } from 'vue'
 
 import AssetBlock from '~/components/blocks/AssetBlock.vue'
 import BlocksBlock from '~/components/blocks/BlocksBlock.vue'
-import IconBlock from '~/components/blocks/IconBlock.vue'
 import BooleanBlock from '~/components/blocks/BooleanBlock.vue'
 import DateBlock from '~/components/blocks/DateBlock.vue'
 import GeoBlock from '~/components/blocks/GeoBlock.vue'
-import PriceBlock from '~/components/blocks/PriceBlock.vue'
+import IconBlock from '~/components/blocks/IconBlock.vue'
 import LinkBlock from '~/components/blocks/LinkBlock.vue'
 import MarkdownBlock from '~/components/blocks/MarkdownBlock.vue'
 import MetaBlock from '~/components/blocks/MetaBlock.vue'
@@ -17,6 +16,7 @@ import MultiAssetBlock from '~/components/blocks/MultiAssetBlock.vue'
 import NumberBlock from '~/components/blocks/NumberBlock.vue'
 import OptionBlock from '~/components/blocks/OptionBlock.vue'
 import OptionsBlock from '~/components/blocks/OptionsBlock.vue'
+import PriceBlock from '~/components/blocks/PriceBlock.vue'
 import ReferencesBlock from '~/components/blocks/ReferencesBlock.vue'
 import RichTextBlock from '~/components/blocks/RichTextBlock.vue'
 import TableBlock from '~/components/blocks/TableBlock.vue'
@@ -36,7 +36,15 @@ import { CheckboxField, InputField, SelectField, TextField } from '~/components/
 import { Switch } from '~/components/ui/switch'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 
-const emit = defineEmits(['delete', 'to-page', 'update:name', 'update:item', 'duplicate', 'copy'])
+const emit = defineEmits([
+  'delete',
+  'to-page',
+  'update:name',
+  'update:item',
+  'duplicate',
+  'copy',
+  'rename',
+])
 const { $t } = useI18n()
 
 const props = defineProps<{
@@ -50,9 +58,63 @@ const props = defineProps<{
 }>()
 
 const localItem = ref<SchemaType>({ ...props.item })
-const translatable = ['text', 'textarea', 'markdown', 'richtext', 'number', 'link', 'meta', 'date', 'table']
+
+const isRenaming = ref(false)
+const renameValue = ref('')
+
+const startRename = () => {
+  renameValue.value = props.name
+  isRenaming.value = true
+}
+
+const cancelRename = () => {
+  isRenaming.value = false
+  renameValue.value = ''
+}
+
+const confirmRename = async () => {
+  const key = renameValue.value.trim()
+  if (!key || key === props.name) {
+    cancelRename()
+    return
+  }
+
+  const success = await new Promise<boolean>((resolve) => emit('rename', { key, resolve }))
+  if (success) {
+    cancelRename()
+  }
+}
+
+const handleRenameKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    confirmRename()
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    cancelRename()
+  }
+}
+const translatable = [
+  'text',
+  'textarea',
+  'markdown',
+  'richtext',
+  'number',
+  'link',
+  'meta',
+  'date',
+  'table',
+]
 const textLike = ['text', 'textarea', 'markdown', 'richtext']
-const countLike = ['blocks', 'references', 'reference', 'multi_assets', 'multiAsset', 'options', 'table']
+const countLike = [
+  'blocks',
+  'references',
+  'reference',
+  'multi_assets',
+  'multiAsset',
+  'options',
+  'table',
+]
 const operatorOptions: Array<{ label: string; value: ConditionOperator }> = [
   { label: 'Equals', value: 'equals' },
   { label: 'Does not equal', value: 'not_equals' },
@@ -496,12 +558,50 @@ const updateConditionOperator = (index: number, value: unknown) => {
       </div>
     </AccordionHeader>
     <AccordionContent class="flex flex-col gap-6 p-2 pt-4">
-      <InputField
-        :model-value="name"
-        :label="$t('labels.blocks.fields.slug')"
-        name="key"
-        disabled
-      />
+      <div class="flex items-end gap-2">
+        <InputField
+          class="grow"
+          :model-value="isRenaming ? renameValue : name"
+          :label="$t('labels.blocks.fields.slug')"
+          name="key"
+          :disabled="!isRenaming"
+          @update:model-value="(v) => (renameValue = String(v ?? ''))"
+          @keydown="handleRenameKeydown"
+        >
+          <template #append>
+            <Button
+              v-if="!readonly && !isRenaming"
+              type="button"
+              variant="ghost"
+              size="toolbar"
+              @click="startRename"
+              :title="$t('actions.blocks.renameField')"
+            >
+              <Icon name="lucide:pencil" />
+            </Button>
+            <template v-else-if="isRenaming">
+              <Button
+                type="button"
+                variant="primary"
+                size="toolbar"
+                :title="$t('actions.blocks.renameFieldConfirm')"
+                @click="confirmRename"
+              >
+                <Icon name="lucide:check" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="toolbar"
+                :title="$t('actions.cancel')"
+                @click="cancelRename"
+              >
+                <Icon name="lucide:x" />
+              </Button>
+            </template>
+          </template>
+        </InputField>
+      </div>
       <InputField
         :model-value="localItem.name"
         :label="$t('labels.blocks.fields.fieldName')"
@@ -628,8 +728,10 @@ const updateConditionOperator = (index: number, value: unknown) => {
               "
               :label="$t('labels.blocks.fields.conditionValue')"
               :options="
-                (((getControllerField(condition.field) as OptionSchema | OptionsSchema | null)
-                  ?.options || []) as OptionItem[]).map((option) => ({
+                (
+                  ((getControllerField(condition.field) as OptionSchema | OptionsSchema | null)
+                    ?.options || []) as OptionItem[]
+                ).map((option) => ({
                   label: option.name,
                   value: option.value,
                 }))

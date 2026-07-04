@@ -1360,6 +1360,13 @@
         "copied": "Feld \"{name}\" kopiert.",
         "paste": "\"{name}\" einfügen"
       },
+      "renameField": {
+        "title": "Feld-Key umbenennen",
+        "message": "\"{from}\" in \"{to}\" umbenennen? Der API-Name ändert sich, sobald der Block gespeichert wird. Bestehende Inhalte behalten ihre Daten unter \"{from}\" und werden nicht migriert – Frontends, die den alten Key lesen, funktionieren dann nicht mehr. Bedingungen in diesem Block, die auf das Feld verweisen, werden automatisch aktualisiert.",
+        "confirmLabel": "Umbenennen",
+        "invalidKey": "Keys müssen mit einem Kleinbuchstaben beginnen und dürfen nur Buchstaben und Zahlen enthalten (camelCase).",
+        "duplicateKey": "Ein Feld mit dem Key \"{key}\" existiert bereits."
+      },
       "usedIn": {
         "title": "Verwendung",
         "description": "Wo dieser Block eingesetzt werden kann, basierend auf den Feldeinstellungen anderer Blöcke.",
@@ -3442,6 +3449,8 @@
       "add": "Block hinzufügen",
       "addCondition": "Bedingung hinzufügen",
       "duplicateField": "Feld duplizieren",
+      "renameField": "Umbenennen",
+      "renameFieldConfirm": "Neuen API-Namen übernehmen",
       "copyField": "Feld kopieren",
       "pasteField": "Feld einfügen",
       "deleteField": "Feld löschen",
