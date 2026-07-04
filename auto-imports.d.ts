@@ -99,9 +99,11 @@ declare global {
   const useAiUsage: typeof import('./resources/js/composables/useAiModels').useAiUsage
   const useAlertDialog: typeof import('./resources/js/composables/useAlertDialog').useAlertDialog
   const useApiClient: typeof import('./resources/js/composables/useApiClient').useApiClient
+  const useAssetBulkOperations: typeof import('./resources/js/composables/useAssetBulkOperations').useAssetBulkOperations
   const useAssetFolders: typeof import('./resources/js/composables/useAssetFolders').useAssetFolders
   const useAssetLibraryMoves: typeof import('./resources/js/composables/useAssetLibraryMoves').useAssetLibraryMoves
   const useAssetRequirements: typeof import('./resources/js/composables/useAssetRequirements').useAssetRequirements
+  const useAssetSelection: typeof import('./resources/js/composables/useAssetSelection').useAssetSelection
   const useAssetTags: typeof import('./resources/js/composables/useAssetTags').useAssetTags
   const useAssetVersions: typeof import('./resources/js/composables/useAssetVersions').useAssetVersions
   const useAssets: typeof import('./resources/js/composables/useAssets').useAssets
@@ -224,8 +226,14 @@ declare global {
   export type { DialogAction, DialogOptions, MessageOptions, ConfirmOptions } from './resources/js/composables/useAlertDialog'
   import('./resources/js/composables/useAlertDialog')
   // @ts-ignore
+  export type { BulkDeleteConflict, BulkDeleteResult } from './resources/js/composables/useAssetBulkOperations'
+  import('./resources/js/composables/useAssetBulkOperations')
+  // @ts-ignore
   export type { AssetRequirementIssue } from './resources/js/composables/useAssetRequirements'
   import('./resources/js/composables/useAssetRequirements')
+  // @ts-ignore
+  export type { AssetSelectionEntry, AssetSelectionModifiers } from './resources/js/composables/useAssetSelection'
+  import('./resources/js/composables/useAssetSelection')
   // @ts-ignore
   export type { UploadAssetOutcome } from './resources/js/composables/useAssets'
   import('./resources/js/composables/useAssets')
@@ -367,9 +375,11 @@ declare module 'vue' {
     readonly useAiUsage: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiUsage']>
     readonly useAlertDialog: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['useAlertDialog']>
     readonly useApiClient: UnwrapRef<typeof import('./resources/js/composables/useApiClient')['useApiClient']>
+    readonly useAssetBulkOperations: UnwrapRef<typeof import('./resources/js/composables/useAssetBulkOperations')['useAssetBulkOperations']>
     readonly useAssetFolders: UnwrapRef<typeof import('./resources/js/composables/useAssetFolders')['useAssetFolders']>
     readonly useAssetLibraryMoves: UnwrapRef<typeof import('./resources/js/composables/useAssetLibraryMoves')['useAssetLibraryMoves']>
     readonly useAssetRequirements: UnwrapRef<typeof import('./resources/js/composables/useAssetRequirements')['useAssetRequirements']>
+    readonly useAssetSelection: UnwrapRef<typeof import('./resources/js/composables/useAssetSelection')['useAssetSelection']>
     readonly useAssetTags: UnwrapRef<typeof import('./resources/js/composables/useAssetTags')['useAssetTags']>
     readonly useAssetVersions: UnwrapRef<typeof import('./resources/js/composables/useAssetVersions')['useAssetVersions']>
     readonly useAssets: UnwrapRef<typeof import('./resources/js/composables/useAssets')['useAssets']>

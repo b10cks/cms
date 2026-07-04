@@ -5,7 +5,10 @@ import { toast } from 'vue-sonner'
 
 import type { AssetsQueryParams } from '~/api/resources/assets'
 import AssetComplianceIndicator from '~/components/assets/AssetComplianceIndicator.vue'
+import AssetSelectionBar from '~/components/assets/AssetSelectionBar.vue'
+import BulkTagDialog from '~/components/assets/BulkTagDialog.vue'
 import CreateFolderDialog from '~/components/assets/CreateFolderDialog.vue'
+import MoveToFolderDialog from '~/components/assets/MoveToFolderDialog.vue'
 import UploadDialog from '~/components/assets/UploadDialog.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
@@ -13,6 +16,7 @@ import SearchFilter from '~/components/SearchFilter.vue'
 import { Alert } from '~/components/ui/alert'
 import { Breadcrumb, BreadcrumbItem } from '~/components/ui/breadcrumb'
 import { Button } from '~/components/ui/button'
+import { Checkbox } from '~/components/ui/checkbox'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -33,6 +37,9 @@ import {
   TableRow,
 } from '~/components/ui/table'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
+import type { AssetSelectionEntry } from '~/composables/useAssetSelection'
+import type { AssetManagerDragItem } from '~/lib/assets/assetDragAndDrop'
+import { downloadAssetFiles } from '~/lib/assets/downloadAssets'
 import type { AssetDeleteConflict, AssetResource } from '~/types/assets'
 
 export interface AssetListViewProps {
@@ -80,6 +87,7 @@ const {
   setFieldValue,
 } = useAssetRequirements(props.spaceId)
 const { getBreadcrumbs } = useFolderStructure()
+const { bulkDeleteAssets, fetchAllMatchingAssets } = useAssetBulkOperations(props.spaceId)
 const { mutateAsync: updateAsset } = useUpdateAssetMutation()
 const { mutateAsync: deleteAsset } = useDeleteAssetMutation()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
@@ -102,6 +110,12 @@ const editingAssetData = ref<AssetResource | null>(null)
 const pendingChanges = ref<Set<string>>(new Set())
 const filters = ref<Record<string, unknown>>({})
 const q = ref('')
+
+const moveDialogOpen = ref(false)
+const moveDialogItems = ref<AssetManagerDragItem[]>([])
+const bulkTagOpen = ref(false)
+const bulkTagAssets = ref<AssetResource[]>([])
+const isSelectingAllMatching = ref(false)
 
 const sortOptions = [
   { value: 'created_at', label: String($t('labels.assets.createdAt')) },
@@ -163,6 +177,239 @@ const breadcrumbs = computed(() => {
 
 const assets = computed(() => assetResponse.value?.data || [])
 const meta = computed(() => assetResponse.value?.meta)
+
+const assetEntries = computed<AssetSelectionEntry[]>(() => {
+  return assets.value.map((asset) => ({ type: 'asset' as const, data: asset }))
+})
+
+const selection = useAssetSelection(assetEntries)
+const { selectedAssets, hasSelection } = selection
+
+const isManageMode = computed(() => props.mode === 'manage')
+
+const allPageAssetsSelected = computed(() => {
+  return assets.value.length > 0 && assets.value.every((asset) => selectedAssets.value.has(asset.id))
+})
+
+const somePageAssetsSelected = computed(() => {
+  return assets.value.some((asset) => selectedAssets.value.has(asset.id))
+})
+
+const offPageSelectedCount = computed(() => {
+  const pageAssetIds = new Set(assets.value.map((asset) => asset.id))
+  let count = 0
+
+  for (const id of selectedAssets.value.keys()) {
+    if (!pageAssetIds.has(id)) count += 1
+  }
+
+  return count
+})
+
+const totalMatchingAssets = computed(() => meta.value?.total ?? 0)
+
+const canSelectAllMatching = computed(() => {
+  return allPageAssetsSelected.value && totalMatchingAssets.value > assets.value.length
+})
+
+const emitSelectionChange = () => {
+  if (!isManageMode.value) {
+    return
+  }
+
+  emit('selectionChange', { assets: Array.from(selectedAssets.value.values()) })
+}
+
+watch(selectedAssets, emitSelectionChange, { deep: true })
+
+const toggleSelectPage = () => {
+  if (allPageAssetsSelected.value) {
+    for (const asset of assets.value) {
+      selectedAssets.value.delete(asset.id)
+    }
+  } else {
+    for (const asset of assets.value) {
+      selectedAssets.value.set(asset.id, asset)
+    }
+  }
+}
+
+const handleRowPointer = (asset: AssetResource, event: MouseEvent) => {
+  if (!isManageMode.value) {
+    emit('asset-select', asset)
+    return
+  }
+
+  if (!props.multiSelect) {
+    selection.selectOnly({ type: 'asset', data: asset })
+    return
+  }
+
+  selection.handleItemPointer(
+    { type: 'asset', data: asset },
+    { meta: event.metaKey || event.ctrlKey, shift: event.shiftKey }
+  )
+}
+
+const openMoveDialog = () => {
+  const items = selection.selectedDragItems.value
+
+  if (items.length) {
+    moveDialogItems.value = items
+    moveDialogOpen.value = true
+  }
+}
+
+const openBulkTagDialog = () => {
+  const selected = Array.from(selectedAssets.value.values())
+
+  if (selected.length) {
+    bulkTagAssets.value = selected
+    bulkTagOpen.value = true
+  }
+}
+
+const handleBulkDownload = async () => {
+  const selected = Array.from(selectedAssets.value.values())
+
+  if (!selected.length) {
+    return
+  }
+
+  toast.info(String($t('messages.assets.downloadStarted', { count: selected.length })))
+
+  const { failed } = await downloadAssetFiles(selected)
+
+  if (failed.length) {
+    toast.error(String($t('messages.assets.downloadFailed', { count: failed.length })))
+  }
+}
+
+const deleteSelectedAssets = async () => {
+  const selected = Array.from(selectedAssets.value.values())
+
+  if (!selected.length || !canManageAssets.value) {
+    return
+  }
+
+  const confirmed = await alert.confirm(
+    String($t('messages.assets.bulkDeleteConfirmation', { count: selected.length })),
+    {
+      title: $t('labels.assets.deleteTitle'),
+      confirmLabel: $t('actions.delete'),
+      variant: 'destructive',
+    }
+  )
+
+  if (!confirmed) {
+    return
+  }
+
+  const { deletedIds, conflicts, failed } = await bulkDeleteAssets(selected)
+
+  for (const id of deletedIds) {
+    selectedAssets.value.delete(id)
+  }
+
+  if (deletedIds.length) {
+    toast.success(String($t('messages.assets.bulkDeleteSuccess', { count: deletedIds.length })))
+  }
+
+  if (failed) {
+    toast.error(String($t('messages.assets.bulkDeleteFailed', { count: failed })))
+  }
+
+  if (conflicts.length) {
+    const forceConfirmed = await alert.confirm(
+      String($t('messages.assets.bulkForceDeleteConfirmation', { count: conflicts.length })),
+      {
+        title: String($t('labels.assets.forceDeleteTitle')),
+        confirmLabel: String($t('actions.forceDelete')),
+        cancelLabel: String($t('alertDialog.cancel')),
+        variant: 'destructive',
+      }
+    )
+
+    if (!forceConfirmed) {
+      return
+    }
+
+    const forceResult = await bulkDeleteAssets(
+      conflicts.map((conflict) => conflict.asset),
+      { force: true }
+    )
+
+    for (const id of forceResult.deletedIds) {
+      selectedAssets.value.delete(id)
+    }
+  }
+
+  await refetchAssets()
+}
+
+const selectAllMatching = async () => {
+  if (isSelectingAllMatching.value) {
+    return
+  }
+
+  isSelectingAllMatching.value = true
+
+  try {
+    const { page: _page, per_page: _perPage, ...params } = assetQueryParams.value
+    const { assets: allAssets, truncated, total } = await fetchAllMatchingAssets(params)
+
+    for (const asset of allAssets) {
+      selectedAssets.value.set(asset.id, asset)
+    }
+
+    if (truncated) {
+      toast.warning(
+        String($t('messages.assets.selectAllTruncated', { count: allAssets.length, total }))
+      )
+    }
+  } finally {
+    isSelectingAllMatching.value = false
+  }
+}
+
+const isEditableTarget = (target: EventTarget | null): boolean => {
+  const element = target as HTMLElement | null
+  return Boolean(
+    element?.closest?.('input, textarea, select, [contenteditable="true"], [role="combobox"]')
+  )
+}
+
+const handleWindowKeydown = (event: KeyboardEvent) => {
+  if (
+    !isManageMode.value ||
+    isEditableTarget(event.target) ||
+    document.querySelector('[role="dialog"], [role="alertdialog"], [role="menu"]')
+  ) {
+    return
+  }
+
+  const isMeta = event.metaKey || event.ctrlKey
+
+  if (isMeta && event.key.toLowerCase() === 'a' && props.multiSelect) {
+    event.preventDefault()
+    selection.selectAll()
+    return
+  }
+
+  if (event.key === 'Escape' && hasSelection.value) {
+    selection.clear()
+    return
+  }
+
+  if (
+    (event.key === 'Delete' || (isMeta && event.key === 'Backspace')) &&
+    hasSelection.value &&
+    canManageAssets.value
+  ) {
+    event.preventDefault()
+    void deleteSelectedAssets()
+  }
+}
 
 const visibleFieldsList = computed(() => {
   return getVisibleFields(settings.value.assets.visibleFields, folderId.value)
@@ -367,6 +614,7 @@ const toggleFieldVisibility = (fieldKey: string) => {
 
 watch([folderId, tagId], async () => {
   currentPage.value = 1
+  selection.clear()
   await refetchAssets()
 })
 
@@ -387,7 +635,13 @@ onMounted(async () => {
     tagId.value = props.initialTagId
   }
 
+  window.addEventListener('keydown', handleWindowKeydown)
+
   await refetchAssets()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleWindowKeydown)
 })
 </script>
 
@@ -544,6 +798,16 @@ onMounted(async () => {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead
+              v-if="isManageMode && multiSelect"
+              class="w-10"
+            >
+              <Checkbox
+                :model-value="allPageAssetsSelected ? true : somePageAssetsSelected ? 'indeterminate' : false"
+                :aria-label="String($t('actions.selectAll'))"
+                @update:model-value="toggleSelectPage"
+              />
+            </TableHead>
             <TableHead class="min-w-24">{{ $t('labels.assets.asset') }}</TableHead>
             <TableHead class="min-w-40">{{ $t('labels.assets.fields.filename') }}</TableHead>
             <TableHead
@@ -559,17 +823,33 @@ onMounted(async () => {
         <TableBody>
           <TableEmpty
             v-if="!assets.length"
-            :colspan="visibleLanguageTabs.length + 3"
+            :colspan="visibleLanguageTabs.length + (isManageMode && multiSelect ? 4 : 3)"
           >
             {{ $t('labels.assets.noAssetsFound') }}
           </TableEmpty>
 
           <TableRow
             v-for="asset in assets"
-            v-else
             :key="asset.id"
+            :class="{ 'bg-accent/5': selectedAssets.has(asset.id) }"
+            :aria-selected="selectedAssets.has(asset.id)"
           >
-            <TableCell class="w-24">
+            <TableCell v-if="isManageMode && multiSelect">
+              <Checkbox
+                :model-value="selectedAssets.has(asset.id)"
+                :aria-label="`Select ${asset.filename}`"
+                @click.stop="
+                  selection.setSelected(
+                    { type: 'asset', data: asset },
+                    !selectedAssets.has(asset.id)
+                  )
+                "
+              />
+            </TableCell>
+            <TableCell
+              class="w-24 cursor-pointer select-none"
+              @click="handleRowPointer(asset, $event)"
+            >
               <div class="checkerboard relative size-20 shrink-0 overflow-hidden rounded-md">
                 <NuxtImg
                   v-if="asset.mime_type?.startsWith('image/')"
@@ -726,6 +1006,37 @@ onMounted(async () => {
       v-model:open="folderDialogOpen"
       :parent-folder-id="folderId || null"
       :space-id="spaceId"
+    />
+
+    <AssetSelectionBar
+      v-if="isManageMode && multiSelect"
+      :asset-count="selectedAssets.size"
+      :off-page-count="offPageSelectedCount"
+      :total-matching="totalMatchingAssets"
+      :can-select-all-matching="canSelectAllMatching"
+      :is-selecting-all-matching="isSelectingAllMatching"
+      :can-manage="canManageAssets"
+      @move="openMoveDialog"
+      @tag="openBulkTagDialog"
+      @download="handleBulkDownload"
+      @delete="deleteSelectedAssets"
+      @clear="selection.clear()"
+      @select-all-matching="selectAllMatching"
+    />
+
+    <MoveToFolderDialog
+      v-if="isManageMode && canManageAssets"
+      v-model:open="moveDialogOpen"
+      :space-id="spaceId"
+      :items="moveDialogItems"
+      @moved="selection.clear()"
+    />
+
+    <BulkTagDialog
+      v-if="isManageMode && canManageAssets"
+      v-model:open="bulkTagOpen"
+      :space-id="spaceId"
+      :assets="bulkTagAssets"
     />
   </main>
 </template>

@@ -60,10 +60,10 @@ watch(selectedTag, (tagId) => {
 </script>
 
 <template>
-  <div class="flex h-full w-full flex-col">
-    <div class="flex flex-1 overflow-hidden">
-      <div class="sticky top-0 flex h-full w-xs shrink-0 flex-col overflow-hidden bg-surface p-2">
-        <ScrollArea class="flex-1 overflow-y-auto">
+  <div class="flex h-[calc(100svh-3.5rem)] max-h-[calc(100svh-3.5rem)] w-full flex-col overflow-hidden">
+    <div class="flex min-h-0 flex-1 overflow-hidden">
+      <div class="flex h-full min-h-0 w-xs shrink-0 flex-col overflow-hidden bg-surface p-2">
+        <ScrollArea class="min-h-0 flex-1 overflow-y-auto">
           <div class="flex flex-col">
             <AssetFolderTree
               v-model="selectedFolder"
@@ -81,29 +81,33 @@ watch(selectedTag, (tagId) => {
       </div>
       <TabsRoot
         v-model="viewMode"
-        class="flex flex-1 flex-col bg-background p-6"
+        class="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-background p-6"
       >
-        <div class="flex-1">
-          <TabsContent value="grid">
-            <AssetGrid
-              v-model:folder-id="selectedFolder"
-              v-model:tag-id="selectedTag"
-              v-model:asset-id="selectedAsset"
-              :space-id="spaceId"
-              :allow-upload="canManageAssets"
-              :allow-folder-creation="canManageAssetFolders"
-            />
-          </TabsContent>
-          <TabsContent value="list">
-            <AssetListView
-              v-model:folder-id="selectedFolder"
-              :tag-id="selectedTag"
-              :space-id="spaceId"
-              :allow-upload="canManageAssets"
-              :allow-folder-creation="canManageAssetFolders"
-            />
-          </TabsContent>
-        </div>
+        <TabsContent
+          value="grid"
+          class="flex-1"
+        >
+          <AssetGrid
+            v-model:folder-id="selectedFolder"
+            v-model:tag-id="selectedTag"
+            v-model:asset-id="selectedAsset"
+            :space-id="spaceId"
+            :allow-upload="canManageAssets"
+            :allow-folder-creation="canManageAssetFolders"
+          />
+        </TabsContent>
+        <TabsContent
+          value="list"
+          class="flex-1"
+        >
+          <AssetListView
+            v-model:folder-id="selectedFolder"
+            :tag-id="selectedTag"
+            :space-id="spaceId"
+            :allow-upload="canManageAssets"
+            :allow-folder-creation="canManageAssetFolders"
+          />
+        </TabsContent>
         <div class="mt-6 flex">
           <TabsList class="mx-auto">
             <TabsTrigger

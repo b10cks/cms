@@ -8,9 +8,17 @@ import NuxtImg from '~/components/NuxtImg.vue'
 import { Badge } from '~/components/ui/badge'
 import { Checkbox } from '~/components/ui/checkbox'
 import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '~/components/ui/context-menu'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import IconName from '~/components/ui/IconName.vue'
@@ -22,6 +30,8 @@ import {
 } from '~/lib/assets/assetDragAndDrop'
 import type { AssetResource, AssetTagResource } from '~/types/assets'
 
+defineOptions({ inheritAttrs: false })
+
 const { t } = useI18n()
 const { formatFileSize } = useFormat()
 const { getFileIcon, getFileType } = useFileUtils()
@@ -29,6 +39,7 @@ const { getFileIcon, getFileType } = useFileUtils()
 export interface AssetItemProps {
   asset: AssetResource
   selected?: boolean
+  cut?: boolean
   draggable?: boolean
   size?: number
   mode?: 'manage' | 'select'
@@ -43,6 +54,7 @@ export interface AssetItemProps {
 
 const props = withDefaults(defineProps<AssetItemProps>(), {
   selected: false,
+  cut: false,
   draggable: false,
   size: 284,
   mode: 'manage',
@@ -57,8 +69,14 @@ const props = withDefaults(defineProps<AssetItemProps>(), {
 
 const emit = defineEmits<{
   select: [asset: AssetResource, selected?: boolean]
+  click: [asset: AssetResource, event: MouseEvent]
   view: [asset: AssetResource]
   delete: [asset: AssetResource]
+  move: [asset: AssetResource]
+  tag: [asset: AssetResource]
+  download: [asset: AssetResource]
+  'copy-url': [asset: AssetResource]
+  'context-menu': [asset: AssetResource]
 }>()
 
 const isSelectMode = computed(() => props.mode === 'select')
@@ -97,9 +115,22 @@ const resolvedDragItems = computed(() => {
   return props.dragItems.length ? props.dragItems : [{ id: props.asset.id, type: 'asset' as const }]
 })
 const dragPreviewTitle = computed(() => {
-  return resolvedDragItems.value.length > 1
-    ? String(t('labels.selectionCount', { count: resolvedDragItems.value.length }))
-    : props.asset.filename
+  const items = resolvedDragItems.value
+
+  if (items.length <= 1) {
+    return props.asset.filename
+  }
+
+  const folderCount = items.filter((item) => item.type === 'folder').length
+  const assetCount = items.length - folderCount
+
+  if (folderCount && assetCount) {
+    return String(
+      t('labels.assets.dragMixed', { folders: folderCount, assets: assetCount })
+    )
+  }
+
+  return String(t('labels.selectionCount', { count: items.length }))
 })
 const linkedContentsLabel = computed(() => {
   return props.asset.linked_contents_count === 1
@@ -109,7 +140,7 @@ const linkedContentsLabel = computed(() => {
       )
 })
 
-function handleSelect(event: Event) {
+function handleCheckboxSelect(event: Event) {
   event.stopPropagation()
 
   if (isSelectMode.value) {
@@ -119,29 +150,26 @@ function handleSelect(event: Event) {
   }
 }
 
-function handleView(event: Event) {
-  if (event.type === 'keydown' && (event as KeyboardEvent).key !== 'Enter') {
-    return
-  }
-  event.stopPropagation()
-
+function handleCardClick(event: MouseEvent) {
   if (isSelectMode.value) {
     emit('select', props.asset)
-  } else {
-    emit('view', props.asset)
+    return
   }
+
+  emit('click', props.asset, event)
 }
 
-function handleKeyDown(event: KeyboardEvent) {
-  if (event.key === ' ' || event.key === 'Spacebar') {
-    event.preventDefault() // Prevent scrolling
-    if (isSelectMode.value) {
-      handleView(event)
-    } else {
-      handleSelect(event)
-    }
-  } else if (event.key === 'Enter') {
-    handleView(event)
+function handleCardDoubleClick() {
+  if (isSelectMode.value) {
+    return
+  }
+
+  emit('view', props.asset)
+}
+
+function handleContextMenu() {
+  if (isManageMode.value) {
+    emit('context-menu', props.asset)
   }
 }
 
@@ -175,165 +203,241 @@ watchEffect((onCleanup) => {
 </script>
 
 <template>
-  <div
-    ref="rootElement"
-    class="group relative rounded-lg bg-background p-1 shadow-lg transition-all hover:bg-input focus:bg-input focus:outline-2 focus:outline-blue-300"
-    :class="{ 'rotate-1 outline-2 outline-accent': selected }"
-    :aria-selected="selected"
-    role="option"
-    tabindex="0"
-    @keydown="handleKeyDown"
-  >
-    <div
-      class="checkerboard relative aspect-square cursor-pointer overflow-hidden rounded-t-[0.325rem]"
-      @click="handleView"
+  <ContextMenu>
+    <ContextMenuTrigger
+      as-child
+      :disabled="!isManageMode"
     >
-      <NuxtImg
-        v-if="getFileType(asset.mime_type) === 'image'"
-        :src="asset.full_path"
-        :alt="String(asset.data?.alt || asset.filename)"
-        :width="size"
-        :height="size"
-        :modifiers="{ crop: 'fill' }"
-        class="pointer-events-none h-full w-full object-cover"
-      />
-      <template
-        v-else-if="getFileType(asset.mime_type) === 'video'"
-        @mouseenter="startThumbnailCycle"
-        @mouseleave="stopThumbnailCycle"
+      <div
+        ref="rootElement"
+        v-bind="$attrs"
+        class="group relative rounded-lg bg-background p-1 shadow-lg transition-all select-none hover:bg-input focus:bg-input focus:outline-2 focus:outline-blue-300"
+        :class="{
+          'outline-2 outline-accent': selected,
+          'opacity-50': cut,
+        }"
+        :aria-selected="selected"
+        role="option"
+        tabindex="0"
+        @click="handleCardClick"
+        @dblclick="handleCardDoubleClick"
+        @contextmenu="handleContextMenu"
       >
-        <NuxtImg
-          v-if="asset.metadata.thumbnails?.[hoverThumbnailIndex]"
-          :src="asset.metadata.thumbnails[hoverThumbnailIndex].full_path"
-          :alt="asset.filename"
-          :width="size"
-          :height="size"
-          crop="fill"
-          class="pointer-events-none h-full w-full object-cover transition-opacity duration-300"
-        />
-        <div
-          v-else
-          class="flex h-full items-center justify-center"
-        >
-          <Icon
-            name="lucide:file-video"
-            size="3rem"
+        <div class="checkerboard relative aspect-square cursor-pointer overflow-hidden rounded-t-[0.325rem]">
+          <NuxtImg
+            v-if="getFileType(asset.mime_type) === 'image'"
+            :src="asset.full_path"
+            :alt="String(asset.data?.alt || asset.filename)"
+            :width="size"
+            :height="size"
+            :modifiers="{ crop: 'fill' }"
+            class="pointer-events-none h-full w-full object-cover"
           />
-        </div>
-        <div class="absolute inset-0 flex items-center justify-center">
-          <div class="rounded-full bg-black/50 p-2">
+          <template
+            v-else-if="getFileType(asset.mime_type) === 'video'"
+            @mouseenter="startThumbnailCycle"
+            @mouseleave="stopThumbnailCycle"
+          >
+            <NuxtImg
+              v-if="asset.metadata.thumbnails?.[hoverThumbnailIndex]"
+              :src="asset.metadata.thumbnails[hoverThumbnailIndex].full_path"
+              :alt="asset.filename"
+              :width="size"
+              :height="size"
+              crop="fill"
+              class="pointer-events-none h-full w-full object-cover transition-opacity duration-300"
+            />
+            <div
+              v-else
+              class="flex h-full items-center justify-center"
+            >
+              <Icon
+                name="lucide:file-video"
+                size="3rem"
+              />
+            </div>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="rounded-full bg-black/50 p-2">
+                <Icon
+                  name="lucide:play"
+                  size="1.5rem"
+                  class="text-white"
+                />
+              </div>
+            </div>
+          </template>
+          <div
+            v-else
+            class="flex h-full items-center justify-center"
+          >
             <Icon
-              name="lucide:play"
-              size="1.5rem"
-              class="text-white"
+              :name="getFileIcon(getFileType(asset.mime_type))"
+              size="3rem"
             />
           </div>
+
+          <div
+            v-if="isSelectMode"
+            class="absolute inset-0 flex items-center justify-center rounded-md bg-accent/50 opacity-0 transition-opacity group-hover:opacity-100"
+          >
+            <Icon
+              name="lucide:check"
+              size="2rem"
+              class="rounded-full border-2 border-accent bg-background p-1 text-accent"
+            />
+          </div>
+
+          <div
+            v-if="asset.rights_status === 'expired'"
+            class="absolute top-2 right-2"
+          >
+            <Badge
+              variant="destructive"
+              class="shadow-sm backdrop-blur-sm"
+            >
+              {{ $t('labels.assets.rights.status.expired') }}
+            </Badge>
+          </div>
+
+          <div
+            v-if="resolvedTags.length"
+            class="absolute bottom-2 left-2 right-2 flex flex-wrap gap-1"
+          >
+            <span
+              v-for="tag in resolvedTags"
+              :key="tag.id"
+              class="inline-flex max-w-full items-center rounded-md px-1.5 py-0.5 text-xs font-medium shadow-sm backdrop-blur-sm"
+              :style="tag.color ? { backgroundColor: tag.color + 'cc', color: '#fff' } : {}"
+              :class="tag.color ? '' : 'bg-black/60 text-white'"
+            >
+              <IconName
+                :icon="tag.icon"
+                :name="tag.name"
+                class="truncate"
+              />
+            </span>
+          </div>
         </div>
-      </template>
-      <div
-        v-else
-        class="flex h-full items-center justify-center"
-      >
-        <Icon
-          :name="getFileIcon(getFileType(asset.mime_type))"
-          size="3rem"
-        />
-      </div>
-
-      <div
-        v-if="isSelectMode"
-        class="absolute inset-0 flex items-center justify-center rounded-md bg-accent/50 opacity-0 transition-opacity group-hover:opacity-100"
-      >
-        <Icon
-          name="lucide:check"
-          size="2rem"
-          class="rounded-full border-2 border-accent bg-background p-1 text-accent"
-        />
-      </div>
-
-      <div
-        v-if="asset.rights_status === 'expired'"
-        class="absolute top-2 right-2"
-      >
-        <Badge
-          variant="destructive"
-          class="shadow-sm backdrop-blur-sm"
+        <div class="flex items-center gap-2 p-2 select-none">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 truncate font-semibold">
+              <span class="truncate">{{ asset.filename }}</span>
+              <AssetComplianceIndicator
+                :issues="complianceIssues"
+                severity="error"
+              />
+            </div>
+            <div class="text-sm text-muted">
+              {{ asset.extension }} • {{ formatFileSize(asset.size)
+              }}<template v-if="asset.metadata.duration">
+                • {{ formatVideoDuration(asset.metadata.duration) }}</template
+              >
+              • {{ linkedContentsLabel }}
+            </div>
+          </div>
+          <DropdownMenu
+            v-if="isManageMode && (canEdit || canDelete)"
+            class="ml-auto"
+          >
+            <DropdownMenuTrigger
+              class="transition-colors hover:text-primary"
+              @click.stop
+              @dblclick.stop
+            >
+              <Icon name="lucide:ellipsis-vertical" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem @select="emit('view', asset)">
+                <Icon name="lucide:pencil" />
+                <span>{{ $t('actions.edit') }}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem @select="emit('copy-url', asset)">
+                <Icon name="lucide:link" />
+                <span>{{ $t('actions.assets.copyUrl') }}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem @select="emit('download', asset)">
+                <Icon name="lucide:download" />
+                <span>{{ $t('actions.assets.download') }}</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator v-if="canEdit" />
+              <DropdownMenuItem
+                v-if="canEdit"
+                @select="emit('move', asset)"
+              >
+                <Icon name="lucide:folder-input" />
+                <span>{{ $t('actions.move') }}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                v-if="canEdit"
+                @select="emit('tag', asset)"
+              >
+                <Icon name="lucide:tags" />
+                <span>{{ $t('actions.assets.tag') }}</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator v-if="canDelete" />
+              <DropdownMenuItem
+                v-if="canDelete"
+                class="text-destructive"
+                @select="emit('delete', asset)"
+              >
+                <Icon name="lucide:trash-2" />
+                <span>{{ $t('actions.delete') }}</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div
+          v-if="displayCheckbox"
+          class="absolute top-2 left-2 transition-opacity"
+          :class="selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'"
         >
-          {{ $t('labels.assets.rights.status.expired') }}
-        </Badge>
+          <Checkbox
+            :model-value="selected"
+            :aria-label="`Select ${asset.filename}`"
+            @click.stop="handleCheckboxSelect"
+            @dblclick.stop
+          />
+        </div>
       </div>
+    </ContextMenuTrigger>
 
-      <div
-        v-if="resolvedTags.length"
-        class="absolute bottom-2 left-2 right-2 flex flex-wrap gap-1"
+    <ContextMenuContent v-if="isManageMode">
+      <ContextMenuItem @select="emit('view', asset)">
+        <Icon name="lucide:eye" />
+        <span>{{ $t('actions.open') }}</span>
+      </ContextMenuItem>
+      <ContextMenuItem @select="emit('copy-url', asset)">
+        <Icon name="lucide:link" />
+        <span>{{ $t('actions.assets.copyUrl') }}</span>
+      </ContextMenuItem>
+      <ContextMenuItem @select="emit('download', asset)">
+        <Icon name="lucide:download" />
+        <span>{{ $t('actions.assets.download') }}</span>
+      </ContextMenuItem>
+      <ContextMenuSeparator v-if="canEdit" />
+      <ContextMenuItem
+        v-if="canEdit"
+        @select="emit('move', asset)"
       >
-        <span
-          v-for="tag in resolvedTags"
-          :key="tag.id"
-          class="inline-flex max-w-full items-center rounded-md px-1.5 py-0.5 text-xs font-medium shadow-sm backdrop-blur-sm"
-          :style="tag.color ? { backgroundColor: tag.color + 'cc', color: '#fff' } : {}"
-          :class="tag.color ? '' : 'bg-black/60 text-white'"
-        >
-          <IconName
-            :icon="tag.icon"
-            :name="tag.name"
-            class="truncate"
-          />
-        </span>
-      </div>
-    </div>
-    <div class="flex items-center gap-2 p-2 select-none">
-      <div class="min-w-0 flex-1">
-        <div class="flex items-center gap-2 truncate font-semibold">
-          <span class="truncate">{{ asset.filename }}</span>
-          <AssetComplianceIndicator
-            :issues="complianceIssues"
-            severity="error"
-          />
-        </div>
-        <div class="text-sm text-muted">
-          {{ asset.extension }} • {{ formatFileSize(asset.size)
-          }}<template v-if="asset.metadata.duration">
-            • {{ formatVideoDuration(asset.metadata.duration) }}</template
-          >
-          • {{ linkedContentsLabel }}
-        </div>
-      </div>
-      <DropdownMenu
-        v-if="canEdit || canDelete"
-        class="ml-auto"
+        <Icon name="lucide:folder-input" />
+        <span>{{ $t('actions.move') }}</span>
+      </ContextMenuItem>
+      <ContextMenuItem
+        v-if="canEdit"
+        @select="emit('tag', asset)"
       >
-        <DropdownMenuTrigger class="transition-colors hover:text-primary">
-          <Icon name="lucide:ellipsis-vertical" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem
-            v-if="canEdit"
-            @select="handleView"
-          >
-            <Icon name="lucide:pencil" />
-            <span>{{ $t('actions.edit') }}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            v-if="canDelete"
-            class="text-destructive"
-            @select="$emit('delete', asset)"
-          >
-            <Icon name="lucide:trash-2" />
-            <span>{{ $t('actions.delete') }}</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-    <div
-      v-if="displayCheckbox"
-      class="absolute top-2 left-2"
-    >
-      <Checkbox
-        :model-value="selected"
-        :aria-label="`Select ${asset.filename}`"
-        @click.stop="handleSelect"
-      />
-    </div>
-  </div>
+        <Icon name="lucide:tags" />
+        <span>{{ $t('actions.assets.tag') }}</span>
+      </ContextMenuItem>
+      <ContextMenuSeparator v-if="canDelete" />
+      <ContextMenuItem
+        v-if="canDelete"
+        class="text-destructive"
+        @select="emit('delete', asset)"
+      >
+        <Icon name="lucide:trash-2" />
+        <span>{{ $t('actions.delete') }}</span>
+      </ContextMenuItem>
+    </ContextMenuContent>
+  </ContextMenu>
 </template>

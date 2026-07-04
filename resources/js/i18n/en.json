@@ -577,6 +577,48 @@
         "contrastWhite": "Contrast vs. white",
         "contrastBlack": "Contrast vs. black",
         "luminance": "Relative luminance"
+      },
+      "deleteTitle": "Delete Asset",
+      "dragMixed": "{folders} folders, {assets} assets",
+      "move": {
+        "title": "Move {count} item | Move {count} items",
+        "description": "Choose a destination folder for the selected items.",
+        "searchPlaceholder": "Search folders…",
+        "noFolders": "No folders found"
+      },
+      "bulkTag": {
+        "title": "Tag {count} asset | Tag {count} assets",
+        "description": "Add or remove tags on all selected assets.",
+        "addLabel": "Add tags",
+        "removeLabel": "Remove tags"
+      },
+      "selection": {
+        "toolbar": "Selection actions",
+        "onOtherPages": "({count} on other pages)",
+        "selectAllMatching": "Select all {count} matching"
+      },
+      "shortcuts": {
+        "title": "Keyboard shortcuts",
+        "description": "Work with assets like in your file manager.",
+        "navigation": "Navigation",
+        "selection": "Selection",
+        "actions": "Actions",
+        "moveFocus": "Move focus",
+        "open": "Open folder / asset",
+        "openDetails": "Open asset details",
+        "parentFolder": "Go to parent folder",
+        "selectAll": "Select all on page",
+        "extendSelection": "Extend selection",
+        "click": "Click",
+        "rangeSelect": "Select range",
+        "toggleSelect": "Toggle item in selection",
+        "clearSelection": "Clear selection / cancel cut",
+        "typeAhead": "Type a name",
+        "typeAheadHint": "Jump to first match",
+        "cut": "Cut selection",
+        "paste": "Paste into current folder",
+        "delete": "Delete selection",
+        "showHelp": "Show this overview"
       }
     },
     "contents": {
@@ -3384,7 +3426,11 @@
       "edit": "Edit",
       "remove": "Remove",
       "delete": "Delete",
-      "reorder": "Reorder"
+      "reorder": "Reorder",
+      "tag": "Tags…",
+      "download": "Download",
+      "copyUrl": "Copy URL",
+      "applyTags": "Apply tags"
     },
     "assetFolders": {
       "create": "Create new folder"
@@ -3937,14 +3983,27 @@
     "deleteTokenConfirm": "Are you sure you want to delete the token '{name}'? This action cannot be undone.",
     "assetFolders": {
       "deleteConfirmation": "Delete \"{name}\"? The folder must be empty first.",
-      "invalidMoveToChild": "Folders cannot be moved into themselves or one of their descendants."
+      "invalidMoveToChild": "Folders cannot be moved into themselves or one of their descendants.",
+      "bulkDeleteConfirmation": "Delete {count} folders? This cannot be undone."
     },
     "assets": {
       "deleteConfirmation": "Delete \"{name}\"? This cannot be undone.",
       "forceDeleteConfirmation": "\"{name}\" is still linked in {count} contents. Force delete removes the asset file, but existing content references will remain.",
       "uploadRequirementsConfirm": "Some files are missing required metadata. You can still upload them, but they will stay flagged until the missing values are filled in.",
       "confirmDelete": "Delete this asset? This cannot be undone.",
-      "confirmDeleteFromCollection": "Remove this asset from the collection?"
+      "confirmDeleteFromCollection": "Remove this asset from the collection?",
+      "bulkDeleteConfirmation": "Delete {count} asset? This cannot be undone. | Delete {count} assets? This cannot be undone.",
+      "bulkDeleteSuccess": "{count} asset deleted | {count} assets deleted",
+      "bulkDeleteFailed": "{count} asset could not be deleted | {count} assets could not be deleted",
+      "bulkForceDeleteConfirmation": "{count} asset is still used in content. Force delete? | {count} assets are still used in content. Force delete?",
+      "urlCopied": "URL copied to clipboard | {count} URLs copied to clipboard",
+      "downloadStarted": "Downloading {count} file… | Downloading {count} files…",
+      "downloadFailed": "{count} download failed | {count} downloads failed",
+      "cutHint": "{count} item cut — paste into a folder with ⌘/Ctrl+V | {count} items cut — paste into a folder with ⌘/Ctrl+V",
+      "pasteSuccess": "{count} item moved | {count} items moved",
+      "selectAllTruncated": "Selected the first {count} of {total} matching assets",
+      "bulkTagSuccess": "Tags updated on {count} asset | Tags updated on {count} assets",
+      "bulkTagPartial": "Tags updated on {succeeded} assets, {failed} failed"
     },
     "references": {
       "duplicateReference": "This content has already been added to the references.",

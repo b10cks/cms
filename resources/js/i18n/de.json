@@ -572,6 +572,48 @@
         "contrastWhite": "Kontrast zu Weiß",
         "contrastBlack": "Kontrast zu Schwarz",
         "luminance": "Relative Luminanz"
+      },
+      "deleteTitle": "Asset löschen",
+      "dragMixed": "{folders} Ordner, {assets} Assets",
+      "move": {
+        "title": "{count} Element verschieben | {count} Elemente verschieben",
+        "description": "Wähle einen Zielordner für die ausgewählten Elemente.",
+        "searchPlaceholder": "Ordner suchen…",
+        "noFolders": "Keine Ordner gefunden"
+      },
+      "bulkTag": {
+        "title": "{count} Asset taggen | {count} Assets taggen",
+        "description": "Tags für alle ausgewählten Assets hinzufügen oder entfernen.",
+        "addLabel": "Tags hinzufügen",
+        "removeLabel": "Tags entfernen"
+      },
+      "selection": {
+        "toolbar": "Auswahlaktionen",
+        "onOtherPages": "({count} auf anderen Seiten)",
+        "selectAllMatching": "Alle {count} Treffer auswählen"
+      },
+      "shortcuts": {
+        "title": "Tastaturkürzel",
+        "description": "Arbeite mit Assets wie in deinem Dateimanager.",
+        "navigation": "Navigation",
+        "selection": "Auswahl",
+        "actions": "Aktionen",
+        "moveFocus": "Fokus bewegen",
+        "open": "Ordner / Asset öffnen",
+        "openDetails": "Asset-Details öffnen",
+        "parentFolder": "Zum übergeordneten Ordner",
+        "selectAll": "Alle auf der Seite auswählen",
+        "extendSelection": "Auswahl erweitern",
+        "click": "Klick",
+        "rangeSelect": "Bereich auswählen",
+        "toggleSelect": "Element zur Auswahl hinzufügen/entfernen",
+        "clearSelection": "Auswahl aufheben / Ausschneiden abbrechen",
+        "typeAhead": "Namen tippen",
+        "typeAheadHint": "Zum ersten Treffer springen",
+        "cut": "Auswahl ausschneiden",
+        "paste": "In aktuellen Ordner einfügen",
+        "delete": "Auswahl löschen",
+        "showHelp": "Diese Übersicht anzeigen"
       }
     },
     "contents": {
@@ -3355,7 +3397,11 @@
       "edit": "Bearbeiten",
       "remove": "Entfernen",
       "delete": "Löschen",
-      "reorder": "Sortieren"
+      "reorder": "Sortieren",
+      "tag": "Tags…",
+      "download": "Herunterladen",
+      "copyUrl": "URL kopieren",
+      "applyTags": "Tags anwenden"
     },
     "assetFolders": {
       "create": "Neuen Ordner erstellen"
@@ -3890,14 +3936,27 @@
     "deleteTokenConfirm": "Bist du sicher, dass du den Token '{name}' löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
     "assetFolders": {
       "deleteConfirmation": "Lösche \"{name}\"? Der Ordner muss vorher leer sein.",
-      "invalidMoveToChild": "Ordner können nicht in sich selbst oder in einen ihrer Unterordner verschoben werden."
+      "invalidMoveToChild": "Ordner können nicht in sich selbst oder in einen ihrer Unterordner verschoben werden.",
+      "bulkDeleteConfirmation": "{count} Ordner löschen? Dies kann nicht rückgängig gemacht werden."
     },
     "assets": {
       "deleteConfirmation": "Lösche \"{name}\"? Diese Aktion kann nicht rückgängig gemacht werden.",
       "forceDeleteConfirmation": "\"{name}\" ist noch in {count} Inhalten verknüpft. Beim erzwungenen Löschen wird die Asset-Datei entfernt, bestehende Inhaltsreferenzen bleiben jedoch erhalten.",
       "uploadRequirementsConfirm": "Einige Dateien haben fehlende Pflicht-Metadaten. Du kannst sie trotzdem hochladen, aber sie bleiben markiert, bis die fehlenden Werte ergänzt wurden.",
       "confirmDelete": "Dieses Asset löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
-      "confirmDeleteFromCollection": "Dieses Asset aus der Sammlung entfernen?"
+      "confirmDeleteFromCollection": "Dieses Asset aus der Sammlung entfernen?",
+      "bulkDeleteConfirmation": "{count} Asset löschen? Dies kann nicht rückgängig gemacht werden. | {count} Assets löschen? Dies kann nicht rückgängig gemacht werden.",
+      "bulkDeleteSuccess": "{count} Asset gelöscht | {count} Assets gelöscht",
+      "bulkDeleteFailed": "{count} Asset konnte nicht gelöscht werden | {count} Assets konnten nicht gelöscht werden",
+      "bulkForceDeleteConfirmation": "{count} Asset wird noch in Inhalten verwendet. Trotzdem löschen? | {count} Assets werden noch in Inhalten verwendet. Trotzdem löschen?",
+      "urlCopied": "URL in die Zwischenablage kopiert | {count} URLs in die Zwischenablage kopiert",
+      "downloadStarted": "{count} Datei wird heruntergeladen… | {count} Dateien werden heruntergeladen…",
+      "downloadFailed": "{count} Download fehlgeschlagen | {count} Downloads fehlgeschlagen",
+      "cutHint": "{count} Element ausgeschnitten — mit ⌘/Strg+V in einen Ordner einfügen | {count} Elemente ausgeschnitten — mit ⌘/Strg+V in einen Ordner einfügen",
+      "pasteSuccess": "{count} Element verschoben | {count} Elemente verschoben",
+      "selectAllTruncated": "Die ersten {count} von {total} passenden Assets ausgewählt",
+      "bulkTagSuccess": "Tags bei {count} Asset aktualisiert | Tags bei {count} Assets aktualisiert",
+      "bulkTagPartial": "Tags bei {succeeded} Assets aktualisiert, {failed} fehlgeschlagen"
     },
     "references": {
       "duplicateReference": "Dieser Inhalt wurde bereits zu den Referenzen hinzugefügt.",
