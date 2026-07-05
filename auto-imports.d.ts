@@ -9,6 +9,7 @@ declare global {
   const AlertDialogProvider: typeof import('./resources/js/composables/useAlertDialog').AlertDialogProvider
   const EffectScope: typeof import('vue').EffectScope
   const TEAM_TYPE_KEYS: typeof import('./resources/js/composables/useTeamTypes').TEAM_TYPE_KEYS
+  const buildShareUrl: typeof import('./resources/js/composables/useAssetShares').buildShareUrl
   const computed: typeof import('vue').computed
   const createAccessEvaluationContext: typeof import('./resources/js/composables/useAuthorization').createAccessEvaluationContext
   const createApp: typeof import('vue').createApp
@@ -100,10 +101,13 @@ declare global {
   const useAlertDialog: typeof import('./resources/js/composables/useAlertDialog').useAlertDialog
   const useApiClient: typeof import('./resources/js/composables/useApiClient').useApiClient
   const useAssetBulkOperations: typeof import('./resources/js/composables/useAssetBulkOperations').useAssetBulkOperations
+  const useAssetCollections: typeof import('./resources/js/composables/useAssetCollections').useAssetCollections
   const useAssetFolders: typeof import('./resources/js/composables/useAssetFolders').useAssetFolders
   const useAssetLibraryMoves: typeof import('./resources/js/composables/useAssetLibraryMoves').useAssetLibraryMoves
+  const useAssetPackages: typeof import('./resources/js/composables/useAssetPackages').useAssetPackages
   const useAssetRequirements: typeof import('./resources/js/composables/useAssetRequirements').useAssetRequirements
   const useAssetSelection: typeof import('./resources/js/composables/useAssetSelection').useAssetSelection
+  const useAssetShares: typeof import('./resources/js/composables/useAssetShares').useAssetShares
   const useAssetTags: typeof import('./resources/js/composables/useAssetTags').useAssetTags
   const useAssetVersions: typeof import('./resources/js/composables/useAssetVersions').useAssetVersions
   const useAssets: typeof import('./resources/js/composables/useAssets').useAssets
@@ -169,6 +173,7 @@ declare global {
   const usePlans: typeof import('./resources/js/composables/usePlans').usePlans
   const usePresence: typeof import('./resources/js/composables/usePresence').usePresence
   const useProvider: typeof import('./resources/js/composables/useProvider').useProvider
+  const usePublicShare: typeof import('./resources/js/composables/usePublicShare').usePublicShare
   const useRedirects: typeof import('./resources/js/composables/useRedirects').useRedirects
   const useReleases: typeof import('./resources/js/composables/useReleases').useReleases
   const useRoute: typeof import('vue-router').useRoute
@@ -292,6 +297,7 @@ declare module 'vue' {
     readonly AlertDialogProvider: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['AlertDialogProvider']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly TEAM_TYPE_KEYS: UnwrapRef<typeof import('./resources/js/composables/useTeamTypes')['TEAM_TYPE_KEYS']>
+    readonly buildShareUrl: UnwrapRef<typeof import('./resources/js/composables/useAssetShares')['buildShareUrl']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createAccessEvaluationContext: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['createAccessEvaluationContext']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
@@ -382,10 +388,13 @@ declare module 'vue' {
     readonly useAlertDialog: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['useAlertDialog']>
     readonly useApiClient: UnwrapRef<typeof import('./resources/js/composables/useApiClient')['useApiClient']>
     readonly useAssetBulkOperations: UnwrapRef<typeof import('./resources/js/composables/useAssetBulkOperations')['useAssetBulkOperations']>
+    readonly useAssetCollections: UnwrapRef<typeof import('./resources/js/composables/useAssetCollections')['useAssetCollections']>
     readonly useAssetFolders: UnwrapRef<typeof import('./resources/js/composables/useAssetFolders')['useAssetFolders']>
     readonly useAssetLibraryMoves: UnwrapRef<typeof import('./resources/js/composables/useAssetLibraryMoves')['useAssetLibraryMoves']>
+    readonly useAssetPackages: UnwrapRef<typeof import('./resources/js/composables/useAssetPackages')['useAssetPackages']>
     readonly useAssetRequirements: UnwrapRef<typeof import('./resources/js/composables/useAssetRequirements')['useAssetRequirements']>
     readonly useAssetSelection: UnwrapRef<typeof import('./resources/js/composables/useAssetSelection')['useAssetSelection']>
+    readonly useAssetShares: UnwrapRef<typeof import('./resources/js/composables/useAssetShares')['useAssetShares']>
     readonly useAssetTags: UnwrapRef<typeof import('./resources/js/composables/useAssetTags')['useAssetTags']>
     readonly useAssetVersions: UnwrapRef<typeof import('./resources/js/composables/useAssetVersions')['useAssetVersions']>
     readonly useAssets: UnwrapRef<typeof import('./resources/js/composables/useAssets')['useAssets']>
@@ -451,6 +460,7 @@ declare module 'vue' {
     readonly usePlans: UnwrapRef<typeof import('./resources/js/composables/usePlans')['usePlans']>
     readonly usePresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['usePresence']>
     readonly useProvider: UnwrapRef<typeof import('./resources/js/composables/useProvider')['useProvider']>
+    readonly usePublicShare: UnwrapRef<typeof import('./resources/js/composables/usePublicShare')['usePublicShare']>
     readonly useRedirects: UnwrapRef<typeof import('./resources/js/composables/useRedirects')['useRedirects']>
     readonly useReleases: UnwrapRef<typeof import('./resources/js/composables/useReleases')['useReleases']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>

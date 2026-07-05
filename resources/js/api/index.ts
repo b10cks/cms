@@ -21,7 +21,10 @@ import { TwoFactorAuth } from '~/api/resources/two-factor'
 import { Users } from '~/api/resources/users'
 
 import { ApiClient } from './client'
+import { AssetCollections } from './resources/asset-collections'
 import { AssetFolders } from './resources/asset-folders'
+import { AssetPackages } from './resources/asset-packages'
+import { AssetShares } from './resources/asset-shares'
 import { AssetTags } from './resources/asset-tags'
 import { AssetVersions } from './resources/asset-versions'
 import { Assets } from './resources/assets'
@@ -141,7 +144,10 @@ export class API {
       automationActions: new AutomationActions(this.client, spaceId),
       automationExecutions: new AutomationExecutions(this.client, spaceId),
       automations: new Automations(this.client, spaceId),
+      assetCollections: new AssetCollections(this.client, spaceId),
       assetFolders: new AssetFolders(this.client, spaceId),
+      assetPackages: new AssetPackages(this.client, spaceId),
+      assetShares: new AssetShares(this.client, spaceId),
       assetTags: new AssetTags(this.client, spaceId),
       assets: new Assets(this.client, spaceId),
       assetVersions: (assetId: string) => new AssetVersions(this.client, spaceId, assetId),

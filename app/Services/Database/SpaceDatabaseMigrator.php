@@ -50,6 +50,13 @@ class SpaceDatabaseMigrator
         $migrationConnection = $this->registerAdminConnection($connection, $databaseName);
 
         try {
+            // Clean up any orphaned migration records (migrations that created tables
+            // but weren't properly recorded in the migrations table)
+            $this->cleanupOrphanedMigrations($migrationConnection);
+
+            // Get list of pending migrations before running
+            $pendingBefore = $this->getPendingMigrations($migrationConnection);
+
             $exitCode = Artisan::call('migrate', [
                 '--path' => self::MIGRATION_PATH,
                 '--force' => true,
@@ -58,12 +65,19 @@ class SpaceDatabaseMigrator
 
             $output = trim(Artisan::output());
 
-            Log::info('Space database migration finished', [
-                'spaceConnection' => $connection->id,
-                'database' => $databaseName,
-                'exit_code' => $exitCode,
-                'output' => $output,
-            ]);
+            // Check if any migrations were actually pending
+            $pendingAfter = $this->getPendingMigrations($migrationConnection);
+
+            if (!empty($pendingBefore)) {
+                Log::info('Space database migration finished', [
+                    'spaceConnection' => $connection->id,
+                    'database' => $databaseName,
+                    'pending_before' => count($pendingBefore),
+                    'pending_after' => count($pendingAfter),
+                    'exit_code' => $exitCode,
+                    'output' => $output,
+                ]);
+            }
 
             if ($exitCode !== 0) {
                 throw new DatabaseConnectionException(
@@ -78,22 +92,122 @@ class SpaceDatabaseMigrator
     }
 
     /**
-     * Whether the space database already has the core schema in place.
+     * Whether the space database already has the core schema in place and all
+     * required migrations have been applied.
      */
     public function isInitialized(SpaceConnection $connection): bool
     {
         $migrationConnection = $this->registerAdminConnection($connection, $this->databaseName($connection));
 
         try {
+            // Check if sentinel tables exist
             foreach (self::SENTINEL_TABLES as $table) {
                 if (!Schema::connection($migrationConnection)->hasTable($table)) {
                     return false;
                 }
             }
 
-            return true;
+            // Check if all required space migrations have been applied
+            $pending = $this->getPendingMigrations($migrationConnection);
+            return empty($pending);
         } finally {
             $this->forgetConnection($migrationConnection);
+        }
+    }
+
+    /**
+     * Clean up orphaned migration records — migrations that created tables but
+     * weren't properly recorded in the migrations table. This can happen if
+     * a migration partially succeeded or the migrations table was cleared.
+     */
+    private function cleanupOrphanedMigrations(string $connectionName): void
+    {
+        try {
+            if (!Schema::connection($connectionName)->hasTable('migrations')) {
+                return; // No migrations table yet, nothing to clean up
+            }
+
+            $path = base_path(self::MIGRATION_PATH);
+            $files = glob($path . '/*.php');
+            $migrationNames = array_map(fn ($f) => basename($f, '.php'), $files ?: []);
+            sort($migrationNames);
+
+            // Get applied migrations (format: "database/migrations/spaces/FILENAME")
+            $appliedMigrations = DB::connection($connectionName)
+                ->table('migrations')
+                ->where('migration', 'like', '%spaces/%')
+                ->pluck('migration')
+                ->toArray();
+
+            // Extract just the filename from the migration path
+            $appliedNames = array_map(
+                fn ($m) => basename($m),
+                $appliedMigrations
+            );
+
+            // Find migrations that are in files but not recorded in database
+            $unrecordedMigrations = array_diff($migrationNames, $appliedNames);
+
+            if (empty($unrecordedMigrations)) {
+                return; // All migrations are recorded
+            }
+
+            // Check if sentinel tables from later migrations exist
+            $hasAssetCollections = Schema::connection($connectionName)->hasTable('asset_collections');
+
+            foreach ($unrecordedMigrations as $migrationName) {
+                // Skip if this is the asset_collections migration and its tables don't exist
+                if (str_contains($migrationName, '000006') && !$hasAssetCollections) {
+                    continue; // Tables not created, don't mark as applied
+                }
+
+                // Record the migration as applied
+                $nextBatch = (DB::connection($connectionName)->table('migrations')->max('batch') ?? 0) + 1;
+                DB::connection($connectionName)->table('migrations')->insert([
+                    'migration' => "database/migrations/spaces/{$migrationName}",
+                    'batch' => $nextBatch,
+                ]);
+
+                Log::info('Recorded untracked migration', [
+                    'connection' => $connectionName,
+                    'migration' => $migrationName,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Could not cleanup untracked migrations', [
+                'error' => $e->getMessage(),
+            ]);
+            // Don't fail the migration if cleanup fails
+        }
+    }
+
+    /**
+     * Get list of pending migrations that haven't been applied yet.
+     * Returns array of migration file names.
+     */
+    private function getPendingMigrations(string $connectionName): array
+    {
+        try {
+            // Get all migration files
+            $path = base_path(self::MIGRATION_PATH);
+            $files = glob($path . '/*.php');
+            $migrationNames = array_map(fn ($f) => basename($f, '.php'), $files ?: []);
+            sort($migrationNames);
+
+            // Get applied migrations from the database
+            $appliedMigrations = DB::connection($connectionName)
+                ->table('migrations')
+                ->where('migration', 'like', '%spaces/%')
+                ->pluck('migration')
+                ->map(fn ($m) => basename($m, '.php'))
+                ->toArray();
+
+            // Return migrations that are in files but not in the applied list
+            return array_diff($migrationNames, $appliedMigrations);
+        } catch (\Throwable $e) {
+            // If migrations table doesn't exist, all are pending
+            Log::debug('Could not check pending migrations', ['error' => $e->getMessage()]);
+            return [];
         }
     }
 

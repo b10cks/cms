@@ -47,6 +47,23 @@ class RouteServiceProvider extends ServiceProvider
             ];
         });
 
+        RateLimiter::for('shares', function (Request $request) {
+            return Limit::perMinute(60)->by("shares|{$request->ip()}");
+        });
+
+        // Image previews load many-per-page from <img> tags, so they get a
+        // higher ceiling than the JSON share endpoints.
+        RateLimiter::for('share-previews', function (Request $request) {
+            return Limit::perMinute(300)->by("share-previews|{$request->ip()}");
+        });
+
+        RateLimiter::for('share-unlock', function (Request $request) {
+            return [
+                Limit::perMinute(10)->by("share-unlock|{$request->ip()}"),
+                Limit::perMinute(5)->by("share-unlock|{$request->route('token')}"),
+            ];
+        });
+
         RateLimiter::for('crucial', function (Request $request) {
             return Limit::perMinute(5)->by($request->user()?->id ?: $request->ip());
         });

@@ -8,11 +8,15 @@ use App\Http\Controllers\Mgmt\Ai\MetaTagsStreamController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiConfigController;
 use App\Http\Controllers\Mgmt\Ai\SpaceAiSettingsController;
 use App\Http\Controllers\Mgmt\Ai\TranslationStreamController;
+use App\Http\Controllers\Mgmt\AssetCollectionAssetController;
+use App\Http\Controllers\Mgmt\AssetCollectionController;
 use App\Http\Controllers\Mgmt\AssetController;
 use App\Http\Controllers\Mgmt\AssetDataExportController;
 use App\Http\Controllers\Mgmt\AssetDataImportController;
 use App\Http\Controllers\Mgmt\AssetFolderController;
 use App\Http\Controllers\Mgmt\AssetLinkedContentController;
+use App\Http\Controllers\Mgmt\AssetPackageController;
+use App\Http\Controllers\Mgmt\AssetShareController;
 use App\Http\Controllers\Mgmt\AssetTagController;
 use App\Http\Controllers\Mgmt\AssetVersionController;
 use App\Http\Controllers\Mgmt\AuditLogController;
@@ -285,6 +289,30 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::post('assets/{asset}/versions/{version}/restore', [AssetVersionController::class, 'restore'])
         ->name('assets.versions.restore');
     Route::apiResource('assets', AssetController::class);
+
+    Route::get('asset-collections/{collection}/assets', [AssetCollectionAssetController::class, 'index'])
+        ->name('asset-collections.assets.index');
+    Route::post('asset-collections/{collection}/assets', [AssetCollectionAssetController::class, 'store'])
+        ->name('asset-collections.assets.store');
+    Route::delete('asset-collections/{collection}/assets', [AssetCollectionAssetController::class, 'destroy'])
+        ->name('asset-collections.assets.destroy');
+    Route::patch('asset-collections/{collection}/assets/order', [AssetCollectionAssetController::class, 'reorder'])
+        ->name('asset-collections.assets.reorder');
+    Route::apiResource('asset-collections', AssetCollectionController::class)->parameters([
+        'asset-collections' => 'collection',
+    ]);
+
+    Route::get('asset-packages/{package}/download', [AssetPackageController::class, 'download'])
+        ->name('asset-packages.download');
+    Route::apiResource('asset-packages', AssetPackageController::class)
+        ->only(['index', 'show', 'store', 'destroy'])
+        ->parameters(['asset-packages' => 'package']);
+
+    Route::post('asset-shares/{share}/revoke', [AssetShareController::class, 'revoke'])
+        ->name('asset-shares.revoke');
+    Route::apiResource('asset-shares', AssetShareController::class)->parameters([
+        'asset-shares' => 'share',
+    ]);
 
     Route::get('icons/tags', [IconController::class, 'tags'])->name('icons.tags');
     Route::post('icons/import', IconDataImportController::class)->name('icons.import');

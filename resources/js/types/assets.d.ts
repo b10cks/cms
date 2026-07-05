@@ -159,6 +159,72 @@ export interface AssetTagResource {
   updated_at: string
 }
 
+export type AssetCollectionType = 'manual' | 'smart'
+
+export type AssetCollectionMatch = 'all' | 'any'
+
+export type AssetCollectionCondition =
+  | { field: 'filename'; operator: 'contains' | 'equals'; value: string }
+  | { field: 'extension'; operator: 'equals'; value: string }
+  | { field: 'extension'; operator: 'in'; value: string[] }
+  | { field: 'mime_type'; operator: 'equals' | 'prefix'; value: string }
+  | { field: 'mime_type'; operator: 'in'; value: string[] }
+  | { field: 'size'; operator: 'gt' | 'lt' | 'gte' | 'lte'; value: number }
+  | { field: 'folder'; operator: 'equals'; value: string }
+  | { field: 'folder'; operator: 'null'; value?: null }
+  | { field: 'tags'; operator: 'any' | 'all'; value: string[] }
+  | { field: 'rights_status'; operator: 'equals'; value: AssetRightsStatus }
+  | { field: 'license_expires_at'; operator: 'before' | 'after'; value: string }
+  | { field: 'created_at'; operator: 'before' | 'after'; value: string }
+  | { field: 'updated_at'; operator: 'before' | 'after'; value: string }
+  | { field: 'orientation'; operator: 'equals'; value: 'landscape' | 'portrait' | 'square' }
+  | { field: 'untagged'; operator: 'equals'; value: true }
+
+export type AssetCollectionConditionField = AssetCollectionCondition['field']
+
+export interface AssetCollectionRules {
+  match: AssetCollectionMatch
+  conditions: AssetCollectionCondition[]
+}
+
+export interface AssetCollectionResource {
+  id: string
+  external_id: string | null
+  name: string
+  description: string | null
+  icon: string | null
+  color: string | null
+  type: AssetCollectionType
+  rules: AssetCollectionRules | null
+  settings: Record<string, unknown> | null
+  cover_asset_id: string | null
+  assets_count?: number | null
+  created_by_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateAssetCollectionPayload {
+  name: string
+  description?: string | null
+  icon?: string | null
+  color?: string | null
+  type: AssetCollectionType
+  rules?: AssetCollectionRules | null
+  settings?: Record<string, unknown> | null
+  cover_asset_id?: string | null
+}
+
+export interface UpdateAssetCollectionPayload {
+  name?: string
+  description?: string | null
+  icon?: string | null
+  color?: string | null
+  rules?: AssetCollectionRules | null
+  settings?: Record<string, unknown> | null
+  cover_asset_id?: string | null
+}
+
 export interface UpsertAssetFolderPayload {
   name?: string
   description?: string | null

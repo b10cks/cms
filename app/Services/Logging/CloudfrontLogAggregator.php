@@ -3,6 +3,7 @@
 namespace App\Services\Logging;
 
 use App\Models\Management\SpaceApiHitHourly as ApiHitHourly;
+use App\Models\Management\SpaceDownloadUsageHourly as DownloadUsageHourly;
 use App\Models\Management\SpaceTrafficUsageHourly as TrafficUsageHourly;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -10,7 +11,11 @@ use Illuminate\Support\Facades\DB;
 class CloudfrontLogAggregator
 {
     private array $apiHitsBuffer = [];
+
     private array $trafficBuffer = [];
+
+    private array $downloadBuffer = [];
+
     private int $bufferSize;
 
     public function __construct(int $bufferSize = 100)
@@ -27,7 +32,7 @@ class CloudfrontLogAggregator
     ): void {
         $hourKey = $this->getHourKey($spaceId, $timestamp);
 
-        if (!isset($this->apiHitsBuffer[$hourKey])) {
+        if (! isset($this->apiHitsBuffer[$hourKey])) {
             $this->apiHitsBuffer[$hourKey] = [
                 'space_id' => $spaceId,
                 'hour_timestamp' => $timestamp->startOfHour(),
@@ -41,7 +46,7 @@ class CloudfrontLogAggregator
         $this->apiHitsBuffer[$hourKey]['hits']++;
         $this->apiHitsBuffer[$hourKey]['ips'][$ipAddress] = true;
 
-        $statusCodeKey = (string)$statusCode;
+        $statusCodeKey = (string) $statusCode;
         $this->apiHitsBuffer[$hourKey]['status_codes'][$statusCodeKey] =
             ($this->apiHitsBuffer[$hourKey]['status_codes'][$statusCodeKey] ?? 0) + 1;
 
@@ -63,7 +68,7 @@ class CloudfrontLogAggregator
     ): void {
         $hourKey = $this->getHourKey($spaceId, $timestamp);
 
-        if (!isset($this->trafficBuffer[$hourKey])) {
+        if (! isset($this->trafficBuffer[$hourKey])) {
             $this->trafficBuffer[$hourKey] = [
                 'space_id' => $spaceId,
                 'hour_timestamp' => $timestamp->startOfHour(),
@@ -90,10 +95,35 @@ class CloudfrontLogAggregator
         }
     }
 
+    public function addDownloadUsage(
+        string $spaceId,
+        Carbon $timestamp,
+        int $bytesSent
+    ): void {
+        $hourKey = $this->getHourKey($spaceId, $timestamp);
+
+        if (! isset($this->downloadBuffer[$hourKey])) {
+            $this->downloadBuffer[$hourKey] = [
+                'space_id' => $spaceId,
+                'hour_timestamp' => $timestamp->startOfHour(),
+                'bytes_sent' => 0,
+                'request_count' => 0,
+            ];
+        }
+
+        $this->downloadBuffer[$hourKey]['bytes_sent'] += $bytesSent;
+        $this->downloadBuffer[$hourKey]['request_count']++;
+
+        if (count($this->downloadBuffer) >= $this->bufferSize) {
+            $this->flushDownloads();
+        }
+    }
+
     public function flush(): void
     {
         $this->flushApiHits();
         $this->flushTraffic();
+        $this->flushDownloads();
     }
 
     private function flushApiHits(): void
@@ -116,7 +146,7 @@ class CloudfrontLogAggregator
                 foreach ($data['status_codes'] as $code => $count) {
                     $statusDistribution[$code] = ($statusDistribution[$code] ?? 0) + $count;
 
-                    $codeInt = (int)$code;
+                    $codeInt = (int) $code;
                     if ($codeInt >= 200 && $codeInt < 300) {
                         $record->success_count = ($record->success_count ?? 0) + $count;
                     } elseif ($codeInt >= 400) {
@@ -160,8 +190,31 @@ class CloudfrontLogAggregator
         $this->trafficBuffer = [];
     }
 
+    private function flushDownloads(): void
+    {
+        if (empty($this->downloadBuffer)) {
+            return;
+        }
+
+        DB::transaction(function () {
+            foreach ($this->downloadBuffer as $data) {
+                $record = DownloadUsageHourly::firstOrNew([
+                    'space_id' => $data['space_id'],
+                    'hour_timestamp' => $data['hour_timestamp'],
+                ]);
+
+                $record->bytes_sent = ($record->bytes_sent ?? 0) + $data['bytes_sent'];
+                $record->request_count = ($record->request_count ?? 0) + $data['request_count'];
+
+                $record->save();
+            }
+        });
+
+        $this->downloadBuffer = [];
+    }
+
     private function getHourKey(string $spaceId, Carbon $timestamp): string
     {
-        return $spaceId . '_' . $timestamp->format('Y-m-d_H');
+        return $spaceId.'_'.$timestamp->format('Y-m-d_H');
     }
 }

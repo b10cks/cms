@@ -53,6 +53,39 @@ export const queryKeys = {
     detail: (tagName: MaybeRef<string>) =>
       [...queryKeys.blockTags(spaceId).details(), tagName] as const,
   }),
+  assetCollections: (spaceId: MaybeRef<string>) => ({
+    all: () => ['spaces', spaceId, 'asset-collections'] as const,
+    lists: () => [...queryKeys.assetCollections(spaceId).all(), 'list'] as const,
+    list: (filters: any = {}) => [...queryKeys.assetCollections(spaceId).lists(), filters] as const,
+    details: () => [...queryKeys.assetCollections(spaceId).all(), 'detail'] as const,
+    detail: (id: MaybeRef<string>) =>
+      [...queryKeys.assetCollections(spaceId).details(), id] as const,
+    assets: (id: MaybeRef<string>) =>
+      [...queryKeys.assetCollections(spaceId).all(), 'assets', id] as const,
+    assetsList: (id: MaybeRef<string>, filters: any = {}) =>
+      [...queryKeys.assetCollections(spaceId).assets(id), filters] as const,
+  }),
+  assetPackages: (spaceId: MaybeRef<string>) => ({
+    all: () => ['spaces', spaceId, 'asset-packages'] as const,
+    lists: () => [...queryKeys.assetPackages(spaceId).all(), 'list'] as const,
+    list: (filters: any = {}) => [...queryKeys.assetPackages(spaceId).lists(), filters] as const,
+    details: () => [...queryKeys.assetPackages(spaceId).all(), 'detail'] as const,
+    detail: (id: MaybeRef<string>) => [...queryKeys.assetPackages(spaceId).details(), id] as const,
+  }),
+  assetShares: (spaceId: MaybeRef<string>) => ({
+    all: () => ['spaces', spaceId, 'asset-shares'] as const,
+    lists: () => [...queryKeys.assetShares(spaceId).all(), 'list'] as const,
+    list: (filters: any = {}) => [...queryKeys.assetShares(spaceId).lists(), filters] as const,
+    details: () => [...queryKeys.assetShares(spaceId).all(), 'detail'] as const,
+    detail: (id: MaybeRef<string>) => [...queryKeys.assetShares(spaceId).details(), id] as const,
+  }),
+  publicShare: (spaceId: MaybeRef<string>, token: MaybeRef<string>) => ({
+    all: () => ['public-share', spaceId, token] as const,
+    meta: () => [...queryKeys.publicShare(spaceId, token).all(), 'meta'] as const,
+    assets: () => [...queryKeys.publicShare(spaceId, token).all(), 'assets'] as const,
+    assetsList: (filters: any = {}) =>
+      [...queryKeys.publicShare(spaceId, token).assets(), filters] as const,
+  }),
   assetTags: (spaceId: MaybeRef<string>) => ({
     all: () => ['spaces', spaceId, 'asset-tags'] as const,
     lists: () => [...queryKeys.assetTags(spaceId).all(), 'list'] as const,

@@ -8,6 +8,7 @@ import { AlertDialogProvider } from '@/composables/useAlertDialog'
 import Command from '~/components/Command.vue'
 import { useUrlNotifications } from '~/composables/useUrlNotifications'
 import DefaultLayout from '~/layouts/default.vue'
+import ShareLayout from '~/layouts/share.vue'
 import StartLayout from '~/layouts/start.vue'
 import UnauthenticatedLayout from '~/layouts/unauthenticated.vue'
 
@@ -22,6 +23,7 @@ const { isAuthenticated } = useAuth()
 
 const layoutMap: Record<string, Component> = {
   default: DefaultLayout,
+  share: ShareLayout,
   start: StartLayout,
   unauthenticated: UnauthenticatedLayout,
 }

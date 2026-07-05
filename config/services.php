@@ -44,6 +44,15 @@ return [
         'log_bucket' => env('CLOUDFRONT_LOG_BUCKET'),
         'log_prefix' => env('CLOUDFRONT_LOG_PREFIX', ''),
         'distribution_id' => env('CLOUDFRONT_DISTRIBUTION_ID'),
+        // CloudFront URL signing for metered asset-package downloads. The
+        // download distribution's /dl/* behavior must front the transfers
+        // bucket (see ShareDeliveryService). `private_key` accepts either the
+        // PEM contents or a path to a .pem file.
+        'signing' => [
+            'key_pair_id' => env('CLOUDFRONT_SIGNING_KEY_PAIR_ID'),
+            'private_key' => env('CLOUDFRONT_SIGNING_PRIVATE_KEY'),
+            'download_base_url' => env('CLOUDFRONT_DOWNLOAD_BASE_URL'),
+        ],
         'ingestion' => [
             'batch_size' => env('CLOUDFRONT_INGESTION_BATCH_SIZE', 500),
             'max_files_per_run' => env('CLOUDFRONT_INGESTION_MAX_FILES_PER_RUN', 50),

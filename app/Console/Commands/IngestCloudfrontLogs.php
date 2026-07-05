@@ -21,11 +21,13 @@ class IngestCloudfrontLogs extends Command
     protected $description = 'Ingest and process CloudFront logs from S3 using S3 tagging';
 
     private const array IGNORE_SPACE_IDS = [
-        'spaces', 'users'
+        'spaces', 'users',
     ];
 
     private S3LogFileManager $fileManager;
+
     private CloudfrontLogParser $parser;
+
     private CloudfrontLogAggregator $aggregator;
 
     public function handle(): int
@@ -36,8 +38,9 @@ class IngestCloudfrontLogs extends Command
         $prefix = $this->option('prefix') ?? config('services.cloudfront.log_prefix', '');
         $limit = (int) $this->option('limit');
 
-        if (!$bucket) {
+        if (! $bucket) {
             $this->error('S3 bucket not specified. Use --bucket option or set CLOUDFRONT_LOG_BUCKET in .env');
+
             return self::FAILURE;
         }
 
@@ -48,6 +51,7 @@ class IngestCloudfrontLogs extends Command
 
             if ($logFiles->isEmpty()) {
                 $this->info('No new log files to process.');
+
                 return self::SUCCESS;
             }
 
@@ -95,7 +99,7 @@ class IngestCloudfrontLogs extends Command
         ]);
 
         $this->fileManager = new S3LogFileManager($s3Client);
-        $this->parser = new CloudfrontLogParser();
+        $this->parser = new CloudfrontLogParser;
         $this->aggregator = new CloudfrontLogAggregator(
             config('services.cloudfront.ingestion.batch_size', 500)
         );
@@ -122,8 +126,9 @@ class IngestCloudfrontLogs extends Command
 
             $parsed = $this->parser->parseLogLine($line);
 
-            if (!$parsed) {
+            if (! $parsed) {
                 $linesSkipped++;
+
                 continue;
             }
 
@@ -139,7 +144,7 @@ class IngestCloudfrontLogs extends Command
 
     private function processLogEntry(array $entry): void
     {
-        $timestamp = Carbon::parse($entry['date'] . ' ' . $entry['time']);
+        $timestamp = Carbon::parse($entry['date'].' '.$entry['time']);
         $uri = $entry['uri'];
         $queryString = $entry['query_string'];
 
@@ -155,10 +160,20 @@ class IngestCloudfrontLogs extends Command
                     $entry['time_taken']
                 );
             }
+        } elseif ($this->parser->isDownloadRequest($uri)) {
+            $spaceId = $this->parser->extractSpaceIdFromDownload($uri);
+
+            if ($spaceId && ! in_array($spaceId, self::IGNORE_SPACE_IDS, true)) {
+                $this->aggregator->addDownloadUsage(
+                    $spaceId,
+                    $timestamp,
+                    $entry['bytes_sent']
+                );
+            }
         } elseif ($this->parser->isTrafficRequest($uri)) {
             $spaceId = $this->parser->extractSpaceIdFromTraffic($uri);
 
-            if ($spaceId && !in_array($spaceId, self::IGNORE_SPACE_IDS, true)) {
+            if ($spaceId && ! in_array($spaceId, self::IGNORE_SPACE_IDS, true)) {
                 $cacheHit = $this->parser->isCacheHit($entry['edge_result_type']);
 
                 $this->aggregator->addTrafficUsage(

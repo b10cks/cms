@@ -255,6 +255,85 @@
         "updatedAt": "Last updated"
       }
     },
+    "assetCollections": {
+      "title": "Collections",
+      "smartIndicator": "Smart collection",
+      "createCollection": "New collection",
+      "editCollection": "Edit collection",
+      "dialogDescription": "Group assets manually or let rules keep a smart collection up to date.",
+      "deleteTitle": "Delete this collection?",
+      "deleteConfirmation": "Delete \"{name}\"? This won't affect the assets — just removes the collection.",
+      "emptyCollection": "This collection doesn't contain any assets yet.",
+      "noCollections": "No collections yet. Create one to group your assets.",
+      "types": {
+        "manual": "Manual",
+        "manualDescription": "Pick assets yourself and arrange them in any order.",
+        "smart": "Smart",
+        "smartDescription": "Assets are included automatically based on rules."
+      },
+      "fieldLabels": {
+        "name": "Collection name",
+        "namePlaceholder": "Enter a collection name",
+        "description": "Description",
+        "descriptionPlaceholder": "What is this collection for?",
+        "type": "Type"
+      },
+      "rules": {
+        "matchLabel": "Match",
+        "match": {
+          "all": "All conditions",
+          "any": "Any condition"
+        },
+        "addCondition": "Add condition",
+        "removeCondition": "Remove condition",
+        "valuePlaceholder": "Value",
+        "listPlaceholder": "Comma-separated values",
+        "sizePlaceholder": "Size in bytes",
+        "folderPlaceholder": "Select a folder",
+        "noValueNeeded": "No value needed"
+      },
+      "fields": {
+        "filename": "Filename",
+        "extension": "Extension",
+        "mime_type": "MIME type",
+        "size": "File size",
+        "folder": "Folder",
+        "tags": "Tags",
+        "rights_status": "Rights status",
+        "license_expires_at": "License expires",
+        "created_at": "Created at",
+        "updated_at": "Updated at",
+        "orientation": "Orientation",
+        "untagged": "Untagged"
+      },
+      "operators": {
+        "contains": "contains",
+        "equals": "equals",
+        "prefix": "starts with",
+        "in": "is one of",
+        "gt": "greater than",
+        "gte": "at least",
+        "lt": "less than",
+        "lte": "at most",
+        "null": "is empty",
+        "any": "has any of",
+        "all": "has all of",
+        "before": "before",
+        "after": "after"
+      },
+      "orientations": {
+        "landscape": "Landscape",
+        "portrait": "Portrait",
+        "square": "Square"
+      },
+      "addToCollection": {
+        "title": "Add {count} asset to collection | Add {count} assets to collection",
+        "description": "Pick a manual collection or create a new one.",
+        "searchPlaceholder": "Search collections…",
+        "empty": "No manual collections found.",
+        "createNew": "New collection"
+      }
+    },
     "assetFolders": {
       "title": "Asset Folders",
       "create": "New folder",
@@ -614,6 +693,7 @@
         "luminance": "Relative luminance"
       },
       "deleteTitle": "Delete Asset",
+      "deleteFromLibraryTitle": "Delete from library",
       "dragMixed": "{folders} folders, {assets} assets",
       "move": {
         "title": "Move {count} item | Move {count} items",
@@ -3136,6 +3216,8 @@
         "assets": "assets",
         "assetFolders": "asset folders",
         "assetTags": "asset tags",
+        "assetCollections": "asset collections",
+        "assetShares": "asset shares",
         "blocks": "blocks",
         "blockTemplates": "block templates",
         "blockVersions": "block versions",
@@ -3457,6 +3539,89 @@
     },
     "accessDenied": {
       "from": "Access denied"
+    },
+    "assetShares": {
+      "title": "Asset shares",
+      "description": "Public download links for collections, folders and asset selections.",
+      "manageTitle": "Manage shares",
+      "manageDescription": "View and manage public download links for this collection.",
+      "noSharesForCollection": "No share links for this collection yet.",
+      "createTitle": "Share assets",
+      "editTitle": "Edit share",
+      "dialogDescription": "Create a public link so recipients can view and download these assets — no account required.",
+      "createdTitle": "Share link created",
+      "createdDescription": "Anyone with this link can access the shared assets.",
+      "createdPasswordHint": "Share the password separately — it is not part of the link.",
+      "sources": {
+        "collection": "Collection",
+        "folder": "Folder",
+        "selection": "Selection",
+        "collectionCount": "Collection",
+        "folderCount": "Folder",
+        "selectionCount": "{count} selected asset | {count} selected assets"
+      },
+      "fields": {
+        "name": "Name",
+        "namePlaceholder": "e.g. Brand assets for print",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional note shown to recipients",
+        "password": "Password",
+        "passwordPlaceholder": "Optional password",
+        "passwordHint": "Recipients must enter this password before they can access the share.",
+        "passwordKeepPlaceholder": "Leave empty to keep the current password",
+        "passwordKeepHint": "Leave empty to keep the current password, or enter a new one.",
+        "removePassword": "Remove password protection",
+        "expiresAt": "Expires",
+        "expiresAtHint": "Leave empty for a link that never expires.",
+        "downloadLimit": "Download limit",
+        "downloadLimitPlaceholder": "Unlimited",
+        "downloadLimitHint": "Maximum number of full downloads. Leave empty for unlimited.",
+        "allowIndividualDownloads": "Allow individual downloads",
+        "allowIndividualDownloadsHint": "Recipients can download single files in addition to the full archive."
+      },
+      "columns": {
+        "name": "Name",
+        "source": "Source",
+        "protected": "Protected",
+        "downloads": "Downloads",
+        "views": "Views",
+        "expires": "Expires",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active",
+        "expired": "Expired",
+        "revoked": "Revoked"
+      },
+      "passwordProtected": "Password protected",
+      "noPassword": "No password",
+      "noShares": "No share links yet. Share a collection, folder or selection from the asset library.",
+      "openMenu": "Open menu",
+      "revokeConfirmTitle": "Revoke share link",
+      "revokeConfirmMessage": "Revoke \"{name}\"? The link stops working immediately. This cannot be undone.",
+      "deleteConfirmTitle": "Delete share link",
+      "deleteConfirmMessage": "Delete \"{name}\"? The link stops working immediately. This cannot be undone."
+    },
+    "publicShare": {
+      "pageTitle": "Shared assets",
+      "notFoundTitle": "This link is no longer available",
+      "notFoundDescription": "The share link is invalid, expired or has been revoked. Please contact the person who sent it to you.",
+      "passwordPrompt": "This share is password protected. Enter the password to continue.",
+      "passwordPlaceholder": "Password",
+      "wrongPassword": "Wrong password. Please try again.",
+      "unlockFailed": "Could not unlock the share. Please try again.",
+      "unlock": "Unlock",
+      "assetCount": "{count} file | {count} files",
+      "expiresAt": "Available until {date}",
+      "downloadsRemaining": "{count} download left | {count} downloads left",
+      "downloadAll": "Download all",
+      "preparing": "Preparing…",
+      "building": "Building archive… {progress}%",
+      "downloadLimitReached": "The download limit for this share has been reached.",
+      "downloadFailed": "Download failed. Please try again.",
+      "downloadAsset": "Download file",
+      "empty": "This share contains no files.",
+      "poweredBy": "Shared via b10cks"
     }
   },
   "notifications": {
@@ -3662,7 +3827,11 @@
       "download": "Download",
       "copyUrl": "Copy URL",
       "applyTags": "Apply tags",
-      "addSelected": "Add {count} selected"
+      "addSelected": "Add {count} selected",
+      "addToCollection": "Add to collection…",
+      "removeFromCollection": "Remove from collection",
+      "deleteFromLibrary": "Delete from library",
+      "share": "Share…"
     },
     "assetFolders": {
       "create": "Create new folder"
@@ -3780,6 +3949,17 @@
       "edit": "Edit Tag",
       "delete": "Delete Tag",
       "save": "Save tag"
+    },
+    "assetCollections": {
+      "save": "Save collection"
+    },
+    "assetShares": {
+      "create": "Create share link",
+      "newShare": "New share link",
+      "manage": "Manage shares…",
+      "revoke": "Revoke",
+      "shareCollection": "Share collection…",
+      "shareFolder": "Share folder…"
     }
   },
   "navigation": {
@@ -3947,6 +4127,19 @@
       "deleteError": "Failed to delete tag: {error}",
       "assignSuccess": "Tag assigned successfully",
       "assignError": "Failed to assign tag: {error}"
+    },
+    "assetCollections": {
+      "createSuccess": "Collection \"{name}\" created successfully",
+      "createError": "Failed to create collection: {error}",
+      "updateSuccess": "Collection \"{name}\" updated successfully",
+      "updateError": "Failed to update collection: {error}",
+      "deleteSuccess": "Collection deleted successfully",
+      "deleteError": "Failed to delete collection: {error}",
+      "addSuccess": "Added {count} asset to collection | Added {count} assets to collection",
+      "addError": "Failed to add assets to collection: {error}",
+      "removeSuccess": "Removed {count} asset from collection | Removed {count} assets from collection",
+      "removeError": "Failed to remove assets from collection: {error}",
+      "reorderError": "Failed to reorder collection: {error}"
     },
     "assets": {
       "uploadSuccess": "Assets uploaded successfully",
@@ -4209,6 +4402,26 @@
       "deleteError": "Failed to delete icon: {error}",
       "importSuccess": "Icons imported successfully",
       "importError": "Failed to import icons: {error}"
+    },
+    "assetShares": {
+      "createSuccess": "Share link \"{name}\" created successfully",
+      "createError": "Failed to create share link: {error}",
+      "updateSuccess": "Share link \"{name}\" updated successfully",
+      "updateError": "Failed to update share link: {error}",
+      "revokeSuccess": "Share link \"{name}\" revoked",
+      "revokeError": "Failed to revoke share link: {error}",
+      "deleteSuccess": "Share link deleted successfully",
+      "deleteError": "Failed to delete share link: {error}",
+      "linkCopied": "Share link copied to clipboard"
+    },
+    "assetPackages": {
+      "createError": "Failed to create download package: {error}",
+      "deleteSuccess": "Download package deleted successfully",
+      "deleteError": "Failed to delete download package: {error}",
+      "preparing": "Preparing download of {count} asset… | Preparing download of {count} assets…",
+      "building": "Building archive… {progress}%",
+      "ready": "Your download is starting",
+      "failed": "Failed to prepare download: {error}"
     }
   },
   "content": {
@@ -4235,6 +4448,8 @@
     },
     "assets": {
       "deleteConfirmation": "Delete \"{name}\"? This cannot be undone.",
+      "deleteFromCollectionConfirmation": "Permanently delete \"{name}\" from your entire library? This removes the asset from every collection and folder it appears in — not just this collection — and cannot be undone. To only take it out of this collection, use “Remove from collection” instead.",
+      "bulkDeleteFromCollectionConfirmation": "Permanently delete {count} asset from your entire library? This removes it from every collection and folder it appears in — not just this collection — and cannot be undone. To only take it out of this collection, use “Remove from collection” instead. | Permanently delete {count} assets from your entire library? This removes them from every collection and folder they appear in — not just this collection — and cannot be undone. To only take them out of this collection, use “Remove from collection” instead.",
       "forceDeleteConfirmation": "\"{name}\" is still linked in {count} contents. Force delete removes the asset file, but existing content references will remain.",
       "uploadRequirementsConfirm": "Some files are missing required metadata. You can still upload them, but they will stay flagged until the missing values are filled in.",
       "confirmDelete": "Delete this asset? This cannot be undone.",

@@ -95,6 +95,11 @@ export const spaceSettingsNavigationItems: NavigationAccessItem[] = [
     icon: 'lucide:arrow-right-left',
     routeName: 'space-settings-migrations',
   },
+  {
+    label: 'labels.assetShares.title',
+    icon: 'lucide:share-2',
+    routeName: 'space-settings-shares',
+  },
 ]
 
 export const teamNavigationItems: NavigationAccessItem[] = [
@@ -249,6 +254,7 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   },
   'space-settings-backups': { abilities: 'backups.view' },
   'space-settings-migrations': { abilities: 'migrations.view' },
+  'space-settings-shares': { abilities: 'asset_shares.view' },
   team: {
     abilities: { anyOf: ['team.members.view', 'team.invites.view'] },
   },

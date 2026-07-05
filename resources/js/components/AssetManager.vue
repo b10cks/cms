@@ -2,6 +2,7 @@
 import { useRouteQuery } from '@vueuse/router'
 import { TabsContent, TabsRoot } from 'reka-ui'
 
+import AssetCollectionTree from '~/components/assets/AssetCollectionTree.vue'
 import AssetFolderTree from '~/components/assets/AssetFolderTree.vue'
 import AssetGrid from '~/components/assets/AssetGrid.vue'
 import AssetListView from '~/components/assets/AssetListView.vue'
@@ -32,11 +33,15 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageAssets = computed(() => access.hasAbility('assets.manage'))
 const canManageAssetFolders = computed(() => access.hasAbility('asset_folders.manage'))
+const canViewAssetCollections = computed(() => access.hasAbility('asset_collections.view'))
 
 const selectedFolder = defineModel<string | null>('folderId', {
   default: null,
 })
 const selectedTag = defineModel<string | null>('tagId', {
+  default: null,
+})
+const selectedCollection = defineModel<string | null>('collectionId', {
   default: null,
 })
 const selectedAsset = defineModel<string | null | undefined>('assetId', {
@@ -50,17 +55,27 @@ const importDialogOpen = ref(false)
 watch(selectedFolder, (folderId) => {
   if (folderId !== null) {
     selectedTag.value = null
+    selectedCollection.value = null
   }
 })
 watch(selectedTag, (tagId) => {
   if (tagId !== null) {
     selectedFolder.value = null
+    selectedCollection.value = null
+  }
+})
+watch(selectedCollection, (collectionId) => {
+  if (collectionId !== null) {
+    selectedFolder.value = null
+    selectedTag.value = null
   }
 })
 </script>
 
 <template>
-  <div class="flex h-[calc(100svh-3.5rem)] max-h-[calc(100svh-3.5rem)] w-full flex-col overflow-hidden">
+  <div
+    class="flex h-[calc(100svh-3.5rem)] max-h-[calc(100svh-3.5rem)] w-full flex-col overflow-hidden"
+  >
     <div class="flex min-h-0 flex-1 overflow-hidden">
       <div class="flex h-full min-h-0 w-xs shrink-0 flex-col overflow-hidden bg-surface p-2">
         <ScrollArea class="min-h-0 flex-1 overflow-y-auto">
@@ -68,11 +83,17 @@ watch(selectedTag, (tagId) => {
             <AssetFolderTree
               v-model="selectedFolder"
               :space-id="spaceId"
-              :has-active-tag="Boolean(selectedTag)"
-              @select-all="selectedTag = null"
+              :has-active-tag="Boolean(selectedTag) || Boolean(selectedCollection)"
+              @select-all="((selectedTag = null), (selectedCollection = null))"
             />
             <AssetTagTree
               v-model="selectedTag"
+              :space-id="spaceId"
+              class="mt-4"
+            />
+            <AssetCollectionTree
+              v-if="canViewAssetCollections"
+              v-model="selectedCollection"
               :space-id="spaceId"
               class="mt-4"
             />
@@ -90,6 +111,7 @@ watch(selectedTag, (tagId) => {
           <AssetGrid
             v-model:folder-id="selectedFolder"
             v-model:tag-id="selectedTag"
+            v-model:collection-id="selectedCollection"
             v-model:asset-id="selectedAsset"
             :space-id="spaceId"
             :allow-upload="canManageAssets"
@@ -103,6 +125,7 @@ watch(selectedTag, (tagId) => {
           <AssetListView
             v-model:folder-id="selectedFolder"
             :tag-id="selectedTag"
+            :collection-id="selectedCollection"
             :space-id="spaceId"
             :allow-upload="canManageAssets"
             :allow-folder-creation="canManageAssetFolders"

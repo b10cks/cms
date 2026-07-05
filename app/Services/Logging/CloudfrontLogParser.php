@@ -8,7 +8,10 @@ use Illuminate\Support\Facades\Log;
 class CloudfrontLogParser
 {
     private const string TRAFFIC_PATTERN = '/\/ilum\/[^\/]+\/([a-z0-9]+)\//i';
+
     private const string API_TOKEN_PATTERN = '/token=([a-z0-9_]+)/i';
+
+    private const string DOWNLOAD_PATTERN = '/\/dl\/([a-z0-9]+)\//i';
 
     public function parseLogLine(string $line): ?array
     {
@@ -29,7 +32,7 @@ class CloudfrontLogParser
         try {
             $data = json_decode($line, true);
 
-            if (!$data || json_last_error() !== JSON_ERROR_NONE) {
+            if (! $data || json_last_error() !== JSON_ERROR_NONE) {
                 return null;
             }
 
@@ -38,12 +41,12 @@ class CloudfrontLogParser
                 'date' => $data['date'] ?? null,
                 'time' => $data['time'] ?? null,
                 'edge_location' => $data['x-edge-location'] ?? null,
-                'bytes_sent' => (int)($data['sc-bytes'] ?? 0),
+                'bytes_sent' => (int) ($data['sc-bytes'] ?? 0),
                 'ip_address' => $data['c-ip'] ?? null,
                 'method' => $data['cs-method'] ?? null,
                 'host' => $data['cs(Host)'] ?? null,
                 'uri' => $data['cs-uri-stem'] ?? null,
-                'status_code' => (int)($data['sc-status'] ?? 0),
+                'status_code' => (int) ($data['sc-status'] ?? 0),
                 'referrer' => $data['cs(Referer)'] ?? null,
                 'user_agent' => $data['cs(User-Agent)'] ?? null,
                 'query_string' => $data['cs-uri-query'] ?? null,
@@ -52,8 +55,8 @@ class CloudfrontLogParser
                 'request_id' => $data['x-edge-request-id'] ?? null,
                 'host_header' => $data['x-host-header'] ?? null,
                 'protocol' => $data['cs-protocol'] ?? null,
-                'bytes_received' => (int)($data['cs-bytes'] ?? 0),
-                'time_taken' => (float)($data['time-taken'] ?? 0),
+                'bytes_received' => (int) ($data['cs-bytes'] ?? 0),
+                'time_taken' => (float) ($data['time-taken'] ?? 0),
                 'forwarded_for' => $data['x-forwarded-for'] ?? null,
                 'ssl_protocol' => $data['ssl-protocol'] ?? null,
                 'ssl_cipher' => $data['ssl-cipher'] ?? null,
@@ -62,7 +65,7 @@ class CloudfrontLogParser
                 'fle_status' => $data['fle-status'] ?? null,
                 'fle_encrypted_fields' => $data['fle-encrypted-fields'] ?? null,
                 'c_port' => $data['c-port'] ?? null,
-                'time_to_first_byte' => (float)($data['time-to-first-byte'] ?? 0),
+                'time_to_first_byte' => (float) ($data['time-to-first-byte'] ?? 0),
                 'x_edge_detailed_result_type' => $data['x-edge-detailed-result-type'] ?? null,
                 'sc_content_type' => $data['sc-content-type'] ?? null,
                 'sc_content_len' => $data['sc-content-len'] ?? null,
@@ -74,6 +77,7 @@ class CloudfrontLogParser
             Log::warning("Failed to parse JSON log line: {$e->getMessage()}", [
                 'line' => substr($line, 0, 200),
             ]);
+
             return null;
         }
     }
@@ -90,12 +94,12 @@ class CloudfrontLogParser
             'date' => $fields[0] ?? null,
             'time' => $fields[1] ?? null,
             'edge_location' => $fields[2] ?? null,
-            'bytes_sent' => (int)($fields[3] ?? 0),
+            'bytes_sent' => (int) ($fields[3] ?? 0),
             'ip_address' => $fields[4] ?? null,
             'method' => $fields[5] ?? null,
             'host' => $fields[6] ?? null,
             'uri' => $fields[7] ?? null,
-            'status_code' => (int)($fields[8] ?? 0),
+            'status_code' => (int) ($fields[8] ?? 0),
             'referrer' => $fields[9] ?? null,
             'user_agent' => $fields[10] ?? null,
             'query_string' => $fields[11] ?? null,
@@ -104,8 +108,8 @@ class CloudfrontLogParser
             'request_id' => $fields[14] ?? null,
             'host_header' => $fields[15] ?? null,
             'protocol' => $fields[16] ?? null,
-            'bytes_received' => (int)($fields[17] ?? 0),
-            'time_taken' => (float)($fields[18] ?? 0),
+            'bytes_received' => (int) ($fields[17] ?? 0),
+            'time_taken' => (float) ($fields[18] ?? 0),
             'forwarded_for' => $fields[19] ?? null,
             'ssl_protocol' => $fields[20] ?? null,
             'ssl_cipher' => $fields[21] ?? null,
@@ -162,6 +166,7 @@ class CloudfrontLogParser
                 'token_hash' => substr(hash('sha256', $token), 0, 12),
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -176,18 +181,35 @@ class CloudfrontLogParser
         return str_contains($uri, '/ilum/');
     }
 
+    /**
+     * Asset-package download served via the download distribution's /dl/ path.
+     */
+    public function isDownloadRequest(string $uri): bool
+    {
+        return str_contains($uri, '/dl/');
+    }
+
+    public function extractSpaceIdFromDownload(string $uri): ?string
+    {
+        if (preg_match(self::DOWNLOAD_PATTERN, $uri, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
+    }
+
     public function extractEndpoint(string $uri): string
     {
         $path = parse_url($uri, PHP_URL_PATH);
 
-        if (!$path) {
+        if (! $path) {
             return $uri;
         }
 
         $parts = explode('/', trim($path, '/'));
 
         if (count($parts) >= 3 && $parts[0] === 'api') {
-            return '/' . implode('/', array_slice($parts, 0, 4));
+            return '/'.implode('/', array_slice($parts, 0, 4));
         }
 
         return $path;
@@ -197,7 +219,7 @@ class CloudfrontLogParser
     {
         $path = parse_url($uri, PHP_URL_PATH);
 
-        if (!$path) {
+        if (! $path) {
             return null;
         }
 

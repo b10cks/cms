@@ -83,6 +83,14 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping()
             ->runInBackground();
+
+        // Delete expired asset download packages (transfers-disk archive +
+        // row); shares rebuild their package on the next download.
+        $schedule->command('assets:prune-packages')
+            ->dailyAt('05:00')
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     /**

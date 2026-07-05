@@ -61,15 +61,13 @@ class RepairSpaceDatabasesCommand extends Command
 
                     if ($initialized && ! $force) {
                         $healthy++;
-
                         continue;
                     }
 
                     if ($dryRun) {
                         $repaired++;
-                        $reason = $initialized ? 'forced' : 'empty/incomplete';
+                        $reason = $initialized ? 'forced' : 'missing migrations';
                         $this->line("  <fg=cyan>repair</>    {$space->id}  ({$reason})");
-
                         continue;
                     }
 
@@ -83,14 +81,17 @@ class RepairSpaceDatabasesCommand extends Command
                     }
 
                     $repaired++;
-                    $this->line("  <fg=green>migrated</>  {$space->id}");
+                    $this->line("  <fg=green>✓ migrated</>  {$space->id}");
                 } catch (\Throwable $e) {
                     $failed++;
-                    $this->error("  failed     {$space->id}: {$e->getMessage()}");
+                    $errorMsg = $e->getMessage();
+                    $shortMsg = strlen($errorMsg) > 100 ? substr($errorMsg, 0, 100) . '...' : $errorMsg;
+                    $this->error("  failed     {$space->id}: {$shortMsg}");
                     Log::error('Failed to repair space database', [
                         'space' => $space->id,
                         'connection' => $connection->id,
                         'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
                     ]);
                 }
             }

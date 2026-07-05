@@ -48,6 +48,7 @@ Route::get('auth/v1/email/verify/{id}/{hash}', VerifyEmailController::class)
 // Guest routes
 Route::get('/invites/{id}', AppController::class)->name('invite');
 Route::get('/invites/accept/{id}', AppController::class)->name('invite-accept');
+Route::get('/share/{space}/{token}', AppController::class)->name('public-share');
 
 // Space creation
 Route::get('/spaces/new', AppController::class)->name('spaces-new');
@@ -94,3 +95,4 @@ Route::get('/{space}/settings/backups', AppController::class)->name('space-setti
 Route::get('/{space}/settings/migrations', AppController::class)->name('space-settings-migrations');
 Route::get('/{space}/settings/subscription', AppController::class)->name('space-settings-subscription');
 Route::get('/{space}/settings/usage', AppController::class)->name('space-settings-usage');
+Route::get('/{space}/settings/shares', AppController::class)->name('space-settings-shares');

@@ -28,13 +28,19 @@ export function useAssets(spaceId: MaybeRef<string>) {
   const { client: apiClient } = useApiClient()
   const error = ref<string | null>(null)
 
-  const useAssetsQuery = (params: MaybeRef<AssetsQueryParams> = {}) => {
+  const useAssetsQuery = (params: MaybeRef<AssetsQueryParams & { collection?: string }> = {}) => {
     return useQuery({
       queryKey: computed(() => queryKeys.assets(spaceId).list(params)),
       queryFn: async () => {
+        const { collection, ...rest } = toValue(params)
+
+        if (collection) {
+          return await spaceAPI.value.assetCollections.getAssets(collection, rest)
+        }
+
         return await spaceAPI.value.assets.index({
           sort: '+created_at',
-          ...toValue(params),
+          ...rest,
         })
       },
       placeholderData: keepPreviousData,

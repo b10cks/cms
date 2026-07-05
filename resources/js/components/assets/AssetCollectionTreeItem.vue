@@ -1,0 +1,171 @@
+<script setup lang="ts">
+import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
+import { TreeItem } from 'reka-ui'
+import type { LocationQueryRaw } from 'vue-router'
+import { RouterLink } from 'vue-router'
+
+import Icon from '~/components/Icon.vue'
+import { Badge } from '~/components/ui/badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '~/components/ui/dropdown-menu'
+import RenamableTitle from '~/components/ui/RenamableTitle.vue'
+import { getAssetManagerDragItems } from '~/lib/assets/assetDragAndDrop'
+import type { AssetCollectionResource } from '~/types/assets'
+
+const props = defineProps<{
+  item: {
+    _id: string
+    level: number
+    bind: Record<string, unknown>
+    value: AssetCollectionResource
+  }
+  selectedCollectionId: string | null
+  canManageCollections: boolean
+  canShareCollections?: boolean
+}>()
+
+const emit = defineEmits<{
+  select: [id: string]
+  rename: [name: string, collection: AssetCollectionResource]
+  edit: [collection: AssetCollectionResource]
+  manageShares: [collection: AssetCollectionResource]
+  delete: [collection: AssetCollectionResource]
+  assignDrop: [collectionId: string, assetIds: string[]]
+}>()
+
+const route = useRoute()
+const wrapperEl = ref<HTMLElement | null>(null)
+const isDraggedOver = ref(false)
+
+const isSmart = computed(() => props.item.value.type === 'smart')
+
+const collectionLink = computed(() => {
+  const query: LocationQueryRaw = { ...route.query }
+  delete query.folder
+  delete query.tag
+  query.collection = props.item.value.id
+  return { name: route.name ?? undefined, params: { space: route.params.space }, query }
+})
+
+watchEffect((onCleanup) => {
+  if (!wrapperEl.value || isSmart.value || !props.canManageCollections) return
+
+  const cleanup = dropTargetForElements({
+    element: wrapperEl.value,
+    canDrop: ({ source }) => {
+      const items = getAssetManagerDragItems(source.data)
+      return items.length > 0 && items.some((i) => i.type === 'asset')
+    },
+    getIsSticky: () => true,
+    onDragEnter: () => {
+      isDraggedOver.value = true
+    },
+    onDragLeave: () => {
+      isDraggedOver.value = false
+    },
+    onDrop: ({ source }) => {
+      isDraggedOver.value = false
+      const items = getAssetManagerDragItems(source.data)
+      const assetIds = items.filter((i) => i.type === 'asset').map((i) => i.id)
+      if (assetIds.length) {
+        emit('assignDrop', props.item.value.id, assetIds)
+      }
+    },
+  })
+
+  onCleanup(() => {
+    isDraggedOver.value = false
+    cleanup()
+  })
+})
+</script>
+
+<template>
+  <div
+    ref="wrapperEl"
+    class="relative rounded-md transition-colors"
+    :class="isDraggedOver ? 'ring-2 ring-accent' : ''"
+  >
+    <TreeItem
+      :style="{ 'padding-left': `${item.level - 0.5}rem` }"
+      v-bind="item.bind"
+      :as="RouterLink"
+      :to="collectionLink"
+      :class="[
+        'group flex w-full items-center gap-2 rounded-md px-2 py-1 outline-none',
+        'cursor-pointer font-semibold transition-colors duration-200 hover:bg-input',
+        item.value.id === selectedCollectionId ? 'bg-input text-primary' : '',
+        isDraggedOver ? 'bg-accent/10' : '',
+      ]"
+      @select="$emit('select', item.value.id)"
+    >
+      <Icon
+        :name="item.value.icon ? `lucide:${item.value.icon}` : 'lucide:layers'"
+        :style="{ color: item.value.color || undefined }"
+        class="shrink-0"
+        aria-hidden="true"
+      />
+      <RenamableTitle
+        :name="item.value.name"
+        :disabled="!canManageCollections"
+        class="min-w-0 flex-1 truncate"
+        @update="$emit('rename', $event, item.value)"
+      />
+      <Icon
+        v-if="isSmart"
+        name="lucide:sparkles"
+        class="shrink-0 text-muted-foreground"
+        :title="String($t('labels.assetCollections.smartIndicator'))"
+        aria-hidden="true"
+      />
+      <Badge
+        v-if="typeof item.value.assets_count === 'number'"
+        size="sm"
+        type="outline"
+        class="shrink-0"
+      >
+        {{ item.value.assets_count }}
+      </Badge>
+      <DropdownMenu v-if="canManageCollections || canShareCollections">
+        <DropdownMenuTrigger
+          class="opacity-0 transition-all duration-200 group-hover:opacity-100 hover:text-primary data-[state=open]:opacity-100"
+          @click.stop
+        >
+          <Icon name="lucide:ellipsis-vertical" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem @select="$emit('select', item.value.id)">
+            <Icon name="lucide:eye" />
+            <span>{{ $t('actions.view.view') }}</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            v-if="canManageCollections"
+            @select="$emit('edit', item.value)"
+          >
+            <Icon name="lucide:edit" />
+            <span>{{ $t('actions.edit') }}</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            v-if="canShareCollections"
+            @select="$emit('manageShares', item.value)"
+          >
+            <Icon name="lucide:share-2" />
+            <span>{{ $t('actions.assetShares.manage') }}</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            v-if="canManageCollections"
+            class="text-destructive"
+            @select="$emit('delete', item.value)"
+          >
+            <Icon name="lucide:trash-2" />
+            <span>{{ $t('actions.delete') }}</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </TreeItem>
+  </div>
+</template>

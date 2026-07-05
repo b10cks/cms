@@ -128,7 +128,12 @@ class SubscriptionPeriodService
             'ended_at' => $endedAt,
             'close_reason' => $reason,
             'storage_bytes' => $this->safeMetric(fn () => (int) round($this->usage->rawStorage($space))),
-            'traffic_bytes' => $this->safeMetric(fn () => (int) round($this->usage->rawTraffic($space, $start, $endedAt))),
+            // Matches the live quota semantics: package-download egress counts
+            // against the same traffic dimension as /ilum/ delivery egress.
+            'traffic_bytes' => $this->safeMetric(fn () => (int) round(
+                $this->usage->rawTraffic($space, $start, $endedAt)
+                + $this->usage->rawDownloads($space, $start, $endedAt)
+            )),
             'requests_count' => $this->safeMetric(fn () => (int) round($this->usage->rawRequests($space, $start, $endedAt))),
             'ai_spend_usd' => $this->safeMetric(fn () => $this->aiUsage->spendForWindow($space, $start, $endedAt)),
         ];

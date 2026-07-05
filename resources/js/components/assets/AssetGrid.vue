@@ -4,12 +4,14 @@ import { toast } from 'vue-sonner'
 
 import type { AssetsQueryParams } from '~/api/resources/assets'
 import AssetsIcon from '~/assets/images/assets.svg?component'
+import AddToCollectionDialog from '~/components/assets/AddToCollectionDialog.vue'
 import AssetDetailsDialog from '~/components/assets/AssetDetailsDialog.vue'
 import AssetFolder from '~/components/assets/AssetFolder.vue'
 import AssetItem from '~/components/assets/AssetItem.vue'
 import AssetSelectionBar from '~/components/assets/AssetSelectionBar.vue'
 import AssetShortcutsDialog from '~/components/assets/AssetShortcutsDialog.vue'
 import BulkTagDialog from '~/components/assets/BulkTagDialog.vue'
+import CreateAssetShareDialog from '~/components/assets/CreateAssetShareDialog.vue'
 import CreateFolderDialog from '~/components/assets/CreateFolderDialog.vue'
 import MoveToFolderDialog from '~/components/assets/MoveToFolderDialog.vue'
 import UploadDialog from '~/components/assets/UploadDialog.vue'
@@ -33,6 +35,7 @@ import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type { AssetSelectionEntry } from '~/composables/useAssetSelection'
 import { getAssetManagerDragItems, type AssetManagerDragItem } from '~/lib/assets/assetDragAndDrop'
 import { downloadAssetFiles } from '~/lib/assets/downloadAssets'
+import type { AssetShareSource } from '~/types/asset-distribution'
 import type { AssetFolderResource, AssetResource } from '~/types/assets'
 
 export interface AssetGridProps {
@@ -90,6 +93,9 @@ const { mutateAsync: deleteFolder } = useDeleteAssetFolderMutation()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageAssets = computed(() => access.hasAbility('assets.manage'))
 const canManageFolders = computed(() => access.hasAbility('asset_folders.manage'))
+const canManageCollections = computed(() => access.hasAbility('asset_collections.manage'))
+const canShareAssets = computed(() => access.hasAbility('asset_shares.manage'))
+const { downloadSelectionAsPackage } = useAssetPackages(props.spaceId)
 
 const isManage = computed(() => props.mode === 'manage')
 const isMultiSelect = computed(() => props.mode === 'multi-select')
@@ -101,7 +107,21 @@ const selectionEnabled = computed(
 
 const folderId = defineModel<string | null>('folderId')
 const tagId = defineModel<string | null>('tagId')
+const collectionId = defineModel<string | null>('collectionId', { default: null })
 const assetId = defineModel<string | null | undefined>('assetId', { default: null })
+
+const { useAssetCollectionQuery, useRemoveAssetsFromCollectionMutation } = useAssetCollections(
+  props.spaceId
+)
+const { data: activeCollection } = useAssetCollectionQuery(collectionId)
+const { mutateAsync: removeAssetsFromCollection } = useRemoveAssetsFromCollectionMutation()
+
+const isManualCollectionView = computed(
+  () =>
+    Boolean(collectionId.value) &&
+    activeCollection.value?.id === collectionId.value &&
+    activeCollection.value?.type === 'manual'
+)
 
 const showUploadDialog = ref(false)
 const droppedFiles = ref<File[]>([])
@@ -125,6 +145,10 @@ const moveDialogOpen = ref(false)
 const moveDialogItems = ref<AssetManagerDragItem[]>([])
 const bulkTagOpen = ref(false)
 const bulkTagAssets = ref<AssetResource[]>([])
+const addToCollectionOpen = ref(false)
+const addToCollectionAssetIds = ref<string[]>([])
+const shareDialogOpen = ref(false)
+const shareSource = ref<AssetShareSource | null>(null)
 const shortcutsOpen = ref(false)
 const isSelectingAllMatching = ref(false)
 const clipboard = ref<AssetManagerDragItem[] | null>(null)
@@ -174,11 +198,12 @@ const assetFilters = computed(() => [
   },
 ])
 
-const assetQueryParams = computed<AssetsQueryParams>(() => {
+const assetQueryParams = computed<AssetsQueryParams & { collection?: string }>(() => {
   return {
     ...filters.value,
-    folder: folderId.value ?? undefined,
-    tags: tagId.value ?? undefined,
+    collection: collectionId.value ?? undefined,
+    folder: collectionId.value ? undefined : (folderId.value ?? undefined),
+    tags: collectionId.value ? undefined : (tagId.value ?? undefined),
     q: q.value || undefined,
     sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
     page: currentPage.value,
@@ -231,8 +256,12 @@ const breadcrumbs = computed(() => {
   return getBreadcrumbs(folderId.value)
 })
 
+const activeTag = computed(
+  () => allTagsResponse.value?.data.find((tag) => tag.id === tagId.value) ?? null
+)
+
 const folders = computed(() => {
-  if (tagId.value) {
+  if (tagId.value || collectionId.value) {
     return []
   }
 
@@ -580,6 +609,47 @@ const openBulkTagDialog = (assetsToTag: AssetResource[]) => {
   bulkTagOpen.value = true
 }
 
+const openAddToCollectionDialog = (assetsToAdd: AssetResource[]) => {
+  if (!assetsToAdd.length) {
+    return
+  }
+
+  addToCollectionAssetIds.value = assetsToAdd.map((asset) => asset.id)
+  addToCollectionOpen.value = true
+}
+
+const openShareDialog = (assetsToShare: AssetResource[]) => {
+  if (!assetsToShare.length) {
+    return
+  }
+
+  shareSource.value = {
+    source_type: 'selection',
+    asset_ids: assetsToShare.map((asset) => asset.id),
+  }
+  shareDialogOpen.value = true
+}
+
+const openFolderShareDialog = (folder: AssetFolderResource) => {
+  shareSource.value = { source_type: 'folder', folder_id: folder.id }
+  shareDialogOpen.value = true
+}
+
+const handleRemoveFromCollection = async (assetsToRemove: AssetResource[]) => {
+  if (!collectionId.value || !assetsToRemove.length) {
+    return
+  }
+
+  await removeAssetsFromCollection({
+    collectionId: collectionId.value,
+    assetIds: assetsToRemove.map((asset) => asset.id),
+  })
+
+  for (const asset of assetsToRemove) {
+    selectedAssets.value.delete(asset.id)
+  }
+}
+
 const handleMoved = () => {
   clearSelection()
   clipboard.value = null
@@ -594,6 +664,13 @@ const handleCopyUrl = async (asset: AssetResource) => {
 
 const handleDownload = async (assetsToDownload: AssetResource[]) => {
   if (!assetsToDownload.length) {
+    return
+  }
+
+  // Larger selections are bundled into a server-built zip instead of a
+  // sequential per-file download loop. Package creation needs assets.manage.
+  if (assetsToDownload.length > 3 && canManageAssets.value) {
+    await downloadSelectionAsPackage(assetsToDownload.map((asset) => asset.id))
     return
   }
 
@@ -622,6 +699,14 @@ const handleAssetTag = (asset: AssetResource) => {
 
 const handleAssetDownload = (asset: AssetResource) => {
   handleDownload(assetsForAction(asset))
+}
+
+const handleAssetAddToCollection = (asset: AssetResource) => {
+  openAddToCollectionDialog(assetsForAction(asset))
+}
+
+const handleAssetRemoveFromCollection = (asset: AssetResource) => {
+  handleRemoveFromCollection(assetsForAction(asset))
 }
 
 const handleAssetContextMenu = (asset: AssetResource) => {
@@ -676,11 +761,16 @@ const handleAssetDelete = async (asset: AssetResource) => {
     return
   }
 
+  const inCollection = isManualCollectionView.value
   const confirmed = await alert.confirm(
-    $t('messages.assets.deleteConfirmation', { name: asset.filename }),
+    inCollection
+      ? $t('messages.assets.deleteFromCollectionConfirmation', { name: asset.filename })
+      : $t('messages.assets.deleteConfirmation', { name: asset.filename }),
     {
-      title: $t('labels.assets.deleteTitle'),
-      confirmLabel: $t('actions.delete'),
+      title: inCollection
+        ? $t('labels.assets.deleteFromLibraryTitle')
+        : $t('labels.assets.deleteTitle'),
+      confirmLabel: inCollection ? $t('actions.assets.deleteFromLibrary') : $t('actions.delete'),
       variant: 'destructive',
     }
   )
@@ -717,11 +807,20 @@ const handleFolderDelete = async (folder: AssetFolderResource) => {
 }
 
 const deleteAssets = async (assetsToDelete: AssetResource[]) => {
+  const inCollection = isManualCollectionView.value
   const confirmed = await alert.confirm(
-    String($t('messages.assets.bulkDeleteConfirmation', { count: assetsToDelete.length })),
+    inCollection
+      ? String(
+          $t('messages.assets.bulkDeleteFromCollectionConfirmation', {
+            count: assetsToDelete.length,
+          })
+        )
+      : String($t('messages.assets.bulkDeleteConfirmation', { count: assetsToDelete.length })),
     {
-      title: $t('labels.assets.deleteTitle'),
-      confirmLabel: $t('actions.delete'),
+      title: inCollection
+        ? $t('labels.assets.deleteFromLibraryTitle')
+        : $t('labels.assets.deleteTitle'),
+      confirmLabel: inCollection ? $t('actions.assets.deleteFromLibrary') : $t('actions.delete'),
       variant: 'destructive',
     }
   )
@@ -1379,7 +1478,7 @@ const handleDocumentDrop = (event: DragEvent) => {
   showUploadDialog.value = true
 }
 
-watch([folderId, tagId], () => {
+watch([folderId, tagId, collectionId], () => {
   clearSelection()
   focusedKey.value = null
   currentPage.value = 1
@@ -1496,6 +1595,44 @@ onUnmounted(() => {
             </button>
           </BreadcrumbItem>
         </template>
+
+        <template v-if="activeCollection">
+          <li
+            role="presentation"
+            aria-hidden="true"
+            class="flex items-center gap-2"
+          >
+            /
+          </li>
+          <BreadcrumbItem>
+            <span class="flex items-center gap-2 py-1 font-semibold text-primary">
+              <Icon
+                :name="activeCollection.icon ? `lucide:${activeCollection.icon}` : 'lucide:layers'"
+                :style="{ color: activeCollection.color || 'inherit' }"
+              />
+              <span>{{ activeCollection.name }}</span>
+            </span>
+          </BreadcrumbItem>
+        </template>
+
+        <template v-else-if="activeTag">
+          <li
+            role="presentation"
+            aria-hidden="true"
+            class="flex items-center gap-2"
+          >
+            /
+          </li>
+          <BreadcrumbItem>
+            <span class="flex items-center gap-2 py-1 font-semibold text-primary">
+              <Icon
+                :name="activeTag.icon ? `lucide:${activeTag.icon}` : 'lucide:tag'"
+                :style="{ color: activeTag.color || 'inherit' }"
+              />
+              <span>{{ activeTag.name }}</span>
+            </span>
+          </BreadcrumbItem>
+        </template>
       </Breadcrumb>
 
       <div class="flex items-center gap-2">
@@ -1581,6 +1718,7 @@ onUnmounted(() => {
                 :can-edit="canManageFolders"
                 :can-delete="canManageFolders"
                 :can-create-children="canManageFolders"
+                :can-share="mode === 'manage' && canShareAssets"
                 :drag-items="getDragItemsFor('folder', folder.id)"
                 :can-receive-drop="(items) => canMoveItems(items, folder.id)"
                 :on-items-drop="(items) => handleItemsMove(folder.id, items)"
@@ -1590,6 +1728,7 @@ onUnmounted(() => {
                 @click="handleFolderClick"
                 @open="(value) => navigateToFolder(value.id)"
                 @edit="openEditFolderDialog"
+                @share="(value) => openFolderShareDialog(value)"
                 @move="
                   (value) => openMoveDialog(itemsForMoveAction({ type: 'folder', data: value }))
                 "
@@ -1682,11 +1821,13 @@ onUnmounted(() => {
                 </h3>
                 <p class="mb-4 text-center text-muted">
                   {{
-                    tagId
-                      ? $t('labels.assets.noAssetsWithTag')
-                      : folderId
-                        ? $t('labels.assets.folderEmpty')
-                        : $t('labels.assets.noAssetsFoundDescription')
+                    collectionId
+                      ? $t('labels.assetCollections.emptyCollection')
+                      : tagId
+                        ? $t('labels.assets.noAssetsWithTag')
+                        : folderId
+                          ? $t('labels.assets.folderEmpty')
+                          : $t('labels.assets.noAssetsFoundDescription')
                   }}
                 </p>
                 <Button
@@ -1716,6 +1857,10 @@ onUnmounted(() => {
                   :drag-items="row.dragItems"
                   :compliance-issues="row.complianceIssues"
                   :resolved-tags="row.resolvedTags"
+                  :can-add-to-collection="mode === 'manage' && canManageCollections"
+                  :can-remove-from-collection="
+                    mode === 'manage' && canManageCollections && isManualCollectionView
+                  "
                   :data-id="row.asset.id"
                   :data-key="`asset:${row.asset.id}`"
                   v-bind="assetItemProps"
@@ -1725,6 +1870,8 @@ onUnmounted(() => {
                   @delete="handleAssetDelete"
                   @move="handleAssetMove"
                   @tag="handleAssetTag"
+                  @add-to-collection="handleAssetAddToCollection"
+                  @remove-from-collection="handleAssetRemoveFromCollection"
                   @download="handleAssetDownload"
                   @copy-url="handleCopyUrl"
                   @context-menu="handleAssetContextMenu"
@@ -1800,8 +1947,14 @@ onUnmounted(() => {
       :can-select-all-matching="canSelectAllMatching"
       :is-selecting-all-matching="isSelectingAllMatching"
       :can-manage="canManageAssets"
+      :can-add-to-collection="canManageCollections"
+      :can-remove-from-collection="canManageCollections && isManualCollectionView"
+      :can-share="canShareAssets"
       @move="openMoveDialog(getSelectedDragItems())"
       @tag="openBulkTagDialog(Array.from(selectedAssets.values()))"
+      @add-to-collection="openAddToCollectionDialog(Array.from(selectedAssets.values()))"
+      @remove-from-collection="handleRemoveFromCollection(Array.from(selectedAssets.values()))"
+      @share="openShareDialog(Array.from(selectedAssets.values()))"
       @download="handleDownload(Array.from(selectedAssets.values()))"
       @delete="deleteSelection"
       @clear="clearSelection"
@@ -1844,6 +1997,20 @@ onUnmounted(() => {
       v-model:open="bulkTagOpen"
       :space-id="spaceId"
       :assets="bulkTagAssets"
+    />
+
+    <AddToCollectionDialog
+      v-if="mode === 'manage' && canManageCollections"
+      v-model:open="addToCollectionOpen"
+      :space-id="spaceId"
+      :asset-ids="addToCollectionAssetIds"
+    />
+
+    <CreateAssetShareDialog
+      v-if="mode === 'manage' && canShareAssets"
+      v-model:open="shareDialogOpen"
+      :space-id="spaceId"
+      :source="shareSource"
     />
 
     <AssetShortcutsDialog v-model:open="shortcutsOpen" />

@@ -250,6 +250,85 @@
         "updatedAt": "Zuletzt aktualisiert"
       }
     },
+    "assetCollections": {
+      "title": "Sammlungen",
+      "smartIndicator": "Smarte Sammlung",
+      "createCollection": "Neue Sammlung",
+      "editCollection": "Sammlung bearbeiten",
+      "dialogDescription": "Gruppiere Assets manuell oder lass Regeln eine smarte Sammlung aktuell halten.",
+      "deleteTitle": "Diese Sammlung löschen?",
+      "deleteConfirmation": "\"{name}\" löschen? Das betrifft die Assets nicht — die Sammlung wird nur entfernt.",
+      "emptyCollection": "Diese Sammlung enthält noch keine Assets.",
+      "noCollections": "Noch keine Sammlungen. Erstelle eine, um deine Assets zu gruppieren.",
+      "types": {
+        "manual": "Manuell",
+        "manualDescription": "Wähle Assets selbst aus und ordne sie beliebig an.",
+        "smart": "Smart",
+        "smartDescription": "Assets werden automatisch anhand von Regeln aufgenommen."
+      },
+      "fieldLabels": {
+        "name": "Name der Sammlung",
+        "namePlaceholder": "Namen der Sammlung eingeben",
+        "description": "Beschreibung",
+        "descriptionPlaceholder": "Wofür ist diese Sammlung gedacht?",
+        "type": "Typ"
+      },
+      "rules": {
+        "matchLabel": "Übereinstimmung",
+        "match": {
+          "all": "Alle Bedingungen",
+          "any": "Beliebige Bedingung"
+        },
+        "addCondition": "Bedingung hinzufügen",
+        "removeCondition": "Bedingung entfernen",
+        "valuePlaceholder": "Wert",
+        "listPlaceholder": "Werte durch Komma getrennt",
+        "sizePlaceholder": "Größe in Bytes",
+        "folderPlaceholder": "Ordner auswählen",
+        "noValueNeeded": "Kein Wert nötig"
+      },
+      "fields": {
+        "filename": "Dateiname",
+        "extension": "Dateiendung",
+        "mime_type": "MIME-Typ",
+        "size": "Dateigröße",
+        "folder": "Ordner",
+        "tags": "Tags",
+        "rights_status": "Rechtestatus",
+        "license_expires_at": "Lizenz läuft ab",
+        "created_at": "Erstellt am",
+        "updated_at": "Aktualisiert am",
+        "orientation": "Ausrichtung",
+        "untagged": "Ohne Tags"
+      },
+      "operators": {
+        "contains": "enthält",
+        "equals": "ist gleich",
+        "prefix": "beginnt mit",
+        "in": "ist eine von",
+        "gt": "größer als",
+        "gte": "mindestens",
+        "lt": "kleiner als",
+        "lte": "höchstens",
+        "null": "ist leer",
+        "any": "hat eine von",
+        "all": "hat alle von",
+        "before": "vor",
+        "after": "nach"
+      },
+      "orientations": {
+        "landscape": "Querformat",
+        "portrait": "Hochformat",
+        "square": "Quadratisch"
+      },
+      "addToCollection": {
+        "title": "{count} Asset zu Sammlung hinzufügen | {count} Assets zu Sammlung hinzufügen",
+        "description": "Wähle eine manuelle Sammlung oder erstelle eine neue.",
+        "searchPlaceholder": "Sammlungen durchsuchen…",
+        "empty": "Keine manuellen Sammlungen gefunden.",
+        "createNew": "Neue Sammlung"
+      }
+    },
     "assetFolders": {
       "title": "Asset-Ordner",
       "create": "Neuer Ordner",
@@ -609,6 +688,7 @@
         "luminance": "Relative Luminanz"
       },
       "deleteTitle": "Asset löschen",
+      "deleteFromLibraryTitle": "Aus Bibliothek löschen",
       "dragMixed": "{folders} Ordner, {assets} Assets",
       "move": {
         "title": "{count} Element verschieben | {count} Elemente verschieben",
@@ -3134,6 +3214,8 @@
         "assets": "Assets",
         "assetFolders": "Asset-Ordner",
         "assetTags": "Asset-Tags",
+        "assetCollections": "Asset-Sammlungen",
+        "assetShares": "Asset-Freigaben",
         "blocks": "Blöcke",
         "blockTemplates": "Block-Templates",
         "blockVersions": "Block-Versionen",
@@ -3455,6 +3537,89 @@
     },
     "accessDenied": {
       "from": "Zugriff verweigert"
+    },
+    "assetShares": {
+      "title": "Asset-Freigaben",
+      "description": "Öffentliche Download-Links für Sammlungen, Ordner und Asset-Auswahlen.",
+      "manageTitle": "Freigaben verwalten",
+      "manageDescription": "Öffentliche Download-Links für diese Sammlung ansehen und verwalten.",
+      "noSharesForCollection": "Noch keine Freigabelinks für diese Sammlung.",
+      "createTitle": "Assets teilen",
+      "editTitle": "Freigabe bearbeiten",
+      "dialogDescription": "Erstelle einen öffentlichen Link, über den Empfänger diese Assets ansehen und herunterladen können — ganz ohne Konto.",
+      "createdTitle": "Freigabelink erstellt",
+      "createdDescription": "Jeder mit diesem Link kann auf die geteilten Assets zugreifen.",
+      "createdPasswordHint": "Teile das Passwort separat mit — es ist nicht Teil des Links.",
+      "sources": {
+        "collection": "Sammlung",
+        "folder": "Ordner",
+        "selection": "Auswahl",
+        "collectionCount": "Sammlung",
+        "folderCount": "Ordner",
+        "selectionCount": "{count} ausgewähltes Asset | {count} ausgewählte Assets"
+      },
+      "fields": {
+        "name": "Name",
+        "namePlaceholder": "z. B. Markenassets für Print",
+        "description": "Beschreibung",
+        "descriptionPlaceholder": "Optionale Notiz für Empfänger",
+        "password": "Passwort",
+        "passwordPlaceholder": "Optionales Passwort",
+        "passwordHint": "Empfänger müssen dieses Passwort eingeben, bevor sie auf die Freigabe zugreifen können.",
+        "passwordKeepPlaceholder": "Leer lassen, um das aktuelle Passwort zu behalten",
+        "passwordKeepHint": "Leer lassen, um das aktuelle Passwort zu behalten, oder ein neues eingeben.",
+        "removePassword": "Passwortschutz entfernen",
+        "expiresAt": "Läuft ab",
+        "expiresAtHint": "Leer lassen für einen Link, der nie abläuft.",
+        "downloadLimit": "Download-Limit",
+        "downloadLimitPlaceholder": "Unbegrenzt",
+        "downloadLimitHint": "Maximale Anzahl vollständiger Downloads. Leer lassen für unbegrenzt.",
+        "allowIndividualDownloads": "Einzelne Downloads erlauben",
+        "allowIndividualDownloadsHint": "Empfänger können zusätzlich zum kompletten Archiv einzelne Dateien herunterladen."
+      },
+      "columns": {
+        "name": "Name",
+        "source": "Quelle",
+        "protected": "Geschützt",
+        "downloads": "Downloads",
+        "views": "Aufrufe",
+        "expires": "Läuft ab",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Aktiv",
+        "expired": "Abgelaufen",
+        "revoked": "Widerrufen"
+      },
+      "passwordProtected": "Passwortgeschützt",
+      "noPassword": "Kein Passwort",
+      "noShares": "Noch keine Freigabelinks. Teile eine Sammlung, einen Ordner oder eine Auswahl aus der Asset-Bibliothek.",
+      "openMenu": "Menü öffnen",
+      "revokeConfirmTitle": "Freigabelink widerrufen",
+      "revokeConfirmMessage": "\"{name}\" widerrufen? Der Link funktioniert sofort nicht mehr. Das kann nicht rückgängig gemacht werden.",
+      "deleteConfirmTitle": "Freigabelink löschen",
+      "deleteConfirmMessage": "\"{name}\" löschen? Der Link funktioniert sofort nicht mehr. Das kann nicht rückgängig gemacht werden."
+    },
+    "publicShare": {
+      "pageTitle": "Geteilte Assets",
+      "notFoundTitle": "Dieser Link ist nicht mehr verfügbar",
+      "notFoundDescription": "Der Freigabelink ist ungültig, abgelaufen oder wurde widerrufen. Wende dich bitte an die Person, die ihn dir geschickt hat.",
+      "passwordPrompt": "Diese Freigabe ist passwortgeschützt. Gib das Passwort ein, um fortzufahren.",
+      "passwordPlaceholder": "Passwort",
+      "wrongPassword": "Falsches Passwort. Bitte versuche es erneut.",
+      "unlockFailed": "Die Freigabe konnte nicht entsperrt werden. Bitte versuche es erneut.",
+      "unlock": "Entsperren",
+      "assetCount": "{count} Datei | {count} Dateien",
+      "expiresAt": "Verfügbar bis {date}",
+      "downloadsRemaining": "Noch {count} Download | Noch {count} Downloads",
+      "downloadAll": "Alles herunterladen",
+      "preparing": "Wird vorbereitet…",
+      "building": "Archiv wird erstellt… {progress}%",
+      "downloadLimitReached": "Das Download-Limit für diese Freigabe wurde erreicht.",
+      "downloadFailed": "Download fehlgeschlagen. Bitte versuche es erneut.",
+      "downloadAsset": "Datei herunterladen",
+      "empty": "Diese Freigabe enthält keine Dateien.",
+      "poweredBy": "Geteilt über b10cks"
     }
   },
   "notifications": {
@@ -3655,7 +3820,11 @@
       "download": "Herunterladen",
       "copyUrl": "URL kopieren",
       "applyTags": "Tags anwenden",
-      "addSelected": "{count} ausgewählte hinzufügen"
+      "addSelected": "{count} ausgewählte hinzufügen",
+      "addToCollection": "Zu Sammlung hinzufügen…",
+      "removeFromCollection": "Aus Sammlung entfernen",
+      "deleteFromLibrary": "Aus Bibliothek löschen",
+      "share": "Teilen…"
     },
     "assetFolders": {
       "create": "Neuen Ordner erstellen"
@@ -3777,6 +3946,17 @@
       "edit": "Tag bearbeiten",
       "delete": "Tag löschen",
       "save": "Tag speichern"
+    },
+    "assetCollections": {
+      "save": "Sammlung speichern"
+    },
+    "assetShares": {
+      "create": "Freigabelink erstellen",
+      "newShare": "Neuer Freigabelink",
+      "manage": "Freigaben verwalten…",
+      "revoke": "Widerrufen",
+      "shareCollection": "Sammlung teilen…",
+      "shareFolder": "Ordner teilen…"
     }
   },
   "navigation": {
@@ -3942,6 +4122,19 @@
       "deleteError": "Fehler beim Löschen des Tags: {error}",
       "assignSuccess": "Tag erfolgreich zugewiesen",
       "assignError": "Fehler beim Zuweisen des Tags: {error}"
+    },
+    "assetCollections": {
+      "createSuccess": "Sammlung \"{name}\" erfolgreich erstellt",
+      "createError": "Fehler beim Erstellen der Sammlung: {error}",
+      "updateSuccess": "Sammlung \"{name}\" erfolgreich aktualisiert",
+      "updateError": "Fehler beim Aktualisieren der Sammlung: {error}",
+      "deleteSuccess": "Sammlung erfolgreich gelöscht",
+      "deleteError": "Fehler beim Löschen der Sammlung: {error}",
+      "addSuccess": "{count} Asset zur Sammlung hinzugefügt | {count} Assets zur Sammlung hinzugefügt",
+      "addError": "Fehler beim Hinzufügen zur Sammlung: {error}",
+      "removeSuccess": "{count} Asset aus der Sammlung entfernt | {count} Assets aus der Sammlung entfernt",
+      "removeError": "Fehler beim Entfernen aus der Sammlung: {error}",
+      "reorderError": "Fehler beim Sortieren der Sammlung: {error}"
     },
     "assets": {
       "uploadSuccess": "Assets erfolgreich hochgeladen",
@@ -4204,6 +4397,26 @@
       "deleteError": "Icon konnte nicht gelöscht werden: {error}",
       "importSuccess": "Icons erfolgreich importiert",
       "importError": "Icons konnten nicht importiert werden: {error}"
+    },
+    "assetShares": {
+      "createSuccess": "Freigabelink \"{name}\" erfolgreich erstellt",
+      "createError": "Fehler beim Erstellen des Freigabelinks: {error}",
+      "updateSuccess": "Freigabelink \"{name}\" erfolgreich aktualisiert",
+      "updateError": "Fehler beim Aktualisieren des Freigabelinks: {error}",
+      "revokeSuccess": "Freigabelink \"{name}\" widerrufen",
+      "revokeError": "Fehler beim Widerrufen des Freigabelinks: {error}",
+      "deleteSuccess": "Freigabelink erfolgreich gelöscht",
+      "deleteError": "Fehler beim Löschen des Freigabelinks: {error}",
+      "linkCopied": "Freigabelink in die Zwischenablage kopiert"
+    },
+    "assetPackages": {
+      "createError": "Fehler beim Erstellen des Download-Pakets: {error}",
+      "deleteSuccess": "Download-Paket erfolgreich gelöscht",
+      "deleteError": "Fehler beim Löschen des Download-Pakets: {error}",
+      "preparing": "Download von {count} Asset wird vorbereitet… | Download von {count} Assets wird vorbereitet…",
+      "building": "Archiv wird erstellt… {progress}%",
+      "ready": "Dein Download startet",
+      "failed": "Fehler beim Vorbereiten des Downloads: {error}"
     }
   },
   "content": {
@@ -4230,6 +4443,8 @@
     },
     "assets": {
       "deleteConfirmation": "Lösche \"{name}\"? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "deleteFromCollectionConfirmation": "\"{name}\" endgültig aus der gesamten Bibliothek löschen? Das Asset wird aus allen Sammlungen und Ordnern entfernt, in denen es vorkommt – nicht nur aus dieser Sammlung – und kann nicht wiederhergestellt werden. Um es nur aus dieser Sammlung zu nehmen, nutze stattdessen „Aus Sammlung entfernen“.",
+      "bulkDeleteFromCollectionConfirmation": "{count} Asset endgültig aus der gesamten Bibliothek löschen? Es wird aus allen Sammlungen und Ordnern entfernt, in denen es vorkommt – nicht nur aus dieser Sammlung – und kann nicht wiederhergestellt werden. Um es nur aus dieser Sammlung zu nehmen, nutze stattdessen „Aus Sammlung entfernen“. | {count} Assets endgültig aus der gesamten Bibliothek löschen? Sie werden aus allen Sammlungen und Ordnern entfernt, in denen sie vorkommen – nicht nur aus dieser Sammlung – und können nicht wiederhergestellt werden. Um sie nur aus dieser Sammlung zu nehmen, nutze stattdessen „Aus Sammlung entfernen“.",
       "forceDeleteConfirmation": "\"{name}\" ist noch in {count} Inhalten verknüpft. Beim erzwungenen Löschen wird die Asset-Datei entfernt, bestehende Inhaltsreferenzen bleiben jedoch erhalten.",
       "uploadRequirementsConfirm": "Einige Dateien haben fehlende Pflicht-Metadaten. Du kannst sie trotzdem hochladen, aber sie bleiben markiert, bis die fehlenden Werte ergänzt wurden.",
       "confirmDelete": "Dieses Asset löschen? Diese Aktion kann nicht rückgängig gemacht werden.",

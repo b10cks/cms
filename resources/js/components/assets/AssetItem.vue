@@ -50,6 +50,8 @@ export interface AssetItemProps {
   dragItems?: AssetManagerDragItem[]
   complianceIssues?: AssetRequirementIssue[]
   resolvedTags?: AssetTagResource[]
+  canAddToCollection?: boolean
+  canRemoveFromCollection?: boolean
 }
 
 const props = withDefaults(defineProps<AssetItemProps>(), {
@@ -65,6 +67,8 @@ const props = withDefaults(defineProps<AssetItemProps>(), {
   dragItems: () => [],
   complianceIssues: () => [],
   resolvedTags: () => [],
+  canAddToCollection: false,
+  canRemoveFromCollection: false,
 })
 
 const emit = defineEmits<{
@@ -74,6 +78,8 @@ const emit = defineEmits<{
   delete: [asset: AssetResource]
   move: [asset: AssetResource]
   tag: [asset: AssetResource]
+  'add-to-collection': [asset: AssetResource]
+  'remove-from-collection': [asset: AssetResource]
   download: [asset: AssetResource]
   'copy-url': [asset: AssetResource]
   'context-menu': [asset: AssetResource]
@@ -85,6 +91,15 @@ const enableDragAndDrop = computed(() => props.draggable && isManageMode.value)
 // The checkbox is shown whenever multi-selection is active (manage or the
 // multi-select picker), but never in the single-pick select mode.
 const displayCheckbox = computed(() => props.showCheckbox && !isSelectMode.value)
+
+// In a collection view the menu also offers "Remove from collection", so the
+// destructive action is spelled out as a library-wide delete to make clear it
+// removes the asset everywhere - not just from this collection.
+const deleteLabel = computed(() =>
+  props.canRemoveFromCollection
+    ? String(t('actions.assets.deleteFromLibrary'))
+    : String(t('actions.delete'))
+)
 
 const hoverThumbnailIndex = ref(0)
 let thumbnailInterval: ReturnType<typeof setInterval> | null = null
@@ -376,6 +391,20 @@ watchEffect((onCleanup) => {
                 <Icon name="lucide:tags" />
                 <span>{{ $t('actions.assets.tag') }}</span>
               </DropdownMenuItem>
+              <DropdownMenuItem
+                v-if="canAddToCollection"
+                @select="emit('add-to-collection', asset)"
+              >
+                <Icon name="lucide:layers" />
+                <span>{{ $t('actions.assets.addToCollection') }}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                v-if="canRemoveFromCollection"
+                @select="emit('remove-from-collection', asset)"
+              >
+                <Icon name="lucide:layers" />
+                <span>{{ $t('actions.assets.removeFromCollection') }}</span>
+              </DropdownMenuItem>
               <DropdownMenuSeparator v-if="canDelete" />
               <DropdownMenuItem
                 v-if="canDelete"
@@ -383,7 +412,7 @@ watchEffect((onCleanup) => {
                 @select="emit('delete', asset)"
               >
                 <Icon name="lucide:trash-2" />
-                <span>{{ $t('actions.delete') }}</span>
+                <span>{{ deleteLabel }}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -431,6 +460,20 @@ watchEffect((onCleanup) => {
         <Icon name="lucide:tags" />
         <span>{{ $t('actions.assets.tag') }}</span>
       </ContextMenuItem>
+      <ContextMenuItem
+        v-if="canAddToCollection"
+        @select="emit('add-to-collection', asset)"
+      >
+        <Icon name="lucide:layers" />
+        <span>{{ $t('actions.assets.addToCollection') }}</span>
+      </ContextMenuItem>
+      <ContextMenuItem
+        v-if="canRemoveFromCollection"
+        @select="emit('remove-from-collection', asset)"
+      >
+        <Icon name="lucide:layers" />
+        <span>{{ $t('actions.assets.removeFromCollection') }}</span>
+      </ContextMenuItem>
       <ContextMenuSeparator v-if="canDelete" />
       <ContextMenuItem
         v-if="canDelete"
@@ -438,7 +481,7 @@ watchEffect((onCleanup) => {
         @select="emit('delete', asset)"
       >
         <Icon name="lucide:trash-2" />
-        <span>{{ $t('actions.delete') }}</span>
+        <span>{{ deleteLabel }}</span>
       </ContextMenuItem>
     </ContextMenuContent>
   </ContextMenu>

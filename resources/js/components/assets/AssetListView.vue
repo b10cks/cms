@@ -5,8 +5,10 @@ import { toast } from 'vue-sonner'
 
 import type { AssetsQueryParams } from '~/api/resources/assets'
 import AssetComplianceIndicator from '~/components/assets/AssetComplianceIndicator.vue'
+import AddToCollectionDialog from '~/components/assets/AddToCollectionDialog.vue'
 import AssetSelectionBar from '~/components/assets/AssetSelectionBar.vue'
 import BulkTagDialog from '~/components/assets/BulkTagDialog.vue'
+import CreateAssetShareDialog from '~/components/assets/CreateAssetShareDialog.vue'
 import CreateFolderDialog from '~/components/assets/CreateFolderDialog.vue'
 import MoveToFolderDialog from '~/components/assets/MoveToFolderDialog.vue'
 import UploadDialog from '~/components/assets/UploadDialog.vue'
@@ -40,6 +42,7 @@ import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type { AssetSelectionEntry } from '~/composables/useAssetSelection'
 import type { AssetManagerDragItem } from '~/lib/assets/assetDragAndDrop'
 import { downloadAssetFiles } from '~/lib/assets/downloadAssets'
+import type { AssetShareSource } from '~/types/asset-distribution'
 import type { AssetDeleteConflict, AssetResource } from '~/types/assets'
 
 export interface AssetListViewProps {
@@ -96,6 +99,23 @@ const canManageFolders = computed(() => access.hasAbility('asset_folders.manage'
 
 const folderId = defineModel<string | null>('folderId')
 const tagId = defineModel<string | null>('tagId')
+const collectionId = defineModel<string | null>('collectionId', { default: null })
+
+const canManageCollections = computed(() => access.hasAbility('asset_collections.manage'))
+const canShareAssets = computed(() => access.hasAbility('asset_shares.manage'))
+const { downloadSelectionAsPackage } = useAssetPackages(props.spaceId)
+const { useAssetCollectionQuery, useRemoveAssetsFromCollectionMutation } = useAssetCollections(
+  props.spaceId
+)
+const { data: activeCollection } = useAssetCollectionQuery(collectionId)
+const { mutateAsync: removeAssetsFromCollection } = useRemoveAssetsFromCollectionMutation()
+
+const isManualCollectionView = computed(
+  () =>
+    Boolean(collectionId.value) &&
+    activeCollection.value?.id === collectionId.value &&
+    activeCollection.value?.type === 'manual'
+)
 
 const showUploadDialog = ref(false)
 const folderDialogOpen = ref(false)
@@ -115,6 +135,10 @@ const moveDialogOpen = ref(false)
 const moveDialogItems = ref<AssetManagerDragItem[]>([])
 const bulkTagOpen = ref(false)
 const bulkTagAssets = ref<AssetResource[]>([])
+const addToCollectionOpen = ref(false)
+const addToCollectionAssetIds = ref<string[]>([])
+const shareDialogOpen = ref(false)
+const shareSource = ref<AssetShareSource | null>(null)
 const isSelectingAllMatching = ref(false)
 
 const sortOptions = [
@@ -153,11 +177,12 @@ const assetFilters = computed(() => [
   },
 ])
 
-const assetQueryParams = computed<AssetsQueryParams>(() => {
+const assetQueryParams = computed<AssetsQueryParams & { collection?: string }>(() => {
   return {
     ...filters.value,
-    folder: folderId.value ?? undefined,
-    tags: tagId.value ?? undefined,
+    collection: collectionId.value ?? undefined,
+    folder: collectionId.value ? undefined : (folderId.value ?? undefined),
+    tags: collectionId.value ? undefined : (tagId.value ?? undefined),
     q: q.value || undefined,
     sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
     page: currentPage.value,
@@ -269,10 +294,55 @@ const openBulkTagDialog = () => {
   }
 }
 
+const openAddToCollectionDialog = () => {
+  const selected = Array.from(selectedAssets.value.values())
+
+  if (selected.length) {
+    addToCollectionAssetIds.value = selected.map((asset) => asset.id)
+    addToCollectionOpen.value = true
+  }
+}
+
+const handleRemoveFromCollection = async () => {
+  const selected = Array.from(selectedAssets.value.values())
+
+  if (!collectionId.value || !selected.length) {
+    return
+  }
+
+  await removeAssetsFromCollection({
+    collectionId: collectionId.value,
+    assetIds: selected.map((asset) => asset.id),
+  })
+
+  for (const asset of selected) {
+    selectedAssets.value.delete(asset.id)
+  }
+}
+
+const openShareDialog = () => {
+  const selected = Array.from(selectedAssets.value.values())
+
+  if (selected.length) {
+    shareSource.value = {
+      source_type: 'selection',
+      asset_ids: selected.map((asset) => asset.id),
+    }
+    shareDialogOpen.value = true
+  }
+}
+
 const handleBulkDownload = async () => {
   const selected = Array.from(selectedAssets.value.values())
 
   if (!selected.length) {
+    return
+  }
+
+  // Larger selections are bundled into a server-built zip instead of a
+  // sequential per-file download loop. Package creation needs assets.manage.
+  if (selected.length > 3 && canManageAssets.value) {
+    await downloadSelectionAsPackage(selected.map((asset) => asset.id))
     return
   }
 
@@ -612,7 +682,7 @@ const toggleFieldVisibility = (fieldKey: string) => {
   settings.value.assets.visibleFields = next.length === allFieldKeys.value.length ? [] : next
 }
 
-watch([folderId, tagId], async () => {
+watch([folderId, tagId, collectionId], async () => {
   currentPage.value = 1
   selection.clear()
   await refetchAssets()
@@ -1016,8 +1086,14 @@ onUnmounted(() => {
       :can-select-all-matching="canSelectAllMatching"
       :is-selecting-all-matching="isSelectingAllMatching"
       :can-manage="canManageAssets"
+      :can-add-to-collection="canManageCollections"
+      :can-remove-from-collection="canManageCollections && isManualCollectionView"
+      :can-share="canShareAssets"
       @move="openMoveDialog"
       @tag="openBulkTagDialog"
+      @add-to-collection="openAddToCollectionDialog"
+      @remove-from-collection="handleRemoveFromCollection"
+      @share="openShareDialog"
       @download="handleBulkDownload"
       @delete="deleteSelectedAssets"
       @clear="selection.clear()"
@@ -1037,6 +1113,20 @@ onUnmounted(() => {
       v-model:open="bulkTagOpen"
       :space-id="spaceId"
       :assets="bulkTagAssets"
+    />
+
+    <AddToCollectionDialog
+      v-if="isManageMode && canManageCollections"
+      v-model:open="addToCollectionOpen"
+      :space-id="spaceId"
+      :asset-ids="addToCollectionAssetIds"
+    />
+
+    <CreateAssetShareDialog
+      v-if="isManageMode && canShareAssets"
+      v-model:open="shareDialogOpen"
+      :space-id="spaceId"
+      :source="shareSource"
     />
   </main>
 </template>

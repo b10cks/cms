@@ -36,6 +36,7 @@ const props = defineProps<{
   canEdit?: boolean
   canDelete?: boolean
   canCreateChildren?: boolean
+  canShare?: boolean
   dragItems?: AssetManagerDragItem[]
   canReceiveDrop?: (items: AssetManagerDragItem[]) => boolean
   onItemsDrop?: (items: AssetManagerDragItem[]) => void | Promise<void>
@@ -48,6 +49,7 @@ const emit = defineEmits<{
   create: [folder: AssetFolderResource]
   edit: [folder: AssetFolderResource]
   move: [folder: AssetFolderResource]
+  share: [folder: AssetFolderResource]
   delete: [folder: AssetFolderResource]
   'context-menu': [folder: AssetFolderResource]
 }>()
@@ -187,7 +189,7 @@ watchEffect((onCleanup) => {
           </div>
         </div>
         <DropdownMenu
-          v-if="canEdit || canDelete || canCreateChildren"
+          v-if="canEdit || canDelete || canCreateChildren || canShare"
           class="ml-auto"
         >
           <DropdownMenuTrigger
@@ -222,6 +224,13 @@ watchEffect((onCleanup) => {
             >
               <Icon name="lucide:folder-input" />
               <span>{{ $t('actions.move') }}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              v-if="canShare"
+              @select="emit('share', folder)"
+            >
+              <Icon name="lucide:share-2" />
+              <span>{{ $t('actions.assetShares.shareFolder') }}</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               v-if="canDelete"
@@ -262,6 +271,13 @@ watchEffect((onCleanup) => {
       >
         <Icon name="lucide:folder-input" />
         <span>{{ $t('actions.move') }}</span>
+      </ContextMenuItem>
+      <ContextMenuItem
+        v-if="canShare"
+        @select="emit('share', folder)"
+      >
+        <Icon name="lucide:share-2" />
+        <span>{{ $t('actions.assetShares.shareFolder') }}</span>
       </ContextMenuItem>
       <ContextMenuItem
         v-if="canDelete"

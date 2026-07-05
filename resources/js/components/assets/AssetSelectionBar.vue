@@ -13,6 +13,9 @@ const props = withDefaults(
     isSelectingAllMatching?: boolean
     canManage?: boolean
     canDownload?: boolean
+    canAddToCollection?: boolean
+    canRemoveFromCollection?: boolean
+    canShare?: boolean
   }>(),
   {
     folderCount: 0,
@@ -22,12 +25,18 @@ const props = withDefaults(
     isSelectingAllMatching: false,
     canManage: true,
     canDownload: true,
+    canAddToCollection: false,
+    canRemoveFromCollection: false,
+    canShare: false,
   }
 )
 
 const emit = defineEmits<{
   move: []
   tag: []
+  addToCollection: []
+  removeFromCollection: []
+  share: []
   download: []
   delete: []
   clear: []
@@ -93,6 +102,33 @@ const selectionCount = computed(() => props.assetCount + props.folderCount)
         {{ $t('actions.assets.tag') }}
       </Button>
       <Button
+        v-if="canAddToCollection && assetCount > 0"
+        variant="ghost"
+        size="sm"
+        @click="emit('addToCollection')"
+      >
+        <Icon name="lucide:layers" />
+        {{ $t('actions.assets.addToCollection') }}
+      </Button>
+      <Button
+        v-if="canRemoveFromCollection && assetCount > 0"
+        variant="ghost"
+        size="sm"
+        @click="emit('removeFromCollection')"
+      >
+        <Icon name="lucide:layers" />
+        {{ $t('actions.assets.removeFromCollection') }}
+      </Button>
+      <Button
+        v-if="canShare && assetCount > 0"
+        variant="ghost"
+        size="sm"
+        @click="emit('share')"
+      >
+        <Icon name="lucide:share-2" />
+        {{ $t('actions.assets.share') }}
+      </Button>
+      <Button
         v-if="canDownload && assetCount > 0"
         variant="ghost"
         size="sm"
@@ -109,7 +145,11 @@ const selectionCount = computed(() => props.assetCount + props.folderCount)
         @click="emit('delete')"
       >
         <Icon name="lucide:trash-2" />
-        {{ $t('actions.delete') }}
+        {{
+          canRemoveFromCollection
+            ? $t('actions.assets.deleteFromLibrary')
+            : $t('actions.delete')
+        }}
       </Button>
 
       <div class="h-5 w-px bg-border" />

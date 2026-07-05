@@ -4,6 +4,7 @@ namespace App\Services\Space;
 
 use App\Models\Management\Space;
 use App\Models\Management\SpaceApiHitHourly;
+use App\Models\Management\SpaceDownloadUsageHourly;
 use App\Models\Management\SpaceTrafficUsageHourly;
 use App\Models\Space\Asset;
 use App\Services\Ai\SpaceAiUsageService;
@@ -28,7 +29,7 @@ class SpaceUsageService
     ) {}
 
     /**
-     * @return array{storage: UsageMetricDto, traffic: UsageMetricDto, requests: UsageMetricDto, ai: UsageMetricDto, period: array{start: string, end: string, resets_at: string}}
+     * @return array{storage: UsageMetricDto, traffic: UsageMetricDto, downloads: UsageMetricDto, requests: UsageMetricDto, ai: UsageMetricDto, period: array{start: string, end: string, resets_at: string}}
      */
     public function forSpace(Space $space): array
     {
@@ -40,9 +41,13 @@ class SpaceUsageService
         $periodStart = now()->startOfMonth();
         $periodEnd = now();
 
+        // Computed once — it feeds both the traffic quota and the breakdown.
+        $downloadBytes = $this->rawDownloads($space, $periodStart, $periodEnd);
+
         return [
             'storage' => $this->storage($space, $this->quota($quotas, 'storage')),
-            'traffic' => $this->traffic($space, $periodStart, $periodEnd, $this->quota($quotas, 'traffic')),
+            'traffic' => $this->traffic($space, $periodStart, $periodEnd, $this->quota($quotas, 'traffic'), $downloadBytes),
+            'downloads' => new UsageMetricDto('downloads', 'bytes', $downloadBytes, null),
             'requests' => $this->requests($space, $periodStart, $periodEnd, $this->quota($quotas, 'requests')),
             'ai' => $this->ai($space, $this->quota($quotas, 'aiCredit')),
             'period' => [
@@ -81,6 +86,14 @@ class SpaceUsageService
             ->sum('total_bytes');
     }
 
+    /** Asset-package download egress (bytes) within the window. */
+    public function rawDownloads(Space $space, Carbon $start, Carbon $end): float
+    {
+        return (float) SpaceDownloadUsageHourly::where('space_id', $space->id)
+            ->whereBetween('hour_timestamp', [$start, $end])
+            ->sum('bytes_sent');
+    }
+
     /** Total API requests within the window. */
     public function rawRequests(Space $space, Carbon $start, Carbon $end): float
     {
@@ -94,9 +107,13 @@ class SpaceUsageService
         return new UsageMetricDto('storage', 'bytes', $this->rawStorage($space), $limit);
     }
 
-    private function traffic(Space $space, Carbon $start, Carbon $end, ?float $limit): UsageMetricDto
+    private function traffic(Space $space, Carbon $start, Carbon $end, ?float $limit, float $downloadBytes): UsageMetricDto
     {
-        return new UsageMetricDto('traffic', 'bytes', $this->rawTraffic($space, $start, $end), $limit);
+        // Package-download egress counts against the same traffic quota as
+        // delivery (/ilum/) egress.
+        $used = $this->rawTraffic($space, $start, $end) + $downloadBytes;
+
+        return new UsageMetricDto('traffic', 'bytes', $used, $limit);
     }
 
     private function requests(Space $space, Carbon $start, Carbon $end, ?float $limit): UsageMetricDto

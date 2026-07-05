@@ -63,6 +63,12 @@ const routes: RouteRecordRaw[] = [
     meta: { layout: 'start' },
   },
   {
+    path: '/share/:space/:token',
+    name: 'public-share',
+    component: () => import('~/pages/share/[space]/[token].vue'),
+    meta: { public: true, layout: 'share' },
+  },
+  {
     path: '/invites/:id',
     name: 'invite',
     alias: ['/invites/accept/:id'],
@@ -321,6 +327,11 @@ const routes: RouteRecordRaw[] = [
         path: 'migrations',
         name: 'space-settings-migrations',
         component: () => import('~/pages/[space]/settings/migrations.vue'),
+      },
+      {
+        path: 'shares',
+        name: 'space-settings-shares',
+        component: () => import('~/pages/[space]/settings/shares.vue'),
       },
     ],
   },
