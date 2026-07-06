@@ -3,6 +3,18 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.6-afbff496] — 2026-7-6
+
+- 👔 Use CommandPalette for add new block
+- ✨ Allow renaming a schema field key
+- 🐛 Fix v-model sync, dead-end states & a11y in SearchFilter
+- 🐛 Import useFieldClipboard explicitly in SchemaEditor
+- ✨ Duplicate and copy/paste schema fields across blocks
+- ✨ Add changes/preview toggle to block version history
+- ✨ Show where a block can be nested or referenced
+- 🐛 Remove deleted block tags from blocks' tag arrays
+- ✨ Finder-style selection & bulk actions in asset manager
+
 ## [v2026.7.3-9680000c] — 2026-7-3
 
 - ⚗️ Try to improve backfill in production
