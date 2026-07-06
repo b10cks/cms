@@ -5,7 +5,8 @@ namespace App\Services\Content\Schema;
 class ContentSchemaNode
 {
     /**
-     * @param array<int, ContentSchemaTree> $childTrees
+     * @param array<int, ContentSchemaTree> $childTrees keyed by effective item index
+     * @param array<int, ContentSchemaTree> $childTreesByRawIndex the same trees keyed by the paired raw (submitted) item index
      */
     public function __construct(
         public readonly SchemaField $field,
@@ -16,6 +17,7 @@ class ContentSchemaNode
         public mixed $effectiveValue,
         public bool $visible = true,
         public array $childTrees = [],
+        public array $childTreesByRawIndex = [],
     ) {}
 
     public function dotPath(): string

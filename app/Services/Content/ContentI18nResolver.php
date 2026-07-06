@@ -144,9 +144,20 @@ class ContentI18nResolver
                 $resolvedLanguage = $resolvedRow->language_iso;
             }
 
-            $effectiveContent = $effectiveMode === 'overlay'
-                ? $this->mergeContentChain($fallbackChain, $targetVersion, $blockSchema, $resolvedCanonical)
-                : ($targetVersion?->content ?? $content->content ?? []);
+            $effectiveBaseContent = $effectiveMode === 'overlay'
+                ? $this->mergeBaseChain($fallbackChain, $blockSchema, $targetVersion ? null : $resolvedCanonical)
+                : [];
+
+            $effectiveContent = match (true) {
+                $effectiveMode !== 'overlay' => $targetVersion?->content ?? $content->content ?? [],
+                $targetVersion !== null => $this->contentSchemaValueMerger->mergeForSchema(
+                    $blockSchema,
+                    $effectiveBaseContent,
+                    $targetVersion->content ?? [],
+                    true,
+                ),
+                default => $effectiveBaseContent,
+            };
 
             return new ResolvedContent(
                 canonicalContent: $canonical,
@@ -160,6 +171,7 @@ class ContentI18nResolver
                 fallbackContent: $fallbackContent,
                 fallbackVersion: $fallbackVersion,
                 effectiveContent: $effectiveContent,
+                effectiveBaseContent: $effectiveBaseContent,
                 effectiveAssets: $effectiveMode === 'overlay'
                 ? $this->mergeCollectionChain($fallbackChain, 'assets', $targetVersion?->assets)
                 : collect($targetVersion?->assets ?? []),
@@ -374,33 +386,18 @@ class ContentI18nResolver
         return $result;
     }
 
-    private function mergeContentChain(
+    private function mergeBaseChain(
         Collection $fallbackChain,
-        ?ContentVersion $targetVersion,
         array $blockSchema,
-        ?Content $selectedContent = null,
+        ?Content $seedContent = null,
     ): array {
-        $contentChain = $fallbackChain
-            ->pluck('version')
-            ->filter()
-            ->reverse();
+        $merged = $this->resolveContentPayload($seedContent);
 
-        $merged = $targetVersion ? [] : $this->resolveContentPayload($selectedContent);
-
-        foreach ($contentChain as $version) {
+        foreach ($fallbackChain->pluck('version')->filter()->reverse() as $version) {
             $merged = $this->contentSchemaValueMerger->mergeForSchema(
                 $blockSchema,
                 $merged,
                 $version->content ?? [],
-                true,
-            );
-        }
-
-        if ($targetVersion) {
-            return $this->contentSchemaValueMerger->mergeForSchema(
-                $blockSchema,
-                $merged,
-                $targetVersion->content ?? [],
                 true,
             );
         }

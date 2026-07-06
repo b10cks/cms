@@ -578,6 +578,48 @@ class ContentSchemaValidatorTest extends TestCase
         $this->assertSame([], $completeResult->errors);
     }
 
+    #[Test]
+    public function text_patterns_are_enforced_with_and_without_preg_delimiters(): void
+    {
+        $block = $this->makeBlock([
+            'code' => [
+                'type' => 'text',
+                'name' => 'Code',
+                'validation' => ['pattern' => '^[a-z]{3}$'],
+            ],
+            'slug' => [
+                'type' => 'text',
+                'name' => 'Slug',
+                'validation' => ['pattern' => '/^[a-z-]+$/'],
+            ],
+        ]);
+
+        $validResult = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            ['code' => 'abc', 'slug' => 'my-slug'],
+            null,
+            'en',
+            null,
+            'save',
+        );
+
+        $this->assertSame([], $validResult->errors);
+
+        $invalidResult = app(ContentSchemaValidator::class)->validateSubmission(
+            $this->makeSpace(),
+            $block,
+            ['code' => 'ABC-123', 'slug' => 'My Slug!'],
+            null,
+            'en',
+            null,
+            'save',
+        );
+
+        $this->assertArrayHasKey('content.code', $invalidResult->errors);
+        $this->assertArrayHasKey('content.slug', $invalidResult->errors);
+    }
+
     protected function ensureOptionTablesExist(): void
     {
         if (! Schema::hasTable('data_sources')) {

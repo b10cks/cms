@@ -135,7 +135,7 @@ class ContentSchemaValidationTest extends TestCase
     }
 
     #[Test]
-    public function current_and_published_version_switches_reject_invalid_historical_versions(): void
+    public function switching_current_is_allowed_while_publishing_invalid_historical_versions_is_rejected(): void
     {
         $this->actingAs($this->owner);
 
@@ -154,13 +154,13 @@ class ContentSchemaValidationTest extends TestCase
             'created_by_id' => $this->owner->id,
         ]);
 
+        // Switching the current (draft) version is a force-save and skips validation.
         $this->postJson(route('mgmt.contents.versions.current', [
             'space' => $this->space->id,
             'content' => $content->id,
             'version' => $invalidVersion->id,
         ]))
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['content.headline']);
+            ->assertStatus(204);
 
         $this->postJson(route('mgmt.contents.versions.publish', [
             'space' => $this->space->id,
@@ -396,6 +396,208 @@ class ContentSchemaValidationTest extends TestCase
         $this->assertSame('Lokalisierte Headline', data_get($translation->current_version?->content, 'body.0.headline'));
         $this->assertNull(data_get($translation->current_version?->content, 'body.0.media'));
         $this->assertArrayNotHasKey('media', data_get($translation->current_version?->content, 'body.0', []));
+    }
+
+    #[Test]
+    public function clearing_a_translatable_field_in_an_overlay_falls_back_to_the_parent_value_not_the_own_stale_one(): void
+    {
+        $this->actingAs($this->owner);
+
+        $block = Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Coded Page',
+            'slug' => 'codedPage',
+            'type' => 'root',
+            'schema' => [
+                'code' => [
+                    'type' => 'text',
+                    'name' => 'Code',
+                    'translatable' => true,
+                    'validation' => ['pattern' => '/^[a-z-]+$/'],
+                ],
+            ],
+            'editor' => [[
+                'header' => 'General',
+                'items' => ['code'],
+            ]],
+        ]);
+
+        $canonical = $this->createContent(['code' => 'valid-code'], $block, 'en');
+        // The translation's persisted value violates the (since tightened) pattern.
+        $translation = $this->createContent(['code' => 'STALE!!'], $block, 'de', $canonical);
+
+        // Clearing the field means "inherit from the parent again" — the parent's
+        // valid value must be validated, not the translation's old stale one.
+        $this->patchJson(route('mgmt.contents.update', [
+            'space' => $this->space->id,
+            'content' => $translation->id,
+        ]), [
+            'content' => ['code' => ''],
+        ])->assertOk();
+    }
+
+    #[Test]
+    public function publishing_an_overlay_with_a_cleared_required_translatable_field_fails_when_the_parent_has_no_value(): void
+    {
+        $this->actingAs($this->owner);
+
+        $block = Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Headline Page',
+            'slug' => 'headlinePage',
+            'type' => 'root',
+            'schema' => [
+                'headline' => [
+                    'type' => 'text',
+                    'name' => 'Headline',
+                    'required' => true,
+                    'translatable' => true,
+                ],
+            ],
+            'editor' => [[
+                'header' => 'General',
+                'items' => ['headline'],
+            ]],
+        ]);
+
+        $canonical = $this->createContent([], $block, 'en');
+        $translation = $this->createContent(['headline' => 'Alte Überschrift'], $block, 'de', $canonical);
+
+        // The old own value must not satisfy the requirement — after this publish
+        // the overlay would resolve to the (empty) parent chain.
+        $this->postJson(route('mgmt.contents.publish', [
+            'space' => $this->space->id,
+            'content' => $translation->id,
+        ]), [
+            'content' => ['headline' => ''],
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['content.headline']);
+    }
+
+    #[Test]
+    public function reordered_translation_block_items_are_pruned_against_their_own_schema(): void
+    {
+        $this->actingAs($this->owner);
+
+        Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Alpha Card',
+            'slug' => 'alphaCard',
+            'type' => 'nestable',
+            'schema' => [
+                'flag' => ['type' => 'boolean', 'name' => 'Flag'],
+                'note' => [
+                    'type' => 'text',
+                    'name' => 'Note',
+                    'translatable' => true,
+                    'conditions' => [
+                        'mode' => 'all',
+                        'rules' => [['field' => 'flag', 'operator' => 'equals', 'value' => true]],
+                    ],
+                ],
+            ],
+            'editor' => [['header' => 'General', 'items' => ['flag', 'note']]],
+        ]);
+
+        Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Beta Card',
+            'slug' => 'betaCard',
+            'type' => 'nestable',
+            'schema' => [
+                'flag' => ['type' => 'boolean', 'name' => 'Flag'],
+                'note' => ['type' => 'text', 'name' => 'Note', 'translatable' => true],
+            ],
+            'editor' => [['header' => 'General', 'items' => ['flag', 'note']]],
+        ]);
+
+        $compoundBlock = Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Card Page',
+            'slug' => 'cardPage',
+            'type' => 'root',
+            'schema' => [
+                'body' => ['type' => 'blocks', 'name' => 'Body'],
+            ],
+            'editor' => [['header' => 'General', 'items' => ['body']]],
+        ]);
+
+        $canonical = $this->createContent([
+            'body' => [
+                ['id' => 'item-alpha', 'block' => 'alphaCard', 'flag' => false],
+                ['id' => 'item-beta', 'block' => 'betaCard', 'flag' => false, 'note' => 'Keep me'],
+            ],
+        ], $compoundBlock, 'en');
+
+        $translation = $this->createContent([], $compoundBlock, 'de', $canonical);
+
+        // Submit the items in reverse order — each must be validated and pruned
+        // against its own block schema, not its positional sibling's.
+        $this->patchJson(route('mgmt.contents.update', [
+            'space' => $this->space->id,
+            'content' => $translation->id,
+        ]), [
+            'content' => [
+                'body' => [
+                    ['id' => 'item-beta', 'block' => 'betaCard', 'flag' => false, 'note' => 'Übersetzt'],
+                    ['id' => 'item-alpha', 'block' => 'alphaCard', 'flag' => false],
+                ],
+            ],
+        ])->assertOk();
+
+        $translation->refresh()->load('current_version');
+        $body = $translation->current_version->content['body'];
+
+        $this->assertSame('item-beta', $body[0]['id']);
+        $this->assertSame('Übersetzt', $body[0]['note']);
+        $this->assertSame('item-alpha', $body[1]['id']);
+    }
+
+    #[Test]
+    public function updating_canonical_content_in_overlay_mode_validates_submitted_non_translatable_values(): void
+    {
+        $this->actingAs($this->owner);
+
+        $badgeBlock = Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Badge Page',
+            'slug' => 'badgePage',
+            'type' => 'root',
+            'schema' => [
+                'variant' => [
+                    'type' => 'option',
+                    'name' => 'Variant',
+                    'translatable' => false,
+                    'options' => [
+                        ['name' => 'Promo', 'value' => 'promo'],
+                        ['name' => 'Frosted', 'value' => 'frosted'],
+                    ],
+                ],
+            ],
+            'editor' => [[
+                'header' => 'General',
+                'items' => ['variant'],
+            ]],
+        ]);
+
+        // Persisted value references an option that has since been removed from the schema.
+        $canonical = $this->createContent([
+            'variant' => 'frosted-light',
+        ], $badgeBlock, 'en');
+
+        $this->patchJson(route('mgmt.contents.update', [
+            'space' => $this->space->id,
+            'content' => $canonical->id,
+        ]), [
+            'content' => [
+                'variant' => 'frosted',
+            ],
+        ])->assertOk();
+
+        $canonical->refresh()->load('current_version');
+
+        $this->assertSame('frosted', $canonical->current_version->content['variant']);
     }
 
     protected function createContent(

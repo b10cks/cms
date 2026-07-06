@@ -465,7 +465,10 @@ const validateScope = (
       }
       if (validation.pattern) {
         try {
-          const pattern = new RegExp(validation.pattern)
+          // Accept both bare JS-style patterns and PHP-delimited ones (`/…/flags`).
+          const raw = String(validation.pattern)
+          const delimited = /^\/([\s\S]+)\/([a-z]*)$/.exec(raw)
+          const pattern = delimited ? new RegExp(delimited[1], delimited[2]) : new RegExp(raw)
           if (!pattern.test(String(value))) {
             pushError(path, `${field.name || key} has an invalid format.`)
           }

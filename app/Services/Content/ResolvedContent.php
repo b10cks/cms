@@ -20,6 +20,8 @@ class ResolvedContent
         public readonly ?Content $fallbackContent,
         public readonly ?ContentVersion $fallbackVersion,
         public readonly array $effectiveContent,
+        /** Overlay chain merged WITHOUT the target's own version — the layer the target inherits from. */
+        public readonly array $effectiveBaseContent,
         public readonly Collection $effectiveAssets,
         public readonly Collection $effectiveLinks,
         public readonly Collection $effectiveRelations,

@@ -94,6 +94,23 @@ class ContentSchemaValidator
         ?string $i18nParentId,
     ): array {
         $requestedLanguage = strtolower((string) ($languageIso ?? $content?->language_iso ?? $space->settings->getDefaultLanguage()));
+
+        // The canonical content in its own language IS the base layer of an overlay
+        // chain — the submission replaces it entirely. Merging it against its own
+        // persisted version would let stale values win over the submission for
+        // non-translatable fields.
+        if (
+            $content !== null
+            && $content->i18n_parent_id === null
+            && $i18nParentId === null
+            && $requestedLanguage === strtolower((string) $content->language_iso)
+        ) {
+            return [
+                'content' => [],
+                'mode' => 'independent',
+            ];
+        }
+
         $resolverContent = $content;
 
         if (!$resolverContent && $i18nParentId) {
@@ -117,9 +134,12 @@ class ContentSchemaValidator
             'current',
         );
 
+        // The submission replaces the target's own layer, so the merge base is the
+        // chain it inherits from — never the target's persisted version, which would
+        // resurrect old values for fields the submission clears.
         return [
             'content' => $resolved->effectiveMode === 'overlay'
-                ? ($resolved->effectiveContent ?? [])
+                ? $resolved->effectiveBaseContent
                 : [],
             'mode' => $resolved->effectiveMode,
         ];
@@ -260,7 +280,7 @@ class ContentSchemaValidator
      */
     protected function validateTextLike(SchemaField $field, mixed $value): array
     {
-        $text = is_string($value) ? $value : json_encode($value);
+        $text = is_string($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $length = mb_strlen((string) $text);
         $validation = $field->getValidation();
         $messages = [];
@@ -273,11 +293,31 @@ class ContentSchemaValidator
             $messages[] = sprintf('%s may not be greater than %d characters.', $field->getLabel(), $maxLength);
         }
 
-        if (($pattern = Arr::get($validation, 'pattern')) && @preg_match($pattern, '') !== false && !preg_match($pattern, (string) $text)) {
+        if (
+            ($pattern = Arr::get($validation, 'pattern'))
+            && is_string($pattern)
+            && ($pregPattern = $this->toPregPattern($pattern)) !== null
+            && !preg_match($pregPattern, (string) $text)
+        ) {
             $messages[] = sprintf('%s has an invalid format.', $field->getLabel());
         }
 
         return $messages;
+    }
+
+    /**
+     * Schema patterns are commonly written JS-style without delimiters; accept
+     * both that and native preg patterns. Returns null when neither parses.
+     */
+    protected function toPregPattern(string $pattern): ?string
+    {
+        if (@preg_match($pattern, '') !== false) {
+            return $pattern;
+        }
+
+        $wrapped = '/' . str_replace('/', '\/', $pattern) . '/u';
+
+        return @preg_match($wrapped, '') !== false ? $wrapped : null;
     }
 
     /**
@@ -857,11 +897,11 @@ class ContentSchemaValidator
                 $items = array_values($content[$key]);
 
                 foreach ($items as $index => $item) {
-                    if (! is_array($item) || ! isset($node->childTrees[$index])) {
+                    if (! is_array($item) || ! isset($node->childTreesByRawIndex[$index])) {
                         continue;
                     }
 
-                    $items[$index] = $this->stripLocalizedOverlayFields($node->childTrees[$index], $item);
+                    $items[$index] = $this->stripLocalizedOverlayFields($node->childTreesByRawIndex[$index], $item);
                 }
 
                 $content[$key] = $items;

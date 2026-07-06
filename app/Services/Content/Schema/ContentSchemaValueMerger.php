@@ -151,20 +151,18 @@ class ContentSchemaValueMerger
                 );
         }
 
+        // The base defines row identity and order — overlays may only localize text
+        // cells of existing rows. Iterating base rows keeps untouched rows alive and
+        // prevents extra override rows from bleeding into the result. When base has
+        // no rows (e.g. the first step of a chain merge starting from []) the
+        // override rows are authoritative instead.
+        $baseIsAuthoritative = $baseTable['rows'] !== [];
         $rows = [];
-        $baseRowsById = collect($baseTable['rows'])
-            ->filter(fn(array $row): bool => isset($row['id']) && \is_string($row['id']) && $row['id'] !== '')
-            ->keyBy('id');
 
-        foreach ($overrideTable['rows'] as $overrideRow) {
-            $rowId = $overrideRow['id'] ?? null;
-
-            if (!\is_string($rowId) || $rowId === '') {
-                continue;
-            }
-
-            $baseRow = $baseRowsById->get($rowId);
-            $baseCells = \is_array($baseRow['cells'] ?? null) ? $baseRow['cells'] : [];
+        foreach ($baseIsAuthoritative ? $baseTable['rows'] : $overrideTable['rows'] as $row) {
+            $rowId = $row['id'];
+            $baseCells = $baseIsAuthoritative ? $row['cells'] : [];
+            $overrideRow = $baseIsAuthoritative ? $overrideRowsById->get($rowId) : $row;
             $overrideCells = \is_array($overrideRow['cells'] ?? null) ? $overrideRow['cells'] : [];
             $mergedCells = $baseCells;
 

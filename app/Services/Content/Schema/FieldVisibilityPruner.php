@@ -29,8 +29,8 @@ class FieldVisibilityPruner
                     continue;
                 }
 
-                if (isset($node->childTrees[$index])) {
-                    $items[$index] = $this->prune($node->childTrees[$index]);
+                if (isset($node->childTreesByRawIndex[$index])) {
+                    $items[$index] = $this->prune($node->childTreesByRawIndex[$index]);
                 }
             }
 
