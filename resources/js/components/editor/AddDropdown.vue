@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuRadioGroup,
-  DropdownMenuTrigger,
-} from '~/components/ui/dropdown-menu'
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '~/components/ui/command'
 import IconName from '~/components/ui/IconName.vue'
-
-import BlockWithTemplatesSubmenu from './BlockWithTemplatesSubmenu.vue'
+import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 
 const emit = defineEmits<{
   (e: 'select', payload: { blockSlug: string; template: BlockTemplate | null }): void
@@ -23,11 +23,17 @@ const props = defineProps<{
   canMutate?: boolean
 }>()
 
-const type = ref<string>()
 const isOpen = ref(false)
+const templatesBlock = ref<BlockResource | null>(null)
 
 const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
+
+const { useBlockTemplatesQuery } = useBlockTemplates(
+  computed(() => props.spaceId),
+  computed(() => templatesBlock.value?.id || '')
+)
+const { data: templates } = useBlockTemplatesQuery()
 
 const activeBlockWhitelist = computed(() =>
   (props.item.block_whitelist || []).filter((slug): slug is string => Boolean(slug))
@@ -69,31 +75,48 @@ const select = (payload: { blockSlug: string; template: BlockTemplate | null }) 
   isOpen.value = false
 }
 
-const autofill = (newIsOpen: boolean) => {
+const pickBlock = (block: BlockResource) => {
+  if (block.templates_count && block.templates_count > 0) {
+    templatesBlock.value = block
+    return
+  }
+
+  select({ blockSlug: block.slug, template: null })
+}
+
+const handleOpen = (newIsOpen: boolean) => {
+  templatesBlock.value = null
+
   if (newIsOpen && possibleBlocks.value.length === 1) {
-    const block = possibleBlocks.value[0]
-    type.value = block.slug
-    select({ blockSlug: block.slug, template: null })
+    select({ blockSlug: possibleBlocks.value[0].slug, template: null })
+  }
+}
+
+const handleInputKeydown = (event: KeyboardEvent) => {
+  const input = event.target as HTMLInputElement
+
+  if (event.key === 'Backspace' && !input.value && templatesBlock.value) {
+    templatesBlock.value = null
   }
 }
 </script>
 
 <template>
-  <DropdownMenu
+  <Popover
     v-if="props.canMutate !== false"
     v-model:open="isOpen"
-    @update:open="autofill"
+    @update:open="handleOpen"
   >
     <div class="flex opacity-0 transition-opacity hover:opacity-100">
       <div class="absolute inset-x-0 -mt-3 border-t-2 border-accent pt-4" />
       <div class="absolute inset-x-0 z-10 mx-auto -mt-6 flex transform justify-center gap-2">
-        <DropdownMenuTrigger>
+        <PopoverTrigger as-child>
           <button
             class="flex size-6 cursor-pointer items-center justify-center rounded-full bg-accent text-accent-foreground"
           >
             <Icon name="lucide:plus" />
           </button>
-        </DropdownMenuTrigger>
+        </PopoverTrigger>
         <button
           v-if="hasClipboardItem"
           class="flex size-6 cursor-pointer items-center justify-center rounded-full bg-accent text-accent-foreground"
@@ -103,31 +126,78 @@ const autofill = (newIsOpen: boolean) => {
         </button>
       </div>
     </div>
-    <DropdownMenuContent>
-      <DropdownMenuRadioGroup v-model="type">
-        <template
-          v-for="block in possibleBlocks"
-          :key="block.slug"
+    <PopoverContent
+      align="center"
+      class="w-64 p-0!"
+    >
+      <Command>
+        <CommandInput
+          :placeholder="$t('labels.contents.canvas.searchBlocks')"
+          @keydown="handleInputKeydown"
+        />
+        <CommandList
+          class="max-h-[min(18rem,calc(var(--reka-popover-content-available-height)-4rem))]"
         >
-          <BlockWithTemplatesSubmenu
-            v-if="block.templates_count && block.templates_count > 0"
-            :block="block"
-            :space-id="spaceId"
-            @select="select($event)"
-          />
-          <DropdownMenuItem
-            v-else
-            :value="block.slug"
-            @select="select({ blockSlug: block.slug, template: null })"
-          >
-            <IconName
-              :icon="block.icon || null"
-              :color="block.color"
-              :name="block.name"
-            />
-          </DropdownMenuItem>
-        </template>
-      </DropdownMenuRadioGroup>
-    </DropdownMenuContent>
-  </DropdownMenu>
+          <CommandEmpty>{{ $t('labels.search.noResultsFound') }}</CommandEmpty>
+          <CommandGroup v-if="!templatesBlock">
+            <CommandItem
+              v-for="block in possibleBlocks"
+              :key="block.slug"
+              :value="block.slug"
+              class="cursor-pointer"
+              @select="pickBlock(block)"
+            >
+              <IconName
+                :icon="block.icon || null"
+                :color="block.color"
+                :name="block.name"
+              />
+              <Icon
+                v-if="block.templates_count && block.templates_count > 0"
+                name="lucide:chevron-right"
+                class="ml-auto opacity-50"
+              />
+            </CommandItem>
+          </CommandGroup>
+          <CommandGroup v-else>
+            <CommandItem
+              value="__back"
+              class="cursor-pointer"
+              @select="templatesBlock = null"
+            >
+              <Icon
+                name="lucide:chevron-left"
+                class="opacity-50"
+              />
+              <IconName
+                :icon="templatesBlock.icon || null"
+                :color="templatesBlock.color"
+                :name="templatesBlock.name"
+              />
+            </CommandItem>
+            <CommandItem
+              value="__blank"
+              class="cursor-pointer"
+              @select="select({ blockSlug: templatesBlock!.slug, template: null })"
+            >
+              {{ $t('labels.contents.blankTemplate') }}
+            </CommandItem>
+            <CommandItem
+              v-for="template in templates"
+              :key="template.id"
+              :value="template.id"
+              class="cursor-pointer"
+              @select="select({ blockSlug: templatesBlock!.slug, template })"
+            >
+              <IconName
+                :icon="template.icon"
+                :color="template.color"
+                :name="template.name"
+              />
+            </CommandItem>
+          </CommandGroup>
+        </CommandList>
+      </Command>
+    </PopoverContent>
+  </Popover>
 </template>
