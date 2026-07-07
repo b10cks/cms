@@ -4,6 +4,7 @@ namespace App\Services\Content;
 
 use App\Models\Management\Space;
 use App\Models\Space\Content;
+use App\Support\SpaceContext;
 
 class LocalizedContentSlugService extends ContentSlugService
 {
@@ -11,7 +12,7 @@ class LocalizedContentSlugService extends ContentSlugService
 
     public function __construct(?Space $space = null)
     {
-        $this->space = $space ?? request('space') ?? app('currentSpace');
+        $this->space = $space ?? request('space') ?? SpaceContext::current();
     }
 
     public function updateFullSlug(Content $content): ?string

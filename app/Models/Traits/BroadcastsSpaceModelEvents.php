@@ -3,6 +3,7 @@
 namespace App\Models\Traits;
 
 use App\Events\Space\SpaceModelChanged;
+use App\Support\SpaceContext;
 use Illuminate\Database\Eloquent\Model;
 
 trait BroadcastsSpaceModelEvents
@@ -11,7 +12,7 @@ trait BroadcastsSpaceModelEvents
     {
         foreach (['created', 'updated', 'deleted'] as $event) {
             static::{$event}(function (Model $model) use ($event) {
-                $space = request('space') ?? app('currentSpace');
+                $space = request('space') ?? SpaceContext::current();
                 if (!$space) {
                     return;
                 }

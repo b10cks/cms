@@ -13,13 +13,20 @@ class ContentDeleted implements ShouldBroadcast
 {
     use SerializesModels;
 
-    public Content $content;
     public Space $space;
+
+    /**
+     * Resolved eagerly: space models can't be restored on a queue worker
+     * where no space connection is bound (and the content is soft-deleted).
+     *
+     * @var array<string, mixed>
+     */
+    public array $payload;
 
     public function __construct(Content $content, Space $space)
     {
-        $this->content = $content;
         $this->space = $space;
+        $this->payload = ContentResource::make($content)->resolve();
     }
 
     public function broadcastOn()
@@ -36,6 +43,6 @@ class ContentDeleted implements ShouldBroadcast
 
     public function broadcastWith()
     {
-        return ContentResource::make($this->content)->resolve();
+        return $this->payload;
     }
 }

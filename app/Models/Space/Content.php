@@ -14,6 +14,7 @@ use App\Services\Automation\Enums\TriggerType;
 use App\Services\Content\ContentMenuCache;
 use App\Services\Content\LocalizedContentSlugService;
 use App\Services\CustomStr;
+use App\Support\SpaceContext;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
@@ -155,17 +156,25 @@ class Content extends SpaceModel
         });
 
         static::saved(function (Content $content) {
+            $space = request('space') ?? SpaceContext::current();
+
             if ($content->isDirty('slug') || $content->isDirty('parent_id') || $content->isDirty('language_iso')) {
-                UpdateContentFullSlugsJob::dispatch($content, request('space') ?? app()->get('currentSpace'));
+                UpdateContentFullSlugsJob::dispatch($content, $space);
             }
 
             self::scheduleContentMenuInvalidation();
-            event(new ContentUpdated($content, request('space') ?? app('currentSpace')));
+            if ($space) {
+                event(new ContentUpdated($content, $space));
+            }
         });
 
         static::softDeleted(function (Content $content) {
+            $space = request('space') ?? SpaceContext::current();
+
             self::scheduleContentMenuInvalidation();
-            event(new ContentDeleted($content, request('space') ?? app('currentSpace')));
+            if ($space) {
+                event(new ContentDeleted($content, $space));
+            }
         });
     }
 

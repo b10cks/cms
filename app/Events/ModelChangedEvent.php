@@ -9,24 +9,26 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Queue\SerializesModels;
 use InvalidArgumentException;
 
 class ModelChangedEvent implements ShouldBroadcast
 {
     use Dispatchable;
     use InteractsWithSockets;
-    use SerializesModels;
 
-    /**
-     * @var class-string<JsonResource>
-     */
-    protected string $resourceClass;
-
-    /**
-     * @var string
-     */
     protected string $action;
+
+    protected string $modelKey;
+
+    protected string $modelType;
+
+    /**
+     * Resolved eagerly: the model may live on a per-space connection that is
+     * not bound on a queue worker, and deleted models can't be restored at all.
+     *
+     * @var array<string, mixed>
+     */
+    protected array $payload;
 
     /**
      * Create a new event instance.
@@ -37,15 +39,17 @@ class ModelChangedEvent implements ShouldBroadcast
      * @param string $channel The channel type (presence, private, public)
      */
     public function __construct(
-        protected Model  $model,
+        Model            $model,
         string           $resourceClass,
         string           $action = 'changed',
         protected string $channel = 'presence'
     )
     {
         $this->validateResourceClass($resourceClass);
-        $this->resourceClass = $resourceClass;
         $this->action = strtolower($action);
+        $this->modelKey = (string) $model->getKey();
+        $this->modelType = str_replace('_', '.', $model->getTable());
+        $this->payload = $resourceClass::make($model)->resolve();
     }
 
     /**
@@ -68,9 +72,9 @@ class ModelChangedEvent implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'model' => ($this->resourceClass)::make($this->model)->resolve(),
+            'model' => $this->payload,
             'action' => $this->action,
-            'model_type' => $this->getModelType(),
+            'model_type' => $this->modelType,
         ];
     }
 
@@ -78,7 +82,7 @@ class ModelChangedEvent implements ShouldBroadcast
     {
         return sprintf(
             '%s.%s',
-            $this->getModelType(),
+            $this->modelType,
             $this->action
         );
     }
@@ -87,8 +91,8 @@ class ModelChangedEvent implements ShouldBroadcast
     {
         $channelName = sprintf(
             '%s.%s',
-            $this->getModelType(),
-            $this->model->getKey()
+            $this->modelType,
+            $this->modelKey
         );
 
         return match ($this->channel) {
@@ -97,11 +101,6 @@ class ModelChangedEvent implements ShouldBroadcast
             'public' => new Channel($channelName),
             default => throw new InvalidArgumentException('Invalid channel type'),
         };
-    }
-
-    protected function getModelType(): string
-    {
-        return str_replace('_', '.', $this->model->getTable());
     }
 
     /**

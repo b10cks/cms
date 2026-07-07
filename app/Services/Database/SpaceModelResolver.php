@@ -21,7 +21,7 @@ class SpaceModelResolver implements ConnectionResolverInterface
             return app('db')->connection();
         }
         /** @var Space|null $space */
-        $space = request('space') ?? app()->get('currentSpace');
+        $space = request('space') ?? \App\Support\SpaceContext::current();
         abort_unless(!!$space, 404, 'Space not found');
 
         $id = $space->id;

@@ -25,6 +25,17 @@ class SpaceContext
      * Bind the given space as the current one and return a callable that
      * restores whatever was bound before.
      */
+    /**
+     * The currently bound space, or null when none is bound (e.g. on a queue
+     * worker outside SpaceContext::enter()). Never throws.
+     */
+    public static function current(): ?Space
+    {
+        $space = app()->bound('currentSpace') ? app('currentSpace') : null;
+
+        return $space instanceof Space ? $space : null;
+    }
+
     public static function enter(Space $space): Closure
     {
         $hadSpace = app()->bound('currentSpace');
