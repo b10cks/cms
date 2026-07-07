@@ -4,18 +4,16 @@ namespace App\Services\AssetData\Drivers;
 
 use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
-use App\Services\Asset\AssetMetadataFieldResolver;
-use App\Services\AssetData\DataMapper;
+use App\Services\ImportExport\WritesXlsxDownload;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\Response;
 
 class ExcelAssetDataDriver extends BaseAssetDataDriver
 {
+    use WritesXlsxDownload;
+
     public function export(
         Space $space,
         Collection $assets,
@@ -23,35 +21,15 @@ class ExcelAssetDataDriver extends BaseAssetDataDriver
         array $languages
     ): Response {
         $headers = $this->mapper->getColumnHeaders($assetFields, $languages);
-        $filename = $this->generateFilename($space, 'xlsx');
 
-        $export = new class ($space, $assets, $languages, $headers, $this->mapper, $this->fieldResolver) implements FromCollection, WithHeadings {
-            public function __construct(
-            private Space $space,
-            private Collection $assets,
-            private array $languages,
-            private array $headers,
-            private DataMapper $mapper,
-            private AssetMetadataFieldResolver $fieldResolver,
-            ) {}
+        $rows = $assets->map(function ($asset) use ($space, $languages, $headers) {
+            $rowFields = $this->fieldResolver->getEffectiveFieldsForAsset($space, $asset);
+            $row = $this->mapper->flattenAsset($asset, $rowFields, $languages);
 
-            public function collection(): Collection
-            {
-                return $this->assets->map(function ($asset) {
-                    $rowFields = $this->fieldResolver->getEffectiveFieldsForAsset($this->space, $asset);
-                    $row = $this->mapper->flattenAsset($asset, $rowFields, $this->languages);
+            return array_map(fn ($header) => $row[$header] ?? '', $headers);
+        });
 
-                    return array_map(fn($header) => $row[$header] ?? '', $this->headers);
-                });
-            }
-
-            public function headings(): array
-            {
-                return $this->headers;
-            }
-        };
-
-        return Excel::download($export, $filename);
+        return $this->xlsxDownload($headers, $rows, $this->generateFilename($space, 'xlsx'));
     }
 
     public function parseFile(UploadedFile $file): array

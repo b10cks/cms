@@ -9,7 +9,7 @@
   ],
   "license": "AGPL-3.0-or-later",
   "require": {
-    "php": "^8.4",
+    "php": "^8.5",
     "ext-pdo": "*",
     "ext-zlib": "*",
     "coderscantina/laravel-filter": "^2.0",
@@ -24,12 +24,12 @@
     "laravel/socialite": "^5.26",
     "laravel/tinker": "^3.0",
     "league/flysystem-aws-s3-v3": "^3.29",
-    "maatwebsite/excel": "^3.1",
     "mews/purifier": "^3.4",
     "nikic/php-parser": "^5.7",
     "onelogin/php-saml": "^4.2",
     "openai-php/laravel": "^0.19",
     "php-ffmpeg/php-ffmpeg": "^1.3",
+    "phpoffice/phpspreadsheet": "^5.8",
     "posthog/posthog-php": "^4.0",
     "staudenmeir/eloquent-json-relations": "^1.15"
   },

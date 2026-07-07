@@ -1,4 +1,4 @@
-FROM dunglas/frankenphp:php8.4-alpine
+FROM dunglas/frankenphp:php8.5-alpine
 
 RUN apk add --no-cache supervisor ffmpeg libheif vips mariadb-client \
     && install-php-extensions \

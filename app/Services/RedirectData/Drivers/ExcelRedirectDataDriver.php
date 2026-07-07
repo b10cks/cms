@@ -4,46 +4,29 @@ namespace App\Services\RedirectData\Drivers;
 
 use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
+use App\Services\ImportExport\WritesXlsxDownload;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\Response;
 
 class ExcelRedirectDataDriver extends BaseRedirectDataDriver
 {
+    use WritesXlsxDownload;
+
     private const HEADERS = ['id', 'external_id', 'source', 'target', 'status_code'];
 
     public function export(Space $space, Collection $redirects): Response
     {
-        $filename = $this->generateFilename($space, 'xlsx');
+        $rows = $redirects->map(fn ($redirect) => [
+            $redirect->id,
+            $redirect->external_id,
+            $redirect->source,
+            $redirect->target,
+            $redirect->status_code,
+        ]);
 
-        $export = new class ($redirects) implements FromCollection, WithHeadings {
-            public function __construct(
-                private readonly Collection $redirects,
-            ) {
-            }
-
-            public function collection(): Collection
-            {
-                return $this->redirects->map(fn ($redirect) => [
-                    $redirect->id,
-                    $redirect->external_id,
-                    $redirect->source,
-                    $redirect->target,
-                    $redirect->status_code,
-                ]);
-            }
-
-            public function headings(): array
-            {
-                return ExcelRedirectDataDriver::HEADERS;
-            }
-        };
-
-        return Excel::download($export, $filename);
+        return $this->xlsxDownload(self::HEADERS, $rows, $this->generateFilename($space, 'xlsx'));
     }
 
     public function parseFile(UploadedFile $file): array

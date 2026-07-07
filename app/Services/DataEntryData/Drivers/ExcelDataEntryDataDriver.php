@@ -5,45 +5,26 @@ namespace App\Services\DataEntryData\Drivers;
 use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use App\Models\Space\DataSource;
+use App\Services\ImportExport\WritesXlsxDownload;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\Response;
 
 class ExcelDataEntryDataDriver extends BaseDataEntryDataDriver
 {
+    use WritesXlsxDownload;
+
     public function export(Space $space, DataSource $dataSource, Collection $entries): Response
     {
-        $filename = $this->generateFilename($space, $dataSource, 'xlsx');
         $dimensionColumns = $this->buildDimensionColumns($dataSource);
         $headers = [...self::BASE_COLUMNS, ...$dimensionColumns];
 
-        $export = new class ($entries, $headers, $dimensionColumns, $this) implements FromCollection, WithHeadings {
-            public function __construct(
-                private readonly Collection $entries,
-                private readonly array $headers,
-                private readonly array $dimensionColumns,
-                private readonly BaseDataEntryDataDriver $driver,
-            ) {
-            }
+        $rows = $entries->map(
+            fn ($entry) => array_values($this->buildEntryRow($entry, $dimensionColumns))
+        );
 
-            public function collection(): Collection
-            {
-                return $this->entries->map(
-                    fn ($entry) => array_values($this->driver->buildEntryRow($entry, $this->dimensionColumns))
-                );
-            }
-
-            public function headings(): array
-            {
-                return $this->headers;
-            }
-        };
-
-        return Excel::download($export, $filename);
+        return $this->xlsxDownload($headers, $rows, $this->generateFilename($space, $dataSource, 'xlsx'));
     }
 
     public function parseFile(UploadedFile $file): array
