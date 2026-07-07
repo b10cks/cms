@@ -3,6 +3,13 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.7-89359d07] — 2026-7-7
+
+- ⬆️ Bump versions
+- 🩹 Fix lingering currentSpace issues
+- ⬆️ Upgrade to php@8.5
+- 👔 Auto-rotate exif images
+
 ## [v2026.7.6-e503300c] — 2026-7-6
 
 - ⬆️ Bump versions
