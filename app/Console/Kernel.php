@@ -75,6 +75,14 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping()
             ->runInBackground();
+
+        // Fold hourly usage rows older than the retention window into one
+        // daily row per space to keep the usage tables bounded.
+        $schedule->command('usage:compact-hourly')
+            ->dailyAt('05:00')
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     /**

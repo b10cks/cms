@@ -49,6 +49,9 @@ return [
             'max_files_per_run' => env('CLOUDFRONT_INGESTION_MAX_FILES_PER_RUN', 50),
             'retry_failed_after_hours' => env('CLOUDFRONT_RETRY_FAILED_HOURS', 24),
         ],
+        'usage' => [
+            'hourly_retention_days' => env('USAGE_HOURLY_RETENTION_DAYS', 180),
+        ],
     ],
 
     'posthog' => [
