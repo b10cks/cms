@@ -16,7 +16,7 @@ class ImagickDriver implements ImageDriverInterface
     {
         $imagick = new Imagick();
         $imagick->readImage($path);
-        return new ImagickImage($imagick);
+        return new ImagickImage($this->autoOrient($imagick));
     }
 
     /**
@@ -26,7 +26,19 @@ class ImagickDriver implements ImageDriverInterface
     {
         $imagick = new Imagick();
         $imagick->readImageBlob($buffer);
-        return new ImagickImage($imagick);
+        return new ImagickImage($this->autoOrient($imagick));
+    }
+
+    /**
+     * Rotate the image upright per its EXIF orientation tag
+     */
+    private function autoOrient(Imagick $imagick): Imagick
+    {
+        if ($imagick->getImageOrientation() !== Imagick::ORIENTATION_UNDEFINED) {
+            $imagick->autoOrient();
+        }
+
+        return $imagick;
     }
 
     /**

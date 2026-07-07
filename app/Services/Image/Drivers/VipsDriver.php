@@ -10,13 +10,15 @@ use Jcupitt\Vips\Image as VipsImageLib;
 class VipsDriver implements ImageDriverInterface
 {
     /**
-     * Load an image from a file path
+     * Load an image from a file path. Single-page images are auto-rotated
+     * per their EXIF orientation; multi-page (animated) loads are not, as
+     * autorot would treat the joined frame strip as one image.
      */
     public function loadFromFile(string $path): ImageInterface
     {
         $vipsImage = $this->shouldLoadAllPages($path)
             ? VipsImageLib::newFromFile($path, ['n' => -1])
-            : VipsImageLib::newFromFile($path);
+            : VipsImageLib::newFromFile($path)->autorot();
 
         return new VipsImage($vipsImage);
     }
@@ -28,7 +30,7 @@ class VipsDriver implements ImageDriverInterface
     {
         $vipsImage = $this->shouldLoadAllPagesFromBuffer($buffer)
             ? VipsImageLib::newFromBuffer($buffer, '', ['n' => -1])
-            : VipsImageLib::newFromBuffer($buffer);
+            : VipsImageLib::newFromBuffer($buffer)->autorot();
 
         return new VipsImage($vipsImage);
     }
