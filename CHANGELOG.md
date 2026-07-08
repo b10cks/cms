@@ -3,6 +3,14 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.8-e4bcb616] — 2026-7-8
+
+- 👔 Improve asset dialog
+- 🚸 Improve image clearity in AM
+- ⬆️ Bump versions
+- 👔 Add block preview
+- 👔 Fold hourly usage rows into single rows per day
+
 ## [v2026.7.7-89359d07] — 2026-7-7
 
 - ⬆️ Bump versions
