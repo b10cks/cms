@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.8-df21e168] — 2026-7-8
+
+- 🚸 Improve preview quality in detail
+
 ## [v2026.7.8-e4bcb616] — 2026-7-8
 
 - 👔 Improve asset dialog
