@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.8-122c5cc6] — 2026-7-8
+
+- 👔 Revert to single click action in AssetGrid
+- 👔 Improve comments with live whisper
+
 ## [v2026.7.8-e9499475] — 2026-7-8
 
 - 👔 Improve live collaboration dirty changes
