@@ -1,9 +1,11 @@
+import { useQueryClient } from '@tanstack/vue-query'
 import type { Ref } from 'vue'
 
 import { getPresenceColor } from '~/components/ui/presence-colors'
 import type { ContentResource } from '~/types/contents'
 
 import type { PresenceUser } from './usePresence'
+import { queryKeys } from './useQueryClient'
 
 const FIELD_UPDATE_EVENT = 'content-field-update'
 const FIELD_FOCUS_EVENT = 'content-field-focus'
@@ -12,6 +14,7 @@ const CONTENT_DISCARD_EVENT = 'content-discard'
 const BLOCK_OPERATION_EVENT = 'content-block-operation'
 const SYNC_REQUEST_EVENT = 'content-sync-request'
 const SYNC_STATE_EVENT = 'content-sync-state'
+const COMMENT_UPDATE_EVENT = 'content-comment-update'
 
 const SYNC_REPLY_MAX_DELAY_MS = 400
 const MAX_QUEUED_BLOCK_OPERATIONS = 100
@@ -86,6 +89,10 @@ interface ContentDiscardWhisperPayload {
   userId: string
 }
 
+interface ContentCommentUpdateWhisperPayload {
+  userId: string
+}
+
 interface UseContentLiveCollaborationOptions {
   content: Ref<ContentResource | null>
   hasLocalUnsavedChanges?: () => boolean
@@ -151,6 +158,7 @@ export function useContentLiveCollaboration(
   }: UseContentLiveCollaborationOptions
 ) {
   const presence = useContentPresence(spaceIdRef, contentIdRef)
+  const queryClient = useQueryClient()
   const fieldPresence = ref<Record<string, string[]>>({})
   const pendingFieldUpdates = new Map<string, ContentFieldWhisperPayload>()
   const localDraftFields = new Map<string, DraftFieldSnapshot>()
@@ -798,6 +806,32 @@ export function useContentLiveCollaboration(
     } satisfies ContentCommitWhisperPayload)
   }
 
+  // Comments (incl. replies and reactions) are persisted via the REST API; the
+  // whisper just tells peers to refetch, so the server stays the source of truth.
+  const broadcastCommentUpdate = () => {
+    const userId = presence.currentUser.value?.id
+    if (!userId) return
+
+    presence.whisper(COMMENT_UPDATE_EVENT, {
+      userId,
+    } satisfies ContentCommentUpdateWhisperPayload)
+  }
+
+  const stopCommentUpdateListener = presence.onWhisper<ContentCommentUpdateWhisperPayload>(
+    COMMENT_UPDATE_EVENT,
+    (payload) => {
+      if (!payload || payload.userId === presence.currentUser.value?.id) return
+
+      const spaceId = unref(spaceIdRef)
+      const contentId = unref(contentIdRef)
+      if (!spaceId || !contentId) return
+
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.comments(spaceId, contentId).all(),
+      })
+    }
+  )
+
   const stopFieldUpdateListener = presence.onWhisper<ContentFieldWhisperPayload>(
     FIELD_UPDATE_EVENT,
     (payload) => {
@@ -904,6 +938,7 @@ export function useContentLiveCollaboration(
     flushFieldUpdates()
     syncReplyTimers.forEach((timer) => clearTimeout(timer))
     syncReplyTimers.clear()
+    stopCommentUpdateListener()
     stopFieldUpdateListener()
     stopFieldFocusListener()
     stopCommitListener()
@@ -920,6 +955,7 @@ export function useContentLiveCollaboration(
     count: presence.count,
     broadcastPersistedContent,
     broadcastBlockOperation,
+    broadcastCommentUpdate,
     discardOwnDrafts,
     queueFieldUpdate,
     updateFieldFocus,

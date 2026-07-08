@@ -18,6 +18,10 @@ export function useComments(
     api.forSpace(toValue(spaceId)).comments(resolvedContentId.value)
   )
   const hasContentId = computed(() => !!toValue(contentId))
+  // Provided by the content editor page (useContentLiveCollaboration) so other
+  // collaborators refetch comments after any local mutation.
+  const broadcastCommentUpdate = inject<(() => void) | undefined>('broadcastCommentUpdate', undefined)
+  const notifyCollaborators = () => broadcastCommentUpdate?.()
 
   const useCommentsQuery = (params: MaybeRef<CommentsQueryParams> = {}) => {
     return useQuery({
@@ -53,6 +57,7 @@ export function useComments(
         queryClient.invalidateQueries({
           queryKey: queryKeys.comments(spaceId, resolvedContentId.value).lists(),
         })
+        notifyCollaborators()
         toast.success(t('composables.comments.addSuccess') as string)
       },
       onError: (error: Error) => {
@@ -78,6 +83,7 @@ export function useComments(
         queryClient.invalidateQueries({
           queryKey: queryKeys.comments(spaceId, resolvedContentId.value).detail(data.id),
         })
+        notifyCollaborators()
         toast.success(t('composables.comments.updateSuccess') as string)
       },
       onError: (error: Error) => {
@@ -103,6 +109,7 @@ export function useComments(
         queryClient.removeQueries({
           queryKey: queryKeys.comments(spaceId, resolvedContentId.value).detail(id),
         })
+        notifyCollaborators()
         toast.success(t('composables.comments.deleteSuccess') as string)
       },
       onError: (error: Error) => {
@@ -128,6 +135,7 @@ export function useComments(
         queryClient.invalidateQueries({
           queryKey: queryKeys.comments(spaceId, resolvedContentId.value).detail(data.id),
         })
+        notifyCollaborators()
         toast.success(t('composables.comments.resolveSuccess') as string)
       },
       onError: (error: Error) => {
@@ -153,6 +161,7 @@ export function useComments(
         queryClient.invalidateQueries({
           queryKey: queryKeys.comments(spaceId, resolvedContentId.value).detail(data.id),
         })
+        notifyCollaborators()
         toast.success(t('composables.comments.unresolveSuccess') as string)
       },
       onError: (error: Error) => {
@@ -171,13 +180,14 @@ export function useComments(
         const response = await commentsAPI.value.addReaction(commentId, emoji)
         return response.data
       },
-      onSuccess: (data) => {
+      onSuccess: (_, { commentId }) => {
         queryClient.invalidateQueries({
           queryKey: queryKeys.comments(spaceId, resolvedContentId.value).lists(),
         })
         queryClient.invalidateQueries({
-          queryKey: queryKeys.comments(spaceId, resolvedContentId.value).detail(data.id),
+          queryKey: queryKeys.comments(spaceId, resolvedContentId.value).detail(commentId),
         })
+        notifyCollaborators()
       },
       onError: (error: Error) => {
         toast.error(
@@ -194,10 +204,14 @@ export function useComments(
       mutationFn: async ({ commentId, emoji }: { commentId: string; emoji: string }) => {
         await commentsAPI.value.removeReaction(commentId, emoji)
       },
-      onSuccess: () => {
+      onSuccess: (_, { commentId }) => {
         queryClient.invalidateQueries({
           queryKey: queryKeys.comments(spaceId, resolvedContentId.value).lists(),
         })
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.comments(spaceId, resolvedContentId.value).detail(commentId),
+        })
+        notifyCollaborators()
       },
       onError: (error: Error) => {
         toast.error(

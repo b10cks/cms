@@ -38,6 +38,14 @@ export interface CommentResource {
   updated_at: string
 }
 
+export interface CommentReactionResource {
+  id: string
+  comment_id: string
+  emoji: string
+  author: SimpleUserResource
+  created_at: string
+}
+
 export interface CreateCommentRequest {
   content_version_id?: string
   parent_id?: string

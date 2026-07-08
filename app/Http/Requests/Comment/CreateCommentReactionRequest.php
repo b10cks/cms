@@ -18,7 +18,7 @@ class CreateCommentReactionRequest extends FormRequest
                 'required',
                 'string',
                 'max:50',
-                'regex:/^:[a-zA-Z0-9_-]+:$/i'
+                'regex:/^:[a-zA-Z0-9_+-]+:$/i'
             ],
         ];
     }

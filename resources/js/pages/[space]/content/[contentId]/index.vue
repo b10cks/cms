@@ -621,6 +621,7 @@ const updatePreviewItem = (item: Record<string, unknown>) => {
 const {
   broadcastPersistedContent,
   broadcastBlockOperation,
+  broadcastCommentUpdate,
   collaborators,
   discardOwnDrafts,
   getCollaboratorsForField,
@@ -717,6 +718,7 @@ provide(
   computed(() => content.value?.current_version_id)
 )
 provide('comments', comments)
+provide('broadcastCommentUpdate', broadcastCommentUpdate)
 provide('commitPersistedContent', commitPersistedContent)
 provide('discardOwnDrafts', discardOwnDrafts)
 provide('getActiveCollaborators', getCollaboratorsForField)

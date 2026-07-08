@@ -1,5 +1,10 @@
 import type { ApiResponse, BaseQueryParams } from '~/types'
-import type { CommentResource, CreateCommentRequest, UpdateCommentRequest } from '~/types/comments'
+import type {
+  CommentReactionResource,
+  CommentResource,
+  CreateCommentRequest,
+  UpdateCommentRequest,
+} from '~/types/comments'
 
 import type { ApiClient } from '../client'
 import { BaseResource } from './base-resource'
@@ -38,8 +43,8 @@ export class Comments extends BaseResource<
   public async addReaction(
     commentId: string,
     emoji: string
-  ): Promise<ApiResponse<CommentResource>> {
-    return this.client.post<ApiResponse<CommentResource>>(
+  ): Promise<ApiResponse<CommentReactionResource>> {
+    return this.client.post<ApiResponse<CommentReactionResource>>(
       `${this.basePath}/${commentId}/reactions`,
       {
         emoji,
@@ -48,12 +53,9 @@ export class Comments extends BaseResource<
   }
 
   public async removeReaction(commentId: string, emoji: string): Promise<void> {
-    await this.client.request<ApiResponse<CommentResource>>(
-      `${this.basePath}/${commentId}/reactions`,
-      {
-        method: 'DELETE',
-        body: { emoji },
-      }
-    )
+    await this.client.request<void>(`${this.basePath}/${commentId}/reactions`, {
+      method: 'DELETE',
+      body: { emoji },
+    })
   }
 }

@@ -32,6 +32,17 @@ const replyBody = ref('')
 const { user: currentUser } = useAuth()
 const { formatRelativeTime } = useFormat()
 
+const spaceId = inject<string>('spaceId', '')
+const { useAccessControl } = useAuthorization()
+const { authorization, hasAbility } = useAccessControl(computed(() => ({ space_id: spaceId })))
+
+// Mirrors CommentPolicy::resolve — root users, or the author with comments.resolve_own.
+const canResolve = computed(
+  () =>
+    authorization.value?.is_root ||
+    (props.comment.author.id === currentUser.value?.id && hasAbility('comments.resolve_own'))
+)
+
 const hasReplies = computed(() => props.comment?.replies?.length > 0)
 const repliesCount = computed(() => props.comment?.replies?.length || 0)
 const reactions = computed(() => props.comment.reactions || {})
@@ -139,7 +150,7 @@ const toggleResolved = () => {
           <Icon name="lucide:reply" />
         </Button>
         <Button
-          v-if="!isReply"
+          v-if="!isReply && canResolve"
           variant="ghost"
           size="toolbar"
           @click="toggleResolved"
