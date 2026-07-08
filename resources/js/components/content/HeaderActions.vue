@@ -577,6 +577,7 @@ const handleConfirmAssign = (versionIds: string[]) => {
     >
       <Badge
         variant="warning"
+        type="outline"
         size="indicator"
       />
     </SimpleTooltip>

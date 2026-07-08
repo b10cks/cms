@@ -18,10 +18,10 @@ import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import { AvatarList } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
 } from '~/components/ui/dropdown-menu'
 import DropIndicator from '~/components/ui/DropIndicator.vue'
 import RenamableTitle from '~/components/ui/RenamableTitle.vue'
@@ -31,10 +31,10 @@ import { useContentTreeClipboard } from '~/composables/useContentTreeClipboard'
 import { queryKeys } from '~/composables/useQueryClient'
 import { normalizeLanguageIso } from '~/lib/content-i18n'
 import type {
-  ContentTreeActionContext,
-  ContentTreeClipboardItem,
-  ContentTreeOperationPayload,
-  CreateContentPayload,
+    ContentTreeActionContext,
+    ContentTreeClipboardItem,
+    ContentTreeOperationPayload,
+    CreateContentPayload,
 } from '~/types/contents'
 
 type Edge = 'top' | 'bottom' | 'left'
@@ -1799,9 +1799,8 @@ onBeforeUnmount(() => {
             <AvatarList
               v-if="getUsersForContent(item.value.id).length > 0"
               :users="getUsersForContent(item.value.id)"
-              :max="2"
               size="sm"
-              class="mr-1"
+              :class="[isItemSelected(item.value.id) ? 'mr-4' : 'mr-1  group-hover:mr-4']"
             />
             <div
               v-if="!item.value.pat"

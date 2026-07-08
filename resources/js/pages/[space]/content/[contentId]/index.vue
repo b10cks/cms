@@ -626,7 +626,7 @@ const {
   getCollaboratorsForField,
   getSubtreeCollaborators,
   getAggregatedCollaboratorsForField,
-  getRemoteDraftCollaborators,
+  getDraftOwners,
   remoteDraftCollaborators,
   queueFieldUpdate,
   updateFieldFocus,
@@ -722,7 +722,7 @@ provide('discardOwnDrafts', discardOwnDrafts)
 provide('getActiveCollaborators', getCollaboratorsForField)
 provide('getSubtreeCollaborators', getSubtreeCollaborators)
 provide('getAggregatedCollaboratorsForField', getAggregatedCollaboratorsForField)
-provide('getRemoteDraftCollaborators', getRemoteDraftCollaborators)
+provide('getDraftOwners', getDraftOwners)
 provide('updatePreviewItem', updatePreviewItem)
 provide('updateHoverItem', (id: string) => {
   if (previewRef.value) {

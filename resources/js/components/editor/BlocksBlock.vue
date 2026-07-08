@@ -1,33 +1,32 @@
 <script setup lang="ts">
 import { useSortable } from '@vueuse/integrations/useSortable'
 import {
-  AccordionContent,
-  AccordionHeader,
-  AccordionItem,
-  AccordionRoot,
-  AccordionTrigger,
+    AccordionContent,
+    AccordionHeader,
+    AccordionItem,
+    AccordionRoot,
+    AccordionTrigger,
 } from 'reka-ui'
 
 import AddDropdown from '~/components/editor/AddDropdown.vue'
 import BlockHeader from '~/components/editor/BlockHeader.vue'
 import Icon from '~/components/Icon.vue'
+import { AvatarList } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
 import Label from '~/components/ui/form/Label.vue'
-import {
-  createBlockItemWithDefaults,
-  createContentDefaultsBlockLookup,
-  hydrateContentWithSchema,
-} from '~/composables/useSchemaDefaults'
-import { AvatarList } from '~/components/ui/avatar'
-import { Badge } from '~/components/ui/badge'
 import type {
-  CollaborationPresenceUser,
-  ContentBlockOperationPayload,
-  ContentFieldFocusPayload,
-  ContentFieldUpdatePayload,
+    CollaborationPresenceUser,
+    ContentBlockOperationPayload,
+    ContentFieldFocusPayload,
+    ContentFieldUpdatePayload,
 } from '~/composables/useContentLiveCollaboration'
 import type { ContentTreeItem } from '~/composables/useContentTree'
+import {
+    createBlockItemWithDefaults,
+    createContentDefaultsBlockLookup,
+    hydrateContentWithSchema,
+} from '~/composables/useSchemaDefaults'
 
 import EditorComponent from './EditorComponent.vue'
 
@@ -69,9 +68,9 @@ const getActiveCollaborators = inject<
 const getSubtreeCollaborators = inject<
   ((itemId: string) => CollaborationPresenceUser[]) | undefined
 >('getSubtreeCollaborators', undefined)
-const getRemoteDraftCollaborators = inject<
+const getDraftOwners = inject<
   ((itemId: string, field?: string) => CollaborationPresenceUser[]) | undefined
->('getRemoteDraftCollaborators', undefined)
+>('getDraftOwners', undefined)
 const getVisibleValidationEntries = inject<
   ((prefix?: string) => Array<{ path: string; messages: string[] }>) | undefined
 >('getVisibleValidationEntries', undefined)
@@ -466,10 +465,17 @@ const isItemOpen = (content: Record<string, unknown>, index: number) =>
 const getItemSubtreePresence = (content: Record<string, unknown>) =>
   typeof content.id === 'string' && content.id ? getSubtreeCollaborators?.(content.id) || [] : []
 
-const getItemRemoteDraftUsers = (content: Record<string, unknown>) =>
-  typeof content.id === 'string' && content.id
-    ? getRemoteDraftCollaborators?.(content.id) || []
-    : []
+const getItemDraftOwners = (content: Record<string, unknown>) =>
+  typeof content.id === 'string' && content.id ? getDraftOwners?.(content.id) || [] : []
+
+// Ring the block card in the color of whoever has unsaved changes inside it;
+// validation-error styling takes priority.
+const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
+  if (hasVisibleItemError(index)) return undefined
+
+  const owner = getItemDraftOwners(content)[0]
+  return owner ? { outline: `1px solid ${owner.color}` } : undefined
+}
 </script>
 
 <template>
@@ -479,7 +485,9 @@ const getItemRemoteDraftUsers = (content: Record<string, unknown>) =>
       :required="item.required"
       class="relative z-10 mr-8"
     />
-    <div class="min-w-0 rounded-2xl border border-border bg-surface px-2">
+    <div
+      class="min-w-0 rounded-2xl border border-border bg-surface px-2"
+    >
       <div
         v-if="!props.readOnly && hasSelectedItems"
         class="flex items-center justify-between pt-2"
@@ -538,6 +546,7 @@ const getItemRemoteDraftUsers = (content: Record<string, unknown>) =>
             hasVisibleItemError(i) ? 'border-destructive/40 bg-destructive/5' : 'border-border',
             content.hidden ? 'opacity-50' : '',
           ]"
+          :style="getItemRingStyle(content, i)"
         >
           <AccordionHeader class="group relative">
             <AddDropdown
@@ -635,20 +644,10 @@ const getItemRemoteDraftUsers = (content: Record<string, unknown>) =>
               </div>
             </AccordionTrigger>
             <div
-              v-if="
-                !isItemOpen(content, i) &&
-                (getItemSubtreePresence(content).length > 0 ||
-                  getItemRemoteDraftUsers(content).length > 0)
-              "
-              class="pointer-events-none absolute top-1/2 right-1 z-10 flex -translate-y-1/2 items-center gap-1.5 transition-opacity group-hover:opacity-0"
+              v-if="!isItemOpen(content, i) && getItemSubtreePresence(content).length > 0"
+              class="pointer-events-none absolute top-1/2 right-1 z-10 flex -translate-y-1/2 items-center transition-opacity group-hover:opacity-0"
             >
-              <Badge
-                v-if="getItemRemoteDraftUsers(content).length"
-                variant="warning"
-                size="indicator"
-              />
               <AvatarList
-                v-if="getItemSubtreePresence(content).length"
                 :users="getItemSubtreePresence(content)"
                 :max="3"
                 size="sm"

@@ -857,7 +857,6 @@
         "value": "Value"
       },
       "collaboration": {
-        "remoteDrafts": "Unsaved changes",
         "unsavedFrom": "Unsaved changes from {names}",
         "persistWithRemoteDrafts": "This will also persist unsaved changes from {names}. Continue?",
         "persistWithRemoteDraftsTitle": "Include changes from others?"

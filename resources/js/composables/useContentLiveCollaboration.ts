@@ -157,8 +157,9 @@ export function useContentLiveCollaboration(
   const remoteDraftFields = new Map<string, Map<string, DraftFieldSnapshot>>()
   const fieldFlushTimers = new Map<string, ReturnType<typeof setTimeout>>()
   const localFocusedFields = new Set<string>()
-  // Reactive mirror of remoteDraftFields (userId -> fieldKeys) so the UI can render dirty state.
+  // Reactive mirrors of the draft maps (fieldKeys) so the UI can render dirty state.
   const remoteDraftIndex = ref<Record<string, string[]>>({})
+  const localDraftIndex = ref<string[]>([])
   // Last-known identity of every collaborator ever seen, so remote-draft indicators
   // survive the draft owner leaving the channel.
   const knownUsers = ref<Record<string, CollaborationPresenceUser>>({})
@@ -253,6 +254,15 @@ export function useContentLiveCollaboration(
 
   const aggregatedPresence = computed(() => aggregateFieldKeys(Object.entries(fieldPresence.value)))
 
+  const aggregatedLocalDrafts = computed(() =>
+    aggregateFieldKeys(localDraftIndex.value.map((fieldKey) => [fieldKey, ['local']]))
+  )
+
+  const hasLocalDraft = (itemId: string, field?: string): boolean =>
+    field
+      ? aggregatedLocalDrafts.value.byField.has(getFieldKey(itemId, field))
+      : aggregatedLocalDrafts.value.byItem.has(itemId)
+
   const aggregatedRemoteDrafts = computed(() => {
     const byFieldKey = new Map<string, string[]>()
     for (const [userId, fieldKeys] of Object.entries(remoteDraftIndex.value)) {
@@ -296,6 +306,33 @@ export function useContentLiveCollaboration(
         .map(([userId]) => userId)
     )
   )
+
+  const selfCollaborator = computed<CollaborationPresenceUser | null>(() => {
+    const user = presence.currentUser.value
+    if (!user) return null
+
+    const color = getPresenceColor(user.id)
+
+    return {
+      ...user,
+      joined_at: '',
+      color: color.value,
+      colorLabel: color.label,
+    }
+  })
+
+  // Unified dirty-state lookup: everyone (including the current user) who has
+  // unsaved changes on the field, or anywhere in the item's subtree when no
+  // field is given. Remote owners first so their color wins on shared fields.
+  const getDraftOwners = (itemId: string, field?: string): CollaborationPresenceUser[] => {
+    const owners = getRemoteDraftCollaborators(itemId, field)
+
+    if (hasLocalDraft(itemId, field) && selfCollaborator.value) {
+      return [...owners, selfCollaborator.value]
+    }
+
+    return owners
+  }
 
   const setFieldPresence = (payload: ContentFieldFocusWhisperPayload) => {
     const key = getFieldKey(payload.itemId, payload.field)
@@ -382,6 +419,12 @@ export function useContentLiveCollaboration(
     syncPreviewItem?.({ ...target })
   }
 
+  const syncLocalDraftIndex = () => {
+    if (localDraftIndex.value.length !== localDraftFields.size) {
+      localDraftIndex.value = Array.from(localDraftFields.keys())
+    }
+  }
+
   const syncRemoteDraftIndex = () => {
     remoteDraftIndex.value = Object.fromEntries(
       Array.from(remoteDraftFields.entries()).map(([userId, drafts]) => [
@@ -429,6 +472,7 @@ export function useContentLiveCollaboration(
     fieldFlushTimers.forEach((timer) => clearTimeout(timer))
     fieldFlushTimers.clear()
     localDraftFields.clear()
+    localDraftIndex.value = []
     pendingFieldUpdates.clear()
   }
 
@@ -470,6 +514,7 @@ export function useContentLiveCollaboration(
         field: payload.field,
         previousValue: cloneValue(payload.previousValue),
       })
+      syncLocalDraftIndex()
     }
 
     pendingFieldUpdates.set(fieldKey, {
@@ -526,6 +571,7 @@ export function useContentLiveCollaboration(
         field,
         previousValue: cloneValue(payload.previousValue),
       })
+      syncLocalDraftIndex()
     }
 
     presence.whisper(BLOCK_OPERATION_EVENT, {
@@ -882,5 +928,7 @@ export function useContentLiveCollaboration(
     getAggregatedCollaboratorsForField,
     getRemoteDraftCollaborators,
     remoteDraftCollaborators,
+    hasLocalDraft,
+    getDraftOwners,
   }
 }

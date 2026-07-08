@@ -21,8 +21,6 @@ import TableBlock from '~/components/editor/TableBlock.vue'
 import TextareaBlock from '~/components/editor/TextareaBlock.vue'
 import TextBlock from '~/components/editor/TextBlock.vue'
 import { AvatarList } from '~/components/ui/avatar'
-import { Badge } from '~/components/ui/badge'
-import { SimpleTooltip } from '~/components/ui/tooltip'
 import type {
   CollaborationPresenceUser,
   ContentBlockOperationPayload,
@@ -173,34 +171,31 @@ const fieldDebounceMs = computed(() => {
   }
 })
 
-const getRemoteDraftCollaborators = inject<
+const getDraftOwners = inject<
   ((itemId: string, field?: string) => CollaborationPresenceUser[]) | undefined
->('getRemoteDraftCollaborators', undefined)
-const remoteDraftUsers = computed(
-  () => getRemoteDraftCollaborators?.(props.itemId, props.item.key) || []
-)
-const remoteDraftTooltip = computed(() =>
-  String(
-    t('labels.contents.collaboration.unsavedFrom', {
-      names: remoteDraftUsers.value
-        .map((user) => [user.firstname, user.lastname].filter(Boolean).join(' ') || user.email)
-        .join(', '),
-    })
-  )
-)
+>('getDraftOwners', undefined)
+const draftOwners = computed(() => getDraftOwners?.(props.itemId, props.item.key) || [])
+const dirtyColor = computed(() => draftOwners.value[0]?.color || null)
 
 const collaborationColor = computed(() => props.activeCollaborators?.[0]?.color || null)
 const showContainerHighlight = computed(
   () => tracksOwnFocus.value && !!props.activeCollaborators?.length
 )
+const showDirtyRing = computed(() => tracksOwnFocus.value && !!dirtyColor.value)
 
 const collaborationStyle = computed(() => {
-  if (!collaborationColor.value) return undefined
-
-  return {
-    '--collaboration-color': collaborationColor.value,
-    '--collaboration-color-soft': `${collaborationColor.value}20`,
+  const style: Record<string, string> = {
+    // Always set (transparent by default) so nested fields reset the cascade —
+    // BlocksBlock's wrapper reads this var for its own dirty ring.
+    '--collaboration-dirty-color': dirtyColor.value || 'transparent',
   }
+
+  if (collaborationColor.value) {
+    style['--collaboration-color'] = collaborationColor.value
+    style['--collaboration-color-soft'] = `${collaborationColor.value}20`
+  }
+
+  return style
 })
 
 const handleFocusIn = () => {
@@ -253,6 +248,7 @@ onBeforeUnmount(() => {
     :data-validation-visible="showFieldError ? 'true' : undefined"
     :class="[
       'relative group/field flex-1 min-w-0',
+      showDirtyRing ? 'collaboration-field-dirty' : '',
       showContainerHighlight ? 'collaboration-field-active' : '',
     ]"
     :style="collaborationStyle"
@@ -260,21 +256,10 @@ onBeforeUnmount(() => {
     @focusout="handleFocusOut"
   >
     <div
-      v-if="activeCollaborators?.length || remoteDraftUsers.length"
-      class="absolute top-3 right-3 z-20 flex items-center gap-1.5"
+      v-if="activeCollaborators?.length"
+      class="absolute top-3 right-3 z-20"
     >
-      <SimpleTooltip
-        v-if="remoteDraftUsers.length"
-        :tooltip="remoteDraftTooltip"
-        side="left"
-      >
-        <Badge
-          variant="warning"
-          size="indicator"
-        />
-      </SimpleTooltip>
       <AvatarList
-        v-if="activeCollaborators?.length"
         :users="activeCollaborators"
         :max="3"
         size="sm"
@@ -316,6 +301,18 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/* Dirty ring (unsaved changes, colored by owner) — declared before the
+   focus outline below so an active collaborator's outline wins. */
+.collaboration-field-dirty :deep(input),
+.collaboration-field-dirty :deep(textarea),
+.collaboration-field-dirty :deep(select),
+.collaboration-field-dirty :deep(button[role='combobox']),
+.collaboration-field-dirty :deep(.border-input),
+.collaboration-field-dirty :deep(.border-input-border),
+.collaboration-field-dirty :deep(.ProseMirror) {
+  outline: 1px solid var(--collaboration-dirty-color);
+}
+
 .collaboration-field-active :deep(input),
 .collaboration-field-active :deep(textarea),
 .collaboration-field-active :deep(select),
