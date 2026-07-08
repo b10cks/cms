@@ -36,7 +36,14 @@ import type { AssetFolderResource, AssetResource } from '~/types/assets'
 
 export interface AssetGridProps {
   spaceId: string
-  mode?: 'manage' | 'select'
+  /**
+   * - `manage`: full asset management (bulk actions, upload, details, …)
+   * - `select`: single-pick picker, emits `asset-select` on click
+   * - `multi-select`: picker with the full Finder selection UX (marquee,
+   *   keyboard, checkboxes) but without the management/bulk actions; the host
+   *   consumes `selectionChange` and confirms the selection itself.
+   */
+  mode?: 'manage' | 'select' | 'multi-select'
   allowUpload?: boolean
   allowFolderCreation?: boolean
   showFolders?: boolean
@@ -81,6 +88,12 @@ const { mutateAsync: deleteFolder } = useDeleteAssetFolderMutation()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageAssets = computed(() => access.hasAbility('assets.manage'))
 const canManageFolders = computed(() => access.hasAbility('asset_folders.manage'))
+
+const isManage = computed(() => props.mode === 'manage')
+const isMultiSelect = computed(() => props.mode === 'multi-select')
+// Whether the Finder-style selection engine (marquee, keyboard, checkboxes) is
+// active. On in `manage` and `multi-select`, off in the single-pick `select`.
+const selectionEnabled = computed(() => (isManage.value || isMultiSelect.value) && props.multiSelect)
 
 const folderId = defineModel<string | null>('folderId')
 const tagId = defineModel<string | null>('tagId')
@@ -333,14 +346,14 @@ const assetItemProps = computed(() => {
   return {
     mode: props.mode,
     draggable: props.mode === 'manage' && canManageAssets.value,
-    showCheckbox: props.mode === 'manage' && props.multiSelect,
+    showCheckbox: selectionEnabled.value,
     canEdit: canManageAssets.value,
     canDelete: canManageAssets.value,
   }
 })
 
 const emitSelectionChange = () => {
-  if (props.mode !== 'manage') {
+  if (!selectionEnabled.value) {
     return
   }
 
@@ -353,7 +366,7 @@ const emitSelectionChange = () => {
 watch([selectedAssets, selectedFolders], emitSelectionChange, { deep: true })
 
 const clearSelection = () => {
-  if (props.mode !== 'manage') {
+  if (!selectionEnabled.value) {
     return
   }
 
@@ -370,7 +383,8 @@ const modifiersFromEvent = (event: MouseEvent) => ({
 })
 
 const handleAssetClick = (asset: AssetResource, event: MouseEvent) => {
-  if (props.mode !== 'manage') {
+  // Single-pick mode routes clicks through AssetItem's `select` emit.
+  if (props.mode === 'select') {
     return
   }
 
@@ -379,13 +393,20 @@ const handleAssetClick = (asset: AssetResource, event: MouseEvent) => {
 
   const modifiers = modifiersFromEvent(event)
 
-  // Modifier-click keeps Finder-style multi-selection without the checkbox.
+  // In the multi-select picker a plain click selects (Finder-style), since
+  // there is no details dialog to open.
+  if (isMultiSelect.value) {
+    selection.handleItemPointer(entry, props.multiSelect ? modifiers : {})
+    return
+  }
+
+  // Manage mode: modifier-click keeps Finder-style multi-selection without the
+  // checkbox, a plain click opens the asset details.
   if (props.multiSelect && (modifiers.meta || modifiers.shift)) {
     selection.handleItemPointer(entry, modifiers)
     return
   }
 
-  // Plain click opens the asset details (selection is done via the checkbox).
   handleAssetView(asset)
 }
 
@@ -413,6 +434,11 @@ const handleFolderClick = (folder: AssetFolderResource, event: MouseEvent) => {
 const handleAssetView = (asset: AssetResource) => {
   if (props.mode === 'select') {
     emit('asset-select', asset)
+    return
+  }
+
+  // No details dialog in the multi-select picker.
+  if (isMultiSelect.value) {
     return
   }
 
@@ -952,7 +978,18 @@ const handleTypeahead = (char: string) => {
 }
 
 const handleWindowKeydown = (event: KeyboardEvent) => {
-  if (props.mode !== 'manage' || anyDialogOpen() || isEditableTarget(event.target)) {
+  if (!selectionEnabled.value || isEditableTarget(event.target)) {
+    return
+  }
+
+  // In manage mode the grid owns the page, so ignore keys while any dialog is
+  // open. In the multi-select picker the grid itself lives inside a dialog, so
+  // instead require the event to originate from within this grid.
+  if (isManage.value) {
+    if (anyDialogOpen()) {
+      return
+    }
+  } else if (!isGridTarget(event.target)) {
     return
   }
 
@@ -974,19 +1011,19 @@ const handleWindowKeydown = (event: KeyboardEvent) => {
     return
   }
 
-  if (meta && event.key.toLowerCase() === 'x' && canManageAssets.value) {
+  if (isManage.value && meta && event.key.toLowerCase() === 'x' && canManageAssets.value) {
     event.preventDefault()
     cutSelection()
     return
   }
 
-  if (meta && event.key.toLowerCase() === 'v' && canManageAssets.value) {
+  if (isManage.value && meta && event.key.toLowerCase() === 'v' && canManageAssets.value) {
     event.preventDefault()
     void pasteClipboard()
     return
   }
 
-  if (meta && event.key.toLowerCase() === 'c' && hasSelection.value) {
+  if (isManage.value && meta && event.key.toLowerCase() === 'c' && hasSelection.value) {
     const urls = Array.from(selectedAssets.value.values()).map((asset) => asset.full_path)
 
     if (urls.length) {
@@ -999,6 +1036,7 @@ const handleWindowKeydown = (event: KeyboardEvent) => {
   }
 
   if (
+    isManage.value &&
     (event.key === 'Delete' || (meta && event.key === 'Backspace')) &&
     hasSelection.value &&
     canManageAssets.value
@@ -1093,7 +1131,7 @@ const pagePoint = (event: MouseEvent) => ({
 })
 
 const handleMarqueeMouseDown = (event: MouseEvent) => {
-  if (props.mode !== 'manage' || !props.multiSelect || event.button !== 0) {
+  if (!selectionEnabled.value || event.button !== 0) {
     return
   }
 
@@ -1184,7 +1222,8 @@ const handleMarqueeMouseMove = (event: MouseEvent) => {
 
     if (entry.type === 'asset') {
       nextAssets.set(entry.data.id, entry.data)
-    } else {
+    } else if (isManage.value) {
+      // Folders are navigation-only in the picker, so keep them unselectable.
       nextFolders.set(entry.data.id, entry.data)
     }
   })
@@ -1484,7 +1523,7 @@ onUnmounted(() => {
                 v-for="folder in folders"
                 :key="folder.id"
                 :folder="folder"
-                :selected="selectedFolders.has(folder.id)"
+                :selected="mode === 'manage' && selectedFolders.has(folder.id)"
                 :cut="cutKeys.has(`folder:${folder.id}`)"
                 :draggable="mode === 'manage' && canManageFolders"
                 :can-edit="canManageFolders"
@@ -1593,7 +1632,7 @@ onUnmounted(() => {
                   v-for="asset in assets"
                   :key="asset.id"
                   :asset="asset"
-                  :selected="mode === 'manage' ? selectedAssets.has(asset.id) : undefined"
+                  :selected="selectionEnabled ? selectedAssets.has(asset.id) : undefined"
                   :cut="cutKeys.has(`asset:${asset.id}`)"
                   :size="imageSize"
                   :drag-items="getDragItemsFor('asset', asset.id)"

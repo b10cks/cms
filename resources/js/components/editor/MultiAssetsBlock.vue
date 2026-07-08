@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import AssetDetailsDialog from '~/components/assets/AssetDetailsDialog.vue'
 import AssetGrid from '~/components/assets/AssetGrid.vue'
+import AssetInsertTrigger from '~/components/editor/AssetInsertTrigger.vue'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { ScrollArea } from '~/components/ui/scroll-area'
-import { useAlertDialog } from '~/composables/useAlertDialog'
 import useSpaceSettings from '~/composables/useSpaceSettings'
 import type { AssetResource } from '~/types/assets'
 
@@ -39,7 +39,6 @@ const emit = defineEmits<{
   'update:modelValue': [value: AssetValue[] | null]
 }>()
 
-const { alert } = useAlertDialog()
 const { settings } = useSpaceSettings(props.spaceId)
 const { $t } = useI18n()
 const { getFileIcon, getFileType } = useFileUtils()
@@ -49,6 +48,9 @@ const showAssetPicker = ref(false)
 const showAssetDetails = ref(false)
 const editingAsset = ref<AssetValue | null>(null)
 const draggedIndex = ref<number | null>(null)
+const pickerSelection = ref<AssetResource[]>([])
+// Position new assets are inserted at; null appends to the end.
+const insertIndex = ref<number | null>(null)
 
 watch(
   () => props.modelValue,
@@ -75,25 +77,58 @@ const updateValue = () => {
   emit('update:modelValue', localValue.value.length > 0 ? localValue.value : null)
 }
 
+const toAssetValue = (asset: AssetResource): AssetValue => ({
+  id: asset.id,
+  type: 'asset',
+  full_path: asset.full_path,
+  extension: asset.extension,
+  mime_type: asset.mime_type,
+  size: asset.size,
+  filename: asset.filename,
+  data: {},
+})
+
+// Opens the multi-select picker, inserting the result at `index` (null appends).
+const openPickerAt = (index: number | null) => {
+  replaceIndex.value = null
+  insertIndex.value = index
+  showAssetPicker.value = true
+}
+
 const handleAssetSelect = (asset: AssetResource) => {
   if (props.item.max && localValue.value.length >= props.item.max) {
     showAssetPicker.value = false
     return
   }
 
-  const newAsset: AssetValue = {
-    id: asset.id,
-    type: 'asset',
-    full_path: asset.full_path,
-    extension: asset.extension,
-    mime_type: asset.mime_type,
-    size: asset.size,
-    filename: asset.filename,
-    data: {},
-  }
-
-  localValue.value.push(newAsset)
+  localValue.value.push(toAssetValue(asset))
   updateValue()
+  showAssetPicker.value = false
+}
+
+const handlePickerSelectionChange = (payload: { assets: AssetResource[] }) => {
+  pickerSelection.value = payload.assets
+}
+
+// Number of selected assets that will actually be added, capped by `item.max`.
+const addableCount = computed(() => {
+  const remaining = remainingSlots.value
+  return remaining === null
+    ? pickerSelection.value.length
+    : Math.min(pickerSelection.value.length, remaining)
+})
+
+const confirmSelection = () => {
+  const count = addableCount.value
+  if (count <= 0) return
+
+  const newAssets = pickerSelection.value.slice(0, count).map(toAssetValue)
+  const at = insertIndex.value ?? localValue.value.length
+  localValue.value.splice(at, 0, ...newAssets)
+
+  updateValue()
+  pickerSelection.value = []
+  insertIndex.value = null
   showAssetPicker.value = false
 }
 
@@ -102,23 +137,15 @@ const handleAssetEdit = (asset: AssetValue) => {
   showAssetDetails.value = true
 }
 
-const handleAssetDelete = async (index: number) => {
-  const asset = localValue.value[index]
-  if (!asset) return
+const handleAssetDelete = (index: number) => {
+  if (!localValue.value[index]) return
 
-  const confirmed = await alert.confirm($t('messages.assets.confirmDeleteFromCollection'), {
-    title: $t('labels.assets.removeAsset'),
-    confirmLabel: $t('actions.remove'),
-    cancelLabel: $t('actions.cancel'),
-  })
-
-  if (confirmed) {
-    localValue.value.splice(index, 1)
-    updateValue()
-  }
+  localValue.value.splice(index, 1)
+  updateValue()
 }
 
 const handleAssetReplace = (index: number) => {
+  insertIndex.value = null
   replaceIndex.value = index
   showAssetPicker.value = true
 }
@@ -129,16 +156,7 @@ const handleAssetSelectForReplace = (asset: AssetResource) => {
   if (replaceIndex.value === null) {
     handleAssetSelect(asset)
   } else {
-    localValue.value[replaceIndex.value] = {
-      id: asset.id,
-      type: 'asset',
-      full_path: asset.full_path,
-      extension: asset.extension,
-      mime_type: asset.mime_type,
-      size: asset.size,
-      filename: asset.filename,
-      data: {},
-    }
+    localValue.value[replaceIndex.value] = toAssetValue(asset)
     updateValue()
     replaceIndex.value = null
   }
@@ -194,51 +212,36 @@ const handleFolderChange = (folderId: string | null) => {
 </script>
 
 <template>
-  <div class="space-y-3 flex flex-col w-full min-w-0 max-w-full relative">
+  <div class="grid w-full min-w-0 gap-2">
     <Label
       :label="item.name || item.key"
       :required="item.required"
     />
-    <div
-      v-if="!hasAssets"
-      :class="[
-        'flex items-center gap-2 rounded-lg border border-dashed border-input bg-surface/50 p-4 transition-colors',
-        props.readOnly ? 'cursor-default' : 'cursor-pointer hover:bg-surface',
-      ]"
-      @click="!props.readOnly && (showAssetPicker = true)"
-    >
-      <Icon
-        name="lucide:images"
-        size="2rem"
-      />
-      <div class="flex-1">
-        <p class="text-primary">
-          {{ $t('labels.assets.addAsset') }}
-        </p>
-        <p class="text-sm text-muted">
-          {{
-            item.max
-              ? $t('labels.assets.addAssetDescriptionWithLimit', { max: item.max })
-              : $t('labels.assets.addAssetDescription')
-          }}
-        </p>
-      </div>
-    </div>
-    <div
-      v-else
-      class="space-y-2 flex-1"
-    >
-      <div class="flex w-full min-w-0 flex-col gap-2">
+    <div class="min-w-0 rounded-2xl border border-border bg-surface px-2">
+      <p
+        v-if="props.readOnly && !hasAssets"
+        class="px-1 py-2 text-center text-sm text-muted"
+      >
+        {{ $t('labels.assets.noAssetsFound') }}
+      </p>
+      <div
+        class="relative"
+        :class="hasAssets ? 'pt-2' : 'pt-6'"
+      >
         <div
           v-for="(asset, index) in localValue"
           :key="asset.id"
-          class="group relative w-full min-w-0 overflow-hidden rounded-lg border border-input bg-surface"
+          class="group relative mb-2 min-w-0 rounded-lg border border-border bg-background p-2 transition-colors"
           :draggable="!props.readOnly"
           @dragstart="!props.readOnly && handleDragStart(index)"
           @dragover="!props.readOnly && handleDragOver($event)"
           @drop="!props.readOnly && handleDrop($event, index)"
         >
-          <div class="flex min-w-0 items-center gap-3 p-2">
+          <AssetInsertTrigger
+            v-if="!props.readOnly && canAddMore"
+            @add="openPickerAt(index)"
+          />
+          <div class="flex min-w-0 items-center gap-3">
             <div
               v-if="!props.readOnly"
               class="cursor-ns-resize opacity-0 group-hover:opacity-100"
@@ -252,20 +255,20 @@ const handleFolderChange = (folderId: string | null) => {
             <div class="flex-shrink-0">
               <div
                 v-if="isImage(asset)"
-                class="h-14 w-14 overflow-hidden rounded border border-input bg-background"
+                class="h-14 w-14 overflow-hidden rounded-md border border-border bg-surface"
               >
                 <NuxtImg
                   :src="asset.full_path"
                   :alt="String((asset.data as Record<string, unknown>)?.altText || asset.filename)"
-                  :width="56"
-                  :height="56"
+                  :width="128"
+                  :height="128"
                   :modifiers="{ crop: 'fill' }"
                   class="h-full w-full object-cover"
                 />
               </div>
               <div
                 v-else
-                class="flex h-12 w-12 items-center justify-center rounded border border-input bg-background"
+                class="flex h-12 w-12 items-center justify-center rounded-md border border-border bg-surface"
               >
                 <Icon
                   :name="getFileIcon(getFileType(asset.mime_type))"
@@ -309,27 +312,18 @@ const handleFolderChange = (folderId: string | null) => {
             </div>
           </div>
         </div>
-      </div>
 
-      <Button
-        v-if="!props.readOnly && canAddMore"
-        @click="showAssetPicker = true"
-      >
-        <Icon name="lucide:plus" />
-        <span>
-          {{
-            remainingSlots
-              ? $t('actions.addMoreAmount', { remaining: remainingSlots })
-              : $t('actions.addMore')
-          }}
-        </span>
-      </Button>
-      <div
-        v-if="item.max"
-        class="text-center text-xs text-muted"
-      >
-        {{ $t('labels.assets.assetsCount', { current: localValue.length, max: item.max }) }}
+        <AssetInsertTrigger
+          v-if="!props.readOnly && canAddMore"
+          @add="openPickerAt(null)"
+        />
       </div>
+    </div>
+    <div
+      v-if="hasAssets && item.max"
+      class="text-center text-xs text-muted"
+    >
+      {{ $t('labels.assets.assetsCount', { current: localValue.length, max: item.max }) }}
     </div>
 
     <Dialog
@@ -339,10 +333,12 @@ const handleFolderChange = (folderId: string | null) => {
       @update:open="
         () => {
           replaceIndex = null
+          insertIndex = null
+          pickerSelection = []
         }
       "
     >
-      <DialogContent class="h-[90dvh] !max-w-[90dvw] p-0">
+      <DialogContent class="!flex h-[90dvh] flex-col !max-w-[90dvw] p-0">
         <DialogHeader>
           <DialogTitle>
             {{
@@ -353,15 +349,33 @@ const handleFolderChange = (folderId: string | null) => {
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea class="flex-1">
+        <ScrollArea class="min-h-0 flex-1">
           <AssetGrid
             :space-id="spaceId"
             :initial-folder-id="initialFolderId"
-            mode="select"
+            :mode="replaceIndex === null ? 'multi-select' : 'select'"
             @asset-select="handleAssetSelectForReplace"
+            @selection-change="handlePickerSelectionChange"
             @folder-change="handleFolderChange"
           />
         </ScrollArea>
+
+        <div
+          v-if="replaceIndex === null"
+          class="flex items-center justify-between gap-4 border-t border-input px-6 py-3"
+        >
+          <p class="text-sm text-muted">
+            {{ $t('labels.selectionCount', { count: pickerSelection.length }) }}
+          </p>
+          <Button
+            variant="primary"
+            :disabled="addableCount === 0"
+            @click="confirmSelection"
+          >
+            <Icon name="lucide:plus" />
+            <span>{{ $t('actions.assets.addSelected', { count: addableCount }) }}</span>
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
 

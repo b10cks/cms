@@ -3489,7 +3489,8 @@
       "tag": "Tags…",
       "download": "Download",
       "copyUrl": "Copy URL",
-      "applyTags": "Apply tags"
+      "applyTags": "Apply tags",
+      "addSelected": "Add {count} selected"
     },
     "assetFolders": {
       "create": "Create new folder"

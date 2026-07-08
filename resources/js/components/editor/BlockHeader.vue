@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
+import Icon from '~/components/Icon.vue';
 
 const handlebars = useHandlebars()
 
@@ -82,7 +82,7 @@ const guessedTitle = computed(() => {
   </div>
   <div class="grid grow text-left leading-none">
     <h4
-      class="font-semibold text-primary"
+      class="font-semibold text-primary line-clamp-3"
       v-html="guessedTitle"
     ></h4>
     <div class="flex text-sm text-muted">{{ blockTitle }}</div>

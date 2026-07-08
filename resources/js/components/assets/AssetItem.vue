@@ -42,7 +42,7 @@ export interface AssetItemProps {
   cut?: boolean
   draggable?: boolean
   size?: number
-  mode?: 'manage' | 'select'
+  mode?: 'manage' | 'select' | 'multi-select'
   canEdit?: boolean
   canDelete?: boolean
   showExtension?: boolean
@@ -82,7 +82,9 @@ const emit = defineEmits<{
 const isSelectMode = computed(() => props.mode === 'select')
 const isManageMode = computed(() => props.mode === 'manage')
 const enableDragAndDrop = computed(() => props.draggable && isManageMode.value)
-const displayCheckbox = computed(() => props.showCheckbox && isManageMode.value)
+// The checkbox is shown whenever multi-selection is active (manage or the
+// multi-select picker), but never in the single-pick select mode.
+const displayCheckbox = computed(() => props.showCheckbox && !isSelectMode.value)
 
 const hoverThumbnailIndex = ref(0)
 let thumbnailInterval: ReturnType<typeof setInterval> | null = null

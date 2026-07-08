@@ -3460,7 +3460,8 @@
       "tag": "Tags…",
       "download": "Herunterladen",
       "copyUrl": "URL kopieren",
-      "applyTags": "Tags anwenden"
+      "applyTags": "Tags anwenden",
+      "addSelected": "{count} ausgewählte hinzufügen"
     },
     "assetFolders": {
       "create": "Neuen Ordner erstellen"
