@@ -3,6 +3,13 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.8-e9499475] — 2026-7-8
+
+- 👔 Improve live collaboration dirty changes
+- 🚸 Further improve image quality
+- 🔧 Adapt default qualities
+- 💄 Improve dirty indicator style
+
 ## [v2026.7.8-551c504b] — 2026-7-8
 
 - 👔 Improve live collaboration on content
