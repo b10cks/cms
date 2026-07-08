@@ -8,6 +8,7 @@ import FieldEditor from '~/components/editor/FieldEditor.vue'
 import Icon from '~/components/Icon.vue'
 import type {
   CollaborationPresenceUser,
+  ContentBlockOperationPayload,
   ContentFieldFocusPayload,
   ContentFieldUpdatePayload,
 } from '~/composables/useContentLiveCollaboration'
@@ -63,6 +64,7 @@ const emit = defineEmits<{
   (e: 'createTemplate', blockId: string, content: object): void
   (e: 'fieldUpdate', payload: ContentFieldUpdatePayload): void
   (e: 'fieldFocus', payload: ContentFieldFocusPayload): void
+  (e: 'blockOperation', payload: ContentBlockOperationPayload): void
 }>()
 
 const hoverRegistry = inject<Map<string, boolean>>('hoverRegistry', new Map())
@@ -267,6 +269,29 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload): void => {
   emit('fieldFocus', payload)
 }
 
+const forwardBlockOperation = (payload: ContentBlockOperationPayload): void => {
+  emit('blockOperation', payload)
+}
+
+const getAggregatedCollaboratorsForField = inject<
+  ((itemId: string, field: string) => CollaborationPresenceUser[]) | undefined
+>('getAggregatedCollaboratorsForField', undefined)
+
+const activeItemId = computed(() => currentContentItem.value?.id || rootContentId.value)
+
+const getPagePresence = (page: EditorPage): CollaborationPresenceUser[] => {
+  if (!getAggregatedCollaboratorsForField || !activeItemId.value) return []
+
+  const users = new Map<string, CollaborationPresenceUser>()
+  for (const fieldKey of page?.items || []) {
+    for (const user of getAggregatedCollaboratorsForField(activeItemId.value, fieldKey)) {
+      users.set(user.id, user)
+    }
+  }
+
+  return Array.from(users.values())
+}
+
 const INTERNAL_CONTENT_KEYS = new Set(['id', 'block', 'hidden'])
 
 const contentData = computed<Record<string, unknown>>(
@@ -361,6 +386,11 @@ const removeAllOutOfSchemaKeys = (): void => {
           class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold whitespace-nowrap transition-colors hover:text-primary data-[state=active]:bg-background data-[state=active]:text-primary"
         >
           {{ page.header }}
+          <span
+            v-if="getPagePresence(page).length > 0"
+            class="size-2 shrink-0 rounded-full"
+            :style="{ backgroundColor: getPagePresence(page)[0].color }"
+          />
           <Badge
             v-if="i === 0 && outOfSchemaEntries.length > 0"
             variant="warning"
@@ -394,6 +424,7 @@ const removeAllOutOfSchemaKeys = (): void => {
                 @create-template="handleCreateTemplate"
                 @field-update="forwardFieldUpdate"
                 @field-focus="forwardFieldFocus"
+                @block-operation="forwardBlockOperation"
               />
             </template>
           </template>
@@ -414,6 +445,7 @@ const removeAllOutOfSchemaKeys = (): void => {
                 @create-template="handleCreateTemplate"
                 @field-update="forwardFieldUpdate"
                 @field-focus="forwardFieldFocus"
+                @block-operation="forwardBlockOperation"
               />
             </template>
           </template>

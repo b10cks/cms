@@ -19,6 +19,7 @@ import {
   DropdownMenuSubTrigger,
 } from '~/components/ui/dropdown-menu'
 import {
+  SimpleTooltip,
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -46,6 +47,7 @@ const props = defineProps<{
   spaceId: string
   content: ContentResource
   presentUsers?: CollaborationPresenceUser[]
+  remoteDraftUsers?: CollaborationPresenceUser[]
   disabled?: boolean
   isDirty?: boolean
 }>()
@@ -245,6 +247,28 @@ const revealAndFocusValidationIssues = async () => {
   await focusFirstValidationError?.()
 }
 
+const remoteDraftUserNames = computed(() =>
+  (props.remoteDraftUsers || [])
+    .map((user) => [user.firstname, user.lastname].filter(Boolean).join(' ') || user.email)
+    .join(', ')
+)
+
+// Persisting also commits unsaved live edits from collaborators — make that explicit.
+const confirmRemoteDrafts = async () => {
+  if (!props.remoteDraftUsers?.length) return true
+
+  return await alert.confirm(
+    t('labels.contents.collaboration.persistWithRemoteDrafts', {
+      names: remoteDraftUserNames.value,
+    }) as string,
+    {
+      title: t('labels.contents.collaboration.persistWithRemoteDraftsTitle') as string,
+      confirmLabel: t('actions.save') as string,
+      cancelLabel: t('actions.cancel') as string,
+    }
+  )
+}
+
 const guardSubmit = async (options?: { silent?: boolean; revealOnFail?: boolean }) => {
   if (!options?.silent) {
     clearValidationErrors?.()
@@ -339,6 +363,8 @@ const handleConflictReload = () => {
 }
 
 const save = async (force = false) => {
+  if (!(await confirmRemoteDrafts())) return
+
   if (force) {
     await performSave(true)
     return
@@ -392,6 +418,7 @@ const handleValidationStatusClick = async () => {
 }
 
 const publishDirectly = async () => {
+  if (!(await confirmRemoteDrafts())) return
   if (!(await guardSubmit({ revealOnFail: true }))) return
 
   try {
@@ -406,6 +433,7 @@ const publishDirectly = async () => {
 }
 
 const publishWithMessage = async () => {
+  if (!(await confirmRemoteDrafts())) return
   if (!(await guardSubmit({ revealOnFail: true }))) return
 
   publishType.value = 'now'
@@ -413,6 +441,7 @@ const publishWithMessage = async () => {
 }
 
 const schedulePublish = async () => {
+  if (!(await confirmRemoteDrafts())) return
   if (!(await guardSubmit({ revealOnFail: true }))) return
 
   publishType.value = 'schedule'
@@ -541,6 +570,22 @@ const handleConfirmAssign = (versionIds: string[]) => {
 
 <template>
   <div class="flex items-center gap-3">
+    <SimpleTooltip
+      v-if="props.remoteDraftUsers?.length"
+      :tooltip="t('labels.contents.collaboration.unsavedFrom', { names: remoteDraftUserNames })"
+      side="bottom"
+    >
+      <Badge
+        variant="warning"
+        class="flex items-center gap-1"
+      >
+        <Icon
+          name="lucide:file-diff"
+          size="0.75rem"
+        />
+        <span>{{ t('labels.contents.collaboration.remoteDrafts') }}</span>
+      </Badge>
+    </SimpleTooltip>
     <AvatarList
       v-if="props.presentUsers?.length"
       :users="props.presentUsers"

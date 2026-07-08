@@ -851,6 +851,12 @@
         "key": "Schlüssel",
         "value": "Wert"
       },
+      "collaboration": {
+        "remoteDrafts": "Ungespeicherte Änderungen",
+        "unsavedFrom": "Ungespeicherte Änderungen von {names}",
+        "persistWithRemoteDrafts": "Dabei werden auch ungespeicherte Änderungen von {names} gespeichert. Fortfahren?",
+        "persistWithRemoteDraftsTitle": "Änderungen anderer einbeziehen?"
+      },
       "emptyTitle": "Kein Inhalt ausgewählt",
       "emptyDescription": "Erstelle zunächst deine erste Inhaltsseite",
       "managerTitle": "Inhalts-Manager",

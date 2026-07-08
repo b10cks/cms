@@ -83,15 +83,16 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
     }
   }
 
-  const teardown = () => {
-    const id = toValue(spaceId)
-    if (!isClient || !id) return
+  // idToLeave must be passed when spaceId already changed (see the watcher) —
+  // reading toValue(spaceId) there would leak the old space's subscriptions.
+  const teardown = (idToLeave: string | null = toValue(spaceId)) => {
+    if (!isClient || !idToLeave) return
 
     try {
       const echo = useEcho()
       if (!echo) return
       for (const channel of ['blocks', 'assets', 'icons', 'redirects']) {
-        echo.leave(`spaces.${id}.${channel}`)
+        echo.leave(`spaces.${idToLeave}.${channel}`)
       }
     } catch {
       /** */
@@ -99,12 +100,12 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
   }
 
   onMounted(setup)
-  onUnmounted(teardown)
+  onUnmounted(() => teardown())
 
   watch(
     () => toValue(spaceId),
     (newId, oldId) => {
-      if (oldId) teardown()
+      if (oldId) teardown(oldId)
       if (newId) setup()
     }
   )

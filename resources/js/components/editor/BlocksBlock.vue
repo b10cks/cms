@@ -19,8 +19,12 @@ import {
   createContentDefaultsBlockLookup,
   hydrateContentWithSchema,
 } from '~/composables/useSchemaDefaults'
+import { AvatarList } from '~/components/ui/avatar'
+import { Badge } from '~/components/ui/badge'
+import { SimpleTooltip } from '~/components/ui/tooltip'
 import type {
   CollaborationPresenceUser,
+  ContentBlockOperationPayload,
   ContentFieldFocusPayload,
   ContentFieldUpdatePayload,
 } from '~/composables/useContentLiveCollaboration'
@@ -57,11 +61,18 @@ const emit = defineEmits<{
   createTemplate: [blockId: string, content: Record<string, unknown>]
   fieldUpdate: [payload: ContentFieldUpdatePayload]
   fieldFocus: [payload: ContentFieldFocusPayload]
+  blockOperation: [payload: ContentBlockOperationPayload]
 }>()
 
 const getActiveCollaborators = inject<
   (itemId: string, field: string) => CollaborationPresenceUser[]
 >('getActiveCollaborators', () => [])
+const getSubtreeCollaborators = inject<
+  ((itemId: string) => CollaborationPresenceUser[]) | undefined
+>('getSubtreeCollaborators', undefined)
+const getRemoteDraftCollaborators = inject<
+  ((itemId: string, field?: string) => CollaborationPresenceUser[]) | undefined
+>('getRemoteDraftCollaborators', undefined)
 const getVisibleValidationEntries = inject<
   ((prefix?: string) => Array<{ path: string; messages: string[] }>) | undefined
 >('getVisibleValidationEntries', undefined)
@@ -83,10 +94,44 @@ const getBlockHeaderBlock = (content: Record<string, unknown>) =>
     preview_template: null,
   }) as BlockResource
 
+const emitBlockOperation = (
+  operation: ContentBlockOperationPayload,
+  previousItems: Array<Record<string, unknown>>
+) => {
+  emit('blockOperation', { ...operation, previousValue: [...previousItems] })
+}
+
+// A pure reorder (same ids, different order) can only come from drag sorting —
+// every other mutation site emits its own, more specific operation.
+const deriveReorderOperation = (
+  previousItems: Array<Record<string, unknown>>,
+  nextItems: Array<Record<string, unknown>>
+): ContentBlockOperationPayload | null => {
+  if (previousItems.length !== nextItems.length) return null
+
+  const previousIds = previousItems.map((item) => item.id)
+  const nextIds = nextItems.map((item) => item.id)
+
+  if (!previousIds.every((id) => typeof id === 'string')) return null
+  if (new Set(previousIds).size !== previousIds.length) return null
+  if (previousIds.every((id, index) => id === nextIds[index])) return null
+
+  const previousIdSet = new Set(previousIds)
+  if (!nextIds.every((id) => typeof id === 'string' && previousIdSet.has(id))) return null
+
+  return { type: 'reorder', order: nextIds as string[] }
+}
+
 const blockItems = computed({
   get: () => props.modelValue || [],
   set: (newValue) => {
     if (newValue === props.modelValue) return
+
+    const previousItems = props.modelValue || []
+    const reorderOperation = deriveReorderOperation(previousItems, newValue)
+    if (reorderOperation) {
+      emitBlockOperation(reorderOperation, previousItems)
+    }
 
     emit('update:modelValue', [...newValue])
   },
@@ -108,14 +153,13 @@ const blockLookup = computed<Record<string, Pick<BlockResource, 'slug' | 'schema
 )
 
 const insertItem = (item: Record<string, unknown>, index: number = -1) => {
-  const updatedItems = [...blockItems.value]
+  const previousItems = [...blockItems.value]
+  const updatedItems = [...previousItems]
+  const insertIndex = index === -1 ? updatedItems.length : index
 
-  if (index === -1) {
-    updatedItems.push(item)
-  } else {
-    updatedItems.splice(index, 0, item)
-  }
+  updatedItems.splice(insertIndex, 0, item)
 
+  emitBlockOperation({ type: 'add', index: insertIndex, items: [item] }, previousItems)
   emit('update:modelValue', updatedItems)
 }
 
@@ -149,8 +193,17 @@ const addItem = (slug: string, index: number = -1, template?: BlockTemplate | nu
 }
 
 const deleteItem = (index: number) => {
-  const updatedItems = [...blockItems.value]
+  const previousItems = [...blockItems.value]
+  const removedId = previousItems[index]?.id
+  const updatedItems = [...previousItems]
   updatedItems.splice(index, 1)
+
+  if (typeof removedId === 'string' && removedId) {
+    emitBlockOperation({ type: 'remove', itemIds: [removedId] }, previousItems)
+  } else {
+    emitBlockOperation({ type: 'replace', items: updatedItems }, previousItems)
+  }
+
   blockItems.value = updatedItems
   selectedIndexes.value = selectedIndexes.value
     .filter((selectedIndex) => selectedIndex !== index)
@@ -240,12 +293,20 @@ const cutItems = async (index?: number) => {
 
   await globalCutItem(payload, props.spaceId, getClipboardLabel(itemsToCut))
 
-  const updatedItems = [...blockItems.value]
+  const previousItems = [...blockItems.value]
+  const updatedItems = [...previousItems]
   indexes
     .sort((a, b) => b - a)
     .forEach((itemIndex) => {
       updatedItems.splice(itemIndex, 1)
     })
+
+  const removedIds = itemsToCut.map((item) => item.id)
+  if (removedIds.every((id): id is string => typeof id === 'string' && id !== '')) {
+    emitBlockOperation({ type: 'remove', itemIds: removedIds }, previousItems)
+  } else {
+    emitBlockOperation({ type: 'replace', items: updatedItems }, previousItems)
+  }
 
   blockItems.value = updatedItems
   selectedIndexes.value = []
@@ -261,9 +322,22 @@ const pasteItems = async (event?: ClipboardEvent | null, insertIndex?: number) =
   const pastedItems = normalizeClipboardItems(pastedItem)
 
   if (pastedItems.length > 0) {
-    const updatedItems = [...blockItems.value]
+    const previousItems = [...blockItems.value]
+    const updatedItems = [...previousItems]
     const index = insertIndex ?? updatedItems.length
     updatedItems.splice(index, 0, ...pastedItems)
+
+    // Pasting a copy keeps the source ids; a remote "add" would skip those as
+    // duplicates, so ship the whole array instead.
+    const existingIds = new Set(previousItems.map((item) => item.id))
+    const hasDuplicateIds = pastedItems.some((item) => existingIds.has(item.id))
+
+    emitBlockOperation(
+      hasDuplicateIds
+        ? { type: 'replace', items: updatedItems }
+        : { type: 'add', index, items: pastedItems },
+      previousItems
+    )
     emit('update:modelValue', updatedItems)
     selectedIndexes.value = []
   }
@@ -293,9 +367,20 @@ const updateContent = (index: number, newContent: Record<string, unknown>) => {
 }
 
 const toggleHidden = (index: number) => {
-  const item = blockItems.value[index]
-  const updatedItems = [...blockItems.value]
+  const previousItems = [...blockItems.value]
+  const item = previousItems[index]
+  const updatedItems = [...previousItems]
   updatedItems[index] = { ...item, hidden: !item.hidden }
+
+  if (typeof item.id === 'string' && item.id) {
+    emitBlockOperation(
+      { type: 'visibility', itemId: item.id, hidden: !item.hidden },
+      previousItems
+    )
+  } else {
+    emitBlockOperation({ type: 'replace', items: updatedItems }, previousItems)
+  }
+
   blockItems.value = updatedItems
 }
 
@@ -371,6 +456,30 @@ watch(
 const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
   emit('fieldFocus', payload)
 }
+
+const forwardBlockOperation = (payload: ContentBlockOperationPayload) => {
+  emit('blockOperation', payload)
+}
+
+const isItemOpen = (content: Record<string, unknown>, index: number) =>
+  openItems.value.includes(getItemAccordionValue(content, index))
+
+const getItemSubtreePresence = (content: Record<string, unknown>) =>
+  typeof content.id === 'string' && content.id ? getSubtreeCollaborators?.(content.id) || [] : []
+
+const getItemRemoteDraftUsers = (content: Record<string, unknown>) =>
+  typeof content.id === 'string' && content.id
+    ? getRemoteDraftCollaborators?.(content.id) || []
+    : []
+
+const getItemRemoteDraftTooltip = (content: Record<string, unknown>) =>
+  String(
+    $t('labels.contents.collaboration.unsavedFrom', {
+      names: getItemRemoteDraftUsers(content)
+        .map((user) => [user.firstname, user.lastname].filter(Boolean).join(' ') || user.email)
+        .join(', '),
+    })
+  )
 </script>
 
 <template>
@@ -472,6 +581,29 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
                 :content="content"
                 :block="getBlockHeaderBlock(content)"
               />
+              <div
+                v-if="!isItemOpen(content, i)"
+                class="flex shrink-0 items-center gap-1.5"
+                @click.stop
+              >
+                <SimpleTooltip
+                  v-if="getItemRemoteDraftUsers(content).length"
+                  :tooltip="getItemRemoteDraftTooltip(content)"
+                  side="bottom"
+                >
+                  <Badge
+                    variant="warning"
+                    size="dot"
+                  />
+                </SimpleTooltip>
+                <AvatarList
+                  v-if="getItemSubtreePresence(content).length"
+                  :users="getItemSubtreePresence(content)"
+                  :max="3"
+                  size="sm"
+                  tooltip-side="bottom"
+                />
+              </div>
               <div class="ml-auto flex items-center gap-2">
                 <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100">
                   <button
@@ -557,6 +689,7 @@ const forwardFieldFocus = (payload: ContentFieldFocusPayload) => {
                   "
                   @field-update="forwardFieldUpdate"
                   @field-focus="forwardFieldFocus"
+                  @block-operation="forwardBlockOperation"
                 />
               </div>
             </div>

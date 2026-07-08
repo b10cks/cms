@@ -116,7 +116,10 @@ export function usePresence(
     }
   }
 
-  const disconnect = () => {
+  // channelToLeave must be passed explicitly when the channel name has already
+  // changed (see the channelName watcher) — leaving channelName.value there
+  // would target the new channel and leak the old subscription.
+  const disconnect = (channelToLeave: string | null = channelName.value) => {
     if (reconnectTimer) {
       clearTimeout(reconnectTimer)
       reconnectTimer = null
@@ -125,8 +128,8 @@ export function usePresence(
     if (presenceChannel) {
       try {
         const echo = getEcho()
-        if (echo && channelName.value) {
-          echo.leave(channelName.value)
+        if (echo && channelToLeave) {
+          echo.leave(channelToLeave)
         }
       } catch {
         // Ignore leave errors
@@ -178,7 +181,7 @@ export function usePresence(
 
   watch(channelName, (newChannel, oldChannel) => {
     if (newChannel !== oldChannel) {
-      disconnect()
+      disconnect(oldChannel ?? null)
       if (newChannel) {
         connect()
       }

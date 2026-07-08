@@ -856,6 +856,12 @@
         "key": "Key",
         "value": "Value"
       },
+      "collaboration": {
+        "remoteDrafts": "Unsaved changes",
+        "unsavedFrom": "Unsaved changes from {names}",
+        "persistWithRemoteDrafts": "This will also persist unsaved changes from {names}. Continue?",
+        "persistWithRemoteDraftsTitle": "Include changes from others?"
+      },
       "emptyTitle": "No Content Selected",
       "emptyDescription": "Start by creating your first content page",
       "managerTitle": "Content Manager",

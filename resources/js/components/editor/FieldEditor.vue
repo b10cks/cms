@@ -21,8 +21,11 @@ import TableBlock from '~/components/editor/TableBlock.vue'
 import TextareaBlock from '~/components/editor/TextareaBlock.vue'
 import TextBlock from '~/components/editor/TextBlock.vue'
 import { AvatarList } from '~/components/ui/avatar'
+import { Badge } from '~/components/ui/badge'
+import { SimpleTooltip } from '~/components/ui/tooltip'
 import type {
   CollaborationPresenceUser,
+  ContentBlockOperationPayload,
   ContentFieldFocusPayload,
   ContentFieldUpdatePayload,
 } from '~/composables/useContentLiveCollaboration'
@@ -68,6 +71,7 @@ const emit = defineEmits<{
   createTemplate: [blockId: string, content: Record<string, unknown>]
   fieldUpdate: [payload: ContentFieldUpdatePayload]
   fieldFocus: [payload: ContentFieldFocusPayload]
+  blockOperation: [payload: ContentBlockOperationPayload]
 }>()
 
 const { t } = useI18n()
@@ -119,13 +123,18 @@ const fieldValue = computed({
     // Emit the update with the new object
     emit('update:modelValue', updatedModel)
     markFieldDirty?.(fieldPath.value)
-    emit('fieldUpdate', {
-      debounceMs: fieldDebounceMs.value,
-      itemId: props.itemId,
-      field: props.item.key,
-      previousValue,
-      value: newValue,
-    })
+
+    // Blocks arrays sync via granular block operations instead of whole-array
+    // updates, so concurrent structural edits don't clobber each other.
+    if (props.item.type !== 'blocks') {
+      emit('fieldUpdate', {
+        debounceMs: fieldDebounceMs.value,
+        itemId: props.itemId,
+        field: props.item.key,
+        previousValue,
+        value: newValue,
+      })
+    }
   },
 })
 
@@ -141,6 +150,15 @@ const handleNestedFieldFocus = (payload: ContentFieldFocusPayload): void => {
   emit('fieldFocus', payload)
 }
 
+const handleBlockOperation = (payload: ContentBlockOperationPayload): void => {
+  if (payload.parentId) {
+    emit('blockOperation', payload)
+    return
+  }
+
+  emit('blockOperation', { ...payload, parentId: props.itemId, field: props.item.key })
+}
+
 const isFocused = ref(false)
 const tracksOwnFocus = computed(() => props.item.type !== 'blocks')
 const fieldDebounceMs = computed(() => {
@@ -154,6 +172,22 @@ const fieldDebounceMs = computed(() => {
       return 150
   }
 })
+
+const getRemoteDraftCollaborators = inject<
+  ((itemId: string, field?: string) => CollaborationPresenceUser[]) | undefined
+>('getRemoteDraftCollaborators', undefined)
+const remoteDraftUsers = computed(
+  () => getRemoteDraftCollaborators?.(props.itemId, props.item.key) || []
+)
+const remoteDraftTooltip = computed(() =>
+  String(
+    t('labels.contents.collaboration.unsavedFrom', {
+      names: remoteDraftUsers.value
+        .map((user) => [user.firstname, user.lastname].filter(Boolean).join(' ') || user.email)
+        .join(', '),
+    })
+  )
+)
 
 const collaborationColor = computed(() => props.activeCollaborators?.[0]?.color || null)
 const showContainerHighlight = computed(
@@ -226,10 +260,21 @@ onBeforeUnmount(() => {
     @focusout="handleFocusOut"
   >
     <div
-      v-if="activeCollaborators?.length"
-      class="absolute top-3 right-3 z-20"
+      v-if="activeCollaborators?.length || remoteDraftUsers.length"
+      class="absolute top-3 right-3 z-20 flex items-center gap-1.5"
     >
+      <SimpleTooltip
+        v-if="remoteDraftUsers.length"
+        :tooltip="remoteDraftTooltip"
+        side="left"
+      >
+        <Badge
+          variant="warning"
+          size="dot"
+        />
+      </SimpleTooltip>
       <AvatarList
+        v-if="activeCollaborators?.length"
         :users="activeCollaborators"
         :max="3"
         size="sm"
@@ -253,6 +298,7 @@ onBeforeUnmount(() => {
       @create-template="handleCreateTemplate"
       @field-update="handleNestedFieldUpdate"
       @field-focus="handleNestedFieldFocus"
+      @block-operation="handleBlockOperation"
     />
     <div v-else>Unknown editor type: {{ item.type }}</div>
     <div

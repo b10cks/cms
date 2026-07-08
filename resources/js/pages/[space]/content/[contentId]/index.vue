@@ -443,6 +443,21 @@ watch(
   { deep: true }
 )
 
+// Remote collaboration writes into content.value.content; rebuild the editor
+// tree whenever it drifts so live edits from others show up in the form.
+watch(
+  () => content.value?.content,
+  (nextContent) => {
+    if (!content.value || !nextContent) return
+
+    const treeSerialized = JSON.stringify(stripEditorContentTree(editorContentTree.value))
+    if (treeSerialized === JSON.stringify(nextContent)) return
+
+    editorContentTree.value = buildEditorContentTree(content.value)
+  },
+  { deep: true }
+)
+
 const isDirty = computed(() => {
   if (!content.value || !persistedContent.value) return false
   return JSON.stringify(content.value) !== JSON.stringify(persistedContent.value)
@@ -605,9 +620,14 @@ const updatePreviewItem = (item: Record<string, unknown>) => {
 
 const {
   broadcastPersistedContent,
+  broadcastBlockOperation,
   collaborators,
   discardOwnDrafts,
   getCollaboratorsForField,
+  getSubtreeCollaborators,
+  getAggregatedCollaboratorsForField,
+  getRemoteDraftCollaborators,
+  remoteDraftCollaborators,
   queueFieldUpdate,
   updateFieldFocus,
 } = useContentLiveCollaboration(
@@ -700,6 +720,9 @@ provide('comments', comments)
 provide('commitPersistedContent', commitPersistedContent)
 provide('discardOwnDrafts', discardOwnDrafts)
 provide('getActiveCollaborators', getCollaboratorsForField)
+provide('getSubtreeCollaborators', getSubtreeCollaborators)
+provide('getAggregatedCollaboratorsForField', getAggregatedCollaboratorsForField)
+provide('getRemoteDraftCollaborators', getRemoteDraftCollaborators)
 provide('updatePreviewItem', updatePreviewItem)
 provide('updateHoverItem', (id: string) => {
   if (previewRef.value) {
@@ -792,6 +815,7 @@ provide('reloadServerContent', reloadServerContent)
           @create-template="handleTemplateTrigger"
           @field-update="queueFieldUpdate"
           @field-focus="updateFieldFocus"
+          @block-operation="broadcastBlockOperation"
         />
         <div
           :class="[
@@ -962,6 +986,7 @@ provide('reloadServerContent', reloadServerContent)
       v-if="content"
       :content="content"
       :present-users="collaborators"
+      :remote-draft-users="remoteDraftCollaborators"
       :space-id="spaceId"
       :is-dirty="isDirty"
     />
