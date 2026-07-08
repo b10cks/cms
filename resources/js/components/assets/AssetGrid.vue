@@ -375,14 +375,18 @@ const handleAssetClick = (asset: AssetResource, event: MouseEvent) => {
   }
 
   const entry: AssetSelectionEntry = { type: 'asset', data: asset }
+  focusedKey.value = keyOf(entry)
 
-  if (!props.multiSelect) {
-    selection.selectOnly(entry)
-  } else {
-    selection.handleItemPointer(entry, modifiersFromEvent(event))
+  const modifiers = modifiersFromEvent(event)
+
+  // Modifier-click keeps Finder-style multi-selection without the checkbox.
+  if (props.multiSelect && (modifiers.meta || modifiers.shift)) {
+    selection.handleItemPointer(entry, modifiers)
+    return
   }
 
-  focusedKey.value = keyOf(entry)
+  // Plain click opens the asset details (selection is done via the checkbox).
+  handleAssetView(asset)
 }
 
 const handleFolderClick = (folder: AssetFolderResource, event: MouseEvent) => {
@@ -392,14 +396,18 @@ const handleFolderClick = (folder: AssetFolderResource, event: MouseEvent) => {
   }
 
   const entry: AssetSelectionEntry = { type: 'folder', data: folder }
+  focusedKey.value = keyOf(entry)
 
-  if (!props.multiSelect) {
-    selection.selectOnly(entry)
-  } else {
-    selection.handleItemPointer(entry, modifiersFromEvent(event))
+  const modifiers = modifiersFromEvent(event)
+
+  // Modifier-click keeps Finder-style multi-selection without the checkbox.
+  if (props.multiSelect && (modifiers.meta || modifiers.shift)) {
+    selection.handleItemPointer(entry, modifiers)
+    return
   }
 
-  focusedKey.value = keyOf(entry)
+  // Plain click opens the folder (selection is done via the checkbox).
+  navigateToFolder(folder.id)
 }
 
 const handleAssetView = (asset: AssetResource) => {
