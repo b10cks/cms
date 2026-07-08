@@ -120,6 +120,7 @@ export interface LinkedAssetContentResource {
     id: string
     name: string
     icon: string
+    color: string | null
     slug: string
   } | null
   usage: {

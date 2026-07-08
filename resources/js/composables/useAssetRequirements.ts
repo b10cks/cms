@@ -225,13 +225,18 @@ export function useAssetRequirements(spaceId: MaybeRef<string>) {
     return fields
   }
 
+  // Read-only on purpose: this is called against assets straight from the
+  // query cache, which are readonly proxies and must not be mutated.
   const getFieldValue = (
     target: AssetLikeRecord,
     fieldKey: string,
     languageCode: string
   ): string => {
-    const fields = ensureAssetFieldData(target)
-    return normalizeFieldValue(fields[languageCode]?.[fieldKey])
+    const data = isPlainRecord(target.data) ? target.data : null
+    const fields = data && isPlainRecord(data.fields) ? data.fields : null
+    const languageFields = fields && isPlainRecord(fields[languageCode]) ? fields[languageCode] : null
+
+    return normalizeFieldValue(languageFields?.[fieldKey])
   }
 
   const setFieldValue = (

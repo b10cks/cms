@@ -7,22 +7,23 @@ import NuxtImg from '~/components/NuxtImg.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from '~/components/ui/dialog'
 import { ComboboxField, DateTimeField, InputField, SelectField } from '~/components/ui/form'
 import IconName from '~/components/ui/IconName.vue'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
+import { downloadAssetFile } from '~/lib/assets/downloadAssets'
 import { isClient } from '~/lib/env'
 import { buildIlumUrl } from '~/lib/ilum'
 import { runtimeConfig } from '~/lib/runtime-config'
 import type {
-  AssetResource,
-  AssetVersionResource,
-  LinkedAssetContentResource,
+    AssetResource,
+    AssetVersionResource,
+    LinkedAssetContentResource,
 } from '~/types/assets'
 
 const RIGHTS_FIELD_KEYS = [
@@ -42,10 +43,14 @@ const props = withDefaults(
     folderId: string | null
     spaceId: string
     readOnly?: boolean
+    hasPrevious?: boolean
+    hasNext?: boolean
   }>(),
   {
     mode: 'normal',
     readOnly: false,
+    hasPrevious: false,
+    hasNext: false,
   }
 )
 
@@ -103,7 +108,10 @@ const onReplaceFileSelected = (event: Event) => {
     },
     {
       onSuccess: (updated) => {
-        if (updated) assetCopy.value = deepClone(updated)
+        if (updated) {
+          assetCopy.value = deepClone(updated)
+          originalSnapshot = editableSnapshot(updated)
+        }
         replaceProgress.value = 0
         if (replaceFileInputRef.value) replaceFileInputRef.value.value = ''
       },
@@ -193,17 +201,36 @@ const { data: versionsResponse, isFetching: isFetchingVersions } = useAssetVersi
 )
 const versionItems = computed<AssetVersionResource[]>(() => versionsResponse.value?.data ?? [])
 
+// Snapshot of the fields saveAsset persists, used for the unsaved-changes guard
+const editableSnapshot = (asset: AssetResource): string =>
+  JSON.stringify({
+    filename: asset.filename,
+    folder_id: asset.folder_id,
+    metadata: asset.metadata,
+    data: asset.data,
+    tags: asset.tags,
+    license_expires_at: asset.license_expires_at,
+  })
+
+let originalSnapshot = ''
+
+const hasUnsavedChanges = (): boolean => {
+  return Boolean(assetCopy.value) && editableSnapshot(assetCopy.value!) !== originalSnapshot
+}
+
 watch(
   () => props.asset,
   (newAsset) => {
     if (newAsset) {
       assetCopy.value = deepClone(newAsset)
+      originalSnapshot = editableSnapshot(newAsset)
       selectedPanel.value = 'details'
       selectedLanguage.value = '_default'
       linkedContentsPage.value = 1
       linkedContentsItems.value = []
     } else {
       assetCopy.value = null
+      originalSnapshot = ''
       linkedContentsItems.value = []
     }
   },
@@ -231,6 +258,7 @@ watch(
 const emit = defineEmits<{
   close: []
   'update:asset': [asset: AssetResource]
+  navigate: [direction: 'previous' | 'next']
 }>()
 
 // Get field value for current language
@@ -273,10 +301,40 @@ const setRightsFieldValue = (fieldKey: string, value: string | number) => {
 }
 
 const formatKey = (key: string): string => {
-  return key.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+  return key
+    .replace(/_/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\b\w/g, (char) => char.toUpperCase())
 }
 
+const exifEntries = computed(() => {
+  const exif = props.asset?.metadata?.exif
+  if (!exif || typeof exif !== 'object') {
+    return []
+  }
+
+  return Object.entries(exif as Record<string, unknown>).filter(
+    ([, value]) => value !== null && value !== undefined && value !== ''
+  )
+})
+
 const colorA11y = computed(() => props.asset?.metadata?.a11y)
+
+// Scale the preview up to fill the panel while keeping the element box equal
+// to the displayed image (object-contain letterboxing would misalign the
+// focus-point overlay). 11rem ≈ header + toolbar + footer + paddings.
+const previewImageStyle = computed(() => {
+  const metadata = assetCopy.value?.metadata
+  const width = Number(metadata?.width)
+  const height = Number(metadata?.height)
+  const ratio = Number(metadata?.aspectRatio) || (width && height ? width / height : 0)
+
+  if (!ratio) {
+    return undefined
+  }
+
+  return { width: `min(100%, calc((90dvh - 11rem) * ${ratio}))` }
+})
 
 const wcagChecks = (ratio: number) => [
   { label: 'AA Large', threshold: 3, passed: ratio >= 3 },
@@ -312,11 +370,39 @@ const copyAssetUrl = () => {
   navigator.clipboard
     .writeText(assetCopy.value.url)
     .then(() => {
-      toast.success('URL copied to clipboard')
+      toast.success(String(t('labels.assets.urlCopied')))
     })
     .catch(() => {
-      toast.error('Failed to copy URL')
+      toast.error(String(t('labels.assets.urlCopyFailed')))
     })
+}
+
+const copyColor = (color: string) => {
+  navigator.clipboard
+    .writeText(color)
+    .then(() => {
+      toast.success(String(t('labels.assets.colorCopied', { color })))
+    })
+    .catch(() => {
+      toast.error(String(t('labels.assets.urlCopyFailed')))
+    })
+}
+
+const isDownloading = ref(false)
+
+const downloadAsset = async () => {
+  if (!assetCopy.value || isDownloading.value) {
+    return
+  }
+
+  isDownloading.value = true
+  try {
+    await downloadAssetFile(assetCopy.value)
+  } catch {
+    toast.error(String(t('messages.assets.downloadFailed', { count: 1 })))
+  } finally {
+    isDownloading.value = false
+  }
 }
 
 const openAssetInNewWindow = () => {
@@ -367,10 +453,33 @@ const updateFocusPointPosition = (event: MouseEvent) => {
   }
 }
 
+const isEditableTarget = (target: EventTarget | null): boolean => {
+  const element = target as HTMLElement | null
+  return Boolean(
+    element?.closest?.('input, textarea, select, [contenteditable="true"], [role="combobox"]')
+  )
+}
+
+const handleKeydown = (event: KeyboardEvent) => {
+  if (!props.asset || props.mode !== 'normal') return
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+  if (isEditableTarget(event.target)) return
+  if (document.querySelector('[role="alertdialog"]')) return
+
+  if (event.key === 'ArrowLeft' && props.hasPrevious) {
+    event.preventDefault()
+    navigate('previous')
+  } else if (event.key === 'ArrowRight' && props.hasNext) {
+    event.preventDefault()
+    navigate('next')
+  }
+}
+
 onMounted(() => {
   if (isClient) {
     window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('mouseup', stopDragging)
+    window.addEventListener('keydown', handleKeydown)
   }
 })
 
@@ -378,6 +487,7 @@ onUnmounted(() => {
   if (isClient) {
     window.removeEventListener('mousemove', handleMouseMove)
     window.removeEventListener('mouseup', stopDragging)
+    window.removeEventListener('keydown', handleKeydown)
   }
 })
 
@@ -410,9 +520,27 @@ const handleFinish = async () => {
   emit('update:asset', assetCopy.value)
 }
 
-const onOpenChange = (open: boolean) => {
-  if (!open) {
+const confirmDiscardIfDirty = async (): Promise<boolean> => {
+  if (props.readOnly || !hasUnsavedChanges()) {
+    return true
+  }
+
+  return await alert.confirm(String(t('labels.assets.unsavedChanges.message')), {
+    title: String(t('labels.assets.unsavedChanges.title')),
+    confirmLabel: String(t('labels.assets.unsavedChanges.discard')),
+    variant: 'destructive',
+  })
+}
+
+const onOpenChange = async (open: boolean) => {
+  if (!open && (await confirmDiscardIfDirty())) {
     emit('close')
+  }
+}
+
+const navigate = async (direction: 'previous' | 'next') => {
+  if (await confirmDiscardIfDirty()) {
+    emit('navigate', direction)
   }
 }
 
@@ -443,6 +571,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
     onSuccess: (updated) => {
       if (updated) {
         assetCopy.value = deepClone(updated)
+        originalSnapshot = editableSnapshot(updated)
       }
       restoringVersionId.value = null
     },
@@ -460,7 +589,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
   >
     <DialogContent
       v-if="asset && assetCopy"
-      class="max-w-11/12! max-h-[90dvh] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden"
+      class="max-w-11/12! h-[90dvh] grid-rows-[auto_minmax(0,1fr)_auto]"
     >
       <DialogHeader class="min-w-0 pr-8">
         <p
@@ -473,29 +602,54 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
             >{{ crumb.name }}/</span
           >
         </p>
-        <DialogTitle class="truncate">{{ asset.filename }}</DialogTitle>
-        <p>.{{ asset.extension }}</p>
+        <DialogTitle class="truncate">{{ asset.filename }}<span class="text-muted">.{{ asset.extension }}</span></DialogTitle>
       </DialogHeader>
+      <template v-if="mode === 'normal' && (hasPrevious || hasNext)">
+        <Button
+          variant="outline"
+          size="icon"
+          class="absolute top-1/2 -left-13 hidden -translate-y-1/2 rounded-full md:inline-flex"
+          :disabled="!hasPrevious"
+          :title="$t('labels.assets.previousAsset')"
+          @click="navigate('previous')"
+        >
+          <Icon name="lucide:chevron-left" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          class="absolute top-1/2 -right-13 hidden -translate-y-1/2 rounded-full md:inline-flex"
+          :disabled="!hasNext"
+          :title="$t('labels.assets.nextAsset')"
+          @click="navigate('next')"
+        >
+          <Icon name="lucide:chevron-right" />
+        </Button>
+      </template>
       <div
         class="grid gap-6 py-4 md:grid-cols-12 md:grid-rows-[minmax(0,1fr)] min-h-0 overflow-y-auto md:overflow-hidden"
       >
-        <div
-          class="checkerboard flex flex-col items-center justify-center-safe rounded-xl p-4 md:col-span-8 min-h-0 md:overflow-y-auto"
-        >
+        <div class="flex min-h-0 flex-col gap-3 md:col-span-8">
+          <div
+            class="flex min-h-0 flex-1 flex-col items-center justify-center-safe overflow-y-auto rounded-xl bg-surface p-4"
+          >
           <div
             v-if="getFileType(asset.mime_type) === 'image'"
             ref="imageContainer"
             class="relative flex w-full items-center justify-center"
           >
-            <div class="relative inline-block">
+            <div
+              class="relative inline-block max-w-full"
+              :style="previewImageStyle"
+            >
               <NuxtImg
                 ref="imageRef"
                 :src="asset.full_path"
                 crop="fit"
                 :alt="String(assetCopy?.data?.altText || asset.filename)"
-                :height="600"
-                :width="600"
-                class="max-h-[calc(60svh)] max-w-full object-contain"
+                :height="960"
+                :width="960"
+                class="checkerboard w-full object-contain"
               />
               <div
                 v-if="assetCopy.data?.focus"
@@ -602,14 +756,15 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
               <p class="text-sm text-muted">{{ formatFileSize(asset.size) }}</p>
             </div>
           </div>
+          </div>
           <div
-            class="mt-4 flex w-full flex-wrap gap-2"
+            class="flex w-full shrink-0 flex-wrap gap-2"
             aria-label="Asset actions"
           >
             <Button
               variant="outline"
               size="icon"
-              class="flex items-center gap-2"
+              :title="$t('labels.assets.openInNewWindow')"
               @click="openAssetInNewWindow"
             >
               <Icon name="lucide:external-link" />
@@ -617,10 +772,22 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
             <Button
               variant="outline"
               size="icon"
-              class="flex items-center gap-2"
+              :title="$t('labels.assets.copyUrl')"
               @click="copyAssetUrl"
             >
               <Icon name="lucide:link" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              :title="$t('labels.assets.downloadFile')"
+              :disabled="isDownloading"
+              @click="downloadAsset"
+            >
+              <Icon
+                :name="isDownloading ? 'lucide:loader-circle' : 'lucide:download'"
+                :class="{ 'animate-spin': isDownloading }"
+              />
             </Button>
             <Button
               v-if="!props.readOnly && getFileType(asset.mime_type) === 'image'"
@@ -628,9 +795,9 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
               class="flex items-center gap-2"
               @click="toggleFocusPoint"
             >
-              <Icon :name="assetCopy.data.focus ? 'lucide:x' : 'lucide:crosshair'" />
+              <Icon :name="assetCopy.data?.focus ? 'lucide:x' : 'lucide:crosshair'" />
               <span>{{
-                assetCopy.data.focus
+                assetCopy.data?.focus
                   ? $t('labels.assets.removeFocusPoint')
                   : $t('labels.assets.setFocusPoint')
               }}</span>
@@ -714,8 +881,17 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
               <TabsTrigger value="versions">
                 {{ $t('labels.assets.versions.title') }}
               </TabsTrigger>
-              <TabsTrigger value="linked">
+              <TabsTrigger
+                value="linked"
+                class="gap-1.5"
+              >
                 {{ $t('labels.assets.linkedContents') }}
+                <Badge
+                  variant="secondary"
+                  size="sm"
+                >
+                  {{ asset.linked_contents_count ?? 0 }}
+                </Badge>
               </TabsTrigger>
             </TabsList>
 
@@ -724,7 +900,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
               class="min-h-0 flex-1 space-y-4 overflow-y-auto"
             >
               <div class="rounded-lg bg-surface p-3 text-sm">
-                <dl class="grid grid-cols-2 gap-2">
+                <dl class="grid grid-cols-[1fr_2fr] gap-x-4 gap-y-2">
                   <dt class="font-semibold">{{ $t('labels.assets.fields.type') }}:</dt>
                   <dd class="truncate">{{ asset.mime_type || $t('labels.assets.unknown') }}</dd>
                   <dt class="font-semibold">{{ $t('labels.assets.size') }}:</dt>
@@ -733,15 +909,13 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                   <dd class="truncate">{{ formatDateTime(asset.created_at) }}</dd>
                   <dt class="font-semibold">{{ $t('labels.assets.updatedAt') }}:</dt>
                   <dd class="truncate">{{ formatDateTime(asset.updated_at) }}</dd>
-                  <dt class="font-semibold">{{ $t('labels.assets.linkedContents') }}:</dt>
-                  <dd class="truncate">{{ linkedContentsSummary }}</dd>
                 </dl>
 
                 <div
                   v-if="asset.metadata && Object.keys(asset.metadata).length"
                   class="mt-4 border-t-2 border-background pt-4"
                 >
-                  <dl class="grid grid-cols-2 gap-2">
+                  <dl class="grid grid-cols-[1fr_2fr] gap-x-4 gap-y-2">
                     <template
                       v-for="(value, key) in asset.metadata"
                       :key="key"
@@ -751,20 +925,25 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                           {{ String($t(`labels.assets.metadata.${key}`) || formatKey(key)) }}:
                         </dt>
                         <dd class="flex flex-wrap items-center gap-2">
-                          <span
+                          <button
                             v-for="color in Array.isArray(value) ? value : [value]"
                             :key="String(color)"
-                            class="inline-flex items-center gap-1"
+                            type="button"
+                            class="inline-flex cursor-pointer items-center gap-1 rounded hover:bg-input"
+                            :title="$t('labels.assets.copyColor')"
+                            @click="copyColor(String(color))"
                           >
                             <span
                               class="inline-block size-4 rounded border border-input"
                               :style="{ backgroundColor: String(color) }"
                             />
                             <span class="text-xs">{{ color }}</span>
-                          </span>
+                          </button>
                         </dd>
                       </template>
-                      <template v-else-if="key !== 'thumbnails' && key !== 'a11y'">
+                      <template
+                        v-else-if="key !== 'thumbnails' && key !== 'a11y' && key !== 'exif'"
+                      >
                         <dt class="font-semibold">
                           {{ String($t(`labels.assets.metadata.${key}`) || formatKey(key)) }}:
                         </dt>
@@ -772,6 +951,32 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                       </template>
                     </template>
                   </dl>
+
+                  <details
+                    v-if="exifEntries.length"
+                    class="group mt-3"
+                  >
+                    <summary
+                      class="flex cursor-pointer select-none items-center gap-1 font-semibold"
+                    >
+                      <Icon
+                        name="lucide:chevron-right"
+                        class="transition-transform group-open:rotate-90"
+                      />
+                      {{ $t('labels.assets.metadata.exif') }}
+                    </summary>
+                    <dl
+                      class="mt-2 grid grid-cols-[1fr_2fr] gap-x-4 gap-y-1 pl-5"
+                    >
+                      <template
+                        v-for="[exifKey, exifValue] in exifEntries"
+                        :key="exifKey"
+                      >
+                        <dt class="font-semibold">{{ formatKey(exifKey) }}:</dt>
+                        <dd class="wrap-break-word">{{ exifValue }}</dd>
+                      </template>
+                    </dl>
+                  </details>
                 </div>
 
                 <div
@@ -779,7 +984,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                   class="mt-4 border-t-2 border-background pt-4"
                 >
                   <h4 class="mb-2 font-semibold">{{ $t('labels.assets.a11y.title') }}</h4>
-                  <dl class="grid grid-cols-2 gap-2">
+                  <dl class="grid grid-cols-[1fr_2fr] gap-x-4 gap-y-2">
                     <dt class="font-semibold">{{ $t('labels.assets.a11y.overlay') }}:</dt>
                     <dd>
                       {{
@@ -1082,8 +1287,8 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                   >
                     <div class="flex items-center gap-2">
                       <Icon
-                        :name="`lucide:${item.block.icon}`"
-                        :style="{ color: item.block.color }"
+                        :name="item.block ? `lucide:${item.block.icon}` : 'lucide:file'"
+                        :style="item.block?.color ? { color: item.block.color } : undefined"
                         class="shrink-0"
                       />
                       <div class="min-w-0 flex-1">

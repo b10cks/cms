@@ -455,6 +455,20 @@
       "noAssetsWithTag": "Keine Assets passen zum ausgewählten Tag.",
       "setFocusPoint": "Fokuspunkt setzen",
       "removeFocusPoint": "Fokuspunkt entfernen",
+      "openInNewWindow": "In neuem Fenster öffnen",
+      "copyUrl": "URL kopieren",
+      "downloadFile": "Herunterladen",
+      "urlCopied": "URL in die Zwischenablage kopiert",
+      "urlCopyFailed": "Kopieren in die Zwischenablage fehlgeschlagen",
+      "copyColor": "Farbe kopieren",
+      "colorCopied": "{color} in die Zwischenablage kopiert",
+      "previousAsset": "Vorheriges Asset",
+      "nextAsset": "Nächstes Asset",
+      "unsavedChanges": {
+        "title": "Änderungen verwerfen?",
+        "message": "Es gibt ungespeicherte Änderungen. Beim Schließen gehen sie verloren.",
+        "discard": "Verwerfen"
+      },
       "fileTypes": {
         "image": "Bild",
         "document": "Dokument",

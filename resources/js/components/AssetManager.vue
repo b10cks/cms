@@ -39,7 +39,7 @@ const selectedFolder = defineModel<string | null>('folderId', {
 const selectedTag = defineModel<string | null>('tagId', {
   default: null,
 })
-const selectedAsset = defineModel<string | null>('assetId', {
+const selectedAsset = defineModel<string | null | undefined>('assetId', {
   default: null,
 })
 

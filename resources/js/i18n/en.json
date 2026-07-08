@@ -459,6 +459,20 @@
       "folderEmpty": "This folder is empty. Drop assets here or upload something new.",
       "noAssetsWithTag": "No assets match the selected tag.",
       "setFocusPoint": "Set Focus Point",
+      "openInNewWindow": "Open in new window",
+      "copyUrl": "Copy URL",
+      "downloadFile": "Download",
+      "urlCopied": "URL copied to clipboard",
+      "urlCopyFailed": "Failed to copy to clipboard",
+      "copyColor": "Copy color",
+      "colorCopied": "{color} copied to clipboard",
+      "previousAsset": "Previous asset",
+      "nextAsset": "Next asset",
+      "unsavedChanges": {
+        "title": "Discard changes?",
+        "message": "You have unsaved changes. Closing will discard them.",
+        "discard": "Discard"
+      },
       "removeFocusPoint": "Remove Focus Point",
       "fileTypes": {
         "image": "Image",

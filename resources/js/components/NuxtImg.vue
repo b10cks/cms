@@ -19,8 +19,15 @@ const props = defineProps<{
   decoding?: 'async' | 'auto' | 'sync'
 }>()
 
+// SVGs scale natively — rasterizing them through ilum only degrades quality
+const isSvg = computed(() => /\.svg$/i.test(props.src.split('?')[0] ?? ''))
+
 const imageUrl = computed(() => {
   const baseURL = (runtimeConfig.public.ilum.baseURL || '').replace(/\/$/, '')
+
+  if (isSvg.value) {
+    return buildIlumUrl(props.src, {}, baseURL)
+  }
 
   return buildIlumUrl(
     props.src,
@@ -42,8 +49,8 @@ const imageUrl = computed(() => {
   <img
     :src="imageUrl"
     :alt="alt"
-    :width="width"
-    :height="height"
+    :width="isSvg ? undefined : width"
+    :height="isSvg ? undefined : height"
     :class="class"
     :loading="loading || 'lazy'"
     :decoding="decoding || 'async'"

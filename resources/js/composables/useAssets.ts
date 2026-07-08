@@ -44,8 +44,10 @@ export function useAssets(spaceId: MaybeRef<string>) {
     return useQuery({
       queryKey: computed(() => queryKeys.assets(spaceId).detail(id)),
       queryFn: async () => {
+        // The show endpoint returns the asset without a `data` envelope;
+        // `response.data` would resolve to the asset's own `data` attribute.
         const response = await spaceAPI.value.assets.get(toValue(id))
-        return response.data
+        return ('id' in response ? response : response.data) as AssetResource
       },
       enabled: computed(() => Boolean(toValue(id)) && toValue(enabled)),
     })

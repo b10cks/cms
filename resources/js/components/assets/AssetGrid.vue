@@ -84,7 +84,7 @@ const canManageFolders = computed(() => access.hasAbility('asset_folders.manage'
 
 const folderId = defineModel<string | null>('folderId')
 const tagId = defineModel<string | null>('tagId')
-const assetId = defineModel<string | null>('assetId', { default: null })
+const assetId = defineModel<string | null | undefined>('assetId', { default: null })
 
 const showUploadDialog = ref(false)
 const droppedFiles = ref<File[]>([])
@@ -186,7 +186,8 @@ watch(deepLinkedAsset, (asset) => {
 })
 
 watch(detailAsset, (asset) => {
-  assetId.value = asset?.id ?? null
+  // undefined (not null) so useRouteQuery drops the param from the URL
+  assetId.value = asset?.id
 })
 
 const selectedGridSize = computed(() => {
@@ -226,6 +227,26 @@ const visibleFolders = computed(() => {
 })
 
 const assets = computed(() => assetResponse.value?.data || [])
+
+const detailAssetIndex = computed(() => {
+  return detailAsset.value ? assets.value.findIndex((a) => a.id === detailAsset.value?.id) : -1
+})
+const hasPreviousDetailAsset = computed(() => detailAssetIndex.value > 0)
+const hasNextDetailAsset = computed(
+  () => detailAssetIndex.value >= 0 && detailAssetIndex.value < assets.value.length - 1
+)
+
+const navigateDetailAsset = (direction: 'previous' | 'next') => {
+  const index = detailAssetIndex.value
+  if (index < 0) {
+    return
+  }
+
+  const target = assets.value[direction === 'previous' ? index - 1 : index + 1]
+  if (target) {
+    detailAsset.value = target
+  }
+}
 
 const orderedEntries = computed<AssetSelectionEntry[]>(() => {
   return [
@@ -1710,8 +1731,11 @@ onUnmounted(() => {
       :folder-id="activeFolderId"
       :space-id="spaceId"
       :read-only="!canManageAssets"
+      :has-previous="hasPreviousDetailAsset"
+      :has-next="hasNextDetailAsset"
       @update:asset="saveAsset"
       @close="detailAsset = null"
+      @navigate="navigateDetailAsset"
     />
   </main>
 </template>
