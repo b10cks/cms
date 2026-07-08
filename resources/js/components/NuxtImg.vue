@@ -38,7 +38,7 @@ const imageUrl = computed(() => {
       crop: props.crop ?? props.modifiers?.crop,
       gravity: props.gravity ?? props.modifiers?.gravity,
       format: props.format ?? props.modifiers?.format,
-      quality: props.quality ?? props.modifiers?.quality ?? 75,
+      quality: props.quality ?? props.modifiers?.quality,
     },
     baseURL
   )

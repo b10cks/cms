@@ -197,10 +197,8 @@ const selectedGridSize = computed(() => {
 
 const imageSize = computed(() => {
   switch (settings.value.assets.gridSize) {
-    case 'sm':
-      return 196
     case 'lg':
-      return 512
+      return 640
     default:
       return 384
   }
