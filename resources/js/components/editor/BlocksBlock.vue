@@ -21,7 +21,6 @@ import {
 } from '~/composables/useSchemaDefaults'
 import { AvatarList } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
-import { SimpleTooltip } from '~/components/ui/tooltip'
 import type {
   CollaborationPresenceUser,
   ContentBlockOperationPayload,
@@ -471,15 +470,6 @@ const getItemRemoteDraftUsers = (content: Record<string, unknown>) =>
   typeof content.id === 'string' && content.id
     ? getRemoteDraftCollaborators?.(content.id) || []
     : []
-
-const getItemRemoteDraftTooltip = (content: Record<string, unknown>) =>
-  String(
-    $t('labels.contents.collaboration.unsavedFrom', {
-      names: getItemRemoteDraftUsers(content)
-        .map((user) => [user.firstname, user.lastname].filter(Boolean).join(' ') || user.email)
-        .join(', '),
-    })
-  )
 </script>
 
 <template>
@@ -581,29 +571,6 @@ const getItemRemoteDraftTooltip = (content: Record<string, unknown>) =>
                 :content="content"
                 :block="getBlockHeaderBlock(content)"
               />
-              <div
-                v-if="!isItemOpen(content, i)"
-                class="flex shrink-0 items-center gap-1.5"
-                @click.stop
-              >
-                <SimpleTooltip
-                  v-if="getItemRemoteDraftUsers(content).length"
-                  :tooltip="getItemRemoteDraftTooltip(content)"
-                  side="bottom"
-                >
-                  <Badge
-                    variant="warning"
-                    size="dot"
-                  />
-                </SimpleTooltip>
-                <AvatarList
-                  v-if="getItemSubtreePresence(content).length"
-                  :users="getItemSubtreePresence(content)"
-                  :max="3"
-                  size="sm"
-                  tooltip-side="bottom"
-                />
-              </div>
               <div class="ml-auto flex items-center gap-2">
                 <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100">
                   <button
@@ -667,6 +634,26 @@ const getItemRemoteDraftTooltip = (content: Record<string, unknown>) =>
                 </div>
               </div>
             </AccordionTrigger>
+            <div
+              v-if="
+                !isItemOpen(content, i) &&
+                (getItemSubtreePresence(content).length > 0 ||
+                  getItemRemoteDraftUsers(content).length > 0)
+              "
+              class="pointer-events-none absolute top-1/2 right-1 z-10 flex -translate-y-1/2 items-center gap-1.5 transition-opacity group-hover:opacity-0"
+            >
+              <Badge
+                v-if="getItemRemoteDraftUsers(content).length"
+                variant="warning"
+                size="indicator"
+              />
+              <AvatarList
+                v-if="getItemSubtreePresence(content).length"
+                :users="getItemSubtreePresence(content)"
+                :max="3"
+                size="sm"
+              />
+            </div>
           </AccordionHeader>
           <AccordionContent>
             <div class="mt-2 grid items-start gap-4 border-t-2 border-surface p-1 pt-2">

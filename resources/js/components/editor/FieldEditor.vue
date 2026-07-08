@@ -270,7 +270,7 @@ onBeforeUnmount(() => {
       >
         <Badge
           variant="warning"
-          size="dot"
+          size="indicator"
         />
       </SimpleTooltip>
       <AvatarList

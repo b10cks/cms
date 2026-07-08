@@ -577,14 +577,8 @@ const handleConfirmAssign = (versionIds: string[]) => {
     >
       <Badge
         variant="warning"
-        class="flex items-center gap-1"
-      >
-        <Icon
-          name="lucide:file-diff"
-          size="0.75rem"
-        />
-        <span>{{ t('labels.contents.collaboration.remoteDrafts') }}</span>
-      </Badge>
+        size="indicator"
+      />
     </SimpleTooltip>
     <AvatarList
       v-if="props.presentUsers?.length"
