@@ -648,9 +648,8 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                 :src="asset.full_path"
                 crop="fit"
                 :alt="String(assetCopy?.data?.altText || asset.filename)"
-                :height="1024"
-                :width="1024"
-                :quality="90"
+                :height="1536"
+                :width="1536"
                 class="checkerboard block w-full object-contain"
               />
               <div
