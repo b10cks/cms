@@ -20,11 +20,11 @@ import { Badge } from '~/components/ui/badge'
 import { Breadcrumb, BreadcrumbItem } from '~/components/ui/breadcrumb'
 import { Button } from '~/components/ui/button'
 import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
+    ContextMenu,
+    ContextMenuContent,
+    ContextMenuItem,
+    ContextMenuSeparator,
+    ContextMenuTrigger,
 } from '~/components/ui/context-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '~/components/ui/select'
 import SortSelect from '~/components/ui/SortSelect.vue'
@@ -197,11 +197,11 @@ const selectedGridSize = computed(() => {
 const imageSize = computed(() => {
   switch (settings.value.assets.gridSize) {
     case 'sm':
-      return 129
+      return 196
     case 'lg':
-      return 436
+      return 512
     default:
-      return 284
+      return 384
   }
 })
 
