@@ -322,7 +322,8 @@ const colorA11y = computed(() => props.asset?.metadata?.a11y)
 
 // Scale the preview up to fill the panel while keeping the element box equal
 // to the displayed image (object-contain letterboxing would misalign the
-// focus-point overlay). 11rem ≈ header + toolbar + footer + paddings.
+// focus-point overlay). The panel is a size container, so 100cqh is its exact
+// content height — the image can never overflow it.
 const previewImageStyle = computed(() => {
   const metadata = assetCopy.value?.metadata
   const width = Number(metadata?.width)
@@ -333,7 +334,7 @@ const previewImageStyle = computed(() => {
     return undefined
   }
 
-  return { width: `min(100%, calc((90dvh - 11rem) * ${ratio}))` }
+  return { width: `min(100%, calc(100cqh * ${ratio}))` }
 })
 
 const wcagChecks = (ratio: number) => [
@@ -631,7 +632,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
       >
         <div class="flex min-h-0 flex-col gap-3 md:col-span-8">
           <div
-            class="flex min-h-0 flex-1 flex-col items-center justify-center-safe overflow-y-auto rounded-xl bg-surface p-4"
+            class="flex min-h-0 flex-1 flex-col items-center justify-center-safe overflow-y-auto rounded-xl bg-surface p-4 [container-type:size]"
           >
           <div
             v-if="getFileType(asset.mime_type) === 'image'"
@@ -647,9 +648,10 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                 :src="asset.full_path"
                 crop="fit"
                 :alt="String(assetCopy?.data?.altText || asset.filename)"
-                :height="960"
-                :width="960"
-                class="checkerboard w-full object-contain"
+                :height="1024"
+                :width="1024"
+                :quality="90"
+                class="checkerboard block w-full object-contain"
               />
               <div
                 v-if="assetCopy.data?.focus"
@@ -685,7 +687,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                 asset.metadata.thumbnails?.[0]?.full_path
                   ? buildIlumUrl(
                       asset.metadata.thumbnails[0].full_path,
-                      { width: 1200, crop: 'fit' },
+                      { width: 1200, crop: 'fit', quality: 75 },
                       ilumBaseUrl
                     )
                   : undefined
