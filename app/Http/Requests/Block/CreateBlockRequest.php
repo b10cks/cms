@@ -44,6 +44,7 @@ class CreateBlockRequest extends FormRequest
             'description' => 'nullable|string',
             'type' => 'required|string|in:root,nestable,single,universal',
             'preview_template' => 'nullable|string',
+            'preview_file' => 'nullable|string|max:255',
             'schema' => 'nullable|array',
             'editor' => 'nullable|array',
             'tags' => 'nullable|array',

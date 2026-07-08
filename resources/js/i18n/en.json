@@ -421,6 +421,11 @@
         "confirmLabel": "Remove"
       }
     },
+    "imageField": {
+      "select": "Select image",
+      "dialogTitle": "Select an image",
+      "imagesOnly": "Please select an image asset."
+    },
     "assets": {
       "pageTitle": "Asset Library",
       "addAsset": "Add Asset",
@@ -1169,6 +1174,8 @@
         "templates": "Templates",
         "previewTemplate": "Preview template",
         "previewTemplateDescription": "Use handlebars syntax to create a preview template.",
+        "previewFile": "Preview image",
+        "previewFileDescription": "Shown to editors when picking this block. A screenshot works best.",
         "required": "Required?",
         "requiredTooltip": "Users can't create an entry without filling this field.",
         "translatable": "Translatable?",

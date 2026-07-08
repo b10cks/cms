@@ -331,6 +331,7 @@ interface BlockResource {
   description: string
   type: 'root' | 'nestable' | 'single' | 'universal'
   preview_template?: string
+  preview_file?: string | null
   schema: Record<string, SchemaType>
   editor: EditorPage[]
   tags: string[]
@@ -346,6 +347,7 @@ interface CreateBlockPayload {
   name: string
   description?: string | null
   type: 'root' | 'nestable' | 'single' | 'universal'
+  preview_file?: string | null
   schema?: Record<string, SchemaType>
   editor?: EditorPage[]
   tags: string[]
@@ -358,6 +360,7 @@ interface UpdateBlockPayload {
   name?: string
   description?: string | null
   type: 'root' | 'nestable' | 'single' | 'universal'
+  preview_file?: string | null
   schema?: Record<string, SchemaType>
   editor?: EditorPage[]
   tags: string[]
@@ -390,7 +393,7 @@ interface CreateBlockTemplatePayload {
   color?: string | null
   description?: string | null
   content: Record<string, any>
-  preview_file?: File | null
+  preview_file?: string | null
   block_id?: string | null
 }
 
@@ -399,7 +402,7 @@ interface UpdateBlockTemplatePayload {
   icon?: string | null
   color?: string | null
   description?: string | null
-  preview_file?: File | null
+  preview_file?: string | null
 }
 
 // Block Version Types
@@ -412,6 +415,7 @@ interface BlockVersionData {
   description?: string | null
   type: 'root' | 'nestable' | 'single' | 'universal'
   preview_template?: string | null
+  preview_file?: string | null
   schema?: Record<string, SchemaType> | null
   editor?: EditorPage[] | null
   tags?: string[]

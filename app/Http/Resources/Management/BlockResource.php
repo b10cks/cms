@@ -23,6 +23,7 @@ class BlockResource extends JsonResource
             'description' => $this->description,
             'type' => $this->type,
             'preview_template' => $this->preview_template,
+            'preview_file' => $this->preview_file,
             'schema' => $this->schema->toArray(),
             'editor' => $this->editor,
             'tags' => $this->tags,

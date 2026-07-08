@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\DB;
  * @property string $type
  * @property string|null $description
  * @property string|null $preview_template
+ * @property string|null $preview_file
  * @property $schema
  * @property array<array-key, mixed>|null $editor
  * @property array<array-key, mixed>|null $tags
@@ -83,6 +84,7 @@ class Block extends SpaceModel
         'description',
         'type',
         'preview_template',
+        'preview_file',
         'schema',
         'editor',
         'tags',

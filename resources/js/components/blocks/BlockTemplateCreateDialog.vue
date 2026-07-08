@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ImagePickerField from '~/components/assets/ImagePickerField.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
@@ -27,7 +28,7 @@ const template = ref<{
   icon: string
   color: string
   description: string
-  previewFile: File | null
+  previewFile: string | null
 }>({
   name: '',
   icon: 'block',
@@ -35,22 +36,6 @@ const template = ref<{
   description: '',
   previewFile: null,
 })
-
-const fileInputRef = ref<HTMLInputElement | null>(null)
-
-const handleFileSelect = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  if (target.files && target.files[0]) {
-    template.value.previewFile = target.files[0]
-  }
-}
-
-const handleRemoveFile = () => {
-  template.value.previewFile = null
-  if (fileInputRef.value) {
-    fileInputRef.value.value = ''
-  }
-}
 
 const handleSubmit = async () => {
   if (!template.value.name.trim()) return
@@ -111,46 +96,12 @@ watch(open, (isOpen) => {
             :placeholder="$t('labels.blockTemplates.fields.descriptionPlaceholder')"
           />
 
-          <div class="grid gap-2">
-            <label class="text-sm font-medium">
-              {{ $t('labels.blockTemplates.fields.previewFile') }}
-            </label>
-            <div class="flex items-center gap-2">
-              <input
-                ref="fileInputRef"
-                type="file"
-                accept="image/*"
-                class="hidden"
-                @change="handleFileSelect"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                @click="fileInputRef?.click()"
-              >
-                <Icon name="lucide:upload" />
-                {{ $t('actions.selectFile') }}
-              </Button>
-              <span
-                v-if="template.previewFile"
-                class="text-muted-foreground text-sm"
-              >
-                {{ template.previewFile.name }}
-              </span>
-              <Button
-                v-if="template.previewFile"
-                type="button"
-                variant="ghost"
-                size="icon"
-                @click="handleRemoveFile"
-              >
-                <Icon name="lucide:x" />
-              </Button>
-            </div>
-            <p class="text-muted-foreground text-xs">
-              {{ $t('labels.blockTemplates.fields.previewFileHint') }}
-            </p>
-          </div>
+          <ImagePickerField
+            v-model="template.previewFile"
+            :space-id="spaceId"
+            :label="$t('labels.blockTemplates.fields.previewFile')"
+            :description="$t('labels.blockTemplates.fields.previewFileHint')"
+          />
 
           <ScrollArea class="h-32 rounded-lg bg-surface p-2">
             <div class="font-mono text-xs">

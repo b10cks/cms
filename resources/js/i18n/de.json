@@ -416,6 +416,11 @@
         "confirmLabel": "Entfernen"
       }
     },
+    "imageField": {
+      "select": "Bild auswählen",
+      "dialogTitle": "Bild auswählen",
+      "imagesOnly": "Bitte wähle ein Bild aus."
+    },
     "assets": {
       "pageTitle": "Asset-Bibliothek",
       "addAsset": "Asset hinzufügen",
@@ -1161,6 +1166,8 @@
         "templates": "Vorlagen",
         "previewTemplate": "Vorschau-Vorlage",
         "previewTemplateDescription": "Nutze Handlebars-Syntax, um eine Vorschau-Vorlage zu erstellen.",
+        "previewFile": "Vorschaubild",
+        "previewFileDescription": "Wird Redakteuren bei der Auswahl dieses Blocks angezeigt. Ein Screenshot eignet sich am besten.",
         "required": "Erforderlich?",
         "requiredTooltip": "Benutzer können keinen Eintrag erstellen, ohne dieses Feld auszufüllen.",
         "translatable": "Übersetzbar?",

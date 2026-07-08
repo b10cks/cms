@@ -48,6 +48,7 @@ class UpdateBlockRequest extends FormRequest
             'description' => 'sometimes|nullable|string',
             'type' => 'sometimes|string|in:root,nestable,single,universal',
             'preview_template' => 'sometimes|nullable|string',
+            'preview_file' => 'sometimes|nullable|string|max:255',
             'schema' => 'sometimes|nullable|array',
             'editor' => 'sometimes|nullable|array',
             'tags' => 'sometimes|nullable|array',

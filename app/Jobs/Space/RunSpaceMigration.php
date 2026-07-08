@@ -223,6 +223,7 @@ class RunSpaceMigration extends QueuedJob
                 'type' => $row['type'],
                 'description' => $row['description'],
                 'preview_template' => $row['preview_template'],
+                'preview_file' => $row['preview_file'],
                 'schema' => $row['schema'],
                 'editor' => $row['editor'],
                 'tags' => $row['tags'],

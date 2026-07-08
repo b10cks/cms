@@ -26,6 +26,7 @@ class CreateBlockVersion
                 'description' => $block->description,
                 'type' => $block->type,
                 'preview_template' => $block->preview_template,
+                'preview_file' => $block->preview_file,
                 'schema' => $block->schema->toArray(),
                 'editor' => $block->editor,
                 'tags' => $block->tags,

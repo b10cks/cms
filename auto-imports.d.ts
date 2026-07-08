@@ -425,6 +425,7 @@ declare module 'vue' {
     readonly useDataEntryTranslation: UnwrapRef<typeof import('./resources/js/composables/useDataEntryTranslation')['useDataEntryTranslation']>
     readonly useDataSources: UnwrapRef<typeof import('./resources/js/composables/useDataSources')['useDataSources']>
     readonly useEcho: UnwrapRef<typeof import('./resources/js/composables/useEcho')['useEcho']>
+    readonly useFieldClipboard: UnwrapRef<typeof import('./resources/js/composables/useFieldClipboard')['useFieldClipboard']>
     readonly useFieldOptionChoices: UnwrapRef<typeof import('./resources/js/composables/useFieldOptionChoices')['useFieldOptionChoices']>
     readonly useFileUpload: UnwrapRef<typeof import('./resources/js/composables/useFileUpload')['useFileUpload']>
     readonly useFileUtils: UnwrapRef<typeof import('./resources/js/composables/useFileUtils')['default']>

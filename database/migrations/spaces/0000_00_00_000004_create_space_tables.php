@@ -153,6 +153,7 @@ return new class extends Migration
 
             $table->text('description')->nullable();
             $table->text('preview_template')->nullable();
+            $table->string('preview_file')->nullable();
 
             $table->json('schema')->nullable();
             $table->json('editor')->nullable();

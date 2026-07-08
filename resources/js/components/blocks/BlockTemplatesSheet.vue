@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 
+import ImagePickerField from '~/components/assets/ImagePickerField.vue'
 import Icon from '~/components/Icon.vue'
+import NuxtImg from '~/components/NuxtImg.vue'
 import { Avatar } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import { TextField } from '~/components/ui/form'
@@ -34,7 +36,7 @@ const editForm = ref<{
   icon: string
   color: string
   description: string
-  previewFile: File | null
+  previewFile: string | null
 }>({
   name: '',
   icon: 'block',
@@ -43,8 +45,6 @@ const editForm = ref<{
   previewFile: null,
 })
 
-const fileInputRef = ref<HTMLInputElement | null>(null)
-
 const startEditing = (template: BlockTemplate) => {
   editingTemplate.value = template
   editForm.value = {
@@ -52,26 +52,12 @@ const startEditing = (template: BlockTemplate) => {
     icon: template.icon || 'block',
     color: template.color || '',
     description: template.description || '',
-    previewFile: null,
+    previewFile: template.preview_file || null,
   }
 }
 
 const cancelEditing = () => {
   editingTemplate.value = null
-}
-
-const handleFileSelect = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  if (target.files && target.files[0]) {
-    editForm.value.previewFile = target.files[0]
-  }
-}
-
-const handleRemoveFile = () => {
-  editForm.value.previewFile = null
-  if (fileInputRef.value) {
-    fileInputRef.value.value = ''
-  }
 }
 
 const handleUpdate = async () => {
@@ -163,45 +149,11 @@ watch(open, (isOpen) => {
                   name="description"
                 />
 
-                <div class="grid gap-2">
-                  <label class="text-sm font-medium">
-                    {{ $t('labels.blockTemplates.fields.previewFile') }}
-                  </label>
-                  <div class="flex items-center gap-2">
-                    <input
-                      ref="fileInputRef"
-                      type="file"
-                      accept="image/*"
-                      class="hidden"
-                      @change="handleFileSelect"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      @click="fileInputRef?.click()"
-                    >
-                      <Icon name="lucide:upload" />
-                      {{ $t('actions.selectFile') }}
-                    </Button>
-                    <span
-                      v-if="editForm.previewFile"
-                      class="text-muted-foreground text-sm"
-                    >
-                      {{ editForm.previewFile.name }}
-                    </span>
-                    <Button
-                      v-if="editForm.previewFile"
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      class="h-6! w-6!"
-                      @click="handleRemoveFile"
-                    >
-                      <Icon name="lucide:x" />
-                    </Button>
-                  </div>
-                </div>
+                <ImagePickerField
+                  v-model="editForm.previewFile"
+                  :space-id="spaceId"
+                  :label="$t('labels.blockTemplates.fields.previewFile')"
+                />
 
                 <div class="flex justify-end gap-2">
                   <Button
@@ -291,10 +243,13 @@ watch(open, (isOpen) => {
                 v-if="template.preview_file"
                 class="mt-3"
               >
-                <img
+                <NuxtImg
                   :src="template.preview_file"
                   :alt="template.name"
-                  class="h-24 w-full rounded-md object-cover"
+                  :width="576"
+                  :height="96"
+                  :modifiers="{ crop: 'fit' }"
+                  class="h-24 w-full rounded-md bg-surface/50 object-contain"
                 />
               </div>
 

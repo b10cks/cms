@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ImagePickerField from '~/components/assets/ImagePickerField.vue'
 import SchemaEditor from '~/components/blocks/SchemaEditor.vue'
 import { FormField, InputField, TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
@@ -149,6 +150,15 @@ const handleTypeChange = (type: 'root' | 'nestable' | 'single' | 'universal') =>
       :label="$t('labels.blocks.fields.previewTemplate')"
       :description="$t('labels.blocks.fields.previewTemplateDescription')"
       name="preview_template"
+    />
+
+    <ImagePickerField
+      v-if="!isCreate"
+      v-model="editableBlock.preview_file"
+      :space-id="spaceId"
+      :read-only="readonly"
+      :label="$t('labels.blocks.fields.previewFile')"
+      :description="$t('labels.blocks.fields.previewFileDescription')"
     />
 
     <SchemaEditor

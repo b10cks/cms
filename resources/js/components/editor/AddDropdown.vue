@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
+import NuxtImg from '~/components/NuxtImg.vue'
 import {
   Command,
   CommandEmpty,
@@ -99,6 +100,36 @@ const handleInputKeydown = (event: KeyboardEvent) => {
     templatesBlock.value = null
   }
 }
+
+interface PreviewDetails {
+  name: string
+  description?: string | null
+  preview_file?: string | null
+}
+
+const highlightedItem = ref<PreviewDetails | null>(null)
+
+const previewItem = computed(() => {
+  const item = highlightedItem.value
+  return item && (item.preview_file || item.description) ? item : null
+})
+
+const handleHighlight = (item?: { value?: unknown }) => {
+  const value = item?.value
+
+  if (typeof value !== 'string') {
+    highlightedItem.value = null
+    return
+  }
+
+  highlightedItem.value = templatesBlock.value
+    ? (templates.value?.find((template) => template.id === value) ?? null)
+    : (possibleBlocks.value.find((block) => block.slug === value) ?? null)
+}
+
+watch([isOpen, templatesBlock], () => {
+  highlightedItem.value = null
+})
 </script>
 
 <template>
@@ -128,9 +159,12 @@ const handleInputKeydown = (event: KeyboardEvent) => {
     </div>
     <PopoverContent
       align="center"
-      class="w-64 p-0!"
+      class="relative w-64 p-0!"
     >
-      <Command>
+      <Command
+        highlight-on-hover
+        @highlight="handleHighlight"
+      >
         <CommandInput
           :placeholder="$t('labels.contents.canvas.searchBlocks')"
           @keydown="handleInputKeydown"
@@ -198,6 +232,29 @@ const handleInputKeydown = (event: KeyboardEvent) => {
           </CommandGroup>
         </CommandList>
       </Command>
+      <div
+        v-if="previewItem"
+        class="absolute top-0 right-full mr-3 w-96 overflow-hidden rounded-md border border-border bg-popover shadow-md"
+      >
+        <NuxtImg
+          v-if="previewItem.preview_file"
+          :src="previewItem.preview_file"
+          :alt="previewItem.name"
+          :width="384"
+          :height="288"
+          :modifiers="{ crop: 'fit' }"
+          class="max-h-72 w-full border-b border-border bg-surface/50 object-contain"
+        />
+        <div class="grid gap-1 p-3">
+          <p class="text-sm font-semibold text-primary">{{ previewItem.name }}</p>
+          <p
+            v-if="previewItem.description"
+            class="text-sm text-muted"
+          >
+            {{ previewItem.description }}
+          </p>
+        </div>
+      </div>
     </PopoverContent>
   </Popover>
 </template>
