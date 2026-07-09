@@ -1,3 +1,4 @@
+import { watchDebounced } from '@vueuse/core'
 import type { Ref } from 'vue'
 import { isProxy, toRaw } from 'vue'
 
@@ -743,7 +744,7 @@ export const useContentSchemaState = ({
     }
   })
 
-  const clientErrors = computed<ValidationErrorMap>(() => {
+  const computeClientErrors = (): ValidationErrorMap => {
     if (!content.value) return {}
 
     try {
@@ -759,7 +760,20 @@ export const useContentSchemaState = ({
       warnSchemaState('failed to validate content client-side; skipping client errors', error)
       return {}
     }
-  })
+  }
+
+  // Validation walks (prune + validate) the whole tree, so run it ~300ms after the
+  // last edit instead of on every keystroke. Submit paths force a synchronous
+  // refresh via refreshClientErrors() so they never act on stale results.
+  const clientErrors = ref<ValidationErrorMap>({})
+  const refreshClientErrors = () => {
+    clientErrors.value = computeClientErrors()
+  }
+  watchDebounced(
+    [() => content.value?.content, rootSchema, blocksBySlug, effectiveContent],
+    refreshClientErrors,
+    { deep: true, debounce: 300, immediate: true }
+  )
 
   const mergedValidationErrors = computed<ValidationErrorMap>(() =>
     mergeValidationErrorMaps(serverErrors.value, clientErrors.value)
@@ -813,6 +827,9 @@ export const useContentSchemaState = ({
     validationEntries.value.map((entry) => `${entry.path}:${entry.messages[0] || ''}`).join('|')
 
   const revealValidationState = async () => {
+    // Bring debounced validation up to date before surfacing errors to the user.
+    refreshClientErrors()
+
     if (submitAttempted.value) {
       submitAttempted.value = false
       await nextTick()
@@ -830,6 +847,8 @@ export const useContentSchemaState = ({
       submitAttempted.value = true
     }
 
+    // Never gate a submit on debounced (possibly stale) results.
+    refreshClientErrors()
     return Object.keys(clientErrors.value).length === 0
   }
 
@@ -888,6 +907,7 @@ export const useContentSchemaState = ({
     dirtyFields.value = {}
     submitAttempted.value = false
     serverErrors.value = {}
+    refreshClientErrors()
   }
 
   return {

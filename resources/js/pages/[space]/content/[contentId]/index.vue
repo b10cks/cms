@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useQueryClient } from '@tanstack/vue-query'
+import { watchDebounced } from '@vueuse/core'
 import { useRouteQuery } from '@vueuse/router'
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
 import { TransitionGroup } from 'vue'
@@ -246,9 +247,27 @@ const currentContentSource = computed<ContentResource | null>(() => {
 })
 
 const content = ref<ContentResource | null>(null)
-const persistedContent = ref<ContentResource | null>(null)
+// persistedContent is only ever replaced wholesale (never mutated in place), so a
+// shallowRef + markRaw avoids paying for a deep reactive proxy over the baseline.
+const persistedContent = shallowRef<ContentResource | null>(null)
 const editorContentTree = ref<ContentTreeItem | null>(null)
 const editingFromVersionId = ref<string | null>(null)
+
+// Dirty tracking via an edit-version counter instead of stringifying the whole
+// tree on every keystroke: any mutation of `content` bumps the counter, and each
+// persist snapshots the current counter into savedEditVersion. flush: 'sync' keeps
+// the counter current so persist paths can re-baseline immediately afterwards.
+const contentEditVersion = ref(0)
+const savedEditVersion = ref(0)
+watch(content, () => contentEditVersion.value++, { deep: true, flush: 'sync' })
+const isDirty = computed(() => contentEditVersion.value !== savedEditVersion.value)
+
+// Guards for the two tree<->content sync watchers below. The paired flags cancel a
+// write's echo in the opposite direction; suppressTreeSync hard-disables both while
+// we rewrite both trees wholesale (load / discard / persist).
+let contentWriteFromTree = false
+let treeWriteFromContent = false
+let suppressTreeSync = false
 
 // Reset when the content identity changes (navigation or language switch)
 watch(
@@ -368,33 +387,36 @@ const syncPersistedContent = (
     hydrationBlockLookup.value
   )
 
-  persistedContent.value = cloned
+  persistedContent.value = markRaw(cloned)
 
+  suppressTreeSync = true
   if (!content.value || mode === 'replace') {
     content.value = cloneContent(cloned)
     editorContentTree.value = buildEditorContentTree(content.value)
-    return
-  }
+    // Baseline is now in sync with the editing model: clear dirty state.
+    savedEditVersion.value = contentEditVersion.value
+  } else {
+    // preserve-local: keep the user's in-flight edits (dirty state untouched).
+    content.value = {
+      ...content.value,
+      ...cloned,
+      content: content.value.content,
+    }
 
-  content.value = {
-    ...content.value,
-    ...cloned,
-    content: content.value.content,
+    if (!editorContentTree.value) {
+      editorContentTree.value = buildEditorContentTree(content.value)
+    }
   }
-
-  if (!editorContentTree.value) {
-    editorContentTree.value = buildEditorContentTree(content.value)
-  }
+  nextTick(() => {
+    suppressTreeSync = false
+  })
 }
 
 watch(
   [currentContentSource, hydrationBlockLookup],
   ([newContent]) => {
     if (newContent) {
-      const shouldReplace =
-        !content.value ||
-        !persistedContent.value ||
-        JSON.stringify(content.value) === JSON.stringify(persistedContent.value)
+      const shouldReplace = !content.value || !persistedContent.value || !isDirty.value
 
       syncPersistedContent(newContent, shouldReplace ? 'replace' : 'preserve-local')
       resetValidationState()
@@ -403,70 +425,69 @@ watch(
   { immediate: true }
 )
 
-watch(
-  sanitizedContent,
-  (nextSanitized) => {
-    if (!content.value) return
-
-    const currentSerialized = JSON.stringify(content.value.content || {})
-    const sanitizedSerialized = JSON.stringify(nextSanitized || {})
-
-    if (currentSerialized === sanitizedSerialized) return
-
-    // If persisted was in sync with content before pruning (no user changes), keep them in sync.
-    // This prevents schema-driven pruning of hidden conditional fields from creating false dirty state.
-    if (
-      persistedContent.value &&
-      JSON.stringify(persistedContent.value.content) === currentSerialized
-    ) {
-      persistedContent.value.content = JSON.parse(sanitizedSerialized)
-    }
-
-    content.value.content = JSON.parse(sanitizedSerialized)
-  },
-  { deep: true }
-)
-
+// editorContentTree -> content.content: the editor mutates the tree in place as the
+// user types; mirror those edits into the canonical content. The paired guard drops
+// the echo when the change actually originated from a content -> tree rebuild.
 watch(
   editorContentTree,
   (nextTree) => {
-    if (!content.value || !nextTree) return
+    if (!content.value || !nextTree || suppressTreeSync) return
+    if (treeWriteFromContent) {
+      treeWriteFromContent = false
+      return
+    }
 
-    const strippedContent = stripEditorContentTree(nextTree)
-    const currentSerialized = JSON.stringify(content.value.content || {})
-    const nextSerialized = JSON.stringify(strippedContent)
-
-    if (currentSerialized === nextSerialized) return
-
-    content.value.content = strippedContent
+    contentWriteFromTree = true
+    content.value.content = stripEditorContentTree(nextTree)
   },
   { deep: true }
 )
 
-// Remote collaboration writes into content.value.content; rebuild the editor
-// tree whenever it drifts so live edits from others show up in the form.
+// content.content -> editorContentTree: remote collaboration, AI, preview edits and
+// schema pruning all write into content.value.content; rebuild the editor tree so
+// those changes show up in the form. Guarded so a local edit's write-back is ignored.
 watch(
   () => content.value?.content,
   (nextContent) => {
-    if (!content.value || !nextContent) return
+    if (!content.value || !nextContent || suppressTreeSync) return
+    if (contentWriteFromTree) {
+      contentWriteFromTree = false
+      return
+    }
 
-    const treeSerialized = JSON.stringify(stripEditorContentTree(editorContentTree.value))
-    if (treeSerialized === JSON.stringify(nextContent)) return
-
+    treeWriteFromContent = true
     editorContentTree.value = buildEditorContentTree(content.value)
   },
   { deep: true }
 )
 
-const isDirty = computed(() => {
-  if (!content.value || !persistedContent.value) return false
-  return JSON.stringify(content.value) !== JSON.stringify(persistedContent.value)
-})
+// Schema pruning (dropping values of hidden conditional fields) walks the whole
+// tree, so run it debounced instead of on every keystroke. Pruning a pristine
+// document must not make it look dirty, so re-baseline when it was clean.
+watchDebounced(
+  () => content.value?.content,
+  () => {
+    if (!content.value) return
+
+    const sanitizedSerialized = JSON.stringify(sanitizedContent.value || {})
+    if (JSON.stringify(content.value.content || {}) === sanitizedSerialized) return
+
+    const wasDirty = isDirty.value
+    content.value.content = JSON.parse(sanitizedSerialized)
+    if (!wasDirty) savedEditVersion.value = contentEditVersion.value
+  },
+  { deep: true, debounce: 300 }
+)
 
 const discardLocalContentChanges = () => {
   if (persistedContent.value) {
+    suppressTreeSync = true
     content.value = cloneContent(persistedContent.value)
     editorContentTree.value = buildEditorContentTree(content.value)
+    savedEditVersion.value = contentEditVersion.value
+    nextTick(() => {
+      suppressTreeSync = false
+    })
   }
 }
 
