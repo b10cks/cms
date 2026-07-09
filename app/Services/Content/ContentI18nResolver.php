@@ -288,6 +288,7 @@ class ContentI18nResolver
         $loadedCanonicals = $missingCanonicalIds->isEmpty()
             ? collect()
             : Content::query()
+                ->select(Content::deliveryColumns())
                 ->whereIn('id', $missingCanonicalIds)
                 ->whereNull('deleted_at')
                 ->with('block')
@@ -306,6 +307,7 @@ class ContentI18nResolver
         }
 
         return Content::query()
+            ->select(Content::deliveryColumns())
             ->where(function ($query) use ($canonicalIds) {
                 $query->whereIn('id', $canonicalIds)
                     ->orWhereIn('i18n_parent_id', $canonicalIds);

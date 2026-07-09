@@ -36,7 +36,7 @@ class ContentController
 
         $query = Content::filter(ContentFilter::fromRequest($request))
             ->select([
-                'contents.*',
+                ...Content::deliveryColumns('contents.'),
                 'content_versions.content',
                 'content_versions.relation_ids',
                 'content_versions.asset_ids',
@@ -156,6 +156,7 @@ class ContentController
     protected function findFamilyCandidate(string $slug, string $language, Space $space): ?Content
     {
         $candidates = Content::query()
+            ->select(Content::deliveryColumns())
             ->where('full_slug', "/$slug")
             ->whereNull('deleted_at')
             ->with([
