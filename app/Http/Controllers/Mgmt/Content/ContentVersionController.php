@@ -18,10 +18,14 @@ class ContentVersionController extends Controller
     {
         $this->authorize('viewHistory', [$content, $space]);
         $versions = ContentVersion::where('content_id', $content->id)
+            ->select([
+                'id', 'external_id', 'message', 'content_id', 'parent_id', 'release_id',
+                'created_by_id', 'published_by_id', 'published_at', 'scheduled_at', 'created_at',
+            ])
             ->with(['createdBy', 'release', 'publishedBy'])
             ->filter(ContentVersionFilter::fromRequest($request))
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(min((int) $request->input('per_page', 50), 200));
 
         return ContentVersionListResource::collection($versions);
     }
