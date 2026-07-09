@@ -34,22 +34,45 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
     return menuData[id] || null
   }
 
+  const compareByPosition = (a: FlatContentMenuItem, b: FlatContentMenuItem) =>
+    (a.position ?? 0) - (b.position ?? 0) ||
+    (a.name || '').localeCompare(b.name || '') ||
+    a.id.localeCompare(b.id)
+
+  // reka-ui calls get-children for every expanded node on every tree re-render.
+  // Building a per-parent lookup once (and memoizing it on the menuData identity,
+  // which is replaced wholesale by TanStack Query on every update) turns each of
+  // those calls from an O(N) scan+sort into an O(1) map lookup.
+  const childrenIndexCache = new WeakMap<object, Map<string | null, FlatContentMenuItem[]>>()
+
+  const getChildrenIndex = (
+    menuData: Record<string, FlatContentMenuItem>
+  ): Map<string | null, FlatContentMenuItem[]> => {
+    const cached = childrenIndexCache.get(menuData)
+    if (cached) return cached
+
+    const index = new Map<string | null, FlatContentMenuItem[]>()
+    for (const item of Object.values(menuData)) {
+      const parentId = item.pid ?? null
+      const bucket = index.get(parentId)
+      if (bucket) bucket.push(item)
+      else index.set(parentId, [item])
+    }
+    for (const bucket of index.values()) bucket.sort(compareByPosition)
+
+    childrenIndexCache.set(menuData, index)
+    return index
+  }
+
   const getRootItems = (
     menuData: Record<string, FlatContentMenuItem> | undefined
   ): FlatContentMenuItem[] => {
     if (!menuData) return []
-    const compareByPosition = (a: FlatContentMenuItem, b: FlatContentMenuItem) =>
-      (a.position ?? 0) - (b.position ?? 0) ||
-      (a.name || '').localeCompare(b.name || '') ||
-      a.id.localeCompare(b.id)
+    const roots = getChildrenIndex(menuData).get(null) ?? []
 
     return [
-      ...Object.values(menuData)
-        .filter((item) => !item.pid && item.type !== 'single')
-        .sort(compareByPosition),
-      ...Object.values(menuData)
-        .filter((item) => !item.pid && item.type === 'single')
-        .sort(compareByPosition),
+      ...roots.filter((item) => item.type !== 'single'),
+      ...roots.filter((item) => item.type === 'single'),
     ]
   }
 
@@ -59,14 +82,7 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
   ): FlatContentMenuItem[] => {
     const parentId = unref(parentIdRef)
     if (!menuData) return []
-    return Object.values(menuData)
-      .filter((item) => item.pid === parentId)
-      .sort(
-        (a, b) =>
-          (a.position ?? 0) - (b.position ?? 0) ||
-          (a.name || '').localeCompare(b.name || '') ||
-          a.id.localeCompare(b.id)
-      )
+    return getChildrenIndex(menuData).get(parentId ?? null) ?? []
   }
 
   const buildBreadcrumbs = (
