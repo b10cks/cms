@@ -49,7 +49,7 @@ class BlockFolderController extends Controller
 
     public function destroy(Space $space, BlockFolder $folder): JsonResponse
     {
-        if ($folder->blocks()->count() > 0) {
+        if ($folder->blocks()->exists()) {
             return response()->json([
                 'message' => 'Cannot delete folder that contains blocks'
             ], 422);
