@@ -283,6 +283,7 @@ return [
                     'asset_tags.manage',
                     'icons.view',
                     'icons.manage',
+                    'ai.view',
                     'audit_logs.view',
                 ],
             ],
