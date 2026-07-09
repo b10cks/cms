@@ -61,6 +61,9 @@ const contentPickerOpen = ref(false)
 const linkInSelection = ref<InternalLinkAttrs | null>(null)
 const isApplyingExternalContent = ref(false)
 const isBroken = ref(false)
+// Identity of the doc we last emitted, so the modelValue watcher can skip the
+// round-trip of our own edit instead of re-diffing the whole document.
+let lastEmittedValue: Record<string, unknown> | null = null
 
 const emptyDoc = { type: 'doc', content: [{ type: 'paragraph', content: [] }] }
 
@@ -128,7 +131,9 @@ const editor = useEditor({
   ],
   onUpdate: ({ editor: currentEditor }) => {
     if (isApplyingExternalContent.value) return
-    emit('update:modelValue', currentEditor.getJSON())
+    const json = currentEditor.getJSON()
+    lastEmittedValue = json
+    emit('update:modelValue', json)
   },
 })
 
@@ -199,6 +204,10 @@ watch(
   (newValue) => {
     if (!editor.value) return
 
+    // Our own edit round-tripping back through v-model — the editor already holds
+    // this exact document, so there is nothing to apply and nothing to diff.
+    if (newValue === lastEmittedValue) return
+
     if (!isValidDoc(newValue)) {
       isBroken.value = true
       return
@@ -217,8 +226,7 @@ watch(
         isApplyingExternalContent.value = false
       })
     }
-  },
-  { deep: true }
+  }
 )
 
 onBeforeUnmount(() => {
