@@ -89,7 +89,7 @@ return new class extends Migration
             $table->foreignUlid('created_by_id')->nullable();
             $table->timestamp('created_at')->nullable();
 
-            $table->index(['asset_id']);
+            // ['asset_id'] alone is a redundant left-prefix of the composite below.
             $table->index(['asset_id', 'version_number']);
         });
 
@@ -351,8 +351,8 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
+            // ['content_id'] alone is a redundant left-prefix of the composite above.
             $table->index(['content_id', 'is_resolved']);
-            $table->index(['content_id']);
             $table->index(['parent_id']);
         });
 
@@ -374,15 +374,17 @@ return new class extends Migration
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->ulid('id')->primary();
 
-            $table->string('referenced_type')->index();
+            // referenced_type / owner_type / operation carry no standalone index:
+            // each is a redundant left-prefix of a composite declared below.
+            $table->string('referenced_type');
             $table->string('referenced_id')->index();
             $table->string('name');
 
             $table->ulid('owner_id')->nullable()->index();
-            $table->string('owner_type')->index();
+            $table->string('owner_type');
             $table->string('owner_name')->nullable();
 
-            $table->string('operation')->index();
+            $table->string('operation');
             $table->json('meta')->nullable();
 
             $table->timestamp('created_at')->nullable()->index();
