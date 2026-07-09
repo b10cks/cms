@@ -14,7 +14,10 @@ const { $t } = useI18n()
 
 const newCurrency = ref('')
 
-const normalise = (code: string) => code.trim().toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3)
+// Allow plain ISO codes (EUR) and region-prefixed codes (US-USD). Strip anything
+// but A–Z and hyphens, and collapse a leading/duplicate hyphen so `-USD` can't slip through.
+const normalise = (code: string) =>
+  code.trim().toUpperCase().replace(/[^A-Z-]/g, '').replace(/^-+/, '').replace(/-+/g, '-').slice(0, 7)
 
 const updateBaseCurrency = (raw: string) => {
   emit('update:item-value', 'base_currency', normalise(raw))
@@ -51,7 +54,7 @@ const handleNewCurrencyKey = (event: KeyboardEvent) => {
       :model-value="value.base_currency"
       :label="$t('labels.blocks.fields.price.baseCurrency')"
       :description="$t('labels.blocks.fields.price.baseCurrencyDescription')"
-      maxlength="3"
+      maxlength="7"
       placeholder="EUR"
       @update:model-value="updateBaseCurrency"
     />
@@ -90,7 +93,7 @@ const handleNewCurrencyKey = (event: KeyboardEvent) => {
           <Input
             v-model="newCurrency"
             :placeholder="$t('labels.blocks.fields.price.currenciesPlaceholder')"
-            maxlength="3"
+            maxlength="7"
             class="w-28 font-mono uppercase"
             @keydown="handleNewCurrencyKey"
           />

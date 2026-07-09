@@ -320,8 +320,8 @@ class BlockSchemaRequestValidator
     {
         $baseCurrency = $field['base_currency'] ?? '';
 
-        if (! is_string($baseCurrency) || ! preg_match('/^[A-Z]{1,3}$/', $baseCurrency)) {
-            $errors["schema.{$key}.base_currency"][] = 'The base currency must be a 1–3 letter ISO 4217 code (uppercase).';
+        if (! is_string($baseCurrency) || ! preg_match('/^[A-Z]{1,3}(-[A-Z]{1,3})?$/', $baseCurrency)) {
+            $errors["schema.{$key}.base_currency"][] = 'The base currency must be a 1–3 letter ISO 4217 code (uppercase), optionally prefixed with a region (e.g. US-USD).';
         }
 
         if (array_key_exists('currencies', $field)) {
@@ -329,8 +329,8 @@ class BlockSchemaRequestValidator
                 $errors["schema.{$key}.currencies"][] = 'The currencies must be an array.';
             } else {
                 foreach ($field['currencies'] as $index => $code) {
-                    if (! is_string($code) || ! preg_match('/^[A-Z]{1,3}$/', $code)) {
-                        $errors["schema.{$key}.currencies.{$index}"][] = 'Each currency must be a 1–3 letter ISO 4217 code (uppercase).';
+                    if (! is_string($code) || ! preg_match('/^[A-Z]{1,3}(-[A-Z]{1,3})?$/', $code)) {
+                        $errors["schema.{$key}.currencies.{$index}"][] = 'Each currency must be a 1–3 letter ISO 4217 code (uppercase), optionally prefixed with a region (e.g. US-USD).';
                     }
                 }
             }
