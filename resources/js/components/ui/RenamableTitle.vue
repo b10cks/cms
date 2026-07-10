@@ -9,6 +9,7 @@ const props = withDefaults(
     disabled?: boolean
     inputClass?: string
     class?: HTMLAttributes['class']
+    highlight?: number[]
   }>(),
   {
     inputClass:
@@ -75,6 +76,30 @@ function handleKeyDown(event: KeyboardEvent) {
   }
 }
 
+// Contiguous runs of highlighted / plain characters, so matched characters can
+// be emphasized without one span per character.
+const highlightSegments = computed(() => {
+  if (!props.highlight?.length || !props.name) {
+    return null
+  }
+
+  const hits = new Set(props.highlight)
+  const segments: { text: string; hit: boolean }[] = []
+
+  for (let index = 0; index < props.name.length; index++) {
+    const hit = hits.has(index)
+    const last = segments[segments.length - 1]
+
+    if (last && last.hit === hit) {
+      last.text += props.name[index]
+    } else {
+      segments.push({ text: props.name[index], hit })
+    }
+  }
+
+  return segments
+})
+
 watch(
   () => props.name,
   (newValue) => {
@@ -107,6 +132,16 @@ defineExpose({
     :class="props.class"
     @dblclick.stop.prevent="startEdit"
   >
-    <slot :name="name">{{ name ?? fallback }}</slot>
+    <template v-if="highlightSegments">
+      <span
+        v-for="(segment, index) in highlightSegments"
+        :key="index"
+        :class="segment.hit ? 'font-bold text-info' : ''"
+      >{{ segment.text }}</span>
+    </template>
+    <slot
+      v-else
+      :name="name"
+    >{{ name ?? fallback }}</slot>
   </span>
 </template>
