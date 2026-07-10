@@ -377,7 +377,8 @@
       }
     },
     "preview": {
-      "liveEdit": "Live-Bearbeitung verfügbar"
+      "liveEdit": "Live-Bearbeitung verfügbar",
+      "siteLocale": "Website-Sprachversion"
     },
     "contentVersions": {
       "title": "Versionsverlauf",
@@ -1985,6 +1986,19 @@
           "label": "Fallback",
           "description": "Wähle die direkte Fallback-Sprache für diese Sprache.",
           "none": "Kein Fallback"
+        },
+        "siteLocales": {
+          "title": "Website-Sprachversionen",
+          "description": "Ordne URL-Pfadsegmente Inhaltssprachen zu und entkopple so Website-URLs von CMS-Sprachen. Eine Sprache kann mehrere Segmente bedienen (z. B. \"de\" unter \"at-de\", \"ch-de\" und \"de-de\"). Leer lassen, um die Slug-Strategie zu verwenden.",
+          "segment": {
+            "label": "URL-Segment",
+            "placeholder": "z. B. at-de"
+          },
+          "language": "Sprache",
+          "name": {
+            "label": "Name",
+            "placeholder": "z. B. Österreich (DE)"
+          }
         },
         "slugStrategy": {
           "label": "Slug-Strategie",

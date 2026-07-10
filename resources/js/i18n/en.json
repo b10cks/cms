@@ -382,7 +382,8 @@
       }
     },
     "preview": {
-      "liveEdit": "Live Edit available"
+      "liveEdit": "Live Edit available",
+      "siteLocale": "Site locale"
     },
     "contentVersions": {
       "title": "Version History",
@@ -1986,6 +1987,19 @@
           "label": "Fallback",
           "description": "Choose the direct fallback language used for this language.",
           "none": "No fallback"
+        },
+        "siteLocales": {
+          "title": "Site Locales",
+          "description": "Map URL path segments to content languages, decoupling site URLs from CMS languages. One language can serve several segments (e.g. \"de\" under \"at-de\", \"ch-de\" and \"de-de\"). Leave empty to use the slug strategy.",
+          "segment": {
+            "label": "URL Segment",
+            "placeholder": "e.g. at-de"
+          },
+          "language": "Language",
+          "name": {
+            "label": "Name",
+            "placeholder": "e.g. Austria (DE)"
+          }
         },
         "slugStrategy": {
           "label": "Slug Strategy",

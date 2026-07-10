@@ -4,6 +4,7 @@ export default function useSpaceSettings(spaceId: string) {
   const defaults = {
     content: {
       environment: null,
+      siteLocale: null as string | null,
       treeWidth: 20,
       showPreview: true,
       history: {

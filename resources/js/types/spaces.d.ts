@@ -9,6 +9,18 @@ interface SpaceLanguage {
   fallback_language?: string | null
 }
 
+/**
+ * Maps a URL path segment to the CMS language it renders, decoupling site
+ * URLs from content languages. One language may serve several segments
+ * (e.g. `de` under `at-de`, `ch-de` and `de-de` for market-style setups).
+ * When no site locales are configured, the `slug_strategy` applies.
+ */
+interface SpaceSiteLocale {
+  segment: string
+  language: string
+  name?: string | null
+}
+
 interface SpaceAssetField {
   key: string
   label: string
@@ -35,6 +47,7 @@ interface SpaceSettings {
   slug_strategy?: 'never' | 'prepend_translations' | 'always_prepend'
   asset_fields?: SpaceAssetField[]
   languages?: SpaceLanguage[]
+  site_locales?: SpaceSiteLocale[]
   filter_hidden_blocks?: boolean
   content_sorting?: boolean
   sitemap?: SpaceSitemapSettings

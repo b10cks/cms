@@ -30,6 +30,7 @@ import { SimpleTooltip } from '~/components/ui/tooltip'
 import { useContentTreeClipboard } from '~/composables/useContentTreeClipboard'
 import { queryKeys } from '~/composables/useQueryClient'
 import { normalizeLanguageIso } from '~/lib/content-i18n'
+import { buildPreviewUrl } from '~/lib/preview-url'
 import type {
     ContentTreeActionContext,
     ContentTreeClipboardItem,
@@ -702,15 +703,16 @@ const openViewTarget = async (item: FlatContentMenuItem) => {
       },
     })
 
-    const slugStrategy = selectedSpace.value?.settings.slug_strategy
-    const needsPrepend =
-      slugStrategy === 'always_prepend' ||
-      (slugStrategy === 'prepend_translations' &&
-        content.language_iso !== selectedSpace.value?.settings.default_language)
-    const prefix = needsPrepend ? `/${content.language_iso}` : ''
-    const url = environment.url.replace(/\/$/, '')
+    const url = buildPreviewUrl(
+      environment.url,
+      selectedSpace.value?.settings,
+      content.language_iso,
+      content.full_slug
+    )
 
-    window.open(`${url}${prefix}${content.full_slug}`, '_blank', 'noopener,noreferrer')
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer')
+    }
   } catch {
     toast.error(t('labels.contentTree.errors.previewFailed') as string)
   }

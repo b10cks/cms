@@ -15,6 +15,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/componen
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { SimpleTooltip } from '~/components/ui/tooltip'
+import { buildPreviewUrl } from '~/lib/preview-url'
 import type {
   ContentResource,
   ContentVersionDiffEntry,
@@ -307,17 +308,15 @@ const previewSource = computed(() => {
   const envUrl = effectiveEnvironment.value?.url
   if (!envUrl) return null
 
-  const slugStrategy = currentSpace.value?.settings.slug_strategy
-  const languageIso = props.content.language_iso
-  const needsPrepend =
-    slugStrategy === 'always_prepend' ||
-    (slugStrategy === 'prepend_translations' &&
-      languageIso !== currentSpace.value?.settings.default_language)
-  const prefix = needsPrepend && languageIso ? `/${languageIso}` : ''
+  const url = buildPreviewUrl(
+    envUrl,
+    currentSpace.value?.settings,
+    props.content.language_iso,
+    props.content.full_slug
+  )
+  if (!url) return null
 
-  const url = envUrl.replace(/\/$/, '')
-
-  return `${url}${prefix}${props.content.full_slug}?b10cks_rv=${new Date(selectedVersion.value.created_at).getTime()}&b10cks_vid=${selectedVersion.value.id}`
+  return `${url}?b10cks_rv=${new Date(selectedVersion.value.created_at).getTime()}&b10cks_vid=${selectedVersion.value.id}`
 })
 
 const openInTab = () => {

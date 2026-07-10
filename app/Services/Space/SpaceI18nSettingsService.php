@@ -37,7 +37,41 @@ class SpaceI18nSettingsService
             'default_language' => $defaultLanguage,
             'i18n_mode' => $this->normalizeMode($settings['i18n_mode'] ?? self::MODE_OVERLAY),
             'languages' => $languages,
+            'site_locales' => $this->normalizeSiteLocales($settings['site_locales'] ?? []),
         ];
+    }
+
+    private function normalizeSiteLocales(mixed $siteLocales): array
+    {
+        if (! \is_array($siteLocales)) {
+            return [];
+        }
+
+        $normalized = [];
+        $seen = [];
+
+        foreach ($siteLocales as $locale) {
+            if (! \is_array($locale)) {
+                continue;
+            }
+
+            $segment = strtolower(trim((string) ($locale['segment'] ?? ''), " \t\n\r\0\x0B/"));
+            $language = $this->normalizeLanguageIso($locale['language'] ?? null);
+
+            if ($segment === '' || $language === null || isset($seen[$segment])) {
+                continue;
+            }
+
+            $seen[$segment] = true;
+            $name = trim((string) ($locale['name'] ?? ''));
+            $normalized[] = [
+                'segment' => $segment,
+                'language' => $language,
+                'name' => $name !== '' ? $name : null,
+            ];
+        }
+
+        return $normalized;
     }
 
     public function validate(array $settings): array
@@ -83,6 +117,17 @@ class SpaceI18nSettingsService
 
             if (! $this->isValidFallbackChain($code, $languageMap, $defaultLanguage)) {
                 $errors["settings.languages.{$index}.fallback_language"] = 'Fallback chains must resolve to the default language without cycles.';
+            }
+        }
+
+        foreach (array_values($settings['site_locales'] ?? []) as $index => $locale) {
+            if (! \is_array($locale)) {
+                continue;
+            }
+
+            $language = $locale['language'] ?? null;
+            if ($language !== null && ! \in_array($language, $enabledLanguages, true)) {
+                $errors["settings.site_locales.{$index}.language"] = 'Site locale language must be enabled in this space.';
             }
         }
 

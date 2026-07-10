@@ -27,6 +27,7 @@ class SpaceSettings extends Settings
         'default_language' => 'en',
         'i18n_mode' => 'overlay',
         'languages' => [],
+        'site_locales' => [],
         'asset_fields' => [],
         'environments' => [],
         'default_environment' => null,
@@ -94,6 +95,27 @@ class SpaceSettings extends Settings
             'languages.*.hidden' => [
                 'nullable',
                 'boolean',
+            ],
+            'site_locales' => [
+                ...$sometimes,
+                'array',
+            ],
+            'site_locales.*.segment' => [
+                ...$required,
+                'string',
+                'max:64',
+                'distinct:ignore_case',
+            ],
+            'site_locales.*.language' => [
+                ...$required,
+                'string',
+                'min:2',
+                'max:10',
+            ],
+            'site_locales.*.name' => [
+                'nullable',
+                'string',
+                'max:100',
             ],
             'asset_fields' => [
                 ...$sometimes,
@@ -240,6 +262,24 @@ class SpaceSettings extends Settings
             'languages.*.hidden' => [
                 'description' => 'Whether the language should be hidden in UI selectors.',
             ],
+            'site_locales' => [
+                'description' => 'Mappings of URL path segments to CMS languages, decoupling site URLs '
+                    .'from content languages. One language may serve several segments (e.g. "de" under '
+                    .'"at-de", "ch-de" and "de-de"). When empty, the slug_strategy applies.',
+            ],
+            'site_locales.*.segment' => [
+                'description' => 'URL path segment (without slashes) the locale is served under.',
+                'example' => 'at-de',
+            ],
+            'site_locales.*.language' => [
+                'description' => 'CMS language ISO code rendered for this segment.',
+                'example' => 'de',
+            ],
+            'site_locales.*.name' => [
+                'description' => 'Optional display name for the locale.',
+                'nullable' => true,
+                'example' => 'Austria (DE)',
+            ],
             'asset_fields' => [
                 'description' => 'Configured metadata fields available for assets in the space.',
             ],
@@ -376,6 +416,72 @@ class SpaceSettings extends Settings
             'never' => false,
             default => $languageIso !== $defaultLanguage
         };
+    }
+
+    /**
+     * @return array<int, array{segment: string, language: string, name: ?string}>
+     */
+    public function getSiteLocales(): array
+    {
+        return array_values(array_filter(
+            $this->attributes['site_locales'] ?? [],
+            fn (mixed $locale): bool => \is_array($locale)
+                && filled($locale['segment'] ?? null)
+                && filled($locale['language'] ?? null),
+        ));
+    }
+
+    /**
+     * All URL path segments a language is served under (without slashes).
+     * Empty when no site locales map to the language.
+     *
+     * @return array<int, string>
+     */
+    public function getSegmentsForLanguage(string $languageIso): array
+    {
+        $segments = [];
+
+        foreach ($this->getSiteLocales() as $locale) {
+            if ($locale['language'] === $languageIso) {
+                $segments[] = trim((string) $locale['segment'], '/');
+            }
+        }
+
+        return array_values(array_unique(array_filter($segments)));
+    }
+
+    /**
+     * The CMS language a URL segment renders, or null for unknown segments.
+     */
+    public function getLanguageForSegment(string $segment): ?string
+    {
+        $segment = trim($segment, '/');
+
+        foreach ($this->getSiteLocales() as $locale) {
+            if (trim((string) $locale['segment'], '/') === $segment) {
+                return $locale['language'];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve the default URL path segment for a language (without slashes).
+     *
+     * The first matching site locale wins; otherwise the `slug_strategy`
+     * decides whether the raw language code is used. Returns an empty string
+     * when no segment should be prepended. Backwards compatible: without site
+     * locales this returns exactly the `shouldPrependLocale`-driven behaviour.
+     */
+    public function getLocaleSegment(string $languageIso): string
+    {
+        $segments = $this->getSegmentsForLanguage($languageIso);
+        if ($segments !== []) {
+            return $segments[0];
+        }
+
+        return $this->shouldPrependLocale($languageIso) ? $languageIso : '';
     }
 
     public function getEnabledLanguages(): array

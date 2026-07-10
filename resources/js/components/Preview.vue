@@ -5,6 +5,7 @@ import { toast } from 'vue-sonner'
 import Icon from '~/components/Icon.vue'
 import Markdown from '~/components/Markdown.vue'
 import { isSafeFrameUrl } from '~/lib/sanitize'
+import { buildPreviewUrl, resolveLocaleSegments } from '~/lib/preview-url'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,6 +68,27 @@ const effectiveEnvironment = computed<SpaceEnvironment | null>(() => {
   return currentSpace.value?.settings.environments?.find((e) => e.name === defaultName) ?? null
 })
 
+const availableSegments = computed<string[]>(() => {
+  const languageIso = content.value?.language_iso
+  if (!languageIso) return []
+
+  return resolveLocaleSegments(languageIso, currentSpace.value?.settings)
+})
+
+const activeSegment = computed<string>(() => {
+  const preferred = settings.value.content.siteLocale
+  if (preferred !== null && availableSegments.value.includes(preferred)) {
+    return preferred
+  }
+
+  return availableSegments.value[0] ?? ''
+})
+
+const siteLocaleLabel = (segment: string) => {
+  const locale = currentSpace.value?.settings.site_locales?.find((l) => l.segment === segment)
+  return locale?.name || `/${segment}`
+}
+
 const baseSrc = computed(() => {
   const env = effectiveEnvironment.value
   const currentContent = content.value
@@ -77,15 +99,13 @@ const baseSrc = computed(() => {
     return null
   }
 
-  const slugStrategy = currentSpace.value?.settings.slug_strategy
-  const needsPrepend =
-    slugStrategy === 'always_prepend' ||
-    (slugStrategy === 'prepend_translations' &&
-      currentContent.language_iso !== currentSpace.value?.settings.default_language)
-  const prefix = needsPrepend ? `/${currentContent.language_iso}` : ''
-
-  const url = env.url.replace(/\/$/, '')
-  return `${url}${prefix}${props.fullSlug}`
+  return buildPreviewUrl(
+    env.url,
+    currentSpace.value?.settings,
+    currentContent.language_iso,
+    props.fullSlug,
+    activeSegment.value
+  )
 })
 const currentEnvironmentUrl = computed(() => effectiveEnvironment.value?.url)
 const availableEnvironments = computed(() => currentSpace.value?.settings.environments ?? [])
@@ -152,6 +172,12 @@ watchEffect(() => {
 const switchEnvironment = (env: SpaceEnvironment) => {
   loading.value = true
   ;(settings.value.content as { environment: SpaceEnvironment | null }).environment = env
+  isConnected.value = false
+}
+
+const switchSiteLocale = (segment: string) => {
+  loading.value = true
+  settings.value.content.siteLocale = segment
   isConnected.value = false
 }
 
@@ -315,6 +341,32 @@ const handleMouseMove = (event: MouseEvent) => {
                 <Icon name="lucide:monitor-smartphone" />
               </button>
             </SimpleTooltip>
+            <DropdownMenu v-if="availableSegments.length > 1">
+              <DropdownMenuTrigger class="flex">
+                <SimpleTooltip
+                  class="flex items-center gap-1"
+                  side="bottom"
+                  :tooltip="$t('labels.preview.siteLocale')"
+                >
+                  <Icon name="lucide:globe" />
+                  <span class="text-xs font-semibold">/{{ activeSegment }}</span>
+                </SimpleTooltip>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuRadioGroup :model-value="activeSegment">
+                  <DropdownMenuRadioItem
+                    v-for="segment in availableSegments"
+                    :key="segment"
+                    :value="segment"
+                    class="grid"
+                    @select="switchSiteLocale(segment)"
+                  >
+                    <span class="font-semibold text-primary">{{ siteLocaleLabel(segment) }}</span>
+                    <span class="text-xs text-primary/60">/{{ segment }}</span>
+                  </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger class="flex">
                 <Icon name="lucide:cog" />

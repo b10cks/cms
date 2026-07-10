@@ -42,6 +42,7 @@ const languages = ref<EditableSpaceLanguage[]>(
     fallback_language: language.fallback_language || NO_FALLBACK_VALUE,
   }))
 )
+const siteLocales = ref<SpaceSiteLocale[]>(deepClone(props.space.settings.site_locales || []))
 const defaultLanguage = ref(props.space.settings.default_language || 'en')
 const slugStrategy = ref(props.space.settings.slug_strategy || 'never')
 const i18nMode = ref(props.space.settings.i18n_mode || 'overlay')
@@ -132,8 +133,54 @@ const addLanguage = (item: TableItem) => {
   languages.value.push(item as EditableSpaceLanguage)
 }
 
+const siteLocaleColumns = computed<ColumnDefinition[]>(() => [
+  {
+    key: 'segment',
+    label: t('labels.settings.i18n.siteLocales.segment.label'),
+    type: 'text',
+    placeholder: t('labels.settings.i18n.siteLocales.segment.placeholder'),
+    required: true,
+  },
+  {
+    key: 'language',
+    label: t('labels.settings.i18n.siteLocales.language'),
+    type: 'select',
+    placeholder: t('labels.settings.i18n.siteLocales.language'),
+    options: () => [
+      {
+        value: defaultLanguage.value,
+        label: defaultLanguage.value.toUpperCase(),
+      },
+      ...fallbackOptions.value,
+    ],
+  },
+  {
+    key: 'name',
+    label: t('labels.settings.i18n.siteLocales.name.label'),
+    type: 'text',
+    placeholder: t('labels.settings.i18n.siteLocales.name.placeholder'),
+  },
+])
+
+const newSiteLocaleTemplate: SpaceSiteLocale = {
+  segment: '',
+  language: '',
+}
+
+const removeSiteLocale = (index: number) => {
+  siteLocales.value.splice(index, 1)
+}
+
+const addSiteLocale = (item: TableItem) => {
+  siteLocales.value.push(item as SpaceSiteLocale)
+}
+
 const languageErrorEntries = computed(() =>
   Object.entries(errors.value).filter(([path]) => path.startsWith('settings.languages.'))
+)
+
+const siteLocaleErrorEntries = computed(() =>
+  Object.entries(errors.value).filter(([path]) => path.startsWith('settings.site_locales.'))
 )
 
 const saveSettings = async () => {
@@ -150,6 +197,11 @@ const saveSettings = async () => {
             name: language.name,
             fallback_language:
               language.fallback_language === NO_FALLBACK_VALUE ? null : language.fallback_language,
+          })),
+          site_locales: siteLocales.value.map((locale) => ({
+            segment: locale.segment.trim(),
+            language: locale.language,
+            name: locale.name?.trim() || null,
           })),
           default_language: defaultLanguage.value,
           i18n_mode: i18nMode.value,
@@ -233,6 +285,40 @@ const saveSettings = async () => {
           class="text-sm text-danger"
         >
           {{ getError('settings.languages') }}
+        </p>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <h4 class="text-sm font-medium">{{ $t('labels.settings.i18n.siteLocales.title') }}</h4>
+          <p class="text-xs text-muted">
+            {{ $t('labels.settings.i18n.siteLocales.description') }}
+          </p>
+        </div>
+        <SettingsTable
+          v-model:items="siteLocales"
+          :columns="siteLocaleColumns"
+          :new-item-template="newSiteLocaleTemplate"
+          @add="addSiteLocale"
+          @remove="removeSiteLocale"
+          @update:items="(items) => (siteLocales = items as SpaceSiteLocale[])"
+        />
+        <div
+          v-if="siteLocaleErrorEntries.length"
+          class="space-y-1"
+        >
+          <p
+            v-for="[path, messages] in siteLocaleErrorEntries"
+            :key="path"
+            class="text-sm text-danger"
+          >
+            {{ messages[0] }}
+          </p>
+        </div>
+        <p
+          v-if="getError('settings.site_locales')"
+          class="text-sm text-danger"
+        >
+          {{ getError('settings.site_locales') }}
         </p>
       </div>
     </CardContent>

@@ -67,8 +67,10 @@ class LocalizedContentSlugService extends ContentSlugService
 
     public function applyLocalizationStrategy(string $basePath, string $languageIso): string
     {
-        if ($this->space->settings->shouldPrependLocale($languageIso)) {
-            return "/{$languageIso}{$basePath}";
+        $segment = $this->space->settings->getLocaleSegment($languageIso);
+
+        if ($segment !== '') {
+            return "/{$segment}{$basePath}";
         }
 
         return $basePath;
@@ -81,8 +83,14 @@ class LocalizedContentSlugService extends ContentSlugService
 
     protected function stripLocaleFromPath(string $path): string
     {
-        $enabledLanguages = $this->space->settings->getEnabledLanguages();
-        $pattern = '/^\/(' . implode('|', $enabledLanguages) . ')(?=\/|$)/';
+        $segments = $this->space->settings->getEnabledLanguages();
+
+        foreach ($this->space->settings->getSiteLocales() as $locale) {
+            $segments[] = trim((string) $locale['segment'], '/');
+        }
+
+        $segments = array_unique(array_map(fn (string $s): string => preg_quote($s, '/'), $segments));
+        $pattern = '/^\/(' . implode('|', $segments) . ')(?=\/|$)/';
 
         return preg_replace($pattern, '', $path) ?: '/';
     }
@@ -98,6 +106,10 @@ class LocalizedContentSlugService extends ContentSlugService
             ? "/{$content->language_iso}{$basePath}"
             : $basePath;
         $variations['never'] = $basePath;
+
+        foreach ($this->space->settings->getSegmentsForLanguage($content->language_iso) as $index => $segment) {
+            $variations["segment_{$index}"] = "/{$segment}{$basePath}";
+        }
 
         return array_unique($variations);
     }
