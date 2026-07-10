@@ -133,7 +133,8 @@
         "apiAvailabilityDescription": "Allow this data source to be used via API. When disabled, it remains available in the CMS for options and internal use.",
         "createdAt": "Created",
         "updatedAt": "Last modified",
-        "actions": "Actions"
+        "actions": "Actions",
+        "defaultDimensionLocale": "Default dimension locale"
       },
       "status": {
         "label": "Status",
@@ -159,7 +160,16 @@
         "title": "Delete this data source?",
         "description": "This can't be undone. All entries will be permanently removed.",
         "confirmText": "Yes, delete it"
-      }
+      },
+      "placeholders": {
+        "name": "Name",
+        "slug": "Slug"
+      },
+      "noSearchResults": "No search results",
+      "noDimensions": "No dimensions",
+      "defaultDimensionLocaleDescription": "Choose the default locale for this dimension",
+      "deleteConfirmMessage": "Are you sure you want to delete this dataset?",
+      "deleteConfirmTitle": "Delete dataset"
     },
     "dataEntries": {
       "fields": {
@@ -224,7 +234,8 @@
         "rowLabel": "Row {row}",
         "changeCount": "{count} change(s)",
         "emptyValue": "empty"
-      }
+      },
+      "deleteTitle": "Delete entry"
     },
     "assetTags": {
       "title": "Asset Tags",
@@ -383,7 +394,10 @@
     },
     "preview": {
       "liveEdit": "Live Edit available",
-      "siteLocale": "Site locale"
+      "siteLocale": "Site locale",
+      "copyLink": "Copy preview link",
+      "openExternal": "Open in new tab",
+      "mode": "Toggle preview mode"
     },
     "contentVersions": {
       "title": "Version History",
@@ -489,7 +503,8 @@
         "metadata": "Metadata",
         "filename": "Filename",
         "altText": "Alt Text",
-        "copyright": "Copyright"
+        "copyright": "Copyright",
+        "fileTypes": "File types"
       },
       "metadata": {
         "codec": "Codec",
@@ -743,7 +758,10 @@
             "modifiedZoom": "Hold Ctrl or Cmd while using the wheel or trackpad gesture to zoom.",
             "toolbarZoom": "Use the toolbar controls to zoom, reset to 100%, or fit the current tree into view."
           }
-        }
+        },
+        "aiPlaceholderTitle": "AI Assistant",
+        "aiPlaceholderDescription": "Use AI to help create and edit your content",
+        "comingSoon": "Coming soon"
       },
       "fields": {
         "name": "Name",
@@ -1280,7 +1298,8 @@
           "maxDescription": "The latest date users can pick",
           "useCurrentAsDefault": "Default to today?",
           "useCurrentAsDefaultDescription": "New entries will default to the current date"
-        }
+        },
+        "has_og_tags": "Show OG tags"
       },
       "types": {
         "root": {
@@ -1419,7 +1438,9 @@
         "color": "Color",
         "icon": "Icon",
         "blockCount": "Blocks tagged",
-        "createdAt": "Created"
+        "createdAt": "Created",
+        "blocks_count": "Block count",
+        "updatedAt": "Updated"
       }
     },
     "blockFolders": {
@@ -1498,7 +1519,8 @@
         "title": "Delete this version?",
         "confirmLabel": "Delete",
         "message": "Delete the version from {date}? This can't be undone."
-      }
+      },
+      "manageTitle": "Manage versions"
     },
     "spaces": {
       "title": "Spaces",
@@ -1614,10 +1636,16 @@
         "publishAt": "Scheduled at",
         "createdAt": "Created",
         "updatedAt": "Updated",
-        "versionsCount": "No items|1 item|{count} items"
+        "versionsCount": "No items|1 item|{count} items",
+        "scheduled": "Scheduled"
       },
       "scheduled": "Scheduled",
-      "unscheduledReleases": "Unscheduled Releases"
+      "unscheduledReleases": "Unscheduled Releases",
+      "states": {
+        "draft": "Draft",
+        "scheduled": "Scheduled",
+        "published": "Published"
+      }
     },
     "redirects": {
       "title": "Redirects",
@@ -1933,7 +1961,8 @@
           "pathPlaceholder": "meta",
           "addType": "Add mapping",
           "empty": "No sitemap mappings configured yet."
-        }
+        },
+        "noBlocks": "No blocks found"
       },
       "dangerZone": {
         "title": "Danger Zone",
@@ -1944,7 +1973,8 @@
         "deleteWarning": "This action cannot be undone. This will permanently delete your space and remove all associated data from our servers.",
         "typeToConfirm": "Type {text} to confirm",
         "confirmDelete": "Delete Space",
-        "deleting": "Deleting..."
+        "deleting": "Deleting...",
+        "deleteSpaceDescription": "This action cannot be undone."
       },
       "editor": {
         "title": "Editor",
@@ -2297,7 +2327,9 @@
         "useBackupCodes": "Use backup code instead?",
         "backupCode": "Backup Code",
         "backupCodeDescription": "Enter a backup code from your list",
-        "button": "Verify"
+        "button": "Verify",
+        "backupLabel": "Backup code",
+        "backupPlaceholder": "Enter your backup code"
       },
       "backupCodes": {
         "title": "Backup Codes",
@@ -3286,7 +3318,8 @@
         "deletedIcons": "Pruned icons",
         "errorsTitle": "Errors",
         "changeCount": "{count} change(s)"
-      }
+      },
+      "dragDropOverlay": "Drop icons here"
     },
     "geo": {
       "field": {
@@ -3299,6 +3332,29 @@
       "field": {
         "amount": "Amount"
       }
+    },
+    "noResults": "No results",
+    "messages": {
+      "blockTags": {
+        "deleteConfirmation": "Are you sure you want to delete this tag?"
+      },
+      "dataEntries": {
+        "deleteConfirmation": "Are you sure you want to delete this entry?"
+      }
+    },
+    "content": {
+      "name": "Name",
+      "type": "Type",
+      "pageElements": "Page Elements",
+      "elements": {
+        "header": "Header",
+        "mainContent": "Main Content",
+        "sidebar": "Sidebar",
+        "footer": "Footer"
+      }
+    },
+    "accessDenied": {
+      "from": "Access denied"
     }
   },
   "notifications": {
@@ -4091,6 +4147,12 @@
     },
     "icons": {
       "confirmDelete": "Are you sure you want to delete this icon? This cannot be undone."
+    },
+    "blockTags": {
+      "deleteConfirmation": "Are you sure you want to delete this tag?"
+    },
+    "dataEntries": {
+      "deleteConfirmation": "Are you sure you want to delete this entry?"
     }
   }
 }

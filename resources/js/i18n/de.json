@@ -128,7 +128,8 @@
         "apiAvailabilityDescription": "Erlaube, dass diese Datenquelle über die API verwendet werden kann. Wenn deaktiviert, bleibt sie im CMS für Optionen und interne Nutzung verfügbar.",
         "createdAt": "Erstellt",
         "updatedAt": "Geändert",
-        "actions": "Aktionen"
+        "actions": "Aktionen",
+        "defaultDimensionLocale": "Standard-Dimensionsgebietsschema"
       },
       "status": {
         "label": "Status",
@@ -154,7 +155,16 @@
         "title": "Diese Datenquelle löschen?",
         "description": "Das kann nicht rückgängig gemacht werden. Alle Einträge werden dauerhaft entfernt.",
         "confirmText": "Ja, löschen"
-      }
+      },
+      "placeholders": {
+        "name": "Name",
+        "slug": "Slug"
+      },
+      "noSearchResults": "Keine Suchergebnisse",
+      "noDimensions": "Keine Dimensionen",
+      "defaultDimensionLocaleDescription": "Wählen Sie das Standard-Gebietsschema für diese Dimension",
+      "deleteConfirmMessage": "Sind Sie sicher, dass Sie diesen Datensatz löschen möchten?",
+      "deleteConfirmTitle": "Datensatz löschen"
     },
     "dataEntries": {
       "fields": {
@@ -219,7 +229,8 @@
         "rowLabel": "Zeile {row}",
         "changeCount": "{count} Änderung(en)",
         "emptyValue": "leer"
-      }
+      },
+      "deleteTitle": "Eintrag löschen"
     },
     "assetTags": {
       "title": "Asset-Tags",
@@ -378,7 +389,10 @@
     },
     "preview": {
       "liveEdit": "Live-Bearbeitung verfügbar",
-      "siteLocale": "Website-Sprachversion"
+      "siteLocale": "Website-Sprachversion",
+      "copyLink": "Vorschau-Link kopieren",
+      "openExternal": "In neuem Tab öffnen",
+      "mode": "Vorschau-Modus umschalten"
     },
     "contentVersions": {
       "title": "Versionsverlauf",
@@ -484,7 +498,8 @@
         "metadata": "Metadaten",
         "filename": "Dateiname",
         "altText": "Alt-Text",
-        "copyright": "Urheberrecht"
+        "copyright": "Urheberrecht",
+        "fileTypes": "Dateitypen"
       },
       "metadata": {
         "codec": "Codec",
@@ -738,7 +753,10 @@
             "modifiedZoom": "Halte Ctrl oder Cmd gedrückt und nutze Mausrad oder Trackpad-Geste zum Zoomen.",
             "toolbarZoom": "Mit den Toolbar-Steuerelementen kannst du zoomen, auf 100 % zurücksetzen oder den aktuellen Baum einpassen."
           }
-        }
+        },
+        "aiPlaceholderTitle": "KI-Assistent",
+        "aiPlaceholderDescription": "Verwenden Sie KI, um Ihren Inhalt zu erstellen und zu bearbeiten",
+        "comingSoon": "Bald verfügbar"
       },
       "fields": {
         "name": "Name",
@@ -1144,7 +1162,8 @@
         "required": "Erforderlich",
         "indexable": "Indexierbar",
         "conditionsAll": "Alle Bedingungen erfüllen",
-        "conditionsAny": "Irgendeine Bedingung erfüllen"
+        "conditionsAny": "Irgendeine Bedingung erfüllen",
+        "translatable": "Is translatable"
       },
       "fields": {
         "name": "Block-Name",
@@ -1272,7 +1291,10 @@
           "maxDescription": "Das späteste Datum, das Benutzer wählen können",
           "useCurrentAsDefault": "Heute als Standard?",
           "useCurrentAsDefaultDescription": "Neue Einträge werden auf das heutige Datum vorbelegt"
-        }
+        },
+        "has_og_tags": "OG-Tags anzeigen",
+        "fieldName": "Field Name",
+        "fieldDescription": "What is the purpose of this field?"
       },
       "types": {
         "root": {
@@ -1419,7 +1441,9 @@
         "color": "Farbe",
         "icon": "Symbol",
         "blockCount": "Blocks getaggt",
-        "createdAt": "Erstellt"
+        "createdAt": "Erstellt",
+        "blocks_count": "Blockanzahl",
+        "updatedAt": "Aktualisiert"
       }
     },
     "blockFolders": {
@@ -1498,7 +1522,8 @@
         "title": "Diese Version löschen?",
         "confirmLabel": "Löschen",
         "message": "Lösche die Version von {date}? Das kann nicht rückgängig gemacht werden."
-      }
+      },
+      "manageTitle": "Versionen verwalten"
     },
     "spaces": {
       "title": "Spaces",
@@ -1613,10 +1638,16 @@
         "publishAt": "Geplant für",
         "createdAt": "Erstellt",
         "updatedAt": "Aktualisiert",
-        "versionsCount": "Keine Elemente|1 Element|{count} Elemente"
+        "versionsCount": "Keine Elemente|1 Element|{count} Elemente",
+        "scheduled": "Geplant"
       },
       "scheduled": "Geplant",
-      "unscheduledReleases": "Ungeplante Releases"
+      "unscheduledReleases": "Ungeplante Releases",
+      "states": {
+        "draft": "Entwurf",
+        "scheduled": "Geplant",
+        "published": "Veröffentlicht"
+      }
     },
     "redirects": {
       "title": "Redirects",
@@ -1932,7 +1963,8 @@
           "pathPlaceholder": "meta",
           "addType": "Mapping hinzufügen",
           "empty": "Noch keine Sitemap-Mappings konfiguriert."
-        }
+        },
+        "noBlocks": "Keine Blöcke gefunden"
       },
       "dangerZone": {
         "title": "Gefahrenzone",
@@ -1943,7 +1975,8 @@
         "deleteWarning": "Diese Aktion kann nicht rückgängig gemacht werden. Dies löscht deinen Space dauerhaft und entfernt alle zugehörigen Daten von unseren Servern.",
         "typeToConfirm": "Gib {text} ein zur Bestätigung",
         "confirmDelete": "Space löschen",
-        "deleting": "Wird gelöscht..."
+        "deleting": "Wird gelöscht...",
+        "deleteSpaceDescription": "Diese Aktion kann nicht rückgängig gemacht werden."
       },
       "editor": {
         "title": "Editor",
@@ -2090,7 +2123,26 @@
         "loadingUsage": "Lade Nutzungsdaten...",
         "noUsageData": "Keine Nutzungsdaten verfügbar",
         "placeholder": "Bitte die KI, deinen Content zu bearbeiten...",
-        "dropFiles": "Dateien hier ablegen"
+        "dropFiles": "Dateien hier ablegen",
+        "configurations": "AI Configurations",
+        "configurationsDescription": "Create and manage named AI configurations with different models and settings for various use cases.",
+        "createConfig": "New Configuration",
+        "noConfigs": "No AI configurations yet",
+        "noConfigsDescription": "Create your first configuration to start using AI features.",
+        "default": "Default",
+        "editConfig": "Edit Configuration",
+        "configDialogDescription": "Configure an AI profile with specific model, temperature, and behavior settings for different content tasks.",
+        "configName": "Configuration Name",
+        "configNamePlaceholder": "e.g., Creative Writer, Technical Editor, Marketing Copy...",
+        "systemPrompt": "AI Instructions",
+        "systemPromptDescription": "Define how AI should behave in this space. Include tone, style guidelines, domain-specific rules, and any other constraints or preferences.",
+        "systemPromptPlaceholder": "e.g. Professional yet approachable tone. Use active voice. Focus on technical accuracy. Never use first person. Always include examples...",
+        "temperature": "Temperature",
+        "precise": "Precise",
+        "creative": "Creative",
+        "maxTokens": "Max Tokens",
+        "maxTokensDescription": "Maximum number of tokens the AI can generate in a single response.",
+        "setAsDefault": "Set as default configuration"
       },
       "members": {
         "title": "Mitglieder",
@@ -2273,7 +2325,9 @@
         "useBackupCodes": "Nutze stattdessen einen Backup-Code?",
         "backupCode": "Backup-Code",
         "backupCodeDescription": "Gib einen Backup-Code aus deiner Liste ein",
-        "button": "Überprüfen"
+        "button": "Überprüfen",
+        "backupLabel": "Sicherungscode",
+        "backupPlaceholder": "Geben Sie Ihren Sicherungscode ein"
       },
       "backupCodes": {
         "title": "Backup-Codes",
@@ -3262,7 +3316,8 @@
         "deletedIcons": "Entfernte Icons",
         "errorsTitle": "Fehler",
         "changeCount": "{count} Änderung(en)"
-      }
+      },
+      "dragDropOverlay": "Symbole hier ablegen"
     },
     "geo": {
       "field": {
@@ -3275,6 +3330,29 @@
       "field": {
         "amount": "Betrag"
       }
+    },
+    "noResults": "Keine Ergebnisse",
+    "messages": {
+      "blockTags": {
+        "deleteConfirmation": "Sind Sie sicher, dass Sie diesen Tag löschen möchten?"
+      },
+      "dataEntries": {
+        "deleteConfirmation": "Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?"
+      }
+    },
+    "content": {
+      "name": "Name",
+      "type": "Typ",
+      "pageElements": "Seitenelemente",
+      "elements": {
+        "header": "Kopfzeile",
+        "mainContent": "Hauptinhalt",
+        "sidebar": "Seitenleiste",
+        "footer": "Fußzeile"
+      }
+    },
+    "accessDenied": {
+      "from": "Zugriff verweigert"
     }
   },
   "notifications": {
@@ -3641,18 +3719,31 @@
     },
     "aiText": {
       "streamError": "KI-Stream-Fehler: {error}",
-      "thinking": "Denke nach..."
+      "thinking": "Denke nach...",
+      "placeholderSelectConfig": "Select a configuration to start...",
+      "placeholderDefault": "Ask {name} to help with your content...",
+      "noConfigSelected": "Please select an AI configuration to continue"
     },
     "aiMention": {
       "content": "Inhalte",
       "draftContent": "Entwurfsbaum",
       "blocks": "Blöcke",
       "noResults": "Keine Treffer gefunden",
-      "hint": "Tippe @ um Inhalte oder Blöcke zu erwähnen"
+      "hint": "Tippe @ um Inhalte oder Blöcke zu erwähnen",
+      "suggestions": "Mention suggestions"
     },
     "aiSettings": {
       "saveSuccess": "KI-Einstellungen erfolgreich gespeichert",
-      "saveError": "KI-Einstellungen konnten nicht gespeichert werden"
+      "saveError": "KI-Einstellungen konnten nicht gespeichert werden",
+      "configUpdateSuccess": "AI configuration updated successfully",
+      "configUpdateError": "Failed to update AI configuration",
+      "configCreateSuccess": "AI configuration created successfully",
+      "configCreateError": "Failed to create AI configuration",
+      "deleteDialogDescription": "This will permanently delete the \"{name}\" configuration. This action cannot be undone.",
+      "deleteDialogTitle": "Delete AI Configuration?",
+      "configDeleteSuccess": "AI configuration deleted successfully",
+      "configDeleteError": "Failed to delete AI configuration",
+      "cannotDeleteLast": "Cannot delete the last configuration"
     },
     "contentTreeAi": {
       "title": "Inhaltsbaum mit KI generieren",
@@ -3671,6 +3762,13 @@
       "willMove": "{count} Element wird verschoben | {count} Elemente werden verschoben",
       "creatingItems": "Erstelle {count} Element... | Erstelle {count} Elemente...",
       "movingItems": "Verschiebe {count} Element... | Verschiebe {count} Elemente..."
+    },
+    "aiConfigSelector": {
+      "selectConfig": "Select AI configuration",
+      "availableConfigs": "Available Configurations",
+      "default": "Default",
+      "loading": "Loading configurations...",
+      "noConfigs": "No configurations available"
     }
   },
   "alertDialog": {
@@ -4044,6 +4142,12 @@
     },
     "icons": {
       "confirmDelete": "Möchtest du dieses Icon wirklich löschen? Dies kann nicht rückgängig gemacht werden."
+    },
+    "blockTags": {
+      "deleteConfirmation": "Sind Sie sicher, dass Sie diesen Tag löschen möchten?"
+    },
+    "dataEntries": {
+      "deleteConfirmation": "Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?"
     }
   }
 }
