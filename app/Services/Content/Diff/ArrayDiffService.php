@@ -8,8 +8,8 @@ class ArrayDiffService implements DiffInterface
     private ValueComparer $valueComparer;
 
     public function __construct(
-        PathNormalizer $pathNormalizer = null,
-        ValueComparer $valueComparer = null
+        ?PathNormalizer $pathNormalizer = null,
+        ?ValueComparer $valueComparer = null
     ) {
         $this->pathNormalizer = $pathNormalizer ?? new PathNormalizer();
         $this->valueComparer = $valueComparer ?? new ValueComparer();
@@ -26,7 +26,12 @@ class ArrayDiffService implements DiffInterface
         $this->processAddedEntries($oldFlattened, $newFlattened, $entries);
         $this->processChangedEntries($oldFlattened, $newFlattened, $entries);
 
-        return new DiffResult($entries->sortBy('path')->values()->toArray());
+        return new DiffResult(
+            $entries
+                ->sort(static fn (DiffEntry $a, DiffEntry $b): int => strnatcmp($a->path, $b->path))
+                ->values()
+                ->toArray()
+        );
     }
 
     private function flattenArray(array $array, string $prefix = ''): array
@@ -36,7 +41,7 @@ class ArrayDiffService implements DiffInterface
         foreach ($array as $key => $value) {
             $currentPath = $this->pathNormalizer->buildPath($prefix, $key);
 
-            if (is_array($value)) {
+            if (is_array($value) && !self::isRichTextDoc($value)) {
                 $result = array_merge($result, $this->flattenArray($value, $currentPath));
             } else {
                 $result[$currentPath] = $value;
@@ -44,6 +49,18 @@ class ArrayDiffService implements DiffInterface
         }
 
         return $result;
+    }
+
+    /**
+     * Rich text fields hold a ProseMirror document. Keep it as a single
+     * leaf so a change surfaces as one entry carrying both full documents,
+     * instead of being flattened into per-node paths.
+     */
+    public static function isRichTextDoc(mixed $value): bool
+    {
+        return \is_array($value)
+            && ($value['type'] ?? null) === 'doc'
+            && array_key_exists('content', $value);
     }
 
     private function processRemovedEntries(array $old, array $new, $entries): void

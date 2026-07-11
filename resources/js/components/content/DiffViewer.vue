@@ -1,15 +1,11 @@
 <script setup lang="ts">
+import type { Component } from 'vue'
+import { resolveDiffComponent, type DiffChange } from '~/components/content/diff/field-diff'
 import ValueRenderer from '~/components/content/ValueRenderer.vue'
 import Icon from '~/components/Icon.vue'
 
 type ChangeType = 'added' | 'removed' | 'changed'
-
-interface Change {
-  type: ChangeType
-  path: string
-  oldValue?: unknown
-  newValue?: unknown
-}
+type Change = DiffChange
 
 interface ChangeStats {
   added: number
@@ -35,9 +31,16 @@ const stats = computed((): ChangeStats => {
   )
 })
 
-const filteredChanges = computed((): Change[] => {
-  if (activeFilter.value === 'all') return props.changes
-  return props.changes.filter((change) => change.type === activeFilter.value)
+interface DisplayChange extends Change {
+  component?: Component
+}
+
+const filteredChanges = computed((): DisplayChange[] => {
+  const changes = activeFilter.value === 'all'
+    ? props.changes
+    : props.changes.filter((change) => change.type === activeFilter.value)
+
+  return changes.map((change) => ({ ...change, component: resolveDiffComponent(change) }))
 })
 
 const formatPath = (path: string): string => {
@@ -138,7 +141,7 @@ const getFilterButtonClasses = (filter: ChangeType): string => {
     <div class="space-y-3">
       <div
         v-for="change in filteredChanges"
-        :key="change.path"
+        :key="`${change.type}:${change.path}`"
         :class="getChangeClasses(change.type)"
         class="rounded-lg border-l-4 px-4 py-3 transition-all duration-200 hover:shadow-sm"
       >
@@ -161,7 +164,18 @@ const getFilterButtonClasses = (filter: ChangeType): string => {
         </div>
         <div class="ml-6">
           <div
-            v-if="change.type === 'added'"
+            v-if="change.component"
+            class="bg-background/60 rounded border border-border px-3 py-2"
+          >
+            <component
+              :is="change.component"
+              :old-value="change.oldValue"
+              :new-value="change.newValue"
+              v-bind="change.fieldType === 'block' ? { children: change.children } : {}"
+            />
+          </div>
+          <div
+            v-else-if="change.type === 'added'"
             class="space-y-1"
           >
             <div class="text-xs font-semibold tracking-wide uppercase">New Value</div>

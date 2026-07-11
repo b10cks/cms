@@ -6,7 +6,7 @@ class PathNormalizer
 {
     public function buildPath(string $prefix, string|int $key): string
     {
-        if (empty($prefix)) {
+        if ($prefix === '') {
             return (string)$key;
         }
 

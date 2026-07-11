@@ -4,8 +4,10 @@ namespace App\Http\Resources\Management;
 
 use App\Models\Space\ContentVersion;
 use App\Services\Content\Diff\ArrayDiffService;
+use App\Services\Content\Diff\DiffResult;
+use App\Services\Content\Diff\SchemaAwareDiffService;
+use App\Services\Content\Schema\ContentSchemaValueMerger;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * @mixin ContentVersion
@@ -19,8 +21,26 @@ class ContentVersionResource extends ContentVersionListResource
             ];
     }
 
-    protected function getDiff()
+    protected function getDiff(): DiffResult
     {
-        return app(ArrayDiffService::class)->diff($this->parent->content ?? [], $this->content);
+        $old = $this->parent->content ?? [];
+        $new = $this->content ?? [];
+
+        $schema = $this->contentModel?->block?->schema?->toArray();
+
+        if (empty($schema)) {
+            return app(ArrayDiffService::class)->diff($old, $new);
+        }
+
+        // The merger's slug lookup is cached per request, so repeated
+        // resource instances share one blocks query.
+        $merger = app(ContentSchemaValueMerger::class);
+
+        return app(SchemaAwareDiffService::class)->diff(
+            $old,
+            $new,
+            $schema,
+            static fn (string $slug): array => $merger->resolveBlockSchema($slug)
+        );
     }
 }
