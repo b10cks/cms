@@ -241,6 +241,25 @@ const previewContentPayload = computed<Record<string, unknown>>(
     >) || {}
 )
 
+// Root id as the delivery API reports it to the site: the translation row when
+// it exists, otherwise the nearest fallback in the source chain, otherwise the
+// canonical content. Site SDKs patch blocks by id, so pushes must carry it.
+const previewRootId = computed(
+  () =>
+    translatableContent.value?.id ||
+    nearestSourceContent.value?.id ||
+    canonicalContent.value?.id ||
+    canonicalContentId.value
+)
+
+// CONTENT_UPDATE pushes must be shaped like the block the site renders
+// ({ id, block, ...fields }); a bare field map matches no v-editable element.
+const previewItemPayload = computed<Record<string, unknown>>(() => ({
+  id: previewRootId.value,
+  block: block.value?.slug || canonicalContent.value?.block?.slug || '',
+  ...previewContentPayload.value,
+}))
+
 const cloneContent = (value: ContentResource): ContentResource => JSON.parse(JSON.stringify(value))
 const getLocalizedDraftContent = (value: ContentResource): Record<string, unknown> => {
   if (value.raw_content && typeof value.raw_content === 'object') {
@@ -658,13 +677,14 @@ watch(
   { immediate: true }
 )
 
-watch(
-  previewContentPayload,
-  (content) => {
-    previewRef.value?.updateItem(content)
-  },
-  { deep: true }
-)
+// Edit-driven preview pushes (matching the content editor): the iframe loads
+// the persisted draft itself, so only in-session changes — local edits, remote
+// collaboration, AI translation — are streamed. Not bound via :content, which
+// would also push on connect and replace the site's delivery-resolved content
+// (assets, links) with raw editor values before any edit happened.
+watch(previewItemPayload, (item) => {
+  previewRef.value?.updateItem(item)
+})
 
 provide(
   'commitPersistedContent',
@@ -723,7 +743,6 @@ useSeoMeta({
           :content-id="translatableContent.id || canonicalContentId"
           :full-slug="translatableContent.full_slug"
           :updated-at="translatableContent.updated_at"
-          :content="previewContentPayload"
           @update-field="handlePreviewFieldUpdate"
         />
       </ResizablePanel>

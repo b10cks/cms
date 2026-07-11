@@ -10,7 +10,10 @@ export type SelectUpdateEvent = {
 
 export type FieldUpdateEvent = {
   itemId: string
-  field: string
+  /** Path to the field within the block. Preferred by newer site SDKs. */
+  path?: Array<string | number>
+  /** @deprecated Flat field key kept for older site SDKs. */
+  field?: string
   value: unknown
 }
 

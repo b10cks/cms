@@ -1007,17 +1007,30 @@ const updateTranslatedValue = (field: TranslatableField, newValue: unknown): voi
   )
 }
 
-// Inline edits from the visual editor arrive as (itemId, field) on the merged
-// preview content; route them to the matching translatable field so they land
-// in the translation draft and go through the usual dirty/whisper pipeline.
-// Returns false for fields this view doesn't own (non-translatable ones).
-const applyPreviewFieldUpdate = ({ itemId, field, value }: FieldUpdateEvent): boolean => {
+// Inline edits from the visual editor arrive as (itemId, path|field) on the
+// merged preview content; route them to the matching translatable field so
+// they land in the translation draft and go through the usual dirty/whisper
+// pipeline. Returns false for fields this view doesn't own (non-translatable
+// ones — those belong to the source content).
+const applyPreviewFieldUpdate = ({ itemId, path, field, value }: FieldUpdateEvent): boolean => {
+  const targetPath = path && path.length > 0 ? path : field !== undefined ? [field] : null
+  if (!targetPath) return false
+
   const match = translatableFields.value.find((candidate) => {
     if (candidate.isOrphanedBlock || candidate.tablePath) return false
-    if (candidate.path[candidate.path.length - 1] !== field) return false
 
     const stamps = candidate.blockStamps || []
     const innermostStamp = stamps[stamps.length - 1]
+    // Candidate paths are absolute within the translation draft; the bridge
+    // addresses fields relative to the block item it reports as itemId.
+    const relativePath = innermostStamp
+      ? candidate.path.slice(innermostStamp.pathIndex + 1)
+      : candidate.path
+
+    if (relativePath.length !== targetPath.length) return false
+    if (!relativePath.every((segment, index) => String(segment) === String(targetPath[index]))) {
+      return false
+    }
 
     return innermostStamp
       ? innermostStamp.id === itemId

@@ -40,6 +40,7 @@ import {
 } from '~/lib/content-i18n'
 import { queryKeys } from '~/composables/useQueryClient'
 import type { ContentResource } from '~/types/contents'
+import type { FieldUpdateEvent } from '~/utils/preview-bridge'
 
 const { t } = useI18n()
 const { alert } = useAlertDialog()
@@ -698,20 +699,25 @@ const findNestedObjectById = (data: unknown, id: string): Record<string, unknown
   return null
 }
 
-const updateField = (update: { itemId: string; field: string; value: unknown }) => {
+const updateField = (update: FieldUpdateEvent) => {
   if (!content.value?.content) return
+
+  // Newer site SDKs address fields by path; only flat (top-of-block) paths map
+  // onto the (itemId, field) content model used here.
+  const field = update.field ?? (update.path?.length === 1 ? String(update.path[0]) : null)
+  if (!field) return
 
   if (update.itemId === content.value.id) {
     content.value.content = {
       ...(content.value.content as Record<string, unknown>),
-      [update.field]: update.value,
+      [field]: update.value,
     }
     return
   }
 
   const target = findNestedObjectById(content.value.content, update.itemId)
   if (target) {
-    target[update.field] = update.value
+    target[field] = update.value
   }
 }
 
