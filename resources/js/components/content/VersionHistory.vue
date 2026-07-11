@@ -4,6 +4,7 @@ import { RadioGroupItem, RadioGroupRoot } from 'reka-ui'
 import type { Ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import { type DiffChange } from '~/components/content/diff/field-diff'
 import DiffViewer from '~/components/content/DiffViewer.vue'
 import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
@@ -300,6 +301,18 @@ const effectiveEnvironment = computed<SpaceEnvironment | null>(() => {
   if (!defaultName) return null
 
   return currentSpace.value?.settings.environments?.find((e) => e.name === defaultName) ?? null
+})
+
+const toDiffChange = (entry: ContentVersionDiffEntry): DiffChange => ({
+  path: entry.path,
+  type:
+    entry.type === 'added' || entry.type === 'removed' || entry.type === 'changed'
+      ? entry.type
+      : 'changed',
+  oldValue: entry.old_value,
+  newValue: entry.new_value,
+  fieldType: entry.field_type,
+  children: entry.children?.map(toDiffChange),
 })
 
 const previewSource = computed(() => {
@@ -629,20 +642,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
               <ScrollArea class="h-full flex-1 rounded-lg bg-surface p-4">
                 <DiffViewer
                   v-if="selectedVersionDetail?.diff"
-                  :changes="
-                    selectedVersionDetail.diff.entries.map((entry: ContentVersionDiffEntry) => ({
-                      path: entry.path,
-                      type:
-                        entry.type === 'added' ||
-                        entry.type === 'removed' ||
-                        entry.type === 'changed'
-                          ? entry.type
-                          : 'changed',
-                      oldValue: entry.old_value,
-                      newValue: entry.new_value,
-                      fieldType: entry.field_type,
-                    }))
-                  "
+                  :changes="selectedVersionDetail.diff.entries.map(toDiffChange)"
                 />
               </ScrollArea>
             </TabsContent>

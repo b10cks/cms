@@ -28,6 +28,7 @@ declare interface ContentVersionDiffEntry {
   new_value: unknown
   type: string
   field_type?: string | null
+  children?: ContentVersionDiffEntry[]
 }
 
 declare interface ContentVersionDiff {

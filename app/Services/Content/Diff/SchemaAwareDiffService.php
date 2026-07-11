@@ -99,13 +99,13 @@ class SchemaAwareDiffService
 
         foreach ($oldById as $id => [$oldIndex, $oldItem]) {
             if (! isset($newById[$id])) {
-                $entries->push(new DiffEntry($path . '.' . $oldIndex, DiffType::REMOVED, $oldItem, null, 'block'));
+                $entries->push(new DiffEntry($path . '.' . $oldIndex, DiffType::REMOVED, $oldItem, null, 'block', $this->blockItemChildren($oldItem, null, $resolver)));
             }
         }
 
         foreach ($newById as $id => [$newIndex, $newItem]) {
             if (! isset($oldById[$id])) {
-                $entries->push(new DiffEntry($path . '.' . $newIndex, DiffType::ADDED, null, $newItem, 'block'));
+                $entries->push(new DiffEntry($path . '.' . $newIndex, DiffType::ADDED, null, $newItem, 'block', $this->blockItemChildren(null, $newItem, $resolver)));
                 continue;
             }
 
@@ -118,7 +118,7 @@ class SchemaAwareDiffService
             $slug = (string) ($newItem['block'] ?? '');
 
             if ($slug !== (string) ($oldItem['block'] ?? '')) {
-                $entries->push(new DiffEntry($path . '.' . $newIndex, DiffType::CHANGED, $oldItem, $newItem, 'block'));
+                $entries->push(new DiffEntry($path . '.' . $newIndex, DiffType::CHANGED, $oldItem, $newItem, 'block', $this->blockItemChildren($oldItem, $newItem, $resolver)));
                 continue;
             }
 
@@ -142,12 +142,12 @@ class SchemaAwareDiffService
             $newItem = $new[$index] ?? null;
 
             if ($newItem === null) {
-                $entries->push(new DiffEntry($itemPath, DiffType::REMOVED, $oldItem, null, 'block'));
+                $entries->push(new DiffEntry($itemPath, DiffType::REMOVED, $oldItem, null, 'block', $this->blockItemChildren(\is_array($oldItem) ? $oldItem : null, null, $resolver)));
                 continue;
             }
 
             if ($oldItem === null) {
-                $entries->push(new DiffEntry($itemPath, DiffType::ADDED, null, $newItem, 'block'));
+                $entries->push(new DiffEntry($itemPath, DiffType::ADDED, null, $newItem, 'block', $this->blockItemChildren(null, \is_array($newItem) ? $newItem : null, $resolver)));
                 continue;
             }
 
@@ -158,12 +158,46 @@ class SchemaAwareDiffService
             $slug = \is_array($newItem) ? (string) ($newItem['block'] ?? '') : '';
 
             if (! \is_array($oldItem) || ! \is_array($newItem) || $slug !== (string) ($oldItem['block'] ?? '')) {
-                $entries->push(new DiffEntry($itemPath, DiffType::CHANGED, $oldItem, $newItem, 'block'));
+                $entries->push(new DiffEntry(
+                    $itemPath,
+                    DiffType::CHANGED,
+                    $oldItem,
+                    $newItem,
+                    'block',
+                    $this->blockItemChildren(\is_array($oldItem) ? $oldItem : null, \is_array($newItem) ? $newItem : null, $resolver)
+                ));
                 continue;
             }
 
             $this->diffFields($oldItem, $newItem, $resolver($slug), $itemPath, $entries, $resolver);
         }
+    }
+
+    /**
+     * Per-field sub-entries for a whole added/removed/replaced block item,
+     * so the UI can render each field with its own type-aware diff instead
+     * of dumping the item as JSON. On a slug change both sides diff against
+     * nothing under their own schema.
+     *
+     * @return DiffEntry[]
+     */
+    private function blockItemChildren(?array $oldItem, ?array $newItem, callable $resolver): array
+    {
+        $children = collect();
+
+        if ($oldItem !== null) {
+            $this->diffFields($oldItem, [], $resolver((string) ($oldItem['block'] ?? '')), '', $children, $resolver);
+        }
+
+        if ($newItem !== null) {
+            $this->diffFields([], $newItem, $resolver((string) ($newItem['block'] ?? '')), '', $children, $resolver);
+        }
+
+        return $children
+            ->reject(static fn (DiffEntry $entry): bool => \in_array($entry->path, ['id', 'block'], true))
+            ->sortBy('path')
+            ->values()
+            ->all();
     }
 
     /**

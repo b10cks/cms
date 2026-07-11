@@ -1,24 +1,11 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
-import AssetDiff from '~/components/content/diff/AssetDiff.vue'
-import InlineTextDiff from '~/components/content/diff/InlineTextDiff.vue'
-import KeyValueDiff from '~/components/content/diff/KeyValueDiff.vue'
-import ListDiff from '~/components/content/diff/ListDiff.vue'
-import TableDiff from '~/components/content/diff/TableDiff.vue'
-import RichTextDiff from '~/components/content/RichTextDiff.vue'
+import { resolveDiffComponent, type DiffChange } from '~/components/content/diff/field-diff'
 import ValueRenderer from '~/components/content/ValueRenderer.vue'
 import Icon from '~/components/Icon.vue'
-import { isRichTextDoc } from '~/utils/richtext-diff'
 
 type ChangeType = 'added' | 'removed' | 'changed'
-
-interface Change {
-  type: ChangeType
-  path: string
-  oldValue?: unknown
-  newValue?: unknown
-  fieldType?: string | null
-}
+type Change = DiffChange
 
 interface ChangeStats {
   added: number
@@ -53,46 +40,11 @@ const filteredChanges = computed((): DisplayChange[] => {
     ? props.changes
     : props.changes.filter((change) => change.type === activeFilter.value)
 
-  return changes.map((change) => ({ ...change, component: diffComponent(change) }))
+  return changes.map((change) => ({ ...change, component: resolveDiffComponent(change) }))
 })
 
 const formatPath = (path: string): string => {
   return path.replace(/\./g, ' → ')
-}
-
-const isRichTextChange = (change: Change): boolean => {
-  // For a changed entry both sides must be docs — a doc↔scalar transition
-  // falls back to the two-column view so neither side is dropped.
-  if (change.type === 'changed') {
-    return isRichTextDoc(change.oldValue) && isRichTextDoc(change.newValue)
-  }
-  return isRichTextDoc(change.oldValue) || isRichTextDoc(change.newValue)
-}
-
-const diffComponent = (change: Change): Component | undefined => {
-  switch (change.fieldType) {
-    case 'text':
-    case 'textarea':
-    case 'markdown':
-      return change.type === 'changed' ? InlineTextDiff : undefined
-    case 'link':
-    case 'geo':
-    case 'price':
-    case 'meta':
-    case 'block':
-      return KeyValueDiff
-    case 'options':
-    case 'references':
-      return ListDiff
-    case 'asset':
-    case 'multi_assets':
-      return AssetDiff
-    case 'table':
-      return TableDiff
-    default:
-      // richtext plus structural detection for diffs without type metadata
-      return isRichTextChange(change) ? RichTextDiff : undefined
-  }
 }
 
 const getChangeClasses = (type: ChangeType): string => {
@@ -219,6 +171,7 @@ const getFilterButtonClasses = (filter: ChangeType): string => {
               :is="change.component"
               :old-value="change.oldValue"
               :new-value="change.newValue"
+              v-bind="change.fieldType === 'block' ? { children: change.children } : {}"
             />
           </div>
           <div

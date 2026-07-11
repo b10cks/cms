@@ -30,6 +30,7 @@ class SchemaAwareDiffServiceTest extends TestCase
     private const TEASER_SCHEMA = [
         'headline' => ['type' => 'text'],
         'image' => ['type' => 'asset'],
+        'cards' => ['type' => 'blocks'],
     ];
 
     private function diff(array $old, array $new): array
@@ -239,6 +240,89 @@ class SchemaAwareDiffServiceTest extends TestCase
         $added = $this->entry($entries, 'cta');
         $this->assertSame(DiffType::ADDED, $added->type);
         $this->assertSame('link', $added->fieldType);
+    }
+
+    #[Test]
+    public function itEmitsTypedChildEntriesForAddedBlockItems()
+    {
+        $entries = $this->diff([], ['body' => [[
+            'id' => 'one',
+            'block' => 'teaser',
+            'headline' => 'Hello',
+            'image' => ['id' => 'a1', 'filename' => 'x.jpg'],
+        ]]]);
+
+        $this->assertCount(1, $entries);
+        $entry = $entries[0];
+        $this->assertSame('block', $entry->fieldType);
+        $this->assertCount(2, $entry->children);
+
+        $headline = $entry->children[0];
+        $this->assertSame('headline', $headline->path);
+        $this->assertSame(DiffType::ADDED, $headline->type);
+        $this->assertSame('text', $headline->fieldType);
+        $this->assertSame('Hello', $headline->newValue);
+
+        $image = $entry->children[1];
+        $this->assertSame('image', $image->path);
+        $this->assertSame('asset', $image->fieldType);
+    }
+
+    #[Test]
+    public function itEmitsRemovedChildEntriesForRemovedBlockItems()
+    {
+        $entries = $this->diff(
+            ['body' => [['id' => 'one', 'block' => 'teaser', 'headline' => 'Bye']]],
+            ['body' => []]
+        );
+
+        $this->assertCount(1, $entries);
+        $this->assertCount(1, $entries[0]->children);
+        $this->assertSame(DiffType::REMOVED, $entries[0]->children[0]->type);
+        $this->assertSame('Bye', $entries[0]->children[0]->oldValue);
+    }
+
+    #[Test]
+    public function itEmitsBothSidesAsChildrenOnSlugChange()
+    {
+        $entries = $this->diff(
+            ['body' => [['id' => 'one', 'block' => 'teaser', 'headline' => 'Old']]],
+            ['body' => [['id' => 'one', 'block' => 'hero', 'title' => 'New']]]
+        );
+
+        $this->assertCount(1, $entries);
+        $children = $entries[0]->children;
+        $this->assertCount(2, $children);
+        $this->assertSame(DiffType::REMOVED, $this->entry($children, 'headline')->type);
+        $this->assertSame(DiffType::ADDED, $this->entry($children, 'title')->type);
+    }
+
+    #[Test]
+    public function itRecursesChildrenIntoNestedBlocks()
+    {
+        $entries = $this->diff([], ['body' => [[
+            'id' => 'outer',
+            'block' => 'teaser',
+            'headline' => 'Top',
+            'cards' => [['id' => 'inner', 'block' => 'teaser', 'headline' => 'Nested']],
+        ]]]);
+
+        $this->assertCount(1, $entries);
+        $cards = $this->entry($entries[0]->children, 'cards.0');
+        $this->assertSame('block', $cards->fieldType);
+        $this->assertCount(1, $cards->children);
+        $this->assertSame('headline', $cards->children[0]->path);
+        $this->assertSame('text', $cards->children[0]->fieldType);
+    }
+
+    #[Test]
+    public function itSerializesChildrenOnlyWhenPresent()
+    {
+        $scalar = $this->diff(['title' => 'Old'], ['title' => 'New']);
+        $this->assertArrayNotHasKey('children', $scalar[0]->toArray());
+
+        $block = $this->diff([], ['body' => [['id' => 'one', 'block' => 'teaser', 'headline' => 'X']]]);
+        $this->assertSame('headline', $block[0]->toArray()['children'][0]['path']);
     }
 
     #[Test]
