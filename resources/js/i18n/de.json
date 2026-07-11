@@ -3186,6 +3186,7 @@
         "horizontalRule": "Horizontale Linie",
         "insertTable": "Tabelle einfügen",
         "tableTools": "Tabellen-Werkzeuge",
+        "link": "Link",
         "externalLink": "Externer Link",
         "internalLink": "Interner Link",
         "removeInternalLink": "Internen Link entfernen",
@@ -3195,6 +3196,14 @@
       },
       "listStyles": {
         "default": "Standard"
+      },
+      "link": {
+        "insert": "Link einfügen",
+        "edit": "Link bearbeiten",
+        "text": "Linktext",
+        "textPlaceholder": "Angezeigter Text",
+        "apply": "Übernehmen",
+        "remove": "Link entfernen"
       },
       "headings": {
         "paragraph": "Absatz",

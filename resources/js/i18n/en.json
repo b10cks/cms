@@ -3188,6 +3188,7 @@
         "horizontalRule": "Horizontal Rule",
         "insertTable": "Insert Table",
         "tableTools": "Table Tools",
+        "link": "Link",
         "externalLink": "External Link",
         "internalLink": "Internal Link",
         "removeInternalLink": "Remove Internal Link",
@@ -3197,6 +3198,14 @@
       },
       "listStyles": {
         "default": "Default"
+      },
+      "link": {
+        "insert": "Insert Link",
+        "edit": "Edit Link",
+        "text": "Link Text",
+        "textPlaceholder": "Displayed text",
+        "apply": "Apply",
+        "remove": "Remove Link"
       },
       "headings": {
         "paragraph": "Paragraph",

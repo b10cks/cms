@@ -8,7 +8,8 @@ import { DOMParser as ProseMirrorDOMParser } from '@tiptap/pm/model'
 import { StarterKit } from '@tiptap/starter-kit'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
 
-import ContentPicker from '~/components/editor/ContentPicker.vue'
+import LinkDialog from '~/components/editor/LinkDialog.vue'
+import type { LinkApplyPayload, LinkInitial } from '~/components/editor/linkTypes'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import {
@@ -19,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 
-import { InternalLink, type InternalLinkAttrs } from './extensions/InternalLink'
+import { InternalLink } from './extensions/InternalLink'
 import { ListStyle } from './extensions/ListStyle'
 import { transformPastedHtml } from './extensions/pasteCleanup'
 import { PlaceholderToken } from './extensions/PlaceholderToken'
@@ -68,8 +69,9 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const contentPickerOpen = ref(false)
-const linkInSelection = ref<InternalLinkAttrs | null>(null)
+const linkDialogOpen = ref(false)
+const linkDialogInitial = ref<LinkInitial | null>(null)
+const linkHasSelection = ref(false)
 const isApplyingExternalContent = ref(false)
 const isBroken = ref(false)
 // Identity of the doc we last emitted, so the modelValue watcher can skip the
@@ -197,42 +199,81 @@ const applyListStyle = (className: string | null) => {
   ;(editor.value.chain().focus() as any).setListStyle(className).run()
 }
 
-const openInternalLinkPicker = () => {
-  if (!editor.value || !props.spaceId) return
-  linkInSelection.value = null
-  contentPickerOpen.value = true
-}
-
-const onInternalLinkSelect = (contentId: string) => {
-  if (!editor.value) return
-  const linkData: InternalLinkAttrs = { content: contentId }
-  editor.value.chain().focus().setInternalLink(linkData).run()
-  contentPickerOpen.value = false
-}
-
-const onInternalLinkWithAnchorSelect = (contentId: string, anchorId: string) => {
-  if (!editor.value) return
-  const linkData: InternalLinkAttrs = { content: contentId, anchor: anchorId }
-  editor.value.chain().focus().setInternalLink(linkData).run()
-  contentPickerOpen.value = false
-}
-
-const removeInternalLink = () => {
-  if (!editor.value) return
-  editor.value.chain().focus().unsetInternalLink().run()
-}
-
 const insertPlaceholder = (placeholder: Placeholder) => {
   if (!editor.value) return
   ;(editor.value.chain().focus() as any).insertPlaceholderToken(placeholder).run()
 }
 
-const insertExternalLink = () => {
+const canLinkUrl = computed(() => isEnabled('link'))
+const canLinkInternal = computed(() => isEnabled('internalLink') && !!props.spaceId)
+const canLink = computed(() => canLinkUrl.value || canLinkInternal.value)
+const isLinkActive = computed(
+  () => editor.value?.isActive('link') || editor.value?.isActive('internalLink')
+)
+
+// Open the unified link editor, prefilled from whichever link the cursor sits on.
+const openLinkDialog = () => {
   if (!editor.value) return
-  const url = prompt('Enter URL:')
-  if (url) {
-    editor.value.chain().focus().setLink({ href: url }).run()
+  linkHasSelection.value = !editor.value.state.selection.empty
+
+  if (editor.value.isActive('internalLink')) {
+    const attrs = editor.value.getAttributes('internalLink')
+    linkDialogInitial.value = {
+      kind: 'internal',
+      content: attrs.content,
+      anchor: attrs.anchor,
+      target: attrs.target,
+      rel: attrs.rel,
+    }
+  } else if (editor.value.isActive('link')) {
+    const attrs = editor.value.getAttributes('link')
+    linkDialogInitial.value = { kind: 'url', url: attrs.href, target: attrs.target, rel: attrs.rel }
+  } else {
+    linkDialogInitial.value = null
   }
+
+  linkDialogOpen.value = true
+}
+
+const onLinkApply = (payload: LinkApplyPayload) => {
+  if (!editor.value) return
+  const chain = editor.value.chain().focus()
+  const initial = linkDialogInitial.value
+
+  if (initial) {
+    // Editing an existing link — expand the selection to cover the whole mark.
+    chain.extendMarkRange(initial.kind === 'url' ? 'link' : 'internalLink')
+  } else if (!linkHasSelection.value && payload.text) {
+    // New link over a collapsed cursor — insert the text, then select it.
+    const from = editor.value.state.selection.from
+    chain.insertContent(payload.text).setTextSelection({ from, to: from + payload.text.length })
+  }
+
+  if (payload.kind === 'url') {
+    // Only touch a mark whose extension is actually registered (feature enabled).
+    if (isEnabled('internalLink')) chain.unsetMark('internalLink')
+    chain.setLink({ href: payload.url as string, target: payload.target, rel: payload.rel })
+  } else {
+    if (isEnabled('link')) chain.unsetMark('link')
+    ;(chain as any).setInternalLink({
+      content: payload.content,
+      anchor: payload.anchor,
+      target: payload.target,
+      rel: payload.rel,
+    })
+  }
+
+  chain.run()
+  linkDialogOpen.value = false
+}
+
+const onLinkRemove = () => {
+  if (!editor.value) return
+  const chain = editor.value.chain().focus()
+  if (isEnabled('link')) chain.extendMarkRange('link').unsetMark('link')
+  if (isEnabled('internalLink')) chain.extendMarkRange('internalLink').unsetMark('internalLink')
+  chain.run()
+  linkDialogOpen.value = false
 }
 
 watch(
@@ -616,38 +657,15 @@ onBeforeUnmount(() => {
         </DropdownMenuContent>
       </DropdownMenu>
       <Button
-        v-if="isEnabled('link')"
+        v-if="canLink"
         type="button"
         size="toolbar"
         variant="ghost"
-        :title="$t('labels.tiptap.toolbar.externalLink')"
-        :class="editor?.isActive('link') && 'bg-primary text-primary-foreground'"
-        @click="insertExternalLink"
+        :title="$t('labels.tiptap.toolbar.link')"
+        :class="isLinkActive && 'bg-primary text-primary-foreground'"
+        @click="openLinkDialog"
       >
         <Icon name="lucide:link" />
-      </Button>
-      <Button
-        v-if="isEnabled('internalLink')"
-        type="button"
-        size="toolbar"
-        variant="ghost"
-        :title="$t('labels.tiptap.toolbar.internalLink')"
-        :class="editor?.isActive('internalLink') && 'bg-primary text-primary-foreground'"
-        :disabled="!props.spaceId"
-        @click="openInternalLinkPicker"
-      >
-        <Icon name="lucide:link-2" />
-      </Button>
-      <Button
-        v-if="isEnabled('internalLink') && editor?.isActive('internalLink')"
-        type="button"
-        size="toolbar"
-        variant="ghost"
-        class="hover:text-destructive"
-        :title="$t('labels.tiptap.toolbar.removeInternalLink')"
-        @click="removeInternalLink"
-      >
-        <Icon name="lucide:trash-2" />
       </Button>
 
       <DropdownMenu v-if="placeholders.length > 0">
@@ -760,15 +778,16 @@ onBeforeUnmount(() => {
       :tabindex="props.disabled ? -1 : undefined"
     />
 
-    <ContentPicker
-      v-if="spaceId && !props.disabled"
-      :open="contentPickerOpen"
+    <LinkDialog
+      v-if="canLink && !props.disabled"
+      v-model:open="linkDialogOpen"
       :space-id="spaceId"
-      :show-elements="true"
-      title="Select Page or Section"
-      @update:open="contentPickerOpen = $event"
-      @content-select="onInternalLinkSelect"
-      @content-with-anchor-select="onInternalLinkWithAnchorSelect"
+      :allow-url="canLinkUrl"
+      :allow-internal="canLinkInternal"
+      :has-selection="linkHasSelection"
+      :initial="linkDialogInitial"
+      @apply="onLinkApply"
+      @remove="onLinkRemove"
     />
   </div>
 </template>
