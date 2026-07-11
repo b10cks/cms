@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import RichTextDiff from '~/components/content/RichTextDiff.vue'
 import ValueRenderer from '~/components/content/ValueRenderer.vue'
 import Icon from '~/components/Icon.vue'
+import { isRichTextDoc } from '~/utils/richtext-diff'
 
 type ChangeType = 'added' | 'removed' | 'changed'
 
@@ -42,6 +44,10 @@ const filteredChanges = computed((): Change[] => {
 
 const formatPath = (path: string): string => {
   return path.replace(/\./g, ' → ')
+}
+
+const isRichTextChange = (change: Change): boolean => {
+  return isRichTextDoc(change.oldValue) || isRichTextDoc(change.newValue)
 }
 
 const getChangeClasses = (type: ChangeType): string => {
@@ -161,7 +167,16 @@ const getFilterButtonClasses = (filter: ChangeType): string => {
         </div>
         <div class="ml-6">
           <div
-            v-if="change.type === 'added'"
+            v-if="isRichTextChange(change)"
+            class="bg-background/60 rounded border border-border px-3 py-2"
+          >
+            <RichTextDiff
+              :old-value="change.oldValue"
+              :new-value="change.newValue"
+            />
+          </div>
+          <div
+            v-else-if="change.type === 'added'"
             class="space-y-1"
           >
             <div class="text-xs font-semibold tracking-wide uppercase">New Value</div>
