@@ -173,6 +173,7 @@ export type ContentChildSortBy =
   | 'published_at'
   | 'created_at'
   | 'updated_at'
+  | `content.${string}`
 
 export interface ContentSettings {
   disablePreview: boolean

@@ -11,6 +11,13 @@ class ContentSettings extends Settings
 {
     public const array CHILD_SORT_FIELDS = ['name', 'published_at', 'created_at', 'updated_at'];
 
+    /**
+     * Matches `content.{field}` sort keys targeting a first-level key of the
+     * content payload. The strict charset keeps the field safe to embed in
+     * JSON path expressions.
+     */
+    public const string CHILD_CONTENT_SORT_PATTERN = '/^content\.([a-zA-Z0-9_]+)$/';
+
     protected array $defaults = [
         'disablePreview' => false,
         'i18n_mode_override' => 'inherit',
@@ -43,7 +50,18 @@ class ContentSettings extends Settings
             'child_sort_by' => [
                 $partial ? 'sometimes' : 'nullable',
                 'string',
-                Rule::in(['inherit', 'manual', ...self::CHILD_SORT_FIELDS]),
+                'max:120',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (\in_array($value, ['inherit', 'manual', ...self::CHILD_SORT_FIELDS], true)) {
+                        return;
+                    }
+
+                    if (\is_string($value) && preg_match(self::CHILD_CONTENT_SORT_PATTERN, $value)) {
+                        return;
+                    }
+
+                    $fail('The selected child sorting field is invalid.');
+                },
             ],
             'child_sort_direction' => [
                 $partial ? 'sometimes' : 'nullable',
@@ -67,6 +85,21 @@ class ContentSettings extends Settings
         }
 
         return \in_array($sortBy, self::CHILD_SORT_FIELDS, true) ? $sortBy : null;
+    }
+
+    /**
+     * The first-level content payload key configured via `content.{field}`,
+     * or null when children are not sorted by a content field.
+     */
+    public function getChildContentSortField(): ?string
+    {
+        $sortBy = $this->attributes['child_sort_by'] ?? '';
+
+        if (\is_string($sortBy) && preg_match(self::CHILD_CONTENT_SORT_PATTERN, $sortBy, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
     }
 
     public function getChildSortDirection(): string
@@ -108,7 +141,9 @@ class ContentSettings extends Settings
                 'nullable' => true,
             ],
             'child_sort_by' => [
-                'description' => 'How direct children of this content entry are ordered.',
+                'description' => 'How direct children of this content entry are ordered. Besides the '
+                    .'listed values, `content.{field}` orders children by a first-level key of their '
+                    .'content payload (e.g. `content.publishDate`).',
                 'example' => 'published_at',
                 'enumDescriptions' => [
                     'inherit' => 'Use the space-level content sorting behaviour.',

@@ -858,7 +858,8 @@
             "name": "Name",
             "published_at": "Veröffentlichungsdatum",
             "created_at": "Erstellungsdatum",
-            "updated_at": "Zuletzt aktualisiert"
+            "updated_at": "Zuletzt aktualisiert",
+            "contentField": "Inhaltsfeld: {field}"
           },
           "directionOptions": {
             "asc": "Aufsteigend (Ältestes / A zuerst)",

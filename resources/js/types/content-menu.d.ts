@@ -14,6 +14,7 @@ interface FlatContentMenuItem {
   pat: string | null
   cat?: string
   uat: string
+  sv?: string | number | null
 }
 
 interface ContentMenuItem extends FlatContentMenuItem {

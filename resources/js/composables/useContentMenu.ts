@@ -60,6 +60,30 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
 
     const direction = parent?.settings?.child_sort_direction === 'desc' ? -1 : 1
 
+    // content.{field}: the menu endpoint delivers the extracted value as `sv`
+    // for exactly the children that need it. Numeric values compare
+    // numerically, everything else as strings; entries without a value last.
+    if (sortBy.startsWith('content.')) {
+      return (a, b) => {
+        const aValue = a.sv ?? null
+        const bValue = b.sv ?? null
+        if (aValue === null || bValue === null) {
+          return Number(aValue === null) - Number(bValue === null) || compareByPosition(a, b)
+        }
+
+        const aNumber = typeof aValue === 'number' ? aValue : Number(aValue)
+        const bNumber = typeof bValue === 'number' ? bValue : Number(bValue)
+        const bothNumeric =
+          aValue !== '' && bValue !== '' && Number.isFinite(aNumber) && Number.isFinite(bNumber)
+
+        return (
+          direction *
+            (bothNumeric ? aNumber - bNumber : String(aValue).localeCompare(String(bValue))) ||
+          compareByPosition(a, b)
+        )
+      }
+    }
+
     if (sortBy === 'name') {
       return (a, b) =>
         direction * (a.name || '').localeCompare(b.name || '') || a.id.localeCompare(b.id)
@@ -166,6 +190,32 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
     return breadcrumbs
   }
 
+  // Live updates arrive without the menu payload's `sv`; recompute it from
+  // the broadcast content when the parent sorts by a content field, otherwise
+  // carry the previous value forward until the next full menu fetch.
+  const resolveContentSortValue = (
+    contentTree: Record<string, FlatContentMenuItem>,
+    content: ContentResource
+  ): string | number | null => {
+    const sortBy = content.parent_id
+      ? contentTree[content.parent_id]?.settings?.child_sort_by
+      : undefined
+
+    if (typeof sortBy === 'string' && sortBy.startsWith('content.')) {
+      const value = (content.content as Record<string, unknown> | undefined)?.[
+        sortBy.slice('content.'.length)
+      ]
+      if (typeof value === 'string' || typeof value === 'number') {
+        return value
+      }
+      if (value == null) {
+        return null
+      }
+    }
+
+    return contentTree[content.id]?.sv ?? null
+  }
+
   const setupEcho = () => {
     if (!isClient) return
 
@@ -196,7 +246,9 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
                 settings: content.settings || {},
                 i18n: content?.i18n_translations || [],
                 pat: content.published_at,
+                cat: content.created_at,
                 uat: content.updated_at,
+                sv: resolveContentSortValue(contentTree, content),
               } as FlatContentMenuItem)
 
           if (!item) return

@@ -79,6 +79,66 @@ class ContentChildSortSettingsTest extends TestCase
     }
 
     #[Test]
+    public function canonical_content_can_sort_children_by_a_first_level_content_field(): void
+    {
+        $this->actingAs($this->owner);
+        $canonical = $this->createContent('news', $this->pageBlock);
+
+        $response = $this->patchJson(route('mgmt.contents.update', [
+            'space' => $this->space->id,
+            'content' => $canonical->id,
+        ]), [
+            'settings' => [
+                'child_sort_by' => 'content.publishDate',
+                'child_sort_direction' => 'desc',
+            ],
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('data.settings.child_sort_by', 'content.publishDate');
+    }
+
+    #[Test]
+    public function invalid_content_field_sort_keys_are_rejected(): void
+    {
+        $this->actingAs($this->owner);
+        $canonical = $this->createContent('news', $this->pageBlock);
+
+        foreach (['content.', 'content.bad-field', 'content.a.b', 'content.a b'] as $invalid) {
+            $response = $this->patchJson(route('mgmt.contents.update', [
+                'space' => $this->space->id,
+                'content' => $canonical->id,
+            ]), [
+                'settings' => ['child_sort_by' => $invalid],
+            ]);
+
+            $response->assertStatus(422);
+            $response->assertJsonValidationErrors(['settings.child_sort_by']);
+        }
+    }
+
+    #[Test]
+    public function content_menu_exposes_sort_values_only_for_content_field_sorted_folders(): void
+    {
+        $this->actingAs($this->owner);
+        $folder = $this->createContent('news', $this->pageBlock, settings: [
+            'child_sort_by' => 'content.publishDate',
+            'child_sort_direction' => 'desc',
+        ]);
+        $child = $this->createContent('article', $this->pageBlock, parent: $folder, content: [
+            'publishDate' => '2026-02-11',
+        ]);
+        $unrelated = $this->createContent('about', $this->pageBlock);
+
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/content-menu");
+
+        $response->assertOk();
+        $response->assertJsonPath("data.{$child->id}.sv", '2026-02-11');
+        $this->assertArrayNotHasKey('sv', $response->json("data.{$unrelated->id}"));
+        $this->assertArrayNotHasKey('sv', $response->json("data.{$folder->id}"));
+    }
+
+    #[Test]
     public function invalid_child_sorting_settings_are_rejected(): void
     {
         $this->actingAs($this->owner);
@@ -149,8 +209,9 @@ class ContentChildSortSettingsTest extends TestCase
         string $languageIso = 'en',
         array $settings = [],
         ?Content $parent = null,
+        array $content = [],
     ): Content {
-        $content = new Content;
+        $model = new Content;
 
         app(CreateContent::class)->execute([
             'block_id' => $block->id,
@@ -159,10 +220,10 @@ class ContentChildSortSettingsTest extends TestCase
             'slug' => $slug,
             'language_iso' => $languageIso,
             'i18n_parent_id' => $i18nParent?->id,
-            'content' => ['title' => ucfirst($slug)],
+            'content' => ['title' => ucfirst($slug), ...$content],
             'settings' => $settings,
-        ], $content, $this->space, $this->owner);
+        ], $model, $this->space, $this->owner);
 
-        return $content->fresh();
+        return $model->fresh();
     }
 }

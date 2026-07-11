@@ -64,14 +64,43 @@ const defaultChildBlockOptions = computed(() =>
   }))
 )
 
-const childSortByOptions = computed(() =>
-  (['inherit', 'manual', 'name', 'published_at', 'created_at', 'updated_at'] as const).map(
+// First-level fields of the allowed child content types whose type sorts
+// meaningfully, offered as `content.{field}` options next to the built-ins.
+const SORTABLE_CONTENT_FIELD_TYPES = new Set(['text', 'number', 'date', 'option'])
+
+const contentFieldSortOptions = computed(() => {
+  const fields = new Set<string>()
+
+  for (const block of availableDefaultChildBlocks.value) {
+    for (const [key, schema] of Object.entries(block.schema || {})) {
+      if (SORTABLE_CONTENT_FIELD_TYPES.has(schema?.type)) {
+        fields.add(key)
+      }
+    }
+  }
+
+  // Keep a configured field selectable even when no allowed child type
+  // declares it anymore.
+  const current = content.value?.settings.child_sort_by
+  if (current?.startsWith('content.')) {
+    fields.add(current.slice('content.'.length))
+  }
+
+  return [...fields].sort().map((field) => ({
+    value: `content.${field}` as const,
+    label: t('labels.contents.settings.sorting.options.contentField', { field }),
+  }))
+})
+
+const childSortByOptions = computed(() => [
+  ...(['inherit', 'manual', 'name', 'published_at', 'created_at', 'updated_at'] as const).map(
     (value) => ({
       value,
       label: t(`labels.contents.settings.sorting.options.${value}`),
     })
-  )
-)
+  ),
+  ...contentFieldSortOptions.value,
+])
 
 const childSortDirectionOptions = computed(() =>
   (['asc', 'desc'] as const).map((value) => ({

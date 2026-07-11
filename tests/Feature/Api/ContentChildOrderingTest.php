@@ -119,6 +119,33 @@ class ContentChildOrderingTest extends TestCase
     }
 
     #[Test]
+    public function children_are_ordered_by_a_first_level_content_field(): void
+    {
+        $folder = $this->createPublishedContent('news', settings: [
+            'child_sort_by' => 'content.publishDate',
+            'child_sort_direction' => 'desc',
+        ]);
+
+        $oldest = $this->createPublishedContent('oldest', parent: $folder, position: 0, content: [
+            'publishDate' => '2026-01-05',
+        ]);
+        $newest = $this->createPublishedContent('newest', parent: $folder, position: 1, content: [
+            'publishDate' => '2026-03-20',
+        ]);
+        $middle = $this->createPublishedContent('middle', parent: $folder, position: 2, content: [
+            'publishDate' => '2026-02-11',
+        ]);
+
+        $response = $this->getJson($this->indexUrl(['parent_id' => $folder->id]));
+
+        $response->assertOk();
+        $this->assertSame(
+            [$newest->id, $middle->id, $oldest->id],
+            array_column($response->json('data'), 'id'),
+        );
+    }
+
+    #[Test]
     public function folders_without_child_sorting_return_all_children(): void
     {
         $folder = $this->createPublishedContent('news');
@@ -151,6 +178,7 @@ class ContentChildOrderingTest extends TestCase
         ?Content $parent = null,
         int $position = 0,
         ?Carbon $publishedAt = null,
+        array $content = [],
     ): Content {
         $model = new Content;
         $model->forceFill([
@@ -167,7 +195,7 @@ class ContentChildOrderingTest extends TestCase
 
         $version = ContentVersion::createWithContentContext([
             'content_id' => $model->id,
-            'content' => ['title' => Str::headline($slug)],
+            'content' => ['title' => Str::headline($slug), ...$content],
             'published_at' => $publishedAt ?? now(),
         ], $model->setRelation('block', $this->pageBlock));
 

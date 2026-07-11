@@ -109,13 +109,34 @@ class ContentController
         }
 
         $parent = Content::query()->select(['id', 'settings'])->find($parentId);
-        $column = $parent?->settings?->getChildSortColumn();
+        $settings = $parent?->settings;
+
+        if ($settings === null) {
+            return;
+        }
+
+        $contentField = $settings->getChildContentSortField();
+
+        // `content.{field}` sorts on the joined version payload; the join only
+        // exists for the published/draft scopes.
+        if ($contentField !== null) {
+            if (\in_array($request->input('vid', 'published'), ['published', 'draft'], true)) {
+                $query
+                    ->orderBy('content_versions.content->'.$contentField, $settings->getChildSortDirection())
+                    ->orderBy('contents.name')
+                    ->orderBy('contents.id');
+            }
+
+            return;
+        }
+
+        $column = $settings->getChildSortColumn();
 
         if ($column === null) {
             return;
         }
 
-        $direction = $column === 'position' ? 'asc' : $parent->settings->getChildSortDirection();
+        $direction = $column === 'position' ? 'asc' : $settings->getChildSortDirection();
 
         $query
             ->orderBy('contents.'.$column, $direction)

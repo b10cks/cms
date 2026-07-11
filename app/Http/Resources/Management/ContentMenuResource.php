@@ -33,6 +33,7 @@ class ContentMenuResource extends JsonResource
             'pat' => $this->published_at?->toIso8601String(),
             'cat' => $this->created_at?->toIso8601String(),
             'uat' => $this->updated_at?->toIso8601String(),
+            'sv' => $this->when(($this->menu_sort_value ?? null) !== null, fn () => $this->menu_sort_value),
         ];
     }
 }
