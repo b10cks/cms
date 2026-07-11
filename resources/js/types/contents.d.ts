@@ -173,6 +173,8 @@ export interface ContentSettings {
   child_block_whitelist: string[]
   child_tag_whitelist: string[]
   default_child_block?: string | null
+  cache_ttl?: number | null
+  cache_tags?: string[]
 }
 
 export interface ContentResource {

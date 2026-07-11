@@ -828,6 +828,16 @@
       "settings": {
         "disablePreview": "Vorschau deaktivieren",
         "disablePreviewDescription": "Deaktiviere das Vorschau-Panel für diesen Inhalt",
+        "cache": {
+          "title": "Caching",
+          "description": "Cache-Hinweise, die mit diesem Inhalt in der Content-API ausgeliefert werden. Nutze sie in deinem Projekt für Cache-Lebensdauer und Tag-basierte Invalidierung.",
+          "ttl": "Cache-TTL (Sekunden)",
+          "ttlDescription": "Überschreibt die Standard-Cache-Lebensdauer für diesen Inhalt. Leer lassen für den Standardwert.",
+          "ttlPlaceholder": "z. B. 3600",
+          "tags": "Cache-Tags",
+          "tagsDescription": "Tags für die Cache-Invalidierung, z. B. \"news\". Automatisierungen können sie bei Inhaltsänderungen per Webhook an dein Projekt senden.",
+          "tagsPlaceholder": "Tag hinzufügen…"
+        },
         "children": {
           "title": "Child Content",
           "description": "Lege fest, welche Inhaltstypen unter diesem Eintrag erstellt werden dürfen, und wähle einen Standardtyp für Kinder.",

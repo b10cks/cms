@@ -1,9 +1,16 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
 
-import { CheckboxField, InputField, SelectField } from '~/components/ui/form'
+import { CheckboxField, FormField, InputField, SelectField } from '~/components/ui/form'
 import type { ComboboxOption } from '~/components/ui/form/ComboboxField.vue'
 import ComboboxField from '~/components/ui/form/ComboboxField.vue'
+import {
+  TagsInput,
+  TagsInputInput,
+  TagsInputItem,
+  TagsInputItemDelete,
+  TagsInputItemText,
+} from '~/components/ui/tags-input'
 import { resolveAllowedChildContentBlocks } from '~/lib/content-children'
 import type { ContentResource } from '~/types/contents'
 
@@ -81,6 +88,27 @@ const filterOptions = (
   )
 }
 
+const cacheTtl = computed({
+  get: () => content.value?.settings.cache_ttl ?? undefined,
+  set: (value: number | string | null) => {
+    if (!content.value) {
+      return
+    }
+
+    const parsed = value === null || value === '' ? null : Number(value)
+    content.value.settings.cache_ttl = parsed !== null && Number.isFinite(parsed) ? parsed : null
+  },
+})
+
+const cacheTags = computed({
+  get: () => content.value?.settings.cache_tags || [],
+  set: (value: string[]) => {
+    if (content.value) {
+      content.value.settings.cache_tags = value
+    }
+  },
+})
+
 watch(
   availableDefaultChildBlocks,
   (nextBlocks) => {
@@ -152,6 +180,51 @@ watch(
     >
       {{ $t('labels.contents.settings.i18n.effectiveMode', { mode: effectiveMode }) }}
     </Alert>
+    <div
+      v-if="content"
+      class="space-y-4 rounded-lg bg-surface px-4 py-4"
+    >
+      <div class="space-y-1">
+        <h3 class="text-sm font-semibold text-primary">
+          {{ $t('labels.contents.settings.cache.title') }}
+        </h3>
+        <p class="text-sm text-muted">
+          {{ $t('labels.contents.settings.cache.description') }}
+        </p>
+      </div>
+
+      <InputField
+        v-model="cacheTtl"
+        type="number"
+        :min="0"
+        name="cacheTtl"
+        :label="$t('labels.contents.settings.cache.ttl')"
+        :description="$t('labels.contents.settings.cache.ttlDescription')"
+        :placeholder="$t('labels.contents.settings.cache.ttlPlaceholder')"
+        :readonly="!canManageContent"
+      />
+
+      <FormField
+        name="cacheTags"
+        :label="$t('labels.contents.settings.cache.tags')"
+        :description="$t('labels.contents.settings.cache.tagsDescription')"
+      >
+        <TagsInput
+          v-model="cacheTags"
+          :disabled="!canManageContent"
+        >
+          <TagsInputItem
+            v-for="tag in cacheTags"
+            :key="tag"
+            :value="tag"
+          >
+            <TagsInputItemText>{{ tag }}</TagsInputItemText>
+            <TagsInputItemDelete />
+          </TagsInputItem>
+          <TagsInputInput :placeholder="$t('labels.contents.settings.cache.tagsPlaceholder')" />
+        </TagsInput>
+      </FormField>
+    </div>
     <div
       v-if="content"
       class="space-y-4 rounded-lg bg-surface px-4 py-4"

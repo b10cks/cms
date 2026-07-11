@@ -4,6 +4,7 @@ namespace App\Services\Automation;
 
 use App\Models\Management\Automation;
 use App\Models\Management\Space;
+use App\Models\Space\Content;
 use App\Services\Automation\Enums\TriggerType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
@@ -13,8 +14,7 @@ class AutomationContextFactory
     public function __construct(
         private readonly CurrentSpaceResolver $currentSpaceResolver,
         private readonly TriggerCatalog $triggerCatalog,
-    ) {
-    }
+    ) {}
 
     public function forAutomation(Automation $automation, array $context = [], array $meta = []): array
     {
@@ -52,9 +52,18 @@ class AutomationContextFactory
             ];
         }
 
+        $cache = $model instanceof Content ? [
+            'ttl' => $model->settings?->cacheTtl(),
+            'tags' => $model->settings?->cacheTags() ?? [],
+        ] : null;
+
         return [
             'source' => 'trigger',
             'operation' => $triggerType->value,
+            // First-class cache keys for content models: `record.settings` is a
+            // serialized JSON string in snapshots, so webhook templates could not
+            // reach the tags through it.
+            ...($cache !== null ? ['cache' => $cache, 'cache_tags' => $cache['tags']] : []),
             'table' => $table,
             'resource' => $table,
             'entity' => $table,
@@ -112,6 +121,6 @@ class AutomationContextFactory
             return null;
         }
 
-        return Arr::map($snapshot, fn(mixed $value): mixed => $value);
+        return Arr::map($snapshot, fn (mixed $value): mixed => $value);
     }
 }
