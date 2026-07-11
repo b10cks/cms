@@ -3192,7 +3192,11 @@
         "internalLink": "Internal Link",
         "removeInternalLink": "Remove Internal Link",
         "insertPlaceholder": "Insert Placeholder",
-        "applyCssClass": "Apply CSS Class"
+        "applyCssClass": "Apply CSS Class",
+        "listStyle": "List Style"
+      },
+      "listStyles": {
+        "default": "Default"
       },
       "headings": {
         "paragraph": "Paragraph",

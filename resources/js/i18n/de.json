@@ -3190,7 +3190,11 @@
         "internalLink": "Interner Link",
         "removeInternalLink": "Internen Link entfernen",
         "insertPlaceholder": "Platzhalter einfügen",
-        "applyCssClass": "CSS-Klasse anwenden"
+        "applyCssClass": "CSS-Klasse anwenden",
+        "listStyle": "Listenstil"
+      },
+      "listStyles": {
+        "default": "Standard"
       },
       "headings": {
         "paragraph": "Absatz",

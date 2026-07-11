@@ -210,12 +210,43 @@ interface PlaceholderConfig {
   label: string
 }
 
+/** Toolbar features that a richtext field can individually enable or disable. */
+type RichTextFeature =
+  | 'bold'
+  | 'italic'
+  | 'underline'
+  | 'strike'
+  | 'code'
+  | 'heading'
+  | 'bulletList'
+  | 'orderedList'
+  | 'blockquote'
+  | 'codeBlock'
+  | 'horizontalRule'
+  | 'link'
+  | 'internalLink'
+  | 'table'
+
+/**
+ * A named list style the editor can apply to a bullet/ordered list. `className`
+ * is emitted as a plain `class` on the `<ul>`/`<ol>` so any CSS framework can
+ * style it; `type` limits which list kinds the style is offered for.
+ */
+interface ListStyleConfig {
+  name: string
+  className: string
+  type?: 'bullet' | 'ordered' | 'both'
+}
+
 interface RichTextSchema extends Schema {
   type: 'richtext'
   translatable: boolean
   html_classes: HtmlClassConfig[]
   heading_levels?: Array<'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'>
   placeholders?: PlaceholderConfig[]
+  /** Per-feature toggles. Absent or `true` ⇒ enabled (back-compatible default). */
+  features?: Partial<Record<RichTextFeature, boolean>>
+  list_styles?: ListStyleConfig[]
 }
 
 interface NumberSchema extends Schema {

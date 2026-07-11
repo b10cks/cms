@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { AnyExtension } from '@tiptap/core'
 import { Table } from '@tiptap/extension-table'
 import { TableCell } from '@tiptap/extension-table-cell'
 import { TableHeader } from '@tiptap/extension-table-header'
@@ -19,6 +20,8 @@ import {
 } from '~/components/ui/dropdown-menu'
 
 import { InternalLink, type InternalLinkAttrs } from './extensions/InternalLink'
+import { ListStyle } from './extensions/ListStyle'
+import { transformPastedHtml } from './extensions/pasteCleanup'
 import { PlaceholderToken } from './extensions/PlaceholderToken'
 import { TextClass } from './extensions/TextClass'
 
@@ -41,6 +44,8 @@ const props = withDefaults(
     disabled?: boolean
     headingLevels?: Array<'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'>
     placeholders?: Placeholder[]
+    features?: Partial<Record<RichTextFeature, boolean>>
+    listStyles?: ListStyleConfig[]
   }>(),
   {
     htmlClasses: () => [],
@@ -48,8 +53,14 @@ const props = withDefaults(
     spaceId: undefined,
     headingLevels: () => ['h1', 'h2', 'h3', 'h4', 'p'],
     placeholders: () => [],
+    features: () => ({}),
+    listStyles: () => [],
   }
 )
+
+// A feature is on unless the field config explicitly disables it, so existing
+// fields (no `features` map) keep every button.
+const isEnabled = (feature: RichTextFeature): boolean => props.features?.[feature] !== false
 
 const emit = defineEmits<{
   'update:modelValue': [value: Record<string, unknown>]
@@ -102,33 +113,59 @@ const headingDisplayLabel = computed(() => {
   return getHeadingLabel(currentHeading.value)
 })
 
+// Disabling a feature drops its extension (not just its button) so the node/mark
+// can't slip in via paste or input rules either.
+const buildExtensions = (): AnyExtension[] => {
+  const starterKitConfig: Record<string, unknown> = {
+    heading: isEnabled('heading') ? { levels: [1, 2, 3, 4, 5, 6] } : false,
+    link: isEnabled('link') ? { openOnClick: false, autolink: true } : false,
+  }
+  const toggleable: RichTextFeature[] = [
+    'bold',
+    'italic',
+    'underline',
+    'strike',
+    'code',
+    'bulletList',
+    'orderedList',
+    'blockquote',
+    'codeBlock',
+    'horizontalRule',
+  ]
+  for (const feature of toggleable) {
+    if (!isEnabled(feature)) starterKitConfig[feature] = false
+  }
+
+  const extensions: AnyExtension[] = [StarterKit.configure(starterKitConfig), TextClass, PlaceholderToken]
+
+  if (isEnabled('internalLink')) extensions.push(InternalLink)
+  if (isEnabled('bulletList') || isEnabled('orderedList')) extensions.push(ListStyle)
+  if (isEnabled('table')) {
+    extensions.push(
+      Table.configure({
+        resizable: true,
+        handleWidth: 4,
+        cellMinWidth: 50,
+        lastColumnResizable: true,
+        allowTableNodeSelection: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell
+    )
+  }
+
+  return extensions
+}
+
 const editor = useEditor({
   content: props.modelValue,
   editable: !props.disabled,
-  extensions: [
-    StarterKit.configure({
-      heading: {
-        levels: [1, 2, 3, 4, 5, 6],
-      },
-      link: {
-        openOnClick: false,
-        autolink: true,
-      },
-    }),
-    InternalLink,
-    TextClass,
-    PlaceholderToken,
-    Table.configure({
-      resizable: true,
-      handleWidth: 4,
-      cellMinWidth: 50,
-      lastColumnResizable: true,
-      allowTableNodeSelection: true,
-    }),
-    TableRow,
-    TableHeader,
-    TableCell,
-  ],
+  extensions: buildExtensions(),
+  editorProps: {
+    // Sanitize Word/Office HTML on paste; other sources pass through untouched.
+    transformPastedHTML: (html: string) => transformPastedHtml(html),
+  },
   onUpdate: ({ editor: currentEditor }) => {
     if (isApplyingExternalContent.value) return
     const json = currentEditor.getJSON()
@@ -140,6 +177,24 @@ const editor = useEditor({
 const applyClass = (className: string) => {
   if (!editor.value) return
   editor.value.chain().focus().toggleMark('textClass', { class: className }).run()
+}
+
+const activeListType = computed<'bullet' | 'ordered' | null>(() => {
+  if (editor.value?.isActive('orderedList')) return 'ordered'
+  if (editor.value?.isActive('bulletList')) return 'bullet'
+  return null
+})
+
+// Only offer styles that match the list the cursor is in (or that target both).
+const listStyleOptions = computed<ListStyleConfig[]>(() => {
+  const active = activeListType.value
+  if (!active) return props.listStyles
+  return props.listStyles.filter((s) => !s.type || s.type === 'both' || s.type === active)
+})
+
+const applyListStyle = (className: string | null) => {
+  if (!editor.value) return
+  ;(editor.value.chain().focus() as any).setListStyle(className).run()
 }
 
 const openInternalLinkPicker = () => {
@@ -241,6 +296,7 @@ onBeforeUnmount(() => {
       class="sticky top-0 z-10 flex flex-wrap gap-1 rounded-t border-b border-input bg-surface p-2"
     >
       <Button
+        v-if="isEnabled('bold')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -251,6 +307,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:bold" />
       </Button>
       <Button
+        v-if="isEnabled('italic')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -261,6 +318,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:italic" />
       </Button>
       <Button
+        v-if="isEnabled('underline')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -271,6 +329,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:underline" />
       </Button>
       <Button
+        v-if="isEnabled('strike')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -281,6 +340,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:strikethrough" />
       </Button>
       <Button
+        v-if="isEnabled('code')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -290,7 +350,7 @@ onBeforeUnmount(() => {
       >
         <Icon name="lucide:code-2" />
       </Button>
-      <DropdownMenu>
+      <DropdownMenu v-if="isEnabled('heading') && headingLevels.length">
         <DropdownMenuTrigger as-child>
           <Button
             size="xs"
@@ -335,6 +395,7 @@ onBeforeUnmount(() => {
         </DropdownMenuContent>
       </DropdownMenu>
       <Button
+        v-if="isEnabled('bulletList')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -345,6 +406,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:list" />
       </Button>
       <Button
+        v-if="isEnabled('orderedList')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -354,7 +416,43 @@ onBeforeUnmount(() => {
       >
         <Icon name="lucide:list-ordered" />
       </Button>
+      <DropdownMenu v-if="listStyles.length > 0 && (isEnabled('bulletList') || isEnabled('orderedList'))">
+        <DropdownMenuTrigger as-child>
+          <Button
+            type="button"
+            size="xs"
+            variant="outline"
+            class="gap-1"
+            :title="$t('labels.tiptap.toolbar.listStyle')"
+            :disabled="!activeListType"
+          >
+            <Icon name="lucide:list-tree" />
+            <Icon
+              name="lucide:chevron-down"
+              size="0.8rem"
+            />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent class="max-h-96 overflow-y-auto">
+          <DropdownMenuItem @click="applyListStyle(null)">
+            <Icon
+              name="lucide:list"
+              class="mr-2"
+            />
+            {{ $t('labels.tiptap.listStyles.default') }}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator v-if="listStyleOptions.length > 0" />
+          <DropdownMenuItem
+            v-for="style in listStyleOptions"
+            :key="style.className"
+            @click="applyListStyle(style.className)"
+          >
+            {{ style.name }}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <Button
+        v-if="isEnabled('codeBlock')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -365,6 +463,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:code" />
       </Button>
       <Button
+        v-if="isEnabled('blockquote')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -375,6 +474,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:quote" />
       </Button>
       <Button
+        v-if="isEnabled('horizontalRule')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -384,6 +484,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:minus" />
       </Button>
       <Button
+        v-if="isEnabled('table')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -394,7 +495,7 @@ onBeforeUnmount(() => {
       >
         <Icon name="lucide:table" />
       </Button>
-      <DropdownMenu>
+      <DropdownMenu v-if="isEnabled('table')">
         <DropdownMenuTrigger as-child>
           <Button
             type="button"
@@ -515,6 +616,7 @@ onBeforeUnmount(() => {
         </DropdownMenuContent>
       </DropdownMenu>
       <Button
+        v-if="isEnabled('link')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -525,6 +627,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:link" />
       </Button>
       <Button
+        v-if="isEnabled('internalLink')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -536,7 +639,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:link-2" />
       </Button>
       <Button
-        v-if="editor?.isActive('internalLink')"
+        v-if="isEnabled('internalLink') && editor?.isActive('internalLink')"
         type="button"
         size="toolbar"
         variant="ghost"
