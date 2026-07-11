@@ -8,7 +8,8 @@ readonly class DiffEntry implements \JsonSerializable
         public string $path,
         public DiffType $type,
         public mixed $oldValue = null,
-        public mixed $newValue = null
+        public mixed $newValue = null,
+        public ?string $fieldType = null
     ) {}
 
     public function toArray(): array
@@ -18,6 +19,7 @@ readonly class DiffEntry implements \JsonSerializable
             'type' => $this->type->value,
             'old_value' => $this->oldValue,
             'new_value' => $this->newValue,
+            'field_type' => $this->fieldType,
         ];
     }
 

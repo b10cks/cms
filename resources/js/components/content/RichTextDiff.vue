@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { diffRichText, type DiffBlock, type DiffSegment } from '~/utils/richtext-diff'
+import DiffSegments from '~/components/content/diff/DiffSegments.vue'
+import { diffRichText, type DiffBlock } from '~/utils/richtext-diff'
 
 const props = defineProps<{
   oldValue?: unknown
@@ -29,17 +30,6 @@ const blockClasses = (block: DiffBlock): string => {
 
   return classes.join(' ')
 }
-
-const segmentClasses = (segment: DiffSegment): string => {
-  switch (segment.type) {
-    case 'added':
-      return 'rounded-sm bg-success/25 text-success no-underline'
-    case 'removed':
-      return 'rounded-sm bg-destructive/25 text-destructive line-through decoration-destructive/60'
-    default:
-      return ''
-  }
-}
 </script>
 
 <template>
@@ -63,22 +53,7 @@ const segmentClasses = (segment: DiffSegment): string => {
         formatting
       </span>
       <span class="min-w-0">
-        <template
-          v-for="(segment, segmentIndex) in block.segments"
-          :key="segmentIndex"
-        >
-          <ins
-            v-if="segment.type === 'added'"
-            :class="segmentClasses(segment)"
-            >{{ segment.text }}</ins
-          >
-          <del
-            v-else-if="segment.type === 'removed'"
-            :class="segmentClasses(segment)"
-            >{{ segment.text }}</del
-          >
-          <span v-else>{{ segment.text }}</span>
-        </template>
+        <DiffSegments :segments="block.segments" />
       </span>
     </div>
   </div>

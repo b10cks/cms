@@ -2,10 +2,12 @@
 
 namespace App\Http\Resources\Management;
 
+use App\Models\Space\Block;
 use App\Models\Space\ContentVersion;
 use App\Services\Content\Diff\ArrayDiffService;
+use App\Services\Content\Diff\DiffResult;
+use App\Services\Content\Diff\SchemaAwareDiffService;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * @mixin ContentVersion
@@ -19,8 +21,38 @@ class ContentVersionResource extends ContentVersionListResource
             ];
     }
 
-    protected function getDiff()
+    protected function getDiff(): DiffResult
     {
-        return app(ArrayDiffService::class)->diff($this->parent->content ?? [], $this->content);
+        $old = $this->parent->content ?? [];
+        $new = $this->content ?? [];
+
+        $schema = $this->contentModel?->block?->schema?->toArray();
+
+        if (empty($schema)) {
+            return app(ArrayDiffService::class)->diff($old, $new);
+        }
+
+        return app(SchemaAwareDiffService::class)->diff($old, $new, $schema, $this->blockSchemaResolver());
+    }
+
+    /**
+     * Lazily resolves nested block schemas by slug; the lookup is only
+     * loaded when the content actually contains a blocks field.
+     */
+    protected function blockSchemaResolver(): callable
+    {
+        $schemasBySlug = null;
+
+        return function (string $slug) use (&$schemasBySlug): array {
+            $schemasBySlug ??= Block::query()
+                ->select(['slug', 'schema'])
+                ->get()
+                ->mapWithKeys(static fn (Block $block): array => [
+                    $block->slug => $block->schema?->toArray() ?? [],
+                ])
+                ->all();
+
+            return $schemasBySlug[$slug] ?? [];
+        };
     }
 }

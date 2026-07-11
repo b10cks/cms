@@ -1,4 +1,10 @@
 <script setup lang="ts">
+import type { Component } from 'vue'
+import AssetDiff from '~/components/content/diff/AssetDiff.vue'
+import InlineTextDiff from '~/components/content/diff/InlineTextDiff.vue'
+import KeyValueDiff from '~/components/content/diff/KeyValueDiff.vue'
+import ListDiff from '~/components/content/diff/ListDiff.vue'
+import TableDiff from '~/components/content/diff/TableDiff.vue'
 import RichTextDiff from '~/components/content/RichTextDiff.vue'
 import ValueRenderer from '~/components/content/ValueRenderer.vue'
 import Icon from '~/components/Icon.vue'
@@ -11,6 +17,7 @@ interface Change {
   path: string
   oldValue?: unknown
   newValue?: unknown
+  fieldType?: string | null
 }
 
 interface ChangeStats {
@@ -53,6 +60,32 @@ const isRichTextChange = (change: Change): boolean => {
     return isRichTextDoc(change.oldValue) && isRichTextDoc(change.newValue)
   }
   return isRichTextDoc(change.oldValue) || isRichTextDoc(change.newValue)
+}
+
+const diffComponent = (change: Change): Component | undefined => {
+  switch (change.fieldType) {
+    case 'text':
+    case 'textarea':
+    case 'markdown':
+      return change.type === 'changed' ? InlineTextDiff : undefined
+    case 'link':
+    case 'geo':
+    case 'price':
+    case 'meta':
+    case 'block':
+      return KeyValueDiff
+    case 'options':
+    case 'references':
+      return ListDiff
+    case 'asset':
+    case 'multi_assets':
+      return AssetDiff
+    case 'table':
+      return TableDiff
+    default:
+      // richtext plus structural detection for diffs without type metadata
+      return isRichTextChange(change) ? RichTextDiff : undefined
+  }
 }
 
 const getChangeClasses = (type: ChangeType): string => {
@@ -172,10 +205,11 @@ const getFilterButtonClasses = (filter: ChangeType): string => {
         </div>
         <div class="ml-6">
           <div
-            v-if="isRichTextChange(change)"
+            v-if="diffComponent(change)"
             class="bg-background/60 rounded border border-border px-3 py-2"
           >
-            <RichTextDiff
+            <component
+              :is="diffComponent(change)"
               :old-value="change.oldValue"
               :new-value="change.newValue"
             />

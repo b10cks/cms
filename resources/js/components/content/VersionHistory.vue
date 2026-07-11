@@ -640,6 +640,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
                           : 'changed',
                       oldValue: entry.old_value,
                       newValue: entry.new_value,
+                      fieldType: entry.field_type,
                     }))
                   "
                 />

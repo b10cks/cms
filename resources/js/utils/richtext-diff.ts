@@ -1,4 +1,5 @@
-import { diffArrays, diffWordsWithSpace } from 'diff'
+import { diffArrays } from 'diff'
+import { diffTextSegments, type DiffSegment } from '~/utils/text-diff'
 
 interface RteNode {
   type: string
@@ -16,11 +17,6 @@ interface TextBlock {
   text: string
   /** Full node JSON, so formatting-only changes (marks, attrs) are detectable. */
   sig: string
-}
-
-interface DiffSegment {
-  type: 'equal' | 'added' | 'removed'
-  text: string
 }
 
 type DiffBlockKind = 'unchanged' | 'added' | 'removed' | 'changed'
@@ -120,15 +116,11 @@ function toSegments(block: TextBlock, type: DiffSegment['type']): DiffBlock {
 }
 
 function wordDiff(oldBlock: TextBlock, newBlock: TextBlock): { block: DiffBlock; similarity: number } {
-  const parts = diffWordsWithSpace(oldBlock.text, newBlock.text)
-  const segments: DiffSegment[] = parts.map((part) => ({
-    type: part.added ? 'added' : part.removed ? 'removed' : 'equal',
-    text: part.value,
-  }))
+  const segments = diffTextSegments(oldBlock.text, newBlock.text)
 
-  const equalLength = parts
-    .filter((part) => !part.added && !part.removed)
-    .reduce((sum, part) => sum + part.value.length, 0)
+  const equalLength = segments
+    .filter((segment) => segment.type === 'equal')
+    .reduce((sum, segment) => sum + segment.text.length, 0)
   const totalLength = oldBlock.text.length + newBlock.text.length
   const similarity = totalLength === 0 ? 1 : (equalLength * 2) / totalLength
   const formattingOnly = segments.every((segment) => segment.type === 'equal')

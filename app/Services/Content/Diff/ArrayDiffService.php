@@ -36,7 +36,7 @@ class ArrayDiffService implements DiffInterface
         foreach ($array as $key => $value) {
             $currentPath = $this->pathNormalizer->buildPath($prefix, $key);
 
-            if (is_array($value) && !$this->isRichTextDoc($value)) {
+            if (is_array($value) && !self::isRichTextDoc($value)) {
                 $result = array_merge($result, $this->flattenArray($value, $currentPath));
             } else {
                 $result[$currentPath] = $value;
@@ -51,9 +51,11 @@ class ArrayDiffService implements DiffInterface
      * leaf so a change surfaces as one entry carrying both full documents,
      * instead of being flattened into per-node paths.
      */
-    private function isRichTextDoc(array $value): bool
+    public static function isRichTextDoc(mixed $value): bool
     {
-        return ($value['type'] ?? null) === 'doc' && array_key_exists('content', $value);
+        return \is_array($value)
+            && ($value['type'] ?? null) === 'doc'
+            && array_key_exists('content', $value);
     }
 
     private function processRemovedEntries(array $old, array $new, $entries): void
