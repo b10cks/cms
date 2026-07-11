@@ -316,6 +316,59 @@ class SchemaAwareDiffServiceTest extends TestCase
     }
 
     #[Test]
+    public function itCrossDiffsSharedFieldsOnSlugChange()
+    {
+        $entries = $this->diff(
+            ['body' => [['id' => 'one', 'block' => 'teaser', 'headline' => 'Same', 'image' => ['id' => 'a1']]]],
+            ['body' => [['id' => 'one', 'block' => 'hero', 'headline' => 'Same', 'image' => ['id' => 'b2']]]]
+        );
+
+        $this->assertCount(1, $entries);
+        $children = $entries[0]->children;
+
+        // the unchanged shared field produces no child; the changed one diffs in place
+        $this->assertCount(1, $children);
+        $this->assertSame('image', $children[0]->path);
+        $this->assertSame(DiffType::CHANGED, $children[0]->type);
+    }
+
+    #[Test]
+    public function itSlimsBlockItemValuesWhenChildrenCarryTheFields()
+    {
+        $entries = $this->diff([], ['body' => [[
+            'id' => 'one',
+            'block' => 'teaser',
+            'headline' => 'Hello',
+        ]]]);
+
+        $this->assertSame(['id' => 'one', 'block' => 'teaser'], $entries[0]->newValue);
+        $this->assertSame('Hello', $entries[0]->children[0]->newValue);
+    }
+
+    #[Test]
+    public function itKeepsFullItemValueWhenNoChildrenExist()
+    {
+        $item = ['id' => 'one', 'block' => 'teaser'];
+
+        $entries = $this->diff([], ['body' => [$item]]);
+
+        $this->assertSame([], $entries[0]->children);
+        $this->assertSame($item, $entries[0]->newValue);
+    }
+
+    #[Test]
+    public function itOrdersEntriesNaturally()
+    {
+        $item = fn (int $n) => ['id' => "id{$n}", 'block' => 'teaser', 'headline' => "H{$n}"];
+
+        $entries = $this->diff([], ['body' => array_map($item, range(0, 10))]);
+
+        $paths = array_map(static fn ($entry) => $entry->path, $entries);
+        $this->assertSame('body.2', $paths[2]);
+        $this->assertSame('body.10', $paths[10]);
+    }
+
+    #[Test]
     public function itSerializesChildrenOnlyWhenPresent()
     {
         $scalar = $this->diff(['title' => 'Old'], ['title' => 'New']);

@@ -26,7 +26,12 @@ class ArrayDiffService implements DiffInterface
         $this->processAddedEntries($oldFlattened, $newFlattened, $entries);
         $this->processChangedEntries($oldFlattened, $newFlattened, $entries);
 
-        return new DiffResult($entries->sortBy('path')->values()->toArray());
+        return new DiffResult(
+            $entries
+                ->sort(static fn (DiffEntry $a, DiffEntry $b): int => strnatcmp($a->path, $b->path))
+                ->values()
+                ->toArray()
+        );
     }
 
     private function flattenArray(array $array, string $prefix = ''): array

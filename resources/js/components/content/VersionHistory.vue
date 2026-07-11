@@ -312,7 +312,7 @@ const toDiffChange = (entry: ContentVersionDiffEntry): DiffChange => ({
   oldValue: entry.old_value,
   newValue: entry.new_value,
   fieldType: entry.field_type,
-  children: entry.children?.map(toDiffChange),
+  children: Array.isArray(entry.children) ? entry.children.map(toDiffChange) : undefined,
 })
 
 const previewSource = computed(() => {

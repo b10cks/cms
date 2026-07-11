@@ -17,24 +17,30 @@ const itemSlug = (value: unknown): string => {
     : ''
 }
 
-// Shows the slug itself as a diff, so block-type swaps read as old → new.
-const slugSegments = computed((): DiffSegment[] =>
-  diffTextSegments(
-    itemSlug(props.oldValue ?? props.newValue),
-    itemSlug(props.newValue ?? props.oldValue)
-  )
-)
+// Shows the slug itself as a diff, so block-type swaps read as old → new;
+// on one-sided entries the single present slug is mirrored (no phantom diff).
+const slugSegments = computed((): DiffSegment[] => {
+  const oldSlug = itemSlug(props.oldValue)
+  const newSlug = itemSlug(props.newValue)
+  return diffTextSegments(oldSlug || newSlug, newSlug || oldSlug)
+})
 
+// Non-block children never carry `children`; Vue drops the undefined prop.
 const rows = computed(() =>
   (props.children ?? []).map((child) => ({
     child,
     component: resolveDiffComponent(child),
-    childProps:
-      child.fieldType === 'block'
-        ? { oldValue: child.oldValue, newValue: child.newValue, children: child.children }
-        : { oldValue: child.oldValue, newValue: child.newValue },
+    childProps: { oldValue: child.oldValue, newValue: child.newValue, children: child.children },
   }))
 )
+
+// The no-children fallback renders the raw item; the slug already shows
+// in the header, so drop it from the key/value rows.
+const withoutBlockKey = (value: unknown): unknown => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return value
+  const { block: _block, ...rest } = value as Record<string, unknown>
+  return rest
+}
 
 const formatPath = (path: string): string => path.replace(/\./g, ' → ')
 
@@ -75,8 +81,8 @@ const fallbackSegments = (child: DiffChange): DiffSegment[] =>
     </div>
     <KeyValueDiff
       v-if="!rows.length"
-      :old-value="oldValue"
-      :new-value="newValue"
+      :old-value="withoutBlockKey(oldValue)"
+      :new-value="withoutBlockKey(newValue)"
     />
   </div>
 </template>

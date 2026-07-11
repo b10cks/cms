@@ -37,7 +37,12 @@ class SchemaAwareDiffService
         $entries = collect();
         $this->diffFields($old, $new, $schema, '', $entries, $blockSchemaResolver);
 
-        return new DiffResult($entries->sortBy('path')->values()->toArray());
+        return new DiffResult(
+            $entries
+                ->sort(static fn (DiffEntry $a, DiffEntry $b): int => strnatcmp($a->path, $b->path))
+                ->values()
+                ->toArray()
+        );
     }
 
     private function diffFields(array $old, array $new, array $schema, string $prefix, Collection $entries, callable $resolver): void
@@ -99,13 +104,13 @@ class SchemaAwareDiffService
 
         foreach ($oldById as $id => [$oldIndex, $oldItem]) {
             if (! isset($newById[$id])) {
-                $entries->push(new DiffEntry($path . '.' . $oldIndex, DiffType::REMOVED, $oldItem, null, 'block', $this->blockItemChildren($oldItem, null, $resolver)));
+                $entries->push($this->blockItemEntry($path . '.' . $oldIndex, DiffType::REMOVED, $oldItem, null, $resolver));
             }
         }
 
         foreach ($newById as $id => [$newIndex, $newItem]) {
             if (! isset($oldById[$id])) {
-                $entries->push(new DiffEntry($path . '.' . $newIndex, DiffType::ADDED, null, $newItem, 'block', $this->blockItemChildren(null, $newItem, $resolver)));
+                $entries->push($this->blockItemEntry($path . '.' . $newIndex, DiffType::ADDED, null, $newItem, $resolver));
                 continue;
             }
 
@@ -118,7 +123,7 @@ class SchemaAwareDiffService
             $slug = (string) ($newItem['block'] ?? '');
 
             if ($slug !== (string) ($oldItem['block'] ?? '')) {
-                $entries->push(new DiffEntry($path . '.' . $newIndex, DiffType::CHANGED, $oldItem, $newItem, 'block', $this->blockItemChildren($oldItem, $newItem, $resolver)));
+                $entries->push($this->blockItemEntry($path . '.' . $newIndex, DiffType::CHANGED, $oldItem, $newItem, $resolver));
                 continue;
             }
 
@@ -142,12 +147,12 @@ class SchemaAwareDiffService
             $newItem = $new[$index] ?? null;
 
             if ($newItem === null) {
-                $entries->push(new DiffEntry($itemPath, DiffType::REMOVED, $oldItem, null, 'block', $this->blockItemChildren(\is_array($oldItem) ? $oldItem : null, null, $resolver)));
+                $entries->push($this->blockItemEntry($itemPath, DiffType::REMOVED, $oldItem, null, $resolver));
                 continue;
             }
 
             if ($oldItem === null) {
-                $entries->push(new DiffEntry($itemPath, DiffType::ADDED, null, $newItem, 'block', $this->blockItemChildren(null, \is_array($newItem) ? $newItem : null, $resolver)));
+                $entries->push($this->blockItemEntry($itemPath, DiffType::ADDED, null, $newItem, $resolver));
                 continue;
             }
 
@@ -158,14 +163,7 @@ class SchemaAwareDiffService
             $slug = \is_array($newItem) ? (string) ($newItem['block'] ?? '') : '';
 
             if (! \is_array($oldItem) || ! \is_array($newItem) || $slug !== (string) ($oldItem['block'] ?? '')) {
-                $entries->push(new DiffEntry(
-                    $itemPath,
-                    DiffType::CHANGED,
-                    $oldItem,
-                    $newItem,
-                    'block',
-                    $this->blockItemChildren(\is_array($oldItem) ? $oldItem : null, \is_array($newItem) ? $newItem : null, $resolver)
-                ));
+                $entries->push($this->blockItemEntry($itemPath, DiffType::CHANGED, $oldItem, $newItem, $resolver));
                 continue;
             }
 
@@ -174,30 +172,60 @@ class SchemaAwareDiffService
     }
 
     /**
-     * Per-field sub-entries for a whole added/removed/replaced block item,
-     * so the UI can render each field with its own type-aware diff instead
-     * of dumping the item as JSON. On a slug change both sides diff against
-     * nothing under their own schema.
-     *
-     * @return DiffEntry[]
+     * Builds a whole-item block entry whose children hold per-field
+     * sub-diffs, so the UI renders each field with its own type-aware
+     * diff instead of dumping the item as JSON. When children carry the
+     * field data the item itself is slimmed to its identity keys —
+     * otherwise nested blocks multiply the payload per nesting level.
      */
-    private function blockItemChildren(?array $oldItem, ?array $newItem, callable $resolver): array
+    private function blockItemEntry(string $path, DiffType $type, mixed $oldItem, mixed $newItem, callable $resolver): DiffEntry
     {
-        $children = collect();
+        $children = $this->blockItemChildren($oldItem, $newItem, $resolver);
 
-        if ($oldItem !== null) {
-            $this->diffFields($oldItem, [], $resolver((string) ($oldItem['block'] ?? '')), '', $children, $resolver);
+        if ($children !== []) {
+            $oldItem = $this->slimItem($oldItem);
+            $newItem = $this->slimItem($newItem);
         }
 
-        if ($newItem !== null) {
+        return new DiffEntry($path, $type, $oldItem, $newItem, 'block', $children);
+    }
+
+    /**
+     * @return DiffEntry[]
+     */
+    private function blockItemChildren(mixed $oldItem, mixed $newItem, callable $resolver): array
+    {
+        $oldItem = \is_array($oldItem) ? $oldItem : null;
+        $newItem = \is_array($newItem) ? $newItem : null;
+
+        $children = collect();
+
+        if ($oldItem !== null && $newItem !== null) {
+            // Slug change: cross-diff under the union schema (new wins) so
+            // fields keeping their value don't read as removed + re-added.
+            $schema = array_replace(
+                $resolver((string) ($oldItem['block'] ?? '')),
+                $resolver((string) ($newItem['block'] ?? ''))
+            );
+            $this->diffFields($oldItem, $newItem, $schema, '', $children, $resolver);
+        } elseif ($oldItem !== null) {
+            $this->diffFields($oldItem, [], $resolver((string) ($oldItem['block'] ?? '')), '', $children, $resolver);
+        } elseif ($newItem !== null) {
             $this->diffFields([], $newItem, $resolver((string) ($newItem['block'] ?? '')), '', $children, $resolver);
         }
 
         return $children
             ->reject(static fn (DiffEntry $entry): bool => \in_array($entry->path, ['id', 'block'], true))
-            ->sortBy('path')
+            ->sort(static fn (DiffEntry $a, DiffEntry $b): int => strnatcmp($a->path, $b->path))
             ->values()
             ->all();
+    }
+
+    private function slimItem(mixed $item): mixed
+    {
+        return \is_array($item)
+            ? array_intersect_key($item, ['id' => true, 'block' => true])
+            : $item;
     }
 
     /**
