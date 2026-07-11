@@ -851,6 +851,25 @@
           "defaultChildBlockDescription": "This content type will be preselected when creating a child under this item.",
           "canonicalOnly": "Child content settings are managed on the canonical default-language page for this content family."
         },
+        "sorting": {
+          "title": "Child ordering",
+          "description": "Choose how direct children of this content item are ordered in the content tree and in API responses.",
+          "sortBy": "Order children by",
+          "sortByDescription": "\"Inherit\" follows the space-wide sorting setting, \"Manual\" always allows drag-and-drop ordering inside this item.",
+          "direction": "Direction",
+          "options": {
+            "inherit": "Inherit from space",
+            "manual": "Manual (drag & drop)",
+            "name": "Name",
+            "published_at": "Publish date",
+            "created_at": "Creation date",
+            "updated_at": "Last updated"
+          },
+          "directionOptions": {
+            "asc": "Ascending (oldest / A first)",
+            "desc": "Descending (newest / Z first)"
+          }
+        },
         "i18n": {
           "override": {
             "label": "I18n Mode",

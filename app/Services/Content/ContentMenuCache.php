@@ -10,6 +10,12 @@ class ContentMenuCache
 {
     private const int MENU_TTL_SECONDS = 86400;
 
+    /**
+     * Bump whenever the cached menu payload shape changes so stale-format
+     * entries are not served after a deployment.
+     */
+    private const int MENU_FORMAT_VERSION = 2;
+
     private const int VERSION_TTL_SECONDS = 2592000;
 
     /**
@@ -55,8 +61,9 @@ class ContentMenuCache
     private function menuKey(string $spaceId, string $version, array $query): string
     {
         return sprintf(
-            'spaces:%s:content-menu:%s:%s',
+            'spaces:%s:content-menu:v%d:%s:%s',
             $spaceId,
+            self::MENU_FORMAT_VERSION,
             $version,
             sha1(json_encode($this->normalizeQuery($query), JSON_THROW_ON_ERROR)),
         );

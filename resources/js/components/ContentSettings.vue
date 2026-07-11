@@ -64,6 +64,27 @@ const defaultChildBlockOptions = computed(() =>
   }))
 )
 
+const childSortByOptions = computed(() =>
+  (['inherit', 'manual', 'name', 'published_at', 'created_at', 'updated_at'] as const).map(
+    (value) => ({
+      value,
+      label: t(`labels.contents.settings.sorting.options.${value}`),
+    })
+  )
+)
+
+const childSortDirectionOptions = computed(() =>
+  (['asc', 'desc'] as const).map((value) => ({
+    value,
+    label: t(`labels.contents.settings.sorting.directionOptions.${value}`),
+  }))
+)
+
+const isAttributeChildSort = computed(() => {
+  const sortBy = content.value?.settings.child_sort_by
+  return !!sortBy && sortBy !== 'inherit' && sortBy !== 'manual'
+})
+
 const filterOptions = (
   option: ComboboxOption<string>,
   search: string,
@@ -222,6 +243,37 @@ watch(
       >
         {{ $t('labels.contents.settings.children.canonicalOnly') }}
       </div>
+    </div>
+    <div
+      v-if="content && isCanonical"
+      class="space-y-4 rounded-lg bg-surface px-4 py-4"
+    >
+      <div class="space-y-1">
+        <h3 class="text-sm font-semibold text-primary">
+          {{ $t('labels.contents.settings.sorting.title') }}
+        </h3>
+        <p class="text-sm text-muted">
+          {{ $t('labels.contents.settings.sorting.description') }}
+        </p>
+      </div>
+
+      <SelectField
+        v-model="content.settings.child_sort_by"
+        name="childSortBy"
+        :label="$t('labels.contents.settings.sorting.sortBy')"
+        :description="$t('labels.contents.settings.sorting.sortByDescription')"
+        :readonly="!canManageChildSettings"
+        :options="childSortByOptions"
+      />
+
+      <SelectField
+        v-if="isAttributeChildSort"
+        v-model="content.settings.child_sort_direction"
+        name="childSortDirection"
+        :label="$t('labels.contents.settings.sorting.direction')"
+        :readonly="!canManageChildSettings"
+        :options="childSortDirectionOptions"
+      />
     </div>
   </div>
 </template>

@@ -12,6 +12,7 @@ interface FlatContentMenuItem {
   settings: Partial<ContentSettings>
   i18n: ContentMenuTranslation[]
   pat: string | null
+  cat?: string
   uat: string
 }
 

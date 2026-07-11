@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/vue-query'
 
 import { api } from '~/api'
 import { isClient } from '~/lib/env'
-import type { ContentResource } from '~/types/contents'
+import type { ContentChildSortBy, ContentResource } from '~/types/contents'
 
 import { queryKeys } from './useQueryClient'
 
@@ -39,6 +39,49 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
     (a.name || '').localeCompare(b.name || '') ||
     a.id.localeCompare(b.id)
 
+  const SORT_DATE_KEYS: Record<
+    Exclude<ContentChildSortBy, 'inherit' | 'manual' | 'name'>,
+    'pat' | 'cat' | 'uat'
+  > = {
+    published_at: 'pat',
+    created_at: 'cat',
+    updated_at: 'uat',
+  }
+
+  // Each folder can override how its children are ordered via its own
+  // settings; without an override the manual position order applies.
+  const comparatorFor = (
+    parent: FlatContentMenuItem | undefined
+  ): ((a: FlatContentMenuItem, b: FlatContentMenuItem) => number) => {
+    const sortBy = parent?.settings?.child_sort_by as ContentChildSortBy | undefined
+    if (!sortBy || sortBy === 'inherit' || sortBy === 'manual') {
+      return compareByPosition
+    }
+
+    const direction = parent?.settings?.child_sort_direction === 'desc' ? -1 : 1
+
+    if (sortBy === 'name') {
+      return (a, b) =>
+        direction * (a.name || '').localeCompare(b.name || '') || a.id.localeCompare(b.id)
+    }
+
+    const key = SORT_DATE_KEYS[sortBy]
+    return (a, b) => {
+      const aValue = a[key]
+      const bValue = b[key]
+      // Entries without a value (e.g. unpublished) always sort last.
+      if (!aValue || !bValue) {
+        return Number(!aValue) - Number(!bValue) || compareByPosition(a, b)
+      }
+
+      return (
+        direction * (Date.parse(aValue) - Date.parse(bValue)) ||
+        (a.name || '').localeCompare(b.name || '') ||
+        a.id.localeCompare(b.id)
+      )
+    }
+  }
+
   // reka-ui calls get-children for every expanded node on every tree re-render.
   // Building a per-parent lookup once (and memoizing it on the menuData identity,
   // which is replaced wholesale by TanStack Query on every update) turns each of
@@ -58,7 +101,9 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
       if (bucket) bucket.push(item)
       else index.set(parentId, [item])
     }
-    for (const bucket of index.values()) bucket.sort(compareByPosition)
+    for (const [parentId, bucket] of index) {
+      bucket.sort(comparatorFor(parentId ? menuData[parentId] : undefined))
+    }
 
     childrenIndexCache.set(menuData, index)
     return index

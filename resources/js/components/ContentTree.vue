@@ -87,6 +87,18 @@ const canPublishContent = computed(() => access.hasAbility('content.publish'))
 // Manual drag-to-reorder is opt-in per space. When disabled, dragging may only
 // reparent items (the "into" gesture); before/after reordering is suppressed.
 const sortingEnabled = computed(() => !!selectedSpace.value?.settings?.content_sorting)
+
+// Folders can override the space default via their own child_sort_by setting:
+// 'manual' enables reordering inside the folder, an attribute sort disables it
+// (the attribute dictates the order), and 'inherit' falls back to the space.
+const allowsManualSort = (parentId: string | null): boolean => {
+  const sortBy = parentId ? data.value?.[parentId]?.settings?.child_sort_by : undefined
+  if (!sortBy || sortBy === 'inherit') {
+    return sortingEnabled.value
+  }
+
+  return sortBy === 'manual'
+}
 const { settings } = useSpaceSettings(props.spaceId)
 const {
   hasClipboardItem,
@@ -411,8 +423,9 @@ function computeDropEdge(
   input: { clientY: number },
   item: FlatContentMenuItem
 ): Edge {
-  // Sorting disabled: only reparenting (nesting) is permitted, never reordering.
-  if (!sortingEnabled.value) {
+  // Sorting disabled for the row's folder: only reparenting (nesting) is
+  // permitted, never reordering.
+  if (!allowsManualSort(item.pid ?? null)) {
     return 'left'
   }
 

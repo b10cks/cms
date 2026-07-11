@@ -46,6 +46,7 @@ class ContentMenuController extends Controller
                     'block_id',
                     'settings',
                     'published_at',
+                    'created_at',
                     'updated_at',
                 ]);
 

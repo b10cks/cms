@@ -846,6 +846,25 @@
           "defaultChildBlockDescription": "Dieser Inhaltstyp wird beim Erstellen eines Kindelements unter diesem Eintrag vorausgewählt.",
           "canonicalOnly": "Child-Content-Einstellungen werden auf der kanonischen Seite in der Standardsprache dieser Content-Familie verwaltet."
         },
+        "sorting": {
+          "title": "Sortierung der Kinder",
+          "description": "Lege fest, wie direkte Kinder dieses Eintrags im Content-Baum und in API-Antworten sortiert werden.",
+          "sortBy": "Kinder sortieren nach",
+          "sortByDescription": "\"Vom Space erben\" folgt der Space-weiten Sortiereinstellung, \"Manuell\" erlaubt immer Drag-and-drop-Sortierung innerhalb dieses Eintrags.",
+          "direction": "Richtung",
+          "options": {
+            "inherit": "Vom Space erben",
+            "manual": "Manuell (Drag & Drop)",
+            "name": "Name",
+            "published_at": "Veröffentlichungsdatum",
+            "created_at": "Erstellungsdatum",
+            "updated_at": "Zuletzt aktualisiert"
+          },
+          "directionOptions": {
+            "asc": "Aufsteigend (Ältestes / A zuerst)",
+            "desc": "Absteigend (Neuestes / Z zuerst)"
+          }
+        },
         "i18n": {
           "override": {
             "label": "I18n-Modus",

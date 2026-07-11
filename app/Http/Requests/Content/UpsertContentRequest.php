@@ -112,6 +112,8 @@ class UpsertContentRequest extends FormRequest
                     $this->hasChildSetting('child_block_whitelist') ? 'child_block_whitelist' : null,
                     $this->hasChildSetting('child_tag_whitelist') ? 'child_tag_whitelist' : null,
                     $this->hasChildSetting('default_child_block') ? 'default_child_block' : null,
+                    $this->hasChildSetting('child_sort_by') ? 'child_sort_by' : null,
+                    $this->hasChildSetting('child_sort_direction') ? 'child_sort_direction' : null,
                 ]));
                 $errors = app(ContentI18nValidator::class)->validate(
                     $space,

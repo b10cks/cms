@@ -166,6 +166,14 @@ export interface ContentTreeActionContext {
   uses_selection: boolean
 }
 
+export type ContentChildSortBy =
+  | 'inherit'
+  | 'manual'
+  | 'name'
+  | 'published_at'
+  | 'created_at'
+  | 'updated_at'
+
 export interface ContentSettings {
   disablePreview: boolean
   i18n_mode_override?: 'inherit' | 'overlay' | 'independent'
@@ -173,6 +181,8 @@ export interface ContentSettings {
   child_block_whitelist: string[]
   child_tag_whitelist: string[]
   default_child_block?: string | null
+  child_sort_by?: ContentChildSortBy
+  child_sort_direction?: 'asc' | 'desc'
 }
 
 export interface ContentResource {

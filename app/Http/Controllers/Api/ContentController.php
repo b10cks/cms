@@ -51,6 +51,8 @@ class ContentController
             $query->leftJoin('content_versions', 'contents.current_version_id', '=', 'content_versions.id');
         }
 
+        $this->applyConfiguredChildOrdering($query, $request);
+
         $paginator = $query->paginate(min($request->per_page ?? 20, 500));
         $resolver = app(ContentI18nResolver::class);
         $space = app('currentSpace');
@@ -82,6 +84,43 @@ class ContentController
         );
 
         return new ContentResourceCollection($resolvedPaginator);
+    }
+
+    /**
+     * When a request lists the children of a single parent without an explicit
+     * `sort`, order them by the sorting configured on that parent (e.g. a news
+     * folder sorted by `published_at`). Requests without such a configuration
+     * keep their previous (unspecified) ordering.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<Content>  $query
+     */
+    protected function applyConfiguredChildOrdering($query, Request $request): void
+    {
+        if ($request->filled('sort')) {
+            return;
+        }
+
+        $parentId = $request->input('parent_id') ?? $request->input('canonical_parent_id');
+
+        // Only plain single-ID values; operator syntax like `in:a,b` targets
+        // multiple parents where a per-folder ordering is ambiguous.
+        if (! \is_string($parentId) || $parentId === '' || str_contains($parentId, ':')) {
+            return;
+        }
+
+        $parent = Content::query()->select(['id', 'settings'])->find($parentId);
+        $column = $parent?->settings?->getChildSortColumn();
+
+        if ($column === null) {
+            return;
+        }
+
+        $direction = $column === 'position' ? 'asc' : $parent->settings->getChildSortDirection();
+
+        $query
+            ->orderBy('contents.'.$column, $direction)
+            ->orderBy('contents.name')
+            ->orderBy('contents.id');
     }
 
     public function show(Request $request, string $slug): ContentResource|Response

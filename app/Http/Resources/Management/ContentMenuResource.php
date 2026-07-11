@@ -31,6 +31,7 @@ class ContentMenuResource extends JsonResource
             'settings' => $settings !== [] ? $settings : new \StdClass,
             'i18n' => $this->whenLoaded('i18n_children', fn () => ContentTranslationResource::collection($this->i18n_children)),
             'pat' => $this->published_at?->toIso8601String(),
+            'cat' => $this->created_at?->toIso8601String(),
             'uat' => $this->updated_at?->toIso8601String(),
         ];
     }
