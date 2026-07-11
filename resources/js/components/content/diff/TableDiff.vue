@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import DiffSegments from '~/components/content/diff/DiffSegments.vue'
-import { diffTextSegments } from '~/utils/text-diff'
+import { diffTextSegments, toDisplayText, type DiffSegment } from '~/utils/text-diff'
 
 type RowStatus = 'added' | 'removed' | 'unchanged'
 
@@ -17,8 +17,7 @@ interface TableLike {
 interface DiffRow {
   key: string
   status: RowStatus
-  oldCells: Record<string, unknown>
-  newCells: Record<string, unknown>
+  cells: DiffSegment[][]
 }
 
 const props = defineProps<{
@@ -41,30 +40,47 @@ const columns = computed((): string[] => [
   ...new Set([...Object.keys(newTable.value.header), ...Object.keys(oldTable.value.header)]),
 ])
 
-const cellText = (value: unknown): string => (value == null ? '' : String(value))
+const headerCells = computed((): DiffSegment[][] =>
+  columns.value.map((column) =>
+    diffTextSegments(
+      toDisplayText(oldTable.value.header[column]),
+      toDisplayText(newTable.value.header[column])
+    )
+  )
+)
 
-const rowId = (row: TableRowLike, index: number): string =>
-  typeof row.id === 'string' && row.id !== '' ? row.id : `#${index}`
+// Prefixes keep real ids and positional fallbacks from colliding.
+const rowKey = (row: TableRowLike, index: number): string =>
+  typeof row.id === 'string' && row.id !== '' ? `id:${row.id}` : `#${index}`
 
 const rows = computed((): DiffRow[] => {
-  const oldById = new Map(oldTable.value.rows.map((row, index) => [rowId(row, index), row]))
-  const newIds = new Set(newTable.value.rows.map((row, index) => rowId(row, index)))
+  const cellSegments = (
+    oldCells: Record<string, unknown>,
+    newCells: Record<string, unknown>,
+    status: RowStatus
+  ): DiffSegment[][] =>
+    columns.value.map((column): DiffSegment[] => {
+      const oldText = toDisplayText(oldCells[column])
+      const newText = toDisplayText(newCells[column])
+      if (status === 'added') return [{ type: 'equal', text: newText }]
+      if (status === 'removed') return [{ type: 'equal', text: oldText }]
+      return oldText === newText ? [{ type: 'equal', text: newText }] : diffTextSegments(oldText, newText)
+    })
+
+  const oldById = new Map(oldTable.value.rows.map((row, index) => [rowKey(row, index), row]))
+  const newKeys = new Set(newTable.value.rows.map((row, index) => rowKey(row, index)))
 
   const result: DiffRow[] = newTable.value.rows.map((row, index) => {
-    const key = rowId(row, index)
+    const key = rowKey(row, index)
     const oldRow = oldById.get(key)
-    return {
-      key,
-      status: (oldRow ? 'unchanged' : 'added') as RowStatus,
-      oldCells: oldRow?.cells ?? {},
-      newCells: row.cells ?? {},
-    }
+    const status: RowStatus = oldRow ? 'unchanged' : 'added'
+    return { key, status, cells: cellSegments(oldRow?.cells ?? {}, row.cells ?? {}, status) }
   })
 
   for (const [index, row] of oldTable.value.rows.entries()) {
-    const key = rowId(row, index)
-    if (!newIds.has(key)) {
-      result.push({ key, status: 'removed', oldCells: row.cells ?? {}, newCells: {} })
+    const key = rowKey(row, index)
+    if (!newKeys.has(key)) {
+      result.push({ key: `removed-${key}`, status: 'removed', cells: cellSegments(row.cells ?? {}, {}, 'removed') })
     }
   }
 
@@ -89,15 +105,11 @@ const rowClasses = (status: RowStatus): string => {
       <thead>
         <tr class="border-b border-border">
           <th
-            v-for="column in columns"
+            v-for="(column, columnIndex) in columns"
             :key="column"
             class="text-muted-foreground px-2 py-1 text-left text-xs font-semibold"
           >
-            <DiffSegments
-              :segments="
-                diffTextSegments(cellText(oldTable.header[column]), cellText(newTable.header[column]))
-              "
-            />
+            <DiffSegments :segments="headerCells[columnIndex]" />
           </th>
         </tr>
       </thead>
@@ -109,17 +121,11 @@ const rowClasses = (status: RowStatus): string => {
           :class="rowClasses(row.status)"
         >
           <td
-            v-for="column in columns"
+            v-for="(column, columnIndex) in columns"
             :key="column"
             class="px-2 py-1 align-top"
           >
-            <DiffSegments
-              v-if="row.status === 'unchanged'"
-              :segments="diffTextSegments(cellText(row.oldCells[column]), cellText(row.newCells[column]))"
-            />
-            <span v-else>{{
-              cellText(row.status === 'added' ? row.newCells[column] : row.oldCells[column])
-            }}</span>
+            <DiffSegments :segments="row.cells[columnIndex]" />
           </td>
         </tr>
       </tbody>

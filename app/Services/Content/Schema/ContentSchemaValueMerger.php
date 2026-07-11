@@ -392,7 +392,7 @@ class ContentSchemaValueMerger
     /**
      * @return array<string, mixed>
      */
-    protected function resolveBlockSchema(string $slug): array
+    public function resolveBlockSchema(string $slug): array
     {
         $this->loadBlockSchemaCache();
 

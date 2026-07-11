@@ -42,31 +42,34 @@ class SchemaAwareDiffService
 
     private function diffFields(array $old, array $new, array $schema, string $prefix, Collection $entries, callable $resolver): void
     {
-        foreach (array_unique([...array_keys($old), ...array_keys($new)]) as $key) {
+        foreach (array_keys($old + $new) as $key) {
             $path = $prefix === '' ? (string) $key : $prefix . '.' . $key;
             $fieldType = isset($schema[$key]['type'])
                 ? SchemaField::canonicalizeType((string) $schema[$key]['type'])
                 : null;
 
+            $oldValue = array_key_exists($key, $old) ? $old[$key] : null;
+            $newValue = array_key_exists($key, $new) ? $new[$key] : null;
+
+            // Blocks fields always diff per item — including whole-field
+            // additions/removals — so each item stays reviewable instead
+            // of collapsing into one array-sized entry.
+            if ($fieldType === 'blocks' && \is_array($oldValue ?? []) && \is_array($newValue ?? [])) {
+                $this->diffBlockItems($oldValue ?? [], $newValue ?? [], $path, $entries, $resolver);
+                continue;
+            }
+
             if (! array_key_exists($key, $new)) {
-                $entries->push(new DiffEntry($path, DiffType::REMOVED, $old[$key], null, $fieldType));
+                $entries->push(new DiffEntry($path, DiffType::REMOVED, $oldValue, null, $fieldType));
                 continue;
             }
 
             if (! array_key_exists($key, $old)) {
-                $entries->push(new DiffEntry($path, DiffType::ADDED, null, $new[$key], $fieldType));
+                $entries->push(new DiffEntry($path, DiffType::ADDED, null, $newValue, $fieldType));
                 continue;
             }
-
-            $oldValue = $old[$key];
-            $newValue = $new[$key];
 
             if ($this->valueComparer->areEqual($oldValue, $newValue)) {
-                continue;
-            }
-
-            if ($fieldType === 'blocks' && \is_array($oldValue) && \is_array($newValue)) {
-                $this->diffBlockItems($oldValue, $newValue, $path, $entries, $resolver);
                 continue;
             }
 
@@ -89,7 +92,7 @@ class SchemaAwareDiffService
         $newById = $this->keyItemsById($new);
 
         if ($oldById === null || $newById === null) {
-            $this->pushFallbackEntries($old, $new, $path, $entries);
+            $this->diffBlockItemsPositionally($old, $new, $path, $entries, $resolver);
 
             return;
         }
@@ -120,6 +123,46 @@ class SchemaAwareDiffService
             }
 
             $this->diffFields($oldItem, $newItem, $resolver($slug), $path . '.' . $newIndex, $entries, $resolver);
+        }
+    }
+
+    /**
+     * Items without stable unique ids pair by position. Field-level
+     * rendering stays schema-aware; insertions shift the pairing, which
+     * is the best available alignment without identity.
+     */
+    private function diffBlockItemsPositionally(array $old, array $new, string $path, Collection $entries, callable $resolver): void
+    {
+        $old = array_values($old);
+        $new = array_values($new);
+
+        for ($index = 0, $count = max(\count($old), \count($new)); $index < $count; $index++) {
+            $itemPath = $path . '.' . $index;
+            $oldItem = $old[$index] ?? null;
+            $newItem = $new[$index] ?? null;
+
+            if ($newItem === null) {
+                $entries->push(new DiffEntry($itemPath, DiffType::REMOVED, $oldItem, null, 'block'));
+                continue;
+            }
+
+            if ($oldItem === null) {
+                $entries->push(new DiffEntry($itemPath, DiffType::ADDED, null, $newItem, 'block'));
+                continue;
+            }
+
+            if ($this->valueComparer->areEqual($oldItem, $newItem)) {
+                continue;
+            }
+
+            $slug = \is_array($newItem) ? (string) ($newItem['block'] ?? '') : '';
+
+            if (! \is_array($oldItem) || ! \is_array($newItem) || $slug !== (string) ($oldItem['block'] ?? '')) {
+                $entries->push(new DiffEntry($itemPath, DiffType::CHANGED, $oldItem, $newItem, 'block'));
+                continue;
+            }
+
+            $this->diffFields($oldItem, $newItem, $resolver($slug), $itemPath, $entries, $resolver);
         }
     }
 

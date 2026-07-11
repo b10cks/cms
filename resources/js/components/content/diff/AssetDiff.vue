@@ -1,7 +1,6 @@
 <script setup lang="ts">
+import { chipClasses, type ChipStatus } from '~/components/content/diff/chips'
 import Icon from '~/components/Icon.vue'
-
-type ItemStatus = 'added' | 'removed' | 'unchanged'
 
 interface AssetLike {
   id?: unknown
@@ -9,54 +8,50 @@ interface AssetLike {
   full_path?: unknown
 }
 
+interface AssetItem {
+  key: string
+  name: string
+}
+
 const props = defineProps<{
   oldValue?: unknown
   newValue?: unknown
 }>()
 
-const toAssets = (value: unknown): AssetLike[] => {
-  if (Array.isArray(value)) {
-    return value.filter((item): item is AssetLike => typeof item === 'object' && item !== null)
-  }
-  return typeof value === 'object' && value !== null ? [value as AssetLike] : []
+const toAssetItems = (value: unknown): AssetItem[] => {
+  const assets = Array.isArray(value)
+    ? value.filter((item): item is AssetLike => typeof item === 'object' && item !== null)
+    : typeof value === 'object' && value !== null
+      ? [value as AssetLike]
+      : []
+
+  return assets.map((asset) => ({
+    key: String(asset.id ?? asset.full_path ?? asset.filename ?? ''),
+    name:
+      typeof asset.filename === 'string' && asset.filename !== ''
+        ? asset.filename
+        : typeof asset.full_path === 'string'
+          ? (asset.full_path.split('/').pop() ?? asset.full_path)
+          : String(asset.id ?? 'asset'),
+  }))
 }
 
-const assetKey = (asset: AssetLike): string => String(asset.id ?? asset.full_path ?? asset.filename ?? '')
-
-const assetName = (asset: AssetLike): string => {
-  if (typeof asset.filename === 'string' && asset.filename !== '') return asset.filename
-  if (typeof asset.full_path === 'string') return asset.full_path.split('/').pop() ?? asset.full_path
-  return String(asset.id ?? 'asset')
-}
-
-const items = computed((): { name: string; status: ItemStatus; key: string }[] => {
-  const oldAssets = toAssets(props.oldValue)
-  const newAssets = toAssets(props.newValue)
-  const oldKeys = new Set(oldAssets.map(assetKey))
-  const newKeys = new Set(newAssets.map(assetKey))
+const items = computed((): { name: string; status: ChipStatus; key: string }[] => {
+  const oldAssets = toAssetItems(props.oldValue)
+  const newAssets = toAssetItems(props.newValue)
+  const oldKeys = new Set(oldAssets.map((asset) => asset.key))
+  const newKeys = new Set(newAssets.map((asset) => asset.key))
 
   return [
     ...newAssets.map((asset) => ({
-      key: assetKey(asset),
-      name: assetName(asset),
-      status: (oldKeys.has(assetKey(asset)) ? 'unchanged' : 'added') as ItemStatus,
+      ...asset,
+      status: (oldKeys.has(asset.key) ? 'unchanged' : 'added') as ChipStatus,
     })),
     ...oldAssets
-      .filter((asset) => !newKeys.has(assetKey(asset)))
-      .map((asset) => ({ key: assetKey(asset), name: assetName(asset), status: 'removed' as ItemStatus })),
+      .filter((asset) => !newKeys.has(asset.key))
+      .map((asset) => ({ ...asset, status: 'removed' as ChipStatus })),
   ]
 })
-
-const chipClasses = (status: ItemStatus): string => {
-  switch (status) {
-    case 'added':
-      return 'border-success/30 bg-success/15 text-success'
-    case 'removed':
-      return 'border-destructive/30 bg-destructive/10 text-destructive line-through'
-    default:
-      return 'border-border text-muted-foreground'
-  }
-}
 </script>
 
 <template>

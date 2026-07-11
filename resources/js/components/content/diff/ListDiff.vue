@@ -1,40 +1,43 @@
 <script setup lang="ts">
-type ItemStatus = 'added' | 'removed' | 'unchanged'
+import { chipClasses, type ChipStatus } from '~/components/content/diff/chips'
+import { toDisplayText } from '~/utils/text-diff'
 
 const props = defineProps<{
   oldValue?: unknown
   newValue?: unknown
 }>()
 
-const toList = (value: unknown): string[] => (Array.isArray(value) ? value.map(String) : [])
+const toList = (value: unknown): string[] => (Array.isArray(value) ? value.map(toDisplayText) : [])
 
-const items = computed((): { value: string; status: ItemStatus }[] => {
+// Multiset matching, so duplicate entries keep add/remove fidelity.
+const items = computed((): { value: string; status: ChipStatus }[] => {
   const oldList = toList(props.oldValue)
   const newList = toList(props.newValue)
-  const oldSet = new Set(oldList)
-  const newSet = new Set(newList)
 
-  return [
-    ...newList.map((value) => ({
-      value,
-      status: (oldSet.has(value) ? 'unchanged' : 'added') as ItemStatus,
-    })),
-    ...oldList
-      .filter((value) => !newSet.has(value))
-      .map((value) => ({ value, status: 'removed' as ItemStatus })),
-  ]
-})
-
-const chipClasses = (status: ItemStatus): string => {
-  switch (status) {
-    case 'added':
-      return 'border-success/30 bg-success/15 text-success'
-    case 'removed':
-      return 'border-destructive/30 bg-destructive/10 text-destructive line-through'
-    default:
-      return 'border-border text-muted-foreground'
+  const remaining = new Map<string, number>()
+  for (const value of oldList) {
+    remaining.set(value, (remaining.get(value) ?? 0) + 1)
   }
-}
+
+  const result: { value: string; status: ChipStatus }[] = newList.map((value) => {
+    const left = remaining.get(value) ?? 0
+    if (left > 0) {
+      remaining.set(value, left - 1)
+      return { value, status: 'unchanged' }
+    }
+    return { value, status: 'added' }
+  })
+
+  for (const value of oldList) {
+    const left = remaining.get(value) ?? 0
+    if (left > 0) {
+      remaining.set(value, left - 1)
+      result.push({ value, status: 'removed' })
+    }
+  }
+
+  return result
+})
 </script>
 
 <template>

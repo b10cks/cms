@@ -132,16 +132,43 @@ class SchemaAwareDiffServiceTest extends TestCase
     }
 
     #[Test]
-    public function itFallsBackToPositionalFlattenWhenItemsLackIds()
+    public function itPairsItemsPositionallyWhenIdsAreMissing()
     {
         $old = ['body' => [['block' => 'teaser', 'headline' => 'x']]];
-        $new = ['body' => [['block' => 'teaser', 'headline' => 'y']]];
+        $new = ['body' => [
+            ['block' => 'teaser', 'headline' => 'y'],
+            ['block' => 'teaser', 'headline' => 'extra'],
+        ]];
 
         $entries = $this->diff($old, $new);
 
-        $this->assertCount(1, $entries);
-        $this->assertSame('body.0.headline', $entries[0]->path);
-        $this->assertNull($entries[0]->fieldType);
+        $this->assertCount(2, $entries);
+
+        $changed = $this->entry($entries, 'body.0.headline');
+        $this->assertSame(DiffType::CHANGED, $changed->type);
+        $this->assertSame('text', $changed->fieldType);
+
+        $added = $this->entry($entries, 'body.1');
+        $this->assertSame(DiffType::ADDED, $added->type);
+        $this->assertSame('block', $added->fieldType);
+    }
+
+    #[Test]
+    public function itEmitsPerItemEntriesWhenWholeBlocksFieldIsAddedOrRemoved()
+    {
+        $items = [
+            ['id' => 'one', 'block' => 'teaser', 'headline' => 'A'],
+            ['id' => 'two', 'block' => 'teaser', 'headline' => 'B'],
+        ];
+
+        $added = $this->diff([], ['body' => $items]);
+        $this->assertCount(2, $added);
+        $this->assertSame(DiffType::ADDED, $this->entry($added, 'body.0')->type);
+        $this->assertSame('block', $this->entry($added, 'body.1')->fieldType);
+
+        $removed = $this->diff(['body' => $items], []);
+        $this->assertCount(2, $removed);
+        $this->assertSame(DiffType::REMOVED, $this->entry($removed, 'body.1')->type);
     }
 
     #[Test]

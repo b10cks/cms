@@ -2,11 +2,11 @@
 
 namespace App\Http\Resources\Management;
 
-use App\Models\Space\Block;
 use App\Models\Space\ContentVersion;
 use App\Services\Content\Diff\ArrayDiffService;
 use App\Services\Content\Diff\DiffResult;
 use App\Services\Content\Diff\SchemaAwareDiffService;
+use App\Services\Content\Schema\ContentSchemaValueMerger;
 use Illuminate\Http\Request;
 
 /**
@@ -32,27 +32,15 @@ class ContentVersionResource extends ContentVersionListResource
             return app(ArrayDiffService::class)->diff($old, $new);
         }
 
-        return app(SchemaAwareDiffService::class)->diff($old, $new, $schema, $this->blockSchemaResolver());
-    }
+        // The merger's slug lookup is cached per request, so repeated
+        // resource instances share one blocks query.
+        $merger = app(ContentSchemaValueMerger::class);
 
-    /**
-     * Lazily resolves nested block schemas by slug; the lookup is only
-     * loaded when the content actually contains a blocks field.
-     */
-    protected function blockSchemaResolver(): callable
-    {
-        $schemasBySlug = null;
-
-        return function (string $slug) use (&$schemasBySlug): array {
-            $schemasBySlug ??= Block::query()
-                ->select(['slug', 'schema'])
-                ->get()
-                ->mapWithKeys(static fn (Block $block): array => [
-                    $block->slug => $block->schema?->toArray() ?? [],
-                ])
-                ->all();
-
-            return $schemasBySlug[$slug] ?? [];
-        };
+        return app(SchemaAwareDiffService::class)->diff(
+            $old,
+            $new,
+            $schema,
+            static fn (string $slug): array => $merger->resolveBlockSchema($slug)
+        );
     }
 }

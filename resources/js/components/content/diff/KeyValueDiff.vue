@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import DiffSegments from '~/components/content/diff/DiffSegments.vue'
-import { diffTextSegments } from '~/utils/text-diff'
-
-type RowStatus = 'added' | 'removed' | 'changed' | 'unchanged'
+import { diffTextSegments, toDisplayText, type DiffSegment } from '~/utils/text-diff'
 
 interface Row {
   key: string
-  oldText: string
-  newText: string
-  status: RowStatus
+  unchanged: boolean
+  segments: DiffSegment[]
 }
 
 const props = defineProps<{
@@ -25,12 +22,6 @@ const toRecord = (value: unknown): Record<string, unknown> => {
     : {}
 }
 
-const format = (value: unknown): string => {
-  if (value == null) return ''
-  if (typeof value === 'object') return JSON.stringify(value)
-  return String(value)
-}
-
 const rows = computed((): Row[] => {
   const oldRecord = toRecord(props.oldValue)
   const newRecord = toRecord(props.newValue)
@@ -39,19 +30,19 @@ const rows = computed((): Row[] => {
   return keys
     .filter((key) => !IGNORED_KEYS.has(key))
     .map((key): Row => {
-      const inOld = key in oldRecord && oldRecord[key] != null
-      const inNew = key in newRecord && newRecord[key] != null
-      const oldText = format(oldRecord[key])
-      const newText = format(newRecord[key])
+      const oldText = toDisplayText(oldRecord[key])
+      const newText = toDisplayText(newRecord[key])
+      const unchanged = oldText === newText
 
-      let status: RowStatus = 'unchanged'
-      if (inOld && !inNew) status = 'removed'
-      else if (!inOld && inNew) status = 'added'
-      else if (oldText !== newText) status = 'changed'
-
-      return { key, oldText, newText, status }
+      return {
+        key,
+        unchanged,
+        segments: unchanged
+          ? [{ type: 'equal', text: newText }]
+          : diffTextSegments(oldText, newText),
+      }
     })
-    .filter((row) => row.status !== 'unchanged' || row.newText !== '')
+    .filter((row) => !row.unchanged || row.segments[0].text !== '')
 })
 </script>
 
@@ -65,25 +56,11 @@ const rows = computed((): Row[] => {
       <span class="text-muted-foreground w-24 shrink-0 truncate font-mono text-xs">{{
         row.key
       }}</span>
-      <span class="min-w-0">
-        <template v-if="row.status === 'changed'">
-          <DiffSegments :segments="diffTextSegments(row.oldText, row.newText)" />
-        </template>
-        <ins
-          v-else-if="row.status === 'added'"
-          class="rounded-sm bg-success/25 text-success no-underline"
-          >{{ row.newText }}</ins
-        >
-        <del
-          v-else-if="row.status === 'removed'"
-          class="rounded-sm bg-destructive/25 text-destructive line-through decoration-destructive/60"
-          >{{ row.oldText }}</del
-        >
-        <span
-          v-else
-          class="text-muted-foreground"
-          >{{ row.newText }}</span
-        >
+      <span
+        class="min-w-0"
+        :class="{ 'text-muted-foreground': row.unchanged }"
+      >
+        <DiffSegments :segments="row.segments" />
       </span>
     </div>
   </div>
