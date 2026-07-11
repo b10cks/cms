@@ -242,7 +242,7 @@ declare global {
   export type { ContentCanvasCommand, ContentCanvasHistoryEntry } from './resources/js/composables/useContentCanvasCommands'
   import('./resources/js/composables/useContentCanvasCommands')
   // @ts-ignore
-  export type { CollaborationPresenceUser, ContentFieldUpdatePayload, ContentFieldFocusPayload, ContentBlockOperationPayload, ContentCommitAction } from './resources/js/composables/useContentLiveCollaboration'
+  export type { CollaborationPresenceUser, ContentFieldUpdatePayload, ContentFieldRef, ContentFieldFocusPayload, ContentBlockOperationPayload, ContentCommitAction } from './resources/js/composables/useContentLiveCollaboration'
   import('./resources/js/composables/useContentLiveCollaboration')
   // @ts-ignore
   export type { ContentPresenceMap } from './resources/js/composables/useContentMenuPresence'

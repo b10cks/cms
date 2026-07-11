@@ -35,6 +35,7 @@ import {
 } from '~/lib/content-i18n'
 import { mergeLocalizedContentForSchema } from '~/lib/tableField'
 import type { ContentResource } from '~/types/contents'
+import type { FieldUpdateEvent } from '~/utils/preview-bridge'
 
 const route = useRoute()
 const router = useRouter()
@@ -163,9 +164,24 @@ const updateTranslationContent = (nextContent: Record<string, unknown>) => {
   translatableContent.value.content = nextContent
 }
 const previewRef = useTemplateRef<InstanceType<typeof Preview>>('previewRef')
+const localizationRef = useTemplateRef<InstanceType<typeof FlattenedLocalization>>('localizationRef')
 const previewContentRef = computed(
   () => translatableContent.value || canonicalContent.value || null
 )
+
+// Ids the preview iframe may report as the root item of an inline edit.
+const previewRootItemIds = computed(() =>
+  [
+    translatableContent.value?.id,
+    canonicalContent.value?.id,
+    canonicalContentId.value,
+    nearestSourceContent.value?.id,
+  ].filter((id, index, ids): id is string => !!id && ids.indexOf(id) === index)
+)
+
+const handlePreviewFieldUpdate = (payload: FieldUpdateEvent) => {
+  localizationRef.value?.applyPreviewFieldUpdate(payload)
+}
 const viewMode = useStorage<'split' | 'localize' | 'preview'>(
   `space-${spaceId.value}-localization-view`,
   'split'
@@ -708,6 +724,7 @@ useSeoMeta({
           :full-slug="translatableContent.full_slug"
           :updated-at="translatableContent.updated_at"
           :content="previewContentPayload"
+          @update-field="handlePreviewFieldUpdate"
         />
       </ResizablePanel>
       <ResizableHandle
@@ -805,6 +822,7 @@ useSeoMeta({
                 </div>
               </div>
               <FlattenedLocalization
+                ref="localizationRef"
                 :original-content="sourceContentPayload"
                 :translation-content="translationContentPayload"
                 :block-schema="block.schema"
@@ -813,6 +831,7 @@ useSeoMeta({
                 :target-language="resolvedLanguage"
                 :get-field-collaborators="getLocalizedFieldCollaborators"
                 :get-field-draft-owners="getLocalizedFieldDraftOwners"
+                :root-item-ids="previewRootItemIds"
                 @update:translation-content="updateTranslationContent"
                 @field-update="handleLocalizedFieldUpdate"
                 @field-focus="handleLocalizedFieldFocus"

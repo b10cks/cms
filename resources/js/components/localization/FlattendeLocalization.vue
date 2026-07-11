@@ -29,6 +29,7 @@ import {
   type LocalizedFieldUpdatePayload,
 } from '~/lib/localizationCollab'
 import { ensureTableValue, getTableColumns } from '~/lib/tableField'
+import type { FieldUpdateEvent } from '~/utils/preview-bridge'
 
 import DateLocalization from './DateLocalization.vue'
 import LinkLocalization from './LinkLocalization.vue'
@@ -116,6 +117,10 @@ const props = defineProps<{
   ) => { schema: Record<string, LocalizableSchema>; name: string } | undefined
   getFieldCollaborators?: (key: string) => CollaborationPresenceUser[]
   getFieldDraftOwners?: (key: string) => CollaborationPresenceUser[]
+  // Content ids the preview may report as the root item of a FIELD_UPDATE
+  // (translation, canonical and nearest source id), used to route root-level
+  // preview edits to top-level translatable fields.
+  rootItemIds?: string[]
 }>()
 const emit = defineEmits<{
   'update:translationContent': [value: Record<string, unknown>]
@@ -1001,6 +1006,45 @@ const updateTranslatedValue = (field: TranslatableField, newValue: unknown): voi
     getFieldDebounceMs(field)
   )
 }
+
+// Inline edits from the visual editor arrive as (itemId, field) on the merged
+// preview content; route them to the matching translatable field so they land
+// in the translation draft and go through the usual dirty/whisper pipeline.
+// Returns false for fields this view doesn't own (non-translatable ones).
+const applyPreviewFieldUpdate = ({ itemId, field, value }: FieldUpdateEvent): boolean => {
+  const match = translatableFields.value.find((candidate) => {
+    if (candidate.isOrphanedBlock || candidate.tablePath) return false
+    if (candidate.path[candidate.path.length - 1] !== field) return false
+
+    const stamps = candidate.blockStamps || []
+    const innermostStamp = stamps[stamps.length - 1]
+
+    return innermostStamp
+      ? innermostStamp.id === itemId
+      : (props.rootItemIds?.includes(itemId) ?? false)
+  })
+
+  if (!match) return false
+
+  switch (normalizeSchemaType(match.schemaItem.type)) {
+    case 'richtext':
+      if (!isRichTextDocument(value)) return false
+      break
+    case 'link':
+      if (!isLinkValue(value)) return false
+      break
+    case 'meta':
+      if (!isObjectRecord(value)) return false
+      break
+    default:
+      if (typeof value !== 'string') return false
+  }
+
+  updateTranslatedValue(match, normalizeTranslatedFieldValue(match, value))
+  return true
+}
+
+defineExpose({ applyPreviewFieldUpdate })
 
 const buildTranslationUnits = (): TranslationUnit[] => {
   const units: TranslationUnit[] = []
