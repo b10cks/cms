@@ -11,6 +11,11 @@ import type {
   UpdateContentPayload,
 } from '~/types/contents'
 
+import type {
+  ContentTranslationExportFormat,
+  ContentTranslationImportMode,
+} from '~/types/content-translations'
+
 import { queryKeys } from './useQueryClient'
 
 export function useContent(spaceId: MaybeRef<string>) {
@@ -331,6 +336,50 @@ export function useContent(spaceId: MaybeRef<string>) {
     })
   }
 
+  const useExportContentTranslationsMutation = () => {
+    return useMutation({
+      mutationFn: async (
+        params: { as: ContentTranslationExportFormat } & Record<string, unknown>
+      ) => {
+        return await spaceAPI.value.contents.exportTranslations(params)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.content.translationExportError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
+  const useImportContentTranslationsMutation = () => {
+    return useMutation({
+      mutationFn: async (variables: {
+        file: File
+        mode: ContentTranslationImportMode
+        createMissing: boolean
+      }) => {
+        return await spaceAPI.value.contents.importTranslations(variables.file, {
+          mode: variables.mode,
+          createMissing: variables.createMissing,
+        })
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
+        toast.success(t('composables.content.translationImportSuccess') as string)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.content.translationImportError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
   return {
     // Queries
     useContentsQuery,
@@ -348,5 +397,7 @@ export function useContent(spaceId: MaybeRef<string>) {
     useBulkCreateContentMutation,
     useMoveContentMutation,
     useTreeOperationsMutation,
+    useExportContentTranslationsMutation,
+    useImportContentTranslationsMutation,
   }
 }

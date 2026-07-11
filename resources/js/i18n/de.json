@@ -898,7 +898,44 @@
       "emptyTitle": "Kein Inhalt ausgewählt",
       "emptyDescription": "Erstelle zunächst deine erste Inhaltsseite",
       "managerTitle": "Inhalts-Manager",
-      "managerDescription": "Wähle ein Element aus dem Inhaltsmenü aus, um es zu bearbeiten oder neuen Inhalt zu erstellen."
+      "managerDescription": "Wähle ein Element aus dem Inhaltsmenü aus, um es zu bearbeiten oder neuen Inhalt zu erstellen.",
+      "translationExport": {
+        "entry": "Übersetzungen exportieren",
+        "title": "Inhaltsübersetzungen exportieren",
+        "description": "Exportiere übersetzbare Inhaltsfelder und ihre Übersetzungen im gewünschten Format.",
+        "formatLabel": "Exportformat",
+        "submit": "Exportieren"
+      },
+      "translationImport": {
+        "entry": "Übersetzungen importieren",
+        "title": "Inhaltsübersetzungen importieren",
+        "description": "Lade eine übersetzte Datei hoch, um die Übersetzungen auf deine Inhalte anzuwenden.",
+        "supportedFormats": "Unterstützte Formate: XLIFF, CSV, Excel, JSON, YAML",
+        "selectFileError": "Bitte wähle eine Datei zum Importieren aus",
+        "submit": "Importieren",
+        "mode": {
+          "label": "Anwenden als",
+          "draft": "Entwurf",
+          "draftDescription": "Übersetzungen als neue Entwurfsversion speichern. Nichts wird veröffentlicht, bis es geprüft wurde.",
+          "publish": "Veröffentlichen",
+          "publishDescription": "Importierte Übersetzungen sofort veröffentlichen."
+        },
+        "createMissing": {
+          "label": "Fehlende Sprachversionen erstellen",
+          "description": "Erstelle eine Inhaltsversion für Sprachen, die noch keine haben."
+        },
+        "summaryTitle": "Import abgeschlossen",
+        "summaryDescription": "Prüfe, was in deine Inhalte importiert wurde.",
+        "summary": {
+          "success": "Aktualisiert",
+          "changes": "Geändert",
+          "errors": "Fehler"
+        },
+        "modifiedContent": "Geänderte Inhalte",
+        "changeCount": "{count} Feld(er)",
+        "ignoredFields": "Ignoriert",
+        "errorsTitle": "Fehler"
+      }
     },
     "contentTree": {
       "actions": {
@@ -3949,7 +3986,10 @@
       "deleteSuccess": "Inhalt erfolgreich gelöscht",
       "deleteError": "Fehler beim Löschen des Inhalts: {error}",
       "bulkCreateError": "Fehler beim Erstellen mehrerer Inhalte: {error}",
-      "moveError": "Fehler beim Verschieben des Inhalts: {error}"
+      "moveError": "Fehler beim Verschieben des Inhalts: {error}",
+      "translationExportError": "Fehler beim Exportieren der Inhaltsübersetzungen: {error}",
+      "translationImportSuccess": "Inhaltsübersetzungen erfolgreich importiert",
+      "translationImportError": "Fehler beim Importieren der Inhaltsübersetzungen: {error}"
     },
     "contentVersions": {
       "setCurrentSuccess": "Version erfolgreich als aktuell festgelegt",

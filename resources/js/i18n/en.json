@@ -903,7 +903,44 @@
       "emptyTitle": "No Content Selected",
       "emptyDescription": "Start by creating your first content page",
       "managerTitle": "Content Manager",
-      "managerDescription": "Select an item from the content menu to edit or create new content."
+      "managerDescription": "Select an item from the content menu to edit or create new content.",
+      "translationExport": {
+        "entry": "Export translations",
+        "title": "Export content translations",
+        "description": "Export translatable content fields and their translations in your preferred format.",
+        "formatLabel": "Export format",
+        "submit": "Export"
+      },
+      "translationImport": {
+        "entry": "Import translations",
+        "title": "Import content translations",
+        "description": "Upload a translated file to apply translations back to your content.",
+        "supportedFormats": "Supported formats: XLIFF, CSV, Excel, JSON, YAML",
+        "selectFileError": "Please select a file to import",
+        "submit": "Import",
+        "mode": {
+          "label": "Apply as",
+          "draft": "Draft",
+          "draftDescription": "Save translations as a new draft version. Nothing goes live until reviewed.",
+          "publish": "Publish",
+          "publishDescription": "Publish imported translations immediately."
+        },
+        "createMissing": {
+          "label": "Create missing language versions",
+          "description": "Create a content version for languages that don't have one yet."
+        },
+        "summaryTitle": "Import complete",
+        "summaryDescription": "Review what was imported into your content.",
+        "summary": {
+          "success": "Updated",
+          "changes": "Changed",
+          "errors": "Errors"
+        },
+        "modifiedContent": "Modified content",
+        "changeCount": "{count} field(s)",
+        "ignoredFields": "Ignored",
+        "errorsTitle": "Errors"
+      }
     },
     "contentTree": {
       "actions": {
@@ -3954,7 +3991,10 @@
       "deleteSuccess": "Content deleted successfully",
       "deleteError": "Failed to delete content: {error}",
       "bulkCreateError": "Failed to create content items: {error}",
-      "moveError": "Failed to move content: {error}"
+      "moveError": "Failed to move content: {error}",
+      "translationExportError": "Failed to export content translations: {error}",
+      "translationImportSuccess": "Content translations imported successfully",
+      "translationImportError": "Failed to import content translations: {error}"
     },
     "contentVersions": {
       "setCurrentSuccess": "Version set as current successfully",

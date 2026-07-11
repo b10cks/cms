@@ -38,6 +38,8 @@ use App\Http\Controllers\Mgmt\Content\BulkCreateContentController;
 use App\Http\Controllers\Mgmt\Content\CommentController;
 use App\Http\Controllers\Mgmt\Content\CommentReactionController;
 use App\Http\Controllers\Mgmt\Content\ContentController;
+use App\Http\Controllers\Mgmt\Content\ContentDataExportController;
+use App\Http\Controllers\Mgmt\Content\ContentDataImportController;
 use App\Http\Controllers\Mgmt\Content\ContentMenuController;
 use App\Http\Controllers\Mgmt\Content\ContentPublishController;
 use App\Http\Controllers\Mgmt\Content\ContentScheduleController;
@@ -303,6 +305,11 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
         ->name('assets.data.export');
     Route::post('assets/import', AssetDataImportController::class)
         ->name('assets.data.import');
+
+    Route::post('contents/export', ContentDataExportController::class)
+        ->name('contents.data.export');
+    Route::post('contents/import', ContentDataImportController::class)
+        ->name('contents.data.import');
 
     // Additional content actions
     Route::post('contents/{content}/publish', ContentPublishController::class)

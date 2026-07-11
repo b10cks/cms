@@ -1,3 +1,4 @@
+import { requestExportBlob, requestImportJson } from '~/lib/import-export'
 import type { ApiResponse, BaseQueryParams } from '~/types'
 import type {
   ContentResource,
@@ -6,6 +7,11 @@ import type {
   CreateContentPayload,
   UpdateContentPayload,
 } from '~/types/contents'
+import type {
+  ContentTranslationExportFormat,
+  ContentTranslationImportMode,
+  ContentTranslationImportResult,
+} from '~/types/content-translations'
 
 type ForceableContentPayload = UpdateContentPayload & {
   force?: boolean
@@ -169,5 +175,40 @@ export class Contents extends BaseResource<
       `${this.basePath}/tree-operations`,
       payload
     )
+  }
+
+  /**
+   * Export content translations in the given format (optionally filtered).
+   */
+  public async exportTranslations(
+    params: { as: ContentTranslationExportFormat } & Record<string, unknown>
+  ): Promise<Blob> {
+    return requestExportBlob({
+      client: this.client,
+      endpoint: `${this.basePath}/export`,
+      payload: params,
+    })
+  }
+
+  /**
+   * Import content translations from a file, as a draft or published.
+   */
+  public async importTranslations(
+    file: File,
+    options: { mode: ContentTranslationImportMode; createMissing: boolean }
+  ): Promise<ContentTranslationImportResult> {
+    const data = await requestImportJson<
+      ContentTranslationImportResult | { data: ContentTranslationImportResult }
+    >({
+      client: this.client,
+      endpoint: `${this.basePath}/import`,
+      file,
+      extraFields: {
+        import_mode: options.mode,
+        create_missing: options.createMissing ? '1' : '0',
+      },
+    })
+
+    return 'data' in data ? data.data : data
   }
 }
