@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import type { Component, Ref } from 'vue'
-import { computed, inject, ref, watch } from 'vue'
+import { computed, inject, onBeforeUnmount, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 
 import type { SpaceAiConfig } from '~/api/resources/ai'
 import Icon from '~/components/Icon.vue'
 import MetaLocalization from '~/components/localization/MetaLocalization.vue'
+import { AvatarList } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
 import SplitButton from '~/components/ui/button/SplitButton.vue'
 import { DropdownMenuItem } from '~/components/ui/dropdown-menu'
@@ -13,12 +14,20 @@ import { CheckboxField } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import { useAiConfigs } from '~/composables/useAiModels'
 import { useAiTranslation } from '~/composables/useAiTranslation'
+import type { CollaborationPresenceUser } from '~/composables/useContentLiveCollaboration'
 import {
   isFieldVisible,
   normalizeSchema,
   normalizeSchemaType,
 } from '~/composables/useContentSchemaState'
 import { stripAiCodeFences } from '~/lib/aiJson'
+import {
+  getCollaborationFieldKey,
+  getLocalizedFieldValue,
+  type BlockStamp,
+  type LocalizedFieldFocusPayload,
+  type LocalizedFieldUpdatePayload,
+} from '~/lib/localizationCollab'
 import { ensureTableValue, getTableColumns } from '~/lib/tableField'
 
 import DateLocalization from './DateLocalization.vue'
@@ -29,12 +38,6 @@ import TextareaLocalization from './TextareaLocalization.vue'
 import TextLocalization from './TextLocalization.vue'
 
 type LocalizableSchema = SchemaType & { translatable?: boolean }
-
-interface BlockStamp {
-  pathIndex: number
-  id: string
-  block: string
-}
 
 interface TranslatableField {
   key: string
@@ -75,6 +78,7 @@ interface TranslationUnit {
   id: string
   source: string
   fieldIdentifier: string
+  field: TranslatableField
   apply: (content: Record<string, unknown>, translation: string) => void
 }
 
@@ -110,9 +114,13 @@ const props = defineProps<{
   getBlockSchema?: (
     blockSlug: string
   ) => { schema: Record<string, LocalizableSchema>; name: string } | undefined
+  getFieldCollaborators?: (key: string) => CollaborationPresenceUser[]
+  getFieldDraftOwners?: (key: string) => CollaborationPresenceUser[]
 }>()
 const emit = defineEmits<{
   'update:translationContent': [value: Record<string, unknown>]
+  'field-update': [payload: LocalizedFieldUpdatePayload]
+  'field-focus': [payload: LocalizedFieldFocusPayload]
 }>()
 
 const { useSpaceQuery } = useSpaces()
@@ -460,12 +468,14 @@ const buildRichTextTranslationBase = (
   return nextDocument
 }
 
+// deep: remote collaboration edits mutate the translation content in place,
+// so a plain reference watch would miss them.
 watch(
   () => props.translationContent,
   (nextTranslationContent) => {
     translationDraft.value = cloneTranslationContent(nextTranslationContent)
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 )
 
 const getBlockItemId = (item: unknown): string | null =>
@@ -737,6 +747,95 @@ const isMachineTranslated = (field: TranslatableField): boolean => {
   return machineTranslatedFields.value.has(getFieldIdentifier(field))
 }
 
+// Live-collaboration wiring: field updates are whispered at the granularity of
+// the value actually written to the draft — whole table values for table
+// cells/headers, the leaf value otherwise.
+const getWhisperPath = (field: TranslatableField): Array<string | number> =>
+  field.tablePath || field.path
+
+const getCollaborationKey = (field: TranslatableField): string =>
+  getCollaborationFieldKey(getWhisperPath(field), field.blockStamps)
+
+const getFieldDebounceMs = (field: TranslatableField): number => {
+  switch (normalizeSchemaType(field.schemaItem.type)) {
+    case 'richtext':
+      return 500
+    case 'markdown':
+    case 'textarea':
+      return 250
+    default:
+      return 150
+  }
+}
+
+const emitFieldUpdate = (
+  path: Array<string | number>,
+  blockStamps: BlockStamp[] | undefined,
+  previousDraft: Record<string, unknown>,
+  nextDraft: Record<string, unknown>,
+  debounceMs?: number
+) => {
+  emit('field-update', {
+    key: getCollaborationFieldKey(path, blockStamps),
+    path,
+    blockStamps,
+    previousValue: getLocalizedFieldValue(previousDraft, path, blockStamps),
+    value: getLocalizedFieldValue(nextDraft, path, blockStamps),
+    debounceMs,
+  })
+}
+
+const fieldCollaborators = (field: TranslatableField): CollaborationPresenceUser[] =>
+  props.getFieldCollaborators?.(getCollaborationKey(field)) || []
+
+const fieldDraftOwners = (field: TranslatableField): CollaborationPresenceUser[] =>
+  props.getFieldDraftOwners?.(getCollaborationKey(field)) || []
+
+const getCollaborationStyle = (field: TranslatableField): Record<string, string> => {
+  const style: Record<string, string> = {
+    '--collaboration-dirty-color': fieldDraftOwners(field)[0]?.color || 'transparent',
+  }
+
+  const activeColor = fieldCollaborators(field)[0]?.color
+  if (activeColor) {
+    style['--collaboration-color'] = activeColor
+  }
+
+  return style
+}
+
+const focusedCollaborationKeys = new Set<string>()
+
+const handleFieldFocusIn = (field: TranslatableField) => {
+  const key = getCollaborationKey(field)
+  if (focusedCollaborationKeys.has(key)) return
+
+  focusedCollaborationKeys.add(key)
+  emit('field-focus', { key, focused: true })
+}
+
+const handleFieldFocusOut = (field: TranslatableField, event: FocusEvent) => {
+  const nextTarget = event.relatedTarget as Node | null
+  const currentTarget = event.currentTarget as HTMLElement | null
+
+  if (nextTarget && currentTarget?.contains(nextTarget)) {
+    return
+  }
+
+  const key = getCollaborationKey(field)
+  if (!focusedCollaborationKeys.has(key)) return
+
+  focusedCollaborationKeys.delete(key)
+  emit('field-focus', { key, focused: false })
+}
+
+onBeforeUnmount(() => {
+  focusedCollaborationKeys.forEach((key) => {
+    emit('field-focus', { key, focused: false })
+  })
+  focusedCollaborationKeys.clear()
+})
+
 const applyBlockStamps = (
   content: Record<string, unknown>,
   path: Array<string | number>,
@@ -842,12 +941,14 @@ const applyTranslatedValue = (
 const removeOrphanedBlock = (field: TranslatableField): void => {
   const arrayPath = field.path.slice(0, -1)
   const itemIndex = field.path[field.path.length - 1] as number
+  const previousDraft = translationDraft.value
   const nextDraft = cloneTranslationContent(translationDraft.value)
   const array = getValueAtPath(nextDraft, arrayPath)
   if (!Array.isArray(array)) return
   array.splice(itemIndex, 1)
   markFieldDirty?.(getValidationPath(field))
   emitTranslationContent(nextDraft)
+  emitFieldUpdate(arrayPath, field.blockStamps, previousDraft, nextDraft, 0)
 }
 
 const removeOrphanedEntry = (field: TranslatableField): void => {
@@ -887,10 +988,18 @@ const updateTranslatedValue = (field: TranslatableField, newValue: unknown): voi
     fieldToUpdate.isTranslated = isFieldTranslated(field.schemaItem, field.originalValue, newValue)
   }
 
+  const previousDraft = translationDraft.value
   const nextTranslationContent = cloneTranslationContent(translationDraft.value)
   applyTranslatedValue(nextTranslationContent, field, newValue)
   markFieldDirty?.(getValidationPath(field))
   emitTranslationContent(nextTranslationContent)
+  emitFieldUpdate(
+    getWhisperPath(field),
+    field.blockStamps,
+    previousDraft,
+    nextTranslationContent,
+    getFieldDebounceMs(field)
+  )
 }
 
 const buildTranslationUnits = (): TranslationUnit[] => {
@@ -916,6 +1025,7 @@ const buildTranslationUnits = (): TranslationUnit[] => {
           id: nextUnitId(),
           source,
           fieldIdentifier,
+          field,
           apply: (content, translation) => {
             const nextMeta = normalizeMetaValue(getFieldValue(content, field))
             nextMeta[key] = translation
@@ -945,6 +1055,7 @@ const buildTranslationUnits = (): TranslationUnit[] => {
           id: nextUnitId(),
           source: segment.text,
           fieldIdentifier,
+          field,
           apply: (content, translation) => {
             const nextDocument = buildRichTextTranslationBase(
               field.originalValue,
@@ -970,6 +1081,7 @@ const buildTranslationUnits = (): TranslationUnit[] => {
       id: nextUnitId(),
       source: field.originalValue,
       fieldIdentifier,
+      field,
       apply: (content, translation) => {
         applyTranslatedValue(content, field, translation)
       },
@@ -983,7 +1095,9 @@ const applyTranslatedValues = (
   translatedTexts: Record<string, string>,
   translationUnitsById: Map<string, TranslationUnit>
 ) => {
+  const previousDraft = translationDraft.value
   const nextTranslationContent = cloneTranslationContent(translationDraft.value)
+  const appliedFields: TranslatableField[] = []
   let hasUpdates = false
 
   Object.entries(translatedTexts).forEach(([translationUnitId, translation]) => {
@@ -995,6 +1109,7 @@ const applyTranslatedValues = (
     try {
       unit.apply(nextTranslationContent, translation)
       machineTranslatedFields.value.add(unit.fieldIdentifier)
+      appliedFields.push(unit.field)
       hasUpdates = true
     } catch {
       // silently skip units that fail to apply
@@ -1003,6 +1118,21 @@ const applyTranslatedValues = (
 
   if (hasUpdates) {
     emitTranslationContent(nextTranslationContent)
+
+    const emittedKeys = new Set<string>()
+    appliedFields.forEach((field) => {
+      const key = getCollaborationKey(field)
+      if (emittedKeys.has(key)) return
+
+      emittedKeys.add(key)
+      emitFieldUpdate(
+        getWhisperPath(field),
+        field.blockStamps,
+        previousDraft,
+        nextTranslationContent,
+        0
+      )
+    })
   }
 }
 
@@ -1140,17 +1270,26 @@ const removeAllOrphanedBlocks = (): void => {
     return bIdx - aIdx
   })
 
-  let nextDraft = cloneTranslationContent(translationDraft.value)
+  const previousDraft = translationDraft.value
+  const nextDraft = cloneTranslationContent(translationDraft.value)
+  const affectedArrays = new Map<string, { path: Array<string | number>; blockStamps?: BlockStamp[] }>()
   for (const field of sorted) {
     const arrayPath = field.path.slice(0, -1)
     const itemIndex = field.path[field.path.length - 1] as number
     const array = getValueAtPath(nextDraft, arrayPath)
     if (Array.isArray(array)) {
       array.splice(itemIndex, 1)
+      affectedArrays.set(getCollaborationFieldKey(arrayPath, field.blockStamps), {
+        path: arrayPath,
+        blockStamps: field.blockStamps,
+      })
     }
   }
 
   emitTranslationContent(nextDraft)
+  affectedArrays.forEach(({ path, blockStamps }) => {
+    emitFieldUpdate(path, blockStamps, previousDraft, nextDraft, 0)
+  })
 }
 </script>
 
@@ -1268,12 +1407,28 @@ const removeAllOrphanedBlocks = (): void => {
         :key="`${field.path.join('-')}-${field.key}`"
         :data-field-path="getValidationPath(field)"
         :data-validation-visible="shouldShowValidationError(field) ? 'true' : undefined"
-        :class="
-          field.isOrphaned
-            ? 'rounded-md border border-amber-500/40 bg-amber-500/5 px-3 pb-1'
-            : undefined
-        "
+        :class="[
+          'relative',
+          field.isOrphaned ? 'rounded-md border border-amber-500/40 bg-amber-500/5 px-3 pb-1' : '',
+          fieldDraftOwners(field).length ? 'collaboration-field-dirty' : '',
+          fieldCollaborators(field).length ? 'collaboration-field-active' : '',
+        ]"
+        :style="getCollaborationStyle(field)"
+        @focusin="handleFieldFocusIn(field)"
+        @focusout="handleFieldFocusOut(field, $event)"
       >
+        <div
+          v-if="fieldCollaborators(field).length"
+          class="absolute top-1 right-1 z-20"
+        >
+          <AvatarList
+            :users="fieldCollaborators(field)"
+            :max="3"
+            size="sm"
+            tooltip-side="left"
+            class="rounded-full bg-background/90 px-1 py-0.5 shadow-sm backdrop-blur"
+          />
+        </div>
         <div class="-mb-2 pt-2">
           <h4 class="flex items-baseline gap-2">
             <span class="font-semibold text-primary">{{ field.fieldName }}</span>
@@ -1369,3 +1524,27 @@ const removeAllOrphanedBlocks = (): void => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Dirty ring (unsaved changes, colored by owner) — declared before the
+   focus outline below so an active collaborator's outline wins. */
+.collaboration-field-dirty :deep(input),
+.collaboration-field-dirty :deep(textarea),
+.collaboration-field-dirty :deep(select),
+.collaboration-field-dirty :deep(button[role='combobox']),
+.collaboration-field-dirty :deep(.border-input),
+.collaboration-field-dirty :deep(.border-input-border),
+.collaboration-field-dirty :deep(.ProseMirror) {
+  outline: 1px solid var(--collaboration-dirty-color);
+}
+
+.collaboration-field-active :deep(input),
+.collaboration-field-active :deep(textarea),
+.collaboration-field-active :deep(select),
+.collaboration-field-active :deep(button[role='combobox']),
+.collaboration-field-active :deep(.border-input),
+.collaboration-field-active :deep(.border-input-border),
+.collaboration-field-active :deep(.ProseMirror) {
+  outline: 2px solid var(--collaboration-color);
+}
+</style>

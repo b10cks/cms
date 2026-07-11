@@ -14,7 +14,18 @@ import { Input } from '~/components/ui/input'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/components/ui/resizable'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { useAlertDialog } from '~/composables/useAlertDialog'
+import {
+  useContentLiveCollaboration,
+  type ContentCommitAction,
+} from '~/composables/useContentLiveCollaboration'
 import { useContentSchemaState } from '~/composables/useContentSchemaState'
+import {
+  applyLocalizedFieldValue,
+  getLocalizedFieldValue,
+  type LocalizedFieldFocusPayload,
+  type LocalizedFieldMeta,
+  type LocalizedFieldUpdatePayload,
+} from '~/lib/localizationCollab'
 import {
   buildMissingLanguageDraft,
   getContentDefaultLanguage,
@@ -471,6 +482,107 @@ const isDirty = computed(() => {
   return JSON.stringify(translatableContent.value) !== JSON.stringify(persistedContent.value)
 })
 
+// Live collaboration: translations may not be persisted yet (no content id), so
+// the presence channel is keyed by canonical content + language instead. That
+// key stays stable when a peer's save creates the translation row mid-session.
+const collaborationContentKey = computed(() =>
+  canonicalContent.value && resolvedLanguage.value
+    ? `${canonicalContent.value.id}-i18n-${resolvedLanguage.value}`
+    : null
+)
+
+const isLocalizedFieldMeta = (meta: unknown): meta is LocalizedFieldMeta =>
+  !!meta && typeof meta === 'object' && Array.isArray((meta as LocalizedFieldMeta).path)
+
+const syncRemotePersistedContent = (
+  nextContent: ContentResource,
+  mode: 'replace' | 'preserve-local'
+) => {
+  if (mode === 'replace' || !translatableContent.value) {
+    syncPersistedContent(nextContent)
+    return
+  }
+
+  // preserve-local: keep the in-flight draft content, but adopt the committed
+  // identity/version metadata (a peer's save may have just created the row).
+  const cloned = cloneContent(nextContent)
+  cloned.content = getLocalizedDraftContent(cloned)
+  persistedContent.value = cloned
+  translatableContent.value = {
+    ...translatableContent.value,
+    ...cloneContent(cloned),
+    content: translatableContent.value.content,
+  }
+}
+
+const {
+  broadcastPersistedContent,
+  collaborators,
+  discardOwnDrafts,
+  getCollaboratorsForField,
+  getDraftOwners,
+  remoteDraftCollaborators,
+  queueFieldUpdate,
+  updateFieldFocus,
+} = useContentLiveCollaboration(spaceId, collaborationContentKey, {
+  content: translatableContent,
+  hasLocalUnsavedChanges: () => isDirty.value,
+  syncPersistedContent: syncRemotePersistedContent,
+  fieldValueAdapter: {
+    get: (source, field) =>
+      isLocalizedFieldMeta(field.meta)
+        ? getLocalizedFieldValue(
+            (source.content || {}) as Record<string, unknown>,
+            field.meta.path,
+            field.meta.blockStamps
+          )
+        : undefined,
+    apply: (field, value) => {
+      if (!translatableContent.value || !isLocalizedFieldMeta(field.meta)) return
+
+      if (!translatableContent.value.content || typeof translatableContent.value.content !== 'object') {
+        translatableContent.value.content = {}
+      }
+
+      applyLocalizedFieldValue(
+        translatableContent.value.content as Record<string, unknown>,
+        field.meta.path,
+        value,
+        field.meta.blockStamps
+      )
+    },
+  },
+})
+
+const handleLocalizedFieldUpdate = (payload: LocalizedFieldUpdatePayload) => {
+  if (!collaborationContentKey.value) return
+
+  queueFieldUpdate({
+    itemId: collaborationContentKey.value,
+    field: payload.key,
+    previousValue: payload.previousValue,
+    value: payload.value,
+    debounceMs: payload.debounceMs,
+    meta: { path: payload.path, blockStamps: payload.blockStamps },
+  })
+}
+
+const handleLocalizedFieldFocus = (payload: LocalizedFieldFocusPayload) => {
+  if (!collaborationContentKey.value) return
+
+  updateFieldFocus({
+    itemId: collaborationContentKey.value,
+    field: payload.key,
+    focused: payload.focused,
+  })
+}
+
+const getLocalizedFieldCollaborators = (key: string) =>
+  collaborationContentKey.value ? getCollaboratorsForField(collaborationContentKey.value, key) : []
+
+const getLocalizedFieldDraftOwners = (key: string) =>
+  collaborationContentKey.value ? getDraftOwners(collaborationContentKey.value, key) : []
+
 async function guardLeave(to: any, from: any, next: any) {
   if (to && from && to.path === from.path) {
     return next()
@@ -484,6 +596,7 @@ async function guardLeave(to: any, from: any, next: any) {
       )
     )
     if (answer) {
+      discardOwnDrafts()
       next()
     } else {
       next(false)
@@ -537,11 +650,15 @@ watch(
   { deep: true }
 )
 
-provide('commitPersistedContent', (nextContent: ContentResource) => {
-  syncPersistedContent(nextContent)
-  clearServerErrors()
-  resetValidationState()
-})
+provide(
+  'commitPersistedContent',
+  (nextContent: ContentResource, action: ContentCommitAction = 'save') => {
+    syncPersistedContent(nextContent)
+    clearServerErrors()
+    resetValidationState()
+    broadcastPersistedContent(nextContent, action)
+  }
+)
 provide('resetDirtyState', () => {
   if (translatableContent.value) {
     syncPersistedContent(translatableContent.value)
@@ -694,7 +811,11 @@ useSeoMeta({
                 :space-id="spaceId"
                 :get-block-schema="getBlockSchemaFn"
                 :target-language="resolvedLanguage"
+                :get-field-collaborators="getLocalizedFieldCollaborators"
+                :get-field-draft-owners="getLocalizedFieldDraftOwners"
                 @update:translation-content="updateTranslationContent"
+                @field-update="handleLocalizedFieldUpdate"
+                @field-focus="handleLocalizedFieldFocus"
               />
             </div>
           </div>
@@ -720,6 +841,8 @@ useSeoMeta({
     <HeaderActions
       v-if="translatableContent"
       :content="translatableContent"
+      :present-users="collaborators"
+      :remote-draft-users="remoteDraftCollaborators"
       :space-id="spaceId"
       :is-dirty="isDirty"
     />

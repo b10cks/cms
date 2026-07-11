@@ -31,6 +31,15 @@ export interface ContentFieldUpdatePayload {
   field: string
   previousValue?: unknown
   value: unknown
+  // Opaque routing info carried through whispers for custom field adapters
+  // (e.g. the localization editor whispers path + block stamps here).
+  meta?: unknown
+}
+
+export interface ContentFieldRef {
+  itemId: string
+  field: string
+  meta?: unknown
 }
 
 export interface ContentFieldFocusPayload {
@@ -100,12 +109,21 @@ interface UseContentLiveCollaborationOptions {
   syncPersistedContent?: (content: ContentResource, mode: 'replace' | 'preserve-local') => void
   syncPreviewItem?: (item: Record<string, unknown>) => void
   syncInterval?: number
+  // Overrides how field values are read from / written into content. Editors
+  // whose fields aren't addressable as (itemId, field) on the content tree
+  // (e.g. path-based localization fields) provide their own resolution via
+  // the payload's `meta`.
+  fieldValueAdapter?: {
+    get: (source: ContentResource, field: ContentFieldRef) => unknown
+    apply: (field: ContentFieldRef, value: unknown) => void
+  }
 }
 
 interface DraftFieldSnapshot {
   field: string
   itemId: string
   previousValue: unknown
+  meta?: unknown
 }
 
 const cloneValue = <T>(value: T): T => {
@@ -156,6 +174,7 @@ export function useContentLiveCollaboration(
     syncPersistedContent,
     syncPreviewItem,
     syncInterval = 750,
+    fieldValueAdapter,
   }: UseContentLiveCollaborationOptions
 ) {
   const presence = useContentPresence(spaceIdRef, contentIdRef)
@@ -400,9 +419,14 @@ export function useContentLiveCollaboration(
   const getFieldValue = (
     source: ContentResource | null,
     itemId: string,
-    field: string
+    field: string,
+    meta?: unknown
   ): unknown => {
     if (!source) return undefined
+
+    if (fieldValueAdapter) {
+      return fieldValueAdapter.get(source, { itemId, field, meta })
+    }
 
     if (itemId === source.id) {
       return (source.content as Record<string, unknown>)?.[field]
@@ -411,10 +435,15 @@ export function useContentLiveCollaboration(
     return findNestedObjectById(source.content, itemId)?.[field]
   }
 
-  const applyFieldValue = (itemId: string, field: string, value: unknown) => {
+  const applyFieldValue = (itemId: string, field: string, value: unknown, meta?: unknown) => {
     if (!content.value) return
 
     const nextValue = cloneValue(value)
+
+    if (fieldValueAdapter) {
+      fieldValueAdapter.apply({ itemId, field, meta }, nextValue)
+      return
+    }
 
     if (itemId === content.value.id) {
       const nextContent = {
@@ -460,7 +489,8 @@ export function useContentLiveCollaboration(
     userId: string,
     itemId: string,
     field: string,
-    previousValue: unknown
+    previousValue: unknown,
+    meta?: unknown
   ) => {
     const userDrafts = remoteDraftFields.get(userId) ?? new Map<string, DraftFieldSnapshot>()
 
@@ -474,6 +504,7 @@ export function useContentLiveCollaboration(
         itemId,
         field,
         previousValue: cloneValue(previousValue),
+        meta,
       })
       syncRemoteDraftIndex()
     }
@@ -484,10 +515,12 @@ export function useContentLiveCollaboration(
       payload.userId,
       payload.itemId,
       payload.field,
-      payload.previousValue ?? getFieldValue(content.value, payload.itemId, payload.field)
+      payload.previousValue ??
+        getFieldValue(content.value, payload.itemId, payload.field, payload.meta),
+      payload.meta
     )
 
-    applyFieldValue(payload.itemId, payload.field, payload.value)
+    applyFieldValue(payload.itemId, payload.field, payload.value, payload.meta)
   }
 
   const clearLocalDraftState = () => {
@@ -535,6 +568,7 @@ export function useContentLiveCollaboration(
         itemId: payload.itemId,
         field: payload.field,
         previousValue: cloneValue(payload.previousValue),
+        meta: payload.meta,
       })
       syncLocalDraftIndex()
     }
@@ -727,7 +761,10 @@ export function useContentLiveCollaboration(
         itemId: snapshot.itemId,
         field: snapshot.field,
         previousValue: cloneValue(snapshot.previousValue),
-        value: cloneValue(getFieldValue(content.value, snapshot.itemId, snapshot.field)),
+        value: cloneValue(
+          getFieldValue(content.value, snapshot.itemId, snapshot.field, snapshot.meta)
+        ),
+        meta: snapshot.meta,
       })),
       focusedFields: Array.from(localFocusedFields).map((fieldKey) => {
         const separator = fieldKey.indexOf(':')
@@ -802,6 +839,7 @@ export function useContentLiveCollaboration(
         field: field.field,
         previousValue: cloneValue(field.previousValue),
         value: cloneValue(field.previousValue),
+        meta: field.meta,
       })),
       userId,
     } satisfies ContentDiscardWhisperPayload)
@@ -880,7 +918,8 @@ export function useContentLiveCollaboration(
         applyFieldValue(
           field.itemId,
           field.field,
-          getFieldValue(payload.content, field.itemId, field.field)
+          getFieldValue(payload.content, field.itemId, field.field, field.meta),
+          field.meta
         )
       })
 
@@ -901,10 +940,11 @@ export function useContentLiveCollaboration(
         itemId: field.itemId,
         field: field.field,
         previousValue: cloneValue(field.previousValue),
+        meta: field.meta,
       }))
 
       ;(remoteFields.length > 0 ? remoteFields : fallbackFields).forEach((field) => {
-        applyFieldValue(field.itemId, field.field, field.previousValue)
+        applyFieldValue(field.itemId, field.field, field.previousValue, field.meta)
       })
     }
   )
