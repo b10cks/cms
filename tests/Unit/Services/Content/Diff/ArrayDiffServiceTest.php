@@ -48,8 +48,16 @@ class ArrayDiffServiceTest extends TestCase
         $result = $this->service->diff(['removed' => 1], ['added' => 2]);
 
         $this->assertCount(2, $result->entries);
-        $this->assertSame(DiffType::ADDED, $result->getChangesByType(DiffType::ADDED)[array_key_first($result->getChangesByType(DiffType::ADDED))]->type);
-        $this->assertCount(1, $result->getChangesByType(DiffType::REMOVED));
+
+        $added = array_values($result->getChangesByType(DiffType::ADDED));
+        $this->assertCount(1, $added);
+        $this->assertSame('added', $added[0]->path);
+        $this->assertSame(2, $added[0]->newValue);
+
+        $removed = array_values($result->getChangesByType(DiffType::REMOVED));
+        $this->assertCount(1, $removed);
+        $this->assertSame('removed', $removed[0]->path);
+        $this->assertSame(1, $removed[0]->oldValue);
     }
 
     #[Test]

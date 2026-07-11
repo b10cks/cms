@@ -56,6 +56,12 @@ const segmentClasses = (segment: DiffSegment): string => {
       >
         {{ block.label }}
       </span>
+      <span
+        v-if="block.formattingOnly"
+        class="bg-info/15 text-info shrink-0 rounded px-1 py-0.5 text-[10px] leading-none"
+      >
+        formatting
+      </span>
       <span class="min-w-0">
         <template
           v-for="(segment, segmentIndex) in block.segments"

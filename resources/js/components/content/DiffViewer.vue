@@ -47,6 +47,11 @@ const formatPath = (path: string): string => {
 }
 
 const isRichTextChange = (change: Change): boolean => {
+  // For a changed entry both sides must be docs — a doc↔scalar transition
+  // falls back to the two-column view so neither side is dropped.
+  if (change.type === 'changed') {
+    return isRichTextDoc(change.oldValue) && isRichTextDoc(change.newValue)
+  }
   return isRichTextDoc(change.oldValue) || isRichTextDoc(change.newValue)
 }
 
