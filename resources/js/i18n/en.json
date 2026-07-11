@@ -920,6 +920,13 @@
         "previewUnavailable": "No preview environment is configured for this space.",
         "previewFailed": "The preview target could not be opened."
       },
+      "search": {
+        "open": "Search content",
+        "close": "Close search",
+        "placeholder": "Type to search…",
+        "matches": "{current} of {total}",
+        "noMatches": "No matches"
+      },
       "status": {
         "draft": "Draft"
       }

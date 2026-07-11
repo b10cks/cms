@@ -63,8 +63,9 @@ return new class extends Migration {
             $table->timestamps();
             $table->softDeletes();
 
+            // The unique already indexes these columns in this order; a second
+            // plain index on the same tuple is redundant.
             $table->unique(['scope', 'team_id', 'key']);
-            $table->index(['scope', 'team_id', 'key']);
         });
 
         $this->seedSystemRoles();
@@ -77,8 +78,8 @@ return new class extends Migration {
 
             $table->timestamps();
 
+            // Redundant plain index on the same tuple as the unique above dropped.
             $table->unique(['team_id', 'user_id']);
-            $table->index(['team_id', 'user_id']);
             $table->index('role_id');
         });
 
@@ -160,8 +161,8 @@ return new class extends Migration {
 
             $table->timestamps();
 
+            // Redundant plain index on the same tuple as the unique above dropped.
             $table->unique(['space_id', 'user_id']);
-            $table->index(['space_id', 'user_id']);
             $table->index('role_id');
         });
 

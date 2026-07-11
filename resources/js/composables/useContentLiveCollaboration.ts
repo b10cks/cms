@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/vue-query'
+import { toRaw } from 'vue'
 import type { Ref } from 'vue'
 
 import { getPresenceColor } from '~/components/ui/presence-colors'
@@ -193,11 +194,24 @@ export function useContentLiveCollaboration(
   const resolveUser = (userId: string): CollaborationPresenceUser | undefined =>
     collaboratorMap.value.get(userId) ?? knownUsers.value[userId]
 
+  // Bumped whenever the block tree gains/loses/reorders items (local broadcast or
+  // remote apply). itemTrailIndex keys off this instead of deep-tracking content,
+  // so plain field edits (typing) no longer invalidate presence/draft aggregation.
+  const structureVersion = ref(0)
+  const bumpStructureVersion = () => {
+    structureVersion.value++
+  }
+
   // Maps every content item id to its ancestor chain as (itemId, field) pairs,
   // so field-level presence/dirty state can bubble up through the blocks tree.
   const itemTrailIndex = computed(() => {
+    // Structure-only dependencies: a wholesale content replace (the ref itself is
+    // reassigned on navigation/save/AI) or a structural block op (structureVersion
+    // bump). Field-value edits mutate leaves in place, so we walk the raw tree to
+    // avoid registering a deep reactive dependency that would re-run per keystroke.
+    void structureVersion.value
     const index = new Map<string, Array<{ itemId: string; field: string }>>()
-    const root = content.value
+    const root = content.value ? (toRaw(content.value) as ContentResource) : null
     if (!root) return index
 
     const visit = (value: unknown, trail: Array<{ itemId: string; field: string }>) => {
@@ -573,6 +587,10 @@ export function useContentLiveCollaboration(
 
     const fieldKey = getFieldKey(parentId, field)
 
+    // The editor has already mutated content.value in place by now; the trail
+    // index depends on this bump to pick up the new/removed/reordered items.
+    if (payload.type !== 'visibility') bumpStructureVersion()
+
     if (!localDraftFields.has(fieldKey)) {
       localDraftFields.set(fieldKey, {
         itemId: parentId,
@@ -660,6 +678,9 @@ export function useContentLiveCollaboration(
 
     recordRemoteDraft(op.userId, op.parentId, op.field, currentItems ?? op.previousValue)
     applyFieldValue(op.parentId, op.field, nextItems)
+    // A nested apply mutates the raw tree in place, so the trail index needs an
+    // explicit bump; root-level applies reassign content.value and self-invalidate.
+    if (op.type !== 'visibility') bumpStructureVersion()
 
     return true
   }

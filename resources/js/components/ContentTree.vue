@@ -30,6 +30,7 @@ import { SimpleTooltip } from '~/components/ui/tooltip'
 import { useContentTreeClipboard } from '~/composables/useContentTreeClipboard'
 import { queryKeys } from '~/composables/useQueryClient'
 import { normalizeLanguageIso } from '~/lib/content-i18n'
+import { fuzzyMatch, prepareFuzzyQuery, prepareFuzzyTarget } from '~/lib/fuzzy-match'
 import { buildPreviewUrl } from '~/lib/preview-url'
 import type {
     ContentTreeActionContext,
@@ -248,7 +249,7 @@ const levelMap = computed(() => {
   return map
 })
 
-const expandedSet = computed(() => new Set(settings.value.content.expanded || []))
+const expandedSet = computed(() => new Set(treeExpanded.value))
 const hasVisibleChildren = (id: string): boolean => (childIdMap.value.get(id)?.length ?? 0) > 0
 const isRowExpanded = (id: string): boolean => expandedSet.value.has(id) && hasVisibleChildren(id)
 
@@ -605,15 +606,11 @@ const handleToggle = (event: TreeItemToggleEvent<FlatContentMenuItem> | Event) =
 }
 
 const toggleExpanded = (contentId: string) => {
-  const expanded = settings.value.content.expanded || []
-  const index = expanded.indexOf(contentId)
+  const expanded = treeExpanded.value
 
-  if (index > -1) {
-    settings.value.content.expanded = expanded.filter((id) => id !== contentId)
-    return
-  }
-
-  settings.value.content.expanded = [...expanded, contentId]
+  treeExpanded.value = expanded.includes(contentId)
+    ? expanded.filter((id) => id !== contentId)
+    : [...expanded, contentId]
 }
 
 const setCurrentItemFromRoute = () => {
@@ -1614,6 +1611,419 @@ const handleKeydown = (event: KeyboardEvent) => {
   finishDragState()
 }
 
+// --- Type-to-search (JetBrains-style speed search) ---
+
+const searchOpen = ref(false)
+const searchQuery = ref('')
+const activeMatchIndex = ref(0)
+const searchInputRef = ref<HTMLInputElement | null>(null)
+const searchPanelRef = ref<HTMLElement | null>(null)
+
+type ContentSearchMatch = {
+  item: FlatContentMenuItem
+  score: number
+  indices: number[]
+}
+
+// Names are normalized once per tree change, not once per keystroke.
+const searchTargets = computed(() =>
+  flatItems.value.map((item) => ({ item, target: prepareFuzzyTarget(item.name) }))
+)
+
+// All fuzzy matches in tree order, so ↑/↓ walks the tree visually instead of
+// jumping around by score. The best-scoring match is only used as the entry point.
+const searchMatches = computed<ContentSearchMatch[]>(() => {
+  const query = prepareFuzzyQuery(searchQuery.value)
+  if (!query) {
+    return []
+  }
+
+  const matches: ContentSearchMatch[] = []
+  for (const { item, target } of searchTargets.value) {
+    const match = fuzzyMatch(query, target)
+    if (match) {
+      matches.push({ item, score: match.score, indices: match.indices })
+    }
+  }
+
+  return matches
+})
+
+// While a query is active the tree is filtered down to the matches plus the
+// ancestor chain ("root line") needed to show them in context.
+const searchFilterActive = computed(() => searchOpen.value && searchQuery.value.trim().length > 0)
+
+const searchAncestorIds = computed(() => {
+  const ancestors = new Set<string>()
+  for (const match of searchMatches.value) {
+    let parentId = parentIdMap.value.get(match.item.id) ?? null
+    while (parentId && !ancestors.has(parentId)) {
+      ancestors.add(parentId)
+      parentId = parentIdMap.value.get(parentId) ?? null
+    }
+  }
+
+  return ancestors
+})
+
+const searchVisibleIds = computed<Set<string> | null>(() => {
+  if (!searchFilterActive.value) {
+    return null
+  }
+
+  const visible = new Set(searchAncestorIds.value)
+  for (const match of searchMatches.value) {
+    visible.add(match.item.id)
+  }
+
+  return visible
+})
+
+const visibleRootItems = computed(() => {
+  const visible = searchVisibleIds.value
+  if (!visible) {
+    return rootItems.value
+  }
+
+  return rootItems.value.filter((item) => visible.has(item.id))
+})
+
+// Filtered child lists, computed once per query instead of on every
+// getVisibleChildren call during render.
+const visibleChildrenMap = computed<Map<string, FlatContentMenuItem[]> | null>(() => {
+  const visible = searchVisibleIds.value
+  if (!visible) {
+    return null
+  }
+
+  const map = new Map<string, FlatContentMenuItem[]>()
+  for (const id of visible) {
+    map.set(
+      id,
+      getChildren(data.value, id).filter((child) => visible.has(child.id))
+    )
+  }
+
+  return map
+})
+
+const getVisibleChildren = (item: FlatContentMenuItem) => {
+  const map = visibleChildrenMap.value
+  if (!map) {
+    return getChildren(data.value, item.id)
+  }
+
+  return map.get(item.id) ?? []
+}
+
+// The filtered view auto-expands every ancestor of a match. Toggles made while
+// searching land in a throwaway overlay so the user's persisted expanded state
+// stays untouched; it resets whenever the query changes.
+const searchExpandedOverride = ref<string[] | null>(null)
+
+const treeExpanded = computed<string[]>({
+  get: () => {
+    if (!searchFilterActive.value) {
+      return settings.value.content.expanded || []
+    }
+
+    if (searchExpandedOverride.value) {
+      return searchExpandedOverride.value
+    }
+
+    return Array.from(searchAncestorIds.value)
+  },
+  set: (value) => {
+    if (searchFilterActive.value) {
+      searchExpandedOverride.value = value
+    } else {
+      settings.value.content.expanded = value
+    }
+  },
+})
+
+watch(searchQuery, () => {
+  searchExpandedOverride.value = null
+})
+
+const searchHighlightMap = computed(() => {
+  const map = new Map<string, number[]>()
+  if (!searchOpen.value) {
+    return map
+  }
+
+  for (const match of searchMatches.value) {
+    map.set(match.item.id, match.indices)
+  }
+
+  return map
+})
+
+const searchCounterText = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return ''
+  }
+
+  if (searchMatches.value.length === 0) {
+    return t('labels.contentTree.search.noMatches') as string
+  }
+
+  return t('labels.contentTree.search.matches', {
+    current: activeMatchIndex.value + 1,
+    total: searchMatches.value.length,
+  }) as string
+})
+
+const getItemRowElement = (id: string) =>
+  treeContainerRef.value?.querySelector<HTMLElement>(`[data-content-id="${CSS.escape(id)}"]`) ??
+  null
+
+const focusItemRow = (id: string | null) => {
+  if (!id) {
+    return
+  }
+
+  void nextTick(() => {
+    const row = getItemRowElement(id)
+    row?.focus({ preventScroll: true })
+    row?.scrollIntoView({ block: 'nearest' })
+  })
+}
+
+const revealAncestors = (id: string) => {
+  const expanded = new Set(settings.value.content.expanded || [])
+  let changed = false
+  let parentId = parentIdMap.value.get(id) ?? null
+
+  while (parentId) {
+    if (!expanded.has(parentId)) {
+      expanded.add(parentId)
+      changed = true
+    }
+    parentId = parentIdMap.value.get(parentId) ?? null
+  }
+
+  if (changed) {
+    settings.value.content.expanded = Array.from(expanded)
+  }
+}
+
+const setActiveMatch = (index: number) => {
+  const match = searchMatches.value[index]
+  if (!match) {
+    return
+  }
+
+  activeMatchIndex.value = index
+  selectSingleItem(match.item.id)
+  void nextTick(() => {
+    getItemRowElement(match.item.id)?.scrollIntoView({ block: 'nearest' })
+  })
+}
+
+watch(searchMatches, (matches) => {
+  if (!searchOpen.value || matches.length === 0) {
+    return
+  }
+
+  let best = 0
+  matches.forEach((match, index) => {
+    if (match.score > matches[best].score) {
+      best = index
+    }
+  })
+
+  setActiveMatch(best)
+})
+
+const cycleMatch = (direction: 1 | -1) => {
+  const total = searchMatches.value.length
+  if (total === 0) {
+    return
+  }
+
+  setActiveMatch((activeMatchIndex.value + direction + total) % total)
+}
+
+const toggleSearch = () => {
+  if (searchOpen.value) {
+    closeSearch()
+  } else {
+    openSearch()
+  }
+}
+
+const openSearch = (initial = '') => {
+  if (searchOpen.value) {
+    if (initial) {
+      searchQuery.value += initial
+    }
+  } else {
+    searchQuery.value = initial
+    activeMatchIndex.value = 0
+    searchOpen.value = true
+  }
+
+  void nextTick(() => {
+    const input = searchInputRef.value
+    if (!input) {
+      return
+    }
+
+    input.focus()
+    input.setSelectionRange(input.value.length, input.value.length)
+  })
+}
+
+const closeSearch = (focusTree = true) => {
+  if (!searchOpen.value) {
+    return
+  }
+
+  searchOpen.value = false
+  searchQuery.value = ''
+  activeMatchIndex.value = 0
+  searchExpandedOverride.value = null
+
+  if (focusTree && selectedItemId.value) {
+    // Persist the ancestor expansion so the row stays visible once the
+    // filtered view is gone, then move focus back onto it.
+    revealAncestors(selectedItemId.value)
+    focusItemRow(selectedItemId.value)
+  }
+}
+
+const openActiveMatch = async () => {
+  const match = searchMatches.value[activeMatchIndex.value]
+  closeSearch(false)
+
+  if (match) {
+    revealAncestors(match.item.id)
+    await openEdit(match.item.id)
+    focusItemRow(match.item.id)
+  }
+}
+
+const handleSearchInputKeydown = (event: KeyboardEvent) => {
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault()
+      cycleMatch(1)
+      break
+    case 'ArrowUp':
+      event.preventDefault()
+      cycleMatch(-1)
+      break
+    case 'Enter':
+      event.preventDefault()
+      void openActiveMatch()
+      break
+    case 'Escape':
+      event.preventDefault()
+      event.stopPropagation()
+      closeSearch()
+      break
+  }
+}
+
+const handleSearchBlur = (event: FocusEvent) => {
+  const next = event.relatedTarget
+  if (next instanceof Node && searchPanelRef.value?.contains(next)) {
+    return
+  }
+
+  closeSearch(false)
+}
+
+const isTextEntryTarget = (target: EventTarget | null) =>
+  target instanceof HTMLElement &&
+  (target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target.isContentEditable)
+
+// Capture-phase so a printable keystroke anywhere in the tree opens the search
+// before reka-ui's built-in single-character typeahead can swallow it.
+const handleTreeKeydownCapture = (event: KeyboardEvent) => {
+  if (event.defaultPrevented || currentlyEditingId.value || isTextEntryTarget(event.target)) {
+    return
+  }
+
+  const printable =
+    event.key.length === 1 && event.key !== ' ' && !event.ctrlKey && !event.metaKey
+
+  if (!printable) {
+    return
+  }
+
+  event.preventDefault()
+  event.stopPropagation()
+  openSearch(event.key)
+}
+
+// --- Keyboard actions on tree rows (arrows / expand / collapse come from reka-ui) ---
+
+const handleItemKeydown = (event: KeyboardEvent, item: FlatContentMenuItem) => {
+  // Only act when the row itself is focused — child buttons (chevron, menu
+  // trigger) keep their own Enter/Space semantics.
+  if (event.target !== event.currentTarget || currentlyEditingId.value) {
+    return
+  }
+
+  const meta = event.metaKey || event.ctrlKey
+
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    event.stopPropagation()
+    void openEdit(item.id)
+    return
+  }
+
+  if (event.key === 'F2') {
+    event.preventDefault()
+    void openRename(item.id)
+    return
+  }
+
+  if ((event.key === 'Delete' || (event.key === 'Backspace' && meta)) && canManageContent.value) {
+    event.preventDefault()
+    void executeDelete(resolveMenuContext(item.id))
+    return
+  }
+
+  if (event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey)) {
+    event.preventDefault()
+    event.stopPropagation()
+    if (!selectedItemsSet.value.has(item.id)) {
+      selectSingleItem(item.id)
+    }
+    void openMenu(item.id, resolveMenuAnchorElement(event.currentTarget))
+    return
+  }
+
+  if (meta && canManageContent.value) {
+    const key = event.key.toLowerCase()
+
+    if (key === 'c') {
+      event.preventDefault()
+      void copyToClipboard(resolveMenuContext(item.id))
+      return
+    }
+
+    if (key === 'x') {
+      event.preventDefault()
+      void cutToClipboard(resolveMenuContext(item.id))
+      return
+    }
+
+    if (key === 'v') {
+      event.preventDefault()
+      void syncActiveClipboardItem().then(() =>
+        pasteClipboard(item, item.type !== 'single' ? 'in' : 'after')
+      )
+    }
+  }
+}
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
 })
@@ -1630,94 +2040,158 @@ onBeforeUnmount(() => {
   <aside
     ref="treeContainerRef"
     class="relative flex h-full min-h-0 flex-col overflow-hidden"
+    @keydown.capture="handleTreeKeydownCapture"
   >
-    <VerticalScrollArea class="h-full min-h-0 w-full">
-      <TreeRoot
-        v-slot="{ flattenItems }"
-        v-model:expanded="settings.content.expanded"
-        class="w-full list-none p-2 select-none"
-        :class="{ 'pb-8': hasClipboardItem }"
-        :items="rootItems"
-        :get-children="(item) => getChildren(data, item.id)"
-        :get-key="({ id }) => id"
+    <div class="shrink-0 px-2 pt-2">
+      <h2
+        v-if="title && !isLoading"
+        class="px-2 pt-1 pb-3 text-sm font-semibold text-primary"
       >
-        <h2
-          v-if="title && !isLoading"
-          class="px-2 pt-1 pb-3 text-sm font-semibold text-primary"
+        {{ title }}
+      </h2>
+
+      <div
+        v-if="selectedSpace"
+        ref="rootDropZoneRef"
+        :class="[
+          'group relative flex w-full items-center gap-2 rounded-md border border-transparent pl-2 py-1 transition-all duration-150',
+          rootDropMode ? 'bg-accent/50 ring-1 ring-info' : '',
+        ]"
+        @contextmenu="handleRootContextMenu"
+      >
+        <button
+          type="button"
+          class="min-w-0 flex flex-1 items-center gap-2 text-left"
+          @click="
+            router.push({ name: 'space-content-index', params: { space: route.params.space } })
+          "
         >
-          {{ title }}
-        </h2>
-
-        <div
-          v-if="selectedSpace"
-          ref="rootDropZoneRef"
-          :class="[
-            'group relative mb-1 flex w-full items-center gap-2 rounded-md border border-transparent -my-1 pl-2 py-1 transition-all duration-150',
-            rootDropMode ? 'bg-accent/50 ring-1 ring-info' : '',
-          ]"
-          @contextmenu="handleRootContextMenu"
-        >
-          <button
-            type="button"
-            class="min-w-0 flex flex-1 items-center gap-2 text-left"
-            @click="
-              router.push({ name: 'space-content-index', params: { space: route.params.space } })
-            "
-          >
-            <NuxtImg
-              v-if="selectedSpace.icon"
-              :src="selectedSpace.icon"
-              :alt="selectedSpace.name"
-              :width="48"
-              :height="48"
-              class="size-6 shrink-0 rounded-sm object-cover"
-            />
-            <div class="min-w-0">
-              <div class="flex items-center gap-2 -mb-1">
-                <Icon
-                  v-if="!selectedSpace.icon"
-                  name="lucide:cuboid"
-                  class="shrink-0 text-muted"
-                />
-                <span class="truncate font-semibold text-primary">{{ selectedSpace.name }}</span>
-              </div>
-              <SpaceBadge
-                v-if="selectedSpace.badge"
-                :badge="selectedSpace.badge"
-                size="2xs"
-              />
-            </div>
-          </button>
-
-          <div class="ml-auto flex items-center gap-1">
-            <Button
-              v-if="canManageContent"
-              variant="ghost"
-              size="toolbar"
-              @click.stop="initCreate(null)"
-            >
-              <Icon name="lucide:plus" />
-            </Button>
-
-            <Button
-              v-if="buildRootMenuActions().length > 0"
-              variant="ghost"
-              size="toolbar"
-              class="opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100"
-              @click.stop="handleRootMenuTrigger"
-            >
-              <Icon name="lucide:ellipsis-vertical" />
-            </Button>
-          </div>
-
-          <DropIndicator
-            v-if="rootDropMode === 'root'"
-            edge="bottom"
-            gap="0px"
-            :label="$t('labels.contentTree.drop.moveToRoot')"
+          <NuxtImg
+            v-if="selectedSpace.icon"
+            :src="selectedSpace.icon"
+            :alt="selectedSpace.name"
+            :width="48"
+            :height="48"
+            class="size-6 shrink-0 rounded-sm object-cover"
           />
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 -mb-1">
+              <Icon
+                v-if="!selectedSpace.icon"
+                name="lucide:cuboid"
+                class="shrink-0 text-muted"
+              />
+              <span class="truncate font-semibold text-primary">{{ selectedSpace.name }}</span>
+            </div>
+            <SpaceBadge
+              v-if="selectedSpace.badge"
+              :badge="selectedSpace.badge"
+              size="2xs"
+            />
+          </div>
+        </button>
+
+        <div class="ml-auto flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="toolbar"
+            :aria-label="$t('labels.contentTree.search.open')"
+            :title="$t('labels.contentTree.search.open')"
+            :aria-expanded="searchOpen"
+            :class="searchOpen ? 'text-primary' : ''"
+            @pointerdown.prevent
+            @click.stop="toggleSearch()"
+          >
+            <Icon name="lucide:search" />
+          </Button>
+
+          <Button
+            v-if="canManageContent"
+            variant="ghost"
+            size="toolbar"
+            @click.stop="initCreate(null)"
+          >
+            <Icon name="lucide:plus" />
+          </Button>
+
+          <Button
+            v-if="buildRootMenuActions().length > 0"
+            variant="ghost"
+            size="toolbar"
+            class="opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100"
+            @click.stop="handleRootMenuTrigger"
+          >
+            <Icon name="lucide:ellipsis-vertical" />
+          </Button>
         </div>
 
+        <DropIndicator
+          v-if="rootDropMode === 'root'"
+          edge="bottom"
+          gap="0px"
+          :label="$t('labels.contentTree.drop.moveToRoot')"
+        />
+      </div>
+
+      <Transition
+        enter-active-class="transition duration-150 ease-butter"
+        leave-active-class="transition duration-150 ease-butter"
+        enter-from-class="opacity-0 -translate-y-2"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 -translate-y-2"
+      >
+        <div
+          v-if="searchOpen"
+          ref="searchPanelRef"
+          class="mt-1 flex items-center gap-2 rounded-md border border-border bg-background py-1 pr-1 pl-2 shadow-sm"
+        >
+          <Icon
+            name="lucide:search"
+            class="shrink-0 text-muted"
+          />
+          <input
+            ref="searchInputRef"
+            v-model="searchQuery"
+            type="text"
+            :placeholder="$t('labels.contentTree.search.placeholder')"
+            :aria-label="$t('labels.contentTree.search.open')"
+            class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
+            @keydown="handleSearchInputKeydown"
+            @blur="handleSearchBlur"
+          />
+          <span
+            v-if="searchCounterText"
+            aria-live="polite"
+            :class="[
+              'shrink-0 text-xs tabular-nums',
+              searchMatches.length > 0 ? 'text-muted' : 'text-destructive',
+            ]"
+          >
+            {{ searchCounterText }}
+          </span>
+          <Button
+            variant="ghost"
+            size="toolbar"
+            :aria-label="$t('labels.contentTree.search.close')"
+            @click="closeSearch()"
+          >
+            <Icon name="lucide:x" />
+          </Button>
+        </div>
+      </Transition>
+    </div>
+
+    <VerticalScrollArea class="min-h-0 w-full flex-1">
+      <TreeRoot
+        v-slot="{ flattenItems }"
+        v-model:expanded="treeExpanded"
+        class="w-full list-none p-2 pt-1 select-none"
+        :class="{ 'pb-8': hasClipboardItem }"
+        :items="visibleRootItems"
+        :get-children="getVisibleChildren"
+        :get-key="({ id }) => id"
+      >
         <div
           v-if="isLoading"
           class="flex items-center justify-center py-4"
@@ -1741,9 +2215,11 @@ onBeforeUnmount(() => {
           v-bind="item.bind"
           :as="RouterLink"
           :to="buildLink(item.value.id)"
+          :data-content-id="item.value.id"
           :class="[
             'group relative my-0.5 flex items-center gap-2 rounded-md py-1 pr-2 pl-0 outline-none',
             'transition-colors duration-150 hover:bg-border',
+            'focus-visible:ring-1 focus-visible:ring-info',
             'cursor-pointer font-semibold',
             item.value.id === selectedItemId ? 'text-primary' : '',
             isCutItem(item.value.id) ? 'opacity-50' : '',
@@ -1755,6 +2231,7 @@ onBeforeUnmount(() => {
           @pointerdown="handleItemPointerDown($event, item.value.id)"
           @click="handleItemNavigate($event, item.value.id)"
           @contextmenu="handleItemContextMenu($event, item.value.id)"
+          @keydown="handleItemKeydown($event, item.value)"
           @toggle="handleToggle"
         >
           <DropIndicator
@@ -1767,7 +2244,9 @@ onBeforeUnmount(() => {
           />
 
           <button
-            v-if="item.value.children"
+            v-if="
+              searchVisibleIds ? getVisibleChildren(item.value).length > 0 : item.value.children
+            "
             class="z-10 h-4 w-3 cursor-pointer"
             @click.stop.prevent="toggleExpanded(item.value.id)"
           >
@@ -1790,6 +2269,7 @@ onBeforeUnmount(() => {
           <RenamableTitle
             :ref="setTitleRef(item.value.id)"
             :name="item.value.name"
+            :highlight="searchHighlightMap.get(item.value.id)"
             :disabled="!canManageContent"
             class="w-full truncate text-left"
             @update="handleRename($event, item.value.id)"

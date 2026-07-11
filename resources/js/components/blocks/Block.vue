@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { deepClone } from '@vue/devtools-shared'
 import { AccordionContent, AccordionHeader, AccordionItem, AccordionTrigger } from 'reka-ui'
 import type { Component } from 'vue'
 
@@ -174,17 +173,18 @@ const schemas = {
   price: PriceBlock,
 } satisfies Partial<Record<CanonicalSchemaTypeName | LegacySchemaTypeName, Component>>
 
+// The parent replaces `item` with a fresh object identity on every change, so a
+// shallow (reference) watch is enough - no need to deep-traverse the schema.
 watch(
   () => props.item,
   (newItem) => {
     localItem.value = { ...newItem } as SchemaType
-  },
-  { deep: true }
+  }
 )
 
 const updateValue = (key: string, value: unknown) => {
   const nextItem = {
-    ...deepClone(localItem.value),
+    ...localItem.value,
     [key]: value,
   } as SchemaType
 

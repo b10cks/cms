@@ -79,20 +79,21 @@ const updatePlaceholder = (index: number, field: keyof Placeholder, value: strin
   updateItemValue('placeholders', placeholders.value)
 }
 
+// The parent replaces `value` (and its arrays) with fresh identities on external
+// changes, while local edits mutate the same array in place - so a shallow watch
+// resyncs on external updates without firing on every local keystroke.
 watch(
   () => props.value.html_classes,
   (newClasses) => {
     htmlClasses.value = newClasses || []
-  },
-  { deep: true }
+  }
 )
 
 watch(
   () => props.value.placeholders,
   (newPlaceholders) => {
     placeholders.value = newPlaceholders || []
-  },
-  { deep: true }
+  }
 )
 </script>
 

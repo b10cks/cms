@@ -183,7 +183,7 @@ const assetEntries = computed<AssetSelectionEntry[]>(() => {
 })
 
 const selection = useAssetSelection(assetEntries)
-const { selectedAssets, hasSelection } = selection
+const { selectedAssets, hasSelection, selectionSignature } = selection
 
 const isManageMode = computed(() => props.mode === 'manage')
 
@@ -220,7 +220,7 @@ const emitSelectionChange = () => {
   emit('selectionChange', { assets: Array.from(selectedAssets.value.values()) })
 }
 
-watch(selectedAssets, emitSelectionChange, { deep: true })
+watch(selectionSignature, emitSelectionChange)
 
 const toggleSelectPage = () => {
   if (allPageAssetsSelected.value) {

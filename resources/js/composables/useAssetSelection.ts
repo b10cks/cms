@@ -48,6 +48,19 @@ export function useAssetSelection(orderedItems: MaybeRefOrGetter<AssetSelectionE
     return selectedAssets.value.size + selectedFolders.value.size
   })
 
+  /**
+   * A cheap, string-valued fingerprint of *which* items are selected. It changes
+   * whenever an item is added, removed, or the selection is replaced, but never
+   * when the internals of an already-selected resource mutate. Watch this instead
+   * of `deep`-watching the Maps (which would walk every full asset resource on
+   * every reactivity tick).
+   */
+  const selectionSignature = computed(() => {
+    const folders = Array.from(selectedFolders.value.keys()).join(',')
+    const assets = Array.from(selectedAssets.value.keys()).join(',')
+    return `${folders}|${assets}`
+  })
+
   const selectedDragItems = computed<AssetManagerDragItem[]>(() => {
     return [
       ...Array.from(selectedFolders.value.keys()).map((id) => ({ id, type: 'folder' as const })),
@@ -151,6 +164,7 @@ export function useAssetSelection(orderedItems: MaybeRefOrGetter<AssetSelectionE
     selectedDragItems,
     selectedFolders,
     selectionCount,
+    selectionSignature,
     setSelected,
     toggle,
   }

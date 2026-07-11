@@ -83,7 +83,7 @@ class AssetFolderController extends Controller
     {
         abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_folders.manage'), 403);
         // Check if folder has children or assets
-        if ($assetFolder->children()->count() > 0 || $assetFolder->assets()->count() > 0) {
+        if ($assetFolder->children()->exists() || $assetFolder->assets()->exists()) {
             return response()->json([
                 'message' => 'Cannot delete folder that contains assets or subfolders',
             ], 422);

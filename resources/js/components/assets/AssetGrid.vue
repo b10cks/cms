@@ -272,6 +272,7 @@ const {
   selectedFolders,
   hasSelection,
   selectionCount,
+  selectionSignature,
   keyOf,
   isSelected,
 } = selection
@@ -342,6 +343,25 @@ const getDragItemsFor = (type: 'asset' | 'folder', id: string): AssetManagerDrag
   return getSelectedDragItems()
 }
 
+/**
+ * Pre-decorate each asset row in a single computed instead of calling the
+ * per-item helpers inline in the template. The template's v-for would otherwise
+ * re-invoke getDragItemsFor / getMissingRequiredFields / resolvedTagsFor for
+ * every asset on any grid re-render (marquee, hover). As a computed these only
+ * recompute when their real reactive deps change, and unchanged rows keep the
+ * same prop identities so the child AssetItems skip re-rendering.
+ */
+const decoratedAssets = computed(() => {
+  return assets.value.map((asset) => ({
+    asset,
+    selected: selectionEnabled.value ? selectedAssets.value.has(asset.id) : undefined,
+    cut: cutKeys.value.has(`asset:${asset.id}`),
+    dragItems: getDragItemsFor('asset', asset.id),
+    complianceIssues: getMissingRequiredFields(asset),
+    resolvedTags: resolvedTagsFor(asset.tags),
+  }))
+})
+
 const assetItemProps = computed(() => {
   return {
     mode: props.mode,
@@ -363,7 +383,7 @@ const emitSelectionChange = () => {
   })
 }
 
-watch([selectedAssets, selectedFolders], emitSelectionChange, { deep: true })
+watch(selectionSignature, emitSelectionChange)
 
 const clearSelection = () => {
   if (!selectionEnabled.value) {
@@ -578,6 +598,28 @@ const handleDownload = async (assetsToDownload: AssetResource[]) => {
   if (failed.length) {
     toast.error(String($t('messages.assets.downloadFailed', { count: failed.length })))
   }
+}
+
+/*
+ * Stable per-row handlers. Defining these as named functions (instead of inline
+ * arrows in the v-for) keeps their identity constant across renders, so an
+ * AssetItem only re-renders when its own data props change - not on every
+ * marquee/hover-driven re-render of the grid.
+ */
+const handleAssetMove = (asset: AssetResource) => {
+  openMoveDialog(itemsForMoveAction({ type: 'asset', data: asset }))
+}
+
+const handleAssetTag = (asset: AssetResource) => {
+  openBulkTagDialog(assetsForAction(asset))
+}
+
+const handleAssetDownload = (asset: AssetResource) => {
+  handleDownload(assetsForAction(asset))
+}
+
+const handleAssetContextMenu = (asset: AssetResource) => {
+  handleEntryContextMenu({ type: 'asset', data: asset })
 }
 
 const promptForceDelete = async (
@@ -1629,27 +1671,27 @@ onUnmounted(() => {
                 aria-multiselectable="true"
               >
                 <AssetItem
-                  v-for="asset in assets"
-                  :key="asset.id"
-                  :asset="asset"
-                  :selected="selectionEnabled ? selectedAssets.has(asset.id) : undefined"
-                  :cut="cutKeys.has(`asset:${asset.id}`)"
+                  v-for="row in decoratedAssets"
+                  :key="row.asset.id"
+                  :asset="row.asset"
+                  :selected="row.selected"
+                  :cut="row.cut"
                   :size="imageSize"
-                  :drag-items="getDragItemsFor('asset', asset.id)"
-                  :compliance-issues="getMissingRequiredFields(asset)"
-                  :resolved-tags="resolvedTagsFor(asset.tags)"
-                  :data-id="asset.id"
-                  :data-key="`asset:${asset.id}`"
+                  :drag-items="row.dragItems"
+                  :compliance-issues="row.complianceIssues"
+                  :resolved-tags="row.resolvedTags"
+                  :data-id="row.asset.id"
+                  :data-key="`asset:${row.asset.id}`"
                   v-bind="assetItemProps"
                   @select="handleAssetSelect"
                   @click="handleAssetClick"
                   @view="handleAssetView"
                   @delete="handleAssetDelete"
-                  @move="(value) => openMoveDialog(itemsForMoveAction({ type: 'asset', data: value }))"
-                  @tag="(value) => openBulkTagDialog(assetsForAction(value))"
-                  @download="(value) => handleDownload(assetsForAction(value))"
+                  @move="handleAssetMove"
+                  @tag="handleAssetTag"
+                  @download="handleAssetDownload"
                   @copy-url="handleCopyUrl"
-                  @context-menu="(value) => handleEntryContextMenu({ type: 'asset', data: value })"
+                  @context-menu="handleAssetContextMenu"
                 />
               </div>
 

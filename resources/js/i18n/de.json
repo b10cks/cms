@@ -915,6 +915,13 @@
         "previewUnavailable": "Für diesen Space ist keine Vorschau-Umgebung konfiguriert.",
         "previewFailed": "Das Vorschauziel konnte nicht geöffnet werden."
       },
+      "search": {
+        "open": "Inhalte durchsuchen",
+        "close": "Suche schließen",
+        "placeholder": "Tippen zum Suchen…",
+        "matches": "{current} von {total}",
+        "noMatches": "Keine Treffer"
+      },
       "status": {
         "draft": "Entwurf"
       }

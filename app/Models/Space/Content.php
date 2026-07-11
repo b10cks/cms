@@ -126,6 +126,31 @@ class Content extends SpaceModel
 
     protected const array REDUCED_FIELDSET = ['id', 'name', 'slug', 'full_slug', 'language_iso', 'position', 'published_at', 'first_published_at', 'created_at', 'updated_at', 'i18n_parent_id'];
 
+    /**
+     * Every persisted column except the heavy `searchable_content` LONGTEXT, which
+     * only the MySQL search driver needs yet otherwise rides along on every
+     * unscoped delivery/resolution read. Use on those hot paths to keep the
+     * LONGTEXT out of the row without losing any column resolution relies on.
+     */
+    public const array DELIVERY_FIELDSET = [
+        'id', 'external_id', 'block_id', 'parent_id', 'position', 'name', 'slug',
+        'full_slug', 'language_iso', 'i18n_parent_id', 'content', 'settings',
+        'current_version_id', 'published_version_id', 'published_at',
+        'first_published_at', 'created_at', 'updated_at', 'deleted_at',
+    ];
+
+    /**
+     * @return array<int, string>
+     */
+    public static function deliveryColumns(string $prefix = ''): array
+    {
+        if ($prefix === '') {
+            return self::DELIVERY_FIELDSET;
+        }
+
+        return array_map(static fn (string $column): string => $prefix.$column, self::DELIVERY_FIELDSET);
+    }
+
     protected static function boot()
     {
         parent::boot();
@@ -289,12 +314,14 @@ class Content extends SpaceModel
 
     public function links(): HasManyFromArray
     {
-        return $this->hasManyFromArray(Content::class, 'link_ids');
+        return $this->hasManyFromArray(Content::class, 'link_ids')
+            ->select(self::deliveryColumns());
     }
 
     public function relations(): HasManyFromArray
     {
-        return $this->hasManyFromArray(Content::class, 'relation_ids');
+        return $this->hasManyFromArray(Content::class, 'relation_ids')
+            ->select(self::deliveryColumns());
     }
 
     public function comments(): HasMany

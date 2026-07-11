@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { useDebounceFn } from '@vueuse/core'
 import { toast } from 'vue-sonner'
 
@@ -37,6 +37,7 @@ export function useAssets(spaceId: MaybeRef<string>) {
           ...toValue(params),
         })
       },
+      placeholderData: keepPreviousData,
     })
   }
 
@@ -70,6 +71,7 @@ export function useAssets(spaceId: MaybeRef<string>) {
         })
       },
       enabled: computed(() => Boolean(toValue(id)) && toValue(enabled)),
+      placeholderData: keepPreviousData,
     })
   }
 
