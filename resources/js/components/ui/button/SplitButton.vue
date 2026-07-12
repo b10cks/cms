@@ -6,6 +6,7 @@ import type { HTMLAttributes } from 'vue'
 import Icon from '~/components/Icon.vue'
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '../dropdown-menu'
+import { Spinner } from '../spinner'
 import type { ButtonVariants } from './index'
 import { buttonVariants } from './index'
 
@@ -55,13 +56,10 @@ const triggerButtonClasses = computed(() => {
       <button
         :class="primaryButtonClasses"
         :disabled="disabled || loading"
+        :aria-busy="loading || undefined"
         @click="primaryAction && primaryAction()"
       >
-        <Icon
-          v-if="loading"
-          name="lucide:loader"
-          class="animate-spin"
-        />
+        <Spinner v-if="loading" />
         <slot />
       </button>
       <DropdownMenuTrigger
