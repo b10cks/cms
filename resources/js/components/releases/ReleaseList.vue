@@ -156,7 +156,7 @@ const handleCancel = (release: Release) => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-2">
     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div class="flex flex-1 flex-col gap-2 md:flex-row md:items-center">
         <SearchFilter
@@ -178,7 +178,7 @@ const handleCancel = (release: Release) => {
     </div>
     <template v-else-if="!hasReleases">
       <div
-        class="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12 text-center"
+        class="flex flex-col bg-surface items-center justify-center rounded-lg border border-dashed border-border py-12 text-center"
       >
         <ReleasesIcon class="mb-4 w-32" />
         <p class="text-muted-foreground text-sm font-medium">

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { IconsQueryParams } from '~/api/resources/icons'
-import Icon from '~/components/Icon.vue'
+import IconsIcon from '~/assets/images/icons.svg?component'
 import IconPreview from '~/components/icons/IconPreview.vue'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
@@ -56,7 +56,7 @@ const handleClick = (icon: IconResource) => {
 </script>
 
 <template>
-  <div class="flex h-full min-h-0 flex-col gap-4">
+  <div class="flex h-full min-h-0 flex-col gap-2">
     <div class="flex shrink-0 flex-col gap-3">
       <InputField
         v-model="search"
@@ -110,13 +110,10 @@ const handleClick = (icon: IconResource) => {
 
       <div
         v-else-if="!icons.length"
-        class="flex h-40 flex-col items-center justify-center gap-2 text-muted"
+        class="flex flex-col bg-surface items-center justify-center rounded-lg border border-dashed border-border py-12 text-center"
       >
-        <Icon
-          name="lucide:shapes"
-          size="32"
-        />
-        <p class="text-sm">{{ t('labels.icons.empty') }}</p>
+        <IconsIcon class="mb-4 w-32" />
+        <p class="text-muted-foreground text-sm font-medium">{{ t('labels.icons.empty') }}</p>
       </div>
 
       <div
