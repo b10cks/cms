@@ -6,7 +6,6 @@
       "name": "b10cks-app",
       "dependencies": {
         "@atlaskit/pragmatic-drag-and-drop": "^2.0.1",
-        "@iconify-json/flag": "^1.2.12",
         "@iconify-json/lucide": "^1.2.116",
         "@iconify/vue": "^5.0.1",
         "@internationalized/date": "^3.12.2",
@@ -371,8 +370,6 @@
     "@humanwhocodes/module-importer": ["@humanwhocodes/module-importer@1.0.1", "", {}, "sha512-bxveV4V8v5Yb4ncFTT3rPSgZBOpCkjfK0y4oVVVJwIuDVBRMDXrPyXRL988i5ap9m9bnyEEjWfm5WkBmtffLfA=="],
 
     "@humanwhocodes/retry": ["@humanwhocodes/retry@0.4.3", "", {}, "sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ=="],
-
-    "@iconify-json/flag": ["@iconify-json/flag@1.2.12", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-B5zphOSTn54UX9v1sKsR1atuhyuXExiAkjuLQA8aeDcB68+P6oiStEDeEEVkbHgwvFvklPM2G7GhqFw6VMnXhw=="],
 
     "@iconify-json/lucide": ["@iconify-json/lucide@1.2.116", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-mbwPmiUXaZyLMSeQOxiTqz2fmZikD9qiGnMBiev47UUNY9uGCEgMg9iUYwaJzCtJTDtAIyK4vokfIpqsVorgSw=="],
 

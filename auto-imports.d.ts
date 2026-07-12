@@ -208,97 +208,43 @@ declare global {
 // for type re-export
 declare global {
   // @ts-ignore
-  export type {
-    Component,
-    Slot,
-    Slots,
-    ComponentPublicInstance,
-    ComputedRef,
-    DirectiveBinding,
-    ExtractDefaultPropTypes,
-    ExtractPropTypes,
-    ExtractPublicPropTypes,
-    InjectionKey,
-    PropType,
-    Ref,
-    ShallowRef,
-    MaybeRef,
-    MaybeRefOrGetter,
-    VNode,
-    WritableComputedRef,
-  } from 'vue'
+  export type { Component, Slot, Slots, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, ShallowRef, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
   // @ts-ignore
   export type { StreamCallbacks } from './resources/js/composables/useAiContent'
   import('./resources/js/composables/useAiContent')
   // @ts-ignore
-  export type {
-    AiContentTreeNode,
-    CreateTreeOperation,
-    MoveTreeOperation,
-    UpdateTreeOperation,
-    DeleteTreeOperation,
-    RestoreTreeOperation,
-    TreeOperation,
-    ContentTreePayload,
-    TreeOperationsResult,
-  } from './resources/js/composables/useAiContentTree'
+  export type { AiContentTreeNode, CreateTreeOperation, MoveTreeOperation, UpdateTreeOperation, DeleteTreeOperation, RestoreTreeOperation, TreeOperation, ContentTreePayload, TreeOperationsResult } from './resources/js/composables/useAiContentTree'
   import('./resources/js/composables/useAiContentTree')
   // @ts-ignore
   export type { MetaTagsPayload } from './resources/js/composables/useAiMetaTags'
   import('./resources/js/composables/useAiMetaTags')
   // @ts-ignore
-  export type {
-    AiModel,
-    GroupedModels,
-    SpaceAiSettings,
-    SpaceAiUsage,
-  } from './resources/js/composables/useAiModels'
+  export type { AiModel, GroupedModels, SpaceAiSettings, SpaceAiUsage } from './resources/js/composables/useAiModels'
   import('./resources/js/composables/useAiModels')
   // @ts-ignore
   export type { TranslationPayload } from './resources/js/composables/useAiTranslation'
   import('./resources/js/composables/useAiTranslation')
   // @ts-ignore
-  export type {
-    DialogAction,
-    DialogOptions,
-    MessageOptions,
-    ConfirmOptions,
-  } from './resources/js/composables/useAlertDialog'
+  export type { DialogAction, DialogOptions, MessageOptions, ConfirmOptions } from './resources/js/composables/useAlertDialog'
   import('./resources/js/composables/useAlertDialog')
   // @ts-ignore
-  export type {
-    BulkDeleteConflict,
-    BulkDeleteResult,
-  } from './resources/js/composables/useAssetBulkOperations'
+  export type { BulkDeleteConflict, BulkDeleteResult } from './resources/js/composables/useAssetBulkOperations'
   import('./resources/js/composables/useAssetBulkOperations')
   // @ts-ignore
   export type { AssetRequirementIssue } from './resources/js/composables/useAssetRequirements'
   import('./resources/js/composables/useAssetRequirements')
   // @ts-ignore
-  export type {
-    AssetSelectionEntry,
-    AssetSelectionModifiers,
-  } from './resources/js/composables/useAssetSelection'
+  export type { AssetSelectionEntry, AssetSelectionModifiers } from './resources/js/composables/useAssetSelection'
   import('./resources/js/composables/useAssetSelection')
   // @ts-ignore
   export type { UploadAssetOutcome } from './resources/js/composables/useAssets'
   import('./resources/js/composables/useAssets')
   // @ts-ignore
-  export type {
-    ContentCanvasCommand,
-    ContentCanvasHistoryEntry,
-  } from './resources/js/composables/useContentCanvasCommands'
+  export type { ContentCanvasCommand, ContentCanvasHistoryEntry } from './resources/js/composables/useContentCanvasCommands'
   import('./resources/js/composables/useContentCanvasCommands')
   // @ts-ignore
-  export type {
-    CollaborationPresenceUser,
-    ContentFieldUpdatePayload,
-    ContentFieldRef,
-    ContentFieldFocusPayload,
-    ContentBlockOperationPayload,
-    ContentCommitAction,
-  } from './resources/js/composables/useContentLiveCollaboration'
+  export type { CollaborationPresenceUser, ContentFieldUpdatePayload, ContentFieldRef, ContentFieldFocusPayload, ContentBlockOperationPayload, ContentCommitAction } from './resources/js/composables/useContentLiveCollaboration'
   import('./resources/js/composables/useContentLiveCollaboration')
   // @ts-ignore
   export type { ContentPresenceMap } from './resources/js/composables/useContentMenuPresence'
@@ -316,21 +262,13 @@ declare global {
   export type { ResolvedOptionChoice } from './resources/js/composables/useFieldOptionChoices'
   import('./resources/js/composables/useFieldOptionChoices')
   // @ts-ignore
-  export type {
-    ClipboardSingleItem,
-    ClipboardMultipleItems,
-    ClipboardItem,
-  } from './resources/js/composables/useGlobalClipboard'
+  export type { ClipboardSingleItem, ClipboardMultipleItems, ClipboardItem } from './resources/js/composables/useGlobalClipboard'
   import('./resources/js/composables/useGlobalClipboard')
   // @ts-ignore
   export type { IconifyCollectionOption } from './resources/js/composables/useIconifyCollections'
   import('./resources/js/composables/useIconifyCollections')
   // @ts-ignore
-  export type {
-    PresenceUser,
-    PresenceState,
-    UsePresenceOptions,
-  } from './resources/js/composables/usePresence'
+  export type { PresenceUser, PresenceState, UsePresenceOptions } from './resources/js/composables/usePresence'
   import('./resources/js/composables/usePresence')
   // @ts-ignore
   export type { SeoMetaOptions } from './resources/js/composables/useSeoMeta'
@@ -351,434 +289,202 @@ import { UnwrapRef } from 'vue'
 declare module 'vue' {
   interface GlobalComponents {}
   interface ComponentCustomProperties {
-    readonly AlertDialogProvider: UnwrapRef<
-      (typeof import('./resources/js/composables/useAlertDialog'))['AlertDialogProvider']
-    >
-    readonly EffectScope: UnwrapRef<(typeof import('vue'))['EffectScope']>
-    readonly TEAM_TYPE_KEYS: UnwrapRef<
-      (typeof import('./resources/js/composables/useTeamTypes'))['TEAM_TYPE_KEYS']
-    >
-    readonly computed: UnwrapRef<(typeof import('vue'))['computed']>
-    readonly createAccessEvaluationContext: UnwrapRef<
-      (typeof import('./resources/js/composables/useAuthorization'))['createAccessEvaluationContext']
-    >
-    readonly createApp: UnwrapRef<(typeof import('vue'))['createApp']>
-    readonly createBlockItemWithDefaults: UnwrapRef<
-      (typeof import('./resources/js/composables/useSchemaDefaults'))['createBlockItemWithDefaults']
-    >
-    readonly createContentDefaultsBlockLookup: UnwrapRef<
-      (typeof import('./resources/js/composables/useSchemaDefaults'))['createContentDefaultsBlockLookup']
-    >
-    readonly customRef: UnwrapRef<(typeof import('vue'))['customRef']>
-    readonly defineAsyncComponent: UnwrapRef<(typeof import('vue'))['defineAsyncComponent']>
-    readonly defineComponent: UnwrapRef<(typeof import('vue'))['defineComponent']>
-    readonly effectScope: UnwrapRef<(typeof import('vue'))['effectScope']>
-    readonly ensureAuthorizationContext: UnwrapRef<
-      (typeof import('./resources/js/composables/useAuthorization'))['ensureAuthorizationContext']
-    >
-    readonly ensureSelectedTeamAccess: UnwrapRef<
-      (typeof import('./resources/js/composables/useAuthorization'))['ensureSelectedTeamAccess']
-    >
-    readonly extractStreamingTreeOperations: UnwrapRef<
-      (typeof import('./resources/js/composables/useAiContentTree'))['extractStreamingTreeOperations']
-    >
-    readonly getCurrentInstance: UnwrapRef<(typeof import('vue'))['getCurrentInstance']>
-    readonly getCurrentScope: UnwrapRef<(typeof import('vue'))['getCurrentScope']>
-    readonly getCurrentWatcher: UnwrapRef<(typeof import('vue'))['getCurrentWatcher']>
-    readonly getLocale: UnwrapRef<(typeof import('./resources/js/plugins/i18n'))['getLocale']>
-    readonly getPosthog: UnwrapRef<(typeof import('./resources/js/plugins/posthog'))['getPosthog']>
-    readonly h: UnwrapRef<(typeof import('vue'))['h']>
-    readonly hydrateContentWithSchema: UnwrapRef<
-      (typeof import('./resources/js/composables/useSchemaDefaults'))['hydrateContentWithSchema']
-    >
-    readonly i18n: UnwrapRef<(typeof import('./resources/js/plugins/i18n'))['i18n']>
-    readonly initAuth: UnwrapRef<(typeof import('./resources/js/plugins/auth'))['initAuth']>
-    readonly inject: UnwrapRef<(typeof import('vue'))['inject']>
-    readonly installChart: UnwrapRef<
-      (typeof import('./resources/js/plugins/chart'))['installChart']
-    >
-    readonly installEcho: UnwrapRef<(typeof import('./resources/js/plugins/echo'))['installEcho']>
-    readonly installI18n: UnwrapRef<(typeof import('./resources/js/plugins/i18n'))['installI18n']>
-    readonly installPosthog: UnwrapRef<
-      (typeof import('./resources/js/plugins/posthog'))['installPosthog']
-    >
-    readonly installVueQuery: UnwrapRef<
-      (typeof import('./resources/js/plugins/vue-query'))['installVueQuery']
-    >
-    readonly isFieldVisible: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentSchemaState'))['isFieldVisible']
-    >
-    readonly isProxy: UnwrapRef<(typeof import('vue'))['isProxy']>
-    readonly isReactive: UnwrapRef<(typeof import('vue'))['isReactive']>
-    readonly isReadonly: UnwrapRef<(typeof import('vue'))['isReadonly']>
-    readonly isRef: UnwrapRef<(typeof import('vue'))['isRef']>
-    readonly isShallow: UnwrapRef<(typeof import('vue'))['isShallow']>
-    readonly locales: UnwrapRef<(typeof import('./resources/js/plugins/i18n'))['locales']>
-    readonly markRaw: UnwrapRef<(typeof import('vue'))['markRaw']>
-    readonly nextTick: UnwrapRef<(typeof import('vue'))['nextTick']>
-    readonly normalizeFieldOptionChoices: UnwrapRef<
-      (typeof import('./resources/js/composables/useFieldOptionChoices'))['normalizeFieldOptionChoices']
-    >
-    readonly normalizeSchema: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentSchemaState'))['normalizeSchema']
-    >
-    readonly normalizeSchemaField: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentSchemaState'))['normalizeSchemaField']
-    >
-    readonly normalizeSchemaType: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentSchemaState'))['normalizeSchemaType']
-    >
-    readonly onActivated: UnwrapRef<(typeof import('vue'))['onActivated']>
-    readonly onBeforeMount: UnwrapRef<(typeof import('vue'))['onBeforeMount']>
-    readonly onBeforeRouteLeave: UnwrapRef<(typeof import('vue-router'))['onBeforeRouteLeave']>
-    readonly onBeforeRouteUpdate: UnwrapRef<(typeof import('vue-router'))['onBeforeRouteUpdate']>
-    readonly onBeforeUnmount: UnwrapRef<(typeof import('vue'))['onBeforeUnmount']>
-    readonly onBeforeUpdate: UnwrapRef<(typeof import('vue'))['onBeforeUpdate']>
-    readonly onDeactivated: UnwrapRef<(typeof import('vue'))['onDeactivated']>
-    readonly onErrorCaptured: UnwrapRef<(typeof import('vue'))['onErrorCaptured']>
-    readonly onMounted: UnwrapRef<(typeof import('vue'))['onMounted']>
-    readonly onRenderTracked: UnwrapRef<(typeof import('vue'))['onRenderTracked']>
-    readonly onRenderTriggered: UnwrapRef<(typeof import('vue'))['onRenderTriggered']>
-    readonly onScopeDispose: UnwrapRef<(typeof import('vue'))['onScopeDispose']>
-    readonly onServerPrefetch: UnwrapRef<(typeof import('vue'))['onServerPrefetch']>
-    readonly onUnmounted: UnwrapRef<(typeof import('vue'))['onUnmounted']>
-    readonly onUpdated: UnwrapRef<(typeof import('vue'))['onUpdated']>
-    readonly onWatcherCleanup: UnwrapRef<(typeof import('vue'))['onWatcherCleanup']>
-    readonly parseTreeOperations: UnwrapRef<
-      (typeof import('./resources/js/composables/useAiContentTree'))['parseTreeOperations']
-    >
-    readonly provide: UnwrapRef<(typeof import('vue'))['provide']>
-    readonly queryClient: UnwrapRef<
-      (typeof import('./resources/js/plugins/vue-query'))['queryClient']
-    >
-    readonly queryKeys: UnwrapRef<
-      (typeof import('./resources/js/composables/useQueryClient'))['queryKeys']
-    >
-    readonly reactive: UnwrapRef<(typeof import('vue'))['reactive']>
-    readonly readonly: UnwrapRef<(typeof import('vue'))['readonly']>
-    readonly ref: UnwrapRef<(typeof import('vue'))['ref']>
-    readonly resolveComponent: UnwrapRef<(typeof import('vue'))['resolveComponent']>
-    readonly resolveFieldInitialValue: UnwrapRef<
-      (typeof import('./resources/js/composables/useSchemaDefaults'))['resolveFieldInitialValue']
-    >
-    readonly setAlertDialogDefaultLabels: UnwrapRef<
-      (typeof import('./resources/js/composables/useAlertDialog'))['setAlertDialogDefaultLabels']
-    >
-    readonly setLocale: UnwrapRef<(typeof import('./resources/js/plugins/i18n'))['setLocale']>
-    readonly shallowReactive: UnwrapRef<(typeof import('vue'))['shallowReactive']>
-    readonly shallowReadonly: UnwrapRef<(typeof import('vue'))['shallowReadonly']>
-    readonly shallowRef: UnwrapRef<(typeof import('vue'))['shallowRef']>
-    readonly toRaw: UnwrapRef<(typeof import('vue'))['toRaw']>
-    readonly toRef: UnwrapRef<(typeof import('vue'))['toRef']>
-    readonly toRefs: UnwrapRef<(typeof import('vue'))['toRefs']>
-    readonly toValue: UnwrapRef<(typeof import('vue'))['toValue']>
-    readonly triggerRef: UnwrapRef<(typeof import('vue'))['triggerRef']>
-    readonly unref: UnwrapRef<(typeof import('vue'))['unref']>
-    readonly useAiConfigs: UnwrapRef<
-      (typeof import('./resources/js/composables/useAiModels'))['useAiConfigs']
-    >
-    readonly useAiContent: UnwrapRef<
-      (typeof import('./resources/js/composables/useAiContent'))['useAiContent']
-    >
-    readonly useAiContentTree: UnwrapRef<
-      (typeof import('./resources/js/composables/useAiContentTree'))['useAiContentTree']
-    >
-    readonly useAiErrorToast: UnwrapRef<
-      (typeof import('./resources/js/composables/useAiErrorToast'))['useAiErrorToast']
-    >
-    readonly useAiMentions: UnwrapRef<
-      (typeof import('./resources/js/composables/useAiMentions'))['useAiMentions']
-    >
-    readonly useAiMetaTags: UnwrapRef<
-      (typeof import('./resources/js/composables/useAiMetaTags'))['useAiMetaTags']
-    >
-    readonly useAiModels: UnwrapRef<
-      (typeof import('./resources/js/composables/useAiModels'))['useAiModels']
-    >
-    readonly useAiSettings: UnwrapRef<
-      (typeof import('./resources/js/composables/useAiModels'))['useAiSettings']
-    >
-    readonly useAiStream: UnwrapRef<
-      (typeof import('./resources/js/composables/useAiStream'))['useAiStream']
-    >
-    readonly useAiTranslation: UnwrapRef<
-      (typeof import('./resources/js/composables/useAiTranslation'))['useAiTranslation']
-    >
-    readonly useAiUsage: UnwrapRef<
-      (typeof import('./resources/js/composables/useAiModels'))['useAiUsage']
-    >
-    readonly useAlertDialog: UnwrapRef<
-      (typeof import('./resources/js/composables/useAlertDialog'))['useAlertDialog']
-    >
-    readonly useApiClient: UnwrapRef<
-      (typeof import('./resources/js/composables/useApiClient'))['useApiClient']
-    >
-    readonly useAssetBulkOperations: UnwrapRef<
-      (typeof import('./resources/js/composables/useAssetBulkOperations'))['useAssetBulkOperations']
-    >
-    readonly useAssetFolders: UnwrapRef<
-      (typeof import('./resources/js/composables/useAssetFolders'))['useAssetFolders']
-    >
-    readonly useAssetLibraryMoves: UnwrapRef<
-      (typeof import('./resources/js/composables/useAssetLibraryMoves'))['useAssetLibraryMoves']
-    >
-    readonly useAssetRequirements: UnwrapRef<
-      (typeof import('./resources/js/composables/useAssetRequirements'))['useAssetRequirements']
-    >
-    readonly useAssetSelection: UnwrapRef<
-      (typeof import('./resources/js/composables/useAssetSelection'))['useAssetSelection']
-    >
-    readonly useAssetTags: UnwrapRef<
-      (typeof import('./resources/js/composables/useAssetTags'))['useAssetTags']
-    >
-    readonly useAssetVersions: UnwrapRef<
-      (typeof import('./resources/js/composables/useAssetVersions'))['useAssetVersions']
-    >
-    readonly useAssets: UnwrapRef<
-      (typeof import('./resources/js/composables/useAssets'))['useAssets']
-    >
-    readonly useAttrs: UnwrapRef<(typeof import('vue'))['useAttrs']>
-    readonly useAuditLogs: UnwrapRef<
-      (typeof import('./resources/js/composables/useAuditLogs'))['useAuditLogs']
-    >
-    readonly useAuth: UnwrapRef<(typeof import('./resources/js/composables/useAuth'))['useAuth']>
-    readonly useAuthorization: UnwrapRef<
-      (typeof import('./resources/js/composables/useAuthorization'))['useAuthorization']
-    >
-    readonly useAutomationActions: UnwrapRef<
-      (typeof import('./resources/js/composables/useAutomationActions'))['useAutomationActions']
-    >
-    readonly useAutomationExecutions: UnwrapRef<
-      (typeof import('./resources/js/composables/useAutomationExecutions'))['useAutomationExecutions']
-    >
-    readonly useAutomations: UnwrapRef<
-      (typeof import('./resources/js/composables/useAutomations'))['useAutomations']
-    >
-    readonly useBackups: UnwrapRef<
-      (typeof import('./resources/js/composables/useBackups'))['useBackups']
-    >
-    readonly useBlockFolders: UnwrapRef<
-      (typeof import('./resources/js/composables/useBlockFolders'))['useBlockFolders']
-    >
-    readonly useBlockTags: UnwrapRef<
-      (typeof import('./resources/js/composables/useBlockTags'))['useBlockTags']
-    >
-    readonly useBlockTemplates: UnwrapRef<
-      (typeof import('./resources/js/composables/useBlockTemplates'))['useBlockTemplates']
-    >
-    readonly useBlockVersions: UnwrapRef<
-      (typeof import('./resources/js/composables/useBlockVersions'))['useBlockVersions']
-    >
-    readonly useBlocks: UnwrapRef<
-      (typeof import('./resources/js/composables/useBlocks'))['useBlocks']
-    >
-    readonly useComments: UnwrapRef<
-      (typeof import('./resources/js/composables/useComments'))['useComments']
-    >
-    readonly useContent: UnwrapRef<
-      (typeof import('./resources/js/composables/useContent'))['useContent']
-    >
-    readonly useContentCanvasCommands: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentCanvasCommands'))['useContentCanvasCommands']
-    >
-    readonly useContentJson: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentJson'))['useContentJson']
-    >
-    readonly useContentLiveCollaboration: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentLiveCollaboration'))['useContentLiveCollaboration']
-    >
-    readonly useContentMenu: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentMenu'))['useContentMenu']
-    >
-    readonly useContentMenuPresence: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentMenuPresence'))['useContentMenuPresence']
-    >
-    readonly useContentPresence: UnwrapRef<
-      (typeof import('./resources/js/composables/usePresence'))['useContentPresence']
-    >
-    readonly useContentSchemaState: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentSchemaState'))['useContentSchemaState']
-    >
-    readonly useContentTree: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentTree'))['useContentTree']
-    >
-    readonly useContentTreeClipboard: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentTreeClipboard'))['useContentTreeClipboard']
-    >
-    readonly useContentVersions: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentVersions'))['useContentVersions']
-    >
-    readonly useContentWizardApply: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentWizardApply'))['useContentWizardApply']
-    >
-    readonly useContentWizardCollaboration: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentWizardCollaboration'))['useContentWizardCollaboration']
-    >
-    readonly useContentWizardKeyboard: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentWizardKeyboard'))['useContentWizardKeyboard']
-    >
-    readonly useContentWizardLayout: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentWizardLayout'))['useContentWizardLayout']
-    >
-    readonly useContentWizardSlug: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentWizardSlug'))['useContentWizardSlug']
-    >
-    readonly useContentWizardTree: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentWizardTree'))['useContentWizardTree']
-    >
-    readonly useContentWizardViewport: UnwrapRef<
-      (typeof import('./resources/js/composables/useContentWizardViewport'))['useContentWizardViewport']
-    >
-    readonly useCssModule: UnwrapRef<(typeof import('vue'))['useCssModule']>
-    readonly useCssVars: UnwrapRef<(typeof import('vue'))['useCssVars']>
-    readonly useDataEntries: UnwrapRef<
-      (typeof import('./resources/js/composables/useDataEntries'))['useDataEntries']
-    >
-    readonly useDataEntryTranslation: UnwrapRef<
-      (typeof import('./resources/js/composables/useDataEntryTranslation'))['useDataEntryTranslation']
-    >
-    readonly useDataSources: UnwrapRef<
-      (typeof import('./resources/js/composables/useDataSources'))['useDataSources']
-    >
-    readonly useEcho: UnwrapRef<(typeof import('./resources/js/composables/useEcho'))['useEcho']>
-    readonly useFieldClipboard: UnwrapRef<
-      (typeof import('./resources/js/composables/useFieldClipboard'))['useFieldClipboard']
-    >
-    readonly useFieldOptionChoices: UnwrapRef<
-      (typeof import('./resources/js/composables/useFieldOptionChoices'))['useFieldOptionChoices']
-    >
-    readonly useFileUpload: UnwrapRef<
-      (typeof import('./resources/js/composables/useFileUpload'))['useFileUpload']
-    >
-    readonly useFileUtils: UnwrapRef<
-      (typeof import('./resources/js/composables/useFileUtils'))['default']
-    >
-    readonly useFormat: UnwrapRef<
-      (typeof import('./resources/js/composables/useFormat'))['default']
-    >
-    readonly useGlobalClipboard: UnwrapRef<
-      (typeof import('./resources/js/composables/useGlobalClipboard'))['useGlobalClipboard']
-    >
-    readonly useGlobalTeam: UnwrapRef<
-      (typeof import('./resources/js/composables/useGlobalTeam'))['useGlobalTeam']
-    >
-    readonly useHandlebars: UnwrapRef<
-      (typeof import('./resources/js/composables/useHandlebars'))['default']
-    >
-    readonly useHoverPrefetch: UnwrapRef<
-      (typeof import('./resources/js/composables/useHoverPrefetch'))['useHoverPrefetch']
-    >
-    readonly useI18n: UnwrapRef<(typeof import('./resources/js/plugins/i18n'))['useI18n']>
-    readonly useIconifyCollections: UnwrapRef<
-      (typeof import('./resources/js/composables/useIconifyCollections'))['useIconifyCollections']
-    >
-    readonly useIcons: UnwrapRef<(typeof import('./resources/js/composables/useIcons'))['useIcons']>
-    readonly useId: UnwrapRef<(typeof import('vue'))['useId']>
-    readonly useInvites: UnwrapRef<
-      (typeof import('./resources/js/composables/useInvites'))['useInvites']
-    >
-    readonly useInvoices: UnwrapRef<
-      (typeof import('./resources/js/composables/useInvoices'))['useInvoices']
-    >
-    readonly useLink: UnwrapRef<(typeof import('vue-router'))['useLink']>
-    readonly useMigrations: UnwrapRef<
-      (typeof import('./resources/js/composables/useMigrations'))['useMigrations']
-    >
-    readonly useModel: UnwrapRef<(typeof import('vue'))['useModel']>
-    readonly useNotificationPresentation: UnwrapRef<
-      (typeof import('./resources/js/composables/useNotificationPresentation'))['useNotificationPresentation']
-    >
-    readonly useNotifications: UnwrapRef<
-      (typeof import('./resources/js/composables/useNotifications'))['useNotifications']
-    >
-    readonly usePersonalAccessTokens: UnwrapRef<
-      (typeof import('./resources/js/composables/usePersonalAccessTokens'))['usePersonalAccessTokens']
-    >
-    readonly usePlans: UnwrapRef<(typeof import('./resources/js/composables/usePlans'))['usePlans']>
-    readonly usePresence: UnwrapRef<
-      (typeof import('./resources/js/composables/usePresence'))['usePresence']
-    >
-    readonly useProvider: UnwrapRef<
-      (typeof import('./resources/js/composables/useProvider'))['useProvider']
-    >
-    readonly useRedirects: UnwrapRef<
-      (typeof import('./resources/js/composables/useRedirects'))['useRedirects']
-    >
-    readonly useReleases: UnwrapRef<
-      (typeof import('./resources/js/composables/useReleases'))['useReleases']
-    >
-    readonly useRoute: UnwrapRef<(typeof import('vue-router'))['useRoute']>
-    readonly useRoutePreload: UnwrapRef<
-      (typeof import('./resources/js/composables/useRoutePreload'))['useRoutePreload']
-    >
-    readonly useRouter: UnwrapRef<(typeof import('vue-router'))['useRouter']>
-    readonly useRuntimeConfig: UnwrapRef<(typeof import('~/env'))['useRuntimeConfig']>
-    readonly useSeoMeta: UnwrapRef<
-      (typeof import('./resources/js/composables/useSeoMeta'))['useSeoMeta']
-    >
-    readonly useSlots: UnwrapRef<(typeof import('vue'))['useSlots']>
-    readonly useSpaceBlueprints: UnwrapRef<
-      (typeof import('./resources/js/composables/useSpaceBlueprints'))['useSpaceBlueprints']
-    >
-    readonly useSpaceBroadcasts: UnwrapRef<
-      (typeof import('./resources/js/composables/useSpaceBroadcasts'))['useSpaceBroadcasts']
-    >
-    readonly useSpaceMembers: UnwrapRef<
-      (typeof import('./resources/js/composables/useSpaceMembers'))['useSpaceMembers']
-    >
-    readonly useSpacePresence: UnwrapRef<
-      (typeof import('./resources/js/composables/usePresence'))['useSpacePresence']
-    >
-    readonly useSpacePresencePeek: UnwrapRef<
-      (typeof import('./resources/js/composables/useSpacePresencePeek'))['useSpacePresencePeek']
-    >
-    readonly useSpaceSettings: UnwrapRef<
-      (typeof import('./resources/js/composables/useSpaceSettings'))['default']
-    >
-    readonly useSpaceUsage: UnwrapRef<
-      (typeof import('./resources/js/composables/useSpaceUsage'))['useSpaceUsage']
-    >
-    readonly useSpaces: UnwrapRef<
-      (typeof import('./resources/js/composables/useSpace'))['useSpaces']
-    >
-    readonly useSubscription: UnwrapRef<
-      (typeof import('./resources/js/composables/useSubscription'))['useSubscription']
-    >
-    readonly useTeamTypes: UnwrapRef<
-      (typeof import('./resources/js/composables/useTeamTypes'))['useTeamTypes']
-    >
-    readonly useTeams: UnwrapRef<(typeof import('./resources/js/composables/useTeams'))['useTeams']>
-    readonly useTemplateRef: UnwrapRef<(typeof import('vue'))['useTemplateRef']>
-    readonly useTokens: UnwrapRef<
-      (typeof import('./resources/js/composables/useTokens'))['useTokens']
-    >
-    readonly useTone: UnwrapRef<(typeof import('./resources/js/composables/useTone'))['useTone']>
-    readonly useTwoFactor: UnwrapRef<
-      (typeof import('./resources/js/composables/useTwoFactor'))['useTwoFactor']
-    >
-    readonly useTwoFactorAuth: UnwrapRef<
-      (typeof import('./resources/js/composables/useTwoFactorAuth'))['useTwoFactorAuth']
-    >
-    readonly useUlid: UnwrapRef<(typeof import('./resources/js/composables/useUlid'))['useUlid']>
-    readonly useUrlNotifications: UnwrapRef<
-      (typeof import('./resources/js/composables/useUrlNotifications'))['useUrlNotifications']
-    >
-    readonly useUsageFormatters: UnwrapRef<
-      (typeof import('./resources/js/composables/useUsageFormatters'))['useUsageFormatters']
-    >
-    readonly useUsageHistory: UnwrapRef<
-      (typeof import('./resources/js/composables/useUsageHistory'))['useUsageHistory']
-    >
-    readonly useUser: UnwrapRef<(typeof import('./resources/js/composables/useUser'))['useUser']>
-    readonly useUserNotifications: UnwrapRef<
-      (typeof import('./resources/js/composables/useUserNotifications'))['useUserNotifications']
-    >
-    readonly useUserSettings: UnwrapRef<
-      (typeof import('./resources/js/composables/useUserSettings'))['useUserSettings']
-    >
-    readonly watch: UnwrapRef<(typeof import('vue'))['watch']>
-    readonly watchEffect: UnwrapRef<(typeof import('vue'))['watchEffect']>
-    readonly watchPostEffect: UnwrapRef<(typeof import('vue'))['watchPostEffect']>
-    readonly watchSyncEffect: UnwrapRef<(typeof import('vue'))['watchSyncEffect']>
+    readonly AlertDialogProvider: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['AlertDialogProvider']>
+    readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
+    readonly TEAM_TYPE_KEYS: UnwrapRef<typeof import('./resources/js/composables/useTeamTypes')['TEAM_TYPE_KEYS']>
+    readonly computed: UnwrapRef<typeof import('vue')['computed']>
+    readonly createAccessEvaluationContext: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['createAccessEvaluationContext']>
+    readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
+    readonly createBlockItemWithDefaults: UnwrapRef<typeof import('./resources/js/composables/useSchemaDefaults')['createBlockItemWithDefaults']>
+    readonly createContentDefaultsBlockLookup: UnwrapRef<typeof import('./resources/js/composables/useSchemaDefaults')['createContentDefaultsBlockLookup']>
+    readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
+    readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
+    readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
+    readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
+    readonly ensureAuthorizationContext: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['ensureAuthorizationContext']>
+    readonly ensureSelectedTeamAccess: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['ensureSelectedTeamAccess']>
+    readonly extractStreamingTreeOperations: UnwrapRef<typeof import('./resources/js/composables/useAiContentTree')['extractStreamingTreeOperations']>
+    readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
+    readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getCurrentWatcher: UnwrapRef<typeof import('vue')['getCurrentWatcher']>
+    readonly getLocale: UnwrapRef<typeof import('./resources/js/plugins/i18n')['getLocale']>
+    readonly getPosthog: UnwrapRef<typeof import('./resources/js/plugins/posthog')['getPosthog']>
+    readonly h: UnwrapRef<typeof import('vue')['h']>
+    readonly hydrateContentWithSchema: UnwrapRef<typeof import('./resources/js/composables/useSchemaDefaults')['hydrateContentWithSchema']>
+    readonly i18n: UnwrapRef<typeof import('./resources/js/plugins/i18n')['i18n']>
+    readonly initAuth: UnwrapRef<typeof import('./resources/js/plugins/auth')['initAuth']>
+    readonly inject: UnwrapRef<typeof import('vue')['inject']>
+    readonly installChart: UnwrapRef<typeof import('./resources/js/plugins/chart')['installChart']>
+    readonly installEcho: UnwrapRef<typeof import('./resources/js/plugins/echo')['installEcho']>
+    readonly installI18n: UnwrapRef<typeof import('./resources/js/plugins/i18n')['installI18n']>
+    readonly installPosthog: UnwrapRef<typeof import('./resources/js/plugins/posthog')['installPosthog']>
+    readonly installVueQuery: UnwrapRef<typeof import('./resources/js/plugins/vue-query')['installVueQuery']>
+    readonly isFieldVisible: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['isFieldVisible']>
+    readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
+    readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
+    readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
+    readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
+    readonly isShallow: UnwrapRef<typeof import('vue')['isShallow']>
+    readonly locales: UnwrapRef<typeof import('./resources/js/plugins/i18n')['locales']>
+    readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
+    readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
+    readonly normalizeFieldOptionChoices: UnwrapRef<typeof import('./resources/js/composables/useFieldOptionChoices')['normalizeFieldOptionChoices']>
+    readonly normalizeSchema: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['normalizeSchema']>
+    readonly normalizeSchemaField: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['normalizeSchemaField']>
+    readonly normalizeSchemaType: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['normalizeSchemaType']>
+    readonly onActivated: UnwrapRef<typeof import('vue')['onActivated']>
+    readonly onBeforeMount: UnwrapRef<typeof import('vue')['onBeforeMount']>
+    readonly onBeforeRouteLeave: UnwrapRef<typeof import('vue-router')['onBeforeRouteLeave']>
+    readonly onBeforeRouteUpdate: UnwrapRef<typeof import('vue-router')['onBeforeRouteUpdate']>
+    readonly onBeforeUnmount: UnwrapRef<typeof import('vue')['onBeforeUnmount']>
+    readonly onBeforeUpdate: UnwrapRef<typeof import('vue')['onBeforeUpdate']>
+    readonly onDeactivated: UnwrapRef<typeof import('vue')['onDeactivated']>
+    readonly onErrorCaptured: UnwrapRef<typeof import('vue')['onErrorCaptured']>
+    readonly onMounted: UnwrapRef<typeof import('vue')['onMounted']>
+    readonly onRenderTracked: UnwrapRef<typeof import('vue')['onRenderTracked']>
+    readonly onRenderTriggered: UnwrapRef<typeof import('vue')['onRenderTriggered']>
+    readonly onScopeDispose: UnwrapRef<typeof import('vue')['onScopeDispose']>
+    readonly onServerPrefetch: UnwrapRef<typeof import('vue')['onServerPrefetch']>
+    readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
+    readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
+    readonly onWatcherCleanup: UnwrapRef<typeof import('vue')['onWatcherCleanup']>
+    readonly parseTreeOperations: UnwrapRef<typeof import('./resources/js/composables/useAiContentTree')['parseTreeOperations']>
+    readonly provide: UnwrapRef<typeof import('vue')['provide']>
+    readonly queryClient: UnwrapRef<typeof import('./resources/js/plugins/vue-query')['queryClient']>
+    readonly queryKeys: UnwrapRef<typeof import('./resources/js/composables/useQueryClient')['queryKeys']>
+    readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
+    readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
+    readonly ref: UnwrapRef<typeof import('vue')['ref']>
+    readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
+    readonly resolveFieldInitialValue: UnwrapRef<typeof import('./resources/js/composables/useSchemaDefaults')['resolveFieldInitialValue']>
+    readonly setAlertDialogDefaultLabels: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['setAlertDialogDefaultLabels']>
+    readonly setLocale: UnwrapRef<typeof import('./resources/js/plugins/i18n')['setLocale']>
+    readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
+    readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
+    readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
+    readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
+    readonly toRef: UnwrapRef<typeof import('vue')['toRef']>
+    readonly toRefs: UnwrapRef<typeof import('vue')['toRefs']>
+    readonly toValue: UnwrapRef<typeof import('vue')['toValue']>
+    readonly triggerRef: UnwrapRef<typeof import('vue')['triggerRef']>
+    readonly unref: UnwrapRef<typeof import('vue')['unref']>
+    readonly useAiConfigs: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiConfigs']>
+    readonly useAiContent: UnwrapRef<typeof import('./resources/js/composables/useAiContent')['useAiContent']>
+    readonly useAiContentTree: UnwrapRef<typeof import('./resources/js/composables/useAiContentTree')['useAiContentTree']>
+    readonly useAiErrorToast: UnwrapRef<typeof import('./resources/js/composables/useAiErrorToast')['useAiErrorToast']>
+    readonly useAiMentions: UnwrapRef<typeof import('./resources/js/composables/useAiMentions')['useAiMentions']>
+    readonly useAiMetaTags: UnwrapRef<typeof import('./resources/js/composables/useAiMetaTags')['useAiMetaTags']>
+    readonly useAiModels: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiModels']>
+    readonly useAiSettings: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiSettings']>
+    readonly useAiStream: UnwrapRef<typeof import('./resources/js/composables/useAiStream')['useAiStream']>
+    readonly useAiTranslation: UnwrapRef<typeof import('./resources/js/composables/useAiTranslation')['useAiTranslation']>
+    readonly useAiUsage: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiUsage']>
+    readonly useAlertDialog: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['useAlertDialog']>
+    readonly useApiClient: UnwrapRef<typeof import('./resources/js/composables/useApiClient')['useApiClient']>
+    readonly useAssetBulkOperations: UnwrapRef<typeof import('./resources/js/composables/useAssetBulkOperations')['useAssetBulkOperations']>
+    readonly useAssetFolders: UnwrapRef<typeof import('./resources/js/composables/useAssetFolders')['useAssetFolders']>
+    readonly useAssetLibraryMoves: UnwrapRef<typeof import('./resources/js/composables/useAssetLibraryMoves')['useAssetLibraryMoves']>
+    readonly useAssetRequirements: UnwrapRef<typeof import('./resources/js/composables/useAssetRequirements')['useAssetRequirements']>
+    readonly useAssetSelection: UnwrapRef<typeof import('./resources/js/composables/useAssetSelection')['useAssetSelection']>
+    readonly useAssetTags: UnwrapRef<typeof import('./resources/js/composables/useAssetTags')['useAssetTags']>
+    readonly useAssetVersions: UnwrapRef<typeof import('./resources/js/composables/useAssetVersions')['useAssetVersions']>
+    readonly useAssets: UnwrapRef<typeof import('./resources/js/composables/useAssets')['useAssets']>
+    readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
+    readonly useAuditLogs: UnwrapRef<typeof import('./resources/js/composables/useAuditLogs')['useAuditLogs']>
+    readonly useAuth: UnwrapRef<typeof import('./resources/js/composables/useAuth')['useAuth']>
+    readonly useAuthorization: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['useAuthorization']>
+    readonly useAutomationActions: UnwrapRef<typeof import('./resources/js/composables/useAutomationActions')['useAutomationActions']>
+    readonly useAutomationExecutions: UnwrapRef<typeof import('./resources/js/composables/useAutomationExecutions')['useAutomationExecutions']>
+    readonly useAutomations: UnwrapRef<typeof import('./resources/js/composables/useAutomations')['useAutomations']>
+    readonly useBackups: UnwrapRef<typeof import('./resources/js/composables/useBackups')['useBackups']>
+    readonly useBlockFolders: UnwrapRef<typeof import('./resources/js/composables/useBlockFolders')['useBlockFolders']>
+    readonly useBlockTags: UnwrapRef<typeof import('./resources/js/composables/useBlockTags')['useBlockTags']>
+    readonly useBlockTemplates: UnwrapRef<typeof import('./resources/js/composables/useBlockTemplates')['useBlockTemplates']>
+    readonly useBlockVersions: UnwrapRef<typeof import('./resources/js/composables/useBlockVersions')['useBlockVersions']>
+    readonly useBlocks: UnwrapRef<typeof import('./resources/js/composables/useBlocks')['useBlocks']>
+    readonly useComments: UnwrapRef<typeof import('./resources/js/composables/useComments')['useComments']>
+    readonly useContent: UnwrapRef<typeof import('./resources/js/composables/useContent')['useContent']>
+    readonly useContentCanvasCommands: UnwrapRef<typeof import('./resources/js/composables/useContentCanvasCommands')['useContentCanvasCommands']>
+    readonly useContentJson: UnwrapRef<typeof import('./resources/js/composables/useContentJson')['useContentJson']>
+    readonly useContentLiveCollaboration: UnwrapRef<typeof import('./resources/js/composables/useContentLiveCollaboration')['useContentLiveCollaboration']>
+    readonly useContentMenu: UnwrapRef<typeof import('./resources/js/composables/useContentMenu')['useContentMenu']>
+    readonly useContentMenuPresence: UnwrapRef<typeof import('./resources/js/composables/useContentMenuPresence')['useContentMenuPresence']>
+    readonly useContentPresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['useContentPresence']>
+    readonly useContentSchemaState: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['useContentSchemaState']>
+    readonly useContentTree: UnwrapRef<typeof import('./resources/js/composables/useContentTree')['useContentTree']>
+    readonly useContentTreeClipboard: UnwrapRef<typeof import('./resources/js/composables/useContentTreeClipboard')['useContentTreeClipboard']>
+    readonly useContentVersions: UnwrapRef<typeof import('./resources/js/composables/useContentVersions')['useContentVersions']>
+    readonly useContentWizardApply: UnwrapRef<typeof import('./resources/js/composables/useContentWizardApply')['useContentWizardApply']>
+    readonly useContentWizardCollaboration: UnwrapRef<typeof import('./resources/js/composables/useContentWizardCollaboration')['useContentWizardCollaboration']>
+    readonly useContentWizardKeyboard: UnwrapRef<typeof import('./resources/js/composables/useContentWizardKeyboard')['useContentWizardKeyboard']>
+    readonly useContentWizardLayout: UnwrapRef<typeof import('./resources/js/composables/useContentWizardLayout')['useContentWizardLayout']>
+    readonly useContentWizardSlug: UnwrapRef<typeof import('./resources/js/composables/useContentWizardSlug')['useContentWizardSlug']>
+    readonly useContentWizardTree: UnwrapRef<typeof import('./resources/js/composables/useContentWizardTree')['useContentWizardTree']>
+    readonly useContentWizardViewport: UnwrapRef<typeof import('./resources/js/composables/useContentWizardViewport')['useContentWizardViewport']>
+    readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
+    readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
+    readonly useDataEntries: UnwrapRef<typeof import('./resources/js/composables/useDataEntries')['useDataEntries']>
+    readonly useDataEntryTranslation: UnwrapRef<typeof import('./resources/js/composables/useDataEntryTranslation')['useDataEntryTranslation']>
+    readonly useDataSources: UnwrapRef<typeof import('./resources/js/composables/useDataSources')['useDataSources']>
+    readonly useEcho: UnwrapRef<typeof import('./resources/js/composables/useEcho')['useEcho']>
+    readonly useFieldClipboard: UnwrapRef<typeof import('./resources/js/composables/useFieldClipboard')['useFieldClipboard']>
+    readonly useFieldOptionChoices: UnwrapRef<typeof import('./resources/js/composables/useFieldOptionChoices')['useFieldOptionChoices']>
+    readonly useFileUpload: UnwrapRef<typeof import('./resources/js/composables/useFileUpload')['useFileUpload']>
+    readonly useFileUtils: UnwrapRef<typeof import('./resources/js/composables/useFileUtils')['default']>
+    readonly useFormat: UnwrapRef<typeof import('./resources/js/composables/useFormat')['default']>
+    readonly useGlobalClipboard: UnwrapRef<typeof import('./resources/js/composables/useGlobalClipboard')['useGlobalClipboard']>
+    readonly useGlobalTeam: UnwrapRef<typeof import('./resources/js/composables/useGlobalTeam')['useGlobalTeam']>
+    readonly useHandlebars: UnwrapRef<typeof import('./resources/js/composables/useHandlebars')['default']>
+    readonly useHoverPrefetch: UnwrapRef<typeof import('./resources/js/composables/useHoverPrefetch')['useHoverPrefetch']>
+    readonly useI18n: UnwrapRef<typeof import('./resources/js/plugins/i18n')['useI18n']>
+    readonly useIconifyCollections: UnwrapRef<typeof import('./resources/js/composables/useIconifyCollections')['useIconifyCollections']>
+    readonly useIcons: UnwrapRef<typeof import('./resources/js/composables/useIcons')['useIcons']>
+    readonly useId: UnwrapRef<typeof import('vue')['useId']>
+    readonly useInvites: UnwrapRef<typeof import('./resources/js/composables/useInvites')['useInvites']>
+    readonly useInvoices: UnwrapRef<typeof import('./resources/js/composables/useInvoices')['useInvoices']>
+    readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
+    readonly useMigrations: UnwrapRef<typeof import('./resources/js/composables/useMigrations')['useMigrations']>
+    readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
+    readonly useNotificationPresentation: UnwrapRef<typeof import('./resources/js/composables/useNotificationPresentation')['useNotificationPresentation']>
+    readonly useNotifications: UnwrapRef<typeof import('./resources/js/composables/useNotifications')['useNotifications']>
+    readonly usePersonalAccessTokens: UnwrapRef<typeof import('./resources/js/composables/usePersonalAccessTokens')['usePersonalAccessTokens']>
+    readonly usePlans: UnwrapRef<typeof import('./resources/js/composables/usePlans')['usePlans']>
+    readonly usePresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['usePresence']>
+    readonly useProvider: UnwrapRef<typeof import('./resources/js/composables/useProvider')['useProvider']>
+    readonly useRedirects: UnwrapRef<typeof import('./resources/js/composables/useRedirects')['useRedirects']>
+    readonly useReleases: UnwrapRef<typeof import('./resources/js/composables/useReleases')['useReleases']>
+    readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
+    readonly useRoutePreload: UnwrapRef<typeof import('./resources/js/composables/useRoutePreload')['useRoutePreload']>
+    readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
+    readonly useRuntimeConfig: UnwrapRef<typeof import('~/env')['useRuntimeConfig']>
+    readonly useSeoMeta: UnwrapRef<typeof import('./resources/js/composables/useSeoMeta')['useSeoMeta']>
+    readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
+    readonly useSpaceBlueprints: UnwrapRef<typeof import('./resources/js/composables/useSpaceBlueprints')['useSpaceBlueprints']>
+    readonly useSpaceBroadcasts: UnwrapRef<typeof import('./resources/js/composables/useSpaceBroadcasts')['useSpaceBroadcasts']>
+    readonly useSpaceMembers: UnwrapRef<typeof import('./resources/js/composables/useSpaceMembers')['useSpaceMembers']>
+    readonly useSpacePresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['useSpacePresence']>
+    readonly useSpacePresencePeek: UnwrapRef<typeof import('./resources/js/composables/useSpacePresencePeek')['useSpacePresencePeek']>
+    readonly useSpaceSettings: UnwrapRef<typeof import('./resources/js/composables/useSpaceSettings')['default']>
+    readonly useSpaceUsage: UnwrapRef<typeof import('./resources/js/composables/useSpaceUsage')['useSpaceUsage']>
+    readonly useSpaces: UnwrapRef<typeof import('./resources/js/composables/useSpace')['useSpaces']>
+    readonly useSubscription: UnwrapRef<typeof import('./resources/js/composables/useSubscription')['useSubscription']>
+    readonly useTeamTypes: UnwrapRef<typeof import('./resources/js/composables/useTeamTypes')['useTeamTypes']>
+    readonly useTeams: UnwrapRef<typeof import('./resources/js/composables/useTeams')['useTeams']>
+    readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
+    readonly useTokens: UnwrapRef<typeof import('./resources/js/composables/useTokens')['useTokens']>
+    readonly useTone: UnwrapRef<typeof import('./resources/js/composables/useTone')['useTone']>
+    readonly useTwoFactor: UnwrapRef<typeof import('./resources/js/composables/useTwoFactor')['useTwoFactor']>
+    readonly useTwoFactorAuth: UnwrapRef<typeof import('./resources/js/composables/useTwoFactorAuth')['useTwoFactorAuth']>
+    readonly useUlid: UnwrapRef<typeof import('./resources/js/composables/useUlid')['useUlid']>
+    readonly useUrlNotifications: UnwrapRef<typeof import('./resources/js/composables/useUrlNotifications')['useUrlNotifications']>
+    readonly useUsageFormatters: UnwrapRef<typeof import('./resources/js/composables/useUsageFormatters')['useUsageFormatters']>
+    readonly useUsageHistory: UnwrapRef<typeof import('./resources/js/composables/useUsageHistory')['useUsageHistory']>
+    readonly useUser: UnwrapRef<typeof import('./resources/js/composables/useUser')['useUser']>
+    readonly useUserNotifications: UnwrapRef<typeof import('./resources/js/composables/useUserNotifications')['useUserNotifications']>
+    readonly useUserSettings: UnwrapRef<typeof import('./resources/js/composables/useUserSettings')['useUserSettings']>
+    readonly watch: UnwrapRef<typeof import('vue')['watch']>
+    readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
+    readonly watchPostEffect: UnwrapRef<typeof import('vue')['watchPostEffect']>
+    readonly watchSyncEffect: UnwrapRef<typeof import('vue')['watchSyncEffect']>
   }
 }

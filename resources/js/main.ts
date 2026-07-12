@@ -1,9 +1,11 @@
-import { icons as flagIcons } from '@iconify-json/flag'
 import { icons as lucideIcons } from '@iconify-json/lucide'
 import { addCollection } from '@iconify/vue'
 import { createApp } from 'vue'
 
 import App from '~/app.vue'
+// Only the handful of `flag:` icons we actually use, extracted from
+// @iconify-json/flag (whose full collection is ~3.9MB). See lib/flag-icons.json.
+import flagIcons from '~/lib/flag-icons.json'
 
 import '~/assets/css/main.css'
 
