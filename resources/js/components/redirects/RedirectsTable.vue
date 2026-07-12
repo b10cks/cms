@@ -2,8 +2,8 @@
 import type { RedirectsQueryParams } from '~/api/resources/redirects'
 import RedirectsIcon from '~/assets/images/redirects.svg?component'
 import Icon from '~/components/Icon.vue'
-import SearchFilter from '~/components/SearchFilter.vue'
 import type { FilterableField } from '~/components/SearchFilter.vue'
+import SearchFilter from '~/components/SearchFilter.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
@@ -29,8 +29,8 @@ import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type {
   CreateRedirectPayload,
-  UpdateRedirectPayload,
   RedirectResource,
+  UpdateRedirectPayload,
 } from '~/types/redirects'
 
 import ExportRedirectsDialog from './ExportRedirectsDialog.vue'
@@ -303,8 +303,8 @@ defineExpose({
 </script>
 
 <template>
-  <div class="space-y-4">
-    <div class="flex flex-wrap items-center justify-end gap-2">
+  <div class="space-y-2">
+    <div class="ml-auto flex items-center gap-2">
       <SearchFilter
         v-model="filters"
         :filterable-fields="redirectFilters"
