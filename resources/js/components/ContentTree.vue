@@ -1221,6 +1221,12 @@ const handleItemNavigate = (event: MouseEvent, id: string) => {
   if (selectedItemId.value !== id) {
     selectSingleItem(id)
   }
+
+  // The click has resolved against the filtered list, so it is now safe to
+  // tear the filter down (see handleSearchBlur).
+  if (searchOpen.value) {
+    closeSearch()
+  }
 }
 
 const getSelectedDragItemsFor = (id: string): ContentTreeDragItem[] => {
@@ -1974,6 +1980,14 @@ const handleSearchInputKeydown = (event: KeyboardEvent) => {
 const handleSearchBlur = (event: FocusEvent) => {
   const next = event.relatedTarget
   if (next instanceof Node && searchPanelRef.value?.contains(next)) {
+    return
+  }
+
+  // Clicking a filtered row moves focus onto that row, firing this blur between
+  // pointerdown and click. Closing here would clear the filter and reflow the
+  // tree mid-click, landing the click on the wrong row. Let the row's click
+  // handler close the search once the correct item has been resolved.
+  if (next instanceof HTMLElement && next.closest('[data-content-id]')) {
     return
   }
 
