@@ -138,6 +138,28 @@ const cloneValue = <T>(value: T): T => {
   }
 }
 
+// Structural equality, used to detect when a field has been edited back to its
+// clean value so its dirty indicator can be cleared. Object comparison is
+// key-order independent; values here are scalars, arrays or plain objects.
+const valuesEqual = (a: unknown, b: unknown): boolean => {
+  if (a === b) return true
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') {
+    return false
+  }
+
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false
+    return a.every((value, index) => valuesEqual(value, b[index]))
+  }
+
+  const aObj = a as Record<string, unknown>
+  const bObj = b as Record<string, unknown>
+  const aKeys = Object.keys(aObj)
+  if (aKeys.length !== Object.keys(bObj).length) return false
+
+  return aKeys.every((key) => Object.hasOwn(bObj, key) && valuesEqual(aObj[key], bObj[key]))
+}
+
 const getFieldKey = (itemId: string, field: string) => `${itemId}:${field}`
 
 const findNestedObjectById = (data: unknown, id: string): Record<string, unknown> | null => {
@@ -510,15 +532,29 @@ export function useContentLiveCollaboration(
     }
   }
 
+  const removeRemoteDraft = (userId: string, itemId: string, field: string) => {
+    const userDrafts = remoteDraftFields.get(userId)
+    if (!userDrafts) return
+
+    if (userDrafts.delete(getFieldKey(itemId, field))) {
+      if (userDrafts.size === 0) {
+        remoteDraftFields.delete(userId)
+      }
+      syncRemoteDraftIndex()
+    }
+  }
+
   const applyRemoteFieldUpdate = (payload: ContentFieldWhisperPayload) => {
-    recordRemoteDraft(
-      payload.userId,
-      payload.itemId,
-      payload.field,
+    const previousValue =
       payload.previousValue ??
-        getFieldValue(content.value, payload.itemId, payload.field, payload.meta),
-      payload.meta
-    )
+      getFieldValue(content.value, payload.itemId, payload.field, payload.meta)
+
+    // A collaborator reverting a field to its clean value clears its dirty ring.
+    if (valuesEqual(payload.value, previousValue)) {
+      removeRemoteDraft(payload.userId, payload.itemId, payload.field)
+    } else {
+      recordRemoteDraft(payload.userId, payload.itemId, payload.field, previousValue, payload.meta)
+    }
 
     applyFieldValue(payload.itemId, payload.field, payload.value, payload.meta)
   }
@@ -563,7 +599,20 @@ export function useContentLiveCollaboration(
 
     const fieldKey = getFieldKey(payload.itemId, payload.field)
 
-    if (!localDraftFields.has(fieldKey)) {
+    const existingDraft = localDraftFields.get(fieldKey)
+    // Compare against the value captured before the first edit (the snapshot),
+    // not the immediately preceding value the editor emits per keystroke.
+    const cleanValue = existingDraft ? existingDraft.previousValue : cloneValue(payload.previousValue)
+    const reverted = valuesEqual(payload.value, cleanValue)
+
+    if (reverted) {
+      // Edited back to the clean value: drop the dirty state. We still whisper
+      // the reverted value below so collaborators clear their indicator too.
+      if (existingDraft) {
+        localDraftFields.delete(fieldKey)
+        syncLocalDraftIndex()
+      }
+    } else if (!existingDraft) {
       localDraftFields.set(fieldKey, {
         itemId: payload.itemId,
         field: payload.field,
@@ -575,7 +624,7 @@ export function useContentLiveCollaboration(
 
     pendingFieldUpdates.set(fieldKey, {
       ...payload,
-      previousValue: cloneValue(localDraftFields.get(fieldKey)?.previousValue),
+      previousValue: cloneValue(cleanValue),
       value: cloneValue(payload.value),
       userId,
     })
