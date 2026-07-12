@@ -304,13 +304,19 @@ const handleInputChange = (entry: DataEntryResource, field: string, value: any) 
   }
 }
 
-const handleKeyDown = (event: KeyboardEvent, entryId: string) => {
+const handleKeyDown = (event: KeyboardEvent, entryId: string, field: string) => {
   const target = event.target as HTMLInputElement
   const currentRow = target.closest('tr')
   const currentCell = target.closest('td')
 
+  // The value / dimension cells are multiline textareas: plain arrow keys and
+  // Enter must behave natively (move the caret / insert a newline). Only the
+  // single-line key input keeps the grid-style row navigation and Enter-to-save.
+  const isMultiline = field === 'value' || field.startsWith('dimension.')
+
   switch (event.key) {
     case 'ArrowUp': {
+      if (isMultiline) break
       event.preventDefault()
       const prevRow = currentRow?.previousElementSibling as HTMLTableRowElement
       if (prevRow) {
@@ -321,6 +327,7 @@ const handleKeyDown = (event: KeyboardEvent, entryId: string) => {
       break
     }
     case 'ArrowDown': {
+      if (isMultiline) break
       event.preventDefault()
       const nextRow = currentRow?.nextElementSibling as HTMLTableRowElement
       if (nextRow) {
@@ -333,7 +340,7 @@ const handleKeyDown = (event: KeyboardEvent, entryId: string) => {
     case 'Tab': {
       break
     }
-    case 'Esc': {
+    case 'Escape': {
       event.preventDefault()
       handleDiscardEntry(entryId)
 
@@ -341,6 +348,10 @@ const handleKeyDown = (event: KeyboardEvent, entryId: string) => {
       break
     }
     case 'Enter': {
+      // In a multiline field a plain Enter inserts a newline; saving requires
+      // the Cmd/Ctrl modifier so the value can genuinely span multiple lines.
+      if (isMultiline && !event.metaKey && !event.ctrlKey) break
+
       event.preventDefault()
 
       handleSaveEntry(entryId)
@@ -696,20 +707,22 @@ const handleTranslateMissingDimensions = async () => {
                     />
                   </TableCell>
                   <TableCell>
-                    <Input
+                    <Textarea
                       v-model="newEntryData.value"
                       :placeholder="$t('labels.dataEntries.fields.value')"
                       :disabled="!isDefaultSelected"
-                      @keydown.enter="handleSaveNewEntry"
+                      @keydown.enter.meta.prevent="handleSaveNewEntry"
+                      @keydown.enter.ctrl.prevent="handleSaveNewEntry"
                     />
                   </TableCell>
                   <TableCell v-if="!isDefaultSelected">
-                    <Input
+                    <Textarea
                       v-model="newEntryData.dimensions[selectedDimension]"
                       :placeholder="
                         dimensionTabs.find((tab) => tab.key === selectedDimension)?.label
                       "
-                      @keydown.enter="handleSaveNewEntry"
+                      @keydown.enter.meta.prevent="handleSaveNewEntry"
+                      @keydown.enter.ctrl.prevent="handleSaveNewEntry"
                     />
                   </TableCell>
                   <TableCell>
