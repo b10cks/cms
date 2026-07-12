@@ -1,25 +1,10 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@font-face {
-  font-family: Inter;
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url(~/assets/fonts/InterVariable.woff2) format('woff2');
-}
-@font-face {
-  font-family: Inter;
-  font-style: italic;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url(~/assets/fonts/InterVariable-Italic.woff2) format('woff2');
-}
-
 @theme {
   --font-sans:
-    'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-    'Segoe UI Symbol', 'Noto Color Emoji';
+    ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
 
   --radius: 8px;
 
@@ -578,12 +563,18 @@
     linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
     linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
   background-size: 10px 10px;
-  background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+  background-position:
+    0 0,
+    0 5px,
+    5px -5px,
+    -5px 0;
 }
 
 .slide-down-enter-active,
 .slide-down-leave-active {
-  transition: opacity 0.15s ease, max-height 0.2s ease;
+  transition:
+    opacity 0.15s ease,
+    max-height 0.2s ease;
   max-height: 300px;
   overflow: hidden;
 }
