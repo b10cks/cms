@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.12-1b52bf22] — 2026-7-12
+
+- 🐛 Fix clicking an item in the filtered content tree
+- 🐛 Clear field dirty state when reverted to clean value
+- 🚸 Allow multiline edits in data source entries
+
 ## [v2026.7.12-34ecf701] — 2026-7-12
 
 - ⚡️ Use system ui font
