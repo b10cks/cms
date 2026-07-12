@@ -10,6 +10,7 @@ import { TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetHeaderCombined } from '~/components/ui/sheet'
+import { Spinner } from '~/components/ui/spinner'
 
 const open = defineModel<boolean>('open')
 const { $t } = useI18n()
@@ -110,10 +111,7 @@ watch(open, (isOpen) => {
         v-if="isLoading"
         class="flex h-32 items-center justify-center"
       >
-        <Icon
-          name="lucide:loader"
-          class="mr-2 h-6 w-6 animate-spin"
-        />
+        <Spinner class="mr-2 size-6" />
         <span>{{ $t('labels.blockTemplates.loading') }}</span>
       </div>
 
@@ -168,14 +166,10 @@ watch(open, (isOpen) => {
                     type="button"
                     variant="primary"
                     size="sm"
-                    :disabled="!editForm.name.trim() || isUpdating"
+                    :loading="isUpdating"
+                    :disabled="!editForm.name.trim()"
                     @click="handleUpdate"
                   >
-                    <Icon
-                      v-if="isUpdating"
-                      name="lucide:loader"
-                      class="animate-spin"
-                    />
                     {{ $t('actions.save') }}
                   </Button>
                 </div>

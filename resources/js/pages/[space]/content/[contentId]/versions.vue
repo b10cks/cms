@@ -6,6 +6,7 @@ import LanguageSwitcher from '~/components/content/LanguageSwitcher.vue'
 import ContentVersionHistory from '~/components/content/VersionHistory.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
+import { Spinner } from '~/components/ui/spinner'
 import {
   getContentDefaultLanguage,
   resolveContentLanguage,
@@ -209,10 +210,7 @@ useSeoMeta({
       v-if="isLoadingContent"
       class="flex h-20 items-center justify-center"
     >
-      <Icon
-        name="lucide:loader"
-        class="mr-2 h-6 w-6 animate-spin"
-      />
+      <Spinner class="mr-2 size-6" />
       <span>Loading content details...</span>
     </div>
 

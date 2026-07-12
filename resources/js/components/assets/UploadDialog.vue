@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { ScrollArea } from '~/components/ui/scroll-area'
+import { Spinner } from '~/components/ui/spinner'
 import type { AssetUploadDuplicate } from '~/types/assets'
 import { UploadFile } from '~/types/assets'
 
@@ -497,10 +498,7 @@ const retryUpload = async (file: UploadFileWithProgress) => {
                 >
                   <div class="p-2 text-center text-primary">
                     <div class="mb-2 flex items-center justify-center">
-                      <Icon
-                        name="lucide:loader"
-                        class="h-6 w-6 animate-spin"
-                      />
+                      <Spinner class="size-6" />
                     </div>
                     <div class="text-sm">{{ file.progress }}%</div>
                   </div>
@@ -581,14 +579,10 @@ const retryUpload = async (file: UploadFileWithProgress) => {
           </Button>
           <Button
             variant="primary"
-            :disabled="files.length === 0 || isUploading"
+            :loading="isUploading"
+            :disabled="files.length === 0"
             @click="handleUpload"
           >
-            <Icon
-              v-if="isUploading"
-              name="lucide:loader"
-              class="animate-spin"
-            />
             {{
               isUploading
                 ? $t('labels.assets.uploading')

@@ -4,9 +4,16 @@ import Icon from '~/components/Icon.vue'
 import IconPreview from '~/components/icons/IconPreview.vue'
 import IconTagsInput from '~/components/icons/IconTagsInput.vue'
 import { Button } from '~/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '~/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '~/components/ui/dialog'
 import { InputField } from '~/components/ui/form'
 import { ScrollArea } from '~/components/ui/scroll-area'
+import { Spinner } from '~/components/ui/spinner'
 import { parseSvgDimensions, replaceColorsWithCurrentColor } from '~/utils/svg'
 
 const props = defineProps<{
@@ -257,7 +264,9 @@ watch(open, (value) => {
             class="flex items-start gap-3 rounded-lg border border-input bg-surface p-2"
           >
             <div class="flex shrink-0 flex-col items-center gap-0.5">
-              <div class="flex size-12 items-center justify-center rounded border border-input bg-background text-primary">
+              <div
+                class="flex size-12 items-center justify-center rounded border border-input bg-background text-primary"
+              >
                 <IconPreview
                   :body="item.body"
                   :width="item.width"
@@ -265,7 +274,9 @@ watch(open, (value) => {
                   size="24"
                 />
               </div>
-              <span class="text-[10px] leading-none text-muted">{{ item.width }}×{{ item.height }}</span>
+              <span class="text-[10px] leading-none text-muted"
+                >{{ item.width }}×{{ item.height }}</span
+              >
             </div>
             <div class="grid min-w-0 flex-1 grid-cols-2 gap-2">
               <InputField
@@ -289,10 +300,9 @@ watch(open, (value) => {
                 name="lucide:check"
                 class="text-green-600"
               />
-              <Icon
+              <Spinner
                 v-else-if="item.status === 'uploading'"
-                name="lucide:loader-circle"
-                class="animate-spin text-muted"
+                class="text-muted"
               />
               <template v-else>
                 <button

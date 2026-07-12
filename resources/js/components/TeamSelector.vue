@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { Spinner } from '~/components/ui/spinner'
 import { cn } from '~/lib/utils'
 import type { TeamResource } from '~/types/teams'
 
@@ -93,10 +94,7 @@ const hierarchicalTeams = computed(() => {
           v-if="isLoading"
           class="flex items-center gap-2"
         >
-          <Icon
-            name="lucide:loader-2"
-            class="shrink-0 animate-spin"
-          />
+          <Spinner class="shrink-0" />
           <span>{{ $t('labels.loading') }}</span>
         </div>
         <div

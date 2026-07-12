@@ -4,6 +4,7 @@ import { refDebounced } from '@vueuse/core'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
+import { Spinner } from '~/components/ui/spinner'
 import { fetchIconifyCollection, searchIconifyIcons, splitIconName } from '~/lib/iconify'
 
 const props = defineProps<{
@@ -88,10 +89,14 @@ const load = async () => {
   }
 }
 
-watch([query, activeCollection, () => props.source], () => {
-  browseLimit.value = PAGE_SIZE
-  load()
-}, { immediate: true })
+watch(
+  [query, activeCollection, () => props.source],
+  () => {
+    browseLimit.value = PAGE_SIZE
+    load()
+  },
+  { immediate: true }
+)
 
 onBeforeUnmount(() => controller?.abort())
 
@@ -134,7 +139,7 @@ const nameOf = (full: string) => splitIconName(full).name
         v-if="loading"
         class="flex h-32 items-center justify-center text-muted"
       >
-        <Icon name="lucide:loader-circle" class="animate-spin" />
+        <Spinner />
       </div>
 
       <div
@@ -148,7 +153,10 @@ const nameOf = (full: string) => splitIconName(full).name
         v-else-if="showPrompt"
         class="flex h-32 flex-col items-center justify-center gap-2 text-muted"
       >
-        <Icon name="lucide:search" size="28" />
+        <Icon
+          name="lucide:search"
+          size="28"
+        />
         <p class="text-sm">{{ t('labels.icons.field.searchAllHint') }}</p>
       </div>
 
@@ -169,8 +177,13 @@ const nameOf = (full: string) => splitIconName(full).name
             class="group flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-input bg-surface p-1.5 text-primary transition-colors hover:border-primary hover:bg-surface/80"
             @click="emit('select', name)"
           >
-            <Icon :name="name" size="22" />
-            <span class="w-full truncate text-center text-[10px] text-muted">{{ nameOf(name) }}</span>
+            <Icon
+              :name="name"
+              size="22"
+            />
+            <span class="w-full truncate text-center text-[10px] text-muted">{{
+              nameOf(name)
+            }}</span>
           </button>
         </div>
 

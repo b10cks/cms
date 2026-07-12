@@ -14,6 +14,7 @@ import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { Input } from '~/components/ui/input'
 import { Progress } from '~/components/ui/progress'
 import SortSelect from '~/components/ui/SortSelect.vue'
+import { Spinner } from '~/components/ui/spinner'
 import { Switch } from '~/components/ui/switch'
 import {
   Table,
@@ -560,10 +561,7 @@ const handleTranslateMissingDimensions = async () => {
         v-if="isLoadingDataSource"
         class="flex items-center justify-center gap-2 py-12"
       >
-        <Icon
-          name="lucide:loader"
-          class="animate-spin"
-        />
+        <Spinner />
         {{ $t('labels.datasets.loading') }}
       </div>
 
@@ -723,10 +721,9 @@ const handleTranslateMissingDimensions = async () => {
                         :disabled="!newEntryData.key || isCreatingEntry"
                         @click="handleSaveNewEntry"
                       >
-                        <Icon
+                        <Spinner
                           v-if="isCreatingEntry"
-                          name="lucide:loader"
-                          class="h-3 w-3 animate-spin"
+                          class="size-3"
                         />
                         <Icon
                           v-else
@@ -743,10 +740,7 @@ const handleTranslateMissingDimensions = async () => {
                     class="h-24 text-center"
                   >
                     <div class="flex items-center justify-center">
-                      <Icon
-                        name="lucide:loader"
-                        class="mr-2 h-6 w-6 animate-spin"
-                      />
+                      <Spinner class="mr-2 size-6" />
                       {{ $t('labels.datasets.loadingEntries') }}
                     </div>
                   </TableCell>
@@ -812,11 +806,7 @@ const handleTranslateMissingDimensions = async () => {
                             :disabled="isUpdatingEntry"
                             @click="handleSaveEntry(entry.id)"
                           >
-                            <Icon
-                              v-if="isUpdatingEntry"
-                              name="lucide:loader"
-                              class="animate-spin"
-                            />
+                            <Spinner v-if="isUpdatingEntry" />
                             <Icon
                               v-else
                               name="lucide:check"

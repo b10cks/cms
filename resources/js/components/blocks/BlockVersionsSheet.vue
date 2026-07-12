@@ -11,6 +11,7 @@ import RenamableTitle from '~/components/ui/RenamableTitle.vue'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/components/ui/resizable'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetHeaderCombined } from '~/components/ui/sheet'
+import { Spinner } from '~/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 
@@ -250,10 +251,7 @@ watch(
                 v-if="isLoading"
                 class="flex h-32 items-center justify-center"
               >
-                <Icon
-                  name="lucide:loader"
-                  class="animate-spin"
-                />
+                <Spinner />
                 <span>{{ $t('labels.blockVersions.loading') }}</span>
               </div>
 

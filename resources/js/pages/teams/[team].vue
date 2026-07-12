@@ -11,10 +11,15 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
 import IconName from '~/components/ui/IconName.vue'
+import { Spinner } from '~/components/ui/spinner'
 import { useAuthorization } from '~/composables/useAuthorization'
 import { teamNavigationItems } from '~/lib/access-control'
 import type { CreateTeamSpaceRolePayload, RoleCatalogEntry } from '~/types/authorization'
-import type { TeamSamlProviderPayload, TeamUserQueryParams, UpdateTeamUserPayload } from '~/types/teams'
+import type {
+  TeamSamlProviderPayload,
+  TeamUserQueryParams,
+  UpdateTeamUserPayload,
+} from '~/types/teams'
 
 const route = useRoute()
 const router = useRouter()
@@ -84,15 +89,16 @@ const queryParams = computed<TeamUserQueryParams>(() => ({
   per_page: perPage.value,
 }))
 
-const { data: membersData, isLoading: isLoadingMembers } = useTeamUsersQuery(
-  teamId,
-  queryParams,
-  canViewMembers
-)
-const { data: teamRoles, isLoading: isLoadingRoles } = useTeamSpaceRolesQuery(
-  teamId,
-  canManageRoles
-)
+const {
+  data: membersData,
+  isLoading: isLoadingMembers,
+  isFetching: isFetchingMembers,
+} = useTeamUsersQuery(teamId, queryParams, canViewMembers)
+const {
+  data: teamRoles,
+  isLoading: isLoadingRoles,
+  isFetching: isFetchingRoles,
+} = useTeamSpaceRolesQuery(teamId, canManageRoles)
 const { data: samlProviderResponse, isLoading: isLoadingSamlProvider } = useTeamSamlProviderQuery(
   teamId,
   canManageSaml
@@ -128,7 +134,11 @@ watch(
     if (views.length === 0) return
 
     const currentView =
-      activeView.value === 'roles' ? 'team-roles' : activeView.value === 'saml' ? 'team-saml' : 'team'
+      activeView.value === 'roles'
+        ? 'team-roles'
+        : activeView.value === 'saml'
+          ? 'team-saml'
+          : 'team'
 
     if (!views.includes(currentView)) {
       router.replace({
@@ -260,10 +270,7 @@ const navigateBack = () => {
       v-if="isLoadingTeam"
       class="py-12 text-center"
     >
-      <Icon
-        name="lucide:loader-2"
-        class="h-8 w-8 animate-spin"
-      />
+      <Spinner class="size-8" />
     </div>
 
     <template v-else-if="team">
@@ -353,122 +360,121 @@ const navigateBack = () => {
         </aside>
 
         <div class="flex-1 space-y-6">
-        <template v-if="activeView === 'people' && canViewPeople">
-          <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div class="space-y-1">
-              <h2 class="font-semibold">{{ $t('labels.teams.peopleTitle') }}</h2>
-              <p class="text-muted-foreground max-w-3xl text-sm">
-                {{ $t('labels.teams.peopleDescription') }}
-              </p>
+          <template v-if="activeView === 'people' && canViewPeople">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div class="space-y-1">
+                <h2 class="font-semibold">{{ $t('labels.teams.peopleTitle') }}</h2>
+                <p class="text-muted-foreground max-w-3xl text-sm">
+                  {{ $t('labels.teams.peopleDescription') }}
+                </p>
+              </div>
+
+              <Button
+                v-if="canManageInvites"
+                @click="isCreateInviteDialogOpen = true"
+              >
+                <Icon name="lucide:user-plus" />
+                {{ $t('labels.teams.inviteAction') }}
+              </Button>
             </div>
 
-            <Button
-              v-if="canManageInvites"
-              @click="isCreateInviteDialogOpen = true"
+            <div
+              v-if="canViewInvites"
+              class="space-y-3"
             >
-              <Icon name="lucide:user-plus" />
-              {{ $t('labels.teams.inviteAction') }}
-            </Button>
-          </div>
+              <div class="space-y-1">
+                <h3 class="font-semibold">{{ $t('labels.teams.invitesTitle') }}</h3>
+                <p class="text-muted-foreground text-sm">
+                  {{ $t('labels.teams.invitesDescription') }}
+                </p>
+              </div>
 
-          <div
-            v-if="canViewInvites"
-            class="space-y-3"
-          >
-            <div class="space-y-1">
-              <h3 class="font-semibold">{{ $t('labels.teams.invitesTitle') }}</h3>
-              <p class="text-muted-foreground text-sm">
-                {{ $t('labels.teams.invitesDescription') }}
-              </p>
+              <TeamInvitesList
+                :team-id="teamId"
+                :available-roles="availableRoles"
+                @delete="handleDeleteInvite"
+                @resend="handleResendInvite"
+              />
             </div>
 
-            <TeamInvitesList
+            <div
+              v-if="canViewMembers"
+              class="space-y-3"
+            >
+              <div class="space-y-1">
+                <h3 class="font-semibold">{{ $t('labels.teamMembers.title') }}</h3>
+                <p class="text-muted-foreground text-sm">
+                  {{ $t('labels.teamMembers.description') }}
+                </p>
+                <p class="text-muted-foreground text-sm">
+                  {{ $t('labels.teamMembers.helper') }}
+                </p>
+              </div>
+
+              <TeamMembersList
+                :members="members"
+                :is-loading="isLoadingMembers"
+                :is-fetching="isFetchingMembers"
+                :meta="meta"
+                :current-page="currentPage"
+                :per-page="perPage"
+                :sort-by="sortBy"
+                :available-roles="availableRoles"
+                @update-role="handleUpdateRole"
+                @remove="handleRemoveMember"
+                @update:current-page="handleCurrentPageUpdate"
+                @update:per-page="handlePerPageUpdate"
+                @update:sort-by="handleSortByUpdate"
+                @update:filters="handleFiltersUpdate"
+              />
+            </div>
+          </template>
+
+          <template v-else-if="activeView === 'roles' && canManageRoles">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div class="space-y-1">
+                <h2 class="font-semibold">{{ $t('labels.teamRoles.title') }}</h2>
+                <p class="text-muted-foreground max-w-3xl text-sm">
+                  {{ $t('labels.teamRoles.description') }}
+                </p>
+              </div>
+
+              <Button @click="handleCreateRole">
+                <Icon name="lucide:shield-plus" />
+                {{ $t('labels.teamRoles.create') }}
+              </Button>
+            </div>
+
+            <TeamRolesList
+              :roles="spaceRoles"
+              :is-loading="isLoadingRoles || isLoadingAuthorization"
+              :is-fetching="isFetchingRoles"
+              @view="handleViewRole"
+              @edit="handleViewRole"
+              @delete="handleDeleteRole"
+            />
+          </template>
+
+          <template v-else-if="activeView === 'saml' && canManageSaml">
+            <TeamSamlProviderSettings
+              v-if="samlProviderResponse"
               :team-id="teamId"
-              :available-roles="availableRoles"
-              @delete="handleDeleteInvite"
-              @resend="handleResendInvite"
+              :provider="samlProviderResponse.data"
+              :defaults="samlProviderResponse.defaults"
+              :is-loading="isLoadingSamlProvider"
+              :is-saving="upsertSamlProviderMutation.isPending.value"
+              :is-deleting="deleteSamlProviderMutation.isPending.value"
+              @save="handleSaveSamlProvider"
+              @delete="handleDeleteSamlProvider"
             />
-          </div>
-
-          <div
-            v-if="canViewMembers"
-            class="space-y-3"
-          >
-            <div class="space-y-1">
-              <h3 class="font-semibold">{{ $t('labels.teamMembers.title') }}</h3>
-              <p class="text-muted-foreground text-sm">
-                {{ $t('labels.teamMembers.description') }}
-              </p>
-              <p class="text-muted-foreground text-sm">
-                {{ $t('labels.teamMembers.helper') }}
-              </p>
+            <div
+              v-else
+              class="flex items-center gap-2 py-6"
+            >
+              <Spinner />
+              {{ $t('labels.loading') }}
             </div>
-
-            <TeamMembersList
-              :members="members"
-              :is-loading="isLoadingMembers"
-              :meta="meta"
-              :current-page="currentPage"
-              :per-page="perPage"
-              :sort-by="sortBy"
-              :available-roles="availableRoles"
-              @update-role="handleUpdateRole"
-              @remove="handleRemoveMember"
-              @update:current-page="handleCurrentPageUpdate"
-              @update:per-page="handlePerPageUpdate"
-              @update:sort-by="handleSortByUpdate"
-              @update:filters="handleFiltersUpdate"
-            />
-          </div>
-        </template>
-
-        <template v-else-if="activeView === 'roles' && canManageRoles">
-          <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div class="space-y-1">
-              <h2 class="font-semibold">{{ $t('labels.teamRoles.title') }}</h2>
-              <p class="text-muted-foreground max-w-3xl text-sm">
-                {{ $t('labels.teamRoles.description') }}
-              </p>
-            </div>
-
-            <Button @click="handleCreateRole">
-              <Icon name="lucide:shield-plus" />
-              {{ $t('labels.teamRoles.create') }}
-            </Button>
-          </div>
-
-          <TeamRolesList
-            :roles="spaceRoles"
-            :is-loading="isLoadingRoles || isLoadingAuthorization"
-            @view="handleViewRole"
-            @edit="handleViewRole"
-            @delete="handleDeleteRole"
-          />
-        </template>
-
-        <template v-else-if="activeView === 'saml' && canManageSaml">
-          <TeamSamlProviderSettings
-            v-if="samlProviderResponse"
-            :team-id="teamId"
-            :provider="samlProviderResponse.data"
-            :defaults="samlProviderResponse.defaults"
-            :is-loading="isLoadingSamlProvider"
-            :is-saving="upsertSamlProviderMutation.isPending.value"
-            :is-deleting="deleteSamlProviderMutation.isPending.value"
-            @save="handleSaveSamlProvider"
-            @delete="handleDeleteSamlProvider"
-          />
-          <div
-            v-else
-            class="flex items-center gap-2 py-6"
-          >
-            <Icon
-              name="lucide:loader-2"
-              class="animate-spin"
-            />
-            {{ $t('labels.loading') }}
-          </div>
-        </template>
+          </template>
         </div>
       </div>
 

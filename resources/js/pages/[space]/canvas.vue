@@ -13,6 +13,7 @@ import { Alert } from '~/components/ui/alert'
 import { AvatarList } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
+import { Spinner } from '~/components/ui/spinner'
 import {
   extractStreamingTreeOperations,
   parseTreeOperations,
@@ -2071,14 +2072,10 @@ onBeforeUnmount(() => {
         <Button
           v-if="canApplyCanvas"
           variant="primary"
-          :disabled="isApplying || validationCount > 0 || !hasUnsavedChanges"
+          :loading="isApplying"
+          :disabled="validationCount > 0 || !hasUnsavedChanges"
           @click="handleApply"
         >
-          <Icon
-            v-if="isApplying"
-            name="lucide:loader-circle"
-            class="animate-spin"
-          />
           {{
             isApplying ? $t('labels.contents.canvas.applying') : $t('labels.contents.canvas.apply')
           }}
@@ -2094,10 +2091,7 @@ onBeforeUnmount(() => {
         <div
           class="flex items-center gap-3 rounded-2xl border border-border bg-background px-4 py-3 shadow-soft"
         >
-          <Icon
-            name="lucide:loader-circle"
-            class="animate-spin text-primary"
-          />
+          <Spinner class="text-primary" />
           <span class="font-semibold">{{ $t('labels.loading') }}</span>
         </div>
       </div>

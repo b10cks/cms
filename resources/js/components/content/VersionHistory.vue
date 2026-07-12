@@ -14,6 +14,7 @@ import { Button } from '~/components/ui/button'
 import RenamableTitle from '~/components/ui/RenamableTitle.vue'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/components/ui/resizable'
 import { ScrollArea } from '~/components/ui/scroll-area'
+import { Spinner } from '~/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { buildPreviewUrl } from '~/lib/preview-url'
@@ -367,10 +368,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
               v-if="isLoading"
               class="flex h-32 items-center justify-center"
             >
-              <Icon
-                name="lucide:loader"
-                class="mr-2 h-6 w-6 animate-spin"
-              />
+              <Spinner class="mr-2 size-6" />
               <span>{{ $t('labels.contentVersions.loading') }}</span>
             </div>
 

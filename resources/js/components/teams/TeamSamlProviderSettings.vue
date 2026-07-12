@@ -3,6 +3,7 @@ import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
 import { CheckboxField, InputField, SelectField, TextField } from '~/components/ui/form'
+import { Spinner } from '~/components/ui/spinner'
 import type { TeamSamlProviderPayload, TeamSamlProviderResource } from '~/types/teams'
 
 const props = defineProps<{
@@ -223,10 +224,7 @@ const handleDelete = async () => {
       variant="surface"
     >
       <CardContent class="flex items-center gap-2 py-6">
-        <Icon
-          name="lucide:loader-2"
-          class="animate-spin"
-        />
+        <Spinner />
         {{ $t('labels.loading') }}
       </CardContent>
     </Card>
@@ -506,21 +504,18 @@ const handleDelete = async () => {
         />
       </section>
 
-      <div class="flex flex-col-reverse gap-2 border-t border-input pt-6 sm:flex-row sm:justify-between">
+      <div
+        class="flex flex-col-reverse gap-2 border-t border-input pt-6 sm:flex-row sm:justify-between"
+      >
         <Button
           v-if="provider"
           type="button"
           variant="destructive"
-          :disabled="isDeleting"
+          :loading="isDeleting"
           @click="handleDelete"
         >
           <Icon
-            v-if="isDeleting"
-            name="lucide:loader-2"
-            class="animate-spin"
-          />
-          <Icon
-            v-else
+            v-if="!isDeleting"
             name="lucide:trash-2"
           />
           {{ $t('labels.teams.saml.delete') }}
@@ -536,15 +531,11 @@ const handleDelete = async () => {
           </span>
           <Button
             type="submit"
-            :disabled="isSaving || !requiredFieldsComplete"
+            :loading="isSaving"
+            :disabled="!requiredFieldsComplete"
           >
             <Icon
-              v-if="isSaving"
-              name="lucide:loader-2"
-              class="animate-spin"
-            />
-            <Icon
-              v-else
+              v-if="!isSaving"
               name="lucide:save"
             />
             {{ $t('labels.teams.saml.save') }}

@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from '~/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group'
+import { Spinner } from '~/components/ui/spinner'
 
 const props = defineProps<{
   plans?: PlanResource[] | null
@@ -77,10 +78,7 @@ const handleCardClick = (plan: PlanResource) => {
       v-if="plansLoading"
       class="flex items-center justify-center py-12 text-muted"
     >
-      <Icon
-        name="lucide:loader"
-        class="mr-2 animate-spin"
-      />
+      <Spinner class="mr-2" />
       {{ $t('labels.loading') }}
     </div>
 

@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { Spinner } from '~/components/ui/spinner'
 import { useAiConfigs } from '~/composables/useAiModels'
 
 const modelValue = defineModel<string | null>()
@@ -93,9 +94,7 @@ watch(
         v-else-if="isLoading"
         class="flex items-center justify-center gap-2 p-4 text-sm text-muted"
       >
-        <div
-          class="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"
-        />
+        <Spinner />
         {{ $t('components.aiConfigSelector.loading') }}
       </div>
       <div
