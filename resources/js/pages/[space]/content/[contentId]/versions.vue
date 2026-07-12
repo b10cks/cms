@@ -6,7 +6,6 @@ import LanguageSwitcher from '~/components/content/LanguageSwitcher.vue'
 import ContentVersionHistory from '~/components/content/VersionHistory.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
-import { Spinner } from '~/components/ui/spinner'
 import {
   getContentDefaultLanguage,
   resolveContentLanguage,
@@ -206,37 +205,14 @@ useSeoMeta({
 
 <template>
   <div class="flex h-full w-full flex-col bg-background">
-    <div
-      v-if="isLoadingContent"
-      class="flex h-20 items-center justify-center"
-    >
-      <Spinner class="mr-2 size-6" />
-      <span>Loading content details...</span>
-    </div>
-
-    <div
-      v-else-if="activeContent"
-      class="flex h-full flex-col"
-    >
+    <div class="flex h-full flex-col">
       <div class="flex-1 overflow-hidden">
         <ContentVersionHistory
+          v-if="activeContent"
           :space-id="spaceId"
           :content="activeContent"
         />
       </div>
-    </div>
-
-    <div
-      v-else
-      class="flex h-full flex-col items-center justify-center p-8"
-    >
-      <Icon
-        name="lucide:file-question"
-        class="mb-4 h-16 w-16 text-muted"
-      />
-      <h2 class="mb-2 text-xl font-bold">No versions yet</h2>
-      <p class="mb-6 text-muted">The selected language does not have a saved content row yet.</p>
-      <Button @click="navigateToContent"> Open editor </Button>
     </div>
   </div>
 
