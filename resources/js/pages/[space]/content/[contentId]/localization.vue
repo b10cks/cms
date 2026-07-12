@@ -13,6 +13,7 @@ import Preview from '~/components/Preview.vue'
 import { Input } from '~/components/ui/input'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/components/ui/resizable'
 import { ScrollArea } from '~/components/ui/scroll-area'
+import { Spinner } from '~/components/ui/spinner'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 import {
   useContentLiveCollaboration,
@@ -20,19 +21,19 @@ import {
 } from '~/composables/useContentLiveCollaboration'
 import { useContentSchemaState } from '~/composables/useContentSchemaState'
 import {
-  applyLocalizedFieldValue,
-  getLocalizedFieldValue,
-  type LocalizedFieldFocusPayload,
-  type LocalizedFieldMeta,
-  type LocalizedFieldUpdatePayload,
-} from '~/lib/localizationCollab'
-import {
   buildMissingLanguageDraft,
   getContentDefaultLanguage,
   resolveContentLanguage,
   resolveContentRouteName,
   withContentLanguageQuery,
 } from '~/lib/content-i18n'
+import {
+  applyLocalizedFieldValue,
+  getLocalizedFieldValue,
+  type LocalizedFieldFocusPayload,
+  type LocalizedFieldMeta,
+  type LocalizedFieldUpdatePayload,
+} from '~/lib/localizationCollab'
 import { mergeLocalizedContentForSchema } from '~/lib/tableField'
 import type { ContentResource } from '~/types/contents'
 import type { FieldUpdateEvent } from '~/utils/preview-bridge'
@@ -164,7 +165,8 @@ const updateTranslationContent = (nextContent: Record<string, unknown>) => {
   translatableContent.value.content = nextContent
 }
 const previewRef = useTemplateRef<InstanceType<typeof Preview>>('previewRef')
-const localizationRef = useTemplateRef<InstanceType<typeof FlattenedLocalization>>('localizationRef')
+const localizationRef =
+  useTemplateRef<InstanceType<typeof FlattenedLocalization>>('localizationRef')
 const previewContentRef = computed(
   () => translatableContent.value || canonicalContent.value || null
 )
@@ -398,7 +400,8 @@ watch(
     }
 
     if (existingTranslation) {
-      const isNewContent = !persistedContent.value || persistedContent.value.id !== existingTranslation.id
+      const isNewContent =
+        !persistedContent.value || persistedContent.value.id !== existingTranslation.id
       if (isNewContent || !isDirty.value) {
         syncPersistedContent(existingTranslation)
       }
@@ -471,7 +474,6 @@ watch(
   },
   { immediate: true }
 )
-
 
 const isLoading = computed(
   () =>
@@ -575,7 +577,10 @@ const {
     apply: (field, value) => {
       if (!translatableContent.value || !isLocalizedFieldMeta(field.meta)) return
 
-      if (!translatableContent.value.content || typeof translatableContent.value.content !== 'object') {
+      if (
+        !translatableContent.value.content ||
+        typeof translatableContent.value.content !== 'object'
+      ) {
         translatableContent.value.content = {}
       }
 
@@ -760,10 +765,7 @@ useSeoMeta({
           class="flex h-full w-full items-center justify-center p-3"
         >
           <div :class="['w-full text-center', showPreviewPane ? '' : 'mx-auto max-w-4xl']">
-            <Icon
-              name="lucide:loader"
-              class="mx-auto mb-4 h-8 w-8 animate-spin text-text-muted"
-            />
+            <Spinner class="mx-auto mb-4 size-8 text-text-muted" />
             <p class="text-muted">Loading content...</p>
           </div>
         </div>

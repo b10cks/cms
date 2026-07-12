@@ -1,6 +1,29 @@
 <script setup lang="ts">
 import TiptapEditor from '~/components/editor/TiptapEditor.vue'
+import SourceCopyButton from '~/components/localization/SourceCopyButton.vue'
 import { FormField } from '~/components/ui/form'
+
+interface RteNode {
+  type?: string
+  text?: string
+  content?: RteNode[]
+}
+
+const BLOCK_TYPES = new Set([
+  'paragraph',
+  'heading',
+  'listItem',
+  'blockquote',
+  'codeBlock',
+  'tableRow',
+])
+
+const nodeToText = (node: RteNode): string => {
+  if (node.type === 'text') return node.text ?? ''
+  if (node.type === 'hardBreak') return '\n'
+  const inner = (node.content ?? []).map(nodeToText).join('')
+  return BLOCK_TYPES.has(node.type ?? '') ? `${inner}\n` : inner
+}
 
 const props = defineProps<{
   item: RichTextSchema & { key: string }
@@ -35,6 +58,10 @@ const emptyDocument = {
 const normalizedOriginalValue = computed(() => props.originalValue || emptyDocument)
 const normalizedModelValue = computed(() => props.modelValue || emptyDocument)
 
+const originalPlainText = computed(() =>
+  props.originalValue ? nodeToText(props.originalValue as RteNode).trim() : ''
+)
+
 const updateValue = (value: Record<string, unknown>) => {
   emit('update:modelValue', value)
 }
@@ -50,18 +77,24 @@ const updateValue = (value: Record<string, unknown>) => {
       :label="props.item.name || props.item.key"
       hide-label
     >
-      <div
-        class="pointer-events-none opacity-60 [&_.ProseMirror]:h-auto [&_.ProseMirror]:max-w-none"
-      >
-        <TiptapEditor
-          :model-value="normalizedOriginalValue"
-          :html-classes="htmlClasses"
-          :heading-levels="headingLevels"
-          :placeholders="placeholders"
-          :space-id="spaceId"
-          disabled
-          tabindex="-1"
-          @update:model-value="() => {}"
+      <div class="relative">
+        <div
+          class="pointer-events-none opacity-60 [&_.ProseMirror]:h-auto [&_.ProseMirror]:max-w-none"
+        >
+          <TiptapEditor
+            :model-value="normalizedOriginalValue"
+            :html-classes="htmlClasses"
+            :heading-levels="headingLevels"
+            :placeholders="placeholders"
+            :space-id="spaceId"
+            disabled
+            tabindex="-1"
+            @update:model-value="() => {}"
+          />
+        </div>
+        <SourceCopyButton
+          v-if="originalPlainText"
+          :text="originalPlainText"
         />
       </div>
     </FormField>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SourceCopyButton from '~/components/localization/SourceCopyButton.vue'
 import { FormField } from '~/components/ui/form'
 import { Textarea } from '~/components/ui/textarea'
 
@@ -30,15 +31,21 @@ const updateValue = (value: string | number) => {
       :label="item.name || item.key"
       hide-label
     >
-      <Textarea
-        :model-value="originalValue || ''"
-        :auto-size="600"
-        disabled
-        rows="4"
-        class="resize-none"
-        tabindex="-1"
-        :aria-label="`Original ${item.name || item.key}`"
-      />
+      <div class="relative">
+        <Textarea
+          :model-value="originalValue || ''"
+          :auto-size="600"
+          disabled
+          rows="4"
+          class="resize-none"
+          tabindex="-1"
+          :aria-label="`Original ${item.name || item.key}`"
+        />
+        <SourceCopyButton
+          v-if="originalValue"
+          :text="originalValue"
+        />
+      </div>
     </FormField>
     <FormField
       :label="item.name || item.key"
