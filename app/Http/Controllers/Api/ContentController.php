@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Filters\Api\ContentFilter;
+use App\Http\Middleware\CacheDataApi;
 use App\Http\Resources\Api\ContentResource;
 use App\Http\Resources\Api\ContentResourceCollection;
 use App\Models\Management\Space;
@@ -63,13 +64,13 @@ class ContentController
         $resolvedItems = $resolver->resolveMany(
             $space,
             $paginator->getCollection()->map(
-                fn(Content $content): array => [
+                fn (Content $content): array => [
                     'content' => $content,
                     'target_language' => $requestedLanguage,
                 ]
             ),
             $versionScope,
-        )->map(fn($resolved) => new ContentResource($resolved));
+        )->map(fn ($resolved) => new ContentResource($resolved));
 
         $resolvedPaginator = new LengthAwarePaginator(
             $resolvedItems,
@@ -154,7 +155,7 @@ class ContentController
         );
 
         $language = $request->input('language') ?? $request->input('language_iso') ?? $space->settings->getDefaultLanguage();
-        if (!\in_array($language, $space->settings->getEnabledLanguages())) {
+        if (! \in_array($language, $space->settings->getEnabledLanguages())) {
             $language = $space->settings->getDefaultLanguage();
         }
 
@@ -172,7 +173,7 @@ class ContentController
         }
 
         $candidate = $this->findFamilyCandidate($slug, $language, $space);
-        abort_if(!$candidate, 404);
+        abort_if(! $candidate, 404);
 
         $versionScope = $request->input('vid', 'published');
 
@@ -204,13 +205,33 @@ class ContentController
         );
 
         if (
-            ($resolved->effectiveMode === 'independent' && !$resolved->targetContent) ||
-            ($resolved->effectiveMode === 'overlay' && !$resolved->targetContent && !$resolved->fallbackContent)
+            ($resolved->effectiveMode === 'independent' && ! $resolved->targetContent) ||
+            ($resolved->effectiveMode === 'overlay' && ! $resolved->targetContent && ! $resolved->fallbackContent)
         ) {
             abort(404);
         }
 
+        $this->applyCacheAttributes($request, $resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent);
+
         return new ContentResource($resolved);
+    }
+
+    protected function applyCacheAttributes(Request $request, ?Content $row): void
+    {
+        $settings = $row?->settings;
+        if (! $settings) {
+            return;
+        }
+
+        $ttl = $settings->cacheTtl();
+        if ($ttl !== null) {
+            $request->attributes->set(CacheDataApi::TTL_ATTRIBUTE, $ttl);
+        }
+
+        $tags = $settings->cacheTags();
+        if ($tags !== []) {
+            $request->attributes->set(CacheDataApi::TAGS_ATTRIBUTE, $tags);
+        }
     }
 
     protected function findFamilyCandidate(string $slug, string $language, Space $space): ?Content

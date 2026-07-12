@@ -833,6 +833,16 @@
       "settings": {
         "disablePreview": "Disable Preview",
         "disablePreviewDescription": "Disable the preview panel for this content",
+        "cache": {
+          "title": "Caching",
+          "description": "Cache hints delivered with this content in the content API. Use them in your project to control cache lifetimes and tag-based invalidation.",
+          "ttl": "Cache TTL (seconds)",
+          "ttlDescription": "Overrides the default cache lifetime for this content. Leave empty to use the default.",
+          "ttlPlaceholder": "e.g. 3600",
+          "tags": "Cache tags",
+          "tagsDescription": "Tags for cache invalidation, e.g. \"news\". Automations can send them to your project via webhook when content changes.",
+          "tagsPlaceholder": "Add tag…"
+        },
         "children": {
           "title": "Child content",
           "description": "Control which content types can be created below this content item and choose a default child type.",

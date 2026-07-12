@@ -27,6 +27,8 @@ class ContentSettings extends Settings
         'default_child_block' => null,
         'child_sort_by' => 'inherit',
         'child_sort_direction' => 'asc',
+        'cache_ttl' => null,
+        'cache_tags' => [],
     ];
 
     /**
@@ -68,6 +70,9 @@ class ContentSettings extends Settings
                 'string',
                 Rule::in(['asc', 'desc']),
             ],
+            'cache_ttl' => [$partial ? 'sometimes' : 'nullable', 'integer', 'min:0', 'max:31536000'],
+            'cache_tags' => [$partial ? 'sometimes' : 'nullable', 'array', 'max:32'],
+            'cache_tags.*' => ['string', 'max:64', 'regex:/^[a-zA-Z0-9_\-.:\/]+$/', 'distinct'],
         ];
     }
 
@@ -162,7 +167,33 @@ class ContentSettings extends Settings
                     'desc' => 'Descending order (newest / Z first).',
                 ],
             ],
+            'cache_ttl' => [
+                'description' => 'Cache time-to-live in seconds delivered with this content entry. Overrides the default delivery cache lifetime.',
+                'example' => 3600,
+                'nullable' => true,
+            ],
+            'cache_tags' => [
+                'description' => 'Cache tags delivered with this content entry, usable for tag-based cache invalidation in consuming projects.',
+                'example' => ['news'],
+            ],
         ];
+    }
+
+    public function cacheTtl(): ?int
+    {
+        $ttl = $this->cache_ttl;
+
+        return is_numeric($ttl) ? (int) $ttl : null;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function cacheTags(): array
+    {
+        $tags = $this->cache_tags;
+
+        return is_array($tags) ? array_values(array_filter($tags, 'is_string')) : [];
     }
 
     /**
@@ -170,7 +201,8 @@ class ContentSettings extends Settings
      */
     public static function castUsing(array $arguments)
     {
-        return new class implements CastsAttributes, SerializesCastableAttributes {
+        return new class implements CastsAttributes, SerializesCastableAttributes
+        {
             public function get($model, string $key, $value, array $attributes)
             {
                 return ContentSettings::make($value ? json_decode($value, true) : []);

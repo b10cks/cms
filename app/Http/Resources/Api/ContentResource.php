@@ -24,6 +24,7 @@ use Illuminate\Support\Collection;
  * @resourceProperty position 0-based sort position within the parent.
  * @resourceProperty full_slug Full resolved path including all parent slugs.
  * @resourceProperty content type=object additionalProperties=true Effective content payload after i18n, link, and asset resolution.
+ * @resourceProperty cache type=object Cache settings for this content entry: `ttl` in seconds (null = default) and `tags` for tag-based invalidation.
  * @resourceProperty relations type=array items=ContentResource First-level related content entries when explicitly requested.
  * @resourceProperty language_iso Requested language ISO code used for content resolution.
  * @resourceProperty translations type=array items=SimpleContentResource Published sibling translations of the resolved content.
@@ -58,6 +59,7 @@ class ContentResource extends JsonResource
             'position' => $row->position,
             'full_slug' => $row->full_slug,
             'content' => $this->getTransformedContent($resolved, $request),
+            'cache' => $this->resolveCacheSettings($row),
             'relations' => $this->when(
                 $this->shouldResolveRelations($request),
                 fn (): array => $this->resolveRelations($request, $resolved),
@@ -68,6 +70,17 @@ class ContentResource extends JsonResource
             'first_published_at' => $row->first_published_at?->toIso8601String(),
             'created_at' => $row->created_at?->toIso8601String(),
             'updated_at' => $row->updated_at?->toIso8601String(),
+        ];
+    }
+
+    /**
+     * @return array{ttl: int|null, tags: array<int, string>}
+     */
+    protected function resolveCacheSettings(Content $row): array
+    {
+        return [
+            'ttl' => $row->settings?->cacheTtl(),
+            'tags' => $row->settings?->cacheTags() ?? [],
         ];
     }
 

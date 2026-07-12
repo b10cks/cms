@@ -200,6 +200,10 @@ export function buildConditionPathOptions(
     return options
   }
 
+  if (tableDefinition.table === 'contents') {
+    options.push({ value: 'cache_tags', label: 'Cache tags' })
+  }
+
   for (const column of tableDefinition.columns) {
     options.push({
       value: `record.${column}`,
@@ -313,6 +317,11 @@ export function buildAutomationPlaceholderOptions(
     options.push(...recordOptions)
     options.push({ value: 'changed_fields', label: 'changed_fields', group: 'changes' })
     options.push({ value: 'meta.table_label', label: 'meta.table_label', group: 'workflow' })
+
+    if (tableDefinition.table === 'contents') {
+      options.push({ value: 'cache_tags', label: 'cache_tags', group: 'record' })
+      options.push({ value: 'cache.ttl', label: 'cache.ttl', group: 'record' })
+    }
   }
 
   const normalizedSecretKeys = [...new Set(secretKeys.map((key) => key.trim()).filter(Boolean))]

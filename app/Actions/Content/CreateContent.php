@@ -12,6 +12,7 @@ use App\Services\Content\ContentI18nValidator;
 use App\Services\Content\ContentPositionService;
 use App\Services\Content\Schema\ContentSchemaValidationResult;
 use App\Services\Content\Schema\ContentSchemaValidator;
+use App\Services\Content\Schema\SchemaDefaultsResolver;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -23,6 +24,7 @@ class CreateContent
         private readonly ContentI18nValidator $validator,
         private readonly ContentSchemaValidator $contentSchemaValidator,
         private readonly ContentPositionService $contentPositionService,
+        private readonly SchemaDefaultsResolver $schemaDefaultsResolver,
     ) {}
 
     protected function throwIfValidationFails(
@@ -76,11 +78,13 @@ class CreateContent
             );
 
             // Allow empty content submissions: if no content (null) or an empty array is provided,
-            // skip schema validation and store an empty content payload.
+            // skip schema validation and seed the block's field defaults instead. Defaults are
+            // validated when the block schema is saved, not per content creation, because a
+            // partial set of defaults must not trip required-field validation here.
             $submittedContent = data_get($data, 'content', null);
 
             if ($submittedContent === null || (is_array($submittedContent) && empty($submittedContent))) {
-                $validatedContent = $submittedContent === null ? [] : $submittedContent;
+                $validatedContent = $this->schemaDefaultsResolver->resolve($block->schema);
             } else {
                 $contentValidation = $this->contentSchemaValidator->validateSubmission(
                     $space,

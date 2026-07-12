@@ -186,6 +186,8 @@ export interface ContentSettings {
   default_child_block?: string | null
   child_sort_by?: ContentChildSortBy
   child_sort_direction?: 'asc' | 'desc'
+  cache_ttl?: number | null
+  cache_tags?: string[]
 }
 
 export interface ContentResource {
