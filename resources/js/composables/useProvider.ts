@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
@@ -31,6 +31,7 @@ export function useProvider() {
         return response
       },
       enabled: computed(() => !!toValue(isAuthenticated) && !!toValue(enabled)),
+      placeholderData: keepPreviousData,
     })
   }
 
@@ -52,7 +53,13 @@ export function useProvider() {
 
   const useUpdateProviderNoteMutation = () => {
     return useMutation({
-      mutationFn: async ({ id, payload }: { id: string; payload: Partial<ProviderNotePayload> }) => {
+      mutationFn: async ({
+        id,
+        payload,
+      }: {
+        id: string
+        payload: Partial<ProviderNotePayload>
+      }) => {
         const response = await api.provider.update(id, payload)
         return response.data
       },

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
@@ -32,8 +32,9 @@ export function useInvites() {
       queryKey: computed(() => queryKeys.invites.myList(params)),
       queryFn: async () => {
         const response = await api.invites.listMyInvites(toValue(params))
-        return response.data
+        return response
       },
+      placeholderData: keepPreviousData,
     })
   }
 
@@ -59,6 +60,7 @@ export function useInvites() {
         return response
       },
       enabled: computed(() => !!toValue(spaceId) && !!toValue(enabled)),
+      placeholderData: keepPreviousData,
     })
   }
 
@@ -74,6 +76,7 @@ export function useInvites() {
         return response
       },
       enabled: computed(() => !!toValue(teamId) && !!toValue(enabled)),
+      placeholderData: keepPreviousData,
     })
   }
 

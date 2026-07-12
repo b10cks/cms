@@ -1,8 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { ContentsQueryParams } from '~/api/resources/contents'
+import type {
+  ContentTranslationExportFormat,
+  ContentTranslationImportMode,
+} from '~/types/content-translations'
 import type {
   ContentResource,
   ContentTreeOperationPayload,
@@ -10,11 +14,6 @@ import type {
   CreateContentPayload,
   UpdateContentPayload,
 } from '~/types/contents'
-
-import type {
-  ContentTranslationExportFormat,
-  ContentTranslationImportMode,
-} from '~/types/content-translations'
 
 import { queryKeys } from './useQueryClient'
 
@@ -57,6 +56,7 @@ export function useContent(spaceId: MaybeRef<string>) {
         const response = await spaceAPI.value.contents.index(toValue(params))
         return response
       },
+      placeholderData: keepPreviousData,
     })
   }
 

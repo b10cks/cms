@@ -35,7 +35,9 @@ useUserNotifications()
     />
     <div class="flex flex-1 min-h-0">
       <AppSidebar />
-      <main class="flex min-h-0 grow w-[calc(100%-3.5rem)] overflow-hidden">
+      <!-- overflow-x-clip (not hidden): a hidden overflow would make <main> the sticky
+     containment box, breaking every position:sticky sidebar/nav inside pages -->
+      <main class="flex min-h-0 grow w-[calc(100%-3.5rem)] overflow-x-clip">
         <slot />
       </main>
     </div>

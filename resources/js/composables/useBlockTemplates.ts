@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
@@ -23,6 +23,7 @@ export function useBlockTemplates(spaceId: MaybeRef<string>, blockId: MaybeRef<s
         return response.data
       },
       enabled: computed(() => !!toValue(spaceId) && !!toValue(blockId)),
+      placeholderData: keepPreviousData,
     })
   }
 

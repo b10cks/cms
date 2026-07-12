@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { computed, toValue } from 'vue'
 import { toast } from 'vue-sonner'
@@ -42,6 +42,7 @@ export function useSpaceBlueprints() {
         return response.data
       },
       enabled: computed(() => !!toValue(isAuthenticated)),
+      placeholderData: keepPreviousData,
     })
   }
 
@@ -68,6 +69,7 @@ export function useSpaceBlueprints() {
         return response.data
       },
       enabled: computed(() => !!toValue(isAuthenticated) && !!toValue(teamId)),
+      placeholderData: keepPreviousData,
     })
   }
 

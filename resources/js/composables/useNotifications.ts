@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
@@ -20,6 +20,7 @@ export function useNotifications() {
         const response = await api.notifications.list(toValue(params))
         return response
       },
+      placeholderData: keepPreviousData,
     })
   }
 

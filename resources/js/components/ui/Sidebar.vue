@@ -6,27 +6,29 @@ import Icon from '~/components/Icon.vue'
 import NotificationBell from '~/components/notifications/NotificationBell.vue'
 import { Avatar } from '~/components/ui/avatar'
 import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
-    DropdownMenuSeparator,
-    DropdownMenuSub,
-    DropdownMenuSubContent,
-    DropdownMenuSubTrigger,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { Switch } from '~/components/ui/switch'
 import { SimpleTooltip } from '~/components/ui/tooltip'
+import { useRoutePreload } from '~/composables/useRoutePreload'
 import { spaceNavigationItems } from '~/lib/access-control'
 import { runtimeConfig } from '~/lib/runtime-config'
 import { getLocale, locales } from '~/plugins/i18n'
 
 const router = useRouter()
 const { t } = useI18n()
+const { preloadRoute, cancelPreload } = useRoutePreload()
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
 
@@ -119,6 +121,10 @@ const availableLocales = locales
               isExtendedSidebar ? 'flex-col gap-1 p-2 text-center' : 'size-8 ',
             ]"
             active-class="text-primary bg-border"
+            @mouseenter="preloadRoute(buildLink(m.routeName))"
+            @focusin="preloadRoute(buildLink(m.routeName))"
+            @mouseleave="cancelPreload(buildLink(m.routeName))"
+            @focusout="cancelPreload(buildLink(m.routeName))"
           >
             <Icon
               :name="m.icon"

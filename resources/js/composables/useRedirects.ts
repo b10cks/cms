@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
@@ -26,12 +26,13 @@ export function useRedirects(spaceId: MaybeRef<string>) {
       queryKey: computed(() => queryKeys.redirects(spaceId).list(params)),
       queryFn: async () => {
         const response = await spaceAPI.value.redirects.index({
-          sort: 'source',
+          sort: '+source',
           ...toValue(params),
         })
         return response
       },
       enabled: computed(() => !!toValue(spaceId) && !!toValue(enabled)),
+      placeholderData: keepPreviousData,
     })
   }
 

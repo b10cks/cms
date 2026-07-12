@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
@@ -6,7 +6,10 @@ import type { AssetVersionsQueryParams } from '~/api/resources/asset-versions'
 
 import { queryKeys } from './useQueryClient'
 
-export function useAssetVersions(spaceId: MaybeRef<string>, assetId: MaybeRef<string | null | undefined>) {
+export function useAssetVersions(
+  spaceId: MaybeRef<string>,
+  assetId: MaybeRef<string | null | undefined>
+) {
   const { t } = useI18n()
   const queryClient = useQueryClient()
 
@@ -42,6 +45,7 @@ export function useAssetVersions(spaceId: MaybeRef<string>, assetId: MaybeRef<st
         })
       },
       enabled: computed(() => hasAssetId.value && toValue(enabled)),
+      placeholderData: keepPreviousData,
     })
   }
 

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { toast } from 'vue-sonner'
 
@@ -24,6 +24,7 @@ export function useSpaces() {
         return response.data
       },
       enabled: computed(() => !!toValue(isAuthenticated)),
+      placeholderData: keepPreviousData,
     })
   }
 

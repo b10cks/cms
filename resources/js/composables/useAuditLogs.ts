@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/vue-query'
+import { keepPreviousData, useQuery } from '@tanstack/vue-query'
 
 import { api } from '~/api'
 import type { AuditLogsQueryParams } from '~/api/resources/audit-logs'
@@ -25,6 +25,7 @@ export function useAuditLogs(spaceId: MaybeRef<string>) {
       staleTime: 0,
       gcTime: 0,
       refetchOnMount: 'always',
+      placeholderData: keepPreviousData,
     })
   }
 

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { ComputedRef, MaybeRef } from 'vue'
 import { toast } from 'vue-sonner'
 
@@ -25,6 +25,7 @@ export function useAutomations(spaceIdRef: MaybeRefOrComputed<string>) {
         return await spaceAPI.value.automations.index(params.value)
       },
       enabled: computed(() => !!spaceId.value),
+      placeholderData: keepPreviousData,
     })
   }
 

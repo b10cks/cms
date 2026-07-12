@@ -1,11 +1,9 @@
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { ComputedRef, MaybeRef } from 'vue'
-
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
-import type { AutomationActionsQueryParams } from '~/api/resources/automation-actions'
-
 import { api } from '~/api'
+import type { AutomationActionsQueryParams } from '~/api/resources/automation-actions'
 
 import { queryKeys } from './useQueryClient'
 
@@ -29,6 +27,7 @@ export function useAutomationActions(spaceIdRef: MaybeRefOrComputed<string>) {
         return await spaceAPI.value.automationActions.index(params.value)
       },
       enabled: computed(() => !!spaceId.value),
+      placeholderData: keepPreviousData,
     })
   }
 
@@ -52,12 +51,18 @@ export function useAutomationActions(spaceIdRef: MaybeRefOrComputed<string>) {
         return response.data
       },
       onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.automationActions(spaceId.value).lists() })
-        toast.success(t('composables.automationActions.createSuccess', { name: data.name }) as string)
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.automationActions(spaceId.value).lists(),
+        })
+        toast.success(
+          t('composables.automationActions.createSuccess', { name: data.name }) as string
+        )
       },
       onError: (error: Error) => {
         toast.error(
-          t('composables.automationActions.createError', { error: error.message || 'Unknown error' }) as string
+          t('composables.automationActions.createError', {
+            error: error.message || 'Unknown error',
+          }) as string
         )
       },
     })
@@ -76,16 +81,22 @@ export function useAutomationActions(spaceIdRef: MaybeRefOrComputed<string>) {
         return response.data
       },
       onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.automationActions(spaceId.value).lists() })
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.automationActions(spaceId.value).lists(),
+        })
         queryClient.invalidateQueries({
           queryKey: queryKeys.automationActions(spaceId.value).detail(data.id),
         })
         queryClient.invalidateQueries({ queryKey: queryKeys.automations(spaceId.value).lists() })
-        toast.success(t('composables.automationActions.updateSuccess', { name: data.name }) as string)
+        toast.success(
+          t('composables.automationActions.updateSuccess', { name: data.name }) as string
+        )
       },
       onError: (error: Error) => {
         toast.error(
-          t('composables.automationActions.updateError', { error: error.message || 'Unknown error' }) as string
+          t('composables.automationActions.updateError', {
+            error: error.message || 'Unknown error',
+          }) as string
         )
       },
     })
@@ -98,13 +109,19 @@ export function useAutomationActions(spaceIdRef: MaybeRefOrComputed<string>) {
         return id
       },
       onSuccess: (id) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.automationActions(spaceId.value).lists() })
-        queryClient.removeQueries({ queryKey: queryKeys.automationActions(spaceId.value).detail(id) })
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.automationActions(spaceId.value).lists(),
+        })
+        queryClient.removeQueries({
+          queryKey: queryKeys.automationActions(spaceId.value).detail(id),
+        })
         toast.success(t('composables.automationActions.deleteSuccess') as string)
       },
       onError: (error: Error) => {
         toast.error(
-          t('composables.automationActions.deleteError', { error: error.message || 'Unknown error' }) as string
+          t('composables.automationActions.deleteError', {
+            error: error.message || 'Unknown error',
+          }) as string
         )
       },
     })

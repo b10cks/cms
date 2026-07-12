@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppHeader from '~/components/AppHeader.vue'
 import Icon from '~/components/Icon.vue'
+import { useRoutePreload } from '~/composables/useRoutePreload'
 interface NavItem {
   title: string
   name: string
@@ -25,6 +26,8 @@ const items: NavItem[] = [
     icon: 'lucide:shield',
   },
 ]
+
+const { preloadRoute, cancelPreload } = useRoutePreload()
 </script>
 
 <template>
@@ -43,6 +46,10 @@ const items: NavItem[] = [
             'transition-colors duration-200 hover:bg-secondary',
             'cursor-pointer font-semibold whitespace-nowrap',
           ]"
+          @mouseenter="preloadRoute({ name: item.name })"
+          @focusin="preloadRoute({ name: item.name })"
+          @mouseleave="cancelPreload({ name: item.name })"
+          @focusout="cancelPreload({ name: item.name })"
         >
           <Icon
             :name="item.icon"

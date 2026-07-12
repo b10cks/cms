@@ -18,25 +18,27 @@ import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import { AvatarList } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
 } from '~/components/ui/dropdown-menu'
 import DropIndicator from '~/components/ui/DropIndicator.vue'
 import RenamableTitle from '~/components/ui/RenamableTitle.vue'
 import { VerticalScrollArea } from '~/components/ui/scroll-area'
+import { Skeleton } from '~/components/ui/skeleton'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { useContentTreeClipboard } from '~/composables/useContentTreeClipboard'
+import { useHoverPrefetch } from '~/composables/useHoverPrefetch'
 import { queryKeys } from '~/composables/useQueryClient'
 import { normalizeLanguageIso } from '~/lib/content-i18n'
 import { fuzzyMatch, prepareFuzzyQuery, prepareFuzzyTarget } from '~/lib/fuzzy-match'
 import { buildPreviewUrl } from '~/lib/preview-url'
 import type {
-    ContentTreeActionContext,
-    ContentTreeClipboardItem,
-    ContentTreeOperationPayload,
-    CreateContentPayload,
+  ContentTreeActionContext,
+  ContentTreeClipboardItem,
+  ContentTreeOperationPayload,
+  CreateContentPayload,
 } from '~/types/contents'
 
 type Edge = 'top' | 'bottom' | 'left'
@@ -80,7 +82,12 @@ const { alert } = useAlertDialog()
 const { useSpaceQuery } = useSpaces()
 const { data: selectedSpace } = useSpaceQuery(props.spaceId)
 const { useContentMenuQuery, getChildren, getRootItems } = useContentMenu(props.spaceId)
-const { useTreeOperationsMutation, useUpdateContentMutation, usePublishContentMutation, useScheduleContentMutation } = useContent(props.spaceId)
+const {
+  useTreeOperationsMutation,
+  useUpdateContentMutation,
+  usePublishContentMutation,
+  useScheduleContentMutation,
+} = useContent(props.spaceId)
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageContent = computed(() => access.hasAbility('content.manage'))
 const canPublishContent = computed(() => access.hasAbility('content.publish'))
@@ -118,6 +125,34 @@ const { mutateAsync: publishContent, isPending: isPublishing } = usePublishConte
 const { mutateAsync: scheduleContent, isPending: isScheduling } = useScheduleContentMutation()
 
 const { isLoading, error, data } = useContentMenuQuery()
+
+// Skeleton rows shown on first load; indents/widths hint at a tree shape and
+// the rows fade out toward the bottom. Indent values mirror the real rows'
+// `padding-left: ${level - 0.5}rem`.
+const skeletonRows = [
+  { indent: 0.5, width: 'w-2/5' },
+  { indent: 0.5, width: 'w-3/5' },
+  { indent: 1.5, width: 'w-1/2' },
+  { indent: 1.5, width: 'w-2/5' },
+  { indent: 0.5, width: 'w-3/4' },
+  { indent: 1.5, width: 'w-1/3' },
+  { indent: 0.5, width: 'w-1/2' },
+  { indent: 0.5, width: 'w-2/5' },
+]
+
+// Warm the detail cache after ~150ms of sustained hover/focus on a tree row,
+// mirroring useContent().useContentQuery() exactly (same key + queryFn) so the
+// editor page gets an instant cache hit. prefetchQuery never throws.
+const { start: startDetailPrefetch, cancel: cancelDetailPrefetch } = useHoverPrefetch(
+  (contentId: string) =>
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.contents(props.spaceId).detail(contentId),
+      queryFn: async () => {
+        const response = await api.forSpace(props.spaceId).contents.get(contentId)
+        return response.data
+      },
+    })
+)
 const rootItems = computed(() => getRootItems(data.value) || [])
 const { getUsersForContent } = useContentMenuPresence(props.spaceId)
 
@@ -449,9 +484,7 @@ function computeDropEdge(
 function extractClosestEdge(value: Record<string, unknown>): Edge | null {
   if (
     'closestEdge' in value &&
-    (value.closestEdge === 'top' ||
-      value.closestEdge === 'bottom' ||
-      value.closestEdge === 'left')
+    (value.closestEdge === 'top' || value.closestEdge === 'bottom' || value.closestEdge === 'left')
   ) {
     return value.closestEdge
   }
@@ -937,7 +970,10 @@ const handlePublishDialog = async (payload: { message?: string; published_at?: s
   publishDialogItem.value = null
 }
 
-const handleScheduleDialog = async (payload: { message?: string; scheduled_at?: string | null }) => {
+const handleScheduleDialog = async (payload: {
+  message?: string
+  scheduled_at?: string | null
+}) => {
   if (!publishDialogItem.value) return
   await scheduleContent({ id: publishDialogItem.value.id, payload })
   publishDialogOpen.value = false
@@ -1262,11 +1298,7 @@ type DropResolution = {
   label: string
 }
 
-const resolveDrop = (
-  targetId: string,
-  edge: Edge,
-  draggedIds: string[]
-): DropResolution | null => {
+const resolveDrop = (targetId: string, edge: Edge, draggedIds: string[]): DropResolution | null => {
   const target = data.value?.[targetId]
   if (!target) {
     return null
@@ -1961,8 +1993,7 @@ const handleTreeKeydownCapture = (event: KeyboardEvent) => {
     return
   }
 
-  const printable =
-    event.key.length === 1 && event.key !== ' ' && !event.ctrlKey && !event.metaKey
+  const printable = event.key.length === 1 && event.key !== ' ' && !event.ctrlKey && !event.metaKey
 
   if (!printable) {
     return
@@ -2207,9 +2238,20 @@ onBeforeUnmount(() => {
       >
         <div
           v-if="isLoading"
-          class="flex items-center justify-center py-4"
+          aria-hidden="true"
         >
-          <span class="text-sm text-muted">Loading...</span>
+          <div
+            v-for="(row, index) in skeletonRows"
+            :key="index"
+            class="my-0.5 flex h-7 items-center gap-2 py-1 pr-2"
+            :style="{
+              paddingLeft: `${row.indent}rem`,
+              opacity: 1 - index * 0.11,
+            }"
+          >
+            <Skeleton class="size-4 shrink-0" />
+            <Skeleton :class="['h-4', row.width]" />
+          </div>
         </div>
 
         <div
@@ -2241,6 +2283,10 @@ onBeforeUnmount(() => {
               ? 'bg-accent/50 ring-1 ring-info/30'
               : '',
           ]"
+          @mouseenter="startDetailPrefetch(item.value.id)"
+          @mouseleave="cancelDetailPrefetch(item.value.id)"
+          @focus="startDetailPrefetch(item.value.id)"
+          @blur="cancelDetailPrefetch(item.value.id)"
           @pointerdown="handleItemPointerDown($event, item.value.id)"
           @click="handleItemNavigate($event, item.value.id)"
           @contextmenu="handleItemContextMenu($event, item.value.id)"

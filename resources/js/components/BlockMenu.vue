@@ -115,8 +115,8 @@ const tabs = computed(() => ({
 </script>
 
 <template>
-  <div class="sticky top-0 flex h-[calc(100vh-3.5rem)] min-w-2xs flex-col overflow-hidden p-2">
-    <div>
+  <div class="sticky top-14 flex h-[calc(100vh-3.5rem)] min-w-2xs flex-col overflow-hidden p-2">
+    <div class="flex min-h-0 flex-1 flex-col">
       <div class="mb-6 flex w-full flex-col rounded-md bg-input p-1">
         <RouterLink
           v-for="({ icon, label, count }, key) in tabs"
@@ -135,7 +135,7 @@ const tabs = computed(() => ({
           </Badge>
         </RouterLink>
       </div>
-      <ScrollArea class="flex-1 overflow-y-auto">
+      <ScrollArea class="min-h-0 flex-1">
         <TreeRoot
           v-slot="{ flattenItems }"
           class="w-full list-none select-none"

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
@@ -32,6 +32,7 @@ export function useTeams() {
         })
       },
       enabled: computed(() => !!toValue(isAuthenticated)),
+      placeholderData: keepPreviousData,
     })
   }
 
@@ -75,6 +76,7 @@ export function useTeams() {
       enabled: computed(
         () => !!toValue(isAuthenticated) && !!toValue(teamId) && !!toValue(enabled)
       ),
+      placeholderData: keepPreviousData,
     })
   }
 

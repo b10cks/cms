@@ -312,6 +312,8 @@ export function useAuth() {
   const initAuth = async (): Promise<void> => {
     if (!isClient) return
     if (isInitializing.value) return
+    // Already initialized with a loaded user — don't block navigation on a refetch
+    if (isReady.value && user.value) return
 
     isInitializing.value = true
     try {

@@ -1,11 +1,9 @@
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { ComputedRef, MaybeRef } from 'vue'
-
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
-import type { AutomationExecutionsQueryParams } from '~/api/resources/automation-executions'
-
 import { api } from '~/api'
+import type { AutomationExecutionsQueryParams } from '~/api/resources/automation-executions'
 
 import { queryKeys } from './useQueryClient'
 
@@ -29,6 +27,7 @@ export function useAutomationExecutions(spaceIdRef: MaybeRefOrComputed<string>) 
         return await spaceAPI.value.automationExecutions.index(params.value)
       },
       enabled: computed(() => !!spaceId.value),
+      placeholderData: keepPreviousData,
     })
   }
 
@@ -39,9 +38,13 @@ export function useAutomationExecutions(spaceIdRef: MaybeRefOrComputed<string>) 
         return response.data
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.automationExecutions(spaceId.value).lists() })
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.automationExecutions(spaceId.value).lists(),
+        })
         queryClient.invalidateQueries({ queryKey: queryKeys.automations(spaceId.value).lists() })
-        queryClient.invalidateQueries({ queryKey: queryKeys.automationActions(spaceId.value).lists() })
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.automationActions(spaceId.value).lists(),
+        })
         toast.success(t('composables.automationExecutions.replaySuccess') as string)
       },
       onError: (error: Error) => {

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
@@ -20,7 +20,10 @@ export function useComments(
   const hasContentId = computed(() => !!toValue(contentId))
   // Provided by the content editor page (useContentLiveCollaboration) so other
   // collaborators refetch comments after any local mutation.
-  const broadcastCommentUpdate = inject<(() => void) | undefined>('broadcastCommentUpdate', undefined)
+  const broadcastCommentUpdate = inject<(() => void) | undefined>(
+    'broadcastCommentUpdate',
+    undefined
+  )
   const notifyCollaborators = () => broadcastCommentUpdate?.()
 
   const useCommentsQuery = (params: MaybeRef<CommentsQueryParams> = {}) => {
@@ -31,6 +34,7 @@ export function useComments(
         return response.data
       },
       enabled: hasContentId,
+      placeholderData: keepPreviousData,
     })
   }
 

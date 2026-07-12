@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { ComputedRef, MaybeRef } from 'vue'
 import { toast } from 'vue-sonner'
 
@@ -32,6 +32,7 @@ export function useBackups(spaceIdRef: MaybeRefOrComputed<string>) {
         return response
       },
       enabled: computed(() => !!spaceId.value && !!toValue(enabled)),
+      placeholderData: keepPreviousData,
     })
   }
 

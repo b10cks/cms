@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
+import { useRoutePreload } from '~/composables/useRoutePreload'
 
 interface NavItem {
   title: string
@@ -28,6 +29,9 @@ const items: NavItem[] = [
 const route = useRoute()
 const spaceId = computed<string>(() => route.params.space as string)
 
+const { preloadRoute, cancelPreload } = useRoutePreload()
+const linkTo = (name: string) => ({ name, params: { space: spaceId.value } })
+
 provide('spaceId', spaceId)
 </script>
 
@@ -38,13 +42,17 @@ provide('spaceId', spaceId)
         <RouterLink
           v-for="item in items"
           :key="item.name"
-          :to="{ name: item.name, params: { space: $route.params.space } }"
+          :to="linkTo(item.name)"
           exact-active-class="bg-secondary text-primary"
           :class="[
             'flex items-center gap-2 rounded-md px-4 py-2',
             'transition-colors duration-200 hover:bg-secondary',
             'cursor-pointer font-semibold whitespace-nowrap',
           ]"
+          @mouseenter="preloadRoute(linkTo(item.name))"
+          @focusin="preloadRoute(linkTo(item.name))"
+          @mouseleave="cancelPreload(linkTo(item.name))"
+          @focusout="cancelPreload(linkTo(item.name))"
         >
           <Icon
             :name="item.icon"

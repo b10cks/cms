@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
@@ -24,6 +24,7 @@ export function useReleases(spaceId: MaybeRef<string>) {
         return await spaceAPI.value.releases.index(toValue(params))
       },
       enabled: computed(() => !!toValue(spaceId) && !!toValue(enabled)),
+      placeholderData: keepPreviousData,
     })
   }
 
