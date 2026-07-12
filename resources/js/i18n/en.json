@@ -1484,6 +1484,21 @@
         "referencedBy": "Can be referenced by",
         "notNestable": "{type} blocks can't be nested inside other blocks.",
         "emptyNested": "No other block currently allows this block inside."
+      },
+      "richtext": {
+        "htmlClasses": {
+          "title": "HTML Classes",
+          "name": "Display name (e.g. Highlight)",
+          "className": "CSS class (e.g. bg-yellow-100)",
+          "css": "CSS preview (optional, e.g. background-color: yellow;)",
+          "toggleCss": "Toggle CSS preview"
+        },
+        "placeholders": {
+          "title": "Placeholders",
+          "description": "Define variables editors can insert as tokens, e.g.",
+          "label": "Label (e.g. First Name)",
+          "key": "Key (e.g. first_name)"
+        }
       }
     },
     "blockTags": {
@@ -3668,6 +3683,12 @@
         "cut": "Cut item",
         "delete": "Delete item",
         "paste": "Paste item"
+      },
+      "richtext": {
+        "addHtmlClass": "Add HTML Class",
+        "removeHtmlClass": "Remove HTML class",
+        "addPlaceholder": "Add Placeholder",
+        "removePlaceholder": "Remove placeholder"
       }
     },
     "blockTags": {

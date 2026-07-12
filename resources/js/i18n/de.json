@@ -1487,6 +1487,21 @@
         "referencedBy": "Kann referenziert werden von",
         "notNestable": "{type}-Blöcke können nicht in andere Blöcke verschachtelt werden.",
         "emptyNested": "Kein anderer Block erlaubt diesen Block aktuell als Inhalt."
+      },
+      "richtext": {
+        "htmlClasses": {
+          "title": "HTML-Klassen",
+          "name": "Anzeigename (z. B. Hervorhebung)",
+          "className": "CSS-Klasse (z. B. bg-yellow-100)",
+          "css": "CSS-Vorschau (optional, z. B. background-color: yellow;)",
+          "toggleCss": "CSS-Vorschau umschalten"
+        },
+        "placeholders": {
+          "title": "Platzhalter",
+          "description": "Variablen, die Redakteure als Token einfügen können, z. B.",
+          "label": "Bezeichnung (z. B. Vorname)",
+          "key": "Schlüssel (z. B. first_name)"
+        }
       }
     },
     "blockTags": {
@@ -3661,6 +3676,12 @@
         "cut": "Element ausschneiden",
         "delete": "Element löschen",
         "paste": "Element einfügen"
+      },
+      "richtext": {
+        "addHtmlClass": "HTML-Klasse hinzufügen",
+        "removeHtmlClass": "HTML-Klasse entfernen",
+        "addPlaceholder": "Platzhalter hinzufügen",
+        "removePlaceholder": "Platzhalter entfernen"
       }
     },
     "blockTags": {
