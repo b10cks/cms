@@ -11,7 +11,7 @@ import CreateBlockDialog from '~/components/blocks/CreateBlockDialog.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
-import { ScrollArea } from '~/components/ui/scroll-area'
+import { Skeleton } from '~/components/ui/skeleton'
 
 const route = useRoute()
 const router = useRouter()
@@ -62,13 +62,44 @@ const handleDuplicateCreated = (createdBlock: BlockResource) => {
 
 <template>
   <BlockMenu :space-id="spaceId" />
-  <ScrollArea class="flex grow bg-background">
-    <div v-if="isLoading">Loading ...</div>
+  <div class="flex grow bg-background">
+    <div
+      v-if="isLoading"
+      aria-hidden="true"
+      class="mx-auto flex w-full max-w-5xl flex-col gap-6 pb-6"
+    >
+      <div class="grid gap-2 pt-8">
+        <Skeleton class="size-9" />
+        <div class="flex items-center justify-between">
+          <Skeleton class="h-8 w-56" />
+          <div class="flex items-center gap-2">
+            <Skeleton class="h-8 w-28" />
+            <Skeleton class="h-8 w-9" />
+            <Skeleton class="h-8 w-32" />
+          </div>
+        </div>
+      </div>
+      <div
+        class="mx-auto flex w-full max-w-4xl flex-col gap-6 [mask-image:linear-gradient(to_bottom,black_20%,transparent)]"
+      >
+        <div
+          v-for="(width, index) in ['w-32', 'w-24', 'w-40', 'w-28', 'w-36', 'w-24']"
+          :key="index"
+          class="flex flex-col gap-2"
+        >
+          <Skeleton :class="['h-4', width]" />
+          <Skeleton class="h-10 w-full" />
+        </div>
+      </div>
+    </div>
     <div
       v-else-if="block"
       class="mx-auto flex w-full max-w-5xl flex-col gap-6 pb-6"
     >
-      <ContentHeader :header="block.name">
+      <ContentHeader
+        class="sticky top-14 z-10 bg-background"
+        :header="block.name"
+      >
         <template #start>
           <Button
             :as="RouterLink"
@@ -147,7 +178,7 @@ const handleDuplicateCreated = (createdBlock: BlockResource) => {
         />
       </div>
     </div>
-  </ScrollArea>
+  </div>
 
   <BlockVersionsSheet
     v-if="block"

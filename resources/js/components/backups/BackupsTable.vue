@@ -98,7 +98,7 @@ const canManageBackups = computed(() => access.hasAbility('backups.manage'))
 const tableColumnCount = computed(() => (canManageBackups.value ? 9 : 8))
 
 const { useBackupsQuery, useDeleteBackupMutation } = useBackups(props.spaceId)
-const { data: backups, isLoading } = useBackupsQuery(queryParams)
+const { data: backups, isLoading, isFetching } = useBackupsQuery(queryParams)
 const { mutate: deleteBackup } = useDeleteBackupMutation()
 
 const { formatDateTime, formatFileSize } = useFormat()
@@ -276,7 +276,13 @@ watch(
           </TableRow>
         </TableHeader>
 
-        <TableBody>
+        <TableBody
+          :class="
+            isFetching && !isLoading
+              ? 'opacity-50 transition-opacity duration-200'
+              : 'transition-opacity duration-200'
+          "
+        >
           <TableLoadingRow
             v-if="isLoading"
             :colspan="tableColumnCount"

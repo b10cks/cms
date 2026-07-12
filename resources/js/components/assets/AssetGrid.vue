@@ -20,13 +20,14 @@ import { Badge } from '~/components/ui/badge'
 import { Breadcrumb, BreadcrumbItem } from '~/components/ui/breadcrumb'
 import { Button } from '~/components/ui/button'
 import {
-    ContextMenu,
-    ContextMenuContent,
-    ContextMenuItem,
-    ContextMenuSeparator,
-    ContextMenuTrigger,
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
 } from '~/components/ui/context-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '~/components/ui/select'
+import { Skeleton } from '~/components/ui/skeleton'
 import SortSelect from '~/components/ui/SortSelect.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type { AssetSelectionEntry } from '~/composables/useAssetSelection'
@@ -74,8 +75,9 @@ const { alert } = useAlertDialog()
 const { useAccessControl } = useAuthorization()
 const { settings } = useSpaceSettings(props.spaceId)
 const { useFolderStructure, useDeleteAssetFolderMutation } = useAssetFolders(props.spaceId)
-const { useAssetsQuery, useAssetQuery, useDeleteAssetMutation, useUpdateAssetMutation } =
-  useAssets(props.spaceId)
+const { useAssetsQuery, useAssetQuery, useDeleteAssetMutation, useUpdateAssetMutation } = useAssets(
+  props.spaceId
+)
 const { useAssetTagsQuery } = useAssetTags(props.spaceId)
 const { data: allTagsResponse } = useAssetTagsQuery({ per_page: 500 })
 const { getBreadcrumbs, getChildrenOfFolder } = useFolderStructure()
@@ -93,7 +95,9 @@ const isManage = computed(() => props.mode === 'manage')
 const isMultiSelect = computed(() => props.mode === 'multi-select')
 // Whether the Finder-style selection engine (marquee, keyboard, checkboxes) is
 // active. On in `manage` and `multi-select`, off in the single-pick `select`.
-const selectionEnabled = computed(() => (isManage.value || isMultiSelect.value) && props.multiSelect)
+const selectionEnabled = computed(
+  () => (isManage.value || isMultiSelect.value) && props.multiSelect
+)
 
 const folderId = defineModel<string | null>('folderId')
 const tagId = defineModel<string | null>('tagId')
@@ -182,10 +186,12 @@ const assetQueryParams = computed<AssetsQueryParams>(() => {
   }
 })
 
-const { data: assetResponse } = useAssetsQuery(assetQueryParams)
+const { data: assetResponse, isLoading, isFetching } = useAssetsQuery(assetQueryParams)
 
 const shouldLoadDeepLinkedAsset = computed(() => {
-  return props.mode === 'manage' && Boolean(assetId.value) && assetId.value !== detailAsset.value?.id
+  return (
+    props.mode === 'manage' && Boolean(assetId.value) && assetId.value !== detailAsset.value?.id
+  )
 })
 const { data: deepLinkedAsset } = useAssetQuery(
   computed(() => assetId.value ?? ''),
@@ -786,7 +792,9 @@ const deleteSelection = async () => {
     const confirmed =
       foldersToDelete.length === 1 ||
       (await alert.confirm(
-        String($t('messages.assetFolders.bulkDeleteConfirmation', { count: foldersToDelete.length })),
+        String(
+          $t('messages.assetFolders.bulkDeleteConfirmation', { count: foldersToDelete.length })
+        ),
         {
           title: $t('labels.assetFolders.deleteTitle'),
           confirmLabel: $t('actions.delete'),
@@ -907,12 +915,12 @@ let typeaheadTimer: ReturnType<typeof setTimeout> | null = null
 const anyDialogOpen = () => {
   return Boolean(
     detailAsset.value ||
-      showUploadDialog.value ||
-      folderDialogOpen.value ||
-      moveDialogOpen.value ||
-      bulkTagOpen.value ||
-      shortcutsOpen.value ||
-      document.querySelector('[role="dialog"], [role="alertdialog"], [role="menu"]')
+    showUploadDialog.value ||
+    folderDialogOpen.value ||
+    moveDialogOpen.value ||
+    bulkTagOpen.value ||
+    shortcutsOpen.value ||
+    document.querySelector('[role="dialog"], [role="alertdialog"], [role="menu"]')
   )
 }
 
@@ -964,7 +972,9 @@ const itemsPerRowFor = (entry: AssetSelectionEntry): number => {
     return 1
   }
 
-  const options = Array.from(container.querySelectorAll(':scope > [role="option"]')) as HTMLElement[]
+  const options = Array.from(
+    container.querySelectorAll(':scope > [role="option"]')
+  ) as HTMLElement[]
   const firstTop = options[0]?.offsetTop
 
   const count = options.filter((option) => option.offsetTop === firstTop).length
@@ -983,9 +993,7 @@ const moveFocus = (delta: number, extend: boolean) => {
     : -1
 
   const nextIndex =
-    currentIndex === -1
-      ? 0
-      : Math.min(Math.max(currentIndex + delta, 0), entries.length - 1)
+    currentIndex === -1 ? 0 : Math.min(Math.max(currentIndex + delta, 0), entries.length - 1)
 
   const entry = entries[nextIndex]
 
@@ -1104,7 +1112,7 @@ const handleWindowKeydown = (event: KeyboardEvent) => {
     return
   }
 
-  if (event.key === '?' ) {
+  if (event.key === '?') {
     event.preventDefault()
     shortcutsOpen.value = true
     return
@@ -1544,7 +1552,9 @@ onUnmounted(() => {
                   name="lucide:folder"
                   size="1.25rem"
                 />
-                <span class="font-semibold text-primary">{{ $t('labels.assetFolders.title') }}</span>
+                <span class="font-semibold text-primary">{{
+                  $t('labels.assetFolders.title')
+                }}</span>
                 <Badge>{{ folders.length }}</Badge>
                 <Icon
                   name="lucide:chevron-up"
@@ -1580,7 +1590,9 @@ onUnmounted(() => {
                 @click="handleFolderClick"
                 @open="(value) => navigateToFolder(value.id)"
                 @edit="openEditFolderDialog"
-                @move="(value) => openMoveDialog(itemsForMoveAction({ type: 'folder', data: value }))"
+                @move="
+                  (value) => openMoveDialog(itemsForMoveAction({ type: 'folder', data: value }))
+                "
                 @delete="handleFolderDelete"
                 @create="(value) => openCreateFolderDialog(value.id)"
                 @context-menu="(value) => handleEntryContextMenu({ type: 'folder', data: value })"
@@ -1632,9 +1644,33 @@ onUnmounted(() => {
               </div>
             </div>
 
+            <!-- First-load skeleton: mirrors the real tile grid so data pops in without a layout jump. -->
             <div
-              v-if="assetResponse"
+              v-if="isLoading"
               class="grid flex-1 gap-1"
+              aria-hidden="true"
+            >
+              <div :class="['grid gap-3 rounded-lg bg-surface p-3', selectedGridSize.cls]">
+                <div
+                  v-for="n in 12"
+                  :key="n"
+                  class="rounded-lg bg-background p-1 shadow-lg"
+                >
+                  <Skeleton class="aspect-square w-full rounded-t-[0.325rem] rounded-b-none" />
+                  <div class="flex flex-col gap-1.5 p-2">
+                    <Skeleton class="h-4 w-3/4" />
+                    <Skeleton class="h-3.5 w-1/2" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              v-else-if="assetResponse"
+              :class="[
+                'grid flex-1 gap-1 transition-opacity duration-200',
+                isFetching ? 'opacity-50' : '',
+              ]"
             >
               <div
                 v-if="!assets.length"

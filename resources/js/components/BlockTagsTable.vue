@@ -49,7 +49,7 @@ const queryParams = computed(() => ({
 }))
 
 const { useBlockTagsQuery, useDeleteBlockTagMutation } = useBlockTags(props.spaceId)
-const { data: blockTags, isLoading } = useBlockTagsQuery(queryParams)
+const { data: blockTags, isLoading, isFetching } = useBlockTagsQuery(queryParams)
 const { mutate: deleteBlockTag } = useDeleteBlockTagMutation()
 
 const showTagDialog = ref(false)
@@ -150,7 +150,13 @@ watch(showTagDialog, (isOpen) => {
                 <TableHead class="w-12" />
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody
+              :class="
+                isFetching && !isLoading
+                  ? 'opacity-50 transition-opacity duration-200'
+                  : 'transition-opacity duration-200'
+              "
+            >
               <TableLoadingRow
                 v-if="isLoading"
                 :colspan="3"

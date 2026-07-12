@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
 import { Badge } from '~/components/ui/badge'
+import { Skeleton } from '~/components/ui/skeleton'
 
 const props = defineProps<{
   invoices: InvoiceResource[]
@@ -29,13 +30,20 @@ function formatDate(value: string | null): string {
 <template>
   <div
     v-if="props.loading"
-    class="flex items-center gap-2 py-6 text-muted"
+    class="divide-y rounded-lg border"
   >
-    <Icon
-      name="lucide:loader"
-      class="animate-spin"
-    />
-    {{ $t('labels.loading') }}
+    <div
+      v-for="i in 3"
+      :key="i"
+      class="flex items-center justify-between gap-3 px-4 py-3"
+    >
+      <div class="flex items-center gap-3">
+        <Skeleton class="h-4 w-20" />
+        <Skeleton class="h-4 w-16" />
+        <Skeleton class="h-5 w-14 rounded-full" />
+      </div>
+      <Skeleton class="h-4 w-16" />
+    </div>
   </div>
 
   <div

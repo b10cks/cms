@@ -6,6 +6,7 @@ import StatsLineChart from '~/components/stats/StatsLineChart.vue'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
+import { Skeleton } from '~/components/ui/skeleton'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -86,13 +87,29 @@ const chartLabel = computed(() =>
 
     <div
       v-if="periodsLoading"
-      class="flex items-center gap-2 py-8 text-muted"
+      class="space-y-6"
     >
-      <Icon
-        name="lucide:loader"
-        class="animate-spin"
-      />
-      {{ $t('labels.loading') }}
+      <Card>
+        <CardHeader>
+          <div class="flex items-center justify-between gap-2">
+            <Skeleton class="h-5 w-48" />
+            <Skeleton class="h-8 w-40" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Skeleton class="h-[260px] w-full" />
+        </CardContent>
+      </Card>
+      <div class="mt-6 space-y-2">
+        <Skeleton class="h-4 w-32" />
+        <div class="space-y-2 rounded-lg border p-3">
+          <Skeleton
+            v-for="i in 3"
+            :key="i"
+            class="h-10 w-full"
+          />
+        </div>
+      </div>
     </div>
 
     <template v-else>
@@ -122,16 +139,10 @@ const chartLabel = computed(() =>
           </div>
         </CardHeader>
         <CardContent>
-          <div
+          <Skeleton
             v-if="timeseriesLoading"
-            class="flex items-center gap-2 py-8 text-muted"
-          >
-            <Icon
-              name="lucide:loader"
-              class="animate-spin"
-            />
-            {{ $t('labels.loading') }}
-          </div>
+            class="h-[260px] w-full"
+          />
           <StatsLineChart
             v-else-if="chartData.length"
             :title="chartLabel"

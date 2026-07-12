@@ -43,7 +43,7 @@ const queryParams = computed(() => ({
   ...filters.value,
 }))
 
-const { data: actionCollection, isLoading } = useAutomationActionsQuery(queryParams)
+const { data: actionCollection, isLoading, isFetching } = useAutomationActionsQuery(queryParams)
 const { data: triggerCatalog } = useAutomationTriggerCatalogQuery()
 const createMutation = useCreateAutomationActionMutation()
 const updateMutation = useUpdateAutomationActionMutation()
@@ -177,6 +177,7 @@ useSeoMeta({
     <AutomationActionsTable
       :actions="actionCollection?.data || []"
       :is-loading="isLoading"
+      :is-fetching="isFetching"
       :meta="actionCollection?.meta"
       :current-page="currentPage"
       :per-page="perPage"

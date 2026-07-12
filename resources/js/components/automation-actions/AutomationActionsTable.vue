@@ -31,6 +31,7 @@ const props = withDefaults(
   defineProps<{
     actions: AutomationActionResource[]
     isLoading: boolean
+    isFetching?: boolean
     meta?: LaravelMeta
     currentPage: number
     perPage: number
@@ -169,7 +170,13 @@ const isTogglePending = (action: AutomationActionResource) => {
           </TableRow>
         </TableHeader>
 
-        <TableBody>
+        <TableBody
+          :class="
+            isFetching && !isLoading
+              ? 'opacity-50 transition-opacity duration-200'
+              : 'transition-opacity duration-200'
+          "
+        >
           <TableLoadingRow
             v-if="isLoading"
             :colspan="7"

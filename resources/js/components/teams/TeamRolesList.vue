@@ -29,6 +29,7 @@ import { formatRoleAbilityLabel, formatRoleAbilityResourceLabel } from '~/utils/
 const props = defineProps<{
   roles: RoleCatalogEntry[]
   isLoading?: boolean
+  isFetching?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -224,7 +225,13 @@ const handleSortChange = (value: { column: string; direction: 'asc' | 'desc' }) 
             <TableHead class="w-28" />
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody
+          :class="
+            isFetching && !isLoading
+              ? 'opacity-50 transition-opacity duration-200'
+              : 'transition-opacity duration-200'
+          "
+        >
           <TableLoadingRow
             v-if="isLoading"
             :colspan="6"

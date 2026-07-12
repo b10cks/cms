@@ -53,7 +53,7 @@ const actionOptionsParams = computed(() => ({
   sort: 'name',
 }))
 
-const { data: automationCollection, isLoading } = useAutomationsQuery(queryParams)
+const { data: automationCollection, isLoading, isFetching } = useAutomationsQuery(queryParams)
 const { data: triggerCatalog } = useAutomationTriggerCatalogQuery()
 const { data: actionCollection, isLoading: isLoadingActions } =
   useAutomationActionsQuery(actionOptionsParams)
@@ -223,6 +223,7 @@ useSeoMeta({
       :automations="automationCollection?.data || []"
       :trigger-catalog="triggerCatalog"
       :is-loading="isLoading"
+      :is-fetching="isFetching"
       :meta="automationCollection?.meta"
       :current-page="currentPage"
       :per-page="perPage"

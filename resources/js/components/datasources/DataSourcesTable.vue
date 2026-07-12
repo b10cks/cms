@@ -94,7 +94,7 @@ const queryParams = computed<DataSourcesQueryParams>(() => {
   }
 })
 
-const { data: dataSources, isLoading, refetch } = useDataSourcesQuery(queryParams)
+const { data: dataSources, isLoading, isFetching, refetch } = useDataSourcesQuery(queryParams)
 
 const deleteDialogOpen = ref(false)
 const dataSourceToDelete = ref<DataSourceResource | null>(null)
@@ -179,10 +179,16 @@ const confirmDelete = async () => {
             <TableHead class="w-16" />
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody
+          :class="
+            isFetching && !isLoading
+              ? 'opacity-50 transition-opacity duration-200'
+              : 'transition-opacity duration-200'
+          "
+        >
           <TableLoadingRow
             v-if="isLoading"
-            :colspan="8"
+            :colspan="6"
           />
           <template v-else-if="dataSources?.data?.length > 0">
             <TableRow
@@ -261,7 +267,7 @@ const confirmDelete = async () => {
           </template>
           <TableEmptyRow
             v-else
-            :colspan="8"
+            :colspan="6"
             :icon="DataSourcesIcon"
             :label="
               searchQuery

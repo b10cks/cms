@@ -105,7 +105,11 @@ const queryParams = computed(() => ({
   direction: sortBy.value.direction,
 }))
 
-const { data: releases, isLoading: isLoadingReleases } = useReleasesQuery(queryParams)
+const {
+  data: releases,
+  isLoading: isLoadingReleases,
+  isFetching: isFetchingReleases,
+} = useReleasesQuery(queryParams)
 
 const isLoading = computed(() => isLoadingReleases.value || props.isLoading)
 
@@ -215,7 +219,13 @@ const handleSort = (column: string) => {
             <TableHead class="text-right"></TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody
+          :class="
+            isFetchingReleases && !isLoading
+              ? 'opacity-50 transition-opacity duration-200'
+              : 'transition-opacity duration-200'
+          "
+        >
           <TableLoadingRow
             v-if="isLoading"
             :colspan="5"

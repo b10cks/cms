@@ -59,7 +59,11 @@ const queryParams = computed(() => ({
 }))
 
 const { useBlocksQuery, useDeleteBlockMutation } = useBlocks(props.spaceId)
-const { data: blocks, isLoading: isLoadingBlocks } = useBlocksQuery(queryParams)
+const {
+  data: blocks,
+  isLoading: isLoadingBlocks,
+  isFetching: isFetchingBlocks,
+} = useBlocksQuery(queryParams)
 const { mutate: deleteBlock } = useDeleteBlockMutation()
 
 const { useBlockTagsQuery } = useBlockTags(props.spaceId)
@@ -224,7 +228,13 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
                 <TableHead class="w-12" />
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody
+              :class="
+                isFetchingBlocks && !isLoading
+                  ? 'opacity-50 transition-opacity duration-200'
+                  : 'transition-opacity duration-200'
+              "
+            >
               <TableLoadingRow
                 v-if="isLoading"
                 :colspan="6"

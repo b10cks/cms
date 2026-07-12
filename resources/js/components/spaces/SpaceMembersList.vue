@@ -35,6 +35,7 @@ const props = withDefaults(
   defineProps<{
     members: SpaceMemberResource[]
     isLoading: boolean
+    isFetching?: boolean
     meta?: LaravelMeta
     currentPage: number
     perPage: number
@@ -274,7 +275,13 @@ const handleBulkRemove = async () => {
             <TableHead class="w-24"></TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody
+          :class="
+            isFetching && !isLoading
+              ? 'opacity-50 transition-opacity duration-200'
+              : 'transition-opacity duration-200'
+          "
+        >
           <TableLoadingRow
             v-if="isLoading"
             :colspan="6"

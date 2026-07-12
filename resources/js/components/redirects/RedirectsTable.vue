@@ -27,7 +27,11 @@ import {
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
-import type { CreateRedirectPayload, UpdateRedirectPayload, RedirectResource } from '~/types/redirects'
+import type {
+  CreateRedirectPayload,
+  UpdateRedirectPayload,
+  RedirectResource,
+} from '~/types/redirects'
 
 import ExportRedirectsDialog from './ExportRedirectsDialog.vue'
 import ImportRedirectsDialog from './ImportRedirectsDialog.vue'
@@ -122,7 +126,7 @@ const {
   useResetRedirectStatsMutation,
 } = useRedirects(props.spaceId)
 
-const { data: redirects, isLoading } = useRedirectsQuery(queryParams)
+const { data: redirects, isLoading, isFetching } = useRedirectsQuery(queryParams)
 const createRedirectMutation = useCreateRedirectMutation()
 const updateRedirectMutation = useUpdateRedirectMutation()
 const deleteRedirectMutation = useDeleteRedirectMutation()
@@ -405,7 +409,13 @@ defineExpose({
           </TableRow>
         </TableHeader>
 
-        <TableBody>
+        <TableBody
+          :class="
+            isFetching && !isLoading
+              ? 'opacity-50 transition-opacity duration-200'
+              : 'transition-opacity duration-200'
+          "
+        >
           <TableLoadingRow
             v-if="isLoading"
             :colspan="tableColumnCount"

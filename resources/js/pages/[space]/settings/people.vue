@@ -55,11 +55,11 @@ const queryParams = computed<SpaceMemberQueryParams>(() => ({
   per_page: perPage.value,
 }))
 
-const { data: membersData, isLoading: isLoadingMembers } = useSpaceMembersQuery(
-  spaceId,
-  queryParams,
-  canViewMembers
-)
+const {
+  data: membersData,
+  isLoading: isLoadingMembers,
+  isFetching: isFetchingMembers,
+} = useSpaceMembersQuery(spaceId, queryParams, canViewMembers)
 
 const updateMemberMutation = useUpdateSpaceMemberMutation()
 const removeMemberMutation = useRemoveSpaceMemberMutation()
@@ -135,6 +135,7 @@ const handleRemoveMember = (userId: string) => {
         <SpaceMembersList
           :members="members"
           :is-loading="isLoadingMembers"
+          :is-fetching="isFetchingMembers"
           :meta="membersMeta"
           :current-page="currentPage"
           :per-page="perPage"

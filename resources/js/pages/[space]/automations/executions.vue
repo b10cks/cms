@@ -41,7 +41,11 @@ const automationOptionsParams = computed(() => ({
   sort: 'name',
 }))
 
-const { data: executionCollection, isLoading } = useAutomationExecutionsQuery(queryParams)
+const {
+  data: executionCollection,
+  isLoading,
+  isFetching,
+} = useAutomationExecutionsQuery(queryParams)
 const { data: automationCollection } = useAutomationsQuery(automationOptionsParams)
 const replayMutation = useReplayAutomationExecutionMutation()
 
@@ -90,6 +94,7 @@ useSeoMeta({
       :executions="executionCollection?.data || []"
       :automations="automationCollection?.data || []"
       :is-loading="isLoading"
+      :is-fetching="isFetching"
       :meta="executionCollection?.meta"
       :current-page="currentPage"
       :per-page="perPage"

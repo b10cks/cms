@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
-import SearchFilter, { type FilterableField } from '~/components/SearchFilter.vue'
 import AutomationActionTypeBadge from '~/components/automation-actions/AutomationActionTypeBadge.vue'
+import Icon from '~/components/Icon.vue'
+import SearchFilter, { type FilterableField } from '~/components/SearchFilter.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import SortSelect from '~/components/ui/SortSelect.vue'
-import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
-import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
-import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
+import { Spinner } from '~/components/ui/spinner'
 import {
   Table,
   TableBody,
@@ -17,6 +14,9 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/ui/table'
+import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
+import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
+import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type { LaravelMeta } from '~/types'
 
 const props = withDefaults(
@@ -24,6 +24,7 @@ const props = withDefaults(
     executions: AutomationExecutionResource[]
     automations: AutomationResource[]
     isLoading: boolean
+    isFetching?: boolean
     meta?: LaravelMeta
     currentPage: number
     perPage: number
@@ -179,11 +180,19 @@ const handleFiltersUpdate = (value: Record<string, unknown>) => {
             <TableHead>{{ $t('labels.automationExecutions.columns.source') }}</TableHead>
             <TableHead>{{ $t('labels.automationExecutions.columns.timing') }}</TableHead>
             <TableHead>{{ $t('labels.automationExecutions.columns.result') }}</TableHead>
-            <TableHead class="w-28">{{ $t('labels.automationExecutions.columns.actions') }}</TableHead>
+            <TableHead class="w-28">{{
+              $t('labels.automationExecutions.columns.actions')
+            }}</TableHead>
           </TableRow>
         </TableHeader>
 
-        <TableBody>
+        <TableBody
+          :class="
+            isFetching && !isLoading
+              ? 'opacity-50 transition-opacity duration-200'
+              : 'transition-opacity duration-200'
+          "
+        >
           <TableLoadingRow
             v-if="isLoading"
             :colspan="6"
@@ -207,9 +216,9 @@ const handleFiltersUpdate = (value: Record<string, unknown>) => {
                   </div>
                   <p class="text-muted-foreground text-sm">
                     {{
-                      execution.automation?.description
-                        || execution.automation?.action?.name
-                        || execution.id
+                      execution.automation?.description ||
+                      execution.automation?.action?.name ||
+                      execution.id
                     }}
                   </p>
                 </div>
@@ -284,14 +293,13 @@ const handleFiltersUpdate = (value: Record<string, unknown>) => {
                     v-if="canManage"
                     variant="outline"
                     size="icon"
-                    :disabled="['queued', 'running'].includes(execution.status) || replayingId === execution.id"
+                    :disabled="
+                      ['queued', 'running'].includes(execution.status) ||
+                      replayingId === execution.id
+                    "
                     @click="emit('replay', execution)"
                   >
-                    <Icon
-                      v-if="replayingId === execution.id"
-                      name="lucide:loader"
-                      class="animate-spin"
-                    />
+                    <Spinner v-if="replayingId === execution.id" />
                     <Icon
                       v-else
                       name="lucide:rotate-ccw"

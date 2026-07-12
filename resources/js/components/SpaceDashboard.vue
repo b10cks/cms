@@ -4,6 +4,7 @@ import StatsCard from '~/components/stats/StatsCard.vue'
 import StatsLineChart from '~/components/stats/StatsLineChart.vue'
 import StatsMultiLineChart from '~/components/stats/StatsMultiLineChart.vue'
 import StatsPieChart from '~/components/stats/StatsPieChart.vue'
+import { Skeleton } from '~/components/ui/skeleton'
 import { installChart } from '~/plugins/chart'
 
 import { SelectField } from './ui/form'
@@ -233,13 +234,32 @@ watch(
 
     <div
       v-if="loading"
-      class="flex h-64 items-center justify-center"
+      aria-hidden="true"
+      class="space-y-6"
     >
-      <div class="text-center">
-        <div
-          class="spinner mx-auto h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent"
+      <Skeleton class="h-7 w-48" />
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Skeleton
+          v-for="index in 5"
+          :key="index"
+          class="h-[138px] rounded-xl"
         />
-        <p class="mt-2 text-muted">{{ t('dashboard.loading') }}</p>
+      </div>
+      <Skeleton class="h-7 w-56" />
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <Skeleton
+          v-for="index in 2"
+          :key="index"
+          class="h-[384px] rounded-xl"
+        />
+      </div>
+      <Skeleton class="h-7 w-40" />
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Skeleton
+          v-for="index in 3"
+          :key="index"
+          class="h-[138px] rounded-xl"
+        />
       </div>
     </div>
 

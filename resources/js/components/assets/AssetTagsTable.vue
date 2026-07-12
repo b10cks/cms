@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { AssetTagResource } from '~/types/assets'
 import CreateAssetTagDialog from '~/components/assets/CreateAssetTagDialog.vue'
 import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
@@ -19,6 +18,7 @@ import {
 } from '~/components/ui/table'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
+import type { AssetTagResource } from '~/types/assets'
 
 const props = defineProps<{
   spaceId: string
@@ -47,7 +47,7 @@ const queryParams = computed(() => ({
 }))
 
 const { useAssetTagsQuery, useDeleteAssetTagMutation } = useAssetTags(props.spaceId)
-const { data: assetTags, isLoading } = useAssetTagsQuery(queryParams)
+const { data: assetTags, isLoading, isFetching } = useAssetTagsQuery(queryParams)
 const { mutate: deleteAssetTag } = useDeleteAssetTagMutation()
 
 const showTagDialog = ref(false)
@@ -142,7 +142,13 @@ watch(showTagDialog, (isOpen) => {
                 <TableHead class="w-12" />
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody
+              :class="
+                isFetching && !isLoading
+                  ? 'opacity-50 transition-opacity duration-200'
+                  : 'transition-opacity duration-200'
+              "
+            >
               <TableLoadingRow
                 v-if="isLoading"
                 :colspan="3"

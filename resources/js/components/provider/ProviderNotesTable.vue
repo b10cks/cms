@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import NotesIcon from '~/assets/images/space.svg?component'
 import Icon from '~/components/Icon.vue'
-import { safeHref } from '~/lib/sanitize'
 import { Button } from '~/components/ui/button'
 import {
   DropdownMenu,
@@ -19,6 +18,7 @@ import {
 } from '~/components/ui/table'
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
+import { safeHref } from '~/lib/sanitize'
 
 import ProviderNoteDialog from './ProviderNoteDialog.vue'
 
@@ -35,7 +35,7 @@ const {
 const noteDialogOpen = ref(false)
 const noteToEdit = ref<ProviderNote | null>(null)
 
-const { data: notesResponse, isLoading } = useProviderNotesQuery({ per_page: 50 })
+const { data: notesResponse, isLoading, isFetching } = useProviderNotesQuery({ per_page: 50 })
 const createMutation = useCreateProviderNoteMutation()
 const updateMutation = useUpdateProviderNoteMutation()
 const deleteMutation = useDeleteProviderNoteMutation()
@@ -91,14 +91,17 @@ const handleUpdate = async (id: string, payload: Partial<ProviderNotePayload>) =
 }
 
 const handleDelete = async (note: ProviderNote) => {
-  const confirmed = await alert.confirm(t('labels.provider.notes.confirmDelete.message', {
-    title: note.title,
-  }) as string, {
-    title: t('labels.provider.notes.confirmDelete.title') as string,
-    confirmLabel: t('actions.delete') as string,
-    cancelLabel: t('actions.cancel') as string,
-    variant: 'destructive',
-  })
+  const confirmed = await alert.confirm(
+    t('labels.provider.notes.confirmDelete.message', {
+      title: note.title,
+    }) as string,
+    {
+      title: t('labels.provider.notes.confirmDelete.title') as string,
+      confirmLabel: t('actions.delete') as string,
+      cancelLabel: t('actions.cancel') as string,
+      variant: 'destructive',
+    }
+  )
 
   if (!confirmed) {
     return
@@ -125,7 +128,13 @@ defineExpose({
           </TableRow>
         </TableHeader>
 
-        <TableBody>
+        <TableBody
+          :class="
+            isFetching && !isLoading
+              ? 'opacity-50 transition-opacity duration-200'
+              : 'transition-opacity duration-200'
+          "
+        >
           <TableLoadingRow
             v-if="isLoading"
             :colspan="4"

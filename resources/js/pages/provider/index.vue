@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import StatsCard from '~/components/stats/StatsCard.vue'
 import { SelectField } from '~/components/ui/form'
+import { Skeleton } from '~/components/ui/skeleton'
 
 const { formatNumber } = useFormat()
 const { t } = useI18n()
@@ -109,13 +110,16 @@ const cards = computed(() => {
 
       <div
         v-if="isLoading"
-        class="flex h-64 items-center justify-center"
+        aria-hidden="true"
+        class="space-y-6"
       >
-        <div class="text-center">
-          <div
-            class="spinner mx-auto h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent"
+        <Skeleton class="h-7 w-40" />
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Skeleton
+            v-for="index in 3"
+            :key="index"
+            class="h-[138px] rounded-xl"
           />
-          <p class="mt-2 text-muted">{{ t('dashboard.loading') }}</p>
         </div>
       </div>
 

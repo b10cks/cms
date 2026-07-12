@@ -6,6 +6,7 @@ import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { Progress } from '~/components/ui/progress'
+import { Skeleton } from '~/components/ui/skeleton'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -175,30 +176,42 @@ const upgradablePlans = computed(() =>
         <Button
           size="sm"
           class="bg-warning-background"
-          :disabled="isReiniting"
+          :loading="isReiniting"
           @click="reinitPayment()"
         >
-          <Icon
-            v-if="isReiniting"
-            name="lucide:loader"
-            class="animate-spin"
-          />
           {{ $t('actions.subscriptions.retryPayment') }}
         </Button>
       </div>
     </Alert>
 
     <!-- Current subscription -->
-    <div
-      v-if="currentLoading"
-      class="flex items-center gap-2 py-8 text-muted"
-    >
-      <Icon
-        name="lucide:loader"
-        class="animate-spin"
-      />
-      {{ $t('labels.loading') }}
-    </div>
+    <Card v-if="currentLoading">
+      <CardHeader>
+        <div class="flex items-start justify-between">
+          <div class="space-y-2">
+            <Skeleton class="h-6 w-40" />
+            <Skeleton class="h-4 w-56" />
+          </div>
+          <Skeleton class="h-5 w-16 rounded-full" />
+        </div>
+      </CardHeader>
+      <CardContent class="space-y-6">
+        <Skeleton class="h-8 w-28" />
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div
+            v-for="i in 4"
+            :key="i"
+            class="space-y-1"
+          >
+            <div class="flex justify-between">
+              <Skeleton class="h-4 w-24" />
+              <Skeleton class="h-4 w-20" />
+            </div>
+            <Skeleton class="h-2 w-full rounded-full" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
 
     <template v-else>
       <!-- Active plan card -->
@@ -266,9 +279,8 @@ const upgradablePlans = computed(() =>
                   <span class="font-medium">{{ row.label }}</span>
                   <span class="text-muted">
                     <template v-if="row.usedLabel">{{ row.usedLabel }} / </template
-                    >{{ row.limitLabel }}<template v-if="row.perMonth">
-                      {{ $t('labels.plans.perMonth') }}</template
-                    >
+                    >{{ row.limitLabel
+                    }}<template v-if="row.perMonth"> {{ $t('labels.plans.perMonth') }}</template>
                   </span>
                 </div>
                 <Progress :model-value="row.percentage" />
@@ -303,28 +315,18 @@ const upgradablePlans = computed(() =>
             <Button
               v-if="canRetryCheckout && ['past_due', 'unpaid'].includes(current.status)"
               variant="outline"
-              :disabled="isCheckingOut"
+              :loading="isCheckingOut"
               @click="checkout(current.plan_id!)"
             >
-              <Icon
-                v-if="isCheckingOut"
-                name="lucide:loader"
-                class="animate-spin"
-              />
               {{ $t('actions.subscriptions.retryPayment') }}
             </Button>
 
             <!-- Resubscribe for cancelled / expired -->
             <Button
               v-if="canRetryCheckout && ['cancelled', 'expired'].includes(current.status)"
-              :disabled="isCheckingOut"
+              :loading="isCheckingOut"
               @click="checkout(current.plan_id!)"
             >
-              <Icon
-                v-if="isCheckingOut"
-                name="lucide:loader"
-                class="animate-spin"
-              />
               {{ $t('actions.subscriptions.resubscribe') }}
             </Button>
 
@@ -332,14 +334,9 @@ const upgradablePlans = computed(() =>
               v-if="current.is_active && !current.is_free && current.status !== 'cancelled'"
               variant="ghost"
               class="text-destructive hover:text-destructive"
-              :disabled="isCancelling"
+              :loading="isCancelling"
               @click="showCancelConfirm = true"
             >
-              <Icon
-                v-if="isCancelling"
-                name="lucide:loader"
-                class="animate-spin"
-              />
               {{ $t('actions.subscriptions.cancel') }}
             </Button>
           </div>
@@ -498,14 +495,9 @@ const upgradablePlans = computed(() =>
           </Button>
           <Button
             variant="destructive"
-            :disabled="isCancelling"
+            :loading="isCancelling"
             @click="(cancelSub(), (showCancelConfirm = false))"
           >
-            <Icon
-              v-if="isCancelling"
-              name="lucide:loader"
-              class="animate-spin"
-            />
             {{ $t('actions.subscriptions.confirmCancel') }}
           </Button>
         </div>

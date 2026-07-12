@@ -53,6 +53,7 @@ const {
 const {
   data: teamsData,
   isLoading: isLoadingTeams,
+  isFetching: isFetchingTeams,
   isError: isTeamsError,
 } = useTeamsQuery(queryParams)
 const { data: hierarchyData, isError: isHierarchyError } = useTeamHierarchyQuery()
@@ -153,6 +154,7 @@ const handleFiltersUpdate = (filtersValue: Record<string, unknown>) => {
       v-else
       :teams="teams"
       :is-loading="isLoadingTeams"
+      :is-fetching="isFetchingTeams"
       :meta="meta"
       :current-page="currentPage"
       :per-page="perPage"

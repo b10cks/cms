@@ -28,6 +28,7 @@ const props = withDefaults(
   defineProps<{
     teams: TeamResource[]
     isLoading: boolean
+    isFetching?: boolean
     meta?: LaravelMeta
     currentPage: number
     perPage: number
@@ -89,9 +90,7 @@ const deletableTeams = computed(() => props.teams.filter((team) => team.can_dele
 
 const selectionCount = computed(() => selectedTeams.value.size)
 const isAllSelected = computed(() => {
-  return (
-    selectionCount.value > 0 && deletableTeams.value.length === selectionCount.value
-  )
+  return selectionCount.value > 0 && deletableTeams.value.length === selectionCount.value
 })
 
 const handleSelectAll = (checked: boolean) => {
@@ -163,7 +162,6 @@ const handleBulkDelete = async () => {
     clearSelection()
   }
 }
-
 </script>
 
 <template>
@@ -244,7 +242,13 @@ const handleBulkDelete = async () => {
             <TableHead class="w-24"></TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody
+          :class="
+            isFetching && !isLoading
+              ? 'opacity-50 transition-opacity duration-200'
+              : 'transition-opacity duration-200'
+          "
+        >
           <TableLoadingRow
             v-if="isLoading"
             :colspan="8"

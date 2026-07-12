@@ -44,7 +44,7 @@ const queryParams = computed(() => ({
 }))
 
 const { useMigrationsQuery, useDeleteMigrationMutation } = useMigrations(props.spaceId)
-const { data: migrations, isLoading, refetch } = useMigrationsQuery(queryParams)
+const { data: migrations, isLoading, isFetching, refetch } = useMigrationsQuery(queryParams)
 const { mutate: deleteMigration } = useDeleteMigrationMutation()
 
 // Poll in-progress migrations
@@ -115,7 +115,13 @@ const handleDelete = async (migration: MigrationResource) => {
           </TableRow>
         </TableHeader>
 
-        <TableBody>
+        <TableBody
+          :class="
+            isFetching && !isLoading
+              ? 'opacity-50 transition-opacity duration-200'
+              : 'transition-opacity duration-200'
+          "
+        >
           <TableLoadingRow
             v-if="isLoading"
             :colspan="7"

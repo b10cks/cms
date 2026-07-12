@@ -25,7 +25,7 @@ const queryParams = computed(() => ({
   ...filters.value,
 }))
 
-const { data: invitesData, isLoading } = useMyInvitesQuery(queryParams)
+const { data: invitesData, isLoading, isFetching } = useMyInvitesQuery(queryParams)
 
 const invites = computed(() => invitesData.value?.data || [])
 const meta = computed(() => invitesData.value?.meta)
@@ -53,6 +53,7 @@ const handleResendInvite = (inviteId: string) => {
         <InvitesList
           :invites="invites"
           :is-loading="isLoading"
+          :is-fetching="isFetching"
           :meta="meta"
           :current-page="currentPage"
           :per-page="perPage"

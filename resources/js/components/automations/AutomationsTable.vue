@@ -33,6 +33,7 @@ const props = withDefaults(
     automations: AutomationResource[]
     triggerCatalog?: AutomationTriggerCatalogResource | null
     isLoading: boolean
+    isFetching?: boolean
     meta?: LaravelMeta
     currentPage: number
     perPage: number
@@ -199,7 +200,13 @@ const isTogglePending = (automation: AutomationResource) => {
           </TableRow>
         </TableHeader>
 
-        <TableBody>
+        <TableBody
+          :class="
+            isFetching && !isLoading
+              ? 'opacity-50 transition-opacity duration-200'
+              : 'transition-opacity duration-200'
+          "
+        >
           <TableLoadingRow
             v-if="isLoading"
             :colspan="7"

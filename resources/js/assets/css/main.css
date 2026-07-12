@@ -593,3 +593,13 @@
   opacity: 0;
   max-height: 0;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse {
+    animation: none;
+  }
+
+  .ai-animate-text {
+    animation: none;
+  }
+}

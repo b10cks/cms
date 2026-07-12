@@ -4,6 +4,7 @@ import Icon from '~/components/Icon.vue'
 import IconPreview from '~/components/icons/IconPreview.vue'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
+import { Skeleton } from '~/components/ui/skeleton'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type { IconResource } from '~/types/icons'
 
@@ -39,7 +40,7 @@ const queryParams = computed<IconsQueryParams>(() => ({
   per_page: perPage.value,
 }))
 
-const { data, isLoading, isError } = useIconsQuery(queryParams)
+const { data, isLoading, isError, isFetching } = useIconsQuery(queryParams)
 const { data: tags } = useIconTagsQuery()
 
 const icons = computed(() => data.value?.data ?? [])
@@ -90,11 +91,13 @@ const handleClick = (icon: IconResource) => {
     <div class="min-h-0 flex-1 overflow-y-auto pr-1">
       <div
         v-if="isLoading"
-        class="flex h-40 items-center justify-center text-muted"
+        aria-hidden="true"
+        class="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-2"
       >
-        <Icon
-          name="lucide:loader-circle"
-          class="animate-spin"
+        <Skeleton
+          v-for="index in 18"
+          :key="index"
+          class="min-h-24 rounded-lg"
         />
       </div>
 
@@ -118,7 +121,8 @@ const handleClick = (icon: IconResource) => {
 
       <div
         v-else
-        class="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-2"
+        class="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-2 transition-opacity duration-200"
+        :class="{ 'opacity-50': isFetching && !isLoading }"
       >
         <button
           v-for="icon in icons"
@@ -136,8 +140,8 @@ const handleClick = (icon: IconResource) => {
             size="28"
           />
           <div class="flex flex-col items-center gap-0.5 w-full">
-          <span class="w-full truncate text-center text-sm">{{ icon.key }}</span>
-          <span class="text-xs leading-none text-muted">{{ icon.width }}×{{ icon.height }}</span>
+            <span class="w-full truncate text-center text-sm">{{ icon.key }}</span>
+            <span class="text-xs leading-none text-muted">{{ icon.width }}×{{ icon.height }}</span>
           </div>
         </button>
       </div>

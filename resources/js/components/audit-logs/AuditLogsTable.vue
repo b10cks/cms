@@ -158,12 +158,16 @@ const queryParams = computed<AuditLogsQueryParams>(() => ({
 }))
 
 // Reset to the first page whenever the active filters change
-watch([filters, dateRange], () => {
-  currentPage.value = 1
-}, { deep: true })
+watch(
+  [filters, dateRange],
+  () => {
+    currentPage.value = 1
+  },
+  { deep: true }
+)
 
 const { useAuditLogsQuery } = useAuditLogs(props.spaceId)
-const { data: logs, isLoading } = useAuditLogsQuery(queryParams)
+const { data: logs, isLoading, isFetching } = useAuditLogsQuery(queryParams)
 
 const sortOptions = [
   { value: 'created_at', label: $t('labels.auditLog.columns.time') },
@@ -288,7 +292,13 @@ function buildItemRoute(row: AuditLogResource): object | null {
           </TableRow>
         </TableHeader>
 
-        <TableBody>
+        <TableBody
+          :class="
+            isFetching && !isLoading
+              ? 'opacity-50 transition-opacity duration-200'
+              : 'transition-opacity duration-200'
+          "
+        >
           <TableLoadingRow
             v-if="isLoading"
             :colspan="5"

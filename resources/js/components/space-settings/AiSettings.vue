@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from '~/components/ui/card'
 import { Progress } from '~/components/ui/progress'
+import { Skeleton } from '~/components/ui/skeleton'
 import { Switch } from '~/components/ui/switch'
 import SimpleTooltip from '~/components/ui/tooltip/SimpleTooltip.vue'
 import { useAiConfigs, useAiModels, useAiSettings, useAiUsage } from '~/composables/useAiModels'
@@ -247,12 +248,17 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
 
             <div
               v-if="isLoadingUsage"
-              class="text-muted-foreground flex items-center gap-2 text-sm"
+              class="space-y-2"
             >
-              <div
-                class="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"
-              />
-              {{ $t('labels.settings.ai.loadingUsage') }}
+              <div class="flex items-center justify-between gap-2">
+                <Skeleton class="h-4 w-40" />
+                <Skeleton class="h-4 w-10" />
+              </div>
+              <Skeleton class="h-2 w-full rounded-full" />
+              <div class="flex items-center justify-between gap-2">
+                <Skeleton class="h-3 w-24" />
+                <Skeleton class="h-3 w-32" />
+              </div>
             </div>
 
             <div
@@ -386,11 +392,22 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
       <CardContent>
         <div
           v-if="isLoadingConfigs"
-          class="flex items-center justify-center py-8"
+          class="space-y-3"
         >
           <div
-            class="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"
-          />
+            v-for="i in 2"
+            :key="i"
+            class="flex items-center justify-between rounded-lg bg-surface p-4"
+          >
+            <div class="flex-1 space-y-2">
+              <Skeleton class="h-5 w-40" />
+              <div class="flex flex-wrap gap-3">
+                <Skeleton class="h-4 w-32" />
+                <Skeleton class="h-4 w-16" />
+                <Skeleton class="h-4 w-20" />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div
