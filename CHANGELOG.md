@@ -3,6 +3,16 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.12-34ecf701] — 2026-7-12
+
+- ⚡️ Use system ui font
+- ⬆️ Bump versions
+- 🚸 Improve versions empty state
+- 🚸 Improve avatar and access denied
+- 🍱 Improve icons empty placeholder
+- 💄 Fix redirects search bar appearance
+- 💄 Fix ugly wrap in block detail header
+
 ## [v2026.7.12-8513b570] — 2026-7-12
 
 - 🧱 Reduce bundle size
