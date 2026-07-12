@@ -214,6 +214,8 @@ export function sanitizeContentMutationPayload<
     'child_block_whitelist',
     'child_tag_whitelist',
     'default_child_block',
+    'child_sort_by',
+    'child_sort_direction',
   ] as const) {
     if (key in settings) {
       delete settings[key]

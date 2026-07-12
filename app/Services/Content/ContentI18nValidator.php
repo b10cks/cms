@@ -64,9 +64,20 @@ class ContentI18nValidator
             $errors['settings.i18n_mode_override'] = 'Only the canonical page may override the i18n mode.';
         }
 
-        if ($i18nParentId !== null) {
+        if ($i18nParentId !== null && $submittedChildSettingKeys !== []) {
+            $canonicalSettings = Content::query()
+                ->where('id', $i18nParentId)
+                ->whereNull('deleted_at')
+                ->first()
+                ?->settings?->toArray() ?? [];
+            $submittedSettings = $data['settings'] ?? [];
+
             foreach ($submittedChildSettingKeys as $key) {
-                $errors["settings.{$key}"] = 'Only the canonical page may update child content settings.';
+                // Only reject a genuine change; a translation may echo the
+                // canonical's value unchanged (e.g. the frontend resends it).
+                if ($this->childSettingDiffers($submittedSettings[$key] ?? null, $canonicalSettings[$key] ?? null)) {
+                    $errors["settings.{$key}"] = 'Only the canonical page may update child content settings.';
+                }
             }
         }
 
@@ -91,5 +102,19 @@ class ContentI18nValidator
         }
 
         return $errors;
+    }
+
+    private function childSettingDiffers(mixed $submitted, mixed $canonical): bool
+    {
+        if (\is_array($submitted) && \is_array($canonical)) {
+            sort($submitted);
+            sort($canonical);
+
+            return $submitted !== $canonical;
+        }
+
+        // Loose comparison so an unset canonical (null) matches a default-y
+        // submitted value (false/''/[]) without flagging a phantom change.
+        return $submitted != $canonical;
     }
 }
