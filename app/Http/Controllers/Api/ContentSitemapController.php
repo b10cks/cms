@@ -14,6 +14,11 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
+/**
+ * List the published tree's slugs and timestamps for sitemap generation,
+ * honoring the space's sitemap-extraction settings (which block types are
+ * exposed and where their SEO meta lives).
+ */
 class ContentSitemapController
 {
     public function __construct(

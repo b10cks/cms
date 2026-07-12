@@ -1,0 +1,131 @@
+/**
+ * Maps the app's design tokens (resources/js/assets/css/main.css) onto
+ * VitePress' theme variables so the docs match the application look.
+ * Keep the palette values in sync with the app's @theme block.
+ */
+
+:root {
+  /* App palette */
+  --b10-blue-50: oklch(97.76% 0.011 234.81);
+  --b10-blue-100: oklch(95.25% 0.023 237.64);
+  --b10-blue-300: oklch(82.72% 0.086 238.13);
+  --b10-blue-400: oklch(75.76% 0.121 240.02);
+  --b10-blue-500: oklch(66.71% 0.161 245.54);
+  --b10-blue-600: oklch(61.5% 0.156 246.57);
+  --b10-blue-700: oklch(56.55% 0.143 246.33);
+
+  --b10-gray-50: oklch(95.82% 0.004 271.37);
+  --b10-gray-100: oklch(91.68% 0.008 278.63);
+  --b10-gray-150: oklch(87.56% 0.01 279.37);
+  --b10-gray-200: oklch(82.89% 0.012 279);
+  --b10-gray-300: oklch(74.2% 0.024 278.9);
+  --b10-gray-400: oklch(65.24% 0.032 278.37);
+  --b10-gray-500: oklch(55.99% 0.04 277.73);
+  --b10-gray-600: oklch(47.78% 0.032 277.85);
+  --b10-gray-700: oklch(39.21% 0.024 278.04);
+  --b10-gray-750: oklch(34.21% 0.024 277.8);
+  --b10-gray-800: oklch(30.43% 0.018 277.6);
+  --b10-gray-850: oklch(23.53% 0.012 277.72);
+  --b10-gray-900: oklch(20.63% 0.008 277.83);
+  --b10-gray-950: oklch(15.15% 0.004 285.34);
+
+  /* Typography */
+  --vp-font-family-base:
+    ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+
+  /* Brand (app accent = blue-500, hover = blue-700) */
+  --vp-c-brand-1: var(--b10-blue-600);
+  --vp-c-brand-2: var(--b10-blue-700);
+  --vp-c-brand-3: var(--b10-blue-500);
+  --vp-c-brand-soft: oklch(66.71% 0.161 245.54 / 14%);
+
+  /* Surfaces */
+  --vp-c-bg: white;
+  --vp-c-bg-alt: var(--b10-gray-50);
+  --vp-c-bg-elv: white;
+  --vp-c-bg-soft: var(--b10-gray-50);
+
+  /* Text */
+  --vp-c-text-1: var(--b10-gray-900);
+  --vp-c-text-2: var(--b10-gray-600);
+  --vp-c-text-3: var(--b10-gray-500);
+
+  /* Lines */
+  --vp-c-border: var(--b10-gray-200);
+  --vp-c-divider: var(--b10-gray-100);
+  --vp-c-gutter: var(--b10-gray-100);
+
+  /* Neutral component colors (buttons, badges, code pills) */
+  --vp-c-default-1: var(--b10-gray-200);
+  --vp-c-default-2: var(--b10-gray-150);
+  --vp-c-default-3: var(--b10-gray-100);
+  --vp-c-default-soft: oklch(82.89% 0.012 279 / 30%);
+
+  /* Buttons */
+  --vp-button-brand-bg: var(--b10-blue-500);
+  --vp-button-brand-hover-bg: var(--b10-blue-600);
+  --vp-button-brand-active-bg: var(--b10-blue-700);
+
+  /* Code */
+  --vp-code-color: var(--b10-gray-700);
+  --vp-code-bg: var(--b10-gray-100);
+  --vp-code-block-bg: var(--b10-gray-50);
+
+  /* Misc */
+  --vp-c-tip-1: var(--vp-c-brand-1);
+  --vp-c-tip-2: var(--vp-c-brand-2);
+  --vp-c-tip-3: var(--vp-c-brand-3);
+  --vp-c-tip-soft: var(--vp-c-brand-soft);
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(
+    120deg,
+    var(--b10-blue-500),
+    var(--b10-blue-700)
+  );
+}
+
+.dark {
+  --vp-c-brand-1: var(--b10-blue-400);
+  --vp-c-brand-2: var(--b10-blue-300);
+  --vp-c-brand-3: var(--b10-blue-500);
+
+  /* Surfaces (app: background gray-900, surface gray-950, elevated gray-850) */
+  --vp-c-bg: var(--b10-gray-900);
+  --vp-c-bg-alt: var(--b10-gray-950);
+  --vp-c-bg-elv: var(--b10-gray-850);
+  --vp-c-bg-soft: var(--b10-gray-850);
+
+  --vp-c-text-1: var(--b10-gray-50);
+  --vp-c-text-2: var(--b10-gray-400);
+  --vp-c-text-3: var(--b10-gray-500);
+
+  --vp-c-border: var(--b10-gray-750);
+  --vp-c-divider: var(--b10-gray-800);
+  --vp-c-gutter: var(--b10-gray-950);
+
+  --vp-c-default-1: var(--b10-gray-750);
+  --vp-c-default-2: var(--b10-gray-800);
+  --vp-c-default-3: var(--b10-gray-850);
+  --vp-c-default-soft: oklch(30.43% 0.018 277.6 / 45%);
+
+  --vp-code-color: var(--b10-gray-300);
+  --vp-code-bg: var(--b10-gray-850);
+  --vp-code-block-bg: var(--b10-gray-950);
+}
+
+/* Wider layout on large screens (VitePress defaults: 1440px / 688px) */
+:root {
+  --vp-layout-max-width: 1600px;
+}
+
+.VPDoc.has-aside .content-container {
+  max-width: 920px;
+}
+
+/* Match the app's selection highlight */
+::selection {
+  background-color: var(--b10-blue-500);
+  color: white;
+}

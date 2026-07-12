@@ -29,3 +29,9 @@ frankenphp-worker.php
 
 localhost.crt
 localhost.key
+
+# VitePress docs build
+/public/docs
+/docs/.vitepress/cache
+/docs/.vitepress/dist
+/docs/.vitepress/.temp

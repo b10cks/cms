@@ -12,6 +12,9 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class BlockController extends Controller
 {
     /**
+     * List the block definitions of the space, including each block's schema,
+     * type, and tags. Useful for type generation and dynamic rendering.
+     *
      * @response AnonymousResourceCollection<BlockResource>
      */
     public function index(Request $request): AnonymousResourceCollection
@@ -21,6 +24,9 @@ class BlockController extends Controller
         return BlockResource::collection($data);
     }
 
+    /**
+     * Get a single block definition by ID.
+     */
     public function show(Block $block): BlockResource
     {
         return new BlockResource($block);

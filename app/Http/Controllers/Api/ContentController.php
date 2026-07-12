@@ -25,6 +25,11 @@ class ContentController
     }
 
     /**
+     * List content entries of the space, filtered, sorted, localized, and paginated.
+     * Use `vid` to select the published or draft version, `language` plus
+     * `include_fallback` for localized listings, and `parent_id`/`canonical_parent_id`
+     * to fetch the children of a tree node.
+     *
      * @response ContentResourceCollection<LengthAwarePaginator<ContentResource>>
      */
     public function index(Request $request): ContentResourceCollection
@@ -145,6 +150,11 @@ class ContentController
             ->orderBy('contents.id');
     }
 
+    /**
+     * Get a single content entry by its full slug. `vid` selects the published
+     * or draft version; with `language` set, localized slugs resolve and the
+     * entry is returned in that language with fallback to the canonical values.
+     */
     public function show(Request $request, string $slug): ContentResource|Response
     {
         /** @var Space $space */

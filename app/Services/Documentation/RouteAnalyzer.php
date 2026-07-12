@@ -12,6 +12,7 @@ use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
+use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -123,7 +124,7 @@ class RouteAnalyzer
             'queryParameters' => $this->extractQueryParameters($controller, $method, $methods[0]),
             'requestBody' => $this->extractRequestBody($controller, $method, $methods[0]),
             'responses' => $this->extractResponses($controller, $method),
-            'summary' => $this->generateSummary($route),
+            'summary' => $this->generateSummary($route, $controller, $method),
             'description' => $this->generateDescription($controller, $method),
             'tags' => $this->extractTags($route),
         ];
@@ -743,23 +744,44 @@ class RouteAnalyzer
     }
 
     /**
-     * Generate summary from method name and route
+     * Generate summary: the controller method's doc block summary when present,
+     * otherwise derived from the HTTP verb and route resource.
      */
-    protected function generateSummary(Route $route): string
+    protected function generateSummary(Route $route, ?string $controller = null, ?string $controllerMethod = null): string
     {
+        if ($controller && $controllerMethod) {
+            $docText = $this->extractDocBlockText($controller, $controllerMethod);
+
+            if ($docText !== '') {
+                // First sentence/line of the doc block
+                $firstLine = preg_split('/(?<=[.!?])\s+|\n/', $docText)[0] ?? '';
+                if ($firstLine !== '') {
+                    return rtrim($firstLine, '.');
+                }
+            }
+        }
+
         $uri = $route->uri();
         $methods = collect($route->methods())
             ->filter(fn($m) => !in_array($m, ['HEAD', 'OPTIONS']))
             ->map(fn($m) => strtoupper($m))
             ->first();
 
-        // Convert snake_case to Title Case
         $parts = explode('/', trim($uri, '/'));
-        $lastPart = end($parts);
-        $resource = str_replace('_', ' ', $lastPart);
+
+        // Prefer the last static segment over a trailing path parameter,
+        // so "contents/{slug}" summarizes as "content", not "{slug}".
+        $staticParts = array_values(array_filter($parts, fn($p) => !str_starts_with($p, '{')));
+        $lastPart = end($staticParts) ?: end($parts);
+        $endsWithParameter = str_starts_with(end($parts), '{');
+
+        $resource = str_replace(['_', '-'], ' ', $lastPart);
+        if ($endsWithParameter) {
+            $resource = Str::singular($resource);
+        }
 
         $summaries = [
-            'GET' => "Get {$resource}",
+            'GET' => $endsWithParameter ? "Get a single {$resource}" : "List {$resource}",
             'POST' => "Create {$resource}",
             'PUT' => "Update {$resource}",
             'PATCH' => "Update {$resource}",
@@ -770,32 +792,102 @@ class RouteAnalyzer
     }
 
     /**
-     * Generate description
+     * Generate description from the controller method's doc block. Falls back
+     * to the class-level doc block for single-action controllers.
      */
     protected function generateDescription(string $controller, string $method): string
     {
-        return "Operation: {$method}()";
+        $docText = $this->extractDocBlockText($controller, $method);
+
+        if ($docText === '') {
+            return '';
+        }
+
+        // The first sentence already serves as the summary; keep the full
+        // text as the description so nothing is lost in clients that hide
+        // summaries.
+        return $docText;
     }
 
     /**
-     * Extract tags from controller namespace
+     * Extract the free-text portion of a method's doc block (annotations,
+     * @param/@return lines, and asterisk decoration stripped). Falls back to
+     * the class doc block when the method has none.
+     */
+    protected function extractDocBlockText(string $controller, string $method): string
+    {
+        try {
+            $text = $this->docCommentText((new ReflectionMethod($controller, $method))->getDocComment());
+
+            // Single-action controllers often carry their documentation on the
+            // class; fall back when the method doc block has no free text.
+            if ($text === '' && $method === '__invoke') {
+                $text = $this->docCommentText((new ReflectionClass($controller))->getDocComment());
+            }
+
+            return $text;
+        } catch (\ReflectionException) {
+            return '';
+        }
+    }
+
+    /**
+     * Strip a doc comment down to its free text (no asterisks, no annotations).
+     */
+    protected function docCommentText(string|false $docComment): string
+    {
+        if ($docComment === false) {
+            return '';
+        }
+
+        $lines = [];
+        foreach (preg_split('/\R/', $docComment) as $line) {
+            $line = trim($line, " \t/*");
+
+            // Stop collecting at the first annotation; everything after is metadata
+            if (str_starts_with($line, '@')) {
+                break;
+            }
+
+            $lines[] = $line;
+        }
+
+        $text = trim(implode("\n", $lines));
+
+        return preg_replace('/\n{3,}/', "\n\n", $text) ?? '';
+    }
+
+    /**
+     * Extract tags from the route URI: the first meaningful resource segment
+     * after the version prefix, skipping scoping segments like "spaces/{space}"
+     * so all space-scoped resources group under their own resource name.
      */
     protected function extractTags(Route $route): array
     {
-        $uri = $route->uri();
-        $parts = explode('/', trim($uri, '/'));
+        $parts = explode('/', trim($route->uri(), '/'));
 
-        // Skip version prefix
-        if (count($parts) > 1) {
-            $resource = $parts[1];
-            // Convert kebab-case to Title Case
-            $tag = str_replace('-', ' ', $resource);
-            $tag = ucwords($tag);
+        // Drop the "api/v1"-style prefix
+        $parts = array_slice($parts, 2);
 
-            return [$tag];
+        // Skip tenancy-scoping pairs like "spaces/{space}" or "users/me" so the
+        // tag reflects the actual resource, not the scope — but keep the pair
+        // when nothing follows it (it is the resource itself then).
+        $scopes = ['spaces', 'users', 'teams'];
+        while (
+            count($parts) > 2
+            && in_array($parts[0], $scopes, true)
+            && (str_starts_with($parts[1], '{') || $parts[1] === 'me')
+        ) {
+            $parts = array_slice($parts, 2);
         }
 
-        return [];
+        $resource = $parts[0] ?? null;
+
+        if (!$resource || str_starts_with($resource, '{')) {
+            return [];
+        }
+
+        return [ucwords(str_replace(['-', '_'], ' ', $resource))];
     }
 
     /**

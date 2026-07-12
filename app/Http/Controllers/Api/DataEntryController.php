@@ -11,6 +11,9 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class DataEntryController
 {
     /**
+     * List the entries of a data source, addressed by its slug. Supports
+     * dimension selection and pagination; responses honor the source's cache TTL.
+     *
      * @response AnonymousResourceCollection<LengthAwarePaginator<DataEntryResource>>
      */
     public function index(Request $request, DataSource $source): AnonymousResourceCollection

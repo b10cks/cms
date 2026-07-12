@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\SamlLoginController;
 use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\Web\AppController;
+use App\Http\Controllers\Web\DocsController;
 use App\Http\Controllers\Web\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
@@ -49,6 +50,11 @@ Route::get('auth/v1/email/verify/{id}/{hash}', VerifyEmailController::class)
 Route::get('/invites/{id}', AppController::class)->name('invite');
 Route::get('/invites/accept/{id}', AppController::class)->name('invite-accept');
 Route::get('/share/{space}/{token}', AppController::class)->name('public-share');
+
+// Documentation (static VitePress build; must precede the /{space} catch-all)
+Route::get('/docs/{path?}', DocsController::class)
+    ->where('path', '.*')
+    ->name('docs');
 
 // Space creation
 Route::get('/spaces/new', AppController::class)->name('spaces-new');

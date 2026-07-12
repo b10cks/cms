@@ -9,6 +9,8 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class DataSourceController
 {
     /**
+     * List the data sources of the space that are marked as available for the API.
+     *
      * @response AnonymousResourceCollection<LengthAwarePaginator<DataSourceResource>>
      */
     public function index(): AnonymousResourceCollection

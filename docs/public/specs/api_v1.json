@@ -1,0 +1,2170 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Data API v1",
+        "description": "Public data API for accessing content, blocks, and data sources",
+        "version": "1.0.0",
+        "contact": {
+            "name": "API Support",
+            "url": "https://b10cks.test"
+        }
+    },
+    "servers": [
+        {
+            "url": "https://b10cks.test",
+            "description": "Current environment"
+        }
+    ],
+    "paths": {
+        "/api/v1/contents": {
+            "get": {
+                "summary": "List content entries of the space, filtered, sorted, localized, and paginated",
+                "description": "List content entries of the space, filtered, sorted, localized, and paginated.\nUse `vid` to select the published or draft version, `language` plus\n`include_fallback` for localized listings, and `parent_id`/`canonical_parent_id`\nto fetch the children of a tree node.",
+                "tags": [
+                    "Contents"
+                ],
+                "operationId": "get_contents",
+                "parameters": [
+                    {
+                        "name": "published_at",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": ">=2024-01-01T00:00:00Z"
+                        },
+                        "description": "Filter by publication date and time.",
+                        "example": ">=2024-01-01T00:00:00Z"
+                    },
+                    {
+                        "name": "updated_at",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2024-01-01T00:00:00Z...2024-01-31T23:59:59Z"
+                        },
+                        "description": "Filter by last update date and time.",
+                        "example": "2024-01-01T00:00:00Z...2024-01-31T23:59:59Z"
+                    },
+                    {
+                        "name": "created_at",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "<2024-06-01T00:00:00Z"
+                        },
+                        "description": "Filter by creation date and time.",
+                        "example": "<2024-06-01T00:00:00Z"
+                    },
+                    {
+                        "name": "language",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "en"
+                        },
+                        "description": "Filter by content language ISO code.",
+                        "example": "en"
+                    },
+                    {
+                        "name": "language_iso",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "en"
+                        },
+                        "description": "Filter by content language ISO code.",
+                        "example": "en"
+                    },
+                    {
+                        "name": "content_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "page"
+                        },
+                        "description": "Filter by block type slug used by the content entry.",
+                        "example": "page"
+                    },
+                    {
+                        "name": "parent_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "01J123ABC456DEF789GHIJKLMN"
+                        },
+                        "description": "Filter by parent content identifier.",
+                        "example": "01J123ABC456DEF789GHIJKLMN"
+                    },
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "01J123ABC456DEF789GHIJKLMN"
+                        },
+                        "description": "Filter by content identifier.",
+                        "example": "01J123ABC456DEF789GHIJKLMN"
+                    },
+                    {
+                        "name": "canonical_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "01J123ABC456DEF789GHIJKLMN"
+                        },
+                        "description": "Filter by canonical content identifier, including all translations.",
+                        "example": "01J123ABC456DEF789GHIJKLMN"
+                    },
+                    {
+                        "name": "canonical_parent_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "01J123ABC456DEF789GHIJKLMN"
+                        },
+                        "description": "Filter by canonical parent identifier, including children of translated parent variants.",
+                        "example": "01J123ABC456DEF789GHIJKLMN"
+                    },
+                    {
+                        "name": "include_fallback",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        },
+                        "description": "Include canonical content without a translation in the requested language.",
+                        "example": true
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "position",
+                                "-position",
+                                "published_at",
+                                "-published_at",
+                                "updated_at",
+                                "-updated_at",
+                                "created_at",
+                                "-created_at"
+                            ]
+                        },
+                        "description": "Sort by a supported field. Prefix with `-` for descending order."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ContentResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/search": {
+            "get": {
+                "summary": "Search published content entries in the current space",
+                "description": "Search published content entries in the current space.",
+                "tags": [
+                    "Search"
+                ],
+                "operationId": "get_search",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 500
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "language",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "minLength": 2,
+                            "maxLength": 5
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "query": {
+                                                    "nullable": true
+                                                },
+                                                "total": {
+                                                    "nullable": true
+                                                },
+                                                "limit": {
+                                                    "nullable": true
+                                                },
+                                                "offset": {
+                                                    "nullable": true
+                                                }
+                                            }
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "format": "uuid",
+                                                        "description": "Unique content identifier."
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "description": "Human-readable content name."
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "description": "URL slug of the resolved content."
+                                                    },
+                                                    "block": {
+                                                        "nullable": true,
+                                                        "description": "Slug of the assigned block definition."
+                                                    },
+                                                    "external_id": {
+                                                        "type": "string"
+                                                    },
+                                                    "parent_id": {
+                                                        "type": "string",
+                                                        "description": "Parent content identifier if this content is nested.",
+                                                        "format": "uuid"
+                                                    },
+                                                    "position": {
+                                                        "type": "string",
+                                                        "description": "0-based sort position within the parent."
+                                                    },
+                                                    "full_slug": {
+                                                        "type": "string",
+                                                        "description": "Full resolved path including all parent slugs."
+                                                    },
+                                                    "content": {
+                                                        "type": "object",
+                                                        "additionalProperties": true,
+                                                        "description": "Effective content payload after i18n, link, and asset resolution."
+                                                    },
+                                                    "cache": {
+                                                        "type": "object",
+                                                        "description": "Cache settings for this content entry: `ttl` in seconds (null = default) and `tags` for tag-based invalidation."
+                                                    },
+                                                    "relations": {
+                                                        "type": "array",
+                                                        "description": "First-level related content entries when explicitly requested.",
+                                                        "items": {
+                                                            "$ref": "#/components/schemas/ContentResource"
+                                                        }
+                                                    },
+                                                    "language_iso": {
+                                                        "type": "string",
+                                                        "description": "Requested language ISO code used for content resolution."
+                                                    },
+                                                    "translations": {
+                                                        "type": "array",
+                                                        "description": "Published sibling translations of the resolved content.",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string",
+                                                                    "format": "uuid",
+                                                                    "description": "Unique content identifier."
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "description": "Human-readable content name."
+                                                                },
+                                                                "slug": {
+                                                                    "type": "string",
+                                                                    "description": "URL-safe content slug."
+                                                                },
+                                                                "full_slug": {
+                                                                    "type": "string",
+                                                                    "description": "Full resolved slug including parent path segments."
+                                                                },
+                                                                "position": {
+                                                                    "type": "string",
+                                                                    "description": "0-based sort position within the parent."
+                                                                },
+                                                                "language_iso": {
+                                                                    "type": "string",
+                                                                    "description": "ISO language code of the content entry."
+                                                                },
+                                                                "published_at": {
+                                                                    "nullable": true,
+                                                                    "description": "Publication timestamp in ISO 8601 format.",
+                                                                    "format": "date-time"
+                                                                },
+                                                                "created_at": {
+                                                                    "nullable": true,
+                                                                    "description": "Creation timestamp in ISO 8601 format.",
+                                                                    "format": "date-time"
+                                                                },
+                                                                "updated_at": {
+                                                                    "nullable": true,
+                                                                    "description": "Last update timestamp in ISO 8601 format.",
+                                                                    "format": "date-time"
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "published_at": {
+                                                        "nullable": true,
+                                                        "description": "Publication timestamp in ISO 8601 format.",
+                                                        "format": "date-time"
+                                                    },
+                                                    "first_published_at": {
+                                                        "nullable": true,
+                                                        "description": "First publication timestamp in ISO 8601 format.",
+                                                        "format": "date-time"
+                                                    },
+                                                    "created_at": {
+                                                        "nullable": true,
+                                                        "description": "Creation timestamp in ISO 8601 format.",
+                                                        "format": "date-time"
+                                                    },
+                                                    "updated_at": {
+                                                        "nullable": true,
+                                                        "description": "Last update timestamp in ISO 8601 format.",
+                                                        "format": "date-time"
+                                                    },
+                                                    "relevance_score": {
+                                                        "type": "number",
+                                                        "description": "Search relevance score rounded to 4 decimal places.",
+                                                        "example": "0.9876"
+                                                    }
+                                                },
+                                                "x-resource-class": "App\\Http\\Resources\\Api\\SearchResultResource"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/sitemap": {
+            "get": {
+                "summary": "List the published tree's slugs and timestamps for sitemap generation,",
+                "description": "List the published tree's slugs and timestamps for sitemap generation,\nhonoring the space's sitemap-extraction settings (which block types are\nexposed and where their SEO meta lives).",
+                "tags": [
+                    "Sitemap"
+                ],
+                "operationId": "get_sitemap",
+                "parameters": [
+                    {
+                        "name": "published_at",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": ">=2024-01-01T00:00:00Z"
+                        },
+                        "description": "Filter by publication date and time.",
+                        "example": ">=2024-01-01T00:00:00Z"
+                    },
+                    {
+                        "name": "updated_at",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2024-01-01T00:00:00Z...2024-01-31T23:59:59Z"
+                        },
+                        "description": "Filter by last update date and time.",
+                        "example": "2024-01-01T00:00:00Z...2024-01-31T23:59:59Z"
+                    },
+                    {
+                        "name": "created_at",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "<2024-06-01T00:00:00Z"
+                        },
+                        "description": "Filter by creation date and time.",
+                        "example": "<2024-06-01T00:00:00Z"
+                    },
+                    {
+                        "name": "language",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "en"
+                        },
+                        "description": "Filter by content language ISO code.",
+                        "example": "en"
+                    },
+                    {
+                        "name": "language_iso",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "en"
+                        },
+                        "description": "Filter by content language ISO code.",
+                        "example": "en"
+                    },
+                    {
+                        "name": "content_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "page"
+                        },
+                        "description": "Filter by block type slug used by the content entry.",
+                        "example": "page"
+                    },
+                    {
+                        "name": "parent_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "01J123ABC456DEF789GHIJKLMN"
+                        },
+                        "description": "Filter by parent content identifier.",
+                        "example": "01J123ABC456DEF789GHIJKLMN"
+                    },
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "01J123ABC456DEF789GHIJKLMN"
+                        },
+                        "description": "Filter by content identifier.",
+                        "example": "01J123ABC456DEF789GHIJKLMN"
+                    },
+                    {
+                        "name": "canonical_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "01J123ABC456DEF789GHIJKLMN"
+                        },
+                        "description": "Filter by canonical content identifier, including all translations.",
+                        "example": "01J123ABC456DEF789GHIJKLMN"
+                    },
+                    {
+                        "name": "canonical_parent_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "01J123ABC456DEF789GHIJKLMN"
+                        },
+                        "description": "Filter by canonical parent identifier, including children of translated parent variants.",
+                        "example": "01J123ABC456DEF789GHIJKLMN"
+                    },
+                    {
+                        "name": "include_fallback",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        },
+                        "description": "Include canonical content without a translation in the requested language.",
+                        "example": true
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "position",
+                                "-position",
+                                "published_at",
+                                "-published_at",
+                                "updated_at",
+                                "-updated_at",
+                                "created_at",
+                                "-created_at"
+                            ]
+                        },
+                        "description": "Sort by a supported field. Prefix with `-` for descending order."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/contents/{slug}": {
+            "get": {
+                "summary": "Get a single content entry by its full slug",
+                "description": "Get a single content entry by its full slug. `vid` selects the published\nor draft version; with `language` set, localized slugs resolve and the\nentry is returned in that language with fallback to the canonical values.",
+                "tags": [
+                    "Contents"
+                ],
+                "operationId": "get_contents_by_slug",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The slug identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContentResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/redirects": {
+            "get": {
+                "summary": "List the redirect rules of the space as source/target pairs with their",
+                "description": "List the redirect rules of the space as source/target pairs with their\nHTTP status codes. Frontends typically fetch all pages and build a lookup map.",
+                "tags": [
+                    "Redirects"
+                ],
+                "operationId": "get_redirects",
+                "parameters": [
+                    {
+                        "name": "source",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by source"
+                    },
+                    {
+                        "name": "target",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by target"
+                    },
+                    {
+                        "name": "status_code",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by status_code"
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Free-text search filter."
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "source",
+                                "-source",
+                                "target",
+                                "-target",
+                                "status_code",
+                                "-status_code"
+                            ]
+                        },
+                        "description": "Sort by field (prefix with - for descending order)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RedirectResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/redirects/lookup": {
+            "post": {
+                "summary": "Resolve a single redirect by its source path",
+                "description": "Resolve a single redirect by its source path. Returns the matching rule\n(target and status code) or `false` when no rule matches. Each hit is\ncounted in the redirect's usage statistics.",
+                "tags": [
+                    "Redirects"
+                ],
+                "operationId": "post_redirects_lookup",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "source": {
+                                        "type": "string",
+                                        "maxLength": 2048
+                                    }
+                                },
+                                "required": [
+                                    "source"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/spaces/me": {
+            "get": {
+                "summary": "Get the metadata of the token's space, including the current content",
+                "description": "Get the metadata of the token's space, including the current content\nrevision and the enabled languages. Clients use the revision to pin\ncache-friendly request URLs.",
+                "tags": [
+                    "Spaces"
+                ],
+                "operationId": "get_spaces_me",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SpaceResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/blocks": {
+            "get": {
+                "summary": "List the block definitions of the space, including each block's schema,",
+                "description": "List the block definitions of the space, including each block's schema,\ntype, and tags. Useful for type generation and dynamic rendering.",
+                "tags": [
+                    "Blocks"
+                ],
+                "operationId": "get_blocks",
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by name (LIKE search)"
+                    },
+                    {
+                        "name": "slug",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by slug (LIKE search)"
+                    },
+                    {
+                        "name": "folder_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by folder ID"
+                    },
+                    {
+                        "name": "is_nestable",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by is_nestable"
+                    },
+                    {
+                        "name": "is_root",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by is_root"
+                    },
+                    {
+                        "name": "tags",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "oneOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            ]
+                        },
+                        "description": "Filter by tags"
+                    },
+                    {
+                        "name": "created_at",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "description": "Supports: value, range (value1...value2), operators (>=value, >value, <=value, <value, <>value)"
+                        },
+                        "description": "Filter by creation date (supports operators and ranges)"
+                    },
+                    {
+                        "name": "updated_at",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "description": "Supports: value, range (value1...value2), operators (>=value, >value, <=value, <value, <>value)"
+                        },
+                        "description": "Filter by update date (supports operators and ranges)"
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "name",
+                                "-name",
+                                "slug",
+                                "-slug",
+                                "is_nestable",
+                                "-is_nestable",
+                                "is_root",
+                                "-is_root",
+                                "created_at",
+                                "-created_at",
+                                "updated_at",
+                                "-updated_at"
+                            ]
+                        },
+                        "description": "Sort by field (prefix with - for descending order)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/BlockResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/blocks/{block}": {
+            "get": {
+                "summary": "Get a single block definition by ID",
+                "description": "Get a single block definition by ID.",
+                "tags": [
+                    "Blocks"
+                ],
+                "operationId": "get_blocks_by_block",
+                "parameters": [
+                    {
+                        "name": "block",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The block identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BlockResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/datasources": {
+            "get": {
+                "summary": "List the data sources of the space that are marked as available for the API",
+                "description": "List the data sources of the space that are marked as available for the API.",
+                "tags": [
+                    "Datasources"
+                ],
+                "operationId": "get_datasources",
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by name (LIKE search)"
+                    },
+                    {
+                        "name": "slug",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by slug (LIKE search)"
+                    },
+                    {
+                        "name": "external_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by external_id"
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by is_active"
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Free-text search filter."
+                    },
+                    {
+                        "name": "created_at",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "description": "Single value or range (format: value1...value2)"
+                        },
+                        "description": "Filter by creation date (supports operators and ranges)"
+                    },
+                    {
+                        "name": "updated_at",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "description": "Single value or range (format: value1...value2)"
+                        },
+                        "description": "Filter by update date (supports operators and ranges)"
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "name",
+                                "-name",
+                                "slug",
+                                "-slug",
+                                "external_id",
+                                "-external_id",
+                                "is_active",
+                                "-is_active",
+                                "created_at",
+                                "-created_at",
+                                "updated_at",
+                                "-updated_at"
+                            ]
+                        },
+                        "description": "Sort by field (prefix with - for descending order)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DataSourceResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/datasources/{source}/entries": {
+            "get": {
+                "summary": "List the entries of a data source, addressed by its slug",
+                "description": "List the entries of a data source, addressed by its slug. Supports\ndimension selection and pagination; responses honor the source's cache TTL.",
+                "tags": [
+                    "Datasources"
+                ],
+                "operationId": "get_datasources_by_source_entries",
+                "parameters": [
+                    {
+                        "name": "source",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The source identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Paginated resource collection",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DataEntryResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "description": "Pagination links",
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the first page"
+                                                },
+                                                "last": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "URL to the last page"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the previous page"
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "nullable": true,
+                                                    "description": "URL to the next page"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "description": "Pagination metadata",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "description": "Current page number"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of first item on current page"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "description": "Total number of pages"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items per page"
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Index of last item on current page"
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/iconify/collections": {
+            "get": {
+                "summary": "List collections",
+                "description": "",
+                "tags": [
+                    "Iconify"
+                ],
+                "operationId": "get_iconify_collections",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/iconify/last-modified": {
+            "get": {
+                "summary": "List last modified",
+                "description": "",
+                "tags": [
+                    "Iconify"
+                ],
+                "operationId": "get_iconify_last_modified",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/iconify/search": {
+            "get": {
+                "summary": "List search",
+                "description": "",
+                "tags": [
+                    "Iconify"
+                ],
+                "operationId": "get_iconify_search",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/iconify/{prefix}.json": {
+            "get": {
+                "summary": "Get a single iconify",
+                "description": "",
+                "tags": [
+                    "Iconify"
+                ],
+                "operationId": "get_iconify_{prefix}_json",
+                "parameters": [
+                    {
+                        "name": "prefix",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The prefix identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/iconify/{prefix}.svg": {
+            "get": {
+                "summary": "Render a collection of icons as a single SVG sprite of <symbol> elements",
+                "description": "Render a collection of icons as a single SVG sprite of <symbol> elements.\n\nEach icon becomes a `<symbol id=\"{prefix}--{name}\">` that can be referenced\nelsewhere with `<svg><use href=\"#{prefix}--{name}\"/></svg>`. The sprite root\nis hidden so it can be inlined at the top of a document without rendering.\n\nQuery params:\nicons \u2014 comma-separated list of icon keys (optional; defaults to all icons)",
+                "tags": [
+                    "Iconify"
+                ],
+                "operationId": "get_iconify_{prefix}_svg",
+                "parameters": [
+                    {
+                        "name": "prefix",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The prefix identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/iconify/{prefix}.css": {
+            "get": {
+                "summary": "Render CSS for multiple icons in a single stylesheet",
+                "description": "Render CSS for multiple icons in a single stylesheet.\n\nRequired: ?icons=name1,name2,...\n\nQuery params:\nmode     \u2014 'mask' (default for currentColor icons) or 'background' (colorful icons)\ncolor    \u2014 replaces currentColor in the embedded SVG (default: 'black' for mask mode)\nselector \u2014 per-icon selector template; supports {prefix} and {name} (default: .icon--{prefix}--{name})\ncommon   \u2014 shared selector for size+mode props (default: .icon--{prefix})\nvar      \u2014 CSS variable name for the SVG data URL, without '--' (default: svg \u2192 --svg)\nflip, rotate \u2014 same as SVG endpoint\nstroke-width \u2014 raw SVG stroke width (viewBox userspace units) for outline icons",
+                "tags": [
+                    "Iconify"
+                ],
+                "operationId": "get_iconify_{prefix}_css",
+                "parameters": [
+                    {
+                        "name": "prefix",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The prefix identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/iconify/{prefix}/{name}.svg": {
+            "get": {
+                "summary": "Render a single icon as an SVG document",
+                "description": "Render a single icon as an SVG document.\n\nQuery params:\nwidth  \u2014 output width  (default: 1em)\nheight \u2014 output height (default: 1em)\ncolor  \u2014 sets CSS `color` on the SVG root so `currentColor` inherits it\nflip   \u2014 'horizontal', 'vertical', or 'horizontal,vertical'\nrotate \u2014 quarter turns: 1=90\u00b0, 2=180\u00b0, 3=270\u00b0; or '90deg' / '180deg' / '270deg'\nbox    \u2014 1/true adds an invisible bounding <rect> (forces height in some renderers)\nstroke-width \u2014 raw SVG stroke width (viewBox userspace units) for outline icons",
+                "tags": [
+                    "Iconify"
+                ],
+                "operationId": "get_iconify_by_prefix_{name}_svg",
+                "parameters": [
+                    {
+                        "name": "prefix",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The prefix identifier"
+                    },
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The name identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/iconify/{prefix}/{name}.css": {
+            "get": {
+                "summary": "Render CSS for a single icon",
+                "description": "Render CSS for a single icon.\nSame query params as iconCss() except `icons` is not needed.",
+                "tags": [
+                    "Iconify"
+                ],
+                "operationId": "get_iconify_by_prefix_{name}_css",
+                "parameters": [
+                    {
+                        "name": "prefix",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The prefix identifier"
+                    },
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The name identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ContentResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "external_id": {
+                        "type": "string"
+                    },
+                    "block_id": {
+                        "type": "string"
+                    },
+                    "block": {
+                        "type": "string"
+                    },
+                    "block_schema": {
+                        "nullable": true
+                    },
+                    "block_editor": {
+                        "nullable": true
+                    },
+                    "parent_id": {
+                        "type": "string"
+                    },
+                    "position": {
+                        "type": "string"
+                    },
+                    "parent": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "children_count": {
+                        "type": "integer"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "full_slug": {
+                        "type": "string"
+                    },
+                    "language_iso": {
+                        "nullable": true
+                    },
+                    "i18n_parent_id": {
+                        "type": "string"
+                    },
+                    "i18n_canonical_id": {
+                        "type": "string"
+                    },
+                    "effective_i18n_mode": {
+                        "nullable": true
+                    },
+                    "language_versions": {
+                        "nullable": true
+                    },
+                    "content": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "raw_content": {
+                        "type": "string"
+                    },
+                    "settings": {
+                        "type": "string"
+                    },
+                    "current_version_id": {
+                        "type": "string"
+                    },
+                    "current_version": {
+                        "type": "string"
+                    },
+                    "published_version_id": {
+                        "type": "string"
+                    },
+                    "published_version": {
+                        "type": "string"
+                    },
+                    "published_at": {
+                        "nullable": true
+                    },
+                    "first_published_at": {
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "nullable": true
+                    },
+                    "i18n_parent": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "i18n_translations": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "i18n_siblings": {
+                        "type": "object",
+                        "nullable": true
+                    }
+                }
+            },
+            "RedirectResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "external_id": {
+                        "type": "string"
+                    },
+                    "source": {
+                        "type": "string"
+                    },
+                    "target": {
+                        "type": "string"
+                    },
+                    "status_code": {
+                        "type": "string"
+                    },
+                    "hits": {
+                        "type": "string"
+                    },
+                    "last_used_at": {
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "SpaceResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "icon": {
+                        "type": "string"
+                    },
+                    "color": {
+                        "type": "string"
+                    },
+                    "badge": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "settings": {
+                        "type": "string"
+                    },
+                    "team_id": {
+                        "type": "string"
+                    },
+                    "plan": {
+                        "type": "string"
+                    },
+                    "user_count": {
+                        "type": "integer"
+                    },
+                    "content_updated_at": {
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "BlockResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "external_id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "icon": {
+                        "type": "string"
+                    },
+                    "color": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "preview_template": {
+                        "type": "string"
+                    },
+                    "preview_file": {
+                        "type": "string"
+                    },
+                    "schema": {
+                        "type": "string"
+                    },
+                    "editor": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "string"
+                    },
+                    "templates_count": {
+                        "type": "integer"
+                    },
+                    "folder": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "folder_id": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "DataSourceResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "external_id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "dimensions": {
+                        "type": "string"
+                    },
+                    "settings": {
+                        "type": "string"
+                    },
+                    "is_active": {
+                        "type": "string"
+                    },
+                    "entries_count": {
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "DataEntryResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "external_id": {
+                        "type": "string"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "string"
+                    },
+                    "dimensions": {
+                        "type": "string"
+                    },
+                    "is_active": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "PaginatedResponse": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        },
+                        "description": "Collection of resources"
+                    },
+                    "links": {
+                        "type": "object",
+                        "properties": {
+                            "first": {
+                                "type": "string",
+                                "format": "uri",
+                                "description": "Link to first page"
+                            },
+                            "last": {
+                                "type": "string",
+                                "format": "uri",
+                                "description": "Link to last page"
+                            },
+                            "prev": {
+                                "type": "string",
+                                "format": "uri",
+                                "nullable": true,
+                                "description": "Link to previous page"
+                            },
+                            "next": {
+                                "type": "string",
+                                "format": "uri",
+                                "nullable": true,
+                                "description": "Link to next page"
+                            }
+                        },
+                        "required": [
+                            "first",
+                            "last",
+                            "prev",
+                            "next"
+                        ]
+                    },
+                    "meta": {
+                        "type": "object",
+                        "properties": {
+                            "current_page": {
+                                "type": "integer",
+                                "description": "Current page number"
+                            },
+                            "from": {
+                                "type": "integer",
+                                "nullable": true,
+                                "description": "Index of first item on current page"
+                            },
+                            "last_page": {
+                                "type": "integer",
+                                "description": "Total number of pages"
+                            },
+                            "per_page": {
+                                "type": "integer",
+                                "description": "Number of items per page"
+                            },
+                            "to": {
+                                "type": "integer",
+                                "nullable": true,
+                                "description": "Index of last item on current page"
+                            },
+                            "total": {
+                                "type": "integer",
+                                "description": "Total number of items"
+                            }
+                        },
+                        "required": [
+                            "current_page",
+                            "from",
+                            "last_page",
+                            "per_page",
+                            "to",
+                            "total"
+                        ]
+                    }
+                },
+                "required": [
+                    "data",
+                    "links",
+                    "meta"
+                ]
+            },
+            "Error": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "Error message"
+                    },
+                    "error": {
+                        "type": "string",
+                        "description": "Error code or type"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "description": "HTTP status code"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
+            "ValidationError": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "Error message"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Error messages for each field"
+                        }
+                    }
+                },
+                "required": [
+                    "message",
+                    "errors"
+                ]
+            }
+        },
+        "securitySchemes": {
+            "tokenAuth": {
+                "type": "apiKey",
+                "in": "query",
+                "name": "token",
+                "description": "API token passed as query parameter"
+            },
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "Sanctum personal access token passed in Authorization header"
+            }
+        }
+    }
+}

@@ -12,6 +12,9 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class RedirectController extends Controller
 {
     /**
+     * List the redirect rules of the space as source/target pairs with their
+     * HTTP status codes. Frontends typically fetch all pages and build a lookup map.
+     *
      * @response AnonymousResourceCollection<LengthAwarePaginator<RedirectResource>>
      */
     public function __invoke(Request $request): AnonymousResourceCollection

@@ -8,6 +8,11 @@ use App\Models\Space\Redirect;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Resolve a single redirect by its source path. Returns the matching rule
+ * (target and status code) or `false` when no rule matches. Each hit is
+ * counted in the redirect's usage statistics.
+ */
 class RedirectLookupController extends Controller
 {
     public function __invoke(RedirectLookupRequest $request): JsonResponse

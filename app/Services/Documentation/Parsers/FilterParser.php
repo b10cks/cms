@@ -63,14 +63,10 @@ class FilterParser
                         $sortableColumns = $property->getValue();
                     } else {
                         try {
-                            if (is_subclass_of($filterClass, \CodersCantina\Filter\AdvancedFilter::class)) {
-                                $instance = new $filterClass([]);
-                            } else {
-                                $instance = new $filterClass(null);
-                            }
+                            $instance = new $filterClass([]);
 
                             $sortableColumns = $property->getValue($instance);
-                        } catch (\Exception $e) {
+                        } catch (\Throwable $e) {
                             $sortableColumns = $property->getDefaultValue();
                         }
                     }

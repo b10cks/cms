@@ -2,7 +2,7 @@
 
 return [
     'output' => [
-        'directory' => public_path('docs'),
+        'directory' => base_path('docs/public/specs'),
         'per_prefix' => true, // Generate separate file per prefix
     ],
 

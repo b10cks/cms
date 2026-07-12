@@ -430,15 +430,31 @@ class OpenApiGenerator
     }
 
     /**
-     * Generate unique operation ID
+     * Generate unique operation ID from the HTTP method and the full route
+     * path (minus the version prefix). Path parameters contribute a "by_x"
+     * segment so sibling routes like "tokens" and "tokens/{token}" stay
+     * distinct: `delete_spaces_tokens_by_token`.
      */
     protected function generateOperationId(array $route): string
     {
         $parts = explode('/', trim($route['uri'], '/'));
-        $resource = $parts[count($parts) - 1] ?? 'resource';
-        $method = strtolower($route['method']);
 
-        return "{$method}_{$resource}";
+        // Drop the "api/v1"-style prefix — it is already implied by the spec file
+        $parts = array_slice($parts, 2);
+
+        $segments = [];
+        foreach ($parts as $part) {
+            if (preg_match('/^\{(.+)\}$/', $part, $matches)) {
+                $segments[] = 'by_' . $matches[1];
+            } else {
+                $segments[] = str_replace(['-', '.'], '_', $part);
+            }
+        }
+
+        $method = strtolower($route['method']);
+        $path = implode('_', $segments) ?: 'root';
+
+        return "{$method}_{$path}";
     }
 
     /**
