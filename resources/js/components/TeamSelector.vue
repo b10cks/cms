@@ -26,7 +26,7 @@ withDefaults(
 )
 
 const sizeClasses = {
-  sm: 'h-8 text-sm',
+  sm: 'h-8! text-sm',
   md: 'h-10',
   lg: 'h-12 text-lg',
 }
