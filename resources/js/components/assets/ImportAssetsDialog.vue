@@ -34,7 +34,10 @@ const handleImport = async () => {
   try {
     importResult.value = await importMutation.mutateAsync(selectedFile.value)
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : t('labels.assets.importDialog.importError') as string
+    errorMessage.value =
+      error instanceof Error
+        ? error.message
+        : (t('labels.assets.importDialog.importError') as string)
   }
 }
 
@@ -105,15 +108,13 @@ const showSummary = computed(() => importResult.value !== null)
             </Button>
             <Button
               type="button"
-              :disabled="!selectedFile || importMutation.isPending.value"
+              :loading="importMutation.isPending.value"
+              :disabled="!selectedFile"
               @click="handleImport"
             >
-              <Icon
-                v-if="importMutation.isPending.value"
-                name="lucide:loader-2"
-                class="animate-spin"
-              />
-              {{ importMutation.isPending.value ? $t('labels.loading') : $t('labels.assets.import') }}
+              {{
+                importMutation.isPending.value ? $t('labels.loading') : $t('labels.assets.import')
+              }}
             </Button>
           </DialogFooter>
         </div>
@@ -177,9 +178,15 @@ const showSummary = computed(() => importResult.value !== null)
                   >
                     <span class="font-medium text-foreground">{{ asset.filename }}</span>
                     <span class="flex items-center gap-2 text-xs text-muted-foreground">
-                      {{ $t('labels.assets.importDialog.changeCount', { count: asset.changes.length }) }}
+                      {{
+                        $t('labels.assets.importDialog.changeCount', {
+                          count: asset.changes.length,
+                        })
+                      }}
                       <Icon
-                        :name="isExpanded(asset.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'"
+                        :name="
+                          isExpanded(asset.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'
+                        "
                         class="h-4 w-4"
                       />
                     </span>
@@ -199,7 +206,8 @@ const showSummary = computed(() => importResult.value !== null)
                           <span
                             v-if="change.language"
                             class="font-normal text-muted-foreground"
-                          >({{ change.language }})</span>
+                            >({{ change.language }})</span
+                          >
                         </div>
                         <div class="text-muted-foreground">
                           {{ change.old ?? $t('labels.assets.importDialog.emptyValue') }}
@@ -245,7 +253,10 @@ const showSummary = computed(() => importResult.value !== null)
                   class="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
                 >
                   <div class="font-medium">
-                    {{ error.id || $t('labels.assets.importDialog.rowLabel', { row: error.row ?? index + 1 }) }}
+                    {{
+                      error.id ||
+                      $t('labels.assets.importDialog.rowLabel', { row: error.row ?? index + 1 })
+                    }}
                   </div>
                   <div>{{ error.message }}</div>
                 </div>

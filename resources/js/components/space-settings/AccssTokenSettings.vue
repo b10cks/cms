@@ -68,14 +68,10 @@ const copyToken = (token: string) => {
           />
         </div>
         <Button
-          :disabled="!newTokenName || isGenerating"
+          :loading="isGenerating"
+          :disabled="!newTokenName"
           @click="generateToken"
         >
-          <Icon
-            v-if="isGenerating"
-            name="lucide:loader"
-            class="animate-spin"
-          />
           {{
             isGenerating
               ? $t('labels.settings.accessTokens.generating')

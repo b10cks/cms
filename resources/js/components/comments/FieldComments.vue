@@ -190,14 +190,10 @@ const handleRemoveReaction = (commentId: string, emoji: string) => {
           />
           <div class="flex justify-end">
             <Button
-              :disabled="!newCommentBody.trim() || createCommentMutation.isPending.value"
+              :loading="createCommentMutation.isPending.value"
+              :disabled="!newCommentBody.trim()"
               @click="handleCreateComment"
             >
-              <Icon
-                v-if="createCommentMutation.isPending.value"
-                name="lucide:loader-2"
-                class="mr-1 animate-spin"
-              />
               <span>{{ $t('labels.comments.addButton') }}</span>
             </Button>
           </div>

@@ -152,14 +152,10 @@ const handleRegenerateBackupCodes = async () => {
         <CardFooter>
           <Button
             variant="primary"
-            :disabled="isChanging || !oldPassword || !newPassword || !confirmPassword"
+            :loading="isChanging"
+            :disabled="!oldPassword || !newPassword || !confirmPassword"
             @click="handleChangePassword"
           >
-            <Icon
-              v-if="isChanging"
-              name="lucide:loader"
-              class="animate-spin"
-            />
             {{ $t('labels.account.security.changePasswordButton') }}
           </Button>
         </CardFooter>
@@ -258,14 +254,10 @@ const handleRegenerateBackupCodes = async () => {
           </Button>
           <Button
             variant="destructive"
-            :disabled="!disablePassword || isDisabling"
+            :loading="isDisabling"
+            :disabled="!disablePassword"
             @click="handleDisable2FA"
           >
-            <Icon
-              v-if="isDisabling"
-              name="lucide:loader"
-              class="animate-spin"
-            />
             {{ $t('labels.twoFactor.disableConfirm') }}
           </Button>
         </DialogFooter>

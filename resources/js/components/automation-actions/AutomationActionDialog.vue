@@ -781,14 +781,10 @@ const summaryText = computed(() => {
           {{ $t('actions.cancel') }}
         </Button>
         <Button
-          :disabled="loading || !isValid"
+          :loading="loading"
+          :disabled="!isValid"
           @click="handleSubmit"
         >
-          <Icon
-            v-if="loading"
-            name="lucide:loader"
-            class="animate-spin"
-          />
           {{
             isEditing
               ? $t('actions.automationActions.save')

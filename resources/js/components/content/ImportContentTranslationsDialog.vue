@@ -181,15 +181,15 @@ const toggleExpanded = (key: string) => {
             </Button>
             <Button
               type="button"
-              :disabled="!selectedFile || importMutation.isPending.value"
+              :loading="importMutation.isPending.value"
+              :disabled="!selectedFile"
               @click="handleImport"
             >
-              <Icon
-                v-if="importMutation.isPending.value"
-                name="lucide:loader-2"
-                class="animate-spin"
-              />
-              {{ importMutation.isPending.value ? t('labels.loading') : t('labels.contents.translationImport.submit') }}
+              {{
+                importMutation.isPending.value
+                  ? t('labels.loading')
+                  : t('labels.contents.translationImport.submit')
+              }}
             </Button>
           </DialogFooter>
         </div>
@@ -253,12 +253,18 @@ const toggleExpanded = (key: string) => {
                   >
                     <span class="font-medium text-foreground">
                       {{ entry.name || entry.content_id }}
-                      <span class="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs uppercase text-muted-foreground">
+                      <span
+                        class="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs uppercase text-muted-foreground"
+                      >
                         {{ entry.language }}
                       </span>
                     </span>
                     <span class="flex items-center gap-2 text-xs text-muted-foreground">
-                      {{ t('labels.contents.translationImport.changeCount', { count: entry.changes.length }) }}
+                      {{
+                        t('labels.contents.translationImport.changeCount', {
+                          count: entry.changes.length,
+                        })
+                      }}
                       <Icon
                         :name="
                           expanded.has(rowKey(entry.content_id, entry.language))

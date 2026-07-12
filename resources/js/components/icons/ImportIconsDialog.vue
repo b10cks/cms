@@ -173,15 +173,13 @@ const showSummary = computed(() => importResult.value !== null)
             </Button>
             <Button
               type="button"
-              :disabled="!selectedFile || importMutation.isPending.value"
+              :loading="importMutation.isPending.value"
+              :disabled="!selectedFile"
               @click="handleImport"
             >
-              <Icon
-                v-if="importMutation.isPending.value"
-                name="lucide:loader-2"
-                class="animate-spin"
-              />
-              {{ importMutation.isPending.value ? $t('labels.loading') : $t('labels.assets.import') }}
+              {{
+                importMutation.isPending.value ? $t('labels.loading') : $t('labels.assets.import')
+              }}
             </Button>
           </DialogFooter>
         </div>
@@ -198,7 +196,12 @@ const showSummary = computed(() => importResult.value !== null)
             v-if="importResult"
             class="space-y-6 p-1"
           >
-            <div :class="['grid gap-4', importResult.summary.total_deleted > 0 ? 'md:grid-cols-4' : 'md:grid-cols-3']">
+            <div
+              :class="[
+                'grid gap-4',
+                importResult.summary.total_deleted > 0 ? 'md:grid-cols-4' : 'md:grid-cols-3',
+              ]"
+            >
               <div class="rounded-lg border p-4">
                 <div class="text-sm font-medium text-muted-foreground">
                   {{ $t('labels.icons.importDialog.summary.success') }}
@@ -256,7 +259,9 @@ const showSummary = computed(() => importResult.value !== null)
                   >
                     <span class="font-medium text-foreground">{{ icon.key }}</span>
                     <span class="flex items-center gap-2 text-xs text-muted-foreground">
-                      {{ $t('labels.icons.importDialog.changeCount', { count: icon.changes.length }) }}
+                      {{
+                        $t('labels.icons.importDialog.changeCount', { count: icon.changes.length })
+                      }}
                       <Icon
                         :name="isExpanded(icon.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'"
                         class="h-4 w-4"

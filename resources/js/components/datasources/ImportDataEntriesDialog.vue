@@ -173,15 +173,13 @@ const showSummary = computed(() => importResult.value !== null)
             </Button>
             <Button
               type="button"
-              :disabled="!selectedFile || importMutation.isPending.value"
+              :loading="importMutation.isPending.value"
+              :disabled="!selectedFile"
               @click="handleImport"
             >
-              <Icon
-                v-if="importMutation.isPending.value"
-                name="lucide:loader-2"
-                class="animate-spin"
-              />
-              {{ importMutation.isPending.value ? $t('labels.loading') : $t('labels.assets.import') }}
+              {{
+                importMutation.isPending.value ? $t('labels.loading') : $t('labels.assets.import')
+              }}
             </Button>
           </DialogFooter>
         </div>
@@ -198,7 +196,12 @@ const showSummary = computed(() => importResult.value !== null)
             v-if="importResult"
             class="space-y-6 p-1"
           >
-            <div :class="['grid gap-4', importResult.summary.total_deleted > 0 ? 'md:grid-cols-4' : 'md:grid-cols-3']">
+            <div
+              :class="[
+                'grid gap-4',
+                importResult.summary.total_deleted > 0 ? 'md:grid-cols-4' : 'md:grid-cols-3',
+              ]"
+            >
               <div class="rounded-lg border p-4">
                 <div class="text-sm font-medium text-muted-foreground">
                   {{ $t('labels.dataEntries.importDialog.summary.success') }}
@@ -256,9 +259,15 @@ const showSummary = computed(() => importResult.value !== null)
                   >
                     <span class="font-medium text-foreground">{{ entry.key }}</span>
                     <span class="flex items-center gap-2 text-xs text-muted-foreground">
-                      {{ $t('labels.dataEntries.importDialog.changeCount', { count: entry.changes.length }) }}
+                      {{
+                        $t('labels.dataEntries.importDialog.changeCount', {
+                          count: entry.changes.length,
+                        })
+                      }}
                       <Icon
-                        :name="isExpanded(entry.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'"
+                        :name="
+                          isExpanded(entry.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'
+                        "
                         class="h-4 w-4"
                       />
                     </span>
@@ -336,7 +345,12 @@ const showSummary = computed(() => importResult.value !== null)
                   class="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
                 >
                   <div class="font-medium">
-                    {{ error.id || $t('labels.dataEntries.importDialog.rowLabel', { row: error.row ?? index + 1 }) }}
+                    {{
+                      error.id ||
+                      $t('labels.dataEntries.importDialog.rowLabel', {
+                        row: error.row ?? index + 1,
+                      })
+                    }}
                   </div>
                   <div>{{ error.message }}</div>
                 </div>

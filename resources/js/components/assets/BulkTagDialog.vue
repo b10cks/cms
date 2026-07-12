@@ -149,16 +149,12 @@ watch(open, (isOpen) => {
         <Button
           type="button"
           variant="primary"
-          :disabled="!canApply || isApplying"
+          :loading="isApplying"
+          :disabled="!canApply"
           @click="handleApply"
         >
           <Icon
-            v-if="isApplying"
-            name="lucide:loader"
-            class="animate-spin"
-          />
-          <Icon
-            v-else
+            v-if="!isApplying"
             name="lucide:tags"
           />
           {{ $t('actions.assets.applyTags') }}

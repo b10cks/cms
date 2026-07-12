@@ -114,14 +114,10 @@ const handleCancel = () => {
         </Button>
         <Button
           variant="primary"
-          :disabled="isVerifying || code.length < 6"
+          :loading="isVerifying"
+          :disabled="code.length < 6"
           @click="handleVerify"
         >
-          <Icon
-            v-if="isVerifying"
-            name="lucide:loader"
-            class="animate-spin"
-          />
           {{ $t('labels.twoFactor.verify.button') }}
         </Button>
       </DialogFooter>

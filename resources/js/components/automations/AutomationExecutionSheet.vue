@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-
 import AutomationActionTypeBadge from '~/components/automation-actions/AutomationActionTypeBadge.vue'
+import Icon from '~/components/Icon.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Sheet, SheetContent, SheetHeaderCombined } from '~/components/ui/sheet'
@@ -116,7 +115,9 @@ const handleReplay = () => {
           <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div class="space-y-2">
               <div class="flex flex-wrap items-center gap-2">
-                <p class="font-semibold text-lg">{{ execution.automation?.name || execution.automation_id }}</p>
+                <p class="font-semibold text-lg">
+                  {{ execution.automation?.name || execution.automation_id }}
+                </p>
                 <Badge
                   :variant="statusVariant"
                   size="sm"
@@ -132,7 +133,11 @@ const handleReplay = () => {
               </div>
 
               <p class="text-muted-foreground text-sm">
-                {{ execution.automation?.description || execution.automation?.action?.name || execution.id }}
+                {{
+                  execution.automation?.description ||
+                  execution.automation?.action?.name ||
+                  execution.id
+                }}
               </p>
 
               <div
@@ -149,16 +154,12 @@ const handleReplay = () => {
             <Button
               v-if="canManage"
               variant="outline"
-              :disabled="!canReplay || replayingId === execution.id"
+              :loading="replayingId === execution.id"
+              :disabled="!canReplay"
               @click="handleReplay"
             >
               <Icon
-                v-if="replayingId === execution.id"
-                name="lucide:loader"
-                class="animate-spin"
-              />
-              <Icon
-                v-else
+                v-if="replayingId !== execution.id"
                 name="lucide:rotate-ccw"
               />
               {{ $t('actions.automationExecutions.replay') }}

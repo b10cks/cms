@@ -65,14 +65,9 @@ const selectionCount = computed(() => props.assetCount + props.folderCount)
           variant="ghost"
           size="sm"
           class="whitespace-nowrap"
-          :disabled="isSelectingAllMatching"
+          :loading="isSelectingAllMatching"
           @click="emit('selectAllMatching')"
         >
-          <Icon
-            v-if="isSelectingAllMatching"
-            name="lucide:loader"
-            class="animate-spin"
-          />
           {{ $t('labels.assets.selection.selectAllMatching', { count: totalMatching }) }}
         </Button>
       </div>

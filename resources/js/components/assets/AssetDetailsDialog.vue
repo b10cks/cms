@@ -7,11 +7,11 @@ import NuxtImg from '~/components/NuxtImg.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
-    Dialog,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '~/components/ui/dialog'
 import { ComboboxField, DateTimeField, InputField, SelectField } from '~/components/ui/form'
 import IconName from '~/components/ui/IconName.vue'
@@ -21,9 +21,9 @@ import { isClient } from '~/lib/env'
 import { buildIlumUrl } from '~/lib/ilum'
 import { runtimeConfig } from '~/lib/runtime-config'
 import type {
-    AssetResource,
-    AssetVersionResource,
-    LinkedAssetContentResource,
+  AssetResource,
+  AssetVersionResource,
+  LinkedAssetContentResource,
 } from '~/types/assets'
 
 const RIGHTS_FIELD_KEYS = [
@@ -603,7 +603,9 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
             >{{ crumb.name }}/</span
           >
         </p>
-        <DialogTitle class="truncate">{{ asset.filename }}<span class="text-muted">.{{ asset.extension }}</span></DialogTitle>
+        <DialogTitle class="truncate"
+          >{{ asset.filename }}<span class="text-muted">.{{ asset.extension }}</span></DialogTitle
+        >
       </DialogHeader>
       <template v-if="mode === 'normal' && (hasPrevious || hasNext)">
         <Button
@@ -634,129 +636,129 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
           <div
             class="flex min-h-0 flex-1 flex-col items-center justify-center-safe overflow-y-auto rounded-xl bg-surface p-4 [container-type:size]"
           >
-          <div
-            v-if="getFileType(asset.mime_type) === 'image'"
-            ref="imageContainer"
-            class="relative flex w-full items-center justify-center"
-          >
             <div
-              class="relative inline-block max-w-full"
-              :style="previewImageStyle"
+              v-if="getFileType(asset.mime_type) === 'image'"
+              ref="imageContainer"
+              class="relative flex w-full items-center justify-center"
             >
-              <NuxtImg
-                ref="imageRef"
-                :src="asset.full_path"
-                crop="fit"
-                :alt="String(assetCopy?.data?.altText || asset.filename)"
-                :height="1536"
-                :width="1536"
-                class="checkerboard block w-full object-contain"
-              />
               <div
-                v-if="assetCopy.data?.focus"
-                class="pointer-events-none absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 transform mix-blend-difference"
-                :style="{
-                  left: `${assetCopy.data?.focus?.x}%`,
-                  top: `${assetCopy.data?.focus?.y}%`,
-                }"
-                aria-hidden="true"
-              >
-                <Icon
-                  name="lucide:crosshair"
-                  size="1.25rem"
-                  class="text-primary"
-                />
-              </div>
-              <div
-                v-if="!props.readOnly && assetCopy.data?.focus"
-                class="absolute inset-0 cursor-crosshair"
-                @mousedown="startDragging"
-              />
-            </div>
-          </div>
-          <div
-            v-else-if="getFileType(asset.mime_type) === 'video'"
-            class="flex w-full flex-col gap-3"
-          >
-            <video
-              ref="videoRef"
-              controls
-              :src="asset.url ?? undefined"
-              :poster="
-                asset.metadata.thumbnails?.[0]?.full_path
-                  ? buildIlumUrl(
-                      asset.metadata.thumbnails[0].full_path,
-                      { width: 1200, crop: 'fit', quality: 75 },
-                      ilumBaseUrl
-                    )
-                  : undefined
-              "
-              class="max-h-[calc(60svh)] w-full rounded-lg object-contain"
-            />
-            <div
-              v-if="asset.metadata.thumbnails?.length"
-              class="flex gap-2 overflow-x-auto pb-1"
-            >
-              <button
-                v-for="thumb in asset.metadata.thumbnails"
-                :key="thumb.position"
-                type="button"
-                class="group relative shrink-0 overflow-hidden rounded"
-                @click="seekVideoTo(thumb.position)"
+                class="relative inline-block max-w-full"
+                :style="previewImageStyle"
               >
                 <NuxtImg
-                  :src="thumb.full_path"
-                  :width="120"
-                  :height="68"
-                  crop="fill"
-                  class="pointer-events-none block h-[68px] w-[120px] object-cover"
+                  ref="imageRef"
+                  :src="asset.full_path"
+                  crop="fit"
+                  :alt="String(assetCopy?.data?.altText || asset.filename)"
+                  :height="1536"
+                  :width="1536"
+                  class="checkerboard block w-full object-contain"
                 />
-                <span
-                  class="absolute bottom-0 left-0 right-0 bg-black/60 py-0.5 text-center text-xs text-white"
+                <div
+                  v-if="assetCopy.data?.focus"
+                  class="pointer-events-none absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 transform mix-blend-difference"
+                  :style="{
+                    left: `${assetCopy.data?.focus?.x}%`,
+                    top: `${assetCopy.data?.focus?.y}%`,
+                  }"
+                  aria-hidden="true"
                 >
-                  {{ thumb.position_formatted }}
-                </span>
-              </button>
+                  <Icon
+                    name="lucide:crosshair"
+                    size="1.25rem"
+                    class="text-primary"
+                  />
+                </div>
+                <div
+                  v-if="!props.readOnly && assetCopy.data?.focus"
+                  class="absolute inset-0 cursor-crosshair"
+                  @mousedown="startDragging"
+                />
+              </div>
             </div>
-          </div>
-          <div
-            v-else-if="getFileType(asset.mime_type) === 'audio'"
-            class="flex w-full flex-col items-center gap-4 py-8"
-          >
-            <Icon
-              name="lucide:file-audio"
-              size="3rem"
-              class="text-muted"
-            />
-            <audio
-              controls
-              :src="asset.url ?? undefined"
+            <div
+              v-else-if="getFileType(asset.mime_type) === 'video'"
+              class="flex w-full flex-col gap-3"
+            >
+              <video
+                ref="videoRef"
+                controls
+                :src="asset.url ?? undefined"
+                :poster="
+                  asset.metadata.thumbnails?.[0]?.full_path
+                    ? buildIlumUrl(
+                        asset.metadata.thumbnails[0].full_path,
+                        { width: 1200, crop: 'fit', quality: 75 },
+                        ilumBaseUrl
+                      )
+                    : undefined
+                "
+                class="max-h-[calc(60svh)] w-full rounded-lg object-contain"
+              />
+              <div
+                v-if="asset.metadata.thumbnails?.length"
+                class="flex gap-2 overflow-x-auto pb-1"
+              >
+                <button
+                  v-for="thumb in asset.metadata.thumbnails"
+                  :key="thumb.position"
+                  type="button"
+                  class="group relative shrink-0 overflow-hidden rounded"
+                  @click="seekVideoTo(thumb.position)"
+                >
+                  <NuxtImg
+                    :src="thumb.full_path"
+                    :width="120"
+                    :height="68"
+                    crop="fill"
+                    class="pointer-events-none block h-[68px] w-[120px] object-cover"
+                  />
+                  <span
+                    class="absolute bottom-0 left-0 right-0 bg-black/60 py-0.5 text-center text-xs text-white"
+                  >
+                    {{ thumb.position_formatted }}
+                  </span>
+                </button>
+              </div>
+            </div>
+            <div
+              v-else-if="getFileType(asset.mime_type) === 'audio'"
+              class="flex w-full flex-col items-center gap-4 py-8"
+            >
+              <Icon
+                name="lucide:file-audio"
+                size="3rem"
+                class="text-muted"
+              />
+              <audio
+                controls
+                :src="asset.url ?? undefined"
+                class="w-full"
+              />
+            </div>
+            <div
+              v-else-if="asset.mime_type === 'application/pdf'"
               class="w-full"
-            />
-          </div>
-          <div
-            v-else-if="asset.mime_type === 'application/pdf'"
-            class="w-full"
-          >
-            <iframe
-              :src="asset.url ?? undefined"
-              class="h-[60svh] w-full rounded-lg border-0"
-              :title="asset.filename"
-            />
-          </div>
-          <div
-            v-else
-            class="flex h-75 w-full flex-col items-center justify-center gap-4"
-          >
-            <Icon
-              :name="getFileIcon(getFileType(asset.mime_type))"
-              size="3rem"
-            />
-            <div class="text-center">
-              <p class="font-semibold">{{ asset.filename }}</p>
-              <p class="text-sm text-muted">{{ formatFileSize(asset.size) }}</p>
+            >
+              <iframe
+                :src="asset.url ?? undefined"
+                class="h-[60svh] w-full rounded-lg border-0"
+                :title="asset.filename"
+              />
             </div>
-          </div>
+            <div
+              v-else
+              class="flex h-75 w-full flex-col items-center justify-center gap-4"
+            >
+              <Icon
+                :name="getFileIcon(getFileType(asset.mime_type))"
+                size="3rem"
+              />
+              <div class="text-center">
+                <p class="font-semibold">{{ asset.filename }}</p>
+                <p class="text-sm text-muted">{{ formatFileSize(asset.size) }}</p>
+              </div>
+            </div>
           </div>
           <div
             class="flex w-full shrink-0 flex-wrap gap-2"
@@ -966,9 +968,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                       />
                       {{ $t('labels.assets.metadata.exif') }}
                     </summary>
-                    <dl
-                      class="mt-2 grid grid-cols-[1fr_2fr] gap-x-4 gap-y-1 pl-5"
-                    >
+                    <dl class="mt-2 grid grid-cols-[1fr_2fr] gap-x-4 gap-y-1 pl-5">
                       <template
                         v-for="[exifKey, exifValue] in exifEntries"
                         :key="exifKey"
@@ -1231,14 +1231,10 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                       v-if="!props.readOnly"
                       variant="outline"
                       size="sm"
+                      :loading="isRestoringVersion && restoringVersionId === version.id"
                       :disabled="isRestoringVersion"
                       @click="restoreVersionWithConfirm(version)"
                     >
-                      <Icon
-                        v-if="isRestoringVersion && restoringVersionId === version.id"
-                        name="lucide:loader-circle"
-                        class="animate-spin"
-                      />
                       {{ $t('labels.assets.versions.restore') }}
                     </Button>
                   </div>

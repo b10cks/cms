@@ -132,13 +132,9 @@ const roleOptions = computed(() =>
           <Button
             type="submit"
             variant="primary"
-            :disabled="isLoading || !formData.email"
+            :loading="isLoading"
+            :disabled="!formData.email"
           >
-            <Icon
-              v-if="isLoading"
-              name="lucide:loader-2"
-              class="animate-spin"
-            />
             {{ isLoading ? $t('labels.invites.sending') : $t('actions.send') }}
           </Button>
         </DialogFooter>

@@ -280,13 +280,9 @@ const handleDimensionAdd = (item: Record<string, unknown>) => {
           </Button>
           <Button
             type="submit"
-            :disabled="isProcessing || !validateDimensions(formData.dimensions)"
+            :loading="isProcessing"
+            :disabled="!validateDimensions(formData.dimensions)"
           >
-            <Icon
-              v-if="isProcessing"
-              name="lucide:loader"
-              class="animate-spin"
-            />
             {{
               isEditing ? $t('labels.datasets.saveChanges') : $t('labels.datasets.createDataSource')
             }}

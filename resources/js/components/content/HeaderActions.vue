@@ -81,9 +81,10 @@ const focusFirstValidationError = inject<(() => Promise<void>) | undefined>(
   'focusFirstValidationError',
   undefined
 )
-const getValidationSummary = inject<
-  (() => { isValid: boolean; issueCount: number }) | undefined
->('getValidationSummary', undefined)
+const getValidationSummary = inject<(() => { isValid: boolean; issueCount: number }) | undefined>(
+  'getValidationSummary',
+  undefined
+)
 const getValidationIssueSignature = inject<(() => string) | undefined>(
   'getValidationIssueSignature',
   undefined
@@ -94,9 +95,8 @@ const revealValidationState = inject<(() => Promise<void>) | undefined>(
 )
 const editingFromVersionId = inject<Ref<string | null>>('editingFromVersionId')
 const serverVersionDrifted = inject<ComputedRef<boolean>>('serverVersionDrifted')
-const serverCurrentVersion = inject<ComputedRef<ContentVersionListResource | null | undefined>>(
-  'serverCurrentVersion'
-)
+const serverCurrentVersion =
+  inject<ComputedRef<ContentVersionListResource | null | undefined>>('serverCurrentVersion')
 const reloadServerContent = inject<(() => void) | undefined>('reloadServerContent', undefined)
 
 const conflictDialogOpen = ref(false)
@@ -149,7 +149,9 @@ const isPublishingAction = computed(
 const isAnyActionPending = computed(
   () => isSaving.value || isPublishingAction.value || isAssigning.value
 )
-const validationSummary = computed(() => getValidationSummary?.() || { isValid: true, issueCount: 0 })
+const validationSummary = computed(
+  () => getValidationSummary?.() || { isValid: true, issueCount: 0 }
+)
 const validationStatusTooltip = computed(() =>
   validationSummary.value.isValid
     ? (t('labels.contents.validation.status.validTooltip') as string)
@@ -220,9 +222,13 @@ const isSoftValidationError = (error: unknown): boolean => {
   )
 }
 
-const isConflictError = (error: unknown): error is { status: 409; data: ContentVersionConflictResponse } => {
-  return (error as { status?: number })?.status === 409 &&
+const isConflictError = (
+  error: unknown
+): error is { status: 409; data: ContentVersionConflictResponse } => {
+  return (
+    (error as { status?: number })?.status === 409 &&
     !!(error as { data?: { conflict?: boolean } })?.data?.conflict
+  )
 }
 
 const getValidationWarningMessage = (errors: Record<string, string[]>): string => {
@@ -601,7 +607,9 @@ const handleConfirmAssign = (versionIds: string[]) => {
             "
             @click="handleValidationStatusClick"
           >
-            <Icon :name="validationSummary.isValid ? 'lucide:badge-check' : 'lucide:circle-alert'" />
+            <Icon
+              :name="validationSummary.isValid ? 'lucide:badge-check' : 'lucide:circle-alert'"
+            />
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
@@ -638,14 +646,10 @@ const handleConfirmAssign = (versionIds: string[]) => {
     </TooltipProvider>
     <Button
       v-if="canSaveContent"
+      :loading="isSaving"
       :disabled="disabled || isAnyActionPending || (!!content.id && !isDirty)"
       @click="handleSaveClick"
     >
-      <Icon
-        v-if="isSaving"
-        name="lucide:loader"
-        class="animate-spin"
-      />
       {{ $t('actions.save') }}
     </Button>
     <SplitButton
@@ -760,7 +764,9 @@ const handleConfirmAssign = (versionIds: string[]) => {
       :open="conflictDialogOpen"
       :server-version="conflictData.current_version"
       :server-content="conflictData.current_content"
-      :my-content="(sanitizeContentForSubmit?.() || props.content.content) as Record<string, unknown>"
+      :my-content="
+        (sanitizeContentForSubmit?.() || props.content.content) as Record<string, unknown>
+      "
       @update:open="conflictDialogOpen = $event"
       @save-branch="handleSaveBranch"
       @reload="handleConflictReload"

@@ -158,14 +158,10 @@ const maxExpiresAt = computed(() => {
         </Button>
         <Button
           @click="handleCreate"
-          :disabled="!isValid || loading"
+          :loading="loading"
+          :disabled="!isValid"
           :class="{ 'cursor-not-allowed opacity-50': !isValid || loading }"
         >
-          <Icon
-            v-if="loading"
-            name="lucide:loader"
-            class="animate-spin"
-          />
           {{ loading ? $t('actions.creating') : $t('actions.backups.create') }}
         </Button>
       </DialogFooter>

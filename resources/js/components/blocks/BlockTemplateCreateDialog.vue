@@ -121,13 +121,9 @@ watch(open, (isOpen) => {
           <Button
             variant="primary"
             type="submit"
-            :disabled="!template.name.trim() || isPending"
+            :loading="isPending"
+            :disabled="!template.name.trim()"
           >
-            <Icon
-              v-if="isPending"
-              name="lucide:loader"
-              class="animate-spin"
-            />
             {{ $t('actions.create') }}
           </Button>
         </DialogFooter>

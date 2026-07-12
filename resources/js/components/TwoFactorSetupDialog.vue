@@ -187,14 +187,9 @@ const handleClose = () => {
         <Button
           v-if="step === 'initial'"
           variant="primary"
-          :disabled="isSettingUp"
+          :loading="isSettingUp"
           @click="handleStartSetup"
         >
-          <Icon
-            v-if="isSettingUp"
-            name="lucide:loader"
-            class="animate-spin"
-          />
           {{ $t('labels.twoFactor.setup.start') }}
         </Button>
 
@@ -208,14 +203,10 @@ const handleClose = () => {
         <Button
           v-if="step === 'scan'"
           variant="primary"
-          :disabled="isConfirming || verificationCode.length !== 6"
+          :loading="isConfirming"
+          :disabled="verificationCode.length !== 6"
           @click="handleVerify"
         >
-          <Icon
-            v-if="isConfirming"
-            name="lucide:loader"
-            class="animate-spin"
-          />
           {{ $t('labels.twoFactor.setup.verify') }}
         </Button>
 

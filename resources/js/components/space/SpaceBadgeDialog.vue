@@ -143,14 +143,9 @@ const handleOpenChange = (val: boolean) => {
         </Button>
         <Button
           variant="primary"
-          :disabled="isPending"
+          :loading="isPending"
           @click="handleSave"
         >
-          <Icon
-            v-if="isPending"
-            name="lucide:loader"
-            class="animate-spin"
-          />
           {{ t('actions.save') }}
         </Button>
       </DialogFooter>

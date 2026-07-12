@@ -261,14 +261,10 @@ watch(
         <Button
           v-if="canSubmit ?? true"
           variant="primary"
-          :disabled="!isFormValid || isSubmitting"
+          :loading="isSubmitting"
+          :disabled="!isFormValid"
           @click="handleSubmit"
         >
-          <Icon
-            v-if="isSubmitting"
-            name="lucide:loader"
-            class="h-4 w-4 animate-spin"
-          />
           {{ isSubmitting ? $t('actions.saving') : $t('actions.save') }}
         </Button>
       </DialogFooter>

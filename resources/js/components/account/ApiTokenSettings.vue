@@ -113,14 +113,10 @@ const handleDeleteToken = async (id: number, tokenName: string) => {
         <div class="flex items-end">
           <Button
             class="w-full"
-            :disabled="!tokenName || isCreating"
+            :loading="isCreating"
+            :disabled="!tokenName"
             @click="handleCreateToken"
           >
-            <Icon
-              v-if="isCreating"
-              name="lucide:loader"
-              class="animate-spin"
-            />
             {{
               isCreating
                 ? $t('labels.account.apiTokens.generating')

@@ -88,13 +88,8 @@ const handleExport = () => {
           </Button>
           <Button
             type="submit"
-            :disabled="isExporting"
+            :loading="isExporting"
           >
-            <Icon
-              v-if="isExporting"
-              name="lucide:loader-2"
-              class="animate-spin"
-            />
             {{ isExporting ? t('labels.loading') : t('labels.contents.translationExport.submit') }}
           </Button>
         </DialogFooter>

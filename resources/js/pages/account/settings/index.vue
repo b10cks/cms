@@ -182,14 +182,9 @@ const onDragOverAvatar = (e: DragEvent) => {
         <CardFooter>
           <Button
             variant="primary"
-            :disabled="isUpdating"
+            :loading="isUpdating"
             @click="handleSave"
           >
-            <Icon
-              v-if="isUpdating"
-              name="lucide:loader"
-              class="animate-spin"
-            />
             {{ $t('actions.saveChanges') }}
           </Button>
         </CardFooter>

@@ -282,6 +282,7 @@ const isStepValid = computed(() => {
           </Button>
           <Button
             variant="primary"
+            :loading="isPending"
             :disabled="!isStepValid"
             @click="handleNext"
           >
@@ -289,14 +290,7 @@ const isStepValid = computed(() => {
               {{ $t('actions.next') }}
               <Icon name="lucide:chevron-right" />
             </template>
-            <template v-else>
-              <Icon
-                v-if="isPending"
-                name="lucide:loader"
-                class="animate-spin"
-              />
-              Create Space
-            </template>
+            <template v-else> Create Space </template>
           </Button>
         </div>
       </div>

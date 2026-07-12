@@ -81,14 +81,10 @@ const confirmDelete = async () => {
             </Button>
             <Button
               variant="destructive"
-              :disabled="confirmText !== space.name || isDeleting"
+              :loading="isDeleting"
+              :disabled="confirmText !== space.name"
               @click="confirmDelete"
             >
-              <Icon
-                v-if="isDeleting"
-                name="lucide:loader"
-                class="animate-spin"
-              />
               {{
                 isDeleting
                   ? $t('labels.settings.dangerZone.deleting')

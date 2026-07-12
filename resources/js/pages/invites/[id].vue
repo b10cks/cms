@@ -182,13 +182,9 @@ const handleAccept = () => {
             type="submit"
             variant="primary"
             class="w-full"
-            :disabled="isAccepting || !hasToken"
+            :loading="isAccepting"
+            :disabled="!hasToken"
           >
-            <Icon
-              v-if="isAccepting"
-              name="lucide:loader-2"
-              class="animate-spin"
-            />
             {{
               isAccepting
                 ? $t('labels.invites.page.acceptingButton')

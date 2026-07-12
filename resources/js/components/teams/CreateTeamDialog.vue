@@ -157,13 +157,9 @@ const handleOpenChange = (value: boolean) => {
           </Button>
           <Button
             type="submit"
-            :disabled="isSubmitting || !formData.name.trim()"
+            :loading="isSubmitting"
+            :disabled="!formData.name.trim()"
           >
-            <Icon
-              v-if="isSubmitting"
-              name="lucide:loader-2"
-              class="animate-spin"
-            />
             {{ $t('labels.teams.createButton') }}
           </Button>
         </DialogFooter>

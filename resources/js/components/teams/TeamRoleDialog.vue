@@ -86,7 +86,9 @@ const keyError = computed(() => {
 
   // Uniqueness only applies when creating a new role (editing keeps its key).
   if (!props.role) {
-    const taken = props.existingKeys.some((existing) => existing.toLowerCase() === key.toLowerCase())
+    const taken = props.existingKeys.some(
+      (existing) => existing.toLowerCase() === key.toLowerCase()
+    )
     if (taken) return t('labels.teamRoles.fields.keyTaken')
   }
 
@@ -476,14 +478,10 @@ const handleOpenChange = (value: boolean) => {
           <Button
             v-if="!isReadOnly"
             type="button"
-            :disabled="isSubmitting || !isFormValid"
+            :loading="isSubmitting"
+            :disabled="!isFormValid"
             @click="handleSubmit"
           >
-            <Icon
-              v-if="isSubmitting"
-              name="lucide:loader-2"
-              class="animate-spin"
-            />
             {{
               props.role ? $t('labels.teamRoles.saveButton') : $t('labels.teamRoles.createButton')
             }}

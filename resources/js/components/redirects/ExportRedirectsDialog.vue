@@ -75,13 +75,8 @@ const handleExport = async () => {
           </Button>
           <Button
             type="submit"
-            :disabled="exportMutation.isPending.value"
+            :loading="exportMutation.isPending.value"
           >
-            <Icon
-              v-if="exportMutation.isPending.value"
-              name="lucide:loader-2"
-              class="animate-spin"
-            />
             {{ exportMutation.isPending.value ? $t('labels.loading') : $t('labels.assets.export') }}
           </Button>
         </DialogFooter>

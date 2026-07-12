@@ -100,13 +100,8 @@ const handleExport = async () => {
           </Button>
           <Button
             type="submit"
-            :disabled="isExporting"
+            :loading="isExporting"
           >
-            <Icon
-              v-if="isExporting"
-              name="lucide:loader-2"
-              class="animate-spin"
-            />
             {{ isExporting ? 'Exporting...' : 'Export' }}
           </Button>
         </DialogFooter>

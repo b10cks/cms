@@ -446,13 +446,8 @@ watch(
           </Button>
           <Button
             type="submit"
-            :disabled="isLoading"
+            :loading="isLoading"
           >
-            <Icon
-              v-if="isLoading"
-              name="lucide:loader"
-              class="animate-spin"
-            />
             {{ submitLabel }}
           </Button>
         </DialogFooter>

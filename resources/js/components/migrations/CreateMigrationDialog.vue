@@ -226,14 +226,10 @@ const handleOpenChange = (newOpen: boolean) => {
           {{ $t('actions.cancel') }}
         </Button>
         <Button
-          :disabled="!isValid || loading"
+          :loading="loading"
+          :disabled="!isValid"
           @click="handleCreate"
         >
-          <Icon
-            v-if="loading"
-            name="lucide:loader"
-            class="animate-spin"
-          />
           {{ loading ? $t('actions.creating') : $t('actions.migrations.create') }}
         </Button>
       </DialogFooter>

@@ -164,16 +164,12 @@ watch(open, (isOpen) => {
         <Button
           type="button"
           variant="primary"
-          :disabled="!canSubmit || isMoving"
+          :loading="isMoving"
+          :disabled="!canSubmit"
           @click="handleSubmit"
         >
           <Icon
-            v-if="isMoving"
-            name="lucide:loader"
-            class="animate-spin"
-          />
-          <Icon
-            v-else
+            v-if="!isMoving"
             name="lucide:folder-input"
           />
           {{ $t('actions.move') }}

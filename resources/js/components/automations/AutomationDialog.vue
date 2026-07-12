@@ -100,7 +100,9 @@ const isHydrating = ref(false)
 
 const isEditing = computed(() => !!props.automation)
 const isEventTriggerSelected = computed(() => isEventTrigger(form.value.trigger_type))
-const isContentLifecycleTriggerSelected = computed(() => isContentLifecycleTrigger(form.value.trigger_type))
+const isContentLifecycleTriggerSelected = computed(() =>
+  isContentLifecycleTrigger(form.value.trigger_type)
+)
 
 const selectedAction = computed(
   () => props.actions.find((action) => action.id === form.value.action_id) || null
@@ -571,7 +573,9 @@ const summaryText = computed(() => {
 
             <template v-if="isContentLifecycleTriggerSelected">
               <div class="rounded-xl border border-border bg-surface/70 px-4 py-3">
-                <p class="font-medium text-sm">{{ $t(`labels.automations.triggerTypes.${form.trigger_type}`) }}</p>
+                <p class="font-medium text-sm">
+                  {{ $t(`labels.automations.triggerTypes.${form.trigger_type}`) }}
+                </p>
                 <p class="text-muted-foreground mt-1 text-sm">
                   {{
                     form.trigger_type === 'content_published'
@@ -655,14 +659,10 @@ const summaryText = computed(() => {
           {{ $t('actions.cancel') }}
         </Button>
         <Button
-          :disabled="loading || !isValid"
+          :loading="loading"
+          :disabled="!isValid"
           @click="handleSubmit"
         >
-          <Icon
-            v-if="loading"
-            name="lucide:loader"
-            class="animate-spin"
-          />
           {{ isEditing ? $t('actions.automations.save') : $t('actions.automations.create') }}
         </Button>
       </DialogFooter>
