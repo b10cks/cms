@@ -3,6 +3,56 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.12-8513b570] — 2026-7-12
+
+- 🧱 Reduce bundle size
+- 💄 Improve TeamSelector in Appheader
+- 🌐 Add loading and localization translation keys
+- ✨ Add loading skeletons and dim-on-refetch states
+- ♻️ Adopt Button loading prop across dialogs and forms
+- ♻️ Replace hand-rolled spinners with Spinner component
+- ✨ Add Spinner component and Button loading state
+- ⚡ Add query caching, route/hover prefetch and faster navigation
+- ✨ Add copy-source-text button to localization editor
+- ✨ Add editable HTML classes to rich-text blocks
+- 🐛 Use advanced range/date filter operators in RedirectFilter
+- ✨ Add content translation import/export
+- ✨ Unify external & internal link editing in the richtext toolbar
+- ✨ Add fine-grained richtext config, Word paste cleanup & list styles
+- 🐛 Fix translation preview pushes to match the site SDK contract
+- ✨ Route visual-editor edits into the translation draft
+- ✨ Add live collaboration to the translation editor
+- 🐛 Fix block sub-field diff review findings
+- ✨ Render typed sub-field diffs inside block item entries
+- ✨ Sort folder children by first-level content fields
+- ✨ Add per-content child sorting for content trees
+- 🐛 Fix field diff review findings
+- ✨ Add schema-aware diffs for all field types in version history
+- 🐛 Fix rich text diff review findings
+- ✨ Add proper rich text diff to content version history
+- ✨ Apply block-defined default values when creating content
+- ✨ Add content cache settings with TTL, tags and webhook delivery
+- 💬 Add missing translations
+- 👔 Extend preview URLs with flexible site locales
+- ✨ Implement fuzzy search in content tree
+- 🔒 Fix AI rights for content managments
+- ⚡️ Drop redundant indexes to cut write overhead
+- ⚡️ Add navigation indexes for content/asset filters
+- ⚡️ Trim + paginate content version history query
+- ⚡️ Keep searchable_content LONGTEXT out of delivery reads
+- ⚡️ Add unique index on tokens.token for delivery lookups
+- ⚡️ Use exists() over count()>0 in folder delete guards
+- ⚡️ Drop per-keystroke deep-watch + deepClone in block editors
+- ⚡️ Cut asset-manager selection/render churn
+- ⚡️ Keep previous page data on paginated asset/icon queries
+- ⚡️ Cut the content editor's per-keystroke stringify storm
+- ⚡️ Key itemTrailIndex off a structure version, not a deep tree walk
+- ⚡️ Stop TiptapEditor double-stringifying the doc per prop update
+- ⚡️ Bundle lucide/flag icon collections instead of runtime API
+- ⚡️ Make content menu get-children O(1) via memoized index
+- 👔 Allow regional price codes like US-USD
+- 🚸 Increase preview image size
+
 ## [v2026.7.8-4f62aba2] — 2026-7-8
 
 - 👔 Improve multi assets selection
