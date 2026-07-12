@@ -94,13 +94,13 @@ const handleDuplicateCreated = (createdBlock: BlockResource) => {
     </div>
     <div
       v-else-if="block"
-      class="mx-auto flex w-full max-w-5xl flex-col gap-6 pb-6"
+      class="mx-auto flex w-full max-w-6xl flex-col gap-6 pb-6"
     >
       <ContentHeader
-        class="sticky top-14 z-10 bg-background"
+        class="sticky top-14 z-10 bg-background pb-2"
         :header="block.name"
       >
-        <template #start>
+        <template #before-header>
           <Button
             :as="RouterLink"
             :to="overviewRoute"
