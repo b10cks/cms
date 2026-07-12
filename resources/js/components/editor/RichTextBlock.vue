@@ -20,6 +20,10 @@ const headingLevels = computed<Array<'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | '
 const placeholders = computed(
   () => (props.item.placeholders || []) as Array<{ key: string; label: string }>
 )
+
+const features = computed(() => props.item.features || {})
+
+const listStyles = computed(() => props.item.list_styles || [])
 </script>
 
 <template>
@@ -34,6 +38,8 @@ const placeholders = computed(
       :html-classes="htmlClasses"
       :heading-levels="headingLevels"
       :placeholders="placeholders"
+      :features="features"
+      :list-styles="listStyles"
       :space-id="spaceId"
       @update:model-value="(v) => (value = v)"
     />

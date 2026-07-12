@@ -1,8 +1,10 @@
-import { Mark } from '@tiptap/core'
+import { Mark, mergeAttributes } from '@tiptap/core'
 
 interface InternalLinkAttrs {
   content: string
   anchor?: string
+  target?: string | null
+  rel?: string | null
 }
 
 const InternalLink = Mark.create({
@@ -22,9 +24,18 @@ const InternalLink = Mark.create({
       anchor: {
         default: null,
         parseHTML: (element) => element.getAttribute('data-anchor'),
-        renderHTML: (attributes) => ({
-          'data-anchor': attributes.anchor,
-        }),
+        renderHTML: (attributes) =>
+          attributes.anchor ? { 'data-anchor': attributes.anchor } : {},
+      },
+      target: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('target'),
+        renderHTML: (attributes) => (attributes.target ? { target: attributes.target } : {}),
+      },
+      rel: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('rel'),
+        renderHTML: (attributes) => (attributes.rel ? { rel: attributes.rel } : {}),
       },
     }
   },
@@ -37,15 +48,14 @@ const InternalLink = Mark.create({
     ]
   },
 
-  renderHTML({ attributes }: any) {
+  renderHTML({ HTMLAttributes }: any) {
     return [
       'a',
-      {
-        ...attributes,
+      mergeAttributes(HTMLAttributes, {
         'data-type': 'internal',
         href: '#',
         class: 'text-primary underline cursor-pointer',
-      },
+      }),
       0,
     ]
   },
@@ -60,7 +70,7 @@ const InternalLink = Mark.create({
         () =>
         ({ commands }: any) =>
           commands.unsetMark(this.name),
-    }
+    } as any
   },
 })
 

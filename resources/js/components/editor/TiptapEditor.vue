@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { AnyExtension } from '@tiptap/core'
 import { Table } from '@tiptap/extension-table'
 import { TableCell } from '@tiptap/extension-table-cell'
 import { TableHeader } from '@tiptap/extension-table-header'
@@ -7,7 +8,8 @@ import { DOMParser as ProseMirrorDOMParser } from '@tiptap/pm/model'
 import { StarterKit } from '@tiptap/starter-kit'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
 
-import ContentPicker from '~/components/editor/ContentPicker.vue'
+import LinkDialog from '~/components/editor/LinkDialog.vue'
+import type { LinkApplyPayload, LinkInitial } from '~/components/editor/linkTypes'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import {
@@ -18,7 +20,9 @@ import {
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 
-import { InternalLink, type InternalLinkAttrs } from './extensions/InternalLink'
+import { InternalLink } from './extensions/InternalLink'
+import { ListStyle } from './extensions/ListStyle'
+import { transformPastedHtml } from './extensions/pasteCleanup'
 import { PlaceholderToken } from './extensions/PlaceholderToken'
 import { TextClass } from './extensions/TextClass'
 
@@ -41,6 +45,8 @@ const props = withDefaults(
     disabled?: boolean
     headingLevels?: Array<'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'>
     placeholders?: Placeholder[]
+    features?: Partial<Record<RichTextFeature, boolean>>
+    listStyles?: ListStyleConfig[]
   }>(),
   {
     htmlClasses: () => [],
@@ -48,8 +54,14 @@ const props = withDefaults(
     spaceId: undefined,
     headingLevels: () => ['h1', 'h2', 'h3', 'h4', 'p'],
     placeholders: () => [],
+    features: () => ({}),
+    listStyles: () => [],
   }
 )
+
+// A feature is on unless the field config explicitly disables it, so existing
+// fields (no `features` map) keep every button.
+const isEnabled = (feature: RichTextFeature): boolean => props.features?.[feature] !== false
 
 const emit = defineEmits<{
   'update:modelValue': [value: Record<string, unknown>]
@@ -57,8 +69,9 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const contentPickerOpen = ref(false)
-const linkInSelection = ref<InternalLinkAttrs | null>(null)
+const linkDialogOpen = ref(false)
+const linkDialogInitial = ref<LinkInitial | null>(null)
+const linkHasSelection = ref(false)
 const isApplyingExternalContent = ref(false)
 const isBroken = ref(false)
 // Identity of the doc we last emitted, so the modelValue watcher can skip the
@@ -102,33 +115,59 @@ const headingDisplayLabel = computed(() => {
   return getHeadingLabel(currentHeading.value)
 })
 
+// Disabling a feature drops its extension (not just its button) so the node/mark
+// can't slip in via paste or input rules either.
+const buildExtensions = (): AnyExtension[] => {
+  const starterKitConfig: Record<string, unknown> = {
+    heading: isEnabled('heading') ? { levels: [1, 2, 3, 4, 5, 6] } : false,
+    link: isEnabled('link') ? { openOnClick: false, autolink: true } : false,
+  }
+  const toggleable: RichTextFeature[] = [
+    'bold',
+    'italic',
+    'underline',
+    'strike',
+    'code',
+    'bulletList',
+    'orderedList',
+    'blockquote',
+    'codeBlock',
+    'horizontalRule',
+  ]
+  for (const feature of toggleable) {
+    if (!isEnabled(feature)) starterKitConfig[feature] = false
+  }
+
+  const extensions: AnyExtension[] = [StarterKit.configure(starterKitConfig), TextClass, PlaceholderToken]
+
+  if (isEnabled('internalLink')) extensions.push(InternalLink)
+  if (isEnabled('bulletList') || isEnabled('orderedList')) extensions.push(ListStyle)
+  if (isEnabled('table')) {
+    extensions.push(
+      Table.configure({
+        resizable: true,
+        handleWidth: 4,
+        cellMinWidth: 50,
+        lastColumnResizable: true,
+        allowTableNodeSelection: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell
+    )
+  }
+
+  return extensions
+}
+
 const editor = useEditor({
   content: props.modelValue,
   editable: !props.disabled,
-  extensions: [
-    StarterKit.configure({
-      heading: {
-        levels: [1, 2, 3, 4, 5, 6],
-      },
-      link: {
-        openOnClick: false,
-        autolink: true,
-      },
-    }),
-    InternalLink,
-    TextClass,
-    PlaceholderToken,
-    Table.configure({
-      resizable: true,
-      handleWidth: 4,
-      cellMinWidth: 50,
-      lastColumnResizable: true,
-      allowTableNodeSelection: true,
-    }),
-    TableRow,
-    TableHeader,
-    TableCell,
-  ],
+  extensions: buildExtensions(),
+  editorProps: {
+    // Sanitize Word/Office HTML on paste; other sources pass through untouched.
+    transformPastedHTML: (html: string) => transformPastedHtml(html),
+  },
   onUpdate: ({ editor: currentEditor }) => {
     if (isApplyingExternalContent.value) return
     const json = currentEditor.getJSON()
@@ -142,29 +181,22 @@ const applyClass = (className: string) => {
   editor.value.chain().focus().toggleMark('textClass', { class: className }).run()
 }
 
-const openInternalLinkPicker = () => {
-  if (!editor.value || !props.spaceId) return
-  linkInSelection.value = null
-  contentPickerOpen.value = true
-}
+const activeListType = computed<'bullet' | 'ordered' | null>(() => {
+  if (editor.value?.isActive('orderedList')) return 'ordered'
+  if (editor.value?.isActive('bulletList')) return 'bullet'
+  return null
+})
 
-const onInternalLinkSelect = (contentId: string) => {
-  if (!editor.value) return
-  const linkData: InternalLinkAttrs = { content: contentId }
-  editor.value.chain().focus().setInternalLink(linkData).run()
-  contentPickerOpen.value = false
-}
+// Only offer styles that match the list the cursor is in (or that target both).
+const listStyleOptions = computed<ListStyleConfig[]>(() => {
+  const active = activeListType.value
+  if (!active) return props.listStyles
+  return props.listStyles.filter((s) => !s.type || s.type === 'both' || s.type === active)
+})
 
-const onInternalLinkWithAnchorSelect = (contentId: string, anchorId: string) => {
+const applyListStyle = (className: string | null) => {
   if (!editor.value) return
-  const linkData: InternalLinkAttrs = { content: contentId, anchor: anchorId }
-  editor.value.chain().focus().setInternalLink(linkData).run()
-  contentPickerOpen.value = false
-}
-
-const removeInternalLink = () => {
-  if (!editor.value) return
-  editor.value.chain().focus().unsetInternalLink().run()
+  ;(editor.value.chain().focus() as any).setListStyle(className).run()
 }
 
 const insertPlaceholder = (placeholder: Placeholder) => {
@@ -172,12 +204,76 @@ const insertPlaceholder = (placeholder: Placeholder) => {
   ;(editor.value.chain().focus() as any).insertPlaceholderToken(placeholder).run()
 }
 
-const insertExternalLink = () => {
+const canLinkUrl = computed(() => isEnabled('link'))
+const canLinkInternal = computed(() => isEnabled('internalLink') && !!props.spaceId)
+const canLink = computed(() => canLinkUrl.value || canLinkInternal.value)
+const isLinkActive = computed(
+  () => editor.value?.isActive('link') || editor.value?.isActive('internalLink')
+)
+
+// Open the unified link editor, prefilled from whichever link the cursor sits on.
+const openLinkDialog = () => {
   if (!editor.value) return
-  const url = prompt('Enter URL:')
-  if (url) {
-    editor.value.chain().focus().setLink({ href: url }).run()
+  linkHasSelection.value = !editor.value.state.selection.empty
+
+  if (editor.value.isActive('internalLink')) {
+    const attrs = editor.value.getAttributes('internalLink')
+    linkDialogInitial.value = {
+      kind: 'internal',
+      content: attrs.content,
+      anchor: attrs.anchor,
+      target: attrs.target,
+      rel: attrs.rel,
+    }
+  } else if (editor.value.isActive('link')) {
+    const attrs = editor.value.getAttributes('link')
+    linkDialogInitial.value = { kind: 'url', url: attrs.href, target: attrs.target, rel: attrs.rel }
+  } else {
+    linkDialogInitial.value = null
   }
+
+  linkDialogOpen.value = true
+}
+
+const onLinkApply = (payload: LinkApplyPayload) => {
+  if (!editor.value) return
+  const chain = editor.value.chain().focus()
+  const initial = linkDialogInitial.value
+
+  if (initial) {
+    // Editing an existing link — expand the selection to cover the whole mark.
+    chain.extendMarkRange(initial.kind === 'url' ? 'link' : 'internalLink')
+  } else if (!linkHasSelection.value && payload.text) {
+    // New link over a collapsed cursor — insert the text, then select it.
+    const from = editor.value.state.selection.from
+    chain.insertContent(payload.text).setTextSelection({ from, to: from + payload.text.length })
+  }
+
+  if (payload.kind === 'url') {
+    // Only touch a mark whose extension is actually registered (feature enabled).
+    if (isEnabled('internalLink')) chain.unsetMark('internalLink')
+    chain.setLink({ href: payload.url as string, target: payload.target, rel: payload.rel })
+  } else {
+    if (isEnabled('link')) chain.unsetMark('link')
+    ;(chain as any).setInternalLink({
+      content: payload.content,
+      anchor: payload.anchor,
+      target: payload.target,
+      rel: payload.rel,
+    })
+  }
+
+  chain.run()
+  linkDialogOpen.value = false
+}
+
+const onLinkRemove = () => {
+  if (!editor.value) return
+  const chain = editor.value.chain().focus()
+  if (isEnabled('link')) chain.extendMarkRange('link').unsetMark('link')
+  if (isEnabled('internalLink')) chain.extendMarkRange('internalLink').unsetMark('internalLink')
+  chain.run()
+  linkDialogOpen.value = false
 }
 
 watch(
@@ -241,6 +337,7 @@ onBeforeUnmount(() => {
       class="sticky top-0 z-10 flex flex-wrap gap-1 rounded-t border-b border-input bg-surface p-2"
     >
       <Button
+        v-if="isEnabled('bold')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -251,6 +348,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:bold" />
       </Button>
       <Button
+        v-if="isEnabled('italic')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -261,6 +359,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:italic" />
       </Button>
       <Button
+        v-if="isEnabled('underline')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -271,6 +370,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:underline" />
       </Button>
       <Button
+        v-if="isEnabled('strike')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -281,6 +381,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:strikethrough" />
       </Button>
       <Button
+        v-if="isEnabled('code')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -290,7 +391,7 @@ onBeforeUnmount(() => {
       >
         <Icon name="lucide:code-2" />
       </Button>
-      <DropdownMenu>
+      <DropdownMenu v-if="isEnabled('heading') && headingLevels.length">
         <DropdownMenuTrigger as-child>
           <Button
             size="xs"
@@ -335,6 +436,7 @@ onBeforeUnmount(() => {
         </DropdownMenuContent>
       </DropdownMenu>
       <Button
+        v-if="isEnabled('bulletList')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -345,6 +447,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:list" />
       </Button>
       <Button
+        v-if="isEnabled('orderedList')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -354,7 +457,43 @@ onBeforeUnmount(() => {
       >
         <Icon name="lucide:list-ordered" />
       </Button>
+      <DropdownMenu v-if="listStyles.length > 0 && (isEnabled('bulletList') || isEnabled('orderedList'))">
+        <DropdownMenuTrigger as-child>
+          <Button
+            type="button"
+            size="xs"
+            variant="outline"
+            class="gap-1"
+            :title="$t('labels.tiptap.toolbar.listStyle')"
+            :disabled="!activeListType"
+          >
+            <Icon name="lucide:list-tree" />
+            <Icon
+              name="lucide:chevron-down"
+              size="0.8rem"
+            />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent class="max-h-96 overflow-y-auto">
+          <DropdownMenuItem @click="applyListStyle(null)">
+            <Icon
+              name="lucide:list"
+              class="mr-2"
+            />
+            {{ $t('labels.tiptap.listStyles.default') }}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator v-if="listStyleOptions.length > 0" />
+          <DropdownMenuItem
+            v-for="style in listStyleOptions"
+            :key="style.className"
+            @click="applyListStyle(style.className)"
+          >
+            {{ style.name }}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <Button
+        v-if="isEnabled('codeBlock')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -365,6 +504,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:code" />
       </Button>
       <Button
+        v-if="isEnabled('blockquote')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -375,6 +515,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:quote" />
       </Button>
       <Button
+        v-if="isEnabled('horizontalRule')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -384,6 +525,7 @@ onBeforeUnmount(() => {
         <Icon name="lucide:minus" />
       </Button>
       <Button
+        v-if="isEnabled('table')"
         type="button"
         size="toolbar"
         variant="ghost"
@@ -394,7 +536,7 @@ onBeforeUnmount(() => {
       >
         <Icon name="lucide:table" />
       </Button>
-      <DropdownMenu>
+      <DropdownMenu v-if="isEnabled('table')">
         <DropdownMenuTrigger as-child>
           <Button
             type="button"
@@ -515,36 +657,15 @@ onBeforeUnmount(() => {
         </DropdownMenuContent>
       </DropdownMenu>
       <Button
+        v-if="canLink"
         type="button"
         size="toolbar"
         variant="ghost"
-        :title="$t('labels.tiptap.toolbar.externalLink')"
-        :class="editor?.isActive('link') && 'bg-primary text-primary-foreground'"
-        @click="insertExternalLink"
+        :title="$t('labels.tiptap.toolbar.link')"
+        :class="isLinkActive && 'bg-primary text-primary-foreground'"
+        @click="openLinkDialog"
       >
         <Icon name="lucide:link" />
-      </Button>
-      <Button
-        type="button"
-        size="toolbar"
-        variant="ghost"
-        :title="$t('labels.tiptap.toolbar.internalLink')"
-        :class="editor?.isActive('internalLink') && 'bg-primary text-primary-foreground'"
-        :disabled="!props.spaceId"
-        @click="openInternalLinkPicker"
-      >
-        <Icon name="lucide:link-2" />
-      </Button>
-      <Button
-        v-if="editor?.isActive('internalLink')"
-        type="button"
-        size="toolbar"
-        variant="ghost"
-        class="hover:text-destructive"
-        :title="$t('labels.tiptap.toolbar.removeInternalLink')"
-        @click="removeInternalLink"
-      >
-        <Icon name="lucide:trash-2" />
       </Button>
 
       <DropdownMenu v-if="placeholders.length > 0">
@@ -657,15 +778,16 @@ onBeforeUnmount(() => {
       :tabindex="props.disabled ? -1 : undefined"
     />
 
-    <ContentPicker
-      v-if="spaceId && !props.disabled"
-      :open="contentPickerOpen"
+    <LinkDialog
+      v-if="canLink && !props.disabled"
+      v-model:open="linkDialogOpen"
       :space-id="spaceId"
-      :show-elements="true"
-      title="Select Page or Section"
-      @update:open="contentPickerOpen = $event"
-      @content-select="onInternalLinkSelect"
-      @content-with-anchor-select="onInternalLinkWithAnchorSelect"
+      :allow-url="canLinkUrl"
+      :allow-internal="canLinkInternal"
+      :has-selection="linkHasSelection"
+      :initial="linkDialogInitial"
+      @apply="onLinkApply"
+      @remove="onLinkRemove"
     />
   </div>
 </template>
