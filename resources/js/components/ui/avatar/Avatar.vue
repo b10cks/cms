@@ -33,6 +33,15 @@ const width = computed(() => {
       return 64
   }
 })
+
+const fontSize = computed(() => {
+  switch (props.size) {
+    case 'sm':
+      return 'text-[8px] font-bold'
+    default:
+      return 'text-xs font-bold'
+  }
+})
 </script>
 
 <template>
@@ -52,7 +61,7 @@ const width = computed(() => {
     />
     <span
       v-else
-      class="text-xs font-bold"
+      :class="fontSize"
       >{{ initials }}</span
     >
   </div>

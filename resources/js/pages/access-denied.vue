@@ -82,7 +82,7 @@ useSeoMeta({
       <CardContent class="space-y-6">
         <p
           v-if="sourcePath"
-          class="text-sm text-muted-foreground"
+          class="text-muted-foreground"
         >
           {{ $t('labels.accessDenied.from', 'Requested page') }}:
           <span class="font-mono">{{ sourcePath }}</span>
@@ -114,7 +114,7 @@ useSeoMeta({
           <Button
             :as="RouterLink"
             :to="{ name: 'index' }"
-            variant="ghost"
+            variant="primary"
           >
             {{ $t('actions.toDashboard') }}
           </Button>
