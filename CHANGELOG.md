@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.12-87d61980] — 2026-7-12
+
+- 🩹 Fix publishing
+- 💄 Improve font in AlertDialog
+
 ## [v2026.7.12-1b52bf22] — 2026-7-12
 
 - 🐛 Fix clicking an item in the filtered content tree
