@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^2.0.1",
-    "@iconify-json/lucide": "^1.2.116",
+    "@iconify-json/lucide": "^1.2.117",
     "@iconify/vue": "^5.0.1",
     "@internationalized/date": "^3.12.2",
     "@tanstack/vue-query": "^5.101.2",
