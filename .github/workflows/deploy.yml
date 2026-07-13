@@ -33,7 +33,9 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # must leave room for a worst-case docs build (2 × 5 min timeout)
+    # on top of the normal ~10 min pipeline
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
@@ -64,6 +66,14 @@ jobs:
       - name: Install production Composer dependencies
         run: composer install --prefer-dist --no-interaction --no-progress --optimize-autoloader --no-dev
 
+      - name: Restore committed OpenAPI specs
+        # composer's post-autoload-dump runs `artisan docs:generate`, which
+        # regenerates docs/public/specs without a real app environment; the
+        # degenerate output sends the vitepress-openapi spec parser into an
+        # infinite loop during docs SSR. The committed specs are the source
+        # of truth for CI builds.
+        run: git checkout -- docs/public/specs
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -90,14 +100,21 @@ jobs:
           NODE_ENV: production
 
       - name: Build docs
-        # vitepress has hung indefinitely in the SSR render phase on runners
-        # (not reproducible since) — bound it and retry once instead of
-        # blocking the whole deploy
+        id: docs
+        # vitepress repeatedly hangs in the SSR render phase in this job
+        # (fine in isolation) — bound it, retry once, and never block the
+        # app deploy on it: on failure we skip docs publishing instead.
         run: |
-          timeout 600 bun run docs:build || {
+          if timeout 300 bun run docs:build || {
             echo "::warning::docs build failed or timed out — retrying once"
-            timeout 600 bun run docs:build
-          }
+            rm -rf public/docs
+            timeout 300 bun run docs:build
+          }; then
+            echo "built=true" >> $GITHUB_OUTPUT
+          else
+            echo "::warning::docs build failed twice — deploying without docs update"
+            echo "built=false" >> $GITHUB_OUTPUT
+          fi
         env:
           NODE_ENV: production
           APP_URL: ${{ vars.APP_FRONTEND_URL || 'https://app.b10cks.com' }}
@@ -167,6 +184,7 @@ jobs:
             --cache-control "max-age=7776000,s-maxage=604800,public"
 
       - name: Publish docs to S3
+        if: steps.docs.outputs.built == 'true'
         run: |
           # HTML gets short-lived cache (invalidated below), hashed assets long-lived
           aws s3 sync public/docs/ "s3://${{ env.DOCS_S3_BUCKET }}/docs" \
@@ -179,6 +197,7 @@ jobs:
             --cache-control "max-age=0,s-maxage=604800,public,must-revalidate"
 
       - name: Invalidate docs CloudFront cache
+        if: steps.docs.outputs.built == 'true'
         run: |
           aws cloudfront create-invalidation \
             --distribution-id ${{ env.DOCS_CLOUDFRONT_DISTRIBUTION_ID }} \
