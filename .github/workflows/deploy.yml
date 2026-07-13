@@ -33,6 +33,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -89,7 +90,14 @@ jobs:
           NODE_ENV: production
 
       - name: Build docs
-        run: bun run docs:build
+        # vitepress has hung indefinitely in the SSR render phase on runners
+        # (not reproducible since) — bound it and retry once instead of
+        # blocking the whole deploy
+        run: |
+          timeout 600 bun run docs:build || {
+            echo "::warning::docs build failed or timed out — retrying once"
+            timeout 600 bun run docs:build
+          }
         env:
           NODE_ENV: production
           APP_URL: ${{ vars.APP_FRONTEND_URL || 'https://app.b10cks.com' }}
