@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.13-e06dab19] — 2026-7-13
+
+- 👷‍♂️ Publish docs in s3 bucket
+
 ## [v2026.7.13-e7a48d53] — 2026-7-13
 
 - ⬆️ Bump versions
