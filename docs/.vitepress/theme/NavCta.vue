@@ -1,16 +1,20 @@
 <script setup lang="ts">
 /**
  * Login / signup links for the navbar. Plain anchors (not themeConfig.nav)
- * so VitePress doesn't prefix them with the `/docs/` base — they point to
- * the app on the same host.
+ * so VitePress doesn't prefix them with the `/docs/` base. __APP_URL__ is
+ * injected at build time from the APP_URL env var (see config.ts).
  */
+declare const __APP_URL__: string
+
 defineProps<{ screen?: boolean }>()
+
+const appUrl = __APP_URL__
 </script>
 
 <template>
   <div class="nav-cta" :class="{ screen }">
-    <a class="login" href="/login">Log in</a>
-    <a class="signup" href="/login/signup">Try for free</a>
+    <a class="login" :href="`${appUrl}/login`">Log in</a>
+    <a class="signup" :href="`${appUrl}/login/signup`">Try for free</a>
   </div>
 </template>
 

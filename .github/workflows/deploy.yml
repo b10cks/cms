@@ -92,6 +92,7 @@ jobs:
         run: bun run docs:build
         env:
           NODE_ENV: production
+          APP_URL: ${{ vars.APP_FRONTEND_URL || 'https://app.b10cks.com' }}
 
       - name: Login to Amazon ECR
         id: login-ecr

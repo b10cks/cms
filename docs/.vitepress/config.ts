@@ -165,6 +165,9 @@ const locales: LocaleConfig<DefaultTheme.Config> = {
 /** Canonical public URL of the docs (see `config/app.php`). */
 const DOCS_HOST = 'https://www.b10cks.com'
 
+/** App URL used for the login/signup links in the navbar. */
+const APP_URL = (process.env.APP_URL ?? 'https://app.b10cks.com').replace(/\/+$/, '')
+
 export default defineConfig({
   title: 'b10cks',
   description: 'Documentation for b10cks – the opinionated headless CMS',
@@ -232,5 +235,8 @@ export default defineConfig({
   vite: {
     // Keep the docs build fully independent from the app's vite.config.ts
     configFile: false,
+    define: {
+      __APP_URL__: JSON.stringify(APP_URL),
+    },
   },
 } satisfies UserConfig<DefaultTheme.Config>)
