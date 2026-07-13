@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.13-1e6589ef] — 2026-7-13
+
+- 👷‍♂️ Improve build workflow with vite press
+
 ## [v2026.7.13-e7d364d2] — 2026-7-13
 
 - 🐛 Make doc CTAs absolute
