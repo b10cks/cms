@@ -15,6 +15,8 @@ env:
 
   PHP_VERSION: '8.5'
   VITE_S3_BUCKET: ${{ secrets.VITE_S3_BUCKET }}
+  DOCS_S3_BUCKET: b10cks-production-docs
+  DOCS_CLOUDFRONT_DISTRIBUTION_ID: E2DCMG9O2W1BIA
 
   VITE_APP_FRONTEND_URL: ${{ vars.APP_FRONTEND_URL || 'https://app.b10cks.com/' }}
   VITE_APP_BACKEND_URL: ${{ vars.APP_BACKEND_URL || 'https://api.b10cks.com/' }}
@@ -154,6 +156,24 @@ jobs:
           aws s3 sync public/build/ "s3://${{ env.VITE_S3_BUCKET }}/build" \
             --delete \
             --cache-control "max-age=7776000,s-maxage=604800,public"
+
+      - name: Publish docs to S3
+        run: |
+          # HTML gets short-lived cache (invalidated below), hashed assets long-lived
+          aws s3 sync public/docs/ "s3://${{ env.DOCS_S3_BUCKET }}/docs" \
+            --delete \
+            --exclude "*.html" \
+            --cache-control "max-age=7776000,s-maxage=604800,public"
+          aws s3 sync public/docs/ "s3://${{ env.DOCS_S3_BUCKET }}/docs" \
+            --exclude "*" \
+            --include "*.html" \
+            --cache-control "max-age=0,s-maxage=604800,public,must-revalidate"
+
+      - name: Invalidate docs CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ env.DOCS_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/docs*"
 
       - name: Deploy CMS service to Amazon ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
