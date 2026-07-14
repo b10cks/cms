@@ -1,19 +1,17 @@
 ---
-description: "The asset manager: uploading, organizing, collections, metadata, and sharing."
+description: 'The asset manager: uploading, organizing, collections, metadata, and sharing.'
 ---
 
 # Asset Manager
 
 **Assets** is your media library — every image, video, document, and file your project uses, in one place. If you can use the file manager on your computer, you already know how to use it: folders, multi-select, cut and paste, keyboard navigation. Background concepts: [Assets](../concepts/assets.md) and [Image service](../concepts/image-service.md).
 
-**On this page:** [Browsing](#browsing-and-finding-files) · [Folders](#folders--and-their-rules) · [Tags](#tags) · [Collections](#collections) · [Uploading](#uploading) · [Asset details](#the-asset-detail-view) · [Bulk work](#working-with-many-assets-at-once) · [Sharing](#sharing-assets) · [Import & export](#import--export)
-
 ## Browsing and finding files
 
 - **Two views** — a thumbnail grid for visual browsing, a list for dense scanning. The folder tree, tag list, and collections sit in the sidebar.
-- **Select like in a file manager** — click; <kbd>Shift</kbd>-click for a range; <kbd>⌘/Ctrl</kbd>-click to add or remove one; *select all*, including everything matching your current filter across pages.
+- **Select like in a file manager** — click; <kbd>Shift</kbd>-click for a range; <kbd>⌘/Ctrl</kbd>-click to add or remove one; _select all_, including everything matching your current filter across pages.
 - **Keyboard first, if you like** — arrows move, <kbd>Enter</kbd> opens, typing a name jumps to the first match, cut/paste moves files between folders. Press <kbd>?</kbd> anytime for the shortcut overview.
-- **Filter** by file type (image, video, audio, document…), tags, folder, rights status, or license expiry — and combine filters ("images tagged *hero* whose license expires before March").
+- **Filter** by file type (image, video, audio, document…), tags, folder, rights status, or license expiry — and combine filters ("images tagged _hero_ whose license expires before March").
 
 ## Folders — and their rules
 
@@ -29,20 +27,20 @@ Folders organize the library like on disk: create, rename, move, nest. Two thing
 
 ## Tags
 
-Tags cut across folders — an image lives in *one* folder but can carry many tags (`hero`, `2026`, `campaign-spring`). Each tag has a name, a color, and an icon, so tag chips stay recognizable. Deleting a tag never touches the assets; it just removes the label. Use **Bulk tag** to add or remove tags on a whole selection at once.
+Tags cut across folders — an image lives in _one_ folder but can carry many tags (`hero`, `2026`, `campaign-spring`). Each tag has a name, a color, and an icon, so tag chips stay recognizable. Deleting a tag never touches the assets; it just removes the label. Use **Bulk tag** to add or remove tags on a whole selection at once.
 
 ## Collections
 
-Collections sit below folders and tags in the sidebar, but group assets *across* folders — the same file can appear in several collections. Create one with the **+** on the collection list. Each has a name, icon, and color; open one and its assets fill the grid with the collection's name in the breadcrumb. Two kinds ([concept](../concepts/assets.md#collections)):
+Collections sit below folders and tags in the sidebar, but group assets _across_ folders — the same file can appear in several collections. Create one with the **+** on the collection list. Each has a name, icon, and color; open one and its assets fill the grid with the collection's name in the breadcrumb. Two kinds ([concept](../concepts/assets.md#collections)):
 
-- **Manual** — curate by hand: drag assets onto the collection, or use **Add to collection** from an asset's menu or the selection bar. *Remove from collection* takes an asset out again without deleting the file.
+- **Manual** — curate by hand: drag assets onto the collection, or use **Add to collection** from an asset's menu or the selection bar. _Remove from collection_ takes an asset out again without deleting the file.
 - **Smart** — instead of adding files you define rules: pick a field (filename, tags, size, folder, orientation, rights status, dates …), an operator, and a value, and match **all** or **any** conditions. The collection fills itself and stays current as assets change.
 
-> **Remove vs. delete** — inside a collection, *Remove from collection* only unlinks the asset from that collection; *Delete from library* permanently removes the asset everywhere it's used. The menu labels and the confirmation dialog spell out the difference so the two are never confused.
+> **Remove vs. delete** — inside a collection, _Remove from collection_ only unlinks the asset from that collection; _Delete from library_ permanently removes the asset everywhere it's used. The menu labels and the confirmation dialog spell out the difference so the two are never confused.
 
 ## Uploading
 
-Drag files anywhere into the library (or click *Browse files*). Before the upload finishes, the details dialog walks you through what your space needs:
+Drag files anywhere into the library (or click _Browse files_). Before the upload finishes, the details dialog walks you through what your space needs:
 
 - **Required information is collected now** — if alt text is mandatory here, you're asked for it upfront rather than chased later. A counter shows which files still miss required details.
 - **Duplicate detection** — if a file looks identical to something already in the library, b10cks offers to **use the existing asset** instead of storing a second copy (or upload anyway, your call).
@@ -55,7 +53,7 @@ Open any asset for the full picture — and use the arrow buttons to step throug
 
 ### Details & metadata
 
-Filename, alt text, title, description, and any custom fields your space (or this folder) defines — with per-language values for translatable fields. An *unsaved changes* hint keeps you from navigating away mid-edit.
+Filename, alt text, title, description, and any custom fields your space (or this folder) defines — with per-language values for translatable fields. An _unsaved changes_ hint keeps you from navigating away mid-edit.
 
 ### Focus point
 
@@ -67,7 +65,7 @@ The extracted color palette with, per color: contrast ratios against black and w
 
 ### Rights & licensing
 
-Copyright holder, license type (proprietary, CC0, CC BY, …), usage restrictions, and expiry date. Assets show their rights status (*unrestricted / restricted / expired*) as a visible indicator — informational, so workflows aren't blocked, but nobody can say they didn't see it. Filter the library by rights status or upcoming expiry to audit before a campaign.
+Copyright holder, license type (proprietary, CC0, CC BY, …), usage restrictions, and expiry date. Assets show their rights status (_unrestricted / restricted / expired_) as a visible indicator — informational, so workflows aren't blocked, but nobody can say they didn't see it. Filter the library by rights status or upcoming expiry to audit before a campaign.
 
 ### Linked content
 
