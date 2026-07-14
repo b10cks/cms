@@ -58,7 +58,7 @@ const getChangeClasses = (type: ChangeType): string => {
     case 'changed':
       return `${baseClasses} bg-info/10 border-info`
     default:
-      return `${baseClasses} bg-gray/10 border-gray`
+      return `${baseClasses} bg-muted-background/20 border-border-strong`
   }
 }
 
@@ -82,7 +82,7 @@ const getBadgeClasses = (type: ChangeType): string => {
     case 'changed':
       return 'bg-info/20 text-info'
     default:
-      return 'bg-gray/20 text-gray-700'
+      return 'bg-muted-background/40 text-foreground'
   }
 }
 

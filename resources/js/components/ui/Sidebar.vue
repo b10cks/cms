@@ -100,7 +100,7 @@ const availableLocales = locales
 <template>
   <div
     :class="[
-      'flex h-full flex-col overflow-hidden border-r border-r-border select-none transition-all',
+      'flex h-full flex-col overflow-hidden border-r border-r-sidebar-border bg-sidebar text-sidebar-foreground select-none transition-all',
       isExtendedSidebar ? 'w-18 p-1 pb-3' : 'w-14 p-3',
     ]"
   >
@@ -117,10 +117,10 @@ const availableLocales = locales
           <RouterLink
             :to="buildLink(m.routeName)"
             :class="[
-              'w-full flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-border',
+              'w-full flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-sidebar-accent',
               isExtendedSidebar ? 'flex-col gap-1 p-2 text-center' : 'size-8 ',
             ]"
-            active-class="text-primary bg-border"
+            active-class="text-sidebar-accent-foreground bg-sidebar-accent"
             @mouseenter="preloadRoute(buildLink(m.routeName))"
             @focusin="preloadRoute(buildLink(m.routeName))"
             @mouseleave="cancelPreload(buildLink(m.routeName))"
@@ -143,7 +143,7 @@ const availableLocales = locales
     <div class="flex flex-col items-center gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger
-          class="relative flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted transition-colors duration-200 hover:bg-elevated hover:text-primary data-[state=open]:bg-elevated"
+          class="relative flex size-9 cursor-pointer items-center justify-center rounded-lg text-sidebar-muted transition-colors duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent"
         >
           <Icon name="lucide:circle-question-mark" />
           <DropdownMenuContent
@@ -204,7 +204,7 @@ const availableLocales = locales
         </DropdownMenuTrigger>
       </DropdownMenu>
       <NotificationBell />
-      <div class="flex flex-col items-center gap-2 border-t-2 border-t-border pt-3">
+      <div class="flex flex-col items-center gap-2 border-t-2 border-t-sidebar-border pt-3">
         <DropdownMenu v-if="user">
           <DropdownMenuTrigger>
             <Avatar

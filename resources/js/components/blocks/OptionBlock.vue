@@ -210,7 +210,7 @@ watch(
           <button
             type="button"
             :disabled="readonly"
-            class="ml-auto cursor-pointer p-2 text-gray-400 hover:text-red-500 focus:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+            class="ml-auto cursor-pointer p-2 text-muted hover:text-destructive focus:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Remove option"
             tabindex="-1"
             @click="() => removeOption(index)"

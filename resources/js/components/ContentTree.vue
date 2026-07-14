@@ -522,10 +522,10 @@ function setContentTreeDragPreview({
       preview.style.maxWidth = '220px'
       preview.style.padding = '8px 10px'
       preview.style.borderRadius = '10px'
-      preview.style.border = '1px solid rgba(148, 163, 184, 0.35)'
-      preview.style.background = 'rgba(15, 23, 42, 0.94)'
-      preview.style.boxShadow = '0 12px 24px rgba(15, 23, 42, 0.18)'
-      preview.style.color = '#f8fafc'
+      preview.style.border = '1px solid var(--popover-border)'
+      preview.style.background = 'var(--popover)'
+      preview.style.boxShadow = 'var(--shadow-soft-sm, 0 4px 12px rgb(0 0 0 / 0.15))'
+      preview.style.color = 'var(--popover-foreground)'
       preview.style.fontSize = '12px'
       preview.style.fontWeight = '600'
       preview.style.lineHeight = '16px'
@@ -543,7 +543,7 @@ function setContentTreeDragPreview({
         badge.style.flexShrink = '0'
         badge.style.padding = '2px 6px'
         badge.style.borderRadius = '999px'
-        badge.style.background = 'rgba(248, 250, 252, 0.14)'
+        badge.style.background = 'var(--muted-background)'
         badge.style.fontSize = '11px'
         badge.style.fontWeight = '700'
         preview.appendChild(badge)
@@ -2097,7 +2097,7 @@ onBeforeUnmount(() => {
 <template>
   <aside
     ref="treeContainerRef"
-    class="relative flex h-full min-h-0 flex-col overflow-hidden"
+    class="relative flex h-full min-h-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground"
     @keydown.capture="handleTreeKeydownCapture"
   >
     <div class="shrink-0 px-2 pt-2">
@@ -2113,7 +2113,7 @@ onBeforeUnmount(() => {
         ref="rootDropZoneRef"
         :class="[
           'group relative flex w-full items-center gap-2 rounded-md border border-transparent pl-2 py-1 transition-all duration-150',
-          rootDropMode ? 'bg-accent/50 ring-1 ring-info' : '',
+          rootDropMode ? 'bg-tree-drop ring-1 ring-ring' : '',
         ]"
         @contextmenu="handleRootContextMenu"
       >
@@ -2286,15 +2286,17 @@ onBeforeUnmount(() => {
           :to="buildLink(item.value.id)"
           :data-content-id="item.value.id"
           :class="[
-            'group relative my-0.5 flex items-center gap-2 rounded-md py-1 pr-2 pl-0 outline-none',
-            'transition-colors duration-150 hover:bg-border',
-            'focus-visible:ring-1 focus-visible:ring-info',
+            'group relative my-0.5 flex items-center gap-2 rounded-md border border-transparent py-1 pr-2 pl-0 outline-none',
+            'transition-colors duration-150 hover:bg-tree-hover',
+            'focus-visible:ring-1 focus-visible:ring-ring',
             'cursor-pointer font-semibold',
-            item.value.id === selectedItemId ? 'text-primary' : '',
+            item.value.id === selectedItemId ? 'text-tree-selected-foreground' : '',
             isCutItem(item.value.id) ? 'opacity-50' : '',
-            isItemSelected(item.value.id) ? 'bg-border text-primary' : '',
+            isItemSelected(item.value.id)
+              ? 'bg-tree-selected border-tree-selected-border text-tree-selected-foreground'
+              : '',
             dropResolution?.nest && dropResolution.rowId === item.value.id
-              ? 'bg-accent/50 ring-1 ring-info/30'
+              ? 'bg-tree-drop ring-1 ring-ring/40'
               : '',
           ]"
           @mouseenter="startDetailPrefetch(item.value.id)"

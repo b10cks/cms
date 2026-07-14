@@ -52,6 +52,13 @@
   --checkerboard-dark: var(--color-gray-200);
   --checkerboard-size: 20px;
 
+  /* Elevation ladder (light): surface (canvas) < background (panel) < card/popover.
+     Depth convention:
+       L0 canvas   bg-surface, no shadow
+       L1 panel    bg-background
+       L2 card     bg-card shadow-soft
+       L3 popover  bg-popover border-popover-border shadow-soft-lg
+       L4 modal    bg-background shadow-soft-lg over bg-overlay scrim */
   --surface: var(--color-gray-100);
   --background: var(--color-gray-50);
   --elevated: var(--color-gray-150);
@@ -60,21 +67,43 @@
   --primary: var(--color-gray-900);
   --primary-foreground: var(--color-gray-50);
   --secondary: var(--color-gray-150);
+  --secondary-foreground: var(--color-gray-800);
 
   --card: var(--color-white);
+  --card-foreground: var(--color-gray-700);
   --accent: var(--color-blue-500);
   --accent-hover: var(--color-blue-700);
   --accent-foreground: var(--color-white);
+  /* --muted is a TEXT color (app-wide convention); --muted-background is the surface pair */
   --muted: var(--color-gray-600);
+  --muted-background: var(--color-gray-150);
 
   --input: var(--color-white);
-  --input-border: var(--color-gray-100);
+  --input-border: var(--color-gray-200);
 
   --border: var(--color-gray-200);
+  --border-strong: var(--color-gray-250);
   --ring: var(--color-blue-500);
   --popover: var(--color-white);
-  --popover-foreground: var(--color-gray-600);
-  --popover-border: var(--color-gray-100);
+  --popover-foreground: var(--color-gray-700);
+  --popover-border: var(--color-gray-200);
+
+  --overlay: oklch(20.63% 0.008 277.83 / 0.45);
+
+  --sidebar: var(--color-gray-100);
+  --sidebar-foreground: var(--color-gray-700);
+  --sidebar-muted: var(--color-gray-600);
+  --sidebar-accent: var(--color-gray-200);
+  --sidebar-accent-foreground: var(--color-gray-900);
+  --sidebar-border: var(--color-gray-200);
+  --sidebar-ring: var(--color-blue-500);
+
+  --tree-hover: var(--color-gray-200);
+  --tree-selected: oklch(66.71% 0.161 245.54 / 0.18);
+  --tree-selected-border: oklch(66.71% 0.161 245.54 / 0.45);
+  --tree-selected-foreground: var(--color-gray-900);
+  --tree-drop: oklch(66.71% 0.161 245.54 / 0.15);
+  --tree-guide: var(--color-gray-250);
 
   --destructive: var(--color-red-600);
   --destructive-foreground: var(--color-red-800);
@@ -98,10 +127,12 @@
 }
 
 .dark {
+  /* Elevation ladder (dark): surface 950 < background 900 < card 850 < elevated/popover 800.
+     Depth comes from lighter surfaces + borders. */
   --surface: var(--color-gray-950);
   --background: var(--color-gray-900);
-  --elevated: var(--color-gray-850);
-  --foreground: var(--color-gray-400);
+  --elevated: var(--color-gray-800);
+  --foreground: var(--color-gray-300);
 
   --checkerboard-light: var(--color-gray-900);
   --checkerboard-dark: var(--color-gray-950);
@@ -109,22 +140,43 @@
   --primary: var(--color-gray-50);
   --primary-foreground: var(--color-gray-950);
   --secondary: var(--color-gray-800);
+  --secondary-foreground: var(--color-gray-200);
 
   --card: var(--color-gray-850);
+  --card-foreground: var(--color-gray-300);
   --accent: var(--color-blue-500);
-  --accent-hover: var(--color-blue-700);
+  --accent-hover: var(--color-blue-400);
   --accent-foreground: var(--color-white);
-  --muted: var(--color-gray-500);
+  --muted: var(--color-gray-400);
+  --muted-background: var(--color-gray-800);
 
   --input: var(--color-gray-800);
   --input-border: var(--color-gray-750);
 
   --border: var(--color-gray-800);
+  --border-strong: var(--color-gray-750);
   --ring: var(--color-blue-500);
 
-  --popover: var(--color-gray-850);
-  --popover-foreground: var(--color-gray-400);
-  --popover-border: var(--color-gray-800);
+  --popover: var(--color-gray-800);
+  --popover-foreground: var(--color-gray-300);
+  --popover-border: var(--color-gray-750);
+
+  --overlay: oklch(0% 0 0 / 0.6);
+
+  --sidebar: var(--color-gray-950);
+  --sidebar-foreground: var(--color-gray-400);
+  --sidebar-muted: var(--color-gray-500);
+  --sidebar-accent: var(--color-gray-850);
+  --sidebar-accent-foreground: var(--color-gray-50);
+  --sidebar-border: var(--color-gray-850);
+  --sidebar-ring: var(--color-blue-500);
+
+  --tree-hover: var(--color-gray-850);
+  --tree-selected: oklch(66.71% 0.161 245.54 / 0.22);
+  --tree-selected-border: oklch(66.71% 0.161 245.54 / 0.5);
+  --tree-selected-foreground: var(--color-gray-50);
+  --tree-drop: oklch(66.71% 0.161 245.54 / 0.18);
+  --tree-guide: var(--color-gray-800);
 
   --destructive: var(--color-red-500);
   --destructive-foreground: var(--color-red-200);
@@ -168,20 +220,40 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
 
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-foreground: var(--accent-foreground);
   --color-text-muted: var(--muted);
   --color-muted: var(--muted);
+  --color-muted-background: var(--muted-background);
   --color-input: var(--input);
   --color-input-border: var(--input-border);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-ring: var(--ring);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover-border: var(--popover-border);
+  --color-overlay: var(--overlay);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-tree-hover: var(--tree-hover);
+  --color-tree-selected: var(--tree-selected);
+  --color-tree-selected-border: var(--tree-selected-border);
+  --color-tree-selected-foreground: var(--tree-selected-foreground);
+  --color-tree-drop: var(--tree-drop);
+  --color-tree-guide: var(--tree-guide);
 
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
@@ -555,20 +627,6 @@
   opacity: 0;
 }
 
-.bg-checkered {
-  background-color: #fff;
-  background-image:
-    linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
-    linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
-    linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
-  background-size: 10px 10px;
-  background-position:
-    0 0,
-    0 5px,
-    5px -5px,
-    -5px 0;
-}
 
 .slide-down-enter-active,
 .slide-down-leave-active {

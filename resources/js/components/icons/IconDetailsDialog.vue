@@ -34,7 +34,7 @@ type PreviewBg = 'light' | 'dark' | 'checkered'
 const BG_CLASSES: Record<PreviewBg, string> = {
   light: 'bg-white',
   dark: 'bg-gray-900',
-  checkered: 'bg-checkered',
+  checkered: 'checkerboard checkerboard-sm',
 }
 
 const COLOR_SWATCHES = [
@@ -171,7 +171,7 @@ const remove = async () => {
                     'size-5 rounded border-2 transition-colors cursor-pointer',
                     cls,
                     previewBg === bg ? 'border-primary' : 'border-input hover:border-muted',
-                    bg === 'checkered' ? 'bg-checkered' : '',
+                    bg === 'checkered' ? 'checkerboard checkerboard-sm' : '',
                   ]"
                   @click="previewBg = bg as PreviewBg"
                 />

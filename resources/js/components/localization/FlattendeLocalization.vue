@@ -1539,10 +1539,10 @@ const removeAllOrphanedBlocks = (): void => {
             v-else
             class="grid grid-cols-2 gap-4 px-4 py-2 text-muted italic"
           >
-            <div class="rounded border border-elevated bg-gray-850 p-2">
+            <div class="rounded border border-border bg-card p-2">
               {{ field.originalValue }}
             </div>
-            <div class="rounded border border-elevated bg-gray-850 p-2">
+            <div class="rounded border border-border bg-card p-2">
               <Input
                 :value="field.translatedValue"
                 @input="

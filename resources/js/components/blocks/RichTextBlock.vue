@@ -548,7 +548,7 @@ watch(
                 type="button"
                 :class="[
                   'cursor-pointer p-2 hover:text-primary focus:text-primary',
-                  expandedCss.has(htmlClass) ? 'text-primary' : 'text-gray-400',
+                  expandedCss.has(htmlClass) ? 'text-primary' : 'text-muted',
                 ]"
                 :aria-label="$t('labels.blocks.richtext.htmlClasses.toggleCss')"
                 :title="$t('labels.blocks.richtext.htmlClasses.toggleCss')"
@@ -559,7 +559,7 @@ watch(
               </button>
               <button
                 type="button"
-                class="cursor-pointer p-2 text-gray-400 hover:text-red-500 focus:text-red-500"
+                class="cursor-pointer p-2 text-muted hover:text-destructive focus:text-destructive"
                 :aria-label="$t('actions.blocks.richtext.removeHtmlClass')"
                 tabindex="-1"
                 @click="() => htmlClassEditor.remove(index)"
@@ -635,7 +635,7 @@ watch(
             />
             <button
               type="button"
-              class="ml-auto cursor-pointer p-2 text-gray-400 hover:text-red-500 focus:text-red-500"
+              class="ml-auto cursor-pointer p-2 text-muted hover:text-destructive focus:text-destructive"
               :aria-label="$t('actions.blocks.richtext.removePlaceholder')"
               tabindex="-1"
               @click="() => placeholderEditor.remove(index)"

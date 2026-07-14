@@ -85,12 +85,12 @@ const isSpaceSelected = computed(() => !!selectedSpace.value)
 
 <template>
   <div
-    class="fixed top-0 z-20 flex h-14 w-full items-center gap-3 border-b border-border bg-surface p-3 select-none"
+    class="fixed top-0 z-20 flex h-14 w-full items-center gap-3 border-b border-sidebar-border bg-sidebar text-sidebar-foreground p-3 select-none"
   >
     <div class="flex items-center gap-3">
       <DropdownMenu>
         <DropdownMenuTrigger
-          class="flex cursor-pointer gap-2 rounded-lg bg-secondary p-2 transition-colors duration-200 hover:bg-elevated data-[state=open]:bg-elevated"
+          class="flex cursor-pointer gap-2 rounded-lg bg-sidebar-accent/60 p-2 transition-colors duration-200 hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent"
         >
           <Logo
             alt="b10cks"
@@ -159,7 +159,7 @@ const isSpaceSelected = computed(() => !!selectedSpace.value)
                   :key="space.id"
                   :class="[
                     'w-full cursor-pointer',
-                    space.id === selectedSpaceId ? 'bg-blue-600 text-primary' : '',
+                    space.id === selectedSpaceId ? 'bg-accent text-accent-foreground' : '',
                   ]"
                   @select="switchSpace(space.id)"
                 >

@@ -136,7 +136,7 @@ const copyToken = (token: string) => {
               <TableRow v-if="tokens?.length === 0">
                 <TableCell
                   colspan="3"
-                  class="text-center text-gray-500"
+                  class="text-center text-muted"
                 >
                   {{ $t('labels.settings.accessTokens.noTokens') }}
                 </TableCell>

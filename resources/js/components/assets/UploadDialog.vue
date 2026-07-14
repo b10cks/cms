@@ -379,9 +379,9 @@ const getProgressColor = (status: 'pending' | 'uploading' | 'error' | 'complete'
     case 'complete':
       return 'bg-green-500'
     case 'error':
-      return 'bg-red-500'
+      return 'bg-destructive'
     default:
-      return 'bg-gray-300'
+      return 'bg-muted-background'
   }
 }
 
@@ -468,7 +468,7 @@ const retryUpload = async (file: UploadFileWithProgress) => {
             >
               <button
                 v-if="file.status !== 'uploading'"
-                class="absolute top-1 right-1 z-10 flex h-6 w-6 cursor-pointer items-center justify-center text-primary/50 hover:text-red-500"
+                class="absolute top-1 right-1 z-10 flex h-6 w-6 cursor-pointer items-center justify-center text-primary/50 hover:text-destructive"
                 @click.stop="removeFile(file.id)"
               >
                 <Icon name="lucide:trash-2" />
@@ -513,7 +513,7 @@ const retryUpload = async (file: UploadFileWithProgress) => {
                 </div>
                 <div
                   v-else-if="file.status === 'error'"
-                  class="bg-opacity-70 absolute inset-0 flex items-center justify-center bg-red-700"
+                  class="bg-opacity-70 absolute inset-0 flex items-center justify-center bg-destructive-background"
                 >
                   <div class="p-2 text-center text-primary">
                     <Icon

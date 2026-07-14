@@ -6,7 +6,7 @@ defineProps<{ value: any }>()
   <div>
     <span
       v-if="value === null"
-      class="text-gray-400 italic"
+      class="text-muted italic"
       >null</span
     >
     <span v-else-if="typeof value === 'string'">"{{ value }}"</span>
@@ -14,7 +14,7 @@ defineProps<{ value: any }>()
     <span v-else-if="typeof value === 'boolean'">{{ value }}</span>
     <pre
       v-else
-      class="whitespace-pre-wrap text-gray-700"
+      class="whitespace-pre-wrap text-foreground"
       >{{ JSON.stringify(value, null, 2) }}</pre
     >
   </div>
