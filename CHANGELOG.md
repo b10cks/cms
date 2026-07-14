@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.14-70ca5312] — 2026-7-14
+
+- ⬆️ Bump versions
+- 💡 Improve docs
+
 ## [v2026.7.13-f8dc955f] — 2026-7-13
 
 - 👷‍♂️ Fix docs build hang: restore specs clobbered by composer, make docs non-fatal
