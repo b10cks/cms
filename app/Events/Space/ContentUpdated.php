@@ -2,6 +2,7 @@
 
 namespace App\Events\Space;
 
+use App\Events\Concerns\ResolvesBroadcastPayload;
 use App\Http\Resources\Management\ContentResource;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
@@ -11,6 +12,7 @@ use Illuminate\Queue\SerializesModels;
 
 class ContentUpdated implements ShouldBroadcast
 {
+    use ResolvesBroadcastPayload;
     use SerializesModels;
 
     public Space $space;
@@ -29,7 +31,7 @@ class ContentUpdated implements ShouldBroadcast
 
         $content->load(['block', 'i18n_children']);
         $content->loadCount(['children']);
-        $this->payload = ContentResource::make($content)->resolve();
+        $this->payload = $this->resolveBroadcastPayload(ContentResource::make($content));
     }
 
     public function broadcastOn()

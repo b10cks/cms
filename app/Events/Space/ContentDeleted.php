@@ -2,6 +2,7 @@
 
 namespace App\Events\Space;
 
+use App\Events\Concerns\ResolvesBroadcastPayload;
 use App\Http\Resources\Management\ContentResource;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
@@ -11,6 +12,7 @@ use Illuminate\Queue\SerializesModels;
 
 class ContentDeleted implements ShouldBroadcast
 {
+    use ResolvesBroadcastPayload;
     use SerializesModels;
 
     public Space $space;
@@ -26,7 +28,7 @@ class ContentDeleted implements ShouldBroadcast
     public function __construct(Content $content, Space $space)
     {
         $this->space = $space;
-        $this->payload = ContentResource::make($content)->resolve();
+        $this->payload = $this->resolveBroadcastPayload(ContentResource::make($content));
     }
 
     public function broadcastOn()

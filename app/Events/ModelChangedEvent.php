@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Events\Concerns\ResolvesBroadcastPayload;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -15,6 +16,7 @@ class ModelChangedEvent implements ShouldBroadcast
 {
     use Dispatchable;
     use InteractsWithSockets;
+    use ResolvesBroadcastPayload;
 
     protected string $action;
 
@@ -49,7 +51,7 @@ class ModelChangedEvent implements ShouldBroadcast
         $this->action = strtolower($action);
         $this->modelKey = (string) $model->getKey();
         $this->modelType = str_replace('_', '.', $model->getTable());
-        $this->payload = $resourceClass::make($model)->resolve();
+        $this->payload = $this->resolveBroadcastPayload($resourceClass::make($model));
     }
 
     /**
