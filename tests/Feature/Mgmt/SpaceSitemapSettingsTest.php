@@ -3,10 +3,7 @@
 namespace Tests\Feature\Mgmt;
 
 use App\Models\Management\Space;
-use App\Models\System\AuditLog;
 use App\Models\User;
-use App\Services\System\AuditService;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -29,20 +26,6 @@ class SpaceSitemapSettingsTest extends TestCase
         $this->space = Space::factory()->withLive()->create();
         $this->assignSpaceRole($this->space, $this->owner, 'owner');
         $this->setUpSpaceTesting($this->space);
-
-        app()->instance(AuditService::class, new class extends AuditService
-        {
-            public function log(
-                string $action,
-                Model $entity,
-                ?array $oldValues = null,
-                ?array $newValues = null,
-                ?array $metadata = null,
-                ?User $user = null,
-            ): AuditLog {
-                return new AuditLog;
-            }
-        });
     }
 
     #[Test]

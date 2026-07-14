@@ -48,9 +48,7 @@ class CommentReactionControllerTest extends TestCase
         $this->setUpSpaceTesting($this->space);
 
         // Create content in the space
-        $this->content = Content::factory()->create([
-            'space_id' => $this->space->id,
-        ]);
+        $this->content = Content::factory()->create();
 
         // Create a root comment for testing
         $this->rootComment = Comment::factory()->create([
@@ -304,8 +302,8 @@ class CommentReactionControllerTest extends TestCase
                 'space' => $this->space->id,
                 'content' => $this->content->id,
                 'comment' => $this->rootComment->id,
-                'reaction' => $reaction->id,
-            ])
+            ]),
+            ['emoji' => ':+1:']
         );
 
         $response->assertStatus(204);
@@ -325,16 +323,23 @@ class CommentReactionControllerTest extends TestCase
 
         $this->actingAs($this->viewer);
 
+        // Deletion is scoped to the authenticated user's own reaction for the
+        // given emoji, so the viewer's request must not remove the owner's reaction.
         $response = $this->deleteJson(
             route('mgmt.comments.reactions.destroy', [
                 'space' => $this->space->id,
                 'content' => $this->content->id,
                 'comment' => $this->rootComment->id,
-                'reaction' => $reaction->id,
-            ])
+            ]),
+            ['emoji' => ':+1:']
         );
 
-        $response->assertStatus(403);
+        $response->assertStatus(204);
+        $this->assertDatabaseHas('comment_reactions', [
+            'id' => $reaction->id,
+            'author_id' => $this->owner->id,
+            'emoji' => ':+1:',
+        ]);
     }
 
     #[Test]
@@ -354,7 +359,7 @@ class CommentReactionControllerTest extends TestCase
         );
 
         $response->assertStatus(422);
-        $response->assertJsonPath('errors.emoji.0', 'The emoji field must be a valid emoji code (e.g., :+1:, :heart:, :eyes:, :+1::skin-tone-4:).');
+        $response->assertJsonPath('errors.emoji.0', 'The emoji field format is invalid.');
     }
 
     #[Test]

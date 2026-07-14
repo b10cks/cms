@@ -57,6 +57,15 @@ class AutomationContextFactory
             'tags' => $model->settings?->cacheTags() ?? [],
         ] : null;
 
+        // A content's title lives in the `name` column, but templates read it as
+        // `{{ content.title }}`. Alias it on content triggers so a template does
+        // not have to know the column name — and expose the `content` namespace
+        // those templates address, which otherwise only exists on manual payloads.
+        $withTitle = static fn (?array $row): ?array => $row === null
+            ? null
+            : $row + ['title' => $row['name'] ?? null];
+        $isContent = $model instanceof Content;
+
         return [
             'source' => 'trigger',
             'operation' => $triggerType->value,
@@ -70,8 +79,9 @@ class AutomationContextFactory
             'model' => class_basename($model),
             'model_type' => $table,
             'record_id' => $model->getKey(),
-            'record' => $record,
-            'previous' => $before,
+            ...($isContent ? ['content' => $withTitle($record)] : []),
+            'record' => $isContent ? $withTitle($record) : $record,
+            'previous' => $isContent ? $withTitle($before) : $before,
             'changes' => $changes,
             'changed_fields' => array_values($changedColumns),
             'space' => $space ? [

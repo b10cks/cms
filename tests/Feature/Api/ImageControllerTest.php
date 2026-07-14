@@ -35,7 +35,7 @@ class ImageControllerTest extends TestCase
 
         $this->getJson('/ilum/storage/space/asset/image.jpg/w_200?quality=101')
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['quality']);
+            ->assertJsonValidationErrors(['quality'], 'details');
     }
 
     #[Test]
@@ -47,7 +47,7 @@ class ImageControllerTest extends TestCase
             ->withArgs(function ($disk, $fullPath, $transformation): bool {
                 return $fullPath === 'space/asset/image.jpg'
                     && $transformation instanceof ImageTransformation
-                    && $transformation->operation === 'resize'
+                    && $transformation->operation === 'fit'
                     && $transformation->format === 'png'
                     && $transformation->quality === 42
                     && $transformation->params['width'] === 5000

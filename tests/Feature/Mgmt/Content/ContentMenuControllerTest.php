@@ -6,10 +6,8 @@ use App\Actions\Content\CreateContent;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
-use App\Models\System\AuditLog;
 use App\Models\User;
 use App\Services\Content\ContentMenuCache;
-use App\Services\System\AuditService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -33,9 +31,6 @@ class ContentMenuControllerTest extends TestCase
         parent::setUp();
 
         Cache::flush();
-        $this->mock(AuditService::class, function ($mock): void {
-            $mock->shouldReceive('log')->andReturn(new AuditLog());
-        });
 
         $this->owner = User::factory()->create();
         $this->space = Space::withoutEvents(fn () => Space::factory()->withLive()->create([

@@ -6,6 +6,7 @@ use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Services\Content\Schema\ContentSchemaValueMerger;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 
 class ContentI18nResolver
@@ -56,6 +57,12 @@ class ContentI18nResolver
         $contents = $normalizedItems
             ->pluck('content')
             ->filter();
+
+        // resolveCanonicals()/resolveFamilies() eager-load `block` for the rows
+        // they query, but a content that is already its own canonical is used
+        // exactly as the caller passed it — and callers don't always arrive with
+        // `block` loaded, which the schema lookup below then lazy loads.
+        EloquentCollection::make($contents->all())->loadMissing('block');
 
         $canonicalsById = $this->resolveCanonicals($contents);
         $familiesByCanonicalId = $this->resolveFamilies($canonicalsById);

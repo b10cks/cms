@@ -8,6 +8,7 @@ use App\Models\Space\DataSource;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use Tests\Traits\SpaceTestingTrait;
 
@@ -62,7 +63,7 @@ class DataEntryTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_create_data_entry()
     {
         $this->actingAs($this->owner);
@@ -95,7 +96,7 @@ class DataEntryTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_create_data_entry()
     {
         $this->actingAs($this->admin);
@@ -117,7 +118,7 @@ class DataEntryTest extends TestCase
         $response->assertStatus(201);
     }
 
-    /** @test */
+    #[Test]
     public function editor_can_create_data_entry()
     {
         $this->actingAs($this->editor);
@@ -139,7 +140,7 @@ class DataEntryTest extends TestCase
         $response->assertStatus(201);
     }
 
-    /** @test */
+    #[Test]
     public function viewer_cannot_create_data_entry()
     {
         $this->actingAs($this->viewer);
@@ -161,7 +162,7 @@ class DataEntryTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_data_entry_creation()
     {
         $this->actingAs($this->owner);
@@ -201,7 +202,7 @@ class DataEntryTest extends TestCase
         $response->assertStatus(422);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_list_data_entries()
     {
         $this->actingAs($this->viewer);
@@ -220,7 +221,7 @@ class DataEntryTest extends TestCase
         $response->assertJsonCount(5, 'data');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_show_data_entry_details()
     {
         $this->actingAs($this->viewer);
@@ -247,7 +248,7 @@ class DataEntryTest extends TestCase
         $response->assertJsonPath('data.dimensions.fr', 'Valeur de test');
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_update_data_entry()
     {
         $this->actingAs($this->owner);
@@ -283,7 +284,7 @@ class DataEntryTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function editor_can_update_data_entry()
     {
         $this->actingAs($this->editor);
@@ -305,7 +306,7 @@ class DataEntryTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function viewer_cannot_update_data_entry()
     {
         $this->actingAs($this->viewer);
@@ -327,7 +328,7 @@ class DataEntryTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_delete_data_entry()
     {
         $this->actingAs($this->owner);
@@ -346,7 +347,7 @@ class DataEntryTest extends TestCase
         $this->assertDatabaseMissing('data_entries', ['id' => $entry->id]);
     }
 
-    /** @test */
+    #[Test]
     public function viewer_cannot_delete_data_entry()
     {
         $this->actingAs($this->viewer);
@@ -364,7 +365,7 @@ class DataEntryTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function it_enforces_unique_key_per_data_source()
     {
         $this->actingAs($this->owner);

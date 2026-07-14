@@ -4,13 +4,12 @@ namespace Tests\Feature\Mgmt\Content;
 
 use App\Http\Controllers\Mgmt\Content\CommentController;
 use App\Models\Management\Space;
-use App\Models\Space\Block;
 use App\Models\Space\Comment;
 use App\Models\Space\Content;
-use App\Models\Space\ContentVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -46,28 +45,12 @@ class CommentControllerTest extends TestCase
 
         $this->setUpSpaceTesting($this->space);
 
-        // Create content in the space with minimal dependencies
-        $this->content = Content::create([
-            'space_id' => $this->space->id,
-            'block_id' => Block::create([
-                'external_id' => fake()->uuid(),
-                'name' => 'Test Block',
-                'slug' => 'test-block',
-                'type' => 'text',
-            ])->id,
+        // Create content in the space (factory creates the block and current version)
+        $this->content = Content::factory()->create([
             'name' => 'Test Content',
             'slug' => 'test-content',
             'full_slug' => 'test-content',
-            'language_iso' => 'en',
-            'current_version_id' => ContentVersion::create([
-                'content_id' => null, // Will be set later
-            ])->id,
         ]);
-
-        // Update the version with the correct content_id
-        $this->content->current_version_id = $this->content->versions()->first()->id ??
-            ContentVersion::create(['content_id' => $this->content->id])->id;
-        $this->content->save();
     }
 
     #[Test]
@@ -387,7 +370,7 @@ class CommentControllerTest extends TestCase
         $comment = Comment::factory()->create([
             'content_id' => $this->content->id,
             'author_id' => $this->owner->id,
-            'is_resolved' => false,
+            'resolved_at' => null,
         ]);
 
         $response = $this->postJson(
@@ -416,7 +399,6 @@ class CommentControllerTest extends TestCase
         $comment = Comment::factory()->create([
             'content_id' => $this->content->id,
             'author_id' => $this->owner->id,
-            'is_resolved' => true,
             'resolved_at' => now(),
         ]);
 
@@ -447,7 +429,7 @@ class CommentControllerTest extends TestCase
         $comment = Comment::factory()->create([
             'content_id' => $this->content->id,
             'author_id' => $this->owner->id,
-            'is_resolved' => false,
+            'resolved_at' => null,
         ]);
 
         $this->actingAs($this->viewer);
@@ -480,7 +462,7 @@ class CommentControllerTest extends TestCase
         );
 
         $response->assertStatus(422);
-        $response->assertJsonPath('errors.parent_id.0', 'The parent_id field must be a valid ULID.');
+        $response->assertJsonPath('errors.parent_id.0', 'The parent id field must be a valid ULID.');
     }
 
     #[Test]
@@ -494,13 +476,13 @@ class CommentControllerTest extends TestCase
                 'content' => $this->content->id,
             ]),
             [
-                'parent_id' => fake()->ulid(),
+                'parent_id' => strtolower((string) Str::ulid()),
                 'body' => 'This is a reply',
             ]
         );
 
         $response->assertStatus(422);
-        $response->assertJsonPath('errors.parent_id.0', 'The selected parent_id is invalid.');
+        $response->assertJsonPath('errors.parent_id.0', 'The selected parent id is invalid.');
     }
 
     #[Test]
@@ -519,7 +501,7 @@ class CommentControllerTest extends TestCase
         );
 
         $response->assertStatus(422);
-        $response->assertJsonPath('errors.body', ['The body field must have at least 1 character.']);
+        $response->assertJsonPath('errors.body', ['The body field is required.']);
     }
 
     #[Test]

@@ -6,12 +6,9 @@ use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
-use App\Models\System\AuditLog;
 use App\Models\User;
-use App\Services\System\AuditService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Str;
-use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use Tests\Traits\SpaceTestingTrait;
@@ -45,9 +42,6 @@ class ContentI18nTest extends TestCase
         $this->assignSpaceRole($this->space, $this->owner, 'owner');
         $this->setUpSpaceTesting($this->space);
         app()->instance('currentSpace', $this->space);
-        $auditService = Mockery::mock(AuditService::class);
-        $auditService->shouldReceive('log')->andReturn(new AuditLog);
-        app()->instance(AuditService::class, $auditService);
 
         $this->block = Block::query()->create([
             'external_id' => (string) Str::uuid(),

@@ -7,14 +7,15 @@ use App\Models\Space\DataSource;
 use App\Models\User;
 use App\Services\Content\Schema\BlockSchemaRequestValidator;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Tests\Traits\SpaceTestingTrait;
 
 class TableFieldValidationTest extends TestCase
 {
     use LazilyRefreshDatabase;
+    use SpaceTestingTrait;
 
     protected User $owner;
 
@@ -30,18 +31,7 @@ class TableFieldValidationTest extends TestCase
         $this->space = Space::factory()->withLive()->create();
         $this->assignSpaceRole($this->space, $this->owner, 'owner');
 
-        if (! Schema::hasTable('data_sources')) {
-            if (Schema::hasTable('audit_logs')) {
-                Schema::drop('audit_logs');
-            }
-
-            $this->artisan('migrate', [
-                '--path' => 'database/migrations/spaces',
-                '--realpath' => true,
-            ]);
-        }
-
-        app()->instance('currentSpace', $this->space);
+        $this->setUpSpaceTesting($this->space);
 
         $this->dataSource = DataSource::withoutEvents(fn () => DataSource::factory()->create([
             'name' => 'Statuses',

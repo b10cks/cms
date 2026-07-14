@@ -10,21 +10,23 @@ use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Tests\Traits\SpaceTestingTrait;
 
 class PublishScheduledContentJobTest extends TestCase
 {
     use LazilyRefreshDatabase;
+    use SpaceTestingTrait;
 
     #[Test]
     public function itPublishesScheduledContent()
     {
         $space = Space::factory()->create();
-        app()->offsetSet('currentSpace', $space);
+        $this->setUpSpaceTesting($space);
 
-        $content = Content::factory()->for($space)->create();
+        $content = Content::factory()->create();
         $version = ContentVersion::factory()
-            ->for($content)
             ->create([
+                'content_id' => $content->id,
                 'scheduled_at' => now()->subMinute(),
                 'published_at' => null,
             ]);
@@ -43,12 +45,12 @@ class PublishScheduledContentJobTest extends TestCase
         Log::spy();
 
         $space = Space::factory()->create();
-        app()->offsetSet('currentSpace', $space);
+        $this->setUpSpaceTesting($space);
 
-        $content = Content::factory()->for($space)->create();
+        $content = Content::factory()->create();
         $version = ContentVersion::factory()
-            ->for($content)
             ->create([
+                'content_id' => $content->id,
                 'scheduled_at' => now()->subMinute(),
                 'published_at' => now(),
             ]);
@@ -88,6 +90,7 @@ class PublishScheduledContentJobTest extends TestCase
         Log::spy();
 
         $space = Space::factory()->create();
+        $this->setUpSpaceTesting($space);
 
         $job = new PublishScheduledContentJob($space->id, 'invalid-version-id');
         $job->handle();
@@ -105,7 +108,7 @@ class PublishScheduledContentJobTest extends TestCase
         Log::spy();
 
         $space = Space::factory()->create();
-        app()->offsetSet('currentSpace', $space);
+        $this->setUpSpaceTesting($space);
 
         $version = ContentVersion::factory()
             ->create([
@@ -128,13 +131,13 @@ class PublishScheduledContentJobTest extends TestCase
     public function itRequeuesIfScheduleTimeNotYetMet()
     {
         $space = Space::factory()->create();
-        app()->offsetSet('currentSpace', $space);
+        $this->setUpSpaceTesting($space);
 
-        $content = Content::factory()->for($space)->create();
+        $content = Content::factory()->create();
         $futureTime = now()->addHours(2);
         $version = ContentVersion::factory()
-            ->for($content)
             ->create([
+                'content_id' => $content->id,
                 'scheduled_at' => $futureTime,
                 'published_at' => null,
             ]);

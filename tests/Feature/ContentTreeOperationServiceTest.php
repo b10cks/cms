@@ -6,9 +6,7 @@ use App\Actions\Content\CreateContent;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
-use App\Models\System\AuditLog;
 use App\Services\Content\ContentTreeOperationService;
-use App\Services\System\AuditService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -18,15 +16,6 @@ class ContentTreeOperationServiceTest extends TestCase
 {
     use RefreshDatabase;
     use SpaceTestingTrait;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->mock(AuditService::class, function ($mock): void {
-            $mock->shouldReceive('log')->andReturn(new AuditLog);
-        });
-    }
 
     #[Test]
     public function it_creates_items_with_the_provided_initial_content(): void

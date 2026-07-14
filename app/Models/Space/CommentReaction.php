@@ -34,6 +34,13 @@ class CommentReaction extends SpaceModel
         'author_id',
         'emoji',
     ];
+
+    // created_at is maintained by the creating hook below rather than by
+    // Eloquent, and $timestamps = false also opts it out of the automatic date
+    // casting — so it needs casting by hand, or it hydrates back as a string.
+    protected $casts = [
+        'created_at' => 'datetime',
+    ];
     public static function boot()
     {
         parent::boot();

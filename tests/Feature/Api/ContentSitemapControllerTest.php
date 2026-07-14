@@ -219,7 +219,7 @@ class ContentSitemapControllerTest extends TestCase
 
     private function sitemapUrl(array $query = []): string
     {
-        return route('api.contents.sitemap', [
+        return route('api.sitemap', [
             'token' => $this->token->token,
             'rv' => $this->space->updated_at->timestamp,
             ...$query,

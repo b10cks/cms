@@ -13,7 +13,7 @@ class PlanAiKeyResolverTest extends TestCase
 {
     private function space(?Subscription $subscription): Space
     {
-        $space = new Space(['id' => 'space_1']);
+        $space = (new Space())->forceFill(['id' => 'space_1']);
         $space->setRelation('subscriptions', collect(array_filter([$subscription])));
 
         return $space;

@@ -11,30 +11,31 @@ use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Tests\Traits\SpaceTestingTrait;
 
 class PublishScheduledReleaseJobTest extends TestCase
 {
     use LazilyRefreshDatabase;
+    use SpaceTestingTrait;
 
     #[Test]
     public function itPublishesScheduledRelease()
     {
         $space = Space::factory()->create();
-        app()->offsetSet('currentSpace', $space);
+        $this->setUpSpaceTesting($space);
 
         $release = Release::factory()
-            ->for($space)
             ->create([
                 'publish_at' => now()->subMinute(),
                 'published_at' => null,
                 'committed_at' => now()->subHour(),
             ]);
 
-        $content = Content::factory()->for($space)->create();
+        $content = Content::factory()->create();
         $version = ContentVersion::factory()
-            ->for($content)
-            ->for($release)
             ->create([
+                'content_id' => $content->id,
+                'release_id' => $release->id,
                 'published_at' => null,
             ]);
 
@@ -54,10 +55,9 @@ class PublishScheduledReleaseJobTest extends TestCase
         Log::spy();
 
         $space = Space::factory()->create();
-        app()->offsetSet('currentSpace', $space);
+        $this->setUpSpaceTesting($space);
 
         $release = Release::factory()
-            ->for($space)
             ->create([
                 'publish_at' => now()->subMinute(),
                 'published_at' => now(),
@@ -83,10 +83,9 @@ class PublishScheduledReleaseJobTest extends TestCase
         Log::spy();
 
         $space = Space::factory()->create();
-        app()->offsetSet('currentSpace', $space);
+        $this->setUpSpaceTesting($space);
 
         $release = Release::factory()
-            ->for($space)
             ->create([
                 'publish_at' => now()->subMinute(),
                 'published_at' => null,
@@ -127,6 +126,7 @@ class PublishScheduledReleaseJobTest extends TestCase
         Log::spy();
 
         $space = Space::factory()->create();
+        $this->setUpSpaceTesting($space);
 
         $job = new PublishScheduledReleaseJob($space->id, 'invalid-release-id');
         $job->handle();
@@ -142,11 +142,10 @@ class PublishScheduledReleaseJobTest extends TestCase
     public function itRequeuesIfPublishTimeNotYetMet()
     {
         $space = Space::factory()->create();
-        app()->offsetSet('currentSpace', $space);
+        $this->setUpSpaceTesting($space);
 
         $futureTime = now()->addHours(2);
         $release = Release::factory()
-            ->for($space)
             ->create([
                 'publish_at' => $futureTime,
                 'published_at' => null,

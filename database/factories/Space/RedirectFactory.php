@@ -3,8 +3,8 @@
 namespace Database\Factories\Space;
 
 use App\Models\Space\Redirect;
-use App\Models\Space\Space;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Redirect>
@@ -21,7 +21,7 @@ class RedirectFactory extends Factory
     public function definition(): array
     {
         return [
-            'space_id' => Space::factory(),
+            'external_id' => Str::uuid(),
             'source' => $this->faker->unique()->regexify('\/[a-z-]{3,15}'),
             'target' => $this->faker->unique()->regexify('\/[a-z-]{3,15}'),
             'status_code' => $this->faker->randomElement([301, 302, 307, 308]),

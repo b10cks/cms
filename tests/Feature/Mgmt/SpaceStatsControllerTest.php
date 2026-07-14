@@ -29,6 +29,7 @@ class SpaceStatsControllerTest extends TestCase
     {
         $space = Space::factory()->create();
         $this->setUpSpaceTesting($space);
+        $this->registerSqliteDateFormat();
 
         $viewer = User::factory()->create();
         $oldUser = User::factory()->create();
@@ -62,11 +63,23 @@ class SpaceStatsControllerTest extends TestCase
                 'updated_at' => '2026-04-15 09:00:00',
             ]);
 
-        Block::factory()->create(['created_at' => '2026-04-02 10:00:00']);
-        Block::factory()->create(['created_at' => '2026-04-16 10:00:00']);
+        $oldBlock = Block::factory()->create(['created_at' => '2026-04-02 10:00:00']);
+        $newBlock = Block::factory()->create(['created_at' => '2026-04-16 10:00:00']);
 
-        Content::factory()->create(['created_at' => '2026-04-03 10:00:00']);
-        Content::factory()->create(['created_at' => '2026-04-17 10:00:00']);
+        // slug and full_slug must agree, or the Content saving hook records a
+        // slug-change redirect and skews the redirect counts asserted below.
+        Content::factory()->create([
+            'block_id' => $oldBlock->id,
+            'slug' => 'old-content',
+            'full_slug' => '/old-content',
+            'created_at' => '2026-04-03 10:00:00',
+        ]);
+        Content::factory()->create([
+            'block_id' => $newBlock->id,
+            'slug' => 'new-content',
+            'full_slug' => '/new-content',
+            'created_at' => '2026-04-17 10:00:00',
+        ]);
 
         Asset::factory()->create([
             'size' => 1_024,
@@ -103,5 +116,27 @@ class SpaceStatsControllerTest extends TestCase
         $response->assertJsonPath('redirects.count.new', 1);
         $response->assertJsonPath('user_activity.total_users', 3);
         $response->assertJsonPath('user_activity.new_users', 1);
+    }
+
+    /**
+     * The stats service groups by MySQL's DATE_FORMAT(), which SQLite lacks.
+     * Register it as a user-defined function so the queries run in tests.
+     */
+    private function registerSqliteDateFormat(): void
+    {
+        DB::connection()->getPdo()->sqliteCreateFunction(
+            'DATE_FORMAT',
+            static function (?string $value, string $format): ?string {
+                if ($value === null) {
+                    return null;
+                }
+
+                return date(
+                    strtr($format, ['%Y' => 'Y', '%m' => 'm', '%d' => 'd', '%u' => 'W', '%H' => 'H', '%i' => 'i', '%s' => 's']),
+                    strtotime($value),
+                );
+            },
+            2,
+        );
     }
 }

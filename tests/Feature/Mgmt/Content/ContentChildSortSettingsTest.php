@@ -6,9 +6,7 @@ use App\Actions\Content\CreateContent;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
-use App\Models\System\AuditLog;
 use App\Models\User;
-use App\Services\System\AuditService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,10 +27,6 @@ class ContentChildSortSettingsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->mock(AuditService::class, function ($mock): void {
-            $mock->shouldReceive('log')->andReturn(new AuditLog);
-        });
 
         $this->owner = User::factory()->create();
         $this->space = Space::factory()->withLive()->create([

@@ -6,12 +6,9 @@ use App\Actions\Content\CreateContent;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
-use App\Models\System\AuditLog;
 use App\Models\User;
-use App\Services\System\AuditService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Str;
-use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use Tests\Traits\SpaceTestingTrait;
@@ -30,10 +27,6 @@ class ContentCacheSettingsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        $auditService = Mockery::mock(AuditService::class);
-        $auditService->shouldReceive('log')->andReturn(new AuditLog);
-        app()->instance(AuditService::class, $auditService);
 
         $this->owner = User::factory()->create();
         $this->space = Space::factory()->withLive()->create([

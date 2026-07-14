@@ -18,7 +18,8 @@ class CommentFactory extends Factory
             'author_id' => User::factory(),
             'parent_id' => null,
             'body' => $this->faker->paragraph(),
-            'is_resolved' => $this->faker->boolean(20), // 20% chance of being resolved
+            // is_resolved is a stored generated column derived from resolved_at
+            'resolved_at' => $this->faker->boolean(20) ? now() : null, // 20% chance of being resolved
             'item_id' => null,
             'field' => null,
             'position' => null,
@@ -58,7 +59,6 @@ class CommentFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                'is_resolved' => true,
                 'resolved_at' => now(),
             ];
         });
@@ -71,7 +71,6 @@ class CommentFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                'is_resolved' => false,
                 'resolved_at' => null,
             ];
         });

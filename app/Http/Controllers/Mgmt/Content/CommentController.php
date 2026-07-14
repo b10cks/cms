@@ -152,6 +152,10 @@ class CommentController extends Controller
         $comment->update(['resolved_at' => now()]);
         $comment->auditSpaceEvent('resolved', AuditActor::user($request->user()), ['content_id' => $content->id]);
 
+        // is_resolved is generated from resolved_at by the database, so it only
+        // reflects the write after a re-read.
+        $comment->refresh();
+
         return new CommentResource($comment->load([
             'author',
             'parent',
@@ -173,6 +177,10 @@ class CommentController extends Controller
         $comment->withoutAudit();
         $comment->update(['resolved_at' => null]);
         $comment->auditSpaceEvent('unresolved', AuditActor::user($request->user()), ['content_id' => $content->id]);
+
+        // is_resolved is generated from resolved_at by the database, so it only
+        // reflects the write after a re-read.
+        $comment->refresh();
 
         return new CommentResource($comment->load([
             'author',
