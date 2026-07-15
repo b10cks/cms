@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
+import { MessageSquareIcon } from '~/components/icons'
 import { Button } from '~/components/ui/button'
 import { TextField } from '~/components/ui/form'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
@@ -122,12 +123,9 @@ const handleRemoveReaction = (commentId: string, emoji: string) => {
           unresolvedCount > 0 ? 'text-warning' : 'text-muted',
           totalComments > 0 ? '' : 'opacity-0 group-hover/field:opacity-100',
         ]"
-        class="inline-flex cursor-pointer items-center gap-1 rounded-sm p-1 text-xs font-semibold hover:bg-secondary/80"
+        class="icon-anim inline-flex cursor-pointer items-center gap-1 rounded-sm p-1 text-xs font-semibold hover:bg-secondary/80"
       >
-        <Icon
-          name="lucide:message-square"
-          size="14"
-        />
+        <MessageSquareIcon :size="14" />
         <span v-if="totalComments > 0">
           {{ totalComments }}
         </span>

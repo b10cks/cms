@@ -9,6 +9,7 @@ import BlockUsedIn from '~/components/blocks/BlockUsedIn.vue'
 import BlockVersionsSheet from '~/components/blocks/BlockVersionsSheet.vue'
 import CreateBlockDialog from '~/components/blocks/CreateBlockDialog.vue'
 import Icon from '~/components/Icon.vue'
+import { HistoryIcon } from '~/components/icons'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { Skeleton } from '~/components/ui/skeleton'
@@ -125,9 +126,10 @@ const handleDuplicateCreated = (createdBlock: BlockResource) => {
             <Button
               variant="outline"
               size="sm"
+              class="icon-anim"
               @click="showVersionsSheet = true"
             >
-              <Icon name="lucide:history" />
+              <HistoryIcon :size="16" />
             </Button>
             <Button
               variant="outline"

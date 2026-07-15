@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 
 import Icon from '~/components/Icon.vue'
+import { BellIcon } from '~/components/icons'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { useNotificationPresentation } from '~/composables/useNotificationPresentation'
@@ -55,13 +56,10 @@ const onMarkAllRead = () => {
 <template>
   <Popover v-model:open="open">
     <PopoverTrigger
-      class="relative flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted transition-colors duration-200 hover:bg-elevated hover:text-primary data-[state=open]:bg-elevated"
+      class="icon-anim relative flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted transition-colors duration-200 hover:bg-elevated hover:text-primary data-[state=open]:bg-elevated"
       :aria-label="$t('notifications.tooltip')"
     >
-      <Icon
-        name="lucide:bell"
-        class="size-4"
-      />
+      <BellIcon :size="16" />
       <span
         v-if="hasUnread"
         class="absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] leading-4 font-semibold text-white"

@@ -3,6 +3,7 @@ import { useDark, useToggle } from '@vueuse/core'
 import type { Ref } from 'vue'
 
 import Icon from '~/components/Icon.vue'
+import { animatedIcons, CircleHelpIcon, SettingsIcon } from '~/components/icons'
 import NotificationBell from '~/components/notifications/NotificationBell.vue'
 import { Avatar } from '~/components/ui/avatar'
 import {
@@ -143,7 +144,7 @@ const availableLocales = locales
             <RouterLink
               :to="buildLink(m.routeName)"
               :class="[
-                'w-full flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-sidebar-accent',
+                'icon-anim w-full flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-sidebar-accent',
                 isExtendedSidebar ? 'flex-col gap-1 p-2 text-center' : 'size-8 ',
               ]"
               active-class="text-sidebar-accent-foreground bg-sidebar-accent"
@@ -152,7 +153,13 @@ const availableLocales = locales
               @mouseleave="cancelPreload(buildLink(m.routeName))"
               @focusout="cancelPreload(buildLink(m.routeName))"
             >
+              <component
+                :is="animatedIcons[m.icon]"
+                v-if="animatedIcons[m.icon]"
+                :size="20"
+              />
               <Icon
+                v-else
                 :name="m.icon"
                 size="20"
               />
@@ -183,9 +190,9 @@ const availableLocales = locales
     <div class="flex flex-col items-center gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger
-          class="relative flex size-9 cursor-pointer items-center justify-center rounded-lg text-sidebar-muted transition-colors duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent"
+          class="icon-anim relative flex size-9 cursor-pointer items-center justify-center rounded-lg text-sidebar-muted transition-colors duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent"
         >
-          <Icon name="lucide:circle-question-mark" />
+          <CircleHelpIcon :size="16" />
           <DropdownMenuContent
             class="min-w-48"
             align="end"
@@ -307,8 +314,11 @@ const availableLocales = locales
                 </DropdownMenuRadioGroup>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
-            <DropdownMenuItem @click="router.push('/account/settings')">
-              <Icon name="lucide:cog" />
+            <DropdownMenuItem
+              class="icon-anim"
+              @click="router.push('/account/settings')"
+            >
+              <SettingsIcon :size="16" />
               <span>{{ $t('actions.user.account') }}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

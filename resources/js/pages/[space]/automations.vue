@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
+import { animatedIcons } from '~/components/icons'
 import { useRoutePreload } from '~/composables/useRoutePreload'
 
 interface NavItem {
@@ -45,7 +46,7 @@ provide('spaceId', spaceId)
           :to="linkTo(item.name)"
           exact-active-class="bg-secondary text-primary"
           :class="[
-            'flex items-center gap-2 rounded-md px-4 py-2',
+            'icon-anim flex items-center gap-2 rounded-md px-4 py-2',
             'transition-colors duration-200 hover:bg-secondary',
             'cursor-pointer font-semibold whitespace-nowrap',
           ]"
@@ -54,7 +55,14 @@ provide('spaceId', spaceId)
           @mouseleave="cancelPreload(linkTo(item.name))"
           @focusout="cancelPreload(linkTo(item.name))"
         >
+          <component
+            :is="animatedIcons[item.icon]"
+            v-if="animatedIcons[item.icon]"
+            :size="16"
+            class="shrink-0"
+          />
           <Icon
+            v-else
             :name="item.icon"
             class="shrink-0"
           />

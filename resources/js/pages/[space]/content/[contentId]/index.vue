@@ -13,6 +13,7 @@ import ContentInfo from '~/components/ContentInfo.vue'
 import ContentSettings from '~/components/ContentSettings.vue'
 import EditorComponent from '~/components/editor/EditorComponent.vue'
 import Icon from '~/components/Icon.vue'
+import { animatedIcons } from '~/components/icons'
 import Preview from '~/components/Preview.vue'
 import AiContentInteraction from '~/components/ui/AiContentInteraction.vue'
 import { Badge, type BadgeVariants } from '~/components/ui/badge'
@@ -933,12 +934,18 @@ provide('reloadServerContent', reloadServerContent)
             <TabsTrigger
               :value="tab.value"
               :class="[
-                'w-full relative flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-border',
+                'icon-anim w-full relative flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-border',
                 isExtendedSidebar ? 'flex-col gap-1 p-2 text-center' : 'size-8',
                 mode === tab.value ? 'bg-border text-primary' : '',
               ]"
             >
+              <component
+                :is="animatedIcons[tab.icon]"
+                v-if="animatedIcons[tab.icon]"
+                :size="20"
+              />
               <Icon
+                v-else
                 :name="tab.icon"
                 size="20"
               />

@@ -651,4 +651,10 @@
   .ai-animate-text {
     animation: none;
   }
+
+  .icn,
+  .icn * {
+    animation: none !important;
+    transition: none !important;
+  }
 }

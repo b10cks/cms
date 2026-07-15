@@ -5,6 +5,7 @@ import { ContentModel } from '~/api/resources/content-model'
 import LanguageSwitcher from '~/components/content/LanguageSwitcher.vue'
 import VersionConflictDialog from '~/components/content/VersionConflictDialog.vue'
 import Icon from '~/components/Icon.vue'
+import { HistoryIcon } from '~/components/icons'
 import AssignToReleaseDialog from '~/components/releases/AssignToReleaseDialog.vue'
 import { AvatarList } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
@@ -624,10 +625,10 @@ const handleConfirmAssign = (versionIds: string[]) => {
           <Button
             :variant="isVersions ? 'primary' : 'default'"
             size="icon"
-            class="relative"
+            class="icon-anim relative"
             @click="switchVersions"
           >
-            <Icon name="lucide:history" />
+            <HistoryIcon :size="16" />
             <Badge
               v-if="serverVersionDrifted"
               variant="warning"
