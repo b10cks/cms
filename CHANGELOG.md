@@ -3,6 +3,14 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.15-3063f932] — 2026-7-15
+
+- ✨ Add onboarding guide for new spaces
+- 💄 Improve theme
+- 🐛 Fix test rot and the production bugs it was hiding
+- ✨ Sync system roles from config on demand
+- 🐛 Fix "Space not found" on broadcast events
+
 ## [v2026.7.14-70ca5312] — 2026-7-14
 
 - ⬆️ Bump versions
