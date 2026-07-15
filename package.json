@@ -53,7 +53,7 @@
     "laravel-echo": "^2.4.0",
     "leaflet": "^1.9.4",
     "marked": "^17.0.6",
-    "posthog-js": "^1.399.5",
+    "posthog-js": "^1.402.0",
     "pusher-js": "^8.5.0",
     "qrcode": "^1.5.4",
     "reka-ui": "^2.10.1",
@@ -62,7 +62,7 @@
     "vue-chartjs": "^5.3.4",
     "vue-i18n": "^11.4.6",
     "vue-input-otp": "^0.3.2",
-    "vue-router": "^5.1.0",
+    "vue-router": "^5.2.0",
     "vue-sonner": "^2.0.9"
   },
   "devDependencies": {
