@@ -1099,7 +1099,8 @@
       "settings": "Einstellungen",
       "provider": "Provider",
       "extendedSidebar": "Erweiterte Seitenleiste",
-      "icons": "Icons"
+      "icons": "Icons",
+      "onboarding": "Onboarding"
     },
     "provider": {
       "title": "Provider",
@@ -2347,6 +2348,12 @@
           "pending": "Ausstehend",
           "inactive": "Inaktiv"
         }
+      },
+      "onboarding": {
+        "title": "Onboarding",
+        "description": "Die Erste-Schritte-Anleitung in der Seitenleiste. Ausblenden gilt für alle in diesem Space.",
+        "show": "Onboarding einblenden",
+        "hide": "Onboarding ausblenden"
       }
     },
     "account": {
@@ -3620,6 +3627,72 @@
       "downloadAsset": "Datei herunterladen",
       "empty": "Diese Freigabe enthält keine Dateien.",
       "poweredBy": "Geteilt über b10cks"
+    },
+    "onboarding": {
+      "title": "Erste Schritte",
+      "subtitle": "In fünf Schritten vom leeren Space zu Inhalten auf deiner Website.",
+      "dismiss": "Onboarding ausblenden",
+      "dismissAction": "Anleitung ausblenden",
+      "dismissed": "Onboarding ausgeblendet. Du kannst es in den Space-Einstellungen wieder einblenden.",
+      "finish": "Fertig",
+      "steps": {
+        "space": {
+          "title": "Space erstellen",
+          "description": "Dein Space ist aktiv und bereit — hier leben deine Inhalte."
+        },
+        "token": {
+          "title": "Access Token erstellen",
+          "description": "Dein Space wurde mit einem Lese-Token angelegt. Damit authentifizierst du Lesezugriffe auf die Data API.",
+          "action": "Token erstellen",
+          "hint": "Behandle ihn wie ein Passwort. Tokens verwaltest du unter Einstellungen → Allgemein."
+        },
+        "stack": {
+          "title": "Mit deinem Tech-Stack integrieren",
+          "description": "Wähle das Framework, mit dem du arbeitest. Wir passen den nächsten Schritt daran an.",
+          "guide": "Zur Integrationsanleitung"
+        },
+        "scaffold": {
+          "title": "Projekt aufsetzen",
+          "description": "Führe diesen Befehl aus, um das Projekt zu erstellen, das SDK zu installieren und deinen Access Token einzurichten.",
+          "pickFirst": "Wähle oben ein Framework, um deinen Befehl zu erhalten.",
+          "directory": "Verzeichnis",
+          "tokenHint": "Der Befehl enthält den Lese-Token dieses Spaces. Behandle ihn wie ein Passwort."
+        },
+        "blocks": {
+          "title": "Blockstruktur definieren",
+          "description": "Blocks sind deine Inhaltstypen. Lege mindestens einen Root-Block an, bevor du Inhalte erstellst.",
+          "action": "Zu den Blocks"
+        },
+        "invite": {
+          "title": "Mitglieder einladen",
+          "description": "Hol Redakteure und Entwickler dazu, damit du nicht allein baust.",
+          "action": "Personen einladen"
+        }
+      },
+      "resources": {
+        "title": "Mehr erfahren",
+        "manual": {
+          "title": "Handbuch",
+          "description": "Eine Tour durch den Editor — vom ersten Block bis zum Veröffentlichen."
+        },
+        "concepts": {
+          "title": "Konzepte",
+          "description": "Wie Spaces, Blocks, Inhalte und Releases zusammenspielen."
+        },
+        "api": {
+          "title": "API-Referenz",
+          "description": "Alle Endpunkte der Data- und Management-API, mit Beispielen."
+        },
+        "packages": {
+          "title": "Pakete",
+          "description": "SDKs und Clients für Nuxt, Next.js, React, Vue und Svelte."
+        },
+        "community": {
+          "title": "Community",
+          "description": "Stelle Fragen, melde Probleme und verfolge, was wir bauen."
+        }
+      },
+      "restored": "Onboarding ist wieder in der Seitenleiste."
     }
   },
   "notifications": {
@@ -3957,7 +4030,8 @@
       "revoke": "Widerrufen",
       "shareCollection": "Sammlung teilen…",
       "shareFolder": "Ordner teilen…"
-    }
+    },
+    "copied": "Kopiert"
   },
   "navigation": {
     "home": "Start",
@@ -4417,6 +4491,9 @@
       "building": "Archiv wird erstellt… {progress}%",
       "ready": "Dein Download startet",
       "failed": "Fehler beim Vorbereiten des Downloads: {error}"
+    },
+    "onboarding": {
+      "dismissError": "Onboarding konnte nicht aktualisiert werden: {error}"
     }
   },
   "content": {

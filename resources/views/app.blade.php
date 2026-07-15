@@ -10,6 +10,8 @@
     <script>
       window.__APP_CONFIG__ = {{ Js::from([
         'version' => config('app.version'),
+        'docsUrl' => config('app.docs_url'),
+        'communityUrl' => config('app.community_url'),
         'sidebarMenu' => config('app.sidebar_menu', []),
         'apiBaseUrl' => config('app.api_url', ''),
         'socialAuth' => [

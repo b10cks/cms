@@ -139,6 +139,13 @@ export const spaceNavigationItems: NavigationAccessItem[] = [
     icon: 'lucide:home',
     routeName: 'space',
   },
+  // Not first: this array's order doubles as the access-denied fallback via
+  // firstAllowedRouteForSpace, which knows nothing about dismissal.
+  {
+    label: 'labels.navigation.onboarding',
+    icon: 'lucide:compass',
+    routeName: 'space-onboarding',
+  },
   {
     label: 'labels.navigation.canvas',
     icon: 'lucide:network',
@@ -219,6 +226,7 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
     check: ({ authorization }) => Boolean(authorization?.is_root),
   },
   space: { abilities: 'space.view' },
+  'space-onboarding': { abilities: 'space.view' },
   'space-content-index': { abilities: 'content.view' },
   'space-content-contentId': { abilities: 'content.view' },
   'space-content-contentId-localization': { abilities: 'content.view' },
@@ -233,7 +241,9 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-releases': { abilities: 'releases.view' },
   'space-redirects': { abilities: 'redirects.view' },
   'space-audit-logs': { abilities: 'audit_logs.view' },
-  'space-automations-index': { abilities: { anyOf: ['automations.view', 'automation_actions.view'] } },
+  'space-automations-index': {
+    abilities: { anyOf: ['automations.view', 'automation_actions.view'] },
+  },
   'space-automations-actions': { abilities: 'automation_actions.view' },
   'space-automations-executions': { abilities: 'automations.view' },
   'space-settings': { anyRouteOf: spaceSettingsNavigationItems.map((item) => item.routeName) },

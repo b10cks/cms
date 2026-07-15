@@ -151,6 +151,12 @@ const routes: RouteRecordRaw[] = [
     meta: { layout: 'default' },
   },
   {
+    path: '/:space/onboarding',
+    name: 'space-onboarding',
+    component: () => import('~/pages/[space]/onboarding.vue'),
+    meta: { layout: 'default' },
+  },
+  {
     path: '/:space/content',
     name: 'space-content',
     component: () => import('~/pages/[space]/content.vue'),

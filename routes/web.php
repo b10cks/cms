@@ -74,6 +74,7 @@ Route::get('/provider/notes', AppController::class)->name('provider-notes');
 
 // Space routes (must come last to avoid shadowing more specific routes)
 Route::get('/{space}', AppController::class)->name('space');
+Route::get('/{space}/onboarding', AppController::class)->name('space-onboarding');
 Route::get('/{space}/content', AppController::class)->name('space-content');
 Route::get('/{space}/canvas', AppController::class)->name('space-canvas');
 Route::get('/{space}/content-wizard', AppController::class)->name('space-content-wizard');

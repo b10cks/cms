@@ -1,4 +1,4 @@
-import type { BaseQueryParams } from '~/types'
+import type { ApiResponse, BaseQueryParams } from '~/types'
 
 import { BaseResource } from './base-resource'
 
@@ -21,5 +21,14 @@ export class Spaces extends BaseResource<
 
   public async archive(id: string): Promise<void> {
     return this.client.post(`${this.basePath}/${id}/archive`)
+  }
+
+  public async updateOnboarding(
+    id: string,
+    dismissed: boolean
+  ): Promise<ApiResponse<SpaceResource>> {
+    return this.client.patch<ApiResponse<SpaceResource>>(`${this.basePath}/${id}/onboarding`, {
+      dismissed,
+    })
   }
 }

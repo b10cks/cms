@@ -49,6 +49,7 @@ class UpdateSpaceRequest extends FormRequest
             'settings.languages.*.code' => 'required|string|min:2|max:5',
             'settings.languages.*.name' => 'required|string|max:100',
             'settings.languages.*.fallback_language' => 'nullable|string|min:2|max:5',
+            'settings.onboarding_dismissed_at' => 'nullable|date',
             'settings.sitemap' => 'nullable|array',
             'settings.sitemap.types' => 'nullable|array',
             'settings.sitemap.types.*.block' => 'required|string|max:100|distinct:ignore_case',

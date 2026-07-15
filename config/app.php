@@ -19,6 +19,12 @@ return [
 
     'version' => env('APP_VERSION', '15d82c34b7a9f0e6'),
 
+    // Base URL of the public documentation. Self-hosted instances that run their
+    // own docs can repoint this; paths are appended (e.g. `/guides/nuxt`).
+    'docs_url' => rtrim(env('APP_DOCS_URL', 'https://www.b10cks.com/docs'), '/'),
+
+    'community_url' => env('APP_COMMUNITY_URL', 'https://discord.gg/zAz6sBDpHT'),
+
     'sidebar_menu' => json_decode(
         env('APP_SIDEBAR_MENU', json_encode([
             [

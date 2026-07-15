@@ -50,6 +50,7 @@ interface SpaceSettings {
   site_locales?: SpaceSiteLocale[]
   filter_hidden_blocks?: boolean
   content_sorting?: boolean
+  onboarding_dismissed_at?: string | null
   sitemap?: SpaceSitemapSettings
 }
 

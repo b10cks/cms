@@ -3625,6 +3625,11 @@
                                                     ]
                                                 }
                                             },
+                                            "onboarding_dismissed_at": {
+                                                "type": "string",
+                                                "format": "date",
+                                                "nullable": true
+                                            },
                                             "sitemap": {
                                                 "type": "array",
                                                 "properties": [],
@@ -3795,6 +3800,56 @@
                         "description": "The space identifier"
                     }
                 ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/onboarding": {
+            "patch": {
+                "summary": "Dismiss or restore the onboarding guide",
+                "description": "Dismiss or restore the onboarding guide.\n\nOnboarding state is shared across the space: dismissing it hides the guide\nfor every member, so it is gated on the same ability as other space edits.",
+                "tags": [
+                    "Onboarding"
+                ],
+                "operationId": "patch_spaces_by_space_onboarding",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "dismissed": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "dismissed"
+                                ]
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Successful response"
@@ -4172,6 +4227,11 @@
                                             },
                                             "content_sorting": {
                                                 "type": "boolean"
+                                            },
+                                            "onboarding_dismissed_at": {
+                                                "type": "string",
+                                                "format": "date",
+                                                "nullable": true
                                             },
                                             "ai": {
                                                 "type": "array",

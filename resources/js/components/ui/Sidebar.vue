@@ -27,6 +27,7 @@ import { runtimeConfig } from '~/lib/runtime-config'
 import { getLocale, locales } from '~/plugins/i18n'
 
 const router = useRouter()
+const route = useRoute()
 const { t } = useI18n()
 const { preloadRoute, cancelPreload } = useRoutePreload()
 const isDark = useDark()
@@ -42,12 +43,26 @@ const spaceId = inject<Ref<string | undefined>>('spaceId')
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => (spaceId?.value ? { space_id: spaceId.value } : {})))
 
+const { useSpaceQuery } = useSpaces()
+const { data: currentSpace } = useSpaceQuery(computed(() => spaceId?.value))
+const { useDismissOnboardingMutation } = useOnboarding(computed(() => spaceId?.value ?? ''))
+const { mutate: dismissOnboarding } = useDismissOnboardingMutation()
+
+const isOnboardingDismissed = computed(
+  () => !!currentSpace.value?.settings?.onboarding_dismissed_at
+)
+const canDismissOnboarding = computed(() => access.hasAbility('space.update'))
+
 const menu = computed(() => {
   if (!spaceId?.value) {
     return []
   }
 
   return access.filterVisibleItems(spaceNavigationItems).filter((item) => {
+    if (item.routeName === 'space-onboarding') {
+      return !isOnboardingDismissed.value
+    }
+
     if (item.routeName !== 'space-settings-index') {
       return true
     }
@@ -55,6 +70,13 @@ const menu = computed(() => {
     return access.canAccessRoute('space-settings-index')
   })
 })
+
+const handleDismissOnboarding = () => {
+  if (route.name === 'space-onboarding') {
+    router.push(buildLink('space'))
+  }
+  dismissOnboarding(true)
+}
 
 const buildLink = (name: string) => {
   if (!spaceId?.value) {
@@ -108,36 +130,54 @@ const availableLocales = locales
       <div
         :class="['relative flex w-full min-w-0 flex-col', isExtendedSidebar ? 'gap-1' : 'gap-2']"
       >
-        <component
-          :is="isExtendedSidebar ? 'div' : SimpleTooltip"
+        <div
           v-for="m in menu"
           :key="m.label"
-          v-bind="isExtendedSidebar ? {} : { tooltip: menuLabel(m.label), side: 'right' }"
+          class="group/nav relative flex w-full"
         >
-          <RouterLink
-            :to="buildLink(m.routeName)"
-            :class="[
-              'w-full flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-sidebar-accent',
-              isExtendedSidebar ? 'flex-col gap-1 p-2 text-center' : 'size-8 ',
-            ]"
-            active-class="text-sidebar-accent-foreground bg-sidebar-accent"
-            @mouseenter="preloadRoute(buildLink(m.routeName))"
-            @focusin="preloadRoute(buildLink(m.routeName))"
-            @mouseleave="cancelPreload(buildLink(m.routeName))"
-            @focusout="cancelPreload(buildLink(m.routeName))"
+          <component
+            :is="isExtendedSidebar ? 'div' : SimpleTooltip"
+            class="w-full"
+            v-bind="isExtendedSidebar ? {} : { tooltip: menuLabel(m.label), side: 'right' }"
+          >
+            <RouterLink
+              :to="buildLink(m.routeName)"
+              :class="[
+                'w-full flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-sidebar-accent',
+                isExtendedSidebar ? 'flex-col gap-1 p-2 text-center' : 'size-8 ',
+              ]"
+              active-class="text-sidebar-accent-foreground bg-sidebar-accent"
+              @mouseenter="preloadRoute(buildLink(m.routeName))"
+              @focusin="preloadRoute(buildLink(m.routeName))"
+              @mouseleave="cancelPreload(buildLink(m.routeName))"
+              @focusout="cancelPreload(buildLink(m.routeName))"
+            >
+              <Icon
+                :name="m.icon"
+                size="20"
+              />
+              <span
+                v-if="isExtendedSidebar"
+                class="line-clamp-2 text-2xs leading-tight"
+              >
+                {{ menuLabel(m.label) }}
+              </span>
+            </RouterLink>
+          </component>
+          <button
+            v-if="m.routeName === 'space-onboarding' && canDismissOnboarding"
+            type="button"
+            :title="t('labels.onboarding.dismiss')"
+            :aria-label="t('labels.onboarding.dismiss')"
+            class="absolute -top-1 -right-1 flex size-4 cursor-pointer items-center justify-center rounded-full bg-sidebar-accent text-sidebar-muted opacity-0 transition-opacity duration-200 group-hover/nav:opacity-100 hover:text-sidebar-accent-foreground focus-visible:opacity-100"
+            @click.stop.prevent="handleDismissOnboarding"
           >
             <Icon
-              :name="m.icon"
-              size="20"
+              name="lucide:x"
+              size="12"
             />
-            <span
-              v-if="isExtendedSidebar"
-              class="line-clamp-2 text-2xs leading-tight"
-            >
-              {{ menuLabel(m.label) }}
-            </span>
-          </RouterLink>
-        </component>
+          </button>
+        </div>
       </div>
     </div>
     <div class="flex flex-col items-center gap-2">

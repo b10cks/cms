@@ -106,6 +106,7 @@ declare global {
   const useInvites: typeof import('./composables/useInvites').useInvites
   const useLink: typeof import('vue-router').useLink
   const useModel: typeof import('vue').useModel
+  const useOnboarding: typeof import('./composables/useOnboarding').useOnboarding
   const usePersonalAccessTokens: typeof import('./composables/usePersonalAccessTokens').usePersonalAccessTokens
   const usePresence: typeof import('./composables/usePresence').usePresence
   const useRedirects: typeof import('./composables/useRedirects').useRedirects
@@ -329,6 +330,7 @@ declare module 'vue' {
     readonly useInvites: UnwrapRef<(typeof import('./composables/useInvites'))['useInvites']>
     readonly useLink: UnwrapRef<(typeof import('vue-router'))['useLink']>
     readonly useModel: UnwrapRef<(typeof import('vue'))['useModel']>
+    readonly useOnboarding: UnwrapRef<(typeof import('./composables/useOnboarding'))['useOnboarding']>
     readonly usePersonalAccessTokens: UnwrapRef<
       (typeof import('./composables/usePersonalAccessTokens'))['usePersonalAccessTokens']
     >

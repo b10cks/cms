@@ -2,6 +2,8 @@ declare global {
   interface Window {
     __APP_CONFIG__?: {
       version?: string
+      docsUrl?: string
+      communityUrl?: string
       apiBaseUrl?: string
       socialAuth?: {
         providers?: Array<{
@@ -41,6 +43,8 @@ export const runtimeConfig = {
   public: {
     apiBaseUrl: appConfig?.apiBaseUrl || '',
     appVersion: appConfig?.version || '',
+    docsUrl: appConfig?.docsUrl || 'https://www.b10cks.com/docs',
+    communityUrl: appConfig?.communityUrl || 'https://discord.gg/zAz6sBDpHT',
     socialAuth: {
       providers: appConfig?.socialAuth?.providers || [],
     },

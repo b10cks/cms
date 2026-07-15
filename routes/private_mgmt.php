@@ -83,6 +83,7 @@ use App\Http\Controllers\Mgmt\SpaceInviteController;
 use App\Http\Controllers\Mgmt\SpaceInviteResendController;
 use App\Http\Controllers\Mgmt\SpaceInvoiceController;
 use App\Http\Controllers\Mgmt\SpaceMemberController;
+use App\Http\Controllers\Mgmt\SpaceOnboardingController;
 use App\Http\Controllers\Mgmt\SpaceRoleController;
 use App\Http\Controllers\Mgmt\SpaceSearchController;
 use App\Http\Controllers\Mgmt\SpaceStatsController;
@@ -206,6 +207,7 @@ Route::apiResource('spaces', SpaceController::class);
 Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], function () {
     Route::post('icon', SpaceIconController::class)->name('spaces.icon');
     Route::post('archive', SpaceArchiveController::class)->name('spaces.archive');
+    Route::patch('onboarding', [SpaceOnboardingController::class, 'update'])->name('spaces.onboarding.update');
     Route::get('ai-usage', SpaceAiUsageController::class)->name('spaces.ai-usage');
     Route::get('usage', SpaceUsageController::class)->name('spaces.usage');
     Route::get('usage/history', [SpaceUsageHistoryController::class, 'index'])->name('spaces.usage.history');

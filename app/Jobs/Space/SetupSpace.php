@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Space;
 
+use App\Actions\Space\CreateToken;
 use App\Jobs\QueuedJob;
 use App\Models\Management\Space;
 use Log;
@@ -18,12 +19,30 @@ class SetupSpace extends QueuedJob
     {
         $this->createDefaultStorage($this->space);
         $this->createLocalDefaultConnection($this->space);
+        $this->createDefaultToken($this->space);
 
         // OpenRouter keys are provisioned from the space's subscription/plan
         // (see SyncSpaceAiKey, dispatched when the subscription is created),
         // not unconditionally at space creation.
 
         $this->space->update(['state' => 'live']);
+    }
+
+    /**
+     * A read-only delivery token so the space is fetchable the moment it exists —
+     * onboarding hands it straight to the CLI. Tokens are stored in plaintext, so
+     * this one stays retrievable via the tokens API instead of being shown once.
+     */
+    protected function createDefaultToken(Space $space)
+    {
+        if ($space->tokens()->exists()) {
+            return;
+        }
+
+        app(CreateToken::class)->execute([
+            'name' => 'Default',
+            'abilities' => ['*:read'],
+        ], $space, null);
     }
 
     protected function createLocalDefaultConnection(Space $space)

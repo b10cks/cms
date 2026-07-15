@@ -36,6 +36,7 @@ class SpaceSettings extends Settings
         'slug_strategy' => 'prepend_translations',
         'filter_hidden_blocks' => false,
         'content_sorting' => false,
+        'onboarding_dismissed_at' => null,
         'sitemap' => [
             'types' => [],
         ],
@@ -176,6 +177,11 @@ class SpaceSettings extends Settings
             'content_sorting' => [
                 ...$sometimes,
                 'boolean',
+            ],
+            'onboarding_dismissed_at' => [
+                ...$sometimes,
+                'nullable',
+                'date',
             ],
             'ai' => [
                 ...$sometimes,
@@ -331,6 +337,12 @@ class SpaceSettings extends Settings
             'content_sorting' => [
                 'description' => 'Whether manual drag-and-drop ordering of content is enabled for the space. '
                     .'When disabled, content is ordered alphabetically by name.',
+            ],
+            'onboarding_dismissed_at' => [
+                'description' => 'When the onboarding guide was dismissed for this space. '
+                    .'Null while the guide is still shown in the navigation.',
+                'nullable' => true,
+                'example' => '2026-07-15T10:00:00+00:00',
             ],
             'ai' => [
                 'description' => 'AI-related defaults and preferences for the space.',

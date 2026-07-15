@@ -1104,7 +1104,8 @@
       "settings": "Settings",
       "provider": "Provider",
       "extendedSidebar": "Extended sidebar",
-      "icons": "Icons"
+      "icons": "Icons",
+      "onboarding": "Onboarding"
     },
     "provider": {
       "title": "Provider",
@@ -2349,6 +2350,12 @@
           "pending": "Pending",
           "inactive": "Inactive"
         }
+      },
+      "onboarding": {
+        "title": "Onboarding",
+        "description": "The get-started guide in the sidebar. Hiding it affects everyone in this space.",
+        "show": "Show onboarding",
+        "hide": "Hide onboarding"
       }
     },
     "account": {
@@ -3622,6 +3629,72 @@
       "downloadAsset": "Download file",
       "empty": "This share contains no files.",
       "poweredBy": "Shared via b10cks"
+    },
+    "onboarding": {
+      "title": "Get started",
+      "subtitle": "Five steps from an empty space to content on your site.",
+      "dismiss": "Hide onboarding",
+      "dismissAction": "Hide guide",
+      "dismissed": "Onboarding hidden. You can bring it back from the space settings.",
+      "finish": "All done",
+      "steps": {
+        "space": {
+          "title": "Create a space",
+          "description": "Your space is live and ready — this is where your content lives."
+        },
+        "token": {
+          "title": "Create an access token",
+          "description": "Your space came with a read-only delivery token. It authenticates reads against the Data API.",
+          "action": "Create a token",
+          "hint": "Treat it like a password. You can add or revoke tokens in Settings → General."
+        },
+        "stack": {
+          "title": "Integrate with your favourite tech stack",
+          "description": "Pick the framework you build with. We tailor the next step to it.",
+          "guide": "Read the integration guide"
+        },
+        "scaffold": {
+          "title": "Scaffold your project",
+          "description": "Run this command to create the project, install the SDK, and wire up your access token.",
+          "pickFirst": "Pick a framework above to get your command.",
+          "directory": "Directory",
+          "tokenHint": "The command includes this space’s read-only delivery token. Treat it like a secret."
+        },
+        "blocks": {
+          "title": "Define your block structure",
+          "description": "Blocks are your content types. Create at least one root block before adding content.",
+          "action": "Go to blocks"
+        },
+        "invite": {
+          "title": "Invite members",
+          "description": "Bring in editors and developers so you are not building alone.",
+          "action": "Invite people"
+        }
+      },
+      "resources": {
+        "title": "Learn more",
+        "manual": {
+          "title": "User manual",
+          "description": "A guided tour of the editor, from first block to publishing."
+        },
+        "concepts": {
+          "title": "Concepts",
+          "description": "How spaces, blocks, content, and releases fit together."
+        },
+        "api": {
+          "title": "API reference",
+          "description": "Every endpoint of the Data and Management APIs, with examples."
+        },
+        "packages": {
+          "title": "Packages",
+          "description": "SDKs and clients for Nuxt, Next.js, React, Vue, and Svelte."
+        },
+        "community": {
+          "title": "Community",
+          "description": "Ask questions, report issues, and follow what we are shipping."
+        }
+      },
+      "restored": "Onboarding is back in the sidebar."
     }
   },
   "notifications": {
@@ -3960,7 +4033,8 @@
       "revoke": "Revoke",
       "shareCollection": "Share collection…",
       "shareFolder": "Share folder…"
-    }
+    },
+    "copied": "Copied"
   },
   "navigation": {
     "home": "Home",
@@ -4422,6 +4496,9 @@
       "building": "Building archive… {progress}%",
       "ready": "Your download is starting",
       "failed": "Failed to prepare download: {error}"
+    },
+    "onboarding": {
+      "dismissError": "Failed to update onboarding: {error}"
     }
   },
   "content": {

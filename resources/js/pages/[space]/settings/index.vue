@@ -7,6 +7,7 @@ import NuxtImg from '~/components/NuxtImg.vue'
 import ServerLocationSelect from '~/components/ServerLocationSelect.vue'
 import AccssTokenSettings from '~/components/space-settings/AccssTokenSettings.vue'
 import DangerZone from '~/components/space-settings/DangerZone.vue'
+import OnboardingSettings from '~/components/space-settings/OnboardingSettings.vue'
 import { Button } from '~/components/ui/button'
 import {
   Card,
@@ -218,6 +219,10 @@ const onDragOverIcon = (e: DragEvent) => {
         </CardFooter>
       </Card>
       <AccssTokenSettings
+        v-if="space"
+        :space="space"
+      />
+      <OnboardingSettings
         v-if="space"
         :space="space"
       />

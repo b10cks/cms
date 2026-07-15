@@ -169,7 +169,9 @@ const handleNext = async () => {
       if (response.checkout_url) {
         window.location.href = response.checkout_url
       } else {
-        router.push({ name: 'space', params: { space: response.data.id } })
+        // A brand-new space has no stats to show on the dashboard — send people
+        // to the onboarding guide instead.
+        router.push({ name: 'space-onboarding', params: { space: response.data.id } })
       }
     },
   })
