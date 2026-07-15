@@ -138,7 +138,11 @@ const buildExtensions = (): AnyExtension[] => {
     if (!isEnabled(feature)) starterKitConfig[feature] = false
   }
 
-  const extensions: AnyExtension[] = [StarterKit.configure(starterKitConfig), TextClass, PlaceholderToken]
+  const extensions: AnyExtension[] = [
+    StarterKit.configure(starterKitConfig),
+    TextClass,
+    PlaceholderToken,
+  ]
 
   if (isEnabled('internalLink')) extensions.push(InternalLink)
   if (isEnabled('bulletList') || isEnabled('orderedList')) extensions.push(ListStyle)
@@ -331,10 +335,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex flex-col rounded border border-input bg-surface">
+  <div class="flex flex-col">
     <div
       v-if="!props.disabled"
-      class="sticky top-0 z-10 flex flex-wrap gap-1 rounded-t border-b border-input bg-surface p-2"
+      class="sticky top-0 z-10 flex flex-wrap gap-1 bg-background pb-2"
     >
       <Button
         v-if="isEnabled('bold')"
@@ -395,12 +399,11 @@ onBeforeUnmount(() => {
         <DropdownMenuTrigger as-child>
           <Button
             size="xs"
-            variant="outline"
             class="gap-1"
+            variant="input"
             :title="`Current: ${headingDisplayLabel}`"
           >
             <Icon :name="getHeadingIcon(currentHeading || 'p')" />
-            {{ headingDisplayLabel }}
             <Icon
               name="lucide:chevron-down"
               size="0.8rem"
@@ -457,7 +460,9 @@ onBeforeUnmount(() => {
       >
         <Icon name="lucide:list-ordered" />
       </Button>
-      <DropdownMenu v-if="listStyles.length > 0 && (isEnabled('bulletList') || isEnabled('orderedList'))">
+      <DropdownMenu
+        v-if="listStyles.length > 0 && (isEnabled('bulletList') || isEnabled('orderedList'))"
+      >
         <DropdownMenuTrigger as-child>
           <Button
             type="button"
@@ -541,7 +546,7 @@ onBeforeUnmount(() => {
           <Button
             type="button"
             size="xs"
-            variant="outline"
+            variant="input"
             class="gap-1"
             :title="$t('labels.tiptap.toolbar.tableTools')"
             :disabled="!editor?.isActive('table')"
@@ -776,6 +781,7 @@ onBeforeUnmount(() => {
     <EditorContent
       :editor="editor"
       :tabindex="props.disabled ? -1 : undefined"
+      class="rounded border border-input-border bg-input shadow-sm"
     />
 
     <LinkDialog

@@ -357,13 +357,9 @@ const toggleExpanded = (folderId: string) => {
             @cancel="currentlyEditingId = null"
           />
         </div>
-        <Badge
-          size="sm"
-          type="outline"
-          class="shrink-0"
-        >
+        <span class="shrink-0 text-sm">
           {{ item.value.assets_count ?? 0 }}
-        </Badge>
+        </span>
         <DropdownMenu v-if="canManageFolders">
           <DropdownMenuTrigger
             class="opacity-0 transition-all duration-200 group-hover:opacity-100 hover:text-primary data-[state=open]:opacity-100"

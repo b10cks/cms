@@ -169,7 +169,11 @@ watchEffect((onCleanup) => {
           :model-value="selected"
           :aria-label="`Select folder ${folder.name}`"
           class="transition-opacity"
-          :class="selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'"
+          :class="
+            selected
+              ? 'opacity-100'
+              : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'
+          "
           @click.stop="handleCheckboxSelect"
           @dblclick.stop
         />
@@ -183,7 +187,7 @@ watchEffect((onCleanup) => {
           </div>
           <div class="flex-1 group-hover:text-primary">
             <h4 class="font-semibold text-primary">{{ folder.name }}</h4>
-            <div class="text-sm">
+            <div class="text-sm text-muted">
               {{ folder.children_count }} Folder, {{ folder.assets_count }} Asset
             </div>
           </div>

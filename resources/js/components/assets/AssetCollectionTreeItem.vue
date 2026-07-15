@@ -96,40 +96,37 @@ watchEffect((onCleanup) => {
       :as="RouterLink"
       :to="collectionLink"
       :class="[
-        'group flex w-full items-center gap-2 rounded-md px-2 py-1 outline-none',
+        'group flex w-full items-center rounded-md px-2 py-1 outline-none',
         'cursor-pointer font-semibold transition-colors duration-200 hover:bg-input',
         item.value.id === selectedCollectionId ? 'bg-input text-primary' : '',
         isDraggedOver ? 'bg-accent/10' : '',
       ]"
       @select="$emit('select', item.value.id)"
     >
-      <Icon
-        :name="item.value.icon ? `lucide:${item.value.icon}` : 'lucide:layers'"
-        :style="{ color: item.value.color || undefined }"
-        class="shrink-0"
-        aria-hidden="true"
-      />
-      <RenamableTitle
-        :name="item.value.name"
-        :disabled="!canManageCollections"
-        class="min-w-0 flex-1 truncate"
-        @update="$emit('rename', $event, item.value)"
-      />
-      <Icon
-        v-if="isSmart"
-        name="lucide:sparkles"
-        class="shrink-0 text-muted-foreground"
-        :title="String($t('labels.assetCollections.smartIndicator'))"
-        aria-hidden="true"
-      />
-      <Badge
-        v-if="typeof item.value.assets_count === 'number'"
-        size="sm"
-        type="outline"
-        class="shrink-0"
-      >
-        {{ item.value.assets_count }}
-      </Badge>
+      <div class="flex flex-1 items-center gap-2">
+        <Icon
+          :name="item.value.icon ? `lucide:${item.value.icon}` : 'lucide:layers'"
+          :style="{ color: item.value.color || undefined }"
+          class="shrink-0"
+          aria-hidden="true"
+        />
+        <RenamableTitle
+          :name="item.value.name"
+          :disabled="!canManageCollections"
+          class="min-w-0 flex-1 truncate"
+          @update="$emit('rename', $event, item.value)"
+        />
+        <Icon
+          v-if="isSmart"
+          name="lucide:sparkles"
+          class="shrink-0 text-muted-foreground"
+          :title="String($t('labels.assetCollections.smartIndicator'))"
+          aria-hidden="true"
+        />
+      </div>
+      <span class="shrink-0 text-sm">
+        {{ item.value.assets_count ?? 0 }}
+      </span>
       <DropdownMenu v-if="canManageCollections || canShareCollections">
         <DropdownMenuTrigger
           class="opacity-0 transition-all duration-200 group-hover:opacity-100 hover:text-primary data-[state=open]:opacity-100"

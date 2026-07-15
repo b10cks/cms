@@ -86,33 +86,31 @@ watchEffect((onCleanup) => {
       :as="RouterLink"
       :to="tagLink"
       :class="[
-        'group flex w-full items-center gap-2 rounded-md px-2 py-1 outline-none',
+        'group flex w-full items-center rounded-md px-2 py-1 outline-none',
         'cursor-pointer font-semibold transition-colors duration-200 hover:bg-input',
         item.value.id === selectedTagId ? 'bg-input text-primary' : '',
         isDraggedOver ? 'bg-accent/10' : '',
       ]"
       @select="$emit('select', item.value.id)"
     >
-      <Icon
-        v-if="item.value.icon"
-        :name="`lucide:${item.value.icon}`"
-        :style="{ color: item.value.color }"
-        class="shrink-0"
-        aria-hidden="true"
-      />
-      <RenamableTitle
-        :name="item.value.name"
-        :disabled="!canManageTags"
-        class="min-w-0 flex-1 truncate"
-        @update="$emit('rename', $event, item.value)"
-      />
-      <Badge
-        size="sm"
-        type="outline"
-        class="shrink-0"
-      >
+      <div class="flex flex-1 items-center gap-2">
+        <Icon
+          v-if="item.value.icon"
+          :name="`lucide:${item.value.icon}`"
+          :style="{ color: item.value.color }"
+          class="shrink-0"
+          aria-hidden="true"
+        />
+        <RenamableTitle
+          :name="item.value.name"
+          :disabled="!canManageTags"
+          class="min-w-0 flex-1 truncate"
+          @update="$emit('rename', $event, item.value)"
+        />
+      </div>
+      <span class="shrink-0 text-sm">
         {{ item.value.assets_count ?? 0 }}
-      </Badge>
+      </span>
       <DropdownMenu v-if="canManageTags">
         <DropdownMenuTrigger
           class="opacity-0 transition-all duration-200 group-hover:opacity-100 hover:text-primary data-[state=open]:opacity-100"

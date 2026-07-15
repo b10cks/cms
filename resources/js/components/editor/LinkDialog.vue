@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 
 import type { LinkApplyPayload, LinkInitial, LinkKind } from './linkTypes'
 
@@ -61,6 +62,8 @@ const text = ref('')
 const showPicker = ref(false)
 
 const editing = computed(() => props.initial != null)
+// With only one kind on offer there is nothing to switch between; the tab panel still renders.
+const showKindTabs = computed(() => props.allowUrl && props.allowInternal)
 // A brand-new link over a collapsed cursor needs its own visible text.
 const showTextField = computed(() => !editing.value && !props.hasSelection)
 
@@ -164,74 +167,81 @@ const submit = () => {
       </DialogHeader>
 
       <div class="space-y-4">
-        <div
-          v-if="allowUrl && allowInternal"
-          class="grid grid-cols-2 gap-1 rounded-md bg-muted p-1"
+        <Tabs
+          :model-value="kind"
+          @update:model-value="kind = $event as LinkKind"
         >
-          <Button
-            type="button"
-            size="sm"
-            :variant="kind === 'url' ? 'default' : 'ghost'"
-            @click="kind = 'url'"
+          <TabsList
+            v-if="showKindTabs"
+            class="w-full"
           >
-            <Icon name="lucide:link" />
-            {{ t('labels.link.types.url') }}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            :variant="kind === 'internal' ? 'default' : 'ghost'"
-            @click="kind = 'internal'"
-          >
-            <Icon name="lucide:file" />
-            {{ t('labels.link.types.internal') }}
-          </Button>
-        </div>
-
-        <template v-if="kind === 'url'">
-          <InputField
-            v-model="url"
-            name="link-url"
-            :label="t('labels.link.url')"
-            :placeholder="t('labels.link.urlPlaceholder')"
-            @keydown.enter.prevent="submit"
-          />
-        </template>
-
-        <template v-else>
-          <FormField
-            name="link-content"
-            :label="t('labels.link.content')"
-          >
-            <button
-              type="button"
-              class="text-input-foreground flex min-h-[2.5rem] w-full items-center gap-2 rounded-md border border-input-border bg-input px-3 py-2 text-sm"
-              @click="showPicker = true"
+            <TabsTrigger
+              value="url"
+              class="flex-1"
             >
-              <span
-                v-if="content"
-                class="flex items-center gap-1 truncate font-semibold"
+              <Icon name="lucide:link" />
+              {{ t('labels.link.types.url') }}
+            </TabsTrigger>
+            <TabsTrigger
+              value="internal"
+              class="flex-1"
+            >
+              <Icon name="lucide:file" />
+              {{ t('labels.link.types.internal') }}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent
+            value="url"
+            :class="{ 'mt-0!': !showKindTabs }"
+          >
+            <InputField
+              v-model="url"
+              name="link-url"
+              :label="t('labels.link.url')"
+              :placeholder="t('labels.link.urlPlaceholder')"
+              @keydown.enter.prevent="submit"
+            />
+          </TabsContent>
+
+          <TabsContent
+            value="internal"
+            :class="{ 'mt-0!': !showKindTabs }"
+          >
+            <FormField
+              name="link-content"
+              :label="t('labels.link.content')"
+            >
+              <button
+                type="button"
+                class="text-input-foreground flex min-h-[2.5rem] w-full items-center gap-2 rounded-md border border-input-border bg-input px-3 py-2 text-sm"
+                @click="showPicker = true"
               >
-                {{ selectedContentName }}
                 <span
-                  v-if="anchor"
-                  class="text-muted-foreground"
-                  >#{{ anchor }}</span
+                  v-if="content"
+                  class="flex items-center gap-1 truncate font-semibold"
                 >
-              </span>
-              <span
-                v-else
-                class="text-muted-foreground"
-              >
-                {{ t('labels.link.noContentSelected') }}
-              </span>
-              <Icon
-                name="lucide:search"
-                class="ml-auto"
-              />
-            </button>
-          </FormField>
-        </template>
+                  {{ selectedContentName }}
+                  <span
+                    v-if="anchor"
+                    class="text-muted-foreground"
+                    >#{{ anchor }}</span
+                  >
+                </span>
+                <span
+                  v-else
+                  class="text-muted-foreground"
+                >
+                  {{ t('labels.link.noContentSelected') }}
+                </span>
+                <Icon
+                  name="lucide:search"
+                  class="ml-auto"
+                />
+              </button>
+            </FormField>
+          </TabsContent>
+        </Tabs>
 
         <InputField
           v-if="showTextField"
