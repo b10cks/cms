@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.15-af5bdd9b] — 2026-7-15
+
+- 💫 Add animated icons
+- ⬆️ Bump versions
+- 💄 Improve RTE input
+
 ## [v2026.7.15-3063f932] — 2026-7-15
 
 - ✨ Add onboarding guide for new spaces
