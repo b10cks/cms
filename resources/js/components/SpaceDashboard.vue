@@ -3,8 +3,6 @@ import { api } from '~/api'
 import StatsCard from '~/components/stats/StatsCard.vue'
 import { Skeleton } from '~/components/ui/skeleton'
 
-import { SelectField } from './ui/form'
-
 // Keep chart.js out of the landing route's chunk; the dashboard shell paints
 // immediately and the charts stream in.
 const StatsLineChart = defineAsyncComponent(
@@ -20,13 +18,13 @@ const { t } = useI18n()
 
 const props = defineProps<{
   spaceId: string
+  period: string
+  dateRange: string
 }>()
 
 const loading = ref(true)
 const error = ref<string | null>(null)
 const stats = ref<any>(null)
-const period = ref('daily')
-const dateRange = ref('thisMonth')
 let activeRequestId = 0
 
 const dateRangeValues = computed(() => {
@@ -34,7 +32,7 @@ const dateRangeValues = computed(() => {
   let startDate: Date
   const endDate = new Date()
 
-  switch (dateRange.value) {
+  switch (props.dateRange) {
     case 'last7':
       startDate = new Date(now)
       startDate.setDate(now.getDate() - 7)
@@ -78,7 +76,7 @@ const fetchDashboardStats = async () => {
   try {
     const { startDate, endDate } = dateRangeValues.value
     const response = await api.client.get(`/mgmt/v1/spaces/${props.spaceId}/stats`, {
-      period: period.value,
+      period: props.period,
       start_date: startDate,
       end_date: endDate,
     })
@@ -197,7 +195,7 @@ const contentActivityData = computed(() => {
 })
 
 watch(
-  [() => props.spaceId, period, dateRange],
+  [() => props.spaceId, () => props.period, () => props.dateRange],
   () => {
     stats.value = null
     fetchDashboardStats()
@@ -208,34 +206,6 @@ watch(
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
-      <div class="ml-auto flex space-x-4">
-        <SelectField
-          name="dateRange"
-          v-model="dateRange"
-          :placeholder="t('dashboard.filters.date_range')"
-          :options="[
-            { value: 'last7', label: t('dashboard.filters.last_7_days') },
-            { value: 'last30', label: t('dashboard.filters.last_30_days') },
-            { value: 'last90', label: t('dashboard.filters.last_90_days') },
-            { value: 'thisMonth', label: t('dashboard.filters.this_month') },
-            { value: 'thisYear', label: t('dashboard.filters.this_year') },
-          ]"
-        />
-
-        <SelectField
-          name="period"
-          v-model="period"
-          :placeholder="t('dashboard.filters.period')"
-          :options="[
-            { value: 'daily', label: t('dashboard.filters.daily') },
-            { value: 'weekly', label: t('dashboard.filters.weekly') },
-            { value: 'monthly', label: t('dashboard.filters.monthly') },
-          ]"
-        />
-      </div>
-    </div>
-
     <div
       v-if="loading"
       aria-hidden="true"

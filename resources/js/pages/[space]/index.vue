@@ -3,11 +3,15 @@ import NuxtImg from '~/components/NuxtImg.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import SpaceDashboard from '~/components/SpaceDashboard.vue'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
+import { SelectField } from '~/components/ui/form'
 
 const { useCurrentSpaceQuery } = useSpaces()
 const { t } = useI18n()
 const { data: space } = useCurrentSpaceQuery()
 const { formatDateTime } = useFormat()
+
+const period = ref('daily')
+const dateRange = ref('thisMonth')
 
 useSeoMeta({
   title: computed(() => t('dashboard.title')),
@@ -39,8 +43,39 @@ useSeoMeta({
               size="xs"
             />
           </div>
+          <template #actions>
+            <div class="flex items-center gap-4">
+              <SelectField
+                v-model="dateRange"
+                name="dateRange"
+                :placeholder="t('dashboard.filters.date_range')"
+                :options="[
+                  { value: 'last7', label: t('dashboard.filters.last_7_days') },
+                  { value: 'last30', label: t('dashboard.filters.last_30_days') },
+                  { value: 'last90', label: t('dashboard.filters.last_90_days') },
+                  { value: 'thisMonth', label: t('dashboard.filters.this_month') },
+                  { value: 'thisYear', label: t('dashboard.filters.this_year') },
+                ]"
+              />
+              <SelectField
+                v-model="period"
+                name="period"
+                :placeholder="t('dashboard.filters.period')"
+                :options="[
+                  { value: 'daily', label: t('dashboard.filters.daily') },
+                  { value: 'weekly', label: t('dashboard.filters.weekly') },
+                  { value: 'monthly', label: t('dashboard.filters.monthly') },
+                ]"
+              />
+            </div>
+          </template>
         </ContentHeader>
-        <SpaceDashboard :space-id="space.id" />
+        <SpaceDashboard
+          class="mt-6"
+          :space-id="space.id"
+          :period="period"
+          :date-range="dateRange"
+        />
       </div>
     </div>
   </div>

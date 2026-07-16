@@ -916,26 +916,30 @@ provide('reloadServerContent', reloadServerContent)
     />
     <TabsList
       :class="[
-        'flex h-full flex-col shrink-0 border-l border-l-border select-none',
+        'flex h-full flex-col shrink-0 border-l border-l-border select-none transition-[width,padding] duration-200 ease-butter',
         isExtendedSidebar ? 'w-18 p-1' : 'w-14 p-3',
       ]"
     >
       <div class="flex min-h-0 flex-1 flex-col">
         <div
-          :class="['relative flex w-full min-w-0 flex-col', isExtendedSidebar ? 'gap-1' : 'gap-2']"
+          :class="[
+            'relative flex w-full min-w-0 flex-col transition-[gap] duration-200 ease-butter',
+            isExtendedSidebar ? 'gap-1' : 'gap-2',
+          ]"
         >
-          <component
-            :is="isExtendedSidebar ? 'div' : SimpleTooltip"
+          <SimpleTooltip
             v-for="tab in tabs"
             :key="tab.value"
-            v-bind="isExtendedSidebar ? {} : { tooltip: tab.label, side: 'left' }"
+            :tooltip="tab.label"
+            :disabled="isExtendedSidebar"
+            side="left"
             class="flex cursor-pointer"
           >
             <TabsTrigger
               :value="tab.value"
               :class="[
-                'icon-anim w-full relative flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-border',
-                isExtendedSidebar ? 'flex-col gap-1 p-2 text-center' : 'size-8',
+                'icon-anim relative flex w-full flex-col items-center justify-center rounded-lg text-center transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-border',
+                isExtendedSidebar ? 'gap-1 p-2' : 'gap-0 p-1.5',
                 mode === tab.value ? 'bg-border text-primary' : '',
               ]"
             >
@@ -950,28 +954,36 @@ provide('reloadServerContent', reloadServerContent)
                 size="20"
               />
               <span
-                v-if="isExtendedSidebar"
-                class="line-clamp-2 text-[10px] leading-tight"
+                :class="[
+                  'grid w-full transition-[grid-template-rows,opacity] duration-200 ease-butter',
+                  isExtendedSidebar ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+                ]"
+                :aria-hidden="!isExtendedSidebar"
               >
-                {{ tab.label }}
+                <span class="line-clamp-2 min-h-0 overflow-hidden text-[10px] leading-tight">
+                  {{ tab.label }}
+                </span>
               </span>
               <Badge
                 v-if="tab.badge?.show"
                 :variant="tab.badge.variant"
                 size="dot"
-                :class="isExtendedSidebar ? 'absolute top-1 right-1' : 'absolute -top-1 -right-1'"
+                :class="[
+                  'absolute transition-[top,right] duration-200 ease-butter',
+                  isExtendedSidebar ? 'top-1 right-1' : '-top-1 -right-1',
+                ]"
               >
                 {{ tab.badge.content }}
               </Badge>
             </TabsTrigger>
-          </component>
+          </SimpleTooltip>
         </div>
       </div>
       <div class="flex flex-col">
         <Button
           :class="[
-            'w-full flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-border',
-            isExtendedSidebar ? 'flex-col gap-1 p-2 text-center' : 'size-8 ',
+            'flex w-full flex-col items-center justify-center rounded-lg transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-border',
+            isExtendedSidebar ? 'gap-1 p-2' : 'gap-0 p-1.5',
           ]"
           :variant="showAi ? 'default' : 'ghost'"
           @click="showAi = !showAi"
@@ -985,10 +997,13 @@ provide('reloadServerContent', reloadServerContent)
             ]"
           />
           <span
-            v-if="isExtendedSidebar"
-            class="line-clamp-2 text-[10px] leading-tight"
+            :class="[
+              'grid w-full transition-[grid-template-rows,opacity] duration-200 ease-butter',
+              isExtendedSidebar ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+            ]"
+            :aria-hidden="!isExtendedSidebar"
           >
-            AI
+            <span class="line-clamp-2 min-h-0 overflow-hidden text-[10px] leading-tight">AI</span>
           </span>
         </Button>
       </div>

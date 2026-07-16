@@ -129,21 +129,24 @@ const availableLocales = locales
 <template>
   <div
     :class="[
-      'flex h-full flex-col overflow-hidden border-r border-r-sidebar-border bg-sidebar text-sidebar-foreground select-none transition-[width,padding]',
+      'flex h-full flex-col overflow-hidden border-r border-r-sidebar-border bg-sidebar text-sidebar-foreground select-none transition-[width,padding] duration-200 ease-butter',
       isExtendedSidebar ? 'w-18 p-1 pb-3' : 'w-14 p-3',
     ]"
   >
     <div class="flex min-h-0 flex-1 flex-col overflow-y-auto">
       <div
-        :class="['relative flex w-full min-w-0 flex-col', isExtendedSidebar ? 'gap-1' : 'gap-2']"
+        :class="[
+          'relative flex w-full min-w-0 flex-col transition-[gap] duration-200 ease-butter',
+          isExtendedSidebar ? 'gap-1' : 'gap-2',
+        ]"
       >
         <template v-if="isMenuLoading">
           <div
             v-for="n in 6"
             :key="n"
             :class="[
-              'w-full animate-pulse rounded-lg bg-sidebar-accent',
-              isExtendedSidebar ? 'h-14' : 'size-8',
+              'w-full animate-pulse rounded-lg bg-sidebar-accent transition-[height] duration-200 ease-butter',
+              isExtendedSidebar ? 'h-14' : 'h-8',
             ]"
           />
         </template>
@@ -152,16 +155,17 @@ const availableLocales = locales
           :key="m.label"
           class="group/nav relative flex w-full"
         >
-          <component
-            :is="isExtendedSidebar ? 'div' : SimpleTooltip"
+          <SimpleTooltip
             class="w-full"
-            v-bind="isExtendedSidebar ? {} : { tooltip: menuLabel(m.label), side: 'right' }"
+            :tooltip="menuLabel(m.label)"
+            :disabled="isExtendedSidebar"
+            side="right"
           >
             <RouterLink
               :to="buildLink(m.routeName)"
               :class="[
-                'icon-anim w-full flex items-center justify-center rounded-lg transition-colors duration-200 ease-butter hover:bg-sidebar-accent',
-                isExtendedSidebar ? 'flex-col gap-1 p-2 text-center' : 'size-8 ',
+                'icon-anim flex w-full flex-col items-center justify-center rounded-lg text-center transition-[padding,gap,background-color,color] duration-200 ease-butter hover:bg-sidebar-accent',
+                isExtendedSidebar ? 'gap-1 p-2' : 'gap-0 p-1.5',
               ]"
               active-class="text-sidebar-accent-foreground bg-sidebar-accent"
               @mouseenter="preloadRoute(buildLink(m.routeName))"
@@ -180,13 +184,18 @@ const availableLocales = locales
                 size="20"
               />
               <span
-                v-if="isExtendedSidebar"
-                class="line-clamp-2 text-2xs leading-tight"
+                :class="[
+                  'grid w-full transition-[grid-template-rows,opacity] duration-200 ease-butter',
+                  isExtendedSidebar ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+                ]"
+                :aria-hidden="!isExtendedSidebar"
               >
-                {{ menuLabel(m.label) }}
+                <span class="line-clamp-2 min-h-0 overflow-hidden text-2xs leading-tight">
+                  {{ menuLabel(m.label) }}
+                </span>
               </span>
             </RouterLink>
-          </component>
+          </SimpleTooltip>
           <button
             v-if="m.routeName === 'space-onboarding' && canDismissOnboarding"
             type="button"

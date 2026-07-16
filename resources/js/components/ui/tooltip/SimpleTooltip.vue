@@ -13,11 +13,13 @@ const props = withDefaults(
     tooltip: string
     delayDuration?: number
     side?: 'top' | 'right' | 'bottom' | 'left'
+    disabled?: boolean
     class?: HTMLAttributes['class']
   }>(),
   {
     delayDuration: 300,
     side: 'top',
+    disabled: false,
     class: '',
   }
 )
@@ -32,7 +34,10 @@ const props = withDefaults(
       >
         <slot />
       </TooltipTrigger>
-      <TooltipContent :side="side">
+      <TooltipContent
+        v-if="!disabled"
+        :side="side"
+      >
         <p>{{ tooltip }}</p>
       </TooltipContent>
     </Tooltip>
