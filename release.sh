@@ -21,12 +21,15 @@ changelog_block() {
     fi
 
     local commits
-    # Use the tag ref if it exists (backfill), otherwise fall back to HEAD (new release, not tagged yet)
-    local upper
-    if git rev-parse --verify "${tag}" >/dev/null 2>&1; then
-        upper="$tag"
-    else
-        upper="HEAD"
+    # Upper bound: explicit override (release flow), the tag ref if it exists
+    # (backfill), otherwise HEAD (new release, not tagged yet)
+    local upper="${3:-}"
+    if [[ -z "$upper" ]]; then
+        if git rev-parse --verify "${tag}" >/dev/null 2>&1; then
+            upper="$tag"
+        else
+            upper="HEAD"
+        fi
     fi
 
     if [[ -z "$prev_tag" ]]; then
@@ -158,24 +161,26 @@ if [[ $local_commit != $remote_commit ]]; then
 fi
 
 current_date=$(date +"%Y.%-m.%-d")
-short_hash=$(git rev-parse --short HEAD)
-new_tag="v${current_date}-${short_hash}"
 
 # Determine the previous tag (HEAD^ mirrors deploy.yml — avoids returning a tag on HEAD itself)
 previous_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
 
-# Update CHANGELOG.md before tagging so the file is included in the tagged commit
+# Commit first so the release commit's hash is known, then amend the changelog
+# into it — this keeps the changelog heading, commit message, and tag name in sync.
+git commit --allow-empty -m "🔖 Release (pending)"
+
+short_hash=$(git rev-parse --short HEAD)
+new_tag="v${current_date}-${short_hash}"
+
 echo "Updating $CHANGELOG_FILE..."
-block=$(changelog_block "$new_tag" "$previous_tag")
+# HEAD^ excludes the placeholder release commit from the commit list
+block=$(changelog_block "$new_tag" "$previous_tag" "HEAD^")
 prepend_to_changelog "$block"
 
 git add "$CHANGELOG_FILE"
-git commit -m "🔖 Release $new_tag"
+git commit --amend -m "🔖 Release $new_tag"
 
-# Re-read commit after the changelog commit
 local_commit=$(git rev-parse HEAD)
-short_hash=$(git rev-parse --short HEAD)
-new_tag="v${current_date}-${short_hash}"
 
 git tag "$new_tag"
 

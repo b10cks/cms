@@ -3,13 +3,13 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
-## [v2026.7.15-af5bdd9b] — 2026-7-15
+## [v2026.7.15-fa3c2b1c] — 2026-7-15
 
 - 💫 Add animated icons
 - ⬆️ Bump versions
 - 💄 Improve RTE input
 
-## [v2026.7.15-3063f932] — 2026-7-15
+## [v2026.7.15-e01cb21e] — 2026-7-15
 
 - ✨ Add onboarding guide for new spaces
 - 💄 Improve theme
@@ -17,45 +17,45 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 - ✨ Sync system roles from config on demand
 - 🐛 Fix "Space not found" on broadcast events
 
-## [v2026.7.14-70ca5312] — 2026-7-14
+## [v2026.7.14-fd53335d] — 2026-7-14
 
 - ⬆️ Bump versions
 - 💡 Improve docs
 
-## [v2026.7.13-f8dc955f] — 2026-7-13
+## [v2026.7.13-472ee9d6] — 2026-7-13
 
 - 👷‍♂️ Fix docs build hang: restore specs clobbered by composer, make docs non-fatal
 
-## [v2026.7.13-1e6589ef] — 2026-7-13
+## [v2026.7.13-51ce183a] — 2026-7-13
 
 - 👷‍♂️ Improve build workflow with vite press
 
-## [v2026.7.13-e7d364d2] — 2026-7-13
+## [v2026.7.13-651a9fc6] — 2026-7-13
 
 - 🐛 Make doc CTAs absolute
 
-## [v2026.7.13-e06dab19] — 2026-7-13
+## [v2026.7.13-4ad1de9d] — 2026-7-13
 
 - 👷‍♂️ Publish docs in s3 bucket
 
-## [v2026.7.13-e7a48d53] — 2026-7-13
+## [v2026.7.13-423d4ba2] — 2026-7-13
 
 - ⬆️ Bump versions
 - 💡 Prepare docs
 - ✨ Add asset collections & DAM sharing
 
-## [v2026.7.12-87d61980] — 2026-7-12
+## [v2026.7.12-ba8404e3] — 2026-7-12
 
 - 🩹 Fix publishing
 - 💄 Improve font in AlertDialog
 
-## [v2026.7.12-1b52bf22] — 2026-7-12
+## [v2026.7.12-e4f8fc87] — 2026-7-12
 
 - 🐛 Fix clicking an item in the filtered content tree
 - 🐛 Clear field dirty state when reverted to clean value
 - 🚸 Allow multiline edits in data source entries
 
-## [v2026.7.12-34ecf701] — 2026-7-12
+## [v2026.7.12-d7f7c3a4] — 2026-7-12
 
 - ⚡️ Use system ui font
 - ⬆️ Bump versions
@@ -65,7 +65,7 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 - 💄 Fix redirects search bar appearance
 - 💄 Fix ugly wrap in block detail header
 
-## [v2026.7.12-8513b570] — 2026-7-12
+## [v2026.7.12-c9a7dae1] — 2026-7-12
 
 - 🧱 Reduce bundle size
 - 💄 Improve TeamSelector in Appheader
@@ -115,31 +115,31 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 - 👔 Allow regional price codes like US-USD
 - 🚸 Increase preview image size
 
-## [v2026.7.8-4f62aba2] — 2026-7-8
+## [v2026.7.8-b7cb2abb] — 2026-7-8
 
 - 👔 Improve multi assets selection
 
-## [v2026.7.8-122c5cc6] — 2026-7-8
+## [v2026.7.8-87ce209c] — 2026-7-8
 
 - 👔 Revert to single click action in AssetGrid
 - 👔 Improve comments with live whisper
 
-## [v2026.7.8-e9499475] — 2026-7-8
+## [v2026.7.8-e434a6f1] — 2026-7-8
 
 - 👔 Improve live collaboration dirty changes
 - 🚸 Further improve image quality
 - 🔧 Adapt default qualities
 - 💄 Improve dirty indicator style
 
-## [v2026.7.8-551c504b] — 2026-7-8
+## [v2026.7.8-e2096e05] — 2026-7-8
 
 - 👔 Improve live collaboration on content
 
-## [v2026.7.8-df21e168] — 2026-7-8
+## [v2026.7.8-7ab58350] — 2026-7-8
 
 - 🚸 Improve preview quality in detail
 
-## [v2026.7.8-e4bcb616] — 2026-7-8
+## [v2026.7.8-9ec1f13d] — 2026-7-8
 
 - 👔 Improve asset dialog
 - 🚸 Improve image clearity in AM
@@ -147,19 +147,19 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 - 👔 Add block preview
 - 👔 Fold hourly usage rows into single rows per day
 
-## [v2026.7.7-89359d07] — 2026-7-7
+## [v2026.7.7-807b07af] — 2026-7-7
 
 - ⬆️ Bump versions
 - 🩹 Fix lingering currentSpace issues
 - ⬆️ Upgrade to php@8.5
 - 👔 Auto-rotate exif images
 
-## [v2026.7.6-e503300c] — 2026-7-6
+## [v2026.7.6-d458602f] — 2026-7-6
 
 - ⬆️ Bump versions
 - 👔 Improve content validation
 
-## [v2026.7.6-afbff496] — 2026-7-6
+## [v2026.7.6-fdc7dc27] — 2026-7-6
 
 - 👔 Use CommandPalette for add new block
 - ✨ Allow renaming a schema field key
@@ -171,29 +171,29 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 - 🐛 Remove deleted block tags from blocks' tag arrays
 - ✨ Finder-style selection & bulk actions in asset manager
 
-## [v2026.7.3-9680000c] — 2026-7-3
+## [v2026.7.3-5859c8de] — 2026-7-3
 
 - ⚗️ Try to improve backfill in production
 
-## [v2026.7.3-429e75bb] — 2026-7-3
+## [v2026.7.3-f142627f] — 2026-7-3
 
 - 👔 Improve asset color detection
 
-## [v2026.7.3-94da03e9] — 2026-7-3
+## [v2026.7.3-9ff7f3c2] — 2026-7-3
 
 - 🚸 Improve overflowing issues
 - 👔 Harden color and a11y extraction
 
-## [v2026.7.3-4aa88e17] — 2026-7-3
+## [v2026.7.3-bb26607e] — 2026-7-3
 
 - ⬆️ Bump versions
 - ✨ Add a11y image meta data and dominant color
 
-## [v2026.7.2-862c1a1b] — 2026-7-2
+## [v2026.7.2-128fac09] — 2026-7-2
 
 - 🩹 Fix icon issues
 
-## [v2026.7.2-f76d4f36] — 2026-7-2
+## [v2026.7.2-6b767c75] — 2026-7-2
 
 - 🐛 Commit icon files hidden by a broken global gitignore rule
 - ✨ Add icon-set import UX to the icon manager
@@ -217,55 +217,55 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 - 🔒 Block active-content uploads and harden asset delivery
 - 🔒 Enforce tenant isolation on space-scoped routes
 
-## [v2026.7.1-aa61a000] — 2026-7-1
+## [v2026.7.1-a99b5b13] — 2026-7-1
 
 - 👔 Allow to define a stroke width
 
-## [v2026.7.1-b53c31a2] — 2026-7-1
+## [v2026.7.1-86295515] — 2026-7-1
 
 - 🩹 Fix video thumbnail delivery
 
-## [v2026.7.1-34fcbe4a] — 2026-7-1
+## [v2026.7.1-5fa2bb1a] — 2026-7-1
 
 - ✨ Add asset versioning and rights management
 
-## [v2026.7.1-1c53254b] — 2026-7-1
+## [v2026.7.1-c67f001e] — 2026-7-1
 
 - 🚸 Streamline asset manager UX
 - 🐛 Fix asset manager issues
 
-## [v2026.6.30-d66b553b] — 2026-6-30
+## [v2026.6.30-6f99ea4b] — 2026-6-30
 
 - 👔 Further improve the asset manager
 
-## [v2026.6.30-e1188f35] — 2026-6-30
+## [v2026.6.30-0e2f749b] — 2026-6-30
 
 - 👔 Improve Asset Manager
 - 🚸 Handle video assets better
 
-## [v2026.6.30-3fc583f9] — 2026-6-30
+## [v2026.6.30-53a71970] — 2026-6-30
 
 - ⬆️ Bump versions
 - ✨ Add price field
 
-## [v2026.6.29-11f8d3f] — 2026-6-29
+## [v2026.6.29-4c95e2a] — 2026-6-29
 
 - 🐛 Fix issues identified in error log
 
-## [v2026.6.29-36314cc] — 2026-6-29
+## [v2026.6.29-6fe57f1] — 2026-6-29
 
 - ⬆️ Bump versions
 - 🩹 Improve dirty detection
 
-## [v2026.6.29-98771b5] — 2026-6-29
+## [v2026.6.29-ae74f30] — 2026-6-29
 
 - 🩹 Fix dirty detection
 
-## [v2026.6.29-763806e] — 2026-6-29
+## [v2026.6.29-654f909] — 2026-6-29
 
 - 🩹 Fix saving issue
 
-## [v2026.6.29-1408b7c] — 2026-6-29
+## [v2026.6.29-0eede65] — 2026-6-29
 
 - 👔 Improve icon handling
 - ♻️ Fix import issues
@@ -291,51 +291,51 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 - 👔 Handle space subscriptions
 - 👔 Improve handling of malformed ilum request
 
-## [v2026.6.19-5abee4b] — 2026-6-19
+## [v2026.6.19-0e60a54] — 2026-6-19
 
 - 👔 Allow to actually translate date fields
 
-## [v2026.6.19-b2fab75] — 2026-6-19
+## [v2026.6.19-b78f295] — 2026-6-19
 
 - 👔 Allow date fields to be translated
 
-## [v2026.6.18-93f2f31] — 2026-6-18
+## [v2026.6.18-3cb23c6] — 2026-6-18
 
 - 👔 Further improve translation handling
 - 👔 Improve translation overlay handling in data API
 
-## [v2026.6.17-2f1b405] — 2026-6-17
+## [v2026.6.17-690a67d] — 2026-6-17
 
 - 👔 Improve content filtering for canonicals
 
-## [v2026.6.17-4c66f78] — 2026-6-17
+## [v2026.6.17-1ad5f73] — 2026-6-17
 
 - ✨ Add canonical_id and canonical_parent_id as content filter
 
-## [v2026.6.17-3bc3784] — 2026-6-17
+## [v2026.6.17-7fc0a93] — 2026-6-17
 
 - 👔 Improve content field localization
 - 🐛 Fix verification resend
 
-## [v2026.6.17-f396df4] — 2026-6-17
+## [v2026.6.17-f6048e3] — 2026-6-17
 
 - ✨ Handle orphaned translated content
 
-## [v2026.6.16-68da2b0] — 2026-6-16
+## [v2026.6.16-aa67189] — 2026-6-16
 
 - 🐛 Improve translation handling
 - 🐛 Fix overflow for multi assets
 
-## [v2026.6.15-1b3690a] — 2026-6-15
+## [v2026.6.15-0d79744] — 2026-6-15
 
 - 👔 Handle language overlay via id
 
-## [v2026.6.15-5dc4c52] — 2026-6-15
+## [v2026.6.15-2f90cd2] — 2026-6-15
 
 - 👔 Adapt slug handling for translated content
 - ⚡️ Improve sitemap generation
 
-## [v2026.6.10-94e87b3] — 2026-6-10
+## [v2026.6.10-6e7eed8] — 2026-6-10
 
 - ✨ Add import/export to data entries
 - 👔 Improve RTE experience
@@ -343,25 +343,25 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 - 👔 Improve rich text search indexing
 - 🐛 Fix data entries translation not handling all
 
-## [v2026.6.10-5f6d2e7] — 2026-6-10
+## [v2026.6.10-79f7571] — 2026-6-10
 
 - ✨ Add quick publish action to content tree
 
-## [v2026.6.9-265a8ed] — 2026-6-9
+## [v2026.6.9-9d34e47] — 2026-6-9
 
 - ✨ Allow to use params with internal links
 
-## [v2026.6.8-d05190f] — 2026-6-8
+## [v2026.6.8-6ecd148] — 2026-6-8
 
 - ⬆️ Bump versions
 - 🚸 Improve multi assets UX
 - 🚸 Add padding to prevent AI overlap
 
-## [v2026.6.7-5b653ea] — 2026-6-7
+## [v2026.6.7-678e1f4] — 2026-6-7
 
 - 🚸 Improve Link handling for emails
 
-## [v2026.6.6-9bb7340] — 2026-6-6
+## [v2026.6.6-0dd9fc6] — 2026-6-6
 
 - 🐛 Fix content publish/unpublish triggers: use wasChanged/getOriginal
 - 🔖 Release v2026.6.6-f212e59
@@ -381,82 +381,82 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 - ✨ Add automations engine
 - 👔 Improve redirects import
 
-## [v2026.6.6-1a7446c] — 2026-6-6
+## [v2026.6.6-f88ea97] — 2026-6-6
 
 - 👔 Handle local links within richtext
 
-## [v2026.6.6-548594d] — 2026-6-6
+## [v2026.6.6-29d32a6] — 2026-6-6
 
 - 🐛 Dedupe prosemirror to avoid issues
 
-## [v2026.6.5-506ee9b] — 2026-6-5
+## [v2026.6.5-3614cc8] — 2026-6-5
 
 - 🐛 Correctly handle unsaved watcher
 - 🐛 Correctly build the history preview URL
 - 🐛 Fix the diff history view
 
-## [v2026.6.5-85f1aa2] — 2026-6-5
+## [v2026.6.5-d865cf9] — 2026-6-5
 
 - ✨ Allow to reduce resultset with take or except query params
 - ✨ Allow to sort contents against a content field
 
-## [v2026.6.5-cefdda1] — 2026-6-5
+## [v2026.6.5-ff44cca] — 2026-6-5
 
 - 🐛 Another use of parent_id in slug uniqueness validation
 
-## [v2026.6.5-0614244] — 2026-6-5
+## [v2026.6.5-751095d] — 2026-6-5
 
 - ⬆️ Bump versions
 - 🐛 Use parent_id in slug uniqueness validation
 
-## [v2026.6.5-9608e66] — 2026-6-5
+## [v2026.6.5-db2b5eb] — 2026-6-5
 
 - 🐛 Disable trim text
 
-## [v2026.6.5-a61c25e] — 2026-6-5
+## [v2026.6.5-4189bd0] — 2026-6-5
 
 - 🐛 Don't trim text from tiptap
 - 🐛 Remove whitespace preserve
 
-## [v2026.6.5-7090359] — 2026-6-5
+## [v2026.6.5-54d1338] — 2026-6-5
 
 - 🐛 Preserve whitespace in TipTap
 
-## [v2026.6.3-09f6480] — 2026-6-3
+## [v2026.6.3-21848f9] — 2026-6-3
 
 - 🧱 Switch to a single instance reverb setup
 
-## [v2026.6.3-6798c90] — 2026-6-3
+## [v2026.6.3-240dc7e] — 2026-6-3
 
 - 🔧 Fix crashes
 
-## [v2026.6.3-7fe0765] — 2026-6-3
+## [v2026.6.3-7bd8554] — 2026-6-3
 
 - 🔊 Log php errors
 
-## [v2026.6.3-38cddb5] — 2026-6-3
+## [v2026.6.3-dbdab5a] — 2026-6-3
 
 - 🔊 Use log level warn for more output
 
-## [v2026.6.3-7fae658] — 2026-6-3
+## [v2026.6.3-92699bf] — 2026-6-3
 
 - ⬆️ Bump versions
 
-## [v2026.6.2-c26b1db] — 2026-6-2
+## [v2026.6.2-1266b10] — 2026-6-2
 
 - ⬆️ Bump versions
 - 👔 Handle richtext translation values
 - 💡 Add madewithvue badge
 
-## [v2026.5.30-1e5475e] — 2026-5-30
+## [v2026.5.30-55a4f58] — 2026-5-30
 
 - 🐛 Prevent empty defaults on tree operations
 
-## [v2026.5.30-5f16a48] — 2026-5-30
+## [v2026.5.30-e526f3f] — 2026-5-30
 
 - 👔 Improve meta tags generation
 
-## [v2026.5.29-f1cd026] — 2026-5-29
+## [v2026.5.29-a98862f] — 2026-5-29
 
 - ⬆️ Bump versions
 - 🐛 Fix creating content from templates
@@ -464,88 +464,88 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 - 🚸 Improve MultiAssets
 - 🚸 Remember last folder locations for asset selection
 
-## [v2026.5.26-46dd30a] — 2026-5-26
+## [v2026.5.26-dc50492] — 2026-5-26
 
 - 🩹 Use crop=fit for asset detail dialog
 
-## [v2026.5.24-d8ee419] — 2026-5-24
+## [v2026.5.24-eabcbb6] — 2026-5-24
 
 - ✨ Implement data entries translations
 - ⬆️ Bump versions
 
-## [v2026.5.17-127a21f] — 2026-5-17
+## [v2026.5.17-50ab758] — 2026-5-17
 
 - ⬆️ Bump PHP versions
 
-## [v2026.5.17-52e9db2] — 2026-5-17
+## [v2026.5.17-13132f8] — 2026-5-17
 
 - ⬆️ Bump versions
 - ⬆️ Bump versions
 
-## [v2026.5.7-0378c26] — 2026-5-7
+## [v2026.5.7-c13cdca] — 2026-5-7
 
 - ⬆️ Bump versions
 - 🩹 Fix redirect
 
-## [v2026.5.6-2779ba4] — 2026-5-6
+## [v2026.5.6-50f3f41] — 2026-5-6
 
 - ⬆️ Bump versions
 - 👔 Redirect to app.url if otherwise reached web frontend
 
-## [v2026.5.6-da0dde8] — 2026-5-6
+## [v2026.5.6-2889a35] — 2026-5-6
 
 - 👔 Expose external_id in content api
 - 👔 Allow to manage external_id
 
-## [v2026.5.6-ddd13bd] — 2026-5-6
+## [v2026.5.6-aca0e4f] — 2026-5-6
 
 - ⬆️ Bump versions
 - 🐛 Prefix external_id with table
 
-## [v2026.5.4-afc4b8d] — 2026-5-4
+## [v2026.5.4-b08b646] — 2026-5-4
 
 - 👔 Link to software sites
 - 🍱 Add marketing assets
 - ⬆️ Bump versions
 
-## [v2026.5.1-4609454] — 2026-5-1
+## [v2026.5.1-413e08e] — 2026-5-1
 
 - 🔧 Increase sensible defaults for images
 
-## [v2026.5.1-ff2d344] — 2026-5-1
+## [v2026.5.1-d187b6d] — 2026-5-1
 
 - ⬆️ Bump versions
 - 🔧 set sensible defaults for image qualities
 
-## [v2026.4.29-acc876f] — 2026-4-29
+## [v2026.4.29-c02b4f8] — 2026-4-29
 
 - 🧑🏻‍💻 Improve example .env
 - 💡 Address pitfalls for local development in readme
 - 🗃️ Make role_id nullable to accomodate `nullOnDelete`
 
-## [v2026.4.28-11a614f] — 2026-4-28
+## [v2026.4.28-39d6e21] — 2026-4-28
 
 - 🔧 Rename echo host
 
-## [v2026.4.28-e9a5925] — 2026-4-28
+## [v2026.4.28-71c650f] — 2026-4-28
 
 - ⬆️ Fix versions
 
-## [v2026.4.28-0e6c23c] — 2026-4-28
+## [v2026.4.28-b868cd6] — 2026-4-28
 
 - ⬇️ downgrade versions
 
-## [v2026.4.28-f743be2] — 2026-4-28
+## [v2026.4.28-7d3e979] — 2026-4-28
 
 - 🔧 use correct public host
 - ⬆️ Bump versions
 - 💡 Improve readme
 
-## [v2026.4.26-28e1061] — 2026-4-26
+## [v2026.4.26-90bce68] — 2026-4-26
 
 - 🐛 Resolve translated slugs correctly
 
-## [v2026.4.26-2f85293] — 2026-4-26
+## [v2026.4.26-d18dad6] — 2026-4-26
 
 - 👔 Use system prompt for each AI interaction
 - 🚸 Prevent default values spill into new localization
@@ -553,89 +553,89 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 - ⬆️ Upgrade to Laravel v13
 - ✨ Add SAML2 auth self service
 
-## [v2026.4.25-46a9994] — 2026-4-25
+## [v2026.4.25-354a5b0] — 2026-4-25
 
 - ⬇️ Downgrade vite due to build errors
 
-## [v2026.4.25-f623ade] — 2026-4-25
+## [v2026.4.25-24223ca] — 2026-4-25
 
 - ⬆️ Bump versions
 
-## [v2026.4.25-f3cd59b] — 2026-4-25
+## [v2026.4.25-377078a] — 2026-4-25
 
 - ✨ Add social logins
 
-## [v2026.4.25-f47f71a] — 2026-4-25
+## [v2026.4.25-89b2a54] — 2026-4-25
 
 - ⬆️ Bump versions
 - ⬆️ Bump versions
 
-## [v2026.4.22-52a3f55] — 2026-4-22
+## [v2026.4.22-b5134bd] — 2026-4-22
 
 - 🩹 Fix publish date issue
 
-## [v2026.4.21-e5c4b22] — 2026-4-21
+## [v2026.4.21-c36a62b] — 2026-4-21
 
 - 🚸 Improve Stats
 - 🔧 Pass public ENV based config via laravel to vue
 
-## [v2026.4.21-c4f5a59] — 2026-4-21
+## [v2026.4.21-45b508c] — 2026-4-21
 
 - ✨ Add provider specific notes and help menu
 - ⬆️ Bump versions
 - 👔 improve handlebars preview
 
-## [v2026.4.19-3245924] — 2026-4-19
+## [v2026.4.19-f71a4f7] — 2026-4-19
 
 - ⚡️ Improve canvas performance for large trees
 - 🚸 Improve space icon
 
-## [v2026.4.19-c01a1c7] — 2026-4-19
+## [v2026.4.19-cea7c38] — 2026-4-19
 
 - 🍱 Replace favicons
 - ⚡️ Cache content-menu and reduce payload
 
-## [v2026.4.19-4def5d2] — 2026-4-19
+## [v2026.4.19-f667c2b] — 2026-4-19
 
 - 💄 Improve StatsCard
 - 👔 Improve redirects management with add and import/export
 
-## [v2026.4.18-532d1e5] — 2026-4-18
+## [v2026.4.18-88ddeb4] — 2026-4-18
 
 - 🐳 Add redis as native php module
 
-## [v2026.4.18-d06979f] — 2026-4-18
+## [v2026.4.18-e71edb4] — 2026-4-18
 
 - ✨ Add animate image support
 
-## [v2026.4.18-d344971] — 2026-4-18
+## [v2026.4.18-538f006] — 2026-4-18
 
 - 🩹 Fix some vips based transformations
 - 👔 add lower case access control headers
 - ⬆️ Bump versions
 
-## [v2026.4.18-5740dd7] — 2026-4-18
+## [v2026.4.18-691bc1e] — 2026-4-18
 
 - 👔 Improve content publishing and updating with inlined translation support
 - 👔 Use fit as default operation if both width and height are supplied
 - 👔 Add link localization and better localization validation
 
-## [v2026.4.17-22abbb5] — 2026-4-17
+## [v2026.4.17-4ecba87] — 2026-4-17
 
 - 👔 Response with the original if no transformations are supplied
 - 👔 Expose the full_path from the actual asset
 
-## [v2026.4.15-62011cb] — 2026-4-15
+## [v2026.4.15-cecde37] — 2026-4-15
 
 - Revert "⚡️ Send cache header for web response"
 
-## [v2026.4.15-8e09cdb] — 2026-4-15
+## [v2026.4.15-716ad8c] — 2026-4-15
 
 - 👔 Improve ilum endpoints
 - ⬆️ Bump versions
 - ⚡️ Send cache header for web response
 
-## [v2026.4.15-f19e928] — 2026-4-15
+## [v2026.4.15-4acd831] — 2026-4-15
 
 - ⬆️ Bump versions
 - 👔 Get disk in image controller and pass down
@@ -650,40 +650,40 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 - 🐛 Prevent storing of space settings when touching
 - 👔 Improve for production-ready data
 
-## [v2026.4.13-1ec473a] — 2026-4-13
+## [v2026.4.13-3a9c822] — 2026-4-13
 
 - 💄 Improve UX for production data
 - ✏️ Fix typo in tablename
 - 🔧 Increase acceptable content size to 500mb
 - 🐛 Fix folder validation in UpdateBlockRequest
 
-## [v2026.4.12-ba9595a] — 2026-4-12
+## [v2026.4.12-8a2ce52] — 2026-4-12
 
 - ⬆️ Bump versions
 - 🚸 Improve UX of settings table add
 
-## [v2026.4.9-596297b] — 2026-4-9
+## [v2026.4.9-0861ac9] — 2026-4-9
 
 - ⬆️ Bump versions
 - ✨ Improve SEO with advanced meta field and a sitemap API
 - 💄 Improve stats rendering
 - 👔 Prevent auto translation creation
 
-## [v2026.4.7-4f67b58] — 2026-4-7
+## [v2026.4.7-259de17] — 2026-4-7
 
 - 👔 Bump versions
 - 👔 Improve meta and translation AI triggers
 
-## [v2026.4.6-750723a] — 2026-4-6
+## [v2026.4.6-a72497c] — 2026-4-6
 
 - ⬆️ Bump versions
 - 🚸 Improve content validation feedback
 
-## [v2026.4.4-3a44bfa] — 2026-4-4
+## [v2026.4.4-f61b804] — 2026-4-4
 
 - ✨ Add table block type
 
-## [v2026.4.4-88c4b9d] — 2026-4-4
+## [v2026.4.4-54a754f] — 2026-4-4
 
 - 👔 Improve template-based block adding
 - 🚸 Improve ContentHeader slots
@@ -694,7 +694,7 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 - ✨ Add space blueprints for reusable space setups
 - 🚸 Prevent audit-log caching
 
-## [v2026.4.3-5ca6a01] — 2026-4-3
+## [v2026.4.3-472a6ae] — 2026-4-3
 
 - ✨ Add basic space internal audit logs
 - ✨ Handle asset usage tracking
@@ -702,30 +702,30 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 - ✨ Allow to restrict child block types
 - ⬆️ Bump versions
 
-## [v2026.3.28-0402bd4] — 2026-3-28
+## [v2026.3.28-faafed2] — 2026-3-28
 
 - 🐛 Fix focus fallback for assets
 
-## [v2026.3.26-858c2de] — 2026-3-26
+## [v2026.3.26-caaff06] — 2026-3-26
 
 - ✨ Add ContextMenu to ContentTree
 - ⬆️ Bump versions
 - 👔 Improve Localization and fix some issues
 
-## [v2026.3.24-7764460] — 2026-3-24
+## [v2026.3.24-353cde7] — 2026-3-24
 
 - 🐛 Fix auth guard for new space
 
-## [v2026.3.24-8dca4b5] — 2026-3-24
+## [v2026.3.24-36ef892] — 2026-3-24
 
 - 👔 Use a new ContentSelect for reference block
 
-## [v2026.3.24-9c73a9d] — 2026-3-24
+## [v2026.3.24-1c39792] — 2026-3-24
 
 - 🔇 Remove console.log
 - 📈 Identify user with posthog
 
-## [v2026.3.24-23c0294] — 2026-3-24
+## [v2026.3.24-edd2112] — 2026-3-24
 
 - 👔 Improve blocks management
 - 🎨 Apply oxmft code style
@@ -744,7 +744,7 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 - 🐛 Add auto imports
 - 🚸 Small UX improvements in canvas
 
-## [v2026.3.24-20dd9a8] — 2026-3-24
+## [v2026.3.24-93122ea] — 2026-3-24
 
 - 🐛 Fix changelog generation
 - 💄 Remove spacing
