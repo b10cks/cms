@@ -61,7 +61,9 @@ const menu = computed(() => {
 
   return access.filterVisibleItems(spaceNavigationItems).filter((item) => {
     if (item.routeName === 'space-onboarding') {
-      return !isOnboardingDismissed.value
+      // Only decide once the space is loaded — showing the link while the
+      // dismissal state is unknown makes it flash and vanish.
+      return !!currentSpace.value && !isOnboardingDismissed.value
     }
 
     if (item.routeName !== 'space-settings-index') {
@@ -71,6 +73,10 @@ const menu = computed(() => {
     return access.canAccessRoute('space-settings-index')
   })
 })
+
+// Cold load: abilities are unknown until the authorization context arrives,
+// so hold the space for the nav with a skeleton instead of popping items in.
+const isMenuLoading = computed(() => !!spaceId?.value && !access.authorization.value)
 
 const handleDismissOnboarding = () => {
   if (route.name === 'space-onboarding') {
@@ -123,7 +129,7 @@ const availableLocales = locales
 <template>
   <div
     :class="[
-      'flex h-full flex-col overflow-hidden border-r border-r-sidebar-border bg-sidebar text-sidebar-foreground select-none transition-all',
+      'flex h-full flex-col overflow-hidden border-r border-r-sidebar-border bg-sidebar text-sidebar-foreground select-none transition-[width,padding]',
       isExtendedSidebar ? 'w-18 p-1 pb-3' : 'w-14 p-3',
     ]"
   >
@@ -131,6 +137,16 @@ const availableLocales = locales
       <div
         :class="['relative flex w-full min-w-0 flex-col', isExtendedSidebar ? 'gap-1' : 'gap-2']"
       >
+        <template v-if="isMenuLoading">
+          <div
+            v-for="n in 6"
+            :key="n"
+            :class="[
+              'w-full animate-pulse rounded-lg bg-sidebar-accent',
+              isExtendedSidebar ? 'h-14' : 'size-8',
+            ]"
+          />
+        </template>
         <div
           v-for="m in menu"
           :key="m.label"

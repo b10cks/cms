@@ -3508,7 +3508,8 @@
         "errorsTitle": "Fehler",
         "changeCount": "{count} Änderung(en)"
       },
-      "dragDropOverlay": "Symbole hier ablegen"
+      "dragDropOverlay": "Symbole hier ablegen",
+      "iconPickerPlaceholder": "Icons durchsuchen…"
     },
     "geo": {
       "field": {

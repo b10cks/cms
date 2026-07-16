@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/vue-query'
+import { keepPreviousData, useQuery } from '@tanstack/vue-query'
 
 import { api } from '~/api'
 import {
@@ -100,6 +100,9 @@ export function useAuthorization() {
         return response.data
       },
       enabled: computed(() => !!toValue(isAuthenticated)),
+      // Keep the previous context while a space/team switch loads the next
+      // one, so ability-gated UI (sidebar nav) doesn't blank out in between.
+      placeholderData: keepPreviousData,
     })
   }
 

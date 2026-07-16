@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { api } from '~/api'
 import StatsCard from '~/components/stats/StatsCard.vue'
-import StatsLineChart from '~/components/stats/StatsLineChart.vue'
-import StatsMultiLineChart from '~/components/stats/StatsMultiLineChart.vue'
-import StatsPieChart from '~/components/stats/StatsPieChart.vue'
 import { Skeleton } from '~/components/ui/skeleton'
-import { installChart } from '~/plugins/chart'
 
 import { SelectField } from './ui/form'
 
-installChart()
+// Keep chart.js out of the landing route's chunk; the dashboard shell paints
+// immediately and the charts stream in.
+const StatsLineChart = defineAsyncComponent(
+  () => import('~/components/stats/StatsLineChart.vue')
+)
+const StatsMultiLineChart = defineAsyncComponent(
+  () => import('~/components/stats/StatsMultiLineChart.vue')
+)
+const StatsPieChart = defineAsyncComponent(() => import('~/components/stats/StatsPieChart.vue'))
 
 const { formatDuration, formatNumber, formatTrafficSize, formatFileSize } = useFormat()
 const { t } = useI18n()

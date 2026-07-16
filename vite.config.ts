@@ -155,6 +155,20 @@ export default defineConfig(({ mode }) => {
       assetsDir: 'assets',
       target: 'baseline-widely-available',
       minify: 'oxc',
+      rollupOptions: {
+        output: {
+          // Group heavy, rarely-changing vendors into stable chunks so they
+          // stay cached across app deploys and aren't duplicated per route.
+          advancedChunks: {
+            groups: [
+              { name: 'tiptap', test: /node_modules[\\/](@tiptap|prosemirror-)/ },
+              { name: 'charts', test: /node_modules[\\/](chart\.js|vue-chartjs)[\\/]/ },
+              { name: 'dnd', test: /node_modules[\\/]@atlaskit[\\/]/ },
+              { name: 'reka', test: /node_modules[\\/]reka-ui[\\/]/ },
+            ],
+          },
+        },
+      },
     },
     define: {
       __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production'),

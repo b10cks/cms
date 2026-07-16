@@ -3510,7 +3510,8 @@
         "errorsTitle": "Errors",
         "changeCount": "{count} change(s)"
       },
-      "dragDropOverlay": "Drop icons here"
+      "dragDropOverlay": "Drop icons here",
+      "iconPickerPlaceholder": "Search icons…"
     },
     "geo": {
       "field": {

@@ -7,6 +7,13 @@ import type { ContentChildSortBy, ContentResource } from '~/types/contents'
 
 import { queryKeys } from './useQueryClient'
 
+// Many components (tree, command palette, RTE link/reference pickers) use this
+// composable at the same time but share one Echo channel per space. Ref-count
+// the subscribers so the channel is joined once and left only when the last
+// subscriber unmounts — otherwise every picker mount stacks another listener
+// that survives for the whole session.
+const contentChannelSubscribers = new Map<string, number>()
+
 export function useContentMenu(spaceId: MaybeRef<string>) {
   const queryClient = useQueryClient()
 
@@ -216,17 +223,15 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
     return contentTree[content.id]?.sv ?? null
   }
 
-  const setupEcho = () => {
-    if (!isClient) return
-
+  const setupEcho = (id: string) => {
     try {
       const echo = useEcho()
       if (!echo) return
       echo
-        .channel(`spaces.${toValue(spaceId)}.content`)
+        .channel(`spaces.${id}.content`)
         .listen('.content:updated', (content: ContentResource) => {
           const contentTree =
-            (queryClient.getQueryData(queryKeys.contentMenu(spaceId).all()) as Record<
+            (queryClient.getQueryData(queryKeys.contentMenu(id).all()) as Record<
               string,
               FlatContentMenuItem
             >) || {}
@@ -255,16 +260,64 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
           const targetId = content.i18n_parent_id ?? content.id
           const newContentTree = { ...contentTree }
           newContentTree[targetId] = item
-          queryClient.setQueryData(queryKeys.contentMenu(spaceId).all(), newContentTree)
+          queryClient.setQueryData(queryKeys.contentMenu(id).all(), newContentTree)
         })
     } catch {
       /** */
     }
   }
 
+  const teardownEcho = (id: string) => {
+    try {
+      useEcho()?.leave(`spaces.${id}.content`)
+    } catch {
+      /** */
+    }
+  }
+
+  // Tracks the id this instance holds a subscription for, so mount/unmount and
+  // spaceId switches stay balanced against the shared ref-count.
+  let subscribedId: string | null = null
+  let mounted = false
+
+  const subscribe = (id: string | null) => {
+    if (!isClient || subscribedId === id) return
+
+    if (subscribedId) {
+      const count = (contentChannelSubscribers.get(subscribedId) ?? 1) - 1
+      if (count <= 0) {
+        contentChannelSubscribers.delete(subscribedId)
+        teardownEcho(subscribedId)
+      } else {
+        contentChannelSubscribers.set(subscribedId, count)
+      }
+      subscribedId = null
+    }
+
+    if (id) {
+      const count = contentChannelSubscribers.get(id) ?? 0
+      contentChannelSubscribers.set(id, count + 1)
+      if (count === 0) setupEcho(id)
+      subscribedId = id
+    }
+  }
+
   onMounted(() => {
-    setupEcho()
+    mounted = true
+    subscribe(toValue(spaceId) || null)
   })
+
+  onUnmounted(() => {
+    mounted = false
+    subscribe(null)
+  })
+
+  watch(
+    () => toValue(spaceId),
+    (id) => {
+      if (mounted) subscribe(id || null)
+    }
+  )
 
   return {
     // Queries

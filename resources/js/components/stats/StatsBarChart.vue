@@ -12,8 +12,10 @@ import {
 import { Bar } from 'vue-chartjs'
 
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { installChart } from '~/plugins/chart'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
+installChart()
 
 interface BarDataPoint {
   name: string

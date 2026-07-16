@@ -15,12 +15,27 @@ const defaultSettings: UserSettings = {
   extendedSidebar: true,
 }
 
+// Last-known settings survive reloads so the first paint (sidebar width,
+// locale) matches the user's preference instead of flashing the defaults
+// until the user request resolves.
+const STORAGE_KEY = 'user-settings'
+
+const readStoredSettings = (): Partial<UserSettings> => {
+  if (typeof window === 'undefined') return {}
+  try {
+    return JSON.parse(window.localStorage.getItem(STORAGE_KEY) || '{}') as Partial<UserSettings>
+  } catch {
+    return {}
+  }
+}
+
 let initialized = false
 let stopSync: (() => void) | null = null
 let syncSuspended = false
 
 const state = reactive<UserSettings>({
   ...defaultSettings,
+  ...readStoredSettings(),
 })
 
 const meta = reactive({
@@ -29,8 +44,12 @@ const meta = reactive({
 })
 
 const assignSettings = (nextSettings?: Partial<User['settings']> | null) => {
-  state.languageIso = nextSettings?.languageIso ?? defaultSettings.languageIso
-  state.extendedSidebar = nextSettings?.extendedSidebar ?? defaultSettings.extendedSidebar
+  // No user (yet) — keep the last-known settings instead of resetting to
+  // defaults, so nothing jumps while the user request is in flight.
+  if (!nextSettings) return
+
+  state.languageIso = nextSettings.languageIso ?? defaultSettings.languageIso
+  state.extendedSidebar = nextSettings.extendedSidebar ?? defaultSettings.extendedSidebar
 
   setLocale(state.languageIso as 'en' | 'de')
 }
@@ -95,7 +114,20 @@ export function useUserSettings() {
   }
 
   if (!initialized) {
+    setLocale(state.languageIso as 'en' | 'de')
     assignSettings(user.value?.settings)
+
+    watch(
+      () => ({ ...state }),
+      (value) => {
+        if (typeof window === 'undefined') return
+        try {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
+        } catch {
+          /** */
+        }
+      }
+    )
 
     stopSync = watch(
       () => user.value?.settings,

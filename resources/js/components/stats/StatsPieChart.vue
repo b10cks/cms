@@ -3,8 +3,10 @@ import { ArcElement, Chart as ChartJS, Legend, Tooltip, type ChartOptions } from
 import { Pie } from 'vue-chartjs'
 
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { installChart } from '~/plugins/chart'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
+installChart()
 
 interface PieDataPoint {
   name: string

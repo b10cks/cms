@@ -2,11 +2,14 @@
 import Icon from '~/components/Icon.vue'
 import InvoicesTable from '~/components/space-settings/usage/InvoicesTable.vue'
 import PeriodHistoryTable from '~/components/space-settings/usage/PeriodHistoryTable.vue'
-import StatsLineChart from '~/components/stats/StatsLineChart.vue'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { Skeleton } from '~/components/ui/skeleton'
+
+const StatsLineChart = defineAsyncComponent(
+  () => import('~/components/stats/StatsLineChart.vue')
+)
 
 const route = useRoute()
 const { t } = useI18n()

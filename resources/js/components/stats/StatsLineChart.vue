@@ -14,6 +14,7 @@ import {
 import { Line } from 'vue-chartjs'
 
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { installChart } from '~/plugins/chart'
 
 ChartJS.register(
   CategoryScale,
@@ -25,6 +26,7 @@ ChartJS.register(
   Legend,
   Filler
 )
+installChart()
 
 interface LineDataPoint {
   name: string
