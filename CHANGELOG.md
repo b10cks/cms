@@ -3,6 +3,13 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.16-091889c7] — 2026-7-16
+
+- 👷‍♂️ Fix changelog
+- ⬆️ Bump versions
+- 💫 Improve sidebar sizing animation
+- ⚡️ Vue-performance improvements
+
 ## [v2026.7.15-fa3c2b1c] — 2026-7-15
 
 - 💫 Add animated icons
