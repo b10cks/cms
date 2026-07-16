@@ -62,16 +62,16 @@
         },
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.388.6",
+            "version": "3.388.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "b89b2b0e0741900c9e25d12302ed8300fa50f22b"
+                "reference": "9ad7cc3619513bb7379e2f1dc8f6763cc54dcb28"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/b89b2b0e0741900c9e25d12302ed8300fa50f22b",
-                "reference": "b89b2b0e0741900c9e25d12302ed8300fa50f22b",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/9ad7cc3619513bb7379e2f1dc8f6763cc54dcb28",
+                "reference": "9ad7cc3619513bb7379e2f1dc8f6763cc54dcb28",
                 "shasum": ""
             },
             "require": {
@@ -153,9 +153,9 @@
             "support": {
                 "forum": "https://github.com/aws/aws-sdk-php/discussions",
                 "issues": "https://github.com/aws/aws-sdk-php/issues",
-                "source": "https://github.com/aws/aws-sdk-php/tree/3.388.6"
+                "source": "https://github.com/aws/aws-sdk-php/tree/3.388.7"
             },
-            "time": "2026-07-14T18:07:03+00:00"
+            "time": "2026-07-15T18:08:26+00:00"
         },
         {
             "name": "brick/math",
@@ -5070,16 +5070,16 @@
         },
         {
             "name": "posthog/posthog-php",
-            "version": "4.9.0",
+            "version": "4.10.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PostHog/posthog-php.git",
-                "reference": "0a75148154b74e5affe309b1e425e409e14989b8"
+                "reference": "13ea457a4096ac90cec9c9ff6789656f380d39f4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PostHog/posthog-php/zipball/0a75148154b74e5affe309b1e425e409e14989b8",
-                "reference": "0a75148154b74e5affe309b1e425e409e14989b8",
+                "url": "https://api.github.com/repos/PostHog/posthog-php/zipball/13ea457a4096ac90cec9c9ff6789656f380d39f4",
+                "reference": "13ea457a4096ac90cec9c9ff6789656f380d39f4",
                 "shasum": ""
             },
             "require": {
@@ -5117,9 +5117,9 @@
             ],
             "support": {
                 "issues": "https://github.com/PostHog/posthog-php/issues",
-                "source": "https://github.com/PostHog/posthog-php/tree/4.9.0"
+                "source": "https://github.com/PostHog/posthog-php/tree/4.10.0"
             },
-            "time": "2026-07-06T07:36:27+00:00"
+            "time": "2026-07-15T23:41:13+00:00"
         },
         {
             "name": "psr/cache",
@@ -10694,23 +10694,23 @@
         },
         {
             "name": "nunomaduro/collision",
-            "version": "v8.9.4",
+            "version": "v8.9.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nunomaduro/collision.git",
-                "reference": "716af8f95a470e9094cfca09ed897b023be191a5"
+                "reference": "fb53eacd509a1d303858e2d20cfebf2d630254ec"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nunomaduro/collision/zipball/716af8f95a470e9094cfca09ed897b023be191a5",
-                "reference": "716af8f95a470e9094cfca09ed897b023be191a5",
+                "url": "https://api.github.com/repos/nunomaduro/collision/zipball/fb53eacd509a1d303858e2d20cfebf2d630254ec",
+                "reference": "fb53eacd509a1d303858e2d20cfebf2d630254ec",
                 "shasum": ""
             },
             "require": {
                 "filp/whoops": "^2.18.4",
                 "nunomaduro/termwind": "^2.4.0",
                 "php": "^8.2.0",
-                "symfony/console": "^7.4.8 || ^8.0.8"
+                "symfony/console": "^7.4.14 || ^8.1.1"
             },
             "conflict": {
                 "laravel/framework": "<11.48.0 || >=14.0.0",
@@ -10718,12 +10718,12 @@
             },
             "require-dev": {
                 "brianium/paratest": "^7.8.5",
-                "larastan/larastan": "^3.9.6",
-                "laravel/framework": "^11.48.0 || ^12.56.0 || ^13.5.0",
-                "laravel/pint": "^1.29.1",
-                "orchestra/testbench-core": "^9.12.0 || ^10.12.1 || ^11.2.1",
-                "pestphp/pest": "^3.8.5 || ^4.4.3 || ^5.0.0",
-                "sebastian/environment": "^7.2.1 || ^8.0.4 || ^9.3.0"
+                "larastan/larastan": "^3.10.0",
+                "laravel/framework": "^11.48.0 || ^12.56.0 || ^13.20.0",
+                "laravel/pint": "^1.29.3",
+                "orchestra/testbench-core": "^9.12.0 || ^10.12.1 || ^11.3.5",
+                "pestphp/pest": "^3.8.5 || ^4.7.5 || ^5.0.0",
+                "sebastian/environment": "^7.2.1 || ^8.1.2 || ^9.3.2"
             },
             "type": "library",
             "extra": {
@@ -10786,7 +10786,7 @@
                     "type": "patreon"
                 }
             ],
-            "time": "2026-04-21T14:04:20+00:00"
+            "time": "2026-07-15T19:09:14+00:00"
         },
         {
             "name": "phar-io/manifest",
