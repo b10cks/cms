@@ -4,12 +4,14 @@ namespace App\Http\Requests\Space;
 
 use App\Models\Space\DataSource;
 use App\Http\Requests\Traits\ExternalIdValidation;
+use App\Http\Requests\Traits\ValidatesDataSourceShape;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateDataSourceRequest extends FormRequest
 {
     use ExternalIdValidation;
+    use ValidatesDataSourceShape;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -51,6 +53,7 @@ class UpdateDataSourceRequest extends FormRequest
             'settings.dimensions_translatable' => 'nullable|boolean',
             'settings.default_dimension_locale' => 'nullable|string|max:5',
             'is_active' => 'boolean',
+            ...$this->shapeRules(),
         ];
     }
 

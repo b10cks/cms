@@ -21,6 +21,7 @@ class DataSourceResource extends JsonResource
             'description' => $this->description,
             'dimensions' => $this->dimensions,
             'settings' => $this->settings,
+            'shape' => $this->shape,
             'is_active' => $this->is_active,
             'entries_count' => $this->whenCounted('entries', fn() => $this->entries_count),
             'created_at' => $this->created_at?->toIso8601String(),

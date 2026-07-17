@@ -10,6 +10,7 @@ use App\Http\Resources\Management\DataEntryResource;
 use App\Models\Management\Space;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
+use App\Services\Space\ShapeValue;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -34,6 +35,8 @@ class DataEntryController extends Controller
             ->where('data_source_id', $dataSource->id)
             ->paginate($this->perPage($request, 50));
 
+        $entries->each(fn (DataEntry $entry) => $entry->setRelation('dataSource', $dataSource));
+
         return DataEntryResource::collection($entries);
     }
 
@@ -50,7 +53,7 @@ class DataEntryController extends Controller
         $this->authorize('create', [DataEntry::class, $dataSource, $space]);
         $this->validateDimensions($dataSource, $request->input('dimensions', []));
 
-        $entry = new DataEntry($request->validated());
+        $entry = new DataEntry($this->encodeShapedValues($dataSource, $request->validated()));
         $entry->dataSource()->associate($dataSource);
         $entry->save();
 
@@ -71,7 +74,7 @@ class DataEntryController extends Controller
     {
         $this->authorize('view', [$entry, $dataSource, $space]);
 
-        return new DataEntryResource($entry);
+        return new DataEntryResource($entry->setRelation('dataSource', $dataSource));
     }
 
     /**
@@ -90,12 +93,12 @@ class DataEntryController extends Controller
             $this->validateDimensions($dataSource, $request->input('dimensions', []));
         }
 
-        $entry->fill($request->validated());
+        $entry->fill($this->encodeShapedValues($dataSource, $request->validated()));
         $entry->save();
 
         $this->clearEntryCache($dataSource);
 
-        return new DataEntryResource($entry);
+        return new DataEntryResource($entry->setRelation('dataSource', $dataSource));
     }
 
     /**
@@ -149,6 +152,29 @@ class DataEntryController extends Controller
                 abort(422, "Dimension '{$dimension}' does not exist in data source '{$dataSource->name}'");
             }
         }
+    }
+
+    /**
+     * JSON-encode structured value and dimension overrides for shaped sources.
+     */
+    protected function encodeShapedValues(DataSource $dataSource, array $data): array
+    {
+        if (!$dataSource->hasShape()) {
+            return $data;
+        }
+
+        if (array_key_exists('value', $data)) {
+            $data['value'] = ShapeValue::encode($data['value'], $dataSource->shape);
+        }
+
+        if (!empty($data['dimensions'])) {
+            $data['dimensions'] = array_map(
+                fn ($value) => ShapeValue::encode($value, $dataSource->shape),
+                $data['dimensions']
+            );
+        }
+
+        return $data;
     }
 
     protected function clearEntryCache(DataSource $dataSource): void

@@ -114,6 +114,26 @@
       "dimensions": {
         "default": "Default"
       },
+      "shape": {
+        "label": "Shape",
+        "description": "Define fields to store structured values instead of plain text. Leave empty for simple text entries.",
+        "fieldName": "Name",
+        "fieldKey": "Key",
+        "fieldType": "Type",
+        "fieldRequired": "Required",
+        "fieldOptions": "Options",
+        "fieldOptionsPlaceholder": "value:Label, value2:Label 2",
+        "legacyValue": "Previous plain value: {value}",
+        "types": {
+          "text": "Text",
+          "textarea": "Textarea",
+          "number": "Number",
+          "boolean": "Boolean",
+          "date": "Date",
+          "option": "Single option",
+          "options": "Multiple options"
+        }
+      },
       "fields": {
         "name": "Name",
         "slug": "Technical name (Slug)",

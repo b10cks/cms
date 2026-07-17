@@ -10,12 +10,22 @@ import { useDataSources } from '~/composables/useDataSources'
 import type {
   CreateDataSourcePayload,
   DataSourceResource,
+  DataSourceShapeField,
+  DataSourceShapeFieldType,
   UpdateDataSourcePayload,
 } from '~/types/data-sources'
 
 interface DimensionItem {
   label: string
   key: string
+}
+
+type ShapeRow = {
+  name: string
+  key: string
+  type: DataSourceShapeFieldType
+  required: boolean
+  options: string
 }
 
 const props = defineProps<{
@@ -29,6 +39,7 @@ const emit = defineEmits<{
 }>()
 
 const route = useRoute()
+const { $t } = useI18n()
 const spaceId = computed(() => route.params.space as string)
 
 const { useCreateDataSourceMutation, useUpdateDataSourceMutation } = useDataSources(spaceId)
@@ -78,6 +89,111 @@ const dimensionColumns = [
   },
 ]
 
+const shapeRows = ref<ShapeRow[]>([])
+
+const shapeFieldTypes: DataSourceShapeFieldType[] = [
+  'text',
+  'textarea',
+  'number',
+  'boolean',
+  'date',
+  'option',
+  'options',
+]
+
+const optionTypes: DataSourceShapeFieldType[] = ['option', 'options']
+
+// Options are edited as a comma-separated list of "value:Label" pairs.
+const parseOptionsString = (options: string) =>
+  options
+    .split(',')
+    .map((option) => option.trim())
+    .filter(Boolean)
+    .map((option) => {
+      const [value, name] = option.split(':').map((part) => part.trim())
+      return { value, name: name || value }
+    })
+
+const toShapeRows = (shape: DataSourceShapeField[] | null): ShapeRow[] =>
+  (shape || []).map((field) => ({
+    name: field.name || '',
+    key: field.key,
+    type: field.type,
+    required: field.required || false,
+    options: (field.options || []).map((o) => (o.name === o.value ? o.value : `${o.value}:${o.name}`)).join(', '),
+  }))
+
+const toShapePayload = (rows: ShapeRow[]): DataSourceShapeField[] | null =>
+  rows.length
+    ? rows.map((row) => ({
+        key: row.key,
+        type: row.type,
+        name: row.name || undefined,
+        required: row.required || undefined,
+        options: optionTypes.includes(row.type) ? parseOptionsString(row.options) : undefined,
+      }))
+    : null
+
+const shapeColumns = computed(() => [
+  {
+    key: 'name',
+    label: String($t('labels.datasets.shape.fieldName')),
+    type: 'text' as const,
+    required: true,
+    validate: (value: unknown) => String(value).trim().length > 0,
+  },
+  {
+    key: 'key',
+    label: String($t('labels.datasets.shape.fieldKey')),
+    type: 'text' as const,
+    required: true,
+    editable: false,
+    validate: (value: unknown) => /^[a-zA-Z0-9_-]+$/.test(String(value)),
+    transform: (value: unknown) => String(value).replace(/[^a-zA-Z0-9_-]/g, ''),
+  },
+  {
+    key: 'type',
+    label: String($t('labels.datasets.shape.fieldType')),
+    type: 'select' as const,
+    required: true,
+    defaultValue: 'text',
+    options: shapeFieldTypes.map((type) => ({
+      value: type,
+      label: String($t(`labels.datasets.shape.types.${type}`)),
+    })),
+  },
+  {
+    key: 'required',
+    label: String($t('labels.datasets.shape.fieldRequired')),
+    type: 'checkbox' as const,
+    width: '60px',
+  },
+  {
+    key: 'options',
+    label: String($t('labels.datasets.shape.fieldOptions')),
+    type: 'text' as const,
+    placeholder: String($t('labels.datasets.shape.fieldOptionsPlaceholder')),
+  },
+])
+
+const validateShapeRow = (row: Record<string, unknown>): boolean =>
+  !optionTypes.includes(row.type as DataSourceShapeFieldType) ||
+  parseOptionsString(String(row.options || '')).length > 0
+
+const handleShapeFieldAdd = (item: Record<string, unknown>) => {
+  if (!item.key && item.name) {
+    item.key = (item.name as string)
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '_')
+  }
+}
+
+const validateShape = (rows: ShapeRow[]): boolean => {
+  const keys = rows.map((row) => row.key)
+  return new Set(keys).size === keys.length && rows.every((row) => validateShapeRow(row))
+}
+
 const isEditing = computed(() => !!props.dataSource)
 const isProcessing = computed(() => isCreating.value || isUpdating.value)
 
@@ -98,6 +214,7 @@ watch(
         },
         is_active: newDataSource.is_active,
       }
+      shapeRows.value = toShapeRows(newDataSource.shape)
     } else {
       formData.value = {
         name: '',
@@ -110,6 +227,7 @@ watch(
         },
         is_active: true,
       }
+      shapeRows.value = []
     }
   },
   { immediate: true }
@@ -133,13 +251,15 @@ const validateDimensions = (dimensions: DimensionItem[]): boolean => {
 
 const handleSubmit = async () => {
   try {
+    const payload = { ...formData.value, shape: toShapePayload(shapeRows.value) }
+
     if (isEditing.value && props.dataSource) {
       await updateDataSource({
         id: props.dataSource.id,
-        payload: formData.value as UpdateDataSourcePayload,
+        payload: payload as UpdateDataSourcePayload,
       })
     } else {
-      await createDataSource(formData.value as CreateDataSourcePayload)
+      await createDataSource(payload as CreateDataSourcePayload)
     }
 
     handleOpenChange(false)
@@ -229,6 +349,18 @@ const handleDimensionAdd = (item: Record<string, unknown>) => {
             @add="handleDimensionAdd"
           />
 
+          <ArrayInputField
+            v-model="shapeRows"
+            name="shape"
+            :label="$t('labels.datasets.shape.label')"
+            :description="$t('labels.datasets.shape.description')"
+            :columns="shapeColumns"
+            :disabled="isProcessing"
+            :add-button-text="$t('actions.add')"
+            :validate-row="validateShapeRow"
+            @add="handleShapeFieldAdd"
+          />
+
           <CheckboxField
             v-model="formData.settings.dimensions_translatable"
             name="dimensions_translatable"
@@ -281,7 +413,7 @@ const handleDimensionAdd = (item: Record<string, unknown>) => {
           <Button
             type="submit"
             :loading="isProcessing"
-            :disabled="!validateDimensions(formData.dimensions)"
+            :disabled="!validateDimensions(formData.dimensions) || !validateShape(shapeRows)"
           >
             {{
               isEditing ? $t('labels.datasets.saveChanges') : $t('labels.datasets.createDataSource')

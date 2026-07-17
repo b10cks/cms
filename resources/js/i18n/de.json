@@ -109,6 +109,26 @@
       "dimensions": {
         "default": "Standard"
       },
+      "shape": {
+        "label": "Struktur",
+        "description": "Definiere Felder, um strukturierte Werte statt einfachem Text zu speichern. Leer lassen für einfache Texteinträge.",
+        "fieldName": "Name",
+        "fieldKey": "Schlüssel",
+        "fieldType": "Typ",
+        "fieldRequired": "Pflichtfeld",
+        "fieldOptions": "Optionen",
+        "fieldOptionsPlaceholder": "wert:Label, wert2:Label 2",
+        "legacyValue": "Vorheriger Textwert: {value}",
+        "types": {
+          "text": "Text",
+          "textarea": "Textbereich",
+          "number": "Zahl",
+          "boolean": "Boolean",
+          "date": "Datum",
+          "option": "Einzelauswahl",
+          "options": "Mehrfachauswahl"
+        }
+      },
       "fields": {
         "name": "Name",
         "slug": "Technischer Name (Slug)",

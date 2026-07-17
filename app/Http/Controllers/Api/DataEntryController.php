@@ -23,6 +23,8 @@ class DataEntryController
         $entries = DataEntry::where('data_source_id', $source->id)
             ->paginate(min($request->integer('per_page', 20), 500));
 
+        $entries->each(fn (DataEntry $entry) => $entry->setRelation('dataSource', $source));
+
         return DataEntryResource::collection($entries);
     }
 }

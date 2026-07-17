@@ -4,6 +4,7 @@ namespace App\Http\Requests\Space;
 
 use App\Models\Space\DataEntry;
 use App\Http\Requests\Traits\ExternalIdValidation;
+use App\Services\Space\ShapeValue;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -30,9 +31,17 @@ class CreateDataEntryRequest extends FormRequest
                 Rule::unique(new DataEntry()->getConnectionName() . '.data_entries', 'key')
                     ->where('data_source_id', $dataSource->id),
             ],
-            'value' => 'nullable|string',
-            'dimensions' => 'nullable|array',
-            'dimensions.*' => 'nullable|string',
+            ...$dataSource->hasShape()
+                ? [
+                    ...ShapeValue::rules($dataSource->shape, 'value', enforceRequired: true),
+                    'dimensions' => 'nullable|array',
+                    ...ShapeValue::rules($dataSource->shape, 'dimensions.*', enforceRequired: false),
+                ]
+                : [
+                    'value' => 'nullable|string',
+                    'dimensions' => 'nullable|array',
+                    'dimensions.*' => 'nullable|string',
+                ],
         ];
     }
 

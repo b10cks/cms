@@ -4,6 +4,7 @@ namespace App\Http\Requests\Space;
 
 use App\Models\Space\DataEntry;
 use App\Http\Requests\Traits\ExternalIdValidation;
+use App\Services\Space\ShapeValue;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -43,9 +44,31 @@ class UpdateDataEntryRequest extends FormRequest
                     ->where('data_source_id', $dataSource->id)
                     ->ignore($dataEntry->id),
             ],
-            'value' => 'sometimes|nullable|string',
-            'dimensions' => 'nullable|array',
-            'dimensions.*' => 'nullable|string',
+            ...$dataSource->hasShape()
+                ? [
+                    ...$this->shapedValueRules($dataSource->shape),
+                    'dimensions' => 'nullable|array',
+                    ...ShapeValue::rules($dataSource->shape, 'dimensions.*', enforceRequired: false),
+                ]
+                : [
+                    'value' => 'sometimes|nullable|string',
+                    'dimensions' => 'nullable|array',
+                    'dimensions.*' => 'nullable|string',
+                ],
         ];
+    }
+
+    /**
+     * Value rules for shaped sources; required fields are only enforced
+     * when the value is part of the request.
+     *
+     * @return array<string, mixed>
+     */
+    protected function shapedValueRules(array $shape): array
+    {
+        $rules = ShapeValue::rules($shape, 'value', enforceRequired: $this->has('value'));
+        array_unshift($rules['value'], 'sometimes');
+
+        return $rules;
     }
 }

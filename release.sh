@@ -21,21 +21,20 @@ changelog_block() {
     fi
 
     local commits
-    # Upper bound: explicit override (release flow), the tag ref if it exists
-    # (backfill), otherwise HEAD (new release, not tagged yet)
-    local upper="${3:-}"
-    if [[ -z "$upper" ]]; then
-        if git rev-parse --verify "${tag}" >/dev/null 2>&1; then
-            upper="$tag"
-        else
-            upper="HEAD"
-        fi
+    # Use the tag ref if it exists (backfill), otherwise fall back to HEAD (new release, not tagged yet)
+    local upper
+    if git rev-parse --verify "${tag}" >/dev/null 2>&1; then
+        upper="$tag"
+    else
+        upper="HEAD"
     fi
 
+    # Changelog commits ("🔖 Release …") sit between tags and are not content changes
+    local -a log_opts=(--pretty=format:"- %s" --no-merges --invert-grep --grep="^🔖 Release")
     if [[ -z "$prev_tag" ]]; then
-        commits=$(git log "$upper" --pretty=format:"- %s" --no-merges 2>/dev/null || true)
+        commits=$(git log "$upper" "${log_opts[@]}" 2>/dev/null || true)
     else
-        commits=$(git log "${prev_tag}..${upper}" --pretty=format:"- %s" --no-merges 2>/dev/null || true)
+        commits=$(git log "${prev_tag}..${upper}" "${log_opts[@]}" 2>/dev/null || true)
     fi
 
     if [[ -z "$commits" ]]; then
@@ -165,24 +164,22 @@ current_date=$(date +"%Y.%-m.%-d")
 # Determine the previous tag (HEAD^ mirrors deploy.yml — avoids returning a tag on HEAD itself)
 previous_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
 
-# Commit first so the release commit's hash is known, then amend the changelog
-# into it — this keeps the changelog heading, commit message, and tag name in sync.
-git commit --allow-empty -m "🔖 Release (pending)"
-
+# The tag goes on HEAD itself, so the tag suffix IS the tagged commit's hash.
+# The changelog commit lands on top of it, outside the tagged release.
+release_commit=$(git rev-parse HEAD)
 short_hash=$(git rev-parse --short HEAD)
 new_tag="v${current_date}-${short_hash}"
 
 echo "Updating $CHANGELOG_FILE..."
-# HEAD^ excludes the placeholder release commit from the commit list
-block=$(changelog_block "$new_tag" "$previous_tag" "HEAD^")
+block=$(changelog_block "$new_tag" "$previous_tag")
 prepend_to_changelog "$block"
 
 git add "$CHANGELOG_FILE"
-git commit --amend -m "🔖 Release $new_tag"
+git commit -m "🔖 Release $new_tag"
 
 local_commit=$(git rev-parse HEAD)
 
-git tag "$new_tag"
+git tag "$new_tag" "$release_commit"
 
 # Push changes if local is ahead of origin
 if [[ $local_commit != $remote_commit && $remote_commit == $base_commit ]]; then

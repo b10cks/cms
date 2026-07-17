@@ -6,6 +6,7 @@ import { toast } from 'vue-sonner'
 
 import DataEntriesIcon from '~/assets/images/data-entries.svg?component'
 import ExportDataEntriesDialog from '~/components/datasources/ExportDataEntriesDialog.vue'
+import ShapeValueFields from '~/components/datasources/ShapeValueFields.vue'
 import ImportDataEntriesDialog from '~/components/datasources/ImportDataEntriesDialog.vue'
 import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
@@ -36,6 +37,7 @@ import { queryKeys } from '~/composables/useQueryClient'
 import type {
   CreateDataEntryPayload,
   DataEntryResource,
+  DataEntryValue,
   UpdateDataEntryPayload,
 } from '~/types/data-sources'
 
@@ -134,6 +136,18 @@ const sortOptions = [
   { value: 'updated_at', label: $t('labels.dataEntries.fields.updatedAt') },
 ]
 
+const shape = computed(() => dataSource.value?.shape ?? [])
+const isShaped = computed(() => shape.value.length > 0)
+
+const formatValue = (value: DataEntryValue | undefined) => {
+  if (value && typeof value === 'object') {
+    return Object.entries(value)
+      .map(([key, fieldValue]) => `${key}: ${Array.isArray(fieldValue) ? fieldValue.join(', ') : fieldValue}`)
+      .join(' · ')
+  }
+  return value || '-'
+}
+
 const dimensionTabs = computed(() => {
   const tabs = [{ key: 'default', label: $t('labels.datasets.dimensions.default') }]
 
@@ -157,13 +171,14 @@ const defaultDimensionLocale = computed(() => {
 
 const canTranslateCurrentDimension = computed(() => {
   return Boolean(
+    !isShaped.value &&
     dataSource.value?.settings?.dimensions_translatable &&
     selectedDimension.value !== 'default' &&
     selectedDimension.value !== defaultDimensionLocale.value
   )
 })
 
-const newEntryData = ref<CreateDataEntryPayload>({
+const newEntryData = ref<CreateDataEntryPayload & { dimensions: Record<string, DataEntryValue> }>({
   key: '',
   value: '',
   dimensions: {},
@@ -193,6 +208,8 @@ const clearEditingState = () => {
   pendingChanges.value.clear()
 }
 
+const emptyValue = (): DataEntryValue => (isShaped.value ? {} : '')
+
 const handleSaveNewEntry = async () => {
   try {
     const payload = {
@@ -202,7 +219,7 @@ const handleSaveNewEntry = async () => {
           ? {}
           : {
               [selectedDimension.value]:
-                newEntryData.value.dimensions[selectedDimension.value] || '',
+                newEntryData.value.dimensions[selectedDimension.value] || emptyValue(),
             },
     }
 
@@ -210,7 +227,7 @@ const handleSaveNewEntry = async () => {
 
     newEntryData.value = {
       key: '',
-      value: '',
+      value: emptyValue(),
       dimensions: {},
       is_active: true,
     }
@@ -367,8 +384,9 @@ const handleKeyDown = (event: KeyboardEvent, entryId: string, field: string) => 
   }
 }
 
-const getDimensionValue = (entry: DataEntryResource, dimensionKey: string) => {
-  return entry.dimensions?.[dimensionKey] || ''
+const getDimensionValue = (entry: DataEntryResource, dimensionKey: string): string => {
+  const value = entry.dimensions?.[dimensionKey]
+  return typeof value === 'string' ? value : ''
 }
 
 const isEntryEditing = (entryId: string) => {
@@ -707,20 +725,35 @@ const handleTranslateMissingDimensions = async () => {
                     />
                   </TableCell>
                   <TableCell>
-                    <Textarea
+                    <ShapeValueFields
+                      v-if="isShaped"
                       v-model="newEntryData.value"
+                      :shape="shape"
+                      :disabled="!isDefaultSelected"
+                    />
+                    <Textarea
+                      v-else
+                      :model-value="(newEntryData.value as string | null) ?? ''"
                       :placeholder="$t('labels.dataEntries.fields.value')"
                       :disabled="!isDefaultSelected"
+                      @update:model-value="(v) => (newEntryData.value = String(v))"
                       @keydown.enter.meta.prevent="handleSaveNewEntry"
                       @keydown.enter.ctrl.prevent="handleSaveNewEntry"
                     />
                   </TableCell>
                   <TableCell v-if="!isDefaultSelected">
-                    <Textarea
+                    <ShapeValueFields
+                      v-if="isShaped"
                       v-model="newEntryData.dimensions[selectedDimension]"
+                      :shape="shape"
+                    />
+                    <Textarea
+                      v-else
+                      :model-value="(newEntryData.dimensions[selectedDimension] as string | null) ?? ''"
                       :placeholder="
                         dimensionTabs.find((tab) => tab.key === selectedDimension)?.label
                       "
+                      @update:model-value="(v) => (newEntryData.dimensions[selectedDimension] = String(v))"
                       @keydown.enter.meta.prevent="handleSaveNewEntry"
                       @keydown.enter.ctrl.prevent="handleSaveNewEntry"
                     />
@@ -781,33 +814,58 @@ const handleTranslateMissingDimensions = async () => {
                     </TableCell>
 
                     <TableCell>
-                      <Textarea
-                        v-if="isEntryEditing(entry.id)"
-                        :model-value="entry.value"
-                        :disabled="!isDefaultSelected"
-                        @update:model-value="(value) => handleInputChange(entry, 'value', value)"
-                        @keydown="(e) => handleKeyDown(e, entry.id, 'value')"
-                      />
+                      <template v-if="isEntryEditing(entry.id)">
+                        <ShapeValueFields
+                          v-if="isShaped"
+                          :shape="shape"
+                          :model-value="editingEntries.get(entry.id)?.value ?? entry.value"
+                          :disabled="!isDefaultSelected"
+                          @update:model-value="(value) => handleInputChange(entry, 'value', value)"
+                        />
+                        <Textarea
+                          v-else
+                          :model-value="(entry.value as string | null) ?? ''"
+                          :disabled="!isDefaultSelected"
+                          @update:model-value="(value) => handleInputChange(entry, 'value', value)"
+                          @keydown="(e) => handleKeyDown(e, entry.id, 'value')"
+                        />
+                      </template>
                       <span
                         v-else
                         class="block max-w-[200px] truncate"
-                        >{{ entry.value || '-' }}</span
+                        >{{ formatValue(entry.value) }}</span
                       >
                     </TableCell>
 
                     <TableCell v-if="!isDefaultSelected">
-                      <Textarea
-                        v-if="isEntryEditing(entry.id)"
-                        :model-value="getDimensionValue(entry, selectedDimension)"
-                        @update:model-value="
-                          (value) =>
-                            handleInputChange(entry, `dimension.${selectedDimension}`, value)
-                        "
-                        @keydown="
-                          (e) => handleKeyDown(e, entry.id, `dimension.${selectedDimension}`)
-                        "
-                      />
-                      <span v-else>{{ getDimensionValue(entry, selectedDimension) || '-' }}</span>
+                      <template v-if="isEntryEditing(entry.id)">
+                        <ShapeValueFields
+                          v-if="isShaped"
+                          :shape="shape"
+                          :model-value="
+                            editingEntries.get(entry.id)?.dimensions?.[selectedDimension] ??
+                            entry.dimensions?.[selectedDimension]
+                          "
+                          @update:model-value="
+                            (value) =>
+                              handleInputChange(entry, `dimension.${selectedDimension}`, value)
+                          "
+                        />
+                        <Textarea
+                          v-else
+                          :model-value="getDimensionValue(entry, selectedDimension)"
+                          @update:model-value="
+                            (value) =>
+                              handleInputChange(entry, `dimension.${selectedDimension}`, value)
+                          "
+                          @keydown="
+                            (e) => handleKeyDown(e, entry.id, `dimension.${selectedDimension}`)
+                          "
+                        />
+                      </template>
+                      <span v-else>{{
+                        formatValue(entry.dimensions?.[selectedDimension])
+                      }}</span>
                     </TableCell>
 
                     <TableCell>

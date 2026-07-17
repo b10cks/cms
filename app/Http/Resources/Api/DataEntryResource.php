@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api;
 
 use App\Models\Space\DataEntry;
+use App\Services\Space\ShapeValue;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
@@ -10,7 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *
  * @resourceProperty id format=uuid Unique identifier of the data entry.
  * @resourceProperty key Stable key of the data entry within the data source.
- * @resourceProperty value Resolved value of the entry. When the optional `dimension` query parameter is used, this returns the dimension-specific value if available, otherwise the base value.
+ * @resourceProperty value Resolved value of the entry. When the optional `dimension` query parameter is used, this returns the dimension-specific value if available, otherwise the base value. For data sources with a shape, the value is a structured object of the shape's fields.
  * @resourceProperty updated_at format=date-time Last update timestamp in ISO 8601 format.
  */
 class DataEntryResource extends JsonResource
@@ -22,7 +23,10 @@ class DataEntryResource extends JsonResource
         return [
             'id' => $this->getRouteKey(),
             'key' => $this->key,
-            'value' => $dimension ? data_get($this->dimensions, $dimension, $this->value) : $this->value,
+            'value' => ShapeValue::decode(
+                $dimension ? data_get($this->dimensions, $dimension, $this->value) : $this->value,
+                $this->dataSource?->shape
+            ),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
     }

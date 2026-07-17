@@ -75,6 +75,12 @@ class DataEntryTranslationStreamController extends Controller
      */
     private function validatePreconditions(DataSource $dataSource, string $targetDimension): string
     {
+        if ($dataSource->hasShape()) {
+            throw ValidationException::withMessages([
+                'target_dimension' => ['AI translation is not available for data sources with a shape.'],
+            ]);
+        }
+
         $dimensionKeys = collect($dataSource->dimensions ?? [])->pluck('key')->filter()->values();
 
         if (! $dimensionKeys->contains($targetDimension)) {

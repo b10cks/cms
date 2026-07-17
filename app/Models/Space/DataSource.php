@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $description
  * @property array<array-key, mixed>|null $dimensions
  * @property array<array-key, mixed>|null $settings
+ * @property array<array-key, mixed>|null $shape
  * @property bool $is_active
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -67,6 +68,7 @@ class DataSource extends SpaceModel
         'description',
         'dimensions',
         'settings',
+        'shape',
         'is_active',
     ];
 
@@ -74,8 +76,14 @@ class DataSource extends SpaceModel
         'slug' => Slug::class,
         'dimensions' => 'json',
         'settings' => 'json',
+        'shape' => 'json',
         'is_active' => 'boolean',
     ];
+
+    public function hasShape(): bool
+    {
+        return !empty($this->shape);
+    }
 
     /**
      * Get the purified description attribute.
