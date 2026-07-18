@@ -219,6 +219,7 @@ export function useTeams() {
       },
       onSuccess: ({ teamId, user }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.teams.users(teamId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.teamPeople(teamId).lists() })
         toast.success(t('composables.teams.updateUserSuccess', { role: user.role }) as string)
       },
       onError: (error: Error) => {
@@ -239,6 +240,7 @@ export function useTeams() {
       },
       onSuccess: ({ teamId }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.teams.users(teamId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.teamPeople(teamId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.teams.detail(teamId) })
         toast.success(t('composables.teams.removeUserSuccess') as string)
       },

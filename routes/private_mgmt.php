@@ -84,6 +84,8 @@ use App\Http\Controllers\Mgmt\SpaceInviteController;
 use App\Http\Controllers\Mgmt\SpaceInviteResendController;
 use App\Http\Controllers\Mgmt\SpaceInvoiceController;
 use App\Http\Controllers\Mgmt\SpaceMemberController;
+use App\Http\Controllers\Mgmt\SpacePeopleController;
+use App\Http\Controllers\Mgmt\TeamPeopleController;
 use App\Http\Controllers\Mgmt\SpaceOnboardingController;
 use App\Http\Controllers\Mgmt\SpaceRoleController;
 use App\Http\Controllers\Mgmt\SpaceSearchController;
@@ -178,6 +180,8 @@ Route::get('space-blueprints', AvailableSpaceBlueprintController::class)
     ->name('space-blueprints');
 
 Route::group(['prefix' => 'teams/{team}'], function () {
+    Route::get('people', [TeamPeopleController::class, 'index'])->name('teams.people.index');
+
     Route::get('members', [TeamMemberController::class, 'index'])->name('teams.members.index');
     Route::get('users', [TeamMemberController::class, 'index'])->name('teams.users.index');
     Route::patch('members/{user}', [TeamMemberController::class, 'update'])->name('teams.members.update');
@@ -226,6 +230,8 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::post('invites', [SpaceInviteController::class, 'store'])->name('spaces.invites.store');
     Route::delete('invites/{invite}', [SpaceInviteController::class, 'destroy'])->name('spaces.invites.destroy');
     Route::post('invites/{invite}/resend', SpaceInviteResendController::class)->name('spaces.invites.resend');
+
+    Route::get('people', [SpacePeopleController::class, 'index'])->name('spaces.people.index');
 
     Route::get('members', [SpaceMemberController::class, 'index'])->name('spaces.members.index');
     Route::patch('members/{user}', [SpaceMemberController::class, 'update'])->name('spaces.members.update');

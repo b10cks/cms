@@ -2772,6 +2772,59 @@
         "remove": "Aus Team entfernen"
       }
     },
+    "people": {
+      "empty": "Keine Personen gefunden.",
+      "pendingInvite": "Ausstehende Einladung",
+      "assignRole": "Rolle zuweisen",
+      "segments": {
+        "all": "Alle",
+        "members": "Mitglieder",
+        "pending": "Ausstehend"
+      },
+      "state": {
+        "active": "Aktiv",
+        "pending": "Ausstehend",
+        "expired": "Abgelaufen"
+      },
+      "columns": {
+        "member": "Person",
+        "role": "Rolle",
+        "status": "Status",
+        "joined": "Beigetreten"
+      },
+      "filters": {
+        "name": "Name",
+        "email": "E-Mail",
+        "role": "Rolle"
+      },
+      "sort": {
+        "name": "Name",
+        "email": "E-Mail",
+        "role": "Rolle",
+        "joined": "Beigetreten"
+      },
+      "tooltip": {
+        "editRole": "Rolle ändern",
+        "remove": "Zugriff entfernen"
+      },
+      "selection": {
+        "selected": "{count} ausgewählt",
+        "clear": "Zurücksetzen"
+      },
+      "actions": {
+        "remove": "Entfernen ({count})",
+        "resend": "Erneut senden ({count})",
+        "delete": "Löschen ({count})"
+      },
+      "removeConfirm": {
+        "title": "Person entfernen",
+        "message": "Möchten Sie {name} wirklich entfernen? Der Zugriff wird sofort entzogen.",
+        "confirmLabel": "Entfernen",
+        "bulkTitle": "Personen entfernen",
+        "bulkMessage": "Möchten Sie {count} Personen wirklich entfernen? Der Zugriff wird sofort entzogen.",
+        "bulkConfirmLabel": "{count} entfernen"
+      }
+    },
     "spaceMembers": {
       "title": "Space-Mitglieder",
       "description": "Hier erscheinen alle Personen, die ihre Einladung bereits angenommen haben.",

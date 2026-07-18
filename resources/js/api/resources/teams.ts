@@ -1,4 +1,5 @@
 import type { ApiCollectionResponse, ApiResponse, BaseQueryParams } from '~/types'
+import type { PeopleCollectionResponse, PeopleQueryParams } from '~/types/people'
 import type {
   CreateTeamSpaceRolePayload,
   RoleCatalogEntry,
@@ -72,6 +73,16 @@ export class Teams extends BaseResource<
   ): Promise<ApiCollectionResponse<TeamUserResource>> {
     return this.client.get<ApiCollectionResponse<TeamUserResource>>(
       `/mgmt/v1/teams/${teamId}/users`,
+      params as Record<string, unknown>
+    )
+  }
+
+  public async getPeople(
+    teamId: string,
+    params: PeopleQueryParams = {}
+  ): Promise<PeopleCollectionResponse> {
+    return this.client.get<PeopleCollectionResponse>(
+      `/mgmt/v1/teams/${teamId}/people`,
       params as Record<string, unknown>
     )
   }

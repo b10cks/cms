@@ -2,8 +2,7 @@
 import StopIcon from '~/assets/images/error.svg?component'
 import Icon from '~/components/Icon.vue'
 import CreateInviteDialog from '~/components/invites/CreateInviteDialog.vue'
-import TeamInvitesList from '~/components/invites/TeamInvitesList.vue'
-import TeamMembersList from '~/components/teams/TeamMembersList.vue'
+import PeopleManager from '~/components/people/PeopleManager.vue'
 import TeamRoleDialog from '~/components/teams/TeamRoleDialog.vue'
 import TeamRolesList from '~/components/teams/TeamRolesList.vue'
 import TeamSamlProviderSettings from '~/components/teams/TeamSamlProviderSettings.vue'
@@ -15,11 +14,7 @@ import { Spinner } from '~/components/ui/spinner'
 import { useAuthorization } from '~/composables/useAuthorization'
 import { teamNavigationItems } from '~/lib/access-control'
 import type { CreateTeamSpaceRolePayload, RoleCatalogEntry } from '~/types/authorization'
-import type {
-  TeamSamlProviderPayload,
-  TeamUserQueryParams,
-  UpdateTeamUserPayload,
-} from '~/types/teams'
+import type { TeamSamlProviderPayload } from '~/types/teams'
 
 const route = useRoute()
 const router = useRouter()
@@ -29,9 +24,6 @@ const teamId = computed(() => route.params.team as string)
 
 const {
   useTeamQuery,
-  useTeamUsersQuery,
-  useUpdateTeamUserMutation,
-  useRemoveTeamUserMutation,
   useTeamSpaceRolesQuery,
   useTeamSamlProviderQuery,
   useCreateTeamSpaceRoleMutation,
@@ -41,7 +33,6 @@ const {
   useDeleteTeamSamlProviderMutation,
 } = useTeams()
 
-const { useDeleteTeamInviteMutation, useResendTeamInviteMutation } = useInvites()
 const { useAuthorizationQuery, useAccessControl } = useAuthorization()
 
 const { data: team, isLoading: isLoadingTeam } = useTeamQuery(teamId)
@@ -56,13 +47,6 @@ useSeoMeta({
   ),
 })
 
-const currentPage = ref(1)
-const perPage = ref(20)
-const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
-  column: 'firstname',
-  direction: 'asc',
-})
-const filters = ref<Record<string, unknown>>({})
 const activeView = computed(() => {
   const routeName = route.name as string | undefined
 
@@ -82,18 +66,6 @@ const canManageRoles = computed(() => access.canAccessRoute('team-roles'))
 const canManageSaml = computed(() => access.canAccessRoute('team-saml'))
 const canViewPeople = computed(() => access.canAccessRoute('team'))
 
-const queryParams = computed<TeamUserQueryParams>(() => ({
-  ...filters.value,
-  sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
-  page: currentPage.value,
-  per_page: perPage.value,
-}))
-
-const {
-  data: membersData,
-  isLoading: isLoadingMembers,
-  isFetching: isFetchingMembers,
-} = useTeamUsersQuery(teamId, queryParams, canViewMembers)
 const {
   data: teamRoles,
   isLoading: isLoadingRoles,
@@ -104,19 +76,12 @@ const { data: samlProviderResponse, isLoading: isLoadingSamlProvider } = useTeam
   canManageSaml
 )
 
-const updateUserMutation = useUpdateTeamUserMutation()
-const removeUserMutation = useRemoveTeamUserMutation()
 const createRoleMutation = useCreateTeamSpaceRoleMutation()
 const updateRoleMutation = useUpdateTeamSpaceRoleMutation()
 const deleteRoleMutation = useDeleteTeamSpaceRoleMutation()
 const upsertSamlProviderMutation = useUpsertTeamSamlProviderMutation()
 const deleteSamlProviderMutation = useDeleteTeamSamlProviderMutation()
 
-const deleteInviteMutation = useDeleteTeamInviteMutation()
-const resendInviteMutation = useResendTeamInviteMutation()
-
-const members = computed(() => membersData.value?.data || [])
-const meta = computed(() => membersData.value?.meta)
 const availableRoles = computed(() => authorization.value?.roles.team || [])
 const spaceRoles = computed(() => teamRoles.value || authorization.value?.roles.space || [])
 const availableSpaceAbilities = computed(() =>
@@ -149,42 +114,6 @@ watch(
   },
   { immediate: true }
 )
-
-const handleUpdateRole = (userId: string, role: string) => {
-  const payload: UpdateTeamUserPayload = { role }
-  updateUserMutation.mutate({ teamId: teamId.value, userId, payload })
-}
-
-const handleRemoveMember = (userId: string) => {
-  removeUserMutation.mutate({ teamId: teamId.value, userId })
-}
-
-const handleDeleteInvite = (inviteId: string) => {
-  deleteInviteMutation.mutate({ teamId: teamId.value, inviteId })
-}
-
-const handleResendInvite = (inviteId: string) => {
-  resendInviteMutation.mutate({ teamId: teamId.value, inviteId })
-}
-
-const handleCurrentPageUpdate = (page: number) => {
-  currentPage.value = page
-}
-
-const handlePerPageUpdate = (perPageValue: number) => {
-  perPage.value = perPageValue
-  currentPage.value = 1
-}
-
-const handleSortByUpdate = (sort: { column: string; direction: 'asc' | 'desc' }) => {
-  sortBy.value = sort
-  currentPage.value = 1
-}
-
-const handleFiltersUpdate = (filtersValue: Record<string, unknown>) => {
-  filters.value = filtersValue
-  currentPage.value = 1
-}
 
 const handleCreateRole = () => {
   selectedRole.value = null
@@ -378,56 +307,21 @@ const navigateBack = () => {
               </Button>
             </div>
 
-            <div
-              v-if="canViewInvites"
-              class="space-y-3"
-            >
-              <div class="space-y-1">
-                <h3 class="font-semibold">{{ $t('labels.teams.invitesTitle') }}</h3>
-                <p class="text-muted-foreground text-sm">
-                  {{ $t('labels.teams.invitesDescription') }}
-                </p>
-              </div>
-
-              <TeamInvitesList
-                :team-id="teamId"
-                :available-roles="availableRoles"
-                @delete="handleDeleteInvite"
-                @resend="handleResendInvite"
-              />
-            </div>
-
-            <div
+            <p
               v-if="canViewMembers"
-              class="space-y-3"
+              class="text-muted-foreground text-sm"
             >
-              <div class="space-y-1">
-                <h3 class="font-semibold">{{ $t('labels.teamMembers.title') }}</h3>
-                <p class="text-muted-foreground text-sm">
-                  {{ $t('labels.teamMembers.description') }}
-                </p>
-                <p class="text-muted-foreground text-sm">
-                  {{ $t('labels.teamMembers.helper') }}
-                </p>
-              </div>
+              {{ $t('labels.teamMembers.helper') }}
+            </p>
 
-              <TeamMembersList
-                :members="members"
-                :is-loading="isLoadingMembers"
-                :is-fetching="isFetchingMembers"
-                :meta="meta"
-                :current-page="currentPage"
-                :per-page="perPage"
-                :sort-by="sortBy"
-                :available-roles="availableRoles"
-                @update-role="handleUpdateRole"
-                @remove="handleRemoveMember"
-                @update:current-page="handleCurrentPageUpdate"
-                @update:per-page="handlePerPageUpdate"
-                @update:sort-by="handleSortByUpdate"
-                @update:filters="handleFiltersUpdate"
-              />
-            </div>
+            <PeopleManager
+              v-if="canViewMembers || canViewInvites"
+              resource-type="team"
+              :resource-id="teamId"
+              :available-roles="availableRoles"
+              :enabled="canViewMembers || canViewInvites"
+              :can-manage-invites="canManageInvites"
+            />
           </template>
 
           <template v-else-if="activeView === 'roles' && canManageRoles">

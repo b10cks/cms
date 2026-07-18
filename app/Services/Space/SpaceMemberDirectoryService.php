@@ -59,6 +59,14 @@ class SpaceMemberDirectoryService
     /**
      * @return Collection<int, User>
      */
+    public function members(Space $space): Collection
+    {
+        return $this->membersForSpace($space);
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
     private function membersForSpace(Space $space): Collection
     {
         return User::query()

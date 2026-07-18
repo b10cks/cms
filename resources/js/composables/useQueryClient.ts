@@ -236,6 +236,16 @@ export const queryKeys = {
     lists: () => [...queryKeys.spaceMembers(spaceId).all(), 'list'] as const,
     list: (filters: any = {}) => [...queryKeys.spaceMembers(spaceId).lists(), filters] as const,
   }),
+  spacePeople: (spaceId: MaybeRef<string>) => ({
+    all: () => ['spaces', spaceId, 'people'] as const,
+    lists: () => [...queryKeys.spacePeople(spaceId).all(), 'list'] as const,
+    list: (filters: any = {}) => [...queryKeys.spacePeople(spaceId).lists(), filters] as const,
+  }),
+  teamPeople: (teamId: MaybeRef<string>) => ({
+    all: () => ['teams', teamId, 'people'] as const,
+    lists: () => [...queryKeys.teamPeople(teamId).all(), 'list'] as const,
+    list: (filters: any = {}) => [...queryKeys.teamPeople(teamId).lists(), filters] as const,
+  }),
   invites: {
     all: () => ['invites'] as const,
     public: (inviteId: MaybeRef<string | undefined>) =>

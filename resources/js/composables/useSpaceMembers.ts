@@ -47,6 +47,7 @@ export function useSpaceMembers() {
       },
       onSuccess: ({ spaceId, role }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.spaceMembers(spaceId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.spacePeople(spaceId).lists() })
         toast.success(
           t('composables.spaceMembers.updateUserSuccess', { role: role ?? '' }) as string
         )
@@ -69,6 +70,7 @@ export function useSpaceMembers() {
       },
       onSuccess: ({ spaceId }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.spaceMembers(spaceId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.spacePeople(spaceId).lists() })
         toast.success(t('composables.spaceMembers.removeUserSuccess') as string)
       },
       onError: (error: Error) => {

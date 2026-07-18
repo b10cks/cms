@@ -2774,6 +2774,59 @@
         "remove": "Remove from team"
       }
     },
+    "people": {
+      "empty": "No people found.",
+      "pendingInvite": "Pending invitation",
+      "assignRole": "Assign role",
+      "segments": {
+        "all": "All",
+        "members": "Members",
+        "pending": "Pending"
+      },
+      "state": {
+        "active": "Active",
+        "pending": "Pending",
+        "expired": "Expired"
+      },
+      "columns": {
+        "member": "Person",
+        "role": "Role",
+        "status": "Status",
+        "joined": "Joined"
+      },
+      "filters": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role"
+      },
+      "sort": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "joined": "Joined"
+      },
+      "tooltip": {
+        "editRole": "Change role",
+        "remove": "Remove access"
+      },
+      "selection": {
+        "selected": "{count} selected",
+        "clear": "Clear"
+      },
+      "actions": {
+        "remove": "Remove ({count})",
+        "resend": "Resend ({count})",
+        "delete": "Delete ({count})"
+      },
+      "removeConfirm": {
+        "title": "Remove person",
+        "message": "Are you sure you want to remove {name}? They will lose access immediately.",
+        "confirmLabel": "Remove",
+        "bulkTitle": "Remove people",
+        "bulkMessage": "Are you sure you want to remove {count} people? They will lose access immediately.",
+        "bulkConfirmLabel": "Remove {count}"
+      }
+    },
     "spaceMembers": {
       "title": "Space Members",
       "description": "Everyone who has already accepted their invitation appears here.",

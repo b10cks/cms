@@ -94,6 +94,7 @@ export function useInvites() {
       },
       onSuccess: ({ spaceId, invite }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.invites.spaceList(spaceId) })
+        queryClient.invalidateQueries({ queryKey: queryKeys.spacePeople(spaceId).lists() })
         toast.success(t('labels.invites.toast.sent', { email: invite.email }) as string)
       },
       onError: (error: Error) => {
@@ -114,6 +115,7 @@ export function useInvites() {
       },
       onSuccess: ({ spaceId }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.invites.spaceList(spaceId) })
+        queryClient.invalidateQueries({ queryKey: queryKeys.spacePeople(spaceId).lists() })
         toast.success(t('labels.invites.toast.revoked') as string)
       },
       onError: (error: Error) => {
@@ -132,7 +134,8 @@ export function useInvites() {
         const response = await api.invites.resendSpaceInvite(spaceId, inviteId)
         return { spaceId, invite: response.data }
       },
-      onSuccess: ({ invite }) => {
+      onSuccess: ({ spaceId, invite }) => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.spacePeople(spaceId).lists() })
         toast.success(t('labels.invites.toast.resent', { email: invite.email }) as string)
       },
       onError: (error: Error) => {
@@ -154,6 +157,7 @@ export function useInvites() {
       },
       onSuccess: ({ teamId, invite }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.invites.teamList(teamId) })
+        queryClient.invalidateQueries({ queryKey: queryKeys.teamPeople(teamId).lists() })
         toast.success(t('labels.invites.toast.sent', { email: invite.email }) as string)
       },
       onError: (error: Error) => {
@@ -174,6 +178,7 @@ export function useInvites() {
       },
       onSuccess: ({ teamId }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.invites.teamList(teamId) })
+        queryClient.invalidateQueries({ queryKey: queryKeys.teamPeople(teamId).lists() })
         toast.success(t('labels.invites.toast.revoked') as string)
       },
       onError: (error: Error) => {
@@ -192,7 +197,8 @@ export function useInvites() {
         const response = await api.invites.resendTeamInvite(teamId, inviteId)
         return { teamId, invite: response.data }
       },
-      onSuccess: ({ invite }) => {
+      onSuccess: ({ teamId, invite }) => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.teamPeople(teamId).lists() })
         toast.success(t('labels.invites.toast.resent', { email: invite.email }) as string)
       },
       onError: (error: Error) => {

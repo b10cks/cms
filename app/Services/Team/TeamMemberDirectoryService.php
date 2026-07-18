@@ -79,6 +79,14 @@ class TeamMemberDirectoryService
     /**
      * @return Collection<int, User>
      */
+    public function members(Team $team): Collection
+    {
+        return $this->membersForTeam($team);
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
     private function membersForTeam(Team $team): Collection
     {
         $directMembers = User::query()

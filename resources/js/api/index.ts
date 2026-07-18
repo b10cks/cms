@@ -16,6 +16,7 @@ import { Provider } from '~/api/resources/provider'
 import { Redirects } from '~/api/resources/redirects'
 import { Releases } from '~/api/resources/releases'
 import { SpaceMembers } from '~/api/resources/space-members'
+import { SpacePeople } from '~/api/resources/space-people'
 import { Subscriptions } from '~/api/resources/subscriptions'
 import { Tokens } from '~/api/resources/tokens'
 import { TwoFactorAuth } from '~/api/resources/two-factor'
@@ -173,6 +174,7 @@ export class API {
       usage: new Usage(this.client, spaceId),
       invoices: new Invoices(this.client, spaceId),
       members: new SpaceMembers(this.client, spaceId),
+      people: new SpacePeople(this.client, spaceId),
     }
   }
 }
