@@ -164,9 +164,8 @@ current_date=$(date +"%Y.%-m.%-d")
 # Determine the previous tag (HEAD^ mirrors deploy.yml — avoids returning a tag on HEAD itself)
 previous_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
 
-# The tag goes on HEAD itself, so the tag suffix IS the tagged commit's hash.
-# The changelog commit lands on top of it, outside the tagged release.
-release_commit=$(git rev-parse HEAD)
+# The tag suffix is the content commit's hash, but the tag itself goes on
+# the changelog commit so the tagged tree contains its own release notes.
 short_hash=$(git rev-parse --short HEAD)
 new_tag="v${current_date}-${short_hash}"
 
@@ -179,7 +178,7 @@ git commit -m "🔖 Release $new_tag"
 
 local_commit=$(git rev-parse HEAD)
 
-git tag "$new_tag" "$release_commit"
+git tag "$new_tag"
 
 # Push changes if local is ahead of origin
 if [[ $local_commit != $remote_commit && $remote_commit == $base_commit ]]; then

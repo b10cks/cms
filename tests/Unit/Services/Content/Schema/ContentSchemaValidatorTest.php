@@ -631,6 +631,7 @@ class ContentSchemaValidatorTest extends TestCase
                 $table->text('description')->nullable();
                 $table->json('dimensions')->nullable();
                 $table->json('settings')->nullable();
+                $table->json('shape')->nullable();
                 $table->boolean('is_active')->default(true);
                 $table->timestamps();
             });

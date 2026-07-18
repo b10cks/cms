@@ -10,8 +10,21 @@ export interface ResolvedOptionChoice {
   value: string
 }
 
-const normalizeChoiceLabel = (label: string | null | undefined, fallback: string) => {
-  const normalized = String(label || '').trim()
+// Shaped entries deliver structured values — use the first non-empty
+// scalar field as the label, mirroring ShapeValue::label on the backend.
+const normalizeChoiceLabel = (
+  label: string | number | Record<string, unknown> | null | undefined,
+  fallback: string
+) => {
+  if (label && typeof label === 'object') {
+    const scalar = Object.values(label).find(
+      (field) =>
+        (typeof field === 'string' && field.trim().length > 0) || typeof field === 'number'
+    )
+    return scalar !== undefined ? String(scalar).trim() : fallback
+  }
+
+  const normalized = String(label ?? '').trim()
   return normalized.length > 0 ? normalized : fallback
 }
 

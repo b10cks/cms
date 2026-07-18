@@ -56,10 +56,12 @@ class DataEntry extends SpaceModel
         'key',
         'value',
         'dimensions',
+        'is_active',
     ];
 
     protected $casts = [
         'dimensions' => 'json',
+        'is_active' => 'boolean',
     ];
 
     public function dataSource(): BelongsTo

@@ -58,9 +58,9 @@ class DataSourceShapeValidator
             'text', 'textarea' => is_string($default) ? null : 'The default must be a string.',
             'number' => is_numeric($default) ? null : 'The default must be a number.',
             'boolean' => is_bool($default) ? null : 'The default must be a boolean.',
-            'date' => strtotime((string) $default) !== false ? null : 'The default must be a valid date.',
+            'date' => is_string($default) && strtotime($default) !== false ? null : 'The default must be a valid date.',
             'option' => in_array($default, $optionValues, true) ? null : 'The default must be one of the option values.',
-            'options' => is_array($default) && array_diff($default, $optionValues) === []
+            'options' => is_array($default) && array_all($default, fn ($item) => in_array($item, $optionValues, true))
                 ? null
                 : 'The default must be an array of option values.',
             default => null,

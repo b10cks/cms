@@ -31,6 +31,7 @@ class CreateDataEntryRequest extends FormRequest
                 Rule::unique(new DataEntry()->getConnectionName() . '.data_entries', 'key')
                     ->where('data_source_id', $dataSource->id),
             ],
+            'is_active' => 'sometimes|boolean',
             ...$dataSource->hasShape()
                 ? [
                     ...ShapeValue::rules($dataSource->shape, 'value', enforceRequired: true),

@@ -8,11 +8,13 @@ use App\Enums\RedirectImportMode;
 use App\Models\Management\Space;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
+use App\Services\Space\ShapeValue;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
 
 abstract class BaseDataEntryDataDriver implements DataEntryDataDriver
@@ -96,6 +98,12 @@ abstract class BaseDataEntryDataDriver implements DataEntryDataDriver
                     'message' => 'Missing required "key" value',
                 ];
 
+                return;
+            }
+
+            $payload = $this->applyShapedValues($dataSource, $payload, $rowNumber, $rowData);
+
+            if ($payload === null) {
                 return;
             }
 
@@ -205,6 +213,69 @@ abstract class BaseDataEntryDataDriver implements DataEntryDataDriver
         }
 
         return $normalized;
+    }
+
+    /**
+     * Validate and encode imported values against the source's shape.
+     * JSON strings (e.g. CSV cells from a shaped export) are decoded first;
+     * plain strings stay valid as legacy values. Returns null and records a
+     * row error when the value doesn't match the shape.
+     */
+    protected function applyShapedValues(DataSource $dataSource, array $payload, int $rowNumber, array $rowData): ?array
+    {
+        if (!$dataSource->hasShape()) {
+            return $payload;
+        }
+
+        $shape = $dataSource->shape;
+        $data = [];
+        $rules = [];
+
+        if (array_key_exists('value', $payload)) {
+            $data['value'] = $this->decodeShapedInput($payload['value']);
+            $rules += ShapeValue::rulesFor($data['value'], $shape, 'value', enforceRequired: true);
+        }
+
+        foreach ($payload['dimensions'] ?? [] as $key => $value) {
+            $data['dimensions'][$key] = $this->decodeShapedInput($value);
+            $rules += ShapeValue::rulesFor($data['dimensions'][$key], $shape, "dimensions.{$key}", enforceRequired: false);
+        }
+
+        $validator = Validator::make($data, $rules);
+
+        if ($validator->fails()) {
+            $this->errors[] = [
+                'row' => $rowNumber + 1,
+                'id' => $rowData['id'] ?? $rowData['key'] ?? null,
+                'message' => implode(' ', $validator->errors()->all()),
+            ];
+
+            return null;
+        }
+
+        if (array_key_exists('value', $data)) {
+            $payload['value'] = ShapeValue::encode($data['value'], $shape);
+        }
+
+        if (isset($data['dimensions'])) {
+            $payload['dimensions'] = array_map(
+                fn ($value) => ShapeValue::encode($value, $shape),
+                $data['dimensions']
+            );
+        }
+
+        return $payload;
+    }
+
+    protected function decodeShapedInput(mixed $value): mixed
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+
+            return is_array($decoded) ? $decoded : $value;
+        }
+
+        return $value;
     }
 
     protected function findEntry(DataSource $dataSource, array $payload): ?DataEntry

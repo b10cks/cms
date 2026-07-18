@@ -52,6 +52,72 @@ class ShapeValue
     }
 
     /**
+     * Rules for a single value that may predate the shape: legacy plain
+     * strings stay valid so existing entries remain editable after a shape
+     * is added; anything else validates against the shape.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    public static function rulesFor(mixed $value, array $shape, string $path, bool $enforceRequired): array
+    {
+        if (is_string($value)) {
+            return [$path => ['nullable', 'string']];
+        }
+
+        return self::rules($shape, $path, $enforceRequired);
+    }
+
+    /**
+     * Human-readable label for an entry value: the first non-empty scalar
+     * field in shape order, or the raw string for shapeless/legacy values.
+     */
+    public static function label(mixed $raw, ?array $shape, string $fallback): string
+    {
+        $value = self::decode($raw, $shape);
+
+        if (is_string($value) && trim($value) !== '') {
+            return $value;
+        }
+
+        if (is_array($value)) {
+            foreach ($shape ?? [] as $field) {
+                $candidate = $value[$field['key'] ?? ''] ?? null;
+
+                if (is_string($candidate) && trim($candidate) !== '') {
+                    return $candidate;
+                }
+
+                if (is_int($candidate) || is_float($candidate)) {
+                    return (string) $candidate;
+                }
+            }
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * Resolve the delivered value for a dimension: structured overrides are
+     * merged per-field over the base value (null/missing fields fall back),
+     * mirroring how shapeless dimensions fall back to the base string.
+     */
+    public static function resolveDimension(mixed $baseRaw, mixed $overrideRaw, ?array $shape): mixed
+    {
+        $base = self::decode($baseRaw, $shape);
+        $override = self::decode($overrideRaw, $shape);
+
+        if ($override === null) {
+            return $base;
+        }
+
+        if (is_array($base) && is_array($override)) {
+            return array_merge($base, array_filter($override, fn ($field) => $field !== null));
+        }
+
+        return $override;
+    }
+
+    /**
      * JSON-encode a structured value for storage, stripping unknown keys.
      * Strings (shapeless values) pass through unchanged.
      */
@@ -69,12 +135,17 @@ class ShapeValue
     /**
      * Decode a stored value for output. Without a shape the raw value is
      * returned as-is; with a shape it is JSON-decoded, falling back to the
-     * raw string for values that predate the shape.
+     * raw string for values that predate the shape. Empty strings represent
+     * cleared values and decode to null.
      */
     public static function decode(mixed $raw, ?array $shape): mixed
     {
         if (empty($shape) || !is_string($raw)) {
             return $raw;
+        }
+
+        if ($raw === '') {
+            return null;
         }
 
         $decoded = json_decode($raw, true);

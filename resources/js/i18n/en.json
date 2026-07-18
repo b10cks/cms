@@ -114,9 +114,23 @@
       "dimensions": {
         "default": "Default"
       },
+      "valueMode": {
+        "label": "Entry values",
+        "description": "Choose how each entry stores its value. You can change this later.",
+        "simple": {
+          "title": "Simple text",
+          "description": "Each entry is a key with a single text value. Great for flat lists like countries or categories."
+        },
+        "shaped": {
+          "title": "Structured fields",
+          "description": "Each entry has typed fields you define — text, numbers, dates, options and more."
+        },
+        "downgradeWarning": "This data source currently has structured fields. Saving as simple text removes the structure — existing entries keep their data, but it will be shown as raw text."
+      },
       "shape": {
         "label": "Shape",
-        "description": "Define fields to store structured values instead of plain text. Leave empty for simple text entries.",
+        "description": "Define the typed fields each entry provides.",
+        "empty": "No fields yet. Add at least one field to define the structure.",
         "fieldName": "Name",
         "fieldKey": "Key",
         "fieldType": "Type",

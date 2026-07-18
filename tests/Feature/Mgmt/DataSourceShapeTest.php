@@ -116,6 +116,20 @@ class DataSourceShapeTest extends TestCase
         $this->postJson($route, $base + ['shape' => [['key' => 'count', 'type' => 'number', 'default' => 'many']]])
             ->assertStatus(422)
             ->assertJsonValidationErrors('shape.0.default');
+
+        // Malformed defaults are validation errors, not 500s
+        $this->postJson($route, $base + ['shape' => [['key' => 'd', 'type' => 'date', 'default' => ['x']]]])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('shape.0.default');
+
+        $this->postJson($route, $base + ['shape' => [[
+            'key' => 'cats',
+            'type' => 'options',
+            'options' => [['name' => 'News', 'value' => 'news']],
+            'default' => [['nested']],
+        ]]])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('shape.0.default');
     }
 
     #[Test]
@@ -228,6 +242,61 @@ class DataSourceShapeTest extends TestCase
     }
 
     #[Test]
+    public function legacy_entries_remain_updatable_after_a_shape_is_added()
+    {
+        $source = $this->createShapedSource();
+
+        $entry = DataEntry::factory()->create([
+            'data_source_id' => $source->id,
+            'key' => 'legacy',
+            'value' => 'plain legacy value',
+            'dimensions' => ['de' => 'alter Wert'],
+        ]);
+
+        // The grid resends the full entry, legacy strings included
+        $response = $this->patchJson(route('mgmt.data-sources.entries.update', [
+            'space' => $this->space->id,
+            'data_source' => $source->id,
+            'entry' => $entry->id,
+        ]), [
+            'key' => 'renamed',
+            'value' => 'plain legacy value',
+            'dimensions' => ['de' => 'alter Wert'],
+            'is_active' => false,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('data.key', 'renamed');
+        $response->assertJsonPath('data.value', 'plain legacy value');
+        $response->assertJsonPath('data.dimensions.de', 'alter Wert');
+        $response->assertJsonPath('data.is_active', false);
+    }
+
+    #[Test]
+    public function shaped_values_can_be_cleared_with_an_explicit_null()
+    {
+        $source = $this->createShapedSource();
+
+        $this->postJson($this->storeEntryRoute($source), [
+            'key' => 'clearable',
+            'value' => ['title' => 'Hello'],
+        ])->assertStatus(201);
+
+        $entry = DataEntry::where('data_source_id', $source->id)->where('key', 'clearable')->first();
+
+        $response = $this->patchJson(route('mgmt.data-sources.entries.update', [
+            'space' => $this->space->id,
+            'data_source' => $source->id,
+            'entry' => $entry->id,
+        ]), [
+            'value' => null,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('data.value', null);
+    }
+
+    #[Test]
     public function it_returns_raw_strings_for_values_that_predate_the_shape()
     {
         $source = $this->createShapedSource();
@@ -266,6 +335,45 @@ class DataSourceShapeTest extends TestCase
             'key' => 'structured',
             'value' => ['title' => 'nope'],
         ])->assertStatus(422)->assertJsonValidationErrors('value');
+    }
+
+    #[Test]
+    public function imports_validate_and_encode_shaped_values()
+    {
+        $source = $this->createShapedSource();
+
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('entries.json', json_encode([
+            'entries' => [
+                // Structured value
+                ['key' => 'structured', 'value' => ['title' => 'Hello', 'count' => 3]],
+                // JSON string, as produced by a shaped export
+                ['key' => 'exported', 'value' => json_encode(['title' => 'Round trip'])],
+                // Legacy plain string stays valid
+                ['key' => 'legacy', 'value' => 'plain legacy value'],
+                // Violates the shape (unknown option value)
+                ['key' => 'invalid', 'value' => ['title' => 'Bad', 'category' => 'nope']],
+            ],
+        ]));
+
+        $response = $this->postJson(route('mgmt.data-sources.entries.data.import', [
+            'space' => $this->space->id,
+            'data_source' => $source->id,
+        ]), ['file' => $file]);
+
+        $response->assertOk();
+        $response->assertJsonPath('summary.total_success', 3);
+        $response->assertJsonPath('summary.total_errors', 1);
+
+        $structured = DataEntry::where('data_source_id', $source->id)->where('key', 'structured')->first();
+        $this->assertSame('Hello', json_decode($structured->getRawOriginal('value'), true)['title']);
+
+        $exported = DataEntry::where('data_source_id', $source->id)->where('key', 'exported')->first();
+        $this->assertSame('Round trip', json_decode($exported->getRawOriginal('value'), true)['title']);
+
+        $legacy = DataEntry::where('data_source_id', $source->id)->where('key', 'legacy')->first();
+        $this->assertSame('plain legacy value', $legacy->getRawOriginal('value'));
+
+        $this->assertNull(DataEntry::where('data_source_id', $source->id)->where('key', 'invalid')->first());
     }
 
     #[Test]

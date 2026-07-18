@@ -109,9 +109,23 @@
       "dimensions": {
         "default": "Standard"
       },
+      "valueMode": {
+        "label": "Werte der Einträge",
+        "description": "Lege fest, wie jeder Eintrag seinen Wert speichert. Das lässt sich später ändern.",
+        "simple": {
+          "title": "Einfacher Text",
+          "description": "Jeder Eintrag ist ein Schlüssel mit einem einzelnen Textwert. Ideal für flache Listen wie Länder oder Kategorien."
+        },
+        "shaped": {
+          "title": "Strukturierte Felder",
+          "description": "Jeder Eintrag hat von dir definierte typisierte Felder – Text, Zahlen, Datum, Optionen und mehr."
+        },
+        "downgradeWarning": "Diese Datenquelle hat aktuell strukturierte Felder. Beim Speichern als einfacher Text wird die Struktur entfernt – bestehende Einträge bleiben erhalten, ihre Werte werden aber als Rohtext angezeigt."
+      },
       "shape": {
         "label": "Struktur",
-        "description": "Definiere Felder, um strukturierte Werte statt einfachem Text zu speichern. Leer lassen für einfache Texteinträge.",
+        "description": "Definiere die typisierten Felder, die jeder Eintrag enthält.",
+        "empty": "Noch keine Felder. Füge mindestens ein Feld hinzu, um die Struktur zu definieren.",
         "fieldName": "Name",
         "fieldKey": "Schlüssel",
         "fieldType": "Typ",

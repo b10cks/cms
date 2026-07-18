@@ -156,22 +156,26 @@ class DataEntryController extends Controller
 
     /**
      * JSON-encode structured value and dimension overrides for shaped sources.
+     * A cleared (null) value is stored as an empty string — the column is
+     * not nullable — and decoded back to null on output.
      */
     protected function encodeShapedValues(DataSource $dataSource, array $data): array
     {
-        if (!$dataSource->hasShape()) {
-            return $data;
+        if ($dataSource->hasShape()) {
+            if (array_key_exists('value', $data)) {
+                $data['value'] = ShapeValue::encode($data['value'], $dataSource->shape);
+            }
+
+            if (!empty($data['dimensions'])) {
+                $data['dimensions'] = array_map(
+                    fn ($value) => ShapeValue::encode($value, $dataSource->shape),
+                    $data['dimensions']
+                );
+            }
         }
 
         if (array_key_exists('value', $data)) {
-            $data['value'] = ShapeValue::encode($data['value'], $dataSource->shape);
-        }
-
-        if (!empty($data['dimensions'])) {
-            $data['dimensions'] = array_map(
-                fn ($value) => ShapeValue::encode($value, $dataSource->shape),
-                $data['dimensions']
-            );
+            $data['value'] ??= '';
         }
 
         return $data;

@@ -16,7 +16,7 @@ class DataEntryFactory extends Factory
         return [
             'external_id' => Str::uuid(),
             'data_source_id' => DataSource::factory(),
-            'key' => $this->faker->word(),
+            'key' => $this->faker->unique()->word(),
             'value' => $this->faker->sentence(),
             'dimensions' => [], // Default empty dimensions
             'is_active' => $this->faker->boolean(90), // 90% chance of being active

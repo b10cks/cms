@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { Label } from 'reka-ui'
 import { computed, ref, watch } from 'vue'
 
 import Icon from '~/components/Icon.vue'
+import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { CheckboxField, InputField, TextField } from '~/components/ui/form'
 import ArrayInputField from '~/components/ui/form/ArrayInputField.vue'
+import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group'
 import { useDataSources } from '~/composables/useDataSources'
 import type {
   CreateDataSourcePayload,
@@ -26,6 +29,9 @@ type ShapeRow = {
   type: DataSourceShapeFieldType
   required: boolean
   options: string
+  // Original field for lossless round-trips of properties the grid
+  // doesn't edit (description, default) or lossily serializes (options).
+  source?: DataSourceShapeField
 }
 
 const props = defineProps<{
@@ -91,6 +97,22 @@ const dimensionColumns = [
 
 const shapeRows = ref<ShapeRow[]>([])
 
+type ValueMode = 'simple' | 'shaped'
+
+const valueMode = ref<ValueMode>('simple')
+
+const valueModes: Array<{ value: ValueMode; icon: string }> = [
+  { value: 'simple', icon: 'lucide:type' },
+  { value: 'shaped', icon: 'lucide:table-properties' },
+]
+
+// Switching back to "simple" on a source that already has a shape drops
+// that shape on save — warn instead of silently discarding it.
+const hadShape = computed(() => !!props.dataSource?.shape?.length)
+const showDowngradeWarning = computed(
+  () => isEditing.value && hadShape.value && valueMode.value === 'simple'
+)
+
 const shapeFieldTypes: DataSourceShapeFieldType[] = [
   'text',
   'textarea',
@@ -104,15 +126,21 @@ const shapeFieldTypes: DataSourceShapeFieldType[] = [
 const optionTypes: DataSourceShapeFieldType[] = ['option', 'options']
 
 // Options are edited as a comma-separated list of "value:Label" pairs.
+// Only the first colon separates value from label, so labels keep colons.
 const parseOptionsString = (options: string) =>
   options
     .split(',')
     .map((option) => option.trim())
     .filter(Boolean)
     .map((option) => {
-      const [value, name] = option.split(':').map((part) => part.trim())
+      const separator = option.indexOf(':')
+      const value = (separator === -1 ? option : option.slice(0, separator)).trim()
+      const name = separator === -1 ? '' : option.slice(separator + 1).trim()
       return { value, name: name || value }
     })
+
+const serializeOptions = (options: DataSourceShapeField['options']) =>
+  (options || []).map((o) => (o.name === o.value ? o.value : `${o.value}:${o.name}`)).join(', ')
 
 const toShapeRows = (shape: DataSourceShapeField[] | null): ShapeRow[] =>
   (shape || []).map((field) => ({
@@ -120,8 +148,16 @@ const toShapeRows = (shape: DataSourceShapeField[] | null): ShapeRow[] =>
     key: field.key,
     type: field.type,
     required: field.required || false,
-    options: (field.options || []).map((o) => (o.name === o.value ? o.value : `${o.value}:${o.name}`)).join(', '),
+    options: serializeOptions(field.options),
+    source: field,
   }))
+
+// Untouched option strings reuse the original options array, so names
+// containing "," or ":" survive an unrelated save.
+const rowOptions = (row: ShapeRow): DataSourceShapeField['options'] =>
+  row.source?.options && serializeOptions(row.source.options) === row.options
+    ? row.source.options
+    : parseOptionsString(row.options)
 
 const toShapePayload = (rows: ShapeRow[]): DataSourceShapeField[] | null =>
   rows.length
@@ -129,8 +165,10 @@ const toShapePayload = (rows: ShapeRow[]): DataSourceShapeField[] | null =>
         key: row.key,
         type: row.type,
         name: row.name || undefined,
+        description: row.source?.description,
+        default: row.source?.type === row.type ? row.source.default : undefined,
         required: row.required || undefined,
-        options: optionTypes.includes(row.type) ? parseOptionsString(row.options) : undefined,
+        options: optionTypes.includes(row.type) ? rowOptions(row) : undefined,
       }))
     : null
 
@@ -190,6 +228,8 @@ const handleShapeFieldAdd = (item: Record<string, unknown>) => {
 }
 
 const validateShape = (rows: ShapeRow[]): boolean => {
+  if (valueMode.value !== 'shaped') return true
+  if (!rows.length) return false
   const keys = rows.map((row) => row.key)
   return new Set(keys).size === keys.length && rows.every((row) => validateShapeRow(row))
 }
@@ -215,6 +255,7 @@ watch(
         is_active: newDataSource.is_active,
       }
       shapeRows.value = toShapeRows(newDataSource.shape)
+      valueMode.value = newDataSource.shape?.length ? 'shaped' : 'simple'
     } else {
       formData.value = {
         name: '',
@@ -228,6 +269,7 @@ watch(
         is_active: true,
       }
       shapeRows.value = []
+      valueMode.value = 'simple'
     }
   },
   { immediate: true }
@@ -251,7 +293,10 @@ const validateDimensions = (dimensions: DimensionItem[]): boolean => {
 
 const handleSubmit = async () => {
   try {
-    const payload = { ...formData.value, shape: toShapePayload(shapeRows.value) }
+    const payload = {
+      ...formData.value,
+      shape: valueMode.value === 'shaped' ? toShapePayload(shapeRows.value) : null,
+    }
 
     if (isEditing.value && props.dataSource) {
       await updateDataSource({
@@ -349,17 +394,68 @@ const handleDimensionAdd = (item: Record<string, unknown>) => {
             @add="handleDimensionAdd"
           />
 
+          <div class="grid gap-2">
+            <div>
+              <div class="text-sm font-medium text-primary">
+                {{ $t('labels.datasets.valueMode.label') }}
+              </div>
+              <div class="text-sm text-muted">
+                {{ $t('labels.datasets.valueMode.description') }}
+              </div>
+            </div>
+            <RadioGroup
+              v-model="valueMode"
+              :disabled="isProcessing"
+              class="grid gap-2 sm:grid-cols-2"
+            >
+              <Label
+                v-for="mode in valueModes"
+                :key="mode.value"
+                :for="`value-mode-${mode.value}`"
+                :class="[
+                  'bg-surface rounded-xl flex cursor-pointer items-start gap-2.5 p-3 transition-colors',
+                  valueMode === mode.value ? 'ring ring-ring' : '',
+                ]"
+              >
+                <RadioGroupItem
+                  :id="`value-mode-${mode.value}`"
+                  :value="mode.value"
+                  class="mt-0.5"
+                />
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5 text-sm font-semibold text-primary">
+                    <Icon :name="mode.icon" />
+                    {{ $t(`labels.datasets.valueMode.${mode.value}.title`) }}
+                  </div>
+                  <div class="text-sm text-muted">
+                    {{ $t(`labels.datasets.valueMode.${mode.value}.description`) }}
+                  </div>
+                </div>
+              </Label>
+            </RadioGroup>
+          </div>
+
           <ArrayInputField
+            v-if="valueMode === 'shaped'"
             v-model="shapeRows"
             name="shape"
             :label="$t('labels.datasets.shape.label')"
             :description="$t('labels.datasets.shape.description')"
             :columns="shapeColumns"
             :disabled="isProcessing"
+            :empty-message="$t('labels.datasets.shape.empty')"
             :add-button-text="$t('actions.add')"
             :validate-row="validateShapeRow"
             @add="handleShapeFieldAdd"
           />
+
+          <Alert
+            v-if="showDowngradeWarning"
+            color="warning"
+            icon="lucide:alert-triangle"
+          >
+            <p class="text-sm">{{ $t('labels.datasets.valueMode.downgradeWarning') }}</p>
+          </Alert>
 
           <CheckboxField
             v-model="formData.settings.dimensions_translatable"

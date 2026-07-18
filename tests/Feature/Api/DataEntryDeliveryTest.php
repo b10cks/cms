@@ -86,9 +86,37 @@ class DataEntryDeliveryTest extends TestCase
             ->assertJsonPath('data.0.value.title', 'Hello')
             ->assertJsonPath('data.0.value.count', 3);
 
+        // Partial overrides merge per-field: fields missing from the
+        // dimension fall back to the base value.
         $this->getJson($this->entriesUrl($source, ['dimension' => 'de']))
             ->assertOk()
-            ->assertJsonPath('data.0.value.title', 'Hallo');
+            ->assertJsonPath('data.0.value.title', 'Hallo')
+            ->assertJsonPath('data.0.value.count', 3);
+    }
+
+    #[Test]
+    public function null_override_fields_fall_back_to_the_base_value(): void
+    {
+        $source = DataSource::factory()->create([
+            'slug' => 'partials',
+            'dimensions' => [['key' => 'de', 'label' => 'German']],
+            'shape' => [
+                ['key' => 'title', 'type' => 'text'],
+                ['key' => 'count', 'type' => 'number'],
+            ],
+        ]);
+
+        DataEntry::factory()->create([
+            'data_source_id' => $source->id,
+            'key' => 'first',
+            'value' => json_encode(['title' => 'Hello', 'count' => 3]),
+            'dimensions' => ['de' => json_encode(['title' => 'Hallo', 'count' => null])],
+        ]);
+
+        $this->getJson($this->entriesUrl($source, ['dimension' => 'de']))
+            ->assertOk()
+            ->assertJsonPath('data.0.value.title', 'Hallo')
+            ->assertJsonPath('data.0.value.count', 3);
     }
 
     #[Test]

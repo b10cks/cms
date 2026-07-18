@@ -3,6 +3,8 @@
 namespace App\Services\Content\Schema;
 
 use App\Models\Space\DataEntry;
+use App\Models\Space\DataSource;
+use App\Services\Space\ShapeValue;
 
 class OptionChoiceResolver
 {
@@ -96,6 +98,8 @@ class OptionChoiceResolver
             return $cached;
         }
 
+        $shape = DataSource::query()->find($dataSourceId)?->shape;
+
         $choices = DataEntry::query()
             ->where('data_source_id', $dataSourceId)
             ->where('is_active', true)
@@ -103,7 +107,7 @@ class OptionChoiceResolver
             ->orderBy('key')
             ->get(['key', 'value'])
             ->map(static fn (DataEntry $entry): array => [
-                'label' => filled($entry->value) ? $entry->value : $entry->key,
+                'label' => ShapeValue::label($entry->value, $shape, $entry->key),
                 'value' => $entry->key,
             ])
             ->all();

@@ -23,10 +23,13 @@ class DataEntryResource extends JsonResource
         return [
             'id' => $this->getRouteKey(),
             'key' => $this->key,
-            'value' => ShapeValue::decode(
-                $dimension ? data_get($this->dimensions, $dimension, $this->value) : $this->value,
-                $this->dataSource?->shape
-            ),
+            'value' => $dimension
+                ? ShapeValue::resolveDimension(
+                    $this->value,
+                    data_get($this->dimensions, $dimension),
+                    $this->dataSource?->shape
+                )
+                : ShapeValue::decode($this->value, $this->dataSource?->shape),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
     }
