@@ -4955,6 +4955,38 @@
                 ]
             }
         },
+        "/mgmt/v1/spaces/{space}/blocks/sync": {
+            "put": {
+                "summary": "Sync a full set of block definitions against the space",
+                "description": "Sync a full set of block definitions against the space.\n\nUpserts blocks keyed by external_id (falling back to slug for adoption),\noptionally pruning blocks absent from the payload. Supports dry runs.",
+                "tags": [
+                    "Blocks"
+                ],
+                "operationId": "put_spaces_by_space_blocks_sync",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/spaces/{space}/blocks": {
             "get": {
                 "summary": "Display a listing of the blocks",

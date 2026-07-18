@@ -56,8 +56,10 @@ class BlockController extends Controller
     }
 
     /**
-     * Reconcile a full set of block definitions against the space (upsert by
-     * external_id, optionally pruning blocks absent from the payload).
+     * Sync a full set of block definitions against the space.
+     *
+     * Upserts blocks keyed by external_id (falling back to slug for adoption),
+     * optionally pruning blocks absent from the payload. Supports dry runs.
      */
     public function sync(Space $space, SyncBlocksRequest $request, SyncBlocks $syncBlocks): JsonResponse
     {
