@@ -32,6 +32,7 @@ type CanonicalSchemaTypeName =
   | 'icon'
   | 'geo'
   | 'price'
+  | 'plugin'
 
 type LegacySchemaTypeName = 'multiAsset' | 'reference' | 'block'
 
@@ -175,6 +176,14 @@ interface PriceSchema extends Schema {
   type: 'price'
   base_currency: string
   currencies: string[]
+}
+
+// Custom field rendered by a space-registered field plugin (sandboxed iframe).
+interface PluginSchema extends Schema {
+  type: 'plugin'
+  translatable: boolean
+  plugin_handle: string
+  options: Record<string, string>
 }
 
 interface ReferencesSchema extends Schema {
@@ -327,6 +336,7 @@ type TranslatableSchema =
   | MetaSchema
   | DateSchema
   | TableSchema
+  | PluginSchema
 type SchemaType =
   | BlocksSchema
   | LinkSchema
@@ -347,6 +357,7 @@ type SchemaType =
   | IconSchema
   | GeoSchema
   | PriceSchema
+  | PluginSchema
 
 interface EditorPage {
   header: string

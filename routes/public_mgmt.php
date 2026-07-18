@@ -3,6 +3,7 @@
 use App\Http\Controllers\Mgmt\ConfigController;
 use App\Http\Controllers\Mgmt\HealthController;
 use App\Http\Controllers\Mgmt\PlanController;
+use App\Http\Controllers\Mgmt\FieldPluginSandboxController;
 use App\Http\Controllers\Mgmt\PublicAssetShareController;
 use App\Http\Controllers\Mgmt\PublicInviteController;
 
@@ -14,6 +15,12 @@ Route::get('plans', PlanController::class)
 Route::get('invites/{invite}', [PublicInviteController::class, 'show'])
     ->middleware('throttle:crucial')
     ->name('invites.show');
+
+// Sandboxed field-plugin shell: the editor iframe has an opaque origin and
+// cannot authenticate, so access is guarded by a permanent signed URL.
+Route::get('spaces/{space}/field-plugins/{fieldPlugin}/sandbox', FieldPluginSandboxController::class)
+    ->middleware(['signed', 'throttle:shares'])
+    ->name('spaces.field-plugins.sandbox');
 
 // Shares live in each space's own database — the space id in the URL is what
 // resolves the right database before the token can even be looked up.

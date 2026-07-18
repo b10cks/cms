@@ -19,6 +19,7 @@ use App\Models\Space\BlockVersion;
 use App\Models\Space\Content;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
+use App\Models\Space\FieldPlugin;
 use App\Models\Space\Redirect;
 use App\Models\Space\Release;
 use App\Policies\AuditLogPolicy;
@@ -28,6 +29,7 @@ use App\Policies\BlockVersionPolicy;
 use App\Policies\ContentPolicy;
 use App\Policies\DataEntryPolicy;
 use App\Policies\DataSourcePolicy;
+use App\Policies\FieldPluginPolicy;
 use App\Policies\InvitePolicy;
 use App\Policies\AutomationActionPolicy;
 use App\Policies\AutomationPolicy;
@@ -60,6 +62,7 @@ class AuthServiceProvider extends ServiceProvider
         Content::class => ContentPolicy::class,
         DataEntry::class => DataEntryPolicy::class,
         DataSource::class => DataSourcePolicy::class,
+        FieldPlugin::class => FieldPluginPolicy::class,
         Invite::class => InvitePolicy::class,
         Redirect::class => RedirectPolicy::class,
         Release::class => ReleasePolicy::class,

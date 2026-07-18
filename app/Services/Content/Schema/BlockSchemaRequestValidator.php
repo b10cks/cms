@@ -3,6 +3,7 @@
 namespace App\Services\Content\Schema;
 
 use App\Models\Space\DataSource;
+use App\Models\Space\FieldPlugin;
 
 class BlockSchemaRequestValidator
 {
@@ -26,6 +27,7 @@ class BlockSchemaRequestValidator
         'meta',
         'blocks',
         'table',
+        'plugin',
     ];
 
     protected const array GEO_KEY_STYLES = ['latitude_longitude', 'lat_lng', 'lat_lon'];
@@ -100,6 +102,10 @@ class BlockSchemaRequestValidator
 
             if ($type === 'price') {
                 $errors = $this->validatePriceField($errors, $key, $field);
+            }
+
+            if ($type === 'plugin') {
+                $errors = $this->validatePluginField($errors, $key, $field);
             }
         }
 
@@ -331,6 +337,36 @@ class BlockSchemaRequestValidator
                 foreach ($field['currencies'] as $index => $code) {
                     if (! is_string($code) || ! preg_match('/^[A-Z]{1,3}(-[A-Z]{1,3})?$/', $code)) {
                         $errors["schema.{$key}.currencies.{$index}"][] = 'Each currency must be a 1–3 letter ISO 4217 code (uppercase), optionally prefixed with a region (e.g. US-USD).';
+                    }
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param  array<string, array<int, string>>  $errors
+     * @param  array<string, mixed>  $field
+     * @return array<string, array<int, string>>
+     */
+    protected function validatePluginField(array $errors, string $key, array $field): array
+    {
+        $handle = $field['plugin_handle'] ?? null;
+
+        if (! is_string($handle) || $handle === '') {
+            $errors["schema.{$key}.plugin_handle"][] = 'A field plugin is required.';
+        } elseif (! FieldPlugin::query()->where('handle', $handle)->exists()) {
+            $errors["schema.{$key}.plugin_handle"][] = 'The selected field plugin does not exist.';
+        }
+
+        if (array_key_exists('options', $field)) {
+            if (! is_array($field['options'])) {
+                $errors["schema.{$key}.options"][] = 'The options must be an object of string values.';
+            } else {
+                foreach ($field['options'] as $optionKey => $value) {
+                    if (! is_string($value)) {
+                        $errors["schema.{$key}.options.{$optionKey}"][] = 'Each option value must be a string.';
                     }
                 }
             }

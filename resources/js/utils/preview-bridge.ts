@@ -1,5 +1,7 @@
 import type { CommentResource } from '~/types/comments'
 
+import { MessageEmitter } from './message-emitter'
+
 export type ContentUpdateEvent = {
   content: Record<string, unknown>
 }
@@ -65,16 +67,11 @@ export type BridgeEvent = {
   payload: ContentUpdateEvent | SelectUpdateEvent
 }
 
-type EventCallback<T> = (payload: T) => void
-
-export class PreviewBridge {
-  private eventListeners: {
-    [key in EventType]?: Array<EventCallback<EventPayloadMap[key]>>
-  } = {}
-
+export class PreviewBridge extends MessageEmitter<EventPayloadMap> {
   private iframeElement: HTMLIFrameElement | null = null
 
   constructor(iframeElement: HTMLIFrameElement) {
+    super()
     this.iframeElement = iframeElement
     window.addEventListener('message', this.handleMessage)
   }
@@ -84,16 +81,6 @@ export class PreviewBridge {
     const { type, payload } = event.data
 
     this.notifyListeners(type as EventType, payload)
-  }
-
-  private notifyListeners<T extends EventType>(type: T, payload: EventPayloadMap[T]): void {
-    const listeners = this.eventListeners[type] as
-      | Array<EventCallback<EventPayloadMap[T]>>
-      | undefined
-
-    if (listeners) {
-      listeners.forEach((listener) => listener(payload))
-    }
   }
 
   private postMessageToIframe(type: EventType, payload: EventPayloadMap[typeof type]): void {
@@ -129,26 +116,9 @@ export class PreviewBridge {
     this.postMessageToIframe('COMMENTS_UPDATE', { comments: positionComments })
   }
 
-  public on<T extends EventType>(
-    eventType: T,
-    callback: EventCallback<EventPayloadMap[T]>
-  ): () => void {
-    if (!this.eventListeners[eventType]) {
-      this.eventListeners[eventType] = []
-    }
-
-    ;(this.eventListeners[eventType] as Array<EventCallback<EventPayloadMap[T]>>).push(callback)
-
-    return () => {
-      this.eventListeners[eventType] = (
-        this.eventListeners[eventType] as Array<EventCallback<EventPayloadMap[T]>>
-      ).filter((listener) => listener !== callback) as never
-    }
-  }
-
   public destroy(): void {
     window.removeEventListener('message', this.handleMessage)
-    this.eventListeners = {}
+    this.clearListeners()
     this.iframeElement = null
   }
 }

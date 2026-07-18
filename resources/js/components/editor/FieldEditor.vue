@@ -7,6 +7,7 @@ import IconBlock from '~/components/editor/IconBlock.vue'
 import BooleanBlock from '~/components/editor/BooleanBlock.vue'
 import DateBlock from '~/components/editor/DateBlockEditor.vue'
 import GeoBlock from '~/components/editor/GeoBlock.vue'
+import PluginBlock from '~/components/editor/PluginBlock.vue'
 import PriceBlock from '~/components/editor/PriceBlock.vue'
 import LinkBlock from '~/components/editor/LinkBlock.vue'
 import MarkdownBlock from '~/components/editor/MarkdownBlock.vue'
@@ -52,6 +53,7 @@ const editors = {
   table: TableBlock,
   geo: GeoBlock,
   price: PriceBlock,
+  plugin: PluginBlock,
 } satisfies Partial<Record<CanonicalSchemaTypeName | LegacySchemaTypeName, Component>>
 
 const props = defineProps<{

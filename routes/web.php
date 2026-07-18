@@ -103,3 +103,4 @@ Route::get('/{space}/settings/migrations', AppController::class)->name('space-se
 Route::get('/{space}/settings/subscription', AppController::class)->name('space-settings-subscription');
 Route::get('/{space}/settings/usage', AppController::class)->name('space-settings-usage');
 Route::get('/{space}/settings/shares', AppController::class)->name('space-settings-shares');
+Route::get('/{space}/settings/plugins', AppController::class)->name('space-settings-plugins');

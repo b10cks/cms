@@ -151,6 +151,7 @@ declare global {
   const useEcho: typeof import('./resources/js/composables/useEcho').useEcho
   const useFieldClipboard: typeof import('./resources/js/composables/useFieldClipboard').useFieldClipboard
   const useFieldOptionChoices: typeof import('./resources/js/composables/useFieldOptionChoices').useFieldOptionChoices
+  const useFieldPlugins: typeof import('./resources/js/composables/useFieldPlugins').useFieldPlugins
   const useFileUpload: typeof import('./resources/js/composables/useFileUpload').useFileUpload
   const useFileUtils: typeof import('./resources/js/composables/useFileUtils').default
   const useFormat: typeof import('./resources/js/composables/useFormat').default
@@ -439,6 +440,7 @@ declare module 'vue' {
     readonly useEcho: UnwrapRef<typeof import('./resources/js/composables/useEcho')['useEcho']>
     readonly useFieldClipboard: UnwrapRef<typeof import('./resources/js/composables/useFieldClipboard')['useFieldClipboard']>
     readonly useFieldOptionChoices: UnwrapRef<typeof import('./resources/js/composables/useFieldOptionChoices')['useFieldOptionChoices']>
+    readonly useFieldPlugins: UnwrapRef<typeof import('./resources/js/composables/useFieldPlugins')['useFieldPlugins']>
     readonly useFileUpload: UnwrapRef<typeof import('./resources/js/composables/useFileUpload')['useFileUpload']>
     readonly useFileUtils: UnwrapRef<typeof import('./resources/js/composables/useFileUtils')['default']>
     readonly useFormat: UnwrapRef<typeof import('./resources/js/composables/useFormat')['default']>

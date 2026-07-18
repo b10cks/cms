@@ -426,6 +426,14 @@ const createDefaultSchemaForType = (type: string, key: string): SchemaType => {
         currencies: [],
         default: null,
       } as PriceSchema
+    case 'plugin':
+      return {
+        ...baseSchema,
+        type: 'plugin',
+        plugin_handle: '',
+        options: {},
+        default: null,
+      } as PluginSchema
     case 'blocks':
       return {
         ...baseSchema,

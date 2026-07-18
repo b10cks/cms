@@ -15,6 +15,7 @@ import MultiAssetBlock from '~/components/blocks/MultiAssetBlock.vue'
 import NumberBlock from '~/components/blocks/NumberBlock.vue'
 import OptionBlock from '~/components/blocks/OptionBlock.vue'
 import OptionsBlock from '~/components/blocks/OptionsBlock.vue'
+import PluginBlock from '~/components/blocks/PluginBlock.vue'
 import PriceBlock from '~/components/blocks/PriceBlock.vue'
 import ReferencesBlock from '~/components/blocks/ReferencesBlock.vue'
 import RichTextBlock from '~/components/blocks/RichTextBlock.vue'
@@ -171,6 +172,7 @@ const schemas = {
   table: TableBlock,
   geo: GeoBlock,
   price: PriceBlock,
+  plugin: PluginBlock,
 } satisfies Partial<Record<CanonicalSchemaTypeName | LegacySchemaTypeName, Component>>
 
 // The parent replaces `item` with a fresh object identity on every change, so a

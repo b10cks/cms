@@ -24,6 +24,7 @@ const types = [
   'price',
   'meta',
   'table',
+  'plugin',
 ]
 
 const slugBlacklist = ['key', 'block']

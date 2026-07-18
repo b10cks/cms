@@ -55,6 +55,7 @@ class RunSpaceMigration extends QueuedJob
         $strategy = $this->migration->conflict_strategy;
 
         if ($scope['blocks'] ?? false) {
+            $this->migrateFieldPlugins($sourceConn, $targetConn, $strategy);
             $this->migrateBlockFolders($sourceConn, $targetConn, $strategy);
             $this->migration->updateProgress(10);
             $this->migrateBlockTags($sourceConn, $targetConn, $strategy);
@@ -87,6 +88,62 @@ class RunSpaceMigration extends QueuedJob
 
         $stats = $this->buildStats($targetConn);
         $this->migration->markAsCompleted($stats, $this->result->toArray());
+    }
+
+    // -------------------------------------------------------------------------
+    // Field Plugins
+    // -------------------------------------------------------------------------
+
+    /**
+     * Block schemas reference plugins by handle, so plugins migrate ahead of
+     * blocks. The handle is unique and immutable, making it the natural match.
+     */
+    private function migrateFieldPlugins(ConnectionInterface $src, ConnectionInterface $tgt, string $strategy): void
+    {
+        $rows = $src->table('field_plugins')->get();
+
+        foreach ($rows as $row) {
+            $row = (array) $row;
+            $externalId = $row['id'];
+
+            $existing = $tgt->table('field_plugins')
+                ->where(function ($q) use ($externalId, $row) {
+                    $q->where('external_id', $externalId)
+                        ->orWhere('handle', $row['handle']);
+                })
+                ->first();
+
+            $data = [
+                'external_id' => $externalId,
+                'name' => $row['name'],
+                'handle' => $row['handle'],
+                'description' => $row['description'],
+                'dev_mode' => $row['dev_mode'],
+                'dev_url' => $row['dev_url'],
+                'code' => $row['code'],
+                'code_hash' => $row['code_hash'],
+                'code_size' => $row['code_size'],
+                'published_at' => $row['published_at'],
+                'manifest' => $row['manifest'],
+                'is_active' => $row['is_active'],
+                'updated_at' => $row['updated_at'],
+            ];
+
+            if ($existing) {
+                $resolved = $this->resolveConflict($tgt, 'field_plugins', $existing->id, $data, $strategy, $row['updated_at']);
+                if ($resolved === 'updated') {
+                    $this->result->incrementUpdated('field_plugins');
+                } elseif ($resolved === 'skipped') {
+                    $this->result->incrementSkipped('field_plugins');
+                }
+            } else {
+                $tgt->table('field_plugins')->insert(array_merge($data, [
+                    'id' => (string) Str::ulid(),
+                    'created_at' => $row['created_at'],
+                ]));
+                $this->result->incrementCreated('field_plugins');
+            }
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -1014,6 +1071,7 @@ class RunSpaceMigration extends QueuedJob
     private function buildStats(ConnectionInterface $tgt): array
     {
         return [
+            'field_plugins' => $tgt->table('field_plugins')->count(),
             'block_folders' => $tgt->table('block_folders')->count(),
             'block_tags' => $tgt->table('block_tags')->count(),
             'blocks' => $tgt->table('blocks')->whereNull('deleted_at')->count(),

@@ -9,6 +9,7 @@ import { BlockTemplates } from '~/api/resources/block-templates'
 import { BlockVersions } from '~/api/resources/block-versions'
 import { Comments } from '~/api/resources/comments'
 import { DataSources } from '~/api/resources/data-sources'
+import { FieldPlugins } from '~/api/resources/field-plugins'
 import { PersonalAccessTokens } from '~/api/resources/personal-access-tokens'
 import { Plans } from '~/api/resources/plans'
 import { Provider } from '~/api/resources/provider'
@@ -162,6 +163,7 @@ export class API {
       contents: new Contents(this.client, spaceId),
       contentMenu: new ContentMenu(this.client, spaceId),
       dataSources: new DataSources(this.client, spaceId),
+      fieldPlugins: new FieldPlugins(this.client, spaceId),
       tokens: new Tokens(this.client, spaceId),
       redirects: new Redirects(this.client, spaceId),
       releases: new Releases(this.client, spaceId),

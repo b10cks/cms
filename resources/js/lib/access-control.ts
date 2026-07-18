@@ -100,6 +100,11 @@ export const spaceSettingsNavigationItems: NavigationAccessItem[] = [
     icon: 'lucide:share-2',
     routeName: 'space-settings-shares',
   },
+  {
+    label: 'labels.settings.fieldPlugins.title',
+    icon: 'lucide:puzzle',
+    routeName: 'space-settings-plugins',
+  },
 ]
 
 export const teamNavigationItems: NavigationAccessItem[] = [
@@ -265,6 +270,7 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-settings-backups': { abilities: 'backups.view' },
   'space-settings-migrations': { abilities: 'migrations.view' },
   'space-settings-shares': { abilities: 'asset_shares.view' },
+  'space-settings-plugins': { abilities: 'field_plugins.manage' },
   team: {
     abilities: { anyOf: ['team.members.view', 'team.invites.view'] },
   },

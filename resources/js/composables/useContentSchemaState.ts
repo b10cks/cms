@@ -54,6 +54,7 @@ const TRANSLATABLE_TYPES: CanonicalSchemaTypeName[] = [
   'meta',
   'date',
   'table',
+  'plugin',
 ]
 
 export const normalizeSchemaType = (type?: string | null): CanonicalSchemaTypeName | '' => {
@@ -83,6 +84,7 @@ export const normalizeSchemaType = (type?: string | null): CanonicalSchemaTypeNa
     case 'date':
     case 'meta':
     case 'table':
+    case 'plugin':
       return type
     default:
       return ''
@@ -184,7 +186,8 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
       allowed_values:
         optionSource === 'self'
           ? validation.allowed_values ||
-            ((schemaField as any).options || [])
+            // Plugin fields carry options as a key/value object, not an option list.
+            (Array.isArray((schemaField as any).options) ? (schemaField as any).options : [])
               .map((option: OptionItem) => option?.value)
               .filter(Boolean)
           : validation.allowed_values,

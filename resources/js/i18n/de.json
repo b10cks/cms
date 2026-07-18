@@ -1449,7 +1449,18 @@
         },
         "has_og_tags": "OG-Tags anzeigen",
         "fieldName": "Field Name",
-        "fieldDescription": "What is the purpose of this field?"
+        "fieldDescription": "What is the purpose of this field?",
+        "plugin": {
+          "selectPlugin": "Feld-Plugin",
+          "selectPluginDescription": "Das Plugin, das dieses Feld im Content-Editor rendert.",
+          "notPublishedWarning": "Dieses Plugin hat noch kein veröffentlichtes Bundle und keine Dev-URL — das Feld wird nicht gerendert.",
+          "deactivated": "deaktiviert",
+          "deactivatedWarning": "Dieses Plugin ist deaktiviert — das Feld wird im Content-Editor nicht dargestellt.",
+          "options": "Optionen",
+          "optionKey": "Schlüssel",
+          "optionValue": "Wert",
+          "addOption": "Option hinzufügen"
+        }
       },
       "types": {
         "root": {
@@ -1553,6 +1564,10 @@
         "price": {
           "label": "Preis",
           "description": "Strukturierter Preis mit einer Basiswährung und optionalen weiteren Währungen"
+        },
+        "plugin": {
+          "label": "Plugin",
+          "description": "Eigenes Feld, gerendert durch ein Feld-Plugin des Spaces"
         }
       },
       "options": {
@@ -2354,6 +2369,10 @@
         "description": "Die Erste-Schritte-Anleitung in der Seitenleiste. Ausblenden gilt für alle in diesem Space.",
         "show": "Onboarding einblenden",
         "hide": "Onboarding ausblenden"
+      },
+      "fieldPlugins": {
+        "title": "Feld-Plugins",
+        "description": "Eigene Feld-Widgets, die im Content-Editor über gesandboxte Plugins gerendert werden."
       }
     },
     "account": {
@@ -3239,7 +3258,8 @@
         "automations": "Automationen",
         "ai": "KI-Werkzeuge",
         "auditLogs": "Audit-Log",
-        "icons": "Icons"
+        "icons": "Icons",
+        "fieldPlugins": "Feld-Plugins"
       }
     },
     "fields": {
@@ -3694,6 +3714,42 @@
         }
       },
       "restored": "Onboarding ist wieder in der Seitenleiste."
+    },
+    "fieldPlugins": {
+      "columns": {
+        "name": "Name",
+        "handle": "Handle",
+        "status": "Status",
+        "size": "Bundle-Größe"
+      },
+      "status": {
+        "draft": "Entwurf",
+        "dev": "Dev",
+        "published": "Veröffentlicht"
+      },
+      "empty": "Noch keine Feld-Plugins. Erstelle eines, um eigene Feldtypen zu deinen Blöcken hinzuzufügen.",
+      "deleteConfirmTitle": "Feld-Plugin löschen",
+      "deleteConfirmMessage": "\"{name}\" löschen? Das veröffentlichte Bundle wird endgültig gelöscht und kann nicht wiederhergestellt werden.",
+      "createDescription": "Der Handle wird von Block-Schemata referenziert und kann später nicht geändert werden.",
+      "form": {
+        "name": "Name",
+        "handle": "Handle",
+        "handleDescription": "Kleinbuchstaben, Zahlen und Bindestriche. Nach dem Erstellen unveränderlich.",
+        "description": "Beschreibung",
+        "devMode": "Entwicklungsmodus",
+        "devModeDescription": "Plugin von einer lokalen Dev-Server-URL statt vom veröffentlichten Bundle laden.",
+        "devUrl": "Dev-URL",
+        "bundle": "Bundle-Code",
+        "bundleDescription": "Füge das gebaute JavaScript-Bundle ein oder lade unten eine .js-Datei hoch.",
+        "currentVersion": "Aktuelle Version"
+      },
+      "editor": {
+        "pluginNotFound": "Feld-Plugin \"{handle}\" wurde in diesem Space nicht gefunden.",
+        "pluginNotPublished": "\"{name}\" hat noch kein veröffentlichtes Bundle und keine Dev-URL.",
+        "pluginDeactivated": "\"{name}\" ist deaktiviert. Bitte einen Space-Admin, es zu aktivieren, um dieses Feld zu bearbeiten.",
+        "pluginLoadFailed": "\"{name}\" antwortet nicht. Das Bundle ist möglicherweise fehlerhaft.",
+        "retry": "Erneut versuchen"
+      }
     }
   },
   "notifications": {
@@ -4032,7 +4088,13 @@
       "shareCollection": "Sammlung teilen…",
       "shareFolder": "Ordner teilen…"
     },
-    "copied": "Kopiert"
+    "copied": "Kopiert",
+    "fieldPlugins": {
+      "create": "Plugin erstellen",
+      "save": "Speichern",
+      "publish": "Bundle veröffentlichen",
+      "delete": "Plugin löschen"
+    }
   },
   "navigation": {
     "home": "Start",
@@ -4495,6 +4557,14 @@
     },
     "onboarding": {
       "dismissError": "Onboarding konnte nicht aktualisiert werden: {error}"
+    },
+    "fieldPlugins": {
+      "createSuccess": "Feld-Plugin \"{name}\" erfolgreich erstellt",
+      "createError": "Feld-Plugin konnte nicht erstellt werden: {error}",
+      "updateSuccess": "Feld-Plugin \"{name}\" erfolgreich aktualisiert",
+      "updateError": "Feld-Plugin konnte nicht aktualisiert werden: {error}",
+      "deleteSuccess": "Feld-Plugin erfolgreich gelöscht",
+      "deleteError": "Feld-Plugin konnte nicht gelöscht werden: {error}"
     }
   },
   "content": {

@@ -36,6 +36,7 @@ class SchemaNormalizer
         'date',
         'meta',
         'table',
+        'plugin',
     ];
 
     public const array VALIDATION_KEYS_BY_TYPE = [
@@ -102,6 +103,17 @@ class SchemaNormalizer
             $normalized['has_thead'] = (bool) ($attributes['has_thead'] ?? false);
             $normalized['columns'] = SchemaField::normalizeTableColumns($attributes['columns'] ?? []);
             $normalized['default'] = SchemaField::normalizeTableDefault($attributes['default'] ?? null);
+        }
+
+        if ($type === 'plugin') {
+            $normalized['plugin_handle'] = (string) ($attributes['plugin_handle'] ?? '');
+            $options = [];
+            foreach (\is_array($attributes['options'] ?? null) ? $attributes['options'] : [] as $optionKey => $value) {
+                if (\is_scalar($value)) {
+                    $options[(string) $optionKey] = (string) $value;
+                }
+            }
+            $normalized['options'] = $options;
         }
 
         foreach ($attributes as $attribute => $value) {
@@ -171,7 +183,7 @@ class SchemaNormalizer
 
     public function supportsIndexing(string $type): bool
     {
-        return !\in_array($type, ['asset', 'multi_assets', 'icon', 'geo', 'price', 'references', 'boolean', 'options', 'table'], true);
+        return !\in_array($type, ['asset', 'multi_assets', 'icon', 'geo', 'price', 'references', 'boolean', 'options', 'table', 'plugin'], true);
     }
 
     protected function normalizeConditions(array $attributes): ?array

@@ -207,6 +207,13 @@ export const queryKeys = {
   contentMenu: (spaceId: MaybeRef<string>) => ({
     all: () => ['spaces', spaceId, 'content-menu'] as const,
   }),
+  fieldPlugins: (spaceId: MaybeRef<string>) => ({
+    all: () => ['spaces', spaceId, 'field-plugins'] as const,
+    lists: () => [...queryKeys.fieldPlugins(spaceId).all(), 'list'] as const,
+    list: (filters: unknown = {}) => [...queryKeys.fieldPlugins(spaceId).lists(), filters] as const,
+    details: () => [...queryKeys.fieldPlugins(spaceId).all(), 'detail'] as const,
+    detail: (id: MaybeRef<string>) => [...queryKeys.fieldPlugins(spaceId).details(), id] as const,
+  }),
   // Add data sources and entries query keys
   dataSources: (spaceId: MaybeRef<string>) => ({
     all: () => ['spaces', spaceId, 'data-sources'] as const,

@@ -335,6 +335,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('~/pages/[space]/settings/migrations.vue'),
       },
       {
+        path: 'plugins',
+        name: 'space-settings-plugins',
+        component: () => import('~/pages/[space]/settings/plugins.vue'),
+      },
+      {
         path: 'shares',
         name: 'space-settings-shares',
         component: () => import('~/pages/[space]/settings/shares.vue'),

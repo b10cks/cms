@@ -1454,7 +1454,18 @@
           "useCurrentAsDefault": "Default to today?",
           "useCurrentAsDefaultDescription": "New entries will default to the current date"
         },
-        "has_og_tags": "Show OG tags"
+        "has_og_tags": "Show OG tags",
+        "plugin": {
+          "selectPlugin": "Field plugin",
+          "selectPluginDescription": "The plugin that renders this field in the content editor.",
+          "notPublishedWarning": "This plugin has no published bundle and no dev URL yet — the field will not render.",
+          "deactivated": "deactivated",
+          "deactivatedWarning": "This plugin is deactivated — the field will not render in the content editor.",
+          "options": "Options",
+          "optionKey": "Key",
+          "optionValue": "Value",
+          "addOption": "Add option"
+        }
       },
       "types": {
         "root": {
@@ -1550,6 +1561,10 @@
         "price": {
           "label": "Price",
           "description": "Structured price with a base currency and optional additional currencies"
+        },
+        "plugin": {
+          "label": "Plugin",
+          "description": "Custom field rendered by a space field plugin"
         }
       },
       "options": {
@@ -2356,6 +2371,10 @@
         "description": "The get-started guide in the sidebar. Hiding it affects everyone in this space.",
         "show": "Show onboarding",
         "hide": "Hide onboarding"
+      },
+      "fieldPlugins": {
+        "title": "Field Plugins",
+        "description": "Custom field widgets rendered in the content editor via sandboxed plugins."
       }
     },
     "account": {
@@ -3241,7 +3260,8 @@
         "automations": "automations",
         "ai": "AI tools",
         "auditLogs": "audit log",
-        "icons": "icons"
+        "icons": "icons",
+        "fieldPlugins": "field plugins"
       }
     },
     "fields": {
@@ -3696,6 +3716,42 @@
         }
       },
       "restored": "Onboarding is back in the sidebar."
+    },
+    "fieldPlugins": {
+      "columns": {
+        "name": "Name",
+        "handle": "Handle",
+        "status": "Status",
+        "size": "Bundle size"
+      },
+      "status": {
+        "draft": "Draft",
+        "dev": "Dev",
+        "published": "Published"
+      },
+      "empty": "No field plugins yet. Create one to add custom field types to your blocks.",
+      "deleteConfirmTitle": "Delete field plugin",
+      "deleteConfirmMessage": "Delete \"{name}\"? The published bundle is deleted permanently and cannot be recovered.",
+      "createDescription": "The handle is referenced by block schemas and cannot be changed later.",
+      "form": {
+        "name": "Name",
+        "handle": "Handle",
+        "handleDescription": "Lowercase letters, numbers, and hyphens. Immutable after creation.",
+        "description": "Description",
+        "devMode": "Development mode",
+        "devModeDescription": "Load the plugin from a local dev server URL instead of the published bundle.",
+        "devUrl": "Dev URL",
+        "bundle": "Bundle code",
+        "bundleDescription": "Paste the built JavaScript bundle, or upload a .js file below.",
+        "currentVersion": "Current version"
+      },
+      "editor": {
+        "pluginNotFound": "Field plugin \"{handle}\" was not found in this space.",
+        "pluginNotPublished": "\"{name}\" has no published bundle and no dev URL yet.",
+        "pluginDeactivated": "\"{name}\" is deactivated. Ask a space admin to activate it to edit this field.",
+        "pluginLoadFailed": "\"{name}\" did not respond. The bundle may be broken.",
+        "retry": "Retry"
+      }
     }
   },
   "notifications": {
@@ -4035,7 +4091,13 @@
       "shareCollection": "Share collection…",
       "shareFolder": "Share folder…"
     },
-    "copied": "Copied"
+    "copied": "Copied",
+    "fieldPlugins": {
+      "create": "Create Plugin",
+      "save": "Save",
+      "publish": "Publish bundle",
+      "delete": "Delete Plugin"
+    }
   },
   "navigation": {
     "home": "Home",
@@ -4500,6 +4562,14 @@
     },
     "onboarding": {
       "dismissError": "Failed to update onboarding: {error}"
+    },
+    "fieldPlugins": {
+      "createSuccess": "Field plugin \"{name}\" created successfully",
+      "createError": "Failed to create field plugin: {error}",
+      "updateSuccess": "Field plugin \"{name}\" updated successfully",
+      "updateError": "Failed to update field plugin: {error}",
+      "deleteSuccess": "Field plugin deleted successfully",
+      "deleteError": "Failed to delete field plugin: {error}"
     }
   },
   "content": {

@@ -244,6 +244,8 @@ class ContentSchemaValidator
             'table' => $this->validateTable($field, $value),
             'geo' => $this->validateGeo($field, $value, $mode),
             'price' => $this->validatePrice($field, $value, $mode),
+            // Plugin values are opaque JSON owned by the field plugin.
+            'plugin' => [],
             default => [],
         };
     }

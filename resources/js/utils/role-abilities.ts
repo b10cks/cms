@@ -43,6 +43,7 @@ type RoleAbilityResource =
   | 'contentHistory'
   | 'comments'
   | 'dataSources'
+  | 'fieldPlugins'
   | 'dataEntries'
   | 'redirects'
   | 'releases'
@@ -136,6 +137,8 @@ const ROLE_ABILITY_META: Record<string, RoleAbilityMeta> = {
   'comments.react': { group: 'comments', action: 'react', resource: 'comments' },
   'data_sources.view': { group: 'data', action: 'view', resource: 'dataSources' },
   'data_sources.manage': { group: 'data', action: 'manage', resource: 'dataSources' },
+  'field_plugins.view': { group: 'data', action: 'view', resource: 'fieldPlugins' },
+  'field_plugins.manage': { group: 'data', action: 'manage', resource: 'fieldPlugins' },
   'data_entries.view': { group: 'data', action: 'view', resource: 'dataEntries' },
   'data_entries.manage': { group: 'data', action: 'manage', resource: 'dataEntries' },
   'redirects.view': { group: 'delivery', action: 'view', resource: 'redirects' },
