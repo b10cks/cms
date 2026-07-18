@@ -1,0 +1,1075 @@
+[
+    {
+        "name": "text_minimal",
+        "input": {
+            "my_field": {
+                "type": "text"
+            }
+        },
+        "expected": {
+            "my_field": {
+                "key": "my_field",
+                "type": "text",
+                "name": "my_field",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": true,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            }
+        },
+        "field_order": [
+            "my_field"
+        ]
+    },
+    {
+        "name": "label_fallback",
+        "input": {
+            "title": {
+                "type": "text",
+                "label": "The Title"
+            }
+        },
+        "expected": {
+            "title": {
+                "key": "title",
+                "type": "text",
+                "name": "The Title",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": true,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            }
+        },
+        "field_order": [
+            "title"
+        ]
+    },
+    {
+        "name": "name_wins_over_label",
+        "input": {
+            "title": {
+                "type": "text",
+                "name": "Name",
+                "label": "Label"
+            }
+        },
+        "expected": {
+            "title": {
+                "key": "title",
+                "type": "text",
+                "name": "Name",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": true,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            }
+        },
+        "field_order": [
+            "title"
+        ]
+    },
+    {
+        "name": "type_aliases",
+        "input": {
+            "body": {
+                "type": "block"
+            },
+            "gallery": {
+                "type": "multiAsset"
+            },
+            "related": {
+                "type": "reference"
+            }
+        },
+        "expected": {
+            "body": {
+                "key": "body",
+                "type": "blocks",
+                "name": "body",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            },
+            "gallery": {
+                "key": "gallery",
+                "type": "multi_assets",
+                "name": "gallery",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            },
+            "related": {
+                "key": "related",
+                "type": "references",
+                "name": "related",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            }
+        },
+        "field_order": [
+            "body",
+            "gallery",
+            "related"
+        ]
+    },
+    {
+        "name": "translatable_gating",
+        "input": {
+            "flag": {
+                "type": "boolean",
+                "translatable": true
+            },
+            "text": {
+                "type": "text",
+                "translatable": true
+            },
+            "choice": {
+                "type": "option",
+                "translatable": true,
+                "options": [
+                    {
+                        "name": "A",
+                        "value": "a"
+                    }
+                ]
+            }
+        },
+        "expected": {
+            "flag": {
+                "key": "flag",
+                "type": "boolean",
+                "name": "flag",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            },
+            "text": {
+                "key": "text",
+                "type": "text",
+                "name": "text",
+                "description": null,
+                "required": false,
+                "translatable": true,
+                "indexable": true,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            },
+            "choice": {
+                "key": "choice",
+                "type": "option",
+                "name": "choice",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": {
+                    "allowed_values": [
+                        "a"
+                    ]
+                },
+                "source": "self",
+                "data_source_id": null,
+                "options": [
+                    {
+                        "name": "A",
+                        "value": "a"
+                    }
+                ]
+            }
+        },
+        "field_order": [
+            "flag",
+            "text",
+            "choice"
+        ]
+    },
+    {
+        "name": "indexable_defaults",
+        "input": {
+            "text": {
+                "type": "text"
+            },
+            "num": {
+                "type": "number"
+            },
+            "text_off": {
+                "type": "text",
+                "indexable": false
+            },
+            "meta": {
+                "type": "meta"
+            }
+        },
+        "expected": {
+            "text": {
+                "key": "text",
+                "type": "text",
+                "name": "text",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": true,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            },
+            "num": {
+                "key": "num",
+                "type": "number",
+                "name": "num",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            },
+            "text_off": {
+                "key": "text_off",
+                "type": "text",
+                "name": "text_off",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            },
+            "meta": {
+                "key": "meta",
+                "type": "meta",
+                "name": "meta",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            }
+        },
+        "field_order": [
+            "text",
+            "num",
+            "text_off",
+            "meta"
+        ]
+    },
+    {
+        "name": "legacy_dependencies",
+        "input": {
+            "detail": {
+                "type": "text",
+                "dependencies": [
+                    {
+                        "field": "mode",
+                        "operator": "=",
+                        "value": "custom"
+                    }
+                ]
+            }
+        },
+        "expected": {
+            "detail": {
+                "key": "detail",
+                "type": "text",
+                "name": "detail",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": true,
+                "default": null,
+                "conditions": {
+                    "mode": "all",
+                    "rules": [
+                        {
+                            "field": "mode",
+                            "operator": "equals",
+                            "value": "custom"
+                        }
+                    ]
+                },
+                "validation": []
+            }
+        },
+        "field_order": [
+            "detail"
+        ]
+    },
+    {
+        "name": "condition_operators",
+        "input": {
+            "a": {
+                "type": "text",
+                "conditions": {
+                    "mode": "any",
+                    "rules": [
+                        {
+                            "field": "x",
+                            "operator": "!=",
+                            "value": 1
+                        },
+                        {
+                            "field": "y",
+                            "operator": ">=",
+                            "value": 2
+                        },
+                        {
+                            "field": "z",
+                            "operator": "empty"
+                        },
+                        {
+                            "operator": "=",
+                            "value": "no-field-dropped"
+                        }
+                    ]
+                }
+            }
+        },
+        "expected": {
+            "a": {
+                "key": "a",
+                "type": "text",
+                "name": "a",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": true,
+                "default": null,
+                "conditions": {
+                    "mode": "any",
+                    "rules": [
+                        {
+                            "field": "x",
+                            "operator": "not_equals",
+                            "value": 1
+                        },
+                        {
+                            "field": "y",
+                            "operator": "gte",
+                            "value": 2
+                        },
+                        {
+                            "field": "z",
+                            "operator": "is_empty",
+                            "value": null
+                        }
+                    ]
+                },
+                "validation": []
+            }
+        },
+        "field_order": [
+            "a"
+        ]
+    },
+    {
+        "name": "invalid_conditions_dropped",
+        "input": {
+            "a": {
+                "type": "text",
+                "conditions": {
+                    "mode": "all",
+                    "rules": []
+                }
+            }
+        },
+        "expected": {
+            "a": {
+                "key": "a",
+                "type": "text",
+                "name": "a",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": true,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            }
+        },
+        "field_order": [
+            "a"
+        ]
+    },
+    {
+        "name": "text_validation_fallbacks",
+        "input": {
+            "a": {
+                "type": "text",
+                "min_length": 2,
+                "max_length": 10,
+                "pattern": "^a"
+            },
+            "b": {
+                "type": "textarea",
+                "maximum": 50
+            },
+            "c": {
+                "type": "text",
+                "validation": {
+                    "max_length": 5,
+                    "pattern": ""
+                }
+            }
+        },
+        "expected": {
+            "a": {
+                "key": "a",
+                "type": "text",
+                "name": "a",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": true,
+                "default": null,
+                "conditions": null,
+                "validation": {
+                    "min_length": 2,
+                    "max_length": 10,
+                    "pattern": "^a"
+                },
+                "min_length": 2,
+                "max_length": 10,
+                "pattern": "^a"
+            },
+            "b": {
+                "key": "b",
+                "type": "textarea",
+                "name": "b",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": true,
+                "default": null,
+                "conditions": null,
+                "validation": {
+                    "max": 50,
+                    "max_length": 50
+                },
+                "maximum": 50
+            },
+            "c": {
+                "key": "c",
+                "type": "text",
+                "name": "c",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": true,
+                "default": null,
+                "conditions": null,
+                "validation": {
+                    "max_length": 5
+                }
+            }
+        },
+        "field_order": [
+            "a",
+            "b",
+            "c"
+        ]
+    },
+    {
+        "name": "number_validation",
+        "input": {
+            "a": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 9
+            },
+            "b": {
+                "type": "number",
+                "validation": {
+                    "min": 0,
+                    "max": null
+                }
+            }
+        },
+        "expected": {
+            "a": {
+                "key": "a",
+                "type": "number",
+                "name": "a",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": {
+                    "min": 1,
+                    "max": 9,
+                    "max_length": 9
+                },
+                "minimum": 1,
+                "maximum": 9
+            },
+            "b": {
+                "key": "b",
+                "type": "number",
+                "name": "b",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": {
+                    "min": 0
+                }
+            }
+        },
+        "field_order": [
+            "a",
+            "b"
+        ]
+    },
+    {
+        "name": "items_validation",
+        "input": {
+            "a": {
+                "type": "references",
+                "min": 1,
+                "max": 4
+            },
+            "b": {
+                "type": "blocks",
+                "validation": {
+                    "min_items": 1,
+                    "max_items": 3
+                }
+            },
+            "c": {
+                "type": "multi_assets"
+            }
+        },
+        "expected": {
+            "a": {
+                "key": "a",
+                "type": "references",
+                "name": "a",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": {
+                    "min": 1,
+                    "max": 4,
+                    "min_items": 1,
+                    "max_items": 4
+                },
+                "min": 1,
+                "max": 4
+            },
+            "b": {
+                "key": "b",
+                "type": "blocks",
+                "name": "b",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": {
+                    "min": 1,
+                    "max": 3
+                }
+            },
+            "c": {
+                "key": "c",
+                "type": "multi_assets",
+                "name": "c",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            }
+        },
+        "field_order": [
+            "a",
+            "b",
+            "c"
+        ]
+    },
+    {
+        "name": "option_self",
+        "input": {
+            "a": {
+                "type": "option",
+                "options": [
+                    {
+                        "name": "One",
+                        "value": "one"
+                    },
+                    {
+                        "name": "Two",
+                        "value": "two"
+                    }
+                ]
+            }
+        },
+        "expected": {
+            "a": {
+                "key": "a",
+                "type": "option",
+                "name": "a",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": {
+                    "allowed_values": [
+                        "one",
+                        "two"
+                    ]
+                },
+                "source": "self",
+                "data_source_id": null,
+                "options": [
+                    {
+                        "name": "One",
+                        "value": "one"
+                    },
+                    {
+                        "name": "Two",
+                        "value": "two"
+                    }
+                ]
+            }
+        },
+        "field_order": [
+            "a"
+        ]
+    },
+    {
+        "name": "option_datasource",
+        "input": {
+            "a": {
+                "type": "option",
+                "source": "datasource",
+                "data_source_id": "ds1",
+                "options": [
+                    {
+                        "name": "X",
+                        "value": "x"
+                    }
+                ]
+            }
+        },
+        "expected": {
+            "a": {
+                "key": "a",
+                "type": "option",
+                "name": "a",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": [],
+                "source": "datasource",
+                "data_source_id": "ds1",
+                "options": [
+                    {
+                        "name": "X",
+                        "value": "x"
+                    }
+                ]
+            }
+        },
+        "field_order": [
+            "a"
+        ]
+    },
+    {
+        "name": "options_multi",
+        "input": {
+            "a": {
+                "type": "options",
+                "min": 1,
+                "max": 2,
+                "options": [
+                    {
+                        "name": "A",
+                        "value": "a"
+                    }
+                ]
+            }
+        },
+        "expected": {
+            "a": {
+                "key": "a",
+                "type": "options",
+                "name": "a",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": {
+                    "min": 1,
+                    "max": 2,
+                    "min_items": 1,
+                    "max_items": 2
+                },
+                "source": "self",
+                "data_source_id": null,
+                "min": 1,
+                "max": 2,
+                "options": [
+                    {
+                        "name": "A",
+                        "value": "a"
+                    }
+                ]
+            }
+        },
+        "field_order": [
+            "a"
+        ]
+    },
+    {
+        "name": "blocks_extras_passthrough",
+        "input": {
+            "body": {
+                "type": "blocks",
+                "restrict_blocks": true,
+                "block_whitelist": [
+                    "hero",
+                    "teaser"
+                ],
+                "max": 5
+            },
+            "rte": {
+                "type": "richtext",
+                "tag_whitelist": [
+                    "p",
+                    "h2"
+                ]
+            }
+        },
+        "expected": {
+            "body": {
+                "key": "body",
+                "type": "blocks",
+                "name": "body",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": {
+                    "max": 5,
+                    "max_items": 5
+                },
+                "restrict_blocks": true,
+                "block_whitelist": [
+                    "hero",
+                    "teaser"
+                ],
+                "max": 5
+            },
+            "rte": {
+                "key": "rte",
+                "type": "richtext",
+                "name": "rte",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": true,
+                "default": null,
+                "conditions": null,
+                "validation": [],
+                "tag_whitelist": [
+                    "p",
+                    "h2"
+                ]
+            }
+        },
+        "field_order": [
+            "body",
+            "rte"
+        ]
+    },
+    {
+        "name": "table_full",
+        "input": {
+            "pricing": {
+                "type": "table",
+                "has_thead": true,
+                "min": 1,
+                "max": 10,
+                "columns": [
+                    {
+                        "key": "plan",
+                        "label": "Plan",
+                        "type": "text"
+                    },
+                    {
+                        "key": "tier",
+                        "label": "Tier",
+                        "type": "option",
+                        "options": [
+                            {
+                                "name": "Pro",
+                                "value": "pro"
+                            },
+                            "garbage"
+                        ],
+                        "data_source_id": null
+                    },
+                    "not-a-column"
+                ],
+                "default": {
+                    "header": {
+                        "plan": "Plan"
+                    },
+                    "rows": [
+                        {
+                            "id": "r1",
+                            "cells": {
+                                "plan": "Free"
+                            }
+                        },
+                        "nope"
+                    ]
+                }
+            }
+        },
+        "expected": {
+            "pricing": {
+                "key": "pricing",
+                "type": "table",
+                "name": "pricing",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": {
+                    "header": {
+                        "plan": "Plan"
+                    },
+                    "rows": [
+                        {
+                            "id": "r1",
+                            "cells": {
+                                "plan": "Free"
+                            }
+                        }
+                    ]
+                },
+                "conditions": null,
+                "validation": {
+                    "min": 1,
+                    "max": 10,
+                    "min_items": 1,
+                    "max_items": 10
+                },
+                "has_thead": true,
+                "columns": [
+                    {
+                        "key": "plan",
+                        "label": "Plan",
+                        "type": "text"
+                    },
+                    {
+                        "key": "tier",
+                        "label": "Tier",
+                        "type": "option",
+                        "source": "self",
+                        "options": [
+                            {
+                                "name": "Pro",
+                                "value": "pro"
+                            }
+                        ],
+                        "data_source_id": null
+                    }
+                ],
+                "min": 1,
+                "max": 10
+            }
+        },
+        "field_order": [
+            "pricing"
+        ]
+    },
+    {
+        "name": "table_minimal",
+        "input": {
+            "t": {
+                "type": "table"
+            }
+        },
+        "expected": {
+            "t": {
+                "key": "t",
+                "type": "table",
+                "name": "t",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": {
+                    "header": [],
+                    "rows": []
+                },
+                "conditions": null,
+                "validation": [],
+                "has_thead": false,
+                "columns": [],
+                "min": null,
+                "max": null
+            }
+        },
+        "field_order": [
+            "t"
+        ]
+    },
+    {
+        "name": "order_sorting",
+        "input": {
+            "second": {
+                "type": "text",
+                "order": 2
+            },
+            "first": {
+                "type": "text",
+                "order": 1
+            },
+            "unordered": {
+                "type": "text"
+            }
+        },
+        "expected": {
+            "first": {
+                "key": "first",
+                "type": "text",
+                "name": "first",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": true,
+                "default": null,
+                "conditions": null,
+                "validation": [],
+                "order": 1
+            },
+            "second": {
+                "key": "second",
+                "type": "text",
+                "name": "second",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": true,
+                "default": null,
+                "conditions": null,
+                "validation": [],
+                "order": 2
+            },
+            "unordered": {
+                "key": "unordered",
+                "type": "text",
+                "name": "unordered",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": true,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            }
+        },
+        "field_order": [
+            "first",
+            "second",
+            "unordered"
+        ]
+    },
+    {
+        "name": "required_defaults",
+        "input": {
+            "a": {
+                "type": "text",
+                "required": 1
+            },
+            "b": {
+                "type": "asset"
+            }
+        },
+        "expected": {
+            "a": {
+                "key": "a",
+                "type": "text",
+                "name": "a",
+                "description": null,
+                "required": true,
+                "translatable": false,
+                "indexable": true,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            },
+            "b": {
+                "key": "b",
+                "type": "asset",
+                "name": "b",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": []
+            }
+        },
+        "field_order": [
+            "a",
+            "b"
+        ]
+    }
+]

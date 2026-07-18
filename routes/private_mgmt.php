@@ -249,6 +249,7 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::patch('search', [SpaceSearchController::class, 'update'])->name('spaces.search.update');
     Route::post('search/reindex', [SpaceSearchController::class, 'reindex'])->name('spaces.search.reindex');
 
+    Route::put('blocks/sync', [BlockController::class, 'sync'])->name('blocks.sync');
     Route::apiResource('blocks', BlockController::class);
     Route::apiResource('block-tags', BlockTagController::class)->parameters([
         'block-tags' => 'tag',

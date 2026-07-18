@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Mgmt;
 
 use App\Actions\Block\CreateBlockVersion;
+use App\Actions\Block\SyncBlocks;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\BlockFilter;
 use App\Http\Requests\Block\CreateBlockRequest;
+use App\Http\Requests\Block\SyncBlocksRequest;
 use App\Http\Requests\Block\UpdateBlockRequest;
 use App\Http\Resources\Management\BlockResource;
 use App\Models\Management\Space;
@@ -51,6 +53,25 @@ class BlockController extends Controller
         }
 
         return new BlockResource($block->load('folder'));
+    }
+
+    /**
+     * Reconcile a full set of block definitions against the space (upsert by
+     * external_id, optionally pruning blocks absent from the payload).
+     */
+    public function sync(Space $space, SyncBlocksRequest $request, SyncBlocks $syncBlocks): JsonResponse
+    {
+        $this->authorize('create', [Block::class, $space]);
+
+        $result = $syncBlocks->execute(
+            $request->validated('blocks'),
+            (bool) $request->validated('prune', false),
+            (bool) $request->validated('dry_run', false),
+            $request->validated('commit_message'),
+            auth()->user(),
+        );
+
+        return response()->json(['data' => $result]);
     }
 
     /**
