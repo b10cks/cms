@@ -18,11 +18,21 @@ class UsageMetricDtoTest extends TestCase
     }
 
     #[Test]
-    public function it_clamps_percentage_to_one_hundred(): void
+    public function percentage_is_not_capped_when_over_the_limit(): void
     {
         $metric = new UsageMetricDto('traffic', 'bytes', 5000, 1000);
 
-        $this->assertSame(100, $metric->percentage());
+        $this->assertSame(500, $metric->percentage());
+        $this->assertTrue($metric->exceeded());
+        $this->assertTrue($metric->toArray()['exceeded']);
+    }
+
+    #[Test]
+    public function a_metric_within_its_limit_is_not_exceeded(): void
+    {
+        $metric = new UsageMetricDto('traffic', 'bytes', 999, 1000);
+
+        $this->assertFalse($metric->exceeded());
     }
 
     #[Test]

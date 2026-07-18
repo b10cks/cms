@@ -23,12 +23,21 @@ const props = defineProps<{
 }>()
 
 const selectedPlanId = defineModel<string | undefined>('selectedPlanId')
+const billingInterval = defineModel<BillingInterval>('billingInterval', { default: 'month' })
 
 const emit = defineEmits<{
   next: []
 }>()
 
 const { t } = useI18n()
+
+const anyYearlyPlan = computed(() => props.plans?.some((plan) => !!plan.yearly_price) ?? false)
+
+const planPrice = (plan: PlanResource) =>
+  billingInterval.value === 'year' && plan.yearly_price ? plan.yearly_price : plan.price
+
+const planPeriodKey = (plan: PlanResource) =>
+  billingInterval.value === 'year' && plan.yearly_price ? 'year' : plan.period
 
 const recommendedPlan = computed(() => {
   return (
@@ -72,6 +81,26 @@ const handleCardClick = (plan: PlanResource) => {
           })
         }}
       </p>
+    </div>
+
+    <div
+      v-if="anyYearlyPlan && !plansLoading"
+      class="flex justify-center"
+    >
+      <div class="flex rounded-lg border p-0.5 text-sm">
+        <button
+          v-for="interval in ['month', 'year'] as const"
+          :key="interval"
+          type="button"
+          :class="[
+            'rounded-md px-4 py-1.5 font-medium transition-colors',
+            billingInterval === interval ? 'bg-secondary text-primary' : 'text-muted',
+          ]"
+          @click="billingInterval = interval"
+        >
+          {{ $t(`labels.plans.interval.${interval}`) }}
+        </button>
+      </div>
     </div>
 
     <div
@@ -119,14 +148,14 @@ const handleCardClick = (plan: PlanResource) => {
                     ? $t('labels.plans.onRequest')
                     : plan.is_free
                       ? $t('labels.plans.free')
-                      : `€${plan.price}`
+                      : `€${planPrice(plan)}`
                 }}
               </div>
               <div
                 v-if="!plan.contact_url"
                 class="text-sm text-text-muted"
               >
-                {{ $t(`labels.plans.period.${plan.period}`) }}
+                {{ $t(`labels.plans.period.${planPeriodKey(plan)}`) }}
               </div>
             </div>
 

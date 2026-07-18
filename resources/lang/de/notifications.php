@@ -34,4 +34,24 @@ return [
         'intro' => 'Das Passwort für dein Konto wurde am <strong>:date</strong> geändert.<br><br><strong>Browser:</strong> :browser<br><strong>IP-Adresse:</strong> :ip',
         'note' => 'Falls du diese Änderung nicht vorgenommen hast, solltest du dein Passwort sofort erneut ändern: <a href=":resetUrl">Passwort zurücksetzen</a>',
     ],
+    'usageWarning' => [
+        'subject' => ':space nähert sich dem Limit für :metric',
+        'intro' => 'Dein Space <strong>:space</strong> hat <strong>:percentage%</strong> seines monatlichen Kontingents für :metric verbraucht.',
+        'detail' => ':used von :limit verbraucht. Es ist nichts blockiert — dies ist nur ein Hinweis, damit du handeln kannst, bevor das Limit erreicht ist.',
+        'action' => 'Nutzung & Pläne ansehen',
+        'outro' => 'Erwäge ein Upgrade deines Plans, falls du davon ausgehst, dass diese Nutzung anhält.',
+    ],
+    'usageExceeded' => [
+        'subject' => ':space hat das Limit für :metric überschritten',
+        'intro' => 'Dein Space <strong>:space</strong> hat <strong>:percentage%</strong> seines monatlichen Kontingents für :metric verbraucht.',
+        'detail' => ':used von :limit verbraucht. Dein Service läuft vorerst uneingeschränkt weiter, aber bitte wechsle zu einem Plan, der zu deiner Nutzung passt.',
+        'action' => 'Plan upgraden',
+        'outro' => 'Bei dauerhafter Überschreitung kann ein Wechsel zu einem höheren Plan erforderlich sein.',
+    ],
+    'usageMetrics' => [
+        'storage' => 'Speicherplatz',
+        'traffic' => 'Traffic',
+        'requests' => 'API-Anfragen',
+        'ai' => 'AI-Credits',
+    ],
 ];

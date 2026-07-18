@@ -7,6 +7,7 @@ interface UsageMetric {
   limit: number | null
   unlimited: boolean
   percentage: number
+  exceeded: boolean
   available: boolean
 }
 

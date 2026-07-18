@@ -25,6 +25,7 @@ class SubscriptionResource extends JsonResource
             'variant_id' => $this->variant_id,
             'product_id' => $this->product_id,
             'quantity' => $this->quantity,
+            'billing_interval' => $this->billing_interval,
             'quotas' => $this->effectiveQuotas(),
             'billing_portal_url' => $this->billing_portal_url,
             'renews_at' => $this->renews_at?->toIso8601String(),

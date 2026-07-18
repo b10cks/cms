@@ -15,4 +15,6 @@ enum NotificationType: string
     case CommentReply = 'comment.reply';
     case InviteToSpace = 'invite.space';
     case InviteToTeam = 'invite.team';
+    case UsageWarning = 'usage.warning';
+    case UsageExceeded = 'usage.exceeded';
 }

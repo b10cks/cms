@@ -23,13 +23,22 @@ final class UsageMetricDto
         return $this->limit === null;
     }
 
+    /**
+     * Consumed share of the quota in percent. Deliberately NOT capped at 100 —
+     * quotas are soft limits and the UI shows how far over a space has gone.
+     */
     public function percentage(): int
     {
         if ($this->limit === null || $this->limit <= 0) {
             return 0;
         }
 
-        return (int) min(100, round(($this->used / $this->limit) * 100));
+        return (int) round(($this->used / $this->limit) * 100);
+    }
+
+    public function exceeded(): bool
+    {
+        return $this->limit !== null && $this->limit > 0 && $this->used > $this->limit;
     }
 
     public function toArray(): array
@@ -41,6 +50,7 @@ final class UsageMetricDto
             'limit' => $this->limit === null ? null : $this->normalise($this->limit),
             'unlimited' => $this->unlimited(),
             'percentage' => $this->percentage(),
+            'exceeded' => $this->exceeded(),
             'available' => $this->available,
         ];
     }

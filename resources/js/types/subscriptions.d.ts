@@ -20,6 +20,7 @@ interface SubscriptionResource {
   variant_id: string
   product_id: string
   quantity: number
+  billing_interval: BillingInterval
   quotas: PlanQuotas | null
   billing_portal_url: string | null
   renews_at: string | null
@@ -32,4 +33,6 @@ interface SubscriptionResource {
 interface CheckoutResponse {
   checkout_url: string | null
   upgraded?: boolean
+  scheduled?: boolean
+  message?: string
 }

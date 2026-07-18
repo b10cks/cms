@@ -38,6 +38,14 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
 
+        // Soft-quota watchdog: notify billing viewers when a space crosses
+        // 80%/100% of a plan quota (deduped per metric and month).
+        $schedule->command('usage:check-quotas')
+            ->hourlyAt(20)
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
         // Reconcile OpenRouter keys with each space's plan/subscription and
         // reissue them at the start of every reset period to refresh budgets.
         $schedule->command('ai:reissue-keys')

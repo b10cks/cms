@@ -2,6 +2,8 @@
 
 namespace App\Services\Subscription;
 
+use App\Enums\SubscriptionStatus;
+use App\Models\Management\Plan;
 use App\Models\Management\Space;
 use App\Models\Management\Subscription;
 use App\Models\Management\SubscriptionPeriod;
@@ -30,11 +32,16 @@ class SubscriptionPeriodService
         $subscription = $space->resolveCurrentSubscription();
         $open = $space->subscriptionPeriods()->open()->latest('started_at')->first();
 
-        // No live plan: close any open period and stop.
+        // No live plan: close any open period, then fall back to the free plan
+        // so the space never ends up quota-less (= unlimited by accident).
         if (! $subscription || ! $subscription->isActive()) {
             if ($open) {
                 $reason = $subscription && $subscription->status === 'cancelled' ? 'cancelled' : 'expired';
                 $this->close($space, $open, $reason);
+            }
+
+            if ($subscription) {
+                $this->enrollFreePlan($space);
             }
 
             return;
@@ -95,8 +102,8 @@ class SubscriptionPeriodService
             'plan_id' => $subscription->plan_id,
             'plan_name' => $subscription->plan?->getTranslatedName() ?? $subscription->name ?? 'Unknown',
             'quotas' => $subscription->effectiveQuotas(),
-            'price' => $subscription->plan?->price ?? 0,
-            'billing_period' => $subscription->plan?->period ?? 'month',
+            'price' => $subscription->plan?->priceForInterval($subscription->billing_interval ?? 'month') ?? 0,
+            'billing_period' => $subscription->billing_interval ?? $subscription->plan?->period ?? 'month',
             'status' => $subscription->status,
             'started_at' => $startedAt ?? now(),
             'renews_at' => $subscription->renews_at,
@@ -137,6 +144,49 @@ class SubscriptionPeriodService
             'requests_count' => $this->safeMetric(fn () => (int) round($this->usage->rawRequests($space, $start, $endedAt))),
             'ai_spend_usd' => $this->safeMetric(fn () => $this->aiUsage->spendForWindow($space, $start, $endedAt)),
         ];
+    }
+
+    /**
+     * A space whose subscription lapsed (expired, unpaid, cancellation grace ran
+     * out) is enrolled on the free plan so it keeps sane quotas. Creating the
+     * subscription re-triggers reconciliation, which then opens the new period.
+     */
+    private function enrollFreePlan(Space $space): void
+    {
+        $plan = Plan::query()
+            ->where('is_free', true)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->first();
+
+        if (! $plan) {
+            return;
+        }
+
+        // A pending checkout means the user is mid-payment — don't get in the way.
+        $hasPending = $space->subscriptions()
+            ->where('status', SubscriptionStatus::Pending->value)
+            ->exists();
+
+        if ($hasPending) {
+            return;
+        }
+
+        Subscription::updateOrCreate(
+            ['space_id' => $space->id, 'plan_id' => $plan->id],
+            [
+                'name' => $plan->getTranslatedName() ?? 'Free',
+                'status' => SubscriptionStatus::Active->value,
+                'lemon_squeezy_id' => null,
+                'ls_customer_id' => null,
+                'variant_id' => '',
+                'product_id' => '',
+                'quantity' => 1,
+                'billing_interval' => 'month',
+                'quotas' => null,
+                'ends_at' => null,
+            ]
+        );
     }
 
     /**

@@ -8,6 +8,8 @@ const TYPE_KEY_MAP: Record<string, string> = {
   'comment.reply': 'commentReply',
   'invite.space': 'inviteToSpace',
   'invite.team': 'inviteToTeam',
+  'usage.warning': 'usageWarning',
+  'usage.exceeded': 'usageExceeded',
 }
 
 const TYPE_ICON_MAP: Record<string, string> = {
@@ -15,6 +17,8 @@ const TYPE_ICON_MAP: Record<string, string> = {
   commentReply: 'lucide:reply',
   inviteToSpace: 'lucide:user-plus',
   inviteToTeam: 'lucide:users',
+  usageWarning: 'lucide:gauge',
+  usageExceeded: 'lucide:triangle-alert',
   unknown: 'lucide:bell',
 }
 
@@ -30,6 +34,9 @@ export function useNotificationPresentation() {
 
   const iconFor = (n: NotificationResource): string => TYPE_ICON_MAP[typeKey(n.type)]
 
+  const metricLabel = (d: NotificationData): string =>
+    d.metric ? (t(`notifications.metrics.${d.metric}`) as string) : ''
+
   const titleFor = (n: NotificationResource): string => {
     const d: NotificationData = n.data ?? {}
     return t(`notifications.items.${typeKey(n.type)}.title`, {
@@ -38,6 +45,8 @@ export function useNotificationPresentation() {
       content: d.content?.name ?? d.space?.name ?? '',
       space: d.space?.name ?? '',
       team: d.team?.name ?? '',
+      metric: metricLabel(d),
+      percentage: d.percentage ?? 0,
     }) as string
   }
 
@@ -48,6 +57,8 @@ export function useNotificationPresentation() {
       space: d.space?.name ?? '',
       team: d.team?.name ?? '',
       inviter: d.inviter?.display_name ?? '',
+      metric: metricLabel(d),
+      percentage: d.percentage ?? 0,
     }) as string
   }
 
@@ -67,6 +78,10 @@ export function useNotificationPresentation() {
 
     if (n.type === 'invite.space' || n.type === 'invite.team') {
       return { name: 'account-settings-invites' }
+    }
+
+    if ((n.type === 'usage.warning' || n.type === 'usage.exceeded') && d.space?.id) {
+      return { name: 'space-settings-subscription', params: { space: d.space.id } }
     }
 
     return null

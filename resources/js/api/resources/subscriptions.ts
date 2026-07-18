@@ -6,9 +6,12 @@ export class Subscriptions {
   private client: ApiClient
   private basePath: string
 
+  private spacePath: string
+
   constructor(client: ApiClient, spaceId: string) {
     this.client = client
-    this.basePath = `/mgmt/v1/spaces/${spaceId}/subscriptions`
+    this.spacePath = `/mgmt/v1/spaces/${spaceId}`
+    this.basePath = `${this.spacePath}/subscriptions`
   }
 
   public async index(): Promise<ApiCollectionResponse<SubscriptionResource>> {
@@ -19,8 +22,14 @@ export class Subscriptions {
     return this.client.get<ApiResponse<SubscriptionResource | null>>(`${this.basePath}/current`)
   }
 
-  public async checkout(planId: string): Promise<CheckoutResponse> {
-    return this.client.post<CheckoutResponse>(`${this.basePath}/checkout`, { plan_id: planId })
+  public async checkout(
+    planId: string,
+    interval: BillingInterval = 'month'
+  ): Promise<CheckoutResponse> {
+    return this.client.post<CheckoutResponse>(`${this.basePath}/checkout`, {
+      plan_id: planId,
+      interval,
+    })
   }
 
   public async reinit(): Promise<CheckoutResponse> {
@@ -29,5 +38,14 @@ export class Subscriptions {
 
   public async cancel(): Promise<{ message: string }> {
     return this.client.post<{ message: string }>(`${this.basePath}/cancel`, {})
+  }
+
+  public async resume(): Promise<{ message: string }> {
+    return this.client.post<{ message: string }>(`${this.basePath}/resume`, {})
+  }
+
+  /** Plans available to this space: public plans plus granted custom plans. */
+  public async plans(): Promise<ApiCollectionResponse<PlanResource>> {
+    return this.client.get<ApiCollectionResponse<PlanResource>>(`${this.spacePath}/plans`)
   }
 }

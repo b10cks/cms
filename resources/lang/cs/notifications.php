@@ -21,4 +21,24 @@ return [
         'intro' => 'Your one-time login code is below. This code will expire in 10 minutes.',
         'outro' => 'If you did not request this code, you can safely ignore this email.',
     ],
+    'usageWarning' => [
+        'subject' => ':space se blíží svému limitu pro :metric',
+        'intro' => 'Váš prostor <strong>:space</strong> využil <strong>:percentage%</strong> své měsíční kvóty pro :metric.',
+        'detail' => 'Využito :used z :limit. Nic není blokováno — jde jen o upozornění, abyste mohli zareagovat dříve, než bude limit dosažen.',
+        'action' => 'Zkontrolovat využití a tarify',
+        'outro' => 'Pokud očekáváte, že toto využití bude pokračovat, zvažte přechod na vyšší tarif.',
+    ],
+    'usageExceeded' => [
+        'subject' => ':space překročil svůj limit pro :metric',
+        'intro' => 'Váš prostor <strong>:space</strong> využil <strong>:percentage%</strong> své měsíční kvóty pro :metric.',
+        'detail' => 'Využito :used z :limit. Vaše služba zatím běží bez omezení, ale přejděte prosím na tarif, který odpovídá vašemu využití.',
+        'action' => 'Přejít na vyšší tarif',
+        'outro' => 'Dlouhodobé překračování limitu může vyžadovat přechod na vyšší tarif.',
+    ],
+    'usageMetrics' => [
+        'storage' => 'úložiště',
+        'traffic' => 'přenos dat',
+        'requests' => 'požadavky API',
+        'ai' => 'AI kredity',
+    ],
 ];

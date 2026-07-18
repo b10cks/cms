@@ -2028,7 +2028,13 @@
         "storage": "Speicher",
         "traffic": "Datenvolumen",
         "aiCredit": "KI-Credits"
-      }
+      },
+      "interval": {
+        "month": "Monatlich",
+        "year": "Jährlich"
+      },
+      "monthlyOnly": "Nur monatliche Abrechnung",
+      "usageExceedsPlan": "Deine aktuelle Nutzung überschreitet die Limits dieses Plans: {metrics}"
     },
     "subscriptions": {
       "noPlan": "Kein aktives Abonnement. Wähle einen Plan aus.",
@@ -2075,7 +2081,9 @@
           "cancelled": "Gekündigt",
           "expired": "Abgelaufen"
         }
-      }
+      },
+      "overLimit": "Über dem inkludierten Limit — {percentage}% verbraucht",
+      "live": "Aktuelle Nutzung"
     },
     "invoices": {
       "title": "Rechnungen",
@@ -3839,7 +3847,21 @@
       "unknown": {
         "title": "Benachrichtigung",
         "body": ""
+      },
+      "usageWarning": {
+        "title": "{space} nähert sich dem {metric}-Limit",
+        "body": "{percentage}% des monatlichen Kontingents verbraucht"
+      },
+      "usageExceeded": {
+        "title": "{space} hat das {metric}-Limit überschritten",
+        "body": "{percentage}% des monatlichen Kontingents verbraucht"
       }
+    },
+    "metrics": {
+      "storage": "Speicher",
+      "traffic": "Traffic",
+      "requests": "API-Anfragen",
+      "ai": "KI-Guthaben"
     }
   },
   "dashboard": {
@@ -3981,7 +4003,8 @@
       "retryPayment": "Zahlung abschließen",
       "resubscribe": "Erneut abonnieren",
       "cancel": "Abonnement kündigen",
-      "confirmCancel": "Ja, kündigen"
+      "confirmCancel": "Ja, kündigen",
+      "resume": "Abo fortsetzen"
     },
     "plans": {
       "contactUs": "Kontakt aufnehmen"
@@ -4265,7 +4288,10 @@
       "reinitNoUrl": "Kein Zahlungslink verfügbar. Bitte versuche es erneut.",
       "reinitError": "Zahlung konnte nicht neu gestartet werden: {error}",
       "cancelSuccess": "Abonnement gekündigt. Zugang bleibt bis Ende des Abrechnungszeitraums bestehen.",
-      "cancelError": "Abonnement konnte nicht gekündigt werden: {error}"
+      "cancelError": "Abonnement konnte nicht gekündigt werden: {error}",
+      "downgradeScheduled": "Downgrade geplant — dein bezahlter Plan bleibt bis zum Ende des Abrechnungszeitraums aktiv.",
+      "resumeSuccess": "Abo fortgesetzt.",
+      "resumeError": "Abo konnte nicht fortgesetzt werden: {error}"
     },
     "migrations": {
       "createSuccess": "Migration erfolgreich gestartet",

@@ -49,7 +49,16 @@ class SyncSubscriptionFromLemonSqueezy
             if ($plan) {
                 $payload['plan_id'] = $plan->id;
                 $payload['name'] = $plan->getTranslatedName() ?? $normalized['name'];
-                $payload['quotas'] = $plan->quotas;
+                $payload['billing_interval'] = $plan->ls_variant_id_yearly !== null
+                    && $normalized['variant_id'] === $plan->ls_variant_id_yearly ? 'year' : 'month';
+
+                // `quotas` on the subscription is reserved for custom overrides
+                // (subsidized deals); plan defaults are resolved at read time via
+                // effectiveQuotas(). Only drop an override when the plan changed —
+                // a negotiated deal does not survive a plan switch.
+                if ($subscription->exists && $subscription->plan_id !== $plan->id) {
+                    $payload['quotas'] = null;
+                }
             } elseif (! $subscription->exists || empty($subscription->name)) {
                 $payload['name'] = $normalized['name'];
             }
@@ -177,7 +186,9 @@ class SyncSubscriptionFromLemonSqueezy
     private function resolvePlan(?string $variantId, ?string $productId): ?Plan
     {
         if ($variantId) {
-            $plan = Plan::where('ls_variant_id', $variantId)->first();
+            $plan = Plan::where('ls_variant_id', $variantId)
+                ->orWhere('ls_variant_id_yearly', $variantId)
+                ->first();
             if ($plan) {
                 return $plan;
             }

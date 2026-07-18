@@ -49,9 +49,10 @@ class SubscriptionPeriodResource extends JsonResource
         $used = $used === null ? null : (float) $used;
         $limit = $limit === null ? null : (float) $limit;
 
+        // Not capped at 100: quotas are soft and the UI flags over-usage in red.
         $percentage = null;
         if ($used !== null && $limit !== null && $limit > 0) {
-            $percentage = (int) min(100, max(0, round($used / $limit * 100)));
+            $percentage = (int) max(0, round($used / $limit * 100));
         }
 
         return [

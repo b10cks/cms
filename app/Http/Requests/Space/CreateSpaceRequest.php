@@ -46,6 +46,7 @@ class CreateSpaceRequest extends FormRequest
             'settings.asset_fields.*.label' => 'required|string|max:100',
             'settings.asset_fields.*.required' => 'required|boolean',
             'plan_id' => 'nullable|string|exists:plans,id',
+            'billing_interval' => ['nullable', 'string', Rule::in(['month', 'year'])],
             'blueprint_id' => [
                 'nullable',
                 'string',

@@ -98,6 +98,7 @@ class SetupPlansCommand extends Command
                     ],
                 ],
                 'price' => '19.00',
+                'yearly_price' => '190.00',
                 'period' => 'month',
                 'quotas' => [
                     'requests' => 100_000,
@@ -142,6 +143,7 @@ class SetupPlansCommand extends Command
                     ],
                 ],
                 'price' => '49.00',
+                'yearly_price' => '490.00',
                 'period' => 'month',
                 'quotas' => [
                     'requests' => 500_000,
@@ -150,6 +152,7 @@ class SetupPlansCommand extends Command
                     'aiCredit' => 15.0,
                 ],
                 'is_free' => false,
+                'is_recommended' => true,
                 'sort_order' => 30,
             ],
             [
@@ -186,6 +189,7 @@ class SetupPlansCommand extends Command
                     ],
                 ],
                 'price' => '99.00',
+                'yearly_price' => '990.00',
                 'period' => 'month',
                 'quotas' => [
                     'requests' => 1_500_000,
@@ -230,6 +234,7 @@ class SetupPlansCommand extends Command
                     ],
                 ],
                 'price' => '249.00',
+                'yearly_price' => '2490.00',
                 'period' => 'month',
                 'quotas' => [
                     'requests' => 10_000_000,
@@ -377,8 +382,13 @@ class SetupPlansCommand extends Command
             );
 
             $variantId = $this->ask(
-                "  Variant ID [{$plan->ls_variant_id}]",
+                "  Variant ID (monthly) [{$plan->ls_variant_id}]",
                 $plan->ls_variant_id ?? ''
+            );
+
+            $yearlyVariantId = $this->ask(
+                "  Variant ID (yearly) [{$plan->ls_variant_id_yearly}]",
+                $plan->ls_variant_id_yearly ?? ''
             );
 
             $updates = [];
@@ -387,6 +397,9 @@ class SetupPlansCommand extends Command
             }
             if ($variantId !== '' && $variantId !== $plan->ls_variant_id) {
                 $updates['ls_variant_id'] = $variantId ?: null;
+            }
+            if ($yearlyVariantId !== '' && $yearlyVariantId !== $plan->ls_variant_id_yearly) {
+                $updates['ls_variant_id_yearly'] = $yearlyVariantId ?: null;
             }
 
             if (! empty($updates)) {

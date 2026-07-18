@@ -88,6 +88,7 @@ interface CreateSpacePayload {
   description?: string | null
   settings: SpaceSettings
   plan_id?: string | null
+  billing_interval?: BillingInterval
 }
 
 interface UpdateSpacePayload {

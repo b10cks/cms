@@ -21,4 +21,24 @@ return [
         'intro' => 'Your one-time login code is below. This code will expire in 10 minutes.',
         'outro' => 'If you did not request this code, you can safely ignore this email.',
     ],
+    'usageWarning' => [
+        'subject' => ':space se približava svom ograničenju za :metric',
+        'intro' => 'Vaš prostor <strong>:space</strong> iskoristio je <strong>:percentage%</strong> svoje mjesečne kvote za :metric.',
+        'detail' => 'Iskorišteno :used od :limit. Ništa nije blokirano — ovo je samo upozorenje kako biste mogli reagirati prije nego što se dosegne ograničenje.',
+        'action' => 'Pregledajte potrošnju i planove',
+        'outro' => 'Razmislite o nadogradnji plana ako očekujete da će se ovakva potrošnja nastaviti.',
+    ],
+    'usageExceeded' => [
+        'subject' => ':space je premašio svoje ograničenje za :metric',
+        'intro' => 'Vaš prostor <strong>:space</strong> iskoristio je <strong>:percentage%</strong> svoje mjesečne kvote za :metric.',
+        'detail' => 'Iskorišteno :used od :limit. Vaša usluga zasad radi bez prekida, ali molimo nadogradite na plan koji odgovara vašoj potrošnji.',
+        'action' => 'Nadogradi plan',
+        'outro' => 'Trajno prekoračenje može zahtijevati prelazak na viši plan.',
+    ],
+    'usageMetrics' => [
+        'storage' => 'pohranu',
+        'traffic' => 'promet',
+        'requests' => 'API zahtjeve',
+        'ai' => 'AI kredite',
+    ],
 ];

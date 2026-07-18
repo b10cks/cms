@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
 import InvoicesTable from '~/components/space-settings/usage/InvoicesTable.vue'
+import LiveUsageCard from '~/components/space-settings/usage/LiveUsageCard.vue'
 import PeriodHistoryTable from '~/components/space-settings/usage/PeriodHistoryTable.vue'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
@@ -18,10 +19,12 @@ const spaceId = route.params.space as string
 const { useUsageHistoryQuery, useUsageTimeseriesQuery } = useUsageHistory(spaceId)
 const { useInvoicesQuery } = useInvoices(spaceId)
 const { useCurrentSubscriptionQuery } = useSubscription(spaceId)
+const { useUsageQuery } = useSpaceUsage(spaceId)
 
 const { data: periods, isLoading: periodsLoading } = useUsageHistoryQuery()
 const { data: invoices, isLoading: invoicesLoading } = useInvoicesQuery()
 const { data: current } = useCurrentSubscriptionQuery()
+const { data: liveUsage } = useUsageQuery()
 
 useSeoMeta({
   title: computed(() => t('labels.usage.history.title')),
@@ -116,6 +119,12 @@ const chartLabel = computed(() =>
     </div>
 
     <template v-else>
+      <!-- Live usage against the current plan quotas -->
+      <LiveUsageCard
+        :usage="liveUsage"
+        class="mb-6"
+      />
+
       <!-- In-period trend chart -->
       <Card v-if="selectedPeriod">
         <CardHeader>

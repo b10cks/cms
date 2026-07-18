@@ -39,8 +39,10 @@ export function useSubscription(spaceIdRef: MaybeRefOrComputed<string>) {
 
   const useCheckoutMutation = () => {
     return useMutation({
-      mutationFn: async (planId: string) => {
-        return spaceAPI.value.subscriptions.checkout(planId)
+      mutationFn: async (input: string | { planId: string; interval?: BillingInterval }) => {
+        const { planId, interval = 'month' } =
+          typeof input === 'string' ? { planId: input } : input
+        return spaceAPI.value.subscriptions.checkout(planId, interval)
       },
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions(spaceId.value).all() })
@@ -49,6 +51,8 @@ export function useSubscription(spaceIdRef: MaybeRefOrComputed<string>) {
           window.location.href = data.checkout_url
         } else if (data.upgraded) {
           toast.success(t('composables.subscriptions.upgradeSuccess'))
+        } else if (data.scheduled) {
+          toast.success(t('composables.subscriptions.downgradeScheduled'))
         } else {
           toast.success(t('composables.subscriptions.planChanged'))
           queryClient.invalidateQueries({
@@ -114,11 +118,29 @@ export function useSubscription(spaceIdRef: MaybeRefOrComputed<string>) {
     })
   }
 
+  const useResumeMutation = () => {
+    return useMutation({
+      mutationFn: async () => {
+        return spaceAPI.value.subscriptions.resume()
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions(spaceId.value).all() })
+        toast.success(t('composables.subscriptions.resumeSuccess'))
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.subscriptions.resumeError', { error: error.message || 'Unknown error' })
+        )
+      },
+    })
+  }
+
   return {
     useSubscriptionsQuery,
     useCurrentSubscriptionQuery,
     useCheckoutMutation,
     useReinitPaymentMutation,
     useCancelMutation,
+    useResumeMutation,
   }
 }

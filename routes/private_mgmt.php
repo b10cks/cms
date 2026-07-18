@@ -90,6 +90,7 @@ use App\Http\Controllers\Mgmt\SpaceOnboardingController;
 use App\Http\Controllers\Mgmt\SpaceRoleController;
 use App\Http\Controllers\Mgmt\SpaceSearchController;
 use App\Http\Controllers\Mgmt\SpaceStatsController;
+use App\Http\Controllers\Mgmt\SpacePlansController;
 use App\Http\Controllers\Mgmt\SpaceSubscriptionController;
 use App\Http\Controllers\Mgmt\SpaceTokenController;
 use App\Http\Controllers\Mgmt\TeamController;
@@ -335,6 +336,8 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::post('subscriptions/checkout', [SpaceSubscriptionController::class, 'checkout'])->name('spaces.subscriptions.checkout');
     Route::post('subscriptions/reinit', [SpaceSubscriptionController::class, 'reinit'])->name('spaces.subscriptions.reinit');
     Route::post('subscriptions/cancel', [SpaceSubscriptionController::class, 'cancel'])->name('spaces.subscriptions.cancel');
+    Route::post('subscriptions/resume', [SpaceSubscriptionController::class, 'resume'])->name('spaces.subscriptions.resume');
+    Route::get('plans', SpacePlansController::class)->name('spaces.plans.index');
 
     Route::get('invoices', SpaceInvoiceController::class)->name('spaces.invoices');
 

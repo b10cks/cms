@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Mgmt;
 
+use App\Actions\Subscription\SyncSubscriptionFromLemonSqueezy;
 use App\Enums\SubscriptionStatus;
-
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Management\SubscriptionResource;
 use App\Models\Management\Plan;
@@ -17,7 +17,10 @@ use Illuminate\Support\Facades\Log;
 
 class SpaceSubscriptionController extends Controller
 {
-    public function __construct(private LemonSqueezyService $ls) {}
+    public function __construct(
+        private LemonSqueezyService $ls,
+        private SyncSubscriptionFromLemonSqueezy $sync,
+    ) {}
 
     /**
      * List all subscriptions for a space.
@@ -72,55 +75,37 @@ class SpaceSubscriptionController extends Controller
     {
         $this->authorize('manageBilling', $space);
 
-        $request->validate([
+        $validated = $request->validate([
             'plan_id' => 'required|string|exists:plans,id',
+            'interval' => 'sometimes|string|in:month,year',
         ]);
 
-        $plan = Plan::findOrFail($request->plan_id);
+        $plan = Plan::findOrFail($validated['plan_id']);
+        $interval = $validated['interval'] ?? 'month';
+
+        if (! $plan->is_active || ! $plan->isAvailableForSpace($space)) {
+            return response()->json(['message' => 'This plan is not available for this space.'], 422);
+        }
 
         if (! empty($plan->contact_url)) {
             return response()->json(['message' => 'This plan requires contacting us directly. Please use the provided contact link.'], 422);
         }
 
         if ($plan->is_free) {
-            // Switch to free plan: cancel existing paid subscription if any
-            $existing = Subscription::where('space_id', $space->id)->active()->first();
-            if ($existing && ! $existing->isFree() && $existing->lemon_squeezy_id) {
-                try {
-                    $this->ls->cancelSubscription($existing->lemon_squeezy_id);
-                } catch (\Throwable $e) {
-                    Log::error('Failed to cancel LS subscription for downgrade', [
-                        'space_id' => $space->id,
-                        'ls_id' => $existing->lemon_squeezy_id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-                $existing->update(['status' => SubscriptionStatus::Cancelled->value, 'ends_at' => now()]);
-            }
+            return $this->switchToFreePlan($space, $plan);
+        }
 
-            // Create or update free subscription
-            Subscription::updateOrCreate(
-                ['space_id' => $space->id, 'plan_id' => $plan->id],
-                [
-                    'name' => $plan->getTranslatedName() ?? 'Free',
-                    'status' => SubscriptionStatus::Active->value,
-                    'lemon_squeezy_id' => null,
-                    'ls_customer_id' => null,
-                    'variant_id' => '',
-                    'product_id' => '',
-                    'quantity' => 1,
-                    'quotas' => $plan->quotas,
-                ]
-            );
-
-            return response()->json(['checkout_url' => null]);
+        if ($interval === 'year' && ! $plan->supportsYearly()) {
+            return response()->json(['message' => 'This plan does not offer yearly billing.'], 422);
         }
 
         if (! $this->ls->isConfigured()) {
             return response()->json(['message' => 'Payment provider not configured.'], 503);
         }
 
-        if (empty($plan->ls_variant_id)) {
+        $variantId = $plan->variantIdForInterval($interval);
+
+        if (empty($variantId)) {
             return response()->json(['message' => 'This plan is not available for purchase.'], 422);
         }
 
@@ -144,17 +129,20 @@ class SpaceSubscriptionController extends Controller
             ], 409);
         }
 
-        // Check if space already has an active subscription on this plan
+        // Already on this exact plan and interval — nothing to buy.
         $existingActive = Subscription::where('space_id', $space->id)
             ->where('plan_id', $plan->id)
+            ->where('billing_interval', $interval)
             ->active()
+            ->whereNot('status', SubscriptionStatus::Cancelled->value)
             ->first();
 
         if ($existingActive) {
             return response()->json(['message' => 'Already subscribed to this plan.'], 422);
         }
 
-        // If upgrading from existing paid plan, use LS plan change instead of new checkout
+        // If upgrading from existing paid plan (or switching interval), use an LS
+        // plan change instead of a new checkout.
         $existingPaid = Subscription::where('space_id', $space->id)
             ->active()
             ->whereNotNull('lemon_squeezy_id')
@@ -162,12 +150,21 @@ class SpaceSubscriptionController extends Controller
 
         if ($existingPaid && $existingPaid->lemon_squeezy_id) {
             try {
-                $this->ls->changeSubscriptionVariant($existingPaid->lemon_squeezy_id, $plan->ls_variant_id);
+                // A cancelled-but-paid-through subscription must be resumed before
+                // LemonSqueezy accepts a variant change.
+                if ($existingPaid->isCancelledWithGrace()) {
+                    $this->ls->resumeSubscription($existingPaid->lemon_squeezy_id);
+                }
+
+                $this->ls->changeSubscriptionVariant($existingPaid->lemon_squeezy_id, $variantId);
                 $existingPaid->update([
                     'plan_id' => $plan->id,
-                    'variant_id' => $plan->ls_variant_id,
+                    'variant_id' => $variantId,
                     'product_id' => $plan->ls_product_id ?? $existingPaid->product_id,
-                    'quotas' => $plan->quotas,
+                    'billing_interval' => $interval,
+                    'status' => SubscriptionStatus::Active->value,
+                    // Custom quota overrides don't survive a plan switch.
+                    'quotas' => $existingPaid->plan_id === $plan->id ? $existingPaid->quotas : null,
                     'name' => $plan->getTranslatedName() ?? 'Subscription',
                 ]);
 
@@ -190,10 +187,10 @@ class SpaceSubscriptionController extends Controller
             [
                 'name' => $plan->getTranslatedName() ?? 'Subscription',
                 'lemon_squeezy_id' => null,
-                'variant_id' => $plan->ls_variant_id,
+                'variant_id' => $variantId,
                 'product_id' => $plan->ls_product_id ?? '',
                 'quantity' => 1,
-                'quotas' => $plan->quotas,
+                'billing_interval' => $interval,
             ]
         );
 
@@ -202,7 +199,7 @@ class SpaceSubscriptionController extends Controller
             $redirectUrl = config('app.url')."/{$space->id}/settings/subscription";
 
             $checkout = $this->ls->createCheckout(
-                variantId: $plan->ls_variant_id,
+                variantId: $variantId,
                 email: $user->email,
                 name: $user->display_name ?? $user->name,
                 customData: ['space_id' => $space->id, 'plan_id' => $plan->id, 'subscription_id' => $pending->id],
@@ -241,8 +238,10 @@ class SpaceSubscriptionController extends Controller
         }
 
         $plan = $pending->plan;
+        // Prefer the variant chosen at checkout time (it encodes the interval).
+        $variantId = $pending->variant_id ?: $plan?->variantIdForInterval($pending->billing_interval);
 
-        if (! $plan || empty($plan->ls_variant_id)) {
+        if (! $plan || empty($variantId)) {
             return response()->json(['message' => 'The pending plan is not available for purchase.'], 422);
         }
 
@@ -255,7 +254,7 @@ class SpaceSubscriptionController extends Controller
             $redirectUrl = config('app.url')."/{$space->id}/settings/subscription";
 
             $checkout = $this->ls->createCheckout(
-                variantId: $plan->ls_variant_id,
+                variantId: $variantId,
                 email: $user->email,
                 name: $user->display_name ?? $user->name ?? $user->email,
                 customData: ['space_id' => $space->id, 'plan_id' => $plan->id, 'subscription_id' => $pending->id],
@@ -276,15 +275,17 @@ class SpaceSubscriptionController extends Controller
     }
 
     /**
-     * Cancel the active subscription at period end.
+     * Cancel the active subscription at period end. Entitlements continue until
+     * the end of the paid period (grace), then the space falls back to Free.
      */
     public function cancel(Space $space): JsonResponse
     {
         $this->authorize('manageBilling', $space);
 
         $subscription = Subscription::where('space_id', $space->id)
-            ->active()
+            ->whereIn('status', SubscriptionStatus::liveValues())
             ->whereNotNull('lemon_squeezy_id')
+            ->latest()
             ->first();
 
         if (! $subscription) {
@@ -296,8 +297,8 @@ class SpaceSubscriptionController extends Controller
         }
 
         try {
-            $this->ls->cancelSubscription($subscription->lemon_squeezy_id);
-            $subscription->update(['status' => SubscriptionStatus::Cancelled->value]);
+            $response = $this->ls->cancelSubscription($subscription->lemon_squeezy_id);
+            $this->syncCancellation($subscription, $response);
 
             return response()->json(['message' => 'Subscription cancelled. Access continues until the end of the billing period.']);
         } catch (\Throwable $e) {
@@ -309,5 +310,120 @@ class SpaceSubscriptionController extends Controller
 
             return response()->json(['message' => 'Failed to cancel subscription. Please try again.'], 500);
         }
+    }
+
+    /**
+     * Resume a subscription that was cancelled but is still within its paid
+     * period, so it renews normally again.
+     */
+    public function resume(Space $space): JsonResponse
+    {
+        $this->authorize('manageBilling', $space);
+
+        $subscription = Subscription::where('space_id', $space->id)
+            ->where('status', SubscriptionStatus::Cancelled->value)
+            ->where('ends_at', '>', now())
+            ->whereNotNull('lemon_squeezy_id')
+            ->latest()
+            ->first();
+
+        if (! $subscription) {
+            return response()->json(['message' => 'No resumable subscription found.'], 404);
+        }
+
+        if (! $this->ls->isConfigured()) {
+            return response()->json(['message' => 'Payment provider not configured.'], 503);
+        }
+
+        try {
+            $response = $this->ls->resumeSubscription($subscription->lemon_squeezy_id);
+
+            if (! empty($response)) {
+                $this->sync->fromWebhook($response, $space->id, $subscription->id);
+            } else {
+                $subscription->update(['status' => SubscriptionStatus::Active->value, 'ends_at' => null]);
+            }
+
+            return response()->json(['message' => 'Subscription resumed.']);
+        } catch (\Throwable $e) {
+            Log::error('Failed to resume LS subscription', [
+                'space_id' => $space->id,
+                'ls_id' => $subscription->lemon_squeezy_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['message' => 'Failed to resume subscription. Please try again.'], 500);
+        }
+    }
+
+    /**
+     * Downgrade to the free plan. A live paid subscription is cancelled at
+     * period end and keeps its entitlements until then; the free plan is
+     * auto-enrolled once it lapses. Without a paid subscription the free plan
+     * activates immediately.
+     */
+    private function switchToFreePlan(Space $space, Plan $plan): JsonResponse
+    {
+        $existing = Subscription::where('space_id', $space->id)
+            ->whereIn('status', SubscriptionStatus::liveValues())
+            ->whereNotNull('lemon_squeezy_id')
+            ->first();
+
+        if ($existing) {
+            try {
+                $response = $this->ls->cancelSubscription($existing->lemon_squeezy_id);
+                $this->syncCancellation($existing, $response);
+
+                return response()->json([
+                    'checkout_url' => null,
+                    'scheduled' => true,
+                    'message' => 'Your paid plan stays active until the end of the billing period, then the space switches to Free.',
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Failed to cancel LS subscription for downgrade', [
+                    'space_id' => $space->id,
+                    'ls_id' => $existing->lemon_squeezy_id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return response()->json(['message' => 'Failed to schedule the downgrade. Please try again.'], 500);
+            }
+        }
+
+        Subscription::updateOrCreate(
+            ['space_id' => $space->id, 'plan_id' => $plan->id],
+            [
+                'name' => $plan->getTranslatedName() ?? 'Free',
+                'status' => SubscriptionStatus::Active->value,
+                'lemon_squeezy_id' => null,
+                'ls_customer_id' => null,
+                'variant_id' => '',
+                'product_id' => '',
+                'quantity' => 1,
+                'billing_interval' => 'month',
+                'ends_at' => null,
+            ]
+        );
+
+        return response()->json(['checkout_url' => null]);
+    }
+
+    /**
+     * Reflect an LS cancellation locally. Prefers the authoritative LS response
+     * (it carries the period-end `ends_at`); falls back to marking the record
+     * cancelled with the renewal date as the grace boundary.
+     */
+    private function syncCancellation(Subscription $subscription, array $lsResponse): void
+    {
+        if (! empty($lsResponse)) {
+            $this->sync->fromWebhook($lsResponse, $subscription->space_id, $subscription->id);
+
+            return;
+        }
+
+        $subscription->update([
+            'status' => SubscriptionStatus::Cancelled->value,
+            'ends_at' => $subscription->ends_at ?? $subscription->renews_at ?? now(),
+        ]);
     }
 }

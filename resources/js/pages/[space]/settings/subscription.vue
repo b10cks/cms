@@ -17,17 +17,19 @@ const {
   useCheckoutMutation,
   useReinitPaymentMutation,
   useCancelMutation,
+  useResumeMutation,
 } = useSubscription(spaceId)
-const { usePlansQuery } = usePlans()
+const { useSpacePlansQuery } = usePlans()
 const { useUsageQuery } = useSpaceUsage(spaceId)
 
 const { data: current, isLoading: currentLoading } = useCurrentSubscriptionQuery()
 const { data: history } = useSubscriptionsQuery()
-const { data: plans } = usePlansQuery()
+const { data: plans } = useSpacePlansQuery(spaceId)
 const { data: usage } = useUsageQuery()
 const { mutate: checkout, isPending: isCheckingOut } = useCheckoutMutation()
 const { mutate: reinitPayment, isPending: isReiniting } = useReinitPaymentMutation()
 const { mutate: cancelSub, isPending: isCancelling } = useCancelMutation()
+const { mutate: resumeSub, isPending: isResuming } = useResumeMutation()
 
 useSeoMeta({
   title: computed(() => t('labels.settings.subscription.title')),
@@ -101,13 +103,20 @@ const usageRows = computed(() => {
     .map((d) => {
       const unit = d.metric?.unit ?? d.unit
       const limit = d.metric?.limit ?? d.quota
+      const percentage = d.metric?.percentage ?? 0
+      const over = (d.metric?.exceeded ?? false) || percentage >= 100
       return {
         key: d.key,
         label: d.label,
         perMonth: d.perMonth,
         usedLabel: d.metric ? formatUnit(d.metric.used, unit) : null,
         limitLabel: formatUnit(limit, unit),
-        percentage: d.metric?.percentage ?? 0,
+        percentage,
+        over,
+        variant: (over ? 'destructive' : percentage >= 80 ? 'warning' : 'default') as
+          | 'destructive'
+          | 'warning'
+          | 'default',
       }
     })
 })
@@ -124,6 +133,14 @@ const canRetryCheckout = computed(
     !!current.value.plan_id
 )
 
+// Cancelled but paid through the period — resumable instead of resubscribable.
+const inCancellationGrace = computed(
+  () =>
+    current.value?.status === 'cancelled' &&
+    !!current.value.ends_at &&
+    new Date(current.value.ends_at) > new Date()
+)
+
 // For cancelled/expired, the user should also be able to pick a different plan
 const canChooseNewPlan = computed(
   () => !!current.value && ['cancelled', 'expired'].includes(current.value.status)
@@ -137,6 +154,42 @@ const upgradablePlans = computed(() =>
     return true
   })
 )
+
+// Billing interval picker inside the upgrade dialog.
+const selectedInterval = ref<BillingInterval>('month')
+const anyYearlyPlan = computed(() => upgradablePlans.value.some((p) => !!p.yearly_price))
+
+const planPrice = (plan: PlanResource) =>
+  selectedInterval.value === 'year' && plan.yearly_price ? plan.yearly_price : plan.price
+
+const planPeriodLabel = (plan: PlanResource) =>
+  selectedInterval.value === 'year' && plan.yearly_price
+    ? t('labels.plans.period.year')
+    : t(`labels.plans.period.${plan.period}`)
+
+// Quota keys of a plan the space's live usage already exceeds — shown in red on
+// the plan card so downgrades into an over-quota plan are a conscious choice.
+const overQuotaKeys = (plan: PlanResource): string[] => {
+  const u = usage.value
+  if (!u || !plan.quotas) return []
+
+  const pairs: Array<[string, number | null, number]> = [
+    [t('labels.plans.quotas.requests'), plan.quotas.requests, u.requests.used],
+    [t('labels.plans.quotas.traffic'), plan.quotas.traffic, u.traffic.used],
+    [t('labels.plans.quotas.storage'), plan.quotas.storage, u.storage.used],
+    [t('labels.plans.quotas.aiCredit'), plan.quotas.aiCredit, u.ai.used],
+  ]
+
+  return pairs.filter(([, limit, used]) => limit != null && used > limit).map(([label]) => label)
+}
+
+const selectPlan = (plan: PlanResource) => {
+  if (plan.contact_url) return
+  const interval: BillingInterval =
+    selectedInterval.value === 'year' && plan.yearly_price ? 'year' : 'month'
+  checkout({ planId: plan.id, interval })
+  showUpgradeDialog.value = false
+}
 </script>
 
 <template>
@@ -233,13 +286,26 @@ const upgradablePlans = computed(() =>
           <!-- Pricing info -->
           <div class="flex items-baseline gap-2">
             <span class="text-2xl font-bold text-primary">
-              {{ current.is_free ? $t('labels.plans.free') : `€${current.plan?.price}` }}
+              {{
+                current.is_free
+                  ? $t('labels.plans.free')
+                  : `€${
+                      current.billing_interval === 'year' && current.plan?.yearly_price
+                        ? current.plan.yearly_price
+                        : current.plan?.price
+                    }`
+              }}
             </span>
             <span
               v-if="!current.is_free && current.plan"
               class="text-sm text-muted"
             >
-              / {{ $t(`labels.plans.period.${current.plan.period}`) }}
+              /
+              {{
+                current.billing_interval === 'year'
+                  ? $t('labels.plans.period.year')
+                  : $t(`labels.plans.period.${current.plan.period}`)
+              }}
             </span>
           </div>
 
@@ -277,13 +343,22 @@ const upgradablePlans = computed(() =>
               >
                 <div class="flex justify-between text-sm">
                   <span class="font-medium">{{ row.label }}</span>
-                  <span class="text-muted">
+                  <span :class="row.over ? 'font-medium text-destructive' : 'text-muted'">
                     <template v-if="row.usedLabel">{{ row.usedLabel }} / </template
                     >{{ row.limitLabel
                     }}<template v-if="row.perMonth"> {{ $t('labels.plans.perMonth') }}</template>
                   </span>
                 </div>
-                <Progress :model-value="row.percentage" />
+                <Progress
+                  :model-value="row.percentage"
+                  :variant="row.variant"
+                />
+                <p
+                  v-if="row.over"
+                  class="text-xs font-medium text-destructive"
+                >
+                  {{ $t('labels.usage.overLimit', { percentage: row.percentage }) }}
+                </p>
               </div>
             </div>
             <p
@@ -321,9 +396,19 @@ const upgradablePlans = computed(() =>
               {{ $t('actions.subscriptions.retryPayment') }}
             </Button>
 
-            <!-- Resubscribe for cancelled / expired -->
+            <!-- Resume a cancellation that is still within its paid period -->
             <Button
-              v-if="canRetryCheckout && ['cancelled', 'expired'].includes(current.status)"
+              v-if="inCancellationGrace && !current.is_free"
+              :loading="isResuming"
+              @click="resumeSub()"
+            >
+              <Icon name="lucide:rotate-ccw" />
+              {{ $t('actions.subscriptions.resume') }}
+            </Button>
+
+            <!-- Resubscribe for cancelled (grace over) / expired -->
+            <Button
+              v-else-if="canRetryCheckout && ['cancelled', 'expired'].includes(current.status)"
               :loading="isCheckingOut"
               @click="checkout(current.plan_id!)"
             >
@@ -386,9 +471,28 @@ const upgradablePlans = computed(() =>
       @click.self="showUpgradeDialog = false"
     >
       <div class="w-full max-w-2xl rounded-xl bg-surface p-6 shadow-xl space-y-4">
-        <h2 class="text-xl font-semibold text-primary">
-          {{ $t('labels.subscriptions.upgradePlans') }}
-        </h2>
+        <div class="flex items-center justify-between gap-4">
+          <h2 class="text-xl font-semibold text-primary">
+            {{ $t('labels.subscriptions.upgradePlans') }}
+          </h2>
+          <div
+            v-if="anyYearlyPlan"
+            class="flex rounded-lg border p-0.5 text-sm"
+          >
+            <button
+              v-for="interval in ['month', 'year'] as const"
+              :key="interval"
+              type="button"
+              :class="[
+                'rounded-md px-3 py-1 font-medium transition-colors',
+                selectedInterval === interval ? 'bg-secondary text-primary' : 'text-muted',
+              ]"
+              @click="selectedInterval = interval"
+            >
+              {{ $t(`labels.plans.interval.${interval}`) }}
+            </button>
+          </div>
+        </div>
         <div class="grid gap-3 sm:grid-cols-2">
           <component
             :is="plan.contact_url ? 'a' : 'div'"
@@ -405,7 +509,7 @@ const upgradablePlans = computed(() =>
                 ? 'cursor-pointer hover:ring hover:ring-ring no-underline'
                 : 'cursor-pointer hover:ring hover:ring-ring',
             ]"
-            @click="!plan.contact_url && (checkout(plan.id), (showUpgradeDialog = false))"
+            @click="selectPlan(plan)"
           >
             <CardHeader class="pb-2">
               <div class="flex items-start justify-between gap-2">
@@ -424,12 +528,12 @@ const upgradablePlans = computed(() =>
                 <span
                   v-if="!plan.contact_url"
                   class="text-2xl font-bold"
-                  >€{{ plan.price }}</span
+                  >€{{ planPrice(plan) }}</span
                 >
                 <span
                   v-if="!plan.contact_url"
                   class="text-sm text-muted"
-                  >/ {{ $t(`labels.plans.period.${plan.period}`) }}</span
+                  >/ {{ planPeriodLabel(plan) }}</span
                 >
                 <span
                   v-else
@@ -437,6 +541,25 @@ const upgradablePlans = computed(() =>
                   >{{ $t('labels.plans.contactForPricing') }}</span
                 >
               </div>
+              <p
+                v-if="selectedInterval === 'year' && !plan.yearly_price && !plan.contact_url"
+                class="mt-1 text-xs text-muted"
+              >
+                {{ $t('labels.plans.monthlyOnly') }}
+              </p>
+              <p
+                v-if="overQuotaKeys(plan).length"
+                class="mt-2 flex items-start gap-1.5 text-xs font-medium text-destructive"
+              >
+                <Icon
+                  name="lucide:triangle-alert"
+                  size="0.875rem"
+                  class="mt-0.5 shrink-0"
+                />
+                {{
+                  $t('labels.plans.usageExceedsPlan', { metrics: overQuotaKeys(plan).join(', ') })
+                }}
+              </p>
               <ul class="mt-3 space-y-1">
                 <li
                   v-for="(f, i) in plan.features.slice(0, 3)"

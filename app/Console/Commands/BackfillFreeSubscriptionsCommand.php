@@ -73,7 +73,6 @@ class BackfillFreeSubscriptionsCommand extends Command
                     'variant_id' => $plan->ls_variant_id ?? '',
                     'product_id' => $plan->ls_product_id ?? '',
                     'quantity' => 1,
-                    'quotas' => $plan->quotas,
                 ]);
 
                 $created++;

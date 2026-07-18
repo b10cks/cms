@@ -5,6 +5,8 @@ export type NotificationType =
   | 'comment.reply'
   | 'invite.space'
   | 'invite.team'
+  | 'usage.warning'
+  | 'usage.exceeded'
 
 export interface NotificationRef {
   id: string
@@ -26,6 +28,11 @@ export interface NotificationData {
   item_id?: string | null
   field?: string | null
   excerpt?: string
+  metric?: string
+  threshold?: number
+  percentage?: number
+  used?: string
+  limit?: string
   [key: string]: unknown
 }
 

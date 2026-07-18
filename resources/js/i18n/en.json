@@ -2026,7 +2026,13 @@
         "storage": "Storage",
         "traffic": "Traffic",
         "aiCredit": "AI Credits"
-      }
+      },
+      "interval": {
+        "month": "Monthly",
+        "year": "Yearly"
+      },
+      "monthlyOnly": "Monthly billing only",
+      "usageExceedsPlan": "Your current usage exceeds this plan's limits: {metrics}"
     },
     "subscriptions": {
       "noPlan": "No active subscription. Choose a plan to get started.",
@@ -2073,7 +2079,9 @@
           "cancelled": "Cancelled",
           "expired": "Expired"
         }
-      }
+      },
+      "overLimit": "Over the included limit — {percentage}% used",
+      "live": "Current usage"
     },
     "invoices": {
       "title": "Invoices",
@@ -3841,7 +3849,21 @@
       "unknown": {
         "title": "Notification",
         "body": ""
+      },
+      "usageWarning": {
+        "title": "{space} is nearing its {metric} limit",
+        "body": "{percentage}% of the monthly allowance used"
+      },
+      "usageExceeded": {
+        "title": "{space} exceeded its {metric} limit",
+        "body": "{percentage}% of the monthly allowance used"
       }
+    },
+    "metrics": {
+      "storage": "storage",
+      "traffic": "traffic",
+      "requests": "API requests",
+      "ai": "AI credit"
     }
   },
   "dashboard": {
@@ -3988,7 +4010,8 @@
       "retryPayment": "Complete Payment",
       "resubscribe": "Resubscribe",
       "cancel": "Cancel Subscription",
-      "confirmCancel": "Yes, Cancel"
+      "confirmCancel": "Yes, Cancel",
+      "resume": "Resume subscription"
     },
     "plans": {
       "contactUs": "Contact us"
@@ -4270,7 +4293,10 @@
       "reinitNoUrl": "Could not retrieve a payment link. Please try again.",
       "reinitError": "Failed to restart payment: {error}",
       "cancelSuccess": "Subscription cancelled. Access continues until end of billing period.",
-      "cancelError": "Failed to cancel subscription: {error}"
+      "cancelError": "Failed to cancel subscription: {error}",
+      "downgradeScheduled": "Downgrade scheduled — your paid plan stays active until the end of the billing period.",
+      "resumeSuccess": "Subscription resumed.",
+      "resumeError": "Failed to resume subscription: {error}"
     },
     "migrations": {
       "createSuccess": "Migration started successfully",

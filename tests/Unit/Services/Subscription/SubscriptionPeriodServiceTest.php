@@ -220,6 +220,58 @@ class SubscriptionPeriodServiceTest extends TestCase
     }
 
     #[Test]
+    public function a_lapsed_subscription_falls_back_to_the_free_plan(): void
+    {
+        $space = Space::factory()->create();
+        $free = $this->plan([
+            'name' => ['en' => 'Free', 'default' => 'Free'],
+            'price' => 0,
+            'is_free' => true,
+            'quotas' => ['requests' => 100],
+        ]);
+        $subscription = $this->subscription($space, $this->plan(), ['status' => 'expired']);
+
+        Cache::put("space.usage.storage.{$space->id}", 0, 120);
+        $this->service()->reconcile($space);
+
+        $enrolled = $space->subscriptions()->where('plan_id', $free->id)->first();
+        $this->assertNotNull($enrolled);
+        $this->assertSame('active', $enrolled->status);
+        $this->assertNull($enrolled->quotas);
+        $this->assertSame(['requests' => 100], $enrolled->effectiveQuotas());
+    }
+
+    #[Test]
+    public function a_pending_checkout_blocks_the_free_plan_fallback(): void
+    {
+        $space = Space::factory()->create();
+        $free = $this->plan(['name' => ['default' => 'Free'], 'price' => 0, 'is_free' => true]);
+        $paid = $this->plan();
+
+        $this->subscription($space, $paid, ['status' => 'expired']);
+        $this->subscription($space, $paid, ['status' => 'pending', 'lemon_squeezy_id' => null]);
+
+        Cache::put("space.usage.storage.{$space->id}", 0, 120);
+        $this->service()->reconcile($space);
+
+        $this->assertNull($space->subscriptions()->where('plan_id', $free->id)->first());
+    }
+
+    #[Test]
+    public function a_cancelled_subscription_in_grace_keeps_its_period_open(): void
+    {
+        $space = Space::factory()->create();
+        $subscription = $this->subscription($space, $this->plan());
+        $this->service()->reconcile($space);
+
+        // Cancelled at LemonSqueezy, but paid through the period end.
+        $subscription->update(['status' => 'cancelled', 'ends_at' => now()->addDays(12)]);
+        $this->service()->reconcile($space);
+
+        $this->assertSame(1, $space->subscriptionPeriods()->whereNull('ended_at')->count());
+    }
+
+    #[Test]
     public function no_period_is_opened_without_an_active_subscription(): void
     {
         $space = Space::factory()->create();

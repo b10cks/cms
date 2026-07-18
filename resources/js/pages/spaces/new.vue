@@ -41,6 +41,7 @@ useSeoMeta({
 const step = ref(1)
 const selectedBlueprintId = ref<string | undefined>()
 const selectedPlanId = ref<string | undefined>()
+const billingInterval = ref<BillingInterval>('month')
 const spaceName = ref('')
 const spaceSlug = ref('')
 const serverLocation = ref('eu')
@@ -158,6 +159,8 @@ const handleNext = async () => {
     team_id: selectedTeam.value.id,
     badge: spaceBadge.value || null,
     plan_id: selectedPlanId.value,
+    billing_interval:
+      billingInterval.value === 'year' && selectedPlan.value?.yearly_price ? 'year' : 'month',
     blueprint_id: selectedBlueprintId.value || null,
     settings: {
       region: serverLocation.value || 'eu',
@@ -269,6 +272,7 @@ const isStepValid = computed(() => {
         <SpaceCreatePlanStep
           v-if="step === 3"
           v-model:selected-plan-id="selectedPlanId"
+          v-model:billing-interval="billingInterval"
           :plans="plans"
           :plans-loading="plansLoading"
           :selected-blueprint="selectedBlueprint"

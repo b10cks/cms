@@ -62,7 +62,8 @@ class SpaceController extends Controller
             abort_unless($authorizationService->canInTeam(auth()->user(), $team, 'team.spaces.create'), 403);
         }
         $planId = $validated['plan_id'] ?? null;
-        unset($validated['plan_id']);
+        $interval = $validated['billing_interval'] ?? 'month';
+        unset($validated['plan_id'], $validated['billing_interval']);
 
         $space = $action->execute($validated, auth()->user());
 
@@ -71,9 +72,15 @@ class SpaceController extends Controller
         if ($planId) {
             $plan = Plan::find($planId);
 
-            if ($plan) {
-                if ($plan->is_free || !$ls->isConfigured() || empty($plan->ls_variant_id)) {
-                    // Create free/default subscription immediately
+            if ($plan && $plan->is_active && $plan->is_public) {
+                if ($interval === 'year' && ! $plan->supportsYearly()) {
+                    $interval = 'month';
+                }
+                $variantId = $plan->variantIdForInterval($interval);
+
+                if ($plan->is_free || !$ls->isConfigured() || empty($variantId)) {
+                    // Create free/default subscription immediately. Quotas stay
+                    // null — plan defaults resolve at read time.
                     Subscription::forceCreate([
                         'space_id' => $space->id,
                         'plan_id' => $plan->id,
@@ -83,7 +90,7 @@ class SpaceController extends Controller
                         'variant_id' => $plan->ls_variant_id ?? '',
                         'product_id' => $plan->ls_product_id ?? '',
                         'quantity' => 1,
-                        'quotas' => $plan->quotas,
+                        'billing_interval' => 'month',
                     ]);
                 } else {
                     // Create pending subscription first so its ID can be embedded in
@@ -94,10 +101,10 @@ class SpaceController extends Controller
                         'name' => $plan->getTranslatedName() ?? 'Subscription',
                         'status' => SubscriptionStatus::Pending->value,
                         'lemon_squeezy_id' => null,
-                        'variant_id' => $plan->ls_variant_id,
+                        'variant_id' => $variantId,
                         'product_id' => $plan->ls_product_id ?? '',
                         'quantity' => 1,
-                        'quotas' => $plan->quotas,
+                        'billing_interval' => $interval,
                     ]);
 
                     try {
@@ -105,7 +112,7 @@ class SpaceController extends Controller
                         $redirectUrl = config('app.url') . "/{$space->slug}/settings/subscription";
 
                         $checkout = $ls->createCheckout(
-                            variantId: $plan->ls_variant_id,
+                            variantId: $variantId,
                             email: $user->email,
                             name: $user->display_name ?? $user->name ?? $user->email,
                             customData: ['space_id' => $space->id, 'plan_id' => $plan->id, 'subscription_id' => $pending->id],

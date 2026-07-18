@@ -26,6 +26,7 @@ use Illuminate\Support\Carbon;
  * @property string $variant_id
  * @property string $product_id
  * @property int $quantity
+ * @property string $billing_interval
  * @property array<array-key, mixed>|null $quotas
  * @property Carbon|null $renews_at
  * @property Carbon|null $ends_at
@@ -76,6 +77,7 @@ class Subscription extends GlobalModel
         'variant_id',
         'product_id',
         'quantity',
+        'billing_interval',
         'quotas',
         'renews_at',
         'ends_at',
@@ -123,9 +125,36 @@ class Subscription extends GlobalModel
         return $this->belongsTo(Plan::class, 'plan_id', 'id');
     }
 
+    /**
+     * Whether the subscription currently grants its plan's entitlements.
+     *
+     * Beyond the plainly active statuses this includes two grace states:
+     * - cancelled but paid through the period (`ends_at` in the future) — a
+     *   LemonSqueezy cancellation keeps the subscription until period end;
+     * - past_due — LemonSqueezy is retrying the payment (dunning); it resolves
+     *   to active on recovery or unpaid/expired on final failure.
+     */
     public function isActive(): bool
     {
-        return \in_array($this->status, SubscriptionStatus::activeValues(), true);
+        if (\in_array($this->status, SubscriptionStatus::activeValues(), true)) {
+            return true;
+        }
+
+        if ($this->status === SubscriptionStatus::PastDue->value) {
+            return true;
+        }
+
+        return $this->status === SubscriptionStatus::Cancelled->value
+            && $this->ends_at !== null
+            && $this->ends_at->isFuture();
+    }
+
+    /** Cancelled but still entitled until period end — eligible for resume. */
+    public function isCancelledWithGrace(): bool
+    {
+        return $this->status === SubscriptionStatus::Cancelled->value
+            && $this->ends_at !== null
+            && $this->ends_at->isFuture();
     }
 
     public function isFree(): bool
@@ -142,13 +171,28 @@ class Subscription extends GlobalModel
         return $this->lemon_squeezy_id !== null && $this->isActive();
     }
 
+    /**
+     * The quotas the space is entitled to. `quotas` on the subscription is a
+     * custom override (subsidized/negotiated limits) and wins when set; plans
+     * provide the defaults. Null quota values mean unlimited.
+     */
     public function effectiveQuotas(): array
     {
         return $this->quotas ?? $this->plan?->quotas ?? [];
     }
 
+    /** SQL twin of {@see isActive()}, including the grace states. */
     public function scopeActive($query)
     {
-        return $query->whereIn('status', SubscriptionStatus::activeValues());
+        return $query->where(function ($query) {
+            $query
+                ->whereIn('status', [
+                    ...SubscriptionStatus::activeValues(),
+                    SubscriptionStatus::PastDue->value,
+                ])
+                ->orWhere(fn ($query) => $query
+                    ->where('status', SubscriptionStatus::Cancelled->value)
+                    ->where('ends_at', '>', now()));
+        });
     }
 }

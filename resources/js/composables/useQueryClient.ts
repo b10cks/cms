@@ -329,6 +329,7 @@ export const queryKeys = {
   plans: {
     all: () => ['plans'] as const,
     lists: () => [...queryKeys.plans.all(), 'list'] as const,
+    forSpace: (spaceId: string) => [...queryKeys.plans.all(), 'space', spaceId] as const,
   },
   subscriptions: (spaceId: string) => ({
     all: () => ['spaces', spaceId, 'subscriptions'] as const,

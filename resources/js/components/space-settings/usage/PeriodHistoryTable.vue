@@ -22,6 +22,13 @@ function formatDate(value: string | null): string {
   return value ? new Date(value).toLocaleDateString() : '—'
 }
 
+function metricVariant(metric: PeriodUsageMetric): 'default' | 'warning' | 'destructive' {
+  const pct = metric.percentage ?? 0
+  if (pct >= 100) return 'destructive'
+  if (pct >= 80) return 'warning'
+  return 'default'
+}
+
 function reasonVariant(period: SubscriptionPeriod) {
   if (period.is_open) return 'success'
   switch (period.close_reason) {
@@ -81,14 +88,23 @@ function reasonVariant(period: SubscriptionPeriod) {
         >
           <div class="flex justify-between text-xs">
             <span class="font-medium">{{ $t(def.label) }}</span>
-            <span class="text-muted">
+            <span
+              :class="
+                (period.usage[def.key].percentage ?? 0) >= 100
+                  ? 'font-medium text-destructive'
+                  : 'text-muted'
+              "
+            >
               {{ formatUnit(period.usage[def.key].used, def.unit) }}
               <template v-if="period.usage[def.key].limit != null">
                 / {{ formatUnit(period.usage[def.key].limit, def.unit) }}
               </template>
             </span>
           </div>
-          <Progress :model-value="period.usage[def.key].percentage ?? 0" />
+          <Progress
+            :model-value="period.usage[def.key].percentage ?? 0"
+            :variant="metricVariant(period.usage[def.key])"
+          />
         </div>
       </div>
 
