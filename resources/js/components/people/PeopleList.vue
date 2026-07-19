@@ -269,6 +269,7 @@ const handleBulkDelete = async () => {
               <Checkbox
                 :model-value="isAllSelected ? true : selectionCount > 0 ? 'indeterminate' : false"
                 :disabled="selectablePeople.length === 0"
+                :aria-label="$t('labels.people.selection.selectAll')"
                 @update:model-value="(value) => toggleSelectAll(value === true)"
               />
             </TableHead>
@@ -319,6 +320,11 @@ const handleBulkDelete = async () => {
                 <Checkbox
                   :disabled="!isSelectable(person)"
                   :model-value="isSelected(person)"
+                  :aria-label="
+                    $t('labels.people.selection.selectRow', {
+                      name: person.user?.name ?? person.email,
+                    })
+                  "
                   @update:model-value="(value) => toggleSelect(person, value === true)"
                 />
               </TableCell>
@@ -392,18 +398,24 @@ const handleBulkDelete = async () => {
                     </SelectContent>
                   </Select>
                 </div>
+                <button
+                  v-else-if="person.kind === 'member' && person.can_assign_role"
+                  type="button"
+                  class="cursor-pointer rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  :aria-label="$t('labels.people.tooltip.editRole')"
+                  @click="editingRole = person.id"
+                >
+                  <Badge
+                    variant="secondary"
+                    size="sm"
+                  >
+                    {{ roleName(person.role) ?? $t('labels.people.assignRole') }}
+                  </Badge>
+                </button>
                 <Badge
                   v-else-if="person.role || person.kind === 'member'"
                   variant="secondary"
                   size="sm"
-                  :class="
-                    person.kind === 'member' && person.can_assign_role ? 'cursor-pointer' : ''
-                  "
-                  @click="
-                    person.kind === 'member' && person.can_assign_role
-                      ? (editingRole = person.id)
-                      : undefined
-                  "
                 >
                   {{ roleName(person.role) ?? $t('labels.people.assignRole') }}
                 </Badge>
@@ -453,50 +465,66 @@ const handleBulkDelete = async () => {
               <TableCell class="text-right">
                 <div class="flex justify-end gap-1">
                   <template v-if="person.kind === 'member'">
-                    <Button
+                    <SimpleTooltip
                       v-if="person.can_assign_role"
-                      size="icon"
-                      variant="ghost"
-                      :title="$t('labels.people.tooltip.editRole')"
-                      @click="editingRole = person.id"
+                      :tooltip="$t('labels.people.tooltip.editRole')"
                     >
-                      <Icon name="lucide:shield" />
-                    </Button>
-                    <Button
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        :aria-label="$t('labels.people.tooltip.editRole')"
+                        @click="editingRole = person.id"
+                      >
+                        <Icon name="lucide:shield" />
+                      </Button>
+                    </SimpleTooltip>
+                    <SimpleTooltip
                       v-if="person.can_remove"
-                      size="icon"
-                      variant="ghost"
-                      :title="$t('labels.people.tooltip.remove')"
-                      @click="handleRemoveMember(person)"
+                      :tooltip="$t('labels.people.tooltip.remove')"
                     >
-                      <Icon
-                        name="lucide:user-minus"
-                        class="text-destructive"
-                      />
-                    </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        :aria-label="$t('labels.people.tooltip.remove')"
+                        @click="handleRemoveMember(person)"
+                      >
+                        <Icon
+                          name="lucide:user-minus"
+                          class="text-destructive"
+                        />
+                      </Button>
+                    </SimpleTooltip>
                   </template>
                   <template v-else>
-                    <Button
+                    <SimpleTooltip
                       v-if="canManageInvites"
-                      size="icon"
-                      variant="ghost"
-                      :title="$t('labels.invites.tooltip.resend')"
-                      @click="handleResendInvite(person)"
+                      :tooltip="$t('labels.invites.tooltip.resend')"
                     >
-                      <Icon name="lucide:send" />
-                    </Button>
-                    <Button
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        :aria-label="$t('labels.invites.tooltip.resend')"
+                        @click="handleResendInvite(person)"
+                      >
+                        <Icon name="lucide:send" />
+                      </Button>
+                    </SimpleTooltip>
+                    <SimpleTooltip
                       v-if="canManageInvites"
-                      size="icon"
-                      variant="ghost"
-                      :title="$t('labels.invites.tooltip.delete')"
-                      @click="handleDeleteInvite(person)"
+                      :tooltip="$t('labels.invites.tooltip.delete')"
                     >
-                      <Icon
-                        name="lucide:trash-2"
-                        class="text-destructive"
-                      />
-                    </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        :aria-label="$t('labels.invites.tooltip.delete')"
+                        @click="handleDeleteInvite(person)"
+                      >
+                        <Icon
+                          name="lucide:trash-2"
+                          class="text-destructive"
+                        />
+                      </Button>
+                    </SimpleTooltip>
                   </template>
                 </div>
               </TableCell>

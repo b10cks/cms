@@ -10,20 +10,24 @@ export function useInvites() {
   const { t } = useI18n()
   const queryClient = useQueryClient()
 
-  const usePublicInviteQuery = (inviteId: MaybeRef<string | undefined>) => {
+  const usePublicInviteQuery = (
+    inviteId: MaybeRef<string | undefined>,
+    token: MaybeRef<string | undefined>
+  ) => {
     return useQuery({
       queryKey: computed(() => queryKeys.invites.public(inviteId)),
       queryFn: async () => {
         const resolvedInviteId = toValue(inviteId)
+        const resolvedToken = toValue(token)
 
-        if (!resolvedInviteId) {
-          throw new Error('Invite ID is required')
+        if (!resolvedInviteId || !resolvedToken) {
+          throw new Error('Invite ID and token are required')
         }
 
-        const response = await api.invites.getPublicInvite(resolvedInviteId)
+        const response = await api.invites.getPublicInvite(resolvedInviteId, resolvedToken)
         return response.data
       },
-      enabled: computed(() => !!toValue(inviteId)),
+      enabled: computed(() => !!toValue(inviteId) && !!toValue(token)),
     })
   }
 
@@ -48,38 +52,6 @@ export function useInvites() {
     })
   }
 
-  const useSpaceInvitesQuery = (
-    spaceId: MaybeRef<string>,
-    params: MaybeRef<InviteQueryParams> = {},
-    enabled: MaybeRef<boolean> = true
-  ) => {
-    return useQuery({
-      queryKey: computed(() => queryKeys.invites.spaceList(spaceId, params)),
-      queryFn: async () => {
-        const response = await api.invites.listSpaceInvites(toValue(spaceId), toValue(params))
-        return response
-      },
-      enabled: computed(() => !!toValue(spaceId) && !!toValue(enabled)),
-      placeholderData: keepPreviousData,
-    })
-  }
-
-  const useTeamInvitesQuery = (
-    teamId: MaybeRef<string>,
-    params: MaybeRef<InviteQueryParams> = {},
-    enabled: MaybeRef<boolean> = true
-  ) => {
-    return useQuery({
-      queryKey: computed(() => queryKeys.invites.teamList(teamId, params)),
-      queryFn: async () => {
-        const response = await api.invites.listTeamInvites(toValue(teamId), toValue(params))
-        return response
-      },
-      enabled: computed(() => !!toValue(teamId) && !!toValue(enabled)),
-      placeholderData: keepPreviousData,
-    })
-  }
-
   const useCreateSpaceInviteMutation = () => {
     return useMutation({
       mutationFn: async ({
@@ -93,7 +65,6 @@ export function useInvites() {
         return { spaceId, invite: response.data }
       },
       onSuccess: ({ spaceId, invite }) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.invites.spaceList(spaceId) })
         queryClient.invalidateQueries({ queryKey: queryKeys.spacePeople(spaceId).lists() })
         toast.success(t('labels.invites.toast.sent', { email: invite.email }) as string)
       },
@@ -114,7 +85,6 @@ export function useInvites() {
         return { spaceId, inviteId }
       },
       onSuccess: ({ spaceId }) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.invites.spaceList(spaceId) })
         queryClient.invalidateQueries({ queryKey: queryKeys.spacePeople(spaceId).lists() })
         toast.success(t('labels.invites.toast.revoked') as string)
       },
@@ -156,7 +126,6 @@ export function useInvites() {
         return { teamId, invite: response.data }
       },
       onSuccess: ({ teamId, invite }) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.invites.teamList(teamId) })
         queryClient.invalidateQueries({ queryKey: queryKeys.teamPeople(teamId).lists() })
         toast.success(t('labels.invites.toast.sent', { email: invite.email }) as string)
       },
@@ -177,7 +146,6 @@ export function useInvites() {
         return { teamId, inviteId }
       },
       onSuccess: ({ teamId }) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.invites.teamList(teamId) })
         queryClient.invalidateQueries({ queryKey: queryKeys.teamPeople(teamId).lists() })
         toast.success(t('labels.invites.toast.revoked') as string)
       },
@@ -242,6 +210,26 @@ export function useInvites() {
     })
   }
 
+  const useDeclineInviteMutation = () => {
+    return useMutation({
+      mutationFn: async ({ inviteId }: { inviteId: string }) => {
+        const response = await api.invites.declineInvite(inviteId)
+        return response.data
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.invites.my() })
+        toast.success(t('labels.invites.toast.declined') as string)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('labels.invites.toast.declineFailed', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
   return {
     // Public Queries
     usePublicInviteQuery,
@@ -249,12 +237,6 @@ export function useInvites() {
     // User Invites Queries
     useMyInvitesQuery,
     useMyInviteQuery,
-
-    // Space Invites Queries
-    useSpaceInvitesQuery,
-
-    // Team Invites Queries
-    useTeamInvitesQuery,
 
     // Space Invites Mutations
     useCreateSpaceInviteMutation,
@@ -266,7 +248,8 @@ export function useInvites() {
     useDeleteTeamInviteMutation,
     useResendTeamInviteMutation,
 
-    // Accept Invite Mutation
+    // Accept / Decline Invite Mutations
     useAcceptInviteMutation,
+    useDeclineInviteMutation,
   }
 }

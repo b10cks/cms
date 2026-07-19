@@ -111,11 +111,6 @@ export const queryKeys = {
       all: () => [...queryKeys.teams.detail(teamId), 'roles'] as const,
       space: () => [...queryKeys.teams.roles(teamId).all(), 'space'] as const,
     }),
-    users: (teamId: MaybeRef<string>) => ({
-      all: () => [...queryKeys.teams.detail(teamId), 'users'] as const,
-      lists: () => [...queryKeys.teams.users(teamId).all(), 'list'] as const,
-      list: (filters: any = {}) => [...queryKeys.teams.users(teamId).lists(), filters] as const,
-    }),
   },
   provider: {
     all: () => ['provider'] as const,
@@ -255,20 +250,6 @@ export const queryKeys = {
     myList: (filters: any = {}) => [...queryKeys.invites.myLists(), filters] as const,
     myDetails: () => [...queryKeys.invites.my(), 'detail'] as const,
     myDetail: (id: MaybeRef<string>) => [...queryKeys.invites.myDetails(), id] as const,
-    spaces: (spaceId: MaybeRef<string>) => ({
-      all: () => ['spaces', spaceId, 'invites'] as const,
-      lists: () => [...queryKeys.invites.spaces(spaceId).all(), 'list'] as const,
-      list: (filters: any = {}) => [...queryKeys.invites.spaces(spaceId).lists(), filters] as const,
-    }),
-    teams: (teamId: MaybeRef<string>) => ({
-      all: () => ['teams', teamId, 'invites'] as const,
-      lists: () => [...queryKeys.invites.teams(teamId).all(), 'list'] as const,
-      list: (filters: any = {}) => [...queryKeys.invites.teams(teamId).lists(), filters] as const,
-    }),
-    spaceList: (spaceId: MaybeRef<string>, filters: any = {}) =>
-      [...queryKeys.invites.spaces(spaceId).list(filters)] as const,
-    teamList: (teamId: MaybeRef<string>, filters: any = {}) =>
-      [...queryKeys.invites.teams(teamId).list(filters)] as const,
   },
   releases: (spaceId: MaybeRef<string>) => ({
     all: () => ['spaces', spaceId, 'releases'] as const,

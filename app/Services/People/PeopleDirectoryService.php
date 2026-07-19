@@ -25,8 +25,7 @@ class PeopleDirectoryService
     public function __construct(
         private readonly SpaceMemberDirectoryService $spaceMembers,
         private readonly TeamMemberDirectoryService $teamMembers,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{data: LengthAwarePaginator, counts: array{members: int, pending: int, total: int}}
@@ -125,6 +124,7 @@ class PeopleDirectoryService
             ->leftJoin('roles', 'roles.id', '=', 'invites.role_id')
             ->where("invites.{$column}", $id)
             ->whereNull('invites.accepted_at')
+            ->whereNull('invites.declined_at')
             ->select('invites.*', 'roles.key as role_key')
             ->get();
     }

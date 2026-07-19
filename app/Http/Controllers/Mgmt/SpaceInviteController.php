@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class SpaceInviteController extends Controller
 {
@@ -49,6 +50,8 @@ class SpaceInviteController extends Controller
             return (new InviteResource($invite->loadMissing(['roleDefinition', 'inviter', 'invitee'])))
                 ->response()
                 ->setStatusCode(201);
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Failed to create space invite', [
                 'space_id' => $space->id,

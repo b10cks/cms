@@ -6,20 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Management\TeamMemberListResource;
 use App\Models\Management\Team;
 use App\Models\User;
+use App\Services\Auth\MembershipGuard;
 use App\Services\Team\TeamMemberDirectoryService;
 use App\Services\Team\TeamService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 
 class TeamUserController extends Controller
 {
     public function __construct(
         private TeamService $teamService,
         private readonly TeamMemberDirectoryService $directory,
-    )
-    {
-    }
+        private readonly MembershipGuard $guard,
+    ) {}
 
     /**
      * Attach user to team
@@ -33,6 +34,8 @@ class TeamUserController extends Controller
             'role' => 'nullable|string|max:50',
         ]);
 
+        $this->guard->ensureCanAssignTeamRole($request->user(), $team, $request->role ?? 'member');
+
         try {
             $this->teamService->attachUser(
                 $team,
@@ -41,6 +44,8 @@ class TeamUserController extends Controller
             );
 
             return new TeamMemberListResource($this->loadTeamUser($team, $request->user_id));
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to attach user to team.',
@@ -60,10 +65,17 @@ class TeamUserController extends Controller
             'role' => 'nullable|string|max:50',
         ]);
 
+        $this->guard->ensureCanManageTeamMember($request->user(), $team, $userId);
+        if ($request->role) {
+            $this->guard->ensureCanAssignTeamRole($request->user(), $team, $request->role);
+        }
+
         try {
             $this->teamService->updateUserRole($team, $userId, $request->role);
 
             return new TeamMemberListResource($this->loadTeamUser($team, $userId));
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to update user role.',
@@ -75,7 +87,7 @@ class TeamUserController extends Controller
     /**
      * Detach user from team
      */
-    public function destroy(Team $team, string $userId): Response|JsonResponse
+    public function destroy(Request $request, Team $team, string $userId): Response|JsonResponse
     {
         $this->authorize('manageMembers', $team);
 
@@ -85,10 +97,14 @@ class TeamUserController extends Controller
             ], 404);
         }
 
+        $this->guard->ensureCanManageTeamMember($request->user(), $team, $userId);
+
         try {
             $this->teamService->detachUser($team, $userId);
 
             return response()->noContent();
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to detach user from team.',

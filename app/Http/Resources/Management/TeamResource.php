@@ -21,6 +21,7 @@ class TeamResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'icon' => $this->icon,
+            'avatar' => $this->avatar_url,
             'color' => $this->color,
             'description' => $this->description,
             'type' => $this->type,

@@ -62,7 +62,10 @@ class TeamPolicy
 
     public function manageSpaceRoles(User $user, Team $team): bool
     {
-        return $this->canInTeam($user, $team, 'team.members.manage');
+        // Custom space roles define arbitrary ability sets — deliberately a
+        // separate, owner-level ability rather than piggybacking on member
+        // management.
+        return $this->canInTeam($user, $team, 'team.roles.manage');
     }
 
     public function manageSaml(User $user, Team $team): bool

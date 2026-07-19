@@ -85,20 +85,21 @@ use App\Http\Controllers\Mgmt\SpaceInviteController;
 use App\Http\Controllers\Mgmt\SpaceInviteResendController;
 use App\Http\Controllers\Mgmt\SpaceInvoiceController;
 use App\Http\Controllers\Mgmt\SpaceMemberController;
-use App\Http\Controllers\Mgmt\SpacePeopleController;
-use App\Http\Controllers\Mgmt\TeamPeopleController;
 use App\Http\Controllers\Mgmt\SpaceOnboardingController;
+use App\Http\Controllers\Mgmt\SpacePeopleController;
+use App\Http\Controllers\Mgmt\SpacePlansController;
 use App\Http\Controllers\Mgmt\SpaceRoleController;
 use App\Http\Controllers\Mgmt\SpaceSearchController;
 use App\Http\Controllers\Mgmt\SpaceStatsController;
-use App\Http\Controllers\Mgmt\SpacePlansController;
 use App\Http\Controllers\Mgmt\SpaceSubscriptionController;
 use App\Http\Controllers\Mgmt\SpaceTokenController;
+use App\Http\Controllers\Mgmt\TeamAvatarController;
 use App\Http\Controllers\Mgmt\TeamController;
 use App\Http\Controllers\Mgmt\TeamHierarchyController;
 use App\Http\Controllers\Mgmt\TeamInviteController;
 use App\Http\Controllers\Mgmt\TeamInviteResendController;
 use App\Http\Controllers\Mgmt\TeamMemberController;
+use App\Http\Controllers\Mgmt\TeamPeopleController;
 use App\Http\Controllers\Mgmt\TeamSamlProviderController;
 use App\Http\Controllers\Mgmt\TeamUserController;
 use App\Http\Controllers\Mgmt\User\UserAvatarController;
@@ -141,6 +142,9 @@ Route::group(['prefix' => 'users'], function () {
         Route::post('/invites/{invite}/accept', [UserInviteController::class, 'accept'])
             ->middleware('throttle:crucial')
             ->name('users.me.invites.accept');
+        Route::post('/invites/{invite}/decline', [UserInviteController::class, 'decline'])
+            ->middleware('throttle:crucial')
+            ->name('users.me.invites.decline');
 
         Route::group(['prefix' => 'notifications'], function () {
             Route::get('/', [NotificationController::class, 'index'])->name('users.me.notifications.index');
@@ -182,6 +186,9 @@ Route::get('space-blueprints', AvailableSpaceBlueprintController::class)
     ->name('space-blueprints');
 
 Route::group(['prefix' => 'teams/{team}'], function () {
+    Route::post('avatar', [TeamAvatarController::class, 'store'])->name('teams.avatar.store');
+    Route::delete('avatar', [TeamAvatarController::class, 'destroy'])->name('teams.avatar.destroy');
+
     Route::get('people', [TeamPeopleController::class, 'index'])->name('teams.people.index');
 
     Route::get('members', [TeamMemberController::class, 'index'])->name('teams.members.index');

@@ -29,6 +29,7 @@ class InviteResource extends JsonResource
             'team' => $this->whenLoaded('team', fn () => new TeamResource($this->team)),
             'expires_at' => $this->expires_at?->toIso8601String(),
             'accepted_at' => $this->accepted_at?->toIso8601String(),
+            'declined_at' => $this->declined_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
@@ -38,6 +39,10 @@ class InviteResource extends JsonResource
     {
         if ($this->isAccepted()) {
             return 'accepted';
+        }
+
+        if ($this->isDeclined()) {
+            return 'declined';
         }
 
         if ($this->isExpired()) {

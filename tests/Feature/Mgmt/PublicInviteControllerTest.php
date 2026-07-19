@@ -37,14 +37,39 @@ class PublicInviteControllerTest extends TestCase
             'accepted_at' => now()->subHour(),
         ]);
 
-        $this->getJson(route('mgmt.invites.show', $expiredInvite))
+        $this->getJson(route('mgmt.invites.show', [$expiredInvite, 'invite_token' => $expiredInvite->token]))
             ->assertOk()
             ->assertJsonPath('data.id', $expiredInvite->id)
             ->assertJsonPath('data.status', 'expired');
 
-        $this->getJson(route('mgmt.invites.show', $acceptedInvite))
+        $this->getJson(route('mgmt.invites.show', [$acceptedInvite, 'invite_token' => $acceptedInvite->token]))
             ->assertOk()
             ->assertJsonPath('data.id', $acceptedInvite->id)
             ->assertJsonPath('data.status', 'accepted');
+    }
+
+    #[Test]
+    public function it_hides_invites_from_requests_without_the_mailed_token(): void
+    {
+        $inviter = User::factory()->create();
+        $team = Team::factory()->create();
+
+        $invite = Invite::factory()->create([
+            'team_id' => $team->id,
+            'space_id' => null,
+            'invited_by' => $inviter->id,
+            'expires_at' => now()->addDay(),
+        ]);
+
+        // Knowing (or guessing) the invite id alone must not leak anything.
+        $this->getJson(route('mgmt.invites.show', $invite))->assertNotFound();
+
+        $this->getJson(route('mgmt.invites.show', [$invite, 'invite_token' => 'wrong-token']))
+            ->assertNotFound();
+
+        // The legacy ?token= parameter is still honored.
+        $this->getJson(route('mgmt.invites.show', [$invite, 'token' => $invite->token]))
+            ->assertOk()
+            ->assertJsonPath('data.id', $invite->id);
     }
 }

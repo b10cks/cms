@@ -98,12 +98,26 @@ class AuthorizationTest extends TestCase
     }
 
     #[Test]
-    public function team_admin_can_manage_custom_space_roles(): void
+    public function team_owner_can_manage_custom_space_roles_but_admin_cannot(): void
     {
         $user = User::factory()->create();
         $team = Team::factory()->create();
 
-        $this->assignTeamRole($team, $user, 'admin');
+        // Custom roles define arbitrary ability sets, so managing them is an
+        // owner-level capability (team.roles.manage), not part of member
+        // management.
+        $admin = User::factory()->create();
+        $this->assignTeamRole($team, $admin, 'admin');
+        $this->actingAs($admin)
+            ->postJson(route('mgmt.teams.roles.space.store', $team), [
+                'key' => 'translator',
+                'name' => 'Translator',
+                'level' => 110,
+                'abilities' => ['space.view'],
+            ])
+            ->assertForbidden();
+
+        $this->assignTeamRole($team, $user, 'owner');
         $this->actingAs($user);
 
         $createResponse = $this->postJson(route('mgmt.teams.roles.space.store', $team), [

@@ -68,6 +68,7 @@ export interface TeamResource {
   id: string
   name: string
   icon?: string | null
+  avatar?: string | null
   color?: string | null
   description?: string | null
   type: string
@@ -112,6 +113,7 @@ export interface TeamHierarchyItem {
   id: string
   name: string
   icon?: string | null
+  avatar?: string | null
   color?: string | null
   description?: string | null
   type: string

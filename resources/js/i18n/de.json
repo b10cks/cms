@@ -378,7 +378,8 @@
       "status": {
         "pending": "Ausstehend",
         "accepted": "Akzeptiert",
-        "expired": "Abgelaufen"
+        "expired": "Abgelaufen",
+        "declined": "Abgelehnt"
       },
       "filters": {
         "email": "E-Mail",
@@ -449,7 +450,9 @@
         "resent": "Einladung an {email} erneut gesendet",
         "resendFailed": "Fehler beim erneuten Senden der Einladung: {error}",
         "joined": "Erfolgreich {name} beigetreten",
-        "acceptFailed": "Fehler beim Annehmen der Einladung: {error}"
+        "acceptFailed": "Fehler beim Annehmen der Einladung: {error}",
+        "declined": "Einladung abgelehnt",
+        "declineFailed": "Einladung konnte nicht abgelehnt werden: {error}"
       },
       "page": {
         "title": "Einer Einladung beitreten",
@@ -464,7 +467,13 @@
         "invitedToJoin": "Du wurdest eingeladen zu",
         "acceptingButton": "Wird angenommen...",
         "acceptButton": "Einladung annehmen",
-        "declineButton": "Ablehnen"
+        "declineButton": "Ablehnen",
+        "resourceSpace": "dem Space \"{name}\"",
+        "resourceTeam": "dem Team \"{name}\"",
+        "resourceFallback": "dieser Ressource",
+        "inviterFallback": "Jemand",
+        "declined": "Einladung abgelehnt",
+        "declinedDesc": "Du hast diese Einladung abgelehnt. Bitte den Einladenden um eine neue, falls du deine Meinung änderst."
       }
     },
     "preview": {
@@ -2448,7 +2457,30 @@
         "title": "Einladungen",
         "description": "Anzeigen und Verwalten deiner ausstehenden Einladungen zu Spaces und Teams.",
         "myInvites": "Meine Einladungen",
-        "myInvitesDescription": "Einladungen, die du erhalten hast, um Spaces und Teams beizutreten."
+        "myInvitesDescription": "Einladungen, die du erhalten hast, um Spaces und Teams beizutreten.",
+        "columns": {
+          "resource": "Workspace",
+          "invitedBy": "Eingeladen von",
+          "role": "Rolle",
+          "status": "Status",
+          "received": "Erhalten"
+        },
+        "resourceType": {
+          "space": "Space",
+          "team": "Team"
+        },
+        "actions": {
+          "accept": "Annehmen",
+          "decline": "Ablehnen"
+        },
+        "declineConfirm": {
+          "title": "Einladung ablehnen",
+          "message": "Einladung zu {name} ablehnen? Der Einladende muss dir eine neue senden, falls du deine Meinung änderst.",
+          "confirmLabel": "Ablehnen"
+        },
+        "empty": "Keine Einladungen",
+        "unknownResource": "Unbekannt",
+        "expiredHint": "Abgelaufen"
       },
       "security": {
         "title": "Sicherheit",
@@ -2599,6 +2631,7 @@
       "pageDescription": "Verwalte deine Teams und deren Mitglieder",
       "listTitle": "Alle Teams",
       "hierarchyTitle": "Team-Hierarchie",
+      "hierarchyError": "Die Team-Hierarchie konnte nicht geladen werden. Bitte versuche es später erneut.",
       "detailTitle": "{name}",
       "peopleTitle": "Personen",
       "peopleDescription": "Lade neue Mitarbeitende ins Team ein, behalte offene Einladungen im Blick und passe Rollen für bereits beigetretene Personen an.",
@@ -2632,7 +2665,18 @@
         "members": "Mitglieder",
         "invites": "Einladungen",
         "roles": "Rollen",
-        "saml": "SAML"
+        "saml": "SAML",
+        "settings": "Einstellungen"
+      },
+      "settings": {
+        "title": "Team-Details",
+        "description": "Name, Erscheinungsbild und Position des Teams in der Hierarchie verwalten.",
+        "avatar": "Avatar",
+        "avatarDescription": "Lade ein Bild hoch, das dieses Team repräsentiert. Max. 2 MB.",
+        "uploadAvatar": "Avatar hochladen",
+        "removeAvatar": "Entfernen",
+        "avatarUploaded": "Avatar erfolgreich hochgeladen",
+        "avatarUploadFailed": "Avatar konnte nicht hochgeladen werden"
       },
       "saml": {
         "title": "SAML-Login",
@@ -2747,7 +2791,9 @@
       },
       "selection": {
         "selected": "{count} ausgewählt",
-        "clear": "Auswahl aufheben"
+        "clear": "Auswahl aufheben",
+        "selectAll": "Alle Teams auswählen",
+        "selectRow": "{name} auswählen"
       },
       "actions": {
         "delete": "Löschen ({count})"
@@ -2856,7 +2902,9 @@
       },
       "selection": {
         "selected": "{count} ausgewählt",
-        "clear": "Zurücksetzen"
+        "clear": "Zurücksetzen",
+        "selectAll": "Alle Personen auswählen",
+        "selectRow": "{name} auswählen"
       },
       "actions": {
         "remove": "Entfernen ({count})",

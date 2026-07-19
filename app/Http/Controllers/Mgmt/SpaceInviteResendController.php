@@ -9,6 +9,7 @@ use App\Models\Management\Invite;
 use App\Models\Management\Space;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class SpaceInviteResendController extends Controller
 {
@@ -21,6 +22,8 @@ class SpaceInviteResendController extends Controller
             $invite = $resendInvite->execute($invite);
 
             return new InviteResource($invite);
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Failed to resend space invite', [
                 'invite_id' => $invite->id,
@@ -29,7 +32,7 @@ class SpaceInviteResendController extends Controller
             ]);
 
             return response()->json([
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         }
     }

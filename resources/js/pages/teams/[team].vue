@@ -3,14 +3,16 @@ import StopIcon from '~/assets/images/error.svg?component'
 import Icon from '~/components/Icon.vue'
 import CreateInviteDialog from '~/components/invites/CreateInviteDialog.vue'
 import PeopleManager from '~/components/people/PeopleManager.vue'
+import TeamDetailsSettings from '~/components/teams/TeamDetailsSettings.vue'
 import TeamRoleDialog from '~/components/teams/TeamRoleDialog.vue'
 import TeamRolesList from '~/components/teams/TeamRolesList.vue'
 import TeamSamlProviderSettings from '~/components/teams/TeamSamlProviderSettings.vue'
+import { Avatar } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
-import IconName from '~/components/ui/IconName.vue'
 import { Spinner } from '~/components/ui/spinner'
+import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { useAuthorization } from '~/composables/useAuthorization'
 import { teamNavigationItems } from '~/lib/access-control'
 import type { CreateTeamSpaceRolePayload, RoleCatalogEntry } from '~/types/authorization'
@@ -24,6 +26,7 @@ const teamId = computed(() => route.params.team as string)
 
 const {
   useTeamQuery,
+  useTeamHierarchyQuery,
   useTeamSpaceRolesQuery,
   useTeamSamlProviderQuery,
   useCreateTeamSpaceRoleMutation,
@@ -52,6 +55,7 @@ const activeView = computed(() => {
 
   if (routeName === 'team-roles') return 'roles'
   if (routeName === 'team-saml') return 'saml'
+  if (routeName === 'team-settings') return 'settings'
 
   return 'people'
 })
@@ -64,7 +68,12 @@ const canViewInvites = computed(() => access.hasAbility('team.invites.view'))
 const canManageInvites = computed(() => access.hasAbility('team.invites.manage'))
 const canManageRoles = computed(() => access.canAccessRoute('team-roles'))
 const canManageSaml = computed(() => access.canAccessRoute('team-saml'))
+const canManageSettings = computed(() => access.canAccessRoute('team-settings'))
 const canViewPeople = computed(() => access.canAccessRoute('team'))
+const isRoot = computed(() => access.authorization.value?.is_root ?? false)
+
+const { data: hierarchyData } = useTeamHierarchyQuery(canManageSettings)
+const hierarchy = computed(() => hierarchyData.value || [])
 
 const {
   data: teamRoles,
@@ -103,7 +112,9 @@ watch(
         ? 'team-roles'
         : activeView.value === 'saml'
           ? 'team-saml'
-          : 'team'
+          : activeView.value === 'settings'
+            ? 'team-settings'
+            : 'team'
 
     if (!views.includes(currentView)) {
       router.replace({
@@ -171,16 +182,53 @@ const handleDeleteSamlProvider = () => {
   deleteSamlProviderMutation.mutate(teamId.value)
 }
 
-const navigateToPeople = () => {
-  router.push({ name: 'team', params: { team: teamId.value } })
-}
+const viewTabs = computed(() => {
+  const tabs: { value: string; route: string; icon: string; label: string }[] = []
 
-const navigateToRoles = () => {
-  router.push({ name: 'team-roles', params: { team: teamId.value } })
-}
+  if (canViewPeople.value) {
+    tabs.push({
+      value: 'people',
+      route: 'team',
+      icon: 'lucide:users',
+      label: t('labels.teams.tabs.people'),
+    })
+  }
 
-const navigateToSaml = () => {
-  router.push({ name: 'team-saml', params: { team: teamId.value } })
+  if (canManageRoles.value) {
+    tabs.push({
+      value: 'roles',
+      route: 'team-roles',
+      icon: 'lucide:shield',
+      label: t('labels.teams.tabs.roles'),
+    })
+  }
+
+  if (canManageSaml.value) {
+    tabs.push({
+      value: 'saml',
+      route: 'team-saml',
+      icon: 'lucide:key-round',
+      label: t('labels.teams.tabs.saml'),
+    })
+  }
+
+  if (canManageSettings.value) {
+    tabs.push({
+      value: 'settings',
+      route: 'team-settings',
+      icon: 'lucide:settings',
+      label: t('labels.teams.tabs.settings'),
+    })
+  }
+
+  return tabs
+})
+
+const selectView = (value: string | number) => {
+  const tab = viewTabs.value.find((item) => item.value === value)
+  if (tab && tab.value !== activeView.value) {
+    router.push({ name: tab.route, params: { team: teamId.value } })
+  }
 }
 
 const navigateBack = () => {
@@ -205,13 +253,22 @@ const navigateBack = () => {
     <template v-else-if="team">
       <div class="mt-8">
         <div class="flex items-start gap-4">
+          <Avatar
+            :name="team.name"
+            :avatar="team.avatar"
+            :border-color="team.color"
+            size="lg"
+            class="mt-1"
+          />
           <div class="flex-1">
-            <IconName
-              :icon="team.icon || 'users'"
-              :name="team.name"
-              :color="team.color"
-              class="text-xl font-bold"
-            />
+            <h1 class="flex items-center gap-2 text-xl font-bold">
+              <Icon
+                v-if="team.icon"
+                :name="`lucide:${team.icon}`"
+                :style="{ color: team.color || undefined }"
+              />
+              {{ team.name }}
+            </h1>
             <p
               v-if="team.description"
               class="text-muted"
@@ -245,48 +302,24 @@ const navigateBack = () => {
 
       <div
         v-if="availableViews.length > 0"
-        class="flex flex-col gap-6 lg:flex-row"
+        class="flex flex-col gap-6"
       >
-        <aside class="lg:w-56 lg:shrink-0">
-          <nav class="flex flex-col gap-1 lg:sticky lg:top-20">
-            <Button
-              v-if="canViewPeople"
-              :variant="activeView === 'people' ? 'default' : 'ghost'"
-              class="justify-start"
-              @click="navigateToPeople"
+        <Tabs
+          :model-value="activeView"
+          class="self-start"
+          @update:model-value="selectView"
+        >
+          <TabsList>
+            <TabsTrigger
+              v-for="tab in viewTabs"
+              :key="tab.value"
+              :value="tab.value"
             >
-              <Icon
-                name="lucide:users"
-                class="mr-2 h-4 w-4"
-              />
-              {{ $t('labels.teams.tabs.people') }}
-            </Button>
-            <Button
-              v-if="canManageRoles"
-              :variant="activeView === 'roles' ? 'default' : 'ghost'"
-              class="justify-start"
-              @click="navigateToRoles"
-            >
-              <Icon
-                name="lucide:shield"
-                class="mr-2 h-4 w-4"
-              />
-              {{ $t('labels.teams.tabs.roles') }}
-            </Button>
-            <Button
-              v-if="canManageSaml"
-              :variant="activeView === 'saml' ? 'default' : 'ghost'"
-              class="justify-start"
-              @click="navigateToSaml"
-            >
-              <Icon
-                name="lucide:key-round"
-                class="mr-2 h-4 w-4"
-              />
-              {{ $t('labels.teams.tabs.saml') }}
-            </Button>
-          </nav>
-        </aside>
+              <Icon :name="tab.icon" />
+              {{ tab.label }}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         <div class="flex-1 space-y-6">
           <template v-if="activeView === 'people' && canViewPeople">
@@ -346,6 +379,14 @@ const navigateBack = () => {
               @view="handleViewRole"
               @edit="handleViewRole"
               @delete="handleDeleteRole"
+            />
+          </template>
+
+          <template v-else-if="activeView === 'settings' && canManageSettings">
+            <TeamDetailsSettings
+              :team="team"
+              :hierarchy="hierarchy"
+              :is-root="isRoot"
             />
           </template>
 

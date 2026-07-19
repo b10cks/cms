@@ -3,8 +3,7 @@ import type { TreeItemToggleEvent } from 'reka-ui'
 import { TreeItem, TreeRoot } from 'reka-ui'
 
 import Icon from '~/components/Icon.vue'
-import { Badge } from '~/components/ui/badge'
-import IconName from '~/components/ui/IconName.vue'
+import NuxtImg from '~/components/NuxtImg.vue'
 import type { TeamHierarchyItem } from '~/types/teams'
 
 const props = defineProps<{
@@ -65,9 +64,10 @@ const toggleExpanded = (teamId: string) => {
 
     <div
       v-else-if="error"
-      class="px-2 py-4 text-sm text-destructive"
+      class="flex items-center gap-2 px-2 py-4 text-sm text-destructive"
     >
-      {{ error }}
+      <Icon name="lucide:alert-circle" />
+      {{ $t('labels.teams.hierarchyError') }}
     </div>
 
     <TreeRoot
@@ -115,32 +115,47 @@ const toggleExpanded = (teamId: string) => {
           class="size-3"
         />
 
-        <IconName
-          :icon="item.value.icon || 'users'"
-          :color="item.value.color || undefined"
-          :name="item.value.name"
-          class="shrink-0"
-        />
+        <span
+          class="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface"
+          :style="!item.value.avatar && item.value.color ? { backgroundColor: `${item.value.color}26` } : undefined"
+        >
+          <NuxtImg
+            v-if="item.value.avatar"
+            :src="item.value.avatar"
+            :alt="item.value.name"
+            :width="24"
+            :height="24"
+            class="size-full object-cover"
+          />
+          <Icon
+            v-else
+            :name="`lucide:${item.value.icon || 'users'}`"
+            :style="{ color: item.value.color || undefined }"
+            class="text-muted"
+          />
+        </span>
 
-        <div class="ml-auto flex items-center gap-1">
-          <Badge
+        <span class="truncate">{{ item.value.name }}</span>
+
+        <div
+          class="ml-auto flex shrink-0 items-center gap-3 text-xs text-muted tabular-nums"
+        >
+          <span
             v-if="item.value.user_count"
-            size="sm"
-            variant="outline"
-            class="gap-1"
+            class="flex items-center gap-1"
+            :title="$t('labels.teams.memberCount', { count: item.value.user_count })"
           >
             <Icon name="lucide:users" />
             {{ item.value.user_count }}
-          </Badge>
-          <Badge
+          </span>
+          <span
             v-if="item.value.spaces_count"
-            size="sm"
-            variant="outline"
-            class="gap-1"
+            class="flex items-center gap-1"
+            :title="$t('labels.teams.spaceCount', { count: item.value.spaces_count })"
           >
             <Icon name="lucide:box" />
             {{ item.value.spaces_count }}
-          </Badge>
+          </span>
         </div>
       </TreeItem>
     </TreeRoot>

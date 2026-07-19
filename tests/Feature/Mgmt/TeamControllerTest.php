@@ -6,6 +6,8 @@ use App\Models\Management\Team;
 use App\Models\User;
 use App\Services\Auth\AuthorizationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -244,5 +246,61 @@ class TeamControllerTest extends TestCase
 
         $this->assertNotContains($moved->id, $authorization->accessibleTeamIds($sourceOwner));
         $this->assertContains($moved->id, $authorization->accessibleTeamIds($destinationOwner));
+    }
+
+    #[Test]
+    public function owner_can_upload_and_remove_a_team_avatar(): void
+    {
+        Storage::fake();
+
+        $user = User::factory()->create();
+        $team = Team::factory()->create();
+        $this->assignTeamRole($team, $user, 'owner');
+
+        $response = $this->actingAs($user)->postJson(route('mgmt.teams.avatar.store', $team), [
+            'avatar' => UploadedFile::fake()->image('avatar.png', 128, 128),
+        ]);
+
+        $response->assertSuccessful();
+        $path = $team->fresh()->avatar;
+        $this->assertNotNull($path);
+        Storage::assertExists($path);
+        $this->assertSame("/storage/{$path}", $response->json('data.avatar'));
+
+        $this->actingAs($user)->deleteJson(route('mgmt.teams.avatar.destroy', $team))
+            ->assertSuccessful();
+
+        $this->assertNull($team->fresh()->avatar);
+        Storage::assertMissing($path);
+    }
+
+    #[Test]
+    public function member_cannot_upload_a_team_avatar(): void
+    {
+        Storage::fake();
+
+        $user = User::factory()->create();
+        $team = Team::factory()->create();
+        $this->assignTeamRole($team, $user, 'member');
+
+        $this->actingAs($user)->postJson(route('mgmt.teams.avatar.store', $team), [
+            'avatar' => UploadedFile::fake()->image('avatar.png'),
+        ])->assertForbidden();
+
+        $this->assertNull($team->fresh()->avatar);
+    }
+
+    #[Test]
+    public function avatar_upload_rejects_non_image_files(): void
+    {
+        Storage::fake();
+
+        $user = User::factory()->create();
+        $team = Team::factory()->create();
+        $this->assignTeamRole($team, $user, 'owner');
+
+        $this->actingAs($user)->postJson(route('mgmt.teams.avatar.store', $team), [
+            'avatar' => UploadedFile::fake()->create('avatar.pdf', 100, 'application/pdf'),
+        ])->assertUnprocessable();
     }
 }

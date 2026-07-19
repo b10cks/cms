@@ -11,9 +11,7 @@ const inviteId = computed(() => route.params.id as string)
 
 const { selectTeam } = useGlobalTeam()
 const { isAuthenticated } = useAuth()
-const { usePublicInviteQuery, useAcceptInviteMutation } = useInvites()
-const { data: invite, isPending, error } = usePublicInviteQuery(inviteId)
-const { mutate: acceptInvite, isPending: isAccepting } = useAcceptInviteMutation()
+const { usePublicInviteQuery, useAcceptInviteMutation, useDeclineInviteMutation } = useInvites()
 
 useSeoMeta({
   title: computed(() => t('labels.invites.page.title')),
@@ -33,6 +31,10 @@ const token = computed(() => {
 
   return ''
 })
+
+const { data: invite, isPending, error } = usePublicInviteQuery(inviteId, token)
+const { mutate: acceptInvite, isPending: isAccepting } = useAcceptInviteMutation()
+const { mutate: declineInvite, isPending: isDeclining } = useDeclineInviteMutation()
 
 const invitePath = computed(() => {
   const query = token.value ? `?invite_token=${encodeURIComponent(token.value)}` : ''
@@ -64,16 +66,16 @@ const signupPath = computed(() => {
 
 const resourceName = computed(() => {
   if (invite.value?.space) {
-    return `space "${invite.value.space.name}"`
+    return t('labels.invites.page.resourceSpace', { name: invite.value.space.name })
   }
   if (invite.value?.team) {
-    return `team "${invite.value.team.name}"`
+    return t('labels.invites.page.resourceTeam', { name: invite.value.team.name })
   }
-  return 'this resource'
+  return t('labels.invites.page.resourceFallback')
 })
 
 const inviterName = computed(() => {
-  return invite.value?.inviter?.name || 'Someone'
+  return invite.value?.inviter?.name || t('labels.invites.page.inviterFallback')
 })
 
 const isExpired = computed(() => {
@@ -86,6 +88,10 @@ const isAccepted = computed(() => {
 
 const isPendingInvite = computed(() => {
   return invite.value?.status === InviteStatus.PENDING
+})
+
+const isDeclined = computed(() => {
+  return invite.value?.status === InviteStatus.DECLINED
 })
 
 const hasToken = computed(() => token.value.length > 0)
@@ -102,6 +108,19 @@ const handleAccept = () => {
             selectTeam(data.team_id)
             router.push(`/teams/${data.team_id}`)
           }
+        },
+      }
+    )
+  }
+}
+
+const handleDecline = () => {
+  if (invite.value?.id) {
+    declineInvite(
+      { inviteId: invite.value.id },
+      {
+        onSuccess: () => {
+          router.push('/')
         },
       }
     )
@@ -142,6 +161,13 @@ const handleAccept = () => {
       >
         <p class="font-semibold">{{ $t('labels.invites.page.alreadyAccepted') }}</p>
         <p class="mt-1 text-sm">{{ $t('labels.invites.page.alreadyAcceptedDesc') }}</p>
+      </Alert>
+      <Alert
+        v-else-if="isDeclined"
+        icon="lucide:circle-slash"
+      >
+        <p class="font-semibold">{{ $t('labels.invites.page.declined') }}</p>
+        <p class="mt-1 text-sm">{{ $t('labels.invites.page.declinedDesc') }}</p>
       </Alert>
 
       <form
@@ -196,7 +222,9 @@ const handleAccept = () => {
             type="button"
             variant="outline"
             class="w-full"
-            @click="router.back()"
+            :loading="isDeclining"
+            :disabled="isAccepting"
+            @click="handleDecline"
           >
             {{ $t('labels.invites.page.declineButton') }}
           </Button>

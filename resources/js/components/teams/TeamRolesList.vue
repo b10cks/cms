@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import UsersIcon from '~/assets/images/users.svg?component'
+import { h } from 'vue'
+
 import Icon from '~/components/Icon.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
@@ -41,6 +42,9 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const { alert } = useAlertDialog()
 const { formatDateTime, formatRelativeTime } = useFormat()
+
+// Roles use the shield iconography established by the role dialogs and actions
+const RolesEmptyIcon = () => h(Icon, { name: 'lucide:shield', size: '8rem' })
 
 const search = ref('')
 const isLoading = computed(() => !!props.isLoading)
@@ -239,7 +243,7 @@ const handleSortChange = (value: { column: string; direction: 'asc' | 'desc' }) 
           <TableEmptyRow
             v-else-if="filteredRoles.length === 0"
             :colspan="6"
-            :icon="UsersIcon"
+            :icon="RolesEmptyIcon"
             :label="
               !hasRoles
                 ? $t('labels.teamRoles.emptyDescription')
@@ -302,30 +306,42 @@ const handleSortChange = (value: { column: string; direction: 'asc' | 'desc' }) 
 
             <TableCell>
               <div class="flex justify-end gap-1">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  :title="
+                <SimpleTooltip
+                  :tooltip="
                     role.is_read_only
                       ? $t('labels.teamRoles.actions.view')
                       : $t('labels.teamRoles.actions.edit')
                   "
-                  @click="handlePrimaryAction(role)"
                 >
-                  <Icon :name="role.is_read_only ? 'lucide:eye' : 'lucide:pencil-line'" />
-                </Button>
-                <Button
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    :aria-label="
+                      role.is_read_only
+                        ? $t('labels.teamRoles.actions.view')
+                        : $t('labels.teamRoles.actions.edit')
+                    "
+                    @click="handlePrimaryAction(role)"
+                  >
+                    <Icon :name="role.is_read_only ? 'lucide:eye' : 'lucide:pencil-line'" />
+                  </Button>
+                </SimpleTooltip>
+                <SimpleTooltip
                   v-if="!role.is_read_only"
-                  size="icon"
-                  variant="ghost"
-                  :title="$t('labels.teamRoles.actions.delete')"
-                  @click="handleDelete(role)"
+                  :tooltip="$t('labels.teamRoles.actions.delete')"
                 >
-                  <Icon
-                    name="lucide:trash-2"
-                    class="text-destructive"
-                  />
-                </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    :aria-label="$t('labels.teamRoles.actions.delete')"
+                    @click="handleDelete(role)"
+                  >
+                    <Icon
+                      name="lucide:trash-2"
+                      class="text-destructive"
+                    />
+                  </Button>
+                </SimpleTooltip>
               </div>
             </TableCell>
           </TableRow>

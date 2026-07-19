@@ -5,11 +5,9 @@ import { api } from '~/api'
 import type { TeamsQueryParams } from '~/api/resources/teams'
 import type { CreateTeamSpaceRolePayload, UpdateTeamSpaceRolePayload } from '~/types/authorization'
 import type {
-  AddTeamUserPayload,
   CreateTeamPayload,
   TeamSamlProviderPayload,
   TeamHierarchyItem,
-  TeamUserQueryParams,
   UpdateTeamPayload,
   UpdateTeamUserPayload,
 } from '~/types/teams'
@@ -47,36 +45,14 @@ export function useTeams() {
     })
   }
 
-  const useTeamHierarchyQuery = () => {
+  const useTeamHierarchyQuery = (enabled: MaybeRef<boolean> = true) => {
     return useQuery({
       queryKey: queryKeys.teams.hierarchy(),
       queryFn: async () => {
         const response = await api.teams.getHierarchy()
         return response.data
       },
-      enabled: computed(() => !!toValue(isAuthenticated)),
-    })
-  }
-
-  // Team Users Queries
-  const useTeamUsersQuery = (
-    teamId: MaybeRef<string>,
-    params: MaybeRef<TeamUserQueryParams> = {},
-    enabled: MaybeRef<boolean> = true
-  ) => {
-    return useQuery({
-      queryKey: computed(() => queryKeys.teams.users(teamId).list(params)),
-      queryFn: async () => {
-        const response = await api.teams.getUsers(toValue(teamId), {
-          sort: '+user.firstname',
-          ...toValue(params),
-        })
-        return response
-      },
-      enabled: computed(
-        () => !!toValue(isAuthenticated) && !!toValue(teamId) && !!toValue(enabled)
-      ),
-      placeholderData: keepPreviousData,
+      enabled: computed(() => !!toValue(isAuthenticated) && toValue(enabled)),
     })
   }
 
@@ -130,6 +106,31 @@ export function useTeams() {
     })
   }
 
+  const invalidateTeam = (teamId: string) => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.teams.lists() })
+    queryClient.invalidateQueries({ queryKey: queryKeys.teams.detail(teamId) })
+    queryClient.invalidateQueries({ queryKey: queryKeys.teams.hierarchy() })
+  }
+
+  const useDeleteTeamAvatarMutation = () => {
+    return useMutation({
+      mutationFn: async (teamId: string) => {
+        const response = await api.teams.deleteAvatar(teamId)
+        return response.data
+      },
+      onSuccess: (_data, teamId) => {
+        invalidateTeam(teamId)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.teams.updateError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
   const useUpdateTeamMutation = () => {
     return useMutation({
       mutationFn: async ({ id, payload }: { id: string; payload: UpdateTeamPayload }) => {
@@ -162,8 +163,6 @@ export function useTeams() {
         queryClient.invalidateQueries({ queryKey: queryKeys.teams.lists() })
         queryClient.removeQueries({ queryKey: queryKeys.teams.detail(id) })
         queryClient.invalidateQueries({ queryKey: queryKeys.teams.hierarchy() })
-        // Also invalidate team users queries
-        queryClient.removeQueries({ queryKey: queryKeys.teams.users(id).all() })
         toast.success(t('composables.teams.deleteSuccess') as string)
       },
       onError: (error: Error) => {
@@ -177,32 +176,6 @@ export function useTeams() {
   }
 
   // Team User Mutations
-  const useAddTeamUserMutation = () => {
-    return useMutation({
-      mutationFn: async ({ teamId, payload }: { teamId: string; payload: AddTeamUserPayload }) => {
-        const response = await api.teams.addUser(teamId, payload)
-        return { teamId, user: response.data }
-      },
-      onSuccess: ({ teamId, user }) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.teams.users(teamId).lists() })
-        queryClient.invalidateQueries({ queryKey: queryKeys.teams.detail(teamId) })
-        toast.success(
-          t('composables.teams.addUserSuccess', {
-            firstname: user.user.firstname,
-            lastname: user.user.lastname,
-          }) as string
-        )
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.teams.addUserError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
-
   const useUpdateTeamUserMutation = () => {
     return useMutation({
       mutationFn: async ({
@@ -218,7 +191,6 @@ export function useTeams() {
         return { teamId, userId, user: response.data }
       },
       onSuccess: ({ teamId, user }) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.teams.users(teamId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.teamPeople(teamId).lists() })
         toast.success(t('composables.teams.updateUserSuccess', { role: user.role }) as string)
       },
@@ -239,7 +211,6 @@ export function useTeams() {
         return { teamId, userId }
       },
       onSuccess: ({ teamId }) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.teams.users(teamId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.teamPeople(teamId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.teams.detail(teamId) })
         toast.success(t('composables.teams.removeUserSuccess') as string)
@@ -472,7 +443,6 @@ export function useTeams() {
     useTeamHierarchyQuery,
 
     // Team User Queries
-    useTeamUsersQuery,
     useTeamSpaceRolesQuery,
     useTeamSamlProviderQuery,
 
@@ -480,9 +450,10 @@ export function useTeams() {
     useCreateTeamMutation,
     useUpdateTeamMutation,
     useDeleteTeamMutation,
+    useDeleteTeamAvatarMutation,
+    invalidateTeam,
 
     // Team User Mutations
-    useAddTeamUserMutation,
     useUpdateTeamUserMutation,
     useRemoveTeamUserMutation,
     useCreateTeamSpaceRoleMutation,

@@ -3,6 +3,7 @@
 namespace App\Models\Management;
 
 use App\Enums\RoleScope;
+use App\Models\Traits\Auditable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,6 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Role extends GlobalModel
 {
+    use Auditable;
     use HasFactory;
     use HasUlids;
     use SoftDeletes;

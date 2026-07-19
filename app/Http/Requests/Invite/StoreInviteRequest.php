@@ -6,6 +6,7 @@ use App\Models\Management\Space;
 use App\Models\Management\Team;
 use App\Services\Auth\RoleService;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
 class StoreInviteRequest extends FormRequest
@@ -42,8 +43,15 @@ class StoreInviteRequest extends FormRequest
                 'required',
                 'email',
                 'max:255',
+                // Only a still-pending invite blocks a new one; expired or
+                // declined invites are superseded and accepted ones are
+                // history (the member may have been removed since).
                 Rule::unique('invites', 'email')
                     ->where(function ($query) {
+                        $query->whereNull('accepted_at')
+                            ->whereNull('declined_at')
+                            ->where('expires_at', '>', now());
+
                         if ($space = $this->route('space')) {
                             return $query->where('space_id', $space->id);
                         }
@@ -63,6 +71,10 @@ class StoreInviteRequest extends FormRequest
         if (! $this->filled('expires_in_days')) {
             $this->merge(['expires_in_days' => 7]);
         }
+
+        if (is_string($this->input('email'))) {
+            $this->merge(['email' => mb_strtolower(trim($this->input('email')))]);
+        }
     }
 
     public function messages(): array
@@ -70,6 +82,7 @@ class StoreInviteRequest extends FormRequest
         return [
             'email.required' => 'The email address is required.',
             'email.email' => 'The email address must be valid.',
+            'email.unique' => 'A pending invitation already exists for this email address.',
             'role.required' => 'The role is required.',
             'role.in' => 'The selected role is invalid for this invite.',
             'message.max' => 'The message may not be greater than 1000 characters.',
@@ -78,7 +91,7 @@ class StoreInviteRequest extends FormRequest
         ];
     }
 
-    public function getExpiresAt(): \Illuminate\Support\Carbon
+    public function getExpiresAt(): Carbon
     {
         return now()->addDays($this->input('expires_in_days', 7));
     }

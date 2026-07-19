@@ -7,8 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Management\InviteResource;
 use App\Models\Management\Invite;
 use App\Models\Management\Team;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
-use Laminas\Diactoros\Response\JsonResponse;
+use Illuminate\Validation\ValidationException;
 
 class TeamInviteResendController extends Controller
 {
@@ -21,6 +22,8 @@ class TeamInviteResendController extends Controller
             $invite = $resendInvite->execute($invite);
 
             return new InviteResource($invite);
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Failed to resend team invite', [
                 'invite_id' => $invite->id,
@@ -29,7 +32,7 @@ class TeamInviteResendController extends Controller
             ]);
 
             return response()->json([
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         }
     }

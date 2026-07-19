@@ -8,6 +8,7 @@ use App\Models\Management\Team;
 use App\Models\User;
 use App\Notifications\Management\InviteToSpaceNotification;
 use App\Notifications\Management\InviteToTeamNotification;
+use App\Services\Auth\MembershipGuard;
 use App\Services\Auth\RoleService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Str;
@@ -17,28 +18,41 @@ class CreateInvite
 {
     public function __construct(
         private readonly RoleService $roleService,
+        private readonly MembershipGuard $guard,
     ) {}
 
     public function execute(array $data, Authenticatable|User $inviter): Invite
     {
-        $inviteeId = null;
-        if (isset($data['email'])) {
-            $existingUser = User::where('email', $data['email'])->first();
-            if ($existingUser) {
-                $inviteeId = $existingUser->id;
-            }
-        }
+        // Acceptance matches the address case-insensitively; store it
+        // normalized so duplicate detection behaves the same way.
+        $data['email'] = mb_strtolower(trim($data['email'] ?? ''));
 
-        $team = null;
-        if (! empty($data['space_id'])) {
-            $team = Space::query()->findOrFail($data['space_id'])->team;
-        } elseif (! empty($data['team_id'])) {
+        $inviteeId = User::where('email', $data['email'])->first()?->id;
+
+        $space = ! empty($data['space_id']) ? Space::query()->findOrFail($data['space_id']) : null;
+        $team = $space?->team;
+        if (! $space && ! empty($data['team_id'])) {
             $team = Team::query()->findOrFail($data['team_id']);
         }
 
-        $role = ! empty($data['space_id'])
+        $role = $space
             ? $this->roleService->resolveSpaceRole($data['role'], $team)
             : $this->roleService->resolveTeamRole($data['role']);
+
+        if ($inviter instanceof User && ! $inviter->is_root) {
+            $space
+                ? $this->guard->ensureCanAssignSpaceRole($inviter, $space, $role)
+                : $this->guard->ensureCanAssignTeamRole($inviter, $team, $role);
+        }
+
+        // A fresh invite supersedes any expired or declined one for the same
+        // address and target; accepted invites are kept as history.
+        Invite::query()
+            ->where('email', $data['email'])
+            ->when($space, fn ($query) => $query->where('space_id', $space->id))
+            ->when(! $space, fn ($query) => $query->where('team_id', $data['team_id']))
+            ->whereNull('accepted_at')
+            ->delete();
 
         $invite = Invite::forceCreate([
             'space_id' => $data['space_id'] ?? null,

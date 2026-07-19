@@ -6,7 +6,6 @@ import type {
   UpdateTeamSpaceRolePayload,
 } from '~/types/authorization'
 import type {
-  AddTeamUserPayload,
   CreateTeamPayload,
   UpdateTeamPayload,
   TeamHierarchyItem,
@@ -14,7 +13,6 @@ import type {
   TeamSamlProviderResource,
   TeamSamlProviderResponse,
   TeamResource,
-  TeamUserQueryParams,
   TeamUserResource,
   UpdateTeamUserPayload,
 } from '~/types/teams'
@@ -42,14 +40,8 @@ export class Teams extends BaseResource<
     return this.client.get<ApiCollectionResponse<TeamHierarchyItem>>('/mgmt/v1/teams/hierarchy')
   }
 
-  public async addUser(
-    teamId: string,
-    payload: AddTeamUserPayload
-  ): Promise<ApiResponse<TeamUserResource>> {
-    return this.client.post<ApiResponse<TeamUserResource>>(
-      `/mgmt/v1/teams/${teamId}/users`,
-      payload
-    )
+  public async deleteAvatar(teamId: string): Promise<ApiResponse<TeamResource>> {
+    return this.client.delete<ApiResponse<TeamResource>>(`/mgmt/v1/teams/${teamId}/avatar`)
   }
 
   public async updateUser(
@@ -65,16 +57,6 @@ export class Teams extends BaseResource<
 
   public async removeUser(teamId: string, userId: string): Promise<void> {
     return this.client.delete(`/mgmt/v1/teams/${teamId}/users/${userId}`)
-  }
-
-  public async getUsers(
-    teamId: string,
-    params: TeamUserQueryParams = {}
-  ): Promise<ApiCollectionResponse<TeamUserResource>> {
-    return this.client.get<ApiCollectionResponse<TeamUserResource>>(
-      `/mgmt/v1/teams/${teamId}/users`,
-      params as Record<string, unknown>
-    )
   }
 
   public async getPeople(

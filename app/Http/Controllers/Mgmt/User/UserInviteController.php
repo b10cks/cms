@@ -48,7 +48,8 @@ class UserInviteController extends Controller
         $user = auth()->user();
 
         try {
-            $acceptedInvite = $acceptInvite->execute($invite, $user, $request->string('token')->toString());
+            $token = $request->filled('token') ? $request->string('token')->toString() : null;
+            $acceptedInvite = $acceptInvite->execute($invite, $user, $token);
 
             return new InviteResource($acceptedInvite->loadMissing(['inviter', 'space', 'team', 'roleDefinition']));
         } catch (ValidationException $e) {
@@ -64,5 +65,24 @@ class UserInviteController extends Controller
                 'message' => 'An error occurred while accepting the invite',
             ], 500);
         }
+    }
+
+    public function decline(Invite $invite): InviteResource
+    {
+        $user = auth()->user();
+        abort_if(strcasecmp($invite->email, $user->email) !== 0 && $invite->invitee_id !== $user->id, 403);
+
+        if (! $invite->isPending()) {
+            throw ValidationException::withMessages([
+                'invite' => ['Only pending invitations can be declined.'],
+            ]);
+        }
+
+        $invite->forceFill([
+            'declined_at' => now(),
+            'invitee_id' => $invite->invitee_id ?? $user->id,
+        ])->save();
+
+        return new InviteResource($invite->loadMissing(['inviter', 'space', 'team', 'roleDefinition']));
     }
 }

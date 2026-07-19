@@ -17,7 +17,7 @@ class AcceptInvite
         private readonly AuthorizationService $authorizationService,
     ) {}
 
-    public function execute(Invite $invite, Authenticatable|User $user, string $token): Invite
+    public function execute(Invite $invite, Authenticatable|User $user, ?string $token): Invite
     {
         return DB::transaction(function () use ($invite, $user, $token) {
             /** @var Invite $lockedInvite */
@@ -50,11 +50,21 @@ class AcceptInvite
         }
     }
 
-    private function ensureCanAccept(Invite $invite, User $user, string $token): void
+    private function ensureCanAccept(Invite $invite, User $user, ?string $token): void
     {
-        if (! hash_equals($invite->token, $token)) {
+        // The mailed token proves possession of the invite link. It is
+        // optional because the email-match check below is an equivalent
+        // proof: the authenticated account owns the invited (verified)
+        // address. When a token IS supplied it must match.
+        if ($token !== null && ! hash_equals($invite->token, $token)) {
             throw ValidationException::withMessages([
                 'token' => 'This invitation link is invalid.',
+            ]);
+        }
+
+        if ($invite->isDeclined()) {
+            throw ValidationException::withMessages([
+                'invite' => 'This invitation has been declined.',
             ]);
         }
 

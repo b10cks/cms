@@ -14,15 +14,9 @@ class AcceptInviteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'token' => 'required|string',
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'token.required' => 'The invitation token is required.',
-            'token.exists' => 'The invitation token is invalid or has expired.',
+            // Optional: authenticated invitees are verified by email match;
+            // a supplied token must still match the mailed link.
+            'token' => 'nullable|string',
         ];
     }
 }

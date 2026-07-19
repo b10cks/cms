@@ -2,21 +2,29 @@
 
 namespace App\Actions\Team;
 
+use App\Models\Management\Space;
 use App\Models\Management\Team;
 use App\Models\User;
+use App\Services\Auth\MembershipService;
 use Illuminate\Support\Collection;
 
 class RemoveTeamMemberAccess
 {
+    public function __construct(
+        private readonly MembershipService $membershipService,
+    ) {}
+
     public function execute(Team $team, User $user): void
     {
+        // Fails on the last owner before any space access is touched.
+        $this->membershipService->removeTeamMembership($team, $user);
+
         $spaceIds = $this->getAllSpaceIdsFromTeamAndChildren($team);
+        $memberSpaceIds = $user->spaces()->whereIn('spaces.id', $spaceIds)->pluck('spaces.id');
 
-        if ($spaceIds->isNotEmpty()) {
-            $user->spaces()->detach($spaceIds);
+        foreach (Space::query()->findMany($memberSpaceIds) as $space) {
+            $this->membershipService->removeSpaceMembership($space, $user);
         }
-
-        $team->users()->detach($user->id);
     }
 
     private function getAllSpaceIdsFromTeamAndChildren(Team $team): Collection

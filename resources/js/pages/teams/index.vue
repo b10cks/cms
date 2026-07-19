@@ -119,6 +119,8 @@ const handleFiltersUpdate = (filtersValue: Record<string, unknown>) => {
   filters.value = filtersValue
   currentPage.value = 1
 }
+
+const hasActiveFilters = computed(() => Object.keys(filters.value).length > 0)
 </script>
 
 <template>
@@ -166,7 +168,18 @@ const handleFiltersUpdate = (filtersValue: Record<string, unknown>) => {
       @update:per-page="handlePerPageUpdate"
       @update:sort-by="handleSortByUpdate"
       @update:filters="handleFiltersUpdate"
-    />
+    >
+      <template
+        v-if="canCreateTeam && !hasActiveFilters"
+        #empty-actions
+      >
+        <CreateTeamDialog
+          :hierarchy="hierarchy"
+          :is-root="isRoot"
+          @submit="handleCreateTeam"
+        />
+      </template>
+    </TeamsList>
   </div>
 
   <EditTeamDialog

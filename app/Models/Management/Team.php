@@ -31,6 +31,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read mixed $avatar_url
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Team> $children
  * @property-read int|null $children_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Management\Invite> $invites
@@ -103,6 +104,17 @@ class Team extends GlobalModel
     protected function description(): Attribute
     {
         return $this->makePurifiedAttribute('rte');
+    }
+
+    protected function avatarUrl(): Attribute
+    {
+        return Attribute::get(function () {
+            if (! $this->avatar) {
+                return null;
+            }
+
+            return "/storage/{$this->avatar}";
+        });
     }
 
     public function parent(): BelongsTo

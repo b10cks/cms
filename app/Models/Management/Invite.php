@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\Management\Invite
@@ -25,16 +26,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $email
  * @property string $role
  * @property string $token
- * @property \Illuminate\Support\Carbon $expires_at
- * @property \Illuminate\Support\Carbon|null $accepted_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon $expires_at
+ * @property Carbon|null $accepted_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property-read User $inviter
  * @property string|null $make_purified_attribute
  * @property string|null $invitee_id
  * @property-read User|null $invitee
- * @property-read \App\Models\Management\Space|null $space
- * @property-read \App\Models\Management\Team|null $team
+ * @property-read Space|null $space
+ * @property-read Team|null $team
  *
  * @method static \Database\Factories\Management\InviteFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invite accepted()
@@ -62,8 +63,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Invite extends GlobalModel
 {
     use Auditable;
-
     use Filterable;
+
     // use BroadcastsModelEvents;
     use HasFactory;
     use HasPurifiedAttributes;
@@ -76,6 +77,7 @@ class Invite extends GlobalModel
     protected $casts = [
         'expires_at' => 'datetime',
         'accepted_at' => 'datetime',
+        'declined_at' => 'datetime',
     ];
 
     protected function message(): Attribute
@@ -110,12 +112,12 @@ class Invite extends GlobalModel
 
     public function scopePending($query)
     {
-        return $query->whereNull('accepted_at')->where('expires_at', '>', now());
+        return $query->whereNull('accepted_at')->whereNull('declined_at')->where('expires_at', '>', now());
     }
 
     public function scopeExpired($query)
     {
-        return $query->whereNull('accepted_at')->where('expires_at', '<=', now());
+        return $query->whereNull('accepted_at')->whereNull('declined_at')->where('expires_at', '<=', now());
     }
 
     public function scopeAccepted($query)
@@ -125,17 +127,22 @@ class Invite extends GlobalModel
 
     public function isExpired(): bool
     {
-        return ! $this->isAccepted() && $this->expires_at <= now();
+        return ! $this->isAccepted() && ! $this->isDeclined() && $this->expires_at <= now();
     }
 
     public function isPending(): bool
     {
-        return ! $this->isAccepted() && $this->expires_at > now();
+        return ! $this->isAccepted() && ! $this->isDeclined() && $this->expires_at > now();
     }
 
     public function isAccepted(): bool
     {
         return $this->accepted_at !== null;
+    }
+
+    public function isDeclined(): bool
+    {
+        return $this->declined_at !== null;
     }
 
     public function getRoleAttribute(): ?string

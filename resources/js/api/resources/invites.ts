@@ -85,18 +85,27 @@ export class Invites extends BaseResource<
     )
   }
 
-  public async getPublicInvite(token: string): Promise<ApiResponse<PublicInviteResource>> {
-    return this.client.get<ApiResponse<PublicInviteResource>>(`/mgmt/v1/invites/${token}`)
+  public async getPublicInvite(
+    inviteId: string,
+    token: string
+  ): Promise<ApiResponse<PublicInviteResource>> {
+    return this.client.get<ApiResponse<PublicInviteResource>>(`/mgmt/v1/invites/${inviteId}`, {
+      invite_token: token,
+    })
   }
 
   public async acceptInvite(
     inviteId: string,
-    payload: AcceptInvitePayload
+    payload: AcceptInvitePayload = {}
   ): Promise<ApiResponse<InviteResource>> {
     return this.client.post<ApiResponse<InviteResource>>(
       `${this.basePath}/${inviteId}/accept`,
       payload
     )
+  }
+
+  public async declineInvite(inviteId: string): Promise<ApiResponse<InviteResource>> {
+    return this.client.post<ApiResponse<InviteResource>>(`${this.basePath}/${inviteId}/decline`, {})
   }
 
   public async listMyInvites(

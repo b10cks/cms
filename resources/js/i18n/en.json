@@ -383,7 +383,8 @@
       "status": {
         "pending": "Pending",
         "accepted": "Accepted",
-        "expired": "Expired"
+        "expired": "Expired",
+        "declined": "Declined"
       },
       "filters": {
         "email": "Email",
@@ -454,7 +455,9 @@
         "resent": "Invite resent to {email}",
         "resendFailed": "Failed to resend invite: {error}",
         "joined": "Successfully joined {name}",
-        "acceptFailed": "Failed to accept invite: {error}"
+        "acceptFailed": "Failed to accept invite: {error}",
+        "declined": "Invitation declined",
+        "declineFailed": "Failed to decline invitation: {error}"
       },
       "page": {
         "title": "Join an Invite",
@@ -469,7 +472,13 @@
         "invitedToJoin": "You've been invited to join",
         "acceptingButton": "Accepting...",
         "acceptButton": "Accept Invite",
-        "declineButton": "Decline"
+        "declineButton": "Decline",
+        "resourceSpace": "the space \"{name}\"",
+        "resourceTeam": "the team \"{name}\"",
+        "resourceFallback": "this resource",
+        "inviterFallback": "Someone",
+        "declined": "Invite declined",
+        "declinedDesc": "You have declined this invitation. Ask the inviter for a new one if you change your mind."
       }
     },
     "preview": {
@@ -2450,7 +2459,30 @@
         "title": "Invitations",
         "description": "View and manage your pending invitations to spaces and teams.",
         "myInvites": "My Invitations",
-        "myInvitesDescription": "Invitations you've received to join spaces and teams."
+        "myInvitesDescription": "Invitations you've received to join spaces and teams.",
+        "columns": {
+          "resource": "Workspace",
+          "invitedBy": "Invited by",
+          "role": "Role",
+          "status": "Status",
+          "received": "Received"
+        },
+        "resourceType": {
+          "space": "Space",
+          "team": "Team"
+        },
+        "actions": {
+          "accept": "Accept",
+          "decline": "Decline"
+        },
+        "declineConfirm": {
+          "title": "Decline invitation",
+          "message": "Decline the invitation to {name}? The inviter will need to send a new one if you change your mind.",
+          "confirmLabel": "Decline"
+        },
+        "empty": "No invitations",
+        "unknownResource": "Unknown",
+        "expiredHint": "Expired"
       },
       "security": {
         "title": "Security",
@@ -2601,6 +2633,7 @@
       "pageDescription": "Manage your teams and their members",
       "listTitle": "All Teams",
       "hierarchyTitle": "Team Hierarchy",
+      "hierarchyError": "Couldn't load the team hierarchy. Please try again later.",
       "detailTitle": "{name}",
       "peopleTitle": "People",
       "peopleDescription": "Invite new collaborators into the team, keep an eye on pending invites, and adjust roles for members who have already joined.",
@@ -2634,7 +2667,18 @@
         "members": "Members",
         "invites": "Invites",
         "roles": "Roles",
-        "saml": "SAML"
+        "saml": "SAML",
+        "settings": "Settings"
+      },
+      "settings": {
+        "title": "Team Details",
+        "description": "Manage the team's name, appearance, and place in the hierarchy.",
+        "avatar": "Avatar",
+        "avatarDescription": "Upload an image to represent this team. Max 2MB.",
+        "uploadAvatar": "Upload avatar",
+        "removeAvatar": "Remove",
+        "avatarUploaded": "Avatar uploaded successfully",
+        "avatarUploadFailed": "Failed to upload avatar"
       },
       "saml": {
         "title": "SAML Login",
@@ -2749,7 +2793,9 @@
       },
       "selection": {
         "selected": "{count} selected",
-        "clear": "Clear selection"
+        "clear": "Clear selection",
+        "selectAll": "Select all teams",
+        "selectRow": "Select {name}"
       },
       "actions": {
         "delete": "Delete ({count})"
@@ -2858,7 +2904,9 @@
       },
       "selection": {
         "selected": "{count} selected",
-        "clear": "Clear"
+        "clear": "Clear",
+        "selectAll": "Select all people",
+        "selectRow": "Select {name}"
       },
       "actions": {
         "remove": "Remove ({count})",

@@ -18,6 +18,7 @@ import {
 } from '~/components/ui/table'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
+import { SimpleTooltip } from '~/components/ui/tooltip'
 import { useTeamTypes } from '~/composables/useTeamTypes'
 import type { LaravelMeta } from '~/types'
 import type { TeamResource } from '~/types/teams'
@@ -215,10 +216,10 @@ const handleBulkDelete = async () => {
           <TableRow>
             <TableHead class="w-12">
               <Checkbox
-                :checked="isAllSelected"
-                :indeterminate="selectionCount > 0 && !isAllSelected"
+                :model-value="isAllSelected ? true : selectionCount > 0 ? 'indeterminate' : false"
                 :disabled="deletableTeams.length === 0"
-                @update:checked="handleSelectAll"
+                :aria-label="$t('labels.teams.selection.selectAll')"
+                @update:model-value="(value) => handleSelectAll(value === true)"
               />
             </TableHead>
             <TableSortableHead
@@ -258,7 +259,11 @@ const handleBulkDelete = async () => {
             :colspan="8"
             :icon="UsersIcon"
             :label="$t('labels.teams.empty')"
-          />
+          >
+            <template #actions>
+              <slot name="empty-actions" />
+            </template>
+          </TableEmptyRow>
 
           <template v-else>
             <TableRow
@@ -273,19 +278,26 @@ const handleBulkDelete = async () => {
                 @click.stop
               >
                 <Checkbox
-                  :checked="isTeamSelected(team)"
+                  :model-value="isTeamSelected(team)"
                   :disabled="!team.can_delete"
-                  @update:checked="(checked: boolean) => handleTeamSelect(team, checked)"
+                  :aria-label="$t('labels.teams.selection.selectRow', { name: team.name })"
+                  @update:model-value="(value) => handleTeamSelect(team, value === true)"
                 />
               </TableCell>
 
               <TableCell>
                 <div class="flex items-center gap-3">
-                  <IconName
-                    :icon="team.icon || 'users'"
-                    :color="team.color || undefined"
-                    :name="team.name"
-                  />
+                  <RouterLink
+                    :to="{ name: 'team', params: { team: team.id } }"
+                    class="rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    @click.stop
+                  >
+                    <IconName
+                      :icon="team.icon || 'users'"
+                      :color="team.color || undefined"
+                      :name="team.name"
+                    />
+                  </RouterLink>
                   <div
                     v-if="team.description"
                     class="text-muted-foreground text-sm"
@@ -353,27 +365,35 @@ const handleBulkDelete = async () => {
                 @click.stop
               >
                 <div class="flex justify-end gap-1">
-                  <Button
+                  <SimpleTooltip
                     v-if="team.can_update"
-                    size="icon"
-                    variant="ghost"
-                    :title="$t('labels.teams.tooltip.edit')"
-                    @click="handleEdit(team)"
+                    :tooltip="$t('labels.teams.tooltip.edit')"
                   >
-                    <Icon name="lucide:pencil" />
-                  </Button>
-                  <Button
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      :aria-label="$t('labels.teams.tooltip.edit')"
+                      @click="handleEdit(team)"
+                    >
+                      <Icon name="lucide:pencil" />
+                    </Button>
+                  </SimpleTooltip>
+                  <SimpleTooltip
                     v-if="team.can_delete"
-                    size="icon"
-                    variant="ghost"
-                    :title="$t('labels.teams.tooltip.delete')"
-                    @click="handleDelete(team)"
+                    :tooltip="$t('labels.teams.tooltip.delete')"
                   >
-                    <Icon
-                      name="lucide:trash-2"
-                      class="text-destructive"
-                    />
-                  </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      :aria-label="$t('labels.teams.tooltip.delete')"
+                      @click="handleDelete(team)"
+                    >
+                      <Icon
+                        name="lucide:trash-2"
+                        class="text-destructive"
+                      />
+                    </Button>
+                  </SimpleTooltip>
                 </div>
               </TableCell>
             </TableRow>

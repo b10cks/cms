@@ -3,6 +3,7 @@ export type InviteRole = 'owner' | 'admin' | 'editor' | 'member' | 'viewer'
 export enum InviteStatus {
   PENDING = 'pending',
   ACCEPTED = 'accepted',
+  DECLINED = 'declined',
   EXPIRED = 'expired',
 }
 
@@ -37,6 +38,7 @@ export interface InviteResource {
   status: InviteStatus
   expires_at: string
   accepted_at: string | null
+  declined_at: string | null
   created_at: string
   updated_at: string
   inviter?: SimpleUser
@@ -65,7 +67,7 @@ export interface CreateInvitePayload {
 }
 
 export interface AcceptInvitePayload {
-  token: string
+  token?: string
 }
 
 export interface InviteQueryParams {

@@ -8,17 +8,20 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Management\SpaceMemberListResource;
 use App\Models\Management\Space;
 use App\Models\User;
+use App\Services\Auth\MembershipGuard;
 use App\Services\Space\SpaceMemberDirectoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 
 class SpaceMemberController extends Controller
 {
-    public function __construct(private readonly SpaceMemberDirectoryService $directory)
-    {
-    }
+    public function __construct(
+        private readonly SpaceMemberDirectoryService $directory,
+        private readonly MembershipGuard $guard,
+    ) {}
 
     public function index(Request $request, Space $space): ResourceCollection
     {
@@ -44,10 +47,17 @@ class SpaceMemberController extends Controller
             'role' => 'nullable|string|max:50',
         ]);
 
+        $this->guard->ensureCanManageSpaceMember($request->user(), $space, $user);
+        if ($request->role) {
+            $this->guard->ensureCanAssignSpaceRole($request->user(), $space, $request->role);
+        }
+
         try {
             $updateRole->execute($space, $user, $request->role);
 
             return response()->noContent();
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to update member role.',
@@ -56,7 +66,7 @@ class SpaceMemberController extends Controller
         }
     }
 
-    public function destroy(Space $space, User $user, RemoveSpaceMemberAccess $removeAccess): Response|JsonResponse
+    public function destroy(Request $request, Space $space, User $user, RemoveSpaceMemberAccess $removeAccess): Response|JsonResponse
     {
         $this->authorize('manageMembers', $space);
 
@@ -66,10 +76,14 @@ class SpaceMemberController extends Controller
             ], 404);
         }
 
+        $this->guard->ensureCanManageSpaceMember($request->user(), $space, $user);
+
         try {
             $removeAccess->execute($space, $user);
 
             return response()->noContent();
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to remove member access.',
