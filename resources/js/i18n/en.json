@@ -394,6 +394,7 @@
           "admin": "Admin",
           "editor": "Editor",
           "member": "Member",
+          "billing": "Billing",
           "viewer": "Viewer"
         }
       },
@@ -2022,7 +2023,6 @@
         "forever": "one-time"
       },
       "quotas": {
-        "requests": "API Requests",
         "storage": "Storage",
         "traffic": "Traffic",
         "aiCredit": "AI Credits"
@@ -2032,11 +2032,18 @@
         "year": "Yearly"
       },
       "monthlyOnly": "Monthly billing only",
-      "usageExceedsPlan": "Your current usage exceeds this plan's limits: {metrics}"
+      "usageExceedsPlan": "Your current usage exceeds this plan's limits: {metrics}",
+      "currentPlan": "Current plan",
+      "downgradeToFreeNotice": "Your paid plan stays active until the end of the billing period, then this space switches to Free."
     },
     "subscriptions": {
       "noPlan": "No active subscription. Choose a plan to get started.",
       "history": "Subscription History",
+      "columns": {
+        "plan": "Plan",
+        "started": "Started",
+        "status": "Status"
+      },
       "upgradePlans": "Choose a plan",
       "cancelTitle": "Cancel Subscription",
       "cancelDescription": "Your subscription will be cancelled at the end of the current billing period. You will retain access until then.",
@@ -2057,7 +2064,28 @@
         "unpaid": "Unpaid",
         "cancelled": "Cancelled",
         "expired": "Expired"
-      }
+      },
+      "proposal": {
+        "title": "Payment requested",
+        "description": "{requester} proposed the {plan} plan (€{price} {interval}) and asked for the payment to be completed here.",
+        "someone": "A team member",
+        "invitee": "Sent to {email}",
+        "expires": "expires {date}",
+        "pay": "Review & pay",
+        "revoke": "Withdraw"
+      },
+      "proposalDialog": {
+        "title": "Request payment",
+        "description": "Pick a plan and invite a billing contact — for example your client — to complete the checkout. They become the billing owner and receive all invoices.",
+        "plan": "Plan",
+        "planPlaceholder": "Choose a plan",
+        "interval": "Billing interval",
+        "email": "Billing contact email",
+        "emailPlaceholder": "billing{'@'}client.com",
+        "emailHint": "Not a member yet? They will be invited with billing-only access.",
+        "send": "Send request"
+      },
+      "pendingPlanDescription": "The checkout for the {plan} plan was started but never completed. Finish the payment, or discard it to pick a different plan."
     },
     "usage": {
       "history": {
@@ -2071,6 +2099,11 @@
         "trend": "Usage trend",
         "noTrend": "No usage recorded in this period.",
         "trafficMb": "Traffic (MB)",
+        "columns": {
+          "plan": "Plan",
+          "period": "Period",
+          "status": "Status"
+        },
         "reason": {
           "created": "Started",
           "renewed": "Renewed",
@@ -2085,7 +2118,12 @@
     },
     "invoices": {
       "title": "Invoices",
-      "empty": "No invoices yet."
+      "empty": "No invoices yet.",
+      "columns": {
+        "date": "Date",
+        "amount": "Amount",
+        "status": "Status"
+      }
     },
     "settings": {
       "general": {
@@ -2366,6 +2404,7 @@
         "roles": {
           "admin": "Admin",
           "editor": "Editor",
+          "billing": "Billing",
           "viewer": "Viewer"
         },
         "statuses": {
@@ -3857,12 +3896,15 @@
       "usageExceeded": {
         "title": "{space} exceeded its {metric} limit",
         "body": "{percentage}% of the monthly allowance used"
+      },
+      "paymentRequested": {
+        "title": "{requester} requests a payment for {space}",
+        "body": "Take over the {plan} plan to become the billing owner"
       }
     },
     "metrics": {
       "storage": "storage",
       "traffic": "traffic",
-      "requests": "API requests",
       "ai": "AI credit"
     }
   },
@@ -4011,7 +4053,10 @@
       "resubscribe": "Resubscribe",
       "cancel": "Cancel Subscription",
       "confirmCancel": "Yes, Cancel",
-      "resume": "Resume subscription"
+      "resume": "Resume subscription",
+      "requestPayment": "Request payment",
+      "completePayment": "Complete payment",
+      "discardPending": "Discard"
     },
     "plans": {
       "contactUs": "Contact us"
@@ -4173,7 +4218,8 @@
       "save": "Save",
       "publish": "Publish bundle",
       "delete": "Delete Plugin"
-    }
+    },
+    "confirm": "Confirm"
   },
   "navigation": {
     "home": "Home",
@@ -4296,7 +4342,12 @@
       "cancelError": "Failed to cancel subscription: {error}",
       "downgradeScheduled": "Downgrade scheduled — your paid plan stays active until the end of the billing period.",
       "resumeSuccess": "Subscription resumed.",
-      "resumeError": "Failed to resume subscription: {error}"
+      "resumeError": "Failed to resume subscription: {error}",
+      "proposalSent": "Payment request sent.",
+      "proposalRevoked": "Payment request withdrawn.",
+      "proposalError": "Payment request failed: {error}",
+      "pendingDiscarded": "Pending checkout discarded.",
+      "pendingDiscardError": "Could not discard the pending checkout: {error}"
     },
     "migrations": {
       "createSuccess": "Migration started successfully",

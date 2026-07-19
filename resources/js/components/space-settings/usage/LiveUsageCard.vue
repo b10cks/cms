@@ -14,7 +14,6 @@ const rows = computed(() => {
   if (!u) return []
 
   const defs: Array<{ key: string; label: string; metric: UsageMetric; perMonth: boolean }> = [
-    { key: 'requests', label: t('labels.plans.quotas.requests'), metric: u.requests, perMonth: true },
     { key: 'storage', label: t('labels.plans.quotas.storage'), metric: u.storage, perMonth: false },
     { key: 'traffic', label: t('labels.plans.quotas.traffic'), metric: u.traffic, perMonth: true },
     { key: 'ai', label: t('labels.plans.quotas.aiCredit'), metric: u.ai, perMonth: true },

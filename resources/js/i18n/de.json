@@ -389,6 +389,7 @@
           "admin": "Admin",
           "editor": "Editor",
           "member": "Mitglied",
+          "billing": "Abrechnung",
           "viewer": "Betrachter"
         }
       },
@@ -2024,7 +2025,6 @@
         "forever": "einmalig"
       },
       "quotas": {
-        "requests": "API-Anfragen",
         "storage": "Speicher",
         "traffic": "Datenvolumen",
         "aiCredit": "KI-Credits"
@@ -2034,11 +2034,18 @@
         "year": "Jährlich"
       },
       "monthlyOnly": "Nur monatliche Abrechnung",
-      "usageExceedsPlan": "Deine aktuelle Nutzung überschreitet die Limits dieses Plans: {metrics}"
+      "usageExceedsPlan": "Deine aktuelle Nutzung überschreitet die Limits dieses Plans: {metrics}",
+      "currentPlan": "Aktueller Plan",
+      "downgradeToFreeNotice": "Dein bezahlter Plan bleibt bis zum Ende des Abrechnungszeitraums aktiv, danach wechselt der Space zu Free."
     },
     "subscriptions": {
       "noPlan": "Kein aktives Abonnement. Wähle einen Plan aus.",
       "history": "Abonnementverlauf",
+      "columns": {
+        "plan": "Plan",
+        "started": "Gestartet",
+        "status": "Status"
+      },
       "upgradePlans": "Plan auswählen",
       "cancelTitle": "Abonnement kündigen",
       "cancelDescription": "Dein Abonnement wird am Ende des aktuellen Abrechnungszeitraums gekündigt. Du behältst bis dahin Zugang.",
@@ -2059,7 +2066,28 @@
         "unpaid": "Unbezahlt",
         "cancelled": "Gekündigt",
         "expired": "Abgelaufen"
-      }
+      },
+      "proposal": {
+        "title": "Zahlung angefragt",
+        "description": "{requester} hat den Plan {plan} (€{price} {interval}) vorgeschlagen und bittet darum, die Zahlung hier abzuschließen.",
+        "someone": "Ein Teammitglied",
+        "invitee": "Gesendet an {email}",
+        "expires": "läuft am {date} ab",
+        "pay": "Prüfen & bezahlen",
+        "revoke": "Zurückziehen"
+      },
+      "proposalDialog": {
+        "title": "Zahlung anfragen",
+        "description": "Wähle einen Plan und lade einen Rechnungskontakt ein — z. B. deinen Kunden —, um den Checkout abzuschließen. Er wird Rechnungsempfänger und erhält alle Rechnungen.",
+        "plan": "Plan",
+        "planPlaceholder": "Plan auswählen",
+        "interval": "Abrechnungsintervall",
+        "email": "E-Mail des Rechnungskontakts",
+        "emailPlaceholder": "billing{'@'}kunde.com",
+        "emailHint": "Noch kein Mitglied? Die Person wird mit reinem Abrechnungszugriff eingeladen.",
+        "send": "Anfrage senden"
+      },
+      "pendingPlanDescription": "Der Checkout für den Plan {plan} wurde gestartet, aber nicht abgeschlossen. Schließe die Zahlung ab oder verwirf sie, um einen anderen Plan zu wählen."
     },
     "usage": {
       "history": {
@@ -2073,6 +2101,11 @@
         "trend": "Nutzungsverlauf",
         "noTrend": "In diesem Zeitraum wurde keine Nutzung erfasst.",
         "trafficMb": "Traffic (MB)",
+        "columns": {
+          "plan": "Plan",
+          "period": "Zeitraum",
+          "status": "Status"
+        },
         "reason": {
           "created": "Gestartet",
           "renewed": "Verlängert",
@@ -2087,7 +2120,12 @@
     },
     "invoices": {
       "title": "Rechnungen",
-      "empty": "Noch keine Rechnungen."
+      "empty": "Noch keine Rechnungen.",
+      "columns": {
+        "date": "Datum",
+        "amount": "Betrag",
+        "status": "Status"
+      }
     },
     "settings": {
       "general": {
@@ -2364,6 +2402,7 @@
         "roles": {
           "admin": "Admin",
           "editor": "Editor",
+          "billing": "Abrechnung",
           "viewer": "Betrachter"
         },
         "statuses": {
@@ -3855,12 +3894,15 @@
       "usageExceeded": {
         "title": "{space} hat das {metric}-Limit überschritten",
         "body": "{percentage}% des monatlichen Kontingents verbraucht"
+      },
+      "paymentRequested": {
+        "title": "{requester} bittet um eine Zahlung für {space}",
+        "body": "Übernimm den Plan {plan} und werde Rechnungsempfänger"
       }
     },
     "metrics": {
       "storage": "Speicher",
       "traffic": "Traffic",
-      "requests": "API-Anfragen",
       "ai": "KI-Guthaben"
     }
   },
@@ -4004,7 +4046,10 @@
       "resubscribe": "Erneut abonnieren",
       "cancel": "Abonnement kündigen",
       "confirmCancel": "Ja, kündigen",
-      "resume": "Abo fortsetzen"
+      "resume": "Abo fortsetzen",
+      "requestPayment": "Zahlung anfragen",
+      "completePayment": "Zahlung abschließen",
+      "discardPending": "Verwerfen"
     },
     "plans": {
       "contactUs": "Kontakt aufnehmen"
@@ -4170,7 +4215,8 @@
       "save": "Speichern",
       "publish": "Bundle veröffentlichen",
       "delete": "Plugin löschen"
-    }
+    },
+    "confirm": "Bestätigen"
   },
   "navigation": {
     "home": "Start",
@@ -4291,7 +4337,12 @@
       "cancelError": "Abonnement konnte nicht gekündigt werden: {error}",
       "downgradeScheduled": "Downgrade geplant — dein bezahlter Plan bleibt bis zum Ende des Abrechnungszeitraums aktiv.",
       "resumeSuccess": "Abo fortgesetzt.",
-      "resumeError": "Abo konnte nicht fortgesetzt werden: {error}"
+      "resumeError": "Abo konnte nicht fortgesetzt werden: {error}",
+      "proposalSent": "Zahlungsanfrage gesendet.",
+      "proposalRevoked": "Zahlungsanfrage zurückgezogen.",
+      "proposalError": "Zahlungsanfrage fehlgeschlagen: {error}",
+      "pendingDiscarded": "Offener Checkout verworfen.",
+      "pendingDiscardError": "Der offene Checkout konnte nicht verworfen werden: {error}"
     },
     "migrations": {
       "createSuccess": "Migration erfolgreich gestartet",
