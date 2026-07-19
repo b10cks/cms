@@ -38,7 +38,18 @@ return [
     'usageMetrics' => [
         'storage' => 'ストレージ',
         'traffic' => 'トラフィック',
-        'requests' => 'APIリクエスト',
         'ai' => 'AIクレジット',
+    ],
+    'billingIntervals' => [
+        'month' => '月',
+        'year' => '年',
+    ],
+    'paymentRequested' => [
+        'subject' => ':space の支払いリクエスト',
+        'intro' => '<strong>:requester</strong> さんが、スペース <strong>:space</strong> のサブスクリプションの引き継ぎを依頼しています。',
+        'detail' => '提案プラン: :plan(€:price / :interval)。お客様が請求先となり、すべての請求書を受け取ります。',
+        'action' => '確認して支払う',
+        'outro' => 'このプランが合わない場合は、サブスクリプションページで別のプランを選択できます。',
+        'inviteMessage' => ':requester さんが「:space」のサブスクリプションの引き継ぎを依頼しています(プラン: :plan)。参加後、スペースのサブスクリプション設定を開いて支払いを完了してください。',
     ],
 ];

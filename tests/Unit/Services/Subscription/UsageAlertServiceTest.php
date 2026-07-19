@@ -41,7 +41,7 @@ class UsageAlertServiceTest extends TestCase
             'name' => ['default' => 'Pro'],
             'price' => 10,
             'period' => 'month',
-            'quotas' => ['requests' => 1000, 'traffic' => 1000, 'storage' => 1000, 'aiCredit' => 5.0],
+            'quotas' => ['traffic' => 1000, 'storage' => 1000, 'aiCredit' => 5.0],
             'is_free' => false,
             'is_active' => true,
         ]);
@@ -65,7 +65,6 @@ class UsageAlertServiceTest extends TestCase
             'storage' => new UsageMetricDto('storage', 'bytes', 100, 1000),
             'traffic' => new UsageMetricDto('traffic', 'bytes', 100, 1000),
             'downloads' => new UsageMetricDto('downloads', 'bytes', 0, null),
-            'requests' => new UsageMetricDto('requests', 'count', 100, 1000),
             'ai' => new UsageMetricDto('ai', 'usd', 0.5, 5.0),
             'period' => ['start' => now()->startOfMonth()->toIso8601String(), 'end' => now()->toIso8601String(), 'resets_at' => now()->addMonth()->toIso8601String()],
         ], $overrides);
@@ -110,7 +109,7 @@ class UsageAlertServiceTest extends TestCase
     #[Test]
     public function jumping_past_both_thresholds_sends_only_the_exceeded_alert(): void
     {
-        $this->fakeUsage(['requests' => new UsageMetricDto('requests', 'count', 1500, 1000)]);
+        $this->fakeUsage(['traffic' => new UsageMetricDto('traffic', 'bytes', 1500, 1000)]);
 
         $this->assertSame(1, $this->service()->check($this->space));
 

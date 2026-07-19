@@ -42,12 +42,39 @@ return new class extends Migration
         Schema::create('space_usage_alerts', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->foreignUlid('space_id')->constrained('spaces')->cascadeOnDelete();
-            $table->string('metric', 20)->charset('ascii');       // storage | traffic | requests | ai
+            $table->string('metric', 20)->charset('ascii');       // storage | traffic | ai
             $table->unsignedSmallInteger('threshold');            // percent: 80, 100
             $table->string('period_key', 10)->charset('ascii');   // allowance window, e.g. 2026-07
             $table->timestamps();
 
             $table->unique(['space_id', 'metric', 'threshold', 'period_key']);
+        });
+
+        // A payment request (agency flow): a space member with billing rights
+        // proposes a plan and asks a client-side contact to complete the
+        // checkout themselves, so the client owns the LemonSqueezy customer
+        // and the invoices. At most one `open` proposal per space (enforced in
+        // code — creating a new one revokes the previous).
+        Schema::create('plan_proposals', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->foreignUlid('space_id')->constrained('spaces')->cascadeOnDelete();
+            $table->foreignUlid('plan_id')->constrained('plans')->cascadeOnDelete();
+            $table->string('billing_interval', 10)->default('month')->charset('ascii');
+            $table->string('invited_email');
+            $table->foreignUlid('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUlid('invite_id')->nullable()->constrained('invites')->nullOnDelete();
+            $table->string('status', 20)->default('open')->charset('ascii'); // open | accepted | revoked | expired
+            $table->timestamp('resolved_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
+            $table->timestamps();
+
+            $table->index(['space_id', 'status']);
+        });
+
+        // API requests are unlimited on every plan — the metric is no longer
+        // metered, so the period rollup column goes away.
+        Schema::table('subscription_periods', function (Blueprint $table) {
+            $table->dropColumn('requests_count');
         });
 
         // Subscription `quotas` becomes an override-only field (custom deals);
@@ -76,6 +103,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        Schema::dropIfExists('plan_proposals');
+        Schema::table('subscription_periods', function (Blueprint $table) {
+            $table->unsignedBigInteger('requests_count')->nullable();
+        });
         Schema::dropIfExists('space_usage_alerts');
         Schema::table('subscriptions', function (Blueprint $table) {
             $table->dropColumn('billing_interval');

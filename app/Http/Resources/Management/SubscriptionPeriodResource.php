@@ -31,7 +31,6 @@ class SubscriptionPeriodResource extends JsonResource
             'usage' => [
                 'storage' => $this->metric('storage_bytes', $quotas['storage'] ?? null),
                 'traffic' => $this->metric('traffic_bytes', $quotas['traffic'] ?? null),
-                'requests' => $this->metric('requests_count', $quotas['requests'] ?? null),
                 'ai' => $this->metric('ai_spend_usd', $quotas['aiCredit'] ?? null),
             ],
         ];

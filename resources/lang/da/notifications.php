@@ -38,7 +38,18 @@ return [
     'usageMetrics' => [
         'storage' => 'lagerplads',
         'traffic' => 'trafik',
-        'requests' => 'API-forespørgsler',
         'ai' => 'AI-kreditter',
+    ],
+    'billingIntervals' => [
+        'month' => 'måned',
+        'year' => 'år',
+    ],
+    'paymentRequested' => [
+        'subject' => 'Betaling anmodet for :space',
+        'intro' => '<strong>:requester</strong> beder dig om at overtage abonnementet for spacet <strong>:space</strong>.',
+        'detail' => 'Foreslået plan: :plan til :price € / :interval. Du bliver faktureringsansvarlig og modtager alle fakturaer.',
+        'action' => 'Gennemse & betal',
+        'outro' => 'Du kan vælge en anden plan på abonnementssiden, hvis denne ikke passer.',
+        'inviteMessage' => ':requester beder dig om at overtage abonnementet for ":space" (plan: :plan). Når du er kommet med, skal du åbne spacets abonnementsindstillinger for at gennemføre betalingen.',
     ],
 ];

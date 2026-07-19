@@ -335,12 +335,13 @@ export const queryKeys = {
     all: () => ['spaces', spaceId, 'subscriptions'] as const,
     lists: () => [...queryKeys.subscriptions(spaceId).all(), 'list'] as const,
     current: () => [...queryKeys.subscriptions(spaceId).all(), 'current'] as const,
+    proposal: () => [...queryKeys.subscriptions(spaceId).all(), 'proposal'] as const,
   }),
   usageHistory: (spaceId: string) => ({
     all: () => ['spaces', spaceId, 'usage-history'] as const,
     lists: () => [...queryKeys.usageHistory(spaceId).all(), 'list'] as const,
-    timeseries: (periodId: string, metric: string) =>
-      [...queryKeys.usageHistory(spaceId).all(), 'timeseries', periodId, metric] as const,
+    timeseries: (periodId: string) =>
+      [...queryKeys.usageHistory(spaceId).all(), 'timeseries', periodId] as const,
   }),
   invoices: (spaceId: string) => ({
     all: () => ['spaces', spaceId, 'invoices'] as const,

@@ -14,7 +14,6 @@ interface UsageMetric {
 interface SpaceUsage {
   storage: UsageMetric
   traffic: UsageMetric
-  requests: UsageMetric
   ai: UsageMetric
   period: {
     start: string
@@ -53,12 +52,11 @@ interface SubscriptionPeriod {
   usage: {
     storage: PeriodUsageMetric
     traffic: PeriodUsageMetric
-    requests: PeriodUsageMetric
     ai: PeriodUsageMetric
   }
 }
 
-type UsageTimeseriesMetric = 'traffic' | 'requests'
+type UsageTimeseriesMetric = 'traffic'
 
 interface UsageTimeseriesPoint {
   date: string

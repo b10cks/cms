@@ -38,7 +38,18 @@ return [
     'usageMetrics' => [
         'storage' => 'tárhely',
         'traffic' => 'adatforgalom',
-        'requests' => 'API-kérés',
         'ai' => 'AI-kredit',
+    ],
+    'billingIntervals' => [
+        'month' => 'hónap',
+        'year' => 'év',
+    ],
+    'paymentRequested' => [
+        'subject' => 'Fizetési kérelem: :space',
+        'intro' => '<strong>:requester</strong> arra kér, hogy vedd át a(z) <strong>:space</strong> tér előfizetését.',
+        'detail' => 'Javasolt csomag: :plan, :price € / :interval. Te leszel a számlázás tulajdonosa, és minden számlát te kapsz meg.',
+        'action' => 'Áttekintés és fizetés',
+        'outro' => 'Az előfizetési oldalon másik csomagot is választhatsz, ha ez nem felel meg.',
+        'inviteMessage' => ':requester arra kér, hogy vedd át a(z) „:space” előfizetését (csomag: :plan). Csatlakozás után nyisd meg a tér előfizetési beállításait a fizetés befejezéséhez.',
     ],
 ];

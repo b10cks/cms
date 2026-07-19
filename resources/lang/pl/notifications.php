@@ -38,7 +38,18 @@ return [
     'usageMetrics' => [
         'storage' => 'przestrzeni dyskowej',
         'traffic' => 'transferu',
-        'requests' => 'żądań API',
         'ai' => 'kredytów AI',
+    ],
+    'billingIntervals' => [
+        'month' => 'miesiąc',
+        'year' => 'rok',
+    ],
+    'paymentRequested' => [
+        'subject' => 'Prośba o płatność dla :space',
+        'intro' => '<strong>:requester</strong> prosi Cię o przejęcie subskrypcji przestrzeni <strong>:space</strong>.',
+        'detail' => 'Proponowany plan: :plan za :price € / :interval. Staniesz się właścicielem rozliczeń i będziesz otrzymywać wszystkie faktury.',
+        'action' => 'Sprawdź i zapłać',
+        'outro' => 'Na stronie subskrypcji możesz wybrać inny plan, jeśli ten nie pasuje.',
+        'inviteMessage' => ':requester prosi Cię o przejęcie subskrypcji „:space” (plan: :plan). Po dołączeniu otwórz ustawienia subskrypcji przestrzeni, aby dokończyć płatność.',
     ],
 ];

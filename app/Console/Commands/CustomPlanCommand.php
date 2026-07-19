@@ -23,7 +23,7 @@ class CustomPlanCommand extends Command
         {--name= : Plan name (create)}
         {--price= : Monthly price, e.g. 29.00 (create)}
         {--yearly-price= : Yearly price (create, optional)}
-        {--quotas= : JSON quotas, e.g. \'{"requests":1000000,"traffic":536870912000,"storage":53687091200,"aiCredit":25}\' (create/override)}
+        {--quotas= : JSON quotas, e.g. \'{"traffic":536870912000,"storage":53687091200,"aiCredit":25}\' (create/override)}
         {--product-id= : LemonSqueezy product ID (create)}
         {--variant-id= : LemonSqueezy monthly variant ID (create)}
         {--yearly-variant-id= : LemonSqueezy yearly variant ID (create)}
@@ -211,7 +211,7 @@ class CustomPlanCommand extends Command
             return false;
         }
 
-        $allowed = ['requests', 'traffic', 'storage', 'aiCredit'];
+        $allowed = ['traffic', 'storage', 'aiCredit'];
         $unknown = array_diff(array_keys($quotas), $allowed);
 
         if ($unknown !== []) {

@@ -33,6 +33,8 @@ export interface NotificationData {
   percentage?: number
   used?: string
   limit?: string
+  requester?: string
+  plan?: { name: string; price: string; interval: string }
   [key: string]: unknown
 }
 

@@ -108,6 +108,7 @@ declare global {
   const useModel: typeof import('vue').useModel
   const useOnboarding: typeof import('./composables/useOnboarding').useOnboarding
   const usePersonalAccessTokens: typeof import('./composables/usePersonalAccessTokens').usePersonalAccessTokens
+  const usePlanPricing: typeof import('./composables/usePlanPricing').usePlanPricing
   const usePresence: typeof import('./composables/usePresence').usePresence
   const useRedirects: typeof import('./composables/useRedirects').useRedirects
   const useReleases: typeof import('./composables/useReleases').useReleases

@@ -37,11 +37,63 @@ export function useSubscription(spaceIdRef: MaybeRefOrComputed<string>) {
     })
   }
 
+  const useProposalQuery = () => {
+    return useQuery({
+      queryKey: computed(() => queryKeys.subscriptions(spaceId.value).proposal()),
+      queryFn: async () => {
+        const response = await spaceAPI.value.subscriptions.proposal()
+        return response.data
+      },
+      enabled: computed(() => !!spaceId.value),
+    })
+  }
+
+  const useCreateProposalMutation = () => {
+    return useMutation({
+      mutationFn: async (payload: { planId: string; interval?: BillingInterval; email: string }) => {
+        const response = await spaceAPI.value.subscriptions.createProposal({
+          plan_id: payload.planId,
+          interval: payload.interval ?? 'month',
+          email: payload.email,
+        })
+        return response.data
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.subscriptions(spaceId.value).proposal(),
+        })
+        toast.success(t('composables.subscriptions.proposalSent'))
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.subscriptions.proposalError', { error: error.message || 'Unknown error' })
+        )
+      },
+    })
+  }
+
+  const useRevokeProposalMutation = () => {
+    return useMutation({
+      mutationFn: async () => {
+        await spaceAPI.value.subscriptions.revokeProposal()
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.subscriptions(spaceId.value).proposal(),
+        })
+        toast.success(t('composables.subscriptions.proposalRevoked'))
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.subscriptions.proposalError', { error: error.message || 'Unknown error' })
+        )
+      },
+    })
+  }
+
   const useCheckoutMutation = () => {
     return useMutation({
-      mutationFn: async (input: string | { planId: string; interval?: BillingInterval }) => {
-        const { planId, interval = 'month' } =
-          typeof input === 'string' ? { planId: input } : input
+      mutationFn: async ({ planId, interval = 'month' }: { planId: string; interval?: BillingInterval }) => {
         return spaceAPI.value.subscriptions.checkout(planId, interval)
       },
       onSuccess: (data) => {
@@ -101,6 +153,25 @@ export function useSubscription(spaceIdRef: MaybeRefOrComputed<string>) {
     })
   }
 
+  const useDiscardPendingMutation = () => {
+    return useMutation({
+      mutationFn: async () => {
+        await spaceAPI.value.subscriptions.discardPending()
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions(spaceId.value).all() })
+        toast.success(t('composables.subscriptions.pendingDiscarded'))
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.subscriptions.pendingDiscardError', {
+            error: error.message || 'Unknown error',
+          })
+        )
+      },
+    })
+  }
+
   const useCancelMutation = () => {
     return useMutation({
       mutationFn: async () => {
@@ -142,5 +213,9 @@ export function useSubscription(spaceIdRef: MaybeRefOrComputed<string>) {
     useReinitPaymentMutation,
     useCancelMutation,
     useResumeMutation,
+    useDiscardPendingMutation,
+    useProposalQuery,
+    useCreateProposalMutation,
+    useRevokeProposalMutation,
   }
 }

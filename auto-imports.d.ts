@@ -173,6 +173,7 @@ declare global {
   const useOnboarding: typeof import('./resources/js/composables/useOnboarding').useOnboarding
   const usePeople: typeof import('./resources/js/composables/usePeople').usePeople
   const usePersonalAccessTokens: typeof import('./resources/js/composables/usePersonalAccessTokens').usePersonalAccessTokens
+  const usePlanPricing: typeof import('./resources/js/composables/usePlanPricing').usePlanPricing
   const usePlans: typeof import('./resources/js/composables/usePlans').usePlans
   const usePresence: typeof import('./resources/js/composables/usePresence').usePresence
   const useProvider: typeof import('./resources/js/composables/useProvider').useProvider
@@ -463,6 +464,7 @@ declare module 'vue' {
     readonly useOnboarding: UnwrapRef<typeof import('./resources/js/composables/useOnboarding')['useOnboarding']>
     readonly usePeople: UnwrapRef<typeof import('./resources/js/composables/usePeople')['usePeople']>
     readonly usePersonalAccessTokens: UnwrapRef<typeof import('./resources/js/composables/usePersonalAccessTokens')['usePersonalAccessTokens']>
+    readonly usePlanPricing: UnwrapRef<typeof import('./resources/js/composables/usePlanPricing')['usePlanPricing']>
     readonly usePlans: UnwrapRef<typeof import('./resources/js/composables/usePlans')['usePlans']>
     readonly usePresence: UnwrapRef<typeof import('./resources/js/composables/usePresence')['usePresence']>
     readonly useProvider: UnwrapRef<typeof import('./resources/js/composables/useProvider')['useProvider']>

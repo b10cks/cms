@@ -74,8 +74,19 @@ return [
     'usageMetrics' => [
         'storage' => 'storage',
         'traffic' => 'traffic',
-        'requests' => 'API request',
         'ai' => 'AI credit',
+    ],
+    'billingIntervals' => [
+        'month' => 'month',
+        'year' => 'year',
+    ],
+    'paymentRequested' => [
+        'subject' => 'Payment requested for :space',
+        'intro' => '<strong>:requester</strong> asks you to take over the subscription for the <strong>:space</strong> space.',
+        'detail' => 'Proposed plan: :plan at €:price / :interval. You will become the billing owner and receive all invoices.',
+        'action' => 'Review & pay',
+        'outro' => 'You can pick a different plan on the subscription page if this one does not fit.',
+        'inviteMessage' => ':requester asks you to take over the subscription for ":space" (plan: :plan). After joining, open the space\'s subscription settings to complete the payment.',
     ],
     'greeting' => 'Hello there,',
     'salutation' => 'May your content stay structured and your blocks never 404,\nThe b10cks team',

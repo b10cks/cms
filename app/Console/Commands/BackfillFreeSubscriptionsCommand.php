@@ -2,11 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\SubscriptionStatus;
-
+use App\Actions\Subscription\ActivateDirectSubscription;
 use App\Models\Management\Plan;
 use App\Models\Management\Space;
-use App\Models\Management\Subscription;
 use Illuminate\Console\Command;
 
 /**
@@ -62,18 +60,9 @@ class BackfillFreeSubscriptionsCommand extends Command
                     continue;
                 }
 
-                // forceCreate fires the saved observer, which dispatches
+                // Saving fires the saved observer, which dispatches
                 // SyncSpaceAiKey to provision the free-tier key.
-                Subscription::forceCreate([
-                    'space_id' => $space->id,
-                    'plan_id' => $plan->id,
-                    'name' => $name,
-                    'status' => SubscriptionStatus::Active->value,
-                    'lemon_squeezy_id' => null,
-                    'variant_id' => $plan->ls_variant_id ?? '',
-                    'product_id' => $plan->ls_product_id ?? '',
-                    'quantity' => 1,
-                ]);
+                app(ActivateDirectSubscription::class)->execute($space->id, $plan);
 
                 $created++;
                 $this->line("  <fg=green>created</>  {$space->id}");

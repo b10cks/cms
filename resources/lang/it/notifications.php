@@ -38,7 +38,18 @@ return [
     'usageMetrics' => [
         'storage' => 'spazio di archiviazione',
         'traffic' => 'traffico',
-        'requests' => 'richieste API',
         'ai' => 'crediti IA',
+    ],
+    'billingIntervals' => [
+        'month' => 'mese',
+        'year' => 'anno',
+    ],
+    'paymentRequested' => [
+        'subject' => 'Pagamento richiesto per :space',
+        'intro' => '<strong>:requester</strong> ti chiede di occuparti dell\'abbonamento dello spazio <strong>:space</strong>.',
+        'detail' => 'Piano proposto: :plan a :price € / :interval. Diventerai l\'intestatario della fatturazione e riceverai tutte le fatture.',
+        'action' => 'Verifica e paga',
+        'outro' => 'Puoi scegliere un piano diverso nella pagina dell\'abbonamento se questo non fa al caso tuo.',
+        'inviteMessage' => ':requester ti chiede di occuparti dell\'abbonamento di ":space" (piano: :plan). Dopo l\'accesso, apri le impostazioni di abbonamento dello spazio per completare il pagamento.',
     ],
 ];

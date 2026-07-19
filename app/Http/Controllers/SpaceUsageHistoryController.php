@@ -4,12 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\Management\SubscriptionPeriodResource;
 use App\Models\Management\Space;
-use App\Models\Management\SpaceApiHitHourly;
 use App\Models\Management\SpaceTrafficUsageHourly;
 use App\Models\Management\SubscriptionPeriod;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -31,31 +29,24 @@ class SpaceUsageHistoryController extends Controller
     }
 
     /**
-     * Daily traffic/requests trend within a closed (or open) period, reconstructed
-     * from the hourly rollup tables for the page charts.
+     * Daily traffic trend within a closed (or open) period, reconstructed
+     * from the hourly rollup tables for the page chart.
      */
-    public function timeseries(Request $request, Space $space, SubscriptionPeriod $period): JsonResponse
+    public function timeseries(Space $space, SubscriptionPeriod $period): JsonResponse
     {
         $this->authorize('viewBilling', $space);
 
         abort_unless($period->space_id === $space->id, 404);
 
-        $metric = $request->query('metric', 'traffic');
-        abort_unless(\in_array($metric, ['traffic', 'requests'], true), 422);
-
         $start = $period->started_at ?? $period->created_at;
         $end = $period->ended_at ?? now();
 
-        $series = $metric === 'traffic'
-            ? $this->dailyTraffic($space, $start, $end)
-            : $this->dailyRequests($space, $start, $end);
-
         return response()->json([
             'data' => [
-                'metric' => $metric,
+                'metric' => 'traffic',
                 'start' => $start?->toIso8601String(),
                 'end' => $end->toIso8601String(),
-                'points' => $series,
+                'points' => $this->dailyTraffic($space, $start, $end),
             ],
         ]);
     }
@@ -70,18 +61,6 @@ class SpaceUsageHistoryController extends Controller
             ->get(['hour_timestamp', 'total_bytes']);
 
         return $this->groupByDay($rows, 'total_bytes');
-    }
-
-    /**
-     * @return array<int, array{date: string, value: int}>
-     */
-    private function dailyRequests(Space $space, ?Carbon $start, Carbon $end): array
-    {
-        $rows = SpaceApiHitHourly::where('space_id', $space->id)
-            ->whereBetween('hour_timestamp', [$start, $end])
-            ->get(['hour_timestamp', 'hit_count']);
-
-        return $this->groupByDay($rows, 'hit_count');
     }
 
     /**

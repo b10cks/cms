@@ -38,7 +38,7 @@ class UsageMetricDtoTest extends TestCase
     #[Test]
     public function a_null_limit_is_unlimited_and_zero_percent(): void
     {
-        $metric = new UsageMetricDto('requests', 'count', 1234, null);
+        $metric = new UsageMetricDto('traffic', 'bytes', 1234, null);
 
         $this->assertTrue($metric->unlimited());
         $this->assertSame(0, $metric->percentage());

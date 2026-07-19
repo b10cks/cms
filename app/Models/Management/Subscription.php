@@ -112,6 +112,17 @@ class Subscription extends GlobalModel
 
             SyncSpaceAiKey::dispatch($subscription->space_id)->afterCommit();
             ReconcileSubscriptionPeriods::dispatch($subscription->space_id)->afterCommit();
+
+            // A newly entitlement-granting paid subscription fulfils any open
+            // payment request (agency flow) — regardless of which plan the
+            // payer ended up choosing.
+            if (in_array($subscription->status, SubscriptionStatus::activeValues(), true)
+                && ! ($subscription->plan?->is_free ?? true)) {
+                PlanProposal::open()->where('space_id', $subscription->space_id)->update([
+                    'status' => PlanProposal::STATUS_ACCEPTED,
+                    'resolved_at' => now(),
+                ]);
+            }
         });
     }
 

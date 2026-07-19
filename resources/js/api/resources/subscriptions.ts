@@ -36,12 +36,39 @@ export class Subscriptions {
     return this.client.post<CheckoutResponse>(`${this.basePath}/reinit`, {})
   }
 
+  /** Discard an abandoned pending checkout so a new plan can be chosen. */
+  public async discardPending(): Promise<void> {
+    await this.client.delete(`${this.basePath}/pending`)
+  }
+
   public async cancel(): Promise<{ message: string }> {
     return this.client.post<{ message: string }>(`${this.basePath}/cancel`, {})
   }
 
   public async resume(): Promise<{ message: string }> {
     return this.client.post<{ message: string }>(`${this.basePath}/resume`, {})
+  }
+
+  /** The space's current open payment request (agency flow), if any. */
+  public async proposal(): Promise<ApiResponse<PlanProposalResource | null>> {
+    return this.client.get<ApiResponse<PlanProposalResource | null>>(`${this.basePath}/proposal`)
+  }
+
+  /** Ask a (client-side) contact to complete the checkout for a plan. */
+  public async createProposal(payload: {
+    plan_id: string
+    interval?: BillingInterval
+    email: string
+  }): Promise<ApiResponse<PlanProposalResource>> {
+    return this.client.post<ApiResponse<PlanProposalResource>>(
+      `${this.basePath}/proposal`,
+      payload
+    )
+  }
+
+  /** Revoke the current open payment request. */
+  public async revokeProposal(): Promise<void> {
+    await this.client.delete(`${this.basePath}/proposal`)
   }
 
   /** Plans available to this space: public plans plus granted custom plans. */

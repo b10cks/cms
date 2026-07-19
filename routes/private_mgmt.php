@@ -63,6 +63,7 @@ use App\Http\Controllers\Mgmt\IconController;
 use App\Http\Controllers\Mgmt\IconDataImportController;
 use App\Http\Controllers\Mgmt\MigrationController;
 use App\Http\Controllers\Mgmt\NotificationController;
+use App\Http\Controllers\Mgmt\PlanProposalController;
 use App\Http\Controllers\Mgmt\PresenceController;
 use App\Http\Controllers\Mgmt\Provider\ProviderNoteController;
 use App\Http\Controllers\Mgmt\Provider\ProviderStatsController;
@@ -335,8 +336,12 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::get('subscriptions/current', [SpaceSubscriptionController::class, 'current'])->name('spaces.subscriptions.current');
     Route::post('subscriptions/checkout', [SpaceSubscriptionController::class, 'checkout'])->name('spaces.subscriptions.checkout');
     Route::post('subscriptions/reinit', [SpaceSubscriptionController::class, 'reinit'])->name('spaces.subscriptions.reinit');
+    Route::delete('subscriptions/pending', [SpaceSubscriptionController::class, 'discardPending'])->name('spaces.subscriptions.pending.destroy');
     Route::post('subscriptions/cancel', [SpaceSubscriptionController::class, 'cancel'])->name('spaces.subscriptions.cancel');
     Route::post('subscriptions/resume', [SpaceSubscriptionController::class, 'resume'])->name('spaces.subscriptions.resume');
+    Route::get('subscriptions/proposal', [PlanProposalController::class, 'show'])->name('spaces.subscriptions.proposal.show');
+    Route::post('subscriptions/proposal', [PlanProposalController::class, 'store'])->name('spaces.subscriptions.proposal.store');
+    Route::delete('subscriptions/proposal', [PlanProposalController::class, 'destroy'])->name('spaces.subscriptions.proposal.destroy');
     Route::get('plans', SpacePlansController::class)->name('spaces.plans.index');
 
     Route::get('invoices', SpaceInvoiceController::class)->name('spaces.invoices');

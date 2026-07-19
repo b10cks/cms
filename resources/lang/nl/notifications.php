@@ -38,7 +38,18 @@ return [
     'usageMetrics' => [
         'storage' => 'opslag',
         'traffic' => 'dataverkeer',
-        'requests' => 'API-verzoeken',
         'ai' => 'AI-credits',
+    ],
+    'billingIntervals' => [
+        'month' => 'maand',
+        'year' => 'jaar',
+    ],
+    'paymentRequested' => [
+        'subject' => 'Betaling aangevraagd voor :space',
+        'intro' => '<strong>:requester</strong> vraagt je het abonnement voor de space <strong>:space</strong> over te nemen.',
+        'detail' => 'Voorgesteld plan: :plan voor €:price / :interval. Je wordt de factuurhouder en ontvangt alle facturen.',
+        'action' => 'Bekijken & betalen',
+        'outro' => 'Je kunt op de abonnementspagina een ander plan kiezen als dit niet past.',
+        'inviteMessage' => ':requester vraagt je het abonnement voor ":space" over te nemen (plan: :plan). Open na het toetreden de abonnementsinstellingen van de space om de betaling af te ronden.',
     ],
 ];

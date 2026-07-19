@@ -38,7 +38,18 @@ return [
     'usageMetrics' => [
         'storage' => 'lagringsutrymme',
         'traffic' => 'trafik',
-        'requests' => 'API-förfrågningar',
         'ai' => 'AI-krediter',
+    ],
+    'billingIntervals' => [
+        'month' => 'månad',
+        'year' => 'år',
+    ],
+    'paymentRequested' => [
+        'subject' => 'Betalning begärd för :space',
+        'intro' => '<strong>:requester</strong> ber dig ta över prenumerationen för spacet <strong>:space</strong>.',
+        'detail' => 'Föreslagen plan: :plan för :price € / :interval. Du blir betalningsansvarig och får alla fakturor.',
+        'action' => 'Granska & betala',
+        'outro' => 'Du kan välja en annan plan på prenumerationssidan om denna inte passar.',
+        'inviteMessage' => ':requester ber dig ta över prenumerationen för ":space" (plan: :plan). När du har gått med, öppna spacets prenumerationsinställningar för att slutföra betalningen.',
     ],
 ];

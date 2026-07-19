@@ -51,7 +51,18 @@ return [
     'usageMetrics' => [
         'storage' => 'Speicherplatz',
         'traffic' => 'Traffic',
-        'requests' => 'API-Anfragen',
         'ai' => 'AI-Credits',
+    ],
+    'billingIntervals' => [
+        'month' => 'Monat',
+        'year' => 'Jahr',
+    ],
+    'paymentRequested' => [
+        'subject' => 'Zahlungsanfrage für :space',
+        'intro' => '<strong>:requester</strong> bittet dich, das Abonnement für den Space <strong>:space</strong> zu übernehmen.',
+        'detail' => 'Vorgeschlagener Plan: :plan für €:price / :interval. Du wirst Rechnungsempfänger und erhältst alle Rechnungen.',
+        'action' => 'Prüfen & bezahlen',
+        'outro' => 'Auf der Abonnement-Seite kannst du auch einen anderen Plan wählen, falls dieser nicht passt.',
+        'inviteMessage' => ':requester bittet dich, das Abonnement für „:space“ zu übernehmen (Plan: :plan). Öffne nach dem Beitritt die Abonnement-Einstellungen des Spaces, um die Zahlung abzuschließen.',
     ],
 ];

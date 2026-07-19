@@ -16,7 +16,7 @@ class SetupPlansCommand extends Command
 
     /**
      * Default plan definitions.
-     * quotas: requests (count/mo), traffic (bytes/mo), storage (bytes), aiCredit (USD spend/mo)
+     * quotas: traffic (bytes/mo), storage (bytes), aiCredit (USD spend/mo) — API requests are unlimited on every plan
      * aiCredit is the monthly OpenRouter spend cap in dollars for the space's key.
      * null quotas = unlimited tier. Adjust the dollar amounts to your real pricing.
      */
@@ -35,21 +35,21 @@ class SetupPlansCommand extends Command
                 ],
                 'features' => [
                     'en' => [
-                        '5,000 API requests / month',
+                        'Unlimited API requests',
                         '5 GB traffic (fair use)',
                         '500 MB asset storage',
                         'Unlimited blocks, content, users, languages',
                         '5,000 AI tokens / month',
                     ],
                     'de' => [
-                        '5.000 API-Anfragen / Monat',
+                        'Unbegrenzte API-Anfragen',
                         '5 GB Datenvolumen (Fair Use)',
                         '500 MB Asset-Speicher',
                         'Unbegrenzte Blocks, Inhalte, Nutzer, Sprachen',
                         '5.000 KI-Token / Monat',
                     ],
                     'default' => [
-                        '5,000 API requests / month',
+                        'Unlimited API requests',
                         '5 GB traffic (fair use)',
                         '500 MB asset storage',
                         'Unlimited blocks, content, users, languages',
@@ -59,7 +59,6 @@ class SetupPlansCommand extends Command
                 'price' => '0.00',
                 'period' => 'month',
                 'quotas' => [
-                    'requests' => 5_000,
                     'traffic' => 5 * $GB,
                     'storage' => 500 * $MB,
                     'aiCredit' => 1.0,
@@ -76,21 +75,21 @@ class SetupPlansCommand extends Command
                 ],
                 'features' => [
                     'en' => [
-                        '100,000 API requests / month',
+                        'Unlimited API requests',
                         '50 GB traffic (fair use)',
                         '5 GB asset storage',
                         'Unlimited blocks, content, users, languages',
                         '100,000 AI tokens / month',
                     ],
                     'de' => [
-                        '100.000 API-Anfragen / Monat',
+                        'Unbegrenzte API-Anfragen',
                         '50 GB Datenvolumen (Fair Use)',
                         '5 GB Asset-Speicher',
                         'Unbegrenzte Blocks, Inhalte, Nutzer, Sprachen',
                         '100.000 KI-Token / Monat',
                     ],
                     'default' => [
-                        '100,000 API requests / month',
+                        'Unlimited API requests',
                         '50 GB traffic (fair use)',
                         '5 GB asset storage',
                         'Unlimited blocks, content, users, languages',
@@ -101,7 +100,6 @@ class SetupPlansCommand extends Command
                 'yearly_price' => '190.00',
                 'period' => 'month',
                 'quotas' => [
-                    'requests' => 100_000,
                     'traffic' => 50 * $GB,
                     'storage' => 5 * $GB,
                     'aiCredit' => 5.0,
@@ -118,7 +116,7 @@ class SetupPlansCommand extends Command
                 ],
                 'features' => [
                     'en' => [
-                        '500,000 API requests / month',
+                        'Unlimited API requests',
                         '250 GB traffic (fair use)',
                         '25 GB asset storage',
                         'Unlimited blocks, content, users, languages',
@@ -126,7 +124,7 @@ class SetupPlansCommand extends Command
                         'Email support',
                     ],
                     'de' => [
-                        '500.000 API-Anfragen / Monat',
+                        'Unbegrenzte API-Anfragen',
                         '250 GB Datenvolumen (Fair Use)',
                         '25 GB Asset-Speicher',
                         'Unbegrenzte Blocks, Inhalte, Nutzer, Sprachen',
@@ -134,7 +132,7 @@ class SetupPlansCommand extends Command
                         'E-Mail-Support',
                     ],
                     'default' => [
-                        '500,000 API requests / month',
+                        'Unlimited API requests',
                         '250 GB traffic (fair use)',
                         '25 GB asset storage',
                         'Unlimited blocks, content, users, languages',
@@ -146,7 +144,6 @@ class SetupPlansCommand extends Command
                 'yearly_price' => '490.00',
                 'period' => 'month',
                 'quotas' => [
-                    'requests' => 500_000,
                     'traffic' => 250 * $GB,
                     'storage' => 25 * $GB,
                     'aiCredit' => 15.0,
@@ -164,7 +161,7 @@ class SetupPlansCommand extends Command
                 ],
                 'features' => [
                     'en' => [
-                        '1,500,000 API requests / month',
+                        'Unlimited API requests',
                         '500 GB traffic (fair use)',
                         '50 GB asset storage',
                         'Unlimited blocks, content, users, languages',
@@ -172,7 +169,7 @@ class SetupPlansCommand extends Command
                         '24-hour technical support',
                     ],
                     'de' => [
-                        '1.500.000 API-Anfragen / Monat',
+                        'Unbegrenzte API-Anfragen',
                         '500 GB Datenvolumen (Fair Use)',
                         '50 GB Asset-Speicher',
                         'Unbegrenzte Blocks, Inhalte, Nutzer, Sprachen',
@@ -180,7 +177,7 @@ class SetupPlansCommand extends Command
                         '24h technischer Support',
                     ],
                     'default' => [
-                        '1,500,000 API requests / month',
+                        'Unlimited API requests',
                         '500 GB traffic (fair use)',
                         '50 GB asset storage',
                         'Unlimited blocks, content, users, languages',
@@ -192,7 +189,6 @@ class SetupPlansCommand extends Command
                 'yearly_price' => '990.00',
                 'period' => 'month',
                 'quotas' => [
-                    'requests' => 1_500_000,
                     'traffic' => 500 * $GB,
                     'storage' => 50 * $GB,
                     'aiCredit' => 40.0,
@@ -209,7 +205,7 @@ class SetupPlansCommand extends Command
                 ],
                 'features' => [
                     'en' => [
-                        '10,000,000 API requests / month',
+                        'Unlimited API requests',
                         '1,000 GB traffic (fair use)',
                         '100 GB asset storage',
                         'Unlimited blocks, content, users, languages',
@@ -217,7 +213,7 @@ class SetupPlansCommand extends Command
                         'Dedicated account manager',
                     ],
                     'de' => [
-                        '10.000.000 API-Anfragen / Monat',
+                        'Unbegrenzte API-Anfragen',
                         '1.000 GB Datenvolumen (Fair Use)',
                         '100 GB Asset-Speicher',
                         'Unbegrenzte Blocks, Inhalte, Nutzer, Sprachen',
@@ -225,7 +221,7 @@ class SetupPlansCommand extends Command
                         'Dedizierter Account Manager',
                     ],
                     'default' => [
-                        '10,000,000 API requests / month',
+                        'Unlimited API requests',
                         '1,000 GB traffic (fair use)',
                         '100 GB asset storage',
                         'Unlimited blocks, content, users, languages',
@@ -237,7 +233,6 @@ class SetupPlansCommand extends Command
                 'yearly_price' => '2490.00',
                 'period' => 'month',
                 'quotas' => [
-                    'requests' => 10_000_000,
                     'traffic' => 1000 * $GB,
                     'storage' => 100 * $GB,
                     'aiCredit' => 150.0,

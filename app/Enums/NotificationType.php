@@ -17,4 +17,5 @@ enum NotificationType: string
     case InviteToTeam = 'invite.team';
     case UsageWarning = 'usage.warning';
     case UsageExceeded = 'usage.exceeded';
+    case PaymentRequested = 'billing.payment_requested';
 }

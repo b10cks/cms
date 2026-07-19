@@ -19,12 +19,14 @@ const props = withDefaults(
 )
 
 const delegatedProps = computed(() => {
-  const { class: _, variant: __, ...delegated } = props
+  const { class: _, variant: __, modelValue: ___, ...delegated } = props
 
   return delegated
 })
 
-// Percentages can exceed 100 (soft quotas) — the bar itself stays full.
+// Percentages can exceed 100 (soft quotas) — the bar itself stays full. The
+// clamped value is also what reaches reka-ui: its ProgressRoot rejects values
+// beyond max (console error + reset to indeterminate).
 const clamped = computed(() => Math.min(100, Math.max(0, props.modelValue ?? 0)))
 
 const indicatorClass = computed(
@@ -40,6 +42,7 @@ const indicatorClass = computed(
 <template>
   <ProgressRoot
     v-bind="delegatedProps"
+    :model-value="clamped"
     :class="cn('relative h-2 w-full overflow-hidden rounded-full bg-secondary', props.class)"
   >
     <ProgressIndicator

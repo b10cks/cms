@@ -8,6 +8,7 @@ enum SpaceRoleKey: string
     case ADMIN = 'admin';
     case EDITOR = 'editor';
     case MEMBER = 'member';
+    case BILLING = 'billing';
     case VIEWER = 'viewer';
 
     public static function values(): array

@@ -30,6 +30,22 @@ interface SubscriptionResource {
   updated_at: string
 }
 
+type PlanProposalStatus = 'open' | 'accepted' | 'revoked' | 'expired'
+
+/** A payment request (agency flow): a plan proposed for someone else to pay. */
+interface PlanProposalResource {
+  id: string
+  plan_id: string
+  plan: PlanResource | null
+  billing_interval: BillingInterval
+  invited_email: string
+  created_by: string | null
+  creator_name: string | null
+  status: PlanProposalStatus
+  expires_at: string | null
+  created_at: string | null
+}
+
 interface CheckoutResponse {
   checkout_url: string | null
   upgraded?: boolean

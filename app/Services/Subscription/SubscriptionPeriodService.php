@@ -2,6 +2,7 @@
 
 namespace App\Services\Subscription;
 
+use App\Actions\Subscription\ActivateDirectSubscription;
 use App\Enums\SubscriptionStatus;
 use App\Models\Management\Plan;
 use App\Models\Management\Space;
@@ -22,6 +23,9 @@ use Illuminate\Support\Facades\Log;
  */
 class SubscriptionPeriodService
 {
+    /** Memoized within one instance — the reconcile command reuses it across spaces. */
+    private ?Plan $freePlan = null;
+
     public function __construct(
         private readonly SpaceUsageService $usage,
         private readonly SpaceAiUsageService $aiUsage,
@@ -40,9 +44,7 @@ class SubscriptionPeriodService
                 $this->close($space, $open, $reason);
             }
 
-            if ($subscription) {
-                $this->enrollFreePlan($space);
-            }
+            $this->enrollFreePlan($space);
 
             return;
         }
@@ -141,19 +143,19 @@ class SubscriptionPeriodService
                 $this->usage->rawTraffic($space, $start, $endedAt)
                 + $this->usage->rawDownloads($space, $start, $endedAt)
             )),
-            'requests_count' => $this->safeMetric(fn () => (int) round($this->usage->rawRequests($space, $start, $endedAt))),
             'ai_spend_usd' => $this->safeMetric(fn () => $this->aiUsage->spendForWindow($space, $start, $endedAt)),
         ];
     }
 
     /**
      * A space whose subscription lapsed (expired, unpaid, cancellation grace ran
-     * out) is enrolled on the free plan so it keeps sane quotas. Creating the
-     * subscription re-triggers reconciliation, which then opens the new period.
+     * out) — or that has no subscription at all — is enrolled on the free plan
+     * so it keeps sane quotas. Creating the subscription re-triggers
+     * reconciliation, which then opens the new period.
      */
     private function enrollFreePlan(Space $space): void
     {
-        $plan = Plan::query()
+        $plan = $this->freePlan ??= Plan::query()
             ->where('is_free', true)
             ->where('is_active', true)
             ->orderBy('sort_order')
@@ -172,21 +174,7 @@ class SubscriptionPeriodService
             return;
         }
 
-        Subscription::updateOrCreate(
-            ['space_id' => $space->id, 'plan_id' => $plan->id],
-            [
-                'name' => $plan->getTranslatedName() ?? 'Free',
-                'status' => SubscriptionStatus::Active->value,
-                'lemon_squeezy_id' => null,
-                'ls_customer_id' => null,
-                'variant_id' => '',
-                'product_id' => '',
-                'quantity' => 1,
-                'billing_interval' => 'month',
-                'quotas' => null,
-                'ends_at' => null,
-            ]
-        );
+        app(ActivateDirectSubscription::class)->execute($space->id, $plan);
     }
 
     /**

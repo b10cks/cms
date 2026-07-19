@@ -100,6 +100,8 @@ function uiSidebar(prefix = ''): DefaultTheme.SidebarItem[] {
         { text: 'Automations', link: `${prefix}/ui/automations` },
         { text: 'Audit Logs', link: `${prefix}/ui/audit-logs` },
         { text: 'Space Settings', link: `${prefix}/ui/settings` },
+        { text: 'Subscription & Billing', link: `${prefix}/ui/subscription` },
+        { text: 'Agency Billing', link: `${prefix}/ui/agency-billing` },
         { text: 'Account, Teams & Spaces', link: `${prefix}/ui/account` },
       ]),
     },

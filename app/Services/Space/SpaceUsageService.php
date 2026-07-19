@@ -3,7 +3,6 @@
 namespace App\Services\Space;
 
 use App\Models\Management\Space;
-use App\Models\Management\SpaceApiHitHourly;
 use App\Models\Management\SpaceDownloadUsageHourly;
 use App\Models\Management\SpaceTrafficUsageHourly;
 use App\Models\Space\Asset;
@@ -14,10 +13,10 @@ use Illuminate\Support\Facades\Cache;
 
 /**
  * Aggregates a space's consumption for each plan quota dimension (storage,
- * traffic, requests, AI spend) measured against the limits of the space's
- * current subscription. Traffic/requests are summed over the current calendar
- * month (matching the "per month" quotas); storage is a live footprint; AI
- * spend is delegated to {@see SpaceAiUsageService} (live OpenRouter usage).
+ * traffic, AI spend) measured against the limits of the space's current
+ * subscription. Traffic is summed over the current calendar month (matching
+ * the "per month" quotas); storage is a live footprint; AI spend is delegated
+ * to {@see SpaceAiUsageService} (live OpenRouter usage).
  */
 class SpaceUsageService
 {
@@ -29,9 +28,13 @@ class SpaceUsageService
     ) {}
 
     /**
-     * @return array{storage: UsageMetricDto, traffic: UsageMetricDto, downloads: UsageMetricDto, requests: UsageMetricDto, ai: UsageMetricDto, period: array{start: string, end: string, resets_at: string}}
+     * `$withAi = false` skips the live OpenRouter fetch (the AI metric comes
+     * back `available: false`) — for callers like the quota sweep that don't
+     * need AI spend and shouldn't pay an external HTTP round-trip per space.
+     *
+     * @return array{storage: UsageMetricDto, traffic: UsageMetricDto, downloads: UsageMetricDto, ai: UsageMetricDto, period: array{start: string, end: string, resets_at: string}}
      */
-    public function forSpace(Space $space): array
+    public function forSpace(Space $space, bool $withAi = true): array
     {
         $subscription = $space->resolveCurrentSubscription();
         // Subscription snapshot wins over the plan definition. null = unlimited
@@ -48,8 +51,9 @@ class SpaceUsageService
             'storage' => $this->storage($space, $this->quota($quotas, 'storage')),
             'traffic' => $this->traffic($space, $periodStart, $periodEnd, $this->quota($quotas, 'traffic'), $downloadBytes),
             'downloads' => new UsageMetricDto('downloads', 'bytes', $downloadBytes, null),
-            'requests' => $this->requests($space, $periodStart, $periodEnd, $this->quota($quotas, 'requests')),
-            'ai' => $this->ai($space, $this->quota($quotas, 'aiCredit')),
+            'ai' => $withAi
+                ? $this->ai($space, $this->quota($quotas, 'aiCredit'))
+                : new UsageMetricDto('ai', 'usd', 0.0, $this->quota($quotas, 'aiCredit'), available: false),
             'period' => [
                 'start' => $periodStart->toIso8601String(),
                 'end' => $periodEnd->toIso8601String(),
@@ -94,14 +98,6 @@ class SpaceUsageService
             ->sum('bytes_sent');
     }
 
-    /** Total API requests within the window. */
-    public function rawRequests(Space $space, Carbon $start, Carbon $end): float
-    {
-        return (float) SpaceApiHitHourly::where('space_id', $space->id)
-            ->whereBetween('hour_timestamp', [$start, $end])
-            ->sum('hit_count');
-    }
-
     private function storage(Space $space, ?float $limit): UsageMetricDto
     {
         return new UsageMetricDto('storage', 'bytes', $this->rawStorage($space), $limit);
@@ -114,11 +110,6 @@ class SpaceUsageService
         $used = $this->rawTraffic($space, $start, $end) + $downloadBytes;
 
         return new UsageMetricDto('traffic', 'bytes', $used, $limit);
-    }
-
-    private function requests(Space $space, Carbon $start, Carbon $end, ?float $limit): UsageMetricDto
-    {
-        return new UsageMetricDto('requests', 'count', $this->rawRequests($space, $start, $end), $limit);
     }
 
     private function ai(Space $space, ?float $limit): UsageMetricDto

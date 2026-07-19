@@ -24,6 +24,7 @@ const { useCreateSpaceMutation } = useSpaces()
 const { mutate: createSpace, isPending } = useCreateSpaceMutation()
 const { t } = useI18n()
 const { usePlansQuery } = usePlans()
+const { checkoutInterval } = usePlanPricing()
 const { data: plans, isLoading: plansLoading } = usePlansQuery()
 const { useAvailableSpaceBlueprintsQuery } = useSpaceBlueprints()
 const { selectedTeam, hasSelectedTeam, isValidSelection } = useGlobalTeam()
@@ -159,8 +160,9 @@ const handleNext = async () => {
     team_id: selectedTeam.value.id,
     badge: spaceBadge.value || null,
     plan_id: selectedPlanId.value,
-    billing_interval:
-      billingInterval.value === 'year' && selectedPlan.value?.yearly_price ? 'year' : 'month',
+    billing_interval: selectedPlan.value
+      ? checkoutInterval(selectedPlan.value, billingInterval.value)
+      : 'month',
     blueprint_id: selectedBlueprintId.value || null,
     settings: {
       region: serverLocation.value || 'eu',

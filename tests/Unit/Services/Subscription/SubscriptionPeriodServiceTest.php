@@ -4,7 +4,6 @@ namespace Tests\Unit\Services\Subscription;
 
 use App\Models\Management\Plan;
 use App\Models\Management\Space;
-use App\Models\Management\SpaceApiHitHourly;
 use App\Models\Management\SpaceTrafficUsageHourly;
 use App\Models\Management\Subscription;
 use App\Services\Subscription\SubscriptionPeriodService;
@@ -38,7 +37,7 @@ class SubscriptionPeriodServiceTest extends TestCase
             'name' => ['en' => 'Pro', 'default' => 'Pro'],
             'price' => 10,
             'period' => 'month',
-            'quotas' => ['storage' => 1000, 'traffic' => 2000, 'requests' => 100, 'aiCredit' => 5.0],
+            'quotas' => ['storage' => 1000, 'traffic' => 2000, 'aiCredit' => 5.0],
             'is_free' => false,
             'is_active' => true,
         ], $overrides));
@@ -203,11 +202,6 @@ class SubscriptionPeriodServiceTest extends TestCase
             'cache_hits' => 0,
             'cache_misses' => 0,
         ]);
-        SpaceApiHitHourly::create([
-            'space_id' => $space->id,
-            'hour_timestamp' => now()->subDays(2),
-            'hit_count' => 33,
-        ]);
 
         $this->service()->reconcile($space);
 
@@ -215,7 +209,6 @@ class SubscriptionPeriodServiceTest extends TestCase
         $this->assertSame('cancelled', $period->close_reason);
         $this->assertSame(750, $period->storage_bytes);
         $this->assertSame(1000, $period->traffic_bytes);
-        $this->assertSame(33, $period->requests_count);
         $this->assertSame('0.000000', $period->ai_spend_usd);
     }
 
@@ -227,7 +220,7 @@ class SubscriptionPeriodServiceTest extends TestCase
             'name' => ['en' => 'Free', 'default' => 'Free'],
             'price' => 0,
             'is_free' => true,
-            'quotas' => ['requests' => 100],
+            'quotas' => ['traffic' => 100],
         ]);
         $subscription = $this->subscription($space, $this->plan(), ['status' => 'expired']);
 
@@ -238,7 +231,26 @@ class SubscriptionPeriodServiceTest extends TestCase
         $this->assertNotNull($enrolled);
         $this->assertSame('active', $enrolled->status);
         $this->assertNull($enrolled->quotas);
-        $this->assertSame(['requests' => 100], $enrolled->effectiveQuotas());
+        $this->assertSame(['traffic' => 100], $enrolled->effectiveQuotas());
+    }
+
+    #[Test]
+    public function a_space_without_any_subscription_is_enrolled_on_the_free_plan(): void
+    {
+        $space = Space::factory()->create();
+        $free = $this->plan([
+            'name' => ['en' => 'Free', 'default' => 'Free'],
+            'price' => 0,
+            'is_free' => true,
+            'quotas' => ['traffic' => 100],
+        ]);
+
+        $this->service()->reconcile($space);
+
+        $enrolled = $space->subscriptions()->where('plan_id', $free->id)->first();
+        $this->assertNotNull($enrolled);
+        $this->assertSame('active', $enrolled->status);
+        $this->assertSame(['traffic' => 100], $enrolled->effectiveQuotas());
     }
 
     #[Test]

@@ -38,7 +38,18 @@ return [
     'usageMetrics' => [
         'storage' => '스토리지',
         'traffic' => '트래픽',
-        'requests' => 'API 요청',
         'ai' => 'AI 크레딧',
+    ],
+    'billingIntervals' => [
+        'month' => '월',
+        'year' => '년',
+    ],
+    'paymentRequested' => [
+        'subject' => ':space에 대한 결제 요청',
+        'intro' => '<strong>:requester</strong> 님이 <strong>:space</strong> 스페이스의 구독을 인수해 달라고 요청했습니다.',
+        'detail' => '제안된 플랜: :plan (€:price / :interval). 회원님이 결제 담당자가 되어 모든 청구서를 받게 됩니다.',
+        'action' => '확인 및 결제',
+        'outro' => '이 플랜이 맞지 않으면 구독 페이지에서 다른 플랜을 선택할 수 있습니다.',
+        'inviteMessage' => ':requester 님이 ":space"의 구독 인수를 요청했습니다 (플랜: :plan). 참여 후 스페이스의 구독 설정을 열어 결제를 완료해 주세요.',
     ],
 ];

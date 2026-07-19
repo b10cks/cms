@@ -38,7 +38,18 @@ return [
     'usageMetrics' => [
         'storage' => 'almacenamiento',
         'traffic' => 'tráfico',
-        'requests' => 'solicitudes de API',
         'ai' => 'créditos de IA',
+    ],
+    'billingIntervals' => [
+        'month' => 'mes',
+        'year' => 'año',
+    ],
+    'paymentRequested' => [
+        'subject' => 'Pago solicitado para :space',
+        'intro' => '<strong>:requester</strong> te pide que te hagas cargo de la suscripción del espacio <strong>:space</strong>.',
+        'detail' => 'Plan propuesto: :plan por :price € / :interval. Pasarás a ser el titular de la facturación y recibirás todas las facturas.',
+        'action' => 'Revisar y pagar',
+        'outro' => 'Puedes elegir otro plan en la página de suscripción si este no encaja.',
+        'inviteMessage' => ':requester te pide que te hagas cargo de la suscripción de «:space» (plan: :plan). Tras unirte, abre los ajustes de suscripción del espacio para completar el pago.',
     ],
 ];

@@ -30,7 +30,6 @@ use Illuminate\Support\Carbon;
  * @property string|null $close_reason
  * @property int|null $storage_bytes
  * @property int|null $traffic_bytes
- * @property int|null $requests_count
  * @property string|null $ai_spend_usd
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -61,7 +60,6 @@ class SubscriptionPeriod extends GlobalModel
         'close_reason',
         'storage_bytes',
         'traffic_bytes',
-        'requests_count',
         'ai_spend_usd',
     ];
 
@@ -73,7 +71,6 @@ class SubscriptionPeriod extends GlobalModel
         'ended_at' => 'datetime',
         'storage_bytes' => 'integer',
         'traffic_bytes' => 'integer',
-        'requests_count' => 'integer',
         'ai_spend_usd' => 'decimal:6',
     ];
 

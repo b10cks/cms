@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property-read array{storage: UsageMetricDto, traffic: UsageMetricDto, downloads?: UsageMetricDto, requests: UsageMetricDto, ai: UsageMetricDto, period: array} $resource
+ * @property-read array{storage: UsageMetricDto, traffic: UsageMetricDto, downloads?: UsageMetricDto, ai: UsageMetricDto, period: array} $resource
  */
 class SpaceUsageResource extends JsonResource
 {
@@ -22,7 +22,6 @@ class SpaceUsageResource extends JsonResource
                 isset($this->resource['downloads']),
                 fn () => $this->resource['downloads']->toArray()
             ),
-            'requests' => $this->resource['requests']->toArray(),
             'ai' => $this->resource['ai']->toArray(),
             'period' => $this->resource['period'],
         ];

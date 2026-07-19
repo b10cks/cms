@@ -94,7 +94,7 @@ class PlanAiKeyResolverTest extends TestCase
     #[Test]
     public function a_plan_with_no_ai_credit_is_not_eligible(): void
     {
-        $plan = new Plan(['is_free' => true, 'quotas' => ['requests' => 1000]]);
+        $plan = new Plan(['is_free' => true, 'quotas' => ['traffic' => 1000]]);
         $subscription = $this->subscription(['status' => 'active'], $plan);
 
         $spec = (new PlanAiKeyResolver())->resolve($this->space($subscription));

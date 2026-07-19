@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Mgmt;
 
+use App\Actions\Subscription\ActivateDirectSubscription;
 use App\Actions\Subscription\SyncSubscriptionFromLemonSqueezy;
 use App\Enums\SubscriptionStatus;
 use App\Http\Controllers\Controller;
@@ -10,6 +11,7 @@ use App\Models\Management\Plan;
 use App\Models\Management\Space;
 use App\Models\Management\Subscription;
 use App\Services\LemonSqueezy\LemonSqueezyService;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -129,12 +131,13 @@ class SpaceSubscriptionController extends Controller
             ], 409);
         }
 
-        // Already on this exact plan and interval — nothing to buy.
+        // Already on this exact plan and interval, in good standing — nothing to
+        // buy. Deliberately limited to the paid-up statuses: past_due/unpaid must
+        // be able to re-enter the payment flow, cancelled-with-grace resumes.
         $existingActive = Subscription::where('space_id', $space->id)
             ->where('plan_id', $plan->id)
             ->where('billing_interval', $interval)
-            ->active()
-            ->whereNot('status', SubscriptionStatus::Cancelled->value)
+            ->whereIn('status', SubscriptionStatus::activeValues())
             ->first();
 
         if ($existingActive) {
@@ -156,17 +159,24 @@ class SpaceSubscriptionController extends Controller
                     $this->ls->resumeSubscription($existingPaid->lemon_squeezy_id);
                 }
 
-                $this->ls->changeSubscriptionVariant($existingPaid->lemon_squeezy_id, $variantId);
-                $existingPaid->update([
-                    'plan_id' => $plan->id,
-                    'variant_id' => $variantId,
-                    'product_id' => $plan->ls_product_id ?? $existingPaid->product_id,
-                    'billing_interval' => $interval,
-                    'status' => SubscriptionStatus::Active->value,
-                    // Custom quota overrides don't survive a plan switch.
-                    'quotas' => $existingPaid->plan_id === $plan->id ? $existingPaid->quotas : null,
-                    'name' => $plan->getTranslatedName() ?? 'Subscription',
-                ]);
+                $response = $this->ls->changeSubscriptionVariant($existingPaid->lemon_squeezy_id, $variantId);
+
+                if (! empty($response)) {
+                    // The LS response is authoritative — in particular for status:
+                    // a past_due subscription must not be masked as active just
+                    // because the plan switched.
+                    $this->sync->fromWebhook($response, $space->id, $existingPaid->id);
+                } else {
+                    $existingPaid->update([
+                        'plan_id' => $plan->id,
+                        'variant_id' => $variantId,
+                        'product_id' => $plan->ls_product_id ?? $existingPaid->product_id,
+                        'billing_interval' => $interval,
+                        // Custom quota overrides don't survive a plan switch.
+                        'quotas' => $existingPaid->plan_id === $plan->id ? $existingPaid->quotas : null,
+                        'name' => $plan->getTranslatedName() ?? 'Subscription',
+                    ]);
+                }
 
                 return response()->json(['checkout_url' => null, 'upgraded' => true]);
             } catch (\Throwable $e) {
@@ -275,6 +285,28 @@ class SpaceSubscriptionController extends Controller
     }
 
     /**
+     * Discard an abandoned pending checkout. A pending subscription blocks new
+     * checkouts (deliberately), so this is the way out when the user changed
+     * their mind instead of completing the payment.
+     */
+    public function discardPending(Space $space): JsonResponse
+    {
+        $this->authorize('manageBilling', $space);
+
+        // Only checkouts that never reached LemonSqueezy — a pending row with an
+        // LS id is mid-webhook and resolves on its own.
+        Subscription::where('space_id', $space->id)
+            ->where('status', SubscriptionStatus::Pending->value)
+            ->whereNull('lemon_squeezy_id')
+            ->update([
+                'status' => SubscriptionStatus::Expired->value,
+                'ends_at' => now(),
+            ]);
+
+        return response()->json(null, 204);
+    }
+
+    /**
      * Cancel the active subscription at period end. Entitlements continue until
      * the end of the paid period (grace), then the space falls back to Free.
      */
@@ -297,7 +329,7 @@ class SpaceSubscriptionController extends Controller
         }
 
         try {
-            $response = $this->ls->cancelSubscription($subscription->lemon_squeezy_id);
+            $response = $this->cancelAtLemonSqueezy($subscription);
             $this->syncCancellation($subscription, $response);
 
             return response()->json(['message' => 'Subscription cancelled. Access continues until the end of the billing period.']);
@@ -364,6 +396,22 @@ class SpaceSubscriptionController extends Controller
      */
     private function switchToFreePlan(Space $space, Plan $plan): JsonResponse
     {
+        // Already cancelled but paid through the period: keep the remaining
+        // grace — reconciliation auto-enrolls Free once it lapses. Creating the
+        // free subscription now would forfeit days the user already paid for.
+        $inGrace = Subscription::where('space_id', $space->id)
+            ->where('status', SubscriptionStatus::Cancelled->value)
+            ->where('ends_at', '>', now())
+            ->exists();
+
+        if ($inGrace) {
+            return response()->json([
+                'checkout_url' => null,
+                'scheduled' => true,
+                'message' => 'Your paid plan stays active until the end of the billing period, then the space switches to Free.',
+            ]);
+        }
+
         $existing = Subscription::where('space_id', $space->id)
             ->whereIn('status', SubscriptionStatus::liveValues())
             ->whereNotNull('lemon_squeezy_id')
@@ -371,7 +419,7 @@ class SpaceSubscriptionController extends Controller
 
         if ($existing) {
             try {
-                $response = $this->ls->cancelSubscription($existing->lemon_squeezy_id);
+                $response = $this->cancelAtLemonSqueezy($existing);
                 $this->syncCancellation($existing, $response);
 
                 return response()->json([
@@ -390,28 +438,36 @@ class SpaceSubscriptionController extends Controller
             }
         }
 
-        Subscription::updateOrCreate(
-            ['space_id' => $space->id, 'plan_id' => $plan->id],
-            [
-                'name' => $plan->getTranslatedName() ?? 'Free',
-                'status' => SubscriptionStatus::Active->value,
-                'lemon_squeezy_id' => null,
-                'ls_customer_id' => null,
-                'variant_id' => '',
-                'product_id' => '',
-                'quantity' => 1,
-                'billing_interval' => 'month',
-                'ends_at' => null,
-            ]
-        );
+        app(ActivateDirectSubscription::class)->execute($space->id, $plan);
 
         return response()->json(['checkout_url' => null]);
     }
 
     /**
+     * Cancel at LemonSqueezy, treating a client error (the subscription is
+     * already terminal on their side, e.g. unpaid or expired) as "nothing to
+     * cancel remotely" so the local downgrade still proceeds.
+     */
+    private function cancelAtLemonSqueezy(Subscription $subscription): array
+    {
+        try {
+            return $this->ls->cancelSubscription($subscription->lemon_squeezy_id);
+        } catch (ClientException $e) {
+            Log::warning('LS refused cancellation; treating subscription as already terminal', [
+                'space_id' => $subscription->space_id,
+                'ls_id' => $subscription->lemon_squeezy_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
+    }
+
+    /**
      * Reflect an LS cancellation locally. Prefers the authoritative LS response
      * (it carries the period-end `ends_at`); falls back to marking the record
-     * cancelled with the renewal date as the grace boundary.
+     * cancelled with the renewal date as the grace boundary. A subscription that
+     * was not entitlement-granting (unpaid, paused) gets no grace.
      */
     private function syncCancellation(Subscription $subscription, array $lsResponse): void
     {
@@ -423,7 +479,9 @@ class SpaceSubscriptionController extends Controller
 
         $subscription->update([
             'status' => SubscriptionStatus::Cancelled->value,
-            'ends_at' => $subscription->ends_at ?? $subscription->renews_at ?? now(),
+            'ends_at' => $subscription->isActive()
+                ? ($subscription->ends_at ?? $subscription->renews_at ?? now())
+                : now(),
         ]);
     }
 }

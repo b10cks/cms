@@ -22,16 +22,13 @@ export function useUsageHistory(spaceIdRef: MaybeRef<string> | ComputedRef<strin
     })
   }
 
-  const useUsageTimeseriesQuery = (
-    periodId: MaybeRef<string | null>,
-    metric: MaybeRef<UsageTimeseriesMetric>
-  ) => {
+  const useUsageTimeseriesQuery = (periodId: MaybeRef<string | null>) => {
     return useQuery({
       queryKey: computed(() =>
-        queryKeys.usageHistory(spaceId.value).timeseries(unref(periodId) ?? '', unref(metric))
+        queryKeys.usageHistory(spaceId.value).timeseries(unref(periodId) ?? '')
       ),
       queryFn: async () => {
-        const response = await spaceAPI.value.usage.timeseries(unref(periodId)!, unref(metric))
+        const response = await spaceAPI.value.usage.timeseries(unref(periodId)!)
         return response.data
       },
       enabled: computed(() => !!spaceId.value && !!unref(periodId)),

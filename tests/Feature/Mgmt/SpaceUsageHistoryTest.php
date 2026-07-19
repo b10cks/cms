@@ -35,7 +35,7 @@ class SpaceUsageHistoryTest extends TestCase
     {
         $this->space->subscriptionPeriods()->create(array_merge([
             'plan_name' => 'Pro',
-            'quotas' => ['storage' => 1000, 'traffic' => 2000, 'requests' => 100, 'aiCredit' => 5.0],
+            'quotas' => ['storage' => 1000, 'traffic' => 2000, 'aiCredit' => 5.0],
             'price' => 10,
             'billing_period' => 'month',
             'status' => 'active',
@@ -53,7 +53,6 @@ class SpaceUsageHistoryTest extends TestCase
             'close_reason' => 'upgraded',
             'storage_bytes' => 500,
             'traffic_bytes' => 1000,
-            'requests_count' => 50,
             'ai_spend_usd' => 2.5,
         ]);
         $this->period(['started_at' => now()]); // current, open
@@ -89,23 +88,12 @@ class SpaceUsageHistoryTest extends TestCase
         }
 
         $this->actingAs($this->owner);
-        $response = $this->getJson(route('mgmt.spaces.usage.history.timeseries', [$this->space, $period]).'?metric=traffic');
+        $response = $this->getJson(route('mgmt.spaces.usage.history.timeseries', [$this->space, $period]));
 
         $response->assertOk();
         $response->assertJsonPath('data.metric', 'traffic');
         // Two rows on one day (200), one on another (100) => two buckets.
         $response->assertJsonCount(2, 'data.points');
-    }
-
-    #[Test]
-    public function timeseries_rejects_an_unknown_metric(): void
-    {
-        $this->period();
-        $period = $this->space->subscriptionPeriods()->first();
-
-        $this->actingAs($this->owner);
-        $this->getJson(route('mgmt.spaces.usage.history.timeseries', [$this->space, $period]).'?metric=bogus')
-            ->assertStatus(422);
     }
 
     #[Test]

@@ -36,16 +36,18 @@ class UsageAlertService
     public function check(Space $space): int
     {
         $subscription = $space->resolveCurrentSubscription();
+        $quotas = $subscription?->effectiveQuotas() ?? [];
 
-        if (! $subscription || ! $subscription->isActive() || $subscription->effectiveQuotas() === []) {
+        if (! $subscription || ! $subscription->isActive() || $quotas === []) {
             return 0;
         }
 
-        $usage = $this->usage->forSpace($space);
+        // Only pay the live OpenRouter round-trip when AI spend is actually capped.
+        $usage = $this->usage->forSpace($space, withAi: ($quotas['aiCredit'] ?? null) !== null);
         $periodKey = now()->format('Y-m');
         $sent = 0;
 
-        foreach (['storage', 'traffic', 'requests', 'ai'] as $key) {
+        foreach (['storage', 'traffic', 'ai'] as $key) {
             $metric = $usage[$key];
 
             if ($metric->unlimited() || ! $metric->available || $metric->limit <= 0) {

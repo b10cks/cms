@@ -30,8 +30,9 @@ class ReconcileSubscriptionPeriods extends Command
         $processed = 0;
         $failed = 0;
 
-        Space::whereHas('subscriptions')
-            ->orWhereHas('subscriptionPeriods', fn ($q) => $q->whereNull('ended_at'))
+        // All spaces, deliberately: a space without any subscription row must
+        // also be reconciled so the free-plan safety net can enroll it.
+        Space::query()
             ->chunkById(100, function ($spaces) use ($periods, $dryRun, &$processed, &$failed) {
                 foreach ($spaces as $space) {
                     if ($dryRun) {

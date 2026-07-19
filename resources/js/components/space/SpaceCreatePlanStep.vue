@@ -33,11 +33,7 @@ const { t } = useI18n()
 
 const anyYearlyPlan = computed(() => props.plans?.some((plan) => !!plan.yearly_price) ?? false)
 
-const planPrice = (plan: PlanResource) =>
-  billingInterval.value === 'year' && plan.yearly_price ? plan.yearly_price : plan.price
-
-const planPeriodKey = (plan: PlanResource) =>
-  billingInterval.value === 'year' && plan.yearly_price ? 'year' : plan.period
+const { planPrice, planPeriodKey } = usePlanPricing()
 
 const recommendedPlan = computed(() => {
   return (
@@ -148,14 +144,14 @@ const handleCardClick = (plan: PlanResource) => {
                     ? $t('labels.plans.onRequest')
                     : plan.is_free
                       ? $t('labels.plans.free')
-                      : `€${planPrice(plan)}`
+                      : `€${planPrice(plan, billingInterval)}`
                 }}
               </div>
               <div
                 v-if="!plan.contact_url"
                 class="text-sm text-text-muted"
               >
-                {{ $t(`labels.plans.period.${planPeriodKey(plan)}`) }}
+                {{ $t(`labels.plans.period.${planPeriodKey(plan, billingInterval)}`) }}
               </div>
             </div>
 

@@ -341,6 +341,16 @@ return [
                     'icons.view',
                 ],
             ],
+            'billing' => [
+                'name' => 'Billing',
+                'description' => 'Billing only: view and manage the space\'s plan, payment, and invoices.',
+                'level' => 110,
+                'abilities' => [
+                    'space.view',
+                    'space.billing.view',
+                    'space.billing.manage',
+                ],
+            ],
             'viewer' => [
                 'name' => 'Viewer',
                 'description' => 'Read-only access to the space.',

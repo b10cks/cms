@@ -1,5 +1,4 @@
 interface PlanQuotas {
-  requests: number | null // API requests per month
   traffic: number | null // bytes per month
   storage: number | null // bytes total
   aiCredit: number | null // AI spend cap (USD) per month

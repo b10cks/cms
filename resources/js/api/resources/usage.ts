@@ -15,12 +15,9 @@ export class Usage {
     return this.client.get<ApiCollectionResponse<SubscriptionPeriod>>(`${this.basePath}/history`)
   }
 
-  public async timeseries(
-    periodId: string,
-    metric: UsageTimeseriesMetric
-  ): Promise<ApiResponse<UsageTimeseries>> {
+  public async timeseries(periodId: string): Promise<ApiResponse<UsageTimeseries>> {
     return this.client.get<ApiResponse<UsageTimeseries>>(
-      `${this.basePath}/history/${periodId}/timeseries?metric=${metric}`
+      `${this.basePath}/history/${periodId}/timeseries`
     )
   }
 }

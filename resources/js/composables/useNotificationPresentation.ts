@@ -10,6 +10,7 @@ const TYPE_KEY_MAP: Record<string, string> = {
   'invite.team': 'inviteToTeam',
   'usage.warning': 'usageWarning',
   'usage.exceeded': 'usageExceeded',
+  'billing.payment_requested': 'paymentRequested',
 }
 
 const TYPE_ICON_MAP: Record<string, string> = {
@@ -19,6 +20,7 @@ const TYPE_ICON_MAP: Record<string, string> = {
   inviteToTeam: 'lucide:users',
   usageWarning: 'lucide:gauge',
   usageExceeded: 'lucide:triangle-alert',
+  paymentRequested: 'lucide:credit-card',
   unknown: 'lucide:bell',
 }
 
@@ -47,6 +49,8 @@ export function useNotificationPresentation() {
       team: d.team?.name ?? '',
       metric: metricLabel(d),
       percentage: d.percentage ?? 0,
+      requester: d.requester ?? '',
+      plan: d.plan?.name ?? '',
     }) as string
   }
 
@@ -59,6 +63,8 @@ export function useNotificationPresentation() {
       inviter: d.inviter?.display_name ?? '',
       metric: metricLabel(d),
       percentage: d.percentage ?? 0,
+      requester: d.requester ?? '',
+      plan: d.plan?.name ?? '',
     }) as string
   }
 
@@ -80,7 +86,12 @@ export function useNotificationPresentation() {
       return { name: 'account-settings-invites' }
     }
 
-    if ((n.type === 'usage.warning' || n.type === 'usage.exceeded') && d.space?.id) {
+    if (
+      (n.type === 'usage.warning' ||
+        n.type === 'usage.exceeded' ||
+        n.type === 'billing.payment_requested') &&
+      d.space?.id
+    ) {
       return { name: 'space-settings-subscription', params: { space: d.space.id } }
     }
 

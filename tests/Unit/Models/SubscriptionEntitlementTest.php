@@ -82,15 +82,15 @@ class SubscriptionEntitlementTest extends TestCase
             'name' => ['default' => 'Pro'],
             'price' => 10,
             'period' => 'month',
-            'quotas' => ['requests' => 1000],
+            'quotas' => ['traffic' => 1000],
             'is_free' => false,
             'is_active' => true,
         ]);
 
         $default = $this->subscription(['plan_id' => $plan->id, 'quotas' => null]);
-        $custom = $this->subscription(['plan_id' => $plan->id, 'quotas' => ['requests' => 5000]]);
+        $custom = $this->subscription(['plan_id' => $plan->id, 'quotas' => ['traffic' => 5000]]);
 
-        $this->assertSame(['requests' => 1000], $default->effectiveQuotas());
-        $this->assertSame(['requests' => 5000], $custom->effectiveQuotas());
+        $this->assertSame(['traffic' => 1000], $default->effectiveQuotas());
+        $this->assertSame(['traffic' => 5000], $custom->effectiveQuotas());
     }
 }

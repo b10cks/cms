@@ -24,7 +24,7 @@ class UsageThresholdNotification extends Notification implements ShouldQueue
 
     /**
      * @param  array{id: string, name: string}  $space
-     * @param  string  $metric  storage | traffic | requests | ai
+     * @param  string  $metric  storage | traffic | ai
      * @param  int  $threshold  the crossed threshold in percent (80, 100)
      * @param  int  $percentage  actual consumption in percent at check time
      * @param  string  $used  human-readable usage, e.g. "4.2 GB"

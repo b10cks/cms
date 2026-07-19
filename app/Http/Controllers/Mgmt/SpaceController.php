@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Mgmt;
 use App\Enums\SubscriptionStatus;
 
 use App\Actions\Space\CreateSpace;
+use App\Actions\Subscription\ActivateDirectSubscription;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\SpaceFilter;
 use App\Http\Requests\Space\CreateSpaceRequest;
@@ -20,6 +21,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class SpaceController extends Controller
 {
@@ -65,68 +67,71 @@ class SpaceController extends Controller
         $interval = $validated['billing_interval'] ?? 'month';
         unset($validated['plan_id'], $validated['billing_interval']);
 
+        // Validation guarantees the plan is active and public. Resolve the
+        // purchasability of a paid plan BEFORE creating the space — a paid plan
+        // whose LS variant is missing must fail loudly (mirroring checkout()),
+        // not silently grant an unpaid Active subscription.
+        $plan = $planId ? Plan::findOrFail($planId) : null;
+        $variantId = null;
+
+        if ($plan && ! $plan->is_free && $ls->isConfigured()) {
+            if ($interval === 'year' && ! $plan->supportsYearly()) {
+                throw ValidationException::withMessages([
+                    'billing_interval' => 'This plan does not offer yearly billing.',
+                ]);
+            }
+
+            $variantId = $plan->variantIdForInterval($interval);
+
+            if (empty($variantId)) {
+                throw ValidationException::withMessages([
+                    'plan_id' => 'This plan is not available for purchase.',
+                ]);
+            }
+        }
+
         $space = $action->execute($validated, auth()->user());
 
         $checkoutUrl = null;
 
-        if ($planId) {
-            $plan = Plan::find($planId);
+        if ($plan) {
+            if ($variantId === null) {
+                // Free plan, or payments not configured — activate immediately.
+                app(ActivateDirectSubscription::class)->execute($space->id, $plan);
+            } else {
+                // Create pending subscription first so its ID can be embedded in
+                // checkout customData — the stable link used by webhook and CLI sync.
+                $pending = Subscription::forceCreate([
+                    'space_id' => $space->id,
+                    'plan_id' => $plan->id,
+                    'name' => $plan->getTranslatedName() ?? 'Subscription',
+                    'status' => SubscriptionStatus::Pending->value,
+                    'lemon_squeezy_id' => null,
+                    'variant_id' => $variantId,
+                    'product_id' => $plan->ls_product_id ?? '',
+                    'quantity' => 1,
+                    'billing_interval' => $interval,
+                ]);
 
-            if ($plan && $plan->is_active && $plan->is_public) {
-                if ($interval === 'year' && ! $plan->supportsYearly()) {
-                    $interval = 'month';
-                }
-                $variantId = $plan->variantIdForInterval($interval);
+                try {
+                    $user = auth()->user();
+                    $redirectUrl = config('app.url') . "/{$space->slug}/settings/subscription";
 
-                if ($plan->is_free || !$ls->isConfigured() || empty($variantId)) {
-                    // Create free/default subscription immediately. Quotas stay
-                    // null — plan defaults resolve at read time.
-                    Subscription::forceCreate([
+                    $checkout = $ls->createCheckout(
+                        variantId: $variantId,
+                        email: $user->email,
+                        name: $user->display_name ?? $user->name ?? $user->email,
+                        customData: ['space_id' => $space->id, 'plan_id' => $plan->id, 'subscription_id' => $pending->id],
+                        redirectUrl: $redirectUrl,
+                    );
+
+                    $checkoutUrl = $checkout['checkout_url'];
+                } catch (\Throwable $e) {
+                    Log::error('Failed to create LS checkout on space creation', [
                         'space_id' => $space->id,
                         'plan_id' => $plan->id,
-                        'name' => $plan->getTranslatedName() ?? 'Free',
-                        'status' => SubscriptionStatus::Active->value,
-                        'lemon_squeezy_id' => null,
-                        'variant_id' => $plan->ls_variant_id ?? '',
-                        'product_id' => $plan->ls_product_id ?? '',
-                        'quantity' => 1,
-                        'billing_interval' => 'month',
+                        'error' => $e->getMessage(),
                     ]);
-                } else {
-                    // Create pending subscription first so its ID can be embedded in
-                    // checkout customData — the stable link used by webhook and CLI sync.
-                    $pending = Subscription::forceCreate([
-                        'space_id' => $space->id,
-                        'plan_id' => $plan->id,
-                        'name' => $plan->getTranslatedName() ?? 'Subscription',
-                        'status' => SubscriptionStatus::Pending->value,
-                        'lemon_squeezy_id' => null,
-                        'variant_id' => $variantId,
-                        'product_id' => $plan->ls_product_id ?? '',
-                        'quantity' => 1,
-                        'billing_interval' => $interval,
-                    ]);
-
-                    try {
-                        $user = auth()->user();
-                        $redirectUrl = config('app.url') . "/{$space->slug}/settings/subscription";
-
-                        $checkout = $ls->createCheckout(
-                            variantId: $variantId,
-                            email: $user->email,
-                            name: $user->display_name ?? $user->name ?? $user->email,
-                            customData: ['space_id' => $space->id, 'plan_id' => $plan->id, 'subscription_id' => $pending->id],
-                            redirectUrl: $redirectUrl,
-                        );
-
-                        $checkoutUrl = $checkout['checkout_url'];
-                    } catch (\Throwable $e) {
-                        Log::error('Failed to create LS checkout on space creation', [
-                            'space_id' => $space->id,
-                            'plan_id' => $plan->id,
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
                 }
             }
         }

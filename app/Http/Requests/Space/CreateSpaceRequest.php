@@ -45,7 +45,11 @@ class CreateSpaceRequest extends FormRequest
             'settings.asset_fields.*.key' => 'required|string|max:100',
             'settings.asset_fields.*.label' => 'required|string|max:100',
             'settings.asset_fields.*.required' => 'required|boolean',
-            'plan_id' => 'nullable|string|exists:plans,id',
+            'plan_id' => [
+                'nullable',
+                'string',
+                Rule::exists('plans', 'id')->where('is_active', true)->where('is_public', true),
+            ],
             'billing_interval' => ['nullable', 'string', Rule::in(['month', 'year'])],
             'blueprint_id' => [
                 'nullable',
@@ -67,6 +71,7 @@ class CreateSpaceRequest extends FormRequest
             'slug.regex' => 'The slug may only contain lowercase letters, numbers, and hyphens.',
             'color.regex' => 'The color must be a valid hex color code (e.g., #FF5733).',
             'blueprint_id.exists' => __('validation.blueprint.invalid'),
+            'plan_id.exists' => 'The selected plan is not available.',
         ];
     }
 

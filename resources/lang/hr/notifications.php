@@ -38,7 +38,18 @@ return [
     'usageMetrics' => [
         'storage' => 'pohranu',
         'traffic' => 'promet',
-        'requests' => 'API zahtjeve',
         'ai' => 'AI kredite',
+    ],
+    'billingIntervals' => [
+        'month' => 'mjesec',
+        'year' => 'godina',
+    ],
+    'paymentRequested' => [
+        'subject' => 'Zatražena uplata za :space',
+        'intro' => '<strong>:requester</strong> traži da preuzmete pretplatu za prostor <strong>:space</strong>.',
+        'detail' => 'Predloženi plan: :plan za :price € / :interval. Postat ćete vlasnik naplate i primati sve račune.',
+        'action' => 'Pregledaj i plati',
+        'outro' => 'Na stranici pretplate možete odabrati drugi plan ako vam ovaj ne odgovara.',
+        'inviteMessage' => ':requester traži da preuzmete pretplatu za „:space” (plan: :plan). Nakon pridruživanja otvorite postavke pretplate prostora kako biste dovršili plaćanje.',
     ],
 ];

@@ -38,7 +38,18 @@ return [
     'usageMetrics' => [
         'storage' => 'úložisko',
         'traffic' => 'prenos dát',
-        'requests' => 'API požiadavky',
         'ai' => 'AI kredity',
+    ],
+    'billingIntervals' => [
+        'month' => 'mesiac',
+        'year' => 'rok',
+    ],
+    'paymentRequested' => [
+        'subject' => 'Žiadosť o platbu pre :space',
+        'intro' => '<strong>:requester</strong> vás žiada o prevzatie predplatného priestoru <strong>:space</strong>.',
+        'detail' => 'Navrhovaný plán: :plan za :price € / :interval. Stanete sa vlastníkom fakturácie a budete dostávať všetky faktúry.',
+        'action' => 'Skontrolovať a zaplatiť',
+        'outro' => 'Ak vám tento plán nevyhovuje, na stránke predplatného si môžete vybrať iný.',
+        'inviteMessage' => ':requester vás žiada o prevzatie predplatného pre „:space“ (plán: :plan). Po pripojení otvorte nastavenia predplatného priestoru a dokončite platbu.',
     ],
 ];
