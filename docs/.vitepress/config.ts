@@ -12,6 +12,7 @@ function nav(prefix = ''): DefaultTheme.NavItem[] {
     { text: 'Concepts', link: `${prefix}/concepts/spaces`, activeMatch: `^${prefix}/concepts/` },
     { text: 'User Guide', link: `${prefix}/ui/dashboard`, activeMatch: `^${prefix}/ui/` },
     { text: 'API', link: `${prefix}/api/overview`, activeMatch: `^${prefix}/api/` },
+    { text: 'Self-hosting', link: `${prefix}/self-hosting/`, activeMatch: `^${prefix}/self-hosting/` },
   ]
 }
 
@@ -26,7 +27,6 @@ function guideSidebar(prefix = ''): DefaultTheme.SidebarItem[] {
       items: sorted([
         { text: 'Introduction', link: `${prefix}/getting-started/introduction` },
         { text: 'Quickstart', link: `${prefix}/getting-started/quickstart` },
-        { text: 'Self-hosting', link: `${prefix}/getting-started/self-hosting` },
       ]),
     },
     {
@@ -108,6 +108,20 @@ function uiSidebar(prefix = ''): DefaultTheme.SidebarItem[] {
   ]
 }
 
+function selfHostingSidebar(prefix = ''): DefaultTheme.SidebarItem[] {
+  return [
+    {
+      text: 'Self-hosting',
+      items: [
+        { text: 'Overview', link: `${prefix}/self-hosting/` },
+        { text: 'Installation', link: `${prefix}/self-hosting/installation` },
+        { text: 'Configuration', link: `${prefix}/self-hosting/configuration` },
+        { text: 'Plans & Pricing', link: `${prefix}/self-hosting/plans-and-pricing` },
+      ],
+    },
+  ]
+}
+
 function apiSidebar(prefix = ''): DefaultTheme.SidebarItem[] {
   return [
     {
@@ -143,6 +157,7 @@ function sidebar(prefix = ''): DefaultTheme.SidebarMulti {
     [`${prefix}/concepts/`]: conceptsSidebar(prefix),
     [`${prefix}/ui/`]: uiSidebar(prefix),
     [`${prefix}/api/`]: apiSidebar(prefix),
+    [`${prefix}/self-hosting/`]: selfHostingSidebar(prefix),
   }
 }
 

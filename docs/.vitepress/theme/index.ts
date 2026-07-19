@@ -4,6 +4,7 @@ import DefaultTheme from 'vitepress/theme'
 import { theme as openapiTheme } from 'vitepress-openapi/client'
 import 'vitepress-openapi/dist/style.css'
 import './custom.css'
+import IlumPlayground from './IlumPlayground.vue'
 import NavCta from './NavCta.vue'
 
 export default {
@@ -15,5 +16,6 @@ export default {
     }),
   async enhanceApp(ctx) {
     openapiTheme.enhanceApp(ctx)
+    ctx.app.component('IlumPlayground', IlumPlayground)
   },
 } satisfies Theme

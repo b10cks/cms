@@ -18,7 +18,7 @@ What makes it different:
 | **New to b10cks** | [Introduction](getting-started/introduction.md), then the [Quickstart](getting-started/quickstart.md) — empty space to rendered page in ~10 minutes |
 | **An editor or content team member** | The [user guide](#using-the-app-user-guide) — friendly walkthroughs of every screen |
 | **A developer building a frontend** | The [Nuxt guide](guides/nuxt.md) (or your framework's), plus [Querying content](guides/querying-content.md) |
-| **Running your own instance** | [Self-hosting](getting-started/self-hosting.md) |
+| **Running your own instance** | [Self-hosting](self-hosting/index.md) |
 
 ## Concepts
 
@@ -75,7 +75,18 @@ Documentation for every part of the admin UI:
 - [Automations](ui/automations.md)
 - [Audit logs](ui/audit-logs.md)
 - [Space settings](ui/settings.md) — access tokens, people & roles, configuration, AI, backups, migrations, subscription, usage
+- [Subscription & billing](ui/subscription.md) — plans, quotas, usage, invoices, and the subscription lifecycle
+- [Agency billing](ui/agency-billing.md) — build a space for a client, let the client pay via a payment request
 - [Account, teams & spaces](ui/account.md)
+
+## Self-hosting
+
+Run and operate your own instance:
+
+- [Overview](self-hosting/index.md) — what's involved, the moving parts, single-team vs. platform
+- [Installation](self-hosting/installation.md) — requirements, install steps, processes, upgrades
+- [Configuration](self-hosting/configuration.md) — the `.env` reference
+- [Plans & pricing](self-hosting/plans-and-pricing.md) — LemonSqueezy, the plan lineup, custom plans, quota overrides
 
 ## API reference
 

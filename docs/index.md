@@ -48,7 +48,7 @@ features:
 | **New to b10cks** | [Introduction](/getting-started/introduction), then the [Quickstart](/getting-started/quickstart) — empty space to rendered page in ~10 minutes |
 | **An editor or content team member** | The [user guide](/ui/dashboard) — friendly walkthroughs of every screen |
 | **A developer building a frontend** | The [Nuxt guide](/guides/nuxt) (or your framework's), plus [Querying content](/guides/querying-content) |
-| **Running your own instance** | [Self-hosting](/getting-started/self-hosting) |
+| **Running your own instance** | [Self-hosting](/self-hosting/) — installation, configuration, plans & pricing |
 
 ## SDK packages
 

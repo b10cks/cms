@@ -28,7 +28,7 @@ The agency keeps full control of the space content and settings throughout; only
 
 ## Custom agency plans
 
-Payment requests combine well with **custom plans**: an operator can create a non-public plan (special pricing, custom quotas) and grant it to the client's space. It then appears in the plan picker of the request dialog, so the client pays exactly the agreed deal. See [Custom plans & pricing](subscription.md#custom-plans--pricing) for how to create, grant, and override them.
+Payment requests combine well with **custom plans**: the platform operator can create a non-public plan (special pricing, custom quotas) and grant it to the client's space. It then appears in the plan picker of the request dialog, so the client pays exactly the agreed deal. Ask your operator about a custom deal — or, if you run your own instance, see [Plans & pricing](../self-hosting/plans-and-pricing.md#custom-plans) for how to create, grant, and override them.
 
 ## Transferring billing of an already-paid space
 

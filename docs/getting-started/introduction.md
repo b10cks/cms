@@ -45,7 +45,7 @@ The [user guide](../ui/dashboard.md) covers every screen.
 ## Hosted or self-hosted
 
 - **b10cks Cloud** — managed hosting at [app.b10cks.com](https://app.b10cks.com); you only build the frontend.
-- **Self-hosted** — the CMS is open source (AGPL-3.0), built on Laravel + Vue, and runs anywhere PHP does. See [Self-hosting](self-hosting.md).
+- **Self-hosted** — the CMS is open source (AGPL-3.0), built on Laravel + Vue, and runs anywhere PHP does. See the [Self-hosting section](../self-hosting/index.md).
 
 Both expose the same APIs, so SDK code is identical either way — only the `apiUrl` differs.
 
