@@ -3,6 +3,20 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.20-be93bbe8] — 2026-7-20
+
+- 💄 Clarify simple vs. structured data source setup
+- ✨ Add shaped data source entries
+- 📝 Regenerate mgmt OpenAPI spec for blocks/sync
+- ✨ Add bulk block schema sync endpoint
+- ✨ Harden team membership and add team details management
+- 💡 Improve docs
+- ✨ Add agency payment proposals and free-plan downgrade
+- 💄 Polish subscription & usage settings UI
+- ✨ Harden subscription system for production
+- 👔 Merge invitations and members into one UX
+- ✨ Add field plugins
+
 ## [v2026.7.16-091889c7] — 2026-7-16
 
 - 👷‍♂️ Fix changelog
