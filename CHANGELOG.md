@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.21-82efd522] — 2026-7-21
+
+- ✨ Add native MCP server for the Management API
+
 ## [v2026.7.20-be93bbe8] — 2026-7-20
 
 - 💄 Clarify simple vs. structured data source setup
