@@ -552,16 +552,53 @@
                                 "type": "object",
                                 "properties": {
                                     "token": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "nullable": true
                                     }
-                                },
-                                "required": [
-                                    "token"
-                                ]
+                                }
                             }
                         }
                     }
                 },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InviteResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/users/me/invites/{invite}/decline": {
+            "post": {
+                "summary": "Create decline",
+                "description": "",
+                "tags": [
+                    "Invites"
+                ],
+                "operationId": "post_users_me_invites_by_invite_decline",
+                "parameters": [
+                    {
+                        "name": "invite",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The invite identifier"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Successful response",
@@ -1761,6 +1798,141 @@
                             ]
                         },
                         "description": "Sort by field (prefix with - for descending order)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResourceCollection"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/avatar": {
+            "post": {
+                "summary": "Create avatar",
+                "description": "",
+                "tags": [
+                    "Avatar"
+                ],
+                "operationId": "post_teams_by_team_avatar",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "avatar": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "maxLength": 2048
+                                    }
+                                },
+                                "required": [
+                                    "avatar"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TeamResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete avatar",
+                "description": "",
+                "tags": [
+                    "Avatar"
+                ],
+                "operationId": "delete_teams_by_team_avatar",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TeamResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/teams/{team}/people": {
+            "get": {
+                "summary": "List people",
+                "description": "",
+                "tags": [
+                    "People"
+                ],
+                "operationId": "get_teams_by_team_people",
+                "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
                     }
                 ],
                 "responses": {
@@ -3455,6 +3627,14 @@
                                         "type": "string",
                                         "nullable": true
                                     },
+                                    "billing_interval": {
+                                        "type": "string",
+                                        "enum": [
+                                            "\"month\"",
+                                            "\"year\""
+                                        ],
+                                        "nullable": true
+                                    },
                                     "blueprint_id": {
                                         "type": "string",
                                         "maxLength": 26,
@@ -3981,8 +4161,8 @@
         },
         "/mgmt/v1/spaces/{space}/usage/history/{period}/timeseries": {
             "get": {
-                "summary": "Daily traffic/requests trend within a closed (or open) period, reconstructed",
-                "description": "Daily traffic/requests trend within a closed (or open) period, reconstructed\nfrom the hourly rollup tables for the page charts.",
+                "summary": "Daily traffic trend within a closed (or open) period, reconstructed",
+                "description": "Daily traffic trend within a closed (or open) period, reconstructed\nfrom the hourly rollup tables for the page chart.",
                 "tags": [
                     "Usage"
                 ],
@@ -4758,6 +4938,45 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/InviteResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/people": {
+            "get": {
+                "summary": "List people",
+                "description": "",
+                "tags": [
+                    "People"
+                ],
+                "operationId": "get_spaces_by_space_people",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResourceCollection"
                                 }
                             }
                         }
@@ -10632,10 +10851,42 @@
                 ]
             }
         },
+        "/mgmt/v1/spaces/{space}/subscriptions/pending": {
+            "delete": {
+                "summary": "Discard an abandoned pending checkout",
+                "description": "Discard an abandoned pending checkout. A pending subscription blocks new\ncheckouts (deliberately), so this is the way out when the user changed\ntheir mind instead of completing the payment.",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "operationId": "delete_spaces_by_space_subscriptions_pending",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/spaces/{space}/subscriptions/cancel": {
             "post": {
                 "summary": "Cancel the active subscription at period end",
-                "description": "Cancel the active subscription at period end.",
+                "description": "Cancel the active subscription at period end. Entitlements continue until\nthe end of the paid period (grace), then the space falls back to Free.",
                 "tags": [
                     "Subscriptions"
                 ],
@@ -10655,6 +10906,169 @@
                 "responses": {
                     "200": {
                         "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/subscriptions/resume": {
+            "post": {
+                "summary": "Resume a subscription that was cancelled but is still within its paid",
+                "description": "Resume a subscription that was cancelled but is still within its paid\nperiod, so it renews normally again.",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "operationId": "post_spaces_by_space_subscriptions_resume",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/subscriptions/proposal": {
+            "get": {
+                "summary": "The space's current open payment request, if any",
+                "description": "The space's current open payment request, if any.",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "operationId": "get_spaces_by_space_subscriptions_proposal",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create a payment request",
+                "description": "Create a payment request. Replaces any previous open one. If the invited\nemail is not a member yet, a space invitation with the billing role is\nsent; members get a payment-request notification instead.",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "operationId": "post_spaces_by_space_subscriptions_proposal",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Revoke the current open payment request",
+                "description": "Revoke the current open payment request.",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "operationId": "delete_spaces_by_space_subscriptions_proposal",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Resource deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/plans": {
+            "get": {
+                "summary": "List the plans available to a space: all active public plans plus any",
+                "description": "List the plans available to a space: all active public plans plus any\ncustom (subsidized/agency) plans granted to this space.",
+                "tags": [
+                    "Plans"
+                ],
+                "operationId": "get_spaces_by_space_plans",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResourceCollection"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -12302,6 +12716,265 @@
                     "Data Sources"
                 ],
                 "operationId": "delete_spaces_by_space_data_sources_by_data_source",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Resource deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/field-plugins": {
+            "get": {
+                "summary": "List field plugins",
+                "description": "",
+                "tags": [
+                    "Field Plugins"
+                ],
+                "operationId": "get_spaces_by_space_field_plugins",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResourceCollection"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create field plugins",
+                "description": "",
+                "tags": [
+                    "Field Plugins"
+                ],
+                "operationId": "post_spaces_by_space_field_plugins",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FieldPluginResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/field-plugins/{field_plugin}": {
+            "get": {
+                "summary": "Get a single field plugin",
+                "description": "",
+                "tags": [
+                    "Field Plugins"
+                ],
+                "operationId": "get_spaces_by_space_field_plugins_by_field_plugin",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FieldPluginResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "summary": "Update field plugin",
+                "description": "",
+                "tags": [
+                    "Field Plugins"
+                ],
+                "operationId": "put_spaces_by_space_field_plugins_by_field_plugin",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "external_id": {
+                                        "type": "string",
+                                        "maxLength": 36,
+                                        "nullable": true
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 100
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "dev_mode": {
+                                        "type": "boolean"
+                                    },
+                                    "dev_url": {
+                                        "type": "string",
+                                        "format": "uri",
+                                        "maxLength": 2048,
+                                        "nullable": true
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "maxLength": 1572864,
+                                        "nullable": true
+                                    },
+                                    "manifest": {
+                                        "type": "object",
+                                        "properties": {
+                                            "options": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "key": {
+                                                            "type": "string",
+                                                            "maxLength": 64
+                                                        },
+                                                        "label": {
+                                                            "type": "string",
+                                                            "maxLength": 100,
+                                                            "nullable": true
+                                                        },
+                                                        "default": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "key"
+                                                    ]
+                                                }
+                                            },
+                                            "height": {
+                                                "type": "integer",
+                                                "minimum": 50,
+                                                "maximum": 1200,
+                                                "nullable": true
+                                            }
+                                        }
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FieldPluginResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete field plugin",
+                "description": "",
+                "tags": [
+                    "Field Plugins"
+                ],
+                "operationId": "delete_spaces_by_space_field_plugins_by_field_plugin",
                 "parameters": [
                     {
                         "name": "space",
@@ -14963,8 +15636,8 @@
         },
         "/mgmt/v1/plans": {
             "get": {
-                "summary": "List all active plans",
-                "description": "List all active plans.\nPublic endpoint, cached for 1 hour.",
+                "summary": "List all active public plans",
+                "description": "List all active public plans.\nPublic endpoint, cached for 1 hour. Custom (non-public) plans are only\nexposed via the space-scoped listing.",
                 "tags": [
                     "Plans"
                 ],
@@ -15018,6 +15691,47 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/field-plugins/{fieldPlugin}/sandbox": {
+            "get": {
+                "summary": "Serves the sandboxed HTML shell that boots a published field plugin bundle",
+                "description": "Serves the sandboxed HTML shell that boots a published field plugin bundle\ninside the content editor's iframe. Unauthenticated but signature-protected:\nthe iframe runs with an opaque origin and cannot send session cookies, so\nthe management API hands out permanently signed URLs instead.",
+                "tags": [
+                    "Field Plugins"
+                ],
+                "operationId": "get_spaces_by_space_field_plugins_by_fieldPlugin_sandbox",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "fieldPlugin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The fieldPlugin identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
                     }
                 },
                 "security": [
@@ -15383,6 +16097,9 @@
             },
             "DataSourceResource": {
                 "$ref": "#/components/schemas/DataSourceResource"
+            },
+            "FieldPluginResource": {
+                "$ref": "#/components/schemas/FieldPluginResource"
             },
             "DataEntryResource": {
                 "$ref": "#/components/schemas/DataEntryResource"

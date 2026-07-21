@@ -25,6 +25,11 @@ class RouteServiceProvider extends ServiceProvider
     public function boot(): void
     {
         RateLimiter::for('mgmt', function (Request $request) {
+            // MCP sub-requests are already throttled via the outer /mcp/v1 request.
+            if ($request->attributes->get('mcp-internal')) {
+                return Limit::none();
+            }
+
             return Limit::perMinute((int) config('app.mgmt_rate_limit', 1000))
                 ->by($request->user()?->id ?: $request->ip());
         });

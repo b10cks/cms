@@ -106,4 +106,10 @@ return [
         'binary' => env('FFMPEG_PATH', '/usr/bin/ffmpeg'),
         'probe' => env('FFPROBE_PATH', '/usr/bin/ffprobe'),
     ],
+
+    'b10cks_mcp' => [
+        // Sanctum PAT used by the local stdio MCP server (php artisan mcp:start b10cks)
+        // to authenticate internal management API calls.
+        'token' => env('B10CKS_MCP_TOKEN'),
+    ],
 ];

@@ -1977,6 +1977,9 @@
                     "settings": {
                         "type": "string"
                     },
+                    "shape": {
+                        "type": "string"
+                    },
                     "is_active": {
                         "type": "string"
                     },
@@ -2004,7 +2007,7 @@
                         "type": "string"
                     },
                     "value": {
-                        "type": "string"
+                        "nullable": true
                     },
                     "dimensions": {
                         "type": "string"

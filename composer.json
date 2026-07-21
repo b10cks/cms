@@ -17,6 +17,7 @@
     "james-heinrich/getid3": "^1.9",
     "jcupitt/vips": "^2.5",
     "laravel/framework": "^13.6",
+    "laravel/mcp": "^0.9.0",
     "laravel/octane": "^2.10",
     "laravel/pennant": "^1.17",
     "laravel/reverb": "^1.5",
