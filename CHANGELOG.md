@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.22-6077c32f] — 2026-7-22
+
+- ⬆️ Bump versions
+- 🐛 Handle larger content.updates with pusher
+
 ## [v2026.7.21-82efd522] — 2026-7-21
 
 - ✨ Add native MCP server for the Management API
