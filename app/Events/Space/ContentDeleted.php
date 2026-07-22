@@ -2,8 +2,6 @@
 
 namespace App\Events\Space;
 
-use App\Events\Concerns\ResolvesBroadcastPayload;
-use App\Http\Resources\Management\ContentResource;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use Illuminate\Broadcasting\Channel;
@@ -12,7 +10,6 @@ use Illuminate\Queue\SerializesModels;
 
 class ContentDeleted implements ShouldBroadcast
 {
-    use ResolvesBroadcastPayload;
     use SerializesModels;
 
     public Space $space;
@@ -21,6 +18,9 @@ class ContentDeleted implements ShouldBroadcast
      * Resolved eagerly: space models can't be restored on a queue worker
      * where no space connection is bound (and the content is soft-deleted).
      *
+     * Identifiers only — the full content resource blows past Pusher's 10KB
+     * message limit and nothing needs the body of a deleted content.
+     *
      * @var array<string, mixed>
      */
     public array $payload;
@@ -28,13 +28,17 @@ class ContentDeleted implements ShouldBroadcast
     public function __construct(Content $content, Space $space)
     {
         $this->space = $space;
-        $this->payload = $this->resolveBroadcastPayload(ContentResource::make($content));
+        $this->payload = [
+            'id' => $content->id,
+            'parent_id' => $content->parent_id,
+            'i18n_parent_id' => $content->i18n_parent_id,
+        ];
     }
 
     public function broadcastOn()
     {
         return [
-            new Channel('spaces.' . $this->space->id . '.content'),
+            new Channel('spaces.'.$this->space->id.'.content'),
         ];
     }
 

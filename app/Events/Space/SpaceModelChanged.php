@@ -14,6 +14,7 @@ class SpaceModelChanged implements ShouldBroadcast
     use SerializesModels;
 
     private string $modelKey;
+
     private string $modelBaseClass;
 
     public function __construct(
@@ -29,13 +30,13 @@ class SpaceModelChanged implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('spaces.' . $this->space->id . '.' . $this->resourceType),
+            new Channel('spaces.'.$this->space->id.'.'.$this->resourceType),
         ];
     }
 
     public function broadcastAs(): string
     {
-        return Str::snake($this->modelBaseClass) . ':' . $this->action;
+        return Str::snake($this->modelBaseClass).':'.$this->action;
     }
 
     public function broadcastWith(): array

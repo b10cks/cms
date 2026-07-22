@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/vue-query'
 
 import { api } from '~/api'
 import { isClient } from '~/lib/env'
-import type { ContentChildSortBy, ContentResource } from '~/types/contents'
+import type { ContentChildSortBy } from '~/types/contents'
 
 import { queryKeys } from './useQueryClient'
 
@@ -197,71 +197,40 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
     return breadcrumbs
   }
 
-  // Live updates arrive without the menu payload's `sv`; recompute it from
-  // the broadcast content when the parent sorts by a content field, otherwise
-  // carry the previous value forward until the next full menu fetch.
-  const resolveContentSortValue = (
-    contentTree: Record<string, FlatContentMenuItem>,
-    content: ContentResource
-  ): string | number | null => {
-    const sortBy = content.parent_id
-      ? contentTree[content.parent_id]?.settings?.child_sort_by
-      : undefined
-
-    if (typeof sortBy === 'string' && sortBy.startsWith('content.')) {
-      const value = (content.content as Record<string, unknown> | undefined)?.[
-        sortBy.slice('content.'.length)
-      ]
-      if (typeof value === 'string' || typeof value === 'number') {
-        return value
-      }
-      if (value == null) {
-        return null
-      }
-    }
-
-    return contentTree[content.id]?.sv ?? null
-  }
-
   const setupEcho = (id: string) => {
     try {
       const echo = useEcho()
       if (!echo) return
       echo
         .channel(`spaces.${id}.content`)
-        .listen('.content:updated', (content: ContentResource) => {
-          const contentTree =
-            (queryClient.getQueryData(queryKeys.contentMenu(id).all()) as Record<
-              string,
-              FlatContentMenuItem
-            >) || {}
-          const item: FlatContentMenuItem | null = content.i18n_parent_id
-            ? contentTree[content.i18n_parent_id]
-            : ({
-                id: content.id,
-                name: content.name,
-                slug: content.slug,
-                block_id: content.block_id,
-                position: content.position,
-                pid: content.parent_id,
-                type: content.block?.type || 'universal',
-                color: content.block?.color || null,
-                children: (content?.children_count || 0) > 0,
-                icon: content.block?.icon,
-                settings: content.settings || {},
-                i18n: content?.i18n_translations || [],
-                pat: content.published_at,
-                cat: content.created_at,
-                uat: content.updated_at,
-                sv: resolveContentSortValue(contentTree, content),
-              } as FlatContentMenuItem)
+        // The payload is already menu-shaped (the full content resource does
+        // not fit into a broadcast message), so it drops straight into the tree.
+        .listen(
+          '.content:updated',
+          (broadcast: FlatContentMenuItem & { i18n_parent_id: string | null }) => {
+            const contentTree =
+              (queryClient.getQueryData(queryKeys.contentMenu(id).all()) as Record<
+                string,
+                FlatContentMenuItem
+              >) || {}
 
-          if (!item) return
-          const targetId = content.i18n_parent_id ?? content.id
-          const newContentTree = { ...contentTree }
-          newContentTree[targetId] = item
-          queryClient.setQueryData(queryKeys.contentMenu(id).all(), newContentTree)
-        })
+            const { i18n_parent_id: i18nParentId, ...content } = broadcast
+            const item: FlatContentMenuItem | undefined = i18nParentId
+              ? contentTree[i18nParentId]
+              : {
+                  ...content,
+                  // Carry the previous sort value forward when the parent does
+                  // not sort by a content field.
+                  sv: content.sv ?? contentTree[content.id]?.sv ?? null,
+                }
+
+            if (!item) return
+            queryClient.setQueryData(queryKeys.contentMenu(id).all(), {
+              ...contentTree,
+              [i18nParentId ?? content.id]: item,
+            })
+          }
+        )
     } catch {
       /** */
     }
