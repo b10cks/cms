@@ -265,6 +265,17 @@ Asset fields deliver a `full_path` you can hand straight to the provider:
 
 The provider supports `width`/`height`, crop modes (`fill`, `fit`, `crop`), gravity (`face`, `center`, `auto`, or a focal point), and `format`/`quality`. See [Image service (Ilum)](../concepts/image-service.md) for the full URL syntax.
 
+Video assets use the same host. Point `<video>` straight at `full_path` — byte ranges are supported, so seeking works — and build the poster from the `/poster` sub-path, which takes the same operations as any image:
+
+```vue
+<video
+  :src="`${ilumBase}/${block.video.full_path}`"
+  :poster="$img(`${block.video.full_path}/poster`, { width: 1280, height: 720, crop: 'fill' }, { provider: 'ilum' })"
+  controls
+  preload="metadata"
+/>
+```
+
 ## 6. SEO metadata
 
 Give your root block a `meta` field (the **Meta** field type, with OG tags enabled) and map it to `useSeoMeta` in the root component:

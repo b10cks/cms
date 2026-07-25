@@ -44,7 +44,7 @@ Drag files anywhere into the library (or click _Browse files_). Before the uploa
 
 - **Required information is collected now** — if alt text is mandatory here, you're asked for it upfront rather than chased later. A counter shows which files still miss required details.
 - **Duplicate detection** — if a file looks identical to something already in the library, b10cks offers to **use the existing asset** instead of storing a second copy (or upload anyway, your call).
-- Images get their **colors and dimensions** read automatically; videos get preview thumbnails.
+- Images get their **colors and dimensions** read automatically; videos get preview thumbnails, one of which doubles as the [poster frame](../concepts/image-service.md#poster-frames).
 - Metadata fields can be filled per language where your space is multilingual.
 
 ## The asset detail view
@@ -58,6 +58,10 @@ Filename, alt text, title, description, and any custom fields your space (or thi
 ### Focus point
 
 Click the image to set its **focus point** — the spot that must stay visible when the website crops the image to different shapes (wide header, square card, tall banner). One image, every format, face always in frame. ([How cropping works](../concepts/image-service.md#crop-modes))
+
+### Video poster
+
+Videos show the frames grabbed at upload; click one to jump the player to that moment. If none of them is the still you want to lead with, **Upload poster** replaces them with an image of your choosing — a designed title card, a frame from elsewhere in the shoot, anything. The uploaded image becomes what the [poster URL](../concepts/image-service.md#poster-frames) serves, so every frontend using it updates without re-linking. Replacing the generated frames is permanent; re-upload a different image to change it again.
 
 ### Colors & accessibility
 
