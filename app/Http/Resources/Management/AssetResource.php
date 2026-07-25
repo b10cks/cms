@@ -37,6 +37,7 @@ class AssetResource extends JsonResource
             'linked_contents_count' => (int) ($this->resource->getAttributes()['linked_contents_count'] ?? 0),
             'effective_asset_fields' => $this->resolveEffectiveAssetFields($request, $space),
             'url' => app(AssetService::class)->getAssetUrl($this->resource),
+            'poster_url' => app(AssetService::class)->getPosterUrl($this->resource),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

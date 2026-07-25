@@ -47,7 +47,24 @@ return [
 
     'cache' => [
         'duration' => env('IMAGE_CACHE_DURATION', 31536000),
+
+        // Transformed images are content-addressed by their URL, so they can
+        // safely be immutable.
         'immutable' => env('IMAGE_CACHE_IMMUTABLE', true),
+
+        // Untransformed files are served under a path that only *usually*
+        // changes when the file does, so they stay revalidatable via ETag.
+        'passthrough_immutable' => env('IMAGE_CACHE_PASSTHROUGH_IMMUTABLE', false),
+
+        // A poster URL is stable across poster changes unless the caller pins
+        // a version, so unpinned poster requests get a short TTL.
+        'poster_duration' => env('IMAGE_CACHE_POSTER_DURATION', 3600),
+    ],
+
+    // Bytes copied from storage to the client per iteration when streaming a
+    // (possibly ranged) file.
+    'stream' => [
+        'chunk_size' => (int) env('IMAGE_STREAM_CHUNK_SIZE', 1048576),
     ],
 
     'max_dimensions' => [

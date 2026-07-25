@@ -80,8 +80,9 @@ const {
 const ilumBaseUrl = (runtimeConfig.public.ilum.baseURL || '').replace(/\/$/, '')
 
 const { alert } = useAlertDialog()
-const { useReplaceAssetFileMutation } = useAssets(props.spaceId)
+const { useReplaceAssetFileMutation, useUploadAssetPosterMutation } = useAssets(props.spaceId)
 const { mutate: replaceFile, isPending: isReplacing } = useReplaceAssetFileMutation()
+const { mutate: uploadPoster, isPending: isUploadingPoster } = useUploadAssetPosterMutation()
 const replaceProgress = ref(0)
 const { useAssetVersionsQuery, useRestoreAssetVersionMutation } = useAssetVersions(
   props.spaceId,
@@ -90,8 +91,35 @@ const { useAssetVersionsQuery, useRestoreAssetVersionMutation } = useAssetVersio
 const { mutate: restoreVersion, isPending: isRestoringVersion } = useRestoreAssetVersionMutation()
 const restoringVersionId = ref<string | null>(null)
 const replaceFileInputRef = useTemplateRef<HTMLInputElement>('replaceFileInput')
+const posterInputRef = useTemplateRef<HTMLInputElement>('posterInput')
 
 const triggerReplaceFile = () => replaceFileInputRef.value?.click()
+
+const triggerPosterUpload = () => posterInputRef.value?.click()
+
+const onPosterSelected = (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file || !assetCopy.value) return
+
+  const clearInput = () => {
+    if (posterInputRef.value) posterInputRef.value.value = ''
+  }
+
+  uploadPoster(
+    { id: assetCopy.value.id, file },
+    {
+      onSuccess: (response) => {
+        const updated = response?.data
+        if (updated) {
+          assetCopy.value = deepClone(updated)
+          originalSnapshot = editableSnapshot(updated)
+        }
+        clearInput()
+      },
+      onError: clearInput,
+    }
+  )
+}
 
 const onReplaceFileSelected = (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0]
@@ -719,6 +747,28 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                     {{ thumb.position_formatted }}
                   </span>
                 </button>
+              </div>
+              <div v-if="!props.readOnly" class="flex items-center gap-2">
+                <input
+                  ref="posterInput"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+                  class="hidden"
+                  @change="onPosterSelected"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="flex items-center gap-2"
+                  :loading="isUploadingPoster"
+                  @click="triggerPosterUpload"
+                >
+                  <Icon name="lucide:image-up" />
+                  <span>{{ $t('labels.assets.uploadPoster') }}</span>
+                </Button>
+                <span class="text-muted-foreground text-xs">
+                  {{ $t('labels.assets.uploadPosterHint') }}
+                </span>
               </div>
             </div>
             <div

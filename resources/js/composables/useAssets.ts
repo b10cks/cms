@@ -268,6 +268,28 @@ export function useAssets(spaceId: MaybeRef<string>) {
     })
   }
 
+  const useUploadAssetPosterMutation = () => {
+    return useMutation({
+      mutationFn: async ({ id, file }: { id: string; file: File }) => {
+        return await spaceAPI.value.assets.uploadPoster(id, file)
+      },
+      onSuccess: (response) => {
+        const asset = response?.data
+
+        if (asset) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
+          queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).detail(asset.id) })
+          toast.success(t('composables.assets.posterSuccess') as string)
+        }
+      },
+      onError: (err: Error) => {
+        toast.error(
+          t('composables.assets.posterError', { error: err.message || 'Unknown error' }) as string
+        )
+      },
+    })
+  }
+
   const useExportAssetsMutation = () => {
     return useMutation({
       mutationFn: async (params: AssetsQueryParams & { as: ExportTypes }) => {
@@ -315,6 +337,7 @@ export function useAssets(spaceId: MaybeRef<string>) {
     useUpdateAssetMutation,
     useDeleteAssetMutation,
     useReplaceAssetFileMutation,
+    useUploadAssetPosterMutation,
     useExportAssetsMutation,
     useImportAssetsMutation,
     uploadAsset,

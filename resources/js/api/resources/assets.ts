@@ -147,6 +147,19 @@ export class Assets extends BaseResource<
     })
   }
 
+  /**
+   * Replace the auto-generated video thumbnails with a hand-picked poster.
+   */
+  public async uploadPoster(assetId: string, file: File): Promise<ApiResponse<AssetResource>> {
+    const formData = new FormData()
+    formData.append('poster', file)
+
+    return this.client.post<ApiResponse<AssetResource>>(
+      `${this.basePath}/${assetId}/poster`,
+      formData
+    )
+  }
+
   public async getLinkedContents(
     assetId: string,
     query: LinkedAssetContentsQueryParams = {}

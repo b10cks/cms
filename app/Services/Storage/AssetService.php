@@ -282,6 +282,113 @@ class AssetService
     }
 
     /**
+     * Replace an asset's generated thumbnails with a single, hand-picked
+     * poster image.
+     *
+     * The generated frames are deliberately dropped rather than kept alongside
+     * the upload: the poster API serves `thumbnails` in capture order, so
+     * leaving them in place would mean the custom poster competes with frames
+     * the editor explicitly rejected. The stored filename carries a random
+     * suffix so a re-upload lands on a new path and cannot be served from a
+     * warm CDN cache.
+     */
+    public function setCustomPoster(Asset $asset, UploadedFile $file, Space $space): Asset
+    {
+        $storage = StorageModel::findOrFail($asset->storage_id);
+        $filesystem = $this->storageService->getStorage($storage);
+
+        $extension = $file->getClientOriginalExtension() ?: 'jpg';
+        $basename = $this->sanitizeFilename((string) $asset->filename) ?: 'asset';
+        $relativePath = "{$space->id}/{$asset->id}/{$basename}_poster_".Str::random(8).'.'.$extension;
+
+        $stream = fopen($file->getRealPath(), 'r');
+
+        try {
+            $filesystem->writeStream($relativePath, $stream);
+        } finally {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }
+
+        $colors = app(DominantColorExtractor::class)
+            ->extract($file->getRealPath(), (string) $file->getMimeType());
+
+        $poster = array_filter([
+            'path' => $relativePath,
+            'position' => 0,
+            'position_formatted' => $this->formatDuration(0),
+            'dominant_color' => $colors['dominant_color'] ?? null,
+            'custom' => true,
+        ], fn ($value) => $value !== null);
+
+        $previousThumbnails = (array) ($asset->metadata['thumbnails'] ?? []);
+
+        $asset->metadata = [
+            ...(array) $asset->metadata,
+            'thumbnails' => [$poster],
+            ...$this->videoColorMetadata([$poster]),
+        ];
+
+        $asset->save();
+
+        $this->deleteThumbnailFiles($previousThumbnails, $filesystem);
+
+        return $asset;
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $thumbnails
+     */
+    private function deleteThumbnailFiles(array $thumbnails, Filesystem|FilesystemOperator $filesystem): void
+    {
+        foreach (array_unique(array_filter(array_column($thumbnails, 'path'))) as $path) {
+            try {
+                if ($filesystem->fileExists($path)) {
+                    $filesystem->delete($path);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to delete replaced thumbnail', [
+                    'path' => $path,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Build the delivery URL for an asset's poster frame, pinned to the stored
+     * poster path so a poster change produces a new, separately cacheable URL.
+     */
+    public function getPosterUrl(Asset $asset): ?string
+    {
+        $thumbnails = array_values(array_filter(
+            (array) ($asset->metadata['thumbnails'] ?? []),
+            static fn ($thumb): bool => is_array($thumb) && ! empty($thumb['path']),
+        ));
+
+        if ($thumbnails === []) {
+            return null;
+        }
+
+        $segments = explode('/', (string) $asset->path, 3);
+
+        if (count($segments) !== 3) {
+            return null;
+        }
+
+        [$spaceId, $assetId, $name] = $segments;
+
+        return route('ilum.poster', [
+            'storage' => $asset->storage_id,
+            'space' => $spaceId,
+            'assetId' => $assetId,
+            'name' => $name,
+            'v' => substr(sha1((string) $thumbnails[0]['path']), 0, 12),
+        ]);
+    }
+
+    /**
      * Promote the first video thumbnail's dominant color (plus its WCAG
      * contrast stats) to asset-level metadata so videos get a placeholder
      * color and overlay guidance just like images.

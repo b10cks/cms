@@ -34,6 +34,8 @@ class ProcessImageRequest extends FormRequest
         return [
             'format' => ['nullable', 'string', Rule::in(array_keys(config('ilum.formats', [])))],
             'quality' => ['nullable', 'integer', 'between:1,100'],
+            // Poster routes only: which stored frame to serve.
+            'frame' => ['nullable', 'integer', 'min:0'],
             'c' => ['nullable', 'string', Rule::in(['fill', 'fit', 'crop'])],
             'g' => ['nullable', 'string'],
             'w' => ['nullable', 'integer', 'min:1', 'max:' . $maxWidth],
@@ -53,6 +55,7 @@ class ProcessImageRequest extends FormRequest
             ...$this->clampDimensions($params),
             'format' => $this->query('format'),
             'quality' => $this->query('quality'),
+            'frame' => $this->query('frame'),
         ]);
     }
 
