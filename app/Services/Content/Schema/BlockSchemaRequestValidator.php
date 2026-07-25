@@ -4,6 +4,9 @@ namespace App\Services\Content\Schema;
 
 use App\Models\Space\DataSource;
 use App\Models\Space\FieldPlugin;
+use App\Services\Content\Serial\ScopeKeyBuilder;
+use App\Services\Content\Serial\SerialFieldConfig;
+use App\Services\Content\Serial\TemplateRenderer;
 
 class BlockSchemaRequestValidator
 {
@@ -28,6 +31,7 @@ class BlockSchemaRequestValidator
         'blocks',
         'table',
         'plugin',
+        'serial',
     ];
 
     protected const array GEO_KEY_STYLES = ['latitude_longitude', 'lat_lng', 'lat_lon'];
@@ -35,6 +39,7 @@ class BlockSchemaRequestValidator
     public function __construct(
         protected SchemaNormalizer $schemaNormalizer,
         protected OptionChoiceResolver $optionChoiceResolver,
+        protected TemplateRenderer $templateRenderer,
     ) {}
 
     /**
@@ -106,6 +111,10 @@ class BlockSchemaRequestValidator
 
             if ($type === 'plugin') {
                 $errors = $this->validatePluginField($errors, $key, $field);
+            }
+
+            if ($type === 'serial') {
+                $errors = $this->validateSerialField($errors, $key, $field, $normalizedSchema);
             }
         }
 
@@ -371,6 +380,75 @@ class BlockSchemaRequestValidator
                 }
             }
         }
+
+        return $errors;
+    }
+
+    /**
+     * @param  array<string, array<int, string>>  $errors
+     * @param  array<string, mixed>  $field
+     * @param  array<string, array<string, mixed>>  $schema
+     * @return array<string, array<int, string>>
+     */
+    protected function validateSerialField(array $errors, string $key, array $field, array $schema): array
+    {
+        $format = (string) ($field['format'] ?? '');
+
+        foreach ($this->templateRenderer->validate($format) as $message) {
+            $errors["schema.{$key}.format"][] = $message;
+        }
+
+        // A format that never draws a number would give every entry in the
+        // scope the same identifier — the uniqueness index would reject the
+        // second one at creation time rather than here, which is far too late.
+        if (! isset($errors["schema.{$key}.format"]) && ! $this->templateRenderer->requiresNumber($format)) {
+            $errors["schema.{$key}.format"][] = 'The format must contain a {counter} token.';
+        }
+
+        // `{field:x}` can only read a field that is filled before the serial is
+        // rendered, i.e. one that exists on the same block and is not itself a
+        // generated value.
+        preg_match_all(TemplateRenderer::TOKEN_PATTERN, $format, $matches, PREG_SET_ORDER);
+
+        foreach ($matches as $match) {
+            if (($match[1] ?? '') !== 'field') {
+                continue;
+            }
+
+            $referenced = $match[2] ?? '';
+            $target = $schema[$referenced] ?? null;
+
+            if ($referenced === '' || $target === null) {
+                $errors["schema.{$key}.format"][] = sprintf('`{field:%s}` references an unknown field.', $referenced);
+
+                continue;
+            }
+
+            if (($target['type'] ?? '') === 'serial') {
+                $errors["schema.{$key}.format"][] = sprintf(
+                    '`{field:%s}` references another generated field, which is not available yet.',
+                    $referenced,
+                );
+            }
+        }
+
+        foreach ($field['scope'] ?? [] as $dimension) {
+            if (! in_array($dimension, ScopeKeyBuilder::DIMENSIONS, true)) {
+                $errors["schema.{$key}.scope"][] = sprintf('`%s` is not a supported scope.', $dimension);
+            }
+        }
+
+        if (! in_array($field['unique'] ?? 'scope', ScopeKeyBuilder::UNIQUE_MODES, true)) {
+            $errors["schema.{$key}.unique"][] = 'The uniqueness mode is not supported.';
+        }
+
+        if (! in_array($field['on_move'] ?? 'keep', SerialFieldConfig::ON_MOVE_MODES, true)) {
+            $errors["schema.{$key}.on_move"][] = 'The move behaviour is not supported.';
+        }
+
+        // `translatable` needs no check here: the normalizer already forces it
+        // to false for every type outside TRANSLATABLE_TYPES, so a serial can
+        // never arrive marked translatable.
 
         return $errors;
     }

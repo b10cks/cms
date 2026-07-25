@@ -3,6 +3,7 @@
 namespace App\Jobs\Space;
 
 use App\DTOs\Migration\MigrationResult;
+use App\Services\Content\Serial\ScopeKeyRemapper;
 use App\Jobs\QueuedJob;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceMigration;
@@ -73,6 +74,7 @@ class RunSpaceMigration extends QueuedJob
 
         if ($scope['content'] ?? false) {
             $this->migrateContents($sourceConn, $targetConn, $strategy);
+            $this->migrateContentSerials($sourceConn, $targetConn);
             $this->migration->updateProgress(80);
         }
 
@@ -770,6 +772,80 @@ class RunSpaceMigration extends QueuedJob
                 ]);
                 $this->result->incrementCreated('contents');
             }
+        }
+    }
+
+    /**
+     * Carry the serial allocation ledger across with the content.
+     *
+     * Without this the target space has entries whose payloads contain serial
+     * values but no reservations behind them, so the next entry created there
+     * starts counting from one and hands out identifiers that already exist.
+     * Scope keys embed block and parent ids, so they are rebuilt from the id
+     * maps rather than copied.
+     */
+    private function migrateContentSerials(ConnectionInterface $src, ConnectionInterface $tgt): void
+    {
+        if (! $src->getSchemaBuilder()->hasTable('content_serials')
+            || ! $tgt->getSchemaBuilder()->hasTable('content_serials')
+        ) {
+            return;
+        }
+
+        $remapper = app(ScopeKeyRemapper::class);
+
+        foreach ($src->table('content_serials')->orderBy('scope_key')->orderBy('number')->cursor() as $row) {
+            $row = (array) $row;
+            $targetContentId = $this->contentIdMap[$row['content_id']] ?? null;
+
+            if (! $targetContentId) {
+                continue;
+            }
+
+            $scopeKey = $remapper->remap($row['scope_key'], $this->blockIdMap, $this->contentIdMap);
+            $uniqueKey = $row['unique_key'] !== null
+                ? $remapper->remap($row['unique_key'], $this->blockIdMap, $this->contentIdMap)
+                : null;
+
+            // Ids that did not migrate would collapse different scopes onto the
+            // same key and hand out duplicate numbers.
+            if ($scopeKey === null || ($row['unique_key'] !== null && $uniqueKey === null)) {
+                $this->result->addError(
+                    'content_serials',
+                    (string) $row['id'],
+                    "Scope references content or blocks that were not migrated: {$row['scope_key']}",
+                );
+
+                continue;
+            }
+
+            $existing = $tgt->table('content_serials')
+                ->where('content_id', $targetContentId)
+                ->where('field_key', $row['field_key'])
+                ->first();
+
+            $data = [
+                'content_id' => $targetContentId,
+                'field_key' => $row['field_key'],
+                'scope_key' => $scopeKey,
+                'unique_key' => $uniqueKey,
+                'number' => $row['number'],
+                'value' => $row['value'],
+                'updated_at' => $row['updated_at'],
+            ];
+
+            if ($existing) {
+                $tgt->table('content_serials')->where('id', $existing->id)->update($data);
+                $this->result->incrementUpdated('content_serials');
+
+                continue;
+            }
+
+            $tgt->table('content_serials')->insert(array_merge($data, [
+                'id' => strtolower((string) Str::ulid()),
+                'created_at' => $row['created_at'],
+            ]));
+            $this->result->incrementCreated('content_serials');
         }
     }
 

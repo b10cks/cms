@@ -86,6 +86,15 @@ export interface ContentTreeOperationResult {
   warnings: ContentTreeOperationWarning[]
 }
 
+export interface ContentSerialPreview {
+  /** Generated field values the entry would receive, keyed by field key. */
+  fields: Record<string, { value: string; preview: boolean }>
+  /** The block's slug pattern, or null when it uses the default (entry name). */
+  slug_pattern: string | null
+  /** The slug the entry would get, already slugified and de-duplicated. */
+  slug_preview: string | null
+}
+
 export interface ContentTreeCreateOperation {
   type: 'create'
   temp_id: string
@@ -93,7 +102,8 @@ export interface ContentTreeCreateOperation {
   position?: number
   block_id: string
   name: string
-  slug: string
+  /** Omitted when the block composes its slug from a pattern. */
+  slug?: string
   content?: Record<string, unknown>
   settings?: Partial<ContentSettings>
 }
@@ -229,7 +239,11 @@ export interface CreateContentPayload {
   position?: number
   block_id: string
   name: string
-  slug: string
+  /**
+   * Omitted when the block has a slug pattern — the server composes the slug
+   * once the entry's generated fields have been allocated.
+   */
+  slug?: string
   language_iso?: string
   i18n_parent_id?: string | null
   content?: Record<string, unknown>

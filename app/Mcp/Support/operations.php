@@ -537,6 +537,14 @@ return [
         'method' => 'POST',
         'uri' => '/mgmt/v1/spaces/{spaceId}/contents/tree-operations',
     ],
+    'contents.serialPreview' => [
+        'description' => 'Preview the values a new entry would receive for its serial fields. '
+            .'A peek, not a reservation — the number is only taken when the entry is created.',
+        'required' => ['spaceId', 'payload'],
+        'accepts' => ['spaceId', 'payload'],
+        'method' => 'POST',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/contents/serial-preview',
+    ],
     'contents.move' => [
         'description' => 'Move a content entry to a different parent or position.',
         'required' => ['spaceId', 'id', 'payload'],

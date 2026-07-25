@@ -36,6 +36,7 @@ class SpaceSettings extends Settings
         'slug_strategy' => 'prepend_translations',
         'filter_hidden_blocks' => false,
         'content_sorting' => false,
+        'serial_gaps' => 'preserve',
         'onboarding_dismissed_at' => null,
         'sitemap' => [
             'types' => [],
@@ -177,6 +178,11 @@ class SpaceSettings extends Settings
             'content_sorting' => [
                 ...$sometimes,
                 'boolean',
+            ],
+            'serial_gaps' => [
+                ...$sometimes,
+                'string',
+                Rule::in(['preserve', 'reuse']),
             ],
             'onboarding_dismissed_at' => [
                 ...$sometimes,
@@ -338,6 +344,15 @@ class SpaceSettings extends Settings
                 'description' => 'Whether manual drag-and-drop ordering of content is enabled for the space. '
                     .'When disabled, content is ordered alphabetically by name.',
             ],
+            'serial_gaps' => [
+                'description' => 'What happens to the number of a deleted entry in auto-generated serial fields.',
+                'example' => 'preserve',
+                'enumDescriptions' => [
+                    'preserve' => 'The number is never handed out again; deleting an entry leaves a permanent gap.',
+                    'reuse' => 'The number returns to the pool and is given to the next entry. A restored entry '
+                        .'is renumbered when its original number was taken in the meantime.',
+                ],
+            ],
             'onboarding_dismissed_at' => [
                 'description' => 'When the onboarding guide was dismissed for this space. '
                     .'Null while the guide is still shown in the navigation.',
@@ -402,6 +417,15 @@ class SpaceSettings extends Settings
     public function isContentSortingEnabled(): bool
     {
         return (bool) ($this->attributes['content_sorting'] ?? false);
+    }
+
+    /**
+     * How serial numbers behave when an entry is deleted: `preserve` burns the
+     * number, `reuse` returns it to the pool.
+     */
+    public function getSerialGapStrategy(): string
+    {
+        return ($this->attributes['serial_gaps'] ?? 'preserve') === 'reuse' ? 'reuse' : 'preserve';
     }
 
     /**

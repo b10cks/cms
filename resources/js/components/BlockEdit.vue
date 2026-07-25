@@ -62,6 +62,20 @@ const enforceSlugFormat = () => {
   editableBlock.value.slug = editableBlock.value.slug.replace(/[^a-zA-Z0-9_]/g, '')
 }
 
+/**
+ * Empty means "no pattern", which is the historic behaviour: the slug follows
+ * the entry name. Stored as null rather than '' so the backend default applies.
+ */
+const slugPattern = computed({
+  get: () => editableBlock.value.settings?.slug_pattern ?? '',
+  set: (value: string) => {
+    editableBlock.value.settings = {
+      ...editableBlock.value.settings,
+      slug_pattern: value.trim() === '' ? null : value,
+    }
+  },
+})
+
 const handleTypeChange = (type: 'root' | 'nestable' | 'single' | 'universal') => {
   if (!props.readonly) {
     editableBlock.value.type = type
@@ -150,6 +164,17 @@ const handleTypeChange = (type: 'root' | 'nestable' | 'single' | 'universal') =>
       :label="$t('labels.blocks.fields.previewTemplate')"
       :description="$t('labels.blocks.fields.previewTemplateDescription')"
       name="preview_template"
+    />
+
+    <InputField
+      v-if="!isCreate && ['root', 'universal'].includes(editableBlock.type)"
+      v-model="slugPattern"
+      :disabled="readonly"
+      :label="$t('labels.blocks.fields.slugPattern')"
+      :description="$t('labels.blocks.fields.slugPatternDescription')"
+      :placeholder="'{field:name}'"
+      class="font-mono"
+      name="slug_pattern"
     />
 
     <ImagePickerField

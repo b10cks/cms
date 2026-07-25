@@ -940,7 +940,13 @@
       "create": {
         "selectContentType": "Inhaltstyp wählen",
         "loadingRestrictions": "Child-Content-Einschränkungen werden geladen...",
-        "noAllowedChildren": "Dieses Elternelement erlaubt derzeit keine Child-Content-Typen."
+        "noAllowedChildren": "Dieses Elternelement erlaubt derzeit keine Child-Content-Typen.",
+        "serialPreview": "Wird beim Anlegen vergeben. Kann sich ändern, wenn jemand anderes zuerst anlegt.",
+        "slugFromPattern": "Aus dem Muster dieses Inhaltstyps: {pattern}",
+        "slugAuto": "Wird automatisch erzeugt – zum Überschreiben einfach eintippen.",
+        "slugManual": "Eigener Slug.",
+        "slugReset": "Automatischen Slug verwenden",
+        "slugPending": "Wird beim Anlegen erzeugt"
       },
       "blankTemplate": "Leer",
       "templates": "Vorlagen",
@@ -1504,7 +1510,39 @@
           "optionKey": "Schlüssel",
           "optionValue": "Wert",
           "addOption": "Option hinzufügen"
-        }
+        },
+        "serial": {
+          "format": "Format",
+          "formatDescription": "Wie die Kennung aufgebaut ist. Wird einmalig beim Anlegen des Eintrags erzeugt.",
+          "tokens": "Bausteine",
+          "tokensDescription": "Zum Anhängen anklicken. Ancestor- und Field-Bausteine lesen Werte aus dem Eintrag oder seinen Eltern.",
+          "samplePrefix": "Sieht so aus:",
+          "counterRequired": "Ohne {counter} bekämen alle Einträge im Zählbereich denselben Wert.",
+          "scope": "Zählen je",
+          "scopeDescription": "Welche Einträge sich einen Zähler teilen. Die Nummerierung beginnt für jede Kombination neu.",
+          "scope_block": "Inhaltstyp",
+          "scope_parent": "Übergeordnetem Eintrag",
+          "scope_language": "Sprache",
+          "scope_year": "Jahr",
+          "scope_month": "Monat",
+          "scope_space": "Gesamtem Space",
+          "unique": "Eindeutig innerhalb",
+          "uniqueDescription": "Wird von der Datenbank erzwungen. Ein Format, das nicht eindeutig bleiben kann, schlägt beim Anlegen fehl.",
+          "uniqueScope": "des Zählbereichs",
+          "uniqueBlock": "des Inhaltstyps",
+          "uniqueSpace": "des gesamten Space",
+          "uniqueNone": "Keine Eindeutigkeit",
+          "onMove": "Beim Verschieben unter ein anderes Element",
+          "onMoveDescription": "Kennungen bleiben normalerweise erhalten, damit ein Eintrag seine Nummer behält.",
+          "onMoveKeep": "Kennung behalten",
+          "onMoveReallocate": "Neue Kennung vergeben",
+          "editable": "Bearbeiten durch Redaktion erlauben",
+          "editableDescription": "Redakteure können einen eigenen Wert eingeben. Die Eindeutigkeit wird trotzdem geprüft.",
+          "editableHint": "Wird automatisch erzeugt. Nur ändern, wenn der richtige Wert bekannt ist.",
+          "assignedOnSave": "Wird beim Anlegen vergeben"
+        },
+        "slugPattern": "Slug-Muster",
+        "slugPatternDescription": "Wie neue Einträge ihren Slug bilden, z. B. {field:number}-{field:name}. Leer lassen, um den Namen zu verwenden."
       },
       "types": {
         "root": {
@@ -1612,6 +1650,10 @@
         "plugin": {
           "label": "Plugin",
           "description": "Eigenes Feld, gerendert durch ein Feld-Plugin des Spaces"
+        },
+        "serial": {
+          "label": "Laufende Nummer",
+          "description": "Automatisch erzeugte Kennung, z. B. 1-001"
         }
       },
       "options": {
@@ -2238,7 +2280,13 @@
           "addType": "Mapping hinzufügen",
           "empty": "Noch keine Sitemap-Mappings konfiguriert."
         },
-        "noBlocks": "Keine Blöcke gefunden"
+        "noBlocks": "Keine Blöcke gefunden",
+        "serialGaps": "Nummerierung nach dem Löschen",
+        "serialGapsDescription": "Was mit der Nummer eines gelöschten Eintrags in automatisch erzeugten Feldern passiert.",
+        "serialGapsPreserve": "Nummern nie wiederverwenden",
+        "serialGapsPreserveDescription": "Löschen hinterlässt eine dauerhafte Lücke. Beim Wiederherstellen gilt immer die ursprüngliche Kennung.",
+        "serialGapsReuse": "Frei gewordene Nummern wiederverwenden",
+        "serialGapsReuseDescription": "Der nächste Eintrag füllt die Lücke. Ein wiederhergestellter Eintrag wird neu nummeriert, falls seine Nummer inzwischen vergeben ist."
       },
       "dangerZone": {
         "title": "Gefahrenzone",

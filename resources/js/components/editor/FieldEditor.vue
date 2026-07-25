@@ -18,6 +18,7 @@ import OptionBlock from '~/components/editor/OptionBlock.vue'
 import OptionsBlock from '~/components/editor/OptionsBlock.vue'
 import ReferenceBlock from '~/components/editor/ReferenceBlock.vue'
 import RichTextBlock from '~/components/editor/RichTextBlock.vue'
+import SerialBlock from '~/components/editor/SerialBlock.vue'
 import TableBlock from '~/components/editor/TableBlock.vue'
 import TextareaBlock from '~/components/editor/TextareaBlock.vue'
 import TextBlock from '~/components/editor/TextBlock.vue'
@@ -54,6 +55,7 @@ const editors = {
   geo: GeoBlock,
   price: PriceBlock,
   plugin: PluginBlock,
+  serial: SerialBlock,
 } satisfies Partial<Record<CanonicalSchemaTypeName | LegacySchemaTypeName, Component>>
 
 const props = defineProps<{

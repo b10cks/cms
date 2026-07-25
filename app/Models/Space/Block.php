@@ -88,12 +88,14 @@ class Block extends SpaceModel
         'schema',
         'editor',
         'tags',
+        'settings',
         'folder_id'
     ];
 
     protected $casts = [
         'tags' => 'array',
         'editor' => 'array',
+        'settings' => BlockSettings::class,
         'schema' => SchemaCast::class,
     ];
 

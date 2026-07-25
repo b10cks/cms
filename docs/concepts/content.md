@@ -25,6 +25,7 @@ A **content entry** is an instance of a root (or universal/singleton) block, pla
 Entries form a tree that usually mirrors your URL structure: folders are just entries with children (any entry can have children, subject to nesting rules). The tree drives:
 
 - **`full_slug`** — built from the parents' slugs; moving an entry updates its path
+- **`slug`** — normally taken from the entry name; a block can instead compose it from a token pattern such as `{field:number}-{field:name}` ([slug patterns](fields.md#slug-patterns)). An explicitly supplied slug always wins.
 - **Navigation** — menus and sitemaps derive from the published tree
 - **Queries** — `parent_id` / `canonical_parent_id` filters fetch children of a node ([Querying content](../guides/querying-content.md))
 

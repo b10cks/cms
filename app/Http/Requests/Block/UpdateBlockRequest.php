@@ -5,6 +5,7 @@ namespace App\Http\Requests\Block;
 use App\Http\Requests\Traits\ExternalIdValidation;
 use App\Models\Space\Block;
 use App\Models\Space\BlockFolder;
+use App\Models\Space\BlockSettings;
 use App\Services\Content\Schema\BlockSchemaRequestValidator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -51,6 +52,8 @@ class UpdateBlockRequest extends FormRequest
             'preview_file' => 'sometimes|nullable|string|max:255',
             'schema' => 'sometimes|nullable|array',
             'editor' => 'sometimes|nullable|array',
+            'settings' => 'sometimes|nullable|array',
+            ...BlockSettings::toValidator('settings', true),
             'tags' => 'sometimes|nullable|array',
             'folder_id' => [
                 'sometimes',

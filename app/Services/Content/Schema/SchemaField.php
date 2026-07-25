@@ -93,6 +93,18 @@ class SchemaField implements Arrayable
         return (bool) ($this->attributes['indexable'] ?? false);
     }
 
+    /**
+     * Whether the value is owned by the system rather than by the editor.
+     *
+     * Readonly fields are rendered disabled and, more importantly, are restored
+     * from the stored entry on every submission — a client that posts a value
+     * anyway cannot overwrite them.
+     */
+    public function isReadonly(): bool
+    {
+        return (bool) ($this->attributes['readonly'] ?? false);
+    }
+
     public function getConditions(): ?array
     {
         $conditions = $this->attributes['conditions'] ?? null;
@@ -160,6 +172,19 @@ class SchemaField implements Arrayable
             $attributes['data_source_id'] = $attributes['data_source_id'] ?? null;
         }
 
+        if ($attributes['type'] === 'serial') {
+            $attributes['format'] = \is_string($attributes['format'] ?? null) && trim($attributes['format']) !== ''
+                ? trim($attributes['format'])
+                : '{counter}';
+            $attributes['scope'] = self::normalizeScopeDimensions($attributes['scope'] ?? null);
+            $attributes['unique'] = \in_array($attributes['unique'] ?? null, ['scope', 'block', 'space', 'none'], true)
+                ? $attributes['unique']
+                : 'scope';
+            $attributes['on_move'] = ($attributes['on_move'] ?? 'keep') === 'reallocate' ? 'reallocate' : 'keep';
+            $attributes['editable'] = (bool) ($attributes['editable'] ?? false);
+            $attributes['default'] = null;
+        }
+
         if ($attributes['type'] === 'table') {
             $attributes['has_thead'] = (bool) ($attributes['has_thead'] ?? false);
             $attributes['min'] = array_key_exists('min', $attributes)
@@ -172,9 +197,42 @@ class SchemaField implements Arrayable
             $attributes['default'] = self::normalizeTableDefault($attributes['default'] ?? null);
         }
 
+        // Resolved after the type branches so `serial` has already settled its
+        // `editable` flag.
+        $attributes['readonly'] = self::resolveReadonly($attributes);
+
         unset($attributes['dependencies']);
 
         return $attributes;
+    }
+
+    protected static function resolveReadonly(array $attributes): bool
+    {
+        if (($attributes['type'] ?? '') === 'serial') {
+            return ! ($attributes['editable'] ?? false);
+        }
+
+        return (bool) ($attributes['readonly'] ?? false);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function normalizeScopeDimensions(mixed $scope): array
+    {
+        $dimensions = ['space', 'block', 'parent', 'language', 'year', 'month'];
+
+        if (! \is_array($scope)) {
+            return ['block', 'parent'];
+        }
+
+        // Emitted in a fixed order so two equivalent scopes are the same scope.
+        $normalized = array_values(array_filter(
+            $dimensions,
+            static fn (string $dimension): bool => \in_array($dimension, $scope, true),
+        ));
+
+        return $normalized === [] ? ['block', 'parent'] : $normalized;
     }
 
     protected static function normalizeConditions(array $attributes): ?array

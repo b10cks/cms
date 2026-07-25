@@ -2,6 +2,7 @@ import { requestExportBlob, requestImportJson } from '~/lib/import-export'
 import type { ApiResponse, BaseQueryParams } from '~/types'
 import type {
   ContentResource,
+  ContentSerialPreview,
   ContentTreeOperationPayload,
   ContentTreeOperationResult,
   CreateContentPayload,
@@ -175,6 +176,21 @@ export class Contents extends BaseResource<
       `${this.basePath}/tree-operations`,
       payload
     )
+  }
+
+  /**
+   * The values a new entry would receive for its generated fields.
+   *
+   * A peek, not a reservation — the number is only taken when the entry is
+   * actually created, so this can go stale if someone else creates one first.
+   */
+  public async serialPreview(payload: {
+    block_id: string
+    parent_id?: string | null
+    language_iso?: string | null
+    name?: string | null
+  }): Promise<ContentSerialPreview> {
+    return this.client.post<ContentSerialPreview>(`${this.basePath}/serial-preview`, payload)
   }
 
   /**

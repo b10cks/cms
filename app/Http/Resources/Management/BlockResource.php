@@ -26,6 +26,7 @@ class BlockResource extends JsonResource
             'preview_file' => $this->preview_file,
             'schema' => $this->schema->toArray(),
             'editor' => $this->editor,
+            'settings' => $this->settings->toArray(),
             'tags' => $this->tags,
             'templates_count' => $this->whenCounted('templates'),
             'folder' => $this->whenLoaded('folder', fn() => new BlockFolderResource($this->folder)),

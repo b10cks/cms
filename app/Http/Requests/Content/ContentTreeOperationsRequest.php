@@ -42,7 +42,9 @@ class ContentTreeOperationsRequest extends FormRequest
                 Rule::exists((new Block)->getConnectionName().'.blocks', 'id')->whereNull('deleted_at'),
             ],
             'operations.*.name' => ['sometimes', 'required', 'string', 'max:100'],
-            'operations.*.slug' => ['sometimes', 'required', 'string', 'max:70'],
+            // Omitted when the block composes its slug from a pattern, which
+            // can only happen server-side once serials have been allocated.
+            'operations.*.slug' => ['sometimes', 'nullable', 'string', 'max:70'],
             'operations.*.content' => ['sometimes', 'array'],
             'operations.*.settings' => ['sometimes', 'array'],
         ];
@@ -58,7 +60,7 @@ class ContentTreeOperationsRequest extends FormRequest
 
                 foreach ($this->validated('operations', []) as $index => $operation) {
                     match ($operation['type']) {
-                        'create' => $this->ensureHas($operation, $index, ['temp_id', 'block_id', 'name', 'slug']),
+                        'create' => $this->ensureHas($operation, $index, ['temp_id', 'block_id', 'name']),
                         'move', 'duplicate', 'delete' => $this->ensureHas($operation, $index, ['ids']),
                         'update_block' => $this->ensureHas($operation, $index, ['id', 'block_id']),
                         default => null,

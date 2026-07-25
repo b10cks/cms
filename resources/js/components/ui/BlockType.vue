@@ -49,6 +49,10 @@ const types: Record<string, BlockType> = {
     cls: 'text-orange-300 border border-orange-400 bg-orange-800',
     icon: 'lucide:puzzle',
   },
+  serial: {
+    cls: 'text-cyan-300 border border-cyan-400 bg-cyan-800',
+    icon: 'lucide:list-ordered',
+  },
   table: { cls: 'text-muted border border-border-strong bg-muted-background', icon: 'lucide:table' },
   meta: { cls: 'text-muted border border-border-strong bg-muted-background', icon: 'lucide:search' },
 }

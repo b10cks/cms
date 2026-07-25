@@ -17,7 +17,8 @@
                 "indexable": true,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             }
         },
         "field_order": [
@@ -43,7 +44,8 @@
                 "indexable": true,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             }
         },
         "field_order": [
@@ -70,7 +72,8 @@
                 "indexable": true,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             }
         },
         "field_order": [
@@ -101,7 +104,8 @@
                 "indexable": false,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             },
             "gallery": {
                 "key": "gallery",
@@ -113,7 +117,8 @@
                 "indexable": false,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             },
             "related": {
                 "key": "related",
@@ -125,7 +130,8 @@
                 "indexable": false,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             }
         },
         "field_order": [
@@ -167,7 +173,8 @@
                 "indexable": false,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             },
             "text": {
                 "key": "text",
@@ -179,7 +186,8 @@
                 "indexable": true,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             },
             "choice": {
                 "key": "choice",
@@ -203,7 +211,8 @@
                         "name": "A",
                         "value": "a"
                     }
-                ]
+                ],
+                "readonly": false
             }
         },
         "field_order": [
@@ -240,7 +249,8 @@
                 "indexable": true,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             },
             "num": {
                 "key": "num",
@@ -252,7 +262,8 @@
                 "indexable": false,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             },
             "text_off": {
                 "key": "text_off",
@@ -264,7 +275,8 @@
                 "indexable": false,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             },
             "meta": {
                 "key": "meta",
@@ -276,7 +288,8 @@
                 "indexable": false,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             }
         },
         "field_order": [
@@ -320,7 +333,8 @@
                         }
                     ]
                 },
-                "validation": []
+                "validation": [],
+                "readonly": false
             }
         },
         "field_order": [
@@ -387,7 +401,8 @@
                         }
                     ]
                 },
-                "validation": []
+                "validation": [],
+                "readonly": false
             }
         },
         "field_order": [
@@ -416,7 +431,8 @@
                 "indexable": true,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             }
         },
         "field_order": [
@@ -462,7 +478,8 @@
                 },
                 "min_length": 2,
                 "max_length": 10,
-                "pattern": "^a"
+                "pattern": "^a",
+                "readonly": false
             },
             "b": {
                 "key": "b",
@@ -478,7 +495,8 @@
                     "max": 50,
                     "max_length": 50
                 },
-                "maximum": 50
+                "maximum": 50,
+                "readonly": false
             },
             "c": {
                 "key": "c",
@@ -492,7 +510,8 @@
                 "conditions": null,
                 "validation": {
                     "max_length": 5
-                }
+                },
+                "readonly": false
             }
         },
         "field_order": [
@@ -534,7 +553,8 @@
                     "max_length": 9
                 },
                 "minimum": 1,
-                "maximum": 9
+                "maximum": 9,
+                "readonly": false
             },
             "b": {
                 "key": "b",
@@ -548,7 +568,8 @@
                 "conditions": null,
                 "validation": {
                     "min": 0
-                }
+                },
+                "readonly": false
             }
         },
         "field_order": [
@@ -593,7 +614,8 @@
                     "max_items": 4
                 },
                 "min": 1,
-                "max": 4
+                "max": 4,
+                "readonly": false
             },
             "b": {
                 "key": "b",
@@ -608,7 +630,8 @@
                 "validation": {
                     "min": 1,
                     "max": 3
-                }
+                },
+                "readonly": false
             },
             "c": {
                 "key": "c",
@@ -620,7 +643,8 @@
                 "indexable": false,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             }
         },
         "field_order": [
@@ -674,7 +698,8 @@
                         "name": "Two",
                         "value": "two"
                     }
-                ]
+                ],
+                "readonly": false
             }
         },
         "field_order": [
@@ -715,7 +740,8 @@
                         "name": "X",
                         "value": "x"
                     }
-                ]
+                ],
+                "readonly": false
             }
         },
         "field_order": [
@@ -763,7 +789,8 @@
                         "name": "A",
                         "value": "a"
                     }
-                ]
+                ],
+                "readonly": false
             }
         },
         "field_order": [
@@ -810,7 +837,8 @@
                     "hero",
                     "teaser"
                 ],
-                "max": 5
+                "max": 5,
+                "readonly": false
             },
             "rte": {
                 "key": "rte",
@@ -826,7 +854,8 @@
                 "tag_whitelist": [
                     "p",
                     "h2"
-                ]
+                ],
+                "readonly": false
             }
         },
         "field_order": [
@@ -930,7 +959,8 @@
                     }
                 ],
                 "min": 1,
-                "max": 10
+                "max": 10,
+                "readonly": false
             }
         },
         "field_order": [
@@ -962,7 +992,8 @@
                 "has_thead": false,
                 "columns": [],
                 "min": null,
-                "max": null
+                "max": null,
+                "readonly": false
             }
         },
         "field_order": [
@@ -996,7 +1027,8 @@
                 "default": null,
                 "conditions": null,
                 "validation": [],
-                "order": 1
+                "order": 1,
+                "readonly": false
             },
             "second": {
                 "key": "second",
@@ -1009,7 +1041,8 @@
                 "default": null,
                 "conditions": null,
                 "validation": [],
-                "order": 2
+                "order": 2,
+                "readonly": false
             },
             "unordered": {
                 "key": "unordered",
@@ -1021,7 +1054,8 @@
                 "indexable": true,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             }
         },
         "field_order": [
@@ -1052,7 +1086,8 @@
                 "indexable": true,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             },
             "b": {
                 "key": "b",
@@ -1064,12 +1099,48 @@
                 "indexable": false,
                 "default": null,
                 "conditions": null,
-                "validation": []
+                "validation": [],
+                "readonly": false
             }
         },
         "field_order": [
             "a",
             "b"
+        ]
+    },
+    {
+        "name": "serial_defaults",
+        "input": {
+            "number": {
+                "type": "serial",
+                "format": "{ancestor:house_no}-{counter:3}"
+            }
+        },
+        "expected": {
+            "number": {
+                "key": "number",
+                "type": "serial",
+                "name": "number",
+                "description": null,
+                "required": false,
+                "translatable": false,
+                "indexable": false,
+                "default": null,
+                "conditions": null,
+                "validation": [],
+                "format": "{ancestor:house_no}-{counter:3}",
+                "scope": [
+                    "block",
+                    "parent"
+                ],
+                "unique": "scope",
+                "on_move": "keep",
+                "editable": false,
+                "readonly": true
+            }
+        },
+        "field_order": [
+            "number"
         ]
     }
 ]

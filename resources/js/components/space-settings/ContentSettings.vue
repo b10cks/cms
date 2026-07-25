@@ -37,6 +37,7 @@ interface ContentSettingsSpace {
     default_block?: string
     filter_hidden_blocks?: boolean
     content_sorting?: boolean
+    serial_gaps?: 'preserve' | 'reuse'
     sitemap?: {
       types?: SitemapTypeMapping[]
     }
@@ -58,6 +59,20 @@ const { $t } = useI18n()
 const defaultBlockId = ref(props.space.settings.default_block)
 const filterHiddenBlocks = ref(props.space.settings.filter_hidden_blocks ?? false)
 const contentSorting = ref(props.space.settings.content_sorting ?? false)
+const serialGaps = ref<'preserve' | 'reuse'>(props.space.settings.serial_gaps ?? 'preserve')
+
+const serialGapOptions = computed(() => [
+  {
+    value: 'preserve',
+    label: $t('labels.settings.content.serialGapsPreserve'),
+    description: $t('labels.settings.content.serialGapsPreserveDescription'),
+  },
+  {
+    value: 'reuse',
+    label: $t('labels.settings.content.serialGapsReuse'),
+    description: $t('labels.settings.content.serialGapsReuseDescription'),
+  },
+])
 const sitemapTypes = ref<SitemapTypeMapping[]>(deepClone(props.space.settings.sitemap?.types || []))
 
 const availableBlocks = computed(
@@ -124,6 +139,7 @@ const handleSave = () => {
         default_block: defaultBlockId.value,
         filter_hidden_blocks: filterHiddenBlocks.value,
         content_sorting: contentSorting.value,
+        serial_gaps: serialGaps.value,
         sitemap: {
           types: sitemapTypes.value
             .map((type) => ({
@@ -211,6 +227,35 @@ const handleSave = () => {
         <p class="text-xs text-muted">
           {{ $t('labels.settings.content.contentSortingDescription') }}
         </p>
+      </div>
+      <div class="space-y-2">
+        <Label
+          class="text-sm font-medium"
+          :label="$t('labels.settings.content.serialGaps')"
+        />
+        <p class="text-xs text-muted">
+          {{ $t('labels.settings.content.serialGapsDescription') }}
+        </p>
+        <div class="space-y-2 pt-1">
+          <label
+            v-for="option in serialGapOptions"
+            :key="option.value"
+            class="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3"
+            :class="serialGaps === option.value ? 'border-accent bg-surface' : ''"
+          >
+            <input
+              v-model="serialGaps"
+              type="radio"
+              name="serial-gaps"
+              :value="option.value"
+              class="mt-1"
+            />
+            <span class="space-y-1">
+              <span class="block text-sm font-medium">{{ option.label }}</span>
+              <span class="block text-xs text-muted">{{ option.description }}</span>
+            </span>
+          </label>
+        </div>
       </div>
       <div class="space-y-4">
         <div class="space-y-1">

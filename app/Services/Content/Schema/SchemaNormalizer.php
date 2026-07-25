@@ -90,7 +90,23 @@ class SchemaNormalizer
             'default' => $attributes['default'] ?? null,
             'conditions' => $conditions,
             'validation' => $validation,
+            'readonly' => (bool) ($attributes['readonly'] ?? false),
         ];
+
+        if ($type === 'serial') {
+            $normalized['format'] = \is_string($attributes['format'] ?? null) && trim($attributes['format']) !== ''
+                ? trim($attributes['format'])
+                : '{counter}';
+            $normalized['scope'] = SchemaField::normalizeScopeDimensions($attributes['scope'] ?? null);
+            $normalized['unique'] = \in_array($attributes['unique'] ?? null, ['scope', 'block', 'space', 'none'], true)
+                ? $attributes['unique']
+                : 'scope';
+            $normalized['on_move'] = ($attributes['on_move'] ?? 'keep') === 'reallocate' ? 'reallocate' : 'keep';
+            $normalized['editable'] = (bool) ($attributes['editable'] ?? false);
+            // The value comes from the allocator, never from a schema default.
+            $normalized['default'] = null;
+            $normalized['readonly'] = ! $normalized['editable'];
+        }
 
         if (\in_array($type, ['option', 'options'], true)) {
             $normalized['source'] = ($attributes['source'] ?? 'self') === 'datasource'

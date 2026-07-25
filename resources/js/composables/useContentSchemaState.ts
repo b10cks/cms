@@ -85,6 +85,7 @@ export const normalizeSchemaType = (type?: string | null): CanonicalSchemaTypeNa
     case 'meta':
     case 'table':
     case 'plugin':
+    case 'serial':
       return type
     default:
       return ''
@@ -106,6 +107,7 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
   const isGeo = canonicalType === 'geo'
   const isPrice = canonicalType === 'price'
   const isTable = canonicalType === 'table'
+  const isSerial = canonicalType === 'serial'
   const conditions = schemaField.conditions
     ? {
         mode: schemaField.conditions.mode === 'any' ? 'any' : 'all',
@@ -173,6 +175,20 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
       : undefined,
     has_thead: isTable ? Boolean((schemaField as TableSchema).has_thead) : undefined,
     columns: isTable ? getTableColumns(schemaField as TableSchema) : undefined,
+    format: isSerial ? ((schemaField.format as string | undefined) || '{counter}') : undefined,
+    scope: isSerial
+      ? ((schemaField.scope as SerialScopeDimension[] | undefined) ?? ['block', 'parent'])
+      : undefined,
+    unique: isSerial
+      ? ((schemaField.unique as SerialSchema['unique'] | undefined) ?? 'scope')
+      : undefined,
+    on_move: isSerial
+      ? ((schemaField.on_move as SerialSchema['on_move'] | undefined) ?? 'keep')
+      : undefined,
+    editable: isSerial ? Boolean(schemaField.editable) : undefined,
+    // A serial is readonly unless it was explicitly opened for editing; every
+    // other type keeps whatever the schema declared.
+    readonly: isSerial ? !schemaField.editable : Boolean(schemaField.readonly),
     conditions,
     validation: {
       ...validation,

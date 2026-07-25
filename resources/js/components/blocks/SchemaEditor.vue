@@ -434,6 +434,18 @@ const createDefaultSchemaForType = (type: string, key: string): SchemaType => {
         options: {},
         default: null,
       } as PluginSchema
+    case 'serial':
+      return {
+        ...baseSchema,
+        type: 'serial',
+        format: '{counter}',
+        scope: ['block', 'parent'],
+        unique: 'scope',
+        on_move: 'keep',
+        editable: false,
+        readonly: true,
+        default: null,
+      } as SerialSchema
     case 'blocks':
       return {
         ...baseSchema,

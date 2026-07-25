@@ -47,6 +47,7 @@ use App\Http\Controllers\Mgmt\Content\ContentDataImportController;
 use App\Http\Controllers\Mgmt\Content\ContentMenuController;
 use App\Http\Controllers\Mgmt\Content\ContentPublishController;
 use App\Http\Controllers\Mgmt\Content\ContentScheduleController;
+use App\Http\Controllers\Mgmt\Content\ContentSerialPreviewController;
 use App\Http\Controllers\Mgmt\Content\ContentTreeOperationsController;
 use App\Http\Controllers\Mgmt\Content\ContentUnpublishController;
 use App\Http\Controllers\Mgmt\Content\ContentVersionController;
@@ -274,6 +275,8 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
         ->name('contents.bulk-create');
     Route::post('contents/tree-operations', ContentTreeOperationsController::class)
         ->name('contents.tree-operations');
+    Route::post('contents/serial-preview', ContentSerialPreviewController::class)
+        ->name('contents.serial-preview');
     Route::post('contents/{content}/move', MoveContentController::class)
         ->name('contents.move');
 

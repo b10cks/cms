@@ -10,6 +10,8 @@ interface Schema {
   max?: number | string | null
   conditions?: FieldConditions | null
   validation?: FieldValidation | null
+  /** The value is owned by the system; the editor renders it disabled. */
+  readonly?: boolean
 }
 
 type CanonicalSchemaTypeName =
@@ -33,6 +35,7 @@ type CanonicalSchemaTypeName =
   | 'geo'
   | 'price'
   | 'plugin'
+  | 'serial'
 
 type LegacySchemaTypeName = 'multiAsset' | 'reference' | 'block'
 
@@ -184,6 +187,20 @@ interface PluginSchema extends Schema {
   translatable: boolean
   plugin_handle: string
   options: Record<string, string>
+}
+
+type SerialScopeDimension = 'space' | 'block' | 'parent' | 'language' | 'year' | 'month'
+
+interface SerialSchema extends Schema {
+  type: 'serial'
+  /** Token pattern rendered once, when the entry is created. */
+  format: string
+  /** Which counter the number is drawn from. */
+  scope: SerialScopeDimension[]
+  /** How far the rendered value has to stay unique. */
+  unique: 'scope' | 'block' | 'space' | 'none'
+  on_move: 'keep' | 'reallocate'
+  editable: boolean
 }
 
 interface ReferencesSchema extends Schema {
@@ -358,10 +375,19 @@ type SchemaType =
   | GeoSchema
   | PriceSchema
   | PluginSchema
+  | SerialSchema
 
 interface EditorPage {
   header: string
   items: string[]
+}
+
+interface BlockSettings {
+  /**
+   * Token pattern new entries seed their slug from. Null keeps the default,
+   * which is the entry name.
+   */
+  slug_pattern?: string | null
 }
 
 interface BlockResource {
@@ -376,6 +402,7 @@ interface BlockResource {
   preview_file?: string | null
   schema: Record<string, SchemaType>
   editor: EditorPage[]
+  settings?: BlockSettings
   tags: string[]
   folder_id: string | null
   templates_count?: number
@@ -392,6 +419,7 @@ interface CreateBlockPayload {
   preview_file?: string | null
   schema?: Record<string, SchemaType>
   editor?: EditorPage[]
+  settings?: BlockSettings
   tags: string[]
   folder_id: string | null
 }
@@ -405,6 +433,7 @@ interface UpdateBlockPayload {
   preview_file?: string | null
   schema?: Record<string, SchemaType>
   editor?: EditorPage[]
+  settings?: BlockSettings
   tags: string[]
   folder_id: string | null
 }

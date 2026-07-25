@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { refDebounced } from '@vueuse/core'
+
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { FormField, InputField } from '~/components/ui/form'
+import { Input } from '~/components/ui/input'
 import IconName from '~/components/ui/IconName.vue'
 import {
   Select,
@@ -39,7 +42,10 @@ const { data: space } = useSpaceQuery(props.spaceId)
 
 const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
-const { useContentQuery } = useContent(props.spaceId)
+const { useContentQuery, useSerialPreviewQuery } = useContent(props.spaceId)
+// Same slug rules the content wizard uses, so both creation paths agree.
+const { slugify } = useContentWizardSlug()
+const { $t } = useI18n()
 
 const content = ref<CreateContentPayload>({
   block_id: '',
@@ -80,6 +86,12 @@ const handleCreate = async (editContent: CreateContentPayload) => {
     parent_id: props.parentId,
   }
 
+  // In auto mode the server composes the slug: only it knows the allocated
+  // serial, and only it can guarantee the result is free among its siblings.
+  if (slugMode.value === 'auto') {
+    delete payload.slug
+  }
+
   if (currentBlock.value?.schema && selectedTemplate.value) {
     payload.content = hydrateContentWithSchema(
       currentBlock.value.schema,
@@ -100,6 +112,7 @@ const resetForm = () => {
     name: '',
   }
   selectedTemplate.value = null
+  slugMode.value = 'auto'
 }
 
 const possibleBlocks = computed(() => {
@@ -124,13 +137,80 @@ const preferredBlockId = computed(() => {
 
 const { data: templates } = useBlockTemplatesQuery()
 
-const createSlug = () => {
-  if (content.value.slug?.trim()) return
-  content.value.slug = content.value.name
-    .replace(/[^a-zA-Z0-9]+/g, '-')
-    .toLocaleLowerCase()
-    .replace(/--/g, '-')
+// Debounced so typing a name doesn't fire a request per keystroke; the preview
+// is advisory, so trailing slightly behind the input is fine.
+const debouncedName = refDebounced(
+  computed(() => content.value.name),
+  250
+)
+
+const { data: serialPreview, isFetching: isPreviewFetching } = useSerialPreviewQuery(
+  blockId,
+  computed(() => props.parentId ?? null),
+  debouncedName,
+  computed(() => Boolean(open.value && blockId.value))
+)
+
+const serialFields = computed(() => {
+  const schema = currentBlock.value?.schema
+
+  if (!schema || !serialPreview.value) return []
+
+  return Object.entries(serialPreview.value.fields).map(([key, field]) => ({
+    key,
+    label: (schema[key] as SerialSchema | undefined)?.name || key,
+    value: field.value,
+  }))
+})
+
+const hasSlugPattern = computed(() => Boolean(serialPreview.value?.slug_pattern))
+
+/**
+ * The slug follows the name until the editor types their own, and then stops.
+ *
+ * `auto` is not merely "empty": with a slug pattern the automatic value is
+ * composed server-side from tokens the client cannot resolve, so the mode has
+ * to be tracked rather than inferred from emptiness.
+ */
+const slugMode = ref<'auto' | 'manual'>('auto')
+
+/** What the entry would get if the editor does not intervene. */
+const automaticSlug = computed(() => {
+  if (hasSlugPattern.value) {
+    return serialPreview.value?.slug_preview ?? ''
+  }
+
+  return slugify(content.value.name || '')
+})
+
+const slugPlaceholder = computed(() =>
+  hasSlugPattern.value && !automaticSlug.value
+    ? String($t('labels.contents.create.slugPending'))
+    : automaticSlug.value
+)
+
+const setSlug = (value: string) => {
+  content.value.slug = value
+  // Clearing the field is how you ask for the automatic value back.
+  slugMode.value = value.trim() === '' ? 'auto' : 'manual'
 }
+
+const resetSlugToAutomatic = () => {
+  slugMode.value = 'auto'
+  content.value.slug = ''
+}
+
+// In auto mode the input mirrors the automatic value so the editor sees the
+// real slug rather than an empty box they have to imagine the result of.
+watch(
+  [automaticSlug, slugMode],
+  ([next, mode]) => {
+    if (mode === 'auto') {
+      content.value.slug = next
+    }
+  },
+  { immediate: true }
+)
 
 const selectTemplate = (template: BlockTemplate | null) => {
   selectedTemplate.value = template
@@ -199,14 +279,66 @@ watch(open, (isOpen, wasOpen) => {
             name="slug"
             required
             auto-focus
-            @blur="createSlug"
           />
-          <InputField
-            v-model="content.slug"
-            :label="$t('labels.contents.fields.slug')"
+          <FormField
             name="slug"
-            required
-          />
+            :label="$t('labels.contents.fields.slug')"
+            :description="
+              slugMode === 'auto' && hasSlugPattern
+                ? $t('labels.contents.create.slugFromPattern', {
+                    pattern: serialPreview?.slug_pattern,
+                  })
+                : undefined
+            "
+          >
+            <template #default="{ id }">
+              <div class="flex items-center gap-2">
+                <Input
+                  :id="id"
+                  :model-value="content.slug"
+                  :placeholder="slugPlaceholder"
+                  class="font-mono"
+                  @update:model-value="setSlug(String($event))"
+                />
+                <Button
+                  v-if="slugMode === 'manual'"
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  :title="$t('labels.contents.create.slugReset')"
+                  @click="resetSlugToAutomatic"
+                >
+                  <Icon name="lucide:rotate-ccw" />
+                  <span class="sr-only">{{ $t('labels.contents.create.slugReset') }}</span>
+                </Button>
+              </div>
+              <p class="mt-1 flex items-center gap-1.5 text-xs text-muted">
+                <Icon
+                  v-if="slugMode === 'auto' && isPreviewFetching"
+                  name="lucide:loader-circle"
+                  class="animate-spin"
+                />
+                {{
+                  slugMode === 'auto'
+                    ? $t('labels.contents.create.slugAuto')
+                    : $t('labels.contents.create.slugManual')
+                }}
+              </p>
+            </template>
+          </FormField>
+          <FormField
+            v-for="field in serialFields"
+            :key="field.key"
+            :name="field.key"
+            :label="field.label"
+            :description="$t('labels.contents.create.serialPreview')"
+          >
+            <span
+              class="inline-flex items-center rounded-md border border-input bg-elevated px-2 py-1 font-mono text-sm text-muted"
+            >
+              {{ field.value }}
+            </span>
+          </FormField>
           <FormField
             name="block"
             :label="$t('labels.contents.fields.block')"

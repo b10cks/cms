@@ -945,7 +945,13 @@
       "create": {
         "selectContentType": "Select content type",
         "loadingRestrictions": "Loading child content restrictions...",
-        "noAllowedChildren": "This parent does not allow any child content types right now."
+        "noAllowedChildren": "This parent does not allow any child content types right now.",
+        "serialPreview": "Assigned when you create the entry. May change if someone else creates one first.",
+        "slugFromPattern": "Built from this content type's pattern: {pattern}",
+        "slugAuto": "Generated automatically — type your own to override.",
+        "slugManual": "Custom slug.",
+        "slugReset": "Use the automatic slug",
+        "slugPending": "Generated when you create the entry"
       },
       "blankTemplate": "Blank",
       "templates": "Templates",
@@ -1509,7 +1515,39 @@
           "optionKey": "Key",
           "optionValue": "Value",
           "addOption": "Add option"
-        }
+        },
+        "serial": {
+          "format": "Format",
+          "formatDescription": "How the identifier is built. Rendered once, when the entry is created.",
+          "tokens": "Tokens",
+          "tokensDescription": "Click to append. Ancestor and field tokens read values from the entry or its parents.",
+          "samplePrefix": "Looks like:",
+          "counterRequired": "Without a {counter} token every entry in the scope would get the same value.",
+          "scope": "Count per",
+          "scopeDescription": "Which entries share a counter. Numbering restarts for every combination you tick.",
+          "scope_block": "Content type",
+          "scope_parent": "Parent entry",
+          "scope_language": "Language",
+          "scope_year": "Year",
+          "scope_month": "Month",
+          "scope_space": "Whole space",
+          "unique": "Must be unique within",
+          "uniqueDescription": "Enforced by the database. A format that cannot stay unique fails when the entry is created.",
+          "uniqueScope": "The counter scope",
+          "uniqueBlock": "The content type",
+          "uniqueSpace": "The whole space",
+          "uniqueNone": "No uniqueness",
+          "onMove": "When moved to another parent",
+          "onMoveDescription": "Identifiers are normally kept, so a filed entry keeps the number it was given.",
+          "onMoveKeep": "Keep the identifier",
+          "onMoveReallocate": "Assign a new one",
+          "editable": "Allow editors to override",
+          "editableDescription": "Editors may type their own value. Uniqueness is still enforced.",
+          "editableHint": "Generated automatically. Change it only if you know what it should be.",
+          "assignedOnSave": "Assigned when the entry is created"
+        },
+        "slugPattern": "Slug pattern",
+        "slugPatternDescription": "How new entries build their slug, e.g. {field:number}-{field:name}. Leave empty to use the entry name."
       },
       "types": {
         "root": {
@@ -1609,6 +1647,10 @@
         "plugin": {
           "label": "Plugin",
           "description": "Custom field rendered by a space field plugin"
+        },
+        "serial": {
+          "label": "Serial number",
+          "description": "Auto-generated identifier, e.g. 1-001"
         }
       },
       "options": {
@@ -2236,7 +2278,13 @@
           "addType": "Add mapping",
           "empty": "No sitemap mappings configured yet."
         },
-        "noBlocks": "No blocks found"
+        "noBlocks": "No blocks found",
+        "serialGaps": "Numbering after deletion",
+        "serialGapsDescription": "What happens to the number of a deleted entry in auto-generated serial fields.",
+        "serialGapsPreserve": "Never reuse numbers",
+        "serialGapsPreserveDescription": "Deleting an entry leaves a permanent gap. Restoring it always gives back the original identifier.",
+        "serialGapsReuse": "Reuse freed numbers",
+        "serialGapsReuseDescription": "The next entry fills the gap. A restored entry is renumbered if its number was taken in the meantime."
       },
       "dangerZone": {
         "title": "Danger Zone",

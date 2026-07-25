@@ -4,7 +4,7 @@ description: "All b10cks field types with their options, validation rules, and c
 
 # Fields
 
-Fields are the building blocks of every block schema. When you add a field to a block, you pick one of 19 types — from a simple text line to a nested block list — and configure how it behaves. This page is the complete reference: every type, every option, and the JSON your frontend receives.
+Fields are the building blocks of every block schema. When you add a field to a block, you pick one of 20 types — from a simple text line to a nested block list — and configure how it behaves. This page is the complete reference: every type, every option, and the JSON your frontend receives.
 
 New to content modeling? Skim the [type picker](#which-field-type-should-i-use) first, then dive into the types you actually need.
 
@@ -31,6 +31,7 @@ New to content modeling? Skim the [type picker](#which-field-type-should-i-use) 
 | An icon | [Icon](#icon) |
 | A map coordinate | [Geo](#geo) |
 | A price in one or more currencies | [Price](#price) |
+| An auto-generated identifier or number | [Serial](#serial) |
 
 ## Settings every field has
 
@@ -295,6 +296,66 @@ A structured monetary value for multi-currency, multi-market pricing.
 | --- | --- |
 | `base_currency` | The primary currency |
 | `currencies` | Additional currencies — including regional codes like `US-USD` or `AT-EUR`, so the same currency can carry different prices per market |
+
+## Generated fields
+
+### Serial
+
+An identifier the system assigns when the entry is created — a house number, an SKU, an order reference. The editor never types it, and it never changes afterwards.
+
+| Option | Effect |
+| --- | --- |
+| `format` | The token pattern the value is built from (below). Defaults to `{counter}` |
+| `scope` | Which entries share a counter: any of `block`, `parent`, `language`, `year`, `month`, `space`. Defaults to `["block", "parent"]` |
+| `unique` | How far the value must stay unique: `scope` (default), `block`, `space`, or `none`. Enforced by the database |
+| `on_move` | `keep` (default) — the identifier survives a move — or `reallocate` |
+| `editable` | Let editors override the generated value. Uniqueness is still enforced |
+
+**Tokens**
+
+| Token | Renders |
+| --- | --- |
+| `{counter}` / `{counter:3}` | The allocated number, optionally zero-padded |
+| `{parent:key}` | A field on the direct parent. `{parent:name}` and `{parent:slug}` also work |
+| `{ancestor:key}` | The nearest ancestor with a value for that key — survives intermediate folders |
+| `{field:key}` | Another field on the entry itself. Must be filled at creation time |
+| `{block}` | The block slug, `{block:name}` for its display name |
+| `{date:Y}` / `{date:Ym}` | The creation date |
+| `{lang}` | The language code |
+
+**Example** — categories numbering their children, each child prefixed with its category:
+
+```jsonc
+// block "category"
+{ "house_no": { "type": "serial", "format": "{counter}", "scope": ["block"] } }
+
+// block "house"
+{ "number": {
+    "type": "serial",
+    "format": "{ancestor:house_no}-{counter:3}",
+    "scope": ["block", "parent"]
+} }
+```
+
+Holzhaus gets `1` and Business `2`; houses filed under Holzhaus get `1-001`, `1-002`, and the first house under Business gets `2-001`.
+
+**Things worth knowing**
+
+- **Translations share the identifier.** A serial is a property of the entry, not of its language, so a translation never draws its own number.
+- **Deleting leaves a gap by default.** Whether a freed number is ever handed out again is a space setting — see [`serial_gaps`](spaces.md#serial-numbering).
+- **Changing the format does not rewrite existing values.** New entries use the new format; run `contents:reissue-serials` to re-render the old ones, keeping their numbers.
+- **Adding the field to a block with existing content leaves it empty.** Run `contents:assign-serials {space} {block} {field}` to backfill in creation order.
+- **A format that cannot stay unique fails loudly.** With `unique: "space"` it is the format's job to distinguish blocks (`H-{counter}` vs `C-{counter}`); the allocator will not silently skip numbers to work around it.
+
+### Slug patterns
+
+A block can compose the slug of its new entries from the same tokens, via its `slug_pattern` setting:
+
+```jsonc
+{ "slug_pattern": "{field:number}-{field:name}" }   // → "1-001-chalet-alpin"
+```
+
+Only `{field:…}`, `{parent:…}`, `{ancestor:…}`, `{block}`, `{date:…}` and `{lang}` apply here — `{counter}` belongs to a serial field. Leaving the pattern empty keeps the default behaviour, where the slug follows the entry name, and an explicitly supplied slug always wins.
 
 ---
 

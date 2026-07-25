@@ -19,6 +19,7 @@ import PluginBlock from '~/components/blocks/PluginBlock.vue'
 import PriceBlock from '~/components/blocks/PriceBlock.vue'
 import ReferencesBlock from '~/components/blocks/ReferencesBlock.vue'
 import RichTextBlock from '~/components/blocks/RichTextBlock.vue'
+import SerialBlock from '~/components/blocks/SerialBlock.vue'
 import TableBlock from '~/components/blocks/TableBlock.vue'
 import TextareaBlock from '~/components/blocks/TextareaBlock.vue'
 import TextBlock from '~/components/blocks/TextBlock.vue'
@@ -173,6 +174,7 @@ const schemas = {
   geo: GeoBlock,
   price: PriceBlock,
   plugin: PluginBlock,
+  serial: SerialBlock,
 } satisfies Partial<Record<CanonicalSchemaTypeName | LegacySchemaTypeName, Component>>
 
 // The parent replaces `item` with a fresh object identity on every change, so a
@@ -207,6 +209,9 @@ const createDefaultConditionRule = (): FieldCondition => ({
 const validation = computed(() => localItem.value.validation || {})
 const conditions = computed<FieldConditions | null>(() => localItem.value.conditions || null)
 const isTranslatableField = computed(() => translatable.includes(localItem.value.type))
+// Generated values are always present and always the same in every language, so
+// "required" and "translatable" have nothing to say about them.
+const isGeneratedField = computed(() => localItem.value.type === 'serial')
 const translatableValue = computed(() =>
   'translatable' in localItem.value ? Boolean(localItem.value.translatable) : false
 )
@@ -619,6 +624,7 @@ const updateConditionOperator = (index: number, value: unknown) => {
         @update:model-value="(v) => updateValue('description', v)"
       />
       <CheckboxField
+        v-if="!isGeneratedField"
         :model-value="localItem.required"
         name="required"
         :label="$t('labels.blocks.fields.required')"

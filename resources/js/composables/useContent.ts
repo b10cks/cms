@@ -261,6 +261,42 @@ export function useContent(spaceId: MaybeRef<string>) {
     })
   }
 
+  /**
+   * The values a not-yet-created entry would receive for its generated fields.
+   *
+   * Not cached beyond the dialog's lifetime: another editor creating an entry
+   * in the same scope moves the number, and a stale preview is more confusing
+   * than a slightly slower one.
+   */
+  const useSerialPreviewQuery = (
+    blockId: MaybeRef<string | null | undefined>,
+    parentId: MaybeRef<string | null | undefined>,
+    name: MaybeRef<string | null | undefined>,
+    enabled: MaybeRef<boolean>
+  ) => {
+    return useQuery({
+      queryKey: computed(() => [
+        ...queryKeys.contents(spaceId).all(),
+        'serial-preview',
+        toValue(blockId),
+        toValue(parentId) ?? null,
+        toValue(name) ?? '',
+      ]),
+      queryFn: async () =>
+        spaceAPI.value.contents.serialPreview({
+          block_id: String(toValue(blockId)),
+          parent_id: toValue(parentId) ?? null,
+          name: toValue(name) ?? null,
+        }),
+      enabled: computed(() => Boolean(toValue(enabled) && toValue(blockId))),
+      // The preview reflects live state — another editor creating an entry in
+      // the same scope moves the number — so a cached answer is a wrong answer.
+      staleTime: 0,
+      gcTime: 0,
+      placeholderData: keepPreviousData,
+    })
+  }
+
   const useBulkCreateContentMutation = () => {
     return useMutation({
       mutationFn: async (payload: {
@@ -385,6 +421,7 @@ export function useContent(spaceId: MaybeRef<string>) {
     useContentsQuery,
     useContentQuery,
     useContentChildrenQuery,
+    useSerialPreviewQuery,
 
     // Mutations
     useCreateContentMutation,

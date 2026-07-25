@@ -42,7 +42,11 @@ class ContentTreeOperationService
                     'block_id' => $attributes['block_id'],
                     'parent_id' => $canonicalParent?->id,
                     'name' => $attributes['name'],
-                    'slug' => $this->makeUniqueSlug($attributes['slug'], $canonicalParent?->id, $defaultLanguage),
+                    // No slug means the block builds one from its slug pattern,
+                    // which CreateContent applies after allocating serials.
+                    'slug' => filled($attributes['slug'] ?? null)
+                        ? $this->makeUniqueSlug($attributes['slug'], $canonicalParent?->id, $defaultLanguage)
+                        : null,
                     'language_iso' => $defaultLanguage,
                     'content' => $attributes['content'] ?? [],
                     'settings' => $attributes['settings'] ?? [],

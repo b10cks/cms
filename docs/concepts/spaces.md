@@ -24,9 +24,21 @@ Settings that shape how the rest of the system behaves (all editable in **Settin
 | **Languages** | The enabled languages and the default language. Drives translatable fields, the Data API's `language` parameter, and fallback behavior. See [Internationalization](internationalization.md). |
 | **Search driver** | `mysql` (FULLTEXT, zero infrastructure) or `opensearch`. Switching drivers requires a reindex, triggered from settings. |
 | **Content sorting** | Default ordering of children in the content tree; individual entries can override it. |
+| **Serial numbering** | What happens to the number of a deleted entry in [serial fields](fields.md#serial). See below. |
 | **Visual editor** | The preview URL(s) your frontend is served from. See [Live preview](../guides/live-preview.md). |
 | **Access tokens** | Data API tokens. See [Access tokens & caching](access-tokens.md). |
 | **AI** | Optional per-space AI provider configuration and spend limits. |
+
+### Serial numbering
+
+`serial_gaps` decides what a [serial field](fields.md#serial) does with the number of a deleted entry:
+
+| Value | Behaviour |
+| --- | --- |
+| `preserve` *(default)* | The number is never handed out again — deleting an entry leaves a permanent gap. Restoring the entry always gives back its original identifier. |
+| `reuse` | The number returns to the pool and the next entry fills the gap. **A restored entry is renumbered if its number was taken in the meantime** — the trade-off gap reuse buys. |
+
+Changing the setting never rewrites existing values; it only changes what the next allocation does.
 
 ## Team and roles
 

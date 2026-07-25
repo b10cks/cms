@@ -29,6 +29,7 @@ class ContentSchemaValidator
         ?string $i18nParentId = null,
         string $mode = 'save',
     ): ContentSchemaValidationResult {
+        $submittedContent = $this->restoreReadonlyValues($block, $submittedContent, $content);
         $effectiveBase = $this->resolveEffectiveBase($space, $content, $languageIso, $i18nParentId);
         $effectiveContent = $this->contentSchemaValueMerger->mergeForSchema(
             $block->schema?->toArray() ?? [],
@@ -85,6 +86,52 @@ class ContentSchemaValidator
             $content->i18n_parent_id,
             $mode,
         );
+    }
+
+    /**
+     * Readonly values are owned by the system, not by the submission.
+     *
+     * Enforced here rather than in each action because every write path — the
+     * editor, the management API, imports, mass edit, version restores — funnels
+     * through this method, so a client that posts a value for a generated field
+     * simply has it ignored.
+     *
+     * @param  array<string, mixed>  $submittedContent
+     * @return array<string, mixed>
+     */
+    protected function restoreReadonlyValues(Block $block, array $submittedContent, ?Content $content): array
+    {
+        if ($content === null) {
+            return $submittedContent;
+        }
+
+        $fields = $block->schema?->getFields();
+
+        if (! $fields) {
+            return $submittedContent;
+        }
+
+        $stored = null;
+
+        foreach ($fields as $key => $field) {
+            if (! $field instanceof SchemaField || ! $field->isReadonly()) {
+                continue;
+            }
+
+            $stored ??= $content->getCurrentContent();
+
+            if (array_key_exists($key, $stored)) {
+                $submittedContent[$key] = $stored[$key];
+
+                continue;
+            }
+
+            // Never persisted (field added after the entry was created): drop
+            // the submitted value rather than letting the client seed it.
+            unset($submittedContent[$key]);
+        }
+
+        return $submittedContent;
     }
 
     protected function resolveEffectiveBase(
@@ -246,6 +293,7 @@ class ContentSchemaValidator
             'price' => $this->validatePrice($field, $value, $mode),
             // Plugin values are opaque JSON owned by the field plugin.
             'plugin' => [],
+            'serial' => $this->validateSerial($field, $value),
             default => [],
         };
     }
@@ -272,6 +320,27 @@ class ContentSchemaValidator
 
         if ($mode === 'save' && $field->isRequired() && $this->isEmpty($value)) {
             return [sprintf('%s is required.', $field->getLabel())];
+        }
+
+        return [];
+    }
+
+    /**
+     * A serial is a generated string. On a readonly field the value can only
+     * have come from the allocator, so there is nothing left to check; on an
+     * editable one the ledger's unique index is the real guard and this only
+     * keeps obvious garbage out of an identifier.
+     *
+     * @return array<int, string>
+     */
+    protected function validateSerial(SchemaField $field, mixed $value): array
+    {
+        if (! is_string($value)) {
+            return [sprintf('%s must be a string.', $field->getLabel())];
+        }
+
+        if (mb_strlen($value) > 191) {
+            return [sprintf('%s may not be longer than 191 characters.', $field->getLabel())];
         }
 
         return [];

@@ -13,6 +13,7 @@ use App\Models\Traits\SpaceAuditable;
 use App\Services\Automation\Enums\TriggerType;
 use App\Services\Content\ContentMenuCache;
 use App\Services\Content\LocalizedContentSlugService;
+use App\Services\Content\Serial\ContentSerialAssigner;
 use App\Services\CustomStr;
 use App\Support\SpaceContext;
 use CodersCantina\Filter\Filterable;
@@ -196,10 +197,26 @@ class Content extends SpaceModel
         static::softDeleted(function (Content $content) {
             $space = request('space') ?? SpaceContext::current();
 
+            if ($space) {
+                // Returns the entry's serial numbers to the pool when the space
+                // reuses gaps; a no-op under the default `preserve`.
+                app(ContentSerialAssigner::class)->onTrashed($space, $content);
+            }
+
             self::scheduleContentMenuInvalidation();
             if ($space) {
                 event(new ContentDeleted($content, $space));
             }
+        });
+
+        static::restored(function (Content $content) {
+            $space = request('space') ?? SpaceContext::current();
+
+            if ($space) {
+                app(ContentSerialAssigner::class)->restoreFor($space, $content);
+            }
+
+            self::scheduleContentMenuInvalidation();
         });
     }
 

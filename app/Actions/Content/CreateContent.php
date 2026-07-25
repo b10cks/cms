@@ -13,6 +13,9 @@ use App\Services\Content\ContentPositionService;
 use App\Services\Content\Schema\ContentSchemaValidationResult;
 use App\Services\Content\Schema\ContentSchemaValidator;
 use App\Services\Content\Schema\SchemaDefaultsResolver;
+use App\Services\Content\Serial\ContentSerialAssigner;
+use App\Services\Content\Serial\ContentSlugComposer;
+use App\Services\Content\Serial\SerialCollisionException;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -25,6 +28,8 @@ class CreateContent
         private readonly ContentSchemaValidator $contentSchemaValidator,
         private readonly ContentPositionService $contentPositionService,
         private readonly SchemaDefaultsResolver $schemaDefaultsResolver,
+        private readonly ContentSerialAssigner $serialAssigner,
+        private readonly ContentSlugComposer $slugComposer,
     ) {}
 
     protected function throwIfValidationFails(
@@ -105,7 +110,27 @@ class CreateContent
             unset($data['force']);
             $content->fill($data);
 
+            // The id is needed before the version is written: the ledger row
+            // points at it, and the allocated value has to be part of the very
+            // first version rather than of a follow-up save.
             $content->id = strtolower((string) Str::ulid());
+
+            try {
+                $validatedContent = $this->serialAssigner->assignOnCreate(
+                    $space,
+                    $block,
+                    $content,
+                    $parent,
+                    $validatedContent,
+                );
+            } catch (SerialCollisionException $exception) {
+                throw ValidationException::withMessages([
+                    'content.'.$exception->fieldKey => [$exception->getMessage()],
+                ]);
+            }
+
+            $this->applySlugPattern($block, $content, $parent, $validatedContent, $data);
+
             $version = ContentVersion::createWithContentContext([
                 'content' => $validatedContent,
                 'content_id' => $content->id,
@@ -120,5 +145,41 @@ class CreateContent
 
             $space->touch('content_updated_at');
         });
+    }
+
+    /**
+     * Seed the slug from the block's slug pattern.
+     *
+     * Only when the client sent none: an explicit slug is always the editor's
+     * decision. Blocks without a pattern keep the historic behaviour, where the
+     * slug is whatever the client derived from the name.
+     *
+     * @param  array<string, mixed>  $values
+     * @param  array<string, mixed>  $data
+     */
+    protected function applySlugPattern(
+        Block $block,
+        Content $content,
+        ?Content $parent,
+        array $values,
+        array $data,
+    ): void {
+        $submittedSlug = $data['slug'] ?? null;
+
+        if (is_string($submittedSlug) && trim($submittedSlug) !== '') {
+            return;
+        }
+
+        $content->slug = $this->slugComposer->uniqueAmongSiblings(
+            $this->slugComposer->compose(
+                $block,
+                $parent,
+                (string) $content->language_iso,
+                $values,
+                (string) $content->name,
+            ),
+            $content->parent_id,
+            (string) $content->language_iso,
+        );
     }
 }
