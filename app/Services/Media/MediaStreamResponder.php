@@ -23,18 +23,16 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class MediaStreamResponder
 {
     /**
-     * Types that can smuggle script into the delivery origin and therefore
-     * keep the restrictive sandbox CSP. Everything else gets `nosniff` only,
-     * because the sandbox directive breaks the built-in PDF viewer's controls.
+     * Types exempt from the restrictive sandbox CSP.
+     *
+     * This is deliberately an allow-list: these routes serve user-uploaded
+     * bytes from an origin shared with the management UI, so anything we have
+     * not explicitly vetted must keep the sandbox. PDF is exempt because the
+     * sandbox directive breaks the built-in viewer's controls, and the viewer
+     * already isolates embedded script from the embedding origin.
      */
-    private const array SCRIPTABLE_TYPES = [
-        'image/svg+xml',
-        'image/svg',
-        'text/html',
-        'text/xml',
-        'application/xml',
-        'application/xhtml+xml',
-        'text/xsl',
+    private const array SANDBOX_EXEMPT_TYPES = [
+        'application/pdf',
     ];
 
     /**
@@ -78,21 +76,14 @@ class MediaStreamResponder
         return new Response($body, Response::HTTP_OK, $headers);
     }
 
-    /**
-     * @param  array<string, string>  $extraHeaders
-     */
     public function respond(
         Request $request,
         FilesystemAdapter $disk,
         StoredFile $file,
         bool $immutable,
         ?int $maxAge = null,
-        array $extraHeaders = [],
     ): Response {
-        $headers = [
-            ...$this->baseHeaders($request, $file, $immutable, $maxAge),
-            ...$extraHeaders,
-        ];
+        $headers = $this->baseHeaders($request, $file, $immutable, $maxAge);
 
         if ($notModified = $this->notModifiedResponse($request, $file, $headers)) {
             return $notModified;
@@ -119,8 +110,17 @@ class MediaStreamResponder
             $headers['content-length'] = (string) $length;
         }
 
+        // Open eagerly: once the status line and Content-Length are on the
+        // wire we can no longer turn a failure into a 404, and a silently
+        // truncated 200 would be cached as if it were the real file.
+        $stream = $this->openStream($disk, $file->path, $start, $length, $range !== null);
+
+        if ($stream === null) {
+            return new Response(null, Response::HTTP_NOT_FOUND);
+        }
+
         return new StreamedResponse(
-            fn () => $this->stream($disk, $file->path, $start, $length, $range !== null),
+            fn () => $this->stream($stream, $file->path, $length),
             $range !== null ? Response::HTTP_PARTIAL_CONTENT : Response::HTTP_OK,
             $headers,
         );
@@ -307,7 +307,7 @@ class MediaStreamResponder
 
         $type = strtolower(trim(explode(';', $mime)[0]));
 
-        if (in_array($type, self::SCRIPTABLE_TYPES, true)) {
+        if (! in_array($type, self::SANDBOX_EXEMPT_TYPES, true)) {
             $headers['content-security-policy'] =
                 "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; sandbox";
         }
@@ -323,23 +323,21 @@ class MediaStreamResponder
     }
 
     /**
-     * Copy [start, start+length) from storage to the client in bounded chunks
-     * so a large file never has to be held in memory.
+     * Copy up to $length bytes from an already-positioned stream to the client
+     * in bounded chunks, so a large file never has to be held in memory.
+     *
+     * @param  resource  $stream
      */
-    private function stream(FilesystemAdapter $disk, string $path, int $start, ?int $length, bool $ranged): void
+    private function stream($stream, string $path, ?int $length): void
     {
-        $stream = $this->openStream($disk, $path, $start, $length, $ranged);
-
-        if ($stream === null) {
-            return;
-        }
-
         // A large transfer over a slow connection legitimately outlives the
-        // default limit.
-        set_time_limit(0);
+        // default limit, but an unbounded one lets a stalled client pin a
+        // worker forever.
+        set_time_limit(max(0, (int) config('ilum.stream.max_seconds', 900)));
 
         $chunkSize = max(8192, (int) config('ilum.stream.chunk_size', 1_048_576));
         $remaining = $length;
+        $aborted = false;
 
         try {
             while (! feof($stream) && ($remaining === null || $remaining > 0)) {
@@ -360,6 +358,8 @@ class MediaStreamResponder
 
                 // Stop paying for bytes nobody is listening to.
                 if (connection_aborted()) {
+                    $aborted = true;
+
                     break;
                 }
             }
@@ -367,6 +367,17 @@ class MediaStreamResponder
             if (is_resource($stream)) {
                 fclose($stream);
             }
+        }
+
+        // We already promised this many bytes in Content-Length. Coming up
+        // short means the object changed or the read failed mid-flight; the
+        // client sees a truncated response either way, so make it diagnosable.
+        if (! $aborted && $remaining !== null && $remaining > 0) {
+            Log::error('Media stream ended short of the promised length', [
+                'path' => $path,
+                'missing' => $remaining,
+                'promised' => $length,
+            ]);
         }
     }
 

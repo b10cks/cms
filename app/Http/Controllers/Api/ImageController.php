@@ -13,6 +13,7 @@ use App\Services\Media\MediaStreamResponder;
 use App\Services\Media\StoredFileProbe;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class ImageController extends Controller
@@ -74,6 +75,13 @@ class ImageController extends Controller
         $source = $this->sources->resolve($storage, $space, $assetId, $name);
 
         if ($source === null || $source->asset === null) {
+            return $this->notFound();
+        }
+
+        // Only video and audio carry poster frames — the same rule the upload
+        // endpoint enforces. Other types can have `thumbnails` metadata for
+        // unrelated reasons, and those are not posters.
+        if (! Str::startsWith((string) $source->asset->mime_type, ['video/', 'audio/'])) {
             return $this->notFound();
         }
 

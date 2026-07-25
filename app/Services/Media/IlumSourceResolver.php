@@ -25,6 +25,15 @@ class IlumSourceResolver
 
     public function resolve(string $storage, string $space, string $assetId, string $name): ?IlumSource
     {
+        // `.` and `..` satisfy the route's charset but are directory
+        // navigation, not names: `…/{assetId}/..` normalises to the space
+        // directory, which is not a file we can ever answer with.
+        foreach ([$storage, $space, $assetId, $name] as $segment) {
+            if ($segment === '.' || $segment === '..' || $segment === '') {
+                return null;
+            }
+        }
+
         $path = "{$space}/{$assetId}/{$name}";
 
         return $storage === 'storage'
@@ -72,9 +81,9 @@ class IlumSourceResolver
         $disk = $this->storageService->getStorage($storageModel);
 
         // Only the asset's *current* file is described by the asset row;
-        // versioned paths and generated thumbnails must be probed.
+        // versioned paths and generated thumbnails carry their own metadata.
         $file = $asset->path === $path
-            ? $this->probe->fromAsset($asset, $path)
+            ? $this->probe->fromAsset($disk, $asset, $path)
             : $this->probe->probe($disk, $path);
 
         return $file === null ? null : new IlumSource($disk, $file, $asset);

@@ -87,9 +87,13 @@ IMAGE_CACHE_IMMUTABLE=true         # mark transformed images immutable
 IMAGE_CACHE_PASSTHROUGH_IMMUTABLE=false  # untransformed files stay revalidatable
 IMAGE_CACHE_POSTER_DURATION=3600   # TTL for poster URLs without a `v` pin
 IMAGE_STREAM_CHUNK_SIZE=1048576    # bytes per chunk when streaming media
+IMAGE_STREAM_MAX_SECONDS=900       # ceiling on a single transfer (0 = no limit)
+IMAGE_RATE_LIMIT=600               # delivery requests per minute per IP
 ```
 
 Leave `IMAGE_CACHE_PASSTHROUGH_IMMUTABLE` off unless you are certain no file is ever served from a reused path — it removes the revalidation escape hatch for a year.
+
+The delivery routes are unauthenticated and each in-flight transfer occupies a PHP worker for its duration, so both `IMAGE_RATE_LIMIT` and `IMAGE_STREAM_MAX_SECONDS` are there to stop slow or abusive clients from exhausting the pool. Raise `IMAGE_STREAM_MAX_SECONDS` if you serve very large files to slow connections; raise `IMAGE_RATE_LIMIT` if a single content-heavy page legitimately pulls more than 600 assets per minute per visitor. Behind a CDN, most requests never reach the origin and the defaults are ample.
 
 Video and other non-image assets are streamed with byte-range support, which is what makes seeking work and is a hard requirement for playback in Safari. If you terminate TLS or proxy in front of the origin, make sure the proxy forwards `Range` and does not buffer whole responses — nginx needs `proxy_buffering off` (or a large `proxy_max_temp_file_size`) on the delivery location for large media.
 

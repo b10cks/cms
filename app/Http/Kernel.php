@@ -85,6 +85,7 @@ class Kernel extends HttpKernel
         ],
 
         'ilum' => [
+            ThrottleRequests::class.':ilum',
             SubstituteBindings::class,
         ],
     ];

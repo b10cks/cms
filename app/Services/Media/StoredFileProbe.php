@@ -6,33 +6,61 @@ use App\Models\Space\Asset;
 use App\Services\Media\Dto\StoredFile;
 use Illuminate\Filesystem\AwsS3V3Adapter;
 use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Resolves the metadata the delivery layer needs (mime, size, validators)
  * for a stored path.
  *
- * Ordered cheapest-first: the asset row already carries everything for the
- * asset's current file, and S3 can answer the rest with a single HeadObject
- * instead of the three round-trips separate mimeType/size/lastModified calls
- * would cost.
+ * Size and the validators always come from storage, never from the database:
+ * they define the response contract (Content-Length, Content-Range), and a row
+ * that has drifted from the object would make us promise bytes we cannot
+ * deliver. S3 answers all of it with a single HeadObject instead of the three
+ * round-trips separate mimeType/size/lastModified calls would cost.
  */
 class StoredFileProbe
 {
     /**
-     * Build a StoredFile from the asset record itself. Only valid when the
-     * requested path *is* the asset's current file — versioned paths and
-     * thumbnails carry different metadata and must be probed.
+     * Probe the asset's current file, describing it with the asset row where
+     * the row is the better source.
+     *
+     * The row wins for mime type and download name — those are descriptive,
+     * and the upload-time detection beats what a storage backend infers from
+     * the file extension. It never wins for size or the validators; see the
+     * class docblock.
+     *
+     * Only valid when the requested path *is* the asset's current file —
+     * versioned paths and thumbnails carry different metadata.
      */
-    public function fromAsset(Asset $asset, string $path): StoredFile
+    public function fromAsset(FilesystemAdapter $disk, Asset $asset, string $path): ?StoredFile
     {
+        $file = $this->probe($disk, $path);
+
+        if ($file === null) {
+            return null;
+        }
+
         return new StoredFile(
             path: $path,
-            mime: (string) $asset->mime_type,
-            size: $asset->size !== null ? (int) $asset->size : null,
-            etag: $asset->checksum ? '"'.$asset->checksum.'"' : null,
-            lastModified: $asset->updated_at?->getTimestamp(),
+            mime: $asset->mime_type ? (string) $asset->mime_type : $file->mime,
+            size: $file->size,
+            // The stored checksum is a strong validator and survives rewrites
+            // of identical content, but it only describes the bytes the row
+            // was written for — fall back to the probed tag once they differ.
+            etag: $this->checksumEtag($asset, $file) ?? $file->etag,
+            lastModified: $file->lastModified,
             downloadName: $this->downloadNameFor($asset, $path),
         );
+    }
+
+    private function checksumEtag(Asset $asset, StoredFile $file): ?string
+    {
+        $inSync = $asset->checksum
+            && $asset->size !== null
+            && $file->size !== null
+            && (int) $asset->size === $file->size;
+
+        return $inSync ? '"'.$asset->checksum.'"' : null;
     }
 
     /**
@@ -46,16 +74,29 @@ class StoredFileProbe
             return $head;
         }
 
-        if (! $disk->exists($path)) {
+        try {
+            // Deliberately not `exists()`, which is also true for directories
+            // — measuring one throws rather than returning a clean miss.
+            if (! $disk->fileExists($path)) {
+                return null;
+            }
+
+            $size = $this->intOrNull($disk->size($path));
+            $lastModified = $this->intOrNull($disk->lastModified($path));
+            $mime = $disk->mimeType($path) ?: 'application/octet-stream';
+        } catch (\Throwable $e) {
+            // An unreadable path is a miss, not a 500 on a public endpoint.
+            Log::warning('Unable to probe stored file', [
+                'path' => $path,
+                'error' => $e->getMessage(),
+            ]);
+
             return null;
         }
 
-        $size = $this->intOrNull($disk->size($path));
-        $lastModified = $this->intOrNull($disk->lastModified($path));
-
         return new StoredFile(
             path: $path,
-            mime: $disk->mimeType($path) ?: 'application/octet-stream',
+            mime: $mime,
             size: $size,
             etag: $this->syntheticEtag($size, $lastModified),
             lastModified: $lastModified,

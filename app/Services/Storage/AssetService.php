@@ -24,6 +24,20 @@ use League\Flysystem\FilesystemOperator;
 
 class AssetService
 {
+    /**
+     * Poster frames are served back through the image pipeline, so they have
+     * to be a raster format the driver can decode — SVG is excluded. Doubles
+     * as the validation allow-list (see UploadAssetPosterRequest) and as the
+     * mime → extension map for the stored path.
+     */
+    public const array POSTER_EXTENSIONS = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+        'image/avif' => 'avif',
+        'image/gif' => 'gif',
+    ];
+
     public function __construct(
         private readonly StorageService $storageService
     ) {}
@@ -297,11 +311,18 @@ class AssetService
         $storage = StorageModel::findOrFail($asset->storage_id);
         $filesystem = $this->storageService->getStorage($storage);
 
-        $extension = $file->getClientOriginalExtension() ?: 'jpg';
+        // The extension comes from the mime type we actually detected, not
+        // from the client-supplied filename: it ends up in the stored path,
+        // and on S3 it is what the ContentType is inferred from.
+        $extension = self::POSTER_EXTENSIONS[(string) $file->getMimeType()] ?? 'jpg';
         $basename = $this->sanitizeFilename((string) $asset->filename) ?: 'asset';
         $relativePath = "{$space->id}/{$asset->id}/{$basename}_poster_".Str::random(8).'.'.$extension;
 
         $stream = fopen($file->getRealPath(), 'r');
+
+        if (! is_resource($stream)) {
+            throw new \RuntimeException('Unable to read the uploaded poster.');
+        }
 
         try {
             $filesystem->writeStream($relativePath, $stream);

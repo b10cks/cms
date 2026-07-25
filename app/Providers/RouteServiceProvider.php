@@ -69,6 +69,13 @@ class RouteServiceProvider extends ServiceProvider
             ];
         });
 
+        // Media delivery is unauthenticated and each request can hold a worker
+        // for the length of a transfer, so the ceiling is high (a single page
+        // pulls many assets) but finite.
+        RateLimiter::for('ilum', function (Request $request) {
+            return Limit::perMinute((int) config('ilum.rate_limit', 600))->by($request->ip());
+        });
+
         RateLimiter::for('crucial', function (Request $request) {
             return Limit::perMinute(5)->by($request->user()?->id ?: $request->ip());
         });

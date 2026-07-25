@@ -61,10 +61,19 @@ return [
         'poster_duration' => env('IMAGE_CACHE_POSTER_DURATION', 3600),
     ],
 
-    // Bytes copied from storage to the client per iteration when streaming a
-    // (possibly ranged) file.
+    // Requests per minute per IP for the (unauthenticated) delivery routes.
+    // A content-heavy page pulls many assets at once, so this is generous.
+    'rate_limit' => (int) env('IMAGE_RATE_LIMIT', 600),
+
     'stream' => [
+        // Bytes copied from storage to the client per iteration when streaming
+        // a (possibly ranged) file.
         'chunk_size' => (int) env('IMAGE_STREAM_CHUNK_SIZE', 1048576),
+
+        // Ceiling on a single transfer. Long enough for a large file over a
+        // slow connection, short enough that a stalled client eventually
+        // releases its worker. 0 disables the limit.
+        'max_seconds' => (int) env('IMAGE_STREAM_MAX_SECONDS', 900),
     ],
 
     'max_dimensions' => [

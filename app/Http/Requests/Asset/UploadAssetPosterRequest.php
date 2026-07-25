@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Asset;
 
+use App\Services\Storage\AssetService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UploadAssetPosterRequest extends FormRequest
@@ -17,9 +18,7 @@ class UploadAssetPosterRequest extends FormRequest
             'poster' => [
                 'required',
                 'file',
-                // The poster is served through the image pipeline, so it has to
-                // be a raster format the driver can decode — SVG is excluded.
-                'mimetypes:image/jpeg,image/png,image/webp,image/avif,image/gif',
+                'mimetypes:'.implode(',', array_keys(AssetService::POSTER_EXTENSIONS)),
                 'max:'.(config('filesystems.max_upload_size', 500) * 1024),
             ],
         ];
