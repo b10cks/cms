@@ -22,6 +22,6 @@ class TranslationUnit
         public readonly array $path,
         public readonly string $source,
         public readonly array $targets = [],
-    ) {
-    }
+        public readonly bool $translatable = true,
+    ) {}
 }

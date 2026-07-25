@@ -35,6 +35,7 @@ import { BlockTags } from './resources/block-tags'
 import { Blocks } from './resources/blocks'
 import { ContentMenu } from './resources/content-menu'
 import { Icons } from './resources/icons'
+import { MassEdit } from './resources/mass-edit'
 import { ContentModel } from './resources/content-model'
 import { ContentVersions } from './resources/content-versions'
 import { Contents } from './resources/contents'
@@ -165,6 +166,7 @@ export class API {
       blockVersions: (blockId: string) => new BlockVersions(this.client, spaceId, blockId),
       contents: new Contents(this.client, spaceId),
       contentMenu: new ContentMenu(this.client, spaceId),
+      massEdit: new MassEdit(this.client, spaceId),
       dataSources: new DataSources(this.client, spaceId),
       fieldPlugins: new FieldPlugins(this.client, spaceId),
       tokens: new Tokens(this.client, spaceId),

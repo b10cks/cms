@@ -90,6 +90,7 @@ function uiSidebar(prefix = ''): DefaultTheme.SidebarItem[] {
       items: sorted([
         { text: 'Dashboard & Navigation', link: `${prefix}/ui/dashboard` },
         { text: 'Content', link: `${prefix}/ui/content` },
+        { text: 'Mass Edit', link: `${prefix}/ui/mass-edit` },
         { text: 'Visual Editor (Canvas)', link: `${prefix}/ui/canvas` },
         { text: 'Block Library', link: `${prefix}/ui/blocks` },
         { text: 'Asset Manager', link: `${prefix}/ui/assets` },

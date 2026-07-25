@@ -191,6 +191,12 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: '/:space/mass-edit',
+    name: 'space-mass-edit',
+    component: () => import('~/pages/[space]/mass-edit.vue'),
+    meta: { layout: 'default' },
+  },
+  {
     path: '/:space/canvas',
     name: 'space-canvas',
     component: () => import('~/pages/[space]/canvas.vue'),

@@ -43,11 +43,12 @@ class ContentTranslationApplier
         private readonly CreateContent $createContent,
         private readonly UpdateContent $updateContent,
         private readonly PublishContent $publishContent,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array<int, array{content_id: string, targets: array<string, array<string, string>>}>  $documents
+     * @param  bool  $allowSourceEdits  Also apply values for the default language (written onto the canonical row).
+     * @param  bool  $applyEmpty  Treat empty strings as intentional clears instead of "no value provided".
      */
     public function apply(
         Space $space,
@@ -55,6 +56,8 @@ class ContentTranslationApplier
         ContentTranslationImportMode $mode,
         bool $createMissing,
         Authenticatable $owner,
+        bool $allowSourceEdits = false,
+        bool $applyEmpty = false,
     ): ImportResult {
         $this->successes = [];
         $this->changes = [];
@@ -85,7 +88,9 @@ class ContentTranslationApplier
             foreach ($targets as $language => $values) {
                 $language = (string) $language;
 
-                if ($language === $defaultLanguage || ! \in_array($language, $enabledLanguages, true)) {
+                $isSourceLanguage = $language === $defaultLanguage;
+
+                if (($isSourceLanguage && ! $allowSourceEdits) || ! \in_array($language, $enabledLanguages, true)) {
                     $this->ignoredFields[] = $language;
 
                     continue;
@@ -95,7 +100,7 @@ class ContentTranslationApplier
                     continue;
                 }
 
-                $this->applyLanguage($space, $canonical, $rootSchema, $language, $values, $mode, $createMissing, $owner);
+                $this->applyLanguage($space, $canonical, $rootSchema, $language, $values, $mode, $createMissing, $owner, $applyEmpty, $isSourceLanguage);
             }
         }
 
@@ -115,6 +120,8 @@ class ContentTranslationApplier
         ContentTranslationImportMode $mode,
         bool $createMissing,
         Authenticatable $owner,
+        bool $applyEmpty = false,
+        bool $isSourceLanguage = false,
     ): void {
         try {
             $family = $this->i18n->getFamily($canonical);
@@ -128,7 +135,7 @@ class ContentTranslationApplier
             }
 
             $tree = $row !== null ? $row->getCurrentContent() : $canonical->getCurrentContent();
-            $unitMap = $this->extractor->collectUnits($tree, $rootSchema);
+            $unitMap = $this->extractor->collectUnits($tree, $rootSchema, includeNonTranslatable: true);
 
             $appliedChanges = [];
             foreach ($values as $id => $value) {
@@ -140,7 +147,21 @@ class ContentTranslationApplier
                     continue;
                 }
 
-                if (! \is_string($value) || $value === '') {
+                // Non-translatable fields only exist on the source row — the overlay
+                // merge always takes them from the base, so target-language writes
+                // would be dead data.
+                if (! ($unitMap[$id]['translatable'] ?? true) && ! $isSourceLanguage) {
+                    $this->ignoredFields[] = $id;
+
+                    continue;
+                }
+
+                // ConvertEmptyStringsToNull turns submitted clears into null.
+                if ($applyEmpty && $value === null) {
+                    $value = '';
+                }
+
+                if (! \is_string($value) || ($value === '' && ! $applyEmpty)) {
                     continue;
                 }
 
@@ -217,6 +238,8 @@ class ContentTranslationApplier
         ];
 
         if ($mode === ContentTranslationImportMode::PUBLISH) {
+            // Publish mass-assigns leftover data keys onto the model; `force` is not fillable.
+            unset($data['force']);
             $this->publishContent->execute($data, $content, $space, $owner);
 
             return;
@@ -231,7 +254,7 @@ class ContentTranslationApplier
         string $language,
         Authenticatable $owner,
     ): Content {
-        $content = new Content();
+        $content = new Content;
 
         $this->createContent->execute([
             'name' => $canonical->name,

@@ -12,7 +12,7 @@ abstract class BaseContentDataDriver implements ContentDataDriver
     use BuildsExportFilename;
 
     /** Reserved (non-language) column headers used by the flat formats. */
-    protected const RESERVED_COLUMNS = ['content_id', 'content_name', 'unit_id', 'type', 'field', 'source'];
+    protected const RESERVED_COLUMNS = ['content_id', 'content_name', 'slug', 'full_slug', 'unit_id', 'type', 'field', 'source'];
 
     protected function generateFilename(Space $space, string $extension): string
     {
@@ -55,6 +55,8 @@ abstract class BaseContentDataDriver implements ContentDataDriver
                 $row = [
                     'content_id' => $document->contentId,
                     'content_name' => $document->name,
+                    'slug' => $document->slug,
+                    'full_slug' => $document->fullSlug,
                     'unit_id' => $unit->id,
                     'type' => $unit->type,
                     'field' => $unit->fieldKey,
@@ -127,6 +129,7 @@ abstract class BaseContentDataDriver implements ContentDataDriver
                 'content_id' => $document->contentId,
                 'name' => $document->name,
                 'slug' => $document->slug,
+                'full_slug' => $document->fullSlug,
                 'source_language' => $document->sourceLanguage,
                 'languages' => $document->languages,
                 'units' => array_map(static fn ($unit): array => [
@@ -190,7 +193,7 @@ abstract class BaseContentDataDriver implements ContentDataDriver
     protected function validateExtension(string $extension, array $allowed): ?string
     {
         if (! \in_array(strtolower($extension), $allowed, true)) {
-            return 'File must be one of: ' . implode(', ', $allowed);
+            return 'File must be one of: '.implode(', ', $allowed);
         }
 
         return null;

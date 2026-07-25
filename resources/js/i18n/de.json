@@ -1128,7 +1128,8 @@
       "provider": "Provider",
       "extendedSidebar": "Erweiterte Seitenleiste",
       "icons": "Icons",
-      "onboarding": "Onboarding"
+      "onboarding": "Onboarding",
+      "massEdit": "Massenbearbeitung"
     },
     "provider": {
       "title": "Provider",
@@ -3988,7 +3989,61 @@
         "retry": "Erneut versuchen"
       }
     },
-    "moreInfo": "Weitere Informationen"
+    "moreInfo": "Weitere Informationen",
+    "massEdit": {
+      "title": "Massenbearbeitung",
+      "description": "Ausgewählte Felder vieler Inhalte gleichzeitig und pro Sprache bearbeiten.",
+      "fields": "Felder",
+      "languages": "Sprachen",
+      "contentColumn": "Inhalt",
+      "fieldColumn": "Feld",
+      "sourceBadge": "Quelle",
+      "save": "{count} Änderung speichern | {count} Änderungen speichern",
+      "saveAndPublish": "Speichern & veröffentlichen",
+      "discard": "Verwerfen",
+      "translateAi": "Mit KI übersetzen",
+      "translateAiHint": "Füllt leere oder veraltete Zellen über alle Seiten der aktuellen Auswahl",
+      "translating": "Übersetze {language}… {applied}/{total}",
+      "translateSuccess": "{count} Zelle übersetzt | {count} Zellen übersetzt",
+      "translateError": "KI-Übersetzung fehlgeschlagen: {error}",
+      "nothingToTranslate": "Nichts zu übersetzen",
+      "noAiConfig": "Keine KI-Konfiguration für diesen Space verfügbar",
+      "export": "Exportieren",
+      "import": "Importieren",
+      "emptyTitle": "Felder zum Bearbeiten auswählen",
+      "emptyDescription": "Wähle ein oder mehrere übersetzbare Felder (z. B. meta oder title), um alle passenden Inhalte in einem bearbeitbaren Raster zu laden.",
+      "noFieldsAvailable": "Keine übersetzbaren Felder gefunden",
+      "noRows": "Keine Inhalte entsprechen der aktuellen Auswahl.",
+      "operators": {
+        "contains": "Enthält",
+        "startsWith": "Beginnt mit",
+        "endsWith": "Endet mit",
+        "equals": "Ist gleich",
+        "after": "Nach",
+        "before": "Vor",
+        "empty": "Ist leer",
+        "notEmpty": "Ist nicht leer"
+      },
+      "filters": {
+        "name": "Name",
+        "slug": "Slug",
+        "block": "Block",
+        "status": "Status",
+        "published": "Veröffentlicht",
+        "draft": "Entwurf",
+        "createdAt": "Erstellt am",
+        "updatedAt": "Aktualisiert am",
+        "fieldValue": "Feld: {field}",
+        "fullSlug": "Vollständiger Slug"
+      },
+      "sourceOnly": "nur Quelle",
+      "notTranslatableHint": "Dieses Feld ist nicht übersetzbar — bearbeite es in der Quellsprache.",
+      "fieldsPlaceholder": "Felder auswählen…",
+      "translateTruncated": "Zu viele Inhalte für einen Durchlauf — Filter eingrenzen und wiederholen.",
+      "fieldRemovalTitle": "Feld entfernen?",
+      "fieldRemovalWarning": "Du hast {count} ungespeicherte Änderung(en). Ein entferntes Feld blendet seine Zellen aus, sie werden beim nächsten Speichern trotzdem geschrieben. Vorher verwerfen, wenn du das nicht willst.",
+      "fieldRemovalConfirm": "Trotzdem entfernen"
+    }
   },
   "notifications": {
     "inputField": {
@@ -4873,6 +4928,11 @@
     },
     "invites": {
       "joinedFallbackTarget": "den Arbeitsbereich"
+    },
+    "massEdit": {
+      "saveSuccess": "{count} Änderung gespeichert | {count} Änderungen gespeichert",
+      "savePartial": "{saved} gespeichert, {errors} Fehler",
+      "saveError": "Speichern fehlgeschlagen: {error}"
     }
   },
   "content": {

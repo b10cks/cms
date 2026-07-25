@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Mgmt\Content;
 use App\Enums\ImportExportFormat;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\ContentFilter;
+use App\Http\Filters\Mgmt\ContentMassEditFilter;
 use App\Http\Requests\Content\ExportContentDataRequest;
 use App\Models\Management\Space;
 use App\Services\ContentData\ContentDataImportExportService;
@@ -22,9 +23,20 @@ class ContentDataExportController extends Controller
 
         try {
             $format = ImportExportFormat::from($request->validated('as'));
-            $filter = new ContentFilter($request->all());
+            // The mass-edit grid sends operator-prefixed filters (`grid=1`); the
+            // classic export dialog sends plain ContentFilter values.
+            $filter = $request->boolean('grid')
+                ? new ContentMassEditFilter($request->all())
+                : new ContentFilter($request->all());
 
-            return $service->exportContents($space, $format, $filter);
+            return $service->exportContents(
+                $space,
+                $format,
+                $filter,
+                $request->getFieldKeys(),
+                $request->getLanguageFilter(),
+                gridMode: $request->boolean('grid'),
+            );
         } catch (\Throwable $e) {
             Log::error('Content translation export failed', [
                 'space_id' => $space->id,
@@ -33,7 +45,7 @@ class ContentDataExportController extends Controller
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            abort(500, 'Failed to export content translations: ' . $e->getMessage());
+            abort(500, 'Failed to export content translations: '.$e->getMessage());
         }
     }
 }

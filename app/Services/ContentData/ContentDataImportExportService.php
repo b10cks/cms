@@ -36,8 +36,22 @@ class ContentDataImportExportService extends ImportExportService
         $this->registerDrivers($csvDriver, $excelDriver, $jsonDriver, $xliffDriver, $yamlDriver);
     }
 
-    public function exportContents(Space $space, ImportExportFormat $format, ?Filter $filter = null): Response
-    {
+    /**
+     * @param  array<int, string>|null  $fieldKeys  Restrict exported units to these schema field keys.
+     * @param  array<int, string>|null  $languages  Restrict exported targets to these languages.
+     * @param  bool  $gridMode  Mirror the mass-edit grid exactly: same block restriction,
+     *                          empty units kept (so every listed item exports), non-translatable
+     *                          fields included. Off for the classic translation export, which
+     *                          only ships units that have something to translate.
+     */
+    public function exportContents(
+        Space $space,
+        ImportExportFormat $format,
+        ?Filter $filter = null,
+        ?array $fieldKeys = null,
+        ?array $languages = null,
+        bool $gridMode = false,
+    ): Response {
         $driver = $this->getDriver($format);
 
         $query = Content::query()
@@ -48,7 +62,20 @@ class ContentDataImportExportService extends ImportExportService
             $query->filter($filter);
         }
 
-        $documents = $this->extractor->extractForContents($space, $query->get());
+        if ($gridMode && $fieldKeys !== null) {
+            $query->whereIn('block_id', $this->extractor->blockIdsWithFields($fieldKeys));
+            // Same order the grid pages in, so export rows line up with what was on screen.
+            $query->orderBy('id');
+        }
+
+        $documents = $this->extractor->extractForContents(
+            $space,
+            $query->get(),
+            $fieldKeys,
+            $languages,
+            includeEmptyUnits: $gridMode,
+            includeNonTranslatable: $gridMode,
+        );
 
         return $driver->export($space, $documents);
     }

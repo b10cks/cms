@@ -57,3 +57,5 @@ Each translation publishes independently — German can go live days after Engli
 ## Translation workflows in the app
 
 The editor shows translatable fields side-by-side with the canonical value, supports **AI-assisted translation** per field or per entry (when AI is configured for the space), and content translations can be exported/imported for external translation workflows. See the [content editor user guide](../ui/content.md).
+
+For work that spans many entries instead of one page, **[Mass Edit](../ui/mass-edit.md)** puts the same translation units into a grid: rows are entries × fields, columns are languages. It's built on the same extraction as the export formats, so a stable unit id addresses the same value whether you edit it in the grid, in an XLIFF file, or via the API. Non-translatable fields can be shown there too, but stay editable in the source language only — matching the overlay rules above.

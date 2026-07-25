@@ -65,6 +65,7 @@ Documentation for every part of the admin UI:
 
 - [Dashboard & navigation](ui/dashboard.md)
 - [Content](ui/content.md) — content tree, editor, and content settings
+- [Mass Edit](ui/mass-edit.md) — spreadsheet-style bulk editing of single fields across many entries, per language
 - [Visual editor (Canvas)](ui/canvas.md)
 - [Block library](ui/blocks.md)
 - [Asset manager](ui/assets.md)

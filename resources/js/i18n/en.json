@@ -46,16 +46,7 @@
       },
       "terms": "I agree to b10cks [Terms of Service](https://www.b10cks.com/en/legal/terms-of-service) and [Privacy Policy](https://www.b10cks.com/en/legal/privacy-policy)",
       "forgotPassword": "Forgot your password?",
-      "forgotPasswordTitle": "Reset your password",
-      "forgotPasswordIntro": "Enter the email address you use for b10cks and we'll send you a password reset link.",
-      "forgotPasswordSuccess": "If we found an account for that email address, we sent a password reset link.",
-      "resetPasswordTitle": "Set a new password",
-      "resetPasswordIntro": "Choose a new password for your account.",
-      "resetPasswordInvalidLink": "This password reset link is invalid or incomplete.",
-      "resetPasswordSuccess": "Your password has been reset. You can now sign in with your new password.",
       "backToLogin": "Back to login",
-      "sendResetLink": "Send reset link",
-      "resetPasswordAction": "Reset password",
       "marketing": {
         "demo": "Curious? [Book a demo](https://www.b10cks.com/en/demo) with us.",
         "header": "Your content, **built for scale**.",
@@ -1128,7 +1119,8 @@
       "provider": "Provider",
       "extendedSidebar": "Extended sidebar",
       "icons": "Icons",
-      "onboarding": "Onboarding"
+      "onboarding": "Onboarding",
+      "massEdit": "Mass Edit"
     },
     "provider": {
       "title": "Provider",
@@ -1772,7 +1764,6 @@
         "all": "All",
         "archived": "Archived"
       },
-      "empty": "No spaces yet.",
       "emptyTitle": "Create the space where your next project comes to life.",
       "emptyDescription": "Spaces give your team a home for content, assets, workflows, and structure — all in one place. Start with your first one and build from there.",
       "newPageTitle": "Create a new space",
@@ -2426,13 +2417,10 @@
         "noUsageData": "No usage data available",
         "placeholder": "Ask AI to modify your content...",
         "dropFiles": "Drop files here",
-        "configTitle": "AI Behavior & Rules",
-        "configDescription": "Customize the behavior, tone, and rules for how AI generates and modifies content across your space.",
         "systemPrompt": "AI Instructions",
         "systemPromptDescription": "Define how AI should behave in this space. Include tone, style guidelines, domain-specific rules, and any other constraints or preferences.",
         "systemPromptPlaceholder": "e.g. Professional yet approachable tone. Use active voice. Focus on technical accuracy. Never use first person. Always include examples...",
         "temperature": "Temperature",
-        "temperatureDescription": "Controls randomness in AI output. Lower values produce more focused, deterministic results.",
         "precise": "Precise",
         "creative": "Creative",
         "maxTokens": "Max Tokens",
@@ -2447,8 +2435,7 @@
         "setAsDefault": "Set as default configuration",
         "default": "Default",
         "noConfigs": "No AI configurations yet",
-        "noConfigsDescription": "Create your first configuration to start using AI features.",
-        "confirmDelete": "Are you sure you want to delete the \"{name}\" configuration?"
+        "noConfigsDescription": "Create your first configuration to start using AI features."
       },
       "members": {
         "title": "Members",
@@ -3988,7 +3975,61 @@
         "retry": "Retry"
       }
     },
-    "moreInfo": "More information"
+    "moreInfo": "More information",
+    "massEdit": {
+      "title": "Mass Edit",
+      "description": "Edit selected fields across many contents at once, per language.",
+      "fields": "Fields",
+      "languages": "Languages",
+      "contentColumn": "Content",
+      "fieldColumn": "Field",
+      "sourceBadge": "Source",
+      "save": "Save {count} change | Save {count} changes",
+      "saveAndPublish": "Save & publish",
+      "discard": "Discard",
+      "translateAi": "Translate with AI",
+      "translateAiHint": "Fills empty or outdated cells across every page of the current selection",
+      "translating": "Translating {language}… {applied}/{total}",
+      "translateSuccess": "Translated {count} cell | Translated {count} cells",
+      "translateError": "AI translation failed: {error}",
+      "nothingToTranslate": "Nothing to translate",
+      "noAiConfig": "No AI configuration available for this space",
+      "export": "Export",
+      "import": "Import",
+      "emptyTitle": "Select fields to edit",
+      "emptyDescription": "Pick one or more translatable fields (like meta or title) to load all matching contents into an editable grid.",
+      "noFieldsAvailable": "No translatable fields found",
+      "noRows": "No contents match the current selection.",
+      "operators": {
+        "contains": "Contains",
+        "startsWith": "Starts with",
+        "endsWith": "Ends with",
+        "equals": "Equals",
+        "after": "After",
+        "before": "Before",
+        "empty": "Is empty",
+        "notEmpty": "Is not empty"
+      },
+      "filters": {
+        "name": "Name",
+        "slug": "Slug",
+        "block": "Block",
+        "status": "Status",
+        "published": "Published",
+        "draft": "Draft",
+        "createdAt": "Created at",
+        "updatedAt": "Updated at",
+        "fieldValue": "Field: {field}",
+        "fullSlug": "Full slug"
+      },
+      "sourceOnly": "source only",
+      "notTranslatableHint": "This field is not translatable — edit it in the source language.",
+      "fieldsPlaceholder": "Select fields…",
+      "translateTruncated": "Too many contents to translate in one run — narrow the filters and repeat.",
+      "fieldRemovalTitle": "Remove field?",
+      "fieldRemovalWarning": "You have {count} unsaved change(s). Removing a field hides its cells, but they are still saved on the next save. Discard first if you do not want them.",
+      "fieldRemovalConfirm": "Remove anyway"
+    }
   },
   "notifications": {
     "inputField": {
@@ -4421,8 +4462,6 @@
     "aiSettings": {
       "saveSuccess": "AI settings saved successfully",
       "saveError": "Failed to save AI settings",
-      "configSaveSuccess": "AI configuration saved successfully",
-      "configSaveError": "Failed to save AI configuration",
       "configCreateSuccess": "AI configuration created successfully",
       "configCreateError": "Failed to create AI configuration",
       "configUpdateSuccess": "AI configuration updated successfully",
@@ -4873,6 +4912,11 @@
     },
     "invites": {
       "joinedFallbackTarget": "the workspace"
+    },
+    "massEdit": {
+      "saveSuccess": "Saved {count} change | Saved {count} changes",
+      "savePartial": "Saved {saved} with {errors} error(s)",
+      "saveError": "Saving failed: {error}"
     }
   },
   "content": {

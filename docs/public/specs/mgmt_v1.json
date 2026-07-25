@@ -11493,6 +11493,17 @@
                                             "\"xliff\"",
                                             "\"yaml\""
                                         ]
+                                    },
+                                    "grid": {
+                                        "type": "boolean"
+                                    },
+                                    "fields": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "languages": {
+                                        "type": "string",
+                                        "nullable": true
                                     }
                                 },
                                 "required": [
@@ -11559,6 +11570,269 @@
                                 },
                                 "required": [
                                     "file"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/mass-edit/fields": {
+            "get": {
+                "summary": "List the translatable fields available for mass editing, aggregated across all",
+                "description": "List the translatable fields available for mass editing, aggregated across all\nblock schemas of the space \u2014 including fields that only exist inside nested\n`blocks` fields.",
+                "tags": [
+                    "Mass Edit"
+                ],
+                "operationId": "get_spaces_by_space_mass_edit_fields",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/mass-edit/rows": {
+            "get": {
+                "summary": "Paginated grid rows: one translation document per canonical content whose",
+                "description": "Paginated grid rows: one translation document per canonical content whose\nblock schema carries at least one of the selected fields.",
+                "tags": [
+                    "Mass Edit"
+                ],
+                "operationId": "get_spaces_by_space_mass_edit_rows",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "languages",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "name": "name",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "name": "slug",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "name": "full_slug",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "name": "external_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "name": "block_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "name": "published",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "name": "published_at",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "name": "created_at",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "name": "updated_at",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "nullable": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Apply a delta of edited cells",
+                "description": "Apply a delta of edited cells. Values are keyed by the same stable unit ids\nthe rows endpoint returns; only provided cells are written.",
+                "tags": [
+                    "Mass Edit"
+                ],
+                "operationId": "patch_spaces_by_space_mass_edit_rows",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "documents": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "content_id": {
+                                                    "type": "string"
+                                                },
+                                                "targets": {
+                                                    "type": "array"
+                                                }
+                                            },
+                                            "required": [
+                                                "content_id",
+                                                "targets"
+                                            ]
+                                        }
+                                    },
+                                    "mode": {
+                                        "type": "string",
+                                        "enum": [
+                                            "\"draft\"",
+                                            "\"publish\""
+                                        ]
+                                    },
+                                    "create_missing": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "documents"
                                 ]
                             }
                         }

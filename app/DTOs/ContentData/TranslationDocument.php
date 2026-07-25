@@ -16,9 +16,9 @@ class TranslationDocument
         public readonly string $contentId,
         public readonly string $name,
         public readonly string $slug,
+        public readonly string $fullSlug,
         public readonly string $sourceLanguage,
         public readonly array $languages,
         public readonly array $units,
-    ) {
-    }
+    ) {}
 }
