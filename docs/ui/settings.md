@@ -63,6 +63,7 @@ Push content **from this space into another space on the same instance** — dir
 - **Scope** — choose what to migrate: blocks (schemas), block templates, content entries, asset metadata, data sources & entries, redirects. (Migrating content without its blocks risks missing block types in the target.)
 - **Conflict strategy** — *Skip existing* (only create missing records), *Overwrite* (source wins), or *Merge newer* (overwrite only when the source is more recent).
 - Migrations are **idempotent**: records match across spaces via their stable `external_id`, so re-running updates rather than duplicates.
+- **Serial reservations travel with the content**: the counters behind [serial fields](../concepts/fields.md#serial) continue in the target space instead of restarting at one. A reservation that collides with one the target already holds is reported as an error rather than aborting the migration.
 
 Progress and results are tracked per migration (pending → processing → completed/failed).
 

@@ -301,7 +301,7 @@ A structured monetary value for multi-currency, multi-market pricing.
 
 ### Serial
 
-An identifier the system assigns when the entry is created — a house number, an SKU, an order reference. The editor never types it, and it never changes afterwards.
+An identifier the system assigns when the entry is created — a house number, an SKU, an order reference. The editor never types it, and unless you opt in (`editable`, `on_move: "reallocate"`), it never changes afterwards.
 
 | Option | Effect |
 | --- | --- |
@@ -309,7 +309,7 @@ An identifier the system assigns when the entry is created — a house number, a
 | `scope` | Which entries share a counter: any of `block`, `parent`, `language`, `year`, `month`, `space`. Defaults to `["block", "parent"]` |
 | `unique` | How far the value must stay unique: `scope` (default), `block`, `space`, or `none`. Enforced by the database |
 | `on_move` | `keep` (default) — the identifier survives a move — or `reallocate` |
-| `editable` | Let editors override the generated value. Uniqueness is still enforced |
+| `editable` | Let editors override the generated value — at creation and on later edits. Uniqueness is still enforced; clearing the field restores the assigned value |
 
 **Tokens**
 
@@ -346,6 +346,9 @@ Holzhaus gets `1` and Business `2`; houses filed under Holzhaus get `1-001`, `1-
 - **Changing the format does not rewrite existing values.** New entries use the new format; run `contents:reissue-serials` to re-render the old ones, keeping their numbers.
 - **Adding the field to a block with existing content leaves it empty.** Run `contents:assign-serials {space} {block} {field}` to backfill in creation order.
 - **A format that cannot stay unique fails loudly.** With `unique: "space"` it is the format's job to distinguish blocks (`H-{counter}` vs `C-{counter}`); the allocator will not silently skip numbers to work around it.
+- **Duplicating an entry draws a fresh identifier.** The serial identifies the source entry, so a copy never carries it over — editable or not.
+- **Editing an editable serial keeps uniqueness enforced.** The reservation follows the edited value; clearing the field restores the assigned one. A custom value the format can explain keeps its counter slot — an editor entering `7` makes the next entry `8`.
+- **The create dialog shows a preview, not a reservation.** The number is only taken when the entry is created, so the preview can change if another editor creates one first.
 
 ### Slug patterns
 

@@ -218,6 +218,18 @@ class Content extends SpaceModel
 
             self::scheduleContentMenuInvalidation();
         });
+
+        static::forceDeleted(function (Content $content) {
+            $space = request('space') ?? SpaceContext::current();
+
+            // Same rule as trashing: under `reuse` the reservations return to
+            // the pool; under `preserve` the rows stay behind on purpose, so a
+            // purged entry's numbers remain burned forever. Covers hard deletes
+            // that never went through the trash.
+            if ($space) {
+                app(ContentSerialAssigner::class)->onTrashed($space, $content);
+            }
+        });
     }
 
     protected static function scheduleContentMenuInvalidation(): void

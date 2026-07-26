@@ -7,6 +7,8 @@ use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\User;
 use App\Services\Content\Schema\ContentSchemaValidator;
+use App\Services\Content\Serial\ContentSerialAssigner;
+use App\Services\Content\Serial\SerialCollisionException;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Validation\ValidationException;
@@ -15,6 +17,7 @@ class SchedulePublishContent extends BasePublishAction
 {
     public function __construct(
         protected readonly ContentSchemaValidator $contentSchemaValidator,
+        protected readonly ContentSerialAssigner $serialAssigner,
     ) {
     }
 
@@ -36,10 +39,25 @@ class SchedulePublishContent extends BasePublishAction
             throw ValidationException::withMessages($contentValidation->errors);
         }
 
+        // Same reconciliation as PublishContent: a scheduled publish can carry
+        // edited content, and edited editable serials must move their ledger
+        // reservation with them.
+        try {
+            $validatedContent = $this->serialAssigner->syncEditedValues(
+                $content->block,
+                $content,
+                $contentValidation->content,
+            );
+        } catch (SerialCollisionException $exception) {
+            throw ValidationException::withMessages([
+                'content.'.$exception->fieldKey => [$exception->getMessage()],
+            ]);
+        }
+
         $content = $this->lockContentForUpdate($content);
 
-        \DB::transaction(function () use ($data, $content, $space, $owner, $contentValidation) {
-            $this->processSchedule($data, $content, $owner, $space, $contentValidation->content);
+        \DB::transaction(function () use ($data, $content, $space, $owner, $validatedContent) {
+            $this->processSchedule($data, $content, $owner, $space, $validatedContent);
             $content->save();
         });
     }

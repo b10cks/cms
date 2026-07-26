@@ -13,6 +13,8 @@ use App\Services\Content\ContentI18nValidator;
 use App\Services\Content\ContentPositionService;
 use App\Services\Content\Schema\ContentSchemaValidationResult;
 use App\Services\Content\Schema\ContentSchemaValidator;
+use App\Services\Content\Serial\ContentSerialAssigner;
+use App\Services\Content\Serial\SerialCollisionException;
 use App\Services\Search\SearchService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Validation\ValidationException;
@@ -25,6 +27,7 @@ class UpdateContent
         protected ContentI18nValidator $validator,
         protected ContentSchemaValidator $contentSchemaValidator,
         protected ContentPositionService $contentPositionService,
+        protected ContentSerialAssigner $serialAssigner,
     ) {}
 
     protected function throwIfValidationFails(
@@ -83,6 +86,21 @@ class UpdateContent
 
         $this->throwIfValidationFails($contentValidation, (bool) data_get($data, 'force', false));
 
+        // Edited editable serials must move their ledger reservation with them,
+        // or uniqueness would only be enforced at creation time. Readonly ones
+        // were already restored from the stored entry by the validator.
+        try {
+            $validatedContent = $this->serialAssigner->syncEditedValues(
+                $targetBlock,
+                $content,
+                $contentValidation->content,
+            );
+        } catch (SerialCollisionException $exception) {
+            throw ValidationException::withMessages([
+                'content.'.$exception->fieldKey => [$exception->getMessage()],
+            ]);
+        }
+
         $content->loadMissing('current_version');
         $clientParentVersionId = data_get($data, 'parent_version_id');
         if (
@@ -93,8 +111,8 @@ class UpdateContent
             throw new ContentVersionConflictException($content->current_version);
         }
 
-        \DB::transaction(function () use ($data, $content, $space, $owner, $contentValidation, $clientParentVersionId) {
-            $contentData = $contentValidation->content;
+        \DB::transaction(function () use ($data, $content, $space, $owner, $validatedContent, $clientParentVersionId) {
+            $contentData = $validatedContent;
             $message = data_get($data, 'message');
             $sortingEnabled = $space->settings->isContentSortingEnabled();
             $shouldReposition = $sortingEnabled

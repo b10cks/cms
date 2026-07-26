@@ -38,7 +38,7 @@ Settings that shape how the rest of the system behaves (all editable in **Settin
 | `preserve` *(default)* | The number is never handed out again — deleting an entry leaves a permanent gap. Restoring the entry always gives back its original identifier. |
 | `reuse` | The number returns to the pool and the next entry fills the gap. **A restored entry is renumbered if its number was taken in the meantime** — the trade-off gap reuse buys. |
 
-Changing the setting never rewrites existing values; it only changes what the next allocation does.
+Both behaviours apply to trashed and permanently deleted entries alike — under `preserve`, even a purged entry's number stays burned. Changing the setting never rewrites existing values; it only changes what the next allocation does.
 
 ## Team and roles
 

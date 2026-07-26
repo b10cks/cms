@@ -5,8 +5,10 @@ namespace App\Services\Content;
 use App\Actions\Content\CreateContent;
 use App\Actions\Content\UpdateContent;
 use App\Models\Management\Space;
+use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\User;
+use App\Services\Content\Serial\SerialFieldConfig;
 use App\Services\Search\SearchService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -332,7 +334,7 @@ class ContentTreeOperationService
                 'name' => $source->name,
                 'slug' => $this->makeUniqueSlug($baseSlug, $parentId, $source->language_iso),
                 'language_iso' => $source->language_iso,
-                'content' => $source->current_version?->content ?? [],
+                'content' => $this->withoutSerialValues($source->block_id, $source->current_version?->content ?? []),
                 'settings' => $source->settings?->toArray() ?? [],
             ],
             $copy,
@@ -350,6 +352,33 @@ class ContentTreeOperationService
     protected function makeCopySlugBase(string $slug): string
     {
         return Str::finish($slug, '-copy') === $slug ? "{$slug}-2" : "{$slug}-copy";
+    }
+
+    /**
+     * Strip serial values from a payload being duplicated.
+     *
+     * A serial is an identifier of the *source* entry. Carrying it over would
+     * either collide (editable fields claim the submitted value) or be
+     * discarded anyway (readonly fields), so the copy always draws fresh ones.
+     *
+     * @param  array<string, mixed>  $content
+     * @return array<string, mixed>
+     */
+    protected function withoutSerialValues(string $blockId, array $content): array
+    {
+        // Loaded explicitly: relations re-loaded by content lifecycle events
+        // carry a restricted column set without the schema.
+        $block = Block::query()->find($blockId);
+
+        if (! $block) {
+            return $content;
+        }
+
+        foreach (array_keys(SerialFieldConfig::collect($block->schema)) as $key) {
+            unset($content[$key]);
+        }
+
+        return $content;
     }
 
     protected function makeUniqueSlug(

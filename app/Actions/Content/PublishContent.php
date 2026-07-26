@@ -6,6 +6,8 @@ use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\User;
 use App\Services\Content\Schema\ContentSchemaValidator;
+use App\Services\Content\Serial\ContentSerialAssigner;
+use App\Services\Content\Serial\SerialCollisionException;
 use App\Services\Search\SearchService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -16,6 +18,7 @@ class PublishContent extends BasePublishAction
     public function __construct(
         protected SearchService $searchService,
         protected ContentSchemaValidator $contentSchemaValidator,
+        protected ContentSerialAssigner $serialAssigner,
     ) {
     }
 
@@ -44,12 +47,26 @@ class PublishContent extends BasePublishAction
             throw ValidationException::withMessages($contentValidation->errors);
         }
 
+        // Publishing can carry edited content, so it has to reconcile edited
+        // editable serials with the ledger exactly like a plain update does.
+        try {
+            $validatedContent = $this->serialAssigner->syncEditedValues(
+                $content->block,
+                $content,
+                $contentValidation->content,
+            );
+        } catch (SerialCollisionException $exception) {
+            throw ValidationException::withMessages([
+                'content.'.$exception->fieldKey => [$exception->getMessage()],
+            ]);
+        }
+
         $success = false;
         $publishedAt = $this->resolvePublishedAt($data);
 
-        \DB::transaction(function () use ($data, $content, $space, $owner, &$success, $contentValidation, $publishedAt) {
+        \DB::transaction(function () use ($data, $content, $space, $owner, &$success, $validatedContent, $publishedAt) {
             $this->clearScheduledVersions($content);
-            $this->processPublish($data, $content, $owner, $contentValidation->content);
+            $this->processPublish($data, $content, $owner, $validatedContent);
             $this->finalizePublish($content, $space, $publishedAt);
             $success = true;
         });

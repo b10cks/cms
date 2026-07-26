@@ -5,6 +5,7 @@ namespace App\Services\Content\Serial;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Services\CustomStr;
+use Illuminate\Support\Str;
 
 /**
  * Builds an entry's slug from its block's slug pattern.
@@ -68,8 +69,10 @@ class ContentSlugComposer
             $suffix++;
             $candidate = $base.'-'.$suffix;
 
+            // Past any plausible sibling count a random suffix is a better
+            // answer than a 501st probe that might still be taken.
             if ($suffix > 500) {
-                break;
+                return $base.'-'.strtolower(Str::random(6));
             }
         }
 

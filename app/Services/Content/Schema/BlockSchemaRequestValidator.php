@@ -416,7 +416,9 @@ class BlockSchemaRequestValidator
             }
 
             $referenced = $match[2] ?? '';
-            $target = $schema[$referenced] ?? null;
+            // The resolver reads with data_get, so `{field:specs.width}` is a
+            // dot path into the field named by the first segment.
+            $target = $schema[explode('.', $referenced, 2)[0]] ?? null;
 
             if ($referenced === '' || $target === null) {
                 $errors["schema.{$key}.format"][] = sprintf('`{field:%s}` references an unknown field.', $referenced);

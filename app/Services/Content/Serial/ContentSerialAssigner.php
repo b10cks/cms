@@ -8,6 +8,7 @@ use App\Models\Space\Content;
 use App\Models\Space\ContentSerial;
 use App\Models\Space\ContentVersion;
 use App\Services\Content\Schema\SchemaField;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 
 /**
@@ -66,6 +67,14 @@ class ContentSerialAssigner
                 continue;
             }
 
+            // A translation whose canonical has no value yet (the field was
+            // added after the canonical was created) must not draw its own
+            // number either — it would permanently diverge from the canonical
+            // once that one is backfilled. The backfill fills both.
+            if ($content->i18n_parent_id) {
+                continue;
+            }
+
             // A value the field is allowed to carry: the editor's own input on
             // an editable field, or a pre-existing value being adopted by a
             // backfill. Anything a client posts for a readonly field on create
@@ -103,7 +112,10 @@ class ContentSerialAssigner
         $serialFields = SerialFieldConfig::collect($block->schema);
         $assigned = [];
         $values = $content->getCurrentContent();
-        $context = $this->context($block, $parent, (string) $content->language_iso, $values);
+        // `createdAt` is passed so `{date:…}` tokens and year/month scopes keep
+        // rendering against the entry's creation date, exactly as a restore or
+        // a re-issue would — a move must not silently change the year.
+        $context = $this->context($block, $parent, (string) $content->language_iso, $values, $content->created_at);
         $gapStrategy = $this->gapStrategy($space);
 
         foreach ($serialFields as $key => ['config' => $config, 'field' => $field]) {
@@ -127,6 +139,71 @@ class ContentSerialAssigner
         }
 
         return $assigned;
+    }
+
+    /**
+     * Reconcile the ledger with edited values on an existing entry.
+     *
+     * Only editable fields can legitimately change after creation — readonly
+     * ones are restored from the stored entry by the schema validator before
+     * this runs. The reservation keeps its number and scope (the counter slot
+     * was drawn at creation and editing must not disturb it); only the rendered
+     * value moves, and the ledger's unique index keeps guarding it.
+     *
+     * @param  array<string, mixed>  $values  validated content payload
+     * @return array<string, mixed>
+     *
+     * @throws SerialCollisionException when an edited value is already taken
+     */
+    public function syncEditedValues(Block $block, Content $content, array $values): array
+    {
+        foreach (SerialFieldConfig::collect($block->schema) as $key => ['config' => $config, 'field' => $field]) {
+            if (! $config->editable) {
+                continue;
+            }
+
+            $serial = ContentSerial::query()
+                ->where('content_id', (string) $content->id)
+                ->where('field_key', $key)
+                ->first();
+
+            // No reservation to reconcile: a translation (the canonical owns
+            // the row) or an entry that predates the ledger. The backfill
+            // command is the tool for the latter.
+            if (! $serial) {
+                continue;
+            }
+
+            $submitted = $values[$key] ?? null;
+
+            // Clearing the field asks for the generated value back — an
+            // identifier cannot be un-assigned.
+            if (! $this->filled($submitted)) {
+                $values[$key] = $serial->value;
+
+                continue;
+            }
+
+            $submitted = (string) $submitted;
+
+            if ($submitted === $serial->value) {
+                continue;
+            }
+
+            if ($serial->unique_key !== null && $this->valueTaken($serial->unique_key, $submitted, (string) $content->id)) {
+                throw new SerialCollisionException($config->key, $field->getLabel(), $submitted);
+            }
+
+            try {
+                $serial->value = $submitted;
+                $serial->save();
+            } catch (UniqueConstraintViolationException) {
+                // Lost a race with a concurrent edit; same answer as above.
+                throw new SerialCollisionException($config->key, $field->getLabel(), $submitted);
+            }
+        }
+
+        return $values;
     }
 
     /**

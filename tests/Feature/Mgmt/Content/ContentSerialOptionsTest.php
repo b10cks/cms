@@ -305,6 +305,316 @@ class ContentSerialOptionsTest extends TestCase
         ])->assertForbidden();
     }
 
+    #[Test]
+    public function editing_an_editable_serial_moves_its_reservation(): void
+    {
+        $block = $this->createBlock('product', [
+            'sku' => ['type' => 'serial', 'format' => '{counter}', 'editable' => true, 'scope' => ['block']],
+        ]);
+
+        $widget = $this->createContent($block, 'Widget');
+        $this->assertSame('1', $this->valueOf($widget, 'sku'));
+
+        $this->putJson("/mgmt/v1/spaces/{$this->space->id}/contents/{$widget->id}", [
+            'content' => ['sku' => 'CUSTOM-9'],
+        ])->assertOk();
+
+        $this->assertSame('CUSTOM-9', $this->valueOf($widget->fresh(), 'sku'));
+        $this->assertDatabaseHas('content_serials', ['content_id' => $widget->id, 'value' => 'CUSTOM-9']);
+        $this->assertDatabaseMissing('content_serials', ['content_id' => $widget->id, 'value' => '1']);
+    }
+
+    #[Test]
+    public function an_edited_editable_serial_still_has_to_be_unique(): void
+    {
+        $block = $this->createBlock('product', [
+            'sku' => ['type' => 'serial', 'format' => '{counter}', 'editable' => true, 'scope' => ['block']],
+        ]);
+
+        $widget = $this->createContent($block, 'Widget');
+        $gadget = $this->createContent($block, 'Gadget');
+
+        $this->putJson("/mgmt/v1/spaces/{$this->space->id}/contents/{$gadget->id}", [
+            'content' => ['sku' => $this->valueOf($widget, 'sku')],
+        ])->assertStatus(422)->assertJsonValidationErrors('content.sku');
+
+        $this->assertSame('2', $this->valueOf($gadget->fresh(), 'sku'));
+        $this->assertDatabaseHas('content_serials', ['content_id' => $gadget->id, 'value' => '2']);
+    }
+
+    #[Test]
+    public function publishing_edited_content_syncs_an_editable_serial(): void
+    {
+        $block = $this->createBlock('product', [
+            'sku' => ['type' => 'serial', 'format' => '{counter}', 'editable' => true, 'scope' => ['block']],
+        ]);
+
+        $widget = $this->createContent($block, 'Widget');
+        $this->createContent($block, 'Gadget');
+
+        // Publishing with the other entry's value must fail like an update would.
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents/{$widget->id}/publish", [
+            'content' => ['sku' => '2'],
+        ])->assertStatus(422)->assertJsonValidationErrors('content.sku');
+
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents/{$widget->id}/publish", [
+            'content' => ['sku' => 'PUB-1'],
+        ])->assertSuccessful();
+
+        $this->assertDatabaseHas('content_serials', ['content_id' => $widget->id, 'value' => 'PUB-1']);
+    }
+
+    #[Test]
+    public function a_scheduled_publish_syncs_an_editable_serial(): void
+    {
+        $block = $this->createBlock('product', [
+            'sku' => ['type' => 'serial', 'format' => '{counter}', 'editable' => true, 'scope' => ['block']],
+        ]);
+
+        $widget = $this->createContent($block, 'Widget');
+        $this->createContent($block, 'Gadget');
+
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents/{$widget->id}/schedule", [
+            'scheduled_at' => now()->addDay()->toIso8601String(),
+            'content' => ['sku' => '2'],
+        ])->assertStatus(422)->assertJsonValidationErrors('content.sku');
+
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents/{$widget->id}/schedule", [
+            'scheduled_at' => now()->addDay()->toIso8601String(),
+            'content' => ['sku' => 'SCHED-1'],
+        ])->assertSuccessful();
+
+        $this->assertDatabaseHas('content_serials', ['content_id' => $widget->id, 'value' => 'SCHED-1']);
+    }
+
+    #[Test]
+    public function a_custom_editable_value_claims_its_counter_slot(): void
+    {
+        $block = $this->createBlock('product', [
+            'sku' => ['type' => 'serial', 'format' => '{counter}', 'editable' => true, 'scope' => ['block']],
+        ]);
+
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents", [
+            'name' => 'Widget',
+            'slug' => 'widget',
+            'block_id' => $block->id,
+            'content' => ['sku' => '7'],
+        ])->assertCreated();
+
+        // "7" renders from the format, so it occupies slot 7 — the next
+        // allocation continues behind it instead of starting a parallel count.
+        $next = $this->createContent($block, 'Gadget');
+        $this->assertSame('8', $this->valueOf($next, 'sku'));
+    }
+
+    #[Test]
+    public function block_wide_uniqueness_spans_counter_scopes(): void
+    {
+        $folder = $this->createBlock('folder', []);
+        $item = $this->createBlock('item', [
+            'ref' => ['type' => 'serial', 'format' => '{counter}', 'scope' => ['parent'], 'unique' => 'block'],
+        ]);
+
+        $a = $this->createContent($folder, 'A');
+        $b = $this->createContent($folder, 'B');
+
+        $this->createContent($item, 'First', $a);
+
+        // Each parent counts on its own, so the entry under B also renders "1"
+        // — which block-wide uniqueness must reject rather than silently skip.
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents", [
+            'name' => 'Second',
+            'slug' => 'second',
+            'block_id' => $item->id,
+            'parent_id' => $b->id,
+        ])->assertStatus(422)->assertJsonValidationErrors('content.ref');
+    }
+
+    #[Test]
+    public function force_deleting_under_reuse_frees_the_number(): void
+    {
+        $this->applySpaceSettings(['serial_gaps' => 'reuse']);
+
+        $block = $this->createBlock('item', [
+            'ref' => ['type' => 'serial', 'format' => '{counter}', 'scope' => ['block']],
+        ]);
+
+        $content = $this->createContent($block, 'First');
+        $content->forceDelete();
+
+        $this->assertSame(0, ContentSerial::query()->count());
+        $this->assertSame('1', $this->valueOf($this->createContent($block, 'Second'), 'ref'));
+    }
+
+    #[Test]
+    public function force_deleting_under_preserve_keeps_the_number_burned(): void
+    {
+        $block = $this->createBlock('item', [
+            'ref' => ['type' => 'serial', 'format' => '{counter}', 'scope' => ['block']],
+        ]);
+
+        $content = $this->createContent($block, 'First');
+        $content->forceDelete();
+
+        // The reservation outlives the entry on purpose: a purged entry's
+        // identifier must never be handed out again.
+        $this->assertSame(1, ContentSerial::query()->count());
+        $this->assertSame('2', $this->valueOf($this->createContent($block, 'Second'), 'ref'));
+    }
+
+    #[Test]
+    public function a_field_token_may_use_a_dot_path_into_a_field(): void
+    {
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/blocks", [
+            'name' => 'Nested',
+            'slug' => 'nested',
+            'type' => 'root',
+            'schema' => [
+                'location' => ['type' => 'geo'],
+                'ref' => ['type' => 'serial', 'format' => '{field:location.lat}-{counter}'],
+            ],
+            'editor' => [['header' => 'General', 'items' => ['location', 'ref']]],
+        ])->assertCreated();
+    }
+
+    #[Test]
+    public function clearing_an_editable_serial_keeps_the_assigned_value(): void
+    {
+        $block = $this->createBlock('product', [
+            'sku' => ['type' => 'serial', 'format' => '{counter}', 'editable' => true, 'scope' => ['block']],
+        ]);
+
+        $widget = $this->createContent($block, 'Widget');
+
+        $this->putJson("/mgmt/v1/spaces/{$this->space->id}/contents/{$widget->id}", [
+            'content' => ['sku' => ''],
+        ])->assertOk();
+
+        // An identifier cannot be un-assigned; emptying the field restores it.
+        $this->assertSame('1', $this->valueOf($widget->fresh(), 'sku'));
+    }
+
+    #[Test]
+    public function a_duplicated_entry_draws_a_fresh_serial(): void
+    {
+        $block = $this->createBlock('item', [
+            'ref' => ['type' => 'serial', 'format' => '{counter}', 'scope' => ['block']],
+        ]);
+
+        $original = $this->createContent($block, 'First');
+
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents/tree-operations", [
+            'operations' => [
+                ['type' => 'duplicate', 'ids' => [$original->id]],
+            ],
+        ])->assertOk();
+
+        $copy = Content::query()->where('block_id', $block->id)->whereKeyNot($original->id)->firstOrFail();
+
+        $this->assertSame('1', $this->valueOf($original->fresh(), 'ref'));
+        $this->assertSame('2', $this->valueOf($copy, 'ref'), 'The copy must not inherit the source identifier.');
+    }
+
+    #[Test]
+    public function a_duplicated_entry_with_an_editable_serial_draws_a_fresh_one_too(): void
+    {
+        $block = $this->createBlock('product', [
+            'sku' => ['type' => 'serial', 'format' => '{counter}', 'editable' => true, 'scope' => ['block']],
+        ]);
+
+        $original = $this->createContent($block, 'Widget');
+
+        // Before the copy stripped serial values this collided with the
+        // source's reservation and the whole duplicate failed.
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents/tree-operations", [
+            'operations' => [
+                ['type' => 'duplicate', 'ids' => [$original->id]],
+            ],
+        ])->assertOk();
+
+        $copy = Content::query()->where('block_id', $block->id)->whereKeyNot($original->id)->firstOrFail();
+
+        $this->assertSame('2', $this->valueOf($copy, 'sku'));
+    }
+
+    #[Test]
+    public function a_translation_never_draws_its_own_number_when_the_canonical_has_none(): void
+    {
+        $this->applySpaceSettings([
+            'default_language' => 'en',
+            'languages' => [
+                ['code' => 'de', 'name' => 'German'],
+            ],
+        ]);
+
+        $block = $this->createBlock('house', []);
+        $canonical = $this->createContent($block, 'Chalet');
+
+        // The serial field arrives after the canonical already exists.
+        $block->schema = [
+            'number' => ['type' => 'serial', 'format' => '{counter}', 'scope' => ['block']],
+        ];
+        $block->save();
+
+        $response = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents", [
+            'name' => 'Chalet DE',
+            'slug' => 'chalet-de',
+            'block_id' => $block->id,
+            'language_iso' => 'de',
+            'i18n_parent_id' => $canonical->id,
+        ])->assertCreated();
+
+        // Allocating here would permanently diverge from the canonical once it
+        // is backfilled — both stay empty until the backfill fills them.
+        $this->assertEmpty($response->json('data.content.number'));
+        $this->assertSame(0, ContentSerial::query()->count());
+    }
+
+    #[Test]
+    public function a_move_reallocation_keeps_the_creation_date(): void
+    {
+        $folder = $this->createBlock('folder', []);
+        $item = $this->createBlock('invoice', [
+            'no' => [
+                'type' => 'serial',
+                'format' => '{date:Y}-{counter}',
+                'scope' => ['block', 'year'],
+                'on_move' => 'reallocate',
+            ],
+        ]);
+
+        $a = $this->createContent($folder, 'A');
+        $b = $this->createContent($folder, 'B');
+
+        Carbon::setTestNow('2025-06-01 12:00:00');
+        $invoice = $this->createContent($item, 'Old invoice', $a);
+        Carbon::setTestNow('2026-07-26 12:00:00');
+
+        $this->assertSame('2025-1', $this->valueOf($invoice, 'no'));
+
+        $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents/{$invoice->id}/move", [
+            'parent_id' => $b->id,
+        ])->assertOk();
+
+        // Reallocation re-renders the identifier but the entry was still
+        // created in 2025 — the year must not silently jump to the move date.
+        $this->assertSame('2025-1', $this->valueOf($invoice->fresh(), 'no'));
+
+        Carbon::setTestNow();
+    }
+
+    /**
+     * @param  array<string, mixed>  $values
+     */
+    protected function applySpaceSettings(array $values): void
+    {
+        $settings = $this->space->settings;
+        $settings->apply($values);
+        $this->space->settings = $settings;
+        $this->space->save();
+        $this->space->refresh();
+    }
+
     /**
      * @param  array<string, mixed>  $schema
      */

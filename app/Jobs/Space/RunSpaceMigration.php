@@ -11,6 +11,7 @@ use App\Services\Database\DatabaseConnectionService;
 use App\Services\Storage\StorageService;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -834,18 +835,30 @@ class RunSpaceMigration extends QueuedJob
                 'updated_at' => $row['updated_at'],
             ];
 
-            if ($existing) {
-                $tgt->table('content_serials')->where('id', $existing->id)->update($data);
-                $this->result->incrementUpdated('content_serials');
+            // The target may already reserve this number or value for content
+            // of its own (e.g. entries created there before the migration).
+            // That is a data conflict to report, not a reason to abort the
+            // whole migration mid-way with a constraint violation.
+            try {
+                if ($existing) {
+                    $tgt->table('content_serials')->where('id', $existing->id)->update($data);
+                    $this->result->incrementUpdated('content_serials');
 
-                continue;
+                    continue;
+                }
+
+                $tgt->table('content_serials')->insert(array_merge($data, [
+                    'id' => strtolower((string) Str::ulid()),
+                    'created_at' => $row['created_at'],
+                ]));
+                $this->result->incrementCreated('content_serials');
+            } catch (QueryException) {
+                $this->result->addError(
+                    'content_serials',
+                    (string) $row['id'],
+                    "Reservation conflicts with one already in the target space: {$row['value']} ({$scopeKey})",
+                );
             }
-
-            $tgt->table('content_serials')->insert(array_merge($data, [
-                'id' => strtolower((string) Str::ulid()),
-                'created_at' => $row['created_at'],
-            ]));
-            $this->result->incrementCreated('content_serials');
         }
     }
 
