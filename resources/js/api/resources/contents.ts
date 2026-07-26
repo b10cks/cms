@@ -189,6 +189,8 @@ export class Contents extends BaseResource<
     parent_id?: string | null
     language_iso?: string | null
     name?: string | null
+    i18n_parent_id?: string | null
+    except_content_id?: string | null
   }): Promise<ContentSerialPreview> {
     return this.client.post<ContentSerialPreview>(`${this.basePath}/serial-preview`, payload)
   }

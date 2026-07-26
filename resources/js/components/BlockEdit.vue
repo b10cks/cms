@@ -173,7 +173,7 @@ const handleTypeChange = (type: 'root' | 'nestable' | 'single' | 'universal') =>
       :label="$t('labels.blocks.fields.slugPattern')"
       :description="$t('labels.blocks.fields.slugPatternDescription')"
       :placeholder="'{field:name}'"
-      class="font-mono"
+      input-class="font-mono"
       name="slug_pattern"
     />
 

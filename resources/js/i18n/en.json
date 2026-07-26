@@ -1547,7 +1547,7 @@
           "assignedOnSave": "Assigned when the entry is created"
         },
         "slugPattern": "Slug pattern",
-        "slugPatternDescription": "How new entries build their slug, e.g. {field:number}-{field:name}. Leave empty to use the entry name."
+        "slugPatternDescription": "How new entries build their slug, e.g. {'{field:number}'}-{'{field:name}'}. Leave empty to use the entry name."
       },
       "types": {
         "root": {

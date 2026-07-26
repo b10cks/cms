@@ -71,7 +71,10 @@ class CreateContentFamily
     {
         $errors = [];
 
-        foreach (['name', 'slug', 'block_id', 'language_iso'] as $field) {
+        // `slug` is deliberately not required: a translation without one gets
+        // its slug composed by the create action — from the block's slug
+        // pattern, or from its (translated) name.
+        foreach (['name', 'block_id', 'language_iso'] as $field) {
             if (! array_key_exists($field, $payload) || $payload[$field] === null || $payload[$field] === '') {
                 $errors[$field] = [sprintf('The %s field is required.', str_replace('_', ' ', $field))];
             }

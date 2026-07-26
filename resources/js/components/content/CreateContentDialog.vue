@@ -145,9 +145,11 @@ const debouncedName = refDebounced(
 )
 
 const { data: serialPreview, isFetching: isPreviewFetching } = useSerialPreviewQuery(
-  blockId,
-  computed(() => props.parentId ?? null),
-  debouncedName,
+  computed(() => ({
+    block_id: blockId.value,
+    parent_id: props.parentId ?? null,
+    name: debouncedName.value,
+  })),
   computed(() => Boolean(open.value && blockId.value))
 )
 

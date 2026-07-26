@@ -94,6 +94,12 @@ const revealValidationState = inject<(() => Promise<void>) | undefined>(
   'revealValidationState',
   undefined
 )
+// Pages can adjust the persist payload right before it is sent — the
+// localization page drops the slug while it is in "auto" mode so the server
+// composes it from the block's slug pattern.
+const prepareMutationPayload = inject<
+  ((payload: ContentResource) => ContentResource) | undefined
+>('prepareMutationPayload', undefined)
 const editingFromVersionId = inject<Ref<string | null>>('editingFromVersionId')
 const serverVersionDrifted = inject<ComputedRef<boolean>>('serverVersionDrifted')
 const serverCurrentVersion =
@@ -187,13 +193,15 @@ const handlePersistedContent = (
   resetDirtyState?.()
 }
 
-const mutationPayload = computed(() =>
-  sanitizeContentMutationPayload({
+const mutationPayload = computed(() => {
+  const payload = sanitizeContentMutationPayload({
     ...props.content,
     content: sanitizeContentForSubmit?.() || props.content.content,
     parent_version_id: editingFromVersionId?.value ?? undefined,
   })
-)
+
+  return prepareMutationPayload ? prepareMutationPayload(payload) : payload
+})
 
 const handleMutationError = (error: unknown) => {
   const errorData =

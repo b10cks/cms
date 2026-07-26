@@ -225,6 +225,28 @@ class ContentSerialAssigner
     }
 
     /**
+     * The serial values a translation would carry: the canonical entry's own.
+     *
+     * A translation never draws numbers of its own, so unlike {@see preview}
+     * this reads the ledgered values instead of peeking at the next slot.
+     *
+     * @return array<string, string>
+     */
+    public function previewForTranslation(Block $block, Content $canonical): array
+    {
+        $canonicalValues = $canonical->getCurrentContent();
+        $values = [];
+
+        foreach (array_keys(SerialFieldConfig::collect($block->schema)) as $key) {
+            if ($this->filled($canonicalValues[$key] ?? null)) {
+                $values[$key] = (string) $canonicalValues[$key];
+            }
+        }
+
+        return $values;
+    }
+
+    /**
      * Release the reservations of a trashed entry when the space reuses gaps.
      */
     public function onTrashed(Space $space, Content $content): void

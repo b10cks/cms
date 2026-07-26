@@ -269,26 +269,37 @@ export function useContent(spaceId: MaybeRef<string>) {
    * than a slightly slower one.
    */
   const useSerialPreviewQuery = (
-    blockId: MaybeRef<string | null | undefined>,
-    parentId: MaybeRef<string | null | undefined>,
-    name: MaybeRef<string | null | undefined>,
+    params: MaybeRef<{
+      block_id: string | null | undefined
+      parent_id?: string | null
+      language_iso?: string | null
+      name?: string | null
+      i18n_parent_id?: string | null
+      except_content_id?: string | null
+    }>,
     enabled: MaybeRef<boolean>
   ) => {
+    const resolvedParams = computed(() => {
+      const value = toValue(params)
+
+      return {
+        block_id: String(value.block_id ?? ''),
+        parent_id: value.parent_id ?? null,
+        language_iso: value.language_iso ?? null,
+        name: value.name ?? null,
+        i18n_parent_id: value.i18n_parent_id ?? null,
+        except_content_id: value.except_content_id ?? null,
+      }
+    })
+
     return useQuery({
       queryKey: computed(() => [
         ...queryKeys.contents(spaceId).all(),
         'serial-preview',
-        toValue(blockId),
-        toValue(parentId) ?? null,
-        toValue(name) ?? '',
+        resolvedParams.value,
       ]),
-      queryFn: async () =>
-        spaceAPI.value.contents.serialPreview({
-          block_id: String(toValue(blockId)),
-          parent_id: toValue(parentId) ?? null,
-          name: toValue(name) ?? null,
-        }),
-      enabled: computed(() => Boolean(toValue(enabled) && toValue(blockId))),
+      queryFn: async () => spaceAPI.value.contents.serialPreview(resolvedParams.value),
+      enabled: computed(() => Boolean(toValue(enabled) && toValue(params).block_id)),
       // The preview reflects live state — another editor creating an entry in
       // the same scope moves the number — so a cached answer is a wrong answer.
       staleTime: 0,

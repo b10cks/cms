@@ -360,6 +360,8 @@ A block can compose the slug of its new entries from the same tokens, via its `s
 
 Only `{field:…}`, `{parent:…}`, `{ancestor:…}`, `{block}`, `{date:…}` and `{lang}` apply here — `{counter}` belongs to a serial field. Leaving the pattern empty keeps the default behaviour, where the slug follows the entry name, and an explicitly supplied slug always wins.
 
+Translations follow the pattern too: a translation created without a slug composes one in its own language — from the canonical entry's serials (it never draws its own) and its translated name. In the localization editor the slug tracks the pattern until the editor types their own; clearing the field asks for the automatic value back.
+
 ---
 
 ## What your frontend receives

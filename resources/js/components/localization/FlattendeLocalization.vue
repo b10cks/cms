@@ -79,7 +79,8 @@ interface TranslationUnit {
   id: string
   source: string
   fieldIdentifier: string
-  field: TranslatableField
+  /** Absent for units outside the content payload, like the entry name. */
+  field?: TranslatableField
   apply: (content: Record<string, unknown>, translation: string) => void
 }
 
@@ -117,6 +118,10 @@ const props = defineProps<{
   ) => { schema: Record<string, LocalizableSchema>; name: string } | undefined
   getFieldCollaborators?: (key: string) => CollaborationPresenceUser[]
   getFieldDraftOwners?: (key: string) => CollaborationPresenceUser[]
+  // The entry name pair: when given, AI translation also covers the name (the
+  // slug then follows it through the page's automatic-slug handling).
+  sourceName?: string | null
+  translationName?: string | null
   // Content ids the preview may report as the root item of a FIELD_UPDATE
   // (translation, canonical and nearest source id), used to route root-level
   // preview edits to top-level translatable fields.
@@ -124,6 +129,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{
   'update:translationContent': [value: Record<string, unknown>]
+  'update:translationName': [value: string]
   'field-update': [payload: LocalizedFieldUpdatePayload]
   'field-focus': [payload: LocalizedFieldFocusPayload]
 }>()
@@ -1064,6 +1070,21 @@ const buildTranslationUnits = (): TranslationUnit[] => {
   let unitIndex = 0
   const nextUnitId = () => `f${++unitIndex}`
 
+  // The entry name still equal to its source is untranslated content too.
+  if (
+    isNonEmptyString(props.sourceName) &&
+    (!isNonEmptyString(props.translationName) || props.translationName === props.sourceName)
+  ) {
+    units.push({
+      id: nextUnitId(),
+      source: props.sourceName,
+      fieldIdentifier: '__content_name__',
+      apply: (_content, translation) => {
+        emit('update:translationName', translation)
+      },
+    })
+  }
+
   translatableFields.value.forEach((field) => {
     const normalizedType = normalizeSchemaType(field.schemaItem.type)
     const fieldIdentifier = getFieldIdentifier(field)
@@ -1166,8 +1187,12 @@ const applyTranslatedValues = (
     try {
       unit.apply(nextTranslationContent, translation)
       machineTranslatedFields.value.add(unit.fieldIdentifier)
-      appliedFields.push(unit.field)
-      hasUpdates = true
+      // Field-less units (the entry name) apply via their own emit and must
+      // not mark the content payload as updated.
+      if (unit.field) {
+        appliedFields.push(unit.field)
+        hasUpdates = true
+      }
     } catch {
       // silently skip units that fail to apply
     }

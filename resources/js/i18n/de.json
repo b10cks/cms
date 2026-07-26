@@ -1542,7 +1542,7 @@
           "assignedOnSave": "Wird beim Anlegen vergeben"
         },
         "slugPattern": "Slug-Muster",
-        "slugPatternDescription": "Wie neue Einträge ihren Slug bilden, z. B. {field:number}-{field:name}. Leer lassen, um den Namen zu verwenden."
+        "slugPatternDescription": "Wie neue Einträge ihren Slug bilden, z. B. {'{field:number}'}-{'{field:name}'}. Leer lassen, um den Namen zu verwenden."
       },
       "types": {
         "root": {

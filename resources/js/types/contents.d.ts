@@ -87,7 +87,11 @@ export interface ContentTreeOperationResult {
 }
 
 export interface ContentSerialPreview {
-  /** Generated field values the entry would receive, keyed by field key. */
+  /**
+   * Generated field values the entry would receive, keyed by field key.
+   * `preview: false` marks values a translation inherits from its canonical
+   * entry — they are already reserved, not a peek at the next slot.
+   */
   fields: Record<string, { value: string; preview: boolean }>
   /** The block's slug pattern, or null when it uses the default (entry name). */
   slug_pattern: string | null

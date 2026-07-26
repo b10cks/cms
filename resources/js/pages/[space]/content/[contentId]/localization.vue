@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
-import { useStorage } from '@vueuse/core'
+import { refDebounced, useStorage } from '@vueuse/core'
 import { useRouteQuery } from '@vueuse/router'
 import { toRaw } from 'vue'
 
@@ -10,6 +10,7 @@ import HeaderActions from '~/components/content/HeaderActions.vue'
 import Icon from '~/components/Icon.vue'
 import FlattenedLocalization from '~/components/localization/FlattendeLocalization.vue'
 import Preview from '~/components/Preview.vue'
+import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/components/ui/resizable'
 import { ScrollArea } from '~/components/ui/scroll-area'
@@ -48,7 +49,8 @@ const { settings } = useSpaceSettings(spaceId.value)
 
 const { useSpaceQuery } = useSpaces()
 const { data: currentSpace } = useSpaceQuery(spaceId.value)
-const { useContentQuery } = useContent(spaceId)
+const { useContentQuery, useSerialPreviewQuery } = useContent(spaceId)
+const { slugify } = useContentWizardSlug()
 const spaceAPI = computed(() => api.forSpace(spaceId.value))
 const { data: routeContent } = useContentQuery(canonicalContentId)
 
@@ -154,6 +156,13 @@ const { data: sourceChainContents } = useQuery({
 
 const translatableContent = ref<ContentResource | null>(null)
 const persistedContent = ref<ContentResource | null>(null)
+
+/**
+ * `auto` follows the block's slug pattern (or the translated name) and lets the
+ * server compose the final value; `manual` is the editor's own slug. Existing
+ * translations start manual so a persisted slug never moves on its own.
+ */
+const slugMode = ref<'auto' | 'manual'>('auto')
 const translationContentPayload = computed<Record<string, unknown>>(
   () => (translatableContent.value?.content as Record<string, unknown>) || {}
 )
@@ -404,6 +413,8 @@ watch(
         !persistedContent.value || persistedContent.value.id !== existingTranslation.id
       if (isNewContent || !isDirty.value) {
         syncPersistedContent(existingTranslation)
+        // A persisted slug must not silently move when the name changes.
+        slugMode.value = 'manual'
       }
       return
     }
@@ -412,11 +423,14 @@ watch(
     const draft = buildMissingLanguageDraft(currentCanonical, seedSource, currentLanguage)
 
     draft.name = seedSource.name
-    draft.slug = seedSource.slug
+    // Left empty rather than copied from the source: the slug is generated for
+    // the target language — from the block's slug pattern, or from the name.
+    draft.slug = ''
     draft.content = {}
 
     if (!persistedContent.value || !isDirty.value) {
       syncPersistedContent(draft)
+      slugMode.value = 'auto'
     }
   },
   { immediate: true }
@@ -454,6 +468,73 @@ const block = computed(() => {
   const blockId = canonicalContent.value.block?.id || canonicalContent.value.block_id
   return blocks.value.data.find((blockItem) => blockItem.id === blockId) || null
 })
+
+// Debounced so typing a name doesn't fire a preview request per keystroke.
+const debouncedTranslationName = refDebounced(
+  computed(() => translatableContent.value?.name || ''),
+  250
+)
+
+// The slug (and the retained canonical serials) a translation would get,
+// rendered by the same composer the create action uses. `i18n_parent_id` makes
+// the preview read the canonical entry's serials instead of peeking at the
+// counter; `except_content_id` lets an existing translation regenerate its
+// slug without colliding with itself.
+const { data: serialPreview, isFetching: isSlugPreviewFetching } = useSerialPreviewQuery(
+  computed(() => ({
+    block_id: block.value?.id,
+    parent_id: translatableContent.value?.parent_id ?? canonicalContent.value?.parent_id ?? null,
+    language_iso: resolvedLanguage.value,
+    name: debouncedTranslationName.value,
+    i18n_parent_id: canonicalContent.value?.id ?? null,
+    except_content_id: translatableContent.value?.id || null,
+  })),
+  computed(() => Boolean(block.value && resolvedLanguage.value))
+)
+
+const hasSlugPattern = computed(() => Boolean(serialPreview.value?.slug_pattern))
+
+/** What the translation would get if the editor does not intervene. */
+const automaticSlug = computed(() => {
+  if (hasSlugPattern.value) {
+    return serialPreview.value?.slug_preview ?? ''
+  }
+
+  return slugify(translatableContent.value?.name || '')
+})
+
+// In auto mode the input mirrors the automatic value without writing it into
+// the draft — the value the server composes on save is the real one, and a
+// mirrored value must not make the page dirty on its own.
+const displayedSlug = computed(() =>
+  slugMode.value === 'auto' ? automaticSlug.value : (translatableContent.value?.slug ?? '')
+)
+
+const setTranslationSlug = (value: string) => {
+  if (!translatableContent.value) {
+    return
+  }
+
+  // Clearing the field is how you ask for the automatic value back.
+  if (value.trim() === '') {
+    slugMode.value = 'auto'
+    translatableContent.value.slug = persistedContent.value?.slug ?? ''
+    return
+  }
+
+  slugMode.value = 'manual'
+  translatableContent.value.slug = value
+}
+
+const resetSlugToAutomatic = () => {
+  setTranslationSlug('')
+}
+
+const handleTranslatedName = (name: string) => {
+  if (translatableContent.value && name.trim() !== '') {
+    translatableContent.value.name = name
+  }
+}
 
 const blockSchemaCache = ref(new Map())
 
@@ -695,11 +776,29 @@ provide(
   'commitPersistedContent',
   (nextContent: ContentResource, action: ContentCommitAction = 'save') => {
     syncPersistedContent(nextContent)
+    // The slug is persisted now; further name edits must not move it.
+    slugMode.value = 'manual'
     clearServerErrors()
     resetValidationState()
     broadcastPersistedContent(nextContent, action)
   }
 )
+provide('prepareMutationPayload', (payload: ContentResource): ContentResource => {
+  if (slugMode.value !== 'auto') {
+    return payload
+  }
+
+  // Creating: omit the slug entirely — only the server knows the canonical
+  // serials and can guarantee uniqueness among the language's siblings.
+  if (!payload.id) {
+    const next = { ...payload } as Partial<ContentResource>
+    delete next.slug
+    return next as ContentResource
+  }
+
+  // Updating after a reset: send the previewed automatic value.
+  return automaticSlug.value ? { ...payload, slug: automaticSlug.value } : payload
+})
 provide('resetDirtyState', () => {
   if (translatableContent.value) {
     syncPersistedContent(translatableContent.value)
@@ -833,11 +932,44 @@ useSeoMeta({
                       >
                         Content Slug (Translation)
                       </label>
-                      <Input
-                        id="translated-slug"
-                        v-model="translatableContent.slug"
-                        aria-label="Translated content slug"
-                      />
+                      <div class="flex items-center gap-2">
+                        <Input
+                          id="translated-slug"
+                          :model-value="displayedSlug"
+                          class="font-mono"
+                          aria-label="Translated content slug"
+                          @update:model-value="setTranslationSlug(String($event))"
+                        />
+                        <Button
+                          v-if="slugMode === 'manual'"
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          :title="t('labels.contents.create.slugReset')"
+                          @click="resetSlugToAutomatic"
+                        >
+                          <Icon name="lucide:rotate-ccw" />
+                          <span class="sr-only">
+                            {{ t('labels.contents.create.slugReset') }}
+                          </span>
+                        </Button>
+                      </div>
+                      <p class="flex items-center gap-1.5 text-xs text-muted">
+                        <Icon
+                          v-if="slugMode === 'auto' && isSlugPreviewFetching"
+                          name="lucide:loader-circle"
+                          class="animate-spin"
+                        />
+                        {{
+                          slugMode === 'auto'
+                            ? hasSlugPattern
+                              ? t('labels.contents.create.slugFromPattern', {
+                                  pattern: serialPreview?.slug_pattern,
+                                })
+                              : t('labels.contents.create.slugAuto')
+                            : t('labels.contents.create.slugManual')
+                        }}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -846,6 +978,9 @@ useSeoMeta({
                 ref="localizationRef"
                 :original-content="sourceContentPayload"
                 :translation-content="translationContentPayload"
+                :source-name="nearestSourceContent?.name"
+                :translation-name="translatableContent.name"
+                @update:translation-name="handleTranslatedName"
                 :block-schema="block.schema"
                 :space-id="spaceId"
                 :get-block-schema="getBlockSchemaFn"
