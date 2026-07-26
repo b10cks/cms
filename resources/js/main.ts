@@ -19,6 +19,7 @@ addCollection(lucideIcons)
 addCollection(flagIcons)
 addCollection(brandIcons)
 import { isClient } from '~/lib/env'
+import { installAuthHandler } from '~/plugins/auth'
 import { installEcho } from '~/plugins/echo'
 import { installI18n } from '~/plugins/i18n'
 import { installPosthog } from '~/plugins/posthog'
@@ -29,6 +30,10 @@ const app = createApp(App)
 
 installI18n(app)
 installVueQuery(app)
+
+// Must run before the router mounts: the first navigation guard already hits the
+// API, and a 401 there needs a handler to redirect instead of failing silently.
+installAuthHandler()
 
 app.use(router)
 

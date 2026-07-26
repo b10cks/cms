@@ -49,6 +49,30 @@ const globalUser = ref<User | null>(null)
 const globalIsReady = ref(false)
 const globalIsInitializing = ref(false)
 
+// Endpoints that are *expected* to answer 401/419 while logged out — their callers
+// render the error themselves, so a 401 here must not trigger a session teardown.
+const UNAUTHENTICATED_ENDPOINTS = [
+  '/auth/v1/csrf-cookie',
+  '/auth/v1/token',
+  '/auth/v1/register',
+  '/auth/v1/logout',
+  '/auth/v1/social/',
+  '/auth/v1/password/',
+  '/auth/v1/one-time-token/',
+  '/auth/v1/email/verify',
+]
+
+const isUnauthenticatedEndpoint = (endpoint: string): boolean =>
+  UNAUTHENTICATED_ENDPOINTS.some((path) => endpoint.includes(path))
+
+// Every in-flight request fails at once when a session expires; collapse them into
+// a single logout + redirect.
+let pendingSessionExpiry: Promise<void> | null = null
+
+// Once we know the session is gone, stop re-probing /users/me on every navigation —
+// that probe would 401 again and re-enter the redirect.
+const globalSessionExpired = ref(false)
+
 export function useAuth() {
   const { t } = useI18n()
 
@@ -86,6 +110,7 @@ export function useAuth() {
       const { api } = await import('~/api')
       const response = await api.client.request<ApiResponse<User>>('/mgmt/v1/users/me')
       user.value = response.data
+      globalSessionExpired.value = false
 
       getPosthog().identify(user.value.id, {
         email: user.value.email,
@@ -273,19 +298,28 @@ export function useAuth() {
     }
   }
 
-  const logout = async (returnPath?: string): Promise<void> => {
-    try {
-      const { api } = await import('~/api')
-      await api.client.post('/auth/v1/logout')
-    } catch (error) {
-      console.warn('[Auth] Logout API call failed:', error)
+  const logout = async (
+    options: { returnPath?: string; expired?: boolean } = {}
+  ): Promise<void> => {
+    const { returnPath, expired = false } = options
+
+    // The session is already gone when it expired — the call would only 401 again.
+    if (!expired) {
+      try {
+        const { api } = await import('~/api')
+        await api.client.post('/auth/v1/logout')
+      } catch (error) {
+        console.warn('[Auth] Logout API call failed:', error)
+      }
     }
 
     const { queryClient } = await import('~/plugins/vue-query')
+    queryClient.cancelQueries()
     queryClient.clear()
 
     user.value = null
-    globalIsReady.value = false
+    globalSessionExpired.value = true
+    globalIsReady.value = true
     error.value = null
     requiresTwoFactor.value = false
     pendingLoginPayload.value = null
@@ -294,18 +328,48 @@ export function useAuth() {
 
     const currentRoute = router.currentRoute.value
 
-    if (currentRoute.fullPath.startsWith('/login')) {
+    if (currentRoute.meta.guest === true || currentRoute.meta.public === true) {
       return
     }
 
-    router.push({
+    await router.push({
       name: 'login',
-      query: { return: returnPath || currentRoute.query.return || currentRoute.fullPath || '/' },
+      query: {
+        return: returnPath || (currentRoute.query.return as string) || currentRoute.fullPath || '/',
+        ...(expired ? { message: 'session_expired' } : {}),
+      },
     })
   }
 
-  const handleUnauthorized = async (): Promise<{ retry?: boolean }> => {
-    await logout()
+  const handleUnauthorized = async (endpoint: string = ''): Promise<{ retry?: boolean }> => {
+    // Login, registration and password flows own their 401s.
+    if (isUnauthenticatedEndpoint(endpoint)) {
+      return { retry: false }
+    }
+
+    // Never bounce a guest/public route (invites, public shares, the login page
+    // itself) — a 401 there is expected, not a lost session.
+    const currentRoute = router.currentRoute.value
+    if (currentRoute.meta.guest === true || currentRoute.meta.public === true) {
+      user.value = null
+      return { retry: false }
+    }
+
+    // No user was ever loaded in this session (e.g. the initial /users/me probe of a
+    // logged-out visitor) — nothing expired, let the router guard do the redirect.
+    if (!user.value) {
+      globalSessionExpired.value = true
+      return { retry: false }
+    }
+
+    if (!pendingSessionExpiry) {
+      pendingSessionExpiry = logout({ expired: true }).finally(() => {
+        pendingSessionExpiry = null
+      })
+    }
+
+    await pendingSessionExpiry
+
     return { retry: false }
   }
 
@@ -314,6 +378,11 @@ export function useAuth() {
     if (isInitializing.value) return
     // Already initialized with a loaded user — don't block navigation on a refetch
     if (isReady.value && user.value) return
+    // Session already known to be gone — probing again would just 401 in a loop
+    if (globalSessionExpired.value && !user.value) {
+      isReady.value = true
+      return
+    }
 
     isInitializing.value = true
     try {
@@ -332,6 +401,7 @@ export function useAuth() {
     isAuthenticated: readonly(isAuthenticated),
     isLoading: readonly(isLoading),
     isReady: readonly(isReady),
+    sessionExpired: readonly(globalSessionExpired),
     error,
     requiresTwoFactor: readonly(requiresTwoFactor),
 

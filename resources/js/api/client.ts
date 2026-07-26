@@ -5,6 +5,9 @@ interface AuthHandler {
   handleUnauthorized: (endpoint: string, options: any) => Promise<{ retry?: boolean } | void>
 }
 
+// Laravel answers an expired/mismatched session with 419 on stateful writes.
+const CSRF_EXPIRED_STATUS = 419
+
 interface RequestOptions extends RequestInit {
   query?: Record<string, unknown>
   body?: any
@@ -59,8 +62,9 @@ export class ApiClient {
     return url
   }
 
-  public async ensureCsrfCookie(): Promise<void> {
-    if (!isClient || this.csrfReady) return
+  public async ensureCsrfCookie(force: boolean = false): Promise<void> {
+    if (!isClient) return
+    if (this.csrfReady && !force) return
 
     try {
       const response = await fetch('/auth/v1/csrf-cookie', {
@@ -135,27 +139,56 @@ export class ApiClient {
       return this.parseResponse<T>(response)
     }
 
+    const isSafeMethod = method === 'GET' || method === 'HEAD' || method === 'OPTIONS'
+
     try {
-      const csrfHeaders =
-        method === 'GET' || method === 'HEAD' || method === 'OPTIONS' ? {} : getXsrfHeaders()
       return await makeRequest({
         ...this.defaultHeaders,
-        ...csrfHeaders,
+        ...(isSafeMethod ? {} : getXsrfHeaders()),
       })
     } catch (error: any) {
-      if (error?.status === 401 && this.authHandler) {
-        const retryInfo = await this.authHandler.handleUnauthorized(endpoint, options)
-
-        if (retryInfo?.retry) {
+      // A 419 usually just means the CSRF token went stale (long-lived tab, or the
+      // session was rotated). Refresh the cookie and retry once before assuming the
+      // session is gone for good.
+      if (error?.status === CSRF_EXPIRED_STATUS && !isSafeMethod) {
+        try {
+          await this.ensureCsrfCookie(true)
           return await makeRequest({
             ...this.defaultHeaders,
             ...getXsrfHeaders(),
           })
+        } catch (retryError: any) {
+          return await this.handleAuthError(retryError, endpoint, options, makeRequest)
         }
       }
 
-      throw error
+      return await this.handleAuthError(error, endpoint, options, makeRequest)
     }
+  }
+
+  private async handleAuthError<T>(
+    error: any,
+    endpoint: string,
+    options: RequestOptions,
+    makeRequest: (headers: Record<string, string>) => Promise<T>
+  ): Promise<T> {
+    const isAuthError = error?.status === 401 || error?.status === CSRF_EXPIRED_STATUS
+
+    if (isAuthError && this.authHandler) {
+      // Reset so the next request re-primes the cookie against a fresh session.
+      this.csrfReady = false
+
+      const retryInfo = await this.authHandler.handleUnauthorized(endpoint, options)
+
+      if (retryInfo?.retry) {
+        return await makeRequest({
+          ...this.defaultHeaders,
+          ...getXsrfHeaders(),
+        })
+      }
+    }
+
+    throw error
   }
 
   public get<T>(

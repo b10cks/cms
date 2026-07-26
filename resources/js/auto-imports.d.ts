@@ -21,7 +21,7 @@ declare global {
   const getPosthog: typeof import('./plugins/posthog').getPosthog
   const h: typeof import('vue').h
   const i18n: typeof import('./plugins/i18n').i18n
-  const initAuth: typeof import('./plugins/auth').initAuth
+  const installAuthHandler: typeof import('./plugins/auth').installAuthHandler
   const inject: typeof import('vue').inject
   const installChart: typeof import('./plugins/chart').installChart
   const installEcho: typeof import('./plugins/echo').installEcho
@@ -214,7 +214,7 @@ declare module 'vue' {
     readonly getPosthog: UnwrapRef<(typeof import('./plugins/posthog'))['getPosthog']>
     readonly h: UnwrapRef<(typeof import('vue'))['h']>
     readonly i18n: UnwrapRef<(typeof import('./plugins/i18n'))['i18n']>
-    readonly initAuth: UnwrapRef<(typeof import('./plugins/auth'))['initAuth']>
+    readonly installAuthHandler: UnwrapRef<(typeof import('./plugins/auth'))['installAuthHandler']>
     readonly inject: UnwrapRef<(typeof import('vue'))['inject']>
     readonly installChart: UnwrapRef<(typeof import('./plugins/chart'))['installChart']>
     readonly installEcho: UnwrapRef<(typeof import('./plugins/echo'))['installEcho']>
