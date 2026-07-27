@@ -135,7 +135,14 @@ class SamlLoginService
 
             $user = $identity?->user;
             if (! $user) {
-                $user = User::query()->where('email', $email)->first();
+                // Matching on the asserted email alone would let any team that
+                // configures its own IdP sign in as any account on the
+                // platform. A team's IdP may only vouch for its own members;
+                // everyone else has to go through JIT provisioning below.
+                $user = User::query()
+                    ->where('email', $email)
+                    ->whereHas('teams', fn ($query) => $query->whereKey($provider->team_id))
+                    ->first();
             }
 
             if (! $user) {
