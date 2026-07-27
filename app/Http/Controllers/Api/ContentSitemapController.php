@@ -48,7 +48,7 @@ class ContentSitemapController
 
         $query = Content::filter(ContentFilter::fromRequest($request))
             ->select([
-                'contents.*',
+                ...Content::deliveryColumns('contents.'),
                 'content_versions.content',
                 'content_versions.relation_ids',
                 'content_versions.asset_ids',

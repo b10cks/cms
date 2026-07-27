@@ -50,7 +50,7 @@ class ContentController
                 'content_versions.asset_ids',
                 'content_versions.link_ids',
             ])
-            ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block', 'relations', 'assets', 'links']);
+            ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block']);
 
         $vid = $this->versionScope($request, allowVersionId: false);
         if ($vid === 'published') {
@@ -228,20 +228,6 @@ class ContentController
         // be reachable in the published scope even though the row still exists.
         if ($versionScope === 'published') {
             abort_if(! $candidate->published_at || ! $candidate->published_version_id, 404);
-        }
-
-        if ($versionScope === 'published') {
-            $candidate->loadMissing([
-                'published_version.assets',
-                'published_version.links',
-                'published_version.relations',
-            ]);
-        } elseif ($versionScope === 'draft') {
-            $candidate->loadMissing([
-                'current_version.assets',
-                'current_version.links',
-                'current_version.relations',
-            ]);
         }
 
         $candidate->loadMissing([

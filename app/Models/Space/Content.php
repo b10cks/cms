@@ -280,7 +280,7 @@ class Content extends SpaceModel
     {
         return $this->belongsTo(Content::class, 'i18n_parent_id', 'id')
             ->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id')
-            ->select('contents.*', 'content_versions.content');
+            ->select([...self::deliveryColumns('contents.'), 'content_versions.content']);
     }
 
     public function i18n_children(): HasMany
