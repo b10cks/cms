@@ -178,7 +178,10 @@ class IconifyController
 
         $svg = sprintf('<svg %s>%s</svg>', $this->attrString($attrs), $transformedBody);
 
-        return response($svg, 200, ['Content-Type' => 'image/svg+xml; charset=utf-8']);
+        return response($svg, 200, [
+            'Content-Type' => 'image/svg+xml; charset=utf-8',
+            ...$this->svgSecurityHeaders(),
+        ]);
     }
 
     /**
@@ -223,7 +226,10 @@ class IconifyController
 
         $svg = sprintf('<svg width="0" height="0" class="hidden">%s</svg>', $symbols);
 
-        return response($svg, 200, ['Content-Type' => 'image/svg+xml; charset=utf-8']);
+        return response($svg, 200, [
+            'Content-Type' => 'image/svg+xml; charset=utf-8',
+            ...$this->svgSecurityHeaders(),
+        ]);
     }
 
     // -------------------------------------------------------------------------
@@ -585,5 +591,22 @@ class IconifyController
     private function abortIfUnknownPrefix(string $prefix): void
     {
         abort_unless($prefix === self::PREFIX, 404);
+    }
+
+    /**
+     * Icon bodies are tenant-supplied SVG. IconSvgParser sanitizes them on the
+     * way in, but an SVG opened as a document runs its own script, so these
+     * responses get the same inert treatment as asset delivery: a hand-rolled
+     * sanitizer should not be the only thing between an icon and same-origin
+     * script execution on the delivery host.
+     *
+     * @return array<string, string>
+     */
+    private function svgSecurityHeaders(): array
+    {
+        return [
+            'x-content-type-options' => 'nosniff',
+            'content-security-policy' => "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; sandbox",
+        ];
     }
 }
