@@ -7,7 +7,7 @@ use App\Models\Management\Space;
 use App\Models\Space\DataSource;
 use App\Services\ImportExport\WritesXlsxDownload;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Enumerable;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -15,7 +15,7 @@ class ExcelDataEntryDataDriver extends BaseDataEntryDataDriver
 {
     use WritesXlsxDownload;
 
-    public function export(Space $space, DataSource $dataSource, Collection $entries): Response
+    public function export(Space $space, DataSource $dataSource, Enumerable $entries): Response
     {
         $dimensionColumns = $this->buildDimensionColumns($dataSource);
         $headers = [...self::BASE_COLUMNS, ...$dimensionColumns];

@@ -6,13 +6,13 @@ use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use App\Models\Space\DataSource;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Enumerable;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class JsonDataEntryDataDriver extends BaseDataEntryDataDriver
 {
-    public function export(Space $space, DataSource $dataSource, Collection $entries): Response
+    public function export(Space $space, DataSource $dataSource, Enumerable $entries): Response
     {
         $filename = $this->generateFilename($space, $dataSource, 'json');
 

@@ -6,7 +6,7 @@ use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use App\Services\ImportExport\WritesCsvDownload;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Enumerable;
 use Symfony\Component\HttpFoundation\Response;
 
 class CsvRedirectDataDriver extends BaseRedirectDataDriver
@@ -15,7 +15,7 @@ class CsvRedirectDataDriver extends BaseRedirectDataDriver
 
     private const HEADERS = ['id', 'external_id', 'source', 'target', 'status_code'];
 
-    public function export(Space $space, Collection $redirects): Response
+    public function export(Space $space, Enumerable $redirects): Response
     {
         $filename = $this->generateFilename($space, 'csv');
 

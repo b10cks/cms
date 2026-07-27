@@ -40,10 +40,12 @@ class DataEntryDataImportExportService extends ImportExportService
     ): Response {
         $driver = $this->getDataEntryDriver($format);
 
+        // cursor() streams rows into the driver instead of hydrating the
+        // whole table up front.
         $entries = DataEntry::query()
             ->where('data_source_id', $dataSource->id)
             ->orderBy('key')
-            ->get();
+            ->cursor();
 
         return $driver->export($space, $dataSource, $entries);
     }

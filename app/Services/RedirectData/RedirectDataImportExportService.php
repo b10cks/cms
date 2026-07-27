@@ -46,7 +46,9 @@ class RedirectDataImportExportService extends ImportExportService
             $query->filter($filter);
         }
 
-        return $driver->export($space, $query->get());
+        // cursor() streams rows into the driver instead of hydrating the
+        // whole table up front.
+        return $driver->export($space, $query->cursor());
     }
 
     public function importRedirects(

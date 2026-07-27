@@ -11,8 +11,7 @@ use App\Models\Space\DataSource;
 use App\Services\Space\ShapeValue;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Enumerable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,6 +20,8 @@ abstract class BaseDataEntryDataDriver implements DataEntryDataDriver
 {
     protected const BASE_COLUMNS = ['id', 'external_id', 'key', 'value', 'is_active'];
 
+    protected const IMPORT_CHUNK_SIZE = 500;
+
     protected array $successes = [];
     protected array $changes = [];
     protected array $ignoredFields = [];
@@ -28,7 +29,7 @@ abstract class BaseDataEntryDataDriver implements DataEntryDataDriver
     protected array $deleted = [];
     protected array $touchedIds = [];
 
-    abstract public function export(Space $space, DataSource $dataSource, Collection $entries): Response;
+    abstract public function export(Space $space, DataSource $dataSource, Enumerable $entries): Response;
 
     abstract public function parseFile(UploadedFile $file): array;
 
@@ -50,15 +51,25 @@ abstract class BaseDataEntryDataDriver implements DataEntryDataDriver
 
             $this->ignoredFields = $this->detectIgnoredFields(array_keys($rows[0] ?? []));
 
-            DB::transaction(function () use ($space, $dataSource, $rows, $mode): void {
-                foreach ($rows as $rowNumber => $rowData) {
-                    $this->importRow($space, $dataSource, $rowNumber, $rowData);
-                }
+            // Chunked: one transaction and one batched lookup per chunk
+            // instead of a per-row SELECT inside one giant transaction. Rows
+            // keep going through model saves so audit entries and change
+            // tracking stay intact.
+            $connection = new DataEntry()->getConnection();
 
-                if ($mode === RedirectImportMode::Replacement && $this->errors === []) {
-                    $this->deleteUntouchedEntries($dataSource);
-                }
-            });
+            foreach (array_chunk($rows, self::IMPORT_CHUNK_SIZE, preserve_keys: true) as $chunk) {
+                $connection->transaction(function () use ($space, $dataSource, $chunk): void {
+                    $lookup = $this->prefetchEntries($dataSource, $chunk);
+
+                    foreach ($chunk as $rowNumber => $rowData) {
+                        $this->importRow($space, $dataSource, $rowNumber, $rowData, $lookup);
+                    }
+                });
+            }
+
+            if ($mode === RedirectImportMode::Replacement && $this->errors === []) {
+                $this->deleteUntouchedEntries($dataSource);
+            }
         } catch (\Throwable $e) {
             Log::error('Data entry import parsing error', [
                 'format' => $this->getFormat(),
@@ -73,21 +84,88 @@ abstract class BaseDataEntryDataDriver implements DataEntryDataDriver
 
     protected function deleteUntouchedEntries(DataSource $dataSource): void
     {
-        $entriesToDelete = DataEntry::query()
-            ->where('data_source_id', $dataSource->id)
-            ->whereNotIn('id', $this->touchedIds)
-            ->get();
+        // Diff the id set in PHP instead of a whereNotIn with thousands of
+        // bindings; deletions stay per-model so audit entries keep firing.
+        $touched = array_fill_keys($this->touchedIds, true);
 
-        foreach ($entriesToDelete as $entry) {
-            $this->deleted[] = [
-                'id' => $entry->id,
-                'key' => $entry->key,
-            ];
-            $entry->delete();
+        $idsToDelete = DataEntry::query()
+            ->where('data_source_id', $dataSource->id)
+            ->pluck('id')
+            ->reject(fn (string $id) => isset($touched[$id]));
+
+        $connection = new DataEntry()->getConnection();
+
+        foreach ($idsToDelete->chunk(self::IMPORT_CHUNK_SIZE) as $ids) {
+            $connection->transaction(function () use ($ids): void {
+                foreach (DataEntry::query()->whereIn('id', $ids->all())->get() as $entry) {
+                    $this->deleted[] = [
+                        'id' => $entry->id,
+                        'key' => $entry->key,
+                    ];
+                    $entry->delete();
+                }
+            });
         }
     }
 
-    protected function importRow(Space $space, DataSource $dataSource, int $rowNumber, array $rowData): void
+    /**
+     * Batched per-chunk lookup maps so a chunk needs one SELECT instead of
+     * one per row. Newly saved entries register themselves so later rows in
+     * the same chunk still find them (duplicate keys in one file).
+     *
+     * @return array{id: array<string, DataEntry>, external_id: array<string, DataEntry>, key: array<string, DataEntry>}
+     */
+    protected function prefetchEntries(DataSource $dataSource, array $chunk): array
+    {
+        $ids = [];
+        $externalIds = [];
+        $keys = [];
+
+        foreach ($chunk as $rowData) {
+            $payload = $this->normalizeRow($rowData);
+
+            if (!empty($payload['id'])) {
+                $ids[] = $payload['id'];
+            }
+            if (!empty($payload['external_id'])) {
+                $externalIds[] = $payload['external_id'];
+            }
+            if (!empty($payload['key'])) {
+                $keys[] = $payload['key'];
+            }
+        }
+
+        $lookup = ['id' => [], 'external_id' => [], 'key' => []];
+
+        $entries = DataEntry::query()
+            ->where('data_source_id', $dataSource->id)
+            ->where(function ($query) use ($ids, $externalIds, $keys): void {
+                $query->whereIn('id', $ids)
+                    ->orWhereIn('external_id', $externalIds)
+                    ->orWhereIn('key', $keys);
+            })
+            ->get();
+
+        foreach ($entries as $entry) {
+            $this->registerEntry($lookup, $entry);
+        }
+
+        return $lookup;
+    }
+
+    protected function registerEntry(array &$lookup, DataEntry $entry): void
+    {
+        $lookup['id'][$entry->id] = $entry;
+
+        if ($entry->external_id !== null) {
+            $lookup['external_id'][$entry->external_id] = $entry;
+        }
+        if ($entry->key !== null) {
+            $lookup['key'][$entry->key] = $entry;
+        }
+    }
+
+    protected function importRow(Space $space, DataSource $dataSource, int $rowNumber, array $rowData, array &$lookup): void
     {
         try {
             $payload = $this->normalizeRow($rowData);
@@ -107,7 +185,7 @@ abstract class BaseDataEntryDataDriver implements DataEntryDataDriver
                 return;
             }
 
-            $entry = $this->findEntry($dataSource, $payload);
+            $entry = $this->findEntry($dataSource, $payload, $lookup);
             unset($payload['id']);
             $existingValues = $entry ? $this->extractTrackedValues($entry) : [];
 
@@ -123,6 +201,12 @@ abstract class BaseDataEntryDataDriver implements DataEntryDataDriver
             }
 
             $entry->save();
+
+            $previousKey = $existingValues['key'] ?? null;
+            if ($previousKey !== null && $previousKey !== $entry->key) {
+                unset($lookup['key'][$previousKey]);
+            }
+            $this->registerEntry($lookup, $entry);
 
             $this->touchedIds[] = $entry->id;
 
@@ -278,19 +362,17 @@ abstract class BaseDataEntryDataDriver implements DataEntryDataDriver
         return $value;
     }
 
-    protected function findEntry(DataSource $dataSource, array $payload): ?DataEntry
+    /**
+     * @param  array{id: array<string, DataEntry>, external_id: array<string, DataEntry>, key: array<string, DataEntry>}  $lookup
+     */
+    protected function findEntry(DataSource $dataSource, array $payload, array $lookup): ?DataEntry
     {
         if (!empty($payload['id'])) {
-            return DataEntry::query()
-                ->where('data_source_id', $dataSource->id)
-                ->find($payload['id']);
+            return $lookup['id'][$payload['id']] ?? null;
         }
 
         if (!empty($payload['external_id'])) {
-            $entry = DataEntry::query()
-                ->where('data_source_id', $dataSource->id)
-                ->where('external_id', $payload['external_id'])
-                ->first();
+            $entry = $lookup['external_id'][$payload['external_id']] ?? null;
 
             if ($entry !== null) {
                 return $entry;
@@ -298,10 +380,7 @@ abstract class BaseDataEntryDataDriver implements DataEntryDataDriver
         }
 
         if (!empty($payload['key'])) {
-            return DataEntry::query()
-                ->where('data_source_id', $dataSource->id)
-                ->where('key', $payload['key'])
-                ->first();
+            return $lookup['key'][$payload['key']] ?? null;
         }
 
         return null;

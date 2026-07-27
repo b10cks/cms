@@ -6,7 +6,7 @@ use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use App\Services\ImportExport\WritesXlsxDownload;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Enumerable;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -16,7 +16,7 @@ class ExcelRedirectDataDriver extends BaseRedirectDataDriver
 
     private const HEADERS = ['id', 'external_id', 'source', 'target', 'status_code'];
 
-    public function export(Space $space, Collection $redirects): Response
+    public function export(Space $space, Enumerable $redirects): Response
     {
         $rows = $redirects->map(fn ($redirect) => [
             $redirect->id,

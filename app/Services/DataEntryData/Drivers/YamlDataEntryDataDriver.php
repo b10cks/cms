@@ -6,14 +6,14 @@ use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use App\Models\Space\DataSource;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Enumerable;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Yaml\Yaml;
 
 class YamlDataEntryDataDriver extends BaseDataEntryDataDriver
 {
-    public function export(Space $space, DataSource $dataSource, Collection $entries): Response
+    public function export(Space $space, DataSource $dataSource, Enumerable $entries): Response
     {
         $filename = $this->generateFilename($space, $dataSource, 'yaml');
 
