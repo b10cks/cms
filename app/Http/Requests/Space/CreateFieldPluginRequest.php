@@ -4,6 +4,7 @@ namespace App\Http\Requests\Space;
 
 use App\Http\Requests\Traits\ExternalIdValidation;
 use App\Models\Space\FieldPlugin;
+use App\Rules\LoopbackUrl;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -40,7 +41,9 @@ class CreateFieldPluginRequest extends FormRequest
         return [
             'description' => 'nullable|string',
             'dev_mode' => 'boolean',
-            'dev_url' => 'nullable|url:http,https|max:2048',
+            // A dev bundle is framed by the editor, so an arbitrary host here
+            // would mean arbitrary script in everyone else's editor.
+            'dev_url' => ['nullable', 'url:http,https', 'max:2048', new LoopbackUrl],
             'code' => 'nullable|string|max:'.self::MAX_CODE_SIZE,
             'manifest' => 'nullable|array',
             'manifest.options' => 'nullable|array',

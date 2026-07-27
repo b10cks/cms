@@ -3,6 +3,7 @@ import { useDark } from '@vueuse/core'
 
 import { Button } from '~/components/ui/button'
 import { useFieldPlugins } from '~/composables/useFieldPlugins'
+import { isSafeFrameUrl } from '~/lib/sanitize'
 import { PluginBridge } from '~/utils/plugin-bridge'
 
 const props = defineProps<{
@@ -59,16 +60,16 @@ const frameSrc = computed(() => {
     ? plugin.value.dev_url
     : plugin.value.sandbox_url
 
-  if (!base) return null
+  if (!base || !isSafeFrameUrl(base)) return null
 
   return `${base}#b10cks-token=${encodeURIComponent(token)}&r=${reloadCount.value}`
 })
 
-// Dev servers need allow-same-origin for HMR; published bundles run fully opaque.
-const sandboxAttr = computed(() => {
-  const base = 'allow-scripts allow-forms allow-popups allow-modals'
-  return plugin.value?.dev_mode ? `${base} allow-same-origin` : base
-})
+// Never allow-same-origin: combined with allow-scripts it voids the sandbox,
+// and the sandbox shell is served from the admin's own origin — plugin code
+// would get window.parent.document, the session cookie and the CSRF token.
+// Dev bundles lose HMR as a result; correctness wins over convenience here.
+const sandboxAttr = 'allow-scripts allow-forms allow-popups allow-modals'
 
 const mergedOptions = computed<Record<string, string>>(() => {
   const defaults: Record<string, string> = {}
