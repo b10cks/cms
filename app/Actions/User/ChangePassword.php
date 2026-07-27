@@ -12,7 +12,12 @@ class ChangePassword
         $user->password = $password;
         $user->save();
 
-        if (!$silent) {
+        // Changing a password is how someone locks an intruder out, so every
+        // API token minted before this point has to stop working. The session
+        // that performed the change is re-authenticated by the caller.
+        $user->tokens()->delete();
+
+        if (! $silent) {
             event(new PasswordChanged($user, [
                 'date' => now()->isoFormat('LLLL'),
                 'browser' => request()->header('User-Agent'),
