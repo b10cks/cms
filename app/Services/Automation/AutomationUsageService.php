@@ -62,8 +62,9 @@ class AutomationUsageService
             ]);
 
             $this->incrementExecutionCount($execution->automation);
-            $this->aggregateStats($execution);
         });
+
+        DB::afterCommit(fn () => $this->aggregateStats($execution));
     }
 
     public function abortExecution(AutomationExecution $execution, \Throwable $error): void
@@ -85,8 +86,9 @@ class AutomationUsageService
             ]);
 
             $this->incrementExecutionCount($execution->automation);
-            $this->aggregateStats($execution);
         });
+
+        DB::afterCommit(fn () => $this->aggregateStats($execution));
     }
 
     public function canExecute(Automation $automation): bool
@@ -142,9 +144,11 @@ class AutomationUsageService
     protected function aggregateStats(AutomationExecution $execution): void
     {
         $date = $execution->created_at->startOfDay();
-        $periodTypes = PeriodType::default();
+        $completed = $execution->status === 'completed';
+        $failed = $execution->status === 'failed';
+        $duration = $execution->started_at !== null ? $execution->duration : null;
 
-        foreach ($periodTypes as $periodType) {
+        foreach (PeriodType::default() as $periodType) {
             $periodDate = match ($periodType) {
                 PeriodType::DAILY => $date,
                 PeriodType::WEEKLY => $date->copy()->startOfWeek(),
@@ -152,41 +156,33 @@ class AutomationUsageService
                 PeriodType::YEARLY => $date->copy()->startOfYear(),
             };
 
-            AutomationUsageStats::updateOrCreate(
-                [
+            // Atomic incremental upsert: avg_duration_ms must be assigned first so
+            // it reads the pre-increment total_executions on MySQL (assignments are
+            // evaluated left to right in ON DUPLICATE KEY UPDATE).
+            AutomationUsageStats::upsert(
+                [[
                     'automation_id' => $execution->automation_id,
-                    'period_type' => $periodType,
-                    'period_date' => $periodDate,
-                ],
-                $this->calculateStats($execution, $periodType, $periodDate)
+                    'period_type' => $periodType->value,
+                    'period_date' => $periodDate->toDateString(),
+                    'total_executions' => 1,
+                    'successful_executions' => $completed ? 1 : 0,
+                    'failed_executions' => $failed ? 1 : 0,
+                    'avg_duration_ms' => $duration,
+                ]],
+                ['automation_id', 'period_type', 'period_date'],
+                [
+                    'avg_duration_ms' => $duration === null
+                        ? DB::raw('avg_duration_ms')
+                        : DB::raw(sprintf(
+                            'coalesce(avg_duration_ms, 0) + (%F - coalesce(avg_duration_ms, 0)) / (total_executions + 1)',
+                            $duration
+                        )),
+                    'total_executions' => DB::raw('total_executions + 1'),
+                    'successful_executions' => DB::raw('successful_executions + ' . ($completed ? 1 : 0)),
+                    'failed_executions' => DB::raw('failed_executions + ' . ($failed ? 1 : 0)),
+                ]
             );
         }
-    }
-
-    protected function calculateStats(AutomationExecution $execution, PeriodType $periodType, Carbon $periodDate): array
-    {
-        $query = AutomationExecution::query()
-            ->where('automation_id', $execution->automation_id)
-            ->whereNotNull('completed_at')
-            ->where('created_at', '>=', $periodDate)
-            ->where('created_at', '<', $periodDate->copy()->add('1 '.$periodType->toCarbonPeriod()));
-
-        $stats = [
-            'total_executions' => $query->count(),
-            'successful_executions' => (clone $query)->where('status', 'completed')->count(),
-            'failed_executions' => (clone $query)->where('status', 'failed')->count(),
-        ];
-
-        // Calculate average duration
-        $avgDuration = (clone $query)
-            ->whereNotNull('started_at')
-            ->whereNotNull('completed_at')
-            ->select(DB::raw('AVG(duration) as avg_duration'))
-            ->first();
-
-        $stats['avg_duration_ms'] = $avgDuration ? $avgDuration->avg_duration : null;
-
-        return $stats;
     }
 
     protected function withExecutionSnapshot(Automation $automation, array $context): array

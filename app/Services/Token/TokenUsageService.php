@@ -138,6 +138,8 @@ class TokenUsageService
         }
 
         $date = $execution->started_at->startOfDay();
+        $failed = $execution->status === 'failed';
+        $duration = $execution->duration;
 
         foreach (PeriodType::default() as $periodType) {
             $periodDate = match ($periodType) {
@@ -147,38 +149,32 @@ class TokenUsageService
                 PeriodType::YEARLY => $date->copy()->startOfYear(),
             };
 
-            TokenUsageStats::updateOrCreate(
-                [
+            // Atomic incremental upsert: avg_duration_ms must be assigned first so
+            // it reads the pre-increment total_executions on MySQL (assignments are
+            // evaluated left to right in ON DUPLICATE KEY UPDATE).
+            TokenUsageStats::upsert(
+                [[
                     'token_id' => $execution->token_id,
-                    'period_type' => $periodType,
-                    'period_date' => $periodDate,
-                ],
-                self::calculateStats($execution, $periodType, $periodDate)
+                    'period_type' => $periodType->value,
+                    'period_date' => $periodDate->toDateString(),
+                    'total_executions' => 1,
+                    'successful_executions' => $failed ? 0 : 1,
+                    'failed_executions' => $failed ? 1 : 0,
+                    'avg_duration_ms' => $duration,
+                ]],
+                ['token_id', 'period_type', 'period_date'],
+                [
+                    'avg_duration_ms' => $duration === null
+                        ? DB::raw('avg_duration_ms')
+                        : DB::raw(sprintf(
+                            'coalesce(avg_duration_ms, 0) + (%F - coalesce(avg_duration_ms, 0)) / (total_executions + 1)',
+                            $duration
+                        )),
+                    'total_executions' => DB::raw('total_executions + 1'),
+                    'successful_executions' => DB::raw('successful_executions + ' . ($failed ? 0 : 1)),
+                    'failed_executions' => DB::raw('failed_executions + ' . ($failed ? 1 : 0)),
+                ]
             );
         }
-    }
-
-    protected static function calculateStats(TokenExecution $execution, PeriodType $periodType, Carbon $periodDate): array
-    {
-        $query = TokenExecution::query()
-            ->where('token_id', $execution->token_id)
-            ->whereNotNull('completed_at')
-            ->where('started_at', '>=', $periodDate)
-            ->where('started_at', '<', $periodDate->copy()->add('1 ' . $periodType->toCarbonPeriod()));
-
-        $stats = [
-            'total_executions' => $query->count(),
-            'successful_executions' => (clone $query)->whereNot('status', 'failed')->count(),
-            'failed_executions' => (clone $query)->where('status', 'failed')->count(),
-        ];
-
-        $avgDuration = (clone $query)
-            ->whereNotNull('completed_at')
-            ->select(DB::raw('AVG(duration) as avg_duration'))
-            ->first();
-
-        $stats['avg_duration_ms'] = $avgDuration ? $avgDuration->avg_duration : null;
-
-        return $stats;
     }
 }
