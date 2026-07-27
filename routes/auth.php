@@ -68,10 +68,6 @@ Route::post('email/verify/send', [EmailVerificationController::class, 'send'])
     ->middleware(['auth:sanctum', 'throttle:login'])
     ->name('verification.send');
 
-Route::post('email/verify', [EmailVerificationController::class, 'verify'])
-    ->middleware(['throttle:login'])
-    ->name('verification.verify');
-
 Route::group(['prefix' => '2fa'], function () {
 
     Route::get('status', TwoFactorStatusController::class)

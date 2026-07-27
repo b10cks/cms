@@ -85,5 +85,14 @@ class AcceptInvite
                 'email' => 'You must use the invited email address to accept this invitation.',
             ]);
         }
+
+        // Without a token the email match is the only proof, so the address
+        // has to actually be verified — otherwise registering under someone
+        // else's address would be enough to claim their invitations.
+        if ($token === null && ! $user->hasVerifiedEmail()) {
+            throw ValidationException::withMessages([
+                'invite' => 'Verify your email address before accepting this invitation.',
+            ]);
+        }
     }
 }

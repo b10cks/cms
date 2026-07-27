@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Management\Space;
 use App\Models\Management\Team;
 use App\Models\Traits\HasPurifiedAttributes;
@@ -10,6 +9,7 @@ use App\Models\User\UserSettings;
 use App\Models\User\UserSocialLink;
 use App\Notifications\User\ResetPasswordNotification;
 use CodersCantina\Filter\Filterable;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -87,7 +87,7 @@ use Laravel\Sanctum\HasApiTokens;
  *
  * @mixin \Eloquent
  */
-class User extends Authenticatable implements HasLocalePreference
+class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail
 {
     use Filterable;
     use HasApiTokens;
