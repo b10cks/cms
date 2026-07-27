@@ -135,8 +135,14 @@ Route::group(['prefix' => 'users'], function () {
 
         Route::get('/tokens', [UserTokenController::class, 'index'])
             ->name('users.me.tokens.index');
+        // Minting a token creates a bearer credential that outlives the
+        // session it was created from — logging out does not revoke it and
+        // neither does changing the password, by design. Whoever mints one
+        // therefore has to prove they are the account owner right now: a TOTP
+        // code (or a backup code) when a second factor is enrolled, the
+        // password when it is not.
         Route::post('/tokens', [UserTokenController::class, 'store'])
-            ->middleware(['not-impersonating'])
+            ->middleware(['throttle:crucial', 'not-impersonating', '2fa'])
             ->name('users.me.tokens.store');
         Route::delete('/tokens/{token}', [UserTokenController::class, 'destroy'])
             ->name('users.me.tokens.destroy');

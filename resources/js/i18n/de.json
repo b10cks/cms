@@ -2627,7 +2627,13 @@
           "lastUsedAt": "Zuletzt verwendet",
           "status": "Status"
         },
-        "deleteConfirmTitle": "Token löschen"
+        "deleteConfirmTitle": "Token löschen",
+        "stepUpTitle": "Bestätige, dass du es bist",
+        "stepUpTotpDescription": "Ein API-Token funktioniert auch nach dem Abmelden oder einer Passwortänderung weiter — zum Erstellen brauchst du daher deinen zweiten Faktor.",
+        "stepUpPasswordDescription": "Ein API-Token funktioniert auch nach dem Abmelden oder einer Passwortänderung weiter — zum Erstellen brauchst du daher dein Passwort.",
+        "stepUpTotpLabel": "Authenticator- oder Backup-Code",
+        "stepUpPasswordLabel": "Aktuelles Passwort",
+        "stepUpConfirm": "Token erstellen"
       },
       "themes": {
         "title": "Themes",

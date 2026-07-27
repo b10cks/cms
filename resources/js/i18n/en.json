@@ -2629,7 +2629,13 @@
           "lastUsedAt": "Last used",
           "status": "Status"
         },
-        "deleteConfirmTitle": "Delete token"
+        "deleteConfirmTitle": "Delete token",
+        "stepUpTitle": "Confirm it’s you",
+        "stepUpTotpDescription": "An API token keeps working after you sign out or change your password, so creating one needs your second factor.",
+        "stepUpPasswordDescription": "An API token keeps working after you sign out or change your password, so creating one needs your password.",
+        "stepUpTotpLabel": "Authentication or backup code",
+        "stepUpPasswordLabel": "Current password",
+        "stepUpConfirm": "Create token"
       },
       "themes": {
         "title": "Themes",

@@ -5,6 +5,7 @@ import { api } from '~/api'
 import type {
   PersonalAccessTokenCreatePayload,
   PersonalAccessTokenQueryParams,
+  StepUpCredential,
 } from '~/api/resources/personal-access-tokens'
 
 import { queryKeys } from './useQueryClient'
@@ -28,8 +29,14 @@ export function usePersonalAccessTokens() {
 
   const useCreateTokenMutation = () => {
     return useMutation({
-      mutationFn: async (payload: PersonalAccessTokenCreatePayload) => {
-        return await api.personalAccessTokens.create(payload)
+      mutationFn: async ({
+        payload,
+        credential,
+      }: {
+        payload: PersonalAccessTokenCreatePayload
+        credential?: StepUpCredential
+      }) => {
+        return await api.personalAccessTokens.create(payload, credential)
       },
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.personalAccessTokens.lists() })
@@ -37,7 +44,11 @@ export function usePersonalAccessTokens() {
           t('composables.personalAccessTokens.createSuccess', { name: data.token.name }) as string
         )
       },
-      onError: (error: Error) => {
+      onError: (error: Error & { status?: number }) => {
+        // 423 is the API asking for a second factor, which the caller answers
+        // with a prompt — not a failure worth shouting about.
+        if (error.status === 423) return
+
         toast.error(
           t('composables.personalAccessTokens.createError', {
             error: error.message || 'Unknown error',

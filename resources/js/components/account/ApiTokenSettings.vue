@@ -18,6 +18,7 @@ import {
   TableRow,
 } from '~/components/ui/table'
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
+import type { StepUpCredential } from '~/api/resources/personal-access-tokens'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 
 const { t } = useI18n()
@@ -31,6 +32,10 @@ const { mutate: deleteToken, isPending: isDeleting } = useDeleteTokenMutation()
 
 const tokenName = ref('')
 const expiresIn = ref('31')
+const showStepUpDialog = ref(false)
+const stepUpFactor = ref<StepUpCredential['factor']>('password')
+const stepUpValue = ref('')
+const stepUpError = ref<string | null>(null)
 const showTokenDialog = ref(false)
 const newTokenValue = ref('')
 const { copy } = useClipboard({ source: newTokenValue })
@@ -49,23 +54,55 @@ const isExpired = (token: PersonalAccessToken) => {
   return dayjs(token.expires_at).isBefore(dayjs())
 }
 
-const handleCreateToken = async () => {
-  if (!tokenName.value || isCreating.value) return
-
+/**
+ * Minting a token needs proof the account owner is at the keyboard. Rather
+ * than deciding client-side which factor applies, the request is made without
+ * one: the API answers 423 saying what it wants, and that drives the prompt.
+ */
+const submitToken = async (credential?: StepUpCredential) => {
   const expiresAt = dayjs().add(Number(expiresIn.value), 'day').toISOString()
 
   try {
     const response = await createToken({
-      name: tokenName.value,
-      expires_at: expiresAt,
+      payload: { name: tokenName.value, expires_at: expiresAt },
+      credential,
     })
 
     newTokenValue.value = response.plain_text_token
     showTokenDialog.value = true
+    showStepUpDialog.value = false
+    stepUpValue.value = ''
     tokenName.value = ''
-  } catch (_) {
-    // handled in mutation
+  } catch (error: any) {
+    if (error?.status === 423) {
+      stepUpFactor.value = error?.data?.requires_2fa ? 'totp' : 'password'
+      stepUpValue.value = ''
+      stepUpError.value = null
+      showStepUpDialog.value = true
+
+      return
+    }
+
+    if (error?.status === 403 && showStepUpDialog.value) {
+      stepUpError.value = error?.message ?? null
+
+      return
+    }
+
+    // Anything else is reported by the mutation itself.
   }
+}
+
+const handleCreateToken = async () => {
+  if (!tokenName.value || isCreating.value) return
+
+  await submitToken()
+}
+
+const handleConfirmStepUp = async () => {
+  if (!stepUpValue.value || isCreating.value) return
+
+  await submitToken({ factor: stepUpFactor.value, value: stepUpValue.value })
 }
 
 const handleCopyToken = async () => {
@@ -198,6 +235,56 @@ const handleDeleteToken = async (id: number, tokenName: string) => {
       </div>
     </CardContent>
   </Card>
+
+  <Dialog v-model:open="showStepUpDialog">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeaderCombined
+        :title="$t('labels.account.apiTokens.stepUpTitle')"
+        :description="
+          stepUpFactor === 'totp'
+            ? $t('labels.account.apiTokens.stepUpTotpDescription')
+            : $t('labels.account.apiTokens.stepUpPasswordDescription')
+        "
+      />
+
+      <InputField
+        v-if="stepUpFactor === 'totp'"
+        v-model="stepUpValue"
+        name="step-up-code"
+        autocomplete="one-time-code"
+        inputmode="numeric"
+        :label="$t('labels.account.apiTokens.stepUpTotpLabel')"
+        :error="stepUpError ?? undefined"
+        @keyup.enter="handleConfirmStepUp"
+      />
+      <InputField
+        v-else
+        v-model="stepUpValue"
+        name="step-up-password"
+        type="password"
+        autocomplete="current-password"
+        :label="$t('labels.account.apiTokens.stepUpPasswordLabel')"
+        :error="stepUpError ?? undefined"
+        @keyup.enter="handleConfirmStepUp"
+      />
+
+      <DialogFooter>
+        <Button
+          variant="outline"
+          @click="showStepUpDialog = false"
+        >
+          {{ $t('actions.cancel') }}
+        </Button>
+        <Button
+          :loading="isCreating"
+          :disabled="!stepUpValue"
+          @click="handleConfirmStepUp"
+        >
+          {{ $t('labels.account.apiTokens.stepUpConfirm') }}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 
   <Dialog v-model:open="showTokenDialog">
     <DialogContent class="max-w-lg">

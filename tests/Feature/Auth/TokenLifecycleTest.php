@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use App\Services\Auth\TwoFactorAuthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use PHPUnit\Framework\Attributes\Test;
@@ -57,6 +58,67 @@ class TokenLifecycleTest extends TestCase
         $this->withHeader('Authorization', "Bearer {$token}")
             ->getJson(route('mgmt.users.me.tokens.index'))
             ->assertOk();
+    }
+
+    /**
+     * A token outlives the session that created it and survives a password
+     * change, so minting one has to prove the owner is present now.
+     */
+    #[Test]
+    public function minting_a_token_requires_the_password_when_no_second_factor_is_enrolled(): void
+    {
+        $user = User::factory()->create(['password' => Hash::make('correct-horse')])->fresh();
+
+        $this->actingAs($user)
+            ->postJson(route('mgmt.users.me.tokens.store'), [
+                'name' => 'deploy script',
+            ])
+            ->assertStatus(423)
+            ->assertJsonPath('error_code', 'PASSWORD_CONFIRMATION_REQUIRED');
+
+        $this->assertSame(0, $user->tokens()->count());
+
+        $this->actingAs($user)
+            ->withHeader('x-password-confirmation', 'correct-horse')
+            ->postJson(route('mgmt.users.me.tokens.store'), [
+                'name' => 'deploy script',
+            ])
+            ->assertCreated();
+
+        $this->assertSame(1, $user->tokens()->count());
+    }
+
+    #[Test]
+    public function minting_a_token_requires_the_second_factor_when_one_is_enrolled(): void
+    {
+        $user = User::factory()->create([
+            'password' => Hash::make('correct-horse'),
+            'two_factor_secret' => app(TwoFactorAuthService::class)->generateSecret(),
+            'two_factor_enabled_at' => now(),
+            'two_factor_backup_codes' => ['AAAAAAAA'],
+        ])->fresh();
+
+        $this->actingAs($user)
+            ->postJson(route('mgmt.users.me.tokens.store'), ['name' => 'deploy script'])
+            ->assertStatus(423)
+            ->assertJsonPath('error_code', 'TOTP_VERIFICATION_REQUIRED');
+
+        // The password alone is no longer enough once a second factor exists.
+        $this->actingAs($user)
+            ->withHeader('x-password-confirmation', 'correct-horse')
+            ->postJson(route('mgmt.users.me.tokens.store'), ['name' => 'deploy script'])
+            ->assertStatus(423);
+
+        $this->assertSame(0, $user->tokens()->count());
+
+        // A backup code is accepted, so losing the authenticator does not lock
+        // the owner out of their own tokens.
+        $this->actingAs($user)
+            ->withHeader('x-totp-code', 'AAAAAAAA')
+            ->postJson(route('mgmt.users.me.tokens.store'), ['name' => 'deploy script'])
+            ->assertCreated();
+
+        $this->assertSame(1, $user->tokens()->count());
     }
 
     #[Test]
