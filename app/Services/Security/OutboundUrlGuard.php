@@ -84,10 +84,48 @@ class OutboundUrlGuard
 
     private function isPublicAddress(string $ip): bool
     {
+        $ip = $this->unwrapIpv4($ip);
+
         return filter_var(
             $ip,
             FILTER_VALIDATE_IP,
             FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
         ) !== false;
+    }
+
+    /**
+     * Reduce an IPv6 address that merely wraps an IPv4 one to that IPv4
+     * address, so the IPv4 range rules decide the outcome.
+     *
+     * PHP 8.5's FILTER_FLAG_NO_PRIV_RANGE/NO_RES_RANGE already reject the
+     * wrapped forms of internal addresses, so this is not closing a live hole.
+     * It is here because that behaviour has not been consistent across PHP
+     * versions and the guard should not depend on it: an IPv4-mapped
+     * `::ffff:169.254.169.254` must never reach the metadata endpoint.
+     */
+    private function unwrapIpv4(string $ip): string
+    {
+        $normalized = strtolower(trim($ip, '[]'));
+
+        foreach (['::ffff:', '::'] as $prefix) {
+            if (str_starts_with($normalized, $prefix)) {
+                $candidate = substr($normalized, strlen($prefix));
+
+                if (filter_var($candidate, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
+                    return $candidate;
+                }
+            }
+        }
+
+        // NAT64 (64:ff9b::/96) embeds the IPv4 address in the low 32 bits.
+        if (str_starts_with($normalized, '64:ff9b::')) {
+            $packed = @inet_pton($normalized);
+
+            if ($packed !== false && strlen($packed) === 16) {
+                return inet_ntop(substr($packed, 12, 4));
+            }
+        }
+
+        return $ip;
     }
 }
