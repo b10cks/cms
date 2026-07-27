@@ -16,7 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class AssetCollectionAssetController extends Controller
 {
@@ -166,18 +166,24 @@ class AssetCollectionAssetController extends Controller
      */
     private function validateAssetIds(Request $request, bool $checkExistence = false): array
     {
-        $assetIdRules = ['required', 'string', 'ulid'];
+        $validated = $request->validate([
+            'asset_ids' => ['required', 'array', 'min:1', 'max:1000'],
+            'asset_ids.*' => ['required', 'string', 'ulid'],
+        ]);
 
         if ($checkExistence) {
-            $assetIdRules[] = Rule::exists(
-                new Asset()->getConnectionName().'.assets',
-                'id'
-            )->whereNull('deleted_at');
+            // One whereIn instead of a Rule::exists query per element.
+            $ids = array_values(array_unique($validated['asset_ids']));
+            $existing = Asset::query()->whereIn('id', $ids)->pluck('id')->all();
+            $missing = array_diff($ids, $existing);
+
+            if ($missing !== []) {
+                throw ValidationException::withMessages([
+                    'asset_ids' => 'Unknown asset ids: '.implode(', ', $missing),
+                ]);
+            }
         }
 
-        return $request->validate([
-            'asset_ids' => ['required', 'array', 'min:1'],
-            'asset_ids.*' => $assetIdRules,
-        ]);
+        return $validated;
     }
 }
