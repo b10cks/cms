@@ -1,5 +1,6 @@
 import { buildIlumUrl } from '~/lib/ilum'
 import { runtimeConfig } from '~/lib/runtime-config'
+import { safeHref } from '~/lib/sanitize'
 
 interface RenderScope {
   value: unknown
@@ -137,7 +138,9 @@ function renderImage(expression: string, scope: RenderScope): string {
   }
 
   if (/^(https?:)?\/\//.test(source) || source.startsWith('data:')) {
-    return source
+    const href = safeHref(source)
+
+    return href ? `<img src="${escapeHtml(href)}" alt="" />` : ''
   }
 
   const baseURL = (runtimeConfig.public.ilum.baseURL || '').replace(/\/$/, '')
