@@ -24,7 +24,7 @@ class ReleaseVersionRemoveController extends Controller
                 ->where('release_id', $release->id)
                 ->update(['release_id' => null]);
 
-            $release->load(['versions'])->loadCount(['versions']);
+            $release->load(['versions' => fn ($query) => $query->listSummary()])->loadCount(['versions']);
 
             return new ReleaseDetailResource($release);
         } catch (\Exception $e) {

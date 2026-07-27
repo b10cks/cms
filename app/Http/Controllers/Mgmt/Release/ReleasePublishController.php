@@ -21,7 +21,7 @@ class ReleasePublishController extends Controller
             $action->execute($release, $space, auth()->user());
             $release->auditSpaceEvent('published', AuditActor::user($request->user()));
 
-            $release->load(['versions'])->loadCount(['versions']);
+            $release->load(['versions' => fn ($query) => $query->listSummary()])->loadCount(['versions']);
 
             return new ReleaseDetailResource($release);
         } catch (\Exception $e) {

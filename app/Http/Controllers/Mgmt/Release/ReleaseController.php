@@ -54,7 +54,7 @@ class ReleaseController extends Controller
     {
         $this->authorize('view', [$release, $space]);
 
-        $release->load(['versions'])->loadCount(['versions']);
+        $release->load(['versions' => fn ($query) => $query->listSummary()])->loadCount(['versions']);
 
         return new ReleaseDetailResource($release);
     }

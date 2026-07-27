@@ -24,7 +24,7 @@ class ReleaseVersionAssignController extends Controller
                 ->whereIn('id', $versionIds)
                 ->update(['release_id' => $release->id]);
 
-            $release->load(['versions'])->loadCount(['versions']);
+            $release->load(['versions' => fn ($query) => $query->listSummary()])->loadCount(['versions']);
 
             return new ReleaseDetailResource($release);
         } catch (\Exception $e) {

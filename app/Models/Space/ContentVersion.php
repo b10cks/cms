@@ -177,6 +177,20 @@ class ContentVersion extends SpaceModel
         return $content;
     }
 
+    /**
+     * Constrain a query to the metadata ContentVersionListResource outputs,
+     * leaving the heavy `content` payload behind.
+     */
+    public function scopeListSummary($query)
+    {
+        return $query
+            ->select([
+                'id', 'external_id', 'message', 'content_id', 'parent_id', 'release_id',
+                'created_by_id', 'published_by_id', 'published_at', 'scheduled_at', 'created_at',
+            ])
+            ->with(['createdBy', 'publishedBy']);
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_id', 'id');
