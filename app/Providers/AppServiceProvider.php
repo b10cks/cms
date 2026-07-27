@@ -7,7 +7,6 @@ use App\Observers\Space\CommentObserver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
 use PostHog\PostHog;
-use Symfony\Component\HttpFoundation\Request;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,7 +16,9 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         if (app()->environment('production')) {
-            request()->setTrustedProxies(['*'], Request::HEADER_X_FORWARDED_AWS_ELB);
+            // Proxy trust is configured in config/trustedproxy.php and applied
+            // by the TrustProxies middleware; setting it here has no effect,
+            // since that middleware resets it on every request.
             \URL::forceScheme('https');
         }
     }

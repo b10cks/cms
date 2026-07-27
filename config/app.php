@@ -96,6 +96,10 @@ return [
 
     'domain' => env('APP_DOMAIN', 'localhost'),
 
+    // Extra Host header values accepted beyond APP_URL and its subdomains.
+    // See App\Http\Middleware\TrustHosts.
+    'trusted_hosts' => env('TRUSTED_HOSTS', ''),
+
     // Per-user/IP request cap per minute for the authenticated management API.
     'mgmt_rate_limit' => env('MGMT_RATE_LIMIT', 1000),
 
