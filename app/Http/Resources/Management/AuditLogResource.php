@@ -7,12 +7,26 @@ use App\Models\User;
 use App\Services\Audit\AuditSubjectRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 
 /**
  * @mixin AuditLog
  */
 class AuditLogResource extends JsonResource
 {
+    /** @var Collection<string, User>|null */
+    protected static ?Collection $owners = null;
+
+    /**
+     * Provide a pre-fetched owner-id => User map to avoid per-row lookups.
+     *
+     * @param  Collection<string, User>  $owners
+     */
+    public static function withOwners(Collection $owners): void
+    {
+        static::$owners = $owners;
+    }
+
     public function toArray(Request $request): array
     {
         $meta = $this->meta;
@@ -48,7 +62,9 @@ class AuditLogResource extends JsonResource
             return null;
         }
 
-        $user = User::find($this->owner_id);
+        $user = static::$owners !== null
+            ? static::$owners->get($this->owner_id)
+            : User::find($this->owner_id);
 
         return $user ? new SimpleUserResource($user) : null;
     }
