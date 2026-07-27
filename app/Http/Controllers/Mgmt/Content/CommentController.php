@@ -37,6 +37,12 @@ class CommentController extends Controller
                 'replies.mentions',
             ])
             ->withCount(['replies', 'reactions'])
+            // A thread reads oldest first. Without this the order is whatever
+            // the database happens to return, which differs between runs.
+            // Appended, so an explicit `sort` parameter still takes precedence
+            // and this only breaks the ties.
+            ->orderBy('created_at')
+            ->orderBy('id')
             ->get();
 
         return CommentResource::collection($comments);
