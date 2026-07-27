@@ -33,8 +33,12 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'visibility' => 'public',
-            'serve' => true,
+            // Private, and not served over HTTP: this disk holds tenant assets
+            // and backups. With serve+public visibility Laravel registers an
+            // unauthenticated GET /storage/{path} that hands out any file on
+            // the disk to anyone who knows its path.
+            'visibility' => 'private',
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],
@@ -42,7 +46,7 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL') . '/storage',
+            'url' => env('APP_URL').'/storage',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
