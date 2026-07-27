@@ -8,6 +8,7 @@ use App\Http\Requests\BlockFolder\UpsertBlockFolderRequest;
 use App\Http\Resources\Management\BlockFolderResource;
 use App\Models\Management\Space;
 use App\Models\Space\BlockFolder;
+use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -17,6 +18,8 @@ class BlockFolderController extends Controller
 {
     public function index(Space $space, Request $request): ResourceCollection
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'blocks.view'), 403);
+
         $filter = new BlockFolderFilter($request->all());
 
         $folders = BlockFolder::filter($filter)
@@ -28,6 +31,8 @@ class BlockFolderController extends Controller
 
     public function store(Space $space, UpsertBlockFolderRequest $request): BlockFolderResource
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'blocks.manage'), 403);
+
         $folder = new BlockFolder($request->validated());
         abort_unless($folder->save(), 500, 'Failed to create block folder');
 
@@ -36,11 +41,15 @@ class BlockFolderController extends Controller
 
     public function show(Space $space, BlockFolder $folder): BlockFolderResource
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'blocks.view'), 403);
+
         return new BlockFolderResource($folder->loadCount(['blocks']));
     }
 
     public function update(UpsertBlockFolderRequest $request, Space $space, BlockFolder $folder): BlockFolderResource
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'blocks.manage'), 403);
+
         $folder->fill($request->validated());
         abort_unless($folder->save(), 500, 'Failed to update block folder');
 
@@ -49,9 +58,11 @@ class BlockFolderController extends Controller
 
     public function destroy(Space $space, BlockFolder $folder): JsonResponse
     {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'blocks.manage'), 403);
+
         if ($folder->blocks()->exists()) {
             return response()->json([
-                'message' => 'Cannot delete folder that contains blocks'
+                'message' => 'Cannot delete folder that contains blocks',
             ], 422);
         }
 
