@@ -11,6 +11,7 @@ use Illuminate\Http\Request as HttpRequest;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class MgmtCallTool extends Tool
 {
@@ -100,16 +101,6 @@ class MgmtCallTool extends Tool
             return Response::error("Unknown operation: {$operationName}. Did you mean: {$suggestions}? Call b10cks_mgmt_operations for the full list.");
         }
 
-        $bearerToken = $httpRequest->bearerToken() ?: config('services.b10cks_mcp.token');
-
-        if (isset($operation['authArg'])) {
-            $override = $arguments[$operation['authArg']] ?? null;
-
-            if (is_string($override) && $override !== '') {
-                $bearerToken = $override;
-            }
-        }
-
         try {
             $uri = OperationRegistry::resolveUri($operation['uri'], $arguments);
         } catch (\InvalidArgumentException $e) {
@@ -120,10 +111,20 @@ class MgmtCallTool extends Tool
         $query = in_array('params', $accepts, true) ? ($this->sanitize($arguments['params'] ?? null) ?? []) : [];
         $payload = in_array('payload', $accepts, true) ? $this->sanitize($arguments['payload'] ?? null) : null;
 
-        if ($operation['method'] === 'GET') {
-            $result = $this->dispatcher->dispatch('GET', $uri, $query, null, $bearerToken);
-        } else {
-            $result = $this->dispatcher->dispatch($operation['method'], $uri, $query, $payload ?? [], $bearerToken);
+        [$bearerToken, $transient] = $this->resolveCredential($httpRequest, $operation, $arguments);
+
+        if ($bearerToken === null) {
+            return Response::error('This MCP request is not authenticated.');
+        }
+
+        try {
+            if ($operation['method'] === 'GET') {
+                $result = $this->dispatcher->dispatch('GET', $uri, $query, null, $bearerToken);
+            } else {
+                $result = $this->dispatcher->dispatch($operation['method'], $uri, $query, $payload ?? [], $bearerToken);
+            }
+        } finally {
+            $transient?->delete();
         }
 
         if ($result['status'] >= 400) {
@@ -131,6 +132,47 @@ class MgmtCallTool extends Tool
         }
 
         return Response::text($this->formatBody($result['body']));
+    }
+
+    /**
+     * Decide which credential the sub-request runs under.
+     *
+     * The sub-request is built with Request::create() and carries no cookies,
+     * so a session-authenticated caller has no bearer token of their own. They
+     * must still act as themselves: falling back to the configured MCP token
+     * would run their 268 available operations as that token's owner, across
+     * every space it can reach. The shared token stays confined to the stdio
+     * transport, which has no user to act as.
+     *
+     * @param  array<string, mixed>  $operation
+     * @param  array<string, mixed>  $arguments
+     * @return array{0: string|null, 1: PersonalAccessToken|null}
+     */
+    private function resolveCredential(HttpRequest $httpRequest, array $operation, array $arguments): array
+    {
+        if (isset($operation['authArg'])) {
+            $override = $arguments[$operation['authArg']] ?? null;
+
+            if (is_string($override) && $override !== '') {
+                return [$override, null];
+            }
+        }
+
+        if ($bearerToken = $httpRequest->bearerToken()) {
+            return [$bearerToken, null];
+        }
+
+        if ($user = ($httpRequest->user() ?? auth()->user())) {
+            $token = $user->createToken('mcp-internal', ['*'], now()->addMinute());
+
+            return [$token->plainTextToken, $token->accessToken];
+        }
+
+        if (app()->runningInConsole()) {
+            return [config('services.b10cks_mcp.token') ?: null, null];
+        }
+
+        return [null, null];
     }
 
     /**
