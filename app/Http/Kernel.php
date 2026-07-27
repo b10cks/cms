@@ -88,7 +88,11 @@ class Kernel extends HttpKernel
             SubstituteBindings::class,
         ],
 
+        // Public image delivery. Unauthenticated, and every distinct
+        // transformation string forces a fresh decode at the origin, so it
+        // needs a ceiling of its own.
         'ilum' => [
+            ThrottleRequests::class.':ilum',
             SubstituteBindings::class,
         ],
     ];

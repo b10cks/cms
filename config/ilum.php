@@ -54,4 +54,7 @@ return [
         'width' => env('IMAGE_MAX_WIDTH', 5000),
         'height' => env('IMAGE_MAX_HEIGHT', 5000),
     ],
+
+    // Requests per minute per IP against the public transformation endpoint.
+    'rate_limit' => env('IMAGE_RATE_LIMIT', 600),
 ];

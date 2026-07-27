@@ -3,10 +3,14 @@
 namespace App\Services\Image;
 
 use App\Contracts\Image\ImageDriverInterface;
+use App\Contracts\Image\ImageInterface;
+use App\Services\Image\Drivers\ImagickDriver;
+use App\Services\Image\Drivers\VipsDriver;
 use App\Services\Image\Dto\ImageTransformation;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Manager;
+use Jcupitt\Vips\Image as VipsImageLib;
 
 class ImageTransformationManager extends Manager
 {
@@ -28,7 +32,7 @@ class ImageTransformationManager extends Manager
      */
     protected function createVipsDriver(): ImageDriverInterface
     {
-        return $this->container->make(\App\Services\Image\Drivers\VipsDriver::class);
+        return $this->container->make(VipsDriver::class);
     }
 
     /**
@@ -36,7 +40,7 @@ class ImageTransformationManager extends Manager
      */
     protected function createImagickDriver(): ImageDriverInterface
     {
-        return $this->container->make(\App\Services\Image\Drivers\ImagickDriver::class);
+        return $this->container->make(ImagickDriver::class);
     }
 
     /**
@@ -54,11 +58,35 @@ class ImageTransformationManager extends Manager
 
         $info = @getimagesize($tempFile);
 
-        if ($info === false || !isset($info[0], $info[1])) {
+        if ($info === false || ! isset($info[0], $info[1])) {
             return true;
         }
 
-        return ($info[0] * $info[1]) <= $maxPixels;
+        // getimagesize reports a single frame, but animated sources are decoded
+        // with every frame in memory, so a small GIF/WebP with thousands of
+        // frames would otherwise walk straight past this cap.
+        return ($info[0] * $info[1] * $this->frameCount($tempFile)) <= $maxPixels;
+    }
+
+    /**
+     * Number of frames in an animated source, or 1 when it is a still image or
+     * the count can't be determined.
+     */
+    private function frameCount(string $tempFile): int
+    {
+        try {
+            if (class_exists(VipsImageLib::class)) {
+                return max(1, (int) VipsImageLib::newFromFile($tempFile, ['access' => 'sequential'])->get('n-pages'));
+            }
+
+            if (class_exists(\Imagick::class)) {
+                return max(1, new \Imagick($tempFile)->getNumberImages());
+            }
+        } catch (\Throwable) {
+            // Unreadable or single-frame format; fall through to the still-image count.
+        }
+
+        return 1;
     }
 
     /**
@@ -70,8 +98,9 @@ class ImageTransformationManager extends Manager
         ImageTransformation $transformation,
     ): ?array {
         try {
-            if (!$disk->exists($fullPath)) {
+            if (! $disk->exists($fullPath)) {
                 Log::error("Image not found: {$fullPath}");
+
                 return null;
             }
 
@@ -86,7 +115,7 @@ class ImageTransformationManager extends Manager
             // Guard against decompression bombs: a tiny compressed file can
             // declare enormous dimensions that blow up memory when decoded.
             // getimagesize only reads the header, so this is cheap.
-            if (!$this->sourceWithinPixelLimit($tempFile)) {
+            if (! $this->sourceWithinPixelLimit($tempFile)) {
                 Log::warning('Rejected oversized source image (possible decompression bomb)', [
                     'path' => $fullPath,
                 ]);
@@ -159,7 +188,7 @@ class ImageTransformationManager extends Manager
     protected function determineOutputFormat(
         ?string $requestedFormat,
         ImageDriverInterface $driver,
-        \App\Contracts\Image\ImageInterface $image,
+        ImageInterface $image,
     ): string {
         if ($requestedFormat && \in_array($requestedFormat, $driver->getSupportedFormats())) {
             return $requestedFormat;
@@ -200,6 +229,7 @@ class ImageTransformationManager extends Manager
 
         if ($tempFile === false) {
             Log::error("Failed to create temporary file for: {$fullPath}");
+
             return null;
         }
 
@@ -212,6 +242,7 @@ class ImageTransformationManager extends Manager
         $sourceStream = $disk->readStream($fullPath);
         if (! $sourceStream) {
             Log::error("Failed to get stream for: {$fullPath}");
+
             return null;
         }
 
@@ -220,6 +251,7 @@ class ImageTransformationManager extends Manager
         if ($tempStream === false) {
             fclose($sourceStream);
             Log::error("Failed to open temporary file for: {$fullPath}");
+
             return null;
         }
 

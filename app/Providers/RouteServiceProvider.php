@@ -69,6 +69,12 @@ class RouteServiceProvider extends ServiceProvider
             ];
         });
 
+        // A content-heavy page pulls many images at once, so this sits well
+        // above normal browsing while still bounding a decode flood.
+        RateLimiter::for('ilum', function (Request $request) {
+            return Limit::perMinute((int) config('ilum.rate_limit', 600))->by("ilum|{$request->ip()}");
+        });
+
         RateLimiter::for('crucial', function (Request $request) {
             return Limit::perMinute(5)->by($request->user()?->id ?: $request->ip());
         });
