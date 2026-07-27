@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from '~/components/ui/card'
 import { Label } from '~/components/ui/form'
+import { safeHref } from '~/lib/sanitize'
 import {
   Select,
   SelectContent,
@@ -66,7 +67,11 @@ const removeEnvironment = (index: number) => {
 }
 
 const openInTab = (url: string) => {
-  window.open(url, '_blank')
+  // Straight from the form field next to it, so it can be anything at all.
+  const safe = safeHref(url)
+  if (safe) {
+    window.open(safe, '_blank', 'noopener,noreferrer')
+  }
 }
 
 const saveSettings = async () => {

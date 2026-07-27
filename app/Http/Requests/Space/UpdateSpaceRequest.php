@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Space;
 
+use App\Models\Management\SpaceSettings;
 use App\Services\Space\SpaceI18nSettingsService;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -48,21 +49,16 @@ class UpdateSpaceRequest extends FormRequest
             'badge' => 'sometimes|nullable|string|max:50',
             'description' => 'sometimes|nullable|string',
             'settings' => 'sometimes|nullable|array',
-            'settings.default_language' => 'nullable|string|min:2|max:5',
-            'settings.i18n_mode' => ['nullable', 'string', Rule::in(['overlay', 'independent'])],
-            'settings.languages' => 'nullable|array',
-            'settings.languages.*.code' => 'required|string|min:2|max:5',
-            'settings.languages.*.name' => 'required|string|max:100',
-            'settings.languages.*.fallback_language' => 'nullable|string|min:2|max:5',
-            'settings.onboarding_dismissed_at' => 'nullable|date',
-            'settings.sitemap' => 'nullable|array',
-            'settings.sitemap.types' => 'nullable|array',
-            'settings.sitemap.types.*.block' => 'required|string|max:100|distinct:ignore_case',
-            'settings.sitemap.types.*.path' => 'required|string|max:255',
-            // 'settings.asset_fields' => 'nullable|array',
-            // 'settings.asset_fields.*.key' => 'required|string|max:100',
-            // 'settings.asset_fields.*.label' => 'required|string|max:100',
-            // 'settings.asset_fields.*.required' => 'required|boolean',
+
+            // Every settings sub-key needs a rule, and not only to be checked:
+            // once any child rule exists, validated() returns just the children
+            // it knows about and drops the rest of the array. Listing a handful
+            // by hand therefore meant `environments`, `visual_editor`,
+            // `search_driver`, `slug_strategy`, `asset_fields` and the others
+            // were silently discarded on every save. SpaceSettings owns the
+            // shape, so it owns the rules.
+            ...SpaceSettings::toValidator('settings', partial: true),
+
             'state' => [
                 'sometimes',
                 'string',
@@ -126,8 +122,11 @@ class UpdateSpaceRequest extends FormRequest
         $validated = parent::validated();
 
         if (\array_key_exists('settings', $validated)) {
-            $validated['settings'] = $this->normalizedSettings
-                ?? app(SpaceI18nSettingsService::class)->normalize($validated['settings'] ?? []);
+            // Normalizing the validated subset rather than the raw input is
+            // what keeps unlisted sub-keys out: they never appear here, so they
+            // cannot be written by a caller who guessed a key name.
+            $validated['settings'] = app(SpaceI18nSettingsService::class)
+                ->normalize($validated['settings'] ?? []);
 
             $validated['settings'] = $this->withoutSeparatelyGatedSettings($validated['settings']);
         }
@@ -138,10 +137,9 @@ class UpdateSpaceRequest extends FormRequest
     /**
      * Drop settings that belong to a differently-permissioned endpoint.
      *
-     * A rule on the `settings` key alone makes Laravel hand back the whole
-     * submitted array, sub-keys included, so `space.update` could otherwise
-     * write AI configuration that its own endpoint gates behind `ai.manage`.
-     * Those keys keep whatever value the space already has.
+     * `space.update` could otherwise write AI configuration that its own
+     * endpoint gates behind `ai.manage`. Those keys keep whatever value the
+     * space already has.
      *
      * @param  array<string, mixed>  $settings
      * @return array<string, mixed>

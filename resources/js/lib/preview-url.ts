@@ -1,4 +1,5 @@
 import { normalizeLanguageIso } from '~/lib/content-i18n'
+import { isSafeFrameUrl } from '~/lib/sanitize'
 
 const trimSegment = (segment: string): string => segment.trim().replace(/^\/+|\/+$/g, '')
 
@@ -70,6 +71,11 @@ export function buildPreviewUrl(
   preferredSegment?: string | null
 ): string | null {
   if (!baseUrl || !languageIso || !fullSlug) return null
+
+  // The base URL is space-configured, and the result is used as an iframe src
+  // and passed to window.open. Rejecting anything that isn't http(s) here
+  // means every consumer inherits the check rather than remembering it.
+  if (!isSafeFrameUrl(baseUrl)) return null
 
   const segment = resolveLocaleSegment(languageIso, settings, preferredSegment)
   const base = baseUrl.replace(/\/$/, '')

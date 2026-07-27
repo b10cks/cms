@@ -141,15 +141,20 @@ class SpaceSettings extends Settings
                 ...$sometimes,
                 'array',
             ],
-            'environments.*.key' => [
+            // The stored shape is {name, url}; the rules used to describe a
+            // {key, label} pair that nothing writes, so `url` — which the admin
+            // console loads as an iframe src and hands to window.open — was
+            // never validated at all and could carry a `javascript:` scheme.
+            'environments.*.name' => [
                 ...$required,
                 'string',
                 'max:100',
             ],
-            'environments.*.label' => [
+            'environments.*.url' => [
                 ...$required,
                 'string',
-                'max:100',
+                'max:2048',
+                'url:http,https',
             ],
             'default_environment' => [
                 ...$sometimes,
@@ -309,13 +314,13 @@ class SpaceSettings extends Settings
             'environments' => [
                 'description' => 'Configured deployment or delivery environments for the space.',
             ],
-            'environments.*.key' => [
-                'description' => 'Unique environment key.',
-                'example' => 'preview',
-            ],
-            'environments.*.label' => [
-                'description' => 'Display label for the environment.',
+            'environments.*.name' => [
+                'description' => 'Display name for the environment.',
                 'example' => 'Preview',
+            ],
+            'environments.*.url' => [
+                'description' => 'Base URL the environment serves content from.',
+                'example' => 'https://preview.example.com',
             ],
             'default_environment' => [
                 'description' => 'Name of the default environment used when no user preference is set.',
