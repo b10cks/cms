@@ -22,11 +22,16 @@ use Illuminate\Http\Request;
  */
 class SearchResultResource extends ContentResource
 {
+    public function __construct(mixed $resource, protected float $relevanceScore = 0.0)
+    {
+        parent::__construct($resource);
+    }
+
     public function toArray(Request $request): array
     {
         return [
             ...parent::toArray($request),
-            'relevance_score' => round((float) data_get($this->resource, 'relevance_score', 0), 4),
+            'relevance_score' => round($this->relevanceScore ?: (float) data_get($this->resource, 'relevance_score', 0), 4),
         ];
     }
 }

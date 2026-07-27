@@ -129,7 +129,7 @@ class SearchService
             ->whereIn('contents.id', $ids)
             ->whereNotNull('contents.published_at')
             ->select([
-                'contents.*',
+                ...Content::deliveryColumns('contents.'),
                 'content_versions.content',
                 'content_versions.relation_ids',
                 'content_versions.asset_ids',
@@ -141,9 +141,6 @@ class SearchService
                 'i18n_children',
                 'i18n_siblings',
                 'block',
-                'relations',
-                'assets',
-                'links',
             ])
             ->get()
             ->keyBy('id');

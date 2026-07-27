@@ -7,6 +7,8 @@ use App\Http\Requests\Api\SearchRequest;
 use App\Http\Resources\Api\SearchResultCollection;
 use App\Http\Resources\Api\SearchResultResource;
 use App\Models\Management\Space;
+use App\Services\Content\ContentI18nResolver;
+use App\Services\Content\ResolvedContent;
 use App\Services\Search\SearchService;
 
 /**
@@ -39,7 +41,18 @@ class SearchController extends Controller
 
         $results = $this->searchService->search($space, $query, $language, $limit, $offset);
 
-        return (new SearchResultCollection($results['results']))->additional([
+        // Resolve all hits in one batch instead of letting each resource run
+        // its own family/version resolution — same pattern as the content index.
+        $hits = collect($results['results']);
+        $versionScope = $request->input('vid', 'published');
+        $resources = app(ContentI18nResolver::class)
+            ->resolveMany($space, $hits, $versionScope === 'draft' ? 'current' : $versionScope)
+            ->map(fn (ResolvedContent $resolved, int $index): SearchResultResource => new SearchResultResource(
+                $resolved,
+                (float) data_get($hits[$index], 'relevance_score', 0),
+            ));
+
+        return (new SearchResultCollection($resources))->additional([
             'query' => $query,
             'total' => $results['total'],
             'limit' => $limit,
