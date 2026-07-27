@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Auth\ImpersonationService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
-use App\Services\Auth\ImpersonationService;
 
 class PreventDuringImpersonation
 {
@@ -21,8 +21,8 @@ class PreventDuringImpersonation
 
     protected function isImpersonating($user): bool
     {
-        $tokenName = $user->currentAccessToken()?->name;
-
-        return $tokenName && str_starts_with($tokenName, ImpersonationService::TOKEN_NAME_PREFIX);
+        // Read the recorded impersonator, not the token name — users name
+        // their own tokens and could otherwise dodge (or forge) this check.
+        return app(ImpersonationService::class)->getRealUserId($user) !== null;
     }
 }

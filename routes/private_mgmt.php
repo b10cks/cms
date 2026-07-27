@@ -127,13 +127,16 @@ Route::group(['prefix' => 'users'], function () {
             ->middleware(['throttle:crucial'])
             ->name('users.me.social-links.destroy');
 
+        // An operator impersonating a user must not be able to take the
+        // account over: no password changes, no minting API tokens as them.
         Route::post('/password', UserPasswordController::class)
-            ->middleware(['throttle:crucial'])
+            ->middleware(['throttle:crucial', 'not-impersonating'])
             ->name('users.me.password');
 
         Route::get('/tokens', [UserTokenController::class, 'index'])
             ->name('users.me.tokens.index');
         Route::post('/tokens', [UserTokenController::class, 'store'])
+            ->middleware(['not-impersonating'])
             ->name('users.me.tokens.store');
         Route::delete('/tokens/{token}', [UserTokenController::class, 'destroy'])
             ->name('users.me.tokens.destroy');

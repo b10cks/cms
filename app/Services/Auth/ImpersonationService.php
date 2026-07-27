@@ -3,17 +3,24 @@
 namespace App\Services\Auth;
 
 use App\Models\User;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class ImpersonationService
 {
     public const TOKEN_NAME_PREFIX = 'impersonation:';
+
     public const REAL_USER_TOKEN_NAME = 'real-user';
 
     public function impersonate(User $realUser, User $impersonatedUser): string
     {
-        $tokenName = self::TOKEN_NAME_PREFIX . $realUser->getRouteKey();
+        $token = $impersonatedUser->createToken(self::TOKEN_NAME_PREFIX.$realUser->getRouteKey(), ['*']);
 
-        return $impersonatedUser->createToken($tokenName, ['*'])->plainTextToken;
+        // The link back to the operator lives on the token row. The name is
+        // only a label: users name their own tokens, so it cannot be trusted
+        // to say who is behind an impersonation session.
+        $token->accessToken->forceFill(['impersonator_id' => $realUser->getKey()])->save();
+
+        return $token->plainTextToken;
     }
 
     public function stop(User $impersonatedUser, User $realUser): string
@@ -25,17 +32,19 @@ class ImpersonationService
 
     public function getRealUserId(User $impersonatedUser): ?string
     {
-        $tokenName = $impersonatedUser->currentAccessToken()?->name;
+        $token = $impersonatedUser->currentAccessToken();
 
-        if (!$tokenName || !str_starts_with($tokenName, self::TOKEN_NAME_PREFIX)) {
+        if (! $token instanceof PersonalAccessToken) {
             return null;
         }
 
-        return substr($tokenName, strlen(self::TOKEN_NAME_PREFIX));
+        $impersonatorId = $token->getAttribute('impersonator_id');
+
+        return is_string($impersonatorId) && $impersonatorId !== '' ? $impersonatorId : null;
     }
 
     public function getRealUser(string $realUserId): ?User
     {
-        return User::findByHashId($realUserId) ?? User::find($realUserId);
+        return User::find($realUserId);
     }
 }
