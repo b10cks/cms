@@ -4,6 +4,7 @@ namespace App\Services\RedirectData\Drivers;
 
 use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
+use App\Support\SpreadsheetValue;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,13 +24,13 @@ class CsvRedirectDataDriver extends BaseRedirectDataDriver
             fputcsv($handle, self::HEADERS);
 
             foreach ($redirects as $redirect) {
-                fputcsv($handle, [
+                fputcsv($handle, SpreadsheetValue::escapeRow([
                     $redirect->id,
                     $redirect->external_id,
                     $redirect->source,
                     $redirect->target,
                     $redirect->status_code,
-                ]);
+                ]));
             }
 
             fclose($handle);
@@ -65,7 +66,7 @@ class CsvRedirectDataDriver extends BaseRedirectDataDriver
         }
 
         $handle = @fopen($file->getRealPath(), 'r');
-        if (!$handle) {
+        if (! $handle) {
             $errors[] = 'Unable to read CSV file';
 
             return $errors;
@@ -74,7 +75,7 @@ class CsvRedirectDataDriver extends BaseRedirectDataDriver
         $headers = array_map('trim', fgetcsv($handle) ?: []);
         fclose($handle);
 
-        if (!in_array('source', $headers, true) || !in_array('target', $headers, true)) {
+        if (! in_array('source', $headers, true) || ! in_array('target', $headers, true)) {
             $errors[] = 'CSV must contain both "source" and "target" columns';
         }
 

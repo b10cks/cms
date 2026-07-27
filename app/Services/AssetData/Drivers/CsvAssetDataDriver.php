@@ -4,6 +4,7 @@ namespace App\Services\AssetData\Drivers;
 
 use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
+use App\Support\SpreadsheetValue;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\Response;
@@ -28,8 +29,8 @@ class CsvAssetDataDriver extends BaseAssetDataDriver
             foreach ($assets as $asset) {
                 $rowFields = $this->fieldResolver->getEffectiveFieldsForAsset($space, $asset);
                 $row = $this->mapper->flattenAsset($asset, $rowFields, $languages);
-                $orderedRow = array_map(fn($header) => $row[$header] ?? '', $headers);
-                fputcsv($handle, $orderedRow);
+                $orderedRow = array_map(fn ($header) => $row[$header] ?? '', $headers);
+                fputcsv($handle, SpreadsheetValue::escapeRow($orderedRow));
             }
 
             fclose($handle);
@@ -69,7 +70,7 @@ class CsvAssetDataDriver extends BaseAssetDataDriver
 
         $handle = @fopen($file->getRealPath(), 'r');
 
-        if (!$handle) {
+        if (! $handle) {
             $errors[] = 'Unable to read CSV file';
 
             return $errors;
@@ -78,7 +79,7 @@ class CsvAssetDataDriver extends BaseAssetDataDriver
         $headers = fgetcsv($handle);
         fclose($handle);
 
-        if (!\in_array('id', $headers) && !\in_array('filename', $headers)) {
+        if (! \in_array('id', $headers) && ! \in_array('filename', $headers)) {
             $errors[] = 'CSV must contain either "id" or "filename" column for asset identification';
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Services\ImportExport;
 
+use App\Support\SpreadsheetValue;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,14 +19,14 @@ trait WritesXlsxDownload
     protected function xlsxDownload(array $headings, iterable $rows, string $filename): Response
     {
         return new StreamedResponse(function () use ($headings, $rows) {
-            $spreadsheet = new Spreadsheet();
+            $spreadsheet = new Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
 
-            $sheet->fromArray($headings, null, 'A1');
+            $sheet->fromArray(SpreadsheetValue::escapeRow($headings), null, 'A1');
 
             $rowNumber = 2;
             foreach ($rows as $row) {
-                $sheet->fromArray(array_values($row), null, 'A' . $rowNumber++);
+                $sheet->fromArray(SpreadsheetValue::escapeRow(array_values($row)), null, 'A'.$rowNumber++);
             }
 
             (new Xlsx($spreadsheet))->save('php://output');

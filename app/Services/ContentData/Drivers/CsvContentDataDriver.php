@@ -4,6 +4,7 @@ namespace App\Services\ContentData\Drivers;
 
 use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
+use App\Support\SpreadsheetValue;
 use Illuminate\Http\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -21,7 +22,9 @@ class CsvContentDataDriver extends BaseContentDataDriver
             fputcsv($handle, $headings);
 
             foreach ($rows as $row) {
-                fputcsv($handle, array_map(static fn (string $header): string => (string) ($row[$header] ?? ''), $headings));
+                fputcsv($handle, SpreadsheetValue::escapeRow(
+                    array_map(static fn (string $header): string => (string) ($row[$header] ?? ''), $headings)
+                ));
             }
 
             fclose($handle);

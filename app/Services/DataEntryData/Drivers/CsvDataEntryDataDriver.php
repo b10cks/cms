@@ -5,6 +5,7 @@ namespace App\Services\DataEntryData\Drivers;
 use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use App\Models\Space\DataSource;
+use App\Support\SpreadsheetValue;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,7 +25,9 @@ class CsvDataEntryDataDriver extends BaseDataEntryDataDriver
             fputcsv($handle, $headers);
 
             foreach ($entries as $entry) {
-                fputcsv($handle, array_values($this->buildEntryRow($entry, $dimensionColumns)));
+                fputcsv($handle, SpreadsheetValue::escapeRow(
+                    array_values($this->buildEntryRow($entry, $dimensionColumns))
+                ));
             }
 
             fclose($handle);
@@ -62,7 +65,7 @@ class CsvDataEntryDataDriver extends BaseDataEntryDataDriver
         }
 
         $handle = @fopen($file->getRealPath(), 'r');
-        if (!$handle) {
+        if (! $handle) {
             $errors[] = 'Unable to read CSV file';
 
             return $errors;
@@ -71,7 +74,7 @@ class CsvDataEntryDataDriver extends BaseDataEntryDataDriver
         $headers = array_map('trim', fgetcsv($handle) ?: []);
         fclose($handle);
 
-        if (!in_array('key', $headers, true)) {
+        if (! in_array('key', $headers, true)) {
             $errors[] = 'CSV must contain a "key" column';
         }
 
