@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 
 class ContentController
 {
@@ -51,7 +52,7 @@ class ContentController
             ])
             ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block', 'relations', 'assets', 'links']);
 
-        $vid = $request->input('vid', 'published');
+        $vid = $this->versionScope($request, allowVersionId: false);
         if ($vid === 'published') {
             // Inner join plus the published_at check: a left join returned
             // never-published entries as rows with a null payload, which still
@@ -95,6 +96,37 @@ class ContentController
         );
 
         return new ContentResourceCollection($resolvedPaginator);
+    }
+
+    /**
+     * The version scope a request asks for, rejecting anything else.
+     *
+     * `vid` used to be taken verbatim. On show, an unrecognized value fell
+     * through to a lookup by version id and then quietly back to the published
+     * version; on index it left the query selecting `content_versions` columns
+     * with no join at all, which is a database error rather than a listing. Both
+     * scopes are now stated explicitly, and only show — where a version id
+     * identifies one row of one entry — accepts one.
+     */
+    private function versionScope(Request $request, bool $allowVersionId = true): string
+    {
+        $vid = $request->input('vid', 'published');
+
+        if (! \is_string($vid) || $vid === '') {
+            abort(422, 'Parameter "vid" must be "published", "draft" or a version id.');
+        }
+
+        if ($vid === 'published' || $vid === 'draft') {
+            return $vid;
+        }
+
+        abort_unless(
+            $allowVersionId && Str::isUlid($vid),
+            422,
+            'Parameter "vid" must be "published", "draft" or a version id.',
+        );
+
+        return $vid;
     }
 
     /**
@@ -190,7 +222,7 @@ class ContentController
         $candidate = $this->findFamilyCandidate($slug, $language, $space);
         abort_if(! $candidate, 404);
 
-        $versionScope = $request->input('vid', 'published');
+        $versionScope = $this->versionScope($request);
 
         // An entry that was never published, or was unpublished again, must not
         // be reachable in the published scope even though the row still exists.

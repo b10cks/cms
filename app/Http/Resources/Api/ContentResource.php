@@ -115,7 +115,7 @@ class ContentResource extends JsonResource
             $content = $this->removeHiddenBlocks($content);
         }
 
-        $this->injectData($resolved, $content);
+        $this->injectData($resolved, $content, $request);
 
         $result = [
             ...$content,
@@ -176,13 +176,14 @@ class ContentResource extends JsonResource
         );
     }
 
-    protected function injectData(ResolvedContent $resolved, array &$content)
+    protected function injectData(ResolvedContent $resolved, array &$content, Request $request)
     {
         $content = app(LinkHandler::class)->replaceContentLinks(
             $content,
             $resolved->effectiveLinks,
             $resolved->requestedLanguage,
             app('currentSpace')->settings->getDefaultLanguage(),
+            $request->input('vid', 'published') === 'published',
         );
         $assetContext = $resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent;
         $content = app(AssetHandler::class)->replaceContentAssets($assetContext, $content, $resolved->effectiveAssets);

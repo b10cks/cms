@@ -334,6 +334,31 @@ class ContentI18nResolver
             : $space->settings->getI18nMode();
     }
 
+    /**
+     * Eager loads for the entries a published version points at.
+     *
+     * The gate on the entry being requested says nothing about the entries it
+     * links to or relates to: those are read straight off the version's id
+     * columns, and an entry that was unpublished keeps its published_version,
+     * so its full payload — and, through links, its name and slug — came back
+     * out inside any published entry that happened to reference it.
+     *
+     * Constraining the relation here rather than filtering afterwards keeps
+     * this to the same one query per relation for the whole batch, and the
+     * filtered rows simply drop out of the resulting collection.
+     *
+     * @return array<string, \Closure>
+     */
+    private static function publishedOnlyContentRelations(): array
+    {
+        $published = fn ($query) => $query->published();
+
+        return [
+            'published_version.links' => $published,
+            'published_version.relations' => $published,
+        ];
+    }
+
     private function resolveVersionsForFamilies(Collection $familiesByCanonicalId, string $versionScope): Collection
     {
         $familyContents = new \Illuminate\Database\Eloquent\Collection(
@@ -350,8 +375,7 @@ class ContentI18nResolver
         if ($versionScope === 'published') {
             $familyContents->load([
                 'published_version.assets',
-                'published_version.links',
-                'published_version.relations',
+                ...self::publishedOnlyContentRelations(),
             ]);
 
             return $familyContents->mapWithKeys(
@@ -382,8 +406,7 @@ class ContentI18nResolver
         if ($missingContents->isNotEmpty()) {
             $missingContents->load([
                 'published_version.assets',
-                'published_version.links',
-                'published_version.relations',
+                ...self::publishedOnlyContentRelations(),
             ]);
             foreach ($missingContents as $content) {
                 if ($content->published_version) {

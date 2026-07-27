@@ -17,6 +17,7 @@ use App\Services\Content\Serial\ContentSerialAssigner;
 use App\Services\CustomStr;
 use App\Support\SpaceContext;
 use CodersCantina\Filter\Filterable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -334,6 +335,22 @@ class Content extends SpaceModel
     public function published_version(): BelongsTo
     {
         return $this->belongsTo(ContentVersion::class, 'published_version_id', 'id');
+    }
+
+    /**
+     * The delivery notion of "published".
+     *
+     * Both columns matter. `published_version_id` survives an unpublish, so an
+     * entry that was published once and taken down again still points at a
+     * version — checking only that column hands the old payload straight back
+     * out. `published_at` is what publishing and unpublishing actually move.
+     *
+     * @param  Builder<Content>  $query
+     */
+    public function scopePublished(Builder $query): void
+    {
+        $query->whereNotNull($query->qualifyColumn('published_at'))
+            ->whereNotNull($query->qualifyColumn('published_version_id'));
     }
 
     public function assets(): HasManyFromArray

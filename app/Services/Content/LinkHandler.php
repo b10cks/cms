@@ -26,13 +26,22 @@ class LinkHandler
         return array_values(array_unique(array_merge($regularLinks, $richtextLinks)));
     }
 
+    /**
+     * @param  bool  $publishedOnly  Whether an unpublished translation may be
+     *                               used to resolve a link. In the published
+     *                               delivery scope it may not: the localized
+     *                               row is fetched separately from the link
+     *                               itself, so an unreleased translation would
+     *                               otherwise contribute its name and slug.
+     */
     public function replaceContentLinks(
         array $data,
         Collection $links,
         ?string $languageIso = null,
         ?string $defaultLanguageIso = null,
+        bool $publishedOnly = true,
     ): array {
-        $resolvedLinks = $this->resolveLocalizedLinks($links, $languageIso, $defaultLanguageIso);
+        $resolvedLinks = $this->resolveLocalizedLinks($links, $languageIso, $defaultLanguageIso, $publishedOnly);
 
         $data = $this->replaceMatching($data, [
             'type' => 'internal',
@@ -67,6 +76,7 @@ class LinkHandler
         Collection $links,
         ?string $languageIso,
         ?string $defaultLanguageIso,
+        bool $publishedOnly = true,
     ): Collection {
         $linksById = $links
             ->filter(fn (mixed $link): bool => $link instanceof Content)
@@ -82,11 +92,13 @@ class LinkHandler
             ->values();
 
         $familiesByCanonicalId = Content::query()
+            ->select(Content::deliveryColumns())
             ->where(function ($query) use ($canonicalIds): void {
                 $query->whereIn('id', $canonicalIds)
                     ->orWhereIn('i18n_parent_id', $canonicalIds);
             })
             ->whereNull('deleted_at')
+            ->when($publishedOnly, fn ($query) => $query->published())
             ->get()
             ->groupBy(fn (Content $content): string => $content->i18n_parent_id ?: $content->id);
 
@@ -96,10 +108,18 @@ class LinkHandler
             $defaultLanguageIso,
         ): array {
             $canonicalId = $link->i18n_parent_id ?: $link->id;
-            $family = $familiesByCanonicalId->get($canonicalId, collect([$link]));
+            $family = $familiesByCanonicalId->get($canonicalId);
+
+            if ($family === null) {
+                // Nothing publishable in the family. Dropping the key leaves
+                // the link node bare rather than falling back to the row we
+                // were handed, which may itself be the unpublished one.
+                return $publishedOnly ? [] : [$link->id => $link];
+            }
+
             $resolvedLink = $family->firstWhere('language_iso', $languageIso)
                 ?? $family->firstWhere('language_iso', $defaultLanguageIso)
-                ?? $link;
+                ?? $family->first();
 
             return [$link->id => $resolvedLink];
         });
