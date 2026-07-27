@@ -251,7 +251,7 @@ class TeamControllerTest extends TestCase
     #[Test]
     public function owner_can_upload_and_remove_a_team_avatar(): void
     {
-        Storage::fake();
+        Storage::fake('public');
 
         $user = User::factory()->create();
         $team = Team::factory()->create();
@@ -264,14 +264,14 @@ class TeamControllerTest extends TestCase
         $response->assertSuccessful();
         $path = $team->fresh()->avatar;
         $this->assertNotNull($path);
-        Storage::assertExists($path);
+        Storage::disk('public')->assertExists($path);
         $this->assertSame("/storage/{$path}", $response->json('data.avatar'));
 
         $this->actingAs($user)->deleteJson(route('mgmt.teams.avatar.destroy', $team))
             ->assertSuccessful();
 
         $this->assertNull($team->fresh()->avatar);
-        Storage::assertMissing($path);
+        Storage::disk('public')->assertMissing($path);
     }
 
     #[Test]

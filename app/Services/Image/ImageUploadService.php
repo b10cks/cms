@@ -46,6 +46,17 @@ class ImageUploadService
     }
 
     /**
+     * Remove the file an attribute points at and clear the attribute.
+     */
+    public function removeForModel(Model $model, string $attribute): void
+    {
+        $this->deleteExistingFile($model, $attribute);
+
+        $model->{$attribute} = null;
+        $model->save();
+    }
+
+    /**
      * The extension to store the file under, derived from its contents.
      *
      * `mimes:` validates the type guessed from the bytes, but the filename is

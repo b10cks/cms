@@ -7,7 +7,6 @@ use App\Http\Requests\Team\UpdateTeamAvatarRequest;
 use App\Http\Resources\Management\TeamResource;
 use App\Models\Management\Team;
 use App\Services\Image\ImageUploadService;
-use Illuminate\Support\Facades\Storage;
 
 class TeamAvatarController extends Controller
 {
@@ -23,16 +22,12 @@ class TeamAvatarController extends Controller
         return $this->teamResource($team);
     }
 
-    public function destroy(Team $team): TeamResource
+    public function destroy(Team $team, ImageUploadService $uploadService): TeamResource
     {
         $this->authorize('update', $team);
 
-        if ($team->avatar && Storage::exists($team->avatar)) {
-            Storage::delete($team->avatar);
-        }
-
-        $team->avatar = null;
-        $team->save();
+        // Through the service so the disk is decided in exactly one place.
+        $uploadService->removeForModel($team, 'avatar');
 
         return $this->teamResource($team);
     }
