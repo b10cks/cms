@@ -9,6 +9,11 @@ use Illuminate\Validation\Rule;
 
 class UpdateSpaceRequest extends FormRequest
 {
+    /**
+     * Settings written only through their own, more strictly gated endpoint.
+     */
+    private const SEPARATELY_GATED_SETTINGS = ['ai'];
+
     protected ?array $normalizedSettings = null;
 
     /**
@@ -123,8 +128,37 @@ class UpdateSpaceRequest extends FormRequest
         if (\array_key_exists('settings', $validated)) {
             $validated['settings'] = $this->normalizedSettings
                 ?? app(SpaceI18nSettingsService::class)->normalize($validated['settings'] ?? []);
+
+            $validated['settings'] = $this->withoutSeparatelyGatedSettings($validated['settings']);
         }
 
         return $key === null ? $validated : data_get($validated, $key, $default);
+    }
+
+    /**
+     * Drop settings that belong to a differently-permissioned endpoint.
+     *
+     * A rule on the `settings` key alone makes Laravel hand back the whole
+     * submitted array, sub-keys included, so `space.update` could otherwise
+     * write AI configuration that its own endpoint gates behind `ai.manage`.
+     * Those keys keep whatever value the space already has.
+     *
+     * @param  array<string, mixed>  $settings
+     * @return array<string, mixed>
+     */
+    private function withoutSeparatelyGatedSettings(array $settings): array
+    {
+        $space = $this->route('space');
+        $current = $space?->settings?->toArray() ?? [];
+
+        foreach (self::SEPARATELY_GATED_SETTINGS as $gated) {
+            unset($settings[$gated]);
+
+            if (\array_key_exists($gated, $current)) {
+                $settings[$gated] = $current[$gated];
+            }
+        }
+
+        return $settings;
     }
 }
