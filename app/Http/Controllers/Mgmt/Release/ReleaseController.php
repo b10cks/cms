@@ -39,7 +39,7 @@ class ReleaseController extends Controller
     {
         $this->authorize('create', [Release::class, $space]);
 
-        $release = new Release();
+        $release = new Release;
         $action->execute($request->validated(), $release, $request->user());
 
         $release->loadCount(['versions']);
@@ -64,11 +64,11 @@ class ReleaseController extends Controller
      */
     public function update(Space $space, Release $release, UpdateReleaseRequest $request): ReleaseDetailResource
     {
-        $this->authorize('update', [$space, $release]);
+        $this->authorize('update', [$release, $space]);
 
         $release->fill($request->validated());
 
-        if (!$release->save()) {
+        if (! $release->save()) {
             Log::error('Failed to update release', ['release_id' => $release->id]);
             abort(500, 'Failed to update release');
         }
@@ -83,10 +83,11 @@ class ReleaseController extends Controller
      */
     public function destroy(Space $space, Release $release): JsonResponse
     {
-        $this->authorize('delete', [$space, $release]);
+        $this->authorize('delete', [$release, $space]);
 
         try {
             $release->delete();
+
             return response()->json(null, 204);
         } catch (\Exception $e) {
             Log::error('Failed to delete release', [

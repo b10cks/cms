@@ -18,7 +18,7 @@ class SpaceBackupPolicy
 
     public function view(User $user, SpaceBackup $backup): bool
     {
-        return $this->userHasAccessToSpace($user, $backup->space);
+        return $this->canInSpace($user, $backup->space, 'backups.view');
     }
 
     public function create(User $user, Space $space): bool
