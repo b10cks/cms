@@ -203,6 +203,47 @@ class ContentPublishedScopeTest extends TestCase
         );
     }
 
+    /**
+     * Link resolution runs once per rendered resource and needs the linked
+     * entry's i18n family, which is a query of its own. Pages link to the same
+     * handful of targets over and over, so that lookup is remembered.
+     */
+    #[Test]
+    public function resolving_links_across_many_relations_does_not_query_per_item(): void
+    {
+        $target = $this->createPublishedContent('linked-page', ['title' => 'Linked page']);
+
+        $related = [];
+        for ($i = 0; $i < 9; $i++) {
+            $related[] = $this->createPublishedContent("related-{$i}", [
+                'title' => "Related {$i}",
+                'cta' => ['type' => 'internal', 'content' => $target->id],
+            ])->id;
+        }
+
+        $small = $this->createPublishedContent('home-small', [
+            'title' => 'Home',
+            'cta' => ['type' => 'internal', 'content' => $target->id],
+            'related' => \array_slice($related, 0, 3),
+        ]);
+        $large = $this->createPublishedContent('home-large', [
+            'title' => 'Home',
+            'cta' => ['type' => 'internal', 'content' => $target->id],
+            'related' => $related,
+        ]);
+
+        $this->countQueries($small->slug, 3);
+
+        $withThree = $this->countQueries($small->slug, 3);
+        $withNine = $this->countQueries($large->slug, 9);
+
+        $this->assertSame(
+            $withThree,
+            $withNine,
+            'Link resolution issues a query per rendered item instead of reusing the lookup.',
+        );
+    }
+
     #[Test]
     public function an_unrecognized_version_scope_is_rejected(): void
     {

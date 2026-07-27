@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\Content\ContentValidator;
+use App\Services\Content\LinkHandler;
 use App\Services\Content\Schema\TypeRegistry;
 use App\Services\Content\Schema\Types\BlockTypeHandler;
 use App\Services\Content\Schema\Types\BooleanTypeHandler;
@@ -55,6 +56,13 @@ class ContentServiceProvider extends ServiceProvider
 
     public function register()
     {
+        // Scoped, not transient: LinkHandler remembers the i18n families it has
+        // already looked up, and every rendered resource resolves its links
+        // through a fresh call. A new instance per call meant one query per
+        // item in a listing for the same handful of link targets. Scoped keeps
+        // the memo for the request (and resets it between queue jobs).
+        $this->app->scoped(LinkHandler::class);
+
         $this->app->singleton(TemplateRenderer::class, function () {
             return new TemplateRenderer(array_map(
                 static fn (string $token): TokenResolver => new $token(),

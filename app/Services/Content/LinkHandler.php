@@ -10,6 +10,13 @@ class LinkHandler
     use ContentExtractor;
     use ContentReplacer;
 
+    /**
+     * Resolved i18n families, per publication scope, for this request.
+     *
+     * @var array<string, array<string, Collection<int, Content>>>
+     */
+    private array $familyCache = [];
+
     public function extractContentLinks(array $data): array
     {
         $regularLinks = $this->extractMatchingField($data, [
@@ -91,16 +98,7 @@ class LinkHandler
             ->unique()
             ->values();
 
-        $familiesByCanonicalId = Content::query()
-            ->select(Content::deliveryColumns())
-            ->where(function ($query) use ($canonicalIds): void {
-                $query->whereIn('id', $canonicalIds)
-                    ->orWhereIn('i18n_parent_id', $canonicalIds);
-            })
-            ->whereNull('deleted_at')
-            ->when($publishedOnly, fn ($query) => $query->published())
-            ->get()
-            ->groupBy(fn (Content $content): string => $content->i18n_parent_id ?: $content->id);
+        $familiesByCanonicalId = $this->familiesFor($canonicalIds, $publishedOnly);
 
         return $linksById->mapWithKeys(function (Content $link) use (
             $familiesByCanonicalId,
@@ -110,7 +108,7 @@ class LinkHandler
             $canonicalId = $link->i18n_parent_id ?: $link->id;
             $family = $familiesByCanonicalId->get($canonicalId);
 
-            if ($family === null) {
+            if ($family === null || $family->isEmpty()) {
                 // Nothing publishable in the family. Dropping the key leaves
                 // the link node bare rather than falling back to the row we
                 // were handed, which may itself be the unpublished one.
@@ -123,5 +121,47 @@ class LinkHandler
 
             return [$link->id => $resolvedLink];
         });
+    }
+
+    /**
+     * The i18n families for the given canonical ids, remembered for the rest
+     * of the request.
+     *
+     * This runs once per rendered resource, so a listing — or a single entry
+     * expanding its relations — used to issue one query per item even though
+     * pages link to the same handful of targets over and over. Only ids not
+     * already seen are fetched, and a canonical id with no publishable family
+     * is remembered as empty so it is not asked for again.
+     *
+     * @param  Collection<int, string>  $canonicalIds
+     * @return Collection<string, Collection<int, Content>>
+     */
+    private function familiesFor(Collection $canonicalIds, bool $publishedOnly): Collection
+    {
+        $cache = &$this->familyCache[$publishedOnly ? 'published' : 'any'];
+        $cache ??= [];
+
+        $missing = $canonicalIds->reject(fn (string $id): bool => \array_key_exists($id, $cache))->values();
+
+        if ($missing->isNotEmpty()) {
+            $fetched = Content::query()
+                ->select(Content::deliveryColumns())
+                ->where(function ($query) use ($missing): void {
+                    $query->whereIn('id', $missing)
+                        ->orWhereIn('i18n_parent_id', $missing);
+                })
+                ->whereNull('deleted_at')
+                ->when($publishedOnly, fn ($query) => $query->published())
+                ->get()
+                ->groupBy(fn (Content $content): string => $content->i18n_parent_id ?: $content->id);
+
+            foreach ($missing as $id) {
+                $cache[$id] = $fetched->get($id, new Collection);
+            }
+        }
+
+        return new Collection(
+            $canonicalIds->mapWithKeys(fn (string $id): array => [$id => $cache[$id]])->all()
+        );
     }
 }
