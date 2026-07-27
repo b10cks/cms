@@ -2,6 +2,7 @@
 
 namespace App\Services\Team;
 
+use App\Enums\MembershipSource;
 use App\Models\Management\Team;
 use App\Models\User;
 use App\Services\Auth\AuthorizationService;
@@ -23,7 +24,7 @@ class TeamService
         // immediately manageable. Done before invalidation so the recomputed
         // graph includes the membership.
         if (! $creator->is_root) {
-            $this->membershipService->assignTeamRole($team, $creator, 'owner');
+            $this->membershipService->assignTeamRole($team, $creator, 'owner', MembershipSource::Owner);
         }
 
         $this->authorizationService->invalidateTeamReparent($team, null, $team->parent_id);
@@ -123,7 +124,10 @@ class TeamService
 
     public function attachUser(Team $team, string $userId, ?string $role = null): void
     {
-        $this->membershipService->assignTeamRole($team, $userId, $role ?? 'member');
+        // Direct attachment: the team asserts this membership, the user never
+        // agreed to it. MembershipSource records that so the SAML email
+        // fallback will not treat it as proof of who the user is.
+        $this->membershipService->assignTeamRole($team, $userId, $role ?? 'member', MembershipSource::Direct);
     }
 
     public function detachUser(Team $team, string $userId): void

@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Enums\MembershipSource;
 use App\Models\Management\Role;
 use App\Models\Management\Space;
 use App\Models\Management\Team;
@@ -18,8 +19,21 @@ class MembershipService
         private readonly AuditService $auditService,
     ) {}
 
-    public function assignTeamRole(Team $team, User|string $user, string $roleKey): void
-    {
+    /**
+     * @param  MembershipSource|null  $source  How the membership came about.
+     *                                         Recorded when the membership is
+     *                                         created and never overwritten, so
+     *                                         a later role change through
+     *                                         another channel cannot launder an
+     *                                         attached member into an invited
+     *                                         one. See MembershipSource.
+     */
+    public function assignTeamRole(
+        Team $team,
+        User|string $user,
+        string $roleKey,
+        ?MembershipSource $source = null,
+    ): void {
         $role = $this->roleService->resolveTeamRole($roleKey);
         $userId = $user instanceof User ? $user->id : $user;
 
@@ -32,6 +46,7 @@ class MembershipService
             $team->users(),
             $userId,
             ['role_id' => $role->id],
+            ['source' => $source?->value],
         );
 
         $this->authorizationService->invalidateUser($userId);
@@ -79,10 +94,18 @@ class MembershipService
         $this->authorizationService->invalidateUser($userId);
     }
 
-    private function upsertPivot(BelongsToMany $relation, string $userId, array $attributes): void
-    {
+    /**
+     * @param  array<string, mixed>  $onCreate  Written only when the membership
+     *                                          is first created.
+     */
+    private function upsertPivot(
+        BelongsToMany $relation,
+        string $userId,
+        array $attributes,
+        array $onCreate = [],
+    ): void {
         if (! $relation->wherePivot('user_id', $userId)->exists()) {
-            $relation->attach($userId, $attributes + [
+            $relation->attach($userId, $attributes + $onCreate + [
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

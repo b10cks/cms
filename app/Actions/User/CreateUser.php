@@ -2,6 +2,7 @@
 
 namespace App\Actions\User;
 
+use App\Enums\MembershipSource;
 use App\Models\Management\Team;
 use App\Models\User;
 use App\Services\Auth\MembershipService;
@@ -21,7 +22,7 @@ class CreateUser
             'icon' => 'user',
             'type' => 'personal',
         ]);
-        $this->membershipService->assignTeamRole($team, $user, 'owner');
+        $this->membershipService->assignTeamRole($team, $user, 'owner', MembershipSource::Owner);
 
         return $user;
     }

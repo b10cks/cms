@@ -2,6 +2,7 @@
 
 namespace App\Actions\Invite;
 
+use App\Enums\MembershipSource;
 use App\Models\Management\Invite;
 use App\Models\User;
 use App\Services\Auth\AuthorizationService;
@@ -45,7 +46,7 @@ class AcceptInvite
             $this->membershipService->assignSpaceRole($invite->space, $user, $invite->role);
             $this->authorizationService->invalidateSpace($invite->space);
         } elseif ($invite->team_id) {
-            $this->membershipService->assignTeamRole($invite->team, $user, $invite->role);
+            $this->membershipService->assignTeamRole($invite->team, $user, $invite->role, MembershipSource::Invite);
             $this->authorizationService->invalidateTeamTree($invite->team);
         }
     }

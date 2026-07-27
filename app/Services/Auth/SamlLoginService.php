@@ -3,6 +3,7 @@
 namespace App\Services\Auth;
 
 use App\Actions\User\CreateUser;
+use App\Enums\MembershipSource;
 use App\Models\Management\TeamSamlProvider;
 use App\Models\Management\UserSamlIdentity;
 use App\Models\User;
@@ -139,9 +140,18 @@ class SamlLoginService
                 // configures its own IdP sign in as any account on the
                 // platform. A team's IdP may only vouch for its own members;
                 // everyone else has to go through JIT provisioning below.
+                //
+                // Membership alone is not enough either: any owner may both
+                // configure a SAML provider and attach an arbitrary user id to
+                // their team, which would hand the attacker the membership
+                // this check looks for. Only a membership the user themselves
+                // agreed to — an accepted invite, their own team, or an
+                // account this very provider created — counts as a claim.
                 $user = User::query()
                     ->where('email', $email)
-                    ->whereHas('teams', fn ($query) => $query->whereKey($provider->team_id))
+                    ->whereHas('teams', fn ($query) => $query
+                        ->whereKey($provider->team_id)
+                        ->whereIn('team_user.source', MembershipSource::samlTrusted()))
                     ->first();
             }
 
@@ -156,7 +166,12 @@ class SamlLoginService
             }
 
             $role = $this->resolveRole($provider, $attributes);
-            $this->membershipService->assignTeamRole($provider->team()->firstOrFail(), $user, $role);
+            $this->membershipService->assignTeamRole(
+                $provider->team()->firstOrFail(),
+                $user,
+                $role,
+                MembershipSource::Saml,
+            );
 
             UserSamlIdentity::query()->updateOrCreate(
                 $identity

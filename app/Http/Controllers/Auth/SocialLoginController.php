@@ -225,7 +225,11 @@ class SocialLoginController extends AuthController
             // to. Only an address both sides have verified is proof of
             // ownership; anything else has to be linked from a session that
             // already proved it owns the account.
-            if (! $user->hasVerifiedEmail() || ! $this->providerVerifiedEmail($provider, $socialUser)) {
+            if (
+                ! $user->hasVerifiedEmail()
+                || $this->verifiedByTeamIdp($user)
+                || ! $this->providerVerifiedEmail($provider, $socialUser)
+            ) {
                 throw ValidationException::withMessages([
                     'email' => __('auth.social_link_required'),
                 ]);
@@ -327,6 +331,23 @@ class SocialLoginController extends AuthController
         }
 
         return Invite::find($inviteId);
+    }
+
+    /**
+     * Whether this account's verified flag came from a team's own identity
+     * provider rather than from the mailbox.
+     *
+     * JIT provisioning marks an account verified on the strength of a SAML
+     * assertion, and any team owner may configure a provider with a
+     * certificate of their choosing. Such an account is therefore not proof
+     * that the address belongs to whoever holds it, and must not be adopted on
+     * an email match — otherwise an attacker JIT-creates an account for an
+     * address they do not own and waits for its real owner to sign in with
+     * Google. Linking from an authenticated session still works.
+     */
+    private function verifiedByTeamIdp(User $user): bool
+    {
+        return str_starts_with((string) $user->source, 'saml:');
     }
 
     /**
