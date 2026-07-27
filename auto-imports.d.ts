@@ -32,6 +32,7 @@ declare global {
   const i18n: typeof import('./resources/js/plugins/i18n').i18n
   const initAuth: typeof import('./resources/js/plugins/auth').initAuth
   const inject: typeof import('vue').inject
+  const installAuthHandler: typeof import('./resources/js/plugins/auth').installAuthHandler
   const installChart: typeof import('./resources/js/plugins/chart').installChart
   const installEcho: typeof import('./resources/js/plugins/echo').installEcho
   const installI18n: typeof import('./resources/js/plugins/i18n').installI18n
@@ -322,8 +323,8 @@ declare module 'vue' {
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly hydrateContentWithSchema: UnwrapRef<typeof import('./resources/js/composables/useSchemaDefaults')['hydrateContentWithSchema']>
     readonly i18n: UnwrapRef<typeof import('./resources/js/plugins/i18n')['i18n']>
-    readonly initAuth: UnwrapRef<typeof import('./resources/js/plugins/auth')['initAuth']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
+    readonly installAuthHandler: UnwrapRef<typeof import('./resources/js/plugins/auth')['installAuthHandler']>
     readonly installChart: UnwrapRef<typeof import('./resources/js/plugins/chart')['installChart']>
     readonly installEcho: UnwrapRef<typeof import('./resources/js/plugins/echo')['installEcho']>
     readonly installI18n: UnwrapRef<typeof import('./resources/js/plugins/i18n')['installI18n']>

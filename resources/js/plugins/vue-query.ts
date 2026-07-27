@@ -5,7 +5,12 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: true,
-      retry: 1,
+      // Retrying an auth/permission failure only delays the redirect to login.
+      retry: (failureCount: number, error: unknown) => {
+        const status = (error as { status?: number })?.status
+        if (status && [401, 403, 404, 419, 422].includes(status)) return false
+        return failureCount < 1
+      },
       staleTime: 1000 * 60 * 5,
       gcTime: 1000 * 60 * 30,
     },

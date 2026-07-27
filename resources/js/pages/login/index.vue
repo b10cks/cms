@@ -79,7 +79,7 @@ const signupUrl = computed(() => {
 // Handle session expired message
 onMounted(() => {
   if (route.query.message === 'session_expired') {
-    error.value = 'Your session has expired. Please log in again.'
+    error.value = t('composables.auth.sessionExpired') as string
   }
 
   if (route.query.social_error === '1') {
