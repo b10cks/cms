@@ -18,7 +18,9 @@ class UpdateTeamAvatarRequest extends FormRequest
                 'required',
                 'file',
                 'image',
-                'mimes:jpeg,png,jpg,gif,svg,webp',
+                // No SVG: it is an active-content document, and these files are served
+                // from the application origin.
+                'mimes:jpeg,png,jpg,gif,webp',
                 'max:2048',
             ],
         ];
@@ -29,7 +31,7 @@ class UpdateTeamAvatarRequest extends FormRequest
         return [
             'avatar.required' => 'An avatar image is required',
             'avatar.image' => 'The file must be an image',
-            'avatar.mimes' => 'The avatar must be a file of type: jpeg, png, jpg, gif, svg, webp',
+            'avatar.mimes' => 'The avatar must be a file of type: jpeg, png, jpg, gif, webp',
             'avatar.max' => 'The avatar may not be greater than 2MB',
         ];
     }

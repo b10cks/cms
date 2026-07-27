@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\Management\SpaceBackup
@@ -27,17 +28,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $s3_path
  * @property int|null $file_size
  * @property string|null $checksum
- * @property \Illuminate\Support\Carbon $expires_at
- * @property \Illuminate\Support\Carbon|null $started_at
- * @property \Illuminate\Support\Carbon|null $completed_at
- * @property \Illuminate\Support\Carbon|null $failed_at
+ * @property Carbon $expires_at
+ * @property Carbon|null $started_at
+ * @property Carbon|null $completed_at
+ * @property Carbon|null $failed_at
  * @property string|null $error_message
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
  * @property string|null $make_purified_attribute
- * @property-read \App\Models\User|null $creator
- * @property-read \App\Models\Management\Space $space
+ * @property-read User|null $creator
+ * @property-read Space $space
+ *
  * @method static \Database\Factories\Management\SpaceBackupFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceBackup newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceBackup newQuery()
@@ -65,15 +67,16 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceBackup whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceBackup withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SpaceBackup withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class SpaceBackup extends GlobalModel
 {
     use Auditable;
+    use Filterable;
     use HasFactory;
     use HasPurifiedAttributes;
     use HasUlids;
-    use Filterable;
     use SoftDeletes;
 
     protected $table = 'space_backups';
@@ -99,6 +102,9 @@ class SpaceBackup extends GlobalModel
 
     protected $casts = [
         'recipients' => 'array',
+        // The archive password unlocks a full space dump; it has no business
+        // sitting in plaintext in the management database or its backups.
+        'password' => 'encrypted',
         'progress' => 'integer',
         'file_size' => 'integer',
         'expires_at' => 'datetime',
@@ -156,9 +162,21 @@ class SpaceBackup extends GlobalModel
         ]);
     }
 
+    /**
+     * Maximum lifetime of a presigned backup download link, in minutes.
+     *
+     * `expires_at` is caller-supplied and says how long the backup is kept,
+     * which is not the same question as how long a single link to a full
+     * database-and-asset dump should stay valid to anyone who has it.
+     */
+    private const MAX_DOWNLOAD_URL_MINUTES = 60;
+
     public function getDownloadUrl(): string
     {
-        $expiration = now()->diffInMinutes($this->expires_at);
+        $expiration = min(
+            max((int) now()->diffInMinutes($this->expires_at), 1),
+            self::MAX_DOWNLOAD_URL_MINUTES
+        );
 
         return \Storage::disk('transfers')
             ->temporaryUrl($this->s3_path, now()->addMinutes($expiration));

@@ -26,7 +26,9 @@ class UpdateIconRequest extends FormRequest
                 'required',
                 'file',
                 'image',
-                'mimes:jpeg,png,jpg,gif,svg',
+                // No SVG: it is an active-content document, and these files are served
+                // from the application origin.
+                'mimes:jpeg,png,jpg,gif,webp',
                 'max:2048',
             ],
         ];

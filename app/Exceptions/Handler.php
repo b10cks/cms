@@ -8,7 +8,7 @@ use Throwable;
 class Handler extends ExceptionHandler
 {
     protected $dontRender = [
-        'Illuminate\Database\QueryException'
+        'Illuminate\Database\QueryException',
     ];
 
     /**
@@ -17,9 +17,14 @@ class Handler extends ExceptionHandler
      * @var array<int, string>
      */
     protected $dontFlash = [
+        'api_key',
+        'client_secret',
         'current_password',
         'password',
         'password_confirmation',
+        'secret',
+        'token',
+        'webhook_secret',
     ];
 
     /**
@@ -32,7 +37,7 @@ class Handler extends ExceptionHandler
         });
     }
 
-    public function render($request, \Throwable $e)
+    public function render($request, Throwable $e)
     {
         if ($this->shouldNotRender($e)) {
             $e = new \Exception('A general error occurred.');
@@ -41,9 +46,9 @@ class Handler extends ExceptionHandler
         return parent::render($request, $e);
     }
 
-    protected function shouldNotRender(\Throwable $e)
+    protected function shouldNotRender(Throwable $e)
     {
-        if (!app()->environment('production')) {
+        if (! app()->environment('production')) {
             return false;
         }
 

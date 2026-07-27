@@ -23,6 +23,13 @@ trait RejectsActiveContentUploads
      */
     private array $blockedExtensions = [
         'html', 'htm', 'xhtml', 'shtml', 'js', 'mjs', 'xml', 'xht', 'phtml', 'php', 'phar',
+        // Every spelling a mis-configured web server might still hand to PHP.
+        'php3', 'php4', 'php5', 'php7', 'php8', 'phps', 'pht', 'phtm', 'inc',
+        // Server config that could re-enable execution for a whole directory.
+        'htaccess', 'htpasswd', 'user.ini',
+        // Compressed SVG: same active content, and the extension sidesteps any
+        // check that only looks at `svg`.
+        'svgz',
     ];
 
     /**
