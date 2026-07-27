@@ -217,6 +217,21 @@ class SocialLoginController extends AuthController
             ->where('email', $email)
             ->first();
 
+        if ($user) {
+            // Adopting an existing account on a bare email match is a
+            // pre-registration hijack: an attacker registers under the
+            // victim's address and waits for them to arrive via the provider,
+            // landing them in an account the attacker still holds the password
+            // to. Only an address both sides have verified is proof of
+            // ownership; anything else has to be linked from a session that
+            // already proved it owns the account.
+            if (! $user->hasVerifiedEmail() || ! $this->providerVerifiedEmail($provider, $socialUser)) {
+                throw ValidationException::withMessages([
+                    'email' => __('auth.social_link_required'),
+                ]);
+            }
+        }
+
         if (! $user) {
             $user = $this->createSocialUser($provider, $socialUser, $email, $request);
         }
@@ -312,6 +327,24 @@ class SocialLoginController extends AuthController
         }
 
         return Invite::find($inviteId);
+    }
+
+    /**
+     * Whether the provider states that it verified the address itself.
+     *
+     * OIDC providers report this as `email_verified`. Socialite's GitHub driver
+     * only ever returns the primary address that GitHub reports as verified, so
+     * for GitHub the guarantee comes from the driver rather than the payload.
+     */
+    private function providerVerifiedEmail(string $provider, SocialiteUser $socialUser): bool
+    {
+        if ($provider === 'github') {
+            return true;
+        }
+
+        $raw = $this->rawUser($socialUser);
+
+        return (bool) (Arr::get($raw, 'email_verified') ?? Arr::get($raw, 'verified_email') ?? false);
     }
 
     private function emailFrom(SocialiteUser $socialUser): string
