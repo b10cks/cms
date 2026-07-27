@@ -111,7 +111,7 @@ class AuditLog extends GlobalModel
      */
     protected function calculateHash(): string
     {
-        return Hash::make($this->getHashAttributes());
+        return hash_hmac('sha256', $this->getHashAttributes(), config('app.key'));
     }
 
     protected function getHashAttributes(): string
@@ -133,7 +133,12 @@ class AuditLog extends GlobalModel
             return false;
         }
 
-        return Hash::check($this->getHashAttributes(), $this->hash);
+        // Legacy entries were hashed with bcrypt
+        if (str_starts_with($this->hash, '$2y$')) {
+            return Hash::check($this->getHashAttributes(), $this->hash);
+        }
+
+        return hash_equals($this->calculateHash(), $this->hash);
     }
 
     /**
