@@ -8,7 +8,7 @@ class CacheDataApi
 
     public const string TAGS_ATTRIBUTE = 'api.cache.tags';
 
-    public function handle($request, \Closure $next, $maxAge = 3600, $serverMaxAge = 86400)
+    public function handle($request, \Closure $next, $maxAge = 3600, $serverMaxAge = 86400, $staleWhileRevalidate = 60)
     {
         $response = $next($request);
 
@@ -18,7 +18,10 @@ class CacheDataApi
             $serverMaxAge = $ttl;
         }
 
-        $response->header('cache-control', "public, max-age=$maxAge, s-maxage=$serverMaxAge");
+        $response->header(
+            'cache-control',
+            "public, max-age=$maxAge, s-maxage=$serverMaxAge, stale-while-revalidate=$staleWhileRevalidate, stale-if-error=86400"
+        );
 
         $tags = $request->attributes->get(self::TAGS_ATTRIBUTE);
         if (\is_array($tags) && $tags !== []) {

@@ -199,6 +199,9 @@ return [
 
     'track_usage' => env('TRACK_TOKEN_USAGE', false),
 
+    // Origin micro-cache TTL (seconds) for heavy delivery endpoints; disabled by default.
+    'micro_cache_ttl' => (int) env('DATA_API_MICRO_CACHE_TTL', 0),
+
     /*
      |--------------------------------------------------------------------------
      | Maintenance Mode Driver

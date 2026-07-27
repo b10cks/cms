@@ -10,16 +10,17 @@ use App\Http\Controllers\Api\RedirectLookupController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SpaceController;
 
-Route::get('contents', [ContentController::class, 'index'])->middleware(['revision', 'cache.data'])->name(
+Route::get('contents', [ContentController::class, 'index'])->middleware(['revision', 'cache.data', 'cache.micro'])->name(
     'contents.index',
 );
-Route::get('search', SearchController::class)->middleware(['cache.data:60,60'])->name('contents.search');
+Route::get('search', SearchController::class)->middleware(['cache.data:60,60', 'cache.micro'])->name('contents.search');
 Route::get('sitemap', \App\Http\Controllers\Api\ContentSitemapController::class)->middleware([
     'revision',
     'cache.data',
+    'cache.micro',
 ])->name('sitemap');
 Route::get('contents/{slug}', [ContentController::class, 'show'])
-    ->middleware(['revision', 'cache.data'])
+    ->middleware(['revision', 'cache.data', 'cache.micro'])
     ->where('slug', '.*')
     ->name('contents.show');
 
