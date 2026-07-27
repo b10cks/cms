@@ -279,22 +279,6 @@
                 "security": []
             }
         },
-        "/auth/v1/email/verify": {
-            "post": {
-                "summary": "Create verify",
-                "description": "",
-                "tags": [
-                    "Email"
-                ],
-                "operationId": "post_email_verify",
-                "responses": {
-                    "200": {
-                        "description": "Successful response"
-                    }
-                },
-                "security": []
-            }
-        },
         "/auth/v1/2fa/status": {
             "get": {
                 "summary": "List status",

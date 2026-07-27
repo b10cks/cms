@@ -4408,6 +4408,13 @@
                                             "content_sorting": {
                                                 "type": "boolean"
                                             },
+                                            "serial_gaps": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "\"preserve\"",
+                                                    "\"reuse\""
+                                                ]
+                                            },
                                             "onboarding_dismissed_at": {
                                                 "type": "string",
                                                 "format": "date",
@@ -7020,6 +7027,38 @@
                     "Contents"
                 ],
                 "operationId": "post_spaces_by_space_contents_tree_operations",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/contents/serial-preview": {
+            "post": {
+                "summary": "The values a new entry of a block would receive for its generated fields",
+                "description": "The values a new entry of a block would receive for its generated fields.\n\nDeliberately a peek and not a reservation: allocating when a create dialog\nopens would burn a number every time someone changes their mind. The preview\ncan therefore go stale if another editor creates an entry in the same scope\nfirst \u2014 the entry shows its real value immediately after it is created.",
+                "tags": [
+                    "Contents"
+                ],
+                "operationId": "post_spaces_by_space_contents_serial_preview",
                 "parameters": [
                     {
                         "name": "space",
@@ -12873,83 +12912,6 @@
                         "description": "The space identifier"
                     }
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "external_id": {
-                                        "type": "string",
-                                        "maxLength": 36,
-                                        "nullable": true
-                                    },
-                                    "name": {
-                                        "type": "string",
-                                        "maxLength": 100
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "dev_mode": {
-                                        "type": "boolean"
-                                    },
-                                    "dev_url": {
-                                        "type": "string",
-                                        "format": "uri",
-                                        "maxLength": 2048,
-                                        "nullable": true
-                                    },
-                                    "code": {
-                                        "type": "string",
-                                        "maxLength": 1572864,
-                                        "nullable": true
-                                    },
-                                    "manifest": {
-                                        "type": "object",
-                                        "properties": {
-                                            "options": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "key": {
-                                                            "type": "string",
-                                                            "maxLength": 64
-                                                        },
-                                                        "label": {
-                                                            "type": "string",
-                                                            "maxLength": 100,
-                                                            "nullable": true
-                                                        },
-                                                        "default": {
-                                                            "type": "string",
-                                                            "nullable": true
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "key"
-                                                    ]
-                                                }
-                                            },
-                                            "height": {
-                                                "type": "integer",
-                                                "minimum": 50,
-                                                "maximum": 1200,
-                                                "nullable": true
-                                            }
-                                        }
-                                    },
-                                    "is_active": {
-                                        "type": "boolean"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "description": "Successful response",

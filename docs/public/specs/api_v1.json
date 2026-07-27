@@ -1932,6 +1932,9 @@
                     "editor": {
                         "type": "string"
                     },
+                    "settings": {
+                        "type": "string"
+                    },
                     "tags": {
                         "type": "string"
                     },
