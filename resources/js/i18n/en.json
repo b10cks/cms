@@ -4056,6 +4056,7 @@
     },
     "sections": {
       "content_stats": "Content Stats",
+      "activity": "Activity",
       "content_distribution": "Content Distribution",
       "usage_stats": "Usage Stats",
       "trends": "Trends",
@@ -4097,6 +4098,16 @@
       "content_created": "Content Created",
       "content_edited": "Content Edited",
       "content_published": "Content Published"
+    },
+    "activity": {
+      "title": "Space Activity",
+      "summary": "{count} events in the last 12 months · {days} active days",
+      "events": "{count} events",
+      "current_streak": "Current streak",
+      "longest_streak": "Longest streak",
+      "less": "Less",
+      "more": "More",
+      "view_log": "View audit log"
     }
   },
   "actions": {

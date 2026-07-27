@@ -7,6 +7,7 @@ use App\Models\Management\Space;
 use App\Models\Management\SpaceApiHitHourly;
 use App\Models\Management\SpaceTrafficUsageHourly;
 use App\Models\Space\Asset;
+use App\Models\Space\AuditLog;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
@@ -15,6 +16,7 @@ use App\Models\Space\DataSource;
 use App\Models\Space\Redirect;
 use App\Models\User;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 class SpaceStatsService
@@ -33,7 +35,7 @@ class SpaceStatsService
         //            "space_stats:{$space->id}:{$periodType->value}:{$startDate->timestamp}:{$endDate->timestamp}",
         //            now()->addMinutes($cacheMinutes),
         //            function () use ($space, $periodType, $startDate, $endDate) {
-        return [
+        $stats = [
             'content' => $this->getContentStats($space, $startDate, $endDate),
             'assets' => $this->getAssetStats($space, $startDate, $endDate),
             'redirects' => $this->getRedirectStats($space, $startDate, $endDate),
@@ -42,6 +44,13 @@ class SpaceStatsService
             'system' => $this->getSystemStats($space, $startDate, $endDate),
             'trends' => $this->getTrendStats($space, $periodType, $startDate, $endDate),
         ];
+
+        // Only exposed to users who may read the audit log itself.
+        if ($options['include_activity'] ?? false) {
+            $stats['activity'] = $this->getActivityCalendar($endDate);
+        }
+
+        return $stats;
         //            }
         //        );
     }
@@ -380,6 +389,61 @@ class SpaceStatsService
             'new_users' => $newUsers,
             'recent_logins' => $recentLogins,
             'role_distribution' => $roleDistribution,
+        ];
+    }
+
+    /**
+     * Build a GitHub-style contribution calendar from the space audit log.
+     *
+     * The window is a fixed number of whole weeks ending on $endDate, independent
+     * of the dashboard date range, so the grid always renders as a full calendar.
+     */
+    public function getActivityCalendar(Carbon $endDate, int $weeks = 53): array
+    {
+        $end = $endDate->copy()->endOfDay();
+        $start = $end->copy()->startOfDay()->subWeeks($weeks - 1)->startOfWeek(CarbonInterface::MONDAY);
+
+        $counts = AuditLog::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->whereBetween('created_at', [$start, $end])
+            ->groupBy('date')
+            ->pluck('count', 'date')
+            ->map(fn ($count) => (int) $count)
+            ->toArray();
+
+        $days = [];
+        $longestStreak = 0;
+        $currentStreak = 0;
+        $streak = 0;
+
+        for ($day = $start->copy(); $day <= $end; $day->addDay()) {
+            $date = $day->format('Y-m-d');
+            $count = $counts[$date] ?? 0;
+            $days[$date] = $count;
+
+            $streak = $count > 0 ? $streak + 1 : 0;
+            $longestStreak = max($longestStreak, $streak);
+            $currentStreak = $streak;
+        }
+
+        $topContributors = AuditLog::selectRaw('owner_name, COUNT(*) as count')
+            ->whereBetween('created_at', [$start, $end])
+            ->whereNotNull('owner_name')
+            ->groupBy('owner_name')
+            ->orderByDesc('count')
+            ->limit(5)
+            ->get()
+            ->map(fn ($row) => ['name' => $row->owner_name, 'count' => (int) $row->count]);
+
+        return [
+            'start' => $start->format('Y-m-d'),
+            'end' => $end->format('Y-m-d'),
+            'days' => $days,
+            'total' => array_sum($days),
+            'max' => $days === [] ? 0 : max($days),
+            'active_days' => count(array_filter($days)),
+            'current_streak' => $currentStreak,
+            'longest_streak' => $longestStreak,
+            'top_contributors' => $topContributors,
         ];
     }
 

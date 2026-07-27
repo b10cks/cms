@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Mgmt;
 use App\Enums\PeriodType;
 use App\Http\Controllers\Controller;
 use App\Models\Management\Space;
+use App\Models\Space\AuditLog;
 use App\Services\Space\SpaceStatsService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class SpaceStatsController extends Controller
 {
@@ -34,6 +36,7 @@ class SpaceStatsController extends Controller
             'period_type' => $periodType,
             'start_date' => $startDate,
             'end_date' => $endDate,
+            'include_activity' => Gate::allows('viewAny', [AuditLog::class, $space]),
         ]);
 
         return response()->json($stats);

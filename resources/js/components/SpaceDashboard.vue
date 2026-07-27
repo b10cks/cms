@@ -12,6 +12,9 @@ const StatsMultiLineChart = defineAsyncComponent(
   () => import('~/components/stats/StatsMultiLineChart.vue')
 )
 const StatsPieChart = defineAsyncComponent(() => import('~/components/stats/StatsPieChart.vue'))
+const StatsActivityHeatmap = defineAsyncComponent(
+  () => import('~/components/stats/StatsActivityHeatmap.vue')
+)
 
 const { formatDuration, formatNumber, formatTrafficSize, formatFileSize } = useFormat()
 const { t } = useI18n()
@@ -328,6 +331,16 @@ watch(
           </template>
         </StatsCard>
       </div>
+
+      <template v-if="stats.activity">
+        <h2 class="text-lg font-semibold text-primary">
+          {{ t('dashboard.sections.activity') }}
+        </h2>
+        <StatsActivityHeatmap
+          :title="t('dashboard.activity.title')"
+          :activity="stats.activity"
+        />
+      </template>
 
       <h2 class="text-lg font-semibold text-primary">
         {{ t('dashboard.sections.content_distribution') }}

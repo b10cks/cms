@@ -4054,6 +4054,7 @@
     },
     "sections": {
       "content_stats": "Content-Statistiken",
+      "activity": "Aktivität",
       "content_distribution": "Content-Verteilung",
       "usage_stats": "Nutzungsstatistiken",
       "trends": "Trends",
@@ -4095,6 +4096,16 @@
       "content_created": "Content erstellt",
       "content_edited": "Content bearbeitet",
       "content_published": "Content veröffentlicht"
+    },
+    "activity": {
+      "title": "Space-Aktivität",
+      "summary": "{count} Ereignisse in den letzten 12 Monaten · {days} aktive Tage",
+      "events": "{count} Ereignisse",
+      "current_streak": "Aktuelle Serie",
+      "longest_streak": "Längste Serie",
+      "less": "Weniger",
+      "more": "Mehr",
+      "view_log": "Audit-Log ansehen"
     }
   },
   "actions": {
