@@ -9,6 +9,17 @@ use Illuminate\Support\Facades\Storage;
 class ImageUploadService
 {
     /**
+     * Avatars and icons are public by nature and are served as `/storage/...`.
+     *
+     * They therefore belong on the disk that is meant to be reachable over
+     * HTTP. Writing them to the default disk put them in `storage/app/private`
+     * alongside every tenant's assets and backups, which only worked if the
+     * `public/storage` symlink pointed at that private root — exposing the
+     * whole disk to anyone who knew a path.
+     */
+    private const DISK = 'public';
+
+    /**
      * Upload image for a model and return the file path.
      *
      * @param Model $model The model to attach the image to
@@ -19,10 +30,9 @@ class ImageUploadService
      */
     public function uploadForModel(Model $model, UploadedFile $file, string $attribute, string $directory): string
     {
-        $extension = $file->getClientOriginalExtension();
-        $filename = $model->getRouteKey() . '_' . time() . '.' . $extension;
+        $filename = $model->getRouteKey() . '_' . time() . '.' . $this->extensionFor($file);
 
-        $path = Storage::putFileAs(
+        $path = Storage::disk(self::DISK)->putFileAs(
             $directory,
             $file,
             $filename
@@ -36,6 +46,24 @@ class ImageUploadService
     }
 
     /**
+     * The extension to store the file under, derived from its contents.
+     *
+     * `mimes:` validates the type guessed from the bytes, but the filename is
+     * the client's. Storing under the client's extension meant a genuine GIF
+     * called `avatar.html` was written as `.html`, and a web server picks the
+     * content type from the extension — so a GIF/HTML polyglot would have been
+     * served as a document on the application's own origin.
+     */
+    private function extensionFor(UploadedFile $file): string
+    {
+        $extension = strtolower((string) ($file->extension() ?: $file->guessExtension()));
+
+        // Nothing recognizable in the bytes: keep the file rather than lose it,
+        // but under an extension no server will execute or render inline.
+        return preg_match('/^[a-z0-9]{1,8}$/', $extension) === 1 ? $extension : 'bin';
+    }
+
+    /**
      * Delete the existing file if it exists.
      *
      * @param Model $model The model with the file
@@ -44,8 +72,10 @@ class ImageUploadService
      */
     protected function deleteExistingFile(Model $model, string $attribute): void
     {
-        if ($model->{$attribute} && Storage::exists($model->{$attribute})) {
-            Storage::delete($model->{$attribute});
+        $disk = Storage::disk(self::DISK);
+
+        if ($model->{$attribute} && $disk->exists($model->{$attribute})) {
+            $disk->delete($model->{$attribute});
         }
     }
 }

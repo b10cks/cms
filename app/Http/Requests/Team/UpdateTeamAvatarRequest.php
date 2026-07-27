@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\Team;
 
+use App\Http\Requests\Traits\RejectsActiveContentUploads;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateTeamAvatarRequest extends FormRequest
 {
+    use RejectsActiveContentUploads;
+
     public function authorize(): bool
     {
         return $this->user()->can('update', $this->route('team'));
@@ -22,6 +25,7 @@ class UpdateTeamAvatarRequest extends FormRequest
                 // from the application origin.
                 'mimes:jpeg,png,jpg,gif,webp',
                 'max:2048',
+                $this->rejectActiveContentRule(),
             ],
         ];
     }

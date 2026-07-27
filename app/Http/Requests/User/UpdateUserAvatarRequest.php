@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\User;
 
+use App\Http\Requests\Traits\RejectsActiveContentUploads;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateUserAvatarRequest extends FormRequest
 {
+    use RejectsActiveContentUploads;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -27,6 +30,7 @@ class UpdateUserAvatarRequest extends FormRequest
                 'image',
                 'mimes:jpeg,png,jpg,gif',
                 'max:2048', // 2MB max file size
+                $this->rejectActiveContentRule(),
             ],
         ];
     }

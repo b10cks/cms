@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\Space;
 
+use App\Http\Requests\Traits\RejectsActiveContentUploads;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateIconRequest extends FormRequest
 {
+    use RejectsActiveContentUploads;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -30,6 +33,7 @@ class UpdateIconRequest extends FormRequest
                 // from the application origin.
                 'mimes:jpeg,png,jpg,gif,webp',
                 'max:2048',
+                $this->rejectActiveContentRule(),
             ],
         ];
     }
