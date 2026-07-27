@@ -1,4 +1,15 @@
+import type { RequestOptions } from '../client'
+
 import { BaseResource } from './base-resource'
+
+/**
+ * The password travels in `x-password-confirmation`, where the step-up
+ * middleware verifies it and counts failures, rather than in the body where
+ * each endpoint would have to re-check it for itself.
+ */
+const stepUpOptions = (password: string): RequestOptions => ({
+  headers: { 'x-password-confirmation': password },
+})
 
 export interface TwoFactorSetupResponse {
   secret: string
@@ -7,6 +18,11 @@ export interface TwoFactorSetupResponse {
 
 export interface TwoFactorConfirmPayload {
   code: string
+  password: string
+}
+
+export interface TwoFactorRegenerateBackupCodesPayload {
+  password: string
 }
 
 export interface TwoFactorConfirmResponse {
@@ -38,7 +54,13 @@ export class TwoFactorAuth extends BaseResource<TwoFactorStatusResponse, never, 
   }
 
   public async confirm(payload: TwoFactorConfirmPayload): Promise<TwoFactorConfirmResponse> {
-    return this.client.post<TwoFactorConfirmResponse>(`${this.basePath}/setup/confirm`, payload)
+    const { password, ...body } = payload
+
+    return this.client.post<TwoFactorConfirmResponse>(
+      `${this.basePath}/setup/confirm`,
+      body,
+      stepUpOptions(password)
+    )
   }
 
   public async verify(payload: TwoFactorVerifyPayload): Promise<{ message: string }> {
@@ -46,12 +68,20 @@ export class TwoFactorAuth extends BaseResource<TwoFactorStatusResponse, never, 
   }
 
   public async disable(payload: TwoFactorDisablePayload): Promise<{ message: string }> {
-    return this.client.post<{ message: string }>(`${this.basePath}/disable`, payload)
+    return this.client.post<{ message: string }>(
+      `${this.basePath}/disable`,
+      undefined,
+      stepUpOptions(payload.password)
+    )
   }
 
-  public async regenerateBackupCodes(): Promise<TwoFactorBackupCodesResponse> {
+  public async regenerateBackupCodes(
+    payload: TwoFactorRegenerateBackupCodesPayload
+  ): Promise<TwoFactorBackupCodesResponse> {
     return this.client.post<TwoFactorBackupCodesResponse>(
-      `${this.basePath}/backup-codes/regenerate`
+      `${this.basePath}/backup-codes/regenerate`,
+      undefined,
+      stepUpOptions(payload.password)
     )
   }
 

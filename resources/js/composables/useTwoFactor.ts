@@ -5,6 +5,7 @@ import { api } from '~/api'
 import type {
   TwoFactorConfirmPayload,
   TwoFactorDisablePayload,
+  TwoFactorRegenerateBackupCodesPayload,
   TwoFactorVerifyPayload,
 } from '~/api/resources/two-factor'
 
@@ -86,8 +87,8 @@ export function useTwoFactor() {
 
   const useRegenerateBackupCodesMutation = () => {
     return useMutation({
-      mutationFn: async () => {
-        return await api.twoFactor.regenerateBackupCodes()
+      mutationFn: async (payload: TwoFactorRegenerateBackupCodesPayload) => {
+        return await api.twoFactor.regenerateBackupCodes(payload)
       },
       onSuccess: () => {
         toast.success(t('labels.twoFactor.backupCodes.regenerated') as string)

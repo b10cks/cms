@@ -17,12 +17,15 @@ import TwoFactorQRCode from './TwoFactorQRCode.vue'
 
 const open = defineModel<boolean>('open')
 
+const { t } = useI18n()
+
 const { useTwoFactorSetupMutation, useTwoFactorConfirmMutation } = useTwoFactor()
 const { mutate: setup, data: setupData, isPending: isSettingUp } = useTwoFactorSetupMutation()
 const { mutate: confirm, isPending: isConfirming } = useTwoFactorConfirmMutation()
 
 const step = ref<'initial' | 'scan' | 'verify' | 'backup'>('initial')
 const verificationCode = ref('')
+const password = ref('')
 const backupCodes = ref<string[]>([])
 const error = ref<string | null>(null)
 const hasConfirmedBackupCodes = ref(false)
@@ -40,8 +43,13 @@ const handleVerify = async () => {
     return
   }
 
+  if (!password.value) {
+    error.value = t('labels.twoFactor.setup.confirmPasswordRequired') as string
+    return
+  }
+
   confirm(
-    { code: verificationCode.value },
+    { code: verificationCode.value, password: password.value },
     {
       onSuccess: (data) => {
         backupCodes.value = data.backup_codes
@@ -59,6 +67,7 @@ const handleClose = () => {
   open.value = false
   step.value = 'initial'
   verificationCode.value = ''
+  password.value = ''
   backupCodes.value = []
   error.value = null
   hasConfirmedBackupCodes.value = false
@@ -137,6 +146,16 @@ const handleClose = () => {
           maxlength="6"
           :label="$t('labels.twoFactor.setup.enterCode')"
           :placeholder="$t('labels.twoFactor.setup.codePlaceholder')"
+        />
+
+        <InputField
+          v-model="password"
+          type="password"
+          name="current-password"
+          autocomplete="current-password"
+          :label="$t('labels.twoFactor.setup.confirmPassword')"
+          :description="$t('labels.twoFactor.setup.confirmPasswordDescription')"
+          required
         />
 
         <div

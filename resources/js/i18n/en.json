@@ -2672,7 +2672,10 @@
         "done": "You're all set",
         "confirmed": "2FA is now enabled. Your account is more secure.",
         "confirmError": "That code didn't work. Try again? {error}",
-        "error": "Couldn't start setup. {error}"
+        "error": "Couldn't start setup. {error}",
+        "confirmPassword": "Current password",
+        "confirmPasswordDescription": "Enabling a second factor requires your password, so a hijacked session cannot enroll one.",
+        "confirmPasswordRequired": "Your current password is required."
       },
       "verify": {
         "title": "Verify it's you",
@@ -2698,7 +2701,11 @@
         "copy": "Copy",
         "confirmCheckbox": "I've saved these codes somewhere safe. I understand that losing them might lock me out of my account.",
         "regenerated": "Backup codes regenerated successfully",
-        "regenerateError": "Failed to regenerate backup codes: {error}"
+        "regenerateError": "Failed to regenerate backup codes: {error}",
+        "regenerateTitle": "Regenerate backup codes",
+        "regenerateDescription": "Issue a fresh set of emergency access codes.",
+        "regenerateWarning": "Regenerating invalidates all existing codes. Make sure to save the new ones.",
+        "regenerateConfirm": "Regenerate"
       },
       "disableTitle": "Disable Two-Factor Authentication",
       "disableDescription": "Confirm your password to disable 2FA.",

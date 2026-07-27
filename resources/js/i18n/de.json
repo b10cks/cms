@@ -2670,7 +2670,10 @@
         "done": "Du bist bereit",
         "confirmed": "2FA ist nun aktiviert. Dein Konto ist sicherer.",
         "confirmError": "Dieser Code funktioniert nicht. Versuche es nochmal? {error}",
-        "error": "Konnte Setup nicht starten. {error}"
+        "error": "Konnte Setup nicht starten. {error}",
+        "confirmPassword": "Aktuelles Passwort",
+        "confirmPasswordDescription": "Das Aktivieren eines zweiten Faktors erfordert dein Passwort, damit eine übernommene Sitzung keinen einrichten kann.",
+        "confirmPasswordRequired": "Dein aktuelles Passwort ist erforderlich."
       },
       "verify": {
         "title": "Überprüfe, dass du es bist",
@@ -2696,7 +2699,11 @@
         "copy": "Kopieren",
         "confirmCheckbox": "Ich habe diese Codes irgendwo sicher gespeichert. Ich verstehe, dass ich aus meinem Konto gesperrt werden könnte, wenn ich sie verliere.",
         "regenerated": "Backup-Codes erfolgreich erneuert",
-        "regenerateError": "Fehler beim Erneuern von Backup-Codes: {error}"
+        "regenerateError": "Fehler beim Erneuern von Backup-Codes: {error}",
+        "regenerateTitle": "Backup-Codes neu erzeugen",
+        "regenerateDescription": "Erzeuge einen neuen Satz Notfall-Zugriffscodes.",
+        "regenerateWarning": "Beim Neuerzeugen werden alle bestehenden Codes ungültig. Speichere unbedingt die neuen.",
+        "regenerateConfirm": "Neu erzeugen"
       },
       "disableTitle": "Zwei-Faktor-Authentifizierung deaktivieren",
       "disableDescription": "Bestätige dein Passwort, um 2FA zu deaktivieren.",

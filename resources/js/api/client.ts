@@ -8,7 +8,7 @@ interface AuthHandler {
 // Laravel answers an expired/mismatched session with 419 on stateful writes.
 const CSRF_EXPIRED_STATUS = 419
 
-interface RequestOptions extends RequestInit {
+export interface RequestOptions extends RequestInit {
   query?: Record<string, unknown>
   body?: any
 }

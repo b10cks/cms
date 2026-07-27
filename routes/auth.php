@@ -74,12 +74,17 @@ Route::group(['prefix' => '2fa'], function () {
         ->middleware(['auth:sanctum', 'stateful'])
         ->name('2fa.verify');
 
+    // Everything that changes which second factors work has to prove the
+    // session belongs to the account owner, not merely that a session exists:
+    // these endpoints hand out — or take away — the factor itself. An operator
+    // inside an impersonation session is not the owner, so they are locked out
+    // of all of them.
     Route::post('setup', [TwoFactorSetupController::class, 'start'])
-        ->middleware(['auth:sanctum', 'stateful'])
+        ->middleware(['auth:sanctum', 'stateful', 'throttle:crucial', 'not-impersonating'])
         ->name('2fa.setup');
 
     Route::post('setup/confirm', [TwoFactorSetupController::class, 'confirm'])
-        ->middleware(['auth:sanctum', 'stateful'])
+        ->middleware(['auth:sanctum', 'stateful', 'throttle:crucial', 'not-impersonating', 'password'])
         ->name('2fa.setup.confirm');
 
     Route::post('verify', TwoFactorVerifyController::class)
@@ -87,10 +92,10 @@ Route::group(['prefix' => '2fa'], function () {
         ->name('2fa.verify');
 
     Route::post('disable', TwoFactorDisableController::class)
-        ->middleware(['auth:sanctum', 'stateful'])
+        ->middleware(['auth:sanctum', 'stateful', 'throttle:crucial', 'not-impersonating', 'password'])
         ->name('2fa.disable');
 
     Route::post('backup-codes/regenerate', [TwoFactorBackupCodesController::class, 'regenerate'])
-        ->middleware(['auth:sanctum', 'stateful'])
+        ->middleware(['auth:sanctum', 'stateful', 'throttle:crucial', 'not-impersonating', 'password'])
         ->name('2fa.backup-codes.regenerate');
 });

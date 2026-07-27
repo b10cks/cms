@@ -39,6 +39,8 @@ const setupDialogOpen = ref(false)
 const disablePassword = ref('')
 const showDisableDialog = ref(false)
 const showBackupCodes = ref(false)
+const showRegenerateDialog = ref(false)
+const regeneratePassword = ref('')
 
 const handleChangePassword = async () => {
   passwordError.value = null
@@ -90,20 +92,24 @@ const handleDisable2FA = async () => {
   }
 }
 
-const handleRegenerateBackupCodes = async () => {
-  const confirmed = await alert.confirm(
-    'Regenerating backup codes will invalidate all existing codes. Make sure to save the new codes.',
+const handleRegenerateBackupCodes = () => {
+  regeneratePassword.value = ''
+  showRegenerateDialog.value = true
+}
+
+const handleConfirmRegenerate = () => {
+  if (!regeneratePassword.value) return
+
+  regenerateBackupCodes(
+    { password: regeneratePassword.value },
     {
-      title: 'Regenerate Backup Codes',
-      confirmLabel: 'Regenerate',
-      cancelLabel: 'Cancel',
+      onSuccess: () => {
+        showRegenerateDialog.value = false
+        regeneratePassword.value = ''
+        showBackupCodes.value = true
+      },
     }
   )
-
-  if (confirmed) {
-    regenerateBackupCodes()
-    showBackupCodes.value = true
-  }
 }
 </script>
 
@@ -259,6 +265,49 @@ const handleRegenerateBackupCodes = async () => {
             @click="handleDisable2FA"
           >
             {{ $t('labels.twoFactor.disableConfirm') }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog v-model:open="showRegenerateDialog">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeaderCombined
+          :title="$t('labels.twoFactor.backupCodes.regenerateTitle')"
+          :description="$t('labels.twoFactor.backupCodes.regenerateDescription')"
+        />
+
+        <Alert
+          variant="modern"
+          color="warning"
+          icon="lucide:alert-triangle"
+        >
+          <p>{{ $t('labels.twoFactor.backupCodes.regenerateWarning') }}</p>
+        </Alert>
+
+        <InputField
+          name="regenerate-password"
+          v-model="regeneratePassword"
+          type="password"
+          autocomplete="current-password"
+          :label="$t('labels.twoFactor.passwordLabel')"
+          :placeholder="$t('labels.twoFactor.passwordPlaceholder')"
+        />
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            @click="showRegenerateDialog = false"
+          >
+            {{ $t('actions.cancel') }}
+          </Button>
+          <Button
+            variant="primary"
+            :loading="isRegenerating"
+            :disabled="!regeneratePassword"
+            @click="handleConfirmRegenerate"
+          >
+            {{ $t('labels.twoFactor.backupCodes.regenerateConfirm') }}
           </Button>
         </DialogFooter>
       </DialogContent>
