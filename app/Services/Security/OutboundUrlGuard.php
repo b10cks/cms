@@ -10,17 +10,45 @@ use App\Services\Security\Exceptions\UnsafeUrlException;
  * private, loopback, link-local or otherwise reserved address (which would let
  * an operator reach internal services or the cloud metadata endpoint).
  *
- * Note: this validates the addresses the host resolves to at check time. It
- * does not by itself defeat DNS-rebinding — callers should also disable HTTP
- * redirect following (an attacker could otherwise redirect to an internal
- * host after the check).
+ * Checking the address is only half the job. The HTTP client resolves the name
+ * a second time when it connects, and an attacker controlling the zone can
+ * answer differently that second time — the guard sees a public address, curl
+ * gets 169.254.169.254. `assertSafe()` therefore returns the addresses it
+ * approved, and callers must pin the connection to them with
+ * `curlResolveFor()`. Callers must also disable redirect following, since a
+ * 30x to an internal host is checked by nobody.
  */
 class OutboundUrlGuard
 {
     /**
+     * Address families and ranges PHP's own filter does not consider private
+     * or reserved, but which are routable only inside someone's network.
+     *
+     * 100.64.0.0/10 is carrier-grade NAT and is where EKS and GKE put pods and
+     * nodes — Alibaba's metadata endpoint lives at 100.100.100.200. The rest
+     * are IETF special-purpose ranges that have no business being the target
+     * of an outbound webhook.
+     *
+     * @var array<int, array{0: string, 1: int}>
+     */
+    private const ADDITIONAL_DENIED_RANGES = [
+        ['100.64.0.0', 10],   // Carrier-grade NAT / cloud internal
+        ['192.0.0.0', 24],    // IETF protocol assignments
+        ['192.0.2.0', 24],    // TEST-NET-1
+        ['198.18.0.0', 15],   // Benchmarking
+        ['198.51.100.0', 24], // TEST-NET-2
+        ['203.0.113.0', 24],  // TEST-NET-3
+        ['240.0.0.0', 4],     // Reserved, includes 255.255.255.255
+    ];
+
+    /**
+     * The addresses the URL's host resolved to, all of them verified public.
+     *
+     * @return array<int, string>
+     *
      * @throws UnsafeUrlException
      */
-    public function assertSafe(string $url): void
+    public function assertSafe(string $url): array
     {
         $parts = parse_url($url);
 
@@ -45,6 +73,35 @@ class OutboundUrlGuard
                 throw new UnsafeUrlException('The webhook URL resolves to a non-routable or internal address.');
             }
         }
+
+        return $addresses;
+    }
+
+    /**
+     * CURLOPT_RESOLVE entries pinning the URL's host to the addresses that
+     * were just approved, so the client cannot resolve it a second time and
+     * get a different answer.
+     *
+     * @param  array<int, string>  $addresses
+     * @return array<int, string>
+     */
+    public function curlResolveFor(string $url, array $addresses): array
+    {
+        $parts = parse_url($url);
+        $host = $parts['host'] ?? null;
+
+        if ($host === null || $addresses === []) {
+            return [];
+        }
+
+        // An IP literal has nothing to resolve, so there is nothing to pin.
+        if (filter_var(trim($host, '[]'), FILTER_VALIDATE_IP) !== false) {
+            return [];
+        }
+
+        $port = $parts['port'] ?? (strtolower($parts['scheme'] ?? '') === 'https' ? 443 : 80);
+
+        return [$host.':'.$port.':'.implode(',', $addresses)];
     }
 
     /**
@@ -86,11 +143,40 @@ class OutboundUrlGuard
     {
         $ip = $this->unwrapIpv4($ip);
 
-        return filter_var(
-            $ip,
-            FILTER_VALIDATE_IP,
-            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
-        ) !== false;
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            return false;
+        }
+
+        // 6to4 embeds an IPv4 address that the filter above never looks at.
+        if (str_starts_with(strtolower($ip), '2002:')) {
+            return false;
+        }
+
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false) {
+            return true;
+        }
+
+        foreach (self::ADDITIONAL_DENIED_RANGES as [$network, $bits]) {
+            if ($this->inIpv4Range($ip, $network, $bits)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function inIpv4Range(string $ip, string $network, int $bits): bool
+    {
+        $address = ip2long($ip);
+        $subnet = ip2long($network);
+
+        if ($address === false || $subnet === false) {
+            return false;
+        }
+
+        $mask = -1 << (32 - $bits);
+
+        return ($address & $mask) === ($subnet & $mask);
     }
 
     /**

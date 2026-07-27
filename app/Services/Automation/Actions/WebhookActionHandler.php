@@ -24,7 +24,7 @@ class WebhookActionHandler extends BaseActionHandler
         $method = strtoupper((string) $config['method']);
 
         try {
-            $this->urlGuard->assertSafe($url);
+            $safeAddresses = $this->urlGuard->assertSafe($url);
         } catch (UnsafeUrlException $e) {
             \Log::warning('Blocked unsafe webhook URL', ['url' => $url, 'reason' => $e->getMessage()]);
             throw $e;
@@ -40,6 +40,15 @@ class WebhookActionHandler extends BaseActionHandler
                 // Do not follow redirects: a 30x to an internal host would
                 // bypass the SSRF check performed above.
                 ->withoutRedirecting()
+                // Connect to the addresses the guard approved rather than
+                // resolving the name again. Without this, a zone the attacker
+                // controls can answer with a public address for the check and
+                // an internal one a moment later.
+                ->withOptions([
+                    'curl' => [
+                        \CURLOPT_RESOLVE => $this->urlGuard->curlResolveFor($url, $safeAddresses),
+                    ],
+                ])
                 ->send($method, $url, [
                     $method === 'GET' ? 'query' : 'json' => $parameters,
                 ]);
