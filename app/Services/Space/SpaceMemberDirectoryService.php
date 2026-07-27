@@ -4,56 +4,48 @@ namespace App\Services\Space;
 
 use App\Models\Management\Space;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class SpaceMemberDirectoryService
 {
     public function paginate(Space $space, array $params = []): LengthAwarePaginator
     {
-        $members = $this->membersForSpace($space)
-            ->when($params['role'] ?? null, fn (Collection $collection, string $role) => $collection
-                ->filter(fn (User $member) => $member->role_key === $this->parseFilterValue($role)['value']))
-            ->when($params['name'] ?? null, fn (Collection $collection, string $name) => $collection
-                ->filter(fn (User $member) => $this->matchesTextFilter(
-                    "{$member->firstname} {$member->lastname}",
-                    $this->parseFilterValue($name),
-                )))
-            ->when($params['email'] ?? null, fn (Collection $collection, string $email) => $collection
-                ->filter(fn (User $member) => $this->matchesTextFilter(
-                    (string) $member->email,
-                    $this->parseFilterValue($email),
-                )));
+        $query = $this->memberQuery($space)
+            ->when($params['role'] ?? null, fn (Builder $query, string $role) => $query
+                ->where('roles.key', $this->parseFilterValue($role)['value']))
+            ->when($params['name'] ?? null, fn (Builder $query, string $name) => $this->applyTextFilter(
+                $query,
+                $this->nameExpression($query),
+                $this->parseFilterValue($name),
+            ))
+            ->when($params['email'] ?? null, fn (Builder $query, string $email) => $this->applyTextFilter(
+                $query,
+                'users.email',
+                $this->parseFilterValue($email),
+            ));
 
         [$sortColumn, $sortDirection] = $this->parseSort((string) ($params['sort'] ?? '+firstname'));
-
-        $members = $members
-            ->sort(fn (User $left, User $right) => $this->compareMembers($left, $right, $sortColumn, $sortDirection))
-            ->values();
+        $this->applySort($query, $sortColumn, $sortDirection);
 
         $perPage = max((int) ($params['per_page'] ?? 20), 1);
         $page = max((int) ($params['page'] ?? Paginator::resolveCurrentPage('page')), 1);
-        $total = $members->count();
-        $items = $members->forPage($page, $perPage)->values();
 
-        return new LengthAwarePaginator(
-            $items,
-            $total,
-            $perPage,
-            $page,
-            [
-                'path' => Paginator::resolveCurrentPath(),
-                'pageName' => 'page',
-            ],
-        );
+        $members = $query->paginate($perPage, ['*'], 'page', $page);
+        $members->getCollection()->transform(fn (User $member) => $this->decorate($member));
+
+        return $members;
     }
 
     public function findMember(Space $space, string $userId): ?User
     {
-        return $this->membersForSpace($space)
-            ->first(fn (User $member) => $member->id === $userId);
+        $member = $this->memberQuery($space)
+            ->where('users.id', $userId)
+            ->first();
+
+        return $member ? $this->decorate($member) : null;
     }
 
     /**
@@ -61,27 +53,27 @@ class SpaceMemberDirectoryService
      */
     public function members(Space $space): Collection
     {
-        return $this->membersForSpace($space);
+        return $this->memberQuery($space)
+            ->get()
+            ->map(fn (User $member) => $this->decorate($member));
     }
 
-    /**
-     * @return Collection<int, User>
-     */
-    private function membersForSpace(Space $space): Collection
+    private function memberQuery(Space $space): Builder
     {
         return User::query()
             ->withTrashed()
             ->join('space_user', 'space_user.user_id', '=', 'users.id')
             ->leftJoin('roles', 'roles.id', '=', 'space_user.role_id')
             ->where('space_user.space_id', $space->id)
-            ->select('users.*', 'roles.key as role_key', 'space_user.created_at as joined_at')
-            ->get()
-            ->map(function (User $member) {
-                $member->setAttribute('can_assign_space_role', true);
-                $member->setAttribute('can_remove', true);
+            ->select('users.*', 'roles.key as role_key', 'space_user.created_at as joined_at');
+    }
 
-                return $member;
-            });
+    private function decorate(User $member): User
+    {
+        $member->setAttribute('can_assign_space_role', true);
+        $member->setAttribute('can_remove', true);
+
+        return $member;
     }
 
     /**
@@ -104,19 +96,34 @@ class SpaceMemberDirectoryService
         ];
     }
 
-    private function matchesTextFilter(string $haystack, array $filter): bool
+    private function nameExpression(Builder $query): string
     {
-        $haystack = mb_strtolower($haystack);
+        $firstname = "COALESCE(users.firstname, '')";
+        $lastname = "COALESCE(users.lastname, '')";
+
+        return $query->getConnection()->getDriverName() === 'sqlite'
+            ? "{$firstname} || ' ' || {$lastname}"
+            : "CONCAT({$firstname}, ' ', {$lastname})";
+    }
+
+    /**
+     * Case-insensitive text matching in SQL, mirroring the operators the
+     * directory previously applied in PHP.
+     *
+     * @param  array{operator: string, value: string}  $filter
+     */
+    private function applyTextFilter(Builder $query, string $expression, array $filter): Builder
+    {
         $needle = mb_strtolower($filter['value']);
+        $escaped = addcslashes($needle, '\\%_');
 
         return match ($filter['operator']) {
-            '^like' => str_starts_with($haystack, $needle),
-            'like$' => str_ends_with($haystack, $needle),
-            'neq' => $haystack !== $needle,
-            'eq' => $haystack === $needle,
-            '!like' => ! str_contains($haystack, $needle),
-            'like' => str_contains($haystack, $needle),
-            default => str_contains($haystack, $needle),
+            '^like' => $query->whereRaw("LOWER({$expression}) LIKE ?", ["{$escaped}%"]),
+            'like$' => $query->whereRaw("LOWER({$expression}) LIKE ?", ["%{$escaped}"]),
+            'neq' => $query->whereRaw("LOWER({$expression}) != ?", [$needle]),
+            'eq' => $query->whereRaw("LOWER({$expression}) = ?", [$needle]),
+            '!like' => $query->whereRaw("LOWER({$expression}) NOT LIKE ?", ["%{$escaped}%"]),
+            default => $query->whereRaw("LOWER({$expression}) LIKE ?", ["%{$escaped}%"]),
         };
     }
 
@@ -131,35 +138,24 @@ class SpaceMemberDirectoryService
         return [$column, $direction];
     }
 
-    private function compareMembers(User $left, User $right, string $column, string $direction): int
+    private function applySort(Builder $query, string $column, string $direction): void
     {
-        $multiplier = $direction === 'desc' ? -1 : 1;
-        $leftValue = $this->sortValue($left, $column);
-        $rightValue = $this->sortValue($right, $column);
-
-        if ($leftValue === $rightValue) {
-            return $multiplier * strnatcasecmp($left->name, $right->name);
-        }
-
-        if ($leftValue === null) {
-            return 1;
-        }
-
-        if ($rightValue === null) {
-            return -1;
-        }
-
-        return $multiplier * ($leftValue <=> $rightValue);
-    }
-
-    private function sortValue(User $member, string $column): string|int|null
-    {
-        return match ($column) {
-            'lastname' => mb_strtolower((string) $member->lastname),
-            'email' => mb_strtolower((string) $member->email),
-            'created_at' => $member->created_at?->getTimestamp(),
-            'last_login_at' => $member->last_login_at?->getTimestamp(),
-            default => mb_strtolower((string) $member->firstname),
+        $expression = match ($column) {
+            'lastname' => 'LOWER(users.lastname)',
+            'email' => 'LOWER(users.email)',
+            'created_at' => 'users.created_at',
+            'last_login_at' => 'users.last_login_at',
+            default => 'LOWER(users.firstname)',
         };
+
+        $direction = $direction === 'desc' ? 'desc' : 'asc';
+
+        // Nulls always sort last (as the previous PHP comparator did), ties
+        // break on the member's name.
+        $query
+            ->orderByRaw("{$expression} IS NULL")
+            ->orderByRaw("{$expression} {$direction}")
+            ->orderByRaw("LOWER(users.firstname) {$direction}")
+            ->orderByRaw("LOWER(users.lastname) {$direction}");
     }
 }
