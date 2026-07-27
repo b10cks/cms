@@ -12,10 +12,13 @@ class ChangePassword
         $user->password = $password;
         $user->save();
 
-        // Changing a password is how someone locks an intruder out, so every
-        // API token minted before this point has to stop working. The session
-        // that performed the change is re-authenticated by the caller.
-        $user->tokens()->delete();
+        // Personal access tokens deliberately survive this: they are long-lived
+        // credentials with their own lifecycle, revoked by hand from account
+        // settings rather than swept away by an unrelated action. Browser
+        // sessions do not survive — every other session still carries the old
+        // password hash, and AuthenticateSession logs them out on their next
+        // request. The session performing the change re-stores the new hash on
+        // the way out, so it stays signed in.
 
         if (! $silent) {
             event(new PasswordChanged($user, [
