@@ -45,8 +45,14 @@ class CreateContent
         }
     }
 
-    public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner)
-    {
+    public function execute(
+        array $data,
+        Content $content,
+        Space $space,
+        Authenticatable|User|null $owner,
+        ?Block $block = null,
+        bool $touchSpace = true,
+    ) {
         if (! (bool) data_get($data, 'force', false)) {
             $errors = $this->validator->validate($space, $data);
             if ($errors !== []) {
@@ -54,7 +60,7 @@ class CreateContent
             }
         }
 
-        \DB::transaction(function () use ($data, $content, $owner, $space) {
+        \DB::transaction(function () use ($data, $content, $owner, $space, $block, $touchSpace) {
             if (! \Arr::has($data, 'language_iso')) {
                 $data['language_iso'] = $space->settings->getDefaultLanguage();
             }
@@ -71,7 +77,7 @@ class CreateContent
             }
 
             /** @var Block $block */
-            $block = Block::query()->findOrFail($data['block_id']);
+            $block ??= Block::query()->findOrFail($data['block_id']);
             $parent = isset($data['parent_id']) ? Content::query()->with('block')->find($data['parent_id']) : null;
 
             $this->contentHierarchyValidator->validatePlacement(
@@ -143,7 +149,9 @@ class CreateContent
                 $this->contentPositionService->placeNewContent($content, $requestedPosition);
             }
 
-            $space->touch('content_updated_at');
+            if ($touchSpace) {
+                $space->touch('content_updated_at');
+            }
         });
     }
 

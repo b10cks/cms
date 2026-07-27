@@ -23,6 +23,12 @@ class BulkCreateContent
         DB::transaction(function () use ($items, $space, $owner, &$createdItems) {
             $tempIdMap = [];
 
+            // Prefetch the distinct blocks once instead of a findOrFail per item.
+            $blocks = Block::query()
+                ->whereIn('id', collect($items)->pluck('block_id')->filter()->unique())
+                ->get()
+                ->keyBy('id');
+
             foreach ($items as $item) {
                 // Resolve parent_id if it references a temp_id
                 $parentId = $item['parent_id'] ?? null;
@@ -39,7 +45,8 @@ class BulkCreateContent
                 $tmpId = $item['temp_id'] ?? null;
                 unset($item['temp_id']);
                 $content = new Content();
-                $this->createContent->execute($item, $content, $space, $owner);
+                // The management-DB space touch is deferred to one write after the loop.
+                $this->createContent->execute($item, $content, $space, $owner, $blocks->get($item['block_id']), false);
 
                 // Map temp_id to real ID for subsequent items
                 if ($tmpId !== null) {
@@ -54,6 +61,8 @@ class BulkCreateContent
                     'parent_id' => $content->parent_id,
                 ];
             }
+
+            $space->touch('content_updated_at');
         });
 
         return $createdItems;
