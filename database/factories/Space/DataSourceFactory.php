@@ -36,7 +36,11 @@ class DataSourceFactory extends Factory
                 'cache_ttl' => $this->faker->numberBetween(60, 3600),
                 'fallback_dimension' => $this->faker->randomElement(array_keys($dimensions)),
             ],
-            'is_active' => $this->faker->boolean(90), // 90% chance of being active
+            // Active by default. A 90% random default made every test that
+            // reads a data source fail roughly one run in ten, since the
+            // delivery endpoint 404s an inactive source. Use ->inactive()
+            // when that is what the test is about.
+            'is_active' => true,
         ];
     }
 
