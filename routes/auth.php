@@ -83,7 +83,7 @@ Route::group(['prefix' => '2fa'], function () {
         ->name('2fa.setup.confirm');
 
     Route::post('verify', TwoFactorVerifyController::class)
-        ->middleware(['auth:sanctum', 'stateful'])
+        ->middleware(['auth:sanctum', 'stateful', 'throttle:crucial'])
         ->name('2fa.verify');
 
     Route::post('disable', TwoFactorDisableController::class)

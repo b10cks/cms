@@ -4,6 +4,7 @@ return [
     'failed' => 'These credentials do not match our records.',
     'password' => 'The provided password is incorrect.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
+    'too_many_verification_attempts' => 'Too many failed verification attempts. Please try again in :seconds seconds.',
 
     // Password Reset
     'password_reset_link_sent' => 'If an account with that email address exists, we have emailed your password reset link.',
