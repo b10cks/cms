@@ -23,7 +23,7 @@ class RedirectController extends Controller
             ->select(['id', 'source', 'target', 'status_code']);
 
         $redirects = $query->paginate(
-            perPage: $request->get('per_page', 50),
+            perPage: min(max((int) $request->get('per_page', 50), 1), 1000),
             page: $request->get('page', 1)
         );
 
