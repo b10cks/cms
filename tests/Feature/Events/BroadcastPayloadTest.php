@@ -73,17 +73,20 @@ class BroadcastPayloadTest extends TestCase
     }
 
     #[Test]
-    public function content_updated_nested_version_is_expanded_into_plain_data(): void
+    public function content_updated_nested_translations_are_expanded_into_plain_data(): void
     {
         $content = $this->makeContentWithVersion();
+        $translation = $this->makeTranslationOf($content);
 
-        $payload = (new ContentUpdated($content, $this->space))->broadcastWith();
+        $payload = (new ContentUpdated($content->refresh(), $this->space))->broadcastWith();
 
-        $this->assertInstanceOf(\stdClass::class, $payload['current_version']);
+        $this->assertIsArray($payload['i18n']);
+        $this->assertCount(1, $payload['i18n']);
+        $this->assertInstanceOf(\stdClass::class, $payload['i18n'][0]);
         $this->assertSame(
-            $content->current_version_id,
-            $payload['current_version']->id,
-            'The nested version must keep its data once expanded eagerly.',
+            $translation->id,
+            $payload['i18n'][0]->id,
+            'The nested translation must keep its data once expanded eagerly.',
         );
     }
 
@@ -96,12 +99,15 @@ class BroadcastPayloadTest extends TestCase
     public function content_updated_payload_encodes_once_the_space_connection_is_gone(): void
     {
         $content = $this->makeContentWithVersion();
-        $event = new ContentUpdated($content, $this->space);
+        $translation = $this->makeTranslationOf($content);
+        $event = new ContentUpdated($content->refresh(), $this->space);
 
         $this->forgetSpaceConnection();
         $payload = $this->payloadAfterQueueRoundTrip($event);
 
-        $this->assertStringContainsString('"id":"' . $content->current_version_id . '"', $payload);
+        // The nested translation is the part the worker would have to read back
+        // off a connection it no longer has.
+        $this->assertStringContainsString('"id":"' . $translation->id . '"', $payload);
     }
 
     /**
@@ -110,13 +116,13 @@ class BroadcastPayloadTest extends TestCase
      * the shape clients bind against.
      */
     #[Test]
-    public function content_updated_keeps_empty_content_as_an_object(): void
+    public function content_updated_keeps_empty_settings_as_an_object(): void
     {
-        $content = $this->makeContentWithVersion(versionContent: []);
+        $content = $this->makeContentWithVersion();
 
         $payload = $this->payloadAfterQueueRoundTrip(new ContentUpdated($content, $this->space));
 
-        $this->assertStringContainsString('"content":{}', $payload);
+        $this->assertStringContainsString('"settings":{}', $payload);
     }
 
     /**
@@ -155,6 +161,12 @@ class BroadcastPayloadTest extends TestCase
      */
     private function assertFullyMaterialised(mixed $payload, string $path = 'payload'): void
     {
+        if ($path === 'payload') {
+            // A payload of nothing but scalars would otherwise recurse without
+            // asserting anything, and the test would pass by doing no work.
+            $this->assertNotEmpty($payload, 'The broadcast payload must not be empty.');
+        }
+
         if (is_array($payload)) {
             foreach ($payload as $key => $value) {
                 $this->assertFullyMaterialised($value, $path . '.' . $key);
@@ -189,6 +201,19 @@ class BroadcastPayloadTest extends TestCase
         $content->current_version->forceFill(['content' => $versionContent])->save();
 
         return $content->refresh();
+    }
+
+    /**
+     * A translation of the given entry, which the menu payload carries nested
+     * under `i18n`.
+     */
+    private function makeTranslationOf(Content $content): Content
+    {
+        return Content::factory()->create([
+            'block_id' => $content->block_id,
+            'i18n_parent_id' => $content->id,
+            'language_iso' => 'de',
+        ]);
     }
 
     private function makeBlock(): Block
