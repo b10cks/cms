@@ -15,6 +15,9 @@ class ProviderNoteController extends Controller
 {
     public function index(Request $request): ResourceCollection
     {
+        // Deliberately readable by every authenticated user: these are the
+        // operator's announcements, rendered in the sidebar for everyone.
+        // Writing them stays root-only, gated in the form requests.
         $notes = ProviderNote::query()
             ->orderByDesc('is_pinned')
             ->latest('updated_at')

@@ -7,6 +7,7 @@ use App\Services\Token\TokenUsageService;
 use Closure;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class AuthenticateDataApi
@@ -18,7 +19,7 @@ class AuthenticateDataApi
     {
         $start = now();
         $plainTextToken = $request->query('token');
-        if (!$plainTextToken) {
+        if (! $plainTextToken) {
             throw new AuthenticationException('No API token provided');
         }
 
@@ -42,15 +43,15 @@ class AuthenticateDataApi
     protected function validateToken(string $plainTextToken, TokenUsageService $usageService): Token
     {
         $token = Token::findValidToken($plainTextToken);
-        if (!$token) {
+        if (! $token) {
             throw new UnauthorizedHttpException('Bearer', 'Invalid or expired api token');
         }
 
         if ($token->space->state !== 'live') {
-            throw new NotFoundHttpException();
+            throw new NotFoundHttpException;
         }
 
-        if (!$usageService->canExecute($token)) {
+        if (! $usageService->canExecute($token)) {
             throw new UnauthorizedHttpException('Bearer', 'Token usage limit exceeded');
         }
 

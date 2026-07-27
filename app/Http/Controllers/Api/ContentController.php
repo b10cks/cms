@@ -11,6 +11,7 @@ use App\Models\Space\Content;
 use App\Models\Space\Redirect;
 use App\Services\Content\ContentI18nResolver;
 use App\Services\Content\LocalizedContentSlugService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -52,7 +53,11 @@ class ContentController
 
         $vid = $request->input('vid', 'published');
         if ($vid === 'published') {
-            $query->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id');
+            // Inner join plus the published_at check: a left join returned
+            // never-published entries as rows with a null payload, which still
+            // leaked the names and slugs of unreleased content.
+            $query->join('content_versions', 'contents.published_version_id', '=', 'content_versions.id')
+                ->whereNotNull('contents.published_at');
         } elseif ($vid === 'draft') {
             $query->leftJoin('content_versions', 'contents.current_version_id', '=', 'content_versions.id');
         }
@@ -98,7 +103,7 @@ class ContentController
      * folder sorted by `published_at`). Requests without such a configuration
      * keep their previous (unspecified) ordering.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder<Content>  $query
+     * @param  Builder<Content>  $query
      */
     protected function applyConfiguredChildOrdering($query, Request $request): void
     {
@@ -186,6 +191,12 @@ class ContentController
         abort_if(! $candidate, 404);
 
         $versionScope = $request->input('vid', 'published');
+
+        // An entry that was never published, or was unpublished again, must not
+        // be reachable in the published scope even though the row still exists.
+        if ($versionScope === 'published') {
+            abort_if(! $candidate->published_at || ! $candidate->published_version_id, 404);
+        }
 
         if ($versionScope === 'published') {
             $candidate->loadMissing([
