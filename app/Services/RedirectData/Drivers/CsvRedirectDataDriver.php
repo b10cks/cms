@@ -4,40 +4,34 @@ namespace App\Services\RedirectData\Drivers;
 
 use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
-use App\Support\SpreadsheetValue;
+use App\Services\ImportExport\WritesCsvDownload;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CsvRedirectDataDriver extends BaseRedirectDataDriver
 {
+    use WritesCsvDownload;
+
     private const HEADERS = ['id', 'external_id', 'source', 'target', 'status_code'];
 
     public function export(Space $space, Collection $redirects): Response
     {
         $filename = $this->generateFilename($space, 'csv');
 
-        return new StreamedResponse(function () use ($redirects) {
-            $handle = fopen('php://output', 'w');
-
-            fputcsv($handle, self::HEADERS);
-
+        $rows = (function () use ($redirects): \Generator {
             foreach ($redirects as $redirect) {
-                fputcsv($handle, SpreadsheetValue::escapeRow([
+                yield [
                     $redirect->id,
                     $redirect->external_id,
                     $redirect->source,
                     $redirect->target,
                     $redirect->status_code,
-                ]));
+                ];
             }
+        })();
 
-            fclose($handle);
-        }, 200, [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ]);
+        return $this->csvDownload(self::HEADERS, $rows, $filename);
     }
 
     public function parseFile(UploadedFile $file): array

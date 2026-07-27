@@ -4,34 +4,29 @@ namespace App\Services\ContentData\Drivers;
 
 use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
-use App\Support\SpreadsheetValue;
+use App\Services\ImportExport\WritesCsvDownload;
 use Illuminate\Http\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CsvContentDataDriver extends BaseContentDataDriver
 {
+    use WritesCsvDownload;
+
     public function export(Space $space, array $documents): Response
     {
         ['headings' => $headings, 'rows' => $rows] = $this->flatten($documents);
         $filename = $this->generateFilename($space, 'csv');
 
-        return new StreamedResponse(function () use ($headings, $rows): void {
-            $handle = fopen('php://output', 'w');
-
-            fputcsv($handle, $headings);
-
+        $orderedRows = (function () use ($rows, $headings): \Generator {
             foreach ($rows as $row) {
-                fputcsv($handle, SpreadsheetValue::escapeRow(
-                    array_map(static fn (string $header): string => (string) ($row[$header] ?? ''), $headings)
-                ));
+                yield array_map(
+                    static fn (string $header): string => (string) ($row[$header] ?? ''),
+                    $headings,
+                );
             }
+        })();
 
-            fclose($handle);
-        }, 200, [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ]);
+        return $this->csvDownload($headings, $orderedRows, $filename);
     }
 
     public function parse(UploadedFile $file): array

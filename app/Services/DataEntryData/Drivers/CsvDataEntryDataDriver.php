@@ -5,36 +5,28 @@ namespace App\Services\DataEntryData\Drivers;
 use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use App\Models\Space\DataSource;
-use App\Support\SpreadsheetValue;
+use App\Services\ImportExport\WritesCsvDownload;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CsvDataEntryDataDriver extends BaseDataEntryDataDriver
 {
+    use WritesCsvDownload;
+
     public function export(Space $space, DataSource $dataSource, Collection $entries): Response
     {
         $filename = $this->generateFilename($space, $dataSource, 'csv');
         $dimensionColumns = $this->buildDimensionColumns($dataSource);
         $headers = [...self::BASE_COLUMNS, ...$dimensionColumns];
 
-        return new StreamedResponse(function () use ($entries, $headers, $dimensionColumns) {
-            $handle = fopen('php://output', 'w');
-
-            fputcsv($handle, $headers);
-
+        $rows = (function () use ($entries, $dimensionColumns): \Generator {
             foreach ($entries as $entry) {
-                fputcsv($handle, SpreadsheetValue::escapeRow(
-                    array_values($this->buildEntryRow($entry, $dimensionColumns))
-                ));
+                yield $this->buildEntryRow($entry, $dimensionColumns);
             }
+        })();
 
-            fclose($handle);
-        }, 200, [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ]);
+        return $this->csvDownload($headers, $rows, $filename);
     }
 
     public function parseFile(UploadedFile $file): array
