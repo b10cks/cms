@@ -7,14 +7,66 @@ use App\Models\Space\Content;
 use App\Services\Content\AssetHandler;
 use App\Services\Content\ContentI18nResolver;
 use App\Services\Content\ContentI18nService;
+use App\Services\Content\ResolvedContent;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 
 /**
  * @mixin Content
  */
 class ContentResource extends JsonResource
 {
+    /**
+     * Per-request cache of batch-resolved rows, keyed by content id. The
+     * cached model instance is kept alongside so a stale entry from an
+     * earlier request in the same process can never be served.
+     *
+     * @var array<string, array{content: Content, resolved: ResolvedContent}>
+     */
+    protected static array $preResolved = [];
+
+    /**
+     * Resolve a whole page of contents in one batch instead of once per row.
+     *
+     * @param  iterable<int, Content>  $contents
+     */
+    public static function preResolve(Space $space, iterable $contents): void
+    {
+        $contents = Collection::make($contents)->values();
+
+        self::$preResolved = [];
+
+        if ($contents->isEmpty()) {
+            return;
+        }
+
+        $resolvedMany = app(ContentI18nResolver::class)->resolveMany(
+            $space,
+            $contents->map(fn (Content $content): array => [
+                'content' => $content,
+                'target_language' => $content->language_iso,
+            ]),
+            'current',
+        );
+
+        EloquentCollection::make(
+            $resolvedMany
+                ->map(fn (ResolvedContent $resolved): Content => $resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent)
+                ->unique('id')
+                ->values()
+                ->all()
+        )->loadMissing(['block', 'parent', 'current_version', 'published_version']);
+
+        foreach ($contents as $index => $content) {
+            self::$preResolved[$content->id] = [
+                'content' => $content,
+                'resolved' => $resolvedMany->get($index),
+            ];
+        }
+    }
+
     public function toArray(Request $request): array
     {
         /** @var Space|null $space */
@@ -24,12 +76,15 @@ class ContentResource extends JsonResource
         $resolvedRow = $this->resource;
 
         if ($space) {
-            $resolved = app(ContentI18nResolver::class)->resolve(
-                $space,
-                $this->resource,
-                $this->language_iso,
-                'current',
-            );
+            $cached = self::$preResolved[$this->resource->id] ?? null;
+            $resolved = $cached && $cached['content'] === $this->resource
+                ? $cached['resolved']
+                : app(ContentI18nResolver::class)->resolve(
+                    $space,
+                    $this->resource,
+                    $this->language_iso,
+                    'current',
+                );
             $resolvedRow = $resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent;
             $resolvedRow->loadMissing(['block', 'parent', 'current_version', 'published_version']);
         }

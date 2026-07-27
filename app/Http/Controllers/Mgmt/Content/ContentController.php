@@ -30,10 +30,9 @@ class ContentController extends Controller
         $this->authorize('viewAny', [Content::class, $space]);
 
         $content = Content::filter(ContentFilter::fromRequest($request))
-            ->with(['assets'])
-            ->leftJoin('content_versions', 'contents.published_version_id', '=', 'content_versions.id')
-            ->select('contents.*', 'content_versions.asset_ids')
             ->paginate();
+
+        ContentResource::preResolve($space, $content->items());
 
         return ContentResource::collection($content);
     }
