@@ -27,10 +27,28 @@ class DeleteContent
 
     private function deleteChildren(Content $content, Space $space)
     {
-        foreach ($content->children as $child) {
-            $this->deleteChildren($child, $space);
-            $this->searchService->removeContent($child, $space);
-            $child->delete();
+        // Collect the subtree with one query per level instead of one per
+        // node, then delete deepest level first so children always go before
+        // their parent. Deletes stay per-model: the soft-delete hooks (serial
+        // pool, ContentDeleted event, audit) are load-bearing.
+        $levels = [];
+        $level = $content->children;
+
+        while ($level->isNotEmpty()) {
+            $levels[] = $level;
+            $level = Content::query()
+                ->whereIn('parent_id', $level->pluck('id'))
+                ->orderBy('position')
+                ->orderBy('name')
+                ->orderBy('id')
+                ->get();
+        }
+
+        foreach (array_reverse($levels) as $levelRows) {
+            foreach ($levelRows as $child) {
+                $this->searchService->removeContent($child, $space);
+                $child->delete();
+            }
         }
     }
 }

@@ -18,6 +18,9 @@ use Illuminate\Support\Str;
 
 class ContentTreeOperationService
 {
+    /** @var array<string, Block|null> */
+    protected array $blockCache = [];
+
     public function __construct(
         protected ContentI18nService $contentI18nService,
         protected ContentHierarchyValidator $contentHierarchyValidator,
@@ -76,7 +79,9 @@ class ContentTreeOperationService
         return DB::transaction(function () use ($orderedIds, $parentId, $afterId, $space, $position): array {
             $warnings = [];
             $sortingEnabled = $space->settings->isContentSortingEnabled();
-            $normalizedIds = $this->resolveOrderedRootSelection($orderedIds);
+            // Callers pass an already root-resolved selection (the controller
+            // resolves it once for authorization) — no need to resolve again.
+            $normalizedIds = $orderedIds;
             $items = Content::query()
                 ->with(['block'])
                 ->whereIn('id', $normalizedIds)
@@ -212,7 +217,9 @@ class ContentTreeOperationService
         ?int $position = null,
     ): array {
         return DB::transaction(function () use ($orderedIds, $parentId, $afterId, $space, $owner, $position): array {
-            $normalizedIds = $this->resolveOrderedRootSelection($orderedIds);
+            // Callers pass an already root-resolved selection (the controller
+            // resolves it once for authorization) — no need to resolve again.
+            $normalizedIds = $orderedIds;
             $sources = Content::query()
                 ->with(['block', 'current_version', 'children'])
                 ->whereIn('id', $normalizedIds)
@@ -294,18 +301,39 @@ class ContentTreeOperationService
 
         $selectedIds = collect($ids)->filter(fn (string $id) => $items->has($id))->values();
 
-        return $selectedIds
-            ->filter(function (string $id) use ($selectedIds, $items): bool {
-                $current = $items->get($id);
+        // Fetch the ancestor chains level by level instead of one find() per
+        // ancestor. A missing (deleted) ancestor terminates its chain, exactly
+        // like the previous per-row walk did.
+        $parentById = $items->map(fn (Content $item): ?string => $item->parent_id);
+        $pending = $parentById->values()->filter()->unique()
+            ->reject(fn (string $id): bool => $parentById->has($id))
+            ->values();
 
-                while ($current?->parent_id) {
-                    if ($selectedIds->contains($current->parent_id)) {
+        while ($pending->isNotEmpty()) {
+            $ancestors = Content::query()
+                ->whereNull('deleted_at')
+                ->whereIn('id', $pending)
+                ->pluck('parent_id', 'id');
+
+            foreach ($pending as $id) {
+                $parentById->put($id, $ancestors->get($id));
+            }
+
+            $pending = $ancestors->values()->filter()->unique()
+                ->reject(fn (string $id): bool => $parentById->has($id))
+                ->values();
+        }
+
+        return $selectedIds
+            ->filter(function (string $id) use ($selectedIds, $parentById): bool {
+                $parentId = $parentById->get($id);
+
+                while ($parentId) {
+                    if ($selectedIds->contains($parentId)) {
                         return false;
                     }
 
-                    $current = $items->get($current->parent_id) ?? Content::query()
-                        ->whereNull('deleted_at')
-                        ->find($current->parent_id);
+                    $parentId = $parentById->get($parentId);
                 }
 
                 return true;
@@ -342,11 +370,17 @@ class ContentTreeOperationService
             $owner,
         );
 
+        // Batch the next level's relations so the recursion does not lazy
+        // load them one node at a time.
+        $source->children->loadMissing(['current_version', 'children']);
+
         foreach ($source->children as $child) {
             $this->duplicateNodeRecursive($child, $copy->id, $space, $owner);
         }
 
-        return $copy->fresh();
+        // No fresh() here: duplicateSubtrees refreshes the returned roots
+        // before building its response, and child return values are unused.
+        return $copy;
     }
 
     protected function makeCopySlugBase(string $slug): string
@@ -367,8 +401,9 @@ class ContentTreeOperationService
     protected function withoutSerialValues(string $blockId, array $content): array
     {
         // Loaded explicitly: relations re-loaded by content lifecycle events
-        // carry a restricted column set without the schema.
-        $block = Block::query()->find($blockId);
+        // carry a restricted column set without the schema. Memoized per run —
+        // a duplicated subtree repeats the same handful of blocks.
+        $block = $this->blockCache[$blockId] ??= Block::query()->find($blockId);
 
         if (! $block) {
             return $content;
@@ -390,13 +425,18 @@ class ContentTreeOperationService
         $slug = Str::slug($baseSlug);
         $suffix = 2;
 
-        while (Content::query()
+        // Every candidate ("slug", "slug-2", "slug-3", …) shares the slugged
+        // base as prefix, so one prefix query replaces an exists() per attempt.
+        $existing = Content::query()
             ->where('parent_id', $parentId)
             ->where('language_iso', $languageIso)
-            ->where('slug', $slug)
+            ->where('slug', 'LIKE', "{$slug}%")
             ->whereNull('deleted_at')
             ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
-            ->exists()) {
+            ->pluck('slug')
+            ->flip();
+
+        while ($existing->has($slug)) {
             $slug = Str::slug("{$baseSlug}-{$suffix}");
             $suffix++;
         }
@@ -419,14 +459,18 @@ class ContentTreeOperationService
 
     protected function validateBatchPlacement(Collection $items, ?Content $targetParent, Space $space): void
     {
-        foreach ($items as $item) {
-            $item->loadMissing('block');
+        EloquentCollection::make($items->values()->all())->loadMissing('block');
 
+        // The target parent's ancestor chain is the same for every item, so
+        // walk it once instead of once per item.
+        $parentChainIds = $targetParent ? $this->collectAncestorChainIds($targetParent) : [];
+
+        foreach ($items as $item) {
             if ($targetParent && $targetParent->id === $item->id) {
                 throw new \InvalidArgumentException('A content item cannot become its own parent.');
             }
 
-            if ($targetParent && $this->wouldCreateCircularReference($item, $targetParent)) {
+            if ($targetParent && isset($parentChainIds[$item->id])) {
                 throw new \InvalidArgumentException('Cannot move content: would create circular reference.');
             }
 
@@ -489,25 +533,27 @@ class ContentTreeOperationService
         ];
     }
 
-    protected function wouldCreateCircularReference(Content $content, Content $newParent): bool
+    /**
+     * The content's own id plus every ancestor id above it, as a lookup set.
+     *
+     * @return array<string, true>
+     */
+    protected function collectAncestorChainIds(Content $content): array
     {
-        $current = $newParent;
+        $ids = [$content->id => true];
+        $current = $content;
 
-        while ($current !== null) {
-            if ($current->id === $content->id) {
-                return true;
-            }
-
-            if ($current->parent_id === null) {
-                return false;
-            }
-
+        while ($current !== null && $current->parent_id !== null && ! isset($ids[$current->parent_id])) {
             $current = $current->relationLoaded('parent')
                 ? $current->getRelation('parent')
                 : Content::query()->whereNull('deleted_at')->select(['id', 'parent_id'])->find($current->parent_id);
+
+            if ($current !== null) {
+                $ids[$current->id] = true;
+            }
         }
 
-        return false;
+        return $ids;
     }
 
     protected function collectCanonicalSubtreeIds(array $ids): array
@@ -517,8 +563,9 @@ class ContentTreeOperationService
 
         while ($queue->isNotEmpty()) {
             $chunk = $queue->splice(0, 100)->all();
-            $rows = Content::query()->whereIn('id', $chunk)->whereNull('deleted_at')->get();
+            $rows = Content::query()->whereIn('id', $chunk)->whereNull('deleted_at')->get(['id', 'i18n_parent_id']);
 
+            $canonicalIds = [];
             foreach ($rows as $row) {
                 $canonicalId = $this->contentI18nService->getCanonicalId($row);
                 if (isset($seen[$canonicalId])) {
@@ -526,21 +573,28 @@ class ContentTreeOperationService
                 }
 
                 $seen[$canonicalId] = true;
-
-                Content::query()
-                    ->where(function ($query) use ($canonicalId) {
-                        $query->where('id', $canonicalId)->orWhere('i18n_parent_id', $canonicalId);
-                    })
-                    ->whereNull('deleted_at')
-                    ->chunk(100, function (EloquentCollection $familyRows) use (&$queue): void {
-                        $children = Content::query()
-                            ->whereIn('parent_id', $familyRows->pluck('id'))
-                            ->whereNull('deleted_at')
-                            ->pluck('id');
-
-                        $queue = $queue->concat($children)->unique()->values();
-                    });
+                $canonicalIds[] = $canonicalId;
             }
+
+            if ($canonicalIds === []) {
+                continue;
+            }
+
+            // One family + one children query per BFS level instead of one
+            // pair per canonical node.
+            Content::query()
+                ->where(function ($query) use ($canonicalIds) {
+                    $query->whereIn('id', $canonicalIds)->orWhereIn('i18n_parent_id', $canonicalIds);
+                })
+                ->whereNull('deleted_at')
+                ->chunk(100, function (EloquentCollection $familyRows) use (&$queue): void {
+                    $children = Content::query()
+                        ->whereIn('parent_id', $familyRows->pluck('id'))
+                        ->whereNull('deleted_at')
+                        ->pluck('id');
+
+                    $queue = $queue->concat($children)->unique()->values();
+                });
         }
 
         return array_keys($seen);
