@@ -6,7 +6,6 @@ use App\Http\Resources\Management\SubscriptionPeriodResource;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceTrafficUsageHourly;
 use App\Models\Management\SubscriptionPeriod;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Carbon;
@@ -58,6 +57,7 @@ class SpaceUsageHistoryController extends Controller
     {
         $rows = SpaceTrafficUsageHourly::where('space_id', $space->id)
             ->whereBetween('hour_timestamp', [$start, $end])
+            ->toBase()
             ->get(['hour_timestamp', 'total_bytes']);
 
         return $this->groupByDay($rows, 'total_bytes');
@@ -65,9 +65,11 @@ class SpaceUsageHistoryController extends Controller
 
     /**
      * Sum an hourly column into per-day buckets. Grouped in PHP to stay driver
-     * agnostic; a period spans at most a year of hourly rows.
+     * agnostic; a period spans at most a year of hourly rows. Rows are plain
+     * stdClass objects (no model hydration) — `hour_timestamp` is a raw string
+     * that Carbon::parse handles.
      *
-     * @param  Collection<int, Model>  $rows
+     * @param  Collection<int, object>  $rows
      * @return array<int, array{date: string, value: int}>
      */
     private function groupByDay($rows, string $column): array
