@@ -3,6 +3,67 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.28-eef36fcd] — 2026-7-28
+
+- 💡 Update self hosting docs with new ENV
+- ⚡️ Absorb the publish stampede with an origin micro-cache
+- ⚡️ Skip redundant space reconnects and usage-row hydration
+- ⚡️ Cache LemonSqueezy invoice listings for five minutes
+- ⚡️ Validate and prefetch bulk-created contents in one pass
+- ⚡️ Walk content trees level by level
+- ⚡️ Keep version payloads out of release listings
+- ⚡️ Stream data exports and chunk imports
+- ⚡️ Push member directory filtering and paging into SQL
+- ⚡️ Look up linked assets in the database, not in PHP
+- ⚡️ Clamp redirect page size and index icons.updated_at
+- ⚡️ Drop relation loads the delivery resolver redoes anyway
+- ⚡️ Batch-resolve search hits on the delivery API
+- ⚡️ Resolve mgmt content lists once per page
+- ⚡️ Batch owner lookups when listing audit logs
+- ⚡️ Increment usage stats instead of recounting the period
+- ⚡️ Hash audit logs with an HMAC instead of bcrypt
+- 🔒 Require a second factor to mint an API token
+- ⚡️ Remember resolved link families for the request
+- ✅ Stop the data source factory rolling a dice for is_active
+- 🔒 Escape the heading row of CSV exports too
+- 🔒 Delete avatars from the disk they are written to
+- 🔒 Pin webhook connections to the addresses the SSRF guard approved
+- 🔒 Store avatars and icons by their content, on the public disk
+- 🔒 Validate environment URLs, and stop dropping settings that had no rule
+- 🔒 Keep unpublished entries out of relation and link expansion
+- 🔒 Require a consented membership before a team IdP may assert an address
+- 🔒 End other sessions on a password change, and leave API tokens alone
+- 🔒 Re-authenticate and throttle the two-factor management endpoints
+- 💡 Regenerate docs
+- ⬆️ Bump versions
+- 🐛 Order the comment listing deterministically
+- ✅ Update the broadcast payload tests to the menu-shaped payload
+- 🔒 Keep unpublished entries out of the published delivery scope
+- 🔒 Close a set of smaller credential and upload exposures
+- ✅ Cover OutboundUrlGuard, and normalize IPv4-in-IPv6 before filtering
+- 🔒 Keep space.update out of AI settings
+- 🔒 Serve icon SVG inert
+- 🔒 Throttle image delivery and count frames in the pixel guard
+- 🔒 Neutralize formula injection in CSV and XLSX exports
+- 🔒 Require proven email ownership before linking a social profile
+- 🔒 Throttle two-factor and step-up verification attempts
+- 🔒 Revoke API tokens on logout and password change
+- 🔒 Authorize the block folder endpoints
+- 🔒 Escape absolute URLs in the handlebars image helper
+- 🔒 Keep the field-plugin iframe sandbox opaque
+- 🔒 Run MCP tool calls as the calling user, not a shared admin token
+- 🐛 Fix two authorization calls that always threw
+- 🔒 Record the impersonator server-side and fix leaving impersonation
+- 🔒 Actually enforce email verification
+- 🔒 Scope the SAML email fallback to the provider's own team
+- 🔒 Trust only configured hosts and proxies, and set security headers
+- 🔒 Stop serving the private storage disk over HTTP
+- ✨ Add heatmap to dashboard
+- 🚸 Better handled expired sessions
+- 👔 Harden serial field
+- 🐛 Harden serial fields: post-create edits, duplication, moves
+- ✨ Add serial fields: auto-generated content identifiers
+
 ## [v2026.7.22-6077c32f] — 2026-7-22
 
 - ⬆️ Bump versions
