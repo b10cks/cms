@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.28-85571bb8] — 2026-7-28
+
+- 📝 Document field plugins, named sitemaps, and the wider MCP catalog
+- ✨ Bring the MCP surface on par with the management API
+
 ## [v2026.7.28-46c5d190] — 2026-7-28
 
 - 🐛 Widen audit_logs.hash to fit HMAC-SHA256 hashes
