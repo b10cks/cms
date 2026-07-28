@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.28-4e221629] — 2026-7-28
+
+- 📝 Document the breadcrumb endpoint
+- ✨ Serve content breadcrumbs from the delivery API
+- 🐛 Honor a resource collection's wrapper in the generated spec
+
 ## [v2026.7.28-85571bb8] — 2026-7-28
 
 - 📝 Document field plugins, named sitemaps, and the wider MCP catalog
