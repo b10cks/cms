@@ -128,18 +128,19 @@ Responses are the Management API's JSON, pretty-printed. Errors surface the API'
 
 ## Operation catalog
 
-**268 operations** cover the entire Management API surface. If it's in the [Management API](../api/management-api.md), it's callable. By resource group:
+**283 operations** cover the entire Management API surface. If it's in the [Management API](../api/management-api.md), it's callable. By resource group:
 
 | Group | Covers |
 | --- | --- |
 | `system.*` | Health, public config, plans, effective permissions, space blueprints, public invites |
 | `users.*`, `notifications.*` | Profile, settings, password, personal access tokens, social links, invites, notifications |
 | `teams.*` | Teams, members, invites, SAML providers, space blueprints, space roles |
-| `spaces.*` | Spaces, members, invites, subscriptions, AI settings/configs, audit logs, backups, migrations, search, usage & invoices, onboarding |
+| `spaces.*` | Spaces, members, invites, people directory, subscriptions (incl. resume, payment requests, available plans), AI settings/configs, audit logs, backups, migrations, search, usage & invoices, onboarding |
 | `blocks.*`, `blockFolders.*`, `blockTags.*` | Block definitions, declarative [`blocks.sync`](../api/management-api.md), templates, restorable versions, folders, tags |
 | `contents.*`, `comments.*` | Content CRUD, bulk create, tree operations, publish/unpublish/schedule, versions, export, comments & reactions |
 | `assets.*`, `assetFolders.*`, `assetTags.*`, `assetCollections.*`, `assetShares.*`, `assetPackages.*`, `shares.*` | Assets, versions, linked contents, folders, tags, manual & smart collections, public shares (incl. password unlock), zip packages |
 | `dataSources.*` | Data sources, entries, import/export, AI translation of missing dimensions |
+| `fieldPlugins.*` | Sandboxed iframe custom field plugins — the `plugin` field type |
 | `redirects.*` | Redirects, import/export, hit-counter reset |
 | `automations.*` | Automations, actions, trigger catalog, manual triggers, executions & replay, stats |
 | `releases.*` | Releases, version assignment, commit, publish, cancel |
@@ -149,6 +150,8 @@ Responses are the Management API's JSON, pretty-printed. Errors surface the API'
 | `provider.*` | Provider-level stats and notes (self-hosted/agency instances) |
 
 Call `b10cks_mgmt_operations` for the authoritative list — it always reflects the connected instance.
+
+Not exposed: endpoints that take file uploads (avatar images, asset file replacement, icon/asset/content imports) — operation calls carry JSON only — and the browser-only realtime presence endpoints.
 
 ## Worked examples
 

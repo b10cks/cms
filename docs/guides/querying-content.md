@@ -16,6 +16,7 @@ This page covers all of it: version selection, filters, sorting, pagination, `ta
 | `GET /api/v1/contents/{slug}` | Single entry by full slug |
 | `GET /api/v1/search?q=…` | Full-text search over published content |
 | `GET /api/v1/sitemap` | Slugs + timestamps of the published tree |
+| `GET /api/v1/sitemaps/{sitemap}` | A named sitemap from the space's `sitemaps` settings |
 
 All requests authenticate with the space's access token as a `token` query parameter — the SDKs append it automatically. See [Access tokens & caching](../concepts/access-tokens.md).
 
@@ -138,6 +139,22 @@ const results = await dataApi.search({ q: 'solar panels', language: 'en' })
 ```ts
 const entries = await dataApi.getSitemap()
 ```
+
+Each entry carries `id`, `name`, `full_slug`, `language_iso`, `published_at`, and a `meta` object with the normalized `robots` and `canonical` values extracted per the space's sitemap settings. Entries whose robots value contains `noindex`/`none` are excluded — and the filtering happens in the database, so pagination totals stay correct. Results are paginated (`page`, `per_page` — default 20, max 1000) and accept a `language` filter.
+
+### Named sitemaps
+
+A space can define **named per-type sitemaps** under its `sitemaps` settings — e.g. one sitemap for pages and a separate one for news:
+
+```jsonc
+// space settings
+{ "sitemaps": [
+  { "slug": "pages", "types": [{ "block": "page", "path": "meta" }] },
+  { "slug": "news",  "types": [{ "block": "article", "path": "seo" }] }
+] }
+```
+
+`GET /api/v1/sitemaps/{slug}` then serves each one with the same response shape, pagination, and filtering as `/sitemap`; unknown slugs return 404. Each definition is self-contained — the same block may appear in several sitemaps with different meta paths.
 
 ## `take` / `except`
 

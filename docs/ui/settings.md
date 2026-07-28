@@ -9,7 +9,7 @@ description: "Space settings: access tokens, people and roles, configuration, AI
 ## General
 
 - **Space** — name, icon (shown across the app), and the read-only space ID.
-- **Content** — default content block for new entries, whether hidden blocks are stripped from Data API responses, manual content sorting (drag-and-drop ordering vs. alphabetical), and **sitemap extraction** (which block types appear in the public sitemap feed and where their SEO meta lives).
+- **Content** — default content block for new entries, whether hidden blocks are stripped from Data API responses, manual content sorting (drag-and-drop ordering vs. alphabetical), and **sitemap extraction** (which block types appear in the public sitemap feed and where their SEO meta lives). Beyond the default feed, **named sitemaps** each get a slug and their own block-to-meta-path mappings, served at `/api/v1/sitemaps/{slug}` — e.g. separate sitemaps for pages and news.
 - **Danger zone** — deleting the space permanently removes all content, settings, and user data (type-to-confirm).
 
 ## Access tokens

@@ -4,7 +4,7 @@ description: "All b10cks field types with their options, validation rules, and c
 
 # Fields
 
-Fields are the building blocks of every block schema. When you add a field to a block, you pick one of 20 types — from a simple text line to a nested block list — and configure how it behaves. This page is the complete reference: every type, every option, and the JSON your frontend receives.
+Fields are the building blocks of every block schema. When you add a field to a block, you pick one of 21 types — from a simple text line to a nested block list — and configure how it behaves. This page is the complete reference: every type, every option, and the JSON your frontend receives.
 
 New to content modeling? Skim the [type picker](#which-field-type-should-i-use) first, then dive into the types you actually need.
 
@@ -32,6 +32,7 @@ New to content modeling? Skim the [type picker](#which-field-type-should-i-use) 
 | A map coordinate | [Geo](#geo) |
 | A price in one or more currencies | [Price](#price) |
 | An auto-generated identifier or number | [Serial](#serial) |
+| A custom editor UI of your own | [Plugin](#plugin) |
 
 ## Settings every field has
 
@@ -361,6 +362,27 @@ A block can compose the slug of its new entries from the same tokens, via its `s
 Only `{field:…}`, `{parent:…}`, `{ancestor:…}`, `{block}`, `{date:…}` and `{lang}` apply here — `{counter}` belongs to a serial field. Leaving the pattern empty keeps the default behaviour, where the slug follows the entry name, and an explicitly supplied slug always wins.
 
 Translations follow the pattern too: a translation created without a slug composes one in its own language — from the canonical entry's serials (it never draws its own) and its translated name. In the localization editor the slug tracks the pattern until the editor types their own; clearing the field asks for the automatic value back.
+
+---
+
+## Custom fields
+
+### Plugin
+
+Renders a **field plugin** registered in the space — your own editor UI, loaded in a sandboxed iframe:
+
+```json
+{
+  "type": "plugin",
+  "plugin_handle": "color-picker",
+  "options": { "preset": "brand" }
+}
+```
+
+- `plugin_handle` — the handle of a field plugin in the space. A plugin's handle is immutable after creation, so schemas referencing it never break.
+- `options` — string values passed to the plugin instance; the plugin's manifest declares which keys it understands, their labels and defaults. This is how one plugin serves several configurations (`preset: "brand"` vs `preset: "free"`).
+- The plugin bundle is either uploaded code (up to 1.5 MB) or, in dev mode, served from a loopback dev URL. It talks to the editor over a message bridge and stores whatever JSON value it produces — your frontend receives that value as-is.
+- Translatable (each language gets its own value), NOT indexable.
 
 ---
 

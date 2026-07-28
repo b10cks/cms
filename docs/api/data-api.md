@@ -16,6 +16,7 @@ The public, read-only content delivery API. Base path: `/api/v1`. Every request 
 | `GET /api/v1/contents/{slug}` | Single entry by full slug (slashes allowed). `vid`, `language`. Localized slugs resolve when `language` is set. |
 | `GET /api/v1/search` | Full-text search over published content. `q` (required), `language`, `limit`, `offset`. Returns scored results with totals. |
 | `GET /api/v1/sitemap` | Published slugs + timestamps for sitemap generation, honoring the space's sitemap-extraction settings. |
+| `GET /api/v1/sitemaps/{sitemap}` | A named sitemap defined in the space's `sitemaps` settings — e.g. separate per-type sitemaps for pages and news. Unknown slugs return 404. |
 
 ### Content entry shape
 
