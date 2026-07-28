@@ -21,7 +21,8 @@ return new class extends Migration {
             $table->json('old_values')->nullable();
             $table->json('new_values')->nullable();
             $table->json('metadata')->nullable();
-            $table->char('hash', 60)->charset('ascii');
+            // 64 fits HMAC-SHA256 hex; legacy bcrypt hashes are 60.
+            $table->char('hash', 64)->charset('ascii');
 
             $table->timestamp('created_at');
 
