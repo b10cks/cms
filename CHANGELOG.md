@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.28-46c5d190] — 2026-7-28
+
+- 🐛 Widen audit_logs.hash to fit HMAC-SHA256 hashes
+- 🐛 Build MCP sub-requests on APP_URL so TrustHosts accepts them
+- 👷‍♂️ Improve deployment
+
 ## [v2026.7.28-4b1353ef] — 2026-7-28
 
 - ✨ Named per-type sitemaps with database-side pagination
