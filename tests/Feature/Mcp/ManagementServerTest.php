@@ -161,6 +161,7 @@ class ManagementServerTest extends TestCase
             'executionId', 'releaseId', 'commentId', 'templateId', 'configId', 'backupId',
             'migrationId', 'inviteId', 'noteId', 'iconId', 'collectionId', 'shareId',
             'packageId', 'notificationId', 'periodId', 'roleId', 'blueprintId',
+            'fieldPluginId',
         ];
 
         foreach (OperationRegistry::all() as $name => $operation) {

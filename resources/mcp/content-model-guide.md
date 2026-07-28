@@ -58,8 +58,10 @@ Supported types (validated by the CMS):
 | `icon` | Icon picker — space registry or Iconify public collections | — | — |
 | `geo` | Geographic coordinate (lat/lon with optional altitude) | — | — |
 | `price` | Multi-currency price object (currency code → amount) | — | — |
+| `serial` | Auto-generated sequential identifier: invoice/article numbers | — | — |
+| `plugin` | Custom field rendered by a space field plugin (sandboxed iframe) | ✓ | — |
 
-**Never-indexable types** (setting `indexable: true` is a validation error): `asset`, `multi_assets`, `icon`, `geo`, `price`, `references`, `boolean`, `options`, `table`
+**Never-indexable types** (setting `indexable: true` is a validation error): `asset`, `multi_assets`, `icon`, `geo`, `price`, `references`, `boolean`, `options`, `table`, `plugin`
 
 ---
 
@@ -246,6 +248,45 @@ IS translatable (`translatable: true` is valid).
 - Value at runtime: `Record<string, number | null>` — currency code → amount (`null` when not filled in)
   - e.g. `{ "EUR": 9.99, "USD": 10.99, "GBP": null }`
 - NOT translatable, NOT indexable.
+
+### `serial` fields
+Auto-generated identifiers (invoice numbers, article numbers). The value is allocated by the CMS when the entry is created — never supplied by the client. `default` is ignored and the field is read-only in the editor unless `editable` is set.
+```json
+{
+  "type": "serial",
+  "format": "INV-{date:Y}-{counter:4}",
+  "scope": ["block", "year"],
+  "unique": "scope",
+  "on_move": "keep",
+  "editable": false
+}
+```
+- `format` (default `{counter}`) — template; must contain `{counter}`. Tokens:
+  - `{counter}` — the allocated number; `{counter:3}` pads to three digits (max 12)
+  - `{date:Y}`, `{date:Ym}`, … — creation date (PHP date format characters)
+  - `{lang}` — language code, `{lang:upper}` for uppercase; translations share their serial
+  - `{block}` — block slug, `{block:name}` for its display name
+  - `{parent:key}` — a field on the direct parent, e.g. `{parent:sku}`
+  - `{ancestor:key}` — the nearest ancestor with a value for the key
+  - `{field:key}` — a field on the entry itself (dot paths allowed, e.g. `{field:specs.width}`); must be filled at creation and may not reference another `serial` field
+- `scope` (default `["block", "parent"]`) — dimensions the counter increments within: `space`, `block`, `parent`, `language`, `year`, `month`
+- `unique`: `scope` (default) | `block` | `space` | `none` — where rendered values must be unique
+- `on_move`: `keep` (default) | `reallocate` — what happens when an entry moves to another parent
+- `editable` (default false) — allow editors to override the generated value
+- NOT translatable. Preview the next values with the `contents.serialPreview` operation (a peek, not a reservation — the number is only taken when the entry is created).
+
+### `plugin` fields
+Custom fields rendered by a space **field plugin** (a sandboxed iframe registered in the space). Manage plugins with the `fieldPlugins.*` operations; the plugin's `handle` is immutable after creation.
+```json
+{
+  "type": "plugin",
+  "plugin_handle": "color-picker",
+  "options": { "preset": "brand" }
+}
+```
+- `plugin_handle` (required) — handle of an existing field plugin in the space
+- `options` — object of string values passed to the plugin as configuration
+- Translatable, NOT indexable.
 
 ---
 

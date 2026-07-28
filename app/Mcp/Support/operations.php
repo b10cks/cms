@@ -260,6 +260,55 @@ return [
         'method' => 'POST',
         'uri' => '/mgmt/v1/spaces/{spaceId}/subscriptions/cancel',
     ],
+    'spaces.resumeSubscription' => [
+        'description' => 'Resume a subscription that is scheduled for cancellation.',
+        'required' => ['spaceId'],
+        'accepts' => ['spaceId'],
+        'method' => 'POST',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/subscriptions/resume',
+    ],
+    'spaces.deletePendingSubscription' => [
+        'description' => 'Discard the pending (not yet paid) subscription of a space.',
+        'required' => ['spaceId'],
+        'accepts' => ['spaceId'],
+        'method' => 'DELETE',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/subscriptions/pending',
+    ],
+    'spaces.getPlanProposal' => [
+        'description' => 'Get the current open payment request (proposed plan handed to a billing contact), if any.',
+        'required' => ['spaceId'],
+        'accepts' => ['spaceId'],
+        'method' => 'GET',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/subscriptions/proposal',
+    ],
+    'spaces.createPlanProposal' => [
+        'description' => 'Create a payment request: propose a plan and hand the checkout to a billing contact. Replaces any previous open one.',
+        'required' => ['spaceId', 'payload'],
+        'accepts' => ['spaceId', 'payload'],
+        'method' => 'POST',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/subscriptions/proposal',
+    ],
+    'spaces.deletePlanProposal' => [
+        'description' => 'Revoke the current open payment request.',
+        'required' => ['spaceId'],
+        'accepts' => ['spaceId'],
+        'method' => 'DELETE',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/subscriptions/proposal',
+    ],
+    'spaces.listPlans' => [
+        'description' => 'List the plans available to a space, including custom agency plans.',
+        'required' => ['spaceId'],
+        'accepts' => ['spaceId', 'params'],
+        'method' => 'GET',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/plans',
+    ],
+    'spaces.listPeople' => [
+        'description' => 'List people of a space: members and pending invites in one directory. Params: q, sort, page, per_page.',
+        'required' => ['spaceId'],
+        'accepts' => ['spaceId', 'params'],
+        'method' => 'GET',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/people',
+    ],
     // AI Settings
     'spaces.getAiSettings' => [
         'description' => 'Get AI settings for a space.',
@@ -1278,6 +1327,42 @@ return [
         'uri' => '/mgmt/v1/spaces/{spaceId}/data-sources/{dataSourceId}',
     ],
 
+    'fieldPlugins.list' => [
+        'description' => 'List field plugins of a space.',
+        'required' => ['spaceId'],
+        'accepts' => ['spaceId', 'params'],
+        'method' => 'GET',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/field-plugins',
+    ],
+    'fieldPlugins.create' => [
+        'description' => 'Create a field plugin (sandboxed iframe custom field). The handle is immutable after creation.',
+        'required' => ['spaceId', 'payload'],
+        'accepts' => ['spaceId', 'payload'],
+        'method' => 'POST',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/field-plugins',
+    ],
+    'fieldPlugins.get' => [
+        'description' => 'Get a field plugin.',
+        'required' => ['spaceId', 'id'],
+        'accepts' => ['spaceId', 'id', 'fieldPluginId'],
+        'method' => 'GET',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/field-plugins/{fieldPluginId}',
+    ],
+    'fieldPlugins.update' => [
+        'description' => 'Update a field plugin. The handle cannot be changed.',
+        'required' => ['spaceId', 'id', 'payload'],
+        'accepts' => ['spaceId', 'id', 'fieldPluginId', 'payload'],
+        'method' => 'PUT',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/field-plugins/{fieldPluginId}',
+    ],
+    'fieldPlugins.delete' => [
+        'description' => 'Delete a field plugin.',
+        'required' => ['spaceId', 'id'],
+        'accepts' => ['spaceId', 'id', 'fieldPluginId'],
+        'method' => 'DELETE',
+        'uri' => '/mgmt/v1/spaces/{spaceId}/field-plugins/{fieldPluginId}',
+    ],
+
     'icons.tags' => [
         'description' => 'List distinct tags used across icons in a space.',
         'required' => ['spaceId'],
@@ -1738,6 +1823,13 @@ return [
 
     // ─── Teams ────────────────────────────────────────────────────────────────────
 
+    'teams.listPeople' => [
+        'description' => 'List people of a team: members and pending invites in one directory. Params: q, sort, page, per_page.',
+        'required' => ['teamId'],
+        'accepts' => ['teamId', 'params'],
+        'method' => 'GET',
+        'uri' => '/mgmt/v1/teams/{teamId}/people',
+    ],
     'teams.listMembers' => [
         'description' => 'List team members. Params: role, name, email, q, isActive, sort, page, per_page.',
         'required' => ['teamId'],
@@ -1945,5 +2037,12 @@ return [
         'accepts' => ['id', 'inviteId'],
         'method' => 'POST',
         'uri' => '/mgmt/v1/users/me/invites/{inviteId}/accept',
+    ],
+    'users.declineInvite' => [
+        'description' => 'Decline an invite addressed to the authenticated user.',
+        'required' => ['id'],
+        'accepts' => ['id', 'inviteId'],
+        'method' => 'POST',
+        'uri' => '/mgmt/v1/users/me/invites/{inviteId}/decline',
     ],
 ];
