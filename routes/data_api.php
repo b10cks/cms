@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\BlockController;
+use App\Http\Controllers\Api\ContentBreadcrumbController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\ContentSitemapController;
 use App\Http\Controllers\Api\DataEntryController;
@@ -25,6 +26,11 @@ Route::get('sitemaps/{sitemap}', [ContentSitemapController::class, 'show'])->mid
     'cache.data',
     'cache.micro',
 ])->name('sitemaps.show');
+// Own prefix, so the catch-all below never competes with it.
+Route::get('breadcrumbs/{slug}', ContentBreadcrumbController::class)
+    ->middleware(['revision', 'cache.data', 'cache.micro'])
+    ->where('slug', '.*')
+    ->name('contents.breadcrumb');
 Route::get('contents/{slug}', [ContentController::class, 'show'])
     ->middleware(['revision', 'cache.data', 'cache.micro'])
     ->where('slug', '.*')
