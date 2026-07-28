@@ -110,7 +110,7 @@ class ResourceParser
             }
         }
 
-        return $this->buildPaginationSchema($itemSchema);
+        return $this->buildPaginationSchema($itemSchema, $resourceClass);
     }
 
     /**
@@ -320,8 +320,26 @@ class ResourceParser
     /**
      * Build pagination schema with item schema
      */
-    protected function buildPaginationSchema(array $itemSchema): array
+    protected function buildPaginationSchema(array $itemSchema, ?string $resourceClass = null): array
     {
+        $wrap = $this->wrapperKey($resourceClass);
+
+        // A collection that renames its wrapper is answering with one whole
+        // thing rather than a page of records, so it gets neither the `data`
+        // key nor the pagination envelope around it.
+        if ($wrap !== 'data') {
+            return [
+                'type' => 'object',
+                'properties' => [
+                    $wrap => [
+                        'type' => 'array',
+                        'description' => 'Collection of resources',
+                        'items' => $itemSchema,
+                    ],
+                ],
+            ];
+        }
+
         return [
             'type' => 'object',
             'description' => 'Paginated resource collection',
@@ -394,6 +412,18 @@ class ResourceParser
             ],
             'required' => ['data', 'links', 'meta'],
         ];
+    }
+
+    /**
+     * The key a resource collection wraps its items in, from Laravel's `$wrap`.
+     */
+    protected function wrapperKey(?string $resourceClass): string
+    {
+        if ($resourceClass === null || !class_exists($resourceClass)) {
+            return 'data';
+        }
+
+        return is_string($resourceClass::$wrap ?? null) ? $resourceClass::$wrap : 'data';
     }
 
     /**
