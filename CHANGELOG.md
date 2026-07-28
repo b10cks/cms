@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.28-6d2a2bd6] — 2026-7-28
+
+- 🔒 Harden ilum media delivery and expand its coverage
+- 📝 Document media delivery, poster frames and IMAGE_* configuration
+- ✨ Add range-aware media delivery and poster API to ilum
+
 ## [v2026.7.28-4e221629] — 2026-7-28
 
 - 📝 Document the breadcrumb endpoint
