@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.28-4b1353ef] — 2026-7-28
+
+- ✨ Named per-type sitemaps with database-side pagination
+- 🐛 Set fix name for index
+
 ## [v2026.7.28-eef36fcd] — 2026-7-28
 
 - 💡 Update self hosting docs with new ENV
