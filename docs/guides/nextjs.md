@@ -253,7 +253,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
 - **Caching**: Data API responses are revision-stamped and CDN-friendly by design; combine with Next's fetch caching or ISR (`revalidate`) as suits your traffic. Publishing content changes the space revision, so revalidated fetches pick up changes naturally.
 - **Environments**: separate tokens per environment (production, staging, preview) so each can be revoked independently; `noindex` staging via `robots`.
-- **CSP**: allow `connect-src` for the API origin, `img-src` for the Ilum host, and `frame-ancestors` for the editor origin (`https://app.b10cks.com` or your self-hosted admin UI).
+- **CSP**: allow `connect-src` for the API origin, `img-src` for the Ilum host (plus `media-src` if you embed video or audio from it), and `frame-ancestors` for the editor origin (`https://app.b10cks.com` or your self-hosted admin UI).
 - **Rebuild on publish**: for fully static output, create an [automation](../concepts/automations.md) that calls your deploy hook when content is published.
 
 ## Troubleshooting

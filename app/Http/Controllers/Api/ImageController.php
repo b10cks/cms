@@ -4,22 +4,33 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ProcessImageRequest;
-use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Services\Image\ImageTransformationResolver;
 use App\Services\Image\ImageTransformationService;
-use App\Services\Storage\StorageService;
-use Illuminate\Http\Response;
+use App\Services\Media\Dto\IlumSource;
+use App\Services\Media\IlumSourceResolver;
+use App\Services\Media\MediaStreamResponder;
+use App\Services\Media\StoredFileProbe;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
 
 class ImageController extends Controller
 {
     public function __construct(
         private readonly ImageTransformationService $imageService,
-        private readonly StorageService $storageService,
+        private readonly IlumSourceResolver $sources,
+        private readonly MediaStreamResponder $responder,
+        private readonly StoredFileProbe $probe,
     ) {}
 
+    /**
+     * Deliver an asset, optionally transformed.
+     *
+     * Images run through the transformation pipeline; everything else is
+     * proxied byte-for-byte with range support so media players can seek.
+     */
     public function process(
         ProcessImageRequest $request,
         string $storage,
@@ -27,59 +38,91 @@ class ImageController extends Controller
         string $assetId,
         string $name,
         ?string $transformations = null,
-    ) {
-        $fullPath = "{$space}/{$assetId}/{$name}";
+    ): Response {
+        $source = $this->sources->resolve($storage, $space, $assetId, $name);
 
-        if ($storage !== 'storage') {
-            $space = Space::findOrFail($space);
-            $request->route()->setParameter('space', $space);
-            app()->offsetSet('currentSpace', $space);
-
-            $storageModel = $space->storages()->findOrFail($storage);
-
-            $asset = Asset::query()->whereKey($assetId)->where('storage_id', $storageModel->id)->firstOrFail();
-            $disk = $this->storageService->getStorage($storageModel);
-
-            if ($asset->path === $fullPath) {
-                $mimetype = $asset->mime_type;
-            } else {
-                $mimetype = $disk->mimeType($fullPath);
-            }
-        } else {
-            $disk = Storage::disk();
-
-            if (! $disk->exists($fullPath)) {
-                return response()->json(['error' => 'Image not found'], 404);
-            }
-
-            $mimetype = $disk->mimeType($fullPath);
+        if ($source === null) {
+            return $this->notFound();
         }
 
-        if (\str_starts_with($mimetype, 'image/') === false) {
-            return $disk->response($fullPath, null, [
-                'access-control-allow-origin' => '*',
-                'access-control-allow-methods' => 'GET',
-                'content-type' => $mimetype,
-                'cache-control' => $this->buildCacheControlHeader(),
-                'pragma' => 'public',
-                ...$this->securityHeaders(),
-            ]);
+        if (! $source->file->isImage()) {
+            return $this->responder->respond(
+                $request,
+                $source->disk,
+                $source->file,
+                immutable: (bool) config('ilum.cache.passthrough_immutable', false),
+            );
         }
 
+        return $this->deliverImage($request, $source, (bool) config('ilum.cache.immutable', true));
+    }
+
+    /**
+     * Deliver the poster frame for a video (or audio) asset.
+     *
+     * Poster URLs mirror the image grammar, so the same transformation segment
+     * and format/quality parameters apply — a poster is just another image
+     * once it has been resolved.
+     */
+    public function poster(
+        ProcessImageRequest $request,
+        string $storage,
+        string $space,
+        string $assetId,
+        string $name,
+        ?string $transformations = null,
+    ): Response {
+        $source = $this->sources->resolve($storage, $space, $assetId, $name);
+
+        if ($source === null || $source->asset === null) {
+            return $this->notFound();
+        }
+
+        // Only video and audio carry poster frames — the same rule the upload
+        // endpoint enforces. Other types can have `thumbnails` metadata for
+        // unrelated reasons, and those are not posters.
+        if (! Str::startsWith((string) $source->asset->mime_type, ['video/', 'audio/'])) {
+            return $this->notFound();
+        }
+
+        $posterPath = $this->resolvePosterPath($source->asset, $request->integer('frame'));
+
+        if ($posterPath === null) {
+            return response()->json(['error' => 'No poster available for this asset'], 404);
+        }
+
+        $poster = $this->probe->probe($source->disk, $posterPath);
+
+        if ($poster === null) {
+            return $this->notFound();
+        }
+
+        // The poster URL is stable across poster changes, so it can only be
+        // cached immutably when the caller pins a version (see AssetResource's
+        // `poster_url`). Without one, keep it short and revalidatable.
+        $pinned = $request->filled('v');
+
+        return $this->deliverImage(
+            $request,
+            $source->withFile($poster),
+            immutable: $pinned,
+            maxAge: $pinned ? null : (int) config('ilum.cache.poster_duration', 3600),
+        );
+    }
+
+    private function deliverImage(
+        ProcessImageRequest $request,
+        IlumSource $source,
+        bool $immutable,
+        ?int $maxAge = null,
+    ): Response {
         try {
             $transformationParameters = $request->transformationParameters();
             $format = $request->validated('format');
             $quality = $request->validated('quality');
 
             if (empty($transformationParameters) && $format === null && $quality === null) {
-                return $disk->response($fullPath, null, [
-                    'access-control-allow-origin' => '*',
-                    'access-control-allow-methods' => 'GET',
-                    'content-type' => $mimetype,
-                    'cache-control' => $this->buildCacheControlHeader(),
-                    'pragma' => 'public',
-                    ...$this->securityHeaders(),
-                ]);
+                return $this->responder->respond($request, $source->disk, $source->file, $immutable, $maxAge);
             }
 
             $transformation = app(ImageTransformationResolver::class)->resolve(
@@ -87,26 +130,24 @@ class ImageController extends Controller
                 $format,
                 $quality,
             );
-            $result = $this->imageService->processImage($disk, $fullPath, $transformation);
+
+            $result = $this->imageService->processImage($source->disk, $source->file->path, $transformation);
 
             if (! $result) {
                 return response()->json(['error' => 'Image not found or processing failed'], 404);
             }
 
-            return new Response($result['data'], 200, [
-                'access-control-allow-origin' => '*',
-                'access-control-allow-methods' => 'GET',
-                'content-type' => $result['mime'],
-                'content-length' => \strlen($result['data']),
-                'cache-control' => $this->buildCacheControlHeader(),
-                'pragma' => 'public',
-                ...$this->securityHeaders(),
-            ]);
+            return $this->responder->respondWithBody(
+                $request,
+                $result['data'],
+                $result['mime'],
+                $immutable,
+                $maxAge,
+                $this->transformedDownloadName($source, $result['format']),
+            );
         } catch (\Exception $e) {
             Log::error('Image processing error: '.$e->getMessage(), [
-                'storage' => $storage,
-                'path' => $fullPath,
-                'transformations' => $transformations,
+                'path' => $source->file->path,
                 'exception' => $e,
             ]);
 
@@ -115,26 +156,32 @@ class ImageController extends Controller
     }
 
     /**
-     * Headers that make it safe to serve user-uploaded files inline from the
-     * delivery origin. `nosniff` stops browsers from re-interpreting a file as
-     * HTML, and the restrictive CSP + sandbox neutralize any script embedded in
-     * an otherwise-legitimate SVG/XML asset while still letting it render.
-     *
-     * @return array<string, string>
+     * Pick a stored poster frame. `frame` indexes into the thumbnail list in
+     * capture order; a custom uploaded poster collapses that list to one entry.
      */
-    private function securityHeaders(): array
+    private function resolvePosterPath(Asset $asset, ?int $frame): ?string
     {
-        return [
-            'x-content-type-options' => 'nosniff',
-            'content-security-policy' => "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; sandbox",
-        ];
+        $thumbnails = array_values(array_filter(
+            (array) ($asset->metadata['thumbnails'] ?? []),
+            static fn ($thumb): bool => is_array($thumb) && ! empty($thumb['path']),
+        ));
+
+        if ($thumbnails === []) {
+            return null;
+        }
+
+        return $thumbnails[$frame ?? 0]['path'] ?? $thumbnails[0]['path'];
     }
 
-    private function buildCacheControlHeader(): string
+    private function transformedDownloadName(IlumSource $source, string $format): string
     {
-        $duration = (int) config('ilum.cache.duration', 31_536_000);
-        $immutable = (bool) config('ilum.cache.immutable', true);
+        $base = pathinfo($source->file->downloadName ?: $source->file->path, PATHINFO_FILENAME);
 
-        return 'public, max-age='.$duration.($immutable ? ', immutable' : '');
+        return ($base !== '' ? $base : 'image').'.'.$format;
+    }
+
+    private function notFound(): JsonResponse
+    {
+        return response()->json(['error' => 'Image not found'], 404);
     }
 }

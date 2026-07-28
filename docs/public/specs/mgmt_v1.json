@@ -8979,6 +8979,75 @@
                 ]
             }
         },
+        "/mgmt/v1/spaces/{space}/assets/{asset}/poster": {
+            "post": {
+                "summary": "Upload a custom poster frame, replacing the auto-generated thumbnails",
+                "description": "Upload a custom poster frame, replacing the auto-generated thumbnails.",
+                "tags": [
+                    "Assets"
+                ],
+                "operationId": "post_spaces_by_space_assets_by_asset_poster",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "asset",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The asset identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "poster": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "maxLength": 512000
+                                    }
+                                },
+                                "required": [
+                                    "poster"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/spaces/{space}/assets/{asset}/versions": {
             "get": {
                 "summary": "List the version history of an asset, most recent first",

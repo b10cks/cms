@@ -687,6 +687,8 @@
       "unknown": "Unknown",
       "uploading": "Uploading...",
       "replaceMedia": "Replace Media",
+      "uploadPoster": "Upload Poster",
+      "uploadPosterHint": "Replaces the generated frames",
       "finish": "Finish",
       "forceDeleteTitle": "Force Delete Asset",
       "rights": {
@@ -4582,7 +4584,9 @@
       "importError": "Failed to import assets: {error}",
       "uploadError": "Failed to upload asset",
       "replaceSuccess": "Asset file replaced successfully",
-      "replaceError": "Failed to replace asset file: {error}"
+      "replaceError": "Failed to replace asset file: {error}",
+      "posterSuccess": "Poster updated successfully",
+      "posterError": "Failed to upload poster: {error}"
     },
     "assetVersions": {
       "restoreSuccess": "Asset version restored successfully",

@@ -69,8 +69,10 @@ class RouteServiceProvider extends ServiceProvider
             ];
         });
 
-        // A content-heavy page pulls many images at once, so this sits well
-        // above normal browsing while still bounding a decode flood.
+        // Media delivery is unauthenticated and each request can hold a worker
+        // for the length of a transfer or a decode, so the ceiling sits well
+        // above normal browsing — a content-heavy page pulls many assets at
+        // once — while still bounding a flood.
         RateLimiter::for('ilum', function (Request $request) {
             return Limit::perMinute((int) config('ilum.rate_limit', 600))->by("ilum|{$request->ip()}");
         });

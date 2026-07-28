@@ -39,6 +39,8 @@ export interface AssetVideoThumbnail {
   position: number
   position_formatted: string
   dominant_color?: string
+  /** Set when the frame was uploaded by an editor rather than generated */
+  custom?: boolean
 }
 
 export interface AssetColorA11y {
@@ -81,6 +83,8 @@ export interface AssetResource {
   linked_contents_count: number
   effective_asset_fields?: SpaceAssetField[]
   url: string
+  /** Delivery URL for the poster frame; null when the asset has none */
+  poster_url: string | null
   created_at: string
   updated_at: string
 }

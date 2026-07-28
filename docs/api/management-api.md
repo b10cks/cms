@@ -60,7 +60,7 @@ Create/update releases, `POST …/commit` and `POST …/cancel` them, schedule v
 
 ### Assets
 
-Upload, `POST …/assets/{asset}/replace-file`, restore versions, import/export metadata, manage folders and tags (including `POST …/asset-tags/{tag}/assign`).
+Upload, `POST …/assets/{asset}/replace-file`, `POST …/assets/{asset}/poster` (custom video poster frame), restore versions, import/export metadata, manage folders and tags (including `POST …/asset-tags/{tag}/assign`).
 
 ### AI endpoints
 

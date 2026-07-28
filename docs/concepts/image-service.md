@@ -154,8 +154,36 @@ Animated sources (GIF, animated webp) keep their animation: if the target format
 
 For Nuxt, a ready-made `@nuxt/image` provider generates these URLs (including responsive `srcset`) — see the [Nuxt guide](../guides/nuxt.md#5-images-with-nuxtimage-and-ilum). In other frameworks, build the operation string yourself or port the provider (it's ~100 lines of URL assembly).
 
+## Poster frames
+
+Video assets get thumbnail frames extracted at upload time. Those frames are addressable through the same URL grammar by appending `/poster`, which turns a video URL into an image URL — every transformation and query parameter above still applies:
+
+```
+…/clip.mp4/poster                                  # first frame, default format
+…/clip.mp4/poster/w_1200,h_675,c_fill              # poster cropped to 16:9
+…/clip.mp4/poster/w_640?format=jpg&quality=70      # jpg poster for older players
+…/clip.mp4/poster?frame=2                          # a later capture position
+```
+
+`frame` indexes the stored captures in capture order (default `0`); an out-of-range index falls back to the first. Assets without any stored frame return `404`.
+
+```html
+<video src="…/clip.mp4" poster="…/clip.mp4/poster/w_1280,h_720,c_fill" controls></video>
+```
+
+**Custom posters.** Editors can replace the auto-generated captures with a hand-picked still via `POST /mgmt/v1/spaces/{space}/assets/{asset}/poster` (multipart, field `poster`, raster image formats only). The upload replaces the generated frames entirely — afterwards `/poster` serves the uploaded image and the old captures are deleted from storage.
+
+Because the `/poster` URL stays the same when the poster changes, unpinned poster responses are cached for an hour and revalidate with an `ETag`. The management API exposes a `poster_url` on every asset that pins the current poster with a `v` parameter; pinned URLs are cached immutably like any other transformation.
+
 ## Caching and delivery
 
-Transformation results are cached server-side with the URL as the cache key, so a given operations string is computed exactly once per asset. Responses are served with `Cache-Control: public, max-age=31536000, immutable` and permissive CORS headers — put a CDN in front of the Ilum host and every variant becomes an edge hit after its first request.
+A given operations string is computed once per edge cache entry: responses carry `Cache-Control: public, max-age=31536000, immutable`, an `ETag`, and permissive CORS headers, so with a CDN in front of the Ilum host every variant becomes an edge hit after its first request. (There is no server-side derivative store — the CDN *is* the cache, so an origin with no CDN in front recomputes on every request.)
 
-Non-image assets requested through Ilum URLs (PDFs, videos, …) are streamed through unchanged with the same cache headers, plus hardening headers (`nosniff`, restrictive CSP with `sandbox`) that make user-uploaded SVGs safe to serve inline.
+### Non-image assets
+
+Anything that isn't an image — video, audio, PDFs, documents — is proxied byte-for-byte rather than transformed, with the semantics media players need:
+
+- **Byte ranges.** `Range` requests are answered with `206 Partial Content` and a `Content-Range`. This is what makes video seekable, and it's a hard requirement for playback in Safari, which probes with `Range: bytes=0-1` before it will play anything. `Accept-Ranges: bytes` is advertised on full responses, unsatisfiable ranges return `416`, and `If-Range` is honoured. On S3-backed storage the offset is pushed down into the `GetObject` call, so the origin never transfers bytes the client didn't ask for.
+- **Conditional requests.** Responses carry an `ETag` (the stored checksum where one exists) and `Last-Modified`; `If-None-Match` / `If-Modified-Since` are answered with `304`. Untransformed files are *not* marked `immutable` by default, so a revalidation path always exists.
+- **Downloads.** Append `?download=1` to get `Content-Disposition: attachment` with the original upload filename instead of inline rendering.
+- **Hardening.** Every response carries `nosniff`, and every response carries the restrictive `sandbox` CSP unless its content type is on a short exemption allow-list. Today that list holds only `application/pdf`, which is exempt because `sandbox` breaks the browser's built-in PDF viewer and that viewer already isolates embedded script from the embedding origin. The allow-list polarity is deliberate: these routes serve user-uploaded bytes from an origin shared with the management UI, so a type nobody has vetted stays sandboxed by default.

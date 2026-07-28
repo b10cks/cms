@@ -8,6 +8,7 @@ use App\Http\Filters\Mgmt\AssetFilter;
 use App\Http\Requests\Asset\ReplaceAssetFileRequest;
 use App\Http\Requests\Asset\StoreAssetRequest;
 use App\Http\Requests\Asset\UpdateAssetRequest;
+use App\Http\Requests\Asset\UploadAssetPosterRequest;
 use App\Http\Resources\Management\AssetResource;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
@@ -19,6 +20,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class AssetController extends Controller
 {
@@ -175,6 +177,38 @@ class AssetController extends Controller
             ]);
 
             return response()->json(['message' => 'Failed to replace asset file: '.$e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Upload a custom poster frame, replacing the auto-generated thumbnails.
+     */
+    public function uploadPoster(
+        Space $space,
+        Asset $asset,
+        UploadAssetPosterRequest $request,
+        AssetService $assetService
+    ): AssetResource|JsonResponse {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
+
+        if (! Str::startsWith((string) $asset->mime_type, ['video/', 'audio/'])) {
+            return response()->json([
+                'message' => 'Only video and audio assets can have a poster.',
+                'code' => 'poster_not_supported',
+            ], 422);
+        }
+
+        try {
+            $asset = $assetService->setCustomPoster($asset, $request->file('poster'), $space);
+
+            return new AssetResource($asset->load('folder'));
+        } catch (\Exception $e) {
+            Log::error('Failed to upload asset poster', [
+                'asset_id' => $asset->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['message' => 'Failed to upload poster: '.$e->getMessage()], 500);
         }
     }
 

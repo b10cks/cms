@@ -682,6 +682,8 @@
       "unknown": "Unbekannt",
       "uploading": "Wird hochgeladen...",
       "replaceMedia": "Medien ersetzen",
+      "uploadPoster": "Poster hochladen",
+      "uploadPosterHint": "Ersetzt die generierten Frames",
       "finish": "Fertig",
       "forceDeleteTitle": "Löschen erzwingen",
       "rights": {
@@ -4577,7 +4579,9 @@
       "importError": "Fehler beim Importieren von Assets: {error}",
       "uploadError": "Fehler beim Hochladen des Assets",
       "replaceSuccess": "Asset-Datei erfolgreich ersetzt",
-      "replaceError": "Fehler beim Ersetzen der Asset-Datei: {error}"
+      "replaceError": "Fehler beim Ersetzen der Asset-Datei: {error}",
+      "posterSuccess": "Poster erfolgreich aktualisiert",
+      "posterError": "Fehler beim Hochladen des Posters: {error}"
     },
     "assetVersions": {
       "restoreSuccess": "Asset-Version erfolgreich wiederhergestellt",
