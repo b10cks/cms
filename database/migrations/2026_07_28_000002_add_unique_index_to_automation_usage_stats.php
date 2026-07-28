@@ -29,7 +29,9 @@ return new class extends Migration
         DB::table('automation_usage_stats')->whereNotIn('id', $keepIds)->delete();
 
         Schema::table('automation_usage_stats', function (Blueprint $table) {
-            $table->unique(['automation_id', 'period_type', 'period_date']);
+            // Named explicitly: the conventional name exceeds MySQL's 64-char
+            // identifier limit.
+            $table->unique(['automation_id', 'period_type', 'period_date'], 'automation_usage_stats_bucket_unique');
         });
     }
 
@@ -38,7 +40,7 @@ return new class extends Migration
         if (Schema::hasTable('automation_usage_stats')
             && Schema::hasIndex('automation_usage_stats', ['automation_id', 'period_type', 'period_date'])) {
             Schema::table('automation_usage_stats', function (Blueprint $table) {
-                $table->dropUnique(['automation_id', 'period_type', 'period_date']);
+                $table->dropUnique('automation_usage_stats_bucket_unique');
             });
         }
     }
