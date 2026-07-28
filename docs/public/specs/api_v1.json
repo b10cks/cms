@@ -538,6 +538,141 @@
                 ]
             }
         },
+        "/api/v1/breadcrumbs/{slug}": {
+            "get": {
+                "summary": "Get the breadcrumb trail of a content entry, addressed by its full slug",
+                "description": "Get the breadcrumb trail of a content entry, addressed by its full slug\nor by its id. `vid` selects the published or draft version, `language`\nthe language every level is resolved for.",
+                "tags": [
+                    "Breadcrumbs"
+                ],
+                "operationId": "get_breadcrumbs_by_slug",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The slug identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "breadcrumb": {
+                                            "type": "array",
+                                            "description": "Collection of resources",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "format": "uuid",
+                                                        "description": "Unique content identifier of the level."
+                                                    },
+                                                    "external_id": {
+                                                        "type": "string",
+                                                        "description": "External identifier of the level, if one is set."
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "description": "Human-readable name in the resolved language."
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "description": "URL-safe slug of the level in the resolved language."
+                                                    },
+                                                    "full_slug": {
+                                                        "type": "string",
+                                                        "description": "Stored path of the level, without any locale segment."
+                                                    },
+                                                    "path": {
+                                                        "type": "string",
+                                                        "description": "Delivery path including the requested language's locale segment."
+                                                    },
+                                                    "block": {
+                                                        "nullable": true,
+                                                        "description": "Slug of the assigned block definition."
+                                                    },
+                                                    "parent_id": {
+                                                        "type": "string",
+                                                        "description": "Parent content identifier, null for the root level.",
+                                                        "format": "uuid"
+                                                    },
+                                                    "position": {
+                                                        "type": "string",
+                                                        "description": "0-based sort position within the parent."
+                                                    },
+                                                    "depth": {
+                                                        "type": "integer",
+                                                        "description": "Depth in the content tree, 0 for the root level."
+                                                    },
+                                                    "is_root": {
+                                                        "type": "boolean",
+                                                        "description": "Whether this level is a tree root."
+                                                    },
+                                                    "is_current": {
+                                                        "type": "boolean",
+                                                        "description": "Whether this level is the requested entry itself."
+                                                    },
+                                                    "language_iso": {
+                                                        "type": "string",
+                                                        "description": "Requested language ISO code."
+                                                    },
+                                                    "resolved_language_iso": {
+                                                        "type": "string",
+                                                        "description": "ISO code of the language this level was actually served from."
+                                                    },
+                                                    "is_fallback": {
+                                                        "type": "boolean",
+                                                        "description": "Whether the level fell back to another language."
+                                                    },
+                                                    "is_published": {
+                                                        "nullable": true,
+                                                        "description": "Whether the served row is published.",
+                                                        "type": "boolean"
+                                                    },
+                                                    "published_at": {
+                                                        "nullable": true,
+                                                        "description": "Publication timestamp in ISO 8601 format.",
+                                                        "format": "date-time"
+                                                    },
+                                                    "updated_at": {
+                                                        "nullable": true,
+                                                        "description": "Last update timestamp in ISO 8601 format.",
+                                                        "format": "date-time"
+                                                    },
+                                                    "content": {
+                                                        "type": "object",
+                                                        "additionalProperties": true,
+                                                        "description": "Overlay-resolved payload, only with `include_content`."
+                                                    },
+                                                    "translations": {
+                                                        "type": "array",
+                                                        "description": "Published sibling translations, only with `translations`."
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/contents/{slug}": {
             "get": {
                 "summary": "Get a single content entry by its full slug",
