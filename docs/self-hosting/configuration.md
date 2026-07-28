@@ -16,6 +16,27 @@ APP_ENV=production
 APP_DEBUG=false
 ```
 
+## Reverse proxy & trusted hosts
+
+Required when the instance runs behind a load balancer, CDN, or any reverse proxy.
+
+```bash
+# Proxies whose X-Forwarded-* headers may be believed, as a comma-separated
+# list of IPs/CIDR ranges. This decides what the app considers the client IP,
+# which every per-IP rate limit and the audit log depend on. Leave it empty
+# only when clients connect directly.
+TRUSTED_PROXIES=172.16.0.0/12
+
+# Host headers accepted in addition to APP_URL and its subdomains, as a
+# comma-separated list of hostnames or regular expressions. Needed for
+# additional domains and for health checks that hit the instance by IP.
+TRUSTED_HOSTS=^api\.example\.com$,^10\.0\.\d+\.\d+$
+```
+
+Leaving `TRUSTED_PROXIES` empty behind a balancer makes every request appear to come from the balancer, collapsing all per-IP throttles into one shared bucket. Setting it to `*` lets anyone who can reach the app directly forge `X-Forwarded-For` — use it only when the app is genuinely unreachable except through the proxy. If a CDN sits in front of the balancer, include the CDN's origin-facing ranges as well, or client IPs will resolve to the CDN edge.
+
+Requests with a Host header outside `APP_URL`, its subdomains, and `TRUSTED_HOSTS` are rejected with a 400 — remember to list the host your load balancer health checks use.
+
 ## Database
 
 ```bash
@@ -62,6 +83,21 @@ AWS_BUCKET=…
 ```
 
 Assets (uploads and generated image transformations) live on this disk. S3 or GCS is recommended for anything beyond a single-server setup.
+
+## Delivery performance (optional)
+
+```bash
+# Origin micro-cache TTL in seconds for the heavy delivery endpoints
+# (content listing/detail, search, sitemap). Collapses the CDN-miss stampede
+# after a publish: each unique URL is computed once per TTL window. Keys
+# include the token and space revision, so entries are isolated per space and
+# invalidate on publish. Disabled by default.
+DATA_API_MICRO_CACHE_TTL=5
+
+# Requests per minute per IP against the public image transformation
+# endpoint. Each distinct transformation forces a fresh decode at the origin.
+IMAGE_RATE_LIMIT=600
+```
 
 ## Search
 
