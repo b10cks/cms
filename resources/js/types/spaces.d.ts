@@ -36,6 +36,15 @@ interface SpaceSitemapSettings {
   types: SpaceSitemapType[]
 }
 
+/**
+ * A named sitemap served under `/api/v1/sitemaps/{slug}` with its own
+ * block-to-meta-path mappings, e.g. one sitemap for pages and one for news.
+ */
+interface SpaceNamedSitemap {
+  slug: string
+  types: SpaceSitemapType[]
+}
+
 interface SpaceSettings {
   visual_editor?: boolean
   default_block?: string
@@ -52,6 +61,7 @@ interface SpaceSettings {
   content_sorting?: boolean
   onboarding_dismissed_at?: string | null
   sitemap?: SpaceSitemapSettings
+  sitemaps?: SpaceNamedSitemap[]
 }
 
 interface SpacePlanSummary {

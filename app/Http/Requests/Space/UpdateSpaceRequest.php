@@ -103,6 +103,26 @@ class UpdateSpaceRequest extends FormRequest
                     $validator->errors()->add('settings.sitemap.types', 'Sitemap block mappings must be unique.');
                 }
 
+                foreach ($this->input('settings.sitemaps', []) as $index => $sitemap) {
+                    if (! \is_array($sitemap)) {
+                        continue;
+                    }
+
+                    $blocks = array_filter(array_map(
+                        fn (mixed $type): ?string => \is_array($type) && isset($type['block'])
+                            ? strtolower((string) $type['block'])
+                            : null,
+                        \is_array($sitemap['types'] ?? null) ? $sitemap['types'] : [],
+                    ));
+
+                    if (count($blocks) !== count(array_unique($blocks))) {
+                        $validator->errors()->add(
+                            "settings.sitemaps.{$index}.types",
+                            'Sitemap block mappings must be unique per sitemap.',
+                        );
+                    }
+                }
+
                 if (! $this->has('settings')) {
                     return;
                 }

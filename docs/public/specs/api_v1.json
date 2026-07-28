@@ -489,155 +489,41 @@
         },
         "/api/v1/sitemap": {
             "get": {
-                "summary": "List the published tree's slugs and timestamps for sitemap generation,",
-                "description": "List the published tree's slugs and timestamps for sitemap generation,\nhonoring the space's sitemap-extraction settings (which block types are\nexposed and where their SEO meta lives).",
+                "summary": "The default sitemap, covering every block type configured in",
+                "description": "The default sitemap, covering every block type configured in\n`settings.sitemap.types`.",
                 "tags": [
                     "Sitemap"
                 ],
                 "operationId": "get_sitemap",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "tokenAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/sitemaps/{sitemap}": {
+            "get": {
+                "summary": "A named sitemap from `settings.sitemaps`, e.g",
+                "description": "A named sitemap from `settings.sitemaps`, e.g. one sitemap for pages\nand a separate one for news. Each definition carries its own\nblock-to-meta-path mappings; unknown slugs return 404.",
+                "tags": [
+                    "Sitemaps"
+                ],
+                "operationId": "get_sitemaps_by_sitemap",
                 "parameters": [
                     {
-                        "name": "published_at",
-                        "in": "query",
-                        "required": false,
+                        "name": "sitemap",
+                        "in": "path",
+                        "required": true,
                         "schema": {
-                            "type": "string",
-                            "format": "date-time",
-                            "example": ">=2024-01-01T00:00:00Z"
+                            "type": "string"
                         },
-                        "description": "Filter by publication date and time.",
-                        "example": ">=2024-01-01T00:00:00Z"
-                    },
-                    {
-                        "name": "updated_at",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "format": "date-time",
-                            "example": "2024-01-01T00:00:00Z...2024-01-31T23:59:59Z"
-                        },
-                        "description": "Filter by last update date and time.",
-                        "example": "2024-01-01T00:00:00Z...2024-01-31T23:59:59Z"
-                    },
-                    {
-                        "name": "created_at",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "format": "date-time",
-                            "example": "<2024-06-01T00:00:00Z"
-                        },
-                        "description": "Filter by creation date and time.",
-                        "example": "<2024-06-01T00:00:00Z"
-                    },
-                    {
-                        "name": "language",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "example": "en"
-                        },
-                        "description": "Filter by content language ISO code.",
-                        "example": "en"
-                    },
-                    {
-                        "name": "language_iso",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "example": "en"
-                        },
-                        "description": "Filter by content language ISO code.",
-                        "example": "en"
-                    },
-                    {
-                        "name": "content_type",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "example": "page"
-                        },
-                        "description": "Filter by block type slug used by the content entry.",
-                        "example": "page"
-                    },
-                    {
-                        "name": "parent_id",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "example": "01J123ABC456DEF789GHIJKLMN"
-                        },
-                        "description": "Filter by parent content identifier.",
-                        "example": "01J123ABC456DEF789GHIJKLMN"
-                    },
-                    {
-                        "name": "id",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "example": "01J123ABC456DEF789GHIJKLMN"
-                        },
-                        "description": "Filter by content identifier.",
-                        "example": "01J123ABC456DEF789GHIJKLMN"
-                    },
-                    {
-                        "name": "canonical_id",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "example": "01J123ABC456DEF789GHIJKLMN"
-                        },
-                        "description": "Filter by canonical content identifier, including all translations.",
-                        "example": "01J123ABC456DEF789GHIJKLMN"
-                    },
-                    {
-                        "name": "canonical_parent_id",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "example": "01J123ABC456DEF789GHIJKLMN"
-                        },
-                        "description": "Filter by canonical parent identifier, including children of translated parent variants.",
-                        "example": "01J123ABC456DEF789GHIJKLMN"
-                    },
-                    {
-                        "name": "include_fallback",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "boolean",
-                            "example": true
-                        },
-                        "description": "Include canonical content without a translation in the requested language.",
-                        "example": true
-                    },
-                    {
-                        "name": "sort",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "position",
-                                "-position",
-                                "published_at",
-                                "-published_at",
-                                "updated_at",
-                                "-updated_at",
-                                "created_at",
-                                "-created_at"
-                            ]
-                        },
-                        "description": "Sort by a supported field. Prefix with `-` for descending order."
+                        "description": "The sitemap identifier"
                     }
                 ],
                 "responses": {

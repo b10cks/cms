@@ -217,6 +217,119 @@ class ContentSitemapControllerTest extends TestCase
         $this->assertTrue($items->pluck('id')->contains($includedWithoutMeta->id));
     }
 
+    #[Test]
+    public function sitemap_paginates_in_the_database_and_excludes_noindex_from_totals(): void
+    {
+        foreach (['alpha', 'bravo', 'charlie'] as $slug) {
+            $this->createPublishedContent(
+                slug: $slug,
+                block: $this->pageBlock,
+                content: ['meta' => ['robots' => 'index,follow']],
+            );
+        }
+        $this->createPublishedContent(
+            slug: 'blocked',
+            block: $this->pageBlock,
+            content: ['meta' => ['robots' => 'noindex']],
+        );
+
+        $firstPage = $this->getJson($this->sitemapUrl(['per_page' => 2]));
+
+        $firstPage->assertOk();
+        $firstPage->assertJsonCount(2, 'data');
+        $firstPage->assertJsonPath('meta.total', 3);
+        $firstPage->assertJsonPath('meta.last_page', 2);
+        $firstPage->assertJsonPath('data.0.full_slug', '/alpha');
+        $firstPage->assertJsonPath('data.1.full_slug', '/bravo');
+
+        $secondPage = $this->getJson($this->sitemapUrl(['per_page' => 2, 'page' => 2]));
+
+        $secondPage->assertOk();
+        $secondPage->assertJsonCount(1, 'data');
+        $secondPage->assertJsonPath('data.0.full_slug', '/charlie');
+    }
+
+    #[Test]
+    public function named_sitemaps_serve_only_their_configured_blocks_with_their_own_meta_paths(): void
+    {
+        $this->configureNamedSitemaps();
+
+        $page = $this->createPublishedContent(
+            slug: 'home',
+            block: $this->pageBlock,
+            content: ['meta' => ['robots' => 'follow,index']],
+        );
+        $article = $this->createPublishedContent(
+            slug: 'launch-post',
+            block: $this->articleBlock,
+            content: ['seo' => ['robots' => 'index,follow', 'canonical' => 'https://example.com/launch']],
+        );
+
+        $pages = $this->getJson($this->namedSitemapUrl('pages'));
+
+        $pages->assertOk();
+        $pages->assertJsonCount(1, 'data');
+        $pages->assertJsonPath('data.0.id', $page->id);
+        $pages->assertJsonPath('data.0.meta.robots', 'index,follow');
+
+        $news = $this->getJson($this->namedSitemapUrl('news'));
+
+        $news->assertOk();
+        $news->assertJsonCount(1, 'data');
+        $news->assertJsonPath('data.0.id', $article->id);
+        $news->assertJsonPath('data.0.meta.robots', 'index,follow');
+        $news->assertJsonPath('data.0.meta.canonical', 'https://example.com/launch');
+    }
+
+    #[Test]
+    public function named_sitemap_honors_noindex_within_its_own_meta_path(): void
+    {
+        $this->configureNamedSitemaps();
+
+        $this->createPublishedContent(
+            slug: 'hidden-article',
+            block: $this->articleBlock,
+            content: ['seo' => ['robots' => 'noindex,follow']],
+        );
+
+        $news = $this->getJson($this->namedSitemapUrl('news'));
+
+        $news->assertOk();
+        $news->assertJsonCount(0, 'data');
+        $news->assertJsonPath('meta.total', 0);
+    }
+
+    #[Test]
+    public function unknown_named_sitemap_returns_404(): void
+    {
+        $this->configureNamedSitemaps();
+
+        $this->getJson($this->namedSitemapUrl('unknown'))->assertNotFound();
+    }
+
+    private function configureNamedSitemaps(): void
+    {
+        $this->space->update([
+            'settings' => [
+                ...$this->space->settings->toArray(),
+                'sitemaps' => [
+                    ['slug' => 'pages', 'types' => [['block' => 'page', 'path' => 'meta']]],
+                    ['slug' => 'news', 'types' => [['block' => 'article', 'path' => 'seo']]],
+                ],
+            ],
+        ]);
+    }
+
+    private function namedSitemapUrl(string $sitemap, array $query = []): string
+    {
+        return route('api.sitemaps.show', [
+            'sitemap' => $sitemap,
+            'token' => $this->token->token,
+            'rv' => $this->space->updated_at->timestamp,
+            ...$query,
+        ]);
+    }
+
     private function sitemapUrl(array $query = []): string
     {
         return route('api.sitemap', [

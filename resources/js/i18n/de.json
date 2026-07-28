@@ -2280,6 +2280,15 @@
           "addType": "Mapping hinzufügen",
           "empty": "Noch keine Sitemap-Mappings konfiguriert."
         },
+        "sitemaps": {
+          "title": "Benannte Sitemaps",
+          "description": "Liefere separate Sitemap-Feeds pro Inhaltstyp unter /api/v1/sitemaps/{slug} aus, z. B. eine für Seiten und eine für News.",
+          "slug": "Slug",
+          "slugDescription": "Der URL-Slug, unter dem diese Sitemap ausgeliefert wird.",
+          "slugPlaceholder": "news",
+          "add": "Sitemap hinzufügen",
+          "remove": "Entfernen"
+        },
         "noBlocks": "Keine Blöcke gefunden",
         "serialGaps": "Nummerierung nach dem Löschen",
         "serialGapsDescription": "Was mit der Nummer eines gelöschten Eintrags in automatisch erzeugten Feldern passiert.",

@@ -2278,6 +2278,15 @@
           "addType": "Add mapping",
           "empty": "No sitemap mappings configured yet."
         },
+        "sitemaps": {
+          "title": "Named Sitemaps",
+          "description": "Serve separate sitemap feeds per content type under /api/v1/sitemaps/{slug}, e.g. one for pages and one for news.",
+          "slug": "Slug",
+          "slugDescription": "The URL slug this sitemap is served under.",
+          "slugPlaceholder": "news",
+          "add": "Add sitemap",
+          "remove": "Remove"
+        },
         "noBlocks": "No blocks found",
         "serialGaps": "Numbering after deletion",
         "serialGapsDescription": "What happens to the number of a deleted entry in auto-generated serial fields.",

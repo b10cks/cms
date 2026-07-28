@@ -41,6 +41,7 @@ class SpaceSettings extends Settings
         'sitemap' => [
             'types' => [],
         ],
+        'sitemaps' => [],
     ];
 
     /**
@@ -232,6 +233,33 @@ class SpaceSettings extends Settings
                 'string',
                 'max:255',
             ],
+            'sitemaps' => [
+                ...$sometimes,
+                'nullable',
+                'array',
+            ],
+            'sitemaps.*.slug' => [
+                ...$required,
+                'string',
+                'max:100',
+                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
+                'distinct:ignore_case',
+            ],
+            'sitemaps.*.types' => [
+                ...$required,
+                'array',
+                'min:1',
+            ],
+            'sitemaps.*.types.*.block' => [
+                ...$required,
+                'string',
+                'max:100',
+            ],
+            'sitemaps.*.types.*.path' => [
+                ...$required,
+                'string',
+                'max:255',
+            ],
         ];
     }
 
@@ -394,6 +422,25 @@ class SpaceSettings extends Settings
                 'description' => 'Dot path inside the effective content payload where the sitemap meta object lives.',
                 'example' => 'meta',
             ],
+            'sitemaps' => [
+                'description' => 'Named sitemaps served under /api/v1/sitemaps/{slug}, each with its own '
+                    .'block-to-meta-path mappings (e.g. one sitemap for pages and one for news).',
+            ],
+            'sitemaps.*.slug' => [
+                'description' => 'URL slug the sitemap is served under.',
+                'example' => 'news',
+            ],
+            'sitemaps.*.types' => [
+                'description' => 'Mappings of content block slugs to the meta object path used for this sitemap.',
+            ],
+            'sitemaps.*.types.*.block' => [
+                'description' => 'Block slug included in this sitemap.',
+                'example' => 'article',
+            ],
+            'sitemaps.*.types.*.path' => [
+                'description' => 'Dot path inside the effective content payload where the sitemap meta object lives.',
+                'example' => 'seo',
+            ],
         ];
     }
 
@@ -444,6 +491,46 @@ class SpaceSettings extends Settings
                 && filled($type['block'] ?? null)
                 && filled($type['path'] ?? null),
         ));
+    }
+
+    /**
+     * @return array<int, array{slug: string, types: array<int, array{block: string, path: string}>}>
+     */
+    public function getSitemaps(): array
+    {
+        $sitemaps = [];
+
+        foreach ($this->attributes['sitemaps'] ?? [] as $sitemap) {
+            if (! is_array($sitemap) || blank($sitemap['slug'] ?? null)) {
+                continue;
+            }
+
+            $sitemaps[] = [
+                'slug' => (string) $sitemap['slug'],
+                'types' => array_values(array_filter(
+                    is_array($sitemap['types'] ?? null) ? $sitemap['types'] : [],
+                    fn (mixed $type): bool => is_array($type)
+                        && filled($type['block'] ?? null)
+                        && filled($type['path'] ?? null),
+                )),
+            ];
+        }
+
+        return $sitemaps;
+    }
+
+    /**
+     * @return ?array{slug: string, types: array<int, array{block: string, path: string}>}
+     */
+    public function getSitemapDefinition(string $slug): ?array
+    {
+        foreach ($this->getSitemaps() as $sitemap) {
+            if ($sitemap['slug'] === $slug) {
+                return $sitemap;
+            }
+        }
+
+        return null;
     }
 
     public function shouldPrependLocale(string $languageIso): bool

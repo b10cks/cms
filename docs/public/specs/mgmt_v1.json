@@ -3764,19 +3764,25 @@
                                     "settings": {
                                         "type": "object",
                                         "properties": {
+                                            "region": {
+                                                "type": "string",
+                                                "maxLength": 20
+                                            },
+                                            "default_block": {
+                                                "type": "string",
+                                                "nullable": true
+                                            },
                                             "default_language": {
                                                 "type": "string",
                                                 "minLength": 2,
-                                                "maxLength": 5,
-                                                "nullable": true
+                                                "maxLength": 10
                                             },
                                             "i18n_mode": {
                                                 "type": "string",
                                                 "enum": [
                                                     "\"overlay\"",
                                                     "\"independent\""
-                                                ],
-                                                "nullable": true
+                                                ]
                                             },
                                             "languages": {
                                                 "type": "array",
@@ -3786,7 +3792,7 @@
                                                         "code": {
                                                             "type": "string",
                                                             "minLength": 2,
-                                                            "maxLength": 5
+                                                            "maxLength": 10
                                                         },
                                                         "name": {
                                                             "type": "string",
@@ -3795,7 +3801,11 @@
                                                         "fallback_language": {
                                                             "type": "string",
                                                             "minLength": 2,
-                                                            "maxLength": 5,
+                                                            "maxLength": 10,
+                                                            "nullable": true
+                                                        },
+                                                        "hidden": {
+                                                            "type": "boolean",
                                                             "nullable": true
                                                         }
                                                     },
@@ -3805,10 +3815,137 @@
                                                     ]
                                                 }
                                             },
+                                            "site_locales": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "segment": {
+                                                            "type": "string",
+                                                            "maxLength": 64
+                                                        },
+                                                        "language": {
+                                                            "type": "string",
+                                                            "minLength": 2,
+                                                            "maxLength": 10
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "maxLength": 100,
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "segment",
+                                                        "language"
+                                                    ]
+                                                }
+                                            },
+                                            "asset_fields": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "key": {
+                                                            "type": "string",
+                                                            "maxLength": 100
+                                                        },
+                                                        "label": {
+                                                            "type": "string",
+                                                            "maxLength": 100
+                                                        },
+                                                        "required": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "key",
+                                                        "label",
+                                                        "required"
+                                                    ]
+                                                }
+                                            },
+                                            "environments": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string",
+                                                            "maxLength": 100
+                                                        },
+                                                        "url": {
+                                                            "type": "string",
+                                                            "maxLength": 2048,
+                                                            "format": "uri"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "name",
+                                                        "url"
+                                                    ]
+                                                }
+                                            },
+                                            "default_environment": {
+                                                "type": "string",
+                                                "maxLength": 100,
+                                                "nullable": true
+                                            },
+                                            "visual_editor": {
+                                                "type": "boolean"
+                                            },
+                                            "search_driver": {
+                                                "type": "string",
+                                                "maxLength": 50
+                                            },
+                                            "slug_strategy": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "\"prepend_translations\"",
+                                                    "\"always_prepend\"",
+                                                    "\"never\""
+                                                ]
+                                            },
+                                            "filter_hidden_blocks": {
+                                                "type": "boolean"
+                                            },
+                                            "content_sorting": {
+                                                "type": "boolean"
+                                            },
+                                            "serial_gaps": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "\"preserve\"",
+                                                    "\"reuse\""
+                                                ]
+                                            },
                                             "onboarding_dismissed_at": {
                                                 "type": "string",
                                                 "format": "date",
                                                 "nullable": true
+                                            },
+                                            "ai": {
+                                                "type": "array",
+                                                "properties": [],
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "enabled": {
+                                                            "type": "boolean",
+                                                            "nullable": true
+                                                        },
+                                                        "model": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "favourites": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             },
                                             "sitemap": {
                                                 "type": "array",
@@ -3837,6 +3974,43 @@
                                                             }
                                                         }
                                                     }
+                                                }
+                                            },
+                                            "sitemaps": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "maxLength": 100,
+                                                            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                                                        },
+                                                        "types": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "block": {
+                                                                        "type": "string",
+                                                                        "maxLength": 100
+                                                                    },
+                                                                    "path": {
+                                                                        "type": "string",
+                                                                        "maxLength": 255
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "block",
+                                                                    "path"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "slug",
+                                                        "types"
+                                                    ]
                                                 }
                                             }
                                         }
@@ -4367,18 +4541,19 @@
                                                 "items": {
                                                     "type": "object",
                                                     "properties": {
-                                                        "key": {
+                                                        "name": {
                                                             "type": "string",
                                                             "maxLength": 100
                                                         },
-                                                        "label": {
+                                                        "url": {
                                                             "type": "string",
-                                                            "maxLength": 100
+                                                            "maxLength": 2048,
+                                                            "format": "uri"
                                                         }
                                                     },
                                                     "required": [
-                                                        "key",
-                                                        "label"
+                                                        "name",
+                                                        "url"
                                                     ]
                                                 }
                                             },
@@ -4470,6 +4645,43 @@
                                                             }
                                                         }
                                                     }
+                                                }
+                                            },
+                                            "sitemaps": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "maxLength": 100,
+                                                            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                                                        },
+                                                        "types": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "block": {
+                                                                        "type": "string",
+                                                                        "maxLength": 100
+                                                                    },
+                                                                    "path": {
+                                                                        "type": "string",
+                                                                        "maxLength": 255
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "block",
+                                                                    "path"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "slug",
+                                                        "types"
+                                                    ]
                                                 }
                                             }
                                         }

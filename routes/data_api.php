@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\BlockController;
 use App\Http\Controllers\Api\ContentController;
+use App\Http\Controllers\Api\ContentSitemapController;
 use App\Http\Controllers\Api\DataEntryController;
 use App\Http\Controllers\Api\DataSourceController;
 use App\Http\Controllers\Api\IconifyController;
@@ -14,11 +15,16 @@ Route::get('contents', [ContentController::class, 'index'])->middleware(['revisi
     'contents.index',
 );
 Route::get('search', SearchController::class)->middleware(['cache.data:60,60', 'cache.micro'])->name('contents.search');
-Route::get('sitemap', \App\Http\Controllers\Api\ContentSitemapController::class)->middleware([
+Route::get('sitemap', ContentSitemapController::class)->middleware([
     'revision',
     'cache.data',
     'cache.micro',
 ])->name('sitemap');
+Route::get('sitemaps/{sitemap}', [ContentSitemapController::class, 'show'])->middleware([
+    'revision',
+    'cache.data',
+    'cache.micro',
+])->name('sitemaps.show');
 Route::get('contents/{slug}', [ContentController::class, 'show'])
     ->middleware(['revision', 'cache.data', 'cache.micro'])
     ->where('slug', '.*')

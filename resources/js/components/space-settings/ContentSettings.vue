@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from '~/components/ui/card'
 import { FormField, Label } from '~/components/ui/form'
+import { Input } from '~/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -31,6 +32,11 @@ interface SitemapTypeMapping extends TableItem {
   path: string
 }
 
+interface NamedSitemap {
+  slug: string
+  types: SitemapTypeMapping[]
+}
+
 interface ContentSettingsSpace {
   id: string
   settings: {
@@ -41,6 +47,7 @@ interface ContentSettingsSpace {
     sitemap?: {
       types?: SitemapTypeMapping[]
     }
+    sitemaps?: NamedSitemap[]
   }
 }
 
@@ -130,6 +137,58 @@ const removeSitemapType = (index: number): void => {
   sitemapTypes.value.splice(index, 1)
 }
 
+const namedSitemaps = ref<NamedSitemap[]>(deepClone(props.space.settings.sitemaps || []))
+
+const namedSitemapColumns = (sitemap: NamedSitemap): ColumnDefinition[] => [
+  {
+    key: 'block',
+    label: $t('labels.settings.content.sitemap.block'),
+    type: 'select',
+    placeholder: $t('labels.settings.content.sitemap.selectBlock'),
+    required: true,
+    options: (item) =>
+      sitemapBlocks.value.map((block) => ({
+        value: block.slug,
+        label: block.name,
+        disabled: sitemap.types.some(
+          (type) => type.block === block.slug && type.block !== (item.block || '')
+        ),
+      })),
+  },
+  {
+    key: 'path',
+    label: $t('labels.settings.content.sitemap.path'),
+    type: 'text',
+    placeholder: $t('labels.settings.content.sitemap.pathPlaceholder'),
+    required: true,
+  },
+]
+
+const addNamedSitemap = (): void => {
+  namedSitemaps.value.push({ slug: '', types: [] })
+}
+
+const removeNamedSitemap = (index: number): void => {
+  namedSitemaps.value.splice(index, 1)
+}
+
+const addNamedSitemapType = (sitemap: NamedSitemap, item: TableItem): void => {
+  sitemap.types.push({
+    block: String(item.block || ''),
+    path: String(item.path || ''),
+  })
+}
+
+const cleanedNamedSitemaps = (): NamedSitemap[] =>
+  namedSitemaps.value
+    .map((sitemap) => ({
+      slug: sitemap.slug.trim().toLowerCase(),
+      types: sitemap.types
+        .map((type) => ({ block: type.block.trim(), path: type.path.trim() }))
+        .filter((type) => type.block && type.path),
+    }))
+    .filter((sitemap) => sitemap.slug && sitemap.types.length)
+
 const handleSave = () => {
   updateSpace({
     id: props.space.id,
@@ -148,6 +207,7 @@ const handleSave = () => {
             }))
             .filter((type) => type.block && type.path),
         },
+        sitemaps: cleanedNamedSitemaps(),
       },
     },
   })
@@ -274,6 +334,56 @@ const handleSave = () => {
           @remove="removeSitemapType"
           @update:items="(items) => (sitemapTypes = items as unknown as SitemapTypeMapping[])"
         />
+      </div>
+      <div class="space-y-4">
+        <div class="space-y-1">
+          <h3 class="text-sm font-semibold">
+            {{ $t('labels.settings.content.sitemaps.title') }}
+          </h3>
+          <p class="text-xs text-muted">
+            {{ $t('labels.settings.content.sitemaps.description') }}
+          </p>
+        </div>
+        <div
+          v-for="(sitemap, index) in namedSitemaps"
+          :key="index"
+          class="space-y-4 rounded-lg border border-border p-4"
+        >
+          <div class="flex items-end gap-2">
+            <FormField
+              :name="`sitemap-slug-${index}`"
+              class="grow"
+              :label="$t('labels.settings.content.sitemaps.slug')"
+              :description="$t('labels.settings.content.sitemaps.slugDescription')"
+            >
+              <Input
+                :id="`sitemap-slug-${index}`"
+                v-model="sitemap.slug"
+                :placeholder="$t('labels.settings.content.sitemaps.slugPlaceholder')"
+              />
+            </FormField>
+            <Button
+              variant="ghost"
+              @click="removeNamedSitemap(index)"
+            >
+              {{ $t('labels.settings.content.sitemaps.remove') }}
+            </Button>
+          </div>
+          <SettingsTable
+            v-model:items="sitemap.types"
+            :columns="namedSitemapColumns(sitemap)"
+            :new-item-template="sitemapNewItemTemplate"
+            @add="(item) => addNamedSitemapType(sitemap, item)"
+            @remove="(typeIndex) => sitemap.types.splice(typeIndex, 1)"
+            @update:items="(items) => (sitemap.types = items as unknown as SitemapTypeMapping[])"
+          />
+        </div>
+        <Button
+          variant="outline"
+          @click="addNamedSitemap"
+        >
+          {{ $t('labels.settings.content.sitemaps.add') }}
+        </Button>
       </div>
     </CardContent>
     <CardFooter>

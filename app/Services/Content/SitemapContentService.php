@@ -15,68 +15,33 @@ class SitemapContentService
      */
     public function configuredMetaPathsByBlock(Space $space): Collection
     {
-        return $this->configuredMetaPathsCache[$space->id] ??= collect($space->settings->getSitemapTypes())
+        return $this->configuredMetaPathsCache[$space->id] ??= $this->metaPathsFromTypes(
+            $space->settings->getSitemapTypes(),
+        );
+    }
+
+    /**
+     * Block-to-meta-path mappings for a named sitemap, or null when no sitemap
+     * with the given slug is configured.
+     *
+     * @return ?Collection<string, string>
+     */
+    public function metaPathsForSitemap(Space $space, string $slug): ?Collection
+    {
+        $definition = $space->settings->getSitemapDefinition($slug);
+
+        return $definition === null ? null : $this->metaPathsFromTypes($definition['types']);
+    }
+
+    /**
+     * @param  array<int, array{block: string, path: string}>  $types
+     * @return Collection<string, string>
+     */
+    private function metaPathsFromTypes(array $types): Collection
+    {
+        return collect($types)
             ->filter(fn (array $type): bool => filled($type['block'] ?? null) && filled($type['path'] ?? null))
             ->mapWithKeys(fn (array $type): array => [(string) $type['block'] => (string) $type['path']]);
-    }
-
-    public function metaPathForBlock(Space $space, string $blockSlug): ?string
-    {
-        return $this->configuredMetaPathsByBlock($space)->get($blockSlug);
-    }
-
-    /**
-     * @return array{robots: ?string, canonical: ?string}
-     */
-    public function extractNormalizedMeta(
-        Space $space,
-        ResolvedContent $resolved,
-        array $effectiveContent,
-    ): array {
-        $blockSlug = $resolved->canonicalContent->block?->slug
-            ?? $resolved->resolvedRow?->block?->slug
-            ?? $resolved->targetContent?->block?->slug
-            ?? $resolved->fallbackContent?->block?->slug;
-
-        if (! $blockSlug) {
-            return [
-                'robots' => null,
-                'canonical' => null,
-            ];
-        }
-
-        $path = $this->metaPathForBlock($space, $blockSlug);
-
-        if (! $path) {
-            return [
-                'robots' => null,
-                'canonical' => null,
-            ];
-        }
-
-        $meta = data_get($effectiveContent, $path);
-
-        if (! is_array($meta)) {
-            return [
-                'robots' => null,
-                'canonical' => null,
-            ];
-        }
-
-        return [
-            'robots' => $this->normalizeRobots($meta['robots'] ?? null),
-            'canonical' => $this->normalizeCanonical($meta['canonical'] ?? null),
-        ];
-    }
-
-    /**
-     * @param  array{robots: ?string, canonical: ?string}  $meta
-     */
-    public function isIndexable(array $meta): bool
-    {
-        $tokens = $this->normalizeRobotTokens($meta['robots'] ?? null);
-
-        return ! in_array('noindex', $tokens, true) && ! in_array('none', $tokens, true);
     }
 
     public function normalizeRobots(mixed $robots): ?string
