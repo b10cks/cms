@@ -38,7 +38,9 @@ class InternalRequestDispatcher
             $server['CONTENT_TYPE'] = 'application/json';
         }
 
-        $request = Request::create($uri, $method, $query, [], [], $server, $content);
+        // Build on APP_URL, not the bare path: Request::create() would default
+        // the host to localhost, which TrustHosts rejects outside local/testing.
+        $request = Request::create(rtrim(config('app.url'), '/').$uri, $method, $query, [], [], $server, $content);
         // The outer /mcp/v1 request is already throttled; exempt the sub-request
         // so one tool call doesn't consume two mgmt rate-limit hits.
         $request->attributes->set('mcp-internal', true);
