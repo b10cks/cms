@@ -9,8 +9,12 @@ on:
   # rather than duplicating these steps.
   workflow_call:
 
+# github.workflow is the *caller's* name under workflow_call, so the deploy and
+# release workflows land in separate groups when both call this on the same tag
+# — with a shared group, whichever started second cancelled the other's run.
+# Direct runs (PRs, pushes to main) keep deduplicating per ref as before.
 concurrency:
-  group: tests-${{ github.ref }}
+  group: tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
