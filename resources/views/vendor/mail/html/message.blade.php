@@ -30,6 +30,7 @@ alt="{{ config('app.name') }}"
 </a>
 <br>
 
+@if (\App\Support\EditionGate::isSaas())
 {{ trans('notifications.footer') }}
 <br>
 <br>
@@ -41,6 +42,17 @@ alt="{{ config('app.name') }}"
  • <a href="https://www.b10cks.com/en/legal/dpa" target="_blank">Data Privacy Agreement</a>
  • <a href="https://www.b10cks.com/en/legal/privacy-policy" target="_blank">Privacy Policy</a>
  • <a href="https://www.b10cks.com/en/legal/terms-of-service" target="_blank">Terms of Use</a>
+@else
+@if (config('edition.imprint.company'))
+{{ config('edition.imprint.company') }}@if (config('edition.imprint.address')), {{ config('edition.imprint.address') }}@endif
+
+@endif
+@if (config('edition.imprint.notice'))
+{{ config('edition.imprint.notice') }}
+
+@endif
+© {{ date('Y') }} {{ config('edition.imprint.company') ?: config('app.name') }}
+@endif
 
 </x-mail::footer>
 </x-slot:footer>
