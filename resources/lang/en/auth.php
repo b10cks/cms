@@ -40,6 +40,7 @@ return [
     'login_session_expired' => 'Login session expired. Please try again.',
     'registration_successful' => 'Registration successful.',
     'registration_failed' => 'An error occurred during registration.',
+    'registration_closed' => 'Registration is closed on this instance. Ask an administrator for an invite.',
     'social_email_missing' => 'We could not read an email address from this social account.',
     'social_link_already_used' => 'This social profile is already linked to another account.',
     'social_link_required' => 'An account already uses this email address. Sign in with your password, then link this social profile from your account settings.',

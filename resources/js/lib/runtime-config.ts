@@ -25,6 +25,7 @@ declare global {
         billing?: boolean
         ai?: boolean
         realtime?: boolean
+        registration?: boolean
       }
       echo?: {
         broadcaster?: 'reverb'
@@ -49,7 +50,7 @@ export const runtimeConfig = {
     apiBaseUrl: appConfig?.apiBaseUrl || '',
     appVersion: appConfig?.version || '',
     docsUrl: appConfig?.docsUrl || 'https://www.b10cks.com/docs',
-    communityUrl: appConfig?.communityUrl || 'https://discord.gg/zAz6sBDpHT',
+    communityUrl: appConfig?.communityUrl || 'https://discord.gg/mdcDktFFcp',
     socialAuth: {
       providers: appConfig?.socialAuth?.providers || [],
     },
@@ -63,6 +64,7 @@ export const runtimeConfig = {
       billing: appConfig?.features?.billing ?? true,
       ai: appConfig?.features?.ai ?? true,
       realtime: appConfig?.features?.realtime ?? Boolean(appConfig?.echo),
+      registration: appConfig?.features?.registration ?? true,
     },
     echo: appConfig?.echo
       ? {

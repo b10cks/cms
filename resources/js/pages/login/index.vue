@@ -6,6 +6,7 @@ import TwoFactorVerifyDialog from '~/components/TwoFactorVerifyDialog.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
+import { runtimeConfig } from '~/lib/runtime-config'
 
 const {
   login,
@@ -53,6 +54,12 @@ const handleCancel = () => {
   isSocialTwoFactor.value = false
   cancelTwoFactorLogin()
 }
+
+// A closed instance (self-hosted after the first account exists) still allows
+// invite-based signups, so the link stays when invite params are present.
+const showSignup = computed(() => {
+  return runtimeConfig.public.features.registration || typeof route.query.invite_id === 'string'
+})
 
 const signupUrl = computed(() => {
   const params = new URLSearchParams()
@@ -142,7 +149,10 @@ onMounted(() => {
         </div>
       </div>
       <Button variant="primary">{{ $t('actions.login') }}</Button>
-      <Markdown :content="$t('labels.login.signup', { url: signupUrl })" />
+      <Markdown
+        v-if="showSignup"
+        :content="$t('labels.login.signup', { url: signupUrl })"
+      />
       <SocialLoginButtons />
     </form>
   </div>

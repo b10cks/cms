@@ -5,6 +5,7 @@ import SocialLoginButtons from '~/components/SocialLoginButtons.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
+import { runtimeConfig } from '~/lib/runtime-config'
 import { digest } from '~/lib/utils'
 import { InviteStatus } from '~/types/invites.d'
 
@@ -48,6 +49,11 @@ const formData = ref<{
 
 const hasPendingInvite = computed(() => {
   return publicInvite.value?.status === InviteStatus.PENDING && !!inviteToken.value
+})
+
+// Mirrors the backend gate: a closed instance still accepts invite signups.
+const registrationClosed = computed(() => {
+  return !runtimeConfig.public.features.registration && !inviteId.value
 })
 
 const emailHash = ref<string | undefined>()
@@ -168,8 +174,17 @@ const handleSignup = async () => {
       >
         {{ inviteErrorMessage }}
       </Alert>
+      <Alert
+        v-if="registrationClosed"
+        color="warning"
+        variant="modern"
+        icon="lucide:lock"
+      >
+        {{ $t('labels.login.registrationClosed') }}
+      </Alert>
     </div>
     <form
+      v-if="!registrationClosed"
       class="grid gap-6"
       @submit.prevent="handleSignup"
     >

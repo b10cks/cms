@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Management\Invite;
 use App\Notifications\User\VerifyEmailNotification;
+use App\Support\EditionGate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -25,6 +26,12 @@ class RegisterController extends Controller
 
     public function __invoke(RegisterRequest $request, CreateUser $createUser, AcceptInvite $acceptInvite): JsonResponse
     {
+        if (! $request->filled('invite_id') && ! EditionGate::registrationOpen()) {
+            return response()->json([
+                'message' => __('auth.registration_closed'),
+            ], 403);
+        }
+
         try {
             $isInviteRegistration = $request->filled('invite_id');
             $invite = ($isInviteRegistration) ? Invite::findOrFail($request->input('invite_id')) : null;

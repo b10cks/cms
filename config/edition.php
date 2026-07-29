@@ -28,6 +28,9 @@ return [
     'features' => [
         'billing' => env('B10CKS_FEATURE_BILLING'),
         'ai' => env('B10CKS_FEATURE_AI'),
+        // Open self-registration. null: always on for saas; on self-hosted
+        // only until the first account exists (invites keep working).
+        'registration' => env('B10CKS_ALLOW_REGISTRATION'),
     ],
 
     /*

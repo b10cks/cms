@@ -65,12 +65,26 @@ class EditionGateTest extends TestCase
         $this->assertTrue(EditionGate::realtimeEnabled());
     }
 
+    public function test_registration_override_wins(): void
+    {
+        config(['edition.edition' => 'saas', 'edition.features.registration' => null]);
+        $this->assertTrue(EditionGate::registrationOpen());
+
+        config(['edition.features.registration' => 'false']);
+        $this->assertFalse(EditionGate::registrationOpen());
+
+        config(['edition.edition' => 'self-hosted', 'edition.features.registration' => true]);
+        $this->assertTrue(EditionGate::registrationOpen());
+    }
+
     public function test_features_shape(): void
     {
-        config(['edition.edition' => 'self-hosted', 'ai.mode' => 'single']);
+        // Pin registration via override: the self-hosted default queries the
+        // users table, which this unit test does not migrate.
+        config(['edition.edition' => 'self-hosted', 'ai.mode' => 'single', 'edition.features.registration' => false]);
 
         $this->assertSame(
-            ['billing' => false, 'ai' => false, 'realtime' => EditionGate::realtimeEnabled()],
+            ['billing' => false, 'ai' => false, 'realtime' => EditionGate::realtimeEnabled(), 'registration' => false],
             EditionGate::features()
         );
     }
