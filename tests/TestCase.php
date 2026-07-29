@@ -15,6 +15,43 @@ abstract class TestCase extends BaseTestCase
 
     protected User $user;
 
+    /**
+     * Setup markers are real files on the storage volume, and the
+     * registration-closed latch in particular is written by any test that
+     * exercises the gate with an account present. Redirect them into a testing
+     * directory and clear them per test, so nothing leaks into the working
+     * tree or between test cases. Individual tests may still point these
+     * elsewhere in their own setUp().
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'setup.state_path' => storage_path('app/testing/base-state/install-state.json'),
+            'setup.http_enabled_path' => storage_path('app/testing/base-state/http-enabled'),
+            'setup.registration_closed_path' => storage_path('app/testing/base-state/registration-closed'),
+        ]);
+
+        $this->clearSetupMarkers();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->clearSetupMarkers();
+
+        parent::tearDown();
+    }
+
+    private function clearSetupMarkers(): void
+    {
+        foreach (['state_path', 'http_enabled_path', 'registration_closed_path'] as $key) {
+            @unlink((string) config("setup.{$key}"));
+        }
+
+        @rmdir(storage_path('app/testing/base-state'));
+    }
+
     protected function createAndActAs(?User $user = null): void
     {
         if (! $user) {

@@ -41,6 +41,20 @@ main() {
     docker compose version >/dev/null 2>&1 || die "the docker compose plugin is missing. Install Docker Compose v2."
     docker info >/dev/null 2>&1 || die "the docker daemon is not reachable. Start Docker and retry."
 
+    # Images are published for amd64 and arm64 only. Without this check an
+    # unsupported architecture fails much later and far less clearly: the
+    # containers exec-format-error on boot and the health wait below just runs
+    # out after ten minutes. Ask docker rather than uname, so what we test is
+    # the architecture the containers will actually run as.
+    ARCH="$(docker version --format '{{.Server.Arch}}' 2>/dev/null || echo '')"
+    [ -n "$ARCH" ] || ARCH="$(uname -m)"
+    case "$ARCH" in
+        amd64 | x86_64 | arm64 | aarch64) ;;
+        *) die "unsupported architecture '${ARCH}'. b10cks images are published for amd64 and arm64 only." ;;
+    esac
+
+    say "architecture ${ARCH}"
+
     if command -v curl >/dev/null 2>&1; then
         fetch() { curl -fsSL "$1"; }
     elif command -v wget >/dev/null 2>&1; then

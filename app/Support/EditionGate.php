@@ -3,6 +3,8 @@
 namespace App\Support;
 
 use App\Enums\Edition;
+use App\Models\User;
+use App\Services\Setup\InstallState;
 
 class EditionGate
 {
@@ -33,6 +35,11 @@ class EditionGate
      * owner" step — and invite-only afterwards, so a fresh install on a
      * public address cannot be claimed by a stranger later. Override with
      * B10CKS_ALLOW_REGISTRATION.
+     *
+     * "Has an account" is latched into a marker file rather than answered from
+     * a live query every time, because the query has two ways of wrongly
+     * reopening a populated instance: a transient database error, and
+     * soft-deleting the last account.
      */
     public static function registrationOpen(): bool
     {
@@ -45,9 +52,34 @@ class EditionGate
             return true;
         }
 
-        // Before setup has migrated the database the check cannot run; stay
-        // open so the first boot is not bricked.
-        return rescue(fn () => ! \App\Models\User::query()->exists(), true, false);
+        $state = app(InstallState::class);
+
+        if ($state->registrationClosed()) {
+            return false;
+        }
+
+        try {
+            // withTrashed: a soft-deleted account is still an account. Without
+            // it, deleting the last user would hand the instance to whoever
+            // registers next.
+            $hasAccount = User::withTrashed()->exists();
+        } catch (\Throwable $e) {
+            report($e);
+
+            // The answer is unknown. On an install that has completed setup,
+            // refuse rather than risk handing out an owner account over a
+            // database blip; before setup the database may legitimately not
+            // exist yet, so the first boot stays open.
+            return ! $state->exists();
+        }
+
+        if ($hasAccount) {
+            $state->closeRegistration();
+
+            return false;
+        }
+
+        return true;
     }
 
     /**

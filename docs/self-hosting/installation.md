@@ -55,7 +55,7 @@ docker compose --profile redis --profile opensearch --profile reverb up -d
 
 Realtime collaboration needs the `reverb` profile plus `BROADCAST_DRIVER=reverb` and `REVERB_APP_KEY`/`REVERB_APP_SECRET`; without it the app runs fine, just without live presence.
 
-Images are published for every release tag to [Docker Hub](https://hub.docker.com/r/b10cks/cms) and mirrored to [GHCR](https://github.com/b10cks/cms/pkgs/container/cms) as `ghcr.io/b10cks/cms`. Both are `linux/amd64` only for now — on Apple Silicon or an arm64 VPS, Docker will run them under emulation. The compose file points at Docker Hub; if you are behind a shared IP and hit its unauthenticated pull limit, keep `B10CKS_IMAGE_TAG` as-is and change the `image:` name in `docker-compose.yml` to `ghcr.io/b10cks/cms`.
+Images are published for every release tag to [Docker Hub](https://hub.docker.com/r/b10cks/cms) and mirrored to [GHCR](https://github.com/b10cks/cms/pkgs/container/cms) as `ghcr.io/b10cks/cms`. Both are published as multi-arch manifests for `linux/amd64` and `linux/arm64`, so Apple Silicon and arm64 VPS hosts pull a native image — Docker picks the right one automatically. Other architectures are not supported; the installer refuses them up front rather than failing later. The compose file points at Docker Hub; if you are behind a shared IP and hit its unauthenticated pull limit, keep `B10CKS_IMAGE_TAG` as-is and change the `image:` name in `docker-compose.yml` to `ghcr.io/b10cks/cms`.
 
 ## Webhost package (shared hosting)
 
@@ -129,10 +129,15 @@ Set `B10CKS_IMAGE_TAG` in your `.env` to the new [release tag](https://github.co
 ```bash
 docker compose pull
 docker compose up -d
-docker compose exec app php artisan migrate --force
 ```
 
-`b10cks:setup` only runs on the very first boot (its state lives on the storage volume), so migrations are an explicit step on every upgrade. The restarted containers pick up new queue workers automatically — no separate `queue:restart` needed.
+Migrations apply themselves. On boot the app container compares the image's version against the one recorded on the storage volume and, when they differ, runs `b10cks:upgrade` before serving traffic — so an ordinary restart costs nothing while an actual upgrade is never forgotten. The restarted containers pick up new queue workers automatically, so no separate `queue:restart` is needed.
+
+To watch it happen, or to confirm it ran:
+
+```bash
+docker compose logs app | grep -i upgrad
+```
 
 ### Manual
 
@@ -140,13 +145,17 @@ docker compose exec app php artisan migrate --force
 git pull
 composer install --no-dev
 bun install && bun run build
-php artisan migrate
+php artisan b10cks:upgrade
 php artisan queue:restart
 ```
 
 ### Webhost package
 
-For the webhost package: extract the new archive over the old tree (keep your `.env` and `storage/`), then run `php artisan migrate`. Re-arming the HTTP installer is **not** needed — migrations are the only upgrade step.
+For the webhost package: extract the new archive over the old tree (keep your `.env` and `storage/`), then run `php artisan b10cks:upgrade`. Re-arming the HTTP installer is **not** needed — migrations are the only upgrade step.
+
+::: warning Migrate space databases too, not just the management one
+`php artisan migrate` alone is **not** enough on any of these paths. It updates the management database, while each space carries its own schema — one database per space on the standard profile, prefixed tables or a SQLite file per space on the shared profile. `b10cks:upgrade` runs both, applying space migrations only where they are actually pending. If you have previously upgraded with `migrate` alone, run `php artisan b10cks:upgrade --force` once to catch the spaces up.
+:::
 
 Space databases are migrated automatically alongside the management database.
 

@@ -58,41 +58,68 @@ class SetupSpace extends QueuedJob
 
         $profile = app(InstallProfileResolver::class)->resolve();
 
+        $connection = $space->connections()->create(
+            self::defaultConnectionAttributes($config, $profile, $space->id)
+        );
+
+        $this->dispatchSetupConnection($connection);
+    }
+
+    /**
+     * The connection record for a space's own database, derived from the main
+     * database config. Pure so both profiles are testable without a live
+     * connection to the driver they describe.
+     *
+     * @param  array<string, mixed>  $config  the main database's connection config
+     * @return array<string, mixed>
+     */
+    public static function defaultConnectionAttributes(array $config, InstallProfile $profile, string $spaceId): array
+    {
         $attributes = [
             'name' => 'Internal',
             'driver' => $config['driver'],
             'is_default' => true,
         ];
 
+        // The standard profile provisions a database (and user) per space, so
+        // the job generates those itself — nothing to carry over here.
+        if ($profile !== InstallProfile::SHARED) {
+            return $attributes;
+        }
+
         // The shared profile provisions without CREATE DATABASE/CREATE USER
         // privileges: sqlite gets one file per space, everything else lives in
         // the main database behind a per-space table prefix.
-        if ($profile === InstallProfile::SHARED) {
-            if (config('setup.space_db_driver') === 'sqlite') {
-                $attributes['driver'] = 'sqlite';
-                $attributes['config'] = [
-                    'database' => storage_path("app/spaces/{$space->id}/space.sqlite"),
-                ];
-            } else {
-                // Same restriction b10cks:setup enforces at install time —
-                // backups can only dump prefixed table lists on MySQL/MariaDB.
-                if (! in_array($config['driver'], ['mysql', 'mariadb', 'sqlite'], true)) {
-                    throw new \RuntimeException(sprintf(
-                        'The shared install profile does not support a "%s" main database.',
-                        $config['driver']
-                    ));
-                }
+        //
+        // A sqlite main database always gets its own file, whatever
+        // B10CKS_SPACE_DB_DRIVER says. Prefixing it instead would point the
+        // space connection at the *main* file, so `space:delete` would unlink
+        // the entire installation and a space backup would copy every other
+        // tenant (plus the users table) into a downloadable zip.
+        if (config('setup.space_db_driver') === 'sqlite' || $config['driver'] === 'sqlite') {
+            $attributes['driver'] = 'sqlite';
+            $attributes['config'] = [
+                'database' => storage_path("app/spaces/{$spaceId}/space.sqlite"),
+            ];
 
-                $attributes['config'] = [
-                    'database' => $config['database'],
-                    'prefix' => self::sharedTablePrefix($space->id),
-                ];
-            }
+            return $attributes;
         }
 
-        $connection = $space->connections()->create($attributes);
+        // Same restriction b10cks:setup enforces at install time — backups can
+        // only dump prefixed table lists on MySQL/MariaDB.
+        if (! in_array($config['driver'], ['mysql', 'mariadb'], true)) {
+            throw new \RuntimeException(sprintf(
+                'The shared install profile does not support a "%s" main database.',
+                $config['driver']
+            ));
+        }
 
-        $this->dispatchSetupConnection($connection);
+        $attributes['config'] = [
+            'database' => $config['database'],
+            'prefix' => self::sharedTablePrefix($spaceId),
+        ];
+
+        return $attributes;
     }
 
     /**

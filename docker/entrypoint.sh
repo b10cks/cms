@@ -5,6 +5,11 @@ set -eu
 # variable is provided and B10CKS_AUTO_SETUP is unset, so this is a strict
 # pass-through.
 
+# supervisord expands %(ENV_OCTANE_HOST)s at parse time and fails hard if the
+# variable is missing, so it always has to be set. 127.0.0.1 keeps the SaaS/ECS
+# behaviour; compose sets 0.0.0.0 so the published port is reachable.
+export OCTANE_HOST="${OCTANE_HOST:-127.0.0.1}"
+
 # APP_KEY: prefer the environment; otherwise generate once and persist it on
 # the storage volume (/app is read-only for this user).
 if [ -z "${APP_KEY:-}" ]; then
@@ -47,8 +52,20 @@ if [ -z "${APP_KEY:-}" ]; then
     export APP_KEY
 fi
 
-if [ "${B10CKS_AUTO_SETUP:-false}" = "true" ] && [ ! -f /app/storage/app/setup/install-state.json ]; then
-    php /app/artisan b10cks:setup --profile="${B10CKS_INSTALL_PROFILE:-standard}"
+if [ "${B10CKS_AUTO_SETUP:-false}" = "true" ]; then
+    if [ ! -f /app/storage/app/setup/install-state.json ]; then
+        php /app/artisan b10cks:setup --profile="${B10CKS_INSTALL_PROFILE:-standard}"
+    else
+        # Already installed: apply whatever the new image's migrations add, to
+        # the management database and every space database. A no-op unless the
+        # recorded version actually changed, so ordinary restarts pay nothing.
+        #
+        # Gated on B10CKS_AUTO_SETUP, which compose sets to false for the reverb
+        # container — it shares this image and entrypoint, and two containers
+        # migrating the same database concurrently on every upgrade is exactly
+        # the race this avoids.
+        php /app/artisan b10cks:upgrade
+    fi
 fi
 
 exec /usr/bin/supervisord -c "${B10CKS_SUPERVISORD_CONF:-/etc/supervisord.conf}" -n

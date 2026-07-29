@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\User\UserSocialLink;
 use App\Notifications\User\VerifyEmailNotification;
 use App\Services\Auth\TwoFactorAuthService;
+use App\Support\EditionGate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -291,6 +292,16 @@ class SocialLoginController extends AuthController
         [$firstname, $lastname] = $this->namesFrom($socialUser);
         $invite = $this->pendingInvite($request);
         $verifiedByInvite = $invite && strcasecmp($invite->email, $email) === 0;
+
+        // Same gate as RegisterController: once a self-hosted instance has its
+        // first account, only invitees may create new ones. Without this the
+        // provider redirect stays an open registration endpoint for anyone
+        // holding an account with the configured IdP.
+        if (! $verifiedByInvite && ! EditionGate::registrationOpen()) {
+            throw ValidationException::withMessages([
+                'email' => __('auth.registration_closed'),
+            ]);
+        }
 
         $user = $this->createUser->execute([
             'email' => $email,

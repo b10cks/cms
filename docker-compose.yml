@@ -18,7 +18,13 @@ services:
       APP_DEBUG: "false"
       APP_KEY: ${APP_KEY:-}
       APP_URL: ${APP_URL:-http://localhost:8000}
-      APP_VERSION: ${APP_VERSION:-latest}
+      # APP_VERSION is deliberately not set here: the image bakes in the release
+      # it was built from, and overriding it would both misreport the version
+      # and break the version comparison that triggers upgrade migrations.
+      # Must be 0.0.0.0: docker forwards the published port to the container's
+      # IP, so a loopback bind inside the container is unreachable from the
+      # host. Host-side exposure is controlled by APP_BIND above, not here.
+      OCTANE_HOST: 0.0.0.0
       B10CKS_EDITION: ${B10CKS_EDITION:-self-hosted}
       B10CKS_AUTO_SETUP: ${B10CKS_AUTO_SETUP:-true}
       B10CKS_INSTALL_PROFILE: ${B10CKS_INSTALL_PROFILE:-standard}
@@ -62,7 +68,10 @@ services:
     volumes:
       - app-storage:/app/storage
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8000/mgmt/v1/health >/dev/null"]
+      # Probes the container's routable address, not loopback: a 127.0.0.1
+      # probe passes even when the app is bound somewhere the published port
+      # can never reach, reporting "healthy" on a stack nobody can connect to.
+      test: ["CMD-SHELL", "wget -qO- \"http://$$(hostname):8000/mgmt/v1/health\" >/dev/null"]
       interval: 30s
       timeout: 10s
       retries: 10

@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - main
+  # Callable so the release workflow can gate publishing on the same suite
+  # rather than duplicating these steps.
+  workflow_call:
 
 concurrency:
   group: tests-${{ github.ref }}

@@ -32,6 +32,20 @@ B10CKS_AUTO_SETUP=true            # Docker entrypoint: run b10cks:setup on first
 
 `php artisan b10cks:setup` is idempotent per install — it records its state in `storage/app/setup/install-state.json`.
 
+## Registration
+
+A self-hosted instance accepts open sign-ups only until the first account exists; that account becomes the owner, and everyone after it joins by invitation. Because a fresh install on a public address is claimable by whoever reaches it first, create the first account immediately after installing.
+
+Once an account is seen, the closure is latched into `storage/app/setup/registration-closed` rather than re-derived from the database on every request — so a database outage cannot reopen the instance, and neither can deleting the accounts. The latch lives on the storage volume and survives upgrades.
+
+To reopen sign-ups deliberately — for example to re-create the owner after losing access — either delete that file or set:
+
+```bash
+B10CKS_ALLOW_REGISTRATION=true
+```
+
+The environment variable wins over everything, in both directions: set it to `false` to keep registration closed even on a brand-new install.
+
 ## Application
 
 ```bash
@@ -76,6 +90,8 @@ DB_PASSWORD=…
 Each space can optionally run in its **own isolated database** — the management database stores users, teams, spaces, and billing, while space databases hold content. With the **standard** install profile, provisioning requires credentials allowed to create databases and users; see [Spaces](../concepts/spaces.md#isolated-databases).
 
 With the **shared** install profile no administrative privileges are needed: spaces live in the main database behind a per-space table prefix (`sp<hash>_…`), or — with `B10CKS_SPACE_DB_DRIVER=sqlite` — in one SQLite file per space under `storage/app/spaces/`.
+
+If your **main** database is SQLite, each space always gets its own file regardless of `B10CKS_SPACE_DB_DRIVER`: table prefixes inside the main SQLite file would make a space's database indistinguishable from the installation's own, so deleting one space would remove everything and a space backup would include every other space.
 
 ## Cache, queues, sessions
 

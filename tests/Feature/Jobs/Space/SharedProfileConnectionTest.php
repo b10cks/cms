@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Jobs\Space;
 
+use App\Enums\InstallProfile;
 use App\Jobs\Space\SetupSpace;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceConnection;
@@ -62,18 +63,62 @@ class SharedProfileConnectionTest extends TestCase
         $this->assertNull($connection->config);
     }
 
+    /**
+     * The suite itself runs on sqlite, so the prefixed path is unreachable
+     * through the live default connection — describe the main database
+     * directly instead. Nothing connects; only the resulting record matters.
+     */
     #[Test]
     public function shared_profile_defaults_to_prefixed_main_database(): void
     {
-        config(['setup.profile' => 'shared', 'setup.space_db_driver' => 'mysql']);
+        config(['setup.space_db_driver' => 'mysql']);
 
-        $space = $this->makeSpace();
-        $connection = $this->runCreateLocalDefaultConnection($space);
+        $attributes = SetupSpace::defaultConnectionAttributes(
+            ['driver' => 'mysql', 'database' => 'b10cks_main'],
+            InstallProfile::SHARED,
+            '01hzx3abcdef'
+        );
 
-        $this->assertNotNull($connection);
-        $this->assertSame(config('database.connections.'.config('database.default').'.driver'), $connection->driver);
-        $this->assertSame(SetupSpace::sharedTablePrefix($space->id), $connection->config['prefix']);
-        $this->assertSame(config('database.connections.'.config('database.default').'.database'), $connection->config['database']);
+        $this->assertSame('mysql', $attributes['driver']);
+        $this->assertSame(SetupSpace::sharedTablePrefix('01hzx3abcdef'), $attributes['config']['prefix']);
+        $this->assertSame('b10cks_main', $attributes['config']['database']);
+    }
+
+    /**
+     * A sqlite main database must never be shared by table prefix, whatever
+     * B10CKS_SPACE_DB_DRIVER says: the space connection would then point at the
+     * main file, so `space:delete` would unlink the whole installation and a
+     * space backup would copy every other tenant into a downloadable zip.
+     */
+    #[Test]
+    public function a_sqlite_main_database_is_never_shared_by_prefix(): void
+    {
+        config(['setup.space_db_driver' => 'mysql']);
+
+        $attributes = SetupSpace::defaultConnectionAttributes(
+            ['driver' => 'sqlite', 'database' => '/var/www/database/database.sqlite'],
+            InstallProfile::SHARED,
+            '01hzx3abcdef'
+        );
+
+        $this->assertSame('sqlite', $attributes['driver']);
+        $this->assertArrayNotHasKey('prefix', $attributes['config']);
+        $this->assertSame(storage_path('app/spaces/01hzx3abcdef/space.sqlite'), $attributes['config']['database']);
+        $this->assertNotSame('/var/www/database/database.sqlite', $attributes['config']['database']);
+    }
+
+    #[Test]
+    public function shared_profile_refuses_an_unsupported_main_database(): void
+    {
+        config(['setup.space_db_driver' => 'mysql']);
+
+        $this->expectException(\RuntimeException::class);
+
+        SetupSpace::defaultConnectionAttributes(
+            ['driver' => 'pgsql', 'database' => 'b10cks_main'],
+            InstallProfile::SHARED,
+            '01hzx3abcdef'
+        );
     }
 
     #[Test]

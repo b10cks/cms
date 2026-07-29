@@ -102,6 +102,17 @@ class DeleteSpaceCommand extends Command
             if (in_array($driver, [ConnectionDriver::SQLITE->value])) {
                 // For SQLite: remove the file
                 $dbPath = data_get($connection->config, 'database');
+
+                // Never delete the installation's own database. A misconfigured
+                // or legacy shared-profile connection can point here, and
+                // unlinking it would destroy every space, all users and the
+                // connection configs — an unrecoverable loss from a one-space
+                // delete. Leaving a stray file behind is the safe failure.
+                if ($dbPath && $this->isMainDatabase($dbPath)) {
+                    $this->warn("  Refusing to delete the main database file: {$dbPath}");
+                    continue;
+                }
+
                 if ($dbPath && file_exists($dbPath)) {
                     unlink($dbPath);
                     $this->line("  Deleted SQLite file: {$dbPath}");
@@ -149,6 +160,21 @@ class DeleteSpaceCommand extends Command
                 ]);
             }
         }
+    }
+
+    /**
+     * Whether a sqlite path is the installation's own database. Compares
+     * resolved real paths so symlinks and relative configs can't slip past.
+     */
+    private function isMainDatabase(string $path): bool
+    {
+        $main = config('database.connections.'.config('database.default').'.database');
+
+        if (! is_string($main) || $main === '') {
+            return false;
+        }
+
+        return (realpath($path) ?: $path) === (realpath($main) ?: $main);
     }
 
     private function dropPrefixedTables(\App\Models\Management\SpaceConnection $connection, string $prefix): void

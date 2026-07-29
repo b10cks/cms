@@ -78,7 +78,7 @@ cp /path/to/cms/.env env-backup
 
 On the shared profile with a single database, `--databases yourdb` is enough — the per-space tables are prefixed inside it. With `B10CKS_SPACE_DB_DRIVER=sqlite`, the space databases are files under `storage/app/spaces/` and travel with the storage archive; make sure the dump and the archive are taken close together so content and assets stay consistent.
 
-Restore is the reverse: put the code in place, restore `.env` and `storage/`, import the dump, and run `php artisan migrate` if the backup predates your current version.
+Restore is the reverse: put the code in place, restore `.env` and `storage/`, import the dump, and run `php artisan b10cks:upgrade --force` if the backup predates your current version — that migrates the space databases as well as the management one.
 
 ## What a backup does not need
 

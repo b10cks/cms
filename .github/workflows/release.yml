@@ -32,9 +32,18 @@ env:
   GHCR_REPOSITORY: ghcr.io/${{ github.repository }}
 
 jobs:
+  # Publishing is gated on the suite: a calver tag can land on any commit, and
+  # without this a red one would go straight to Docker Hub `latest`, GHCR, a
+  # GitHub release and get.b10cks.com. Reuses tests.yml so the gate cannot
+  # drift from what runs on pull requests.
+  test:
+    uses: ./.github/workflows/tests.yml
+
   release:
+    needs: test
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # arm64 is emulated, so the image build is the long pole here.
+    timeout-minutes: 60
 
     steps:
       - name: Checkout code
@@ -101,6 +110,14 @@ jobs:
           NODE_ENV: production
           APP_VERSION: ${{ steps.version.outputs.version }}
 
+      # arm64 is emulated rather than built on a native runner: vendor/ and
+      # public/ are built on the runner and only COPY'd in, so the only
+      # architecture-dependent work in the image is apk plus the PHP extension
+      # compile. That keeps a single build step, and with it a single digest
+      # for the provenance attestations below.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
@@ -139,6 +156,7 @@ jobs:
         with:
           context: .
           push: true
+          platforms: linux/amd64,linux/arm64
           # Blank lines are dropped by the action, so the latest tags simply vanish
           # from the list when this is not the newest release.
           tags: |
