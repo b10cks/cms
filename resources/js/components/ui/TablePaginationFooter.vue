@@ -21,12 +21,16 @@ const perPageProxy = computed({
   get: () => props.perPage,
   set: (val: number) => emit('update:perPage', val),
 })
+
+// $t's named-interpolation argument wants an index signature, which LaravelMeta
+// (deliberately) doesn't have.
+const metaParams = computed(() => ({ ...props.meta }) as Record<string, unknown>)
 </script>
 
 <template>
   <div class="flex items-center rounded-lg bg-surface px-2 py-2">
     <div class="pl-2 text-sm font-semibold text-muted">
-      {{ meta.total ? $t('labels.showingEntries', meta) : $t('labels.nothingToShow') }}
+      {{ meta.total ? $t('labels.showingEntries', metaParams) : $t('labels.nothingToShow') }}
     </div>
     <LaravelPagination
       v-model="currentPageProxy"

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="TItem extends TableItem = TableItem">
 import { useSortable } from '@vueuse/integrations/useSortable'
 
 import Icon from '~/components/Icon.vue'
@@ -22,7 +22,11 @@ import {
   TableRow,
 } from '~/components/ui/table'
 
-export interface ColumnDefinition {
+export interface TableItem {
+  [key: string]: string | number | boolean | null | undefined
+}
+
+export interface ColumnDefinition<TItem extends TableItem = TableItem> {
   key: string
   label: string
   type?: 'text' | 'switch' | 'select' | 'custom'
@@ -36,27 +40,23 @@ export interface ColumnDefinition {
         label: string
         disabled?: boolean
       }>
-    | ((item: TableItem) => Array<{
+    | ((item: TItem) => Array<{
         value: string
         label: string
         disabled?: boolean
       }>)
 }
 
-export interface TableItem {
-  [key: string]: string | number | boolean | undefined
-}
-
 const props = withDefaults(
   defineProps<{
-    items: TableItem[]
-    columns: ColumnDefinition[]
+    items: TItem[]
+    columns: ColumnDefinition<TItem>[]
     allowSort?: boolean
     showAddRow?: boolean
     canAdd?: boolean
     canEdit?: boolean
     canDelete?: boolean
-    newItemTemplate?: TableItem
+    newItemTemplate?: TItem
     addButtonLabel?: string
     removeButtonLabel?: string
   }>(),
@@ -66,7 +66,7 @@ const props = withDefaults(
     canAdd: true,
     canEdit: true,
     canDelete: true,
-    newItemTemplate: () => ({}),
+    newItemTemplate: () => ({}) as TItem,
     addButtonLabel: 'actions.add',
     removeButtonLabel: 'actions.remove',
   }
@@ -75,14 +75,14 @@ const props = withDefaults(
 const id = `settings-table-${Math.random().toString(36).substring(2, 15)}`
 
 const emit = defineEmits<{
-  'update:items': [items: TableItem[]]
-  add: [item: TableItem]
-  remove: [index: number, item: TableItem]
+  'update:items': [items: TItem[]]
+  add: [item: TItem]
+  remove: [index: number, item: TItem]
 }>()
 
 const tableBodyRef = useTemplateRef<HTMLElement>('tableBodyRef')
-const localItems = ref<TableItem[]>([...(props.items || [])])
-const newItem = ref<TableItem>({ ...props.newItemTemplate })
+const localItems = ref([...(props.items || [])]) as Ref<TItem[]>
+const newItem = ref({ ...props.newItemTemplate }) as Ref<TItem>
 
 watch(
   () => props.items,
@@ -133,18 +133,18 @@ const removeItem = (index: number) => {
   emit('remove', index, item)
 }
 
-const getSelectValue = (item: TableItem, key: string) => {
+const getSelectValue = (item: TItem, key: string) => {
   const value = item[key]
   return typeof value === 'string' ? value : undefined
 }
 
-const updateSelectValue = (item: TableItem, key: string, value: unknown) => {
+const updateSelectValue = (item: TItem, key: string, value: unknown) => {
   if (typeof value === 'string') {
-    item[key] = value
+    ;(item as TableItem)[key] = value
   }
 }
 
-const getColumnOptions = (column: ColumnDefinition, item: TableItem) => {
+const getColumnOptions = (column: ColumnDefinition<TItem>, item: TItem) => {
   return typeof column.options === 'function' ? column.options(item) : (column.options ?? [])
 }
 </script>

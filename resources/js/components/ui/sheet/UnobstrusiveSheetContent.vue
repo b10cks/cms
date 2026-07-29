@@ -12,7 +12,7 @@ import { unobstrusiveSheetVariants } from '.'
 
 interface SheetContentProps extends DialogContentProps {
   class?: HTMLAttributes['class']
-  side?: UnobstrusiveSheetVariants
+  side?: UnobstrusiveSheetVariants['side']
 }
 
 defineOptions({
@@ -21,7 +21,8 @@ defineOptions({
 
 const props = defineProps<SheetContentProps>()
 
-const emits = defineEmits<DialogContentEmits>()
+// `close` is this wrapper's own signal; the rest are forwarded dialog events.
+const emits = defineEmits<DialogContentEmits & { close: [open: boolean] }>()
 </script>
 
 <template>
@@ -39,7 +40,7 @@ const emits = defineEmits<DialogContentEmits>()
       <div class="relative flex flex-1">
         <slot />
         <SimpleTooltip
-          :tooltip-markdown="'Close sheet'"
+          :tooltip="'Close sheet'"
           class="absolute left-1 top-1 z-20"
           shortcut="Esc"
         >

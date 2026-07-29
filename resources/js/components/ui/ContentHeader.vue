@@ -5,7 +5,7 @@ withDefaults(
     description?: string
   }>(),
   {
-    description: null,
+    description: undefined,
   }
 )
 </script>

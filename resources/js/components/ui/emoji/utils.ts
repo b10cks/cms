@@ -11,7 +11,7 @@ export type EmojiGroups = {
 import emojiGroups from './emojis.json'
 export { emojiGroups }
 
-export const tones = ['neutral', '1f3fb', '1f3fc', '1f3fd', '1f3fe', '1f3ff']
+export const tones = ['neutral', '1f3fb', '1f3fc', '1f3fd', '1f3fe', '1f3ff'] as const
 export type Tone = (typeof tones)[number]
 
 export function unicodeToEmoji(unicode: string): string {
@@ -22,7 +22,8 @@ export function unicodeToEmoji(unicode: string): string {
     .join('')
 }
 
-export function emojiToChar(emoji: Emoji, tone: Tone = 'neutral'): string {
+export function emojiToChar(emoji: Emoji | undefined, tone: Tone = 'neutral'): string {
+  if (!emoji) return ''
   const u = emoji.u
   if (emoji?.v && tone != 'neutral') {
     const index = emoji.v.indexOf(`${u}-${tone}`)

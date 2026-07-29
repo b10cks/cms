@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils'
 
 const props = defineProps<{
   class?: HTMLAttributes['class']
-  defaultValue?: string | number
-  modelValue?: string | number
+  defaultValue?: string | number | null
+  modelValue?: string | number | null
   autoSize?: boolean | number
 }>()
 

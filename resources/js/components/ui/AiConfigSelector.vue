@@ -16,7 +16,7 @@ const modelValue = defineModel<string | null>()
 
 const props = defineProps<{
   spaceId: string
-  error?: string
+  error?: string | null
 }>()
 
 const { useAiConfigsQuery } = useAiConfigs(toRef(props, 'spaceId'))

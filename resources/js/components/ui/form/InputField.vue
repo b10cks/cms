@@ -21,7 +21,7 @@ const props = defineProps<{
   required?: boolean
   tooltip?: string
   description?: string
-  error?: string
+  error?: string | null
   autoFocus?: boolean
   class?: HTMLAttributes['class']
   inputClass?: HTMLAttributes['class']
@@ -29,8 +29,8 @@ const props = defineProps<{
   actionTabindex?: number | string
 
   // Input props
-  modelValue?: string | number
-  defaultValue?: string | number
+  modelValue?: string | number | null
+  defaultValue?: string | number | null
   placeholder?: unknown
   type?: string
   disabled?: boolean

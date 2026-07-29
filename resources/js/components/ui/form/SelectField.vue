@@ -1,5 +1,5 @@
-<script setup lang="ts" generic="T">
-import { useVModel } from '@vueuse/core'
+<script setup lang="ts" generic="T extends AcceptableValue">
+import type { AcceptableValue } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import { computed } from 'vue'
 
@@ -28,7 +28,7 @@ const props = defineProps<{
   required?: boolean
   tooltip?: string
   description?: string
-  error?: string
+  error?: string | null
   class?: HTMLAttributes['class']
   selectClass?: HTMLAttributes['class']
   modelValue?: T
@@ -49,10 +49,26 @@ const emits = defineEmits<{
   (e: 'select' | 'remove', payload: { option: SelectOption<T>; value: T }): void
 }>()
 
-const modelValue = useVModel(props, 'modelValue', emits, {
-  passive: true,
-  defaultValue: props.defaultValue,
+// A plain writable computed rather than useVModel: the latter's conditional
+// prop typing collapses to nonsense once the component is generic.
+const innerValue = ref(props.defaultValue) as Ref<T | undefined>
+
+watch(
+  () => props.modelValue,
+  (value) => {
+    innerValue.value = value
+  }
+)
+
+const modelValue = computed<T | undefined>({
+  get: () => props.modelValue ?? innerValue.value,
+  set: (value) => {
+    innerValue.value = value
+    emits('update:modelValue', value as T)
+  },
 })
+
+const hasValue = computed(() => modelValue.value != null && modelValue.value !== '')
 
 const getDisplayValue = (option: SelectOption<T>): string => {
   return props.displayFn ? props.displayFn(option) : option.label
@@ -62,7 +78,7 @@ const getOptionValue = (option: SelectOption<T>): T => {
   return props.valueFn ? props.valueFn(option) : option.value
 }
 
-const getOptionByValue = (value: T): SelectOption<T> | undefined => {
+const getOptionByValue = (value: T | undefined): SelectOption<T> | undefined => {
   return props.options.find((option) => {
     const optionValue = getOptionValue(option)
     return optionValue === value
@@ -73,11 +89,12 @@ const emptyTextComputed = computed(() => {
   return props.emptyText || 'common.no_results'
 })
 
-const handleSelect = (value: T) => {
-  if (value === '' || value === null || value === undefined) {
+const handleSelect = (raw: AcceptableValue | AcceptableValue[] | undefined) => {
+  if (raw === '' || raw === null || raw === undefined) {
     handleClear()
     return
   }
+  const value = raw as T
   modelValue.value = value
   const option = getOptionByValue(value)
   if (option) {
@@ -86,7 +103,7 @@ const handleSelect = (value: T) => {
 }
 
 const handleClear = () => {
-  modelValue.value = undefined as T
+  modelValue.value = undefined
 }
 </script>
 
@@ -136,7 +153,7 @@ const handleClear = () => {
           </SelectContent>
         </Select>
         <button
-          v-if="clearable && modelValue != null && modelValue !== ''"
+          v-if="clearable && hasValue"
           size="icon"
           :aria-label="$t('actions.clear')"
           class="absolute right-8 shrink-0 text-muted-foreground hover:text-foreground"

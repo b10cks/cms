@@ -57,10 +57,13 @@ const types: Record<string, BlockType> = {
   meta: { cls: 'text-muted border border-border-strong bg-muted-background', icon: 'lucide:search' },
 }
 
-const props = defineProps<{ type: keyof typeof types }>()
+// Callers pass whatever the schema says, so accept any string and fall back to
+// rendering the raw type name.
+const props = defineProps<{ type?: string }>()
 
-const currentType = computed(() => {
-  return types[props.type] ?? { cls: props.type }
+const currentType = computed<{ cls?: string; icon?: string; text?: string }>(() => {
+  const known = props.type ? types[props.type as keyof typeof types] : undefined
+  return known ?? { cls: props.type }
 })
 </script>
 

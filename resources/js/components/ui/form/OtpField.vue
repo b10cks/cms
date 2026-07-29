@@ -13,7 +13,7 @@ const props = defineProps<{
   required?: boolean
   tooltip?: string
   description?: string
-  error?: string
+  error?: string | null
   class?: HTMLAttributes['class']
   inputClass?: HTMLAttributes['class']
 

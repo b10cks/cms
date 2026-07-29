@@ -13,7 +13,7 @@ const props = defineProps<{
   required?: boolean
   tooltip?: string
   description?: string
-  error?: string
+  error?: string | null
   class?: HTMLAttributes['class']
   inputClass?: HTMLAttributes['class']
 
@@ -95,6 +95,11 @@ const inputProps = computed(() => {
     inputClass: _inputClass,
     modelValue: _modelValue,
     defaultValue: _defaultValue,
+    // Bound explicitly below in their normalised form; leaving them in `rest`
+    // let the trailing v-bind overwrite those bindings with the raw props.
+    min: _min,
+    max: _max,
+    placeholder: _placeholder,
     ...rest
   } = props
 

@@ -43,7 +43,7 @@ interface SelectOption {
   disabled?: boolean
 }
 
-interface ColumnDefinition {
+export interface ColumnDefinition {
   key: string
   label: string
   type: InputType
@@ -104,6 +104,13 @@ const emit = defineEmits<{
 }>()
 
 const newItem = reactive<Record<string, unknown>>({})
+
+// The draft row holds untyped cell values; these narrow them for each control.
+const newItemText = (key: string): string => (newItem[key] == null ? '' : String(newItem[key]))
+const newItemBool = (key: string): boolean => Boolean(newItem[key])
+const setNewItem = (key: string, value: unknown): void => {
+  newItem[key] = value
+}
 
 const initializeNewItem = (): void => {
   props.columns.forEach((column) => {
@@ -400,47 +407,52 @@ const handleKeyPress = (event: KeyboardEvent): void => {
                     column.type === 'url' ||
                     column.type === 'tel'
                   "
-                  v-model="newItem[column.key]"
+                  :model-value="newItemText(column.key)"
                   :type="column.type"
                   :placeholder="String(column.placeholder || '')"
                   :disabled="disabled"
                   :maxlength="column.maxLength"
+                  @update:model-value="setNewItem(column.key, $event)"
                   @keydown="handleKeyPress"
                 />
 
                 <Input
                   v-else-if="column.type === 'number'"
-                  v-model="newItem[column.key]"
+                  :model-value="newItemText(column.key)"
                   type="number"
                   :placeholder="String(column.placeholder || '')"
                   :disabled="disabled"
                   :min="column.min"
                   :max="column.max"
                   :step="column.step"
+                  @update:model-value="setNewItem(column.key, $event)"
                   @keydown="handleKeyPress"
                 />
 
                 <Input
                   v-else-if="['date', 'time', 'datetime-local'].includes(column.type)"
-                  v-model="newItem[column.key]"
+                  :model-value="newItemText(column.key)"
                   :type="column.type"
                   :disabled="disabled"
+                  @update:model-value="setNewItem(column.key, $event)"
                   @keydown="handleKeyPress"
                 />
 
                 <Textarea
                   v-else-if="column.type === 'textarea'"
-                  v-model="newItem[column.key]"
+                  :model-value="newItemText(column.key)"
                   :placeholder="String(column.placeholder || '')"
                   :disabled="disabled"
                   :rows="column.rows || 3"
                   :maxlength="column.maxLength"
+                  @update:model-value="setNewItem(column.key, $event)"
                 />
 
                 <Select
                   v-else-if="column.type === 'select'"
-                  v-model="newItem[column.key]"
+                  :model-value="newItemText(column.key)"
                   :disabled="disabled"
+                  @update:model-value="setNewItem(column.key, $event)"
                 >
                   <SelectTrigger>
                     <SelectValue :placeholder="String(column.placeholder || '')" />
@@ -459,8 +471,9 @@ const handleKeyPress = (event: KeyboardEvent): void => {
 
                 <Switch
                   v-else-if="column.type === 'checkbox'"
-                  v-model="newItem[column.key]"
+                  :model-value="newItemBool(column.key)"
                   :disabled="disabled"
+                  @update:model-value="setNewItem(column.key, $event)"
                 />
               </template>
             </TableCell>

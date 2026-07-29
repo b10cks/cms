@@ -1,7 +1,7 @@
-<script setup lang="ts" generic="T">
-import { useVModel } from '@vueuse/core'
+<script setup lang="ts" generic="T extends AcceptableValue">
+import type { AcceptableInputValue, AcceptableValue } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import {
   Combobox,
@@ -37,7 +37,7 @@ const props = defineProps<{
   required?: boolean
   tooltip?: string
   description?: string
-  error?: string
+  error?: string | null
   class?: HTMLAttributes['class']
   comboboxClass?: HTMLAttributes['class']
 
@@ -66,18 +66,34 @@ const emits = defineEmits<{
   (e: 'select' | 'remove', payload: { option: ComboboxOption<T>; value: T }): void
 }>()
 
-const modelValue = useVModel(props, 'modelValue', emits, {
-  passive: true,
-  defaultValue: props.defaultValue ?? (props.multiple ? [] : undefined),
+// A plain writable computed rather than useVModel: the latter's conditional
+// prop typing collapses to nonsense once the component is generic.
+const innerValue = ref(props.defaultValue ?? (props.multiple ? [] : undefined)) as Ref<
+  T | T[] | undefined
+>
+
+watch(
+  () => props.modelValue,
+  (value) => {
+    innerValue.value = value
+  }
+)
+
+const modelValue = computed<T | T[] | undefined>({
+  get: () => props.modelValue ?? innerValue.value,
+  set: (value) => {
+    innerValue.value = value
+    emits('update:modelValue', value as T | T[])
+  },
 })
 
 const searchValue = ref('')
 
-const selectedValues = computed(() => {
+const selectedValues = computed<T[]>(() => {
   if (props.multiple) {
     return Array.isArray(modelValue.value) ? modelValue.value : []
   }
-  return modelValue.value ? [modelValue.value] : []
+  return modelValue.value == null ? [] : [modelValue.value as T]
 })
 
 const defaultFilterFn = (
@@ -129,10 +145,10 @@ const handleSelect = (option: ComboboxOption<T>) => {
     const currentValues = Array.isArray(modelValue.value) ? [...modelValue.value] : []
     if (!currentValues.includes(value)) {
       currentValues.push(value)
-      modelValue.value = currentValues as T[] | T
+      modelValue.value = currentValues
     }
   } else {
-    modelValue.value = value as T[] | T
+    modelValue.value = value
   }
 
   searchValue.value = ''
@@ -146,7 +162,7 @@ const handleRemove = (value: T) => {
     const index = currentValues.indexOf(value)
     if (index > -1) {
       currentValues.splice(index, 1)
-      modelValue.value = currentValues as T[] | T
+      modelValue.value = currentValues
 
       const option = getOptionByValue(value)
       if (option) {
@@ -184,14 +200,14 @@ const emptyTextComputed = computed(() => {
         <ComboboxAnchor as-child>
           <TagsInput
             v-if="multiple"
-            :model-value="selectedValues"
+            :model-value="(selectedValues as AcceptableInputValue[])"
             :disabled="disabled || readonly"
             :class="{ 'border-red-500': hasError, 'pl-2': selectedValues.length > 0 }"
           >
             <TagsInputItem
               v-for="value in selectedValues"
-              :key="value"
-              :value="value"
+              :key="String(value)"
+              :value="(value as AcceptableInputValue)"
             >
               <slot
                 name="selected"

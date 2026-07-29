@@ -6,7 +6,7 @@ import TableHead from './TableHead.vue'
 const sortBy = defineModel<{
   column: string
   direction: 'asc' | 'desc'
-}>()
+}>({ required: true })
 
 const props = withDefaults(
   defineProps<{

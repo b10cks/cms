@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { AcceptableValue } from 'reka-ui'
 import { computed } from 'vue'
 
 import Icon from '~/components/Icon.vue'
@@ -60,7 +61,7 @@ const sortField = computed(() => {
   return value && value.column ? value.column : 'created_at'
 })
 
-const handleFieldChange = (field: string) => {
+const handleFieldChange = (field: AcceptableValue | AcceptableValue[] | undefined) => {
   if (typeof field !== 'string' || field.length === 0) return
 
   const currentDirection = sortDirection.value

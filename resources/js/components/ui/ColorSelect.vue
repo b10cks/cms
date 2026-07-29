@@ -23,7 +23,7 @@ const selectedColor = defineModel<string | null>()
         <div class="grid grid-cols-8">
           <SelectItem
             v-for="{ value, label } in colors"
-            :key="value"
+            :key="String(value)"
             class="relative flex items-center rounded-sm p-2 text-sm outline-none focus:bg-accent focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
             :value="value"
             :title="label"

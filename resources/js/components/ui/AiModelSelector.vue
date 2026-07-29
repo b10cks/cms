@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { AcceptableValue } from 'reka-ui'
 import { toast } from 'vue-sonner'
 
 import Icon from '~/components/Icon.vue'
@@ -54,7 +55,9 @@ const selectedModel = computed<AiModel | null>(() => {
   return flatModels.value.find((m) => m.full_id === modelValue.value) ?? null
 })
 
-const handleSelect = async (modelId: string) => {
+const handleSelect = async (raw: AcceptableValue | AcceptableValue[] | undefined) => {
+  if (typeof raw !== 'string') return
+  const modelId = raw
   modelValue.value = modelId
 
   if (props.autoSave) {

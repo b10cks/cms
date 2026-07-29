@@ -25,7 +25,7 @@ type VirtualRow =
 const COLUMNS = 8
 
 const props = defineProps<{
-  color?: string
+  color?: string | null
   disabled?: boolean
 }>()
 
