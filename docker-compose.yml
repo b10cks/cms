@@ -1,0 +1,131 @@
+# Self-hosted b10cks CMS. Copy .env.docker.example to .env, adjust, then:
+#   docker compose up -d
+# Optional services: --profile redis, --profile opensearch, --profile reverb
+services:
+  app:
+    image: b10cks/cms:${B10CKS_IMAGE_TAG:-latest}
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment: &app-env
+      APP_NAME: ${APP_NAME:-b10cks CMS}
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY:-}
+      APP_URL: ${APP_URL:-http://localhost:8000}
+      APP_VERSION: ${APP_VERSION:-latest}
+      B10CKS_EDITION: ${B10CKS_EDITION:-self-hosted}
+      B10CKS_AUTO_SETUP: ${B10CKS_AUTO_SETUP:-true}
+      B10CKS_INSTALL_PROFILE: ${B10CKS_INSTALL_PROFILE:-standard}
+      B10CKS_HTTP_SETUP_ENABLED: ${B10CKS_HTTP_SETUP_ENABLED:-false}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_RO_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-b10cks}
+      # The standard profile creates one database (and user) per space, which
+      # needs administrative MySQL privileges — hence root by default. Use a
+      # restricted user together with B10CKS_INSTALL_PROFILE=shared.
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-${DB_ROOT_PASSWORD:-root}}
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
+      SESSION_DRIVER: ${SESSION_DRIVER:-database}
+      CACHE_STORE: ${CACHE_STORE:-file}
+      # Realtime is optional; set to "reverb" and start --profile reverb.
+      BROADCAST_DRIVER: ${BROADCAST_DRIVER:-null}
+      FILESYSTEM_DISK: ${FILESYSTEM_DISK:-local}
+      TRANSFERS_DISK_DRIVER: ${TRANSFERS_DISK_DRIVER:-local}
+      AI_MODE: ${AI_MODE:-single}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      MAIL_MAILER: ${MAIL_MAILER:-log}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-no-reply@localhost}
+      REVERB_APP_ID: ${REVERB_APP_ID:-b10cks}
+      REVERB_APP_KEY: ${REVERB_APP_KEY:-}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET:-}
+      REVERB_HOST: ${REVERB_HOST:-localhost}
+      REVERB_PORT: ${REVERB_PUBLIC_PORT:-8001}
+      REVERB_SCHEME: ${REVERB_SCHEME:-http}
+      POSTHOG_API_KEY: ${POSTHOG_API_KEY:-}
+      POSTHOG_HOST: ${POSTHOG_HOST:-https://eu.i.posthog.com}
+      OPENSEARCH_HOST: ${OPENSEARCH_HOST:-}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    volumes:
+      - app-storage:/app/storage
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8000/mgmt/v1/health >/dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  # Websocket server for live collaboration/presence; opt-in via
+  # --profile reverb plus BROADCAST_DRIVER=reverb and REVERB_APP_* secrets.
+  reverb:
+    image: b10cks/cms:${B10CKS_IMAGE_TAG:-latest}
+    profiles: ["reverb"]
+    ports:
+      - "${REVERB_PUBLIC_PORT:-8001}:8001"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *app-env
+      B10CKS_SUPERVISORD_CONF: /etc/supervisord-reverb.conf
+      B10CKS_AUTO_SETUP: "false"
+    volumes:
+      - app-storage:/app/storage
+
+  db:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE:-b10cks}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p${DB_ROOT_PASSWORD:-root} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7.2-alpine
+    profiles: ["redis"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  opensearch:
+    image: opensearchproject/opensearch:2.19.1
+    profiles: ["opensearch"]
+    environment:
+      discovery.type: single-node
+      plugins.security.disabled: "true"
+      bootstrap.memory_lock: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9200/_cluster/health >/dev/null"]
+      interval: 20s
+      timeout: 10s
+      retries: 15
+      start_period: 60s
+
+volumes:
+  app-storage:
+  db-data:
+  redis-data:
+  opensearch-data:
