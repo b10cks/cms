@@ -16,6 +16,10 @@ class UpsertTeamSamlProviderRequest extends FormRequest
 
     public function rules(): array
     {
+        // Disabling strict mode or assertion signature checks makes assertions
+        // forgeable; only allow it for local debugging.
+        $mustStayEnabled = config('app.debug') ? [] : ['accepted'];
+
         return [
             'enabled' => ['required', 'boolean'],
             'idp_entity_id' => ['required', 'string', 'max:512'],
@@ -35,14 +39,22 @@ class UpsertTeamSamlProviderRequest extends FormRequest
             'role_mapping.*' => ['required', 'string', Rule::in(TeamRoleKey::values())],
             'default_role' => ['required', 'string', Rule::in(TeamRoleKey::values())],
             'allow_jit' => ['required', 'boolean'],
-            'strict' => ['required', 'boolean'],
+            'strict' => ['required', 'boolean', ...$mustStayEnabled],
             'sign_authn_requests' => ['required', 'boolean'],
             'sign_logout_requests' => ['required', 'boolean'],
-            'want_assertions_signed' => ['required', 'boolean'],
+            'want_assertions_signed' => ['required', 'boolean', ...$mustStayEnabled],
             'want_messages_signed' => ['required', 'boolean'],
             'want_assertions_encrypted' => ['required', 'boolean'],
             'digest_algorithm' => ['required', 'string', 'max:255'],
             'signature_algorithm' => ['required', 'string', 'max:255'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'strict.accepted' => 'Strict SAML validation cannot be disabled.',
+            'want_assertions_signed.accepted' => 'Requiring signed assertions cannot be disabled.',
         ];
     }
 

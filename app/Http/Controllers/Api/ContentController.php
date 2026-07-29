@@ -50,7 +50,7 @@ class ContentController
                 'content_versions.asset_ids',
                 'content_versions.link_ids',
             ])
-            ->with(['i18n_parent', 'i18n_children', 'i18n_siblings', 'block']);
+            ->with(['i18n_parent.block', 'i18n_children.block', 'i18n_siblings.block', 'block']);
 
         $vid = $this->versionScope($request, allowVersionId: false);
         if ($vid === 'published') {

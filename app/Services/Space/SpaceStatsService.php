@@ -17,6 +17,7 @@ use App\Models\Space\Redirect;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class SpaceStatsService
@@ -30,29 +31,30 @@ class SpaceStatsService
         $startDate = $options['start_date'] ?? Carbon::now()->subDays(30);
         $endDate = $options['end_date'] ?? Carbon::now();
         $cacheMinutes = $options['cache_minutes'] ?? 10;
+        $includeActivity = (bool) ($options['include_activity'] ?? false);
 
-        //        return Cache::remember(
-        //            "space_stats:{$space->id}:{$periodType->value}:{$startDate->timestamp}:{$endDate->timestamp}",
-        //            now()->addMinutes($cacheMinutes),
-        //            function () use ($space, $periodType, $startDate, $endDate) {
-        $stats = [
-            'content' => $this->getContentStats($space, $startDate, $endDate),
-            'assets' => $this->getAssetStats($space, $startDate, $endDate),
-            'redirects' => $this->getRedirectStats($space, $startDate, $endDate),
-            'data_sources' => $this->getDataSourceStats($space, $startDate, $endDate),
-            'user_activity' => $this->getUserActivityStats($space, $startDate, $endDate),
-            'system' => $this->getSystemStats($space, $startDate, $endDate),
-            'trends' => $this->getTrendStats($space, $periodType, $startDate, $endDate),
-        ];
+        return Cache::remember(
+            "space_stats:{$space->id}:{$periodType->value}:{$startDate->timestamp}:{$endDate->timestamp}:".($includeActivity ? '1' : '0'),
+            now()->addMinutes($cacheMinutes),
+            function () use ($space, $periodType, $startDate, $endDate, $includeActivity) {
+                $stats = [
+                    'content' => $this->getContentStats($space, $startDate, $endDate),
+                    'assets' => $this->getAssetStats($space, $startDate, $endDate),
+                    'redirects' => $this->getRedirectStats($space, $startDate, $endDate),
+                    'data_sources' => $this->getDataSourceStats($space, $startDate, $endDate),
+                    'user_activity' => $this->getUserActivityStats($space, $startDate, $endDate),
+                    'system' => $this->getSystemStats($space, $startDate, $endDate),
+                    'trends' => $this->getTrendStats($space, $periodType, $startDate, $endDate),
+                ];
 
-        // Only exposed to users who may read the audit log itself.
-        if ($options['include_activity'] ?? false) {
-            $stats['activity'] = $this->getActivityCalendar($endDate);
-        }
+                // Only exposed to users who may read the audit log itself.
+                if ($includeActivity) {
+                    $stats['activity'] = $this->getActivityCalendar($endDate);
+                }
 
-        return $stats;
-        //            }
-        //        );
+                return $stats;
+            }
+        );
     }
 
     /**

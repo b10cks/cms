@@ -52,7 +52,7 @@ class SamlLoginService
         $slsUrl = route('auth.saml.sls', ['team' => $team]);
 
         return [
-            'strict' => $provider->strict,
+            'strict' => $provider->strict ?? true,
             'debug' => config('app.debug'),
             'sp' => [
                 'entityId' => $metadataUrl,
@@ -84,7 +84,7 @@ class SamlLoginService
                 'authnRequestsSigned' => $provider->sign_authn_requests,
                 'logoutRequestSigned' => $provider->sign_logout_requests,
                 'wantMessagesSigned' => $provider->want_messages_signed,
-                'wantAssertionsSigned' => $provider->want_assertions_signed,
+                'wantAssertionsSigned' => $provider->want_assertions_signed ?? true,
                 'wantAssertionsEncrypted' => $provider->want_assertions_encrypted,
                 'wantNameId' => true,
                 'wantNameIdEncrypted' => false,

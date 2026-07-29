@@ -81,18 +81,6 @@ class UpsertContentRequest extends FormRequest
         ];
     }
 
-    /**
-     * Get the error messages for the defined validation rules.
-     *
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        return [
-            'slug.regex' => 'The slug may only contain lowercase letters, numbers, and hyphens.',
-        ];
-    }
-
     public function after(): array
     {
         return [

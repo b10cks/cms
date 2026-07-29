@@ -58,7 +58,6 @@ class Kernel extends HttpKernel
         HandleManagementCors::class,
         PreventRequestsDuringMaintenance::class,
         ValidatePostSize::class,
-        // \App\Http\Middleware\TrimStrings::class,
         ConvertEmptyStringsToNull::class,
     ];
 

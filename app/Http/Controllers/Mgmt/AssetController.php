@@ -85,11 +85,11 @@ class AssetController extends Controller
         } catch (\Exception $e) {
             Log::error('Failed to store asset', [
                 'space_id' => $space->id,
-                'error' => $e->getMessage(),
+                'exception' => $e,
             ]);
 
             return response()->json([
-                'message' => 'Failed to store asset: ' . $e->getMessage(),
+                'message' => 'Failed to store asset.',
             ], 500);
         }
     }
