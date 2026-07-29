@@ -133,6 +133,11 @@ return [
 
     'flush' => [
         'log',
+        // The ambient space set by AuthenticateDataApi & friends must never
+        // survive into the next request on the same worker: the per-space DB
+        // resolver falls back to it, so a stale binding would silently route
+        // space-model queries to the previous tenant's database.
+        'currentSpace',
     ],
 
     /*

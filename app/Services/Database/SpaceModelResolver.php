@@ -20,8 +20,15 @@ class SpaceModelResolver implements ConnectionResolverInterface
         if (app()->runningUnitTests()) {
             return app('db')->connection();
         }
-        /** @var Space|null $space */
-        $space = request('space') ?? \App\Support\SpaceContext::current();
+        // Deliberately the *route* parameter: request('space') checks query and
+        // body input before the route, so `?space=x` could displace the bound
+        // model on the most safety-critical lookup in the app. Only an already
+        // resolved Space counts; anything else falls back to the ambient
+        // context (jobs, delivery API) or aborts.
+        $space = request()->route('space');
+        if (! $space instanceof Space) {
+            $space = \App\Support\SpaceContext::current();
+        }
         abort_unless(!!$space, 404, 'Space not found');
 
         $id = $space->id;
