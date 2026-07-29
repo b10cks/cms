@@ -28,7 +28,49 @@ env:
 
 
 jobs:
+  # Same gate as release.yml: a calver tag can land on any commit, and without
+  # this a red one would deploy straight to production. Reuses tests.yml so the
+  # gate cannot drift from what runs on pull requests.
+  test:
+    uses: ./.github/workflows/tests.yml
+
+  # The deploy job's own Discord notification never runs when the gate fails
+  # (the job is skipped, not failed), so a blocked deploy would otherwise be
+  # silent outside the Actions UI.
+  notify-blocked:
+    needs: test
+    if: failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Post blocked-deploy notification to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          PAYLOAD=$(jq -n \
+            --arg title "🚫 Deployment Blocked — Tests Failed" \
+            --arg description "**Project:** https://github.com/b10cks/cms
+          **Version:** \`${VERSION}\`
+
+          The test suite failed, so this tag was not deployed.
+          ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
+            '{
+              "embeds": [{
+                "title": $title,
+                "description": $description,
+                "color": 15158332,
+                "timestamp": $timestamp
+              }]
+            }')
+
+          curl -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "$DISCORD_WEBHOOK"
+
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     # must leave room for a worst-case docs build (2 × 5 min timeout)
     # on top of the normal ~10 min pipeline
