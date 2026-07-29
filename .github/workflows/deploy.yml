@@ -22,17 +22,6 @@ env:
   DOCS_S3_BUCKET: b10cks-production-docs
   DOCS_CLOUDFRONT_DISTRIBUTION_ID: E2DCMG9O2W1BIA
 
-  VITE_APP_FRONTEND_URL: ${{ vars.APP_FRONTEND_URL || 'https://app.b10cks.com/' }}
-  VITE_APP_BACKEND_URL: ${{ vars.APP_BACKEND_URL || 'https://api.b10cks.com/' }}
-  VITE_APP_ILUM_BASE_URL: ${{ vars.APP_ILUM_BASE_URL || 'https://api.b10cks.com/ilum/' }}
-  VITE_APP_POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://eu.i.posthog.com' }}
-  VITE_APP_POSTHOG_KEY: ${{ secrets.POSTHOG_API_KEY || '' }}
-  VITE_APP_REVERB_APP_ID: ${{ secrets.REVERB_APP_ID || '' }}
-  VITE_APP_REVERB_APP_KEY: ${{ secrets.REVERB_APP_KEY || '' }}
-  VITE_APP_REVERB_APP_SECRET: ${{ secrets.REVERB_APP_SECRET || '' }}
-  VITE_APP_REVERB_HOST: ${{ secrets.REVERB_HOST || '' }}
-  VITE_APP_REVERB_PORT: ${{ secrets.REVERB_PORT || '' }}
-  VITE_APP_REVERB_SCHEME: ${{ secrets.REVERB_SCHEME || '' }}
 
 jobs:
   deploy:
@@ -97,9 +86,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build frontend
-        run: |
-          export VITE_APP_PUBLIC_VERSION="${{ steps.version.outputs.version }}"
-          bun run build
+        run: bun run build
         env:
           NODE_ENV: production
 

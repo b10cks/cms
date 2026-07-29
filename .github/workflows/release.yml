@@ -1,0 +1,107 @@
+name: Publish self-hosted release
+
+# Runs on the same calver tags as deploy.yml (independent workflows, separate
+# registries): pushes the public Docker image to Docker Hub and attaches the
+# webhost package to a GitHub release.
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  PHP_VERSION: '8.5'
+  DOCKERHUB_REPOSITORY: b10cks/cms
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, redis
+          tools: composer:v2
+
+      - name: Install production Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress --optimize-autoloader --no-dev
+
+      - name: Restore committed OpenAPI specs
+        # composer's post-autoload-dump regenerates docs/public/specs without a
+        # real app environment; the committed specs are the source of truth.
+        run: git checkout -- docs/public/specs
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build frontend
+        run: bun run build
+        env:
+          NODE_ENV: production
+          APP_VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.DOCKERHUB_REPOSITORY }}:${{ steps.version.outputs.version }}
+            ${{ env.DOCKERHUB_REPOSITORY }}:latest
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.version }}
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_REPOSITORY }}:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_REPOSITORY }}:buildcache,mode=max
+          provenance: false
+
+      - name: Build webhost package
+        run: ./scripts/build-webhost-package.sh "${{ steps.version.outputs.version }}"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            dist/b10cks-cms-webhost-${{ steps.version.outputs.version }}.tar.gz
+            dist/b10cks-cms-webhost-${{ steps.version.outputs.version }}.zip
