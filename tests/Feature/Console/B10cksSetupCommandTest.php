@@ -101,7 +101,6 @@ class B10cksSetupCommandTest extends TestCase
             'db:seed',
             'plans:setup',
             'subscriptions:backfill-free',
-            'storage:link',
         ], array_column($command->recordedCalls, 'command'));
         $this->assertSame(['--class' => 'DatabaseSeeder', '--force' => true], $command->recordedCalls[1]['arguments']);
         $this->assertSame(['--self-hosted' => true], $command->recordedCalls[2]['arguments']);

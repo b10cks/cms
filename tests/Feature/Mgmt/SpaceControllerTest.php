@@ -117,6 +117,38 @@ class SpaceControllerTest extends TestCase
     }
 
     #[Test]
+    public function self_hosted_space_creation_without_plan_attaches_the_free_plan()
+    {
+        Queue::fake();
+        config(['edition.edition' => 'self-hosted']);
+        $this->actingAs($this->user);
+
+        $plan = Plan::forceCreate([
+            'name' => ['default' => 'Self-Hosted'],
+            'price' => '0.00',
+            'period' => 'month',
+            'sort_order' => 10,
+            'quotas' => null,
+            'is_free' => true,
+            'is_active' => true,
+        ]);
+
+        $response = $this->postJson(route('mgmt.spaces.store'), [
+            'name' => 'Self-Hosted Space',
+            'slug' => 'self-hosted-space',
+        ]);
+
+        $response->assertStatus(201);
+
+        $subscription = Subscription::query()
+            ->where('space_id', $response->json('data.id'))
+            ->sole();
+
+        $this->assertSame($plan->id, $subscription->plan_id);
+        $this->assertTrue($subscription->isActive());
+    }
+
+    #[Test]
     public function user_cannot_create_a_space_with_invalid_data()
     {
         $this->actingAs($this->user);

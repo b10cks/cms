@@ -106,7 +106,7 @@ php artisan migrate
 php artisan queue:restart
 ```
 
-For the webhost package: extract the new archive over the old tree (keep your `.env` and `storage/`), then run `php artisan migrate` — or re-arm the HTTP installer by creating `storage/app/setup/http-enabled` and deleting `storage/app/setup/install-state.json` is **not** needed; migrations are the only upgrade step.
+For the webhost package: extract the new archive over the old tree (keep your `.env` and `storage/`), then run `php artisan migrate`. Re-arming the HTTP installer is **not** needed — migrations are the only upgrade step.
 
 Space databases are migrated automatically alongside the management database.
 

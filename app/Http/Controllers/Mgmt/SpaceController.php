@@ -16,6 +16,7 @@ use App\Models\Management\Space;
 use App\Models\Management\Subscription;
 use App\Models\Management\Team;
 use App\Services\Auth\AuthorizationService;
+use App\Support\EditionGate;
 use App\Services\LemonSqueezy\LemonSqueezyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -72,6 +73,18 @@ class SpaceController extends Controller
         // whose LS variant is missing must fail loudly (mirroring checkout()),
         // not silently grant an unpaid Active subscription.
         $plan = $planId ? Plan::findOrFail($planId) : null;
+
+        // Self-hosted installs skip the plan step in the UI; attach the free
+        // plan so every space still carries a subscription (matching what
+        // subscriptions:backfill-free produces at install time).
+        if (! $plan && ! EditionGate::billingEnabled()) {
+            $plan = Plan::query()
+                ->where('is_free', true)
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->first();
+        }
+
         $variantId = null;
 
         if ($plan && ! $plan->is_free && $ls->isConfigured()) {

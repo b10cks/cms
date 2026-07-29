@@ -9,10 +9,14 @@ set -eu
 # the storage volume (/app is read-only for this user).
 if [ -z "${APP_KEY:-}" ]; then
     KEY_FILE=/app/storage/app/setup/app.key
-    if [ ! -f "$KEY_FILE" ]; then
+    # -s (not -f): a failed earlier attempt must not leave an empty key file
+    # that every later boot exports as APP_KEY. Write via tmp + mv so the
+    # final file is only ever complete.
+    if [ ! -s "$KEY_FILE" ]; then
         mkdir -p "$(dirname "$KEY_FILE")"
-        php /app/artisan key:generate --show > "$KEY_FILE"
-        chmod 600 "$KEY_FILE"
+        php /app/artisan key:generate --show > "$KEY_FILE.tmp"
+        chmod 600 "$KEY_FILE.tmp"
+        mv "$KEY_FILE.tmp" "$KEY_FILE"
     fi
     APP_KEY="$(cat "$KEY_FILE")"
     export APP_KEY

@@ -100,6 +100,11 @@ class CreateBackup extends QueuedJob
             '--password=' . $config['password'],
             ...config('database.dumper.options'),
             $config['database'],
+            // Shared-profile connections live in the main database behind a
+            // table prefix — restrict the dump to this space's tables, never
+            // the whole database (which holds management data and every other
+            // space).
+            ...$this->prefixedTables($connection, $config),
         ];
 
         // Redirect the dump's stdout straight to the file at the OS level so the
@@ -116,6 +121,35 @@ class CreateBackup extends QueuedJob
         }
 
         $this->backup->updateProgress(10);
+    }
+
+    /**
+     * @return list<string> explicit table list for the dumper; empty for
+     *                      dedicated (unprefixed) space databases
+     */
+    protected function prefixedTables($connection, array $config): array
+    {
+        $prefix = data_get($connection->config, 'prefix');
+        if (! $prefix) {
+            return [];
+        }
+
+        if (! \in_array($config['driver'] ?? null, ['mysql', 'mariadb'], true)) {
+            throw new \Exception('Prefixed space connections can only be dumped on MySQL/MariaDB');
+        }
+
+        $pdo = $connection->getConnection()->getPdo();
+        $like = str_replace(['\\', '_', '%'], ['\\\\', '\\_', '\\%'], $prefix) . '%';
+        $tables = array_column(
+            $pdo->query('SHOW TABLES LIKE ' . $pdo->quote($like))->fetchAll(\PDO::FETCH_NUM),
+            0
+        );
+
+        if ($tables === []) {
+            throw new \Exception("No tables found for prefix {$prefix}");
+        }
+
+        return $tables;
     }
 
     protected function backupAssets(): void

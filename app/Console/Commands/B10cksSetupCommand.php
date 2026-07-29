@@ -42,7 +42,7 @@ class B10cksSetupCommand extends Command
         }
 
         $this->callOrFail('subscriptions:backfill-free', []);
-        $this->attemptStorageLink();
+        $this->ensurePublicStorageLink();
 
         $this->installState->write($profile);
 
@@ -144,17 +144,24 @@ class B10cksSetupCommand extends Command
         }
     }
 
-    private function attemptStorageLink(): void
+    /**
+     * The app serves uploaded assets from public/storage -> storage/app/private
+     * (NOT Laravel's storage:link default of app/public). Zip extraction and
+     * FTP uploads commonly drop symlinks, so recreate it when missing.
+     */
+    private function ensurePublicStorageLink(): void
     {
-        try {
-            $exitCode = $this->call('storage:link');
+        $link = public_path('storage');
 
-            if ($exitCode !== self::SUCCESS) {
-                $this->warn('storage:link did not complete successfully. Continuing without a public storage symlink.');
-            }
+        if (file_exists($link) || is_link($link)) {
+            return;
+        }
+
+        try {
+            symlink(storage_path('app/private'), $link);
         } catch (Throwable $exception) {
             $this->warn(sprintf(
-                'storage:link could not create a symlink (%s). Continuing anyway.',
+                'Could not create the public/storage symlink (%s). Create it manually: public/storage -> storage/app/private.',
                 $exception->getMessage()
             ));
         }

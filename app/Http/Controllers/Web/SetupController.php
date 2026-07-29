@@ -17,22 +17,42 @@ class SetupController extends Controller
             throw new NotFoundHttpException();
         }
 
-        if ($installState->exists()) {
-            return response($this->renderResult(
-                title: 'b10cks is already installed',
-                status: 'already installed',
-                output: json_encode($installState->read(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: ''
-            ));
-        }
-
         $profile = InstallProfile::tryFrom((string) $request->query('profile', InstallProfile::STANDARD->value))
             ?? InstallProfile::STANDARD;
 
-        $exitCode = Artisan::call('b10cks:setup', [
-            '--profile' => $profile->value,
-        ]);
+        // flock, not Cache::lock — the cache store may live in the database
+        // this very request is about to create. Serializes concurrent /setup
+        // hits so the installer never runs twice at once.
+        $lockPath = dirname($installState->path()).'/.setup.lock';
+        @mkdir(dirname($lockPath), 0755, true);
+        $lock = fopen($lockPath, 'c');
 
-        $output = trim(Artisan::output());
+        if ($lock === false || ! flock($lock, LOCK_EX | LOCK_NB)) {
+            return response($this->renderResult(
+                title: 'b10cks setup is already running',
+                status: 'busy',
+                output: 'Another setup request is currently in progress. Retry in a minute.'
+            ), 409);
+        }
+
+        try {
+            if ($installState->exists()) {
+                return response($this->renderResult(
+                    title: 'b10cks is already installed',
+                    status: 'already installed',
+                    output: json_encode($installState->read(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: ''
+                ));
+            }
+
+            $exitCode = Artisan::call('b10cks:setup', [
+                '--profile' => $profile->value,
+            ]);
+
+            $output = trim(Artisan::output());
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
 
         if ($exitCode === 0) {
             if ($installState->httpEnabledMarkerExists()) {
