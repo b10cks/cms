@@ -10,11 +10,35 @@ There are three ways to run b10cks yourself, from most to least automated:
 2. **Webhost package** — a pre-built archive for traditional shared hosting: no Docker, no Composer, no shell required.
 3. **Manual** — clone and build on your own server.
 
+## Quickstart
+
+```bash
+curl -fsSL https://get.b10cks.com | sh
+```
+
+The installer checks for Docker, downloads the compose stack for the newest release into `./b10cks`, generates a database password, starts the stack, and waits until the app answers its health check. It is [`scripts/install.sh`](https://github.com/b10cks/cms/blob/main/scripts/install.sh) in the repo — read it before piping it to a shell, as you should with any such command.
+
+Three environment variables change what it does:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `B10CKS_DIR` | `./b10cks` | Where the compose file and `.env` are written |
+| `B10CKS_VERSION` | newest release | Install a specific tag, e.g. `v2026.7.29-5acd0668` |
+| `B10CKS_PORT` | `8000` | Host port for the app |
+
+```bash
+curl -fsSL https://get.b10cks.com | B10CKS_PORT=9000 sh
+```
+
+The result is an ordinary Compose installation — the sections below describe the same stack, set up by hand.
+
 All three end with the same installer, `php artisan b10cks:setup`, which prepares directories, generates `APP_KEY` if missing, migrates, seeds, sets up the plan, and records the install.
 
 Set `B10CKS_EDITION=self-hosted` in every self-hosted deployment — it disables the SaaS billing surface, seeds a single unlimited plan, and keeps b10cks.com branding out of outgoing mail. See the [configuration reference](configuration.md).
 
 ## Docker Compose
+
+What the quickstart above automates, step by step:
 
 ```bash
 curl -LO https://raw.githubusercontent.com/b10cks/cms/main/docker-compose.yml
@@ -31,7 +55,7 @@ docker compose --profile redis --profile opensearch --profile reverb up -d
 
 Realtime collaboration needs the `reverb` profile plus `BROADCAST_DRIVER=reverb` and `REVERB_APP_KEY`/`REVERB_APP_SECRET`; without it the app runs fine, just without live presence.
 
-Images are published to [Docker Hub](https://hub.docker.com/r/b10cks/cms) for every release tag.
+Images are published for every release tag to [Docker Hub](https://hub.docker.com/r/b10cks/cms) and mirrored to [GHCR](https://github.com/b10cks/cms/pkgs/container/cms) as `ghcr.io/b10cks/cms`. Both are `linux/amd64` only for now — on Apple Silicon or an arm64 VPS, Docker will run them under emulation. The compose file points at Docker Hub; if you are behind a shared IP and hit its unauthenticated pull limit, set `B10CKS_IMAGE_TAG` aside and override the image with the `ghcr.io/b10cks/cms` name instead.
 
 ## Webhost package (shared hosting)
 

@@ -3,21 +3,30 @@ name: Publish self-hosted release
 # Runs on the same calver tags as deploy.yml (independent workflows, separate
 # registries): pushes the public Docker image to Docker Hub and attaches the
 # webhost package to a GitHub release.
+#
+# The image goes to two registries from one build. Docker Hub is the documented
+# default because it is the only one that works as a bare `b10cks/cms`; GHCR is
+# the mirror self-hosters and CI can pull without hitting Docker Hub's
+# unauthenticated pull limits.
 on:
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+-*'
 
 concurrency:
-  group: release-${{ github.ref }}
+  # Deliberately not keyed on the ref: several tags a day is normal here, and two
+  # releases building in parallel would race each other for the `latest` tag.
+  group: release
   cancel-in-progress: false
 
 permissions:
   contents: write
+  packages: write
 
 env:
   PHP_VERSION: '8.5'
   DOCKERHUB_REPOSITORY: b10cks/cms
+  GHCR_REPOSITORY: ghcr.io/${{ github.repository }}
 
 jobs:
   release:
@@ -27,12 +36,30 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          # The whole tag list is needed to decide whether this release is the newest.
+          fetch-depth: 0
 
       - name: Extract version from tag
         id: version
         run: |
           echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
           echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Determine whether this tag is the newest release
+        id: latest
+        # `latest` must never regress. Serialising the workflow is not enough on its
+        # own: an old run re-tried from the Actions UI would otherwise republish its
+        # version over the current one. Tags are lightweight, so creatordate is the
+        # tagged commit's date — tagging an older commit correctly loses the race too.
+        run: |
+          newest="$(git for-each-ref --sort=-creatordate --format='%(refname:short)' 'refs/tags/v*' | head -n1)"
+          if [ "$newest" = "${{ steps.version.outputs.tag }}" ]; then
+            echo "is_latest=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_latest=false" >> $GITHUB_OUTPUT
+            echo "::notice::${newest} is newer than ${{ steps.version.outputs.tag }} — publishing the version tag only, leaving latest alone"
+          fi
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -80,18 +107,31 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
+          # Blank lines are dropped by the action, so the latest tags simply vanish
+          # from the list when this is not the newest release.
           tags: |
             ${{ env.DOCKERHUB_REPOSITORY }}:${{ steps.version.outputs.version }}
-            ${{ env.DOCKERHUB_REPOSITORY }}:latest
+            ${{ env.GHCR_REPOSITORY }}:${{ steps.version.outputs.version }}
+            ${{ steps.latest.outputs.is_latest == 'true' && format('{0}:latest', env.DOCKERHUB_REPOSITORY) || '' }}
+            ${{ steps.latest.outputs.is_latest == 'true' && format('{0}:latest', env.GHCR_REPOSITORY) || '' }}
           build-args: |
             APP_VERSION=${{ steps.version.outputs.version }}
-          cache-from: type=registry,ref=${{ env.DOCKERHUB_REPOSITORY }}:buildcache
-          cache-to: type=registry,ref=${{ env.DOCKERHUB_REPOSITORY }}:buildcache,mode=max
+          # GitHub Actions cache rather than a registry ref: a `buildcache` tag in
+          # a public repo shows up on the Docker Hub tag list next to the releases.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           provenance: false
 
       - name: Build webhost package
@@ -105,3 +145,26 @@ jobs:
           files: |
             dist/b10cks-cms-webhost-${{ steps.version.outputs.version }}.tar.gz
             dist/b10cks-cms-webhost-${{ steps.version.outputs.version }}.zip
+
+      # get.b10cks.com serves scripts/install.sh from S3 via CloudFront. Only the
+      # newest release publishes it, for the same reason it owns the `latest` tag.
+      - name: Configure AWS credentials
+        if: steps.latest.outputs.is_latest == 'true'
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+
+      - name: Publish the installer to get.b10cks.com
+        if: steps.latest.outputs.is_latest == 'true'
+        run: |
+          aws s3 cp scripts/install.sh "s3://${INSTALLER_BUCKET}/install.sh" \
+            --content-type "text/plain; charset=utf-8" \
+            --cache-control "public, max-age=300"
+          aws cloudfront create-invalidation \
+            --distribution-id "${INSTALLER_DISTRIBUTION_ID}" \
+            --paths '/' '/install.sh'
+        env:
+          INSTALLER_BUCKET: b10cks-get
+          INSTALLER_DISTRIBUTION_ID: EP3IEWFWO7K3F
