@@ -10,6 +10,7 @@ class SetupPlansCommand extends Command
     protected $signature = 'plans:setup
         {--list : List existing plans and exit}
         {--link : Interactively link plans to LemonSqueezy product/variant IDs}
+        {--self-hosted : Seed a single unlimited free plan instead of the SaaS tiers}
         {--force : Overwrite existing plan data with defaults}';
 
     protected $description = 'Bootstrap default plans and optionally link them to LemonSqueezy';
@@ -292,6 +293,14 @@ class SetupPlansCommand extends Command
             return $this->listPlans();
         }
 
+        if ($this->option('self-hosted')) {
+            $this->upsertSelfHostedPlan();
+            $this->newLine();
+            $this->listPlans();
+
+            return 0;
+        }
+
         $this->upsertDefaultPlans();
 
         if ($this->option('link')) {
@@ -350,6 +359,40 @@ class SetupPlansCommand extends Command
 
         $this->newLine();
         $this->info("Done: {$created} created, {$updated} updated, {$skipped} skipped.");
+    }
+
+    /**
+     * Self-hosted installs run a single free plan; null quotas mean
+     * unlimited everywhere quotas are consulted.
+     */
+    private function upsertSelfHostedPlan(): void
+    {
+        $plan = Plan::updateOrCreate(
+            ['sort_order' => 10],
+            [
+                'name' => ['en' => 'Self-Hosted', 'de' => 'Self-Hosted', 'default' => 'Self-Hosted'],
+                'description' => [
+                    'en' => 'Unlimited plan for this installation',
+                    'de' => 'Unlimitierter Plan für diese Installation',
+                    'default' => 'Unlimited plan for this installation',
+                ],
+                'features' => [
+                    'en' => ['Unlimited API requests, traffic, storage and users'],
+                    'de' => ['Unbegrenzte API-Anfragen, Datenvolumen, Speicher und Nutzer'],
+                    'default' => ['Unlimited API requests, traffic, storage and users'],
+                ],
+                'price' => '0.00',
+                'period' => 'month',
+                'quotas' => null,
+                'contact_url' => null,
+                'is_free' => true,
+                'is_active' => true,
+            ]
+        );
+
+        $this->line($plan->wasRecentlyCreated
+            ? '  <fg=green>create</> Self-Hosted (unlimited)'
+            : '  <fg=yellow>update</> Self-Hosted (unlimited)');
     }
 
     private function linkToLemonSqueezy(): void
