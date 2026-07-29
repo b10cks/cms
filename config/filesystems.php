@@ -69,7 +69,9 @@ return [
             // "local" (self-hosted without S3) stores under storage/app/transfers
             // and serves via the signed transfers.download route.
             'driver' => env('TRANSFERS_DISK_DRIVER', 's3'),
-            'root' => storage_path('app/transfers'),
+            // Only meaningful for the local driver — on s3 a 'root' would
+            // silently prefix every object key.
+            'root' => env('TRANSFERS_DISK_DRIVER') === 'local' ? storage_path('app/transfers') : '',
             'key' => env('AWS_TRANSFERS_ACCESS_KEY_ID', env('AWS_ACCESS_KEY_ID')),
             'secret' => env('AWS_TRANSFERS_SECRET_ACCESS_KEY', env('AWS_SECRET_ACCESS_KEY')),
             'region' => env('AWS_TRANSFERS_DEFAULT_REGION', env('AWS_DEFAULT_REGION')),
