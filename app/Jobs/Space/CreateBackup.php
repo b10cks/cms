@@ -70,6 +70,28 @@ class CreateBackup extends QueuedJob
         $config = $connection->getConnection()->getConfig();
         $dumpFile = "{$this->tempPath}/data/database.sql";
 
+        // sqlite space databases are a single file — copy it instead of
+        // shelling out to a dumper (which shared hosts may not even allow).
+        if (($config['driver'] ?? null) === 'sqlite') {
+            File::copy($config['database'], "{$this->tempPath}/data/database.sqlite");
+            $this->backup->updateProgress(10);
+
+            return;
+        }
+
+        if (! \function_exists('proc_open')) {
+            \Log::warning('Skipping database dump: proc_open is disabled on this host', [
+                'space' => $this->space->id,
+            ]);
+            File::put(
+                "{$this->tempPath}/data/DATABASE_DUMP_SKIPPED.txt",
+                "The database dump was skipped because this host does not allow spawning processes (proc_open).\n"
+            );
+            $this->backup->updateProgress(10);
+
+            return;
+        }
+
         $command = [
             config('database.dumper.command'),
             '--host=' . $config['host'],

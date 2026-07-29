@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\Web\AppController;
 use App\Http\Controllers\Web\DocsController;
 use App\Http\Controllers\Web\SetupController;
+use App\Http\Controllers\Web\TransferDownloadController;
 use App\Http\Controllers\Web\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +16,12 @@ Route::get('/', AppController::class)->name('home');
 // enabled and self-disarms after a successful run. Must stay ahead of the
 // /{space} catch-all below.
 Route::get('/setup', SetupController::class)->name('setup');
+
+// Streams package/backup downloads when the transfers disk is local
+// (self-hosted without S3); links are short-lived signed URLs.
+Route::get('/transfers/download', TransferDownloadController::class)
+    ->middleware('signed')
+    ->name('transfers.download');
 
 // Auth routes
 Route::get('/login', AppController::class)->name('login');
