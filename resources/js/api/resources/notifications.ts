@@ -1,10 +1,3 @@
-import type { ApiCollectionResponse } from '~/types'
-import type {
-  NotificationQueryParams,
-  NotificationResource,
-  UnreadCountResponse,
-} from '~/types/notifications'
-
 import { BaseResource } from './base-resource'
 
 export class Notifications extends BaseResource<

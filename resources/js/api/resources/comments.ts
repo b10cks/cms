@@ -1,4 +1,3 @@
-import type { ApiResponse, BaseQueryParams } from '~/types'
 import type {
   CommentReactionResource,
   CommentResource,

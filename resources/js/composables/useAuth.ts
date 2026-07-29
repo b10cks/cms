@@ -4,7 +4,6 @@ import { isClient } from '~/lib/env'
 import { useI18n } from '~/plugins/i18n'
 import { getPosthog } from '~/plugins/posthog'
 import { router } from '~/router'
-import type { ApiResponse } from '~/types'
 import type { User } from '~/types/users'
 
 interface LoginPayload {

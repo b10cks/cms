@@ -1,6 +1,4 @@
-import type { BaseQueryParams } from '~/types'
-
-export type NotificationType =
+type NotificationType =
   | 'comment.mention'
   | 'comment.reply'
   | 'invite.space'
@@ -8,17 +6,17 @@ export type NotificationType =
   | 'usage.warning'
   | 'usage.exceeded'
 
-export interface NotificationRef {
+interface NotificationRef {
   id: string
   name?: string | null
 }
 
-export interface NotificationActor {
+interface NotificationActor {
   id: string
   display_name: string
 }
 
-export interface NotificationData {
+interface NotificationData {
   space?: NotificationRef
   content?: NotificationRef
   team?: NotificationRef | null
@@ -38,7 +36,7 @@ export interface NotificationData {
   [key: string]: unknown
 }
 
-export interface NotificationResource {
+interface NotificationResource {
   id: string
   type: NotificationType | string
   data: NotificationData
@@ -46,12 +44,12 @@ export interface NotificationResource {
   created_at: string
 }
 
-export interface NotificationQueryParams extends BaseQueryParams {
+interface NotificationQueryParams extends BaseQueryParams {
   unread_only?: boolean
   type?: string
   per_page?: number
 }
 
-export interface UnreadCountResponse {
+interface UnreadCountResponse {
   count: number
 }

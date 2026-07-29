@@ -18,7 +18,6 @@ import {
 } from '~/components/ui/table'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
-import type { AssetTagResource } from '~/types/assets'
 
 const props = defineProps<{
   spaceId: string

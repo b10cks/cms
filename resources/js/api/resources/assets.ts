@@ -1,15 +1,5 @@
 import { getXsrfHeaders } from '~/lib/csrf'
 import { requestExportBlob, requestImportJson } from '~/lib/import-export'
-import type { ApiCollectionResponse, ApiResponse, BaseQueryParams } from '~/types'
-import type {
-  AssetDataImportResult,
-  AssetResource,
-  AssetRightsStatus,
-  ExportTypes,
-  LinkedAssetContentResource,
-  UpdateAssetPayload,
-  UploadAssetPayload,
-} from '~/types/assets'
 
 import type { ApiClient } from '../client'
 import { BaseResource } from './base-resource'

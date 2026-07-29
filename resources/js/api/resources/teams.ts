@@ -1,5 +1,3 @@
-import type { ApiCollectionResponse, ApiResponse, BaseQueryParams } from '~/types'
-import type { PeopleCollectionResponse, PeopleQueryParams } from '~/types/people'
 import type {
   CreateTeamSpaceRolePayload,
   RoleCatalogEntry,

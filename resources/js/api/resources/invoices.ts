@@ -1,5 +1,3 @@
-import type { ApiCollectionResponse } from '~/types'
-
 import type { ApiClient } from '../client'
 
 export class Invoices {

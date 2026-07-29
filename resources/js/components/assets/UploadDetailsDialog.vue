@@ -12,7 +12,6 @@ import {
 } from '~/components/ui/dialog'
 import { InputField } from '~/components/ui/form'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
-import { UploadFile } from '~/types/assets'
 
 const { formatFileSize, formatDateTime } = useFormat()
 const { getFileIcon } = useFileUtils()

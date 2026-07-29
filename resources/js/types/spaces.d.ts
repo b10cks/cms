@@ -111,7 +111,7 @@ interface UpdateSpacePayload {
   settings?: SpaceSettings
 }
 
-export interface SpaceMemberResource {
+interface SpaceMemberResource {
   id: string
   user: {
     id: string
@@ -127,11 +127,11 @@ export interface SpaceMemberResource {
   joined_at: string
 }
 
-export interface UpdateSpaceMemberPayload {
+interface UpdateSpaceMemberPayload {
   role: string | null
 }
 
-export interface SpaceMemberQueryParams {
+interface SpaceMemberQueryParams {
   role?: string
   name?: string
   email?: string

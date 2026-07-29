@@ -3,7 +3,6 @@ import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { BlocksQueryParams } from '~/api/resources/blocks'
-import type { ApiResponse } from '~/types'
 
 import { queryKeys } from './useQueryClient'
 

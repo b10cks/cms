@@ -10,7 +10,6 @@ import {
   PaginationNext,
   PaginationPrev,
 } from '~/components/ui/pagination'
-import type { LaravelMeta } from '~/types'
 
 const props = withDefaults(
   defineProps<{

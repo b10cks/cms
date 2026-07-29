@@ -1,4 +1,3 @@
-import type { BaseQueryParams } from '~/types'
 import type {
   AssetPackageResource,
   AssetPackageState,

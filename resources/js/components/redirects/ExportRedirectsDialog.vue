@@ -4,7 +4,6 @@ import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import SelectField from '~/components/ui/form/SelectField.vue'
 import { buildTimestampedExportFilename, downloadBlob } from '~/lib/import-export'
-import type { RedirectImportExportFormat } from '~/types/redirects'
 
 const props = defineProps<{
   spaceId: string

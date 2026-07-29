@@ -1,5 +1,4 @@
 import type { ApiClient } from '~/api/client'
-import type { ApiResponse } from '~/types'
 import type { AuthorizationPayload, AuthorizationQueryParams } from '~/types/authorization'
 
 export class Authorization {

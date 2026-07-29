@@ -6,7 +6,6 @@ import SortSelect from '~/components/ui/SortSelect.vue'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { usePeople } from '~/composables/usePeople'
 import type { RoleCatalogEntry } from '~/types/authorization'
-import type { PeopleQueryParams, PersonSegment } from '~/types/people'
 
 const props = withDefaults(
   defineProps<{

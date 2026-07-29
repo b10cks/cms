@@ -1,7 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/vue-query'
 
 import { api } from '~/api'
-import type { PeopleQueryParams } from '~/types/people'
 
 import { queryKeys } from './useQueryClient'
 

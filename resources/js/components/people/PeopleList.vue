@@ -25,9 +25,7 @@ import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { SimpleTooltip } from '~/components/ui/tooltip'
-import type { LaravelMeta } from '~/types'
 import type { RoleCatalogEntry } from '~/types/authorization'
-import type { PersonResource, PersonState } from '~/types/people'
 
 const props = withDefaults(
   defineProps<{

@@ -1,6 +1,4 @@
-import type { ImportError, ImportSummary } from './import-export'
-
-export interface IconResource {
+interface IconResource {
   id: string
   external_id: string | null
   key: string
@@ -22,9 +20,9 @@ export interface IconResource {
  * The SVG body is never stored here — it is fetched from the Iconify-compatible
  * delivery API at render time.
  */
-export type IconValue = string
+type IconValue = string
 
-export interface UploadIconPayload {
+interface UploadIconPayload {
   file?: File
   body?: string
   key?: string
@@ -36,7 +34,7 @@ export interface UploadIconPayload {
   height?: number
 }
 
-export interface UpdateIconPayload {
+interface UpdateIconPayload {
   file?: File
   body?: string
   key?: string
@@ -48,30 +46,30 @@ export interface UpdateIconPayload {
   height?: number
 }
 
-export type IconImportMode = 'addition' | 'replacement'
+type IconImportMode = 'addition' | 'replacement'
 
-export interface IconImportChange {
+interface IconImportChange {
   field: string
   old: string | number | string[] | null
   new: string | number | string[] | null
 }
 
-export interface ImportedIconChanges {
+interface ImportedIconChanges {
   id: string
   key: string
   changes: IconImportChange[]
 }
 
-export interface IconImportRef {
+interface IconImportRef {
   id: string
   key: string
 }
 
-export interface IconDataImportResult {
+interface IconDataImportResult {
   successes: IconImportRef[]
   changes: ImportedIconChanges[]
   ignored_fields: string[]
-  errors: ImportError[]
+  errors: import('./import-export').ImportError[]
   deleted: IconImportRef[]
-  summary: ImportSummary & { total_deleted: number }
+  summary: import('./import-export').ImportSummary & { total_deleted: number }
 }

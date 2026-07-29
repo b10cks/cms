@@ -1,24 +1,22 @@
-import type { ImportError, ImportExportFormat, ImportSummary } from './import-export'
-
-export interface AssetFieldOverride {
+interface AssetFieldOverride {
   key: string
   enabled?: boolean | null
   required?: boolean | null
 }
 
-export interface AssetFolderSettings {
+interface AssetFolderSettings {
   field_overrides?: AssetFieldOverride[]
   additional_fields?: SpaceAssetField[]
 }
 
-export interface AssetFolderFieldState extends SpaceAssetField {
+interface AssetFolderFieldState extends SpaceAssetField {
   enabled: boolean
   custom?: boolean
   inherited?: boolean
   source?: 'space' | 'folder'
 }
 
-export interface AssetFolderResource {
+interface AssetFolderResource {
   id: string
   name: string
   description: string | null
@@ -33,7 +31,7 @@ export interface AssetFolderResource {
   updated_at: string
 }
 
-export interface AssetVideoThumbnail {
+interface AssetVideoThumbnail {
   path: string
   full_path: string
   position: number
@@ -43,7 +41,7 @@ export interface AssetVideoThumbnail {
   custom?: boolean
 }
 
-export interface AssetColorA11y {
+interface AssetColorA11y {
   /** 'dark' = treat the image as a dark surface (use light overlays/text) */
   scheme: 'dark' | 'light'
   /** WCAG relative luminance of the dominant color (0–1) */
@@ -54,7 +52,7 @@ export interface AssetColorA11y {
   contrast_black: number
 }
 
-export interface AssetMediaMetadata {
+interface AssetMediaMetadata {
   width?: number
   height?: number
   thumbnails?: AssetVideoThumbnail[]
@@ -65,7 +63,7 @@ export interface AssetMediaMetadata {
   a11y?: AssetColorA11y
 }
 
-export interface AssetResource {
+interface AssetResource {
   id: string
   filename: string
   extension: string
@@ -89,9 +87,9 @@ export interface AssetResource {
   updated_at: string
 }
 
-export type AssetRightsStatus = 'unrestricted' | 'restricted' | 'expired'
+type AssetRightsStatus = 'unrestricted' | 'restricted' | 'expired'
 
-export interface AssetVersionResource {
+interface AssetVersionResource {
   id: string
   external_id: string | null
   asset_id: string
@@ -107,13 +105,13 @@ export interface AssetVersionResource {
   created_at: string | null
 }
 
-export interface AssetUploadDuplicate {
+interface AssetUploadDuplicate {
   code: 'duplicate_asset'
   message: string
   existing_asset: AssetResource
 }
 
-export interface LinkedAssetContentResource {
+interface LinkedAssetContentResource {
   id: string
   name: string | null
   full_slug: string
@@ -133,14 +131,14 @@ export interface LinkedAssetContentResource {
   }
 }
 
-export interface AssetDeleteConflict {
+interface AssetDeleteConflict {
   message: string
   code: 'asset_in_use'
   linked_contents_count: number
   can_force_delete: boolean
 }
 
-export interface AssetValue {
+interface AssetValue {
   id: string
   type: 'asset'
   full_path: string
@@ -152,7 +150,7 @@ export interface AssetValue {
   data: Record<string, unknown> & { focus?: { x: number; y: number } }
 }
 
-export interface AssetTagResource {
+interface AssetTagResource {
   id: string
   external_id: string | null
   name: string
@@ -163,11 +161,11 @@ export interface AssetTagResource {
   updated_at: string
 }
 
-export type AssetCollectionType = 'manual' | 'smart'
+type AssetCollectionType = 'manual' | 'smart'
 
-export type AssetCollectionMatch = 'all' | 'any'
+type AssetCollectionMatch = 'all' | 'any'
 
-export type AssetCollectionCondition =
+type AssetCollectionCondition =
   | { field: 'filename'; operator: 'contains' | 'equals'; value: string }
   | { field: 'extension'; operator: 'equals'; value: string }
   | { field: 'extension'; operator: 'in'; value: string[] }
@@ -184,14 +182,14 @@ export type AssetCollectionCondition =
   | { field: 'orientation'; operator: 'equals'; value: 'landscape' | 'portrait' | 'square' }
   | { field: 'untagged'; operator: 'equals'; value: true }
 
-export type AssetCollectionConditionField = AssetCollectionCondition['field']
+type AssetCollectionConditionField = AssetCollectionCondition['field']
 
-export interface AssetCollectionRules {
+interface AssetCollectionRules {
   match: AssetCollectionMatch
   conditions: AssetCollectionCondition[]
 }
 
-export interface AssetCollectionResource {
+interface AssetCollectionResource {
   id: string
   external_id: string | null
   name: string
@@ -208,7 +206,7 @@ export interface AssetCollectionResource {
   updated_at: string
 }
 
-export interface CreateAssetCollectionPayload {
+interface CreateAssetCollectionPayload {
   name: string
   description?: string | null
   icon?: string | null
@@ -219,7 +217,7 @@ export interface CreateAssetCollectionPayload {
   cover_asset_id?: string | null
 }
 
-export interface UpdateAssetCollectionPayload {
+interface UpdateAssetCollectionPayload {
   name?: string
   description?: string | null
   icon?: string | null
@@ -229,7 +227,7 @@ export interface UpdateAssetCollectionPayload {
   cover_asset_id?: string | null
 }
 
-export interface UpsertAssetFolderPayload {
+interface UpsertAssetFolderPayload {
   name?: string
   description?: string | null
   icon?: string | null
@@ -238,13 +236,13 @@ export interface UpsertAssetFolderPayload {
   settings?: AssetFolderSettings
 }
 
-export interface UpsertAssetTagPayload {
+interface UpsertAssetTagPayload {
   name: string
   icon?: string | null
   color?: string | null
 }
 
-export interface UploadAssetPayload {
+interface UploadAssetPayload {
   file: File
   folder_id?: string | null
   tags?: string[]
@@ -252,7 +250,7 @@ export interface UploadAssetPayload {
   data?: Record<string, unknown>
 }
 
-export interface UpdateAssetPayload {
+interface UpdateAssetPayload {
   filename?: string
   folder_id?: string | null
   tags?: string[]
@@ -262,35 +260,35 @@ export interface UpdateAssetPayload {
   rights_status?: AssetRightsStatus
 }
 
-export type AssetTypes = 'image' | 'document' | 'video' | 'audio' | 'other'
+type AssetTypes = 'image' | 'document' | 'video' | 'audio' | 'other'
 
-export interface UploadFile extends UploadAssetPayload {
+interface UploadFile extends UploadAssetPayload {
   id: string
   preview?: string
   type: AssetTypes
 }
 
-export type ExportTypes = ImportExportFormat
+type ExportTypes = import('./import-export').ImportExportFormat
 
-export interface AssetChange {
+interface AssetChange {
   field: string
   language: string
   old: string | null
   new: string
 }
 
-export interface ImportSuccess {
+interface ImportSuccess {
   id: string
   filename: string
 }
 
-export interface ImportedAssetChanges {
+interface ImportedAssetChanges {
   id: string
   filename: string
   changes: AssetChange[]
 }
 
-export interface AssetDataImportResult {
+interface AssetDataImportResult {
   /**
    * List of successfully imported assets (unchanged or changed)
    */
@@ -311,10 +309,10 @@ export interface AssetDataImportResult {
    * Errors encountered during import
    * Import continues on errors (non-blocking)
    */
-  errors: ImportError[]
+  errors: import('./import-export').ImportError[]
 
   /**
    * Summary statistics of the import operation
    */
-  summary: ImportSummary
+  summary: import('./import-export').ImportSummary
 }

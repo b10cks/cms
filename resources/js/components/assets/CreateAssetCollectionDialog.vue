@@ -8,13 +8,6 @@ import IconNameField from '~/components/ui/IconNameField.vue'
 import { Input } from '~/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group'
 import { Spinner } from '~/components/ui/spinner'
-import type {
-  AssetCollectionCondition,
-  AssetCollectionConditionField,
-  AssetCollectionMatch,
-  AssetCollectionResource,
-  AssetCollectionType,
-} from '~/types/assets'
 
 const open = defineModel<boolean>('open')
 

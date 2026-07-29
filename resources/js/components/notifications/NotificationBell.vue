@@ -6,7 +6,6 @@ import { BellIcon } from '~/components/icons'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { useNotificationPresentation } from '~/composables/useNotificationPresentation'
-import type { NotificationResource } from '~/types/notifications'
 
 const router = useRouter()
 const { formatRelativeTime } = useFormat()

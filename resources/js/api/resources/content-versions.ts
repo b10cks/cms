@@ -1,4 +1,3 @@
-import type { BaseQueryParams } from '~/types'
 import type { ContentVersionListResource, ContentVersionResource } from '~/types/contents'
 
 import type { ApiClient } from '../client'

@@ -2,7 +2,6 @@ import { useQueryClient } from '@tanstack/vue-query'
 
 import { api } from '~/api'
 import type { AssetsQueryParams } from '~/api/resources/assets'
-import type { AssetResource, UpdateAssetPayload } from '~/types/assets'
 
 import { queryKeys } from './useQueryClient'
 

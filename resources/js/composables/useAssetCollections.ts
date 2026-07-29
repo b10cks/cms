@@ -4,10 +4,6 @@ import { toast } from 'vue-sonner'
 import { api } from '~/api'
 import type { AssetCollectionsQueryParams } from '~/api/resources/asset-collections'
 import type { AssetsQueryParams } from '~/api/resources/assets'
-import type {
-  CreateAssetCollectionPayload,
-  UpdateAssetCollectionPayload,
-} from '~/types/assets'
 
 import { queryKeys } from './useQueryClient'
 

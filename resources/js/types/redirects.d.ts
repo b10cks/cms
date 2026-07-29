@@ -1,6 +1,4 @@
-import type { ImportError, ImportExportFormat, ImportSummary } from './import-export'
-
-export interface RedirectResource {
+interface RedirectResource {
   id: string
   external_id?: string | null
   source: string
@@ -12,51 +10,51 @@ export interface RedirectResource {
   updated_at: string
 }
 
-export interface CreateRedirectPayload {
+interface CreateRedirectPayload {
   external_id?: string | null
   source: string
   target: string
   status_code: number
 }
 
-export interface UpdateRedirectPayload {
+interface UpdateRedirectPayload {
   external_id?: string | null
   source?: string
   target?: string
   status_code?: number
 }
 
-export type RedirectImportExportFormat = Extract<ImportExportFormat, 'csv' | 'excel' | 'json' | 'yaml'>
+type RedirectImportExportFormat = Extract<import('./import-export').ImportExportFormat, 'csv' | 'excel' | 'json' | 'yaml'>
 
-export type RedirectImportMode = 'addition' | 'replacement'
+type RedirectImportMode = 'addition' | 'replacement'
 
-export interface RedirectChange {
+interface RedirectChange {
   field: string
   old: string | number | null
   new: string | number | null
 }
 
-export interface ImportedRedirectChanges {
+interface ImportedRedirectChanges {
   id: string
   source: string
   changes: RedirectChange[]
 }
 
-export interface RedirectImportSuccess {
+interface RedirectImportSuccess {
   id: string
   source: string
 }
 
-export interface DeletedRedirect {
+interface DeletedRedirect {
   id: string
   source: string
 }
 
-export interface RedirectDataImportResult {
+interface RedirectDataImportResult {
   successes: RedirectImportSuccess[]
   changes: ImportedRedirectChanges[]
   ignored_fields: string[]
-  errors: ImportError[]
+  errors: import('./import-export').ImportError[]
   deleted: DeletedRedirect[]
-  summary: ImportSummary & { total_deleted: number }
+  summary: import('./import-export').ImportSummary & { total_deleted: number }
 }

@@ -13,7 +13,6 @@ import Label from '~/components/ui/form/Label.vue'
 import { useAiConfigs } from '~/composables/useAiModels'
 import { parseAiJson } from '~/lib/aiJson'
 import { normalizeLanguageIso } from '~/lib/content-i18n'
-import type { AssetValue } from '~/types/assets'
 import type { ContentResource } from '~/types/contents'
 
 import { Badge } from '../ui/badge'

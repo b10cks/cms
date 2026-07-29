@@ -6,7 +6,6 @@ import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { ComboboxField } from '~/components/ui/form'
 import IconName from '~/components/ui/IconName.vue'
-import type { AssetResource } from '~/types/assets'
 
 const props = defineProps<{
   spaceId: string

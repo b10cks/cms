@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import PerPageSelect from '~/components/PerPageSelect.vue'
 import LaravelPagination from '~/components/ui/pagination/LaravelPagination.vue'
-import type { LaravelMeta } from '~/types'
 
 const props = defineProps<{
   meta: LaravelMeta

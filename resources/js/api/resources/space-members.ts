@@ -1,10 +1,3 @@
-import type { ApiCollectionResponse } from '~/types'
-import type {
-  SpaceMemberQueryParams,
-  SpaceMemberResource,
-  UpdateSpaceMemberPayload,
-} from '~/types/spaces'
-
 import type { ApiClient } from '../client'
 
 export class SpaceMembers {

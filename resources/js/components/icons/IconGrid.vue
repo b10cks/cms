@@ -6,7 +6,6 @@ import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
 import { Skeleton } from '~/components/ui/skeleton'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
-import type { IconResource } from '~/types/icons'
 
 const props = withDefaults(
   defineProps<{

@@ -3,12 +3,6 @@ import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { RedirectsQueryParams } from '~/api/resources/redirects'
-import type {
-  CreateRedirectPayload,
-  RedirectImportExportFormat,
-  RedirectImportMode,
-  UpdateRedirectPayload,
-} from '~/types/redirects'
 
 import { queryKeys } from './useQueryClient'
 

@@ -1,5 +1,3 @@
-import type { ApiResponse, ApiCollectionResponse, BaseQueryParams } from '~/types'
-
 import type { ApiClient } from '../client'
 
 export abstract class BaseResource<

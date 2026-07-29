@@ -2,7 +2,6 @@
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import IconNameField from '~/components/ui/IconNameField.vue'
-import type { AssetTagResource, UpsertAssetTagPayload } from '~/types/assets'
 
 const open = defineModel<boolean>('open')
 

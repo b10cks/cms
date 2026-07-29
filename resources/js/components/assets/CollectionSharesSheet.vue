@@ -15,7 +15,6 @@ import { ScrollArea } from '~/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetHeaderCombined } from '~/components/ui/sheet'
 import { Skeleton } from '~/components/ui/skeleton'
 import type { AssetShareResource, AssetShareSource } from '~/types/asset-distribution'
-import type { AssetCollectionResource } from '~/types/assets'
 
 const props = defineProps<{
   spaceId: string

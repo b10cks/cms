@@ -4,7 +4,6 @@ import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { buildTimestampedExportFilename, downloadBlob } from '~/lib/import-export'
-import type { ExportTypes } from '~/types/assets'
 
 import SelectField from '../ui/form/SelectField.vue'
 

@@ -3,12 +3,6 @@ import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { IconsQueryParams } from '~/api/resources/icons'
-import type {
-  IconImportMode,
-  IconResource,
-  UpdateIconPayload,
-  UploadIconPayload,
-} from '~/types/icons'
 
 import { queryKeys } from './useQueryClient'
 

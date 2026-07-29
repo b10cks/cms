@@ -4,7 +4,6 @@ import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import FileDropZone from '~/components/ui/FileDropZone.vue'
 import { ScrollArea } from '~/components/ui/scroll-area'
-import type { RedirectDataImportResult, RedirectImportMode } from '~/types/redirects'
 
 const props = defineProps<{
   spaceId: string

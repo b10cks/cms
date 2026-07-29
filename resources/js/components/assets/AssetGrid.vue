@@ -36,7 +36,6 @@ import type { AssetSelectionEntry } from '~/composables/useAssetSelection'
 import { getAssetManagerDragItems, type AssetManagerDragItem } from '~/lib/assets/assetDragAndDrop'
 import { downloadAssetFiles } from '~/lib/assets/downloadAssets'
 import type { AssetShareSource } from '~/types/asset-distribution'
-import type { AssetFolderResource, AssetResource } from '~/types/assets'
 
 export interface AssetGridProps {
   spaceId: string

@@ -1,5 +1,3 @@
-import type { ApiCollectionResponse, ApiResponse, BaseQueryParams } from '~/types'
-
 import { BaseResource } from './base-resource'
 
 export class Provider extends BaseResource<

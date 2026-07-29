@@ -2,7 +2,6 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
-import type { SpaceMemberQueryParams, UpdateSpaceMemberPayload } from '~/types/spaces'
 
 import { queryKeys } from './useQueryClient'
 

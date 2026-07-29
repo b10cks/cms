@@ -2,11 +2,6 @@
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { InputField, SelectField } from '~/components/ui/form'
-import type {
-  CreateRedirectPayload,
-  RedirectResource,
-  UpdateRedirectPayload,
-} from '~/types/redirects'
 
 const props = defineProps<{
   open: boolean

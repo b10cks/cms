@@ -1,5 +1,3 @@
-import type { PeopleCollectionResponse, PeopleQueryParams } from '~/types/people'
-
 import type { ApiClient } from '../client'
 
 export class SpacePeople {

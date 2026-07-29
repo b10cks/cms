@@ -1,5 +1,4 @@
 import type { AssetManagerDragItem } from '~/lib/assets/assetDragAndDrop'
-import type { AssetFolderResource, AssetResource } from '~/types/assets'
 
 export type AssetSelectionEntry =
   | { type: 'folder'; data: AssetFolderResource }

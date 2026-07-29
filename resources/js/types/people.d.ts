@@ -1,12 +1,10 @@
-import type { ApiCollectionResponse } from '~/types'
+type PersonKind = 'member' | 'invite'
 
-export type PersonKind = 'member' | 'invite'
+type PersonState = 'active' | 'pending' | 'expired'
 
-export type PersonState = 'active' | 'pending' | 'expired'
+type PersonSegment = 'all' | 'members' | 'pending'
 
-export type PersonSegment = 'all' | 'members' | 'pending'
-
-export interface PersonUser {
+interface PersonUser {
   id: string
   firstname: string
   lastname: string
@@ -16,7 +14,7 @@ export interface PersonUser {
   initials?: string
 }
 
-export interface PersonSpaceMembership {
+interface PersonSpaceMembership {
   space: {
     id: string
     name: string
@@ -25,7 +23,7 @@ export interface PersonSpaceMembership {
   joined_at: string
 }
 
-export interface PersonResource {
+interface PersonResource {
   kind: PersonKind
   id: string
   user_id: string | null
@@ -44,17 +42,17 @@ export interface PersonResource {
   created_at: string | null
 }
 
-export interface PeopleCounts {
+interface PeopleCounts {
   members: number
   pending: number
   total: number
 }
 
-export interface PeopleCollectionResponse extends ApiCollectionResponse<PersonResource> {
+interface PeopleCollectionResponse extends ApiCollectionResponse<PersonResource> {
   counts: PeopleCounts
 }
 
-export interface PeopleQueryParams {
+interface PeopleQueryParams {
   segment?: PersonSegment
   name?: string
   email?: string

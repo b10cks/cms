@@ -1,5 +1,3 @@
-import type { AssetResource } from '~/types/assets'
-
 const downloadBlob = (blob: Blob, filename: string) => {
   const objectUrl = URL.createObjectURL(blob)
   const link = document.createElement('a')

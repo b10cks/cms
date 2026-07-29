@@ -1,13 +1,5 @@
 import { getXsrfHeaders } from '~/lib/csrf'
 import { requestImportJson } from '~/lib/import-export'
-import type { ApiResponse, BaseQueryParams } from '~/types'
-import type {
-  IconDataImportResult,
-  IconImportMode,
-  IconResource,
-  UpdateIconPayload,
-  UploadIconPayload,
-} from '~/types/icons'
 
 import type { ApiClient } from '../client'
 import { BaseResource } from './base-resource'

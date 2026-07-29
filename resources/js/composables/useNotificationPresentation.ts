@@ -1,7 +1,5 @@
 import type { RouteLocationRaw } from 'vue-router'
 
-import type { NotificationData, NotificationResource } from '~/types/notifications'
-
 import { runtimeConfig } from '~/lib/runtime-config'
 
 // Maps a raw notification `type` to the i18n/icon key used for presentation.

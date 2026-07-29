@@ -17,7 +17,6 @@ import {
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
-import type { LaravelMeta } from '~/types'
 
 const props = withDefaults(
   defineProps<{

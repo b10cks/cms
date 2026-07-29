@@ -5,14 +5,6 @@ import { toast } from 'vue-sonner'
 import { api } from '~/api'
 import type { AssetsQueryParams } from '~/api/resources/assets'
 import { getXsrfHeaders } from '~/lib/csrf'
-import type {
-  AssetDeleteConflict,
-  AssetResource,
-  AssetUploadDuplicate,
-  ExportTypes,
-  UpdateAssetPayload,
-  UploadAssetPayload,
-} from '~/types/assets'
 
 import { queryKeys } from './useQueryClient'
 

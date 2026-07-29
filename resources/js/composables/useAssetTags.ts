@@ -3,7 +3,6 @@ import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { AssetTagsQueryParams } from '~/api/resources/asset-tags'
-import type { UpsertAssetTagPayload } from '~/types/assets'
 
 import { queryKeys } from './useQueryClient'
 

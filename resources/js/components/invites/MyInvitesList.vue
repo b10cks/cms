@@ -15,7 +15,6 @@ import {
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { SimpleTooltip } from '~/components/ui/tooltip'
-import type { LaravelMeta } from '~/types'
 import type { InviteResource } from '~/types/invites'
 import { InviteStatus } from '~/types/invites.d'
 

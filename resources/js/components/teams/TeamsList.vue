@@ -20,7 +20,6 @@ import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { useTeamTypes } from '~/composables/useTeamTypes'
-import type { LaravelMeta } from '~/types'
 import type { TeamResource } from '~/types/teams'
 
 import TableEmptyRow from '../ui/TableEmptyRow.vue'

@@ -6,7 +6,6 @@ import IconUploadDialog from '~/components/icons/IconUploadDialog.vue'
 import ImportIconsDialog from '~/components/icons/ImportIconsDialog.vue'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
-import type { IconResource } from '~/types/icons'
 
 const props = defineProps<{
   spaceId: string

@@ -1,13 +1,4 @@
-import type { ApiResponse, BaseQueryParams } from '~/types'
 import { requestExportBlob, requestImportJson } from '~/lib/import-export'
-import type {
-  CreateRedirectPayload,
-  RedirectDataImportResult,
-  RedirectImportExportFormat,
-  RedirectImportMode,
-  RedirectResource,
-  UpdateRedirectPayload,
-} from '~/types/redirects'
 
 import type { ApiClient } from '../client'
 import { BaseResource } from './base-resource'

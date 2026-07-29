@@ -1,5 +1,3 @@
-import type { ComputedRef, MaybeRef } from 'vue'
-
 interface ApiMetaLink {
   url: string | null
   label: string | null
@@ -32,15 +30,15 @@ interface ApiCollectionResponse<T> {
   meta: LaravelMeta
 }
 
-export interface PaginationParams {
+interface PaginationParams {
   page?: number
   per_page?: number
 }
 
-export interface SortParams {
+interface SortParams {
   sort?: string
 }
 
-export interface BaseQueryParams extends PaginationParams, SortParams {}
+interface BaseQueryParams extends PaginationParams, SortParams {}
 
-export type MaybeRefOrComputed<T> = MaybeRef<T> | ComputedRef<T>
+type MaybeRefOrComputed<T> = import('vue').MaybeRef<T> | import('vue').ComputedRef<T>

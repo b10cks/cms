@@ -4,7 +4,6 @@ import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { SpaceQueryParams } from '~/api/resources/spaces'
-import type { ApiResponse } from '~/types'
 
 import { queryKeys } from './useQueryClient'
 

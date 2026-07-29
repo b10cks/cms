@@ -1,11 +1,3 @@
-import type { ApiCollectionResponse, BaseQueryParams } from '~/types'
-import type {
-  AssetCollectionResource,
-  AssetResource,
-  CreateAssetCollectionPayload,
-  UpdateAssetCollectionPayload,
-} from '~/types/assets'
-
 import type { ApiClient } from '../client'
 import type { AssetsQueryParams } from './assets'
 import { BaseResource } from './base-resource'

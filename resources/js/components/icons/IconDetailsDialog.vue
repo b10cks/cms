@@ -13,7 +13,6 @@ import FileDropZone from '~/components/ui/FileDropZone.vue'
 import { InputField, Label, TextField } from '~/components/ui/form'
 import IconTagsInput from '~/components/icons/IconTagsInput.vue'
 import { useAlertDialog } from '~/composables/useAlertDialog'
-import type { IconResource, UpdateIconPayload } from '~/types/icons'
 import { replaceColorsWithCurrentColor } from '~/utils/svg'
 
 const props = defineProps<{

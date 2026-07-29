@@ -1,4 +1,3 @@
-import type { ApiResponse } from '~/types'
 import type { User } from '~/types/users'
 
 import { BaseResource } from './base-resource'

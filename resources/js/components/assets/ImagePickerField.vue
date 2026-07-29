@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/u
 import Label from '~/components/ui/form/Label.vue'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import useSpaceSettings from '~/composables/useSpaceSettings'
-import type { AssetResource } from '~/types/assets'
 
 const props = defineProps<{
   spaceId: string

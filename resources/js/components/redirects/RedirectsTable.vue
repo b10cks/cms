@@ -27,11 +27,6 @@ import {
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
-import type {
-  CreateRedirectPayload,
-  RedirectResource,
-  UpdateRedirectPayload,
-} from '~/types/redirects'
 
 import ExportRedirectsDialog from './ExportRedirectsDialog.vue'
 import ImportRedirectsDialog from './ImportRedirectsDialog.vue'

@@ -16,13 +16,6 @@ import SettingsTable, {
   type ColumnDefinition,
   type TableItem,
 } from '~/components/ui/settings-table.vue'
-import type {
-  AssetFieldOverride,
-  AssetFolderFieldState,
-  AssetFolderResource,
-  AssetFolderSettings,
-  UpsertAssetFolderPayload,
-} from '~/types/assets'
 
 const props = withDefaults(
   defineProps<{

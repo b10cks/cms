@@ -6,7 +6,6 @@ import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
 import type { AssetManagerDragItem } from '~/lib/assets/assetDragAndDrop'
-import type { AssetFolderResource } from '~/types/assets'
 
 const props = defineProps<{
   spaceId: string

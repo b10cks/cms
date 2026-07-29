@@ -1,5 +1,3 @@
-import type { BaseQueryParams } from '~/types'
-
 import type { ApiClient, RequestOptions } from '../client'
 
 export interface PersonalAccessTokenQueryParams extends BaseQueryParams {

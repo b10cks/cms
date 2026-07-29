@@ -2,7 +2,6 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
-import type { NotificationQueryParams } from '~/types/notifications'
 
 import { queryKeys } from './useQueryClient'
 

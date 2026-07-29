@@ -1,4 +1,5 @@
 import type { App } from 'vue'
+import type { Composer } from 'vue-i18n'
 import { createI18n } from 'vue-i18n'
 
 import de from '~/i18n/de.json'
@@ -25,27 +26,29 @@ export const locales = [
   { code: 'en', name: 'English', iso: 'en', flag: '🇺🇸' },
 ] as const
 
+const composer = i18n.global as unknown as Composer<{ en: MessageSchema; de: MessageSchema }>
+
 export function useI18n() {
-  const global = i18n.global as any
+  const t = composer.t.bind(composer)
   return {
-    t: global.t.bind(global),
-    $t: global.t.bind(global),
-    locale: global.locale,
+    t,
+    $t: t,
+    locale: composer.locale,
     locales,
-    setLocale: (locale: 'en' | 'de') => {
-      global.locale.value = locale
-      document.querySelector('html').setAttribute('lang', locale)
+    setLocale: (locale: LocaleCode) => {
+      composer.locale.value = locale
+      document.documentElement.setAttribute('lang', locale)
     },
-    getLocale: () => global.locale.value,
+    getLocale: () => composer.locale.value,
   }
 }
 
-export function setLocale(locale: 'en' | 'de') {
-  ;(i18n.global.locale as any).value = locale
+export function setLocale(locale: LocaleCode) {
+  composer.locale.value = locale
 }
 
 export function getLocale() {
-  return (i18n.global.locale as any).value
+  return composer.locale.value
 }
 
 export type LocaleCode = (typeof locales)[number]['code']
