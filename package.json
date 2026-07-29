@@ -13,6 +13,7 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "lint": "oxlint --fix",
+    "lint:ci": "oxlint --deny-warnings",
     "format": "oxfmt",
     "typecheck": "vue-tsc --noEmit"
   },
