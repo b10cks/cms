@@ -50,7 +50,9 @@ class MySqlSearchDriver implements SearchDriverInterface
     {
         $content = new Content();
         $connection = $content->getConnection();
-        $tableName = $content->getTable();
+        // Raw DDL bypasses the query grammar, so the table prefix (shared
+        // profile) must be applied by hand.
+        $tableName = $connection->getTablePrefix() . $content->getTable();
 
         $hasFullTextIndex = DB::connection($connection->getName())
             ->select("SHOW INDEX FROM {$tableName} WHERE Index_type = 'FULLTEXT' AND Key_name = 'idx_searchable_content'");
@@ -65,7 +67,7 @@ class MySqlSearchDriver implements SearchDriverInterface
     {
         $content = new Content();
         $connection = $content->getConnection();
-        $tableName = $content->getTable();
+        $tableName = $connection->getTablePrefix() . $content->getTable();
 
         $hasFullTextIndex = DB::connection($connection->getName())
             ->select("SHOW INDEX FROM {$tableName} WHERE Index_type = 'FULLTEXT' AND Key_name = 'idx_searchable_content'");
@@ -118,9 +120,9 @@ class MySqlSearchDriver implements SearchDriverInterface
             $total = (clone $baseQuery)->count();
 
             $results = (clone $baseQuery)
-                ->selectRaw('contents.id, MATCH(searchable_content) AGAINST(? IN NATURAL LANGUAGE MODE) as relevance_score', [$searchQuery])
+                ->selectRaw('id, MATCH(searchable_content) AGAINST(? IN NATURAL LANGUAGE MODE) as relevance_score', [$searchQuery])
                 ->orderByDesc('relevance_score')
-                ->orderBy('contents.id')
+                ->orderBy('id')
                 ->skip($offset)
                 ->take($limit)
                 ->get()

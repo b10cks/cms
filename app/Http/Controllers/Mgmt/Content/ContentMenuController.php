@@ -99,8 +99,10 @@ class ContentMenuController extends Controller
 
             $extract = $query->getGrammar()->wrap('content_versions.content->'.$field);
 
+            $idColumn = $query->getGrammar()->wrap('contents.id');
+
             $rows = $query
-                ->selectRaw("contents.id as id, {$extract} as sort_value")
+                ->selectRaw("{$idColumn} as id, {$extract} as sort_value")
                 ->get();
 
             foreach ($rows as $row) {

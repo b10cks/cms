@@ -117,6 +117,14 @@ class DeleteSpaceCommand extends Command
                 continue;
             }
 
+            // Shared-profile connections live in the main database behind a
+            // table prefix — dropping the database would take the whole
+            // installation with it. Drop only the prefixed tables.
+            if ($prefix = data_get($connection->config, 'prefix')) {
+                $this->dropPrefixedTables($connection, $prefix);
+                continue;
+            }
+
             try {
                 $tempConfig = array_merge($connection->config ?? [], ['database' => null]);
                 $tempConnection = new \App\Models\Management\SpaceConnection([
@@ -140,6 +148,49 @@ class DeleteSpaceCommand extends Command
                     'error' => $e->getMessage(),
                 ]);
             }
+        }
+    }
+
+    private function dropPrefixedTables(\App\Models\Management\SpaceConnection $connection, string $prefix): void
+    {
+        try {
+            $db = $this->connectionService->getConnection($connection);
+            $pdo = $db->getPdo();
+            $driver = is_string($connection->driver) ? $connection->driver : $connection->driver->value;
+
+            $like = str_replace(['\\', '_', '%'], ['\\\\', '\\_', '\\%'], $prefix) . '%';
+            $tables = match ($driver) {
+                ConnectionDriver::MYSQL->value => array_column(
+                    $pdo->query("SHOW TABLES LIKE " . $pdo->quote($like))->fetchAll(\PDO::FETCH_NUM),
+                    0
+                ),
+                ConnectionDriver::PGSQL->value => array_column(
+                    $pdo->query("SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename LIKE " . $pdo->quote($like))->fetchAll(\PDO::FETCH_NUM),
+                    0
+                ),
+                default => [],
+            };
+
+            $isMysql = $driver === ConnectionDriver::MYSQL->value;
+
+            if ($isMysql) {
+                $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
+            }
+            foreach ($tables as $table) {
+                $escaped = $this->escapeIdentifier($driver, $table);
+                $pdo->exec($isMysql ? "DROP TABLE IF EXISTS {$escaped}" : "DROP TABLE IF EXISTS {$escaped} CASCADE");
+            }
+            if ($isMysql) {
+                $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+            }
+
+            $this->line('  Dropped ' . count($tables) . " prefixed tables ({$prefix}*)");
+        } catch (Throwable $e) {
+            $this->warn("  Failed to drop prefixed tables for connection {$connection->id}: {$e->getMessage()}");
+            Log::warning('DeleteSpaceCommand: failed to drop prefixed tables', [
+                'connection_id' => $connection->id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 

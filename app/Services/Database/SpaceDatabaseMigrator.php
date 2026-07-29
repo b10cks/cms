@@ -230,9 +230,18 @@ class SpaceDatabaseMigrator
      */
     private function registerAdminConnection(SpaceConnection $connection, string $databaseName): string
     {
+        $config = ['database' => $databaseName];
+
+        // Shared-profile connections address their tables through a prefix in
+        // the main database; the migration must run with the same prefix or it
+        // would create (and verify) unprefixed tables.
+        if ($prefix = data_get($connection->config, 'prefix')) {
+            $config['prefix'] = $prefix;
+        }
+
         $admin = new SpaceConnection([
             'driver' => $connection->driver,
-            'config' => ['database' => $databaseName],
+            'config' => $config,
         ]);
         $admin->id = $connection->id . '_migrate';
 

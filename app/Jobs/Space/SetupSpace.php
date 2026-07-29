@@ -3,8 +3,10 @@
 namespace App\Jobs\Space;
 
 use App\Actions\Space\CreateToken;
+use App\Enums\InstallProfile;
 use App\Jobs\QueuedJob;
 use App\Models\Management\Space;
+use App\Services\Setup\InstallProfileResolver;
 use Log;
 
 class SetupSpace extends QueuedJob
@@ -54,12 +56,47 @@ class SetupSpace extends QueuedJob
         $default = config('database.default');
         $config = config("database.connections.{$default}");
 
-        $connection = $space->connections()->create([
+        $profile = app(InstallProfileResolver::class)->resolve();
+
+        $attributes = [
             'name' => 'Internal',
             'driver' => $config['driver'],
             'is_default' => true,
-        ]);
+        ];
 
+        // The shared profile provisions without CREATE DATABASE/CREATE USER
+        // privileges: sqlite gets one file per space, everything else lives in
+        // the main database behind a per-space table prefix.
+        if ($profile === InstallProfile::SHARED) {
+            if (config('setup.space_db_driver') === 'sqlite') {
+                $attributes['driver'] = 'sqlite';
+                $attributes['config'] = [
+                    'database' => storage_path("app/spaces/{$space->id}/space.sqlite"),
+                ];
+            } else {
+                $attributes['config'] = [
+                    'database' => $config['database'],
+                    'prefix' => self::sharedTablePrefix($space->id),
+                ];
+            }
+        }
+
+        $connection = $space->connections()->create($attributes);
+
+        $this->dispatchSetupConnection($connection);
+    }
+
+    /**
+     * Deterministic, short (11 chars) so even the longest space table names
+     * stay well under MySQL's 64-character identifier limit.
+     */
+    public static function sharedTablePrefix(string $spaceId): string
+    {
+        return 'sp'.substr(md5($spaceId), 0, 8).'_';
+    }
+
+    protected function dispatchSetupConnection($connection): void
+    {
         SetupConnection::dispatchSync($connection, $this->blueprintId);
     }
 
