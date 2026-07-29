@@ -206,6 +206,7 @@ export interface ContentSettings {
 
 export interface ContentResource {
   id: string
+  external_id?: string | null
   slug: string
   full_slug: string
   parent_id: string | null

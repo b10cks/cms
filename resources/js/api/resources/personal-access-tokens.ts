@@ -9,6 +9,21 @@ export interface PersonalAccessTokenCreatePayload {
   expires_at: string
 }
 
+export interface PersonalAccessToken {
+  id: number
+  name: string
+  created_at: string
+  last_used_at: string | null
+  expires_at: string | null
+}
+
+export type PersonalAccessTokenListResponse = ApiCollectionResponse<PersonalAccessToken>
+
+export interface PersonalAccessTokenCreateResponse {
+  token: PersonalAccessToken
+  plain_text_token: string
+}
+
 /**
  * The step-up credential the API asks for before it mints a token: a TOTP (or
  * backup) code when a second factor is enrolled, the account password when it

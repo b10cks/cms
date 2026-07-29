@@ -264,11 +264,13 @@ interface ListStyleConfig {
   type?: 'bullet' | 'ordered' | 'both'
 }
 
+type HeadingLevel = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'
+
 interface RichTextSchema extends Schema {
   type: 'richtext'
   translatable: boolean
   html_classes: HtmlClassConfig[]
-  heading_levels?: Array<'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'>
+  heading_levels?: HeadingLevel[]
   placeholders?: PlaceholderConfig[]
   /** Per-feature toggles. Absent or `true` ⇒ enabled (back-compatible default). */
   features?: Partial<Record<RichTextFeature, boolean>>

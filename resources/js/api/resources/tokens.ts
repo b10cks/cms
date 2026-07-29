@@ -12,7 +12,18 @@ export interface CreateTokenRequest {
   execution_limit?: number
 }
 
-export class Tokens extends BaseResource<Token, CreateTokenRequest, undefined, TokenQueryParams> {
+export interface CreateTokenResponse {
+  token: Token
+  plain_text_token: string
+}
+
+export class Tokens extends BaseResource<
+  Token,
+  CreateTokenRequest,
+  undefined,
+  TokenQueryParams,
+  CreateTokenResponse
+> {
   protected basePath: string
 
   constructor(client: ApiClient, spaceId: string) {

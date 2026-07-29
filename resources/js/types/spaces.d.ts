@@ -19,6 +19,8 @@ interface SpaceSiteLocale {
   segment: string
   language: string
   name?: string | null
+  // Index signature so the type satisfies the settings table's TableItem constraint.
+  [key: string]: string | null | undefined
 }
 
 interface SpaceAssetField {
@@ -30,6 +32,8 @@ interface SpaceAssetField {
 interface SpaceSitemapType {
   block: string
   path: string
+  // Index signature so the type satisfies the settings table's TableItem constraint.
+  [key: string]: string | null | undefined
 }
 
 interface SpaceSitemapSettings {
@@ -59,6 +63,7 @@ interface SpaceSettings {
   site_locales?: SpaceSiteLocale[]
   filter_hidden_blocks?: boolean
   content_sorting?: boolean
+  serial_gaps?: 'preserve' | 'reuse'
   onboarding_dismissed_at?: string | null
   sitemap?: SpaceSitemapSettings
   sitemaps?: SpaceNamedSitemap[]

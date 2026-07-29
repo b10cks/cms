@@ -18,6 +18,8 @@ export interface ConditionRow {
 export interface TriggerOption {
   value: string
   label: string
+  // Index signature so the type satisfies ComboboxField's ComboboxOption.
+  [key: string]: unknown
 }
 
 export interface AutomationPlaceholderOption {

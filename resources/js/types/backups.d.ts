@@ -2,10 +2,14 @@ type BackupState = 'pending' | 'active' | 'expired' | 'failed'
 type BackupSortColumn = 'name' | 'state' | 'progress' | 'created_at' | 'expires_at'
 type SortOrder = 'asc' | 'desc'
 
+/** Mirrors SimpleUserResource, which is what the backup endpoints embed. */
 interface BackupCreator {
   id: string
-  display_name: string
+  name: string
+  avatar?: string | null
+  initials?: string
   email?: string
+  created_at?: string
 }
 
 interface BackupResource {

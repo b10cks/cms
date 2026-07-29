@@ -5,6 +5,9 @@ export abstract class BaseResource<
   CreatePayload = unknown,
   UpdatePayload = unknown,
   QueryParams extends BaseQueryParams = BaseQueryParams,
+  // Most endpoints answer create with the standard `{ data }` envelope; a few
+  // (tokens) return the resource alongside a one-shot secret instead.
+  CreateResponse = ApiResponse<T>,
 > {
   protected client: ApiClient
   protected abstract basePath: string
@@ -34,8 +37,8 @@ export abstract class BaseResource<
     )
   }
 
-  public async create(payload: CreatePayload): Promise<ApiResponse<T>> {
-    return this.client.post<ApiResponse<T>>(this.basePath, payload)
+  public async create(payload: CreatePayload): Promise<CreateResponse> {
+    return this.client.post<CreateResponse>(this.basePath, payload)
   }
 
   public async update(id: string, payload: UpdatePayload): Promise<ApiResponse<T>> {
