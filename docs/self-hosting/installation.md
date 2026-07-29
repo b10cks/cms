@@ -47,6 +47,8 @@ curl -Lo .env https://raw.githubusercontent.com/b10cks/cms/main/.env.docker.exam
 docker compose up -d
 ```
 
+Set `B10CKS_IMAGE_TAG` in `.env` to a concrete [release tag](https://github.com/b10cks/cms/releases) rather than keeping the `latest` default — that is what the quickstart installer does, and it keeps a reinstall reproducible and the compose file in step with the image it runs.
+
 On first boot the container generates an `APP_KEY` (persisted on the storage volume) and runs `b10cks:setup` automatically (`B10CKS_AUTO_SETUP=true`). Optional services are behind compose profiles:
 
 ```bash
@@ -156,8 +158,6 @@ For the webhost package: extract the new archive over the old tree (keep your `.
 ::: warning Migrate space databases too, not just the management one
 `php artisan migrate` alone is **not** enough on any of these paths. It updates the management database, while each space carries its own schema — one database per space on the standard profile, prefixed tables or a SQLite file per space on the shared profile. `b10cks:upgrade` runs both, applying space migrations only where they are actually pending. If you have previously upgraded with `migrate` alone, run `php artisan b10cks:upgrade --force` once to catch the spaces up.
 :::
-
-Space databases are migrated automatically alongside the management database.
 
 ## Generating API docs
 

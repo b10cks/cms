@@ -96,7 +96,7 @@ If your **main** database is SQLite, each space always gets its own file regardl
 ## Cache, queues, sessions
 
 ```bash
-CACHE_DRIVER=redis
+CACHE_STORE=redis
 QUEUE_CONNECTION=redis
 SESSION_DRIVER=redis
 REDIS_HOST=…
