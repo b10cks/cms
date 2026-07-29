@@ -7,9 +7,6 @@ Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
 - ✅ Fake the Vite manifest in the app-shell payload test
 - 👷 Key the test-suite concurrency group on the calling workflow
-
-## [v2026.7.29-739eae81] — 2026-7-29
-
 - 📝 Fix the CACHE_STORE key and pin advice in the self-hosting docs
 - 👷 Gate the production deploy on the test suite
 - 🔒 Fix self-hosting blockers and gate the release on tests
