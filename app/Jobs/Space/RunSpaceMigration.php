@@ -12,12 +12,15 @@ use App\Services\Storage\StorageService;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\QueryException;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class RunSpaceMigration extends QueuedJob
 {
     public $tries = 1;
+
+    public $timeout = 1800;
 
     private array $blockFolderIdMap = [];
 
@@ -39,8 +42,35 @@ class RunSpaceMigration extends QueuedJob
         public SpaceMigration $migration
     ) {}
 
+    /**
+     * Two migrations writing into the same target space interleave inserts
+     * and corrupt the id maps. The lock lives in the default cache (not the
+     * per-space DB) and expires with the timeout so a crashed worker cannot
+     * deadlock future migrations.
+     */
+    public function middleware(): array
+    {
+        return [
+            (new WithoutOverlapping($this->migration->target_space_id))
+                ->expireAfter($this->timeout),
+        ];
+    }
+
     protected function execute(): void
     {
+        // Fail fast instead of running a partial, interleaved migration (the
+        // job has no transactions or resume support).
+        $inFlight = SpaceMigration::where('target_space_id', $this->migration->target_space_id)
+            ->where('state', 'processing')
+            ->whereKeyNot($this->migration->id)
+            ->exists();
+
+        if ($inFlight) {
+            throw new \RuntimeException(
+                'Another migration into this target space is already running. Wait for it to finish and retry.'
+            );
+        }
+
         $this->migration->markAsProcessing();
         $this->result = new MigrationResult;
 

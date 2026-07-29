@@ -6,6 +6,7 @@ use App\Jobs\QueuedJob;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceBackup;
 use App\Notifications\Management\BackupReadyNotification;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,8 @@ use ZipArchive;
 
 class CreateBackup extends QueuedJob
 {
+    public $timeout = 1800;
+
     private string $tempPath;
     private string $backupId;
 
@@ -24,6 +27,20 @@ class CreateBackup extends QueuedJob
     ) {
         $this->backupId = $backup->id;
         $this->tempPath = storage_path("app/backups/{$this->backupId}");
+    }
+
+    /**
+     * Concurrent backups of the same space hammer the same DB and asset
+     * storage for no benefit; the lock expires with the timeout so a crashed
+     * worker cannot block future backups.
+     */
+    public function middleware(): array
+    {
+        return [
+            (new WithoutOverlapping($this->space->id))
+                ->releaseAfter(60)
+                ->expireAfter($this->timeout),
+        ];
     }
 
     protected function execute(): void

@@ -31,7 +31,7 @@ class MigrationController extends Controller
         return MigrationListResource::collection($migrations);
     }
 
-    public function store(CreateMigrationRequest $request, Space $space, CreateMigrationAction $action): MigrationDetailResource
+    public function store(CreateMigrationRequest $request, Space $space, CreateMigrationAction $action): MigrationDetailResource|JsonResponse
     {
         $this->authorize('create', [SpaceMigration::class, $space]);
 
@@ -42,6 +42,19 @@ class MigrationController extends Controller
         // simply by pointing a migration at it.
         $targetSpace = Space::findOrFail($validated['target_space_id']);
         $this->authorize('create', [SpaceMigration::class, $targetSpace]);
+
+        // The migration job has no transactions or resume support — a second
+        // migration into the same target while one is in flight would
+        // interleave writes and corrupt the target space.
+        $inFlight = SpaceMigration::where('target_space_id', $targetSpace->id)
+            ->whereIn('state', ['pending', 'processing'])
+            ->exists();
+
+        if ($inFlight) {
+            return response()->json([
+                'message' => 'A migration into this target space is already pending or running. Wait for it to finish before starting another.',
+            ], 409);
+        }
 
         $migration = $action->execute(
             $validated,

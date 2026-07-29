@@ -15,15 +15,21 @@ use PDO;
 
 class SetupConnection extends QueuedJob
 {
-    private DatabaseConnectionService $spaceConnectionService;
     private const MIN_PASSWORD_LENGTH = 32;
     private const ALLOWED_USERNAME_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
     public function __construct(
         public SpaceConnection $spaceConnection,
         public ?string $blueprintId = null
-    ) {
-        $this->spaceConnectionService = app(DatabaseConnectionService::class);
+    ) {}
+
+    /**
+     * Resolved lazily on the worker — resolving in the constructor stores the
+     * service on the job and serializes it into the queue payload.
+     */
+    private function spaceConnectionService(): DatabaseConnectionService
+    {
+        return app(DatabaseConnectionService::class);
     }
 
     protected function execute(): void
@@ -34,7 +40,7 @@ class SetupConnection extends QueuedJob
             // Shared-profile connection into the main database behind a table
             // prefix: the database exists and the base credentials apply, so
             // there is nothing to create.
-            $this->spaceConnectionService->getConnection($this->spaceConnection);
+            $this->spaceConnectionService()->getConnection($this->spaceConnection);
         } else {
             $databaseName = $this->getDatabaseName();
             $pdo = $this->getTempConnection();
@@ -53,7 +59,7 @@ class SetupConnection extends QueuedJob
             $this->createDatabase($pdo, $databaseName);
             $this->createDatabaseUser($pdo, $credentials, $databaseName);
 
-            $this->spaceConnectionService->getConnection($this->spaceConnection);
+            $this->spaceConnectionService()->getConnection($this->spaceConnection);
         }
 
         $this->migrateDatabase($this->spaceConnection->id);
@@ -64,7 +70,7 @@ class SetupConnection extends QueuedJob
         $this->spaceConnection->refresh();
         $this->spaceConnection->space->refresh();
 
-        $this->spaceConnectionService->getConnection($this->spaceConnection);
+        $this->spaceConnectionService()->getConnection($this->spaceConnection);
 
         $this->applyBlueprintData();
 
@@ -95,7 +101,7 @@ class SetupConnection extends QueuedJob
             ['database' => $database]
         );
 
-        $this->spaceConnectionService->getConnection($this->spaceConnection);
+        $this->spaceConnectionService()->getConnection($this->spaceConnection);
     }
 
     protected function getDatabaseName(): string
@@ -147,7 +153,7 @@ class SetupConnection extends QueuedJob
             'config' => $tempConfig
         ]);
 
-        return $this->spaceConnectionService
+        return $this->spaceConnectionService()
             ->getConnection($tempConnection)
             ->getPdo();
     }

@@ -8,6 +8,7 @@ use App\Models\Space\Asset;
 use App\Models\Space\AssetPackage;
 use App\Services\Asset\AssetPackageService;
 use App\Services\Storage\StorageService;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -49,6 +50,19 @@ class BuildAssetPackageJob extends QueuedJob
         $this->packageId = $package->id;
         $this->tempPath = storage_path("app/packages/{$this->packageId}");
         $this->onQueue('heavy');
+    }
+
+    /**
+     * Two builds of the same package share the temp dir and upload key and
+     * corrupt each other's zip; the lock expires with the timeout so a
+     * crashed worker cannot block a rebuild.
+     */
+    public function middleware(): array
+    {
+        return [
+            (new WithoutOverlapping($this->packageId))
+                ->expireAfter($this->timeout),
+        ];
     }
 
     private function package(): AssetPackage

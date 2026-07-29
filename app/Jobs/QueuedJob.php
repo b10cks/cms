@@ -17,6 +17,10 @@ abstract class QueuedJob implements ShouldQueue
 
     public $tries = 3;
 
+    // Exponential retry spacing; ignored by jobs that set $tries = 1. Without
+    // this, all retries fire back-to-back against a resource that just failed.
+    public $backoff = [10, 60, 300];
+
     public function handle(): void
     {
         // Defense-in-depth tenant isolation for long-lived workers: snapshot any

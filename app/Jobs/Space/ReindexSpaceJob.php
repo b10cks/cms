@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Log;
 
 class ReindexSpaceJob extends QueuedJob
 {
+    public $timeout = 900;
+
     public function __construct(
         protected Space $space
     ) {
