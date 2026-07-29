@@ -213,6 +213,7 @@ const confirmDelete = async () => {
                   <span class="font-mono">{{ dataSource.slug }}</span>
                   <button
                     class="cursor-pointer text-muted hover:text-primary"
+                    :aria-label="$t('labels.datasets.copySlugTooltip')"
                     @click.stop="copySlug(dataSource.slug)"
                   >
                     <Icon name="lucide:copy" />

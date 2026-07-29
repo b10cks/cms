@@ -261,6 +261,7 @@ const handleSort = (column: string) => {
                     <Button
                       variant="ghost"
                       size="icon"
+                      :aria-label="$t('actions.moreActions')"
                     >
                       <Icon name="lucide:more-horizontal" />
                     </Button>

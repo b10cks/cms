@@ -122,6 +122,7 @@ const handleCancel = () => {
               variant="ghost"
               size="icon"
               class="shrink-0"
+              :aria-label="$t('actions.moreActions')"
             >
               <Icon name="lucide:more-horizontal" />
             </Button>

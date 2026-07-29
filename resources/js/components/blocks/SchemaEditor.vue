@@ -619,7 +619,8 @@ watch(
           <button
             v-if="localEditor.length > 1 && !readonly"
             type="button"
-            title="Delete page"
+            :aria-label="$t('actions.blocks.deletePage')"
+            :title="$t('actions.blocks.deletePage')"
             class="absolute top-1/2 right-4 z-10 -translate-y-1/2 transform cursor-pointer opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
             @click.stop="deletePage(index)"
           >
@@ -632,7 +633,8 @@ watch(
 
         <Button
           v-if="!readonly"
-          title="Add new page"
+          :aria-label="$t('actions.blocks.addPage')"
+          :title="$t('actions.blocks.addPage')"
           type="button"
           size="icon"
           class="ml-auto"

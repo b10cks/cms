@@ -144,6 +144,7 @@ watch([isOpen, templatesBlock], () => {
         <PopoverTrigger as-child>
           <button
             class="flex size-6 cursor-pointer items-center justify-center rounded-full bg-accent text-accent-foreground"
+            :aria-label="$t('actions.blocks.add')"
           >
             <Icon name="lucide:plus" />
           </button>
@@ -151,6 +152,7 @@ watch([isOpen, templatesBlock], () => {
         <button
           v-if="hasClipboardItem"
           class="flex size-6 cursor-pointer items-center justify-center rounded-full bg-accent text-accent-foreground"
+          :aria-label="$t('actions.blocks.tooltips.paste')"
           @click="emit('paste')"
         >
           <Icon name="lucide:clipboard-paste" />

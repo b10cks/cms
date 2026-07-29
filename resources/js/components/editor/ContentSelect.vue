@@ -208,6 +208,7 @@ onUnmounted(() => {
             v-if="search"
             type="button"
             class="text-muted transition-colors hover:text-primary"
+            :aria-label="$t('actions.clear')"
             @click="search = ''"
           >
             <Icon

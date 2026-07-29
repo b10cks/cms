@@ -323,6 +323,7 @@ const handleOpenChange = (value: boolean) => {
                       type="button"
                       size="sm"
                       :disabled="isReadOnly || selectedAbilityCount === totalAbilityCount"
+                      :aria-label="$t('actions.selectAll')"
                       @click="setAbilities(props.availableAbilities, true)"
                     >
                       <Icon name="lucide:check-square" />
@@ -331,6 +332,7 @@ const handleOpenChange = (value: boolean) => {
                       type="button"
                       size="sm"
                       :disabled="isReadOnly || selectedAbilityCount === 0"
+                      :aria-label="$t('actions.clearSelection')"
                       @click="setAbilities(props.availableAbilities, false)"
                     >
                       <Icon name="lucide:eraser" />
@@ -405,6 +407,7 @@ const handleOpenChange = (value: boolean) => {
                             isReadOnly ||
                             hasAllAbilities(resource.abilities.map((ability) => ability.key))
                           "
+                          :aria-label="$t('actions.selectAll')"
                           @click="
                             setAbilities(
                               resource.abilities.map((ability) => ability.key),
@@ -422,6 +425,7 @@ const handleOpenChange = (value: boolean) => {
                             isReadOnly ||
                             !hasSomeAbilities(resource.abilities.map((ability) => ability.key))
                           "
+                          :aria-label="$t('actions.clearSelection')"
                           @click="
                             setAbilities(
                               resource.abilities.map((ability) => ability.key),

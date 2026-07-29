@@ -180,6 +180,7 @@ const removeColumn = (index: number) => {
               type="button"
               draggable
               :disabled="readonly"
+              :aria-label="$t('actions.dragToReorder')"
               class="h-full flex items-center cursor-ns-resize py-2 text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Icon
@@ -226,6 +227,7 @@ const removeColumn = (index: number) => {
             <button
               type="button"
               :disabled="readonly"
+              :aria-label="$t('actions.blocks.table.deleteColumn')"
               class="mt-7 cursor-pointer p-2 text-muted-foreground hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
               @click="removeColumn(index)"
             >

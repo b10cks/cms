@@ -13,6 +13,7 @@ const { $t } = useI18n()
       <button
         type="button"
         class="flex size-6 cursor-pointer items-center justify-center rounded-full bg-accent text-accent-foreground"
+        :aria-label="$t('labels.assets.addAsset') as string"
         :title="$t('labels.assets.addAsset') as string"
         @click.stop="$emit('add')"
       >

@@ -63,6 +63,7 @@
                   variant="ghost"
                   size="sm"
                   class="h-6 w-6 p-1 opacity-0 group-hover:opacity-100"
+                  :aria-label="$t('labels.content.pageElements')"
                   @click.stop="toggleElementsView(item.value.id)"
                 >
                   <Icon
@@ -86,8 +87,12 @@
                   <div
                     v-for="element in getContentElements(item.value.id)"
                     :key="element.id"
+                    role="button"
+                    tabindex="0"
                     class="flex cursor-pointer items-center justify-between rounded border p-3 hover:bg-input"
                     @click="selectContentWithAnchor(item.value.id, element.id)"
+                    @keydown.enter.prevent="selectContentWithAnchor(item.value.id, element.id)"
+                    @keydown.space.prevent="selectContentWithAnchor(item.value.id, element.id)"
                   >
                     <div class="flex items-center gap-2">
                       <Icon

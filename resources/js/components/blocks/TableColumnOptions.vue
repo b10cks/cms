@@ -222,6 +222,7 @@ watch(
           <button
             type="button"
             :disabled="readonly"
+            :aria-label="$t('actions.blocks.options.delete')"
             class="cursor-pointer p-2 text-muted-foreground hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
             tabindex="-1"
             @click="removeOption(index)"

@@ -264,6 +264,7 @@ const handleKeyPress = (event: KeyboardEvent): void => {
                 variant="ghost"
                 size="icon"
                 :disabled="disabled"
+                :aria-label="$t('actions.dragToReorder')"
                 class="cursor-grab"
               >
                 <Icon name="lucide:grip-vertical" />

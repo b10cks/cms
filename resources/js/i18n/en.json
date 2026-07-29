@@ -521,7 +521,8 @@
       "siteLocale": "Site locale",
       "copyLink": "Copy preview link",
       "openExternal": "Open in new tab",
-      "mode": "Toggle preview mode"
+      "mode": "Toggle preview mode",
+      "settings": "Preview settings"
     },
     "contentVersions": {
       "title": "Version History",
@@ -889,7 +890,9 @@
         },
         "aiPlaceholderTitle": "AI Assistant",
         "aiPlaceholderDescription": "Use AI to help create and edit your content",
-        "comingSoon": "Coming soon"
+        "comingSoon": "Coming soon",
+        "addChild": "Add child",
+        "addSibling": "Add sibling"
       },
       "fields": {
         "name": "Name",
@@ -1142,7 +1145,12 @@
       "hideReplies": "Hide",
       "showReplies": "Show",
       "reply": "reply | replies",
-      "you": "You"
+      "you": "You",
+      "actions": {
+        "reply": "Reply",
+        "resolve": "Resolve",
+        "reopen": "Reopen"
+      }
     },
     "navigation": {
       "home": "Home",
@@ -2550,7 +2558,8 @@
           "updateFailed": "Failed to update profile: {error}",
           "avatarUploaded": "Profile picture updated successfully",
           "avatarUploadFailed": "Failed to upload profile picture: {error}"
-        }
+        },
+        "uploadAvatar": "Upload profile picture"
       },
       "invites": {
         "title": "Invitations",
@@ -3590,7 +3599,8 @@
         "1f3fd": "Medium",
         "1f3fe": "Medium-Dark",
         "1f3ff": "Dark"
-      }
+      },
+      "pick": "Pick an emoji"
     },
     "publishDialog": {
       "titleNow": "Publish Now",
@@ -3623,7 +3633,9 @@
         "removeInternalLink": "Remove Internal Link",
         "insertPlaceholder": "Insert Placeholder",
         "applyCssClass": "Apply CSS Class",
-        "listStyle": "List Style"
+        "listStyle": "List Style",
+        "undo": "Undo (Ctrl+Z)",
+        "redo": "Redo (Ctrl+Y)"
       },
       "listStyles": {
         "default": "Default"
@@ -4010,7 +4022,8 @@
         "pluginLoadFailed": "\"{name}\" did not respond. The bundle may be broken.",
         "retry": "Retry"
       }
-    }
+    },
+    "moreInfo": "More information"
   },
   "notifications": {
     "inputField": {
@@ -4284,7 +4297,8 @@
         "addColumn": "Add Column",
         "addOption": "Add Choice",
         "addRow": "Add Row",
-        "editTable": "Edit Table"
+        "editTable": "Edit Table",
+        "deleteColumn": "Delete Column"
       },
       "tooltips": {
         "createTemplate": "Create Template from this block",
@@ -4301,7 +4315,11 @@
         "removeHtmlClass": "Remove HTML class",
         "addPlaceholder": "Add Placeholder",
         "removePlaceholder": "Remove placeholder"
-      }
+      },
+      "moveFieldToPage": "Move field to page",
+      "removeCondition": "Remove Condition",
+      "addPage": "Add new page",
+      "deletePage": "Delete page"
     },
     "blockTags": {
       "add": "New Tag",
@@ -4388,7 +4406,16 @@
       "publish": "Publish bundle",
       "delete": "Delete Plugin"
     },
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "toggleExpand": "Expand or collapse",
+    "dragToReorder": "Drag to reorder",
+    "undo": "Undo",
+    "redo": "Redo",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "zoomToFit": "Zoom to fit",
+    "moreActions": "More actions",
+    "moreOptions": "More options"
   },
   "navigation": {
     "home": "Home",

@@ -221,6 +221,7 @@ const handleBlockChange = (value: AcceptableValue) => {
           )
         "
         tabindex="-1"
+        :aria-label="$t('actions.dragToReorder')"
         @pointerdown.stop
         @dragstart="emit('dragstart', $event)"
         @dragend="emit('dragend', $event)"
@@ -307,6 +308,8 @@ const handleBlockChange = (value: AcceptableValue) => {
           size="toolbar"
           class="size-7 rounded-full border border-border bg-background shadow-sm"
           tabindex="-1"
+          :aria-label="$t('actions.toggleExpand')"
+          :aria-expanded="!node.isCollapsed"
           @click.stop="emit('toggle-collapse')"
         >
           <Icon :name="node.isCollapsed ? 'lucide:chevron-right' : 'lucide:chevron-down'" />
@@ -317,6 +320,7 @@ const handleBlockChange = (value: AcceptableValue) => {
           size="toolbar"
           class="rounded-full border border-border bg-background shadow-sm"
           tabindex="-1"
+          :aria-label="$t('labels.contents.canvas.restore')"
           @click.stop="emit('toggle-delete')"
         >
           <Icon name="lucide:rotate-ccw" />
@@ -327,6 +331,7 @@ const handleBlockChange = (value: AcceptableValue) => {
           size="toolbar"
           class="size-7 rounded-full border border-border bg-background shadow-sm"
           tabindex="-1"
+          :aria-label="$t('actions.delete')"
           @click.stop="emit('toggle-delete')"
         >
           <Icon name="lucide:trash-2" />

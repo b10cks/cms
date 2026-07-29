@@ -227,11 +227,16 @@ watch(open, (value) => {
       </DialogHeader>
 
       <div
+        role="button"
+        tabindex="0"
+        :aria-label="t('labels.icons.dropHint')"
         :class="[
           'cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors',
           isDragging ? 'border-primary bg-primary/5' : 'border-input hover:border-primary',
         ]"
         @click="fileInput?.click()"
+        @keydown.enter.prevent="fileInput?.click()"
+        @keydown.space.prevent="fileInput?.click()"
         @dragover.prevent="isDragging = true"
         @dragleave.prevent="isDragging = false"
         @drop="onDrop"
@@ -307,6 +312,7 @@ watch(open, (value) => {
               <template v-else>
                 <button
                   type="button"
+                  :aria-label="t('labels.icons.useCurrentColor')"
                   :title="t('labels.icons.useCurrentColor')"
                   :class="[
                     'rounded p-1 transition-colors',
@@ -321,6 +327,7 @@ watch(open, (value) => {
                 <button
                   type="button"
                   class="text-muted hover:text-destructive"
+                  :aria-label="t('actions.remove')"
                   @click="removeItem(item.id)"
                 >
                   <Icon name="lucide:x" />

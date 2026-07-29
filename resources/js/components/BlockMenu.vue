@@ -151,6 +151,7 @@ const tabs = computed(() => ({
               v-if="canManageBlockFolders"
               class="ml-auto"
               size="xs"
+              :aria-label="$t('labels.blockFolders.createFolder')"
               @click="showCreateFolderDialog = true"
             >
               <Icon name="lucide:plus" />
@@ -197,7 +198,8 @@ const tabs = computed(() => ({
               <button
                 v-if="canManageBlockFolders"
                 type="button"
-                title="Delete block"
+                :aria-label="$t('actions.delete')"
+                :title="$t('actions.delete')"
                 class="flex transform cursor-pointer items-center p-1 hover:text-red-500"
                 @click.prevent.stop="initDeleteFolder(item.value)"
               >

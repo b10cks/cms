@@ -500,6 +500,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
             type="button"
             variant="ghost"
             size="xs"
+            :aria-label="$t('actions.selectAll')"
             @click="selectAllItems()"
           >
             <Icon name="lucide:square-check" />
@@ -508,6 +509,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
             type="button"
             variant="ghost"
             size="xs"
+            :aria-label="$t('actions.blocks.tooltips.copy')"
             @click="copyItems()"
           >
             <Icon name="lucide:copy" />
@@ -516,6 +518,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
             type="button"
             variant="ghost"
             size="xs"
+            :aria-label="$t('actions.blocks.tooltips.cut')"
             @click="cutItems()"
           >
             <Icon name="lucide:scissors" />
@@ -585,6 +588,11 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   <button
                     v-if="!props.readOnly"
                     type="button"
+                    :aria-label="
+                      content.hidden
+                        ? $t('actions.blocks.tooltips.show')
+                        : $t('actions.blocks.tooltips.hide')
+                    "
                     :title="
                       content.hidden
                         ? $t('actions.blocks.tooltips.show')
@@ -598,6 +606,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   <button
                     v-if="!props.readOnly && content.id"
                     type="button"
+                    :aria-label="$t('actions.blocks.tooltips.createTemplate')"
                     :title="$t('actions.blocks.tooltips.createTemplate')"
                     class="flex transform cursor-pointer items-center hover:text-primary"
                     @click.stop="handleTemplateTrigger(content)"
@@ -607,6 +616,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   <button
                     v-if="content.id"
                     type="button"
+                    :aria-label="$t('actions.blocks.tooltips.editNested')"
                     :title="$t('actions.blocks.tooltips.editNested')"
                     class="flex transform cursor-pointer items-center hover:text-primary"
                     @click.stop="navigateToItem(content.id as string)"
@@ -616,6 +626,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   <button
                     v-if="!props.readOnly"
                     type="button"
+                    :aria-label="$t('actions.blocks.tooltips.copy')"
                     :title="$t('actions.blocks.tooltips.copy')"
                     class="flex transform cursor-pointer items-center hover:text-primary"
                     @click.stop="copyItems(i)"
@@ -625,6 +636,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   <button
                     v-if="!props.readOnly"
                     type="button"
+                    :aria-label="$t('actions.blocks.tooltips.cut')"
                     :title="$t('actions.blocks.tooltips.cut')"
                     class="flex transform cursor-pointer items-center hover:text-primary"
                     @click.stop="cutItems(i)"
@@ -634,6 +646,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   <button
                     v-if="!props.readOnly"
                     type="button"
+                    :aria-label="$t('actions.blocks.tooltips.delete')"
                     :title="$t('actions.blocks.tooltips.delete')"
                     class="flex transform cursor-pointer items-center hover:text-red-500"
                     @click.stop="deleteItem(i)"

@@ -416,6 +416,7 @@ watch(
               size="icon"
               variant="ghost"
               class="hover:text-destructive"
+              :aria-label="$t('actions.remove')"
               @click="removeListStyle(index)"
             >
               <Icon

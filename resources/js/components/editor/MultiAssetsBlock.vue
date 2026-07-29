@@ -8,7 +8,6 @@ import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import useSpaceSettings from '~/composables/useSpaceSettings'
-import type { AssetResource } from '~/types/assets'
 
 import Label from '../ui/form/Label.vue'
 
@@ -289,6 +288,7 @@ const handleFolderChange = (folderId: string | null) => {
               <button
                 v-if="!props.readOnly"
                 class="flex transform cursor-pointer items-center hover:text-primary"
+                :aria-label="$t('actions.assets.replace') as string"
                 :title="$t('actions.assets.replace') as string"
                 @click.stop="handleAssetReplace(index)"
               >
@@ -296,6 +296,7 @@ const handleFolderChange = (folderId: string | null) => {
               </button>
               <button
                 class="flex transform cursor-pointer items-center hover:text-primary"
+                :aria-label="$t('actions.assets.edit') as string"
                 :title="$t('actions.assets.edit') as string"
                 @click.stop="handleAssetEdit(asset)"
               >
@@ -304,6 +305,7 @@ const handleFolderChange = (folderId: string | null) => {
               <button
                 v-if="!props.readOnly"
                 class="flex transform cursor-pointer items-center hover:text-red-500"
+                :aria-label="$t('actions.assets.remove') as string"
                 :title="$t('actions.assets.remove') as string"
                 @click.stop="handleAssetDelete(index)"
               >

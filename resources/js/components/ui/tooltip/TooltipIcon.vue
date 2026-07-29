@@ -25,6 +25,7 @@ withDefaults(
       <TooltipTrigger
         type="button"
         class="flex items-center"
+        :aria-label="$t('labels.moreInfo')"
       >
         <Icon
           :name="icon"

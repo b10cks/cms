@@ -61,6 +61,7 @@ const filteredEmojis = computed(() => {
         variant="ghost"
         size="xs"
         :class="props.class"
+        :aria-label="$t('labels.emojis.pick')"
       >
         <Icon name="lucide:smile-plus" />
       </Button>

@@ -46,6 +46,7 @@ const emits = defineEmits<DialogContentEmits>()
           <Button
             size="icon"
             variant="ghost"
+            :aria-label="$t('actions.close')"
             @click="emits('close', false)"
           >
             <Icon

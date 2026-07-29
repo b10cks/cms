@@ -115,8 +115,13 @@ const onDragOverAvatar = (e: DragEvent) => {
             >
               <div
                 v-if="avatar"
+                role="button"
+                tabindex="0"
+                :aria-label="$t('labels.account.profile.uploadAvatar')"
                 class="flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-surface"
                 @click="handleUploadAvatar"
+                @keydown.enter.prevent="handleUploadAvatar"
+                @keydown.space.prevent="handleUploadAvatar"
               >
                 <NuxtImg
                   :src="avatar"
@@ -126,8 +131,13 @@ const onDragOverAvatar = (e: DragEvent) => {
               </div>
               <div
                 v-else
+                role="button"
+                tabindex="0"
+                :aria-label="$t('labels.account.profile.uploadAvatar')"
                 class="flex h-20 w-20 cursor-pointer items-center justify-center rounded-full border border-dashed border-muted bg-surface"
                 @click="handleUploadAvatar"
+                @keydown.enter.prevent="handleUploadAvatar"
+                @keydown.space.prevent="handleUploadAvatar"
               >
                 <Icon
                   name="lucide:user"

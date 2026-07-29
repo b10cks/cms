@@ -102,6 +102,7 @@ const handleNewCurrencyKey = (event: KeyboardEvent) => {
             size="sm"
             variant="outline"
             :disabled="!newCurrency.trim()"
+            :aria-label="$t('actions.add')"
             @click="addCurrency"
           >
             <Icon name="lucide:plus" />

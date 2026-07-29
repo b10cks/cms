@@ -143,6 +143,7 @@ const handleRemoveReaction = (commentId: string, emoji: string) => {
           <Button
             variant="ghost"
             size="toolbar"
+            :aria-label="$t('actions.close')"
             @click="isOpen = false"
           >
             <Icon name="lucide:x" />

@@ -61,6 +61,9 @@ const handleDrop = (event: DragEvent) => {
 
 <template>
   <div
+    role="button"
+    tabindex="0"
+    :aria-label="$t('components.fileDropZone.selectFileAction')"
     :class="[
       'cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors',
       isDragging
@@ -68,6 +71,8 @@ const handleDrop = (event: DragEvent) => {
         : 'border-border hover:border-muted-foreground',
     ]"
     @click="fileInputRef?.click()"
+    @keydown.enter.prevent="fileInputRef?.click()"
+    @keydown.space.prevent="fileInputRef?.click()"
     @dragover="handleDragOver"
     @dragleave="handleDragLeave"
     @drop="handleDrop"

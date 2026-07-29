@@ -551,6 +551,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
                           size="icon"
                           class="h-6! w-6!"
                           :disabled="isCurrentDraft(version) || isSettingCurrent"
+                          :aria-label="$t('labels.contentVersions.actions.setCurrent')"
                           @click.prevent.stop="handleSetAsCurrent(version.id)"
                         >
                           <Icon name="lucide:square-pen" />
@@ -563,6 +564,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
                           size="icon"
                           class="h-6! w-6!"
                           :disabled="!apiToken"
+                          :aria-label="$t('labels.contentVersions.actions.showJson')"
                           @click.prevent.stop="openVersionJsonInNewTab(version.id)"
                         >
                           <Icon name="lucide:braces" />
@@ -575,6 +577,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
                           size="icon"
                           class="h-6! w-6!"
                           :disabled="isCurrentlyPublished(version) || isPublishing"
+                          :aria-label="$t('labels.contentVersions.actions.publish')"
                           @click.prevent.stop="handlePublishVersion(version.id)"
                         >
                           <Icon name="lucide:send" />

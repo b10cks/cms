@@ -685,6 +685,11 @@ defineExpose({
             type="button"
             class="flex size-6 items-center justify-center rounded-full scale-50 bg-accent text-primary shadow-sm transition-transform hover:scale-100"
             tabindex="-1"
+            :aria-label="
+              activeAddControlsNode.isRootVirtual
+                ? $t('labels.contents.canvas.addChild')
+                : $t('labels.contents.canvas.addSibling')
+            "
             @pointerdown.prevent.stop
             @click.prevent.stop="
               openNodeAddMenu(
@@ -715,6 +720,7 @@ defineExpose({
             type="button"
             class="flex size-6 items-center justify-center rounded-full bg-accent text-primary scale-50 shadow-sm transition-transform hover:scale-100"
             tabindex="-1"
+            :aria-label="$t('labels.contents.canvas.addChild')"
             @pointerdown.prevent.stop
             @click.prevent.stop="
               openNodeAddMenu(activeAddControlsNode.id, 'child', { focusNode: false })

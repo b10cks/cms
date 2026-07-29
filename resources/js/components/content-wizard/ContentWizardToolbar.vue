@@ -72,6 +72,7 @@ defineEmits<{
         variant="ghost"
         size="toolbar"
         :disabled="!canUndo"
+        :aria-label="$t('actions.undo')"
         @click="$emit('undo')"
       >
         <Icon name="lucide:undo-2" />
@@ -80,6 +81,7 @@ defineEmits<{
         variant="ghost"
         size="toolbar"
         :disabled="!canRedo"
+        :aria-label="$t('actions.redo')"
         @click="$emit('redo')"
       >
         <Icon name="lucide:redo-2" />
@@ -94,6 +96,7 @@ defineEmits<{
       <Button
         variant="ghost"
         size="toolbar"
+        :aria-label="$t('actions.zoomOut')"
         @click="$emit('zoom-out')"
       >
         <Icon name="lucide:minus" />
@@ -104,6 +107,7 @@ defineEmits<{
       <Button
         variant="ghost"
         size="toolbar"
+        :aria-label="$t('actions.zoomIn')"
         @click="$emit('zoom-in')"
       >
         <Icon name="lucide:plus" />
@@ -119,6 +123,7 @@ defineEmits<{
       <Button
         variant="ghost"
         size="toolbar"
+        :aria-label="$t('actions.zoomToFit')"
         @click="$emit('fit')"
       >
         <Icon name="lucide:maximize" />

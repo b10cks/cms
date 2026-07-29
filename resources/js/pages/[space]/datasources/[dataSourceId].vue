@@ -765,6 +765,7 @@ const handleTranslateMissingDimensions = async () => {
                         variant="outline"
                         class="h-8 w-8"
                         :disabled="!newEntryData.key || isCreatingEntry"
+                        :aria-label="$t('actions.create')"
                         @click="handleSaveNewEntry"
                       >
                         <Spinner
@@ -902,6 +903,7 @@ const handleTranslateMissingDimensions = async () => {
                             v-if="settings.dataEntries.mode === 'single'"
                             size="icon"
                             variant="ghost"
+                            :aria-label="$t('labels.dataEntries.actions.edit')"
                             @click="handleEditEntry(entry)"
                           >
                             <Icon name="lucide:pencil" />
@@ -915,6 +917,7 @@ const handleTranslateMissingDimensions = async () => {
                             size="icon"
                             variant="outline"
                             class="h-8 w-8"
+                            :aria-label="$t('actions.save')"
                             @click="handleSaveEntry(entry.id)"
                           >
                             <Icon
@@ -927,6 +930,7 @@ const handleTranslateMissingDimensions = async () => {
                             size="icon"
                             variant="destructive"
                             class="h-8 w-8"
+                            :aria-label="$t('labels.dataEntries.actions.delete')"
                             @click="handleDeleteEntry(entry)"
                           >
                             <Icon

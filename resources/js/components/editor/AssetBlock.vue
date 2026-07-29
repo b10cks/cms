@@ -9,7 +9,6 @@ import Label from '~/components/ui/form/Label.vue'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 import useSpaceSettings from '~/composables/useSpaceSettings'
-import { AssetResource, AssetValue } from '~/types/assets'
 
 const props = defineProps<{
   item: AssetSchema & { key: string }
@@ -110,11 +109,16 @@ const handleAssetDetailsUpdate = (asset: AssetResource) => {
     />
     <div
       v-if="!hasAsset"
+      role="button"
+      :tabindex="props.readOnly ? -1 : 0"
+      :aria-label="$t('labels.assets.addAsset')"
       :class="[
         'rounded-lg border-2 border-dashed border-input bg-surface/50 p-8 text-center transition-colors',
         props.readOnly ? 'cursor-default' : 'cursor-pointer hover:bg-surface',
       ]"
       @click="!props.readOnly && (showAssetPicker = true)"
+      @keydown.enter.prevent="!props.readOnly && (showAssetPicker = true)"
+      @keydown.space.prevent="!props.readOnly && (showAssetPicker = true)"
     >
       <AssetsIcon class="mx-auto mb-3 size-16 text-muted" />
       <p class="mb-1 text-sm font-medium text-primary">
@@ -167,6 +171,7 @@ const handleAssetDetailsUpdate = (asset: AssetResource) => {
           <button
             v-if="!props.readOnly"
             class="flex transform cursor-pointer items-center hover:text-primary"
+            :aria-label="$t('actions.assets.replace')"
             :title="$t('actions.assets.replace')"
             @click.stop="handleAssetReplace"
           >
@@ -174,6 +179,7 @@ const handleAssetDetailsUpdate = (asset: AssetResource) => {
           </button>
           <button
             class="flex transform cursor-pointer items-center hover:text-primary"
+            :aria-label="$t('actions.assets.edit')"
             :title="$t('actions.assets.edit')"
             @click.stop="handleAssetEdit"
           >
@@ -182,6 +188,7 @@ const handleAssetDetailsUpdate = (asset: AssetResource) => {
           <button
             v-if="!props.readOnly"
             class="flex transform cursor-pointer items-center hover:text-red-500"
+            :aria-label="$t('actions.assets.delete')"
             :title="$t('actions.assets.delete')"
             @click.stop="handleAssetDelete"
           >

@@ -107,6 +107,11 @@ const togglePreview = () => {
         v-if="showPreviewToggle"
         variant="ghost"
         size="toolbar"
+        :aria-label="
+          settings.content.showPreview
+            ? $t('actions.content.modes.toField')
+            : $t('actions.content.modes.toVisual')
+        "
         @click="togglePreview()"
       >
         <Icon :name="settings.content.showPreview ? 'lucide:eye' : 'lucide:eye-off'" />

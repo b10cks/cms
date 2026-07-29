@@ -6,8 +6,6 @@ import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { Spinner } from '~/components/ui/spinner'
-import type { AssetUploadDuplicate } from '~/types/assets'
-import { UploadFile } from '~/types/assets'
 
 import DuplicateAssetDialog from './DuplicateAssetDialog.vue'
 import UploadDetailsDialog from './UploadDetailsDialog.vue'
@@ -463,12 +461,16 @@ const retryUpload = async (file: UploadFileWithProgress) => {
               v-for="file in files"
               :key="file.id"
               role="button"
+              tabindex="0"
               class="group relative cursor-pointer rounded-lg bg-background shadow-lg transition-all hover:-translate-y-2 hover:bg-input focus:-translate-y-2 focus:bg-input"
               @click="openFileDetails(file)"
+              @keydown.enter.prevent="openFileDetails(file)"
+              @keydown.space.prevent="openFileDetails(file)"
             >
               <button
                 v-if="file.status !== 'uploading'"
                 class="absolute top-1 right-1 z-10 flex h-6 w-6 cursor-pointer items-center justify-center text-primary/50 hover:text-destructive"
+                :aria-label="$t('actions.remove')"
                 @click.stop="removeFile(file.id)"
               >
                 <Icon name="lucide:trash-2" />

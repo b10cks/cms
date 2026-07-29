@@ -6,7 +6,6 @@ import CollectionSharesSheet from '~/components/assets/CollectionSharesSheet.vue
 import CreateAssetCollectionDialog from '~/components/assets/CreateAssetCollectionDialog.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
-import type { AssetCollectionResource } from '~/types/assets'
 
 const props = defineProps<{
   spaceId: string
@@ -101,6 +100,7 @@ async function handleDelete(collection: AssetCollectionResource) {
           v-if="canManageCollections"
           class="ml-auto opacity-0 transition-opacity duration-200 group-hover:opacity-100"
           size="toolbar"
+          :aria-label="$t('labels.assetCollections.createCollection')"
           @click="openCreateDialog"
         >
           <Icon name="lucide:plus" />

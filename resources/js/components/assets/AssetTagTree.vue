@@ -5,7 +5,6 @@ import AssetTagTreeItem from '~/components/assets/AssetTagTreeItem.vue'
 import CreateAssetTagDialog from '~/components/assets/CreateAssetTagDialog.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
-import type { AssetTagResource } from '~/types/assets'
 
 const props = defineProps<{
   spaceId: string
@@ -92,6 +91,7 @@ async function handleDelete(tag: AssetTagResource) {
           v-if="canManageTags"
           class="ml-auto opacity-0 transition-opacity duration-200 group-hover:opacity-100"
           size="toolbar"
+          :aria-label="$t('labels.assetTags.createTag')"
           @click="openCreateDialog"
         >
           <Icon name="lucide:plus" />

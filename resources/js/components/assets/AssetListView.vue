@@ -43,7 +43,6 @@ import type { AssetSelectionEntry } from '~/composables/useAssetSelection'
 import type { AssetManagerDragItem } from '~/lib/assets/assetDragAndDrop'
 import { downloadAssetFiles } from '~/lib/assets/downloadAssets'
 import type { AssetShareSource } from '~/types/asset-distribution'
-import type { AssetDeleteConflict, AssetResource } from '~/types/assets'
 
 export interface AssetListViewProps {
   spaceId: string
@@ -1029,6 +1028,7 @@ onUnmounted(() => {
                     <Button
                       size="icon"
                       variant="ghost"
+                      :aria-label="$t('actions.moreActions')"
                     >
                       <Icon
                         name="lucide:more-vertical"

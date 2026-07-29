@@ -154,8 +154,13 @@ const onDragOverIcon = (e: DragEvent) => {
               >
                 <div
                   v-if="space?.icon"
+                  role="button"
+                  tabindex="0"
+                  :aria-label="$t('labels.settings.space.uploadIcon')"
                   class="flex h-16 w-16 cursor-pointer items-center justify-center rounded-sm bg-surface"
                   @click="handleUploadIcon"
+                  @keydown.enter.prevent="handleUploadIcon"
+                  @keydown.space.prevent="handleUploadIcon"
                 >
                   <NuxtImg
                     :src="spaceIcon"
@@ -165,8 +170,13 @@ const onDragOverIcon = (e: DragEvent) => {
                 </div>
                 <div
                   v-else
+                  role="button"
+                  tabindex="0"
+                  :aria-label="$t('labels.settings.space.uploadIcon')"
                   class="flex h-16 w-16 cursor-pointer items-center justify-center rounded-md border border-dashed border-muted bg-surface"
                   @click="handleUploadIcon"
+                  @keydown.enter.prevent="handleUploadIcon"
+                  @keydown.space.prevent="handleUploadIcon"
                 >
                   <Icon
                     name="lucide:image"

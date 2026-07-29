@@ -411,6 +411,7 @@ const handleDelete = async () => {
               variant="ghost"
               size="icon"
               class="self-end"
+              :aria-label="$t('actions.delete')"
               :title="$t('actions.delete')"
               @click="removeRoleMapping(row.id)"
             >

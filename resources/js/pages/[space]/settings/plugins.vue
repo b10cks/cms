@@ -207,6 +207,7 @@ const formatSize = (bytes: number | null) => (bytes ? formatFileSize(bytes) : 'â
               v-if="canManage"
               variant="ghost"
               size="icon"
+              :aria-label="$t('actions.delete')"
               @click.stop="handleDelete(plugin)"
             >
               <Icon name="lucide:trash-2" />

@@ -217,6 +217,7 @@ watch(
                 type="button"
                 reference-draggable
                 class="z-10 cursor-ns-resize absolute text-muted opacity-0 group-hover:opacity-100 hover:text-primary"
+                :aria-label="$t('actions.dragToReorder')"
                 @click.prevent
               >
                 <Icon name="lucide:grip-vertical" />
@@ -234,12 +235,14 @@ watch(
               <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100">
                 <button
                   class="flex transform cursor-pointer items-center hover:text-primary"
+                  :aria-label="$t('actions.edit')"
                   @click="handleReferenceEdit(index)"
                 >
                   <Icon name="lucide:pencil" />
                 </button>
                 <button
                   class="flex transform cursor-pointer items-center hover:text-red-500"
+                  :aria-label="$t('labels.references.removeReference')"
                   @click="handleReferenceDelete(index)"
                 >
                   <Icon name="lucide:trash-2" />

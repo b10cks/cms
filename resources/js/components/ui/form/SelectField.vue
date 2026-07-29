@@ -138,6 +138,7 @@ const handleClear = () => {
         <button
           v-if="clearable && modelValue != null && modelValue !== ''"
           size="icon"
+          :aria-label="$t('actions.clear')"
           class="absolute right-8 shrink-0 text-muted-foreground hover:text-foreground"
           @click="handleClear"
         >

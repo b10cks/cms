@@ -14,7 +14,6 @@ import {
 } from '~/components/ui/dropdown-menu'
 import RenamableTitle from '~/components/ui/RenamableTitle.vue'
 import { getAssetManagerDragItems } from '~/lib/assets/assetDragAndDrop'
-import type { AssetTagResource } from '~/types/assets'
 
 const props = defineProps<{
   item: { _id: string; level: number; bind: Record<string, unknown>; value: AssetTagResource }
@@ -114,6 +113,7 @@ watchEffect((onCleanup) => {
       <DropdownMenu v-if="canManageTags">
         <DropdownMenuTrigger
           class="opacity-0 transition-all duration-200 group-hover:opacity-100 hover:text-primary data-[state=open]:opacity-100"
+          :aria-label="$t('actions.moreActions')"
           @click.stop
         >
           <Icon name="lucide:ellipsis-vertical" />

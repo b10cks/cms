@@ -367,6 +367,7 @@ const removeAllOutOfSchemaKeys = (): void => {
           v-if="!props.readOnly"
           size="xs"
           variant="ghost"
+          :aria-label="$t('labels.blockTemplates.createFromBlock')"
           @click="handleTemplateTrigger"
           ><Icon name="lucide:notepad-text-dashed"
         /></Button>
@@ -517,6 +518,7 @@ const removeAllOutOfSchemaKeys = (): void => {
                         variant="ghost"
                         size="xs"
                         class="text-destructive hover:text-destructive"
+                        :aria-label="$t('actions.remove')"
                         @click="removeOutOfSchemaKey(key)"
                       >
                         <Icon name="lucide:trash-2" />

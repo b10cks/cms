@@ -215,6 +215,7 @@ watch(open, (isOpen) => {
                     variant="ghost"
                     size="icon"
                     class="h-6! w-6!"
+                    :aria-label="$t('actions.edit')"
                     @click="startEditing(template)"
                   >
                     <Icon name="lucide:pencil" />
@@ -226,6 +227,7 @@ watch(open, (isOpen) => {
                     size="icon"
                     class="h-6! w-6!"
                     :disabled="isDeleting"
+                    :aria-label="$t('actions.delete')"
                     @click="handleDelete(template)"
                   >
                     <Icon name="lucide:trash-2" />

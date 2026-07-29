@@ -9,7 +9,6 @@ import { Label } from '~/components/ui/form'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { splitIconName } from '~/lib/iconify'
 import { api } from '~/api'
-import type { IconResource } from '~/types/icons'
 
 const props = defineProps<{
   item: IconSchema & { key: string }
@@ -102,11 +101,16 @@ const openPicker = () => {
     />
     <div
       v-if="!hasValue"
+      role="button"
+      :tabindex="readOnly ? -1 : 0"
+      :aria-label="t('labels.icons.field.add')"
       :class="[
         'rounded-lg border-1 border-input bg-surface p-6 text-center transition-colors',
         readOnly ? 'cursor-default' : 'cursor-pointer hover:border-muted',
       ]"
       @click="openPicker"
+      @keydown.enter.prevent="openPicker"
+      @keydown.space.prevent="openPicker"
     >
       <Icon
         name="lucide:shapes"
@@ -143,6 +147,7 @@ const openPicker = () => {
           v-if="!readOnly"
           type="button"
           class="flex cursor-pointer items-center hover:text-primary"
+          :aria-label="t('actions.icons.replace')"
           :title="t('actions.icons.replace')"
           @click="openPicker"
         >
@@ -152,6 +157,7 @@ const openPicker = () => {
           v-if="!readOnly"
           type="button"
           class="flex cursor-pointer items-center hover:text-destructive"
+          :aria-label="t('actions.delete')"
           :title="t('actions.delete')"
           @click="clear"
         >

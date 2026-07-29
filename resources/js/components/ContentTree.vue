@@ -2167,6 +2167,7 @@ onBeforeUnmount(() => {
             v-if="canManageContent"
             variant="ghost"
             size="toolbar"
+            :aria-label="$t('labels.contents.createContent')"
             @click.stop="initCreate(null)"
           >
             <Icon name="lucide:plus" />
@@ -2177,6 +2178,7 @@ onBeforeUnmount(() => {
             variant="ghost"
             size="toolbar"
             class="opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100"
+            :aria-label="$t('labels.contentTree.actions.more')"
             @click.stop="handleRootMenuTrigger"
           >
             <Icon name="lucide:ellipsis-vertical" />
@@ -2323,6 +2325,8 @@ onBeforeUnmount(() => {
               searchVisibleIds ? getVisibleChildren(item.value).length > 0 : item.value.children
             "
             class="z-10 h-4 w-3 cursor-pointer"
+            :aria-label="$t('actions.toggleExpand')"
+            :aria-expanded="isExpanded"
             @click.stop.prevent="toggleExpanded(item.value.id)"
           >
             <Icon

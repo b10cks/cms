@@ -365,6 +365,7 @@ watch(
                             size="icon"
                             class="h-6! w-6!"
                             :disabled="isRestoring"
+                            :aria-label="$t('labels.blockVersions.restoreTooltip')"
                             @click.stop="handleRestore(version.id)"
                           >
                             <Icon name="lucide:rotate-ccw" />
@@ -376,6 +377,7 @@ watch(
                             variant="ghost"
                             size="icon"
                             class="h-6! w-6!"
+                            :aria-label="$t('labels.blockVersions.deleteTooltip')"
                             @click.stop="handleDelete(version)"
                           >
                             <Icon name="lucide:trash-2" />

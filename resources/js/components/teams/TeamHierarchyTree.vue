@@ -103,6 +103,8 @@ const toggleExpanded = (teamId: string) => {
         <button
           v-if="item.value.children && item.value.children.length > 0"
           class="h-4 w-3"
+          :aria-label="$t('actions.toggleExpand')"
+          :aria-expanded="isExpanded"
           @click.stop.prevent="toggleExpanded(item.value.id)"
         >
           <Icon

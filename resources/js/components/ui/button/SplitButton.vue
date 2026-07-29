@@ -66,6 +66,7 @@ const triggerButtonClasses = computed(() => {
         v-if="hasMenu"
         :disabled="menuDisabled || loading"
         :class="triggerButtonClasses"
+        :aria-label="$t('actions.moreOptions')"
       >
         <Icon name="lucide:chevron-down" />
       </DropdownMenuTrigger>

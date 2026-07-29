@@ -367,6 +367,7 @@ const getSpacePlanLabel = (plan: SpacePlanSummary) => {
                           size="icon"
                           class="opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                           :class="[open ? 'opacity-100' : '']"
+                          :aria-label="$t('actions.moreActions')"
                           @click.prevent
                         >
                           <Icon name="lucide:ellipsis" />

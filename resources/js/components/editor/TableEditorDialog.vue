@@ -314,6 +314,7 @@ const handleCellKeyDown = (event: KeyboardEvent, rowIndex: number, columnIndex: 
                         type="button"
                         draggable
                         data-row-drag-handle
+                        :aria-label="$t('actions.dragToReorder')"
                         class="cursor-ns-resize"
                       >
                         <Icon name="lucide:grip-vertical" />
@@ -417,6 +418,7 @@ const handleCellKeyDown = (event: KeyboardEvent, rowIndex: number, columnIndex: 
                       v-if="canEdit"
                       type="button"
                       tabindex="-1"
+                      :aria-label="$t('actions.remove')"
                       class="cursor-pointer text-muted-foreground hover:text-destructive"
                       @click="removeRow(row.id)"
                     >

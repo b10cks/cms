@@ -122,6 +122,7 @@ const selectPlugin = (handle: unknown) => {
           variant="ghost"
           size="icon"
           type="button"
+          :aria-label="$t('actions.remove')"
           @click="removeRow(index)"
         >
           <Icon name="lucide:trash-2" />

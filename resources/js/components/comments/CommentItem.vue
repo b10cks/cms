@@ -128,6 +128,7 @@ const toggleResolved = () => {
           v-if="comment.author.id === currentUser?.id"
           variant="ghost"
           size="toolbar"
+          :aria-label="$t('actions.edit')"
           @click="startEditing"
         >
           <Icon name="lucide:edit-2" />
@@ -137,6 +138,7 @@ const toggleResolved = () => {
           variant="ghost"
           size="toolbar"
           class="text-destructive hover:text-destructive"
+          :aria-label="$t('actions.delete')"
           @click="emit('delete', comment)"
         >
           <Icon name="lucide:trash-2" />
@@ -145,6 +147,7 @@ const toggleResolved = () => {
           v-if="!isReply"
           variant="ghost"
           size="toolbar"
+          :aria-label="$t('labels.comments.actions.reply')"
           @click="startReplying"
         >
           <Icon name="lucide:reply" />
@@ -153,6 +156,11 @@ const toggleResolved = () => {
           v-if="!isReply && canResolve"
           variant="ghost"
           size="toolbar"
+          :aria-label="
+            comment.is_resolved
+              ? $t('labels.comments.actions.reopen')
+              : $t('labels.comments.actions.resolve')
+          "
           @click="toggleResolved"
         >
           <Icon :name="comment.is_resolved ? 'lucide:check-circle' : 'lucide:check'" />
@@ -180,6 +188,7 @@ const toggleResolved = () => {
             variant="ghost"
             size="toolbar"
             class="text-destructive"
+            :aria-label="$t('actions.cancel')"
             @click="cancelEditing"
           >
             <Icon name="lucide:x" />
@@ -188,6 +197,7 @@ const toggleResolved = () => {
             variant="ghost"
             size="toolbar"
             class="text-success"
+            :aria-label="$t('actions.save')"
             @click="saveEdit"
           >
             <Icon name="lucide:check" />
@@ -271,6 +281,7 @@ const toggleResolved = () => {
               <Button
                 variant="ghost"
                 size="toolbar"
+                :aria-label="$t('actions.cancel')"
                 @click="cancelReply"
               >
                 <Icon name="lucide:x" />
@@ -278,6 +289,7 @@ const toggleResolved = () => {
               <Button
                 variant="ghost"
                 size="toolbar"
+                :aria-label="$t('actions.send')"
                 @click="submitReply"
               >
                 <Icon name="lucide:send" />

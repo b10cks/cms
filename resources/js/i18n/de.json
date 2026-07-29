@@ -521,7 +521,8 @@
       "siteLocale": "Website-Sprachversion",
       "copyLink": "Vorschau-Link kopieren",
       "openExternal": "In neuem Tab öffnen",
-      "mode": "Vorschau-Modus umschalten"
+      "mode": "Vorschau-Modus umschalten",
+      "settings": "Vorschau-Einstellungen"
     },
     "contentVersions": {
       "title": "Versionsverlauf",
@@ -889,7 +890,9 @@
         },
         "aiPlaceholderTitle": "KI-Assistent",
         "aiPlaceholderDescription": "Verwenden Sie KI, um Ihren Inhalt zu erstellen und zu bearbeiten",
-        "comingSoon": "Bald verfügbar"
+        "comingSoon": "Bald verfügbar",
+        "addChild": "Unterelement hinzufügen",
+        "addSibling": "Gleichrangiges Element hinzufügen"
       },
       "fields": {
         "name": "Name",
@@ -1142,7 +1145,12 @@
       "hideReplies": "Ausblenden",
       "showReplies": "Anzeigen",
       "reply": "Antwort | Antworten",
-      "you": "Du"
+      "you": "Du",
+      "actions": {
+        "reply": "Antworten",
+        "resolve": "Als erledigt markieren",
+        "reopen": "Wieder öffnen"
+      }
     },
     "navigation": {
       "home": "Startseite",
@@ -2550,7 +2558,8 @@
           "updateFailed": "Fehler beim Aktualisieren des Profils: {error}",
           "avatarUploaded": "Profilbild erfolgreich aktualisiert",
           "avatarUploadFailed": "Fehler beim Hochladen des Profilbilds: {error}"
-        }
+        },
+        "uploadAvatar": "Profilbild hochladen"
       },
       "invites": {
         "title": "Einladungen",
@@ -3590,7 +3599,8 @@
         "1f3fd": "Mittel",
         "1f3fe": "Mittel-Dunkel",
         "1f3ff": "Dunkel"
-      }
+      },
+      "pick": "Emoji auswählen"
     },
     "publishDialog": {
       "titleNow": "Jetzt veröffentlichen",
@@ -3623,7 +3633,9 @@
         "removeInternalLink": "Internen Link entfernen",
         "insertPlaceholder": "Platzhalter einfügen",
         "applyCssClass": "CSS-Klasse anwenden",
-        "listStyle": "Listenstil"
+        "listStyle": "Listenstil",
+        "undo": "Rückgängig (Strg+Z)",
+        "redo": "Wiederholen (Strg+Y)"
       },
       "listStyles": {
         "default": "Standard"
@@ -4010,7 +4022,8 @@
         "pluginLoadFailed": "\"{name}\" antwortet nicht. Das Bundle ist möglicherweise fehlerhaft.",
         "retry": "Erneut versuchen"
       }
-    }
+    },
+    "moreInfo": "Weitere Informationen"
   },
   "notifications": {
     "inputField": {
@@ -4279,7 +4292,8 @@
         "addColumn": "Spalte hinzufügen",
         "addOption": "Auswahl hinzufügen",
         "addRow": "Zeile hinzufügen",
-        "editTable": "Tabelle bearbeiten"
+        "editTable": "Tabelle bearbeiten",
+        "deleteColumn": "Spalte löschen"
       },
       "tooltips": {
         "createTemplate": "Vorlage aus diesem Block erstellen",
@@ -4296,7 +4310,11 @@
         "removeHtmlClass": "HTML-Klasse entfernen",
         "addPlaceholder": "Platzhalter hinzufügen",
         "removePlaceholder": "Platzhalter entfernen"
-      }
+      },
+      "moveFieldToPage": "Feld auf Seite verschieben",
+      "removeCondition": "Bedingung entfernen",
+      "addPage": "Neue Seite hinzufügen",
+      "deletePage": "Seite löschen"
     },
     "blockTags": {
       "add": "Neuer Tag",
@@ -4388,7 +4406,16 @@
       "publish": "Bundle veröffentlichen",
       "delete": "Plugin löschen"
     },
-    "confirm": "Bestätigen"
+    "confirm": "Bestätigen",
+    "toggleExpand": "Auf- oder zuklappen",
+    "dragToReorder": "Zum Neuanordnen ziehen",
+    "undo": "Rückgängig",
+    "redo": "Wiederholen",
+    "zoomIn": "Vergrößern",
+    "zoomOut": "Verkleinern",
+    "zoomToFit": "Auf Ansicht einpassen",
+    "moreActions": "Weitere Aktionen",
+    "moreOptions": "Weitere Optionen"
   },
   "navigation": {
     "home": "Start",

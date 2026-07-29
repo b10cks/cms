@@ -23,7 +23,6 @@ import {
   setAssetManagerDragPreview,
   type AssetManagerDragItem,
 } from '~/lib/assets/assetDragAndDrop'
-import type { AssetFolderResource } from '~/types/assets'
 
 defineOptions({ inheritAttrs: false })
 
@@ -198,6 +197,7 @@ watchEffect((onCleanup) => {
         >
           <DropdownMenuTrigger
             class="transition-colors hover:text-primary"
+            :aria-label="$t('actions.moreActions')"
             @click.stop
             @dblclick.stop
           >

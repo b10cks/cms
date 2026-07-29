@@ -183,6 +183,7 @@ const selectFirstMatch = () => {
                   v-for="icon in row.data.icons"
                   :key="icon"
                   type="button"
+                  :aria-label="icon"
                   :title="icon"
                   :class="[
                     'inline-flex size-8 cursor-pointer items-center justify-center rounded-md p-1 hover:bg-surface',

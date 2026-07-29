@@ -20,11 +20,6 @@ import { downloadAssetFile } from '~/lib/assets/downloadAssets'
 import { isClient } from '~/lib/env'
 import { buildIlumUrl } from '~/lib/ilum'
 import { runtimeConfig } from '~/lib/runtime-config'
-import type {
-  AssetResource,
-  AssetVersionResource,
-  LinkedAssetContentResource,
-} from '~/types/assets'
 
 const RIGHTS_FIELD_KEYS = [
   'copyright_holder',
@@ -641,6 +636,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
           size="icon"
           class="absolute top-1/2 -left-13 hidden -translate-y-1/2 rounded-full md:inline-flex"
           :disabled="!hasPrevious"
+          :aria-label="$t('labels.assets.previousAsset')"
           :title="$t('labels.assets.previousAsset')"
           @click="navigate('previous')"
         >
@@ -651,6 +647,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
           size="icon"
           class="absolute top-1/2 -right-13 hidden -translate-y-1/2 rounded-full md:inline-flex"
           :disabled="!hasNext"
+          :aria-label="$t('labels.assets.nextAsset')"
           :title="$t('labels.assets.nextAsset')"
           @click="navigate('next')"
         >
@@ -817,6 +814,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
             <Button
               variant="outline"
               size="icon"
+              :aria-label="$t('labels.assets.openInNewWindow')"
               :title="$t('labels.assets.openInNewWindow')"
               @click="openAssetInNewWindow"
             >
@@ -825,6 +823,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
             <Button
               variant="outline"
               size="icon"
+              :aria-label="$t('labels.assets.copyUrl')"
               :title="$t('labels.assets.copyUrl')"
               @click="copyAssetUrl"
             >
@@ -833,6 +832,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
             <Button
               variant="outline"
               size="icon"
+              :aria-label="$t('labels.assets.downloadFile')"
               :title="$t('labels.assets.downloadFile')"
               :disabled="isDownloading"
               @click="downloadAsset"

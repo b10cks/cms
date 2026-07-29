@@ -512,6 +512,7 @@ const updateConditionOperator = (index: number, value: unknown) => {
             class="cursor-pointer hover:text-primary focus:text-primary"
             v-if="!readonly"
             :disabled="pages.length <= 1"
+            :aria-label="$t('actions.blocks.moveFieldToPage')"
           >
             <Icon name="lucide:folder-input" />
           </DropdownMenuTrigger>
@@ -551,6 +552,7 @@ const updateConditionOperator = (index: number, value: unknown) => {
           v-if="!readonly"
           class="cursor-pointer hover:text-destructive focus:text-destructive"
           type="button"
+          :aria-label="$t('actions.blocks.deleteField')"
           :title="$t('actions.blocks.deleteField')"
           @click="$emit('delete', name)"
         >
@@ -582,6 +584,7 @@ const updateConditionOperator = (index: number, value: unknown) => {
               variant="ghost"
               size="toolbar"
               @click="startRename"
+              :aria-label="$t('actions.blocks.renameField')"
               :title="$t('actions.blocks.renameField')"
             >
               <Icon name="lucide:pencil" />
@@ -591,6 +594,7 @@ const updateConditionOperator = (index: number, value: unknown) => {
                 type="button"
                 variant="primary"
                 size="toolbar"
+                :aria-label="$t('actions.blocks.renameFieldConfirm')"
                 :title="$t('actions.blocks.renameFieldConfirm')"
                 @click="confirmRename"
               >
@@ -600,6 +604,7 @@ const updateConditionOperator = (index: number, value: unknown) => {
                 type="button"
                 variant="ghost"
                 size="toolbar"
+                :aria-label="$t('actions.cancel')"
                 :title="$t('actions.cancel')"
                 @click="cancelRename"
               >
@@ -767,6 +772,7 @@ const updateConditionOperator = (index: number, value: unknown) => {
               variant="ghost"
               class="self-end"
               :disabled="readonly"
+              :aria-label="$t('actions.blocks.removeCondition')"
               @click="removeCondition(index)"
             >
               <Icon name="lucide:trash-2" />

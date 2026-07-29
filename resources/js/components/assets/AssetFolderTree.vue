@@ -22,7 +22,6 @@ import {
   getAssetManagerDragItems,
   setAssetManagerDragPreview,
 } from '~/lib/assets/assetDragAndDrop'
-import type { AssetFolderResource } from '~/types/assets'
 
 const props = defineProps<{
   spaceId: string
@@ -300,6 +299,7 @@ const toggleExpanded = (folderId: string) => {
           v-if="canManageFolders"
           class="ml-auto opacity-0 transition-opacity duration-200 group-hover:opacity-100"
           size="toolbar"
+          :aria-label="$t('actions.assetFolders.create')"
           @click="openCreateFolderDialog(null)"
         >
           <Icon name="lucide:plus" />
@@ -332,6 +332,7 @@ const toggleExpanded = (folderId: string) => {
         <div class="flex w-5 items-center">
           <button
             v-if="item.value.children_count"
+            :aria-label="$t('actions.toggleExpand')"
             @click.stop.prevent="toggleExpanded(item.value.id)"
           >
             <Icon
@@ -363,6 +364,7 @@ const toggleExpanded = (folderId: string) => {
         <DropdownMenu v-if="canManageFolders">
           <DropdownMenuTrigger
             class="opacity-0 transition-all duration-200 group-hover:opacity-100 hover:text-primary data-[state=open]:opacity-100"
+            :aria-label="$t('actions.moreActions')"
           >
             <Icon name="lucide:ellipsis-vertical" />
           </DropdownMenuTrigger>

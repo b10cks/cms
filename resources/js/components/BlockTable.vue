@@ -307,6 +307,7 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
                       <Button
                         variant="ghost"
                         size="icon"
+                        :aria-label="$t('actions.edit')"
                         @click.stop="router.push(buildBlockRoute(block.id))"
                       >
                         <Icon name="lucide:pencil" />

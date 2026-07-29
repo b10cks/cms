@@ -71,6 +71,7 @@ const copy = async () => {
           type="button"
           size="sm"
           variant="ghost"
+          :aria-label="String(copied ? $t('actions.copied') : $t('actions.copy'))"
           @click="copy"
         >
           <Icon :name="copied ? 'lucide:check' : 'lucide:copy'" />
