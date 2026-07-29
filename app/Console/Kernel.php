@@ -2,6 +2,8 @@
 
 namespace App\Console;
 
+use App\Enums\InstallProfile;
+use App\Services\Setup\InstallProfileResolver;
 use App\Support\EditionGate;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -68,6 +70,15 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping()
             ->runInBackground();
+
+        // Shared webhosts have no long-running workers — a single cron line
+        // (schedule:run) drains the queue in short bursts instead. Heavy jobs
+        // that outlive a burst resume on the next minute's run.
+        if (app(InstallProfileResolver::class)->resolve() === InstallProfile::SHARED) {
+            $schedule->command('queue:work --stop-when-empty --max-time=50 --queue=default,heavy')
+                ->everyMinute()
+                ->withoutOverlapping();
+        }
 
         // Shared webhosts commonly disable proc_open; running foreground is
         // slower but works everywhere.
