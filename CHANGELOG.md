@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.29-5acd0668] — 2026-7-29
+
+- 🔒 Run the container as an unprivileged app user
+- ✨ Apply block templates when adding on the canvas
+- ⬆️ Bump versions
+
 ## [v2026.7.28-6d2a2bd6] — 2026-7-28
 
 - 🔒 Harden ilum media delivery and expand its coverage
