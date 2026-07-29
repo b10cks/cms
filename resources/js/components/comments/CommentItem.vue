@@ -43,7 +43,7 @@ const canResolve = computed(
     (props.comment.author.id === currentUser.value?.id && hasAbility('comments.resolve_own'))
 )
 
-const hasReplies = computed(() => props.comment?.replies?.length > 0)
+const hasReplies = computed(() => (props.comment?.replies?.length ?? 0) > 0)
 const repliesCount = computed(() => props.comment?.replies?.length || 0)
 const reactions = computed(() => props.comment.reactions || {})
 

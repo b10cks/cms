@@ -27,35 +27,11 @@ import { Switch } from '~/components/ui/switch'
 
 import IconName from '../ui/IconName.vue'
 
-interface SitemapTypeMapping extends TableItem {
-  block: string
-  path: string
-}
-
-interface NamedSitemap {
-  slug: string
-  types: SitemapTypeMapping[]
-}
-
-interface ContentSettingsSpace {
-  id: string
-  settings: {
-    default_block?: string
-    filter_hidden_blocks?: boolean
-    content_sorting?: boolean
-    serial_gaps?: 'preserve' | 'reuse'
-    sitemap?: {
-      types?: SitemapTypeMapping[]
-    }
-    sitemaps?: NamedSitemap[]
-  }
-}
-
 const { useUpdateSpaceMutation } = useSpaces()
 const { mutate: updateSpace } = useUpdateSpaceMutation()
 const { useAccessControl } = useAuthorization()
 
-const props = defineProps<{ space: ContentSettingsSpace }>()
+const props = defineProps<{ space: SpaceResource }>()
 const access = useAccessControl(computed(() => ({ space_id: props.space.id })))
 const canUpdateSpace = computed(() => access.hasAbility('space.update'))
 
@@ -80,7 +56,7 @@ const serialGapOptions = computed(() => [
     description: $t('labels.settings.content.serialGapsReuseDescription'),
   },
 ])
-const sitemapTypes = ref<SitemapTypeMapping[]>(deepClone(props.space.settings.sitemap?.types || []))
+const sitemapTypes = ref<SpaceSitemapType[]>(deepClone(props.space.settings.sitemap?.types || []))
 
 const availableBlocks = computed(
   () => blocks.value?.data?.filter(({ type }) => ['root', 'universal'].includes(type)) || []
@@ -121,7 +97,7 @@ const sitemapColumns = computed<ColumnDefinition[]>(() => [
   },
 ])
 
-const sitemapNewItemTemplate: SitemapTypeMapping = {
+const sitemapNewItemTemplate: SpaceSitemapType = {
   block: '',
   path: '',
 }
@@ -137,9 +113,9 @@ const removeSitemapType = (index: number): void => {
   sitemapTypes.value.splice(index, 1)
 }
 
-const namedSitemaps = ref<NamedSitemap[]>(deepClone(props.space.settings.sitemaps || []))
+const namedSitemaps = ref<SpaceNamedSitemap[]>(deepClone(props.space.settings.sitemaps || []))
 
-const namedSitemapColumns = (sitemap: NamedSitemap): ColumnDefinition[] => [
+const namedSitemapColumns = (sitemap: SpaceNamedSitemap): ColumnDefinition<SpaceSitemapType>[] => [
   {
     key: 'block',
     label: $t('labels.settings.content.sitemap.block'),
@@ -172,14 +148,14 @@ const removeNamedSitemap = (index: number): void => {
   namedSitemaps.value.splice(index, 1)
 }
 
-const addNamedSitemapType = (sitemap: NamedSitemap, item: TableItem): void => {
+const addNamedSitemapType = (sitemap: SpaceNamedSitemap, item: SpaceSitemapType): void => {
   sitemap.types.push({
     block: String(item.block || ''),
     path: String(item.path || ''),
   })
 }
 
-const cleanedNamedSitemaps = (): NamedSitemap[] =>
+const cleanedNamedSitemaps = (): SpaceNamedSitemap[] =>
   namedSitemaps.value
     .map((sitemap) => ({
       slug: sitemap.slug.trim().toLowerCase(),
@@ -332,7 +308,7 @@ const handleSave = () => {
           :new-item-template="sitemapNewItemTemplate"
           @add="addSitemapType"
           @remove="removeSitemapType"
-          @update:items="(items) => (sitemapTypes = items as unknown as SitemapTypeMapping[])"
+          @update:items="(items) => (sitemapTypes = items as unknown as SpaceSitemapType[])"
         />
       </div>
       <div class="space-y-4">
@@ -375,7 +351,7 @@ const handleSave = () => {
             :new-item-template="sitemapNewItemTemplate"
             @add="(item) => addNamedSitemapType(sitemap, item)"
             @remove="(typeIndex) => sitemap.types.splice(typeIndex, 1)"
-            @update:items="(items) => (sitemap.types = items as unknown as SitemapTypeMapping[])"
+            @update:items="(items) => (sitemap.types = items as unknown as SpaceSitemapType[])"
           />
         </div>
         <Button

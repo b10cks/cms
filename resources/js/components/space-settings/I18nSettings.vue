@@ -133,7 +133,7 @@ const addLanguage = (item: TableItem) => {
   languages.value.push(item as EditableSpaceLanguage)
 }
 
-const siteLocaleColumns = computed<ColumnDefinition[]>(() => [
+const siteLocaleColumns = computed<ColumnDefinition<SpaceSiteLocale>[]>(() => [
   {
     key: 'segment',
     label: t('labels.settings.i18n.siteLocales.segment.label'),
@@ -171,8 +171,8 @@ const removeSiteLocale = (index: number) => {
   siteLocales.value.splice(index, 1)
 }
 
-const addSiteLocale = (item: TableItem) => {
-  siteLocales.value.push(item as SpaceSiteLocale)
+const addSiteLocale = (item: SpaceSiteLocale) => {
+  siteLocales.value.push(item)
 }
 
 const languageErrorEntries = computed(() =>
@@ -300,7 +300,7 @@ const saveSettings = async () => {
           :new-item-template="newSiteLocaleTemplate"
           @add="addSiteLocale"
           @remove="removeSiteLocale"
-          @update:items="(items) => (siteLocales = items as SpaceSiteLocale[])"
+          @update:items="(items) => (siteLocales = items)"
         />
         <div
           v-if="siteLocaleErrorEntries.length"

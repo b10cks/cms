@@ -190,9 +190,9 @@ const confirmDelete = async () => {
             v-if="isLoading"
             :colspan="6"
           />
-          <template v-else-if="dataSources?.data?.length > 0">
+          <template v-else-if="(dataSources?.data?.length ?? 0) > 0">
             <TableRow
-              v-for="(dataSource, index) in dataSources.data"
+              v-for="(dataSource, index) in dataSources?.data ?? []"
               :key="dataSource.id"
               :class="{ 'bg-background/50': index % 2 === 0 }"
             >

@@ -239,9 +239,9 @@ const snapshotOptions = computed(() => [
           name="name"
           @update:model-value="
             (value) => {
-              form.name = value.name
-              form.icon = value.icon
-              form.color = value.color
+              form.name = value.name ?? ''
+              form.icon = value.icon ?? ''
+              form.color = value.color ?? ''
             }
           "
         />

@@ -19,8 +19,8 @@ const newCurrency = ref('')
 const normalise = (code: string) =>
   code.trim().toUpperCase().replace(/[^A-Z-]/g, '').replace(/^-+/, '').replace(/-+/g, '-').slice(0, 7)
 
-const updateBaseCurrency = (raw: string) => {
-  emit('update:item-value', 'base_currency', normalise(raw))
+const updateBaseCurrency = (raw: string | number) => {
+  emit('update:item-value', 'base_currency', normalise(String(raw)))
 }
 
 const currencies = computed<string[]>(() => props.value.currencies ?? [])

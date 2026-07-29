@@ -104,7 +104,8 @@ const openCreateBlueprintDialog = (space: SpaceResource) => {
   isCreateBlueprintDialogOpen.value = true
 }
 
-const handleBlueprintDialogOpenChange = (open: boolean) => {
+const handleBlueprintDialogOpenChange = (value: boolean | undefined) => {
+  const open = value === true
   isCreateBlueprintDialogOpen.value = open
 
   if (!open) {

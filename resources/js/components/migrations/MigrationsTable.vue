@@ -126,9 +126,9 @@ const handleDelete = async (migration: MigrationResource) => {
             v-if="isLoading"
             :colspan="7"
           />
-          <template v-else-if="migrations?.data?.length > 0">
+          <template v-else-if="(migrations?.data?.length ?? 0) > 0">
             <TableRow
-              v-for="migration in migrations.data"
+              v-for="migration in migrations?.data ?? []"
               :key="migration.id"
             >
               <TableCell>
@@ -155,7 +155,7 @@ const handleDelete = async (migration: MigrationResource) => {
                 <span class="text-muted-foreground text-sm">{{ scopeLabel(migration.scope) }}</span>
               </TableCell>
               <TableCell>
-                <Badge variant="outline">
+                <Badge type="outline">
                   {{ $t(`labels.migrations.conflictStrategies.${migration.conflict_strategy}`) }}
                 </Badge>
               </TableCell>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AnyExtension } from '@tiptap/core'
+import type { Level } from '@tiptap/extension-heading'
 import { Table } from '@tiptap/extension-table'
 import { TableCell } from '@tiptap/extension-table-cell'
 import { TableHeader } from '@tiptap/extension-table-header'
@@ -43,7 +44,7 @@ const props = withDefaults(
     htmlClasses?: HtmlClass[]
     spaceId?: string
     disabled?: boolean
-    headingLevels?: Array<'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'>
+    headingLevels?: HeadingLevel[]
     placeholders?: Placeholder[]
     features?: Partial<Record<RichTextFeature, boolean>>
     listStyles?: ListStyleConfig[]
@@ -86,23 +87,25 @@ const isValidDoc = (value: unknown): value is Record<string, unknown> =>
   !Array.isArray(value) &&
   (value as Record<string, unknown>).type === 'doc'
 
-const getHeadingLabel = (level: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'): string => {
+const headingLevelNumber = (level: HeadingLevel): Level => Number(level.charAt(1)) as Level
+
+const getHeadingLabel = (level: HeadingLevel): string => {
   if (level === 'p') return t('labels.tiptap.headings.paragraph')
   return t('labels.tiptap.headings.heading', { level: level.charAt(1) })
 }
 
-const getHeadingIcon = (level: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'): string => {
+const getHeadingIcon = (level: HeadingLevel): string => {
   if (level === 'p') return 'lucide:pilcrow'
   return `lucide:heading-${level.charAt(1)}`
 }
 
-const currentHeading = computed(() => {
+const currentHeading = computed<HeadingLevel | null>(() => {
   if (editor.value?.isActive('paragraph')) {
     return 'p'
   }
   for (const level of [1, 2, 3, 4, 5, 6]) {
     if (editor.value?.isActive('heading', { level })) {
-      return `h${level}` as const
+      return `h${level}` as HeadingLevel
     }
   }
   return null
@@ -423,7 +426,7 @@ onBeforeUnmount(() => {
             :class="
               (level === 'p'
                 ? editor?.isActive('paragraph')
-                : editor?.isActive('heading', { level: parseInt(level.charAt(1)) })) &&
+                : editor?.isActive('heading', { level: headingLevelNumber(level) })) &&
               'bg-primary text-primary-foreground'
             "
             @click="
@@ -432,7 +435,7 @@ onBeforeUnmount(() => {
                 : editor
                     ?.chain()
                     .focus()
-                    .toggleHeading({ level: parseInt(level.charAt(1)) })
+                    .toggleHeading({ level: headingLevelNumber(level) })
                     .run()
             "
           >

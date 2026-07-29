@@ -2,6 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
+import type { CreateTokenRequest, TokenQueryParams } from '~/api/resources/tokens'
 
 import { queryKeys } from './useQueryClient'
 

@@ -10,7 +10,6 @@ import type {
 import type {
   ContentResource,
   ContentTreeOperationPayload,
-  ContentTreeOperationResult,
   CreateContentPayload,
   UpdateContentPayload,
 } from '~/types/contents'
@@ -369,7 +368,7 @@ export function useContent(spaceId: MaybeRef<string>) {
         const response = await spaceAPI.value.contents.treeOperations(payload)
         return response.data
       },
-      onSuccess: (data: ContentTreeOperationResult) => {
+      onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
       },

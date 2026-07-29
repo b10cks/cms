@@ -5,6 +5,14 @@ interface PlaceholderTokenAttrs {
   label: string
 }
 
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    placeholderToken: {
+      insertPlaceholderToken: (attrs: PlaceholderTokenAttrs) => ReturnType
+    }
+  }
+}
+
 const PlaceholderToken = Node.create({
   name: 'placeholderToken',
   group: 'inline',

@@ -50,7 +50,7 @@ const initializeForm = () => {
   if (props.noteToEdit) {
     form.value = {
       title: props.noteToEdit.title,
-      icon: props.noteToEdit.icon,
+      icon: props.noteToEdit.icon ?? 'dot',
       url: props.noteToEdit.url ?? '',
       color: props.noteToEdit.color ?? '',
       content: props.noteToEdit.content ?? '',

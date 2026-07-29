@@ -3,6 +3,7 @@ import type { BackupsQueryParams } from '~/api/resources/backups'
 import BackupIcon from '~/assets/images/backups.svg?component'
 import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
+import type { FilterableField } from '~/components/SearchFilter.vue'
 import { Avatar } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
@@ -43,7 +44,7 @@ const backupStates = computed(() => [
   { value: 'failed', label: $t('labels.backups.states.failed') },
 ])
 
-const backupFilters = computed(() => [
+const backupFilters = computed<FilterableField[]>(() => [
   {
     id: 'name',
     label: $t('labels.backups.columns.name'),
@@ -73,7 +74,7 @@ const sortOptions = [
 const filters = ref<Record<string, unknown>>({})
 const currentPage = ref(1)
 const perPage = ref(24)
-const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
+const sortBy = ref<{ column: BackupSortColumn; direction: SortOrder }>({
   column: 'created_at',
   direction: 'desc',
 })
@@ -287,9 +288,9 @@ watch(
             v-if="isLoading"
             :colspan="tableColumnCount"
           />
-          <template v-else-if="backups?.data?.length > 0">
+          <template v-else-if="(backups?.data?.length ?? 0) > 0">
             <TableRow
-              v-for="backup in backups.data"
+              v-for="backup in backups?.data ?? []"
               :key="backup.id"
               :data-state="isBackupSelected(backup) ? 'selected' : undefined"
             >

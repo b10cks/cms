@@ -6,7 +6,7 @@ import { runtimeConfig } from '~/lib/runtime-config'
 
 const route = useRoute()
 
-const providerMeta: Record<string, { icon: string; labelKey: string }> = {
+const providerMeta: Record<string, { icon: Component; labelKey: string }> = {
   google: { icon: GoogleIcon, labelKey: 'labels.login.social.google' },
   github: { icon: GithubIcon, labelKey: 'labels.login.social.github' },
 }

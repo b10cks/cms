@@ -411,7 +411,11 @@ const isFieldTranslated = (
   return isNonEmptyString(translatedValue)
 }
 
-const normalizeTranslatedFieldValue = (field: TranslatableField, value: unknown): unknown => {
+// Only the schema is consulted, so callers need not have a complete field yet.
+const normalizeTranslatedFieldValue = (
+  field: Pick<TranslatableField, 'schemaItem'>,
+  value: unknown
+): unknown => {
   const normalizedType = normalizeSchemaType(field.schemaItem.type)
 
   if (normalizedType === 'meta') {
@@ -673,15 +677,7 @@ const traverseContent = (
     } else if ('translatable' in schemaItem && schemaItem.translatable) {
       const translatedValue = translationScope[key]
       const normalizedTranslatedValue = normalizeTranslatedFieldValue(
-        {
-          key,
-          path,
-          fieldName: schemaItem.name || key,
-          schemaItem,
-          originalValue,
-          translatedValue,
-          isTranslated: false,
-        },
+        { schemaItem },
         translatedValue
       )
 
@@ -1420,7 +1416,7 @@ const removeAllOrphanedBlocks = (): void => {
             variant="default"
             :primary-action="() => translateWithAI()"
             :disabled="!canTranslateWithAI"
-            :has-menu="aiConfigs?.length > 1"
+            :has-menu="(aiConfigs?.length ?? 0) > 1"
             :menu-disabled="isLoadingAiConfigs || !aiConfigs?.length"
             :loading="isTranslating"
           >

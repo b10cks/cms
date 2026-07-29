@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRouteQuery } from '@vueuse/router'
+import type { StringOrNumber } from 'reka-ui'
 import { computed, nextTick, ref } from 'vue'
 import { toast } from 'vue-sonner'
 
@@ -10,6 +11,7 @@ import ShapeValueFields from '~/components/datasources/ShapeValueFields.vue'
 import ImportDataEntriesDialog from '~/components/datasources/ImportDataEntriesDialog.vue'
 import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
+import type { FilterableField } from '~/components/SearchFilter.vue'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { Input } from '~/components/ui/input'
@@ -85,8 +87,8 @@ const queryParams = computed(() => ({
   sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
 }))
 
-const possibleFilters = computed(() => {
-  const result = [
+const possibleFilters = computed<FilterableField[]>(() => {
+  const result: FilterableField[] = [
     { id: 'key', label: 'Key' },
     { id: 'value', label: 'Value' },
   ]
@@ -151,9 +153,9 @@ const formatValue = (value: DataEntryValue | undefined) => {
 const dimensionTabs = computed(() => {
   const tabs = [{ key: 'default', label: $t('labels.datasets.dimensions.default') }]
 
-  if (dataSource.value?.dimensions?.length > 0) {
+  if ((dataSource.value?.dimensions?.length ?? 0) > 0) {
     tabs.push(
-      ...dataSource.value.dimensions.map((dim) => ({
+      ...(dataSource.value?.dimensions ?? []).map((dim) => ({
         key: dim.key,
         label: dim.label,
       }))
@@ -163,7 +165,7 @@ const dimensionTabs = computed(() => {
   return tabs
 })
 
-const showDimensionTabs = computed(() => dataSource.value?.dimensions?.length > 0)
+const showDimensionTabs = computed(() => (dataSource.value?.dimensions?.length ?? 0) > 0)
 
 const defaultDimensionLocale = computed(() => {
   return dataSource.value?.settings?.default_dimension_locale || 'default'
@@ -185,8 +187,8 @@ const newEntryData = ref<CreateDataEntryPayload & { dimensions: Record<string, D
   is_active: true,
 })
 
-const handleDimensionChange = (dimension: string) => {
-  selectedDimension.value = dimension
+const handleDimensionChange = (dimension: StringOrNumber) => {
+  selectedDimension.value = String(dimension)
   clearEditingState()
   // Clear dimension filters that no longer apply to the newly selected dimension
   const newFilters: Record<string, unknown> = {}
@@ -198,8 +200,8 @@ const handleDimensionChange = (dimension: string) => {
   filters.value = newFilters
 }
 
-const handleEditModeChange = (mode: 'grid' | 'single') => {
-  settings.value.dataEntries.mode = mode
+const handleEditModeChange = (mode: StringOrNumber) => {
+  settings.value.dataEntries.mode = mode === 'grid' ? 'grid' : 'single'
   clearEditingState()
 }
 
@@ -285,7 +287,7 @@ const handleDiscardEntry = (entryId: string) => {
 
 const handleDeleteEntry = async (entry: DataEntryResource) => {
   const confirmed = await alert.confirm(
-    $t('messages.dataEntries.deleteConfirmation', { name: entry.name }),
+    $t('messages.dataEntries.deleteConfirmation', { name: entry.key }),
     {
       title: $t('labels.dataEntries.deleteTitle'),
       confirmLabel: $t('actions.delete'),
@@ -303,6 +305,7 @@ const handleInputChange = (entry: DataEntryResource, field: string, value: any) 
     editingEntries.value.set(entry.id, { ...entry })
   }
   const editedEntry = editingEntries.value.get(entry.id)
+  if (!editedEntry) return
 
   if (field.startsWith('dimension.')) {
     const dimensionKey = field.replace('dimension.', '')
@@ -337,7 +340,7 @@ const handleKeyDown = (event: KeyboardEvent, entryId: string, field: string) => 
       event.preventDefault()
       const prevRow = currentRow?.previousElementSibling as HTMLTableRowElement
       if (prevRow) {
-        const cellIndex = Array.from(currentRow.children).indexOf(currentCell!)
+        const cellIndex = Array.from(currentRow?.children ?? []).indexOf(currentCell!)
         const prevInput = prevRow.children[cellIndex]?.querySelector('input') as HTMLInputElement
         prevInput?.focus()
       }
@@ -348,7 +351,7 @@ const handleKeyDown = (event: KeyboardEvent, entryId: string, field: string) => 
       event.preventDefault()
       const nextRow = currentRow?.nextElementSibling as HTMLTableRowElement
       if (nextRow) {
-        const cellIndex = Array.from(currentRow.children).indexOf(currentCell!)
+        const cellIndex = Array.from(currentRow?.children ?? []).indexOf(currentCell!)
         const nextInput = nextRow.children[cellIndex]?.querySelector('input') as HTMLInputElement
         nextInput?.focus()
       }
@@ -375,7 +378,7 @@ const handleKeyDown = (event: KeyboardEvent, entryId: string, field: string) => 
 
       const nextRow = currentRow?.nextElementSibling as HTMLTableRowElement
       if (nextRow) {
-        const cellIndex = Array.from(currentRow.children).indexOf(currentCell!)
+        const cellIndex = Array.from(currentRow?.children ?? []).indexOf(currentCell!)
         const nextInput = nextRow.children[cellIndex]?.querySelector('input') as HTMLInputElement
         nextInput?.focus()
       }
@@ -535,7 +538,7 @@ const handleTranslateMissingDimensions = async () => {
     <div class="content-grid">
       <ContentHeader
         :header="dataSource?.name || $t('labels.datasets.dataEntries')"
-        :description="dataSource?.description"
+        :description="dataSource?.description ?? undefined"
       >
         <template #start>
           <RouterLink
@@ -805,7 +808,7 @@ const handleTranslateMissingDimensions = async () => {
                         :model-value="entry.key"
                         :disabled="!isDefaultSelected"
                         @update:model-value="(value) => handleInputChange(entry, 'key', value)"
-                        @keydown="(e) => handleKeyDown(e, entry.id, 'key')"
+                        @keydown="(e: KeyboardEvent) => handleKeyDown(e, entry.id, 'key')"
                       />
                       <span
                         v-else
@@ -828,7 +831,7 @@ const handleTranslateMissingDimensions = async () => {
                           :model-value="(entry.value as string | null) ?? ''"
                           :disabled="!isDefaultSelected"
                           @update:model-value="(value) => handleInputChange(entry, 'value', value)"
-                          @keydown="(e) => handleKeyDown(e, entry.id, 'value')"
+                          @keydown="(e: KeyboardEvent) => handleKeyDown(e, entry.id, 'value')"
                         />
                       </template>
                       <span
@@ -860,7 +863,8 @@ const handleTranslateMissingDimensions = async () => {
                               handleInputChange(entry, `dimension.${selectedDimension}`, value)
                           "
                           @keydown="
-                            (e) => handleKeyDown(e, entry.id, `dimension.${selectedDimension}`)
+                            (e: KeyboardEvent) =>
+                              handleKeyDown(e, entry.id, `dimension.${selectedDimension}`)
                           "
                         />
                       </template>

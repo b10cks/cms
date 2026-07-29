@@ -18,7 +18,10 @@ import {
   TableRow,
 } from '~/components/ui/table'
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
-import type { StepUpCredential } from '~/api/resources/personal-access-tokens'
+import type {
+  PersonalAccessToken,
+  StepUpCredential,
+} from '~/api/resources/personal-access-tokens'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 
 const { t } = useI18n()
@@ -142,6 +145,7 @@ const handleDeleteToken = async (id: number, tokenName: string) => {
 
         <SelectField
           v-model="expiresIn"
+          name="api-token-expires-in"
           :label="$t('labels.account.apiTokens.expiresLabel')"
           :placeholder="$t('labels.account.apiTokens.expiresPlaceholder')"
           :options="expiryOptions"

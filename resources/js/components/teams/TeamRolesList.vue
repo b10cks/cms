@@ -274,7 +274,7 @@ const handleSortChange = (value: { column: string; direction: 'asc' | 'desc' }) 
 
             <TableCell>
               <Badge
-                variant="outline"
+                type="outline"
                 size="sm"
               >
                 {{ role.level }}

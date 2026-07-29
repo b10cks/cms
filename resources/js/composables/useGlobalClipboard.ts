@@ -46,7 +46,7 @@ const checkClipboard = async () => {
         if (isValidClipboardItem(parsed)) {
           clipboardData = parsed
         }
-      } catch (error) {
+      } catch {
         // Invalid JSON or format, continue to fallback
       }
     }
@@ -58,13 +58,13 @@ const checkClipboard = async () => {
         if (isValidClipboardItem(parsed)) {
           clipboardData = parsed
         }
-      } catch (error) {
+      } catch {
         // Invalid localStorage data
       }
     }
 
     hasClipboardItem.value = !!clipboardData
-  } catch (error) {
+  } catch {
     hasClipboardItem.value = false
   }
 }
@@ -126,7 +126,7 @@ onMounted(async () => {
   if (clipboardPermission.value === 'prompt' && isSupported.value) {
     try {
       await navigator.clipboard.readText()
-    } catch (error) {
+    } catch {
       // Permission denied or not supported, continue with localStorage fallback
     }
   }

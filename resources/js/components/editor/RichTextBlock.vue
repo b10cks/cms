@@ -2,7 +2,7 @@
 import TiptapEditor from '~/components/editor/TiptapEditor.vue'
 import { FormField } from '~/components/ui/form'
 
-const value = defineModel<Record<string, unknown>>({ default: {} })
+const value = defineModel<Record<string, unknown>>({ default: () => ({}) })
 
 const props = defineProps<{
   item: RichTextSchema & { key: string }
@@ -13,7 +13,7 @@ const htmlClasses = computed(
   () => (props.item.html_classes || []) as Array<{ name: string; className: string; css?: string }>
 )
 
-const headingLevels = computed<Array<'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'>>(
+const headingLevels = computed<HeadingLevel[]>(
   () => props.item.heading_levels || ['h1', 'h2', 'h3', 'h4', 'p']
 )
 

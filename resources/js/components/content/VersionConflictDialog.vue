@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ContentVersionListResource } from '~/types/contents'
 import DiffViewer from '~/components/content/DiffViewer.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'

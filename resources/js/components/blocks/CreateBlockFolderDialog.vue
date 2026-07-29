@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { BlockFolderResource } from '~/api/resources/block-folders'
+import type { UpsertBlockFolderPayload } from '~/api/resources/block-folders'
 import BlockFolderEdit from '~/components/BlockFolderEdit.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
@@ -13,7 +13,7 @@ const props = defineProps<{
 const { useCreateBlockFolderMutation } = useBlockFolders(props.spaceId)
 const { mutate: createBlockFolder } = useCreateBlockFolderMutation()
 
-const handleCreate = async (folder: BlockFolderResource) => {
+const handleCreate = async (folder: UpsertBlockFolderPayload) => {
   await createBlockFolder(folder)
   open.value = false
 }

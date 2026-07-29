@@ -42,7 +42,9 @@ const emit = defineEmits<{
 const htmlClasses = computed(
   () => (props.item.html_classes || []) as Array<{ name: string; className: string; css?: string }>
 )
-const headingLevels = computed(() => props.item.heading_levels || ['h1', 'h2', 'h3', 'h4', 'p'])
+const headingLevels = computed<HeadingLevel[]>(
+  () => props.item.heading_levels || ['h1', 'h2', 'h3', 'h4', 'p']
+)
 const placeholders = computed(
   () => (props.item.placeholders || []) as Array<{ key: string; label: string }>
 )

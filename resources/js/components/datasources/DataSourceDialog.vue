@@ -8,6 +8,7 @@ import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { CheckboxField, InputField, TextField } from '~/components/ui/form'
 import ArrayInputField from '~/components/ui/form/ArrayInputField.vue'
+import type { ColumnDefinition } from '~/components/ui/form/ArrayInputField.vue'
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group'
 import { useDataSources } from '~/composables/useDataSources'
 import type {
@@ -53,7 +54,10 @@ const { mutate: createDataSource, isPending: isCreating } = useCreateDataSourceM
 const { mutate: updateDataSource, isPending: isUpdating } = useUpdateDataSourceMutation()
 
 const formData = ref<
-  (CreateDataSourcePayload | UpdateDataSourcePayload) & { dimensions: DimensionItem[] }
+  (CreateDataSourcePayload | UpdateDataSourcePayload) & {
+    dimensions: DimensionItem[]
+    settings: NonNullable<CreateDataSourcePayload['settings']>
+  }
 >({
   name: '',
   slug: '',
@@ -66,7 +70,7 @@ const formData = ref<
   is_active: true,
 })
 
-const dimensionColumns = [
+const dimensionColumns: ColumnDefinition[] = [
   {
     key: 'label',
     label: 'Display Name',
@@ -75,7 +79,7 @@ const dimensionColumns = [
     required: true,
     editable: true,
     creatable: true,
-    validate: (value: string) => value.trim().length > 0,
+    validate: (value: unknown) => String(value ?? '').trim().length > 0,
   },
   {
     key: 'key',
@@ -85,8 +89,11 @@ const dimensionColumns = [
     required: true,
     editable: false,
     creatable: true,
-    validate: (value: string) => /^[a-zA-Z0-9_-]+$/.test(value),
-    transform: (value: string) => value.toLowerCase().replace(/[^a-zA-Z0-9_-]/g, ''),
+    validate: (value: unknown) => /^[a-zA-Z0-9_-]+$/.test(String(value ?? '')),
+    transform: (value: unknown) =>
+      String(value ?? '')
+        .toLowerCase()
+        .replace(/[^a-zA-Z0-9_-]/g, ''),
   },
   {
     key: 'required',

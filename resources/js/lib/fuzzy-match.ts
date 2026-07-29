@@ -37,7 +37,7 @@ const isWordBoundary = (raw: string, index: number) => {
 }
 
 export function prepareFuzzyTarget(raw: string): FuzzyTarget {
-  const boundaries: boolean[] = new Array(raw.length)
+  const boundaries: boolean[] = Array.from({ length: raw.length })
   for (let index = 0; index < raw.length; index++) {
     boundaries[index] = isWordBoundary(raw, index)
   }

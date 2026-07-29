@@ -6,11 +6,20 @@ import type { BlockTemplatesQueryParams } from '~/api/resources/block-templates'
 
 import { queryKeys } from './useQueryClient'
 
-export function useBlockTemplates(spaceId: MaybeRef<string>, blockId: MaybeRef<string>) {
+export function useBlockTemplates(
+  spaceIdSource: MaybeRefOrGetter<string>,
+  blockIdSource: MaybeRefOrGetter<string>
+) {
   const { t } = useI18n()
   const queryClient = useQueryClient()
-  const spaceAPI = computed(() => api.forSpace(toValue(spaceId)))
-  const templatesAPI = computed(() => spaceAPI.value.blockTemplates(toValue(blockId)))
+
+  // Callers pass getters; query keys must hold refs, not functions, or the key
+  // serialises to something TanStack can't compare.
+  const spaceId = computed(() => toValue(spaceIdSource))
+  const blockId = computed(() => toValue(blockIdSource))
+
+  const spaceAPI = computed(() => api.forSpace(spaceId.value))
+  const templatesAPI = computed(() => spaceAPI.value.blockTemplates(blockId.value))
 
   const useBlockTemplatesQuery = (params: MaybeRef<BlockTemplatesQueryParams> = {}) => {
     return useQuery({

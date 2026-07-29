@@ -24,7 +24,7 @@ const inviteId = computed(() => route.query.invite_id as string | undefined)
 const inviteToken = computed(() => route.query.invite_token as string | undefined)
 const returnPath = computed(() => route.query.return as string | undefined)
 
-const { data: publicInvite, error: inviteError } = usePublicInviteQuery(inviteId)
+const { data: publicInvite, error: inviteError } = usePublicInviteQuery(inviteId, inviteToken)
 const inviteErrorMessage = computed(() => {
   return (inviteError.value as { data?: { message?: string } } | null)?.data?.message
 })

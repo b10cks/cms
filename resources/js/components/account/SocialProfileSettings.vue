@@ -18,7 +18,7 @@ const { useSocialLinksQuery, useUnlinkSocialProviderMutation } = useUser()
 const { data: providers, isLoading } = useSocialLinksQuery()
 const { mutate: unlinkProvider, isPending: isUnlinking } = useUnlinkSocialProviderMutation()
 
-const providerMeta: Record<string, { icon: string; labelKey: string }> = {
+const providerMeta: Record<string, { icon: Component; labelKey: string }> = {
   google: { icon: GoogleIcon, labelKey: 'labels.login.social.googleProvider' },
   github: { icon: GithubIcon, labelKey: 'labels.login.social.githubProvider' },
 }

@@ -6,7 +6,6 @@ import type {
   CreateDataEntryPayload,
   DataEntryImportExportFormat,
   DataEntryImportMode,
-  DataEntryImportResult,
   DataEntryQueryParams,
   DataEntryResource,
   UpdateDataEntryPayload,

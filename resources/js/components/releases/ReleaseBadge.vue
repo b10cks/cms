@@ -8,16 +8,20 @@ defineProps<{
   release: Release
 }>()
 
+// `outline` is a badge *type*, not a variant — the two compose.
 const stateConfig = {
-  draft: { label: 'Draft', variant: 'secondary' },
-  scheduled: { label: 'Scheduled', variant: 'outline' },
-  pending: { label: 'Pending', variant: 'outline' },
-  published: { label: 'Published', variant: 'accent' },
+  draft: { label: 'Draft', variant: 'secondary', type: 'default' },
+  scheduled: { label: 'Scheduled', variant: 'secondary', type: 'outline' },
+  pending: { label: 'Pending', variant: 'secondary', type: 'outline' },
+  published: { label: 'Published', variant: 'accent', type: 'default' },
 } as const
 </script>
 
 <template>
-  <Badge :variant="stateConfig[getReleaseState(release)].variant">
+  <Badge
+    :variant="stateConfig[getReleaseState(release)].variant"
+    :type="stateConfig[getReleaseState(release)].type"
+  >
     {{ stateConfig[getReleaseState(release)].label }}
   </Badge>
 </template>

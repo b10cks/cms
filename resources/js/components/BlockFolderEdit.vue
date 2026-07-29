@@ -4,7 +4,7 @@ import IconNameField from '~/components/ui/IconNameField.vue'
 
 const props = withDefaults(
   defineProps<{
-    folder: BlockFolderResource
+    folder: Partial<BlockFolderResource>
     isCreate?: boolean
   }>(),
   {
@@ -12,7 +12,8 @@ const props = withDefaults(
   }
 )
 
-const editableFolder = ref<BlockFolderResource>({
+const editableFolder = ref<Partial<BlockFolderResource> & { name: string }>({
+  name: '',
   ...props.folder,
   icon: props.folder.icon || 'folder',
   color: props.folder.color,

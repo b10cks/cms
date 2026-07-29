@@ -98,7 +98,6 @@ const setFeature = (key: RichTextFeature, enabled: boolean) => {
 
 // ─── Heading levels ───────────────────────────────────────────────────────────
 
-type HeadingLevel = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p'
 const ALL_HEADINGS: HeadingLevel[] = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p']
 const DEFAULT_HEADINGS: HeadingLevel[] = ['h1', 'h2', 'h3', 'h4', 'p']
 

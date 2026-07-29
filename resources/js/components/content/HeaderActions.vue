@@ -2,6 +2,7 @@
 import { toast } from 'vue-sonner'
 
 import { ContentModel } from '~/api/resources/content-model'
+import type { ContentVersionListResource } from '~/types/contents'
 import LanguageSwitcher from '~/components/content/LanguageSwitcher.vue'
 import VersionConflictDialog from '~/components/content/VersionConflictDialog.vue'
 import Icon from '~/components/Icon.vue'

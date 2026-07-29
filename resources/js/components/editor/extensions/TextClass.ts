@@ -1,5 +1,14 @@
 import { Mark, mergeAttributes } from '@tiptap/core'
 
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    textClass: {
+      setTextClass: (attrs: { class: string }) => ReturnType
+      unsetTextClass: () => ReturnType
+    }
+  }
+}
+
 const TextClass = Mark.create({
   name: 'textClass',
   priority: 1000,

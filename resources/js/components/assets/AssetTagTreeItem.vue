@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
+import type { FlattenedItem } from 'reka-ui'
 import { TreeItem } from 'reka-ui'
 import type { LocationQueryRaw } from 'vue-router'
 import { RouterLink } from 'vue-router'
@@ -16,7 +17,7 @@ import RenamableTitle from '~/components/ui/RenamableTitle.vue'
 import { getAssetManagerDragItems } from '~/lib/assets/assetDragAndDrop'
 
 const props = defineProps<{
-  item: { _id: string; level: number; bind: Record<string, unknown>; value: AssetTagResource }
+  item: FlattenedItem<AssetTagResource>
   selectedTagId: string | null
   canManageTags: boolean
 }>()
@@ -47,7 +48,7 @@ watchEffect((onCleanup) => {
     element: wrapperEl.value,
     canDrop: ({ source }) => {
       const items = getAssetManagerDragItems(source.data)
-      return items.length > 0 && items.some((i) => i.type === 'asset')
+      return items.some((i) => i.type === 'asset')
     },
     getIsSticky: () => true,
     onDragEnter: () => {

@@ -88,7 +88,7 @@ const handleIconFile = async (file: File) => {
       toast.error('Upload succeeded but no icon returned')
     }
   } catch (e) {
-    toast.error(e.message || 'Failed to upload icon')
+    toast.error((e as Error).message || 'Failed to upload icon')
   }
 }
 
@@ -163,7 +163,7 @@ const onDragOverIcon = (e: DragEvent) => {
                   @keydown.space.prevent="handleUploadIcon"
                 >
                   <NuxtImg
-                    :src="spaceIcon"
+                    :src="spaceIcon ?? ''"
                     alt="Space icon"
                     class="h-14 w-14"
                   />

@@ -1,5 +1,4 @@
 import { createSharedComposable } from '@vueuse/core'
-import type { PluginsInjections } from 'nuxt-i18n-micro'
 import type { Component } from 'vue'
 
 import {
@@ -59,10 +58,10 @@ export function setAlertDialogDefaultLabels(labels: Partial<DefaultLabels>): voi
   Object.assign(defaultLabels, labels)
 }
 const useAlertDialogBase = () => {
-  let i18n: PluginsInjections = null
+  let i18n: ReturnType<typeof useI18n> | null = null
   try {
     i18n = useI18n()
-  } catch (_) {
+  } catch {
     /* empty */
   }
 
