@@ -18,8 +18,9 @@ export function installEcho(_app: App) {
   const echoConfig = runtimeConfig.public.echo
   const apiBaseUrl = runtimeConfig.public.apiBaseUrl || ''
 
-  if (!echoConfig || !echoConfig.broadcaster) {
-    console.warn('[Echo] Configuration is missing or invalid')
+  // Realtime is optional on self-hosted installs — a missing config is a
+  // legitimate state, not an error.
+  if (!echoConfig || !echoConfig.broadcaster || !echoConfig.key) {
     return
   }
 

@@ -50,9 +50,14 @@ COPY app /app/app
 
 # storage/ and bootstrap/cache are the only writable paths in /app; /config and
 # /data are frankenphp's XDG dirs, where caddy keeps its state.
+COPY docker/entrypoint.sh /usr/local/bin/b10cks-entrypoint
+
 RUN mkdir -p \
         /app/storage/app/private \
         /app/storage/app/public \
+        /app/storage/app/setup \
+        /app/storage/app/spaces \
+        /app/storage/app/transfers \
         /app/storage/framework/cache/data \
         /app/storage/framework/sessions \
         /app/storage/framework/views \
@@ -64,6 +69,7 @@ RUN mkdir -p \
     # worker stub in on first boot — bake it in at build time instead.
     && cp vendor/laravel/octane/src/Commands/stubs/frankenphp-worker.php public/frankenphp-worker.php \
     && chmod -R go-w /app \
+    && chmod 755 /usr/local/bin/b10cks-entrypoint \
     && chown -R app:app /app/storage /app/bootstrap/cache /config /data /home/app
 
 VOLUME /app/storage
@@ -78,4 +84,6 @@ EXPOSE 8000 8001
 
 USER app
 
-ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf", "-n"]
+# Pass-through to supervisord on SaaS; on self-hosted installs it also
+# provides a persisted APP_KEY and runs one-shot auto-setup (see the script).
+ENTRYPOINT ["/usr/local/bin/b10cks-entrypoint"]

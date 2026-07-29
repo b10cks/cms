@@ -2,6 +2,8 @@ import type { RouteLocationRaw } from 'vue-router'
 
 import type { NotificationData, NotificationResource } from '~/types/notifications'
 
+import { runtimeConfig } from '~/lib/runtime-config'
+
 // Maps a raw notification `type` to the i18n/icon key used for presentation.
 const TYPE_KEY_MAP: Record<string, string> = {
   'comment.mention': 'commentMention',
@@ -92,7 +94,14 @@ export function useNotificationPresentation() {
         n.type === 'billing.payment_requested') &&
       d.space?.id
     ) {
-      return { name: 'space-settings-subscription', params: { space: d.space.id } }
+      // Without billing the subscription route is not registered — the usage
+      // page is the closest destination for quota notifications.
+      return {
+        name: runtimeConfig.public.features.billing
+          ? 'space-settings-subscription'
+          : 'space-settings-usage',
+        params: { space: d.space.id },
+      }
     }
 
     return null

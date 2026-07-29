@@ -35,3 +35,5 @@ localhost.key
 /docs/.vitepress/cache
 /docs/.vitepress/dist
 /docs/.vitepress/.temp
+
+.DS_Store

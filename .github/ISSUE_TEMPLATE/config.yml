@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discord
+    url: https://discord.gg/mdcDktFFcp
+    about: Get help, ask questions, and chat with the community.
+  - name: GitHub Discussions
+    url: https://github.com/b10cks/cms/discussions
+    about: Open-ended questions, ideas, and technical discussions.

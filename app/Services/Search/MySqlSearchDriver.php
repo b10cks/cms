@@ -50,7 +50,16 @@ class MySqlSearchDriver implements SearchDriverInterface
     {
         $content = new Content();
         $connection = $content->getConnection();
-        $tableName = $content->getTable();
+
+        // sqlite space databases have no FULLTEXT indexes; search() falls
+        // back to LIKE there.
+        if ($connection->getDriverName() === 'sqlite') {
+            return;
+        }
+
+        // Raw DDL bypasses the query grammar, so the table prefix (shared
+        // profile) must be applied by hand.
+        $tableName = $connection->getTablePrefix() . $content->getTable();
 
         $hasFullTextIndex = DB::connection($connection->getName())
             ->select("SHOW INDEX FROM {$tableName} WHERE Index_type = 'FULLTEXT' AND Key_name = 'idx_searchable_content'");
@@ -65,7 +74,12 @@ class MySqlSearchDriver implements SearchDriverInterface
     {
         $content = new Content();
         $connection = $content->getConnection();
-        $tableName = $content->getTable();
+
+        if ($connection->getDriverName() === 'sqlite') {
+            return;
+        }
+
+        $tableName = $connection->getTablePrefix() . $content->getTable();
 
         $hasFullTextIndex = DB::connection($connection->getName())
             ->select("SHOW INDEX FROM {$tableName} WHERE Index_type = 'FULLTEXT' AND Key_name = 'idx_searchable_content'");
@@ -108,6 +122,12 @@ class MySqlSearchDriver implements SearchDriverInterface
 
         $searchQuery = $this->prepareSearchQuery($query);
 
+        // sqlite space databases (shared install profile) have no MATCH …
+        // AGAINST — degrade to a LIKE scan over the searchable text.
+        if (Content::query()->getConnection()->getDriverName() === 'sqlite') {
+            return $this->searchWithLike($searchQuery, $language, $limit, $offset);
+        }
+
         try {
             $baseQuery = Content::query()
                 ->whereNotNull('published_at')
@@ -118,9 +138,9 @@ class MySqlSearchDriver implements SearchDriverInterface
             $total = (clone $baseQuery)->count();
 
             $results = (clone $baseQuery)
-                ->selectRaw('contents.id, MATCH(searchable_content) AGAINST(? IN NATURAL LANGUAGE MODE) as relevance_score', [$searchQuery])
+                ->selectRaw('id, MATCH(searchable_content) AGAINST(? IN NATURAL LANGUAGE MODE) as relevance_score', [$searchQuery])
                 ->orderByDesc('relevance_score')
-                ->orderBy('contents.id')
+                ->orderBy('id')
                 ->skip($offset)
                 ->take($limit)
                 ->get()
@@ -144,6 +164,38 @@ class MySqlSearchDriver implements SearchDriverInterface
 
             throw $e;
         }
+    }
+
+    protected function searchWithLike(string $query, string $language, int $limit, int $offset): array
+    {
+        $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $query);
+
+        $baseQuery = Content::query()
+            ->whereNotNull('published_at')
+            ->whereNotNull('searchable_content')
+            ->where('language_iso', $language)
+            // sqlite's LIKE has no default escape character — declare one so
+            // %/_ in the user's query match literally.
+            ->whereRaw("searchable_content LIKE ? ESCAPE '\\'", ["%{$escaped}%"]);
+
+        $total = (clone $baseQuery)->count();
+
+        $results = (clone $baseQuery)
+            ->select('id')
+            ->orderBy('id')
+            ->skip($offset)
+            ->take($limit)
+            ->get()
+            ->map(fn ($content) => $this->formatSearchHit(
+                id: $content->id,
+                relevanceScore: 1.0,
+            ))
+            ->all();
+
+        return [
+            'total' => $total,
+            'results' => $results,
+        ];
     }
 
     protected function prepareSearchQuery(string $query): string

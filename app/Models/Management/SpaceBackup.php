@@ -178,8 +178,8 @@ class SpaceBackup extends GlobalModel
             self::MAX_DOWNLOAD_URL_MINUTES
         );
 
-        return \Storage::disk('transfers')
-            ->temporaryUrl($this->s3_path, now()->addMinutes($expiration));
+        return app(\App\Services\Asset\ShareDeliveryService::class)
+            ->transferDownloadUrl($this->s3_path, now()->addMinutes($expiration));
     }
 
     public function markAsActive(string $s3Path, int $fileSize, string $checksum): void

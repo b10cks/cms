@@ -28,24 +28,33 @@ class SetupConnection extends QueuedJob
 
     protected function execute(): void
     {
-        $databaseName = $this->getDatabaseName();
-        $pdo = $this->getTempConnection();
+        if ($this->spaceConnection->driver === ConnectionDriver::SQLITE->value) {
+            $this->configureSqliteConnection();
+        } elseif ($this->usesSharedDatabase()) {
+            // Shared-profile connection into the main database behind a table
+            // prefix: the database exists and the base credentials apply, so
+            // there is nothing to create.
+            $this->spaceConnectionService->getConnection($this->spaceConnection);
+        } else {
+            $databaseName = $this->getDatabaseName();
+            $pdo = $this->getTempConnection();
 
-        $credentials = $this->ensureSecureCredentials();
+            $credentials = $this->ensureSecureCredentials();
 
-        $this->spaceConnection->config = array_merge(
-            $this->spaceConnection->config ?? [],
-            [
-                'database' => $databaseName,
-                'username' => $credentials['username'],
-                'password' => $credentials['password'],
-            ]
-        );
+            $this->spaceConnection->config = array_merge(
+                $this->spaceConnection->config ?? [],
+                [
+                    'database' => $databaseName,
+                    'username' => $credentials['username'],
+                    'password' => $credentials['password'],
+                ]
+            );
 
-        $this->createDatabase($pdo, $databaseName);
-        $this->createDatabaseUser($pdo, $credentials, $databaseName);
+            $this->createDatabase($pdo, $databaseName);
+            $this->createDatabaseUser($pdo, $credentials, $databaseName);
 
-        $this->spaceConnectionService->getConnection($this->spaceConnection);
+            $this->spaceConnectionService->getConnection($this->spaceConnection);
+        }
 
         $this->migrateDatabase($this->spaceConnection->id);
 
@@ -60,6 +69,33 @@ class SetupConnection extends QueuedJob
         $this->applyBlueprintData();
 
         $this->spaceConnection->refresh();
+    }
+
+    protected function usesSharedDatabase(): bool
+    {
+        return ! empty(data_get($this->spaceConnection->config, 'prefix'));
+    }
+
+    /**
+     * One sqlite file per space under storage; no server-level privileges
+     * needed at all.
+     */
+    protected function configureSqliteConnection(): void
+    {
+        $database = data_get($this->spaceConnection->config, 'database')
+            ?: storage_path("app/spaces/{$this->spaceConnection->space->id}/space.sqlite");
+
+        $directory = dirname($database);
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        $this->spaceConnection->config = array_merge(
+            $this->spaceConnection->config ?? [],
+            ['database' => $database]
+        );
+
+        $this->spaceConnectionService->getConnection($this->spaceConnection);
     }
 
     protected function getDatabaseName(): string

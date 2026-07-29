@@ -4,7 +4,7 @@ description: "Operate billing on your own instance: LemonSqueezy setup, the publ
 
 # Plans & pricing
 
-Billing is **optional**. On a single-team instance you can skip this page entirely — spaces work without a subscription provider, and nothing is metered or gated. Configure it when you run b10cks as a platform: for clients, for an agency, or as a product.
+Billing is **optional**. On a single-team instance you can skip this page entirely — with `B10CKS_EDITION=self-hosted`, `php artisan b10cks:setup` seeds one unlimited free plan (`plans:setup --self-hosted`), every space gets a subscription on it automatically, and nothing is metered or gated. Configure LemonSqueezy only when you run b10cks as a platform: for clients, for an agency, or as a product.
 
 How plans, quotas, and the subscription lifecycle *behave* for the people using a space is described in the user guide under [Subscription & Billing](../ui/subscription.md). This page covers the operator side: setting billing up and shaping the plan lineup.
 

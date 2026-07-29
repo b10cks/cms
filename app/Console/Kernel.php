@@ -2,6 +2,9 @@
 
 namespace App\Console;
 
+use App\Enums\InstallProfile;
+use App\Services\Setup\InstallProfileResolver;
+use App\Support\EditionGate;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -14,11 +17,9 @@ class Kernel extends ConsoleKernel
     {
         $schedule->useCache('database');
 
-        $schedule->command('cloudfront:ingest-logs')
-            ->everyFiveMinutes()
-            ->onOneServer()
-            ->withoutOverlapping()
-            ->runInBackground();
+        if (EditionGate::isSaas()) {
+            $this->saasSchedule($schedule);
+        }
 
         $schedule->command('queue:requeue-orphaned-publishing')
             ->dailyAt('01:00')
@@ -28,36 +29,6 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('backup:cleanup-expired')
             ->hourly()
-            ->onOneServer()
-            ->withoutOverlapping()
-            ->runInBackground();
-
-        $schedule->command('subscriptions:sync-lemonsqueezy')
-            ->hourly()
-            ->onOneServer()
-            ->withoutOverlapping()
-            ->runInBackground();
-
-        // Soft-quota watchdog: notify billing viewers when a space crosses
-        // 80%/100% of a plan quota (deduped per metric and month).
-        $schedule->command('usage:check-quotas')
-            ->hourlyAt(20)
-            ->onOneServer()
-            ->withoutOverlapping()
-            ->runInBackground();
-
-        // Reconcile OpenRouter keys with each space's plan/subscription and
-        // reissue them at the start of every reset period to refresh budgets.
-        $schedule->command('ai:reissue-keys')
-            ->dailyAt('02:30')
-            ->onOneServer()
-            ->withoutOverlapping()
-            ->runInBackground();
-
-        // Close billing periods that rolled over via the hourly LS sync and
-        // open any missing ones (safety net for the event-driven reconcile).
-        $schedule->command('subscriptions:reconcile-periods')
-            ->dailyAt('03:00')
             ->onOneServer()
             ->withoutOverlapping()
             ->runInBackground();
@@ -96,6 +67,67 @@ class Kernel extends ConsoleKernel
         // row); shares rebuild their package on the next download.
         $schedule->command('assets:prune-packages')
             ->dailyAt('05:00')
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
+        // Shared webhosts have no long-running workers — a single cron line
+        // (schedule:run) drains the queue in short bursts instead. Heavy jobs
+        // that outlive a burst resume on the next minute's run.
+        if (app(InstallProfileResolver::class)->resolve() === InstallProfile::SHARED) {
+            $schedule->command('queue:work --stop-when-empty --max-time=50 --queue=default,heavy')
+                ->everyMinute()
+                ->withoutOverlapping();
+        }
+
+        // Shared webhosts commonly disable proc_open; running foreground is
+        // slower but works everywhere.
+        if (! function_exists('proc_open')) {
+            foreach ($schedule->events() as $event) {
+                $event->runInBackground = false;
+            }
+        }
+    }
+
+    /**
+     * Jobs that only make sense on the hosted b10cks.com deployment:
+     * CloudFront traffic metering, LemonSqueezy billing and per-space
+     * OpenRouter key reconciliation.
+     */
+    private function saasSchedule(Schedule $schedule): void
+    {
+        $schedule->command('cloudfront:ingest-logs')
+            ->everyFiveMinutes()
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
+        $schedule->command('subscriptions:sync-lemonsqueezy')
+            ->hourly()
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
+        // Soft-quota watchdog: notify billing viewers when a space crosses
+        // 80%/100% of a plan quota (deduped per metric and month).
+        $schedule->command('usage:check-quotas')
+            ->hourlyAt(20)
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
+        // Reconcile OpenRouter keys with each space's plan/subscription and
+        // reissue them at the start of every reset period to refresh budgets.
+        $schedule->command('ai:reissue-keys')
+            ->dailyAt('02:30')
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->runInBackground();
+
+        // Close billing periods that rolled over via the hourly LS sync and
+        // open any missing ones (safety net for the event-driven reconcile).
+        $schedule->command('subscriptions:reconcile-periods')
+            ->dailyAt('03:00')
             ->onOneServer()
             ->withoutOverlapping()
             ->runInBackground();

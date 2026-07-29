@@ -1,5 +1,7 @@
 import type { ContentResource } from '~/types/contents'
 
+import { runtimeConfig } from '~/lib/runtime-config'
+
 export function useContentJson(
   spaceId: MaybeRef<string>,
   content?: MaybeRef<Pick<ContentResource, 'full_slug' | 'language_iso'> | null | undefined>
@@ -27,7 +29,7 @@ export function useContentJson(
       language: activeContent.language_iso,
     })
 
-    return `https://api.b10cks.com/api/v1/contents/${slug}?${params.toString()}`
+    return `${runtimeConfig.public.apiBaseUrl}/api/v1/contents/${slug}?${params.toString()}`
   }
 
   const openContentJsonInNewTab = (vid: 'draft' | 'published' | string) => {

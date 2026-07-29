@@ -6,7 +6,9 @@ use App\Services\Image\Drivers\VipsDriver;
 return [
     'default_format' => env('IMAGE_DEFAULT_FORMAT', 'webp'),
 
-    'base_url' => env('IMAGE_BASE_URL', 'https://api.b10cks.com/ilum'),
+    // Absolute base URL for delivered media. When unset, AppConfigPayload
+    // falls back to the SaaS CDN (saas edition) or APP_URL/ilum (self-hosted).
+    'base_url' => env('IMAGE_BASE_URL'),
 
     'driver' => env('IMAGE_DRIVER', 'vips'),
 

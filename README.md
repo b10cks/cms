@@ -2,86 +2,88 @@
 
 <div align="center">
 
-An opinionated headless CMS built with Laravel and Vue.js.
+**The opinionated headless CMS.** Model content as reusable blocks, edit it visually with your team in real time, deliver it anywhere through a fast, cached Data API. Self-host the full product (AGPL-3.0) or use [b10cks Cloud](https://app.b10cks.com).
 
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
-[![Laravel](https://img.shields.io/badge/Laravel-13.x-orange.svg)](https://laravel.com/)
-[![Vue.js](https://img.shields.io/badge/Vue.js-3.x-brightgreen.svg)](https://vuejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![MadeWithVueJs.com shield](https://madewithvuejs.com/storage/repo-shields/6367-shield.svg)](https://madewithvuejs.com/p/b10cks/shield-link)
+[![Latest release](https://img.shields.io/github/v/release/b10cks/cms)](https://github.com/b10cks/cms/releases)
+[![Docker pulls](https://img.shields.io/docker/pulls/b10cks/cms)](https://hub.docker.com/r/b10cks/cms)
+[![Discord](https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/mdcDktFFcp)
+
+[Documentation](https://www.b10cks.com/docs) · [Website](https://www.b10cks.com) · [Cloud](https://app.b10cks.com) · [Discord](https://discord.gg/mdcDktFFcp)
 
 </div>
 
 ![b10cks CMS](/docs/b10cks.png)
 
-## Overview
+## Try it in 60 seconds
 
-b10cks is an API-first headless CMS for teams that model content as reusable blocks and deliver it through APIs. The repository contains the self-hosted CMS application, including the Laravel backend, Vue-based admin UI, content editing tools, asset handling, search integrations, and multi-tenant space management.
+On a machine with Docker:
 
-Hosted SaaS options are available separately:
+```bash
+curl -fsSL https://get.b10cks.com | sh
+```
 
-- Website: [www.b10cks.com](https://www.b10cks.com)
-- Hosted app: [app.b10cks.com](https://app.b10cks.com)
+The installer only writes into `./b10cks` — it downloads the compose stack for the newest release, generates a database password, starts the stack, and waits for the health check. It is [`scripts/install.sh`](scripts/install.sh) in this repo; read it before piping it to a shell, as you should with any such command.
+
+The compose stack binds to `127.0.0.1` by default and speaks plain HTTP — production deployments put a TLS reverse proxy in front (the [docs](https://www.b10cks.com/docs/self-hosting/configuration.html) cover it).
+
+Prefer to set things up by hand? The [installation guide](docs/self-hosting/installation.md) covers all three paths:
+
+- **Docker Compose** — the official `b10cks/cms` image plus MariaDB (also mirrored to `ghcr.io/b10cks/cms`)
+- **Webhost package** — a pre-built archive for traditional shared hosting: no Docker, no Composer, no shell required
+- **Manual** — clone and build on your own server
+
+## Open source, no asterisk
+
+b10cks is licensed under the [AGPL-3.0](LICENSE). The self-hosted version is the complete product — no enterprise edition, no license keys, no feature gates. `B10CKS_EDITION=self-hosted` only disables the SaaS billing surface; everything else is identical.
+
+[b10cks Cloud](https://app.b10cks.com) is this same codebase, hosted for you — and it funds the project.
 
 ## Features
 
-### Content Editing
+- **Git-like content history** — every save is a commit with author and message; history branches instead of overwriting, and schema-aware diffs make review effortless.
+- **Live collaboration** — Figma-style presence and real-time co-editing, down to individual blocks — comments included.
+- **The Canvas** — plan and restructure whole site sections on an infinite whiteboard, then apply the plan in one click.
+- **Your own Iconify registry** — brand icons served through the Iconify protocol, straight into the tooling developers already use.
+- **A real query API** — 16 filter operators, sorting by your own content fields, language fallback, and revision-based caching — all in plain GET requests.
+- **Settings where they belong** — per-entry child sorting and nesting rules, per-folder asset metadata requirements, per-field editor configuration. Structure without bureaucracy.
 
-- **Block-based content modeling**: Define reusable, versioned blocks and compose them into content structures.
-- **Canvas editor**: Visual tree editor with drag-and-drop, pan and zoom, keyboard support, and undo/redo history.
-- **Content versioning**: Version history with selective publishing and scheduled publication.
-- **Release management**: Group multiple content versions into a release and publish them atomically.
-- **Comments and reviews**: Threaded comments on content items with resolution tracking and reactions.
+Plus everything you'd expect from a headless CMS: block-based content modeling, release management with atomic publishing, scheduled publication, a hierarchical asset library with on-the-fly image transformations (WebP/AVIF), content localization, full-text search (MySQL fulltext or OpenSearch), AI-assisted content workflows, multi-tenant spaces with isolated per-space databases, redirects, backups, and space-to-space migrations.
 
-### Search
+## Why b10cks instead of…
 
-- **Full-text search**: MySQL fulltext indexes by default, with OpenSearch support for larger or relevance-tuned deployments.
-- **Localization-aware filtering**: Multi-language filtering and relevance scoring.
-
-### Collaboration
-
-- **Real-time collaboration**: Presence tracking per space, content item, and canvas, including cursor positions.
-- **AI assistance**: Multi-model integration for content generation, translation, meta tag generation, and canvas structuring, with streaming responses.
-
-### Assets & Media
-
-- **Asset management**: Hierarchical asset library with folders, tags, and bulk import/export.
-- **Image transformations**: On-the-fly resize, crop, and smart-fit transformations via the built-in Ilum service, with WebP, AVIF, JPG, and PNG output.
-
-### Infrastructure
-
-- **Internationalization**: Content localization across multiple languages.
-- **REST API**: API endpoints for integrating content into frontend applications and other services.
-- **Multi-tenant spaces**: Isolated per-space databases with team and role management.
-- **Data sources**: Structured dynamic data management with dimension support.
-- **Redirects**: URL redirect management with hit tracking.
-- **Backups and migrations**: Space backups and direct DB-to-DB space migration with configurable conflict resolution.
-- **Subscription billing**: LemonSqueezy integration for plan-based subscriptions.
+- **Strapi / Directus** — their open-source cores gate SSO, advanced roles, or seats behind enterprise tiers. b10cks has no gates: self-hosted is the whole product.
+- **Payload** — great developer experience, but dev-first. b10cks adds the full editorial UX on top: live multiplayer editing, infinite-canvas planning, releases, comments.
+- **Storyblok / Contentful** — visual block-based editing, without the SaaS lock-in. Run it yourself, keep your content in your database.
 
 ## Technical Architecture
 
-b10cks CMS uses the following main components:
-
 - **Backend**: Laravel
-- **Admin UI**: Vue.js-based interface with TanStack Query, Tailwind CSS, Shadcn UI, and Vue Router
-- **Database**: PostgreSQL, MySQL, MariaDB, or SQLite
+- **Admin UI**: Vue.js with TanStack Query, Tailwind CSS, Shadcn UI, and Vue Router
+- **Database**: MySQL 8.0+ or MariaDB (SQLite optionally for per-space databases via the shared profile)
 - **Storage**: Local filesystem, S3, or Google Cloud Storage
 - **Caching**: Redis-supported caching and queues
-- **Real-time updates**: Laravel Echo + Pusher for real-time updates and collaboration
+- **Real-time**: Laravel Reverb (Pusher-protocol compatible) for collaboration and presence
 - **Search**: MySQL fulltext or OpenSearch — configurable per space
 - **API**: REST endpoints for content delivery and management workflows
 
-## Getting Started
+## Deployment Options
 
-### Prerequisites
+### Self-Hosted
 
-- **Node.js**: Install Node.js version 20 or higher.
-- **Bun**: Install Bun version 1.0 or higher.
-- **PHP**: Install PHP version 8.4 or higher.
-- **Composer**: Install Composer version 2.5 or higher.
-- **MySQL**: Install MySQL version 8.0 or higher.
+Deploy b10cks on your own infrastructure — see the [self-hosting docs](https://www.b10cks.com/docs/self-hosting/):
 
-### Installation
+- Docker (any VPS or cloud provider)
+- AWS, Azure, Google Cloud, DigitalOcean, Linode, Vultr
+- Shared hosting with PHP 8.5+ (webhost package)
+
+### b10cks Cloud
+
+Managed hosting for teams that do not want to operate the CMS themselves: [app.b10cks.com](https://app.b10cks.com)
+
+## Development Setup
+
+Contributing or hacking on b10cks itself? You need PHP 8.5+, Composer 2.5+, Bun 1.0+, and MySQL 8.0+ (or MariaDB).
 
 ```bash
 git clone https://github.com/b10cks/cms.git
@@ -93,80 +95,25 @@ php artisan key:generate
 php artisan migrate
 ```
 
-### Running the Application Locally
-
-Start the Laravel backend:
+Run three processes while developing:
 
 ```bash
-php artisan serve
+php artisan serve      # Laravel backend
+bun run dev            # Vite dev server for the admin UI
+php artisan reverb:start  # WebSockets for real-time features
 ```
 
-In a second terminal, start the Vite development server for the Vue admin UI:
+Optional: Redis 6.0+ for caching and queues, OpenSearch for relevance-tuned search. See the [Contributing Guide](CONTRIBUTING.md) for conventions, commit format, and the PR process.
 
-```bash
-bun run dev
-```
+## Security
 
-In a third terminal, start Laravel Reverb for WebSocket-based real-time features:
+Please report vulnerabilities responsibly — see the [Security Policy](SECURITY.md).
 
-```bash
-php artisan reverb:start
-```
+## Community
 
-All processes need to keep running while developing locally. The Laravel server handles the backend, `bun run dev` serves the frontend assets used by the admin UI, and Reverb powers real-time updates and collaboration.
-
-#### Optional
-
-- **Redis**: Install Redis version 6.0 or higher for caching and queues.
-- **OpenSearch**: Install OpenSearch for advanced full-text search capabilities.
-
-### Search Configuration
-
-b10cks supports two search drivers. Set the driver per space in the admin UI or via the API:
-
-- **`mysql`** (default): Uses MySQL `FULLTEXT` indexes with natural language mode — no extra infrastructure needed.
-- **`opensearch`**: Connects to an OpenSearch cluster for scalable, relevance-tuned search. Configure via `OPENSEARCH_HOST`, `OPENSEARCH_USERNAME`, `OPENSEARCH_PASSWORD` in your `.env`.
-
-After switching drivers, trigger a reindex from the space settings.
-
-## Deployment Options
-
-### Self-Hosted
-
-Deploy b10cks on your own infrastructure:
-
-- AWS, Azure, Google Cloud
-- Docker
-- DigitalOcean, Linode, Vultr
-- Any VPS provider
-- Shared hosting with PHP 8.4+
-
-### b10cks CMS Cloud
-
-Managed SaaS hosting is available for teams that do not want to operate the CMS themselves.
-
-- Product website: [www.b10cks.com](https://www.b10cks.com)
-- Hosted application: [app.b10cks.com](https://app.b10cks.com)
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within this project, please send an e-mail to [security@b10cks.com](mailto:security@b10cks.com).
-All security vulnerabilities will be promptly addressed.
-
-## Contributing
-
-See the [Contributing Guide](CONTRIBUTING.md) before opening a pull request.
-
-1. Fork the repository
-2. Create your feature branch: `git checkout -b feature/example`
-3. Commit your changes: `git commit -m 'Add example feature'`
-4. Push to the branch: `git push origin feature/example`
-5. Open a Pull Request
-
-## Community Support
-
-- [Discord](https://discord.gg/zAz6sBDpHT) - Get help and share your knowledge
-- [GitHub Discussions](https://github.com/b10cks/cms/discussions) - Feature requests and technical discussions
+- [Discord](https://discord.gg/mdcDktFFcp) — get help and share your knowledge
+- [GitHub Discussions](https://github.com/b10cks/cms/discussions) — feature requests and technical discussions
+- [Documentation](https://www.b10cks.com/docs) — guides, concepts, API reference
 
 ## License
 

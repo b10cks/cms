@@ -6,6 +6,46 @@ description: "The .env configuration reference for self-hosted b10cks: applicati
 
 All configuration happens through the standard Laravel `.env` file. This page covers the keys that matter for a production instance; billing has [its own page](plans-and-pricing.md).
 
+## Edition
+
+```bash
+B10CKS_EDITION=self-hosted     # saas (default) | self-hosted
+```
+
+`self-hosted` turns off the SaaS billing surface: the subscription UI and LemonSqueezy webhooks disappear, billing/metering cron jobs stop, `b10cks:setup` seeds a single unlimited plan, and outgoing mail drops the b10cks.com footer. Individual features can be overridden with `B10CKS_FEATURE_BILLING` / `B10CKS_FEATURE_AI`.
+
+```bash
+# Optional mail-footer imprint (rendered when company is set)
+B10CKS_IMPRINT_COMPANY="Example GmbH"
+B10CKS_IMPRINT_ADDRESS="Musterstraße 1, 12345 Berlin"
+B10CKS_IMPRINT_NOTICE="You receive this email because of your account at cms.example.com."
+```
+
+## Installer
+
+```bash
+B10CKS_INSTALL_PROFILE=standard   # standard | shared
+B10CKS_SPACE_DB_DRIVER=mysql      # shared profile: mysql (prefixes) | sqlite (file per space)
+B10CKS_HTTP_SETUP_ENABLED=false   # enables GET /setup (or create storage/app/setup/http-enabled)
+B10CKS_AUTO_SETUP=true            # Docker entrypoint: run b10cks:setup on first boot
+```
+
+`php artisan b10cks:setup` is idempotent per install — it records its state in `storage/app/setup/install-state.json`.
+
+## Registration
+
+A self-hosted instance accepts open sign-ups only until the first account exists; that account becomes the owner, and everyone after it joins by invitation. Because a fresh install on a public address is claimable by whoever reaches it first, create the first account immediately after installing.
+
+Once an account is seen, the closure is latched into `storage/app/setup/registration-closed` rather than re-derived from the database on every request — so a database outage cannot reopen the instance, and neither can deleting the accounts. The latch lives on the storage volume and survives upgrades.
+
+To reopen sign-ups deliberately — for example to re-create the owner after losing access — either delete that file or set:
+
+```bash
+B10CKS_ALLOW_REGISTRATION=true
+```
+
+The environment variable wins over everything, in both directions: set it to `false` to keep registration closed even on a brand-new install.
+
 ## Application
 
 ```bash
@@ -47,18 +87,22 @@ DB_USERNAME=…
 DB_PASSWORD=…
 ```
 
-Each space can optionally run in its **own isolated database** — the management database stores users, teams, spaces, and billing, while space databases hold content. Space database provisioning requires credentials allowed to create databases; see [Spaces](../concepts/spaces.md#isolated-databases).
+Each space can optionally run in its **own isolated database** — the management database stores users, teams, spaces, and billing, while space databases hold content. With the **standard** install profile, provisioning requires credentials allowed to create databases and users; see [Spaces](../concepts/spaces.md#isolated-databases).
+
+With the **shared** install profile no administrative privileges are needed: spaces live in the main database behind a per-space table prefix (`sp<hash>_…`), or — with `B10CKS_SPACE_DB_DRIVER=sqlite` — in one SQLite file per space under `storage/app/spaces/`.
+
+If your **main** database is SQLite, each space always gets its own file regardless of `B10CKS_SPACE_DB_DRIVER`: table prefixes inside the main SQLite file would make a space's database indistinguishable from the installation's own, so deleting one space would remove everything and a space backup would include every other space.
 
 ## Cache, queues, sessions
 
 ```bash
-CACHE_DRIVER=redis
+CACHE_STORE=redis
 QUEUE_CONNECTION=redis
 SESSION_DRIVER=redis
 REDIS_HOST=…
 ```
 
-`QUEUE_CONNECTION=sync` works for evaluation but blocks requests on every background job — use Redis in production.
+`QUEUE_CONNECTION=sync` works for evaluation but blocks requests on every background job. `database` is a solid zero-infrastructure default (it is what the webhost package uses); Redis is recommended at scale. On the shared install profile the scheduler drains the queue from cron, so no long-running worker is required.
 
 ## Real-time (Reverb)
 
@@ -72,6 +116,8 @@ REVERB_SCHEME=https
 ```
 
 Any Pusher-protocol-compatible service works as an alternative to self-hosted Reverb.
+
+Realtime is optional: with `BROADCAST_DRIVER=null` (or no Reverb key) the admin UI simply runs without live presence and collaboration — nothing breaks and no websocket connections are attempted.
 
 ## File storage
 
@@ -91,6 +137,7 @@ Defaults for the [image service](../concepts/image-service.md); all optional.
 ```bash
 IMAGE_DRIVER=vips              # or imagick
 IMAGE_BASE_URL=https://…/ilum  # public origin the delivery URLs are built from
+                               # (defaults to APP_URL/ilum on self-hosted)
 IMAGE_DEFAULT_FORMAT=webp      # output format when a transformation omits one
 IMAGE_MAX_WIDTH=5000           # requested dimensions are clamped to these
 IMAGE_MAX_HEIGHT=5000
@@ -133,6 +180,14 @@ DATA_API_MICRO_CACHE_TTL=5
 IMAGE_RATE_LIMIT=600
 ```
 
+## Transfers (packages & backups)
+
+```bash
+TRANSFERS_DISK_DRIVER=local    # or s3 (default)
+```
+
+Asset download packages and backups are written to the transfers disk. `local` keeps them under `storage/app/transfers` and serves downloads through short-lived signed application URLs — no S3 required.
+
 ## Search
 
 ```bash
@@ -151,13 +206,15 @@ Standard Laravel mail configuration (`MAIL_*`) — used for invites, notificatio
 ## AI (optional)
 
 ```bash
-AI_MODE=space                  # AI configuration is managed per space
-AI_DEFAULT_DRIVER=openrouter
-OPENROUTER_ENABLED=true
-OPENROUTER_MANAGEMENT_KEY=…    # provisions per-space keys
+AI_MODE=single                 # self-hosted default: one platform key for all spaces
+OPENROUTER_API_KEY=…           # empty disables AI features
+
+# SaaS-style per-space keys instead (needs an OpenRouter provisioning key):
+#AI_MODE=space
+#OPENROUTER_MANAGEMENT_KEY=…
 ```
 
-AI features (generation, translation, meta tags, asset classification) are opt-in and configured per space in **Settings → AI**.
+AI features (generation, translation, meta tags, asset classification) are opt-in and configured per space in **Settings → AI**. In `single` mode there is no per-space spend metering — usage counts against your one key.
 
 ## Billing (optional)
 

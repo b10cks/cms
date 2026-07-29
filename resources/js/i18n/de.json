@@ -57,7 +57,8 @@
         "description": "* Modular aufgebaut mit atomarer Block-Architektur für nahtlose Content-Zusammensetzung\n* Benutzerorientierter Visual Editor mit Git-ähnlicher Versionierung und API-First-Ansatz\n* Enterprise-Features für jeden – globales CDN ohne Premium-Preis\n* **Kostenlos starten. Keine Kreditkarte erforderlich.**",
         "asFeatured": "Bekannt von",
         "footer": "Mit der Nutzung von b10cks akzeptierst du unsere [Nutzungsbedingungen](https://www.b10cks.com/legal/terms-of-service) und [Datenschutzerklärung](https://www.b10cks.com/legal/privacy-policy), und periodische Updates per Email zu erhalten."
-      }
+      },
+      "registrationClosed": "Die Registrierung ist auf dieser Instanz geschlossen. Bitte einen Administrator um eine Einladung."
     },
     "command": {
       "input": {

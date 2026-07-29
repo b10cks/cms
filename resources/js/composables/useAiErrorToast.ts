@@ -1,6 +1,7 @@
 import { toast } from 'vue-sonner'
 
 import { aiErrorMessage, isPlanError } from '~/lib/aiErrors'
+import { runtimeConfig } from '~/lib/runtime-config'
 
 /**
  * Consistent toast for AI failures. Resolves the backend `reason` to a localised
@@ -15,7 +16,9 @@ export function useAiErrorToast() {
   const showAiError = (reason?: string | null, fallbackMessage?: string | null): void => {
     const message = aiErrorMessage(t, reason, fallbackMessage)
 
-    if (isPlanError(reason)) {
+    // The subscription route only exists when billing is enabled; on
+    // self-hosted installs there is no upgrade path to offer.
+    if (isPlanError(reason) && runtimeConfig.public.features.billing) {
       const space = route.params.space as string | undefined
 
       toast.error(

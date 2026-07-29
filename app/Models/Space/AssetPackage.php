@@ -171,8 +171,8 @@ class AssetPackage extends SpaceModel
      */
     public function getDownloadUrl(int $minutes = 15): string
     {
-        return \Storage::disk('transfers')
-            ->temporaryUrl($this->s3_path, now()->addMinutes($minutes));
+        return app(\App\Services\Asset\ShareDeliveryService::class)
+            ->transferDownloadUrl($this->s3_path, now()->addMinutes($minutes));
     }
 
     public function scopeExpired($query)

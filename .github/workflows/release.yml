@@ -1,0 +1,239 @@
+name: Publish self-hosted release
+
+# Runs on the same calver tags as deploy.yml (independent workflows, separate
+# registries): pushes the public Docker image to Docker Hub and attaches the
+# webhost package to a GitHub release.
+#
+# The image goes to two registries from one build. Docker Hub is the documented
+# default because it is the only one that works as a bare `b10cks/cms`; GHCR is
+# the mirror self-hosters and CI can pull without hitting Docker Hub's
+# unauthenticated pull limits.
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+
+concurrency:
+  # Deliberately not keyed on the ref: several tags a day is normal here, and two
+  # releases building in parallel would race each other for the `latest` tag.
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+  # for actions/attest-build-provenance
+  id-token: write
+  attestations: write
+
+env:
+  PHP_VERSION: '8.5'
+  DOCKERHUB_REPOSITORY: b10cks/cms
+  GHCR_REPOSITORY: ghcr.io/${{ github.repository }}
+
+jobs:
+  # Publishing is gated on the suite: a calver tag can land on any commit, and
+  # without this a red one would go straight to Docker Hub `latest`, GHCR, a
+  # GitHub release and get.b10cks.com. Reuses tests.yml so the gate cannot
+  # drift from what runs on pull requests.
+  test:
+    uses: ./.github/workflows/tests.yml
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    # arm64 is emulated, so the image build is the long pole here.
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          # The whole tag list is needed to decide whether this release is the newest.
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Determine whether this tag is the newest release
+        id: latest
+        # `latest` must never regress. Serialising the workflow is not enough on its
+        # own: an old run re-tried from the Actions UI would otherwise republish its
+        # version over the current one. Tags are lightweight, so creatordate is the
+        # tagged commit's date — tagging an older commit correctly loses the race too.
+        run: |
+          newest="$(git for-each-ref --sort=-creatordate --format='%(refname:short)' 'refs/tags/v*' | head -n1)"
+          if [ "$newest" = "${{ steps.version.outputs.tag }}" ]; then
+            echo "is_latest=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_latest=false" >> $GITHUB_OUTPUT
+            echo "::notice::${newest} is newer than ${{ steps.version.outputs.tag }} — publishing the version tag only, leaving latest alone"
+          fi
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, redis
+          tools: composer:v2
+
+      - name: Install production Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress --optimize-autoloader --no-dev
+
+      - name: Restore committed OpenAPI specs
+        # composer's post-autoload-dump regenerates docs/public/specs without a
+        # real app environment; the committed specs are the source of truth.
+        run: git checkout -- docs/public/specs
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build frontend
+        run: bun run build
+        env:
+          NODE_ENV: production
+          APP_VERSION: ${{ steps.version.outputs.version }}
+
+      # arm64 is emulated rather than built on a native runner: vendor/ and
+      # public/ are built on the runner and only COPY'd in, so the only
+      # architecture-dependent work in the image is apk plus the PHP extension
+      # compile. That keeps a single build step, and with it a single digest
+      # for the provenance attestations below.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for existing image
+        id: image-exists
+        # version tags are immutable — a re-run after a partial failure must not
+        # silently republish the tag its first attempt already pushed
+        env:
+          IMAGE_TAG: ${{ steps.version.outputs.version }}
+        run: |
+          if docker manifest inspect "${DOCKERHUB_REPOSITORY}:${IMAGE_TAG}" >/dev/null 2>&1 \
+            || docker manifest inspect "${GHCR_REPOSITORY}:${IMAGE_TAG}" >/dev/null 2>&1; then
+            echo "::notice::${IMAGE_TAG} already published to Docker Hub/GHCR — skipping image build and push"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push Docker image
+        if: steps.image-exists.outputs.exists != 'true'
+        id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          # Blank lines are dropped by the action, so the latest tags simply vanish
+          # from the list when this is not the newest release.
+          tags: |
+            ${{ env.DOCKERHUB_REPOSITORY }}:${{ steps.version.outputs.version }}
+            ${{ env.GHCR_REPOSITORY }}:${{ steps.version.outputs.version }}
+            ${{ steps.latest.outputs.is_latest == 'true' && format('{0}:latest', env.DOCKERHUB_REPOSITORY) || '' }}
+            ${{ steps.latest.outputs.is_latest == 'true' && format('{0}:latest', env.GHCR_REPOSITORY) || '' }}
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.version }}
+          # GitHub Actions cache rather than a registry ref: a `buildcache` tag in
+          # a public repo shows up on the Docker Hub tag list next to the releases.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: mode=max
+          sbom: true
+
+      - name: Attest image provenance (Docker Hub)
+        if: steps.image-exists.outputs.exists != 'true'
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        with:
+          subject-name: index.docker.io/${{ env.DOCKERHUB_REPOSITORY }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Attest image provenance (GHCR)
+        if: steps.image-exists.outputs.exists != 'true'
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        with:
+          subject-name: ${{ env.GHCR_REPOSITORY }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Build webhost package
+        run: ./scripts/build-webhost-package.sh "${{ steps.version.outputs.version }}"
+
+      - name: Generate SHA256SUMS
+        run: |
+          cd dist
+          sha256sum \
+            "b10cks-cms-webhost-${{ steps.version.outputs.version }}.tar.gz" \
+            "b10cks-cms-webhost-${{ steps.version.outputs.version }}.zip" \
+            > SHA256SUMS
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        with:
+          name: ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
+          # Empty when the image guard skipped a re-run's build — the digest from
+          # the first attempt is already on the release body in that case.
+          append_body: true
+          body: |
+            ${{ steps.build.outputs.digest != '' && format('**Docker image digest:** `{0}`', steps.build.outputs.digest) || '' }}
+          files: |
+            dist/b10cks-cms-webhost-${{ steps.version.outputs.version }}.tar.gz
+            dist/b10cks-cms-webhost-${{ steps.version.outputs.version }}.zip
+            dist/SHA256SUMS
+
+      # get.b10cks.com serves scripts/install.sh from S3 via CloudFront. Only the
+      # newest release publishes it, for the same reason it owns the `latest` tag.
+      - name: Configure AWS credentials
+        if: steps.latest.outputs.is_latest == 'true'
+        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+
+      - name: Publish the installer to get.b10cks.com
+        if: steps.latest.outputs.is_latest == 'true'
+        run: |
+          aws s3 cp scripts/install.sh "s3://${INSTALLER_BUCKET}/install.sh" \
+            --content-type "text/plain; charset=utf-8" \
+            --cache-control "public, max-age=300"
+          aws cloudfront create-invalidation \
+            --distribution-id "${INSTALLER_DISTRIBUTION_ID}" \
+            --paths '/' '/install.sh'
+        env:
+          INSTALLER_BUCKET: b10cks-get
+          INSTALLER_DISTRIBUTION_ID: EP3IEWFWO7K3F

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Support\EditionGate;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
@@ -102,11 +103,20 @@ class RouteServiceProvider extends ServiceProvider
                 ->name('api.')
                 ->group(base_path('routes/data_api.php'));
 
-            // Webhook endpoints — no auth, signature verified in middleware
-            Route::middleware(['api'])
-                ->prefix('webhooks')
-                ->name('webhooks.')
-                ->group(base_path('routes/webhooks.php'));
+            // Webhook endpoints — no auth, signature verified in middleware.
+            // LemonSqueezy callbacks only exist on the billed SaaS deployment.
+            if (EditionGate::billingEnabled()) {
+                Route::middleware(['api'])
+                    ->prefix('webhooks')
+                    ->name('webhooks.')
+                    ->group(base_path('routes/webhooks.php'));
+            }
+
+            // One-shot installer for hosts without shell access; 404s unless
+            // explicitly enabled and self-disarms after a successful run.
+            // Deliberately outside the 'web' group: session/cookie encryption
+            // would require the very APP_KEY this endpoint generates.
+            Route::get('/setup', \App\Http\Controllers\Web\SetupController::class)->name('setup');
 
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));

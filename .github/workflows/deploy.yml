@@ -9,6 +9,10 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false
 
+# The workflow only talks to AWS; contents: read is all checkout needs.
+permissions:
+  contents: read
+
 env:
   AWS_REGION: eu-west-1
   ECR_REGISTRY: 525984396332.dkr.ecr.eu-west-1.amazonaws.com
@@ -22,20 +26,51 @@ env:
   DOCS_S3_BUCKET: b10cks-production-docs
   DOCS_CLOUDFRONT_DISTRIBUTION_ID: E2DCMG9O2W1BIA
 
-  VITE_APP_FRONTEND_URL: ${{ vars.APP_FRONTEND_URL || 'https://app.b10cks.com/' }}
-  VITE_APP_BACKEND_URL: ${{ vars.APP_BACKEND_URL || 'https://api.b10cks.com/' }}
-  VITE_APP_ILUM_BASE_URL: ${{ vars.APP_ILUM_BASE_URL || 'https://api.b10cks.com/ilum/' }}
-  VITE_APP_POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://eu.i.posthog.com' }}
-  VITE_APP_POSTHOG_KEY: ${{ secrets.POSTHOG_API_KEY || '' }}
-  VITE_APP_REVERB_APP_ID: ${{ secrets.REVERB_APP_ID || '' }}
-  VITE_APP_REVERB_APP_KEY: ${{ secrets.REVERB_APP_KEY || '' }}
-  VITE_APP_REVERB_APP_SECRET: ${{ secrets.REVERB_APP_SECRET || '' }}
-  VITE_APP_REVERB_HOST: ${{ secrets.REVERB_HOST || '' }}
-  VITE_APP_REVERB_PORT: ${{ secrets.REVERB_PORT || '' }}
-  VITE_APP_REVERB_SCHEME: ${{ secrets.REVERB_SCHEME || '' }}
 
 jobs:
+  # Same gate as release.yml: a calver tag can land on any commit, and without
+  # this a red one would deploy straight to production. Reuses tests.yml so the
+  # gate cannot drift from what runs on pull requests.
+  test:
+    uses: ./.github/workflows/tests.yml
+
+  # The deploy job's own Discord notification never runs when the gate fails
+  # (the job is skipped, not failed), so a blocked deploy would otherwise be
+  # silent outside the Actions UI.
+  notify-blocked:
+    needs: test
+    if: failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Post blocked-deploy notification to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          PAYLOAD=$(jq -n \
+            --arg title "🚫 Deployment Blocked — Tests Failed" \
+            --arg description "**Project:** https://github.com/b10cks/cms
+          **Version:** \`${VERSION}\`
+
+          The test suite failed, so this tag was not deployed.
+          ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
+            '{
+              "embeds": [{
+                "title": $title,
+                "description": $description,
+                "color": 15158332,
+                "timestamp": $timestamp
+              }]
+            }')
+
+          curl -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "$DISCORD_WEBHOOK"
+
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     # must leave room for a worst-case docs build (2 × 5 min timeout)
     # on top of the normal ~10 min pipeline
@@ -43,7 +78,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           fetch-depth: 0 # Fetch all history for commit comparison
 
@@ -56,12 +91,12 @@ jobs:
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.3.14
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: ${{ env.PHP_VERSION }}
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, redis
@@ -79,14 +114,14 @@ jobs:
         run: git checkout -- docs/public/specs
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Cache Bun dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
@@ -97,9 +132,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build frontend
-        run: |
-          export VITE_APP_PUBLIC_VERSION="${{ steps.version.outputs.version }}"
-          bun run build
+        run: bun run build
         env:
           NODE_ENV: production
 
@@ -125,10 +158,10 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2.1.6
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Check for existing image
         id: image-exists
@@ -148,7 +181,7 @@ jobs:
 
       - name: Build and push Docker image
         if: steps.image-exists.outputs.exists != 'true'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           push: true
@@ -167,7 +200,7 @@ jobs:
 
       - name: Update task definition with new image
         id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        uses: aws-actions/amazon-ecs-render-task-definition@138c24f321fdbdf7edee4a685519d253cae2cdea # v1.9.0
         with:
           task-definition: task-definition.json
           container-name: ${{ env.ECS_TASK_DEFINITION }}
@@ -181,7 +214,7 @@ jobs:
 
       - name: Update reverb task definition with new image
         id: reverb-task-def-image
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        uses: aws-actions/amazon-ecs-render-task-definition@138c24f321fdbdf7edee4a685519d253cae2cdea # v1.9.0
         with:
           task-definition: reverb-task-definition.json
           container-name: b10cks-reverb
@@ -221,7 +254,7 @@ jobs:
             --paths "/docs*"
 
       - name: Deploy CMS service to Amazon ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        uses: aws-actions/amazon-ecs-deploy-task-definition@c465972ecbd160473f22e683363b422a5412a3de # v2.6.3
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: ${{ env.ECS_SERVICE }}
@@ -230,7 +263,7 @@ jobs:
           wait-for-minutes: 10
 
       - name: Deploy Reverb service to Amazon ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        uses: aws-actions/amazon-ecs-deploy-task-definition@c465972ecbd160473f22e683363b422a5412a3de # v2.6.3
         with:
           task-definition: ${{ steps.reverb-task-def.outputs.task-definition }}
           service: b10cks-reverb

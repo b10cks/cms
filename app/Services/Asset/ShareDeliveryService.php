@@ -7,6 +7,7 @@ use Aws\CloudFront\UrlSigner;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 /**
  * Issues the actual download URL for a built asset package.
@@ -20,7 +21,9 @@ use Illuminate\Support\Facades\Storage;
  * at `packages/{spaceId}/{packageId}/{filename}` so the mapping is 1:1.
  *
  * Fallback (dev / unconfigured): a presigned S3 URL on the transfers disk —
- * functional, but bypasses download metering.
+ * functional, but bypasses download metering. A local transfers disk
+ * (self-hosted) gets a signed application route streaming the file instead,
+ * since local disks cannot issue temporary URLs.
  */
 class ShareDeliveryService
 {
@@ -48,12 +51,25 @@ class ShareDeliveryService
         $expiresAt = now()->addMinutes($minutes);
 
         $url = $this->signedUrl($package->s3_path, $expiresAt->getTimestamp())
-            ?? Storage::disk('transfers')->temporaryUrl($package->s3_path, $expiresAt);
+            ?? $this->transferDownloadUrl($package->s3_path, $expiresAt);
 
         return [
             'url' => $url,
             'expires_at' => $expiresAt,
         ];
+    }
+
+    /**
+     * Un-metered download URL for any transfers-disk object: presigned on S3,
+     * a signed app route on local disks.
+     */
+    public function transferDownloadUrl(string $path, Carbon $expiresAt): string
+    {
+        if (config('filesystems.disks.transfers.driver') === 'local') {
+            return URL::temporarySignedRoute('transfers.download', $expiresAt, ['path' => $path]);
+        }
+
+        return Storage::disk('transfers')->temporaryUrl($path, $expiresAt);
     }
 
     /**
