@@ -23,7 +23,7 @@ class PublishReleaseContentVersion
         }
 
         $success = false;
-        \DB::transaction(function () use ($version, $content, $space, $owner, &$success) {
+        $content->getConnection()->transaction(function () use ($version, $content, $space, $owner, &$success) {
             $version->update([
                 'published_at' => now(),
                 'published_by_id' => $owner?->id,

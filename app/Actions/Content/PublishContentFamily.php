@@ -35,7 +35,7 @@ class PublishContentFamily
         $publishedIds = [];
         $canonicalPayload = Arr::except($data, ['translations']);
 
-        \DB::transaction(function () use (
+        $canonical->getConnection()->transaction(function () use (
             $canonical,
             $canonicalPayload,
             $translations,

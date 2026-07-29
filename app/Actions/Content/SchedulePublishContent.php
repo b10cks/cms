@@ -56,7 +56,7 @@ class SchedulePublishContent extends BasePublishAction
 
         $content = $this->lockContentForUpdate($content);
 
-        \DB::transaction(function () use ($data, $content, $space, $owner, $validatedContent) {
+        $content->getConnection()->transaction(function () use ($data, $content, $space, $owner, $validatedContent) {
             $this->processSchedule($data, $content, $owner, $space, $validatedContent);
             $content->save();
         });

@@ -32,7 +32,7 @@ class UpdateContentFamily
         $familyCanonicalId = $this->contentI18nService->getCanonicalId($content);
         $primaryPayload = Arr::except($data, ['translations']);
 
-        \DB::transaction(function () use ($primaryPayload, $translations, $content, $space, $owner, $familyCanonicalId): void {
+        $content->getConnection()->transaction(function () use ($primaryPayload, $translations, $content, $space, $owner, $familyCanonicalId): void {
             $this->updateContent->execute($primaryPayload, $content, $space, $owner);
 
             $family = $this->contentI18nService->getFamily($content)->keyBy('language_iso');

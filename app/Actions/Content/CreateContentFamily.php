@@ -25,7 +25,7 @@ class CreateContentFamily
         $canonicalPayload = Arr::except($data, ['translations']);
         $canonical = new Content();
 
-        \DB::transaction(function () use ($canonicalPayload, $translations, $canonical, $space, $owner): void {
+        $canonical->getConnection()->transaction(function () use ($canonicalPayload, $translations, $canonical, $space, $owner): void {
             $this->createContent->execute($canonicalPayload, $canonical, $space, $owner);
 
             foreach ($translations as $index => $translation) {

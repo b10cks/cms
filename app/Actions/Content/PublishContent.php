@@ -64,7 +64,7 @@ class PublishContent extends BasePublishAction
         $success = false;
         $publishedAt = $this->resolvePublishedAt($data);
 
-        \DB::transaction(function () use ($data, $content, $space, $owner, &$success, $validatedContent, $publishedAt) {
+        $content->getConnection()->transaction(function () use ($data, $content, $space, $owner, &$success, $validatedContent, $publishedAt) {
             $this->clearScheduledVersions($content);
             $this->processPublish($data, $content, $owner, $validatedContent);
             $this->finalizePublish($content, $space, $publishedAt);

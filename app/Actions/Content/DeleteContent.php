@@ -17,7 +17,7 @@ class DeleteContent
 
     public function execute(Content $content, Space $space, Authenticatable|User|null $owner)
     {
-        \DB::transaction(function () use ($content, $owner, $space) {
+        $content->getConnection()->transaction(function () use ($content, $owner, $space) {
             $this->deleteChildren($content, $space);
             $this->searchService->removeContent($content, $space);
             $content->delete();

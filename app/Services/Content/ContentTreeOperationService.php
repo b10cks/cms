@@ -13,7 +13,6 @@ use App\Services\Search\SearchService;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ContentTreeOperationService
@@ -36,7 +35,7 @@ class ContentTreeOperationService
         Space $space,
         Authenticatable|User|null $owner,
     ): array {
-        return DB::transaction(function () use ($parent, $attributes, $space, $owner): array {
+        return (new Content)->getConnection()->transaction(function () use ($parent, $attributes, $space, $owner): array {
             $defaultLanguage = $space->settings->getDefaultLanguage();
             $parentFamily = $parent ? $this->contentI18nService->getFamily($parent)->keyBy('language_iso') : collect();
             $canonicalParent = $parent ? $parentFamily->get($defaultLanguage) ?? $parent : null;
@@ -76,7 +75,9 @@ class ContentTreeOperationService
         Space $space,
         ?int $position = null,
     ): array {
-        return DB::transaction(function () use ($orderedIds, $parentId, $afterId, $space, $position): array {
+        $connection = (new Content)->getConnection();
+
+        return $connection->transaction(function () use ($connection, $orderedIds, $parentId, $afterId, $space, $position): array {
             $warnings = [];
             $sortingEnabled = $space->settings->isContentSortingEnabled();
             // Callers pass an already root-resolved selection (the controller
@@ -176,7 +177,7 @@ class ContentTreeOperationService
             }
 
             $space->touch('content_updated_at');
-            DB::afterCommit(static fn (): mixed => app(ContentMenuCache::class)->invalidate($space->id));
+            $connection->afterCommit(static fn (): mixed => app(ContentMenuCache::class)->invalidate($space->id));
 
             return [
                 'warnings' => $warnings,
@@ -186,7 +187,7 @@ class ContentTreeOperationService
 
     public function deleteSubtrees(array $ids, Space $space): array
     {
-        return DB::transaction(function () use ($ids, $space): array {
+        return (new Content)->getConnection()->transaction(function () use ($ids, $space): array {
             $canonicalIds = $this->collectCanonicalSubtreeIds($ids);
             $familyRows = Content::query()
                 ->where(function ($query) use ($canonicalIds) {
@@ -216,7 +217,9 @@ class ContentTreeOperationService
         Authenticatable|User|null $owner,
         ?int $position = null,
     ): array {
-        return DB::transaction(function () use ($orderedIds, $parentId, $afterId, $space, $owner, $position): array {
+        $connection = (new Content)->getConnection();
+
+        return $connection->transaction(function () use ($connection, $orderedIds, $parentId, $afterId, $space, $owner, $position): array {
             // Callers pass an already root-resolved selection (the controller
             // resolves it once for authorization) — no need to resolve again.
             $normalizedIds = $orderedIds;
@@ -261,7 +264,7 @@ class ContentTreeOperationService
                     $this->contentPositionService->moveItems($createdRoots, $targetParent?->id, $after?->id, $position);
                 }
                 $space->touch('content_updated_at');
-                DB::afterCommit(static fn (): mixed => app(ContentMenuCache::class)->invalidate($space->id));
+                $connection->afterCommit(static fn (): mixed => app(ContentMenuCache::class)->invalidate($space->id));
             }
 
             return [
@@ -277,7 +280,7 @@ class ContentTreeOperationService
         Space $space,
         Authenticatable|User|null $owner,
     ): array {
-        return DB::transaction(function () use ($content, $blockId, $space, $owner): array {
+        return $content->getConnection()->transaction(function () use ($content, $blockId, $space, $owner): array {
             $family = $this->contentI18nService->getFamily($content);
 
             foreach ($family as $familyItem) {

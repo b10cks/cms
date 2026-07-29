@@ -7,7 +7,6 @@ use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\DB;
 
 class BulkCreateContent
 {
@@ -20,7 +19,7 @@ class BulkCreateContent
     {
         $createdItems = [];
 
-        DB::transaction(function () use ($items, $space, $owner, &$createdItems) {
+        (new Content)->getConnection()->transaction(function () use ($items, $space, $owner, &$createdItems) {
             $tempIdMap = [];
 
             // Prefetch the distinct blocks once instead of a findOrFail per item.

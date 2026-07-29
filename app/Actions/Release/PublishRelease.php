@@ -23,7 +23,7 @@ class PublishRelease
         }
 
         $contents = [];
-        \DB::transaction(function () use ($release, $space, $owner, &$contents) {
+        $release->getConnection()->transaction(function () use ($release, $space, $owner, &$contents) {
             // Assigned directly, as ReleaseCommitController does for committed_at:
             // published_at is cast but deliberately not fillable, so update() drops
             // it outright once strict mode is off in production.

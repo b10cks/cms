@@ -111,7 +111,7 @@ class UpdateContent
             throw new ContentVersionConflictException($content->current_version);
         }
 
-        \DB::transaction(function () use ($data, $content, $space, $owner, $validatedContent, $clientParentVersionId) {
+        $content->getConnection()->transaction(function () use ($data, $content, $space, $owner, $validatedContent, $clientParentVersionId) {
             $contentData = $validatedContent;
             $message = data_get($data, 'message');
             $sortingEnabled = $space->settings->isContentSortingEnabled();

@@ -60,7 +60,7 @@ class CreateContent
             }
         }
 
-        \DB::transaction(function () use ($data, $content, $owner, $space, $block, $touchSpace) {
+        $content->getConnection()->transaction(function () use ($data, $content, $owner, $space, $block, $touchSpace) {
             if (! \Arr::has($data, 'language_iso')) {
                 $data['language_iso'] = $space->settings->getDefaultLanguage();
             }

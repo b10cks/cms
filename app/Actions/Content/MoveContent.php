@@ -9,7 +9,6 @@ use App\Models\Space\ContentVersion;
 use App\Services\Content\ContentHierarchyValidator;
 use App\Services\Content\ContentPositionService;
 use App\Services\Content\Serial\ContentSerialAssigner;
-use Illuminate\Support\Facades\DB;
 
 class MoveContent
 {
@@ -21,7 +20,7 @@ class MoveContent
 
     public function execute(Content $content, ?string $parentId, ?int $position, Space $space): void
     {
-        DB::transaction(function () use ($content, $parentId, $position, $space) {
+        $content->getConnection()->transaction(function () use ($content, $parentId, $position, $space) {
             $content->loadMissing('block');
 
             // Validate parent exists if provided

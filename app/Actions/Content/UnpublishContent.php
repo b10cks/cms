@@ -15,7 +15,7 @@ class UnpublishContent
 
     public function execute(Content $content, Space $space): void
     {
-        \DB::transaction(function () use ($content, $space) {
+        $content->getConnection()->transaction(function () use ($content, $space) {
             $content->published_at = null;
             $content->save();
 
