@@ -828,6 +828,7 @@
         "savedState": "No local changes",
         "unsavedChanges": "Draft has unsaved changes",
         "searchBlocks": "Filter blocks...",
+        "searchTemplates": "Filter templates...",
         "noBlocksAvailable": "No eligible blocks are available here.",
         "validationSummary": "{count} issue blocks apply until the draft is valid.",
         "slugMode": {

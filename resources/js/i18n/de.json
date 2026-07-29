@@ -823,6 +823,7 @@
         "savedState": "Keine lokalen Änderungen",
         "unsavedChanges": "Entwurf hat ungespeicherte Änderungen",
         "searchBlocks": "Blocks filtern...",
+        "searchTemplates": "Vorlagen filtern...",
         "noBlocksAvailable": "Hier sind keine zulässigen Blocks verfügbar.",
         "validationSummary": "{count} Problem(e) blockieren das Anwenden, bis der Entwurf gültig ist.",
         "slugMode": {

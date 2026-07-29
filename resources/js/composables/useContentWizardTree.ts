@@ -35,6 +35,11 @@ const cloneNodeSettings = (settings: Partial<ContentSettings> | null | undefined
   child_tag_whitelist: [...(settings?.child_tag_whitelist || [])],
 })
 
+// Template content nests arbitrarily deep (nested blocks, arrays of objects), so
+// a shallow copy would let two draft nodes share the same sub-objects.
+const cloneNodeContent = (content: Record<string, unknown> | null | undefined) =>
+  structuredClone(toRaw(content) || {})
+
 export function useContentWizardTree(
   blocks: Ref<BlockResource[]>,
   menuData: Ref<Record<string, FlatContentMenuItem> | undefined>
@@ -60,6 +65,7 @@ export function useContentWizardTree(
     blockType: 'root',
     blockName: 'Root',
     settings: {},
+    content: {},
     title: 'Root',
     slug: '',
     slugMode: 'manual',
@@ -90,6 +96,7 @@ export function useContentWizardTree(
   const cloneNode = (node: ContentWizardDraftNode): ContentWizardDraftNode => ({
     ...node,
     settings: cloneNodeSettings(node.settings),
+    content: cloneNodeContent(node.content),
     childrenIds: [...node.childrenIds],
     layout: { ...node.layout },
     changes: { ...node.changes },
@@ -426,6 +433,9 @@ export function useContentWizardTree(
         blockType,
         blockName: block?.name || item.name,
         settings: cloneNodeSettings(item.settings || {}),
+        // Existing entries already have their content server-side; the canvas
+        // never edits or resubmits it.
+        content: {},
         title: item.name,
         slug: item.slug,
         slugMode: resolveSlugMode(item.name, item.slug),
@@ -488,6 +498,7 @@ export function useContentWizardTree(
       slug?: string
       slugMode?: 'auto' | 'manual'
       title?: string
+      content?: Record<string, unknown>
       settings?: Partial<ContentSettings>
     }
   ) => {
@@ -511,6 +522,7 @@ export function useContentWizardTree(
       blockType: block.type,
       blockName: block.name,
       settings: cloneNodeSettings(options.settings),
+      content: cloneNodeContent(options.content),
       title,
       slug: options.slug ?? slugify(title),
       slugMode: options.slugMode ?? 'auto',
@@ -593,6 +605,7 @@ export function useContentWizardTree(
         position: 'child',
         title: isRootClone ? `${source.title} Copy` : source.title,
         settings: source.settings,
+        content: source.content,
       })
 
       clonedNode.slug = isRootClone ? slugify(`${source.title} Copy`) : source.slug

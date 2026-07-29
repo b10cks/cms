@@ -28,6 +28,10 @@ import { useContentWizardApply } from '~/composables/useContentWizardApply'
 import { useContentWizardCollaboration } from '~/composables/useContentWizardCollaboration'
 import { useContentWizardKeyboard } from '~/composables/useContentWizardKeyboard'
 import { useContentWizardTree } from '~/composables/useContentWizardTree'
+import {
+  createContentDefaultsBlockLookup,
+  hydrateContentWithSchema,
+} from '~/composables/useSchemaDefaults'
 import { aiErrorMessage } from '~/lib/aiErrors'
 import { resolvePreferredCreateContentBlock } from '~/lib/content-children'
 import {
@@ -74,6 +78,8 @@ const {
 } = useContentMenuQuery()
 
 const blocks = computed(() => blocksResponse.value?.data || [])
+// Resolves nested-block schemas when hydrating a template's content.
+const blockLookup = computed(() => createContentDefaultsBlockLookup(blocks.value))
 const treeApi = useContentWizardTree(blocks, menuData)
 const { apply, applyError, invalidateContentQueries, isApplying } = useContentWizardApply(
   spaceId,
@@ -273,6 +279,7 @@ const applyRemoteOperation = (operation: ContentWizardSyncOperation) => {
         title: operation.title,
         slug: operation.slug,
         slugMode: operation.slugMode,
+        content: operation.content,
       })
     } catch {
       queueRemoteOperation(operation)
@@ -540,6 +547,7 @@ const buildAddSubtreeOperations = (
       nodeId: node.id,
       parentId: node.parentId,
       blockId: node.blockId,
+      content: node.content,
       title: node.title,
       slug: node.slug,
       slugMode: node.slugMode,
@@ -1291,6 +1299,7 @@ const broadcastCreatedSubtree = (nodeId: string) => {
     nodeId: node.id,
     parentId: node.parentId,
     blockId: node.blockId,
+    content: node.content,
     title: node.title,
     slug: node.slug,
     slugMode: node.slugMode,
@@ -1349,7 +1358,8 @@ const resolveAddContext = (nodeId: string, position: ContentWizardAddPosition) =
 const createNodeFromContext = (
   nodeId: string,
   position: ContentWizardAddPosition,
-  block?: BlockResource
+  block?: BlockResource,
+  template?: BlockTemplate | null
 ) => {
   const context = resolveAddContext(nodeId, position)
   if (!context) {
@@ -1364,6 +1374,13 @@ const createNodeFromContext = (
     return false
   }
 
+  // Same hydration the content tree's create dialog runs, so a template yields
+  // the same entry whichever way it was added.
+  const templateContent =
+    template && selectedBlock.schema
+      ? hydrateContentWithSchema(selectedBlock.schema, template.content || {}, blockLookup.value)
+      : undefined
+
   const commandResult = history.executeCommand({
     label: 'add-node',
     execute: () => {
@@ -1371,6 +1388,7 @@ const createNodeFromContext = (
         parentId: targetParentId,
         position: resolvedPosition,
         referenceNodeId: node.isRootVirtual ? null : node.id,
+        content: templateContent,
       })
 
       if (resolvedPosition === 'child' && !node.isRootVirtual && node.isCollapsed) {
@@ -2130,6 +2148,7 @@ onBeforeUnmount(() => {
           ref="canvas"
           :nodes="draftNodes"
           :bounds="bounds"
+          :space-id="spaceId"
           :can-mutate="canApplyCanvas"
           :root-title="space?.name || $t('labels.contents.canvas.rootNodeTitle')"
           :focused-node-id="focusedNodeId"
@@ -2156,7 +2175,9 @@ onBeforeUnmount(() => {
           @update-block="handleBlockUpdate($event.nodeId, $event.blockId)"
           @toggle-collapse="handleToggleCollapse($event)"
           @toggle-delete="handleToggleDelete($event)"
-          @add-node="createNodeFromContext($event.nodeId, $event.position, $event.block)"
+          @add-node="
+            createNodeFromContext($event.nodeId, $event.position, $event.block, $event.template)
+          "
           @dragstart="handleDragStart($event.nodeId, $event.event)"
           @dragend="handleDragEnd"
           @dragover-node="handleDragOverNode"

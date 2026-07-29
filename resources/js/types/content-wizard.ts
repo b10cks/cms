@@ -64,6 +64,12 @@ export interface ContentWizardDraftNode {
   blockType: ContentWizardBlockType
   blockName: string
   settings: Partial<ContentSettings>
+  /**
+   * Initial field values for nodes created from a block template. Empty for
+   * everything else, including nodes hydrated from the server — the canvas only
+   * ever sends this on create, so existing entries have nothing to carry.
+   */
+  content: Record<string, unknown>
   title: string
   slug: string
   slugMode: ContentWizardSlugMode
@@ -162,6 +168,7 @@ export interface ContentWizardAddOperationPayload {
   nodeId: string
   parentId: string | null
   blockId: string
+  content?: Record<string, unknown>
   title: string
   slug: string
   slugMode: ContentWizardSlugMode

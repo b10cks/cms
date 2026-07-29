@@ -5,14 +5,24 @@
 
 # General
 bootstrap/cache/*.php
+node_modules/
+**/node_modules
+tests/
+
+# Local runtime state. A build from a working checkout would otherwise bake dev
+# uploads, backups and logs into the image; the Dockerfile recreates the tree.
+storage/app/*
+storage/debugbar/*
 storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/testing/*
 storage/framework/views/*
-tests/
+storage/logs/*
 
-# ignore all dot files
+# ignore all dot files (`.*` is top level only, hence the explicit patterns)
 .*
+**/.env*
+**/.git
 _ide_helper.php
 composer.lock
 Dockerfile
