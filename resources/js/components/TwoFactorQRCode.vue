@@ -13,12 +13,11 @@ watch(
   async (newValue) => {
     try {
       src.value = await toDataURL(newValue, {
-        type: 'svg',
         margin: 2,
         width: props.size || 400,
         errorCorrectionLevel: 'Q',
       })
-    } catch (e) {
+    } catch {
       src.value = null
     }
   },
@@ -28,7 +27,7 @@ watch(
 
 <template>
   <img
-    :src="src"
+    :src="src ?? undefined"
     class="overflow-clip rounded-sm"
   />
 </template>

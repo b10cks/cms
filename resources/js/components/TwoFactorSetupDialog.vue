@@ -143,7 +143,6 @@ const handleClose = () => {
           name="verificationCode"
           inputmode="numeric"
           pattern="[0-9]*"
-          maxlength="6"
           :label="$t('labels.twoFactor.setup.enterCode')"
           :placeholder="$t('labels.twoFactor.setup.codePlaceholder')"
         />

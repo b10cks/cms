@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
-import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
+import { draggable as makeDraggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
 
 import AssetComplianceIndicator from '~/components/assets/AssetComplianceIndicator.vue'
 import Icon from '~/components/Icon.vue'
@@ -195,7 +195,7 @@ watchEffect((onCleanup) => {
   }
 
   const cleanup = combine(
-    draggable({
+    makeDraggable({
       element: rootElement.value,
       canDrag: () => enableDragAndDrop.value,
       getInitialData: () => {

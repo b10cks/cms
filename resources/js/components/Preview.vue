@@ -55,7 +55,8 @@ const isConnected = ref<boolean>(false)
 const mode = ref<'desktop' | 'mobile'>('desktop')
 const mobileWidth = ref<number>(384)
 const isResizing = ref<boolean>(false)
-const content = inject<Ref<ContentResource | null>>('content', ref(null))
+// Named apart from the `content` prop, which carries the unsaved draft.
+const injectedContent = inject<Ref<ContentResource | null>>('content', ref(null))
 let previewBridge: PreviewBridge
 
 const effectiveEnvironment = computed<SpaceEnvironment | null>(() => {
@@ -69,7 +70,7 @@ const effectiveEnvironment = computed<SpaceEnvironment | null>(() => {
 })
 
 const availableSegments = computed<string[]>(() => {
-  const languageIso = content.value?.language_iso
+  const languageIso = injectedContent.value?.language_iso
   if (!languageIso) return []
 
   return resolveLocaleSegments(languageIso, currentSpace.value?.settings)
@@ -91,7 +92,7 @@ const siteLocaleLabel = (segment: string) => {
 
 const baseSrc = computed(() => {
   const env = effectiveEnvironment.value
-  const currentContent = content.value
+  const currentContent = injectedContent.value
 
   // env.url is space-configured; reject anything that isn't http(s) so a
   // `javascript:` URL can never end up as the iframe src.
