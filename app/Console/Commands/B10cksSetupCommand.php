@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\InstallProfile;
 use App\Services\Setup\InstallProfileResolver;
 use App\Services\Setup\InstallState;
 use App\Support\EditionGate;
@@ -29,6 +30,7 @@ class B10cksSetupCommand extends Command
     {
         $profile = $this->profileResolver->resolve($this->option('profile'));
 
+        $this->assertProfileSupported($profile);
         $this->ensureWritableDirectories();
         $this->ensureAppKey();
 
@@ -52,6 +54,29 @@ class B10cksSetupCommand extends Command
         ));
 
         return self::SUCCESS;
+    }
+
+    /**
+     * The shared profile's table-prefix scheme is only wired up for
+     * MySQL/MariaDB (backups dump explicit prefixed table lists via
+     * mysqldump) — fail at install time, not on the first space backup.
+     */
+    private function assertProfileSupported(InstallProfile $profile): void
+    {
+        if ($profile !== InstallProfile::SHARED || config('setup.space_db_driver') === 'sqlite') {
+            return;
+        }
+
+        $driver = config('database.connections.'.config('database.default').'.driver');
+
+        if (! in_array($driver, ['mysql', 'mariadb', 'sqlite'], true)) {
+            throw new RuntimeException(sprintf(
+                'The shared install profile does not support a "%s" main database '
+                .'(space backups can only dump prefixed table lists on MySQL/MariaDB). '
+                .'Set B10CKS_SPACE_DB_DRIVER=sqlite or use the standard profile.',
+                $driver
+            ));
+        }
     }
 
     private function ensureWritableDirectories(): void

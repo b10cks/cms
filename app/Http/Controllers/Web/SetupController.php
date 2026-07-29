@@ -8,6 +8,7 @@ use App\Services\Setup\InstallState;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Throwable;
 
 class SetupController extends Controller
 {
@@ -44,11 +45,19 @@ class SetupController extends Controller
                 ));
             }
 
-            $exitCode = Artisan::call('b10cks:setup', [
-                '--profile' => $profile->value,
-            ]);
+            // b10cks:setup throws on sub-command failure instead of returning
+            // a non-zero exit code — catch it so a failed install renders the
+            // diagnostic page below rather than a bare 500.
+            try {
+                $exitCode = Artisan::call('b10cks:setup', [
+                    '--profile' => $profile->value,
+                ]);
 
-            $output = trim(Artisan::output());
+                $output = trim(Artisan::output());
+            } catch (Throwable $exception) {
+                $exitCode = 1;
+                $output = trim(Artisan::output()."\n".$exception->getMessage());
+            }
         } finally {
             flock($lock, LOCK_UN);
             fclose($lock);

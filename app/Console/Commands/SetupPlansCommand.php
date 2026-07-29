@@ -367,32 +367,39 @@ class SetupPlansCommand extends Command
      */
     private function upsertSelfHostedPlan(): void
     {
-        $plan = Plan::updateOrCreate(
-            ['sort_order' => 10],
-            [
-                'name' => ['en' => 'Self-Hosted', 'de' => 'Self-Hosted', 'default' => 'Self-Hosted'],
-                'description' => [
-                    'en' => 'Unlimited plan for this installation',
-                    'de' => 'Unlimitierter Plan für diese Installation',
-                    'default' => 'Unlimited plan for this installation',
-                ],
-                'features' => [
-                    'en' => ['Unlimited API requests, traffic, storage and users'],
-                    'de' => ['Unbegrenzte API-Anfragen, Datenvolumen, Speicher und Nutzer'],
-                    'default' => ['Unlimited API requests, traffic, storage and users'],
-                ],
-                'price' => '0.00',
-                'period' => 'month',
-                'quotas' => null,
-                'contact_url' => null,
-                'is_free' => true,
-                'is_active' => true,
-            ]
-        );
+        // Match by name, never by sort_order: on a database that already
+        // carries the SaaS tiers this must not overwrite whichever plan
+        // happens to sit at sort_order 10.
+        $plan = Plan::whereJsonContains('name->default', 'Self-Hosted')->first();
 
-        $this->line($plan->wasRecentlyCreated
-            ? '  <fg=green>create</> Self-Hosted (unlimited)'
-            : '  <fg=yellow>update</> Self-Hosted (unlimited)');
+        $attributes = [
+            'sort_order' => 10,
+            'name' => ['en' => 'Self-Hosted', 'de' => 'Self-Hosted', 'default' => 'Self-Hosted'],
+            'description' => [
+                'en' => 'Unlimited plan for this installation',
+                'de' => 'Unlimitierter Plan für diese Installation',
+                'default' => 'Unlimited plan for this installation',
+            ],
+            'features' => [
+                'en' => ['Unlimited API requests, traffic, storage and users'],
+                'de' => ['Unbegrenzte API-Anfragen, Datenvolumen, Speicher und Nutzer'],
+                'default' => ['Unlimited API requests, traffic, storage and users'],
+            ],
+            'price' => '0.00',
+            'period' => 'month',
+            'quotas' => null,
+            'contact_url' => null,
+            'is_free' => true,
+            'is_active' => true,
+        ];
+
+        if ($plan) {
+            $plan->update($attributes);
+            $this->line('  <fg=yellow>update</> Self-Hosted (unlimited)');
+        } else {
+            Plan::create($attributes);
+            $this->line('  <fg=green>create</> Self-Hosted (unlimited)');
+        }
     }
 
     private function linkToLemonSqueezy(): void

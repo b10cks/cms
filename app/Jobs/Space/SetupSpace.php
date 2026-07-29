@@ -74,6 +74,15 @@ class SetupSpace extends QueuedJob
                     'database' => storage_path("app/spaces/{$space->id}/space.sqlite"),
                 ];
             } else {
+                // Same restriction b10cks:setup enforces at install time —
+                // backups can only dump prefixed table lists on MySQL/MariaDB.
+                if (! in_array($config['driver'], ['mysql', 'mariadb', 'sqlite'], true)) {
+                    throw new \RuntimeException(sprintf(
+                        'The shared install profile does not support a "%s" main database.',
+                        $config['driver']
+                    ));
+                }
+
                 $attributes['config'] = [
                     'database' => $config['database'],
                     'prefix' => self::sharedTablePrefix($space->id),
