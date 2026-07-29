@@ -2390,6 +2390,8 @@
         "tokenNamePlaceholder": "z.B. Website-Integration",
         "generateToken": "Token generieren",
         "generating": "Wird generiert...",
+        "allowPreview": "Entwurfsvorschau erlauben",
+        "allowPreviewDescription": "Erlaubt diesem Token, unveröffentlichte Entwurfsversionen abzurufen (vid=draft). Nur für Tokens von Vorschau-Umgebungen aktivieren.",
         "existingTokens": "Existierende Tokens",
         "name": "Name",
         "token": "Token",

@@ -4,7 +4,6 @@ namespace Database\Factories\Management;
 
 use App\Models\Management\Space;
 use App\Models\Management\Token;
-use App\ValueObjects\TokenAbility;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -21,7 +20,7 @@ class TokenFactory extends Factory
             'space_id' => Space::factory(),
             'name' => fake()->words(3, true),
             'token' => Str::random(64),
-            'abilities' => ['*:read', '*:create', '*:update', '*:delete'],
+            'abilities' => ['*:read', '*:create', '*:update', '*:delete', '*:preview'],
             'expires_at' => fake()->optional(0.7)->dateTimeBetween('now', '+1 year'),
         ];
     }

@@ -25,7 +25,7 @@ All requests authenticate with the space's access token as a `token` query param
 Every entry has up to two deliverable versions:
 
 - `vid=published` (default) — the published version; what live traffic should see.
-- `vid=draft` — the current working version; used by editor previews.
+- `vid=draft` — the current working version; used by editor previews. Requires a token with the `preview` ability — enable "Allow draft preview" when generating the token. Tokens issued before ability enforcement keep their draft access.
 
 ```
 GET /api/v1/contents/home?vid=draft

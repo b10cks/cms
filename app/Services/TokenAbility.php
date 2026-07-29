@@ -6,7 +6,7 @@ use Illuminate\Support\Collection;
 
 class TokenAbility
 {
-    private const array ALLOWED_ACTIONS = ['read', 'create', 'update', 'delete'];
+    private const array ALLOWED_ACTIONS = ['read', 'create', 'update', 'delete', 'preview'];
 
     private Collection $abilities;
 

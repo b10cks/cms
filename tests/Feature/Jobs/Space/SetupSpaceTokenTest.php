@@ -41,7 +41,7 @@ class SetupSpaceTokenTest extends TestCase
         $token = $space->tokens()->sole();
 
         $this->assertSame('Default', $token->name);
-        $this->assertSame(['*:read'], $token->abilities->toArray());
+        $this->assertSame(['*:read', '*:preview'], $token->abilities->toArray());
         $this->assertStringStartsWith('blx_', $token->token);
     }
 

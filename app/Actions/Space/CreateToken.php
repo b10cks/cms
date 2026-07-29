@@ -16,6 +16,12 @@ class CreateToken
         $token->fill($data);
         $token->space_id = $space->id;
 
+        // Published-content reads only unless the caller grants more; draft
+        // access needs an explicit `preview` ability.
+        if (empty($data['abilities'])) {
+            $token->abilities = ['*:read'];
+        }
+
         $plainTextToken = 'blx_' . Str::random(24);
         $token->token = $plainTextToken;
 

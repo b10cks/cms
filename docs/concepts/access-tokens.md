@@ -18,10 +18,11 @@ Create and revoke tokens in **Settings → Access tokens**. Tokens:
 
 - belong to exactly one space (the token *is* the space selector — no space ID in the URL)
 - carry **abilities** in `resource:action` form (e.g. `contents:read`, or `*:read` for read-everything); delivery tokens are read-only by nature
+- need the **`preview` ability** (`*:preview` / `contents:preview`) to fetch unpublished versions via `vid=draft`; tokens without it serve published content only
 - can expire, and record usage statistics (request counts, execution stats) you can inspect in the space's usage page
 - only work while the space is `live`
 
-Use one token per environment (production, staging, preview) so each can be revoked independently. A leaked delivery token exposes *read* access to the space's published and draft content — rotate it in settings.
+Use one token per environment (production, staging, preview) so each can be revoked independently — and grant `preview` only to the tokens preview environments actually use. A leaked delivery token exposes *read* access to the space's published content — and to drafts if it carries `preview`. Rotate it in settings. Tokens issued before ability enforcement were grandfathered with `preview` so embedded tokens keep working; revoke and re-issue them to tighten scope.
 
 > **Management API is different.** The admin/management API (`/mgmt/v1/…`) authenticates with per-user personal access tokens as a `Bearer` header, not with space delivery tokens. See [API overview](../api/overview.md).
 

@@ -6,7 +6,7 @@ import { toast } from 'vue-sonner'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
-import { InputField } from '~/components/ui/form'
+import { CheckboxField, InputField } from '~/components/ui/form'
 import {
   Table,
   TableBody,
@@ -27,6 +27,7 @@ const { mutate: createToken, isPending: isGenerating } = useCreateTokenMutation(
 const { mutate: deleteToken } = useDeleteTokenMutation()
 
 const newTokenName = ref('')
+const newTokenPreview = ref<boolean | 'indeterminate'>(false)
 const currentToken = ref('')
 
 const { copy } = useClipboard({ source: currentToken })
@@ -35,8 +36,10 @@ const generateToken = async () => {
   if (newTokenName.value) {
     await createToken({
       name: newTokenName.value,
+      abilities: newTokenPreview.value === true ? ['*:read', '*:preview'] : ['*:read'],
     })
     newTokenName.value = ''
+    newTokenPreview.value = false
   }
 }
 
@@ -79,6 +82,13 @@ const copyToken = (token: string) => {
           }}
         </Button>
       </div>
+
+      <CheckboxField
+        v-model="newTokenPreview"
+        name="token-preview"
+        :label="$t('labels.settings.accessTokens.allowPreview')"
+        :description="$t('labels.settings.accessTokens.allowPreviewDescription')"
+      />
 
       <div class="space-y-2">
         <h4 class="text-sm font-medium">{{ $t('labels.settings.accessTokens.existingTokens') }}</h4>

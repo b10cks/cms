@@ -41,9 +41,11 @@ class SetupSpace extends QueuedJob
             return;
         }
 
+        // Preview is included so a fresh space's still-unpublished content is
+        // reachable during onboarding; drop it once real tokens exist.
         app(CreateToken::class)->execute([
             'name' => 'Default',
-            'abilities' => ['*:read'],
+            'abilities' => ['*:read', '*:preview'],
         ], $space, null);
     }
 

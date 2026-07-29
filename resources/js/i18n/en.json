@@ -2388,6 +2388,8 @@
         "tokenNamePlaceholder": "e.g., Website Integration",
         "generateToken": "Generate Token",
         "generating": "Generating...",
+        "allowPreview": "Allow draft preview",
+        "allowPreviewDescription": "Lets this token fetch unpublished draft versions (vid=draft). Only enable it for tokens used by preview environments.",
         "existingTokens": "Existing Tokens",
         "name": "Name",
         "token": "Token",
