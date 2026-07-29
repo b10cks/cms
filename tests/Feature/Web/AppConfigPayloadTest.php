@@ -66,6 +66,10 @@ class AppConfigPayloadTest extends TestCase
 
     public function test_app_shell_injects_payload(): void
     {
+        // CI runs the suite without a frontend build, so the real Vite
+        // manifest does not exist there.
+        $this->withoutVite();
+
         $response = $this->get('/');
 
         $response->assertOk();
