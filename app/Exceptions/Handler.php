@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use App\Services\PostHog\ExceptionReporter;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
 
@@ -32,8 +33,10 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
+        // reportable() already respects $dontReport / shouldntReport, so
+        // expected exceptions (validation, 404, auth, throttle) never get here.
         $this->reportable(function (Throwable $e) {
-            //
+            app(ExceptionReporter::class)->report($e);
         });
     }
 

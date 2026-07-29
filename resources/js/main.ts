@@ -41,5 +41,5 @@ app.mount('#app')
 
 if (isClient) {
   installEcho(app)
-  installPosthog()
+  installPosthog(app)
 }
