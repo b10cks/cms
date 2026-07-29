@@ -46,11 +46,16 @@
       },
       "terms": "Ich akzeptiere die [Nutzungsbedingungen](https://www.b10cks.com/en/legal/terms-of-service) und die [Datenschutzerklärung](https://www.b10cks.com/en/legal/privacy-policy) von b10cks",
       "forgotPassword": "Passwort vergessen?",
-      "passwordResetDescription": "Gib deine E-Mail-Adresse ein und wir schicken dir einen Link zum Zurücksetzen deines Passworts.",
-      "passwordResetSuccess": "Wenn ein Konto mit dieser E-Mail existiert, haben wir einen Link zum Zurücksetzen gesendet.",
-      "resetPasswordDescription": "Lege ein neues Passwort für dein Konto fest.",
+      "forgotPasswordTitle": "Passwort zurücksetzen",
+      "forgotPasswordIntro": "Gib die E-Mail-Adresse ein, die du für b10cks verwendest, und wir schicken dir einen Link zum Zurücksetzen deines Passworts.",
+      "forgotPasswordSuccess": "Wenn ein Konto mit dieser E-Mail-Adresse existiert, haben wir einen Link zum Zurücksetzen gesendet.",
+      "resetPasswordTitle": "Neues Passwort festlegen",
+      "resetPasswordIntro": "Wähle ein neues Passwort für dein Konto.",
+      "resetPasswordInvalidLink": "Dieser Link zum Zurücksetzen des Passworts ist ungültig oder unvollständig.",
+      "resetPasswordSuccess": "Dein Passwort wurde zurückgesetzt. Du kannst dich jetzt mit deinem neuen Passwort anmelden.",
+      "sendResetLink": "Link zum Zurücksetzen senden",
+      "resetPasswordAction": "Passwort zurücksetzen",
       "backToLogin": "Zurück zur Anmeldung",
-      "rememberPassword": "Passwort wieder eingefallen?",
       "marketing": {
         "demo": "Interessiert? [Buche eine Demo](https://www.b10cks.com/de/demo) mit uns.",
         "header": "Dein Content, **gebaut für Skalierbarkeit**.",
@@ -1607,10 +1612,6 @@
           "label": "Text",
           "description": "Einzeiliges Textfeld"
         },
-        "reference": {
-          "label": "Referenz",
-          "description": "Referenz zu anderem Inhalt"
-        },
         "references": {
           "label": "Referenz",
           "description": "Referenz zu anderem Inhalt"
@@ -1618,10 +1619,6 @@
         "asset": {
           "label": "Asset",
           "description": "Referenz zu einem Asset"
-        },
-        "multiAsset": {
-          "label": "Multi Asset",
-          "description": "Referenziere mehrere Assets"
         },
         "multi_assets": {
           "label": "Multi Asset",
@@ -1808,6 +1805,7 @@
       },
       "emptyTitle": "Erstelle den Space, in dem dein nächstes Projekt Gestalt annimmt.",
       "emptyDescription": "Spaces geben deinem Team ein gemeinsames Zuhause für Inhalte, Assets, Workflows und Struktur. Starte mit deinem ersten Space und baue von dort aus weiter.",
+      "empty": "Noch keine Spaces.",
       "newPageTitle": "Erstelle einen neuen Space",
       "newPageDescription": "Erstelle einen neuen Content Space, um deine Inhalte zu organisieren.",
       "noCreateAccess": "Du kannst {team} auswählen, aber in diesem Team keine Spaces erstellen.",
@@ -2429,6 +2427,10 @@
       "ai": {
         "title": "KI-Einstellungen",
         "description": "Konfiguriere KI-Features und überwache die Nutzung.",
+        "configTitle": "KI-Verhalten & Regeln",
+        "configDescription": "Passe Verhalten, Tonalität und Regeln dafür an, wie die KI Inhalte in deinem Space erstellt und ändert.",
+        "temperatureDescription": "Steuert die Zufälligkeit der KI-Ausgabe. Niedrigere Werte liefern fokussiertere, deterministischere Ergebnisse.",
+        "confirmDelete": "Möchtest du die Konfiguration \"{name}\" wirklich löschen?",
         "enableAIFeatures": "KI-Features aktivieren",
         "featuresDescription": "KI-Features beinhalten Content-Vorschläge, automatische Tagging und intelligente Suche.",
         "usage": "KI-Nutzung",
@@ -4328,6 +4330,7 @@
       }
     },
     "view": {
+      "view": "Ansehen",
       "all": "Alle",
       "archived": "Archiviert"
     },
@@ -4451,6 +4454,8 @@
     "aiSettings": {
       "saveSuccess": "KI-Einstellungen erfolgreich gespeichert",
       "saveError": "KI-Einstellungen konnten nicht gespeichert werden",
+      "configSaveSuccess": "KI-Konfiguration erfolgreich gespeichert",
+      "configSaveError": "KI-Konfiguration konnte nicht gespeichert werden",
       "configUpdateSuccess": "AI configuration updated successfully",
       "configUpdateError": "Failed to update AI configuration",
       "configCreateSuccess": "AI configuration created successfully",
