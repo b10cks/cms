@@ -3,6 +3,33 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.29-739eae81] — 2026-7-29
+
+- 📝 Fix the CACHE_STORE key and pin advice in the self-hosting docs
+- 👷 Gate the production deploy on the test suite
+- 🔒 Fix self-hosting blockers and gate the release on tests
+- 📝 Ready the README, docs and community files for launch
+- 👷 Pin workflow actions and attest the release artifacts
+- 🔒 Harden the installer, compose defaults and the setup endpoint
+- ✨ Close self-hosted registration once the first account exists
+- 📝 Document the get.b10cks.com one-line install
+- 🐛 Fix second-pass self-hosting review findings
+- 👷 Add the get.b10cks.com installer and GHCR release mirror
+- 🐛 Scope the transfers disk root to the local driver
+- 🐛 Harden self-hosting review findings
+- 🐛 Serve /setup outside the web middleware group
+- 📝 Document the self-hosted distributions and edition configuration
+- 👷 Publish Docker Hub image + webhost package on release tags
+- 📦 Add webhost release package script and cron-driven queue draining
+- 🐳 Add self-host Docker entrypoint, compose stack and env template
+- ✨ Make the mail footer imprint edition-aware
+- ✨ Support a local transfers disk with signed app-served downloads
+- ✨ Provision shared-profile space databases without admin privileges
+- ✨ Add b10cks:setup installer with profiles and HTTP /setup endpoint
+- ✨ Add plans:setup --self-hosted preset
+- ✨ Add feature flags to the SPA config and make realtime optional
+- ✨ Add edition gate for SaaS-only billing surface
+
 ## [v2026.7.29-5acd0668] — 2026-7-29
 
 - 🔒 Run the container as an unprivileged app user
