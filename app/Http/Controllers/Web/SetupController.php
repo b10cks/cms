@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Setup\InstallState;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
@@ -37,6 +38,21 @@ class SetupController extends Controller
         }
 
         try {
+            // Poor man's rate limit: throttle middleware needs a cache store,
+            // which may live in the database this request is about to create.
+            // One attempt per 30s is plenty for a one-shot installer and stops
+            // scanners from driving repeated migration runs.
+            $attemptPath = dirname($installState->path()).'/.setup.last-attempt';
+            $lastAttempt = @filemtime($attemptPath);
+            if ($lastAttempt !== false && time() - $lastAttempt < 30) {
+                return response($this->renderResult(
+                    title: 'b10cks setup is rate limited',
+                    status: 'too many requests',
+                    output: 'A setup attempt ran moments ago. Retry in 30 seconds.'
+                ), 429);
+            }
+            @touch($attemptPath);
+
             if ($installState->exists()) {
                 return response($this->renderResult(
                     title: 'b10cks is already installed',
@@ -75,10 +91,15 @@ class SetupController extends Controller
             ));
         }
 
+        // The command output can carry connection details (a PDOException
+        // message includes host, database and username) — that belongs in the
+        // log, not in an unauthenticated HTTP response.
+        Log::error('HTTP setup failed', ['output' => $output]);
+
         return response($this->renderResult(
             title: 'b10cks setup failed',
             status: 'error',
-            output: $output
+            output: 'Setup failed. The full output has been written to storage/logs/laravel.log.'
         ), 500);
     }
 

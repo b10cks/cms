@@ -32,6 +32,11 @@ for path in app bootstrap config database public resources routes vendor artisan
   rsync -a "$ROOT_DIR/$path" "$PACKAGE_DIR/"
 done
 
+# A cached config (php artisan config:cache) contains the fully resolved .env
+# of the build machine — secrets included. It must never ship, and a baked
+# cache would override the operator's .env anyway.
+rm -f "$PACKAGE_DIR"/bootstrap/cache/*.php
+
 # Webhost-tuned environment template ships as the package's .env.example.
 cp "$ROOT_DIR/.env.webhost.example" "$PACKAGE_DIR/.env.example"
 

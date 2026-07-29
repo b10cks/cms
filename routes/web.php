@@ -14,7 +14,7 @@ Route::get('/', AppController::class)->name('home');
 // Streams package/backup downloads when the transfers disk is local
 // (self-hosted without S3); links are short-lived signed URLs.
 Route::get('/transfers/download', TransferDownloadController::class)
-    ->middleware('signed')
+    ->middleware(['signed', 'throttle:shares'])
     ->name('transfers.download');
 
 // Auth routes

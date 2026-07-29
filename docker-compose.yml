@@ -5,7 +5,10 @@ services:
   app:
     image: b10cks/cms:${B10CKS_IMAGE_TAG:-latest}
     ports:
-      - "${APP_PORT:-8000}:8000"
+      # Loopback only by default: the stack speaks plain HTTP, so anything
+      # reachable from other machines must sit behind a TLS reverse proxy.
+      # Set APP_BIND=0.0.0.0 to expose it directly (not recommended).
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -29,7 +32,7 @@ services:
       # needs administrative MySQL privileges — hence root by default. Use a
       # restricted user together with B10CKS_INSTALL_PROFILE=shared.
       DB_USERNAME: ${DB_USERNAME:-root}
-      DB_PASSWORD: ${DB_PASSWORD:-${DB_ROOT_PASSWORD:-root}}
+      DB_PASSWORD: ${DB_PASSWORD:-${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env — refusing to boot with a default password}}
       QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
       SESSION_DRIVER: ${SESSION_DRIVER:-database}
       CACHE_STORE: ${CACHE_STORE:-file}
@@ -71,7 +74,7 @@ services:
     image: b10cks/cms:${B10CKS_IMAGE_TAG:-latest}
     profiles: ["reverb"]
     ports:
-      - "${REVERB_PUBLIC_PORT:-8001}:8001"
+      - "${APP_BIND:-127.0.0.1}:${REVERB_PUBLIC_PORT:-8001}:8001"
     depends_on:
       db:
         condition: service_healthy
@@ -86,11 +89,11 @@ services:
     image: mariadb:11.4
     environment:
       MARIADB_DATABASE: ${DB_DATABASE:-b10cks}
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env — refusing to boot with a default password}
     volumes:
       - db-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p${DB_ROOT_PASSWORD:-root} --silent"]
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p${DB_ROOT_PASSWORD} --silent"]
       interval: 10s
       timeout: 5s
       retries: 10
