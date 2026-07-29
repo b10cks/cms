@@ -55,7 +55,7 @@ docker compose --profile redis --profile opensearch --profile reverb up -d
 
 Realtime collaboration needs the `reverb` profile plus `BROADCAST_DRIVER=reverb` and `REVERB_APP_KEY`/`REVERB_APP_SECRET`; without it the app runs fine, just without live presence.
 
-Images are published for every release tag to [Docker Hub](https://hub.docker.com/r/b10cks/cms) and mirrored to [GHCR](https://github.com/b10cks/cms/pkgs/container/cms) as `ghcr.io/b10cks/cms`. Both are `linux/amd64` only for now — on Apple Silicon or an arm64 VPS, Docker will run them under emulation. The compose file points at Docker Hub; if you are behind a shared IP and hit its unauthenticated pull limit, set `B10CKS_IMAGE_TAG` aside and override the image with the `ghcr.io/b10cks/cms` name instead.
+Images are published for every release tag to [Docker Hub](https://hub.docker.com/r/b10cks/cms) and mirrored to [GHCR](https://github.com/b10cks/cms/pkgs/container/cms) as `ghcr.io/b10cks/cms`. Both are `linux/amd64` only for now — on Apple Silicon or an arm64 VPS, Docker will run them under emulation. The compose file points at Docker Hub; if you are behind a shared IP and hit its unauthenticated pull limit, keep `B10CKS_IMAGE_TAG` as-is and change the `image:` name in `docker-compose.yml` to `ghcr.io/b10cks/cms`.
 
 ## Webhost package (shared hosting)
 
@@ -94,7 +94,7 @@ Serve `public/` with your web server of choice, then work through the [configura
 
 | Component | Requirement |
 | --- | --- |
-| PHP | 8.4+ (with `bcmath`, `exif`, `gd`/`imagick`, `intl`, `pdo_mysql`, `pcntl` extensions) |
+| PHP | 8.5+ (with `bcmath`, `exif`, `gd`/`imagick`, `intl`, `pdo_mysql`, `pcntl` extensions) |
 | Database | MySQL 8.0+ / MariaDB (SQLite for space databases via the shared profile) |
 | Node / Bun | Node 20+ and Bun 1.0+ (build-time only, for the admin UI) |
 | Composer | 2.5+ |
@@ -122,6 +122,20 @@ On the shared profile the scheduler also drains the queue, so the single cron li
 
 ## Upgrades
 
+### Docker Compose
+
+Set `B10CKS_IMAGE_TAG` in your `.env` to the new [release tag](https://github.com/b10cks/cms/releases), then:
+
+```bash
+docker compose pull
+docker compose up -d
+docker compose exec app php artisan migrate --force
+```
+
+`b10cks:setup` only runs on the very first boot (its state lives on the storage volume), so migrations are an explicit step on every upgrade. The restarted containers pick up new queue workers automatically — no separate `queue:restart` needed.
+
+### Manual
+
 ```bash
 git pull
 composer install --no-dev
@@ -129,6 +143,8 @@ bun install && bun run build
 php artisan migrate
 php artisan queue:restart
 ```
+
+### Webhost package
 
 For the webhost package: extract the new archive over the old tree (keep your `.env` and `storage/`), then run `php artisan migrate`. Re-arming the HTTP installer is **not** needed — migrations are the only upgrade step.
 

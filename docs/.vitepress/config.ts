@@ -116,6 +116,7 @@ function selfHostingSidebar(prefix = ''): DefaultTheme.SidebarItem[] {
         { text: 'Overview', link: `${prefix}/self-hosting/` },
         { text: 'Installation', link: `${prefix}/self-hosting/installation` },
         { text: 'Configuration', link: `${prefix}/self-hosting/configuration` },
+        { text: 'Backup & Restore', link: `${prefix}/self-hosting/backup` },
         { text: 'Plans & Pricing', link: `${prefix}/self-hosting/plans-and-pricing` },
       ],
     },

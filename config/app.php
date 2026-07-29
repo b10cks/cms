@@ -23,7 +23,7 @@ return [
     // own docs can repoint this; paths are appended (e.g. `/guides/nuxt`).
     'docs_url' => rtrim(env('APP_DOCS_URL', 'https://www.b10cks.com/docs'), '/'),
 
-    'community_url' => env('APP_COMMUNITY_URL', 'https://discord.gg/zAz6sBDpHT'),
+    'community_url' => env('APP_COMMUNITY_URL', 'https://discord.gg/mdcDktFFcp'),
 
     'sidebar_menu' => json_decode(
         env('APP_SIDEBAR_MENU', json_encode([
@@ -40,7 +40,7 @@ return [
             [
                 'label' => 'Community',
                 'icon' => 'lucide:users',
-                'href' => 'https://discord.gg/zAz6sBDpHT',
+                'href' => 'https://discord.gg/mdcDktFFcp',
             ],
             [
                 'label' => 'Report a problem',

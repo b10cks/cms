@@ -1,0 +1,72 @@
+name: Bug report
+description: Something isn't working as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. A report someone can reproduce without guessing saves hours — please fill in as much as you can.
+  - type: input
+    id: version
+    attributes:
+      label: b10cks version
+      description: The release tag you are running (or commit SHA).
+      placeholder: v2026.7.29-5acd0668
+    validations:
+      required: true
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: Install method
+      options:
+        - One-line installer (get.b10cks.com)
+        - Docker Compose
+        - Webhost package
+        - Manual
+        - b10cks Cloud
+    validations:
+      required: true
+  - type: input
+    id: php-version
+    attributes:
+      label: PHP version
+      placeholder: "8.5.2"
+    validations:
+      required: true
+  - type: input
+    id: database
+    attributes:
+      label: Database
+      description: Engine and version.
+      placeholder: MariaDB 11.4
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Be specific — what did you click, call, or run?
+      placeholder: |
+        1. Go to …
+        2. Click …
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Relevant lines from `storage/logs/laravel.log`, browser console output, or screenshots. This field is rendered as code automatically.
+      render: shell

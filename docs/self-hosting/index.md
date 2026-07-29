@@ -4,7 +4,7 @@ description: "Run b10cks on your own infrastructure: what's involved, requiremen
 
 # Self-hosting b10cks
 
-b10cks CMS is open source (AGPL-3.0) and built as a Laravel application with a Vue admin UI. It runs anywhere PHP 8.4+ runs — a VPS, Docker, or even shared webhosting. Self-hosting gives you the full product: every feature in these docs works on your own instance, with no license keys or feature gates.
+b10cks CMS is open source (AGPL-3.0) and built as a Laravel application with a Vue admin UI. It runs anywhere PHP 8.5+ runs — a VPS, Docker, or even shared webhosting. Self-hosting gives you the full product: every feature in these docs works on your own instance, with no license keys or feature gates.
 
 On a machine with Docker, one command gets you a running instance:
 
@@ -22,6 +22,7 @@ This section is for the person **operating** an instance. If you're building a s
 | --- | --- |
 | [Installation](installation.md) | Requirements, install steps, the long-lived processes, and upgrades |
 | [Configuration](configuration.md) | The `.env` reference: database, storage, real-time, search, AI, mail |
+| [Backup & restore](backup.md) | What to back up, how to dump the databases, and how to restore |
 | [Plans & pricing](plans-and-pricing.md) | Optional billing: public plans, LemonSqueezy, custom/agency plans, quota overrides |
 
 ## The moving parts

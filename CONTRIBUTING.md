@@ -22,7 +22,7 @@ This guide will get you from zero to merged PR as smoothly as possible.
 
 ## Code of Conduct
 
-We expect everyone in this community to be kind, patient, and constructive. Harassment, gatekeeping, and dismissiveness have no place here. Treat people the way you'd want to be treated on a bad day.
+We expect everyone in this community to be kind, patient, and constructive. Harassment, gatekeeping, and dismissiveness have no place here. Treat people the way you'd want to be treated on a bad day. The full text lives in [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 Violations can be reported to [hello@b10cks.com](mailto:hello@b10cks.com).
 
@@ -34,7 +34,7 @@ You don't have to write code to make a difference:
 
 - **Report a bug** — even a well-written issue saves someone hours of guesswork
 - **Improve docs** — spotted something confusing or missing? Fix it
-- **Answer questions** — help others in [GitHub Discussions](https://github.com/b10cks/cms/discussions) or [Discord](https://discord.gg/UT6GrvhvBx)
+- **Answer questions** — help others in [GitHub Discussions](https://github.com/b10cks/cms/discussions) or [Discord](https://discord.gg/mdcDktFFcp)
 - **Review pull requests** — feedback from fresh eyes is invaluable
 - **Translate** — help make b10cks accessible to more people
 - **Write code** — bug fixes, features, performance improvements, tests
@@ -65,7 +65,21 @@ php artisan key:generate
 php artisan migrate
 ```
 
-### 4. Create a branch
+You need PHP 8.5+, Composer 2.5+, Bun 1.0+, and MySQL 8.0+ (or MariaDB).
+
+### 4. Run the app
+
+Three processes need to run while developing:
+
+```bash
+php artisan serve         # Laravel backend
+bun run dev               # Vite dev server for the admin UI
+php artisan reverb:start  # WebSockets for real-time features
+```
+
+Optional: Redis 6.0+ for caching and queues, OpenSearch for relevance-tuned search.
+
+### 5. Create a branch
 
 Use a short, descriptive name:
 
@@ -76,7 +90,7 @@ git checkout -b feat/opensearch-wildcard-queries
 
 Prefixes: `feat/`, `fix/`, `docs/`, `refactor/`, `test/`, `chore/`
 
-### 5. Make your changes, then open a PR
+### 6. Make your changes, then open a PR
 
 ---
 
@@ -209,7 +223,7 @@ A PR is ready to merge when:
 
 ### TypeScript / Vue
 
-- Prettier + ESLint — run `bun lint` and `bun format` before pushing
+- oxlint + oxfmt — run `bun run lint` and `bun run format` before pushing
 - Vue components use the Composition API with `<script setup>`
 - Composables follow the `use*.ts` naming convention and live in `resources/js/composables/`
 
@@ -252,7 +266,7 @@ Start a conversation in [GitHub Discussions](https://github.com/b10cks/cms/discu
 
 ## Questions?
 
-If you're unsure about anything — scope, approach, conventions — just ask before you invest time writing code. Open a discussion, drop by [Discord](https://discord.gg/UT6GrvhvBx), or leave a comment on the relevant issue.
+If you're unsure about anything — scope, approach, conventions — just ask before you invest time writing code. Open a discussion, drop by [Discord](https://discord.gg/mdcDktFFcp), or leave a comment on the relevant issue.
 
 We'd rather answer a question upfront than ask you to rewrite a PR.
 
