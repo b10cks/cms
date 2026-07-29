@@ -112,6 +112,12 @@ class RouteServiceProvider extends ServiceProvider
                     ->group(base_path('routes/webhooks.php'));
             }
 
+            // One-shot installer for hosts without shell access; 404s unless
+            // explicitly enabled and self-disarms after a successful run.
+            // Deliberately outside the 'web' group: session/cookie encryption
+            // would require the very APP_KEY this endpoint generates.
+            Route::get('/setup', \App\Http\Controllers\Web\SetupController::class)->name('setup');
+
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
 
