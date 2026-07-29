@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.7.29-80aae291] — 2026-7-29
+
+- ✅ Fake the Vite manifest in the app-shell payload test
+- 👷 Key the test-suite concurrency group on the calling workflow
+
 ## [v2026.7.29-739eae81] — 2026-7-29
 
 - 📝 Fix the CACHE_STORE key and pin advice in the self-hosting docs
