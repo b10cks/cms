@@ -21,6 +21,7 @@ import ContentWizardNodeCard from './ContentWizardNodeCard.vue'
 const props = defineProps<{
   nodes: Record<string, ContentWizardDraftNode>
   bounds: ContentWizardBounds
+  spaceId: string
   rootTitle?: string
   canMutate?: boolean
   focusedNodeId: string | null
@@ -61,7 +62,12 @@ const emit = defineEmits<{
   (event: 'toggle-collapse', nodeId: string): void
   (
     event: 'add-node',
-    payload: { nodeId: string; position: ContentWizardAddPosition; block: BlockResource }
+    payload: {
+      nodeId: string
+      position: ContentWizardAddPosition
+      block: BlockResource
+      template?: BlockTemplate | null
+    }
   ): void
   (event: 'dragstart', payload: { nodeId: string; event: DragEvent }): void
   (event: 'dragend'): void
@@ -375,7 +381,9 @@ const openNodeAddMenu = (
     focusNodeCard(nodeId)
   }
 
-  if (blocks.length === 1) {
+  // With a single choice the menu is pure friction — unless that block has
+  // templates, in which case there is still a decision to make.
+  if (blocks.length === 1 && !blocks[0].templates_count) {
     sharedAddMenuOpen.value = false
     emit('add-node', {
       nodeId,
@@ -479,7 +487,10 @@ const handleSharedAddControlsPointerLeave = (event: PointerEvent) => {
   hoveredNodeId.value = null
 }
 
-const handleSharedAddSelect = (block: BlockResource) => {
+const handleSharedAddSelect = (payload: {
+  block: BlockResource
+  template: BlockTemplate | null
+}) => {
   if (!sharedAddMenuNodeId.value) {
     return
   }
@@ -487,7 +498,8 @@ const handleSharedAddSelect = (block: BlockResource) => {
   emit('add-node', {
     nodeId: sharedAddMenuNodeId.value,
     position: sharedAddMenuPosition.value,
-    block,
+    block: payload.block,
+    template: payload.template,
   })
 }
 
@@ -715,6 +727,7 @@ defineExpose({
         <ContentWizardAddMenu
           v-model="sharedAddMenuOpen"
           :blocks="sharedAddMenuBlocks"
+          :space-id="spaceId"
           :side="sharedAddMenuSide"
           :anchor-style="sharedAddMenuAnchorStyle"
           @select="handleSharedAddSelect"

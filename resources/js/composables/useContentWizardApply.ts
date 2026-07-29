@@ -133,6 +133,9 @@ export function useContentWizardApply(
               slug: resolveEffectiveSlug(node.title, node.slug),
               block_id: node.blockId,
               parent_id: getNodeReferenceId(node.parentId),
+              // Omitted for blank nodes so the server applies its own schema
+              // defaults instead of being handed an empty object.
+              ...(Object.keys(node.content).length ? { content: node.content } : {}),
               settings: node.settings,
             },
           ]
