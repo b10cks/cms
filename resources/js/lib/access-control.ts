@@ -2,6 +2,8 @@ import type { RouteLocationRaw } from 'vue-router'
 
 import type { AuthorizationPayload } from '~/types/authorization'
 
+import { runtimeConfig } from '~/lib/runtime-config'
+
 export type AppRouteName = string
 
 export interface AccessEvaluationContext {
@@ -60,11 +62,15 @@ export const spaceSettingsNavigationItems: NavigationAccessItem[] = [
     icon: 'lucide:settings',
     routeName: 'space-settings-index',
   },
-  {
-    label: 'labels.settings.subscription.title',
-    icon: 'lucide:credit-card',
-    routeName: 'space-settings-subscription',
-  },
+  ...(runtimeConfig.public.features.billing
+    ? [
+        {
+          label: 'labels.settings.subscription.title',
+          icon: 'lucide:credit-card',
+          routeName: 'space-settings-subscription',
+        },
+      ]
+    : []),
   {
     label: 'labels.usage.history.title',
     icon: 'lucide:chart-line',

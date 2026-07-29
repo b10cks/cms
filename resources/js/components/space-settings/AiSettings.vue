@@ -19,6 +19,7 @@ import { Skeleton } from '~/components/ui/skeleton'
 import { Switch } from '~/components/ui/switch'
 import SimpleTooltip from '~/components/ui/tooltip/SimpleTooltip.vue'
 import { useAiConfigs, useAiModels, useAiSettings, useAiUsage } from '~/composables/useAiModels'
+import { runtimeConfig } from '~/lib/runtime-config'
 import { useAlertDialog } from '~/composables/useAlertDialog'
 
 const props = defineProps<{ space: SpaceResource }>()
@@ -220,7 +221,10 @@ const handleDeleteConfig = async (config: SpaceAiConfig) => {
           v-if="enableAI"
           class="space-y-4"
         >
-          <div class="space-y-4">
+          <div
+            v-if="runtimeConfig.public.features.ai"
+            class="space-y-4"
+          >
             <div class="flex items-start justify-between gap-4">
               <div>
                 <h4 class="font-medium">{{ $t('labels.settings.ai.usage') }}</h4>

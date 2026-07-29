@@ -21,6 +21,11 @@ declare global {
         key?: string
         host?: string
       }
+      features?: {
+        billing?: boolean
+        ai?: boolean
+        realtime?: boolean
+      }
       echo?: {
         broadcaster?: 'reverb'
         key?: string
@@ -29,7 +34,7 @@ declare global {
         wssPort?: string
         forceTLS?: boolean
         enabledTransports?: Array<'ws' | 'wss'>
-      }
+      } | null
       ilum?: {
         baseURL?: string
       }
@@ -53,15 +58,23 @@ export const runtimeConfig = {
       key: appConfig?.posthog?.key,
       host: appConfig?.posthog?.host,
     },
-    echo: {
-      broadcaster: appConfig?.echo?.broadcaster || 'reverb',
-      key: appConfig?.echo?.key,
-      wsHost: appConfig?.echo?.wsHost,
-      wsPort: appConfig?.echo?.wsPort,
-      wssPort: appConfig?.echo?.wssPort,
-      forceTLS: appConfig?.echo?.forceTLS ?? true,
-      enabledTransports: ['ws', 'wss'] as const,
+    features: {
+      // Absent payload (e.g. dev without a fresh page load) means SaaS defaults.
+      billing: appConfig?.features?.billing ?? true,
+      ai: appConfig?.features?.ai ?? true,
+      realtime: appConfig?.features?.realtime ?? Boolean(appConfig?.echo),
     },
+    echo: appConfig?.echo
+      ? {
+          broadcaster: appConfig.echo.broadcaster || 'reverb',
+          key: appConfig.echo.key,
+          wsHost: appConfig.echo.wsHost,
+          wsPort: appConfig.echo.wsPort,
+          wssPort: appConfig.echo.wssPort,
+          forceTLS: appConfig.echo.forceTLS ?? true,
+          enabledTransports: ['ws', 'wss'] as const,
+        }
+      : null,
     ilum: {
       baseURL: appConfig?.ilum?.baseURL,
     },

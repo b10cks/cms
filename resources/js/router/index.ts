@@ -7,6 +7,7 @@ import {
   ensureSelectedTeamAccess,
 } from '~/composables/useAuthorization'
 import { canAccessRouteByName, getRouteAccessRequirement } from '~/lib/access-control'
+import { runtimeConfig } from '~/lib/runtime-config'
 
 function buildAccessDeniedRedirect(
   to: { fullPath: string; params: Record<string, unknown> },
@@ -288,11 +289,15 @@ const routes: RouteRecordRaw[] = [
         name: 'space-settings-index',
         component: () => import('~/pages/[space]/settings/index.vue'),
       },
-      {
-        path: 'subscription',
-        name: 'space-settings-subscription',
-        component: () => import('~/pages/[space]/settings/subscription.vue'),
-      },
+      ...(runtimeConfig.public.features.billing
+        ? [
+            {
+              path: 'subscription',
+              name: 'space-settings-subscription',
+              component: () => import('~/pages/[space]/settings/subscription.vue'),
+            },
+          ]
+        : []),
       {
         path: 'usage',
         name: 'space-settings-usage',

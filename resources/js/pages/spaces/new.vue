@@ -19,6 +19,8 @@ import {
   StepperTrigger,
 } from '~/components/ui/stepper'
 
+import { runtimeConfig } from '~/lib/runtime-config'
+
 const router = useRouter()
 const { useCreateSpaceMutation } = useSpaces()
 const { mutate: createSpace, isPending } = useCreateSpaceMutation()
@@ -39,6 +41,8 @@ useSeoMeta({
   title: computed(() => t('labels.spaces.newPageTitle')),
 })
 
+// Self-hosted installs have a single unlimited plan — skip the plan step.
+const billingEnabled = runtimeConfig.public.features.billing
 const step = ref(1)
 const selectedBlueprintId = ref<string | undefined>()
 const selectedPlanId = ref<string | undefined>()
@@ -102,11 +106,15 @@ const steps = computed(() => [
     step: 'details',
     icon: 'lucide:settings-2',
   },
-  {
-    step: 'plan',
-    icon: 'lucide:land-plot',
-    disabled: !spaceName.value || !spaceSlug.value || !serverLocation.value,
-  },
+  ...(billingEnabled
+    ? [
+        {
+          step: 'plan',
+          icon: 'lucide:land-plot',
+          disabled: !spaceName.value || !spaceSlug.value || !serverLocation.value,
+        },
+      ]
+    : []),
 ])
 
 const handleNameChange = (event: Event) => {
@@ -136,7 +144,7 @@ watch(
 )
 
 const handleNext = async () => {
-  if (step.value < 3) {
+  if (step.value < steps.value.length) {
     step.value++
     return
   }
@@ -150,7 +158,7 @@ const handleNext = async () => {
     return
   }
 
-  if (!selectedPlanId.value || selectedPlan.value?.contact_url) {
+  if (billingEnabled && (!selectedPlanId.value || selectedPlan.value?.contact_url)) {
     return
   }
 
@@ -159,7 +167,7 @@ const handleNext = async () => {
     slug: spaceSlug.value,
     team_id: selectedTeam.value.id,
     badge: spaceBadge.value || null,
-    plan_id: selectedPlanId.value,
+    plan_id: billingEnabled ? selectedPlanId.value : null,
     billing_interval: selectedPlan.value
       ? checkoutInterval(selectedPlan.value, billingInterval.value)
       : 'month',
@@ -204,6 +212,8 @@ const isStepValid = computed(() => {
       !!canCreateSpace.value
     )
   }
+
+  if (!billingEnabled) return true
 
   return !!selectedPlanId.value && !selectedPlan.value?.contact_url
 })

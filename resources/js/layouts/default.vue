@@ -2,6 +2,7 @@
 import AppHeader from '~/components/AppHeader.vue'
 import AppSidebar from '~/components/AppSidebar.vue'
 import PendingSubscriptionBanner from '~/components/PendingSubscriptionBanner.vue'
+import { runtimeConfig } from '~/lib/runtime-config'
 
 const { useCurrentSpaceQuery } = useSpaces()
 const { data: currentSpace } = useCurrentSpaceQuery()
@@ -30,7 +31,7 @@ useUserNotifications()
   <div class="flex min-h-svh flex-col pt-14">
     <AppHeader />
     <PendingSubscriptionBanner
-      v-if="spaceId"
+      v-if="spaceId && runtimeConfig.public.features.billing"
       :space-id="spaceId"
     />
     <div class="flex flex-1 min-h-0">
