@@ -6,6 +6,12 @@ description: "Run b10cks on your own infrastructure: what's involved, requiremen
 
 b10cks CMS is open source (AGPL-3.0) and built as a Laravel application with a Vue admin UI. It runs anywhere PHP 8.4+ runs — a VPS, Docker, or even shared webhosting. Self-hosting gives you the full product: every feature in these docs works on your own instance, with no license keys or feature gates.
 
+On a machine with Docker, one command gets you a running instance:
+
+```bash
+curl -fsSL https://get.b10cks.com | sh
+```
+
 Two ready-made distributions are published for every release: the [`b10cks/cms` Docker image](https://hub.docker.com/r/b10cks/cms) (with a `docker-compose.yml` in the repo) and a **webhost package** on [GitHub releases](https://github.com/b10cks/cms/releases) — a pre-built archive for traditional hosting with a browser-based installer. See [Installation](installation.md).
 
 This section is for the person **operating** an instance. If you're building a site against b10cks Cloud (or someone else's instance), you want the [guides](../getting-started/introduction.md) instead.
