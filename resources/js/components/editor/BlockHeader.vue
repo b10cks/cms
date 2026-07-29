@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue';
+import { sanitizeHtml } from '~/lib/sanitize'
 
 const handlebars = useHandlebars()
 
@@ -31,7 +32,12 @@ const guessedTitle = computed(() => {
 
   if (props.block?.preview_template) {
     try {
-      const rendered = handlebars.render(props.block.preview_template, props.content)?.trim()
+      // The template *markup* itself is tenant-authored (block managers), so
+      // the rendered result is sanitized before it reaches the v-html sink —
+      // escaping the interpolated values alone doesn't cover the template.
+      const rendered = sanitizeHtml(
+        handlebars.render(props.block.preview_template, props.content) ?? '',
+      ).trim()
       if (rendered) {
         return rendered
       }

@@ -116,11 +116,29 @@ const src = computed(() => {
   return baseSrc?.value ? `${baseSrc.value}?b10cks_vid=draft&b10cks_rv=${timestamp / 1000}` : null
 })
 
+const originOf = (url: string | null | undefined): string | null => {
+  if (!url) return null
+  try {
+    return new URL(url).origin
+  } catch {
+    return null
+  }
+}
+
 // Initialize connection with the iframe
 const setupConnection = async () => {
   if (!iframeRef.value || !baseSrc.value) return
 
-  previewBridge = new PreviewBridge(iframeRef.value)
+  // Trust exactly the origins of the configured preview environments; the
+  // active one is where outgoing draft updates are addressed.
+  const allowedOrigins = availableEnvironments.value
+    .map((environment) => originOf(environment.url))
+    .filter((origin): origin is string => origin !== null)
+
+  previewBridge = new PreviewBridge(iframeRef.value, {
+    allowedOrigins,
+    targetOrigin: originOf(currentEnvironmentUrl.value) ?? undefined,
+  })
   previewBridge.on('SELECT_UPDATE', ({ selectedItem }) => {
     emit('selectItem', selectedItem)
   })
@@ -311,6 +329,7 @@ const handleMouseMove = (event: MouseEvent) => {
             >
               <button
                 :class="['shrink-0 cursor-pointer', src || 'invisible']"
+                :aria-label="$t('labels.preview.openExternal')"
                 @click="openExternal"
               >
                 <Icon name="lucide:external-link" />
@@ -323,6 +342,7 @@ const handleMouseMove = (event: MouseEvent) => {
             >
               <button
                 :class="['shrink-0 cursor-pointer', src || 'invisible']"
+                :aria-label="$t('labels.preview.copyLink')"
                 @click="copyLink"
               >
                 <Icon name="lucide:link" />
@@ -336,6 +356,7 @@ const handleMouseMove = (event: MouseEvent) => {
             >
               <button
                 class="shrink-0 cursor-pointer"
+                :aria-label="$t('labels.preview.mode')"
                 @click="mode === 'desktop' ? (mode = 'mobile') : (mode = 'desktop')"
               >
                 <Icon name="lucide:monitor-smartphone" />
@@ -368,7 +389,10 @@ const handleMouseMove = (event: MouseEvent) => {
               </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
-              <DropdownMenuTrigger class="flex">
+              <DropdownMenuTrigger
+                class="flex"
+                :aria-label="$t('labels.preview.settings')"
+              >
                 <Icon name="lucide:cog" />
               </DropdownMenuTrigger>
               <DropdownMenuContent>

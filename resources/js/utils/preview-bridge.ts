@@ -67,17 +67,41 @@ export type BridgeEvent = {
   payload: ContentUpdateEvent | SelectUpdateEvent
 }
 
+export type PreviewBridgeOptions = {
+  /**
+   * Origins of the space's configured preview environments. Messages from any
+   * other origin are dropped, so an iframe that navigated away from the
+   * configured site can no longer drive the editor.
+   */
+  allowedOrigins?: string[]
+  /** Origin outgoing messages are addressed to; defaults to the first allowed origin. */
+  targetOrigin?: string
+}
+
 export class PreviewBridge extends MessageEmitter<EventPayloadMap> {
   private iframeElement: HTMLIFrameElement | null = null
+  private allowedOrigins: Set<string>
+  private targetOrigin: string
 
-  constructor(iframeElement: HTMLIFrameElement) {
+  constructor(iframeElement: HTMLIFrameElement, options: PreviewBridgeOptions = {}) {
     super()
     this.iframeElement = iframeElement
+    this.allowedOrigins = new Set(options.allowedOrigins ?? [])
+    this.targetOrigin = options.targetOrigin ?? options.allowedOrigins?.[0] ?? '*'
     window.addEventListener('message', this.handleMessage)
   }
 
   private handleMessage = (event: MessageEvent): void => {
     if (!event.data || typeof event.data !== 'object') return
+    // Only the preview iframe itself may talk to the editor — any other
+    // window (a popup, a sibling iframe) holding a reference to the console
+    // is ignored, as is a configured-origin mismatch.
+    if (!this.iframeElement?.contentWindow || event.source !== this.iframeElement.contentWindow) {
+      return
+    }
+    if (this.allowedOrigins.size > 0 && !this.allowedOrigins.has(event.origin)) {
+      return
+    }
     const { type, payload } = event.data
 
     this.notifyListeners(type as EventType, payload)
@@ -93,7 +117,7 @@ export class PreviewBridge extends MessageEmitter<EventPayloadMap> {
         type,
         payload,
       },
-      '*'
+      this.targetOrigin
     )
   }
 
