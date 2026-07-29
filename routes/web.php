@@ -4,11 +4,17 @@ use App\Http\Controllers\Auth\SamlLoginController;
 use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\Web\AppController;
 use App\Http\Controllers\Web\DocsController;
+use App\Http\Controllers\Web\SetupController;
 use App\Http\Controllers\Web\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 // Root
 Route::get('/', AppController::class)->name('home');
+
+// One-shot installer for hosts without shell access; 404s unless explicitly
+// enabled and self-disarms after a successful run. Must stay ahead of the
+// /{space} catch-all below.
+Route::get('/setup', SetupController::class)->name('setup');
 
 // Auth routes
 Route::get('/login', AppController::class)->name('login');
