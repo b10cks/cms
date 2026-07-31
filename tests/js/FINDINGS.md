@@ -12,13 +12,17 @@ described: the text and line numbers record what was wrong at audit time, and th
 now guards the fix.
 
 Counts at audit time: 37 HIGH, ~106 MED, ~97 LOW (the original header said 36 HIGH; 37 is the
-tally of HIGH entries below). After the fix pass, **two findings remain OPEN**, each
-re-verified against the current source — and neither is a live user-visible bug:
+tally of HIGH entries below). **Nothing remains open.** The last two — `findItemById`'s
+ancestor-index leak (#4) and `broadcastBlockOperation`'s missing `isConnected` guard (#5) —
+were fixed in the follow-up pass along with two decisions the sweep surfaced but could not
+make on its own:
 
-1. `findItemById` leaks an ancestor array index onto an object-slot result (latent — Open #4).
-2. `broadcastBlockOperation` has no `isConnected` guard (minor — Open #5).
-
-No HIGH findings remain open.
+- `clearClipboard` reads the system clipboard before overwriting it and only clears our own
+  serialized item, so clearing an editor selection cannot destroy what the user copied in
+  another application.
+- The wizard's slug input re-seats itself from the store on blur. `updateSlug` already
+  slugified every keystroke; the card's local ref just never showed it, so raw input that
+  normalized to the same slug left the field disagreeing with what would be saved.
 
 Severity is triage, not ceremony: **HIGH** = user-visible bug or security consequence,
 **MED** = wrong-but-contained or a trap for the next change, **LOW** = cosmetic or dead surface.
@@ -28,8 +32,7 @@ Severity is triage, not ceremony: **HIGH** = user-visible bug or security conseq
 ## Start here — the ten that were worth fixing first (all now FIXED)
 
 Ordered by consequence at audit time. **Every row below has been fixed** and its pinning test
-retargeted; the table is kept as the record of what was worst. For what still needs attention,
-see the two OPEN items above and the Open section.
+retargeted; the table is kept as the record of what was worst.
 
 | # | Status | What was wrong | Where (at audit time) |
 |---|---|---|---|
@@ -128,37 +131,38 @@ outranked a better mid-string match now loses. Verified ranking still behaves se
 
 ---
 
-## Open
+## Formerly open — all now fixed
 
-Re-verified against the current source during this status update: #4, #5 and #8 are still
-present; #6 and #7 were fixed by the sweep and stay here only because this section is where
-earlier revisions tracked them.
+This section is kept as the record of what was tracked here longest. #4 and #5 were closed in
+the follow-up pass; #6, #7 and #8 were closed by the sweep itself.
 
-### 4. `findItemById` leaks an ancestor array index onto an object-slot result — OPEN
+### 4. `findItemById` leaked an ancestor array index onto an object-slot result — FIXED
 `resources/js/composables/useContentTree.ts:74` (the `?? index` merge)
 
-The `?? index` merge in `findNestedItem` fills `index` from whichever array frame the
-recursion passed through, so it can describe a **different level** than `parent`/`parentKey`.
-For an item at `section.items[1].nested`, the result is
+The `?? index` merge in `findNestedItem` filled `index` from whichever array frame the
+recursion passed through, so it could describe a **different level** than `parent`/`parentKey`.
+For an item at `section.items[1].nested`, the result was
 `{parent: card-2, parentKey: 'nested', index: 1}` — where `1` is `card-2`'s position in
-`section.items`, not a position inside `nested`.
+`section.items`, not a position inside `nested`, so `{parent, parentKey, index}` was not a
+safe splice target and a caller that trusted it would have mutated the wrong array. Latent:
+`EditorComponent.vue:142` is the only caller and reads `item` plus the breadcrumbs.
 
-*Consequence:* `{parent, parentKey, index}` is not a safe splice target for an object slot;
-a caller that trusted it would mutate the wrong array.
-*Depends on it:* nothing today — `EditorComponent.vue:142` is the only caller and reads
-`item` plus the breadcrumbs. Latent, not live.
-*Pinned by:* `tests/js/composables/useContentTree.test.ts` → "leaks an ancestor array index
-onto an object-slot result".
+Fixed by making the slot atomic: the first frame to return claims `parentKey` **and** `index`
+together, so `index` is non-null only when the slot really is an array.
+*Pinned by:* `tests/js/composables/useContentTree.test.ts` → "reports no index for an
+object-slot result".
 
-### 5. `broadcastBlockOperation` has no `isConnected` guard — OPEN (minor)
+### 5. `broadcastBlockOperation` had no `isConnected` guard — FIXED (minor)
 `resources/js/composables/useContentLiveCollaboration.ts:666`
 
 The field-update path bails on `!presence.isConnected.value` before whispering; the block
-operation path does not. Harmless in production because `usePresence.whisper` is a no-op
-without a channel, but the two paths guard differently for no stated reason — which is the
-kind of asymmetry that misleads the next reader.
-*Pinned by:* `tests/js/composables/useContentLiveCollaboration.test.ts` → "still whispers
-while disconnected".
+operation path did not. Harmless in production because `usePresence.whisper` is a no-op
+without a channel, but the two paths guarded differently for no stated reason.
+
+Fixed by guarding the whisper only — the local bookkeeping above it (the structure-version
+bump and the draft-field record) still runs offline, because the trail index depends on it.
+*Pinned by:* `tests/js/composables/useContentLiveCollaboration.test.ts` → "does not whisper
+while disconnected" plus "still records the local draft while disconnected".
 
 ### 6. `useAssetLibraryMoves`' cycle guard was only as good as the cached folder list — FIXED
 `resources/js/composables/useAssetLibraryMoves.ts:25-37`
