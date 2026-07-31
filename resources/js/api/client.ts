@@ -1,4 +1,4 @@
-import { getXsrfHeaders } from '~/lib/csrf'
+import { getXsrfHeaders, hasXsrfToken } from '~/lib/csrf'
 import { isClient } from '~/lib/env'
 
 interface AuthHandler {
@@ -8,9 +8,20 @@ interface AuthHandler {
 // Laravel answers an expired/mismatched session with 419 on stateful writes.
 const CSRF_EXPIRED_STATUS = 419
 
+const CSRF_COOKIE_ENDPOINT = '/auth/v1/csrf-cookie'
+
+// An HTML error page can be arbitrarily large; keep just enough to identify it.
+const MAX_ERROR_BODY_LENGTH = 500
+
 export interface RequestOptions extends RequestInit {
   query?: Record<string, unknown>
   body?: any
+  /**
+   * Skip the CSRF machinery entirely: no cookie priming, no X-XSRF-TOKEN
+   * header, no 419 retry. For anonymous endpoints (public shares) that must
+   * not touch the session — pair it with `credentials: 'omit'`.
+   */
+  skipCsrf?: boolean
 }
 
 export class ApiClient {
@@ -48,16 +59,44 @@ export class ApiClient {
     return this.authToken ? { Authorization: `Bearer ${this.authToken}` } : {}
   }
 
+  // Laravel parses `filter[parent_id]=x` into a nested array and `tags[]=a&tags[]=b`
+  // into a list, so nested objects get bracket notation and arrays repeat their key.
+  private appendQueryParam(params: URLSearchParams, key: string, value: unknown): void {
+    if (value === undefined || value === null) return
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        this.appendQueryParam(params, `${key}[]`, item)
+      }
+      return
+    }
+
+    if (value instanceof Date) {
+      params.append(key, value.toISOString())
+      return
+    }
+
+    if (typeof value === 'object') {
+      for (const [nestedKey, nestedValue] of Object.entries(value as Record<string, unknown>)) {
+        this.appendQueryParam(params, `${key}[${nestedKey}]`, nestedValue)
+      }
+      return
+    }
+
+    params.append(key, String(value))
+  }
+
   private resolveUrl(endpoint: string, query?: Record<string, unknown>): string {
     let url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`
-    if (query && Object.keys(query).length > 0) {
+    if (query) {
       const params = new URLSearchParams()
       for (const [key, value] of Object.entries(query)) {
-        if (value !== undefined && value !== null) {
-          params.set(key, String(value))
-        }
+        this.appendQueryParam(params, key, value)
       }
-      url += `?${params.toString()}`
+      const serialized = params.toString()
+      if (serialized) {
+        url += `?${serialized}`
+      }
     }
     return url
   }
@@ -67,7 +106,7 @@ export class ApiClient {
     if (this.csrfReady && !force) return
 
     try {
-      const response = await fetch('/auth/v1/csrf-cookie', {
+      const response = await fetch(`${this.baseURL}${CSRF_COOKIE_ENDPOINT}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -75,10 +114,17 @@ export class ApiClient {
         },
       })
 
-      if (response.ok) {
+      if (!response.ok) {
+        console.warn('[API] CSRF cookie request failed with status:', response.status)
+        return
+      }
+
+      // A 200 only means the endpoint answered; the cookie is what the next
+      // request actually needs, so stay unprimed until it is really there.
+      if (hasXsrfToken()) {
         this.csrfReady = true
       } else {
-        console.warn('[API] CSRF cookie request failed with status:', response.status)
+        console.warn('[API] CSRF cookie request succeeded but no XSRF-TOKEN cookie was set')
       }
     } catch (error) {
       console.warn('[API] Failed to fetch CSRF cookie:', error)
@@ -87,7 +133,9 @@ export class ApiClient {
 
   private async parseResponse<T>(response: Response): Promise<T> {
     const contentType = response.headers.get('content-type')
-    const isJson = contentType?.includes('application/json')
+    const isJson =
+      !!contentType &&
+      (contentType.includes('application/json') || contentType.includes('application/problem+json'))
 
     if (!response.ok) {
       let errorData: any = {}
@@ -97,8 +145,23 @@ export class ApiClient {
         } catch {
           // ignore json parse errors
         }
+      } else {
+        // An HTML 502 or a text/plain Laravel error is all the debug info there
+        // is; keep a trimmed copy rather than dropping it on the floor.
+        try {
+          const body = (await response.text()).trim()
+          if (body) {
+            errorData = { message: body.slice(0, MAX_ERROR_BODY_LENGTH) }
+          }
+        } catch {
+          // ignore body read errors
+        }
       }
-      const error: any = new Error(errorData.message || response.statusText)
+      // statusText is empty over HTTP/2, so without the status fallback callers
+      // showing `error.message` render an empty toast.
+      const error: any = new Error(
+        errorData.message || response.statusText || `HTTP ${response.status}`
+      )
       error.response = response
       error.data = errorData
       error.status = response.status
@@ -112,17 +175,20 @@ export class ApiClient {
   }
 
   public async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    const { query, body, ...fetchOptions } = options
+    const { query, body, skipCsrf, ...fetchOptions } = options
     const method = (fetchOptions.method || 'GET').toString().toUpperCase()
     const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
+    const isSafeMethod = method === 'GET' || method === 'HEAD' || method === 'OPTIONS'
+    const needsCsrf = !isSafeMethod && !skipCsrf
 
-    if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+    if (needsCsrf) {
       await this.ensureCsrfCookie()
     }
 
     const url = this.resolveUrl(endpoint, query)
 
-    const makeRequest = async (headers: Record<string, string>): Promise<T> => {
+    const makeRequest = async (requestHeaders: Record<string, string>): Promise<T> => {
+      const headers = { ...this.getAuthHeaders(), ...requestHeaders }
       const response = await fetch(url, {
         ...fetchOptions,
         credentials: fetchOptions.credentials || 'include',
@@ -139,18 +205,16 @@ export class ApiClient {
       return this.parseResponse<T>(response)
     }
 
-    const isSafeMethod = method === 'GET' || method === 'HEAD' || method === 'OPTIONS'
-
     try {
       return await makeRequest({
         ...this.defaultHeaders,
-        ...(isSafeMethod ? {} : getXsrfHeaders()),
+        ...(needsCsrf ? getXsrfHeaders() : {}),
       })
     } catch (error: any) {
       // A 419 usually just means the CSRF token went stale (long-lived tab, or the
       // session was rotated). Refresh the cookie and retry once before assuming the
       // session is gone for good.
-      if (error?.status === CSRF_EXPIRED_STATUS && !isSafeMethod) {
+      if (error?.status === CSRF_EXPIRED_STATUS && needsCsrf) {
         try {
           await this.ensureCsrfCookie(true)
           return await makeRequest({

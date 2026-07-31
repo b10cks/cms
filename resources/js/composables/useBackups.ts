@@ -11,6 +11,7 @@ type MaybeRefOrComputed<T> = MaybeRef<T> | ComputedRef<T>
 
 export function useBackups(spaceIdRef: MaybeRefOrComputed<string>) {
   const queryClient = useQueryClient()
+  const { t } = useI18n()
 
   const spaceId = computed(() => unref(spaceIdRef))
   const spaceAPI = computed(() => api.forSpace(spaceId.value))
@@ -64,10 +65,12 @@ export function useBackups(spaceIdRef: MaybeRefOrComputed<string>) {
       },
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.backups(spaceId.value).lists() })
-        toast.success(`Backup "${data.name}" created successfully`)
+        toast.success(t('composables.backups.createSuccess', { name: data.name }))
       },
       onError: (error: Error) => {
-        toast.error(`Failed to create backup: ${error.message || 'Unknown error'}`)
+        toast.error(
+          t('composables.backups.createError', { error: error.message || 'Unknown error' })
+        )
       },
     })
   }
@@ -83,10 +86,12 @@ export function useBackups(spaceIdRef: MaybeRefOrComputed<string>) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.backups(spaceId.value).detail(data.id),
         })
-        toast.success(`Backup "${data.name}" updated successfully`)
+        toast.success(t('composables.backups.updateSuccess', { name: data.name }))
       },
       onError: (error: Error) => {
-        toast.error(`Failed to update backup: ${error.message || 'Unknown error'}`)
+        toast.error(
+          t('composables.backups.updateError', { error: error.message || 'Unknown error' })
+        )
       },
     })
   }
@@ -97,12 +102,16 @@ export function useBackups(spaceIdRef: MaybeRefOrComputed<string>) {
         await spaceAPI.value.backups.delete(id)
         return id
       },
-      onSuccess: () => {
+      onSuccess: (id) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.backups(spaceId.value).lists() })
-        toast.success(`Backup deleted successfully`)
+        // useBackupQuery polls while the backup is pending — drop the entry or it polls a 404.
+        queryClient.removeQueries({ queryKey: queryKeys.backups(spaceId.value).detail(id) })
+        toast.success(t('composables.backups.deleteSuccess'))
       },
       onError: (error: Error) => {
-        toast.error(`Failed to delete backup: ${error.message || 'Unknown error'}`)
+        toast.error(
+          t('composables.backups.deleteError', { error: error.message || 'Unknown error' })
+        )
       },
     })
   }

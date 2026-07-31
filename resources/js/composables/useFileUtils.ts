@@ -1,14 +1,21 @@
 export default function useFileUtils() {
+  // Legacy Office types name neither "document" nor "spreadsheet".
+  const LEGACY_OFFICE = ['msword', 'ms-excel', 'ms-powerpoint', 'macroenabled']
+
   const getFileType = (mimeType: string): AssetTypes => {
     if (!mimeType) return 'other'
-    if (mimeType.startsWith('image/')) return 'image'
-    if (mimeType.startsWith('video/')) return 'video'
-    if (mimeType.startsWith('audio/')) return 'audio'
+    // Mime types are case-insensitive (RFC 2045), and `macroEnabled.12` is
+    // actually spelled with capitals.
+    const mime = mimeType.toLowerCase()
+    if (mime.startsWith('image/')) return 'image'
+    if (mime.startsWith('video/')) return 'video'
+    if (mime.startsWith('audio/')) return 'audio'
     if (
-      mimeType === 'application/pdf' ||
-      mimeType.includes('document') ||
-      mimeType.includes('spreadsheet') ||
-      mimeType.includes('presentation')
+      mime === 'application/pdf' ||
+      mime.includes('document') ||
+      mime.includes('spreadsheet') ||
+      mime.includes('presentation') ||
+      LEGACY_OFFICE.some((token) => mime.includes(token))
     )
       return 'document'
     return 'other'

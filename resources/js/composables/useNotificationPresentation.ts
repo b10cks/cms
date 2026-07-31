@@ -26,6 +26,10 @@ const TYPE_ICON_MAP: Record<string, string> = {
 
 const typeKey = (type: string): string => TYPE_KEY_MAP[type] ?? 'unknown'
 
+// The metrics that have a message under `notifications.metrics`; anything else
+// would render its raw i18n key mid-sentence.
+const KNOWN_METRICS = ['storage', 'traffic', 'ai']
+
 /**
  * Resolves the icon, localised title/body and navigation target for an in-app
  * notification. Kept separate from the bell component so the (testable) mapping
@@ -36,20 +40,28 @@ export function useNotificationPresentation() {
 
   const iconFor = (n: NotificationResource): string => TYPE_ICON_MAP[typeKey(n.type)]
 
-  const metricLabel = (d: NotificationData): string =>
-    d.metric ? (t(`notifications.metrics.${d.metric}`) as string) : ''
+  const metricLabel = (d: NotificationData): string => {
+    if (!d.metric) return ''
+    return KNOWN_METRICS.includes(d.metric)
+      ? (t(`notifications.metrics.${d.metric}`) as string)
+      : d.metric
+  }
+
+  // "Someone mentioned you" beats " mentioned you" when the actor is missing.
+  const person = (name?: string | null): string =>
+    name || (t('labels.invites.page.inviterFallback') as string)
 
   const titleFor = (n: NotificationResource): string => {
     const d: NotificationData = n.data ?? {}
     return t(`notifications.items.${typeKey(n.type)}.title`, {
-      author: d.author?.display_name ?? '',
-      inviter: d.inviter?.display_name ?? '',
+      author: person(d.author?.display_name),
+      inviter: person(d.inviter?.display_name),
       content: d.content?.name ?? d.space?.name ?? '',
       space: d.space?.name ?? '',
       team: d.team?.name ?? '',
       metric: metricLabel(d),
       percentage: d.percentage ?? 0,
-      requester: d.requester ?? '',
+      requester: person(d.requester),
       plan: d.plan?.name ?? '',
     }) as string
   }
@@ -60,10 +72,10 @@ export function useNotificationPresentation() {
       content: d.content?.name ?? d.space?.name ?? '',
       space: d.space?.name ?? '',
       team: d.team?.name ?? '',
-      inviter: d.inviter?.display_name ?? '',
+      inviter: person(d.inviter?.display_name),
       metric: metricLabel(d),
       percentage: d.percentage ?? 0,
-      requester: d.requester ?? '',
+      requester: person(d.requester),
       plan: d.plan?.name ?? '',
     }) as string
   }

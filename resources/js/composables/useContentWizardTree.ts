@@ -116,15 +116,22 @@ export function useContentWizardTree(
     ),
   })
 
+  // Only a genuinely absent id means "the root". An empty string is a bad id —
+  // resolving it to the root let a blank id from an AI response flag the root.
   const getNode = (nodeId: string | null | undefined) => {
-    if (!nodeId) {
+    if (nodeId === null || nodeId === undefined) {
       return tree.value.nodes[CONTENT_WIZARD_ROOT_ID] || null
     }
 
     return tree.value.nodes[nodeId] || null
   }
 
-  const isRootLevelItem = (item: Pick<FlatContentMenuItem, 'pid' | 'type'>) => item.pid === null
+  // The root is addressable both as `null` and by its id; normalizing here keeps
+  // the two spellings from disagreeing about what is allowed to live there.
+  const normalizeParentId = (parentId: string | null) =>
+    parentId === CONTENT_WIZARD_ROOT_ID ? null : parentId
+
+  const isRootLevelItem = (item: Pick<FlatContentMenuItem, 'pid'>) => item.pid === null
 
   const compareMenuItems = (left: FlatContentMenuItem, right: FlatContentMenuItem) => {
     if (isRootLevelItem(left) && isRootLevelItem(right) && left.type !== right.type) {
@@ -180,9 +187,12 @@ export function useContentWizardTree(
 
   const canPlaceBlockUnderParent = (
     block: Pick<BlockResource, 'id' | 'type'>,
-    parentId: string | null,
+    rawParentId: string | null,
     options: {
       excludeNodeId?: string
+      // A duplicate is always created active, so the source branch being deleted
+      // says nothing about whether the copy may live where it is going.
+      ignoreDeletedParent?: boolean
     } = {}
   ): ValidationResult => {
     if (block.type === 'nestable') {
@@ -192,6 +202,7 @@ export function useContentWizardTree(
       }
     }
 
+    const parentId = normalizeParentId(rawParentId)
     const parent = parentId ? getNode(parentId) : getNode(CONTENT_WIZARD_ROOT_ID)
     if (!parent) {
       return {
@@ -201,7 +212,7 @@ export function useContentWizardTree(
     }
 
     if (!parent.isRootVirtual) {
-      if (parent.deletedReason) {
+      if (parent.deletedReason && !options.ignoreDeletedParent) {
         return {
           valid: false,
           message: 'Move the parent out of the deleted branch first.',
@@ -294,7 +305,8 @@ export function useContentWizardTree(
     parent.childrenIds = parent.childrenIds.filter((childId) => childId !== nodeId)
   }
 
-  const insertIntoParent = (nodeId: string, parentId: string | null, index?: number) => {
+  const insertIntoParent = (nodeId: string, rawParentId: string | null, index?: number) => {
+    const parentId = normalizeParentId(rawParentId)
     const parent = parentId ? getNode(parentId) : getNode(CONTENT_WIZARD_ROOT_ID)
     const node = getNode(nodeId)
 
@@ -390,7 +402,12 @@ export function useContentWizardTree(
           (node.title !== node.original?.title ||
             effectiveSlug !== originalSlug ||
             node.blockId !== node.original?.blockId),
-        moved: !!node.backendId && node.parentId !== node.original?.parentId,
+        // Same test as operationPlan's move filter: a pure sibling reorder is a
+        // pending operation too, and the leave guard has to be able to see it.
+        moved:
+          !!node.backendId &&
+          (node.parentId !== node.original?.parentId ||
+            node.position !== node.original?.position),
         deleted: node.deletedReason === 'self',
       }
     })
@@ -404,10 +421,18 @@ export function useContentWizardTree(
     }
 
     const sourceItems = Object.values(menuData.value || {})
+    const sourceIds = new Set(sourceItems.map((item) => item.id))
+    // An item whose parent is missing from the payload (permission filter,
+    // partial load) would be hydrated but never reached by the tree walk: no
+    // layout and no deletedReason, while it still feeds validations and the
+    // operation plan. Re-home it at the root so it stays visible and fixable.
+    const resolveParentId = (item: FlatContentMenuItem) =>
+      item.pid && sourceIds.has(item.pid) ? item.pid : null
+
     const childrenByParent = new Map<string | null, FlatContentMenuItem[]>()
 
     sourceItems.forEach((item) => {
-      const key = item.pid ?? null
+      const key = resolveParentId(item)
       const currentChildren = childrenByParent.get(key) || []
       childrenByParent.set(key, [...currentChildren, item])
     })
@@ -417,7 +442,8 @@ export function useContentWizardTree(
     })
 
     sourceItems.forEach((item) => {
-      const position = (childrenByParent.get(item.pid ?? null) || []).findIndex(
+      const parentId = resolveParentId(item)
+      const position = (childrenByParent.get(parentId) || []).findIndex(
         (child) => child.id === item.id
       )
 
@@ -427,7 +453,7 @@ export function useContentWizardTree(
       nextNodes[item.id] = {
         id: item.id,
         backendId: item.id,
-        parentId: item.pid ?? null,
+        parentId,
         childrenIds: [],
         blockId: item.block_id,
         blockType,
@@ -461,7 +487,7 @@ export function useContentWizardTree(
           errors: [],
         },
         original: {
-          parentId: item.pid ?? null,
+          parentId,
           title: item.name,
           slug: item.slug,
           blockId: item.block_id,
@@ -550,6 +576,13 @@ export function useContentWizardTree(
       original: null,
     }
 
+    // A caller-supplied id can already be in the tree — a replayed collaboration
+    // whisper is the realistic case. Detach the old placement first, otherwise
+    // the id is appended to a parent twice and the node is laid out twice.
+    if (tree.value.nodes[nodeId]) {
+      removeFromParent(nodeId)
+    }
+
     tree.value.nodes[nodeId] = nextNode
 
     insertIntoParent(nodeId, targetParentId)
@@ -572,15 +605,52 @@ export function useContentWizardTree(
       }
     }
 
-    const block = blockMap.value.get(sourceNode.blockId)
-    if (!block) {
-      return {
-        valid: false,
-        message: 'The selected block is not available.',
+    // The whole subtree is checked before anything is created: addNode throws,
+    // and a descendant the target rejects used to escape as an exception and
+    // leave a half-built copy behind.
+    const validateSubtree = (
+      sourceId: string,
+      parentId: string | null,
+      isRootClone: boolean
+    ): ValidationResult => {
+      const source = getNode(sourceId)
+      if (!source || source.isRootVirtual) {
+        return {
+          valid: false,
+          message: 'The selected node cannot be copied.',
+        }
       }
+
+      const sourceBlock = blockMap.value.get(source.blockId)
+      if (!sourceBlock) {
+        return {
+          valid: false,
+          message: 'The selected block is not available.',
+        }
+      }
+
+      const placement = canPlaceBlockUnderParent(sourceBlock, parentId, {
+        // The copy is always created active, so a deleted source branch must not
+        // fail its own descendants — only the real target parent is checked.
+        ignoreDeletedParent: !isRootClone,
+      })
+      if (!placement.valid) {
+        return placement
+      }
+
+      for (const childId of source.childrenIds) {
+        // A clone carries its source's settings and block type, so the source
+        // node stands in for the clone that will become the child's parent.
+        const childResult = validateSubtree(childId, sourceId, false)
+        if (!childResult.valid) {
+          return childResult
+        }
+      }
+
+      return { valid: true }
     }
 
-    const validation = canPlaceBlockUnderParent(block, nextParentId)
+    const validation = validateSubtree(nodeId, nextParentId, true)
     if (!validation.valid) {
       return validation
     }
@@ -610,7 +680,6 @@ export function useContentWizardTree(
 
       clonedNode.slug = isRootClone ? slugify(`${source.title} Copy`) : source.slug
       clonedNode.slugMode = source.slugMode
-      clonedNode.isDeletedSelf = source.isDeletedSelf
 
       source.childrenIds.forEach((childId) => {
         cloneSubtree(childId, clonedNode.id, false)
@@ -619,7 +688,23 @@ export function useContentWizardTree(
       return clonedNode
     }
 
-    const createdNode = cloneSubtree(nodeId, nextParentId, true)
+    const snapshot = cloneTreeSnapshot()
+    let createdNode: ContentWizardDraftNode | null = null
+
+    try {
+      createdNode = cloneSubtree(nodeId, nextParentId, true)
+    } catch (error) {
+      // Validation above should have caught everything addNode rejects; roll the
+      // half-built copy back rather than let an exception reach the caller.
+      tree.value = snapshot
+      recomputeNodeState()
+
+      return {
+        valid: false,
+        message: error instanceof Error ? error.message : 'The selected node cannot be copied.',
+      }
+    }
+
     recomputeNodeState()
 
     if (!createdNode) {
@@ -782,6 +867,41 @@ export function useContentWizardTree(
     }
 
     if (!node.backendId) {
+      // Dropping the draft must not take saved descendants with it: they would
+      // disappear from the canvas while the backend still holds them, because a
+      // deleted record produces no delete operation. Persisted descendants are
+      // re-parented onto the removed draft's parent instead — the user asked to
+      // remove something they had just created, not to destroy stored content —
+      // which surfaces as a real move operation.
+      const salvagedIds: string[] = []
+      const collectPersisted = (targetNodeId: string) => {
+        const target = getNode(targetNodeId)
+        if (!target) {
+          return
+        }
+
+        if (target.backendId) {
+          salvagedIds.push(targetNodeId)
+          return
+        }
+
+        ;[...target.childrenIds].forEach(collectPersisted)
+      }
+
+      ;[...node.childrenIds].forEach(collectPersisted)
+
+      const parent = getNode(node.parentId)
+      const insertIndex = parent ? parent.childrenIds.indexOf(nodeId) : -1
+
+      salvagedIds.forEach((salvagedId, offset) => {
+        removeFromParent(salvagedId)
+        insertIntoParent(
+          salvagedId,
+          node.parentId,
+          insertIndex < 0 ? undefined : insertIndex + offset
+        )
+      })
+
       const removeSubtree = (targetNodeId: string) => {
         const target = getNode(targetNodeId)
         if (!target || target.isRootVirtual) {

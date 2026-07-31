@@ -80,7 +80,9 @@ const selectedDropdownIndex = ref(0)
 const dropdownRef = ref<HTMLDivElement | null>(null)
 const editingFilterIndex = ref<number | null>(null)
 const srMessage = ref('')
-const lastSearch = ref('')
+// The free-text term of the model (`q`), whether it was typed here or restored
+// from the URL by the parent.
+const searchTerm = ref('')
 
 const placeholder = computed(() => {
   if (stage.value === 'field') {
@@ -139,12 +141,22 @@ const serializeFilters = (filters: FilterValue[]): Record<string, string | numbe
   const result: Record<string, string | number> = {}
 
   filters.forEach((filter) => {
-    if (filter.operator) {
+    if (filter.operator && NO_VALUE_OPERATORS.includes(filter.operator)) {
+      // The operator is the whole filter; a trailing `:` would only add an
+      // empty value for the backend to parse off again.
+      result[filter.field] = filter.operator
+    } else if (filter.operator) {
       result[filter.field] = `${filter.operator}:${filter.value}`
     } else {
       result[filter.field] = filter.value
     }
   })
+
+  // The free-text term lives in the same model object; without it every filter
+  // change would emit a model that silently drops the active search.
+  if (searchTerm.value) {
+    result.q = searchTerm.value
+  }
 
   return result
 }
@@ -161,12 +173,13 @@ const parseModelValue = (model: Record<string, unknown>): FilterValue[] => {
     let operator: FilterableOperator | undefined
     let value: string | number = raw as string | number
 
-    if (typeof raw === 'string' && raw.includes(':') && field.operators?.length) {
-      const prefix = raw.slice(0, raw.indexOf(':'))
+    if (typeof raw === 'string' && field.operators?.length) {
+      const prefix = raw.includes(':') ? raw.slice(0, raw.indexOf(':')) : raw
       const matched = field.operators.find((op) => String(op.value) === prefix)
       if (matched) {
         operator = matched
-        value = raw.slice(prefix.length + 1)
+        // A value-less operator is serialized bare, with nothing after it
+        value = raw.length > prefix.length ? raw.slice(prefix.length + 1) : ''
       }
     }
 
@@ -200,13 +213,36 @@ watch(
   () => props.modelValue,
   (model) => {
     const incoming = { ...model } as Record<string, string | number>
-    delete incoming.q
+    searchTerm.value = incoming.q === undefined || incoming.q === null ? '' : String(incoming.q)
+
     if (!sameFilters(serializeFilters(activeFilters.value), incoming)) {
       activeFilters.value = parseModelValue(incoming)
     }
   },
   { immediate: true, deep: true }
 )
+
+// The remove button is the only interactive part of the badge, so the
+// descriptive label belongs on it; the badge itself is what opens the filter
+// for editing.
+const removeLabel = (filter: FilterValue): string =>
+  String(
+    $t('labels.search.removeFilter', {
+      field: filter.fieldLabel,
+      operator: filter.operatorLabel || '',
+      value: filter.valueLabel || filter.value,
+    })
+  )
+
+const editLabel = (filter: FilterValue): string =>
+  [
+    `${String($t('labels.search.editFilter'))}:`,
+    filter.fieldLabel,
+    filter.operatorLabel,
+    String(filter.valueLabel || filter.value),
+  ]
+    .filter(Boolean)
+    .join(' ')
 
 const emitFilters = (): void => {
   emit('update:modelValue', serializeFilters(activeFilters.value))
@@ -254,7 +290,7 @@ const clearAllFilters = (): void => {
   activeFilters.value = []
   resetSelectionState()
   dropdownOpen.value = false
-  lastSearch.value = ''
+  searchTerm.value = ''
   emit('update:modelValue', {})
   announceToScreenReader($t('labels.search.allFiltersCleared'))
   focusInput()
@@ -449,8 +485,8 @@ const handleInputChange = (): void => {
   dropdownOpen.value = true
 
   // Backspacing the search text to empty should clear stale results
-  if (stage.value === 'field' && inputValue.value === '' && lastSearch.value !== '') {
-    lastSearch.value = ''
+  if (stage.value === 'field' && inputValue.value === '' && searchTerm.value !== '') {
+    searchTerm.value = ''
     emit('search', '')
   }
 }
@@ -487,7 +523,7 @@ const handleKeyDown = (e: KeyboardEvent): void => {
     } else if (stage.value === 'value') {
       handleValueSelect()
     } else if (stage.value === 'field' && inputValue.value) {
-      lastSearch.value = inputValue.value
+      searchTerm.value = inputValue.value
       emit('search', inputValue.value)
     }
   }
@@ -522,8 +558,8 @@ const handleKeyDown = (e: KeyboardEvent): void => {
       dropdownOpen.value = false
     } else if (inputValue.value) {
       inputValue.value = ''
-      if (lastSearch.value !== '') {
-        lastSearch.value = ''
+      if (searchTerm.value !== '') {
+        searchTerm.value = ''
         emit('search', '')
       }
     } else {
@@ -569,15 +605,15 @@ onBeforeUnmount(() => {
           v-if="index !== editingFilterIndex"
           :label="filter.fieldLabel"
           removable
-          :aria-label="
-            $t('labels.search.removeFilter', {
-              field: filter.fieldLabel,
-              operator: filter.operatorLabel || '',
-              value: filter.valueLabel || filter.value,
-            })
-          "
+          :remove-label="removeLabel(filter)"
+          role="button"
+          tabindex="0"
+          :aria-label="editLabel(filter)"
+          class="cursor-pointer"
           @remove="removeFilter(index)"
           @click="editFilter(index)"
+          @keydown.enter.prevent="editFilter(index)"
+          @keydown.space.prevent="editFilter(index)"
         >
           {{ filter.operatorLabel ? `${filter.operatorLabel} ` : '' }}
           {{ filter.valueLabel || filter.value }}

@@ -94,6 +94,7 @@ export function useTeams() {
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.teams.lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.teams.hierarchy() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.authorization.all() })
         toast.success(t('composables.teams.createSuccess', { name: data.name }) as string)
       },
       onError: (error: Error) => {
@@ -162,7 +163,9 @@ export function useTeams() {
       onSuccess: (id) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.teams.lists() })
         queryClient.removeQueries({ queryKey: queryKeys.teams.detail(id) })
+        queryClient.removeQueries({ queryKey: queryKeys.teamPeople(id).all() })
         queryClient.invalidateQueries({ queryKey: queryKeys.teams.hierarchy() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.authorization.all() })
         toast.success(t('composables.teams.deleteSuccess') as string)
       },
       onError: (error: Error) => {
@@ -192,6 +195,7 @@ export function useTeams() {
       },
       onSuccess: ({ teamId, user }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.teamPeople(teamId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.authorization.all() })
         toast.success(t('composables.teams.updateUserSuccess', { role: user.role }) as string)
       },
       onError: (error: Error) => {
@@ -213,6 +217,7 @@ export function useTeams() {
       onSuccess: ({ teamId }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.teamPeople(teamId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.teams.detail(teamId) })
+        queryClient.invalidateQueries({ queryKey: queryKeys.authorization.all() })
         toast.success(t('composables.teams.removeUserSuccess') as string)
       },
       onError: (error: Error) => {
@@ -337,6 +342,7 @@ export function useTeams() {
       },
       onSuccess: (teamId) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.teams.samlProvider(teamId) })
+        queryClient.invalidateQueries({ queryKey: queryKeys.authorization.all() })
         toast.success(t('composables.teams.samlDeleteSuccess') as string)
       },
       onError: (error: Error) => {
@@ -350,6 +356,20 @@ export function useTeams() {
   }
 
   // Utility functions
+  const findTeamNode = (
+    items: TeamHierarchyItem[],
+    teamId: string
+  ): TeamHierarchyItem | undefined => {
+    for (const item of items) {
+      if (item.id === teamId) return item
+      if (item.children?.length) {
+        const found = findTeamNode(item.children, teamId)
+        if (found) return found
+      }
+    }
+    return undefined
+  }
+
   const findTeamInHierarchy = (
     hierarchy: MaybeRef<TeamHierarchyItem[] | undefined>,
     teamId: MaybeRef<string>
@@ -359,48 +379,34 @@ export function useTeams() {
       const teamIdValue = toValue(teamId)
       if (!hierarchyValue || !teamIdValue) return undefined
 
-      const findInTree = (items: TeamHierarchyItem[]): TeamHierarchyItem | undefined => {
-        for (const item of items) {
-          if (item.id === teamIdValue) return item
-          if (item.children?.length) {
-            const found = findInTree(item.children)
-            if (found) return found
-          }
-        }
-        return undefined
-      }
-
-      return findInTree(toValue(hierarchyValue))
+      return findTeamNode(hierarchyValue, teamIdValue)
     })
   }
 
+  /** `null` means the team is not in the hierarchy; `[]` means it is a root team. */
   const getTeamAncestors = (
     hierarchy: MaybeRef<TeamHierarchyItem[] | undefined>,
     teamId: MaybeRef<string>
-  ): ComputedRef<TeamHierarchyItem[]> => {
+  ): ComputedRef<TeamHierarchyItem[] | null> => {
     return computed(() => {
       const hierarchyValue = toValue(hierarchy)
       const teamIdValue = toValue(teamId)
-      if (!hierarchyValue || !teamIdValue) return []
+      if (!hierarchyValue || !teamIdValue) return null
 
       const findAncestors = (
         items: TeamHierarchyItem[],
         targetId: string,
         ancestors: TeamHierarchyItem[] = []
-      ): TeamHierarchyItem[] => {
+      ): TeamHierarchyItem[] | null => {
         for (const item of items) {
-          const currentPath = [...ancestors, item]
-
-          if (item.id === targetId) {
-            return currentPath.slice(0, -1) // Exclude the target team itself
-          }
+          if (item.id === targetId) return ancestors
 
           if (item.children?.length) {
-            const found = findAncestors(item.children, targetId, currentPath)
-            if (found.length > 0) return found
+            const found = findAncestors(item.children, targetId, [...ancestors, item])
+            if (found) return found
           }
         }
-        return []
+        return null
       }
 
       return findAncestors(hierarchyValue, teamIdValue)
@@ -416,7 +422,7 @@ export function useTeams() {
       const teamIdValue = toValue(teamId)
       if (!hierarchyValue || !teamIdValue) return []
 
-      const team = findTeamInHierarchy(hierarchy, teamId).value
+      const team = findTeamNode(hierarchyValue, teamIdValue)
       if (!team) return []
 
       const getAllDescendants = (item: TeamHierarchyItem): TeamHierarchyItem[] => {

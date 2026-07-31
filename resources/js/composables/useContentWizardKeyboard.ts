@@ -70,9 +70,23 @@ export function useContentWizardKeyboard(options: {
     const isBlockSelect = !!target?.closest('[data-block-select]')
     const node = options.getNode(nodeId)
 
+    // The block-select popover owns every key while it is open — Enter picks the
+    // highlighted block, Escape closes it — so no canvas shortcut may fire
+    // underneath it. An editing field is different: it owns the printable and
+    // caret keys (guarded per key below), but Tab and Enter deliberately reach
+    // the canvas so a title can be typed and continued into the next node.
+    if (isBlockSelect) {
+      return
+    }
+
     if (event.key === 'Tab') {
       event.preventDefault()
       if (node?.isRootVirtual) {
+        if (event.altKey) {
+          options.openAddMenu(nodeId, 'child')
+          return
+        }
+
         if (!options.createNodeFromPreferredBlock(nodeId, 'child')) {
           options.openAddMenu(nodeId, 'child')
         }
@@ -158,7 +172,7 @@ export function useContentWizardKeyboard(options: {
       return
     }
 
-    if (isEditingField || isBlockSelect) {
+    if (isEditingField) {
       return
     }
 

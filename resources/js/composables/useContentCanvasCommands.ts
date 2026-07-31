@@ -50,7 +50,17 @@ export function useContentCanvasCommands(options: {
 
   const executeCommand = <TResult>(command: ContentCanvasCommand<TResult>) => {
     const before = options.createSnapshot()
-    const result = command.execute()
+
+    let result: TResult
+    try {
+      result = command.execute()
+    } catch (error) {
+      // A throwing command used to escape before the after-snapshot, so its
+      // partial mutation stayed with no history entry to undo it.
+      options.restoreSnapshot(before)
+      throw error
+    }
+
     const after = options.createSnapshot()
 
     if (recordSnapshotChange({ label: command.label, before, after })) {

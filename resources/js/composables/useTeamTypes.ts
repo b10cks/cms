@@ -20,8 +20,14 @@ export function useTeamTypes() {
     }))
   )
 
-  const getTeamTypeLabel = (type?: string | null): string =>
-    type ? t(`labels.teams.types.${type}`) : ''
+  // An unknown type has no message, and vue-i18n echoes the key back — showing
+  // "labels.teams.types.ghost" in the UI. Fall back to the raw value.
+  const getTeamTypeLabel = (type?: string | null): string => {
+    if (!type) return ''
+    return (TEAM_TYPE_KEYS as readonly string[]).includes(type)
+      ? t(`labels.teams.types.${type}`)
+      : type
+  }
 
   return { teamTypeOptions, getTeamTypeLabel }
 }

@@ -4531,7 +4531,6 @@
       "checkoutError": "Failed to start checkout: {error}",
       "pendingAlreadyExists": "A payment for this plan is already pending. Use \"Complete payment\" to resume it.",
       "pendingConflict": "A payment for another plan is already pending. Complete or cancel it before switching plans.",
-      "reinitSuccess": "Redirecting to payment...",
       "reinitNoUrl": "Could not retrieve a payment link. Please try again.",
       "reinitError": "Failed to restart payment: {error}",
       "cancelSuccess": "Subscription cancelled. Access continues until end of billing period.",
@@ -4550,6 +4549,14 @@
       "createError": "Failed to start migration: {error}",
       "deleteSuccess": "Migration deleted successfully",
       "deleteError": "Failed to delete migration: {error}"
+    },
+    "backups": {
+      "createSuccess": "Backup \"{name}\" created successfully",
+      "createError": "Failed to create backup: {error}",
+      "updateSuccess": "Backup \"{name}\" updated successfully",
+      "updateError": "Failed to update backup: {error}",
+      "deleteSuccess": "Backup deleted successfully",
+      "deleteError": "Failed to delete backup: {error}"
     },
     "automationActions": {
       "createSuccess": "Action \"{name}\" created successfully",
@@ -4831,7 +4838,8 @@
       "updateUserSuccess": "Member role updated to {role}",
       "updateUserError": "Failed to update member role: {error}",
       "removeUserSuccess": "Member removed from space",
-      "removeUserError": "Failed to remove member from space: {error}"
+      "removeUserError": "Failed to remove member from space: {error}",
+      "clearUserRoleSuccess": "Member role cleared"
     },
     "tokens": {
       "createSuccess": "Token \"{name}\" created successfully",
@@ -4898,6 +4906,9 @@
       "updateError": "Failed to update field plugin: {error}",
       "deleteSuccess": "Field plugin deleted successfully",
       "deleteError": "Failed to delete field plugin: {error}"
+    },
+    "invites": {
+      "joinedFallbackTarget": "the workspace"
     }
   },
   "content": {

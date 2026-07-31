@@ -67,11 +67,17 @@ const findNestedItem = (
 
         const result = findNestedItem(entry, itemId, currentPath)
         if (result) {
+          // The slot is claimed by the first frame to return, and `index` belongs
+          // to that same frame. Filling it independently let an ancestor array's
+          // position describe an object slot one level down, so
+          // {parent, parentKey, index} was not a valid splice target.
+          const claimsSlot = result.parentKey === null
+
           return {
             ...result,
             parent: result.parent ?? node,
-            parentKey: result.parentKey ?? key,
-            index: result.index ?? index,
+            parentKey: claimsSlot ? key : result.parentKey,
+            index: claimsSlot ? index : result.index,
           }
         }
       }

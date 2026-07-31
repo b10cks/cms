@@ -45,6 +45,13 @@ export const resolveFieldInitialValue = (field: SchemaType): unknown => {
   const type = normalizeSchemaType(field.type)
   const defaultValue = field.default
 
+  // Tables are normalized against their columns whether or not a default is
+  // configured — a raw default would otherwise reach the editor with stray
+  // columns and untyped cells, which the table field cannot render.
+  if (type === 'table') {
+    return ensureTableValue(field as TableSchema, defaultValue)
+  }
+
   if (defaultValue !== undefined && defaultValue !== null) {
     return cloneDefaultValue(defaultValue)
   }
@@ -83,8 +90,6 @@ export const resolveFieldInitialValue = (field: SchemaType): unknown => {
     case 'asset':
     case 'link':
       return null
-    case 'table':
-      return ensureTableValue(field as TableSchema, defaultValue)
     case 'richtext':
     case 'meta':
       return {}

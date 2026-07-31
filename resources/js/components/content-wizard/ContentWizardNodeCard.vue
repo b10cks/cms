@@ -127,7 +127,16 @@ defineExpose({
 })
 
 const commitTitle = () => emit('commit-title', titleValue.value)
-const commitSlug = () => emit('commit-slug', slugValue.value)
+
+const commitSlug = () => {
+  emit('commit-slug', slugValue.value)
+  // `updateSlug` already slugified every keystroke into the store, but the
+  // watcher above only fires when the *stored* value changes — so raw input
+  // that normalizes to the same slug ('About ', 'About!') left the field
+  // showing something other than what will be saved. Re-seat it on blur so the
+  // user sees the slug they are getting.
+  slugValue.value = props.node.slug
+}
 
 const handleDragOver = (event: DragEvent) => {
   if (event.dataTransfer) {

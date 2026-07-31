@@ -13,6 +13,7 @@ const props = withDefaults(
     labelVariant?: BadgeVariants['variant']
     size?: BadgeVariants['size']
     removable?: boolean
+    removeLabel?: string
     labelClass?: HTMLAttributes['class']
     valueClass?: HTMLAttributes['class']
   }>(),
@@ -21,6 +22,7 @@ const props = withDefaults(
     labelVariant: 'surface',
     size: 'default',
     removable: false,
+    removeLabel: 'Remove',
   }
 )
 
@@ -70,7 +72,7 @@ const iconSize = computed(
         v-if="removable"
         type="button"
         class="-mr-1 ml-1 inline-flex items-center justify-center rounded-sm hover:bg-current/10 focus:ring-1 focus:ring-current/30 focus:outline-none"
-        aria-label="Remove"
+        :aria-label="removeLabel"
         @click="handleRemove"
       >
         <Icon

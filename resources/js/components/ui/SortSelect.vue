@@ -39,13 +39,14 @@ const emit = defineEmits<{
   'update:modelValue': [value: { column: string; direction: 'asc' | 'desc' }]
 }>()
 
-// Ensure we always have a valid sort value
+// Ensure we always have a valid sort value; a usable direction is kept even
+// when the column has to be repaired.
 const safeModelValue = computed(() => {
   const value = props.modelValue
   if (!value || typeof value !== 'object' || !('column' in value) || !value.column) {
     return {
       column: 'created_at',
-      direction: 'desc' as const,
+      direction: value?.direction === 'asc' ? ('asc' as const) : ('desc' as const),
     }
   }
   return value
@@ -90,8 +91,9 @@ const selectedOptionLabel = computed(() => {
   if (!field) {
     return props.placeholder || 'Sort by'
   }
-  const option = props.options.find((opt) => opt.value === field)
-  return option ? option.label : props.placeholder || 'Sort by'
+  // The list *is* sorted by this column, so name it rather than showing the
+  // placeholder, which would claim nothing is sorted.
+  return props.options.find((opt) => opt.value === field)?.label ?? field
 })
 
 const directionIcon = computed(() => {

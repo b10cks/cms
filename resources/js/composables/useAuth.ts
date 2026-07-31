@@ -64,6 +64,32 @@ const UNAUTHENTICATED_ENDPOINTS = [
 const isUnauthenticatedEndpoint = (endpoint: string): boolean =>
   UNAUTHENTICATED_ENDPOINTS.some((path) => endpoint.includes(path))
 
+// Persisted, user-scoped browser state. It has to go when the session ends, or
+// the next account on a shared browser starts in the previous user's language
+// with their team selected.
+const PERSISTED_USER_STATE_KEYS = ['user-settings', 'global-team']
+
+const clearPersistedUserState = () => {
+  if (typeof window === 'undefined') return
+
+  for (const key of PERSISTED_USER_STATE_KEYS) {
+    try {
+      window.localStorage.removeItem(key)
+    } catch {
+      /** A storage-less or full browser must not break the sign-out. */
+    }
+  }
+}
+
+// Dropping the cache is what stops an expired session's authenticated responses
+// from being served to whoever comes next. Imported lazily: the query plugin
+// pulls in the composables that call `useAuth`.
+const clearQueryCache = async () => {
+  const { queryClient } = await import('~/plugins/vue-query')
+  queryClient.cancelQueries()
+  queryClient.clear()
+}
+
 // Every in-flight request fails at once when a session expires; collapse them into
 // a single logout + redirect.
 let pendingSessionExpiry: Promise<void> | null = null
@@ -77,6 +103,15 @@ export function useAuth() {
 
   const user = globalUser
   const setUser = (value: User | null) => {
+    if (!value) {
+      // A null user ends the session, so it has to take the session's cached
+      // responses with it. The server call and the redirect stay in `logout()` —
+      // only it knows whether the current route survives a sign-out.
+      user.value = null
+      void clearQueryCache()
+      return
+    }
+
     user.value = value
   }
   const isAuthenticated = computed(() => !!user.value)
@@ -127,6 +162,14 @@ export function useAuth() {
 
   const handleAuthResponse = async (cb: CallableFunction) => {
     await loadUser(true)
+
+    // The credentials were accepted but the session never materialized — navigating
+    // now would only bounce off the router guard with nothing shown to the user.
+    if (!user.value) {
+      error.value = t('composables.auth.failedToLoadUser') as string
+      return false
+    }
+
     cb()
     return true
   }
@@ -236,7 +279,7 @@ export function useAuth() {
       return true
     } catch (err: any) {
       const parsedError = parseErrorResponse(err)
-      error.value = parsedError.message ?? (t('composables.auth.passwordResetLinkFailed') as string)
+      error.value = parsedError.message ?? (t('composables.auth.forgotPasswordFailed') as string)
       return false
     } finally {
       isLoading.value = false
@@ -260,11 +303,7 @@ export function useAuth() {
       return true
     } catch (err: any) {
       const parsedError = parseErrorResponse(err)
-      error.value =
-        parsedError.message ??
-        (parsedError.status === 422
-          ? (t('composables.auth.passwordResetFailed') as string)
-          : (t('composables.auth.passwordResetFailed') as string))
+      error.value = parsedError.message ?? (t('composables.auth.resetPasswordFailed') as string)
       return false
     } finally {
       isLoading.value = false
@@ -287,10 +326,13 @@ export function useAuth() {
     } catch (err: any) {
       const parsedError = parseErrorResponse(err)
 
+      // A 409 is usually a taken email, but not always (an already accepted invite
+      // answers 409 too), so a server message wins over the assumption.
       error.value =
-        parsedError.status === 409
+        parsedError.message ??
+        (parsedError.status === 409
           ? (t('composables.auth.emailExists') as string)
-          : (parsedError.message ?? (t('composables.auth.registerFailed') as string))
+          : (t('composables.auth.registerFailed') as string))
       return false
     } finally {
       isLoading.value = false
@@ -312,9 +354,8 @@ export function useAuth() {
       }
     }
 
-    const { queryClient } = await import('~/plugins/vue-query')
-    queryClient.cancelQueries()
-    queryClient.clear()
+    await clearQueryCache()
+    clearPersistedUserState()
 
     user.value = null
     globalSessionExpired.value = true
@@ -351,6 +392,9 @@ export function useAuth() {
     const currentRoute = router.currentRoute.value
     if (currentRoute.meta.guest === true || currentRoute.meta.public === true) {
       user.value = null
+      // The route survives, the session does not — the responses it fetched must
+      // not stay in the cache for the rest of the tab's life.
+      await clearQueryCache()
       return { retry: false }
     }
 

@@ -8,6 +8,11 @@ import { queryKeys } from './useQueryClient'
 
 type MaybeRefOrComputed<T> = MaybeRef<T> | ComputedRef<T>
 
+type ApiError = Error & { status?: number; data?: { use_reinit?: boolean } }
+
+/** A reinit that comes back without a payment link — a failure, not a success. */
+class MissingCheckoutUrlError extends Error {}
+
 export function useSubscription(spaceIdRef: MaybeRefOrComputed<string>) {
   const queryClient = useQueryClient()
   const { t } = useI18n()
@@ -98,6 +103,10 @@ export function useSubscription(spaceIdRef: MaybeRefOrComputed<string>) {
       },
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions(spaceId.value).all() })
+        // The plan carries the quotas, the space detail carries the limits derived from it.
+        queryClient.invalidateQueries({ queryKey: queryKeys.plans.all() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.spaces.detail(spaceId.value) })
+        queryClient.invalidateQueries({ queryKey: queryKeys.spaceUsage(spaceId.value).all() })
 
         if (data.checkout_url) {
           window.location.href = data.checkout_url
@@ -107,13 +116,10 @@ export function useSubscription(spaceIdRef: MaybeRefOrComputed<string>) {
           toast.success(t('composables.subscriptions.downgradeScheduled'))
         } else {
           toast.success(t('composables.subscriptions.planChanged'))
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.subscriptions(spaceId.value).current(),
-          })
         }
       },
       onError: (error: Error) => {
-        const apiError = error as any
+        const apiError = error as ApiError
         if (apiError.status === 409 && apiError.data?.use_reinit) {
           // A pending payment already exists for this plan — refresh so the pending notice appears
           queryClient.invalidateQueries({
@@ -136,18 +142,23 @@ export function useSubscription(spaceIdRef: MaybeRefOrComputed<string>) {
   const useReinitPaymentMutation = () => {
     return useMutation({
       mutationFn: async () => {
-        return spaceAPI.value.subscriptions.reinit()
+        const response = await spaceAPI.value.subscriptions.reinit()
+        if (!response.checkout_url) throw new MissingCheckoutUrlError()
+        return { ...response, checkout_url: response.checkout_url }
       },
       onSuccess: (data) => {
-        if (data.checkout_url) {
-          window.location.href = data.checkout_url
-        } else {
-          toast.error(t('composables.subscriptions.reinitNoUrl'))
-        }
+        queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions(spaceId.value).all() })
+        window.location.href = data.checkout_url
       },
       onError: (error: Error) => {
+        // Either way the pending checkout may be gone server-side, so refresh the notice.
+        queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions(spaceId.value).all() })
         toast.error(
-          t('composables.subscriptions.reinitError', { error: error.message || 'Unknown error' })
+          error instanceof MissingCheckoutUrlError
+            ? t('composables.subscriptions.reinitNoUrl')
+            : t('composables.subscriptions.reinitError', {
+                error: error.message || 'Unknown error',
+              })
         )
       },
     })

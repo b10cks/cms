@@ -143,6 +143,10 @@ export function useReleases(spaceId: MaybeRef<string>) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.releases(spaceId).detail(data.id),
         })
+        // Publishing a release publishes every content version it holds.
+        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).details() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
 
         toast.success(t('composables.releases.publishSuccess', { name: data.name }) as string)
       },
@@ -190,13 +194,15 @@ export function useReleases(spaceId: MaybeRef<string>) {
         const response = await spaceAPI.value.releases.assignVersions(releaseId, payload)
         return response.data
       },
-      onSuccess: (data) => {
+      onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.releases(spaceId).lists() })
         queryClient.invalidateQueries({
           queryKey: queryKeys.releases(spaceId).detail(data.id),
         })
 
-        const versionCount = (data as any).versions?.length || 1
+        // The request is the only reliable count: the response carries the
+        // release, not the versions that were just assigned.
+        const versionCount = variables.payload.version_ids.length
         toast.success(
           t('composables.releases.assignVersionsSuccess', {
             count: versionCount,
@@ -253,6 +259,12 @@ export function useReleases(spaceId: MaybeRef<string>) {
 
     if (!release.committed_at) {
       return 'draft'
+    }
+
+    // No publish date at all: committed and ready to go, whether the field is
+    // null, undefined or an empty string.
+    if (!release.publish_at) {
+      return 'pending'
     }
 
     const publishAt = new Date(release.publish_at)

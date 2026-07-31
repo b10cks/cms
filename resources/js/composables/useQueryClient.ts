@@ -137,7 +137,9 @@ export const queryKeys = {
       [...queryKeys.assets(spaceId).linkedContents(id), page] as const,
   }),
   assetVersions: (spaceId: MaybeRef<string>, assetId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'assets', assetId, 'versions'] as const,
+    // Nested under the asset's own detail key, like `linkedContents` above, so
+    // invalidating an asset cascades to its versions.
+    all: () => [...queryKeys.assets(spaceId).detail(assetId), 'versions'] as const,
     lists: () => [...queryKeys.assetVersions(spaceId, assetId).all(), 'list'] as const,
     list: (filters: any = {}) => [...queryKeys.assetVersions(spaceId, assetId).lists(), filters] as const,
   }),
@@ -283,10 +285,13 @@ export const queryKeys = {
     status: () => [...queryKeys.twoFactor.all(), 'status'] as const,
   },
   ai: (spaceId: MaybeRef<string>) => ({
-    config: () => ['ai-config', spaceId] as const,
-    models: () => ['ai-models', spaceId] as const,
-    settings: () => ['ai-settings', spaceId] as const,
-    usage: () => ['ai-usage', spaceId] as const,
+    all: () => ['spaces', spaceId, 'ai'] as const,
+    models: () => [...queryKeys.ai(spaceId).all(), 'models'] as const,
+    settings: () => [...queryKeys.ai(spaceId).all(), 'settings'] as const,
+    usage: () => [...queryKeys.ai(spaceId).all(), 'usage'] as const,
+    configs: () => [...queryKeys.ai(spaceId).all(), 'configs'] as const,
+    config: (configId: MaybeRef<string>) =>
+      [...queryKeys.ai(spaceId).configs(), configId] as const,
   }),
   migrations: (spaceId: string) => ({
     all: () => ['spaces', spaceId, 'migrations'] as const,
@@ -317,6 +322,9 @@ export const queryKeys = {
     lists: () => [...queryKeys.subscriptions(spaceId).all(), 'list'] as const,
     current: () => [...queryKeys.subscriptions(spaceId).all(), 'current'] as const,
     proposal: () => [...queryKeys.subscriptions(spaceId).all(), 'proposal'] as const,
+  }),
+  spaceUsage: (spaceId: MaybeRef<string | null>) => ({
+    all: () => ['spaces', spaceId, 'usage'] as const,
   }),
   usageHistory: (spaceId: string) => ({
     all: () => ['spaces', spaceId, 'usage-history'] as const,

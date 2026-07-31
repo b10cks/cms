@@ -1,6 +1,10 @@
 import { useQueryClient } from '@tanstack/vue-query'
 
-import type { ContentWizardApplyResult, ContentWizardDraftNode } from '~/types/content-wizard'
+import type {
+  ContentWizardApplyResult,
+  ContentWizardDraftNode,
+  ContentWizardOperation,
+} from '~/types/content-wizard'
 import { CONTENT_WIZARD_ROOT_ID } from '~/types/content-wizard'
 import type { ContentTreeOperationPayload } from '~/types/contents'
 
@@ -27,6 +31,18 @@ export function useContentWizardApply(
   )
 
   const applyError = ref<string | null>(null)
+  /**
+   * How far the field-update pass got. That pass is sequential and cannot be
+   * rolled back, so on a failure the caller needs to know that operations
+   * 1..completed were applied and the structural batch went through as well.
+   */
+  const applyProgress = ref<{ completed: number; total: number } | null>(null)
+
+  // `apply` reads the plan straight off the tree and never resets it, so without
+  // these two guards a double click, or a caller that retries, re-sends an
+  // identical batch. The signature covers the field state the plan does not.
+  let inFlight: Promise<ContentWizardApplyResult> | null = null
+  let appliedSignature: string | null = null
 
   const invalidateContentQueries = async () => {
     await Promise.all([
@@ -42,9 +58,9 @@ export function useContentWizardApply(
     ])
   }
 
-  const apply = async (): Promise<ContentWizardApplyResult> => {
-    const operations = treeApi.operationPlan.value
-
+  const runApply = async (
+    operations: ContentWizardOperation[]
+  ): Promise<ContentWizardApplyResult> => {
     if (treeApi.validations.value.length > 0) {
       const message = treeApi.validations.value[0]?.message || 'Validation failed.'
       applyError.value = message
@@ -57,6 +73,8 @@ export function useContentWizardApply(
     }
 
     applyError.value = null
+    applyProgress.value = null
+
     const getNodeReferenceId = (nodeId: string | null) => {
       if (!nodeId) {
         return null
@@ -227,21 +245,31 @@ export function useContentWizardApply(
         })
       }
 
-      for (const node of activeExistingNodes) {
+      const nodesToUpdate = activeExistingNodes.filter((node) => {
         const effectiveSlug = resolveEffectiveSlug(node.title, node.slug)
         const originalSlug = node.original
           ? resolveEffectiveSlug(node.original.title, node.original.slug)
           : ''
-        const shouldUpdate =
-          node.title !== node.original?.title ||
-          effectiveSlug !== originalSlug
 
-        if (!shouldUpdate) {
-          continue
-        }
+        return node.title !== node.original?.title || effectiveSlug !== originalSlug
+      })
 
+      const total = nodesToUpdate.length
+      let completed = 0
+      applyProgress.value = { completed, total }
+
+      // Sequential and not rollback-able: a failure here leaves the structural
+      // batch and every earlier update applied, which is what applyProgress
+      // reports to the caller.
+      for (const node of nodesToUpdate) {
         await executeUpdate(node.id)
+        completed += 1
+        applyProgress.value = { completed, total }
       }
+
+      // Each mutation's own onSuccess covers contents and contentMenu, but not
+      // blocks(...).lists() — which the failure path does invalidate.
+      await invalidateContentQueries()
 
       return {
         success: true,
@@ -260,9 +288,57 @@ export function useContentWizardApply(
     }
   }
 
+  // The plan alone does not describe an update — it names the node but not the
+  // title or slug it is carrying — so the signature pins both.
+  const planSignature = (operations: ContentWizardOperation[]) =>
+    JSON.stringify(
+      operations.map((operation) => {
+        const node = treeApi.getNode(operation.nodeId)
+
+        return [
+          operation,
+          node
+            ? [
+                node.title,
+                resolveEffectiveSlug(node.title, node.slug),
+                node.blockId,
+                node.parentId,
+                node.position,
+              ]
+            : null,
+        ]
+      })
+    )
+
+  const apply = (): Promise<ContentWizardApplyResult> => {
+    if (inFlight) {
+      return inFlight
+    }
+
+    const operations = treeApi.operationPlan.value
+    const signature = planSignature(operations)
+
+    if (signature === appliedSignature) {
+      return Promise.resolve({ success: true, operations })
+    }
+
+    inFlight = runApply(operations)
+      .then((result) => {
+        appliedSignature = result.success ? signature : null
+
+        return result
+      })
+      .finally(() => {
+        inFlight = null
+      })
+
+    return inFlight
+  }
+
   return {
     isApplying,
     applyError,
+    applyProgress,
     apply,
     invalidateContentQueries,
   }

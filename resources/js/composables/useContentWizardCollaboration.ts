@@ -147,8 +147,10 @@ export function useContentWizardCollaboration(spaceIdRef: MaybeRefOrComputed<str
     } satisfies ContentWizardOperationWhisperPayload)
   }
 
-  const onOperation = (callback: (operation: ContentWizardSyncOperation) => void) =>
-    presence.onWhisper<ContentWizardOperationWhisperPayload>(
+  const operationListeners = new Set<() => void>()
+
+  const onOperation = (callback: (operation: ContentWizardSyncOperation) => void) => {
+    const stop = presence.onWhisper<ContentWizardOperationWhisperPayload>(
       CONTENT_WIZARD_OPERATION_EVENT,
       (payload) => {
         if (!payload || payload.userId === currentUserId.value) {
@@ -158,6 +160,16 @@ export function useContentWizardCollaboration(spaceIdRef: MaybeRefOrComputed<str
         callback(payload.operation)
       }
     )
+
+    // Tracked so unmount tears these down like the focus and cursor listeners,
+    // whether or not the caller kept the unsubscribe.
+    operationListeners.add(stop)
+
+    return () => {
+      operationListeners.delete(stop)
+      stop()
+    }
+  }
 
   const stopFocusListener = presence.onWhisper<ContentWizardFocusWhisperPayload>(
     CONTENT_WIZARD_FOCUS_EVENT,
@@ -200,6 +212,8 @@ export function useContentWizardCollaboration(spaceIdRef: MaybeRefOrComputed<str
     broadcastCursor(null)
     stopFocusListener()
     stopCursorListener()
+    operationListeners.forEach((stop) => stop())
+    operationListeners.clear()
   })
 
   return {

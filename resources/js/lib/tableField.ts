@@ -11,7 +11,9 @@ const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
 
 export const cloneStructuredValue = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
 
-export const normalizeTableSchemaType = (type?: string | null): CanonicalSchemaTypeName | '' => {
+// The single canonical schema-type normalizer. `useContentSchemaState` re-exports
+// it as `normalizeSchemaType`; a new field type must only be added here.
+export const normalizeSchemaTypeName = (type?: string | null): CanonicalSchemaTypeName | '' => {
   switch (type) {
     case 'multiAsset':
       return 'multi_assets'
@@ -31,10 +33,15 @@ export const normalizeTableSchemaType = (type?: string | null): CanonicalSchemaT
     case 'link':
     case 'asset':
     case 'multi_assets':
+    case 'icon':
+    case 'geo':
+    case 'price':
     case 'references':
     case 'date':
     case 'meta':
     case 'table':
+    case 'plugin':
+    case 'serial':
       return type
     default:
       return ''
@@ -264,7 +271,7 @@ export const mergeLocalizedContentForSchema = (
   const merged = (mergePlainContent(base, overlay) || {}) as Record<string, unknown>
 
   Object.entries(schema || {}).forEach(([key, field]) => {
-    const type = normalizeTableSchemaType(field?.type)
+    const type = normalizeSchemaTypeName(field?.type)
 
     if (type === 'table' && (field as TableSchema).translatable) {
       merged[key] = mergeLocalizedTableValue(

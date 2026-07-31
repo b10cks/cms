@@ -64,7 +64,13 @@ export function useFieldPlugins(spaceId: MaybeRef<string>) {
   const useUpdateFieldPluginMutation = () => {
     return useMutation({
       mutationFn: async ({ id, payload }: { id: string; payload: UpdateFieldPluginPayload }) => {
-        const response = await spaceAPI.value.fieldPlugins.update(id, payload)
+        // `handle` is immutable — content already stored against a plugin is keyed
+        // by it. The type omits it, but a cast would otherwise put it on the wire
+        // and leave the server as the only gatekeeper.
+        const { handle: _handle, ...updatable } = payload as UpdateFieldPluginPayload & {
+          handle?: string
+        }
+        const response = await spaceAPI.value.fieldPlugins.update(id, updatable)
         return response.data
       },
       onSuccess: (data) => {

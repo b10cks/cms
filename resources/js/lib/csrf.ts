@@ -1,27 +1,54 @@
 const XSRF_COOKIE_NAME = 'XSRF-TOKEN'
 
+/** `[name, value]` per cookie; the name is everything before the *first* `=`. */
+const parseCookies = (): Array<[string, string]> => {
+  const cookies = document.cookie ? document.cookie.split('; ') : []
+  return cookies.map((cookie) => {
+    const separator = cookie.indexOf('=')
+    return separator === -1
+      ? ([cookie, ''] as [string, string])
+      : ([cookie.slice(0, separator), cookie.slice(separator + 1)] as [string, string])
+  })
+}
+
+/** Reads the token without logging — for polling and presence checks. */
+const readXsrfToken = (): string | null => {
+  if (typeof document === 'undefined') return null
+
+  const entry = parseCookies().find(([name]) => name === XSRF_COOKIE_NAME)
+  if (!entry || !entry[1]) return null
+
+  try {
+    return decodeURIComponent(entry[1])
+  } catch {
+    return entry[1]
+  }
+}
+
 export const getXsrfToken = (): string | null => {
   if (typeof document === 'undefined') return null
 
-  const cookies = document.cookie ? document.cookie.split('; ') : []
-  const entry = cookies.find((cookie) => cookie.startsWith(`${XSRF_COOKIE_NAME}=`))
+  const entry = parseCookies().find(([name]) => name === XSRF_COOKIE_NAME)
 
   if (!entry) {
-    console.warn('[CSRF] XSRF-TOKEN cookie not found. Available cookies:', cookies)
+    // Names only — cookie *values* are credentials and this runs in production.
+    console.warn(
+      '[CSRF] XSRF-TOKEN cookie not found. Available cookies:',
+      parseCookies().map(([name]) => name)
+    )
     return null
   }
 
-  const value = entry.split('=').slice(1).join('=')
-  if (!value) {
+  if (!entry[1]) {
     console.warn('[CSRF] XSRF-TOKEN cookie has no value')
     return null
   }
 
   try {
-    return decodeURIComponent(value)
+    return decodeURIComponent(entry[1])
   } catch (e) {
     console.warn('[CSRF] Failed to decode XSRF-TOKEN:', e)
-    return value
+    return entry[1]
   }
 }
 
@@ -51,12 +78,21 @@ export async function fetchCsrfCookie(): Promise<boolean> {
   }
 }
 
+const CSRF_COOKIE_POLL_ATTEMPTS = 10
+const CSRF_COOKIE_POLL_INTERVAL = 20
+
 export async function ensureCsrfToken(): Promise<boolean> {
   if (hasXsrfToken()) return true
 
   const success = await fetchCsrfCookie()
   if (!success) return false
 
-  await new Promise((resolve) => setTimeout(resolve, 100))
+  // The cookie is set by the response itself, but the browser may need a tick
+  // to commit it. Poll briefly instead of betting on one fixed wait.
+  for (let attempt = 0; attempt < CSRF_COOKIE_POLL_ATTEMPTS; attempt++) {
+    if (readXsrfToken() !== null) return true
+    await new Promise((resolve) => setTimeout(resolve, CSRF_COOKIE_POLL_INTERVAL))
+  }
+
   return hasXsrfToken()
 }

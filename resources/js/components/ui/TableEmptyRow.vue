@@ -8,15 +8,19 @@ const { $t } = useI18n()
 const props = withDefaults(
   defineProps<{
     colspan?: number
-    icon?: string | Component
+    // A component, never an icon name: `<Component :is>` would resolve a string
+    // as a tag name and render an unknown element.
+    icon?: Component
     label?: string
   }>(),
   {
     colspan: 3,
-    icon: '',
+    icon: undefined,
     label: undefined,
   }
 )
+
+const iconComponent = computed(() => (typeof props.icon === 'string' ? undefined : props.icon))
 
 const labelText = computed(() => {
   return props.label || $t('labels.noResults')
@@ -31,7 +35,8 @@ const labelText = computed(() => {
     >
       <div class="flex flex-col items-center justify-center gap-6">
         <Component
-          :is="icon"
+          :is="iconComponent"
+          v-if="iconComponent"
           class="w-32 text-muted"
         />
         <div class="font-semibold text-muted">{{ labelText }}</div>

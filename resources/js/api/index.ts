@@ -91,7 +91,9 @@ export class API {
     this.client.setAuthHandler(handler)
   }
 
-  public get ai(): Ai {
+  // Space-less: every other Ai method interpolates the space id into its path,
+  // so those are only reachable through `forSpace(id).ai`.
+  public get ai(): Pick<Ai, 'getStreamUrl'> {
     return this._ai
   }
 

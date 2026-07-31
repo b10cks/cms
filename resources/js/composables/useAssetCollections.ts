@@ -35,6 +35,7 @@ export function useAssetCollections(spaceId: MaybeRef<string>) {
           ...toValue(params),
         })
       },
+      enabled: computed(() => Boolean(toValue(spaceId))),
     })
   }
 
@@ -216,10 +217,8 @@ export function useAssetCollections(spaceId: MaybeRef<string>) {
         return { collectionId }
       },
       onSuccess: ({ collectionId }) => {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.assetCollections(spaceId).assets(collectionId),
-        })
-        queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
+        // A reorder can change the cover asset, which the list and detail both show.
+        invalidateCollectionAssets(collectionId)
       },
       onError: (error: Error) => {
         toast.error(

@@ -25,6 +25,7 @@ interface WhisperListener {
 interface PresenceRealtimeChannel {
   whisper?: (eventName: string, payload: unknown) => void
   listenForWhisper?: (eventName: string, callback: (payload: unknown) => void) => void
+  stopListeningForWhisper?: (eventName: string, callback: (payload: unknown) => void) => void
 }
 
 export function usePresence(
@@ -41,6 +42,10 @@ export function usePresence(
   const reconnectAttempts = ref(0)
 
   let presenceChannel: ReturnType<Echo<'reverb'>['join']> | null = null
+  // The channel handle is dropped on a channel error (so nothing whispers into a
+  // dead object), but the subscription still has to be left — hence a separate
+  // record of what was actually joined.
+  let joinedChannelName: string | null = null
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
   const whisperListeners: WhisperListener[] = []
 
@@ -86,6 +91,7 @@ export function usePresence(
 
     try {
       presenceChannel = echo.join(channelName.value)
+      joinedChannelName = channelName.value
       attachWhisperListeners()
 
       presenceChannel
@@ -107,6 +113,9 @@ export function usePresence(
           error.value = err
           isConnected.value = false
           isConnecting.value = false
+          // Drop the handle so whispers are not written into a dead channel
+          // while the reconnect is pending; joinedChannelName keeps the leave.
+          presenceChannel = null
           handleReconnect()
         })
     } catch (err) {
@@ -119,42 +128,61 @@ export function usePresence(
   // channelToLeave must be passed explicitly when the channel name has already
   // changed (see the channelName watcher) — leaving channelName.value there
   // would target the new channel and leak the old subscription.
-  const disconnect = (channelToLeave: string | null = channelName.value) => {
+  const clearReconnectTimer = () => {
     if (reconnectTimer) {
       clearTimeout(reconnectTimer)
       reconnectTimer = null
     }
+  }
 
-    if (presenceChannel) {
+  const disconnect = (channelToLeave: string | null = channelName.value) => {
+    clearReconnectTimer()
+
+    if (joinedChannelName) {
       try {
         const echo = getEcho()
-        if (echo && channelToLeave) {
-          echo.leave(channelToLeave)
+        const target = channelToLeave ?? joinedChannelName
+        if (echo && target) {
+          echo.leave(target)
         }
       } catch {
         // Ignore leave errors
       }
       presenceChannel = null
+      joinedChannelName = null
     }
 
     users.value = []
     isConnected.value = false
     isConnecting.value = false
-    reconnectAttempts.value = 0
+    // reconnectAttempts is deliberately NOT reset here: the reconnect timer
+    // calls disconnect() before rejoining, so resetting would let a dead server
+    // reconnect forever. Only a successful subscription (here) clears it.
   }
 
   const handleReconnect = () => {
-    if (reconnectAttempts.value < maxReconnectAttempts) {
-      reconnectAttempts.value++
-      reconnectTimer = setTimeout(() => {
-        disconnect()
-        connect()
-      }, reconnectDelay)
-    }
+    // One reconnect at a time — a burst of channel errors must not leave a
+    // pending timer per error.
+    if (reconnectTimer) return
+    if (reconnectAttempts.value >= maxReconnectAttempts) return
+
+    reconnectAttempts.value++
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null
+      disconnect()
+      connect()
+    }, reconnectDelay)
+  }
+
+  // An explicit retry (or a different channel) starts the budget over.
+  const resetReconnect = () => {
+    clearReconnectTimer()
+    reconnectAttempts.value = 0
   }
 
   const refresh = () => {
     disconnect()
+    resetReconnect()
     connect()
   }
 
@@ -176,12 +204,17 @@ export function usePresence(
       if (index >= 0) {
         whisperListeners.splice(index, 1)
       }
+      // Forgetting the listener is not enough: it is still attached to the live
+      // channel, so a consumer that unsubscribes and resubscribes would receive
+      // every whisper twice.
+      getRealtimeChannel()?.stopListeningForWhisper?.(eventName, listener.callback)
     }
   }
 
   watch(channelName, (newChannel, oldChannel) => {
     if (newChannel !== oldChannel) {
       disconnect(oldChannel ?? null)
+      resetReconnect()
       if (newChannel) {
         connect()
       }

@@ -18,6 +18,14 @@ export function useContentVersions(
   const versionsAPI = computed(() => spaceAPI.value.contentVersions(resolvedContentId.value))
   const hasContentId = computed(() => !!toValue(contentId))
 
+  // Mutations are gated exactly like the queries: without a content id the
+  // request would address `/contents//versions/{id}/…`.
+  const requireContentId = () => {
+    if (!hasContentId.value) {
+      throw new Error('Content ID is required')
+    }
+  }
+
   const invalidateVersionQueries = (versionId?: string) => {
     queryClient.invalidateQueries({
       queryKey: queryKeys.contentVersions(spaceId, resolvedContentId.value).lists(),
@@ -43,8 +51,8 @@ export function useContentVersions(
       ),
       queryFn: async () => {
         const response = await versionsAPI.value.index({
-          ...toValue(params),
           sort: '-created_at',
+          ...toValue(params),
         })
         return response.data
       },
@@ -77,6 +85,7 @@ export function useContentVersions(
   const useSetCurrentVersionMutation = () => {
     return useMutation({
       mutationFn: async (versionId: string) => {
+        requireContentId()
         await versionsAPI.value.current(versionId)
         return { id: versionId }
       },
@@ -97,6 +106,7 @@ export function useContentVersions(
   const useUpdateVersionMutation = () => {
     return useMutation({
       mutationFn: async ({ id, payload }: { id: string; payload: { message?: string | null } }) => {
+        requireContentId()
         const response = await versionsAPI.value.update(id, payload as never)
         return response.data
       },
@@ -118,6 +128,7 @@ export function useContentVersions(
   const usePublishVersionMutation = () => {
     return useMutation({
       mutationFn: async (versionId: string) => {
+        requireContentId()
         await versionsAPI.value.publish(versionId)
         return { id: versionId }
       },

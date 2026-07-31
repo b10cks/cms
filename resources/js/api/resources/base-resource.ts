@@ -16,6 +16,12 @@ export abstract class BaseResource<
     this.client = client
   }
 
+  // Ids reach these methods straight from user data (tag names, slugs), so a
+  // space or slash must not be able to address a different route.
+  protected idPath(id: string): string {
+    return `${this.basePath}/${encodeURIComponent(id)}`
+  }
+
   protected getPath(endpoint: string = ''): string {
     if (endpoint.startsWith('/')) {
       return `${this.basePath}${endpoint}`
@@ -31,10 +37,7 @@ export abstract class BaseResource<
   }
 
   public async get(id: string, query: QueryParams = {} as QueryParams): Promise<ApiResponse<T>> {
-    return this.client.get<ApiResponse<T>>(
-      `${this.basePath}/${id}`,
-      query as Record<string, unknown>
-    )
+    return this.client.get<ApiResponse<T>>(this.idPath(id), query as Record<string, unknown>)
   }
 
   public async create(payload: CreatePayload): Promise<CreateResponse> {
@@ -42,15 +45,15 @@ export abstract class BaseResource<
   }
 
   public async update(id: string, payload: UpdatePayload): Promise<ApiResponse<T>> {
-    return this.client.patch<ApiResponse<T>>(`${this.basePath}/${id}`, payload)
+    return this.client.patch<ApiResponse<T>>(this.idPath(id), payload)
   }
 
   public async replace(id: string, payload: CreatePayload): Promise<ApiResponse<T>> {
-    return this.client.put<ApiResponse<T>>(`${this.basePath}/${id}`, payload)
+    return this.client.put<ApiResponse<T>>(this.idPath(id), payload)
   }
 
   public async delete(id: string): Promise<void> {
-    return this.client.delete(`${this.basePath}/${id}`)
+    return this.client.delete(this.idPath(id))
   }
 
   public async custom<R = unknown>(

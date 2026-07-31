@@ -11,11 +11,13 @@ const html = computed(() => {
 })
 
 function onClick(e: MouseEvent) {
-  if (!((e.target as HTMLElement).tagName === 'A')) {
+  // The click can land on a child of the link (`[*deep*](/docs)`), so walk up.
+  const anchor = (e.target as HTMLElement | null)?.closest('a')
+  if (!anchor) {
     return
   }
 
-  const url = new URL((e.target as HTMLLinkElement).href, window.location.origin)
+  const url = new URL(anchor.href, window.location.origin)
   if (url.protocol === 'mailto:') {
     return
   }
@@ -27,7 +29,7 @@ function onClick(e: MouseEvent) {
     return
   }
 
-  router.push(url.pathname)
+  router.push(`${url.pathname}${url.search}${url.hash}`)
 }
 </script>
 

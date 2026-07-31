@@ -146,7 +146,12 @@ export function buildContentRouteLocation<TQuery extends Record<string, unknown>
   query: TQuery & { lang?: string | undefined }
   hash: string
 } {
-  const resolvedLanguage = resolveContentLanguage(languageIso, defaultLanguage, undefined)
+  // Only normalized, not resolved: resolveContentLanguage needs the content's
+  // language versions to tell a real language from a bogus one, and this
+  // helper has none — passing `undefined` made every language fall through to
+  // the default, so the localization route was unreachable. Callers that have
+  // the versions resolve the language themselves before calling in.
+  const resolvedLanguage = normalizeLanguageIso(languageIso) || defaultLanguage
   return {
     name: resolveContentRouteName(
       currentRouteName,

@@ -37,3 +37,6 @@ localhost.key
 /docs/.vitepress/.temp
 
 .DS_Store
+
+# Vitest coverage output
+/coverage

@@ -74,7 +74,12 @@ export class PluginBridge extends MessageEmitter<PluginMessagePayloadMap> {
   }
 
   private handleMessage = (event: MessageEvent): void => {
-    if (!this.iframeElement || event.source !== this.iframeElement.contentWindow) return
+    // A frame that is not loaded (or has been detached/navigated away) has no
+    // contentWindow, and `null !== null` would let a source-less message — a
+    // port relay, an injected script — through the source check.
+    if (!this.iframeElement?.contentWindow || event.source !== this.iframeElement.contentWindow) {
+      return
+    }
 
     const data = event.data as Partial<PluginMessage> | null
     if (

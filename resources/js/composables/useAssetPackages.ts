@@ -112,9 +112,11 @@ export function useAssetPackages(spaceId: MaybeRef<string>) {
         return
       }
 
-      if (pkg.state === 'failed') {
+      // Anything that is not still building is terminal — polling a state this
+      // client does not know (a server-side addition) would only spin for minutes.
+      if (!isInProgress(pkg.state)) {
         queryClient.invalidateQueries({ queryKey: queryKeys.assetPackages(spaceId).lists() })
-        throw new Error(pkg.error || 'Package build failed')
+        throw new Error(pkg.error || `Package build ${pkg.state}`)
       }
 
       onProgress?.(pkg.progress)
@@ -127,9 +129,12 @@ export function useAssetPackages(spaceId: MaybeRef<string>) {
   /**
    * Bundle a selection into a server-built zip and download it once ready.
    * Used instead of the per-file download loop for larger selections.
+   *
+   * Resolves to whether the download actually started. The failure is toasted here
+   * rather than thrown, because the callers are template event handlers.
    */
-  const downloadSelectionAsPackage = async (assetIds: string[]): Promise<void> => {
-    if (!assetIds.length) return
+  const downloadSelectionAsPackage = async (assetIds: string[]): Promise<boolean> => {
+    if (!assetIds.length) return false
 
     const toastId = toast.loading(
       t('composables.assetPackages.preparing', { count: assetIds.length }) as string
@@ -150,6 +155,7 @@ export function useAssetPackages(spaceId: MaybeRef<string>) {
       })
 
       toast.success(t('composables.assetPackages.ready') as string, { id: toastId })
+      return true
     } catch (error: any) {
       toast.error(
         t('composables.assetPackages.failed', {
@@ -157,6 +163,7 @@ export function useAssetPackages(spaceId: MaybeRef<string>) {
         }) as string,
         { id: toastId }
       )
+      return false
     }
   }
 

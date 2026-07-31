@@ -32,7 +32,9 @@ export function useContent(spaceId: MaybeRef<string>) {
       familyContentIds.add(content.i18n_canonical_id)
     }
 
-    content.language_versions.forEach((version) => {
+    // A write response may omit the language versions entirely; a missing
+    // field must not turn a committed save into an error toast.
+    content.language_versions?.forEach((version) => {
       if (version.content_id) {
         familyContentIds.add(version.content_id)
       }
@@ -78,17 +80,19 @@ export function useContent(spaceId: MaybeRef<string>) {
     })
   }
 
-  // Query to fetch children of a specific content item
+  // Query to fetch children of a specific content item.
+  // Keyed by the params it actually sends, and caching the same envelope shape
+  // as useContentsQuery — both live under contents.lists().
+  // ContentFilter reads `parent_id` off the top level and takes the literal
+  // string 'null' as "root level"; a real null is dropped from the query
+  // string, which would return the whole unfiltered list.
   const useContentChildrenQuery = (parentId: MaybeRef<string | null>) => {
+    const params = computed(() => ({ parent_id: toValue(parentId) ?? 'null' }))
+
     return useQuery({
-      queryKey: computed(() => queryKeys.contents(spaceId).list({ parent: parentId })),
+      queryKey: computed(() => queryKeys.contents(spaceId).list(params.value)),
       queryFn: async () => {
-        const response = await spaceAPI.value.contents.index({
-          filter: {
-            parent_id: toValue(parentId),
-          },
-        })
-        return response.data
+        return await spaceAPI.value.contents.index(params.value)
       },
     })
   }
@@ -246,6 +250,8 @@ export function useContent(spaceId: MaybeRef<string>) {
       onSuccess: (id) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
         queryClient.removeQueries({ queryKey: queryKeys.contents(spaceId).detail(id) })
+        // The version history is a sibling of the detail key, not a child of it.
+        queryClient.removeQueries({ queryKey: queryKeys.contentVersions(spaceId, id).all() })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
 
         toast.success(t('composables.content.deleteSuccess') as string)
@@ -370,6 +376,8 @@ export function useContent(spaceId: MaybeRef<string>) {
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
+        // A batch reparents arbitrary entries, so every open detail is suspect.
+        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).details() })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
       },
       onError: (error: Error) => {
@@ -413,6 +421,8 @@ export function useContent(spaceId: MaybeRef<string>) {
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
+        // An import rewrites entry content, so an open editor must refetch.
+        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).details() })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
         toast.success(t('composables.content.translationImportSuccess') as string)
       },

@@ -53,6 +53,11 @@ export function usePublicShare(spaceId: MaybeRef<string>, token: MaybeRef<string
     queryClient.invalidateQueries({ queryKey: queryKeys.publicShare(spaceId, token).all() })
   }
 
+  const clearAccess = () => {
+    accessToken.value = null
+    clearStoredAccessToken(toValue(spaceId), toValue(token))
+  }
+
   const useShareQuery = () => {
     return useQuery({
       queryKey: computed(() => [...queryKeys.publicShare(spaceId, token).meta(), accessToken.value]),
@@ -61,17 +66,19 @@ export function usePublicShare(spaceId: MaybeRef<string>, token: MaybeRef<string
           const response = await shareAPI.value.show(accessToken.value)
           return response.data
         } catch (error: any) {
-          // A stale/expired access token behaves like a locked share again.
+          // A stale/expired access token behaves like a locked share again. The token
+          // is part of the query key, so clearing it rekeys the query and refetches as
+          // an anonymous visitor — re-requesting here as well would only burn a second
+          // metered round trip whose answer lands under the stale key.
           if (error?.status === 403 && accessToken.value) {
             clearAccess()
-            const response = await shareAPI.value.show(null)
-            return response.data
           }
           throw error
         }
       },
       retry: (failureCount, error: any) => {
-        if (error?.status === 404) return false
+        // Neither an unknown share nor a rejected token changes on a retry.
+        if (error?.status === 404 || error?.status === 403) return false
         return failureCount < 2
       },
     })
@@ -114,11 +121,6 @@ export function usePublicShare(spaceId: MaybeRef<string>, token: MaybeRef<string
     })
   }
 
-  const clearAccess = () => {
-    accessToken.value = null
-    clearStoredAccessToken(toValue(spaceId), toValue(token))
-  }
-
   /**
    * Request the package download. While the archive is (re)building the
    * endpoint answers 202 — poll until a signed URL arrives.
@@ -148,7 +150,10 @@ export function usePublicShare(spaceId: MaybeRef<string>, token: MaybeRef<string
   }
 
   const downloadAsset = async (assetId: string): Promise<DownloadUrlResponse> => {
-    return await shareAPI.value.downloadAsset(assetId, accessToken.value)
+    const response = await shareAPI.value.downloadAsset(assetId, accessToken.value)
+    // Single downloads are metered too, so the remaining-downloads figure is now stale.
+    invalidateShare()
+    return response
   }
 
   return {

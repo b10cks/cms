@@ -36,19 +36,27 @@ export async function fetchIconifyCollections(): Promise<IconifyCollectionMeta[]
 
 // Full name lists per collection prefix are cached for the session so switching
 // chips (or re-opening the picker) is instant.
-const collectionCache = new Map<string, string[]>()
+const collectionCache = new Map<string, readonly string[]>()
+// Requests still in flight, so chip-switching back and forth fetches once.
+const collectionRequests = new Map<string, Promise<readonly string[]>>()
 
-/** Every fully-qualified icon name (e.g. `mdi:home`) in a single collection. */
-export async function fetchIconifyCollection(
+/** Drops the memoised collections; mainly for tests and manual invalidation. */
+export function clearIconifyCollectionCache(): void {
+  collectionCache.clear()
+  collectionRequests.clear()
+}
+
+async function requestIconifyCollection(
   prefix: string,
   signal?: AbortSignal
-): Promise<string[]> {
-  const cached = collectionCache.get(prefix)
-  if (cached) return cached
-
+): Promise<readonly string[]> {
   const response = await fetch(`${ICONIFY_HOST}/collection?prefix=${encodeURIComponent(prefix)}`, {
     signal,
   })
+  if (!response.ok) {
+    throw new Error(`Iconify collection request failed: ${response.status}`)
+  }
+
   const data = await response.json()
 
   const names: string[] = []
@@ -60,8 +68,31 @@ export async function fetchIconifyCollection(
   }
 
   const full = names.map((name) => `${prefix}:${name}`)
-  collectionCache.set(prefix, full)
+  // An empty result is a failed or unknown prefix, not a collection worth
+  // memoising for the rest of the session.
+  if (full.length) collectionCache.set(prefix, full)
   return full
+}
+
+/** Every fully-qualified icon name (e.g. `mdi:home`) in a single collection. */
+export async function fetchIconifyCollection(
+  prefix: string,
+  signal?: AbortSignal
+): Promise<string[]> {
+  const cached = collectionCache.get(prefix)
+  // A fresh copy per caller: a consumer that sorts or splices the list must not
+  // corrupt the cache for everyone else.
+  if (cached) return [...cached]
+
+  let request = collectionRequests.get(prefix)
+  if (!request) {
+    request = requestIconifyCollection(prefix, signal).finally(() => {
+      collectionRequests.delete(prefix)
+    })
+    collectionRequests.set(prefix, request)
+  }
+
+  return [...(await request)]
 }
 
 export interface IconifySearchScope {
@@ -81,6 +112,10 @@ export async function searchIconifyIcons(
   else if (scope.prefixes?.length) params.set('prefixes', scope.prefixes.join(','))
 
   const response = await fetch(`${ICONIFY_HOST}/search?${params.toString()}`, { signal })
+  if (!response.ok) {
+    throw new Error(`Iconify search request failed: ${response.status}`)
+  }
+
   const data = await response.json()
 
   const icons = Array.isArray(data.icons) ? data.icons : []

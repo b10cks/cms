@@ -46,12 +46,18 @@ export async function parseStreamErrorResponse(
 }
 
 export function parseSseEvent(line: string): SseEvent | null {
-  if (!line.startsWith('data: ') || line.startsWith(':') || !line.trim()) {
+  if (!line.startsWith('data: ')) {
     return null
   }
 
   try {
-    return JSON.parse(line.slice(6)) as SseEvent
+    const parsed: unknown = JSON.parse(line.slice(6))
+    // Only an object with a string `type` is an event; a bare array or scalar
+    // parses as JSON but is not something `dispatchSseEvent` could ever route.
+    if (!parsed || typeof parsed !== 'object' || typeof (parsed as SseEvent).type !== 'string') {
+      return null
+    }
+    return parsed as SseEvent
   } catch {
     return null
   }
@@ -76,6 +82,18 @@ export function dispatchSseEvent(event: SseEvent, callbacks: SseCallbacks): bool
   }
 }
 
+/** Dispatches lines in order, stopping at the first terminal (`done`/`error`) event. */
+function dispatchSseLines(lines: string[], callbacks: SseCallbacks): boolean {
+  for (const line of lines) {
+    const event = parseSseEvent(line)
+    if (event && dispatchSseEvent(event, callbacks)) {
+      return true
+    }
+  }
+
+  return false
+}
+
 export async function consumeSseStream(
   reader: ReadableStreamDefaultReader<Uint8Array>,
   callbacks: SseCallbacks
@@ -84,33 +102,31 @@ export async function consumeSseStream(
   let buffer = ''
   let receivedDone = false
 
-  while (true) {
-    const { done, value } = await reader.read()
+  try {
+    // A terminal event ends the stream: anything the server writes after it is
+    // dropped, so a second `done` cannot fire `onDone` (and re-apply its result)
+    // twice.
+    while (!receivedDone) {
+      const { done, value } = await reader.read()
 
-    if (done) {
-      if (buffer.trim()) {
-        for (const line of buffer.split('\n')) {
-          const event = parseSseEvent(line)
-          if (event) {
-            const isDone = dispatchSseEvent(event, callbacks)
-            if (isDone) receivedDone = true
-          }
+      if (done) {
+        if (buffer.trim()) {
+          receivedDone = dispatchSseLines(buffer.split('\n'), callbacks)
         }
+        break
       }
-      break
-    }
 
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop() ?? ''
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
 
-    for (const line of lines) {
-      const event = parseSseEvent(line)
-      if (event) {
-        const isDone = dispatchSseEvent(event, callbacks)
-        if (isDone) receivedDone = true
-      }
+      receivedDone = dispatchSseLines(lines, callbacks)
     }
+  } finally {
+    // Release the body on every exit path — completion, abort or a failed read —
+    // otherwise the stream stays locked until it is garbage collected.
+    void reader.cancel().catch(() => {})
+    reader.releaseLock()
   }
 
   if (!receivedDone) {

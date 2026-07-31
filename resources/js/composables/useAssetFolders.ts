@@ -31,6 +31,9 @@ export function useAssetFolders(spaceId: MaybeRef<string>) {
         const response = await spaceAPI.value.assetFolders.get(id)
         return response.data
       },
+      // Without this a component rendering before its id resolves would
+      // request `/asset-folders/`.
+      enabled: computed(() => Boolean(id)),
     })
   }
 
@@ -63,6 +66,8 @@ export function useAssetFolders(spaceId: MaybeRef<string>) {
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.assetFolders(spaceId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.assetFolders(spaceId).detail(data.id) })
+        // A move changes which folder the assets are browsed under.
+        queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
         toast.success(t('composables.assetFolders.updateSuccess', { name: data.name }) as string)
       },
       onError: (error: Error) => {
@@ -110,7 +115,8 @@ export function useAssetFolders(spaceId: MaybeRef<string>) {
 
     const getChildrenOfFolder = (parentId: string | null) => {
       if (!folders.value) return []
-      return folders.value.filter((folder) => folder.parent_id === parentId)
+      // A payload that omits parent_id is a root folder, same as rootFolders sees it.
+      return folders.value.filter((folder) => (folder.parent_id ?? null) === parentId)
     }
 
     const getBreadcrumbs = (folderId: string): AssetFolderResource[] => {
@@ -121,16 +127,21 @@ export function useAssetFolders(spaceId: MaybeRef<string>) {
 
       if (!currentFolder) return []
 
+      // A corrupt parent chain (self-parent, or a → b → a) would otherwise
+      // walk forever and grow the trail unboundedly.
+      const visited = new Set<string>([currentFolder.id])
+
       breadcrumbs.unshift(currentFolder)
 
       while (currentFolder?.parent_id) {
         const parentFolder = folderMap.value.get(currentFolder.parent_id)
-        if (parentFolder) {
-          breadcrumbs.unshift(parentFolder)
-          currentFolder = parentFolder
-        } else {
+        if (!parentFolder || visited.has(parentFolder.id)) {
           break
         }
+
+        visited.add(parentFolder.id)
+        breadcrumbs.unshift(parentFolder)
+        currentFolder = parentFolder
       }
 
       return breadcrumbs
@@ -138,12 +149,20 @@ export function useAssetFolders(spaceId: MaybeRef<string>) {
 
     const isDescendantOf = (folderId: string, potentialAncestorId: string): boolean => {
       let currentFolder = folderMap.value.get(folderId)
+      // Same cycle guard as getBreadcrumbs — this also backs the move guard,
+      // so a cycle here would hang a drag-drop instead of rejecting it.
+      const visited = new Set<string>()
 
       while (currentFolder?.parent_id) {
         if (currentFolder.parent_id === potentialAncestorId) {
           return true
         }
 
+        if (visited.has(currentFolder.id)) {
+          return false
+        }
+
+        visited.add(currentFolder.id)
         currentFolder = folderMap.value.get(currentFolder.parent_id)
       }
 

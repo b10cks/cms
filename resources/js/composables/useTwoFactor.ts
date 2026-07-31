@@ -73,7 +73,7 @@ export function useTwoFactor() {
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.twoFactor.status() })
-        toast.success(t('labels.twoFactor.disabled') as string)
+        toast.success(t('labels.twoFactor.disableSuccess') as string)
       },
       onError: (error: Error) => {
         toast.error(

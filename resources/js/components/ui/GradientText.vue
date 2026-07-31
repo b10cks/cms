@@ -19,7 +19,9 @@ const escapeHtml = (value: string): string =>
 
 const processedContent = computed(() => {
   const regex = /\*\*([^*]+)\*\*/g
-  const colors = props.colors.join(', ')
+  // Escaped like the content: the colours end up inside a quoted attribute of a
+  // `v-html` string, so an unescaped quote would break out of it.
+  const colors = escapeHtml(props.colors.join(', '))
 
   return escapeHtml(props.content).replace(
     regex,

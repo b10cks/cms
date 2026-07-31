@@ -1,4 +1,4 @@
-import { balancedSpans, stripAiCodeFences } from '~/lib/aiJson'
+import { balancedSpans, parseAiJson, stripAiCodeFences } from '~/lib/aiJson'
 import type { SseCallbacks } from '~/lib/sse'
 
 import { useAiStream } from './useAiStream'
@@ -84,13 +84,27 @@ const TREE_OPERATION_TYPES = new Set([
   'restore',
 ])
 
+/** The fields that make a `create` mean something; every other type carries an `id`. */
+const CREATE_FIELDS = ['name', 'slug', 'block_id', 'temp_id', 'parent_id'] as const
+
 function isTreeOperation(value: unknown): value is TreeOperation {
   if (!value || typeof value !== 'object') {
     return false
   }
 
-  const type = (value as { type?: unknown }).type
-  return typeof type === 'string' && TREE_OPERATION_TYPES.has(type)
+  const record = value as Record<string, unknown>
+  if (typeof record.type !== 'string' || !TREE_OPERATION_TYPES.has(record.type)) {
+    return false
+  }
+
+  // `create` is the one shape with no required key, so a bare `{type: 'create'}`
+  // — a stray object the model emitted mid-thought — would otherwise reach the
+  // applier as a real operation.
+  if (record.type === 'create') {
+    return CREATE_FIELDS.some((field) => record[field] !== undefined)
+  }
+
+  return true
 }
 
 export function useAiContentTree(spaceId: MaybeRef<string>) {
@@ -118,26 +132,31 @@ export function useAiContentTree(spaceId: MaybeRef<string>) {
 }
 
 export function parseTreeOperations(jsonString: string): TreeOperationsResult | null {
-  try {
-    const parsed = JSON.parse(stripAiCodeFences(jsonString))
-    if (parsed && Array.isArray(parsed.operations)) {
-      return {
-        operations: parsed.operations.filter(isTreeOperation),
-      }
-    }
+  // `parseAiJson` falls back to balanced extraction, so a document the model
+  // wrapped in prose parses here just as it does in the streaming path.
+  const parsed = parseAiJson<{ operations?: unknown }>(jsonString)
+  if (!parsed || !Array.isArray(parsed.operations)) {
     return null
-  } catch {
-    return null
+  }
+
+  return {
+    operations: parsed.operations.filter(isTreeOperation),
   }
 }
 
 export function extractStreamingTreeOperations(partial: string): TreeOperation[] {
-  const match = stripAiCodeFences(partial).match(/"operations"\s*:\s*\[([\s\S]*)$/)
-  if (!match) {
+  const text = stripAiCodeFences(partial)
+  const match = text.match(/"operations"\s*:\s*\[/)
+  if (match?.index === undefined) {
     return []
   }
 
-  const arrayContent = match[1]
+  // From the array's own `[`, and only as far as its matching `]` — otherwise
+  // the scan runs on into the sibling keys that follow the closed array and
+  // reports any operation-shaped object among them as an operation.
+  const rest = text.slice(match.index + match[0].length - 1)
+  const array = balancedSpans(rest, '[', ']').next().value
+  const arrayContent = array ? rest.slice(1, array.end) : rest.slice(1)
   const operations: TreeOperation[] = []
 
   for (const { start, end } of balancedSpans(arrayContent, '{', '}')) {

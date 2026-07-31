@@ -25,30 +25,20 @@ function applyTitleTemplate(title: string): string {
   return title
 }
 
-function updateMetaTag(name: string, content: string | undefined) {
-  if (!isClient) return
+type MetaKind = 'name' | 'property'
 
-  let meta = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null
-  if (content) {
-    if (!meta) {
-      meta = document.createElement('meta')
-      meta.name = name
-      document.head.appendChild(meta)
-    }
-    meta.content = content
-  } else if (meta) {
-    meta.remove()
-  }
+function findMetaTag(kind: MetaKind, key: string): HTMLMetaElement | null {
+  return document.querySelector(`meta[${kind}="${key}"]`) as HTMLMetaElement | null
 }
 
-function updatePropertyMeta(property: string, content: string | undefined) {
+function updateMeta(kind: MetaKind, key: string, content: string | undefined) {
   if (!isClient) return
 
-  let meta = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null
+  let meta = findMetaTag(kind, key)
   if (content) {
     if (!meta) {
       meta = document.createElement('meta')
-      meta.setAttribute('property', property)
+      meta.setAttribute(kind, key)
       document.head.appendChild(meta)
     }
     meta.content = content
@@ -62,12 +52,32 @@ export function useSeoMeta(options: SeoMetaOptions) {
     return
   }
 
-  const scopedTitleTemplate = options.titleTemplate
+  // The template *this* scope installed. A string template is wrapped in a
+  // closure before it is stored, so comparing against `options.titleTemplate`
+  // never matched and the template outlived the page that set it.
+  let ownTitleTemplate: ((title: string) => string) | null = null
+
+  // What this scope last wrote per tag, so dispose can drop the tags it still
+  // owns without stealing ones a later page has since overwritten.
+  const written = new Map<string, { kind: MetaKind; key: string; content: string }>()
+
+  const write = (kind: MetaKind, key: string, content: string | undefined) => {
+    updateMeta(kind, key, content)
+    const id = `${kind}:${key}`
+    if (content) written.set(id, { kind, key, content })
+    else written.delete(id)
+  }
 
   onScopeDispose(() => {
-    if (scopedTitleTemplate && currentTitleTemplate === unref(scopedTitleTemplate)) {
+    if (ownTitleTemplate && currentTitleTemplate === ownTitleTemplate) {
       currentTitleTemplate = null
     }
+
+    for (const { kind, key, content } of written.values()) {
+      const meta = findMetaTag(kind, key)
+      if (meta?.content === content) meta.remove()
+    }
+    written.clear()
   })
 
   watchEffect(() => {
@@ -81,22 +91,23 @@ export function useSeoMeta(options: SeoMetaOptions) {
 
     if (titleTemplate !== undefined) {
       if (typeof titleTemplate === 'function') {
-        currentTitleTemplate = titleTemplate
+        ownTitleTemplate = titleTemplate
       } else if (typeof titleTemplate === 'string') {
-        currentTitleTemplate = (t: string) => titleTemplate.replace('%s', t)
+        ownTitleTemplate = (t: string) => titleTemplate.replace('%s', t)
       } else {
-        currentTitleTemplate = null
+        ownTitleTemplate = null
       }
+      currentTitleTemplate = ownTitleTemplate
     }
 
     if (title !== undefined) {
       document.title = applyTitleTemplate(title || '')
     }
 
-    updateMetaTag('description', description)
-    updatePropertyMeta('og:title', ogTitle || title)
-    updatePropertyMeta('og:description', ogDescription || description)
-    updatePropertyMeta('og:image', ogImage)
-    updatePropertyMeta('og:url', ogUrl)
+    write('name', 'description', description)
+    write('property', 'og:title', ogTitle || title)
+    write('property', 'og:description', ogDescription || description)
+    write('property', 'og:image', ogImage)
+    write('property', 'og:url', ogUrl)
   })
 }

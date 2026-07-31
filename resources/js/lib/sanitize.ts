@@ -9,9 +9,16 @@ import DOMPurify from 'dompurify'
 
 /**
  * Sanitize an HTML fragment for use with `v-html` (e.g. rendered markdown).
+ *
+ * The `html` profile allows form controls, which would let authored content
+ * render a credential prompt posting to another origin from inside the CMS.
+ * Nothing we render this way needs interactive controls, so they are dropped.
  */
 export function sanitizeHtml(html: string): string {
-  return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } })
+  return DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+    FORBID_TAGS: ['form', 'input', 'button', 'textarea', 'select'],
+  })
 }
 
 /**

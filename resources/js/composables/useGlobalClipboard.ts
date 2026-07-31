@@ -5,7 +5,15 @@ import {
   usePermission,
   useWindowFocus,
 } from '@vueuse/core'
-import { onMounted, readonly, ref, watch } from 'vue'
+import {
+  effectScope,
+  getCurrentInstance,
+  onMounted,
+  onUnmounted,
+  readonly,
+  ref,
+  watch,
+} from 'vue'
 
 export interface ClipboardSingleItem {
   type: 'blocks-editor-clipboard-item'
@@ -82,8 +90,12 @@ const isValidClipboardItem = (item: unknown): item is ClipboardItem => {
     return false
   }
 
+  if (item._isCut !== undefined && typeof item._isCut !== 'boolean') {
+    return false
+  }
+
   if (item.type === 'blocks-editor-clipboard-item') {
-    return isRecord(item.data) && (item._isCut === undefined || typeof item._isCut === 'boolean')
+    return isRecord(item.data)
   }
 
   if (item.type === 'blocks-editor-clipboard-items') {
@@ -93,35 +105,58 @@ const isValidClipboardItem = (item: unknown): item is ClipboardItem => {
   return false
 }
 
-// Periodic clipboard checking when window is focused
-const { pause: pauseInterval, resume: resumeInterval } = useIntervalFn(async () => {
-  if (focused.value && clipboardPermission.value === 'granted') {
-    await checkClipboard()
-  }
-}, 1000) // Check every second
+// The poll and the watchers are shared by every caller (like the state they
+// maintain), but they are started on first use rather than at import, and
+// stopped again when the last component consumer unmounts — a module-scope
+// `useIntervalFn` leaves a timer running for the lifetime of the page.
+let watcherScope: ReturnType<typeof effectScope> | null = null
+let consumers = 0
+let permissionPrimed = false
 
-// Watch for focus changes to start/stop checking
-watch(focused, async (isFocused) => {
-  if (isFocused && clipboardPermission.value === 'granted') {
-    resumeInterval()
-    await checkClipboard() // Check immediately when focused
-  } else {
-    pauseInterval()
-  }
-})
+const startWatchers = () => {
+  // Periodic clipboard checking when window is focused
+  const { pause: pauseInterval, resume: resumeInterval } = useIntervalFn(async () => {
+    if (focused.value && clipboardPermission.value === 'granted') {
+      await checkClipboard()
+    }
+  }, 1000) // Check every second
 
-// Watch for permission changes
-watch(clipboardPermission, async (permission) => {
-  if (permission === 'granted' && focused.value) {
-    resumeInterval()
-    await checkClipboard()
-  } else {
-    pauseInterval()
-  }
-})
+  // Watch for focus changes to start/stop checking
+  watch(focused, async (isFocused) => {
+    if (isFocused && clipboardPermission.value === 'granted') {
+      resumeInterval()
+      await checkClipboard() // Check immediately when focused
+    } else {
+      pauseInterval()
+    }
+  })
 
-// Initialize on mount
-onMounted(async () => {
+  // Watch for permission changes
+  watch(clipboardPermission, async (permission) => {
+    if (permission === 'granted' && focused.value) {
+      resumeInterval()
+      await checkClipboard()
+    } else {
+      pauseInterval()
+    }
+  })
+}
+
+const ensureWatching = () => {
+  if (watcherScope) return
+  watcherScope = effectScope(true)
+  watcherScope.run(startWatchers)
+}
+
+const stopWatching = () => {
+  watcherScope?.stop()
+  watcherScope = null
+}
+
+const primePermission = async () => {
+  if (permissionPrimed) return
+  permissionPrimed = true
+
   // Try to read clipboard to trigger permission request if needed
   if (clipboardPermission.value === 'prompt' && isSupported.value) {
     try {
@@ -130,12 +165,27 @@ onMounted(async () => {
       // Permission denied or not supported, continue with localStorage fallback
     }
   }
-
-  // Initial check
-  await checkClipboard()
-})
+}
 
 export const useGlobalClipboard = () => {
+  ensureWatching()
+
+  // Outside a component (module setup, plain helpers) there is no unmount to
+  // tear down on, so only component callers take part in the ref-count.
+  if (getCurrentInstance()) {
+    consumers++
+
+    onMounted(async () => {
+      await primePermission()
+      await checkClipboard()
+    })
+
+    onUnmounted(() => {
+      consumers--
+      if (consumers === 0) stopWatching()
+    })
+  }
+
   const replaceIds = (obj: unknown): unknown => {
     if (Array.isArray(obj)) {
       return obj.map(replaceIds)
@@ -220,6 +270,17 @@ export const useGlobalClipboard = () => {
     await writeClipboardItem(clipboardItem)
   }
 
+  /** Whether the system clipboard currently holds one of *our* serialized items. */
+  const holdsOwnClipboardItem = (): boolean => {
+    if (!clipboardText.value) return false
+
+    try {
+      return isValidClipboardItem(JSON.parse(clipboardText.value))
+    } catch {
+      return false
+    }
+  }
+
   const getClipboardItem = async (): Promise<ClipboardItem | null> => {
     try {
       // First try to read from system clipboard
@@ -269,6 +330,19 @@ export const useGlobalClipboard = () => {
   const clearClipboard = async () => {
     localStorageClipboard.value = null
     hasClipboardItem.value = false
+
+    // getClipboardItem prefers the system clipboard, so leaving our serialized
+    // item there means a "cleared" clipboard still pastes. Only our own payload
+    // is overwritten though — the system clipboard is shared with every other
+    // application, and clearing an editor selection must not destroy whatever
+    // the user copied elsewhere.
+    if (!holdsOwnClipboardItem()) return
+
+    try {
+      await copyToClipboard('')
+    } catch {
+      // Nothing to do: the localStorage mirror is already empty.
+    }
   }
 
   return {

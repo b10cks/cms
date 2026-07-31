@@ -40,8 +40,8 @@ export function useAssetVersions(
       ),
       queryFn: async () => {
         return await versionsAPI.value.index({
-          ...toValue(params),
           sort: '-version_number',
+          ...toValue(params),
         })
       },
       enabled: computed(() => hasAssetId.value && toValue(enabled)),
@@ -52,6 +52,8 @@ export function useAssetVersions(
   const useRestoreAssetVersionMutation = () => {
     return useMutation({
       mutationFn: async (versionId: string) => {
+        // Without an asset the request would POST to `/assets//versions/{id}/restore`.
+        if (!hasAssetId.value) throw new Error('No asset selected')
         return await versionsAPI.value.restore(versionId)
       },
       onSuccess: (asset) => {

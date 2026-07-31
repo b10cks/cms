@@ -2,7 +2,7 @@ import { watchDebounced } from '@vueuse/core'
 import type { Ref } from 'vue'
 import { isProxy, toRaw } from 'vue'
 
-import { ensureTableValue, getTableColumns } from '~/lib/tableField'
+import { ensureTableValue, getTableColumns, normalizeSchemaTypeName } from '~/lib/tableField'
 import type { ContentResource } from '~/types/contents'
 
 type ScopeValue = Record<string, unknown>
@@ -17,16 +17,26 @@ type OptionLikeField =
   | (OptionsSchema & { key?: string; validation?: FieldValidation | null })
   | (Extract<TableColumn, { type: 'option' }> & { validation?: FieldValidation | null })
 
-const resolveAllowedOptionValues = (field: OptionLikeField): string[] => {
-  const source = field.source === 'datasource' ? 'datasource' : 'self'
+// `0` and `false` are legitimate option values, so only null/undefined collapse
+// to the empty string that marks an option as unusable.
+const normalizeOptionValue = (value: unknown): string =>
+  value === null || value === undefined ? '' : String(value).trim()
 
-  if (source !== 'self') {
-    return (field.validation?.allowed_values || []).map(String)
+const uniqueNonEmpty = (values: string[]) =>
+  values.filter((value, index) => value.length > 0 && values.indexOf(value) === index)
+
+const resolveAllowedOptionValues = (field: OptionLikeField): string[] => {
+  const declared = uniqueNonEmpty(
+    (field.validation?.allowed_values || []).map(normalizeOptionValue)
+  )
+
+  if (declared.length > 0 || field.source === 'datasource') {
+    return declared
   }
 
-  return ((field.options || []) as OptionItem[])
-    .map((option) => String(option?.value || '').trim())
-    .filter((value, index, values) => value.length > 0 && values.indexOf(value) === index)
+  return uniqueNonEmpty(
+    ((field.options || []) as OptionItem[]).map((option) => normalizeOptionValue(option?.value))
+  )
 }
 
 interface ValidationStateOptions {
@@ -57,40 +67,12 @@ const TRANSLATABLE_TYPES: CanonicalSchemaTypeName[] = [
   'plugin',
 ]
 
-export const normalizeSchemaType = (type?: string | null): CanonicalSchemaTypeName | '' => {
-  switch (type) {
-    case 'multiAsset':
-      return 'multi_assets'
-    case 'reference':
-      return 'references'
-    case 'block':
-      return 'blocks'
-    case 'blocks':
-    case 'text':
-    case 'textarea':
-    case 'markdown':
-    case 'richtext':
-    case 'number':
-    case 'boolean':
-    case 'option':
-    case 'options':
-    case 'link':
-    case 'asset':
-    case 'multi_assets':
-    case 'icon':
-    case 'geo':
-    case 'price':
-    case 'references':
-    case 'date':
-    case 'meta':
-    case 'table':
-    case 'plugin':
-    case 'serial':
-      return type
-    default:
-      return ''
-  }
-}
+export const normalizeSchemaType = normalizeSchemaTypeName
+
+const ICON_SOURCES: IconFieldSource[] = ['registry', 'all', 'collections']
+
+const normalizeIconSource = (source: unknown): IconFieldSource =>
+  ICON_SOURCES.includes(source as IconFieldSource) ? (source as IconFieldSource) : 'all'
 
 const isCanonicalSchemaType = (
   type: CanonicalSchemaTypeName | ''
@@ -139,7 +121,9 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
                               ? 'is_not_empty'
                               : rule.operator || 'equals',
             value: rule.value,
-          })),
+          }))
+            // Same rule as `conditions.rules`: a rule naming no field is dead.
+            .filter((rule: FieldCondition) => Boolean(rule.field)),
         }
       : null
 
@@ -159,7 +143,7 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
     source: isOptionLike
       ? optionSource
       : isIcon
-        ? ((schemaField.source as IconFieldSource | undefined) ?? 'all')
+        ? normalizeIconSource(schemaField.source)
         : undefined,
     data_source_id: isOptionLike ? (schemaField.data_source_id ?? null) : undefined,
     key_style: isGeo
@@ -197,15 +181,22 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
       min_items: validation.min_items ?? (schemaField as any).min,
       max_items: validation.max_items ?? (schemaField as any).max,
       min_length: validation.min_length ?? (schemaField as any).min_length,
+      // Deliberately asymmetric, mirroring SchemaField::normalizeValidation on the
+      // backend: legacy `maximum` doubles as a text max_length, legacy `minimum`
+      // never means a length. Adding a `minimum` fallback here would raise
+      // client-only errors the backend does not enforce.
       max_length:
         validation.max_length ?? (schemaField as any).max_length ?? (schemaField as any).maximum,
       allowed_values:
-        optionSource === 'self'
+        isOptionLike && optionSource === 'self'
           ? validation.allowed_values ||
             // Plugin fields carry options as a key/value object, not an option list.
-            (Array.isArray((schemaField as any).options) ? (schemaField as any).options : [])
-              .map((option: OptionItem) => option?.value)
-              .filter(Boolean)
+            uniqueNonEmpty(
+              (Array.isArray((schemaField as any).options)
+                ? ((schemaField as any).options as OptionItem[])
+                : []
+              ).map((option) => normalizeOptionValue(option?.value))
+            )
           : validation.allowed_values,
     } satisfies FieldValidation,
     default: isTable
@@ -266,16 +257,32 @@ const warnSchemaState = (context: string, error: unknown) => {
 
 const isEmpty = (value: unknown) => value === null || value === undefined || value === ''
 
+const isPrimitive = (value: unknown) =>
+  value === null || (typeof value !== 'object' && typeof value !== 'function')
+
+// Loose enough that a numeric 1 still matches a configured '1', strict enough
+// that an unset field no longer equals an explicit `null`.
+const looseEquals = (actual: unknown, expected: unknown) => {
+  if (actual === expected) return true
+  if (isEmpty(actual) || isEmpty(expected)) return false
+  if (!isPrimitive(actual) || !isPrimitive(expected)) return false
+
+  return String(actual) === String(expected)
+}
+
+const toComparableString = (value: unknown) => (isEmpty(value) ? '' : String(value).toLowerCase())
+
 const matchesCondition = (actual: unknown, operator: ConditionOperator, expected?: unknown) => {
   switch (operator) {
     case 'equals':
-      return actual == expected
+      return looseEquals(actual, expected)
     case 'not_equals':
-      return actual != expected
+      return !looseEquals(actual, expected)
     case 'in':
       return Array.isArray(expected) && expected.includes(actual as never)
     case 'not_in':
-      return Array.isArray(expected) && !expected.includes(actual as never)
+      // A malformed rule must not hide the field: nothing is a member of a non-list.
+      return !Array.isArray(expected) || !expected.includes(actual as never)
     case 'is_empty':
       return isEmpty(actual) || (Array.isArray(actual) && actual.length === 0)
     case 'is_not_empty':
@@ -291,9 +298,10 @@ const matchesCondition = (actual: unknown, operator: ConditionOperator, expected
     case 'contains':
       return Array.isArray(actual)
         ? actual.includes(expected as never)
-        : String(actual || '')
-            .toLowerCase()
-            .includes(String(expected || '').toLowerCase())
+        : toComparableString(actual).includes(toComparableString(expected))
+    default:
+      // An operator this build does not know about must not make the field vanish.
+      return true
   }
 }
 
@@ -316,6 +324,7 @@ export const isFieldVisible = (
       const source =
         controller.translatable ||
         (localValue === undefined &&
+          Boolean(effectiveScope) &&
           Object.prototype.hasOwnProperty.call(effectiveScope, rule.field))
           ? effectiveScope
           : scope
@@ -325,9 +334,33 @@ export const isFieldVisible = (
 
     return normalized.conditions.mode === 'any' ? results.some(Boolean) : results.every(Boolean)
   } catch (error) {
-    warnSchemaState(`failed to evaluate visibility for field "${field.key || 'unknown'}"`, error)
+    const fieldKey = (field as { key?: string } | null | undefined)?.key || 'unknown'
+    warnSchemaState(`failed to evaluate visibility for field "${fieldKey}"`, error)
     return true
   }
+}
+
+const readBlockItemId = (item: unknown): string | null => {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return null
+  const id = (item as Record<string, unknown>).id
+
+  return typeof id === 'string' && id !== '' ? id : null
+}
+
+// Pruning and validation must pair a translated block item with the same source
+// item, or they disagree about a reordered translation: id first, index second.
+const pairEffectiveItem = (
+  item: ScopeValue,
+  effectiveItems: Array<ScopeValue>,
+  index: number
+): ScopeValue => {
+  const itemId = readBlockItemId(item)
+
+  return (
+    (itemId ? effectiveItems.find((entry) => readBlockItemId(entry) === itemId) : undefined) ??
+    effectiveItems[index] ??
+    item
+  )
 }
 
 const pruneScope = (
@@ -338,11 +371,16 @@ const pruneScope = (
   ignoreAbsentNonTranslatableFields = false
 ) => {
   const next = cloneScope(values)
+  // Conditions read a controller from the source document when the local scope
+  // has no key for it. A field this pass removed must not resurface there, or a
+  // dependency chain (a → b → c) never collapses.
+  const visibilityScope: ScopeValue = { ...effectiveScope }
 
   for (const [key, rawField] of Object.entries(normalizeSchema(schema))) {
     const field = rawField as SchemaType & { key: string }
-    if (!isFieldVisible(field, schema, next, effectiveScope)) {
+    if (!isFieldVisible(field, schema, next, visibilityScope)) {
       delete next[key]
+      delete visibilityScope[key]
       continue
     }
 
@@ -368,11 +406,7 @@ const pruneScope = (
     if (ignoreAbsentNonTranslatableFields && Array.isArray(effectiveScope?.[key])) {
       const sourceIds = new Set(
         (effectiveScope[key] as Array<unknown>)
-          .map((item) => {
-            if (typeof item !== 'object' || item === null || Array.isArray(item)) return null
-            const id = (item as Record<string, unknown>).id
-            return typeof id === 'string' && id !== '' ? id : null
-          })
+          .map((item) => readBlockItemId(item))
           .filter((id): id is string => id !== null)
       )
       if (sourceIds.size > 0) {
@@ -390,14 +424,7 @@ const pruneScope = (
       const effectiveItems = Array.isArray(effectiveScope[key])
         ? (effectiveScope[key] as Array<ScopeValue>)
         : []
-      const itemId =
-        typeof (item as any).id === 'string' && (item as any).id !== ''
-          ? ((item as any).id as string)
-          : null
-      const effectiveItem: ScopeValue =
-        (itemId ? effectiveItems.find((ei) => (ei as any)?.id === itemId) : undefined) ??
-        effectiveItems[index] ??
-        (item as ScopeValue)
+      const effectiveItem = pairEffectiveItem(item as ScopeValue, effectiveItems, index)
 
       // Stamp block references that are missing id/block by copying them from the
       // matched source item — prevents unstamped stubs from persisting across saves.
@@ -441,6 +468,9 @@ const validateScope = (
 ) => {
   const errors: Record<string, string[]> = {}
   const normalizedSchema = normalizeSchema(schema)
+  // Mirrors pruneScope: a field hidden by a condition also disappears from the
+  // scope its dependants are evaluated against.
+  const visibilityScope: ScopeValue = { ...effectiveScope }
 
   const pushError = (path: Array<string | number>, message: string) => {
     const key = `content.${path.map(String).join('.')}`
@@ -450,7 +480,10 @@ const validateScope = (
 
   for (const [key, field] of Object.entries(normalizedSchema)) {
     const path = [...pathPrefix, key]
-    if (!isFieldVisible(field, schema, values, effectiveScope)) continue
+    if (!isFieldVisible(field, schema, values, visibilityScope)) {
+      delete visibilityScope[key]
+      continue
+    }
 
     const type = normalizeSchemaType(field.type)
     const ignoreCurrentField = ignoreAbsentNonTranslatableFields && !field.translatable
@@ -459,7 +492,9 @@ const validateScope = (
       continue
     }
 
-    const value = (effectiveScope as ScopeValue)[key]
+    // Validate what will actually be saved — the pruned local scope visibility
+    // was decided from — rather than the source document.
+    const value = values?.[key]
     const validation = field.validation || {}
 
     if (!ignoreCurrentField && field.required && isEmpty(value)) {
@@ -515,23 +550,22 @@ const validateScope = (
     if (type === 'option') {
       const allowedValues = resolveAllowedOptionValues(field as OptionLikeField)
 
-      if (allowedValues.length && !allowedValues.includes(String(value))) {
+      if (allowedValues.length && !allowedValues.includes(normalizeOptionValue(value))) {
         pushError(path, `${field.name || key} must use an allowed option.`)
       }
     }
 
-    if (type === 'options') {
-      if (!Array.isArray(value)) {
-        pushError(path, `${field.name || key} must be a list.`)
-      } else {
-        const allowedValues = resolveAllowedOptionValues(field as OptionLikeField)
+    // A non-array value is reported once, by the shared list branch below.
+    if (type === 'options' && Array.isArray(value)) {
+      const allowedValues = resolveAllowedOptionValues(field as OptionLikeField)
 
-        if (allowedValues.length) {
-          const invalidValues = value.filter((entry) => !allowedValues.includes(String(entry)))
+      if (allowedValues.length) {
+        const invalidValues = value.filter(
+          (entry) => !allowedValues.includes(normalizeOptionValue(entry))
+        )
 
-          if (invalidValues.length > 0) {
-            pushError(path, `${field.name || key} must only use allowed options.`)
-          }
+        if (invalidValues.length > 0) {
+          pushError(path, `${field.name || key} must only use allowed options.`)
         }
       }
     }
@@ -690,22 +724,24 @@ const validateScope = (
         const blockSlug = String((item as any).block || '')
         const block = blocksBySlug[blockSlug]
         if (!block?.schema) return
-        const effectiveItem =
-          Array.isArray(effectiveScope[key]) && (effectiveScope[key] as Array<ScopeValue>)[index]
-            ? ((effectiveScope[key] as Array<ScopeValue>)[index] as ScopeValue)
-            : (item as ScopeValue)
-
-        Object.assign(
-          errors,
-          validateScope(
-            item as ScopeValue,
-            block.schema,
-            blocksBySlug,
-            [...path, index],
-            effectiveItem,
-            ignoreAbsentNonTranslatableFields
-          )
+        const effectiveItems = Array.isArray(effectiveScope[key])
+          ? (effectiveScope[key] as Array<ScopeValue>)
+          : []
+        const effectiveItem = pairEffectiveItem(item as ScopeValue, effectiveItems, index)
+        const nestedErrors = validateScope(
+          item as ScopeValue,
+          block.schema,
+          blocksBySlug,
+          [...path, index],
+          effectiveItem,
+          ignoreAbsentNonTranslatableFields
         )
+
+        Object.entries(nestedErrors).forEach(([nestedPath, messages]) => {
+          errors[nestedPath] = errors[nestedPath]
+            ? Array.from(new Set([...errors[nestedPath], ...messages]))
+            : messages
+        })
       })
     }
   }
@@ -874,6 +910,10 @@ export const useContentSchemaState = ({
   const getFirstInvalidFieldPath = () => validationEntries.value[0]?.path || null
 
   const focusFirstInvalidField = async () => {
+    // The debounced client errors decide which path to focus, so refresh them
+    // before reading — an edit within the last 300ms would otherwise no-op.
+    refreshClientErrors()
+
     const path = getFirstInvalidFieldPath()
     if (!path || typeof document === 'undefined') return
 

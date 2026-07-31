@@ -3,6 +3,11 @@ import { useStorage } from '@vueuse/core'
 import { isClient } from '~/lib/env'
 import type { TeamResource } from '~/types/teams'
 
+export const GLOBAL_TEAM_QUERY_PARAMS = {
+  include_space_context: true,
+  per_page: 1000,
+} as const
+
 interface GlobalTeamState {
   selectedTeamId: string | null
   lastSelectedAt: string | null
@@ -45,7 +50,7 @@ export function useGlobalTeam() {
     data: teams,
     isLoading: isLoadingTeams,
     error: teamsError,
-  } = useTeamsQuery({ include_space_context: true, per_page: 1000 })
+  } = useTeamsQuery(GLOBAL_TEAM_QUERY_PARAMS)
 
   const availableTeams = computed<TeamResource[]>(() => teams.value?.data ?? [])
 

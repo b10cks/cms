@@ -11,7 +11,7 @@ import { queryKeys } from './useQueryClient'
 export function useUser() {
   const { t } = useI18n()
   const queryClient = useQueryClient()
-  const { setUser } = useAuth()
+  const { user, setUser } = useAuth()
 
   const useUserQuery = () => {
     return useQuery({
@@ -30,9 +30,12 @@ export function useUser() {
         return response.data
       },
       onSuccess: (data) => {
+        // The PATCH already returned the updated user, so seeding the cache is
+        // enough — invalidating it here would fire a redundant `GET /users/me`
+        // and, because the key is a prefix of the token and social-link keys,
+        // refetch those too.
         setUser(data)
         queryClient.setQueryData<User>(queryKeys.users.me(), data)
-        queryClient.invalidateQueries({ queryKey: queryKeys.users.me() })
         toast.success(t('labels.account.profile.toast.updated') as string)
       },
       onError: (error: Error) => {
@@ -69,12 +72,19 @@ export function useUser() {
         const response = await api.users.uploadAvatar(file)
         return response.data
       },
-      onSuccess: async () => {
-        await queryClient.invalidateQueries({ queryKey: queryKeys.users.me() })
-        const refreshedUser = queryClient.getQueryData<User>(queryKeys.users.me())
-        if (refreshedUser) {
-          setUser(refreshedUser)
+      onSuccess: async (data) => {
+        // The upload response carries the new avatar. Reading the cache back
+        // after `invalidateQueries` is not enough: it only refetches *active*
+        // observers, so on a screen without a mounted `useUserQuery` the
+        // read-back hands back the pre-upload entry and re-seats the old avatar.
+        queryClient.setQueryData<User>(queryKeys.users.me(), (previous) =>
+          previous ? { ...previous, avatar: data.avatar } : previous
+        )
+        const current = queryClient.getQueryData<User>(queryKeys.users.me()) ?? user.value
+        if (current) {
+          setUser({ ...current, avatar: data.avatar })
         }
+        await queryClient.invalidateQueries({ queryKey: queryKeys.users.me() })
         toast.success(t('labels.account.profile.toast.avatarUploaded') as string)
       },
       onError: (error: Error) => {

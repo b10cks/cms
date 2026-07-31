@@ -27,10 +27,16 @@ export function useHoverPrefetch<TPayload>(
         timers.delete(payload)
         done.add(payload)
         // Swallow rejections so a failed prefetch never surfaces; the real
-        // query will simply fetch on demand (and may retry) later.
-        void Promise.resolve(prefetch(payload)).catch(() => {
+        // query will simply fetch on demand (and may retry) later. The call is
+        // evaluated before the promise wrapper, so a *synchronous* throw needs
+        // the same treatment or it escapes the timer uncaught.
+        try {
+          void Promise.resolve(prefetch(payload)).catch(() => {
+            done.delete(payload)
+          })
+        } catch {
           done.delete(payload)
-        })
+        }
       }, delay)
     )
   }
@@ -50,7 +56,10 @@ export function useHoverPrefetch<TPayload>(
     }
   }
 
-  onScopeDispose(() => cancel())
+  onScopeDispose(() => {
+    cancel()
+    done.clear()
+  })
 
   return { start, cancel }
 }

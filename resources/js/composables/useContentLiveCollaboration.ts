@@ -683,6 +683,11 @@ export function useContentLiveCollaboration(
       syncLocalDraftIndex()
     }
 
+    // Guarded like flushFieldUpdate: the local bookkeeping above still has to run
+    // offline (the trail index depends on it), but nothing goes on the wire
+    // without a channel.
+    if (!presence.isConnected.value) return
+
     presence.whisper(BLOCK_OPERATION_EVENT, {
       ...payload,
       parentId,

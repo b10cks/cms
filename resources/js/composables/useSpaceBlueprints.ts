@@ -121,13 +121,8 @@ export function useSpaceBlueprints() {
         return response.data
       },
       onSuccess: (blueprint) => {
+        // `all()` is a prefix of every blueprint key, team lists included.
         queryClient.invalidateQueries({ queryKey: spaceBlueprintQueryKeys.all() })
-
-        if (blueprint.team_id) {
-          queryClient.invalidateQueries({
-            queryKey: spaceBlueprintQueryKeys.teamList(blueprint.team_id),
-          })
-        }
 
         toast.success(
           t('composables.spaceBlueprints.createSuccess', {

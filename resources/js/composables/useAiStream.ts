@@ -1,6 +1,13 @@
 import { ensureCsrfToken, getXsrfHeaders } from '~/lib/csrf'
 import { consumeSseStream, parseStreamErrorResponse, type SseCallbacks } from '~/lib/sse'
 
+/** A rejection is not necessarily an Error — it can be anything, including null. */
+const errorField = (error: unknown, field: 'name' | 'message'): string | undefined => {
+  if (typeof error !== 'object' || error === null) return undefined
+  const value = (error as Record<string, unknown>)[field]
+  return typeof value === 'string' ? value : undefined
+}
+
 /**
  * Shared transport for the AI streaming endpoints. Owns the abort controller, CSRF
  * handshake, fetch with the SSE headers, pre-stream error parsing and the reader
@@ -11,7 +18,10 @@ import { consumeSseStream, parseStreamErrorResponse, type SseCallbacks } from '~
  */
 export function useAiStream() {
   const { t } = useI18n()
-  const abortController = ref<AbortController | null>(null)
+  // A set, not a single controller: two concurrent `stream()` calls on one
+  // instance would otherwise overwrite each other's controller, so one could no
+  // longer be cancelled and the other would report itself as finished mid-flight.
+  const abortControllers = ref(new Set<AbortController>())
 
   const stream = async (
     url: string,
@@ -26,7 +36,8 @@ export function useAiStream() {
       return
     }
 
-    abortController.value = new AbortController()
+    const controller = new AbortController()
+    abortControllers.value.add(controller)
 
     try {
       const response = await fetch(url, {
@@ -37,7 +48,7 @@ export function useAiStream() {
           ...xsrfHeaders,
         },
         body: JSON.stringify(payload),
-        signal: abortController.value.signal,
+        signal: controller.signal,
         credentials: 'include',
       })
 
@@ -51,23 +62,23 @@ export function useAiStream() {
       if (!reader) throw new Error('No response body')
 
       await consumeSseStream(reader, callbacks)
-    } catch (error: any) {
-      if (error.name === 'AbortError') return
+    } catch (error: unknown) {
+      if (errorField(error, 'name') === 'AbortError') return
 
-      callbacks.onError?.(error.message || 'Unknown error')
+      callbacks.onError?.(errorField(error, 'message') || 'Unknown error')
     } finally {
-      abortController.value = null
+      abortControllers.value.delete(controller)
     }
   }
 
   const cancelStream = () => {
-    if (abortController.value) {
-      abortController.value.abort()
-      abortController.value = null
+    for (const controller of abortControllers.value) {
+      controller.abort()
     }
+    abortControllers.value.clear()
   }
 
-  const isStreaming = computed(() => abortController.value !== null)
+  const isStreaming = computed(() => abortControllers.value.size > 0)
 
   return { stream, cancelStream, isStreaming }
 }

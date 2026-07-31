@@ -61,7 +61,10 @@ const matchFrom = (query: string, target: FuzzyTarget, start: number): FuzzyMatc
 
     let charScore = 1
 
-    if (previousIndex === textIndex - 1) {
+    // previousIndex >= 0 guards the seed value: without it a match anchored at
+    // index 0 reads -1 === -1 as a continued run and collects the bonus for its
+    // very first character, making index-0 scores incomparable to the rest.
+    if (previousIndex >= 0 && previousIndex === textIndex - 1) {
       charScore += 8
     }
 

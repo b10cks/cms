@@ -27,6 +27,7 @@ export function useIcons(spaceId: MaybeRef<string>) {
         })
         return response
       },
+      enabled: computed(() => Boolean(toValue(spaceId))),
       placeholderData: keepPreviousData,
     })
   }

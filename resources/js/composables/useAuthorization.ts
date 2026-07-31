@@ -14,6 +14,7 @@ import {
   type NavigationAccessItem,
   type RouteAccessRequirement,
 } from '~/lib/access-control'
+import { GLOBAL_TEAM_QUERY_PARAMS } from '~/lib/global-team'
 import { queryClient } from '~/plugins/vue-query'
 import type { AuthorizationPayload, AuthorizationQueryParams } from '~/types/authorization'
 
@@ -56,12 +57,15 @@ export async function ensureAuthorizationContext(params: AuthorizationQueryParam
 }
 
 export async function ensureSelectedTeamAccess(): Promise<SelectedTeamAccess> {
+  // Same key and same params as `useGlobalTeam`: the guard and the team switcher
+  // have to resolve the selection from one cache entry, or a paginated-away team
+  // makes them disagree about which team is selected.
   const teamsResponse = await queryClient.ensureQueryData({
-    queryKey: queryKeys.teams.list({ include_space_context: true }),
+    queryKey: queryKeys.teams.list(GLOBAL_TEAM_QUERY_PARAMS),
     queryFn: async () => {
       return await api.teams.index({
         sort: '+name',
-        include_space_context: true,
+        ...GLOBAL_TEAM_QUERY_PARAMS,
       })
     },
   })
@@ -74,6 +78,30 @@ export async function ensureSelectedTeamAccess(): Promise<SelectedTeamAccess> {
     teamId: selectedTeam?.id ?? null,
     canCreateSpace: !!selectedTeam?.can_create_space,
   }
+}
+
+/**
+ * `keepPreviousData` keeps the payload of the space the user just left around
+ * while the next one loads. That is what stops the nav from blanking out on a
+ * team/global switch, but for a space scope it would answer ability checks from
+ * *another* space's abilities — so a space with fewer rights briefly renders as
+ * permitted. Treat such a payload as unresolved instead.
+ */
+function resolveScopedAuthorization(
+  authorization: AuthorizationPayload | undefined,
+  params: AuthorizationQueryParams
+): AuthorizationPayload | null {
+  if (!authorization) {
+    return null
+  }
+
+  const loadedSpaceId = authorization.space?.id
+
+  if (params.space_id && loadedSpaceId && loadedSpaceId !== params.space_id) {
+    return null
+  }
+
+  return authorization
 }
 
 export function createAccessEvaluationContext(
@@ -106,18 +134,6 @@ export function useAuthorization() {
     })
   }
 
-  const useAbility = (
-    ability: MaybeRef<string>,
-    params: MaybeRef<AuthorizationQueryParams> = {}
-  ) => {
-    const query = useAuthorizationQuery(params)
-
-    return computed(() => {
-      const abilities = getAbilitySet(query.data.value)
-      return query.data.value?.is_root || abilities.has(toValue(ability))
-    })
-  }
-
   const useAccessControl = (
     params: MaybeRef<AuthorizationQueryParams> = {},
     overrides: MaybeRef<Partial<AccessEvaluationContext>> = {}
@@ -125,15 +141,19 @@ export function useAuthorization() {
     const query = useAuthorizationQuery(params)
     const { selectedTeam } = useGlobalTeam()
 
+    const authorization = computed(() =>
+      resolveScopedAuthorization(query.data.value, toValue(params))
+    )
+
     const context = computed<AccessEvaluationContext>(() =>
-      createAccessEvaluationContext(query.data.value, toValue(params), {
+      createAccessEvaluationContext(authorization.value, toValue(params), {
         selectedTeamId: selectedTeam.value?.id ?? null,
         selectedTeamCanCreateSpace: selectedTeam.value?.can_create_space ?? false,
         ...toValue(overrides),
       })
     )
 
-    const abilitySet = computed(() => getAbilitySet(query.data.value))
+    const abilitySet = computed(() => getAbilitySet(authorization.value))
 
     const hasAbility = (ability: string) => {
       return canAccessRequirement({ abilities: ability }, context.value)
@@ -189,7 +209,7 @@ export function useAuthorization() {
 
     return {
       query,
-      authorization: computed(() => query.data.value ?? null),
+      authorization,
       abilitySet,
       context,
       hasAbility,
@@ -201,6 +221,17 @@ export function useAuthorization() {
       firstAllowedRouteForTeam,
       getRouteAccessRequirement,
     }
+  }
+
+  // Built on `useAccessControl` so both ability APIs answer identically: the same
+  // scope guard, the same selected-team context, the same requirement evaluation.
+  const useAbility = (
+    ability: MaybeRef<string>,
+    params: MaybeRef<AuthorizationQueryParams> = {}
+  ) => {
+    const { hasAbility } = useAccessControl(params)
+
+    return computed(() => hasAbility(toValue(ability)))
   }
 
   return {

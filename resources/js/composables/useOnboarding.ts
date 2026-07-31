@@ -20,12 +20,18 @@ interface OnboardingChoices {
   commandCopied: boolean
 }
 
-const defaultChoices: OnboardingChoices = {
+/**
+ * A factory, not a shared object: `useStorage` hands back the very object it was
+ * given whenever the key holds nothing, so a single instance would be mutated in
+ * place and the next space with no stored onboarding would start from — and
+ * immediately persist — the previous space's answers.
+ */
+const createDefaultChoices = (): OnboardingChoices => ({
   framework: null,
   packageManager: 'bun',
   directory: '',
   commandCopied: false,
-}
+})
 
 export function useOnboarding(spaceId: MaybeRef<string>) {
   const { t } = useI18n()
@@ -38,7 +44,7 @@ export function useOnboarding(spaceId: MaybeRef<string>) {
    */
   const choices = useStorage<OnboardingChoices>(
     computed(() => `space-${toValue(spaceId)}-onboarding`),
-    defaultChoices,
+    createDefaultChoices,
     undefined,
     { mergeDefaults: true }
   )
@@ -49,9 +55,11 @@ export function useOnboarding(spaceId: MaybeRef<string>) {
         const response = await api.spaces.updateOnboarding(toValue(spaceId), dismissed)
         return response.data
       },
-      onSuccess: (data) => {
+      // Keyed off the space we mutated, not off the response: a mismatched id
+      // would invalidate a stranger and leave this space stale.
+      onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.spaces.lists() })
-        queryClient.invalidateQueries({ queryKey: queryKeys.spaces.detail(data.id) })
+        queryClient.invalidateQueries({ queryKey: queryKeys.spaces.detail(toValue(spaceId)) })
       },
       onError: (error: Error) => {
         toast.error(

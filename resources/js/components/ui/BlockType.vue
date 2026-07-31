@@ -63,19 +63,24 @@ const props = defineProps<{ type?: string }>()
 
 const currentType = computed<{ cls?: string; icon?: string; text?: string }>(() => {
   const known = props.type ? types[props.type as keyof typeof types] : undefined
-  return known ?? { cls: props.type }
+  return known ?? { text: props.type }
 })
 </script>
 
 <template>
-  <span :class="['flex h-6 w-10 items-center justify-center rounded-sm', currentType.cls]">
+  <span
+    :class="['flex h-6 w-10 items-center justify-center rounded-sm', currentType.cls]"
+    :role="type ? 'img' : undefined"
+    :aria-label="type"
+    :title="type"
+  >
     <Icon
       v-if="currentType.icon"
       :name="currentType.icon"
     />
     <span
       v-else
-      class="text-sm font-bold"
+      class="truncate px-1 text-sm font-bold"
       >{{ currentType.text }}</span
     >
   </span>

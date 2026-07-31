@@ -84,8 +84,10 @@ export function useMigrations(spaceIdRef: MaybeRefOrComputed<string>) {
         await spaceAPI.value.migrations.delete(id)
         return id
       },
-      onSuccess: () => {
+      onSuccess: (id) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.migrations(spaceId.value).lists() })
+        // useMigrationQuery polls while the migration runs — drop the entry or it polls a 404.
+        queryClient.removeQueries({ queryKey: queryKeys.migrations(spaceId.value).detail(id) })
         toast.success(t('composables.migrations.deleteSuccess'))
       },
       onError: (error: Error) => {

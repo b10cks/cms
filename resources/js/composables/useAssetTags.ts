@@ -21,6 +21,7 @@ export function useAssetTags(spaceId: MaybeRef<string>) {
           ...toValue(params),
         })
       },
+      enabled: computed(() => Boolean(toValue(spaceId))),
       placeholderData: keepPreviousData,
     })
   }
@@ -66,6 +67,8 @@ export function useAssetTags(spaceId: MaybeRef<string>) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.assetTags(spaceId).detail(data.id),
         })
+        // Assets embed the tag's label and colour, so every cached list is stale.
+        queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
         toast.success(t('composables.assetTags.updateSuccess', { name: data.name }) as string)
       },
       onError: (error: Error) => {

@@ -20,8 +20,8 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  (e: 'update', newName: string, itemId?: string | number): void
-  (e: 'cancel' | 'edit-start', itemId?: string | number): void
+  (e: 'update', newName: string): void
+  (e: 'cancel' | 'edit-start'): void
 }>()
 
 const isEditing = ref(false)
@@ -128,9 +128,12 @@ defineExpose({
   />
   <span
     v-else
-    type="button"
     :class="props.class"
+    :role="disabled ? undefined : 'button'"
+    :tabindex="disabled ? undefined : 0"
     @dblclick.stop.prevent="startEdit"
+    @keydown.enter.stop.prevent="startEdit"
+    @keydown.space.stop.prevent="startEdit"
   >
     <template v-if="highlightSegments">
       <span
@@ -141,7 +144,7 @@ defineExpose({
     </template>
     <slot
       v-else
-      :name="name"
-    >{{ name ?? fallback }}</slot>
+      :value="name"
+    >{{ name || fallback }}</slot>
   </span>
 </template>

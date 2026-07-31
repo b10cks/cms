@@ -9,9 +9,15 @@ const CANVAS_PADDING = 100
 const CANVAS_MIN_OVERSCROLL_X = 2400
 const CANVAS_MIN_OVERSCROLL_Y = 2000
 const CANVAS_MIN_WIDTH = 5200
-const CANVAS_MIN_HEIGHT = 4200
 const GESTURE_ZOOM_SENSITIVITY = 0.005
 const AI_DOCK_SAFE_AREA = 120
+const MIN_USABLE_HEIGHT = 240
+
+// The dock only has to be kept clear when there is room for it: on a container
+// shorter than the reserve, subtracting it would leave a usable area taller than
+// the container itself, so fitted content could never actually fit.
+const resolveUsableHeight = (height: number) =>
+  Math.max(height - AI_DOCK_SAFE_AREA, Math.min(height, MIN_USABLE_HEIGHT))
 
 interface WebKitGestureEvent extends Event {
   scale: number
@@ -60,8 +66,7 @@ export function useContentWizardViewport(bounds: Ref<ContentWizardBounds>) {
     ),
     height: Math.max(
       bounds.value.height + overscrollPadding.value.y * 2 + 220,
-      containerHeight.value + overscrollPadding.value.y * 2 + 220,
-      CANVAS_MIN_HEIGHT
+      containerHeight.value + overscrollPadding.value.y * 2 + 220
     ),
   }))
 
@@ -75,7 +80,7 @@ export function useContentWizardViewport(bounds: Ref<ContentWizardBounds>) {
   const clampScale = (scale: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale))
   const getViewportCenterOffset = (element: HTMLElement) => ({
     x: element.clientWidth / 2,
-    y: Math.max((element.clientHeight - AI_DOCK_SAFE_AREA) / 2, 120),
+    y: resolveUsableHeight(element.clientHeight) / 2,
   })
 
   const syncViewport = () => {
@@ -139,7 +144,7 @@ export function useContentWizardViewport(bounds: Ref<ContentWizardBounds>) {
       return
     }
 
-    const availableHeight = Math.max(element.clientHeight - AI_DOCK_SAFE_AREA, 240)
+    const availableHeight = resolveUsableHeight(element.clientHeight)
     const targetScale = clampScale(
       Math.min(
         element.clientWidth / Math.max(bounds.value.width + padding * 2, 320),

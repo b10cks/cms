@@ -21,12 +21,16 @@ import type { ApiClient } from '../client'
 // src/api/resources/contents.ts
 import { BaseResource } from './base-resource'
 
+/**
+ * The management content filters are read off the top level of the query
+ * string (`ContentFilter::fromRequest()` dispatches on `$request->all()`), so
+ * there is no `filter` wrapper — a nested one is silently ignored.
+ * `parent_id` takes the literal string `null` to mean "root level".
+ */
 export interface ContentsQueryParams extends BaseQueryParams {
-  filter?: {
-    parent_id?: string | null
-    block_id?: string
-    published?: boolean
-  }
+  parent_id?: string | 'null'
+  block_id?: string
+  published?: boolean
 }
 
 export class Contents extends BaseResource<

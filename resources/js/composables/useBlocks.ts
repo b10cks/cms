@@ -88,6 +88,10 @@ export function useBlocks(spaceId: MaybeRef<string>) {
         queryClient.invalidateQueries({
           queryKey: queryKeys.blockVersions(spaceId, data.id).lists(),
         })
+        // A schema change can invalidate a template built against the old one.
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.blockTemplates(spaceId, data.id).lists(),
+        })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
 
         toast.success(t('composables.blocks.updateSuccess', { slug: data.slug }) as string)
@@ -111,6 +115,9 @@ export function useBlocks(spaceId: MaybeRef<string>) {
       onSuccess: (id) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.blocks(spaceId).lists() })
         queryClient.removeQueries({ queryKey: queryKeys.blocks(spaceId).detail(id) })
+        // Versions and templates are siblings of the detail key, not children.
+        queryClient.removeQueries({ queryKey: queryKeys.blockVersions(spaceId, id).all() })
+        queryClient.removeQueries({ queryKey: queryKeys.blockTemplates(spaceId, id).all() })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
         toast.success(t('composables.blocks.deleteSuccess') as string)
       },
@@ -132,7 +139,7 @@ export function useBlocks(spaceId: MaybeRef<string>) {
     const slug = unref(slugRef)
 
     if (!blocks?.data) return null
-    return blocks.data.find((block) => block.slug == slug)
+    return blocks.data.find((block) => block.slug === slug) ?? null
   }
 
   const getBlockById = (
@@ -143,7 +150,7 @@ export function useBlocks(spaceId: MaybeRef<string>) {
     const id = unref(idRef)
 
     if (!blocks?.data) return null
-    return blocks.data.find((block) => block.id == id)
+    return blocks.data.find((block) => block.id === id) ?? null
   }
 
   return {

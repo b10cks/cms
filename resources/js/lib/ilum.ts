@@ -26,13 +26,15 @@ export function generateIlumOperations(modifiers: IlumModifiers): string {
   const operations: string[] = []
 
   for (const [key, value] of Object.entries(modifiers)) {
-    if (value === undefined) {
+    // `null` is as absent as `undefined` here — a nullable asset field spread
+    // into the modifiers would otherwise emit a broken `w_null` operation.
+    if (value == null) {
       continue
     }
 
     const mappedKey = keyMap[key]
     if (mappedKey) {
-      operations.push(`${mappedKey}_${value}`)
+      operations.push(`${mappedKey}_${encodeURIComponent(String(value))}`)
     }
   }
 
@@ -41,7 +43,7 @@ export function generateIlumOperations(modifiers: IlumModifiers): string {
 
 export function buildIlumUrl(src: string, modifiers: IlumModifiers = {}, baseURL = ''): string {
   const { format, quality, ...transformations } = modifiers
-  const normalizedBaseURL = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL
+  const normalizedBaseURL = baseURL.replace(/\/+$/, '')
   let finalPath = src.startsWith('/') ? src : `/${src}`
   const operations = generateIlumOperations(transformations)
 

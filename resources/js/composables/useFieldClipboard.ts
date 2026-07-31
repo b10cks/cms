@@ -22,7 +22,8 @@ const clipboardItem = computed<SchemaFieldClipboardItem | null>(() => {
       parsed.type === 'b10cks-schema-field' &&
       typeof parsed.key === 'string' &&
       parsed.field &&
-      typeof parsed.field === 'object'
+      typeof parsed.field === 'object' &&
+      !Array.isArray(parsed.field)
     ) {
       return parsed as SchemaFieldClipboardItem
     }

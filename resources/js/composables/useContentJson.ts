@@ -9,22 +9,23 @@ export function useContentJson(
   const { useSpaceQuery } = useSpaces()
   const { useTokensQuery } = useTokens(spaceId)
 
-  const { data: space } = useSpaceQuery(toValue(spaceId))
+  const { data: space } = useSpaceQuery(spaceId)
   const { data: tokens } = useTokensQuery()
 
   const apiToken = computed(() => tokens.value?.[0]?.token ?? null)
   const rv = computed(() =>
-    space.value?.updated_at ? new Date(space.value?.updated_at).getTime() : Date.now()
+    space.value?.updated_at ? new Date(space.value.updated_at).getTime() : Date.now()
   )
 
   const buildContentJsonUrl = (vid: 'draft' | 'published' | string) => {
     const activeContent = content ? toValue(content) : null
     const slug = activeContent?.full_slug?.replace(/^\/+/, '')
-    if (!apiToken.value || !rv.value || !slug || !activeContent?.language_iso) return null
+    if (!apiToken.value || !slug || !activeContent?.language_iso) return null
 
     const params = new URLSearchParams({
       vid,
-      rv: String(rv.value / 1000),
+      // Whole seconds only — a fractional cache-buster just splits the cache.
+      rv: String(Math.floor(rv.value / 1000)),
       token: apiToken.value,
       language: activeContent.language_iso,
     })

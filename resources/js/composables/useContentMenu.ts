@@ -136,20 +136,18 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
       bucket.sort(comparatorFor(parentId ? menuData[parentId] : undefined))
     }
 
+    // Single-type content sits behind the tree at the root, whichever way the
+    // roots are asked for.
+    const roots = index.get(null)
+    if (roots) {
+      index.set(null, [
+        ...roots.filter((item) => item.type !== 'single'),
+        ...roots.filter((item) => item.type === 'single'),
+      ])
+    }
+
     childrenIndexCache.set(menuData, index)
     return index
-  }
-
-  const getRootItems = (
-    menuData: Record<string, FlatContentMenuItem> | undefined
-  ): FlatContentMenuItem[] => {
-    if (!menuData) return []
-    const roots = getChildrenIndex(menuData).get(null) ?? []
-
-    return [
-      ...roots.filter((item) => item.type !== 'single'),
-      ...roots.filter((item) => item.type === 'single'),
-    ]
   }
 
   const getChildren = (
@@ -158,8 +156,15 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
   ): FlatContentMenuItem[] => {
     const parentId = unref(parentIdRef)
     if (!menuData) return []
-    return getChildrenIndex(menuData).get(parentId ?? null) ?? []
+    // A copy: the cached bucket is shared by every caller, and a caller that
+    // sorts or splices in place would corrupt it for all of them.
+    const bucket = getChildrenIndex(menuData).get(parentId ?? null)
+    return bucket ? [...bucket] : []
   }
+
+  const getRootItems = (
+    menuData: Record<string, FlatContentMenuItem> | undefined
+  ): FlatContentMenuItem[] => getChildren(menuData, null)
 
   const buildBreadcrumbs = (
     menuData: Record<string, FlatContentMenuItem> | undefined,
@@ -182,8 +187,11 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
       name: currentItem.name,
     })
 
-    // Traverse up the tree using parent_id
-    while (currentItem && currentItem.pid) {
+    // Traverse up the tree using parent_id. A `pid` cycle (bad import,
+    // hand-edited parent) must not spin forever — bail out with what we have.
+    const visited = new Set<string>([currentItem.id])
+    while (currentItem && currentItem.pid && !visited.has(currentItem.pid)) {
+      visited.add(currentItem.pid)
       currentItem = findItemById(menuData, currentItem.pid)
 
       if (currentItem) {
@@ -195,6 +203,22 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
     }
 
     return breadcrumbs
+  }
+
+  const applyTranslation = (
+    parent: FlatContentMenuItem | undefined,
+    translation: FlatContentMenuItem
+  ): FlatContentMenuItem | undefined => {
+    if (!parent) return undefined
+
+    return {
+      ...parent,
+      i18n: (parent.i18n ?? []).map((entry) =>
+        entry.id === translation.id
+          ? { ...entry, name: translation.name, published_at: translation.pat }
+          : entry
+      ),
+    }
   }
 
   const setupEcho = (id: string) => {
@@ -216,7 +240,11 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
 
             const { i18n_parent_id: i18nParentId, ...content } = broadcast
             const item: FlatContentMenuItem | undefined = i18nParentId
-              ? contentTree[i18nParentId]
+              ? // A translation is not a tree node of its own: it lives in its
+                // canonical parent's i18n list. The broadcast carries no
+                // language, so an unknown translation cannot be inserted — the
+                // parent is still rewritten so the tree re-renders.
+                applyTranslation(contentTree[i18nParentId], content)
               : {
                   ...content,
                   // Carry the previous sort value forward when the parent does

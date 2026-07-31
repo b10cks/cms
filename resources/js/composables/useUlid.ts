@@ -9,7 +9,9 @@ export function useUlid() {
     const now = time ? time.getTime() : Date.now()
     const nowStr = now.toString()
 
-    if (nowStr === lastTime.value) {
+    // `<=`, not `===`: an out-of-order (earlier) timestamp must keep counting
+    // from the last one, otherwise it yields a smaller — non-monotonic — ULID.
+    if (lastTime.value !== null && now <= parseInt(lastTime.value, 10)) {
       let i
       for (i = 3; i >= 0; i--) {
         if (lastRandom.value[i] === 0xfffff) {
@@ -21,7 +23,7 @@ export function useUlid() {
       }
 
       if (i < 0) {
-        lastTime.value = (now + 1).toString()
+        lastTime.value = (parseInt(lastTime.value, 10) + 1).toString()
         lastRandom.value = [0, 0, 0, 0].map(() => Math.floor(Math.random() * 0x100000))
       }
     } else {
@@ -42,7 +44,6 @@ export function useUlid() {
       timeStr = ENCODING[t % ENCODING_LEN] + timeStr
       t = Math.floor(t / ENCODING_LEN)
     }
-    timeStr = timeStr.padStart(10, '0')
 
     const randomStr = lastRandom.value
       .map((r) => {

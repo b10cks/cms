@@ -15,7 +15,9 @@ export function useInvites() {
     token: MaybeRef<string | undefined>
   ) => {
     return useQuery({
-      queryKey: computed(() => queryKeys.invites.public(inviteId)),
+      // The token is part of the request, so it must be part of the key — otherwise a
+      // second token for the same invite id is served the first token's result.
+      queryKey: computed(() => [...queryKeys.invites.public(inviteId), toValue(token)]),
       queryFn: async () => {
         const resolvedInviteId = toValue(inviteId)
         const resolvedToken = toValue(token)
@@ -127,6 +129,7 @@ export function useInvites() {
       },
       onSuccess: ({ teamId, invite }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.teamPeople(teamId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.teams.detail(teamId) })
         toast.success(t('labels.invites.toast.sent', { email: invite.email }) as string)
       },
       onError: (error: Error) => {
@@ -193,9 +196,14 @@ export function useInvites() {
         return response.data
       },
       onSuccess: (invite) => {
-        const targetName = invite.space?.name || invite.team?.name || 'resource'
+        const targetName =
+          invite.space?.name ||
+          invite.team?.name ||
+          (t('composables.invites.joinedFallbackTarget') as string)
         queryClient.invalidateQueries({ queryKey: queryKeys.invites.my() })
-        queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all() })
+        // spaces.all() is a prefix of every space-scoped key, so it would drop the whole
+        // per-space cache of every space; only the space list actually gains an entry.
+        queryClient.invalidateQueries({ queryKey: queryKeys.spaces.lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.teams.all() })
         queryClient.invalidateQueries({ queryKey: queryKeys.authorization.all() })
         toast.success(t('labels.invites.toast.joined', { name: targetName }) as string)

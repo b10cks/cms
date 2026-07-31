@@ -22,23 +22,25 @@ withDefaults(
 const emit = defineEmits<{
   'update:modelValue': [number]
 }>()
+
+// `Select` is reka-ui's renderless root, so anything id-related has to go on the
+// trigger — that is the element the label needs to point at.
+const labelId = `${useId()}-per-page-label`
 </script>
 
 <template>
   <div class="flex items-center gap-2">
     <label
-      for="per-page-label"
+      :id="labelId"
       class="sr-only"
     >
       {{ label || 'Items per page' }}
     </label>
     <Select
-      id="per-page-label"
       :model-value="modelValue"
-      aria-labelledby="per-page-label"
       @update:model-value="emit('update:modelValue', $event as number)"
     >
-      <SelectTrigger>
+      <SelectTrigger :aria-labelledby="labelId">
         <SelectValue>{{ modelValue }}</SelectValue>
       </SelectTrigger>
       <SelectContent>

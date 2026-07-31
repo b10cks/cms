@@ -86,8 +86,11 @@ const useAlertDialogBase = () => {
     reject: null,
   })
   let closeTimeout: ReturnType<typeof setTimeout> | null = null
+  // Overwriting a live dialog tore down its markup while its resolvers stayed
+  // captured in an unreachable closure, so the first promise never settled.
+  const pendingDialogs: Component[] = []
 
-  const openDialog = (component: Component) => {
+  const showDialog = (component: Component) => {
     if (closeTimeout) {
       clearTimeout(closeTimeout)
       closeTimeout = null
@@ -95,6 +98,15 @@ const useAlertDialogBase = () => {
 
     state.value.component = markRaw(component)
     state.value.isOpen = true
+  }
+
+  const openDialog = (component: Component) => {
+    if (state.value.isOpen) {
+      pendingDialogs.push(markRaw(component))
+      return
+    }
+
+    showDialog(component)
   }
 
   const closeDialog = () => {
@@ -106,6 +118,11 @@ const useAlertDialogBase = () => {
     closeTimeout = setTimeout(() => {
       state.value.component = null
       closeTimeout = null
+
+      const next = pendingDialogs.shift()
+      if (next) {
+        showDialog(next)
+      }
     }, 300)
   }
   const dialog = (options: DialogOptions) => {
@@ -211,6 +228,16 @@ const useAlertDialogBase = () => {
   }
   const confirm = (message: string, options: ConfirmOptions = {}) => {
     return new Promise<boolean>((resolve) => {
+      let isSettled = false
+      const settle = (value: boolean) => {
+        if (isSettled) {
+          return
+        }
+
+        isSettled = true
+        resolve(value)
+      }
+
       dialog({
         title: options.title,
         message,
@@ -220,7 +247,7 @@ const useAlertDialogBase = () => {
             label: options.cancelLabel || getLabel('cancel'),
             click: () => {
               if (options.onCancel) options.onCancel()
-              resolve(false)
+              settle(false)
             },
             autoClose: true,
           },
@@ -229,12 +256,16 @@ const useAlertDialogBase = () => {
             label: options.confirmLabel || getLabel('confirm'),
             click: () => {
               if (options.onConfirm) options.onConfirm()
-              resolve(true)
+              settle(true)
             },
             autoClose: true,
           },
         ],
-      })
+        // A dismissal — Escape, an overlay click — only settles the inner dialog
+        // promise, which used to be discarded here: every `await confirm(...)`
+        // the user escaped out of hung forever. The click handlers run
+        // synchronously, before this microtask, so a real answer still wins.
+      }).then(() => settle(false))
     })
   }
   return {

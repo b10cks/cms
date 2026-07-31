@@ -8,7 +8,9 @@ export {}
 declare global {
   const AlertDialogProvider: typeof import('./resources/js/composables/useAlertDialog').AlertDialogProvider
   const EffectScope: typeof import('vue').EffectScope
+  const GLOBAL_TEAM_QUERY_PARAMS: typeof import('./resources/js/composables/useGlobalTeam').GLOBAL_TEAM_QUERY_PARAMS
   const TEAM_TYPE_KEYS: typeof import('./resources/js/composables/useTeamTypes').TEAM_TYPE_KEYS
+  const UploadError: typeof import('./resources/js/composables/useFileUpload').UploadError
   const buildShareUrl: typeof import('./resources/js/composables/useAssetShares').buildShareUrl
   const computed: typeof import('vue').computed
   const createAccessEvaluationContext: typeof import('./resources/js/composables/useAuthorization').createAccessEvaluationContext
@@ -30,7 +32,6 @@ declare global {
   const h: typeof import('vue').h
   const hydrateContentWithSchema: typeof import('./resources/js/composables/useSchemaDefaults').hydrateContentWithSchema
   const i18n: typeof import('./resources/js/plugins/i18n').i18n
-  const initAuth: typeof import('./resources/js/plugins/auth').initAuth
   const inject: typeof import('vue').inject
   const installAuthHandler: typeof import('./resources/js/plugins/auth').installAuthHandler
   const installChart: typeof import('./resources/js/plugins/chart').installChart
@@ -87,7 +88,6 @@ declare global {
   const toValue: typeof import('vue').toValue
   const triggerRef: typeof import('vue').triggerRef
   const unref: typeof import('vue').unref
-  const useAiConfig: typeof import('./resources/js/composables/useAiModels').useAiConfig
   const useAiConfigs: typeof import('./resources/js/composables/useAiModels').useAiConfigs
   const useAiContent: typeof import('./resources/js/composables/useAiContent').useAiContent
   const useAiContentTree: typeof import('./resources/js/composables/useAiContentTree').useAiContentTree
@@ -272,6 +272,9 @@ declare global {
   export type { ResolvedOptionChoice } from './resources/js/composables/useFieldOptionChoices'
   import('./resources/js/composables/useFieldOptionChoices')
   // @ts-ignore
+  export type { UploadError, UploadTask } from './resources/js/composables/useFileUpload'
+  import('./resources/js/composables/useFileUpload')
+  // @ts-ignore
   export type { ClipboardSingleItem, ClipboardMultipleItems, ClipboardItem } from './resources/js/composables/useGlobalClipboard'
   import('./resources/js/composables/useGlobalClipboard')
   // @ts-ignore
@@ -290,6 +293,9 @@ declare global {
   export type { TeamType } from './resources/js/composables/useTeamTypes'
   import('./resources/js/composables/useTeamTypes')
   // @ts-ignore
+  export type { QueuedRequest, TwoFactorState } from './resources/js/composables/useTwoFactorAuth'
+  import('./resources/js/composables/useTwoFactorAuth')
+  // @ts-ignore
   export type { MessageSchema, LocaleCode } from './resources/js/plugins/i18n'
   import('./resources/js/plugins/i18n')
 }
@@ -301,7 +307,9 @@ declare module 'vue' {
   interface ComponentCustomProperties {
     readonly AlertDialogProvider: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['AlertDialogProvider']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
+    readonly GLOBAL_TEAM_QUERY_PARAMS: UnwrapRef<typeof import('./resources/js/composables/useGlobalTeam')['GLOBAL_TEAM_QUERY_PARAMS']>
     readonly TEAM_TYPE_KEYS: UnwrapRef<typeof import('./resources/js/composables/useTeamTypes')['TEAM_TYPE_KEYS']>
+    readonly UploadError: UnwrapRef<typeof import('./resources/js/composables/useFileUpload')['UploadError']>
     readonly buildShareUrl: UnwrapRef<typeof import('./resources/js/composables/useAssetShares')['buildShareUrl']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createAccessEvaluationContext: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['createAccessEvaluationContext']>

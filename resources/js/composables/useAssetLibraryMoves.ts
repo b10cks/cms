@@ -3,7 +3,7 @@ import type { AssetManagerDragItem } from '~/lib/assets/assetDragAndDrop'
 export function useAssetLibraryMoves(spaceId: MaybeRef<string>) {
   const { useFolderStructure, useUpdateAssetFolderMutation } = useAssetFolders(spaceId)
   const { useUpdateAssetMutation } = useAssets(spaceId)
-  const { isDescendantOf } = useFolderStructure()
+  const { isDescendantOf, folders, isLoading } = useFolderStructure()
   const { mutateAsync: updateFolder } = useUpdateAssetFolderMutation()
   const { mutateAsync: updateAsset } = useUpdateAssetMutation()
 
@@ -22,10 +22,18 @@ export function useAssetLibraryMoves(spaceId: MaybeRef<string>) {
       items.filter((item) => item.type === 'folder').map((item) => item.id)
     )
 
+    // Without the folder list there is no lineage for isDescendantOf to walk,
+    // and it would wave a folder straight into its own subtree. Fail closed:
+    // refuse folder-into-folder moves until the list has resolved. Moves to
+    // the root cannot cycle, so they (and asset moves) stay allowed.
+    const lineageReady = !isLoading.value && (folders.value?.length ?? 0) > 0
+
     const invalidFolderIds = targetFolderId
-      ? normalizedFolderIds.filter(
-          (folderId) => folderId === targetFolderId || isDescendantOf(targetFolderId, folderId)
-        )
+      ? lineageReady
+        ? normalizedFolderIds.filter(
+            (folderId) => folderId === targetFolderId || isDescendantOf(targetFolderId, folderId)
+          )
+        : normalizedFolderIds
       : []
 
     return {

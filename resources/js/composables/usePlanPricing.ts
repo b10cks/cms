@@ -4,11 +4,16 @@
  * everything else falls back to the monthly price/period.
  */
 export function usePlanPricing() {
+  // `yearly_price` is a decimal string, so '0.00' is truthy — compare the
+  // amount, not the string.
+  const hasYearlyPrice = (plan: PlanResource) =>
+    plan.yearly_price != null && Number(plan.yearly_price) > 0
+
   const billsYearly = (plan: PlanResource, interval: BillingInterval) =>
-    interval === 'year' && !!plan.yearly_price
+    interval === 'year' && hasYearlyPrice(plan)
 
   const planPrice = (plan: PlanResource, interval: BillingInterval) =>
-    interval === 'year' && plan.yearly_price ? plan.yearly_price : plan.price
+    billsYearly(plan, interval) ? (plan.yearly_price as string) : plan.price
 
   /** i18n key suffix for the "/ month" | "/ year" period label. */
   const planPeriodKey = (plan: PlanResource, interval: BillingInterval) =>

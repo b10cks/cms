@@ -47,8 +47,12 @@ export function useSpaceMembers() {
       onSuccess: ({ spaceId, role }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.spaceMembers(spaceId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.spacePeople(spaceId).lists() })
+        // A null role clears the space role; "updated to " with nothing after it
+        // reads as a bug, so that case gets its own message.
         toast.success(
-          t('composables.spaceMembers.updateUserSuccess', { role: role ?? '' }) as string
+          (role
+            ? t('composables.spaceMembers.updateUserSuccess', { role })
+            : t('composables.spaceMembers.clearUserRoleSuccess')) as string
         )
       },
       onError: (error: Error) => {

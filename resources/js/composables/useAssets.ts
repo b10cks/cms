@@ -22,7 +22,16 @@ export function useAssets(spaceId: MaybeRef<string>) {
 
   const useAssetsQuery = (params: MaybeRef<AssetsQueryParams & { collection?: string }> = {}) => {
     return useQuery({
-      queryKey: computed(() => queryKeys.assets(spaceId).list(params)),
+      // A collection grid is served by the collection endpoint, so it is cached
+      // in the collection namespace — that is the key a collection mutation
+      // invalidates, and an asset-list invalidation must not refetch it.
+      queryKey: computed(() => {
+        const { collection, ...rest } = toValue(params)
+
+        return collection
+          ? queryKeys.assetCollections(spaceId).assetsList(collection, rest)
+          : queryKeys.assets(spaceId).list(rest)
+      }),
       queryFn: async () => {
         const { collection, ...rest } = toValue(params)
 
@@ -73,6 +82,13 @@ export function useAssets(spaceId: MaybeRef<string>) {
     })
   }
 
+  // Shared by every upload from this composable instance, so a multi-file drop
+  // produces one invalidation and one toast instead of one per file.
+  const debouncedInvalidateQueries = useDebounceFn(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
+    toast.success(t('composables.assets.uploadSuccess') as string)
+  }, 300)
+
   /**
    * Upload a new asset. When the backend detects a checksum match against an
    * existing asset in the space, the request is not silently accepted -
@@ -84,11 +100,6 @@ export function useAssets(spaceId: MaybeRef<string>) {
     onProgress?: (progress: number) => void,
     options: { force?: boolean } = {}
   ): Promise<UploadAssetOutcome | null> => {
-    const debouncedInvalidateQueries = useDebounceFn(() => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
-      toast.success(t('composables.assets.uploadSuccess') as string)
-    }, 300)
-
     try {
       await apiClient.ensureCsrfCookie()
       const formData = new FormData()
@@ -177,11 +188,13 @@ export function useAssets(spaceId: MaybeRef<string>) {
       return await promise
     } catch (err) {
       console.error(err)
-      error.value =
+      const message =
         err instanceof Error ? err.message : (t('composables.assets.uploadError') as string)
+      error.value = message
+      // Every other write in this file reports its failure; an upload must too.
+      // The server message is the useful part, so it is the toast.
+      toast.error(message)
       return null
-    } finally {
-      // isLoading.value = false
     }
   }
 
@@ -214,8 +227,8 @@ export function useAssets(spaceId: MaybeRef<string>) {
       },
       onSuccess: ({ id }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
+        // linkedContents lives inside the detail subtree, so it goes with it.
         queryClient.removeQueries({ queryKey: queryKeys.assets(spaceId).detail(id) })
-        queryClient.removeQueries({ queryKey: queryKeys.assets(spaceId).linkedContents(id) })
         toast.success(t('composables.assets.deleteSuccess') as string)
       },
       onError: (error: Error & { data?: AssetDeleteConflict; status?: number }) => {
@@ -246,11 +259,17 @@ export function useAssets(spaceId: MaybeRef<string>) {
         return await spaceAPI.value.assets.replaceFile(id, file, onProgress)
       },
       onSuccess: (data) => {
-        if (data) {
-          queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
-          queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).detail(data.id) })
-          toast.success(t('composables.assets.replaceSuccess') as string)
+        if (!data) {
+          // An empty response is not a success we can report on.
+          toast.error(
+            t('composables.assets.replaceError', { error: 'Unknown error' }) as string
+          )
+          return
         }
+
+        queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).detail(data.id) })
+        toast.success(t('composables.assets.replaceSuccess') as string)
       },
       onError: (err: Error) => {
         toast.error(
@@ -268,11 +287,15 @@ export function useAssets(spaceId: MaybeRef<string>) {
       onSuccess: (response) => {
         const asset = response?.data
 
-        if (asset) {
-          queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
-          queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).detail(asset.id) })
-          toast.success(t('composables.assets.posterSuccess') as string)
+        if (!asset) {
+          // An empty response is not a success we can report on.
+          toast.error(t('composables.assets.posterError', { error: 'Unknown error' }) as string)
+          return
         }
+
+        queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).detail(asset.id) })
+        toast.success(t('composables.assets.posterSuccess') as string)
       },
       onError: (err: Error) => {
         toast.error(

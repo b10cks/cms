@@ -63,10 +63,11 @@ export const runtimeConfig = {
       // Absent payload (e.g. dev without a fresh page load) means SaaS defaults.
       billing: appConfig?.features?.billing ?? true,
       ai: appConfig?.features?.ai ?? true,
-      realtime: appConfig?.features?.realtime ?? Boolean(appConfig?.echo),
+      // An echo block without a key cannot connect, so it must not enable realtime.
+      realtime: appConfig?.features?.realtime ?? Boolean(appConfig?.echo?.key),
       registration: appConfig?.features?.registration ?? true,
     },
-    echo: appConfig?.echo
+    echo: appConfig?.echo?.key
       ? {
           broadcaster: appConfig.echo.broadcaster || 'reverb',
           key: appConfig.echo.key,
@@ -74,11 +75,12 @@ export const runtimeConfig = {
           wsPort: appConfig.echo.wsPort,
           wssPort: appConfig.echo.wssPort,
           forceTLS: appConfig.echo.forceTLS ?? true,
-          enabledTransports: ['ws', 'wss'] as const,
+          // A ws-only deployment can narrow this; both by default.
+          enabledTransports: appConfig.echo.enabledTransports ?? ['ws', 'wss'],
         }
       : null,
     ilum: {
-      baseURL: appConfig?.ilum?.baseURL,
+      baseURL: appConfig?.ilum?.baseURL || '/ilum',
     },
   },
 }

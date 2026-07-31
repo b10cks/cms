@@ -4531,7 +4531,6 @@
       "checkoutError": "Checkout konnte nicht gestartet werden: {error}",
       "pendingAlreadyExists": "Eine Zahlung für diesen Plan ist bereits ausstehend. Nutze \"Zahlung abschließen\", um fortzufahren.",
       "pendingConflict": "Eine Zahlung für einen anderen Plan ist bereits ausstehend. Schließe sie ab oder brich sie ab, bevor du den Plan wechselst.",
-      "reinitSuccess": "Weiterleitung zur Zahlung...",
       "reinitNoUrl": "Kein Zahlungslink verfügbar. Bitte versuche es erneut.",
       "reinitError": "Zahlung konnte nicht neu gestartet werden: {error}",
       "cancelSuccess": "Abonnement gekündigt. Zugang bleibt bis Ende des Abrechnungszeitraums bestehen.",
@@ -4550,6 +4549,14 @@
       "createError": "Migration konnte nicht gestartet werden: {error}",
       "deleteSuccess": "Migration erfolgreich gelöscht",
       "deleteError": "Migration konnte nicht gelöscht werden: {error}"
+    },
+    "backups": {
+      "createSuccess": "Backup \"{name}\" erfolgreich erstellt",
+      "createError": "Backup konnte nicht erstellt werden: {error}",
+      "updateSuccess": "Backup \"{name}\" erfolgreich aktualisiert",
+      "updateError": "Backup konnte nicht aktualisiert werden: {error}",
+      "deleteSuccess": "Backup erfolgreich gelöscht",
+      "deleteError": "Backup konnte nicht gelöscht werden: {error}"
     },
     "automationActions": {
       "createSuccess": "Aktion \"{name}\" erfolgreich erstellt",
@@ -4831,7 +4838,8 @@
       "updateUserSuccess": "Mitgliederrolle aktualisiert zu {role}",
       "updateUserError": "Fehler beim Aktualisieren der Mitgliederrolle: {error}",
       "removeUserSuccess": "Mitglied aus Space entfernt",
-      "removeUserError": "Fehler beim Entfernen des Mitglieds aus Space: {error}"
+      "removeUserError": "Fehler beim Entfernen des Mitglieds aus Space: {error}",
+      "clearUserRoleSuccess": "Mitgliederrolle entfernt"
     },
     "tokens": {
       "createSuccess": "Token \"{name}\" erfolgreich erstellt",
@@ -4898,6 +4906,9 @@
       "updateError": "Feld-Plugin konnte nicht aktualisiert werden: {error}",
       "deleteSuccess": "Feld-Plugin erfolgreich gelöscht",
       "deleteError": "Feld-Plugin konnte nicht gelöscht werden: {error}"
+    },
+    "invites": {
+      "joinedFallbackTarget": "den Arbeitsbereich"
     }
   },
   "content": {

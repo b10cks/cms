@@ -6,17 +6,19 @@ import type {
   ShareUnlockResponse,
 } from '~/types/asset-distribution'
 
-import type { ApiClient } from '../client'
+import type { ApiClient, RequestOptions } from '../client'
 
 /**
  * Unauthenticated public share API (`/mgmt/v1/shares/{space}/{token}`). The
  * space id is part of the address because shares live in each space's own
  * database.
  *
- * Auth in this app is cookie/session based, so the shared ApiClient issues no
- * Authorization header by itself — these endpoints simply ignore any session.
- * Password-protected shares are unlocked via a short-lived access token that
- * is sent explicitly as `Authorization: Bearer <token>` on each call.
+ * Every request here is deliberately anonymous: `credentials: 'omit'` keeps a
+ * logged-in visitor's session cookie off someone else's share request, and
+ * `skipCsrf` stops `unlock()` from priming the CSRF cookie against an auth
+ * endpoint. Password-protected shares are unlocked via a short-lived access
+ * token that is sent explicitly as `Authorization: Bearer <token>` on each
+ * call.
  */
 export class PublicShare {
   private readonly client: ApiClient
@@ -27,20 +29,29 @@ export class PublicShare {
     this.basePath = `/mgmt/v1/shares/${spaceId}/${token}`
   }
 
-  private headers(accessToken?: string | null): Record<string, string> {
-    return accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
+  /** Anonymous transport: no session cookie, no CSRF, only the share token. */
+  private options(accessToken?: string | null): RequestOptions {
+    return {
+      credentials: 'omit',
+      skipCsrf: true,
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    }
   }
 
   public async show(accessToken?: string | null): Promise<{ data: PublicShareResource }> {
     return this.client.get<{ data: PublicShareResource }>(
       this.basePath,
       {},
-      { headers: this.headers(accessToken) }
+      this.options(accessToken)
     )
   }
 
   public async unlock(password: string): Promise<ShareUnlockResponse> {
-    return this.client.post<ShareUnlockResponse>(`${this.basePath}/unlock`, { password })
+    return this.client.post<ShareUnlockResponse>(
+      `${this.basePath}/unlock`,
+      { password },
+      this.options()
+    )
   }
 
   public async assets(
@@ -50,7 +61,7 @@ export class PublicShare {
     return this.client.get<PublicShareAssetsResponse>(
       `${this.basePath}/assets`,
       params as Record<string, unknown>,
-      { headers: this.headers(accessToken) }
+      this.options(accessToken)
     )
   }
 
@@ -61,7 +72,7 @@ export class PublicShare {
     return this.client.get<DownloadUrlResponse | ShareDownloadBuildingResponse>(
       `${this.basePath}/download`,
       {},
-      { headers: this.headers(accessToken) }
+      this.options(accessToken)
     )
   }
 
@@ -72,7 +83,7 @@ export class PublicShare {
     return this.client.get<DownloadUrlResponse>(
       `${this.basePath}/assets/${assetId}/download`,
       {},
-      { headers: this.headers(accessToken) }
+      this.options(accessToken)
     )
   }
 }

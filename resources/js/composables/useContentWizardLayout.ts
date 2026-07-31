@@ -23,14 +23,19 @@ export function useContentWizardLayout() {
 
   const layoutTree = (nodes: Record<string, ContentWizardDraftNode>): ContentWizardLayoutResult => {
     const positions: Record<string, { x: number; y: number }> = {}
+    const visited = new Set<string>()
     let rowIndex = 0
 
     const place = (nodeId: string, depth: number) => {
       const node = nodes[nodeId]
 
-      if (!node || !node.isVisible) {
+      if (!node || !node.isVisible || visited.has(nodeId)) {
         return
       }
+
+      // A malformed tree can list the same node under two parents; placing it
+      // twice would leave the first row as a blank gap and inflate the bounds.
+      visited.add(nodeId)
 
       positions[nodeId] = {
         x: depth * (CONTENT_WIZARD_CARD_WIDTH + CONTENT_WIZARD_HORIZONTAL_GAP),

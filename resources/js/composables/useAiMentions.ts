@@ -3,6 +3,8 @@ import type { AiMentionItem } from '~/components/editor/extensions/AiMention'
 import { useBlocks } from './useBlocks'
 import { useContentMenu } from './useContentMenu'
 
+const MENTION_LIMIT = 50
+
 export function useAiMentions(spaceId: MaybeRef<string>) {
   const { useBlocksQuery } = useBlocks(spaceId)
   const { useContentMenuQuery, getRootItems, getChildren } = useContentMenu(spaceId)
@@ -12,15 +14,17 @@ export function useAiMentions(spaceId: MaybeRef<string>) {
     const { data: contentMenuData } = useContentMenuQuery()
 
     const items = computed<AiMentionItem[]>(() => {
-      const search = toValue(searchQuery).toLowerCase()
-      const items: AiMentionItem[] = []
+      const search = toValue(searchQuery).trim().toLowerCase()
+      const contentItems: AiMentionItem[] = []
+      const blockItems: AiMentionItem[] = []
 
-      if (contentMenuData.value) {
+      const menuData = contentMenuData.value
+      if (menuData) {
+        // Traversed over the real `pid` links: a parent whose `children` flag is
+        // stale would otherwise hide every descendant from the mention list.
         const allItems = [
-          ...getRootItems(contentMenuData.value),
-          ...Object.values(contentMenuData.value).flatMap((item) =>
-            item.children ? getChildren(contentMenuData.value, item.id) : []
-          ),
+          ...getRootItems(menuData),
+          ...Object.values(menuData).flatMap((item) => getChildren(menuData, item.id)),
         ]
 
         const seen = new Set<string>()
@@ -30,7 +34,7 @@ export function useAiMentions(spaceId: MaybeRef<string>) {
 
           const label = content.name ?? 'Untitled'
           if (!search || label.toLowerCase().includes(search)) {
-            items.push({
+            contentItems.push({
               id: content.id,
               label,
               type: 'content',
@@ -49,7 +53,7 @@ export function useAiMentions(spaceId: MaybeRef<string>) {
             label.toLowerCase().includes(search) ||
             block.slug.toLowerCase().includes(search)
           ) {
-            items.push({
+            blockItems.push({
               id: block.slug,
               label,
               type: 'block',
@@ -60,7 +64,18 @@ export function useAiMentions(spaceId: MaybeRef<string>) {
         }
       }
 
-      return items.slice(0, 50)
+      // Each source keeps at least half the cap, plus whatever the other leaves
+      // unused — capping the concatenated list meant a space with 50+ contents
+      // could never mention a block.
+      const contentCount = Math.min(
+        contentItems.length,
+        Math.max(MENTION_LIMIT - blockItems.length, MENTION_LIMIT / 2)
+      )
+
+      return [
+        ...contentItems.slice(0, contentCount),
+        ...blockItems.slice(0, MENTION_LIMIT - contentCount),
+      ]
     })
 
     const isLoading = computed(() => !blocksData.value || !contentMenuData.value)

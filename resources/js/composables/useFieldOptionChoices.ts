@@ -28,14 +28,20 @@ const normalizeChoiceLabel = (
   return normalized.length > 0 ? normalized : fallback
 }
 
+// `0` and `false` are legitimate option values; only null/undefined make an
+// option unusable.
+const normalizeChoiceValue = (value: unknown) =>
+  value === null || value === undefined ? '' : String(value).trim()
+
 export const normalizeFieldOptionChoices = (
   field: OptionChoiceField | null | undefined
 ): ResolvedOptionChoice[] => {
   return (field?.options || [])
-    .map((option) => ({
-      label: normalizeChoiceLabel(option?.name, option?.value || ''),
-      value: String(option?.value || '').trim(),
-    }))
+    .map((option) => {
+      const value = normalizeChoiceValue(option?.value)
+
+      return { label: normalizeChoiceLabel(option?.name, value), value }
+    })
     .filter((option) => option.value.length > 0)
 }
 
@@ -71,10 +77,12 @@ export const useFieldOptionChoices = (
 
     return (dataEntriesResponse.value?.data || [])
       .filter((entry) => entry.is_active)
-      .map((entry) => ({
-        label: normalizeChoiceLabel(entry.value, entry.key),
-        value: entry.key,
-      }))
+      .map((entry) => {
+        const value = normalizeChoiceValue(entry.key)
+
+        return { label: normalizeChoiceLabel(entry.value, value), value }
+      })
+      .filter((choice) => choice.value.length > 0)
   })
 
   const resolvedLoading = computed(

@@ -11,17 +11,14 @@ export function useSpacePresencePeek() {
   const isLoading = ref(false)
   const error = ref<Error | null>(null)
 
+  // Throws on failure so the caller can surface it — swallowing here made the
+  // exported `error` ref permanently null.
   const fetchSpacePresence = async (spaceId: string): Promise<SpacePresenceInfo | null> => {
-    try {
-      const { api } = await import('~/api')
-      const response = await api.client.get<{ data: SpacePresenceInfo }>(
-        `/mgmt/v1/spaces/${spaceId}/presence`
-      )
-      return response.data
-    } catch (err) {
-      console.error(`Failed to fetch presence for space ${spaceId}:`, err)
-      return null
-    }
+    const { api } = await import('~/api')
+    const response = await api.client.get<{ data: SpacePresenceInfo }>(
+      `/mgmt/v1/spaces/${spaceId}/presence`
+    )
+    return response.data
   }
 
   const peekSpacePresence = async (spaceId: string) => {
@@ -46,7 +43,14 @@ export function useSpacePresencePeek() {
 
     try {
       const results = await Promise.all(
-        spaceIds.map((id) => fetchSpacePresence(id).catch(() => null))
+        // One failing space must not take the whole batch down, so the failure
+        // is logged per space instead of reaching `error`.
+        spaceIds.map((id) =>
+          fetchSpacePresence(id).catch((err) => {
+            console.error(`Failed to fetch presence for space ${id}:`, err)
+            return null
+          })
+        )
       )
 
       results.forEach((info, index) => {
