@@ -219,7 +219,7 @@ jobs:
       # newest release publishes it, for the same reason it owns the `latest` tag.
       - name: Configure AWS credentials
         if: steps.latest.outputs.is_latest == 'true'
-        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
