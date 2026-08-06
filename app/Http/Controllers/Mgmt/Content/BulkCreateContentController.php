@@ -20,7 +20,7 @@ class BulkCreateContentController extends Controller
         $validator = Validator::make($request->all(), [
             'items' => 'required|array|min:1',
             'items.*.name' => 'required|string|max:255',
-            'items.*.slug' => 'required|string|max:70',
+            'items.*.slug' => 'required|string|max:75',
             'items.*.block_id' => 'required|string',
             'items.*.parent_id' => 'nullable|string',
             'items.*.position' => 'sometimes|integer|min:0',

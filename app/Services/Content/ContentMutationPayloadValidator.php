@@ -30,7 +30,7 @@ class ContentMutationPayloadValidator
                 'sometimes',
                 'required',
                 'string',
-                'max:70',
+                'max:75',
                 Rule::unique($connectionName.'.contents', 'slug')
                     ->when($languageIso, fn ($query) => $query->where('language_iso', $languageIso))
                     ->when($parentId, fn ($query) => $query->where('parent_id', $parentId), fn ($query) => $query->whereNull('parent_id'))

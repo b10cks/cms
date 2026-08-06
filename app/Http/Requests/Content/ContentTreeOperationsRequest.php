@@ -44,7 +44,7 @@ class ContentTreeOperationsRequest extends FormRequest
             'operations.*.name' => ['sometimes', 'required', 'string', 'max:100'],
             // Omitted when the block composes its slug from a pattern, which
             // can only happen server-side once serials have been allocated.
-            'operations.*.slug' => ['sometimes', 'nullable', 'string', 'max:70'],
+            'operations.*.slug' => ['sometimes', 'nullable', 'string', 'max:75'],
             'operations.*.content' => ['sometimes', 'array'],
             'operations.*.settings' => ['sometimes', 'array'],
         ];

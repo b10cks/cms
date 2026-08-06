@@ -43,7 +43,7 @@ class UpsertContentRequest extends FormRequest
                 'sometimes',
                 'required',
                 'string',
-                'max:70',
+                'max:75',
                 Rule::unique($connectionName.'.contents', 'slug')
                     ->when($languageIso, fn ($query) => $query->where('language_iso', $languageIso))
                     ->when($parentId, fn ($query) => $query->where('parent_id', $parentId), fn ($query) => $query->whereNull('parent_id'))
@@ -133,7 +133,7 @@ class UpsertContentRequest extends FormRequest
             'translations.*.id' => 'sometimes|string',
             'translations.*.external_id' => ['sometimes', 'nullable', 'string', 'max:36'],
             'translations.*.name' => 'sometimes|required|string|max:100',
-            'translations.*.slug' => 'sometimes|required|string|max:70',
+            'translations.*.slug' => 'sometimes|required|string|max:75',
             'translations.*.settings' => 'nullable|array',
             ...ContentSettings::toValidator('translations.*.settings'),
             'translations.*.block_id' => 'sometimes|required|string',
