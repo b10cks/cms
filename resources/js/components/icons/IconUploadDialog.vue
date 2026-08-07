@@ -50,12 +50,13 @@ const isDragging = ref(false)
 const isUploading = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 
+const { slugifyIdentifier } = useSlug()
+const slugLanguage = useSlugLanguage(() => props.spaceId)
+
+// The icon key rule is ^[a-z0-9]+(?:-[a-z0-9]+)*$, so no underscores. Dropping
+// the extension first keeps "logo.v2.svg" from becoming "logo-v2-svg".
 const slugify = (value: string): string =>
-  value
-    .toLowerCase()
-    .replace(/\.[^.]+$/, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+  slugifyIdentifier(value.replace(/\.[^.]+$/, ''), slugLanguage.value, 100)
 
 const humanize = (value: string): string =>
   value

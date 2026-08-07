@@ -25,30 +25,36 @@ describe('slugify', () => {
   })
 
   it('spells out @ so an email-ish title stays readable', () => {
-    expect(slugify('a@b.com')).toBe('a-at-bcom')
+    // The dot separates rather than vanishing, so "b" and "com" stay distinct
+    // words — this is what the backend has always produced.
+    expect(slugify('a@b.com')).toBe('a-at-b-com')
   })
 
   it('keeps underscores, which are neither letter, number nor separator', () => {
     expect(slugify('Hello_World Test')).toBe('hello_world-test')
   })
 
-  it('drops punctuation and symbols entirely rather than turning them into dashes', () => {
-    expect(slugify('C++ & C#')).toBe('c-c')
-    expect(slugify('10% off')).toBe('10-off')
+  it('spells out symbols that carry a word', () => {
+    // Dropping the ampersand glued "Bed & Breakfast" into "bed-breakfast",
+    // which reads as a different phrase.
+    expect(slugify('C++ & C#')).toBe('c-and-c')
+    expect(slugify('10% off')).toBe('10-percent-off')
   })
 
   it('drops emoji', () => {
     expect(slugify('emoji 🎉 title')).toBe('emoji-title')
   })
 
-  it('keeps non-latin letters as-is', () => {
-    expect(slugify('日本語 タイトル')).toBe('日本語-タイトル')
+  // The backend transliterates these via portable-ascii and the browser has no
+  // such table, so the preview declines to guess and the server fills it in on
+  // save. It never really "kept" them: the stored slug was always romanized.
+  it('yields nothing for scripts it cannot transliterate', () => {
+    expect(slugify('日本語 タイトル')).toBe('')
   })
 
   it('expands NFKD compatibility forms', () => {
-    // ﬁ ligature decomposes to "fi", ½ to "1⁄2" whose fraction slash is dropped.
     expect(slugify('ﬁle')).toBe('file')
-    expect(slugify('½ half')).toBe('12-half')
+    expect(slugify('x²')).toBe('x2')
   })
 
   it('returns an empty string when nothing survives', () => {
@@ -61,10 +67,15 @@ describe('slugify', () => {
     expect(slugify(slugify('Hello -- World!'))).toBe(slugify('Hello -- World!'))
   })
 
-  // ß has no combining-accent decomposition, so the NFKD folding above cannot
-  // reach it and it needs its own rule to keep the output ASCII.
-  it('folds ß like every other German umlaut', () => {
+  // ß has no combining-accent decomposition, so NFKD cannot reach it and it
+  // needs its own rule to keep the output ASCII.
+  it('folds umlauts when no language asks for expansion', () => {
     expect(slugify('Über Größe')).toBe('uber-grosse')
+  })
+
+  // The point of the language argument: German spells the umlaut out.
+  it('expands umlauts for German', () => {
+    expect(slugify('Über Größe', 'de')).toBe('ueber-groesse')
   })
 
   // Braces and path separators mark word boundaries; stripping them glued the

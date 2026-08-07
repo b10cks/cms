@@ -2,7 +2,6 @@
 
 namespace App\Models\Space;
 
-use App\Casts\Slug;
 use App\Database\HasManyFromArray;
 use App\Database\HasManyFromArrayTrait;
 use App\Events\Space\ContentDeleted;
@@ -14,7 +13,7 @@ use App\Services\Automation\Enums\TriggerType;
 use App\Services\Content\ContentMenuCache;
 use App\Services\Content\LocalizedContentSlugService;
 use App\Services\Content\Serial\ContentSerialAssigner;
-use App\Services\CustomStr;
+use App\Services\Slug\Slugger;
 use App\Support\SpaceContext;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Builder;
@@ -120,7 +119,8 @@ class Content extends SpaceModel
 
     protected $casts = [
         'settings' => ContentSettings::class,
-        'slug' => Slug::class,
+        // No `slug` cast: the mutator below already wins over it, and the real
+        // normalization happens in the `saving` hook where the language is known.
         'position' => 'integer',
         'published_at' => 'datetime',
         'first_published_at' => 'datetime',
@@ -173,6 +173,14 @@ class Content extends SpaceModel
         });
 
         static::saving(function (Content $content) {
+            // Before full_slug is composed from it, and with language_iso
+            // populated, which is the whole reason it does not happen in the
+            // mutator.
+            $content->slug = app(Slugger::class)->forContent(
+                (string) $content->getAttributeValue('slug'),
+                $content->language_iso,
+            );
+
             $slugService = app(LocalizedContentSlugService::class);
             $oldFullSlug = $slugService->updateFullSlug($content);
             if (! empty($oldFullSlug)) {
@@ -252,10 +260,17 @@ class Content extends SpaceModel
         return $this->makePurifiedAttribute('removeAll');
     }
 
+    /**
+     * Stored raw on purpose.
+     *
+     * Slugging here would run before `language_iso` is guaranteed to be set —
+     * attribute order follows the payload — and folding "Über" to "uber" with
+     * the English map is not something a later pass with the German map can
+     * undo. The `saving` hook normalizes it once, when the language is known.
+     */
     public function setSlugAttribute($value)
     {
-
-        $this->attributes['slug'] = CustomStr::slug($value, '-');
+        $this->attributes['slug'] = \is_string($value) ? trim($value) : $value;
     }
 
     public function block(): BelongsTo

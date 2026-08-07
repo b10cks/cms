@@ -41,20 +41,20 @@ const possibleTags = computed(() => {
   }))
 })
 
+// Block slugs are camelCase by rule (`^[a-z][a-z0-9A-Z]+$`), not kebab — the
+// shared normalizer only supplies the transliteration, so "Übersicht" becomes
+// "uebersicht" rather than the "bersicht" the old [^a-zA-Z0-9] strip produced.
+const slugLanguage = useSlugLanguage(() => props.spaceId)
+const { slugify } = useSlug()
+
 const createSlug = (value: string) => {
   if (!props.slugEditable) return
-  editableBlock.value.slug = value
-    .replace(/[^a-zA-Z0-9]+/g, ' ')
-    .trim()
-    .split(' ')
-    .map((word, i) => {
-      if (i === 0) {
-        return word.charAt(0).toLowerCase() + word.slice(1)
-      } else {
-        return word.charAt(0).toUpperCase() + word.slice(1)
-      }
-    })
-    .join('')
+  editableBlock.value.slug = slugify(value, {
+    language: slugLanguage.value,
+    case: 'camel',
+    maxLength: 50,
+    allowUnderscore: false,
+  })
 }
 
 const enforceSlugFormat = () => {

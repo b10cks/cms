@@ -10,6 +10,7 @@ use App\Models\Space\Content;
 use App\Models\User;
 use App\Services\Content\Serial\SerialFieldConfig;
 use App\Services\Search\SearchService;
+use App\Services\Slug\Slugger;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
@@ -425,26 +426,46 @@ class ContentTreeOperationService
         string $languageIso,
         ?string $ignoreId = null,
     ): string {
-        $slug = Str::slug($baseSlug);
+        $slugger = app(Slugger::class);
+        $base = $slugger->forContent($baseSlug, $languageIso);
+
+        if ($base === '') {
+            return $base;
+        }
+
+        $slug = $base;
         $suffix = 2;
 
         // Every candidate ("slug", "slug-2", "slug-3", …) shares the slugged
         // base as prefix, so one prefix query replaces an exists() per attempt.
+        // Slugs written before underscores were normalized away can still hold a
+        // LIKE wildcard, hence the escape.
         $existing = Content::query()
             ->where('parent_id', $parentId)
             ->where('language_iso', $languageIso)
-            ->where('slug', 'LIKE', "{$slug}%")
+            ->where('slug', 'LIKE', $slugger->escapeLike($base).'%')
             ->whereNull('deleted_at')
             ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
             ->pluck('slug')
             ->flip();
 
         while ($existing->has($slug)) {
-            $slug = Str::slug("{$baseSlug}-{$suffix}");
+            $slug = $this->slugWithSuffix($base, $suffix);
             $suffix++;
         }
 
         return $slug;
+    }
+
+    /**
+     * Append a numeric suffix, taking the room it needs out of the base rather
+     * than pushing the result past the slug column's limit.
+     */
+    protected function slugWithSuffix(string $base, int $suffix): string
+    {
+        $room = Slugger::CONTENT_SLUG_LENGTH - \strlen((string) $suffix) - 1;
+
+        return rtrim(mb_substr($base, 0, max($room, 1)), '-').'-'.$suffix;
     }
 
     protected function reassignParent(Collection $items, ?string $parentId): void

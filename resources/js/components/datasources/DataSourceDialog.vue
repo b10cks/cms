@@ -50,6 +50,8 @@ const { $t } = useI18n()
 const spaceId = computed(() => route.params.space as string)
 
 const { useCreateDataSourceMutation, useUpdateDataSourceMutation } = useDataSources(spaceId)
+const { slugify, slugifyIdentifier } = useSlug()
+const slugLanguage = useSlugLanguage(spaceId)
 const { mutate: createDataSource, isPending: isCreating } = useCreateDataSourceMutation()
 const { mutate: updateDataSource, isPending: isUpdating } = useUpdateDataSourceMutation()
 
@@ -227,10 +229,10 @@ const validateShapeRow = (row: Record<string, unknown>): boolean =>
 
 const handleShapeFieldAdd = (item: Record<string, unknown>) => {
   if (!item.key && item.name) {
-    item.key = (item.name as string)
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '_')
+    item.key = slugify(item.name as string, {
+      language: slugLanguage.value,
+      separator: '_',
+    })
   }
 }
 
@@ -325,18 +327,16 @@ const handleNameChange = (event: Event) => {
   const target = event.target as HTMLInputElement
   const name = target.value
   formData.value.name = name
-  formData.value.slug = name
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
+  // The slug rule here is ^[a-z0-9-]+$, so no underscores.
+  formData.value.slug = slugifyIdentifier(name, slugLanguage.value, 50)
 }
 
 const handleDimensionAdd = (item: Record<string, unknown>) => {
   if (!item.key && item.label) {
-    item.key = (item.label as string)
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '_')
+    item.key = slugify(item.label as string, {
+      language: slugLanguage.value,
+      separator: '_',
+    })
   }
 }
 </script>

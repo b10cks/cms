@@ -44,6 +44,9 @@ const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 const { useContentQuery, useSerialPreviewQuery } = useContent(props.spaceId)
 // Same slug rules the content wizard uses, so both creation paths agree.
+// New entries are created in the space's default language, which is what
+// decides whether "Über" becomes "ueber" or "uber".
+const contentLanguage = computed(() => space.value?.settings?.default_language ?? null)
 const { slugify } = useContentWizardSlug()
 const { $t } = useI18n()
 
@@ -182,7 +185,7 @@ const automaticSlug = computed(() => {
     return serialPreview.value?.slug_preview ?? ''
   }
 
-  return slugify(content.value.name || '')
+  return slugify(content.value.name || '', contentLanguage.value)
 })
 
 const slugPlaceholder = computed(() =>

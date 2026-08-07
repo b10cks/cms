@@ -42,12 +42,17 @@ if (!props.readonly) {
   })
 }
 
+// Schema keys transliterate for the space's language too, so a German space
+// gets "groesse" rather than "grosse".
+const { slugify } = useSlug()
+const slugLanguage = useSlugLanguage(() => route.params.space as string)
+
 function handleBlur(option: OptionItem) {
   if (option.name && !option.value) {
-    option.value = option.name
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9-]/g, '')
+    option.value = slugify(option.name, {
+      language: slugLanguage.value,
+      allowUnderscore: false,
+    })
   }
 
   emit('update:item-value', 'options', [...props.value.options])

@@ -9,6 +9,8 @@ use App\Models\Space\Icon;
 use App\Services\Icon\IconSvgParser;
 use App\Services\ImportExport\Exceptions\ImportValidationException;
 use Illuminate\Http\UploadedFile;
+use App\Services\Slug\Slugger;
+use App\Services\Slug\SlugLanguage;
 use Illuminate\Support\Str;
 
 /**
@@ -182,7 +184,7 @@ class IconDataImportService
             throw new ImportValidationException('Icon has no "body".');
         }
 
-        $key = Str::slug($sourceName);
+        $key = app(Slugger::class)->forIdentifier($sourceName, app(SlugLanguage::class)->current(), 100);
 
         if (!preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $key)) {
             throw new ImportValidationException("\"{$sourceName}\" is not a valid icon name.");

@@ -4,7 +4,7 @@ namespace App\Services\Content\Serial;
 
 use App\Models\Space\Block;
 use App\Models\Space\Content;
-use App\Services\CustomStr;
+use App\Services\Slug\Slugger;
 use Illuminate\Support\Str;
 
 /**
@@ -19,6 +19,7 @@ class ContentSlugComposer
     public function __construct(
         protected readonly TemplateRenderer $renderer,
         protected readonly ContentSerialAssigner $assigner,
+        protected readonly Slugger $slugger,
     ) {}
 
     /**
@@ -45,7 +46,10 @@ class ContentSlugComposer
 
         $rendered = trim($this->renderer->render($block->settings->getSlugPattern(), $context));
 
-        return CustomStr::slug($rendered !== '' ? $rendered : (string) $name, '-');
+        return $this->slugger->forContent(
+            $rendered !== '' ? $rendered : (string) $name,
+            $languageIso,
+        );
     }
 
     /**
@@ -67,16 +71,28 @@ class ContentSlugComposer
 
         while ($this->slugTaken($candidate, $parentId, $languageIso, $exceptContentId)) {
             $suffix++;
-            $candidate = $base.'-'.$suffix;
+            // A base already at the column limit would push the suffix past it,
+            // so the room the suffix needs comes out of the base.
+            $candidate = $this->withSuffix($base, (string) $suffix);
 
             // Past any plausible sibling count a random suffix is a better
             // answer than a 501st probe that might still be taken.
             if ($suffix > 500) {
-                return $base.'-'.strtolower(Str::random(6));
+                return $this->withSuffix($base, strtolower(Str::random(6)));
             }
         }
 
         return $candidate;
+    }
+
+    /**
+     * Append a disambiguating suffix without overflowing the slug column.
+     */
+    protected function withSuffix(string $base, string $suffix): string
+    {
+        $room = Slugger::CONTENT_SLUG_LENGTH - mb_strlen($suffix) - 1;
+
+        return rtrim(mb_substr($base, 0, max($room, 1)), '-').'-'.$suffix;
     }
 
     protected function slugTaken(

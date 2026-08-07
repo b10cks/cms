@@ -80,7 +80,11 @@ const {
 const blocks = computed(() => blocksResponse.value?.data || [])
 // Resolves nested-block schemas when hydrating a template's content.
 const blockLookup = computed(() => createContentDefaultsBlockLookup(blocks.value))
-const treeApi = useContentWizardTree(blocks, menuData)
+const treeApi = useContentWizardTree(
+  blocks,
+  menuData,
+  () => space.value?.settings?.default_language ?? null
+)
 const { apply, applyError, invalidateContentQueries, isApplying } = useContentWizardApply(
   spaceId,
   treeApi

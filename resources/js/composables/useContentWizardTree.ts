@@ -42,11 +42,13 @@ const cloneNodeContent = (content: Record<string, unknown> | null | undefined) =
 
 export function useContentWizardTree(
   blocks: Ref<BlockResource[]>,
-  menuData: Ref<Record<string, FlatContentMenuItem> | undefined>
+  menuData: Ref<Record<string, FlatContentMenuItem> | undefined>,
+  /** The language the drafted entries are written in; decides umlaut handling. */
+  language?: MaybeRefOrGetter<string | null | undefined>
 ) {
   const { layoutTree } = useContentWizardLayout()
   const { resolveEffectiveSlug, resolveSlugMode, slugify, syncSlugWithTitle } =
-    useContentWizardSlug()
+    useContentWizardSlug(language)
 
   const tree = ref<ContentWizardDraftTree>({
     rootId: CONTENT_WIZARD_ROOT_ID,

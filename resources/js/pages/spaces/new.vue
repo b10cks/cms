@@ -49,6 +49,12 @@ const selectedPlanId = ref<string | undefined>()
 const billingInterval = ref<BillingInterval>('month')
 const spaceName = ref('')
 const spaceSlug = ref('')
+
+// The space does not exist yet, so there is no default language to transliterate
+// for; English folding is the only honest answer here. The server re-slugs on
+// save with the space's own language once that is known.
+const { slugifyIdentifier } = useSlug()
+const toSpaceSlug = (value: string) => slugifyIdentifier(value, null, 50)
 const serverLocation = ref('eu')
 const spaceBadge = ref<string | null>(null)
 
@@ -121,10 +127,7 @@ const handleNameChange = (event: Event) => {
   const target = event.target as HTMLInputElement | null
   const name = target?.value ?? ''
   spaceName.value = name
-  spaceSlug.value = name
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
+  spaceSlug.value = toSpaceSlug(name)
 }
 
 watch(
@@ -134,10 +137,7 @@ watch(
 
     if (!spaceName.value) {
       spaceName.value = blueprint.name
-      spaceSlug.value = blueprint.name
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
+      spaceSlug.value = toSpaceSlug(blueprint.name)
     }
   },
   { immediate: true }

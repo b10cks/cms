@@ -2,25 +2,20 @@
 
 namespace App\Services;
 
+use App\Services\Slug\Slugger;
+
 class CustomStr extends \Str
 {
+    /**
+     * Kept for the callers that predate {@see Slugger} and have no language to
+     * offer. New code should resolve a language and call the Slugger directly —
+     * without one, umlauts fold ("ü" -> "u") instead of expanding ("ü" -> "ue").
+     *
+     * The `$dictionary` argument is ignored: symbol expansion is now part of the
+     * shared rules so the frontend can reproduce it. No caller ever passed one.
+     */
     public static function slug($title, $separator = '-', $language = 'en', $dictionary = ['@' => 'at'])
     {
-        $title = $language ? static::ascii($title, $language) : $title;
-
-        // Replace dictionary words
-        foreach ($dictionary as $key => $value) {
-            $dictionary[$key] = $separator.$value.$separator;
-        }
-
-        $title = str_replace(array_keys($dictionary), array_values($dictionary), $title);
-
-        // Remove all characters that are not the separator, letters, numbers, or whitespace
-        $title = preg_replace('![^'.preg_quote($separator).'_\pL\pN\s]+!u', '', static::lower($title));
-
-        // Replace all separator characters and whitespace by a single separator
-        $title = preg_replace('!['.preg_quote($separator).'\s]+!u', $separator, $title);
-
-        return trim($title, $separator);
+        return app(Slugger::class)->make((string) $title, $language, $separator);
     }
 }

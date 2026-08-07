@@ -115,6 +115,16 @@ class Space extends GlobalModel
         'content_updated_at' => 'datetime',
     ];
 
+    /**
+     * A space slugs against its own default language, not the ambient one —
+     * during creation there is no space in context yet, and afterwards the
+     * ambient space may be a different one entirely.
+     */
+    public function slugLanguage(): ?string
+    {
+        return data_get($this->settings, 'default_language');
+    }
+
     protected function name(): Attribute
     {
         return $this->makePurifiedAttribute('removeAll');

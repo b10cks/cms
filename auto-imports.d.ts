@@ -187,6 +187,8 @@ declare global {
   const useRuntimeConfig: typeof import('~/env').useRuntimeConfig
   const useSeoMeta: typeof import('./resources/js/composables/useSeoMeta').useSeoMeta
   const useSlots: typeof import('vue').useSlots
+  const useSlug: typeof import('./resources/js/composables/useSlug').useSlug
+  const useSlugLanguage: typeof import('./resources/js/composables/useSlugLanguage').useSlugLanguage
   const useSpaceBlueprints: typeof import('./resources/js/composables/useSpaceBlueprints').useSpaceBlueprints
   const useSpaceBroadcasts: typeof import('./resources/js/composables/useSpaceBroadcasts').useSpaceBroadcasts
   const useSpaceMembers: typeof import('./resources/js/composables/useSpaceMembers').useSpaceMembers
@@ -286,6 +288,9 @@ declare global {
   // @ts-ignore
   export type { SeoMetaOptions } from './resources/js/composables/useSeoMeta'
   import('./resources/js/composables/useSeoMeta')
+  // @ts-ignore
+  export type { SlugOptions } from './resources/js/composables/useSlug'
+  import('./resources/js/composables/useSlug')
   // @ts-ignore
   export type { SpacePresenceInfo } from './resources/js/composables/useSpacePresencePeek'
   import('./resources/js/composables/useSpacePresencePeek')
@@ -486,6 +491,8 @@ declare module 'vue' {
     readonly useRuntimeConfig: UnwrapRef<typeof import('~/env')['useRuntimeConfig']>
     readonly useSeoMeta: UnwrapRef<typeof import('./resources/js/composables/useSeoMeta')['useSeoMeta']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
+    readonly useSlug: UnwrapRef<typeof import('./resources/js/composables/useSlug')['useSlug']>
+    readonly useSlugLanguage: UnwrapRef<typeof import('./resources/js/composables/useSlugLanguage')['useSlugLanguage']>
     readonly useSpaceBlueprints: UnwrapRef<typeof import('./resources/js/composables/useSpaceBlueprints')['useSpaceBlueprints']>
     readonly useSpaceBroadcasts: UnwrapRef<typeof import('./resources/js/composables/useSpaceBroadcasts')['useSpaceBroadcasts']>
     readonly useSpaceMembers: UnwrapRef<typeof import('./resources/js/composables/useSpaceMembers')['useSpaceMembers']>

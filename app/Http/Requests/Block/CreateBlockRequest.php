@@ -81,7 +81,7 @@ class CreateBlockRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'slug.regex' => 'The slug may only contain lowercase letters, numbers, and hyphens.',
+            'slug.regex' => 'The slug must start with a lowercase letter and contain only letters and numbers.',
             'color.regex' => 'The color must be a valid hex color code (e.g., #FF5733).',
         ];
     }

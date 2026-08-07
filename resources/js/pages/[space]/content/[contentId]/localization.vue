@@ -500,7 +500,9 @@ const automaticSlug = computed(() => {
     return serialPreview.value?.slug_preview ?? ''
   }
 
-  return slugify(translatableContent.value?.name || '')
+  // The translation's own language, not the space default: a German
+  // translation expands "Ü" to "ue" where the French one folds it to "u".
+  return slugify(translatableContent.value?.name || '', resolvedLanguage.value)
 })
 
 // In auto mode the input mirrors the automatic value without writing it into

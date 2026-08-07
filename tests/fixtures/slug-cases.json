@@ -1,0 +1,42 @@
+{
+  "_comment": "Shared expectations for App\\Services\\Slug\\Slugger and ~/lib/slug. Both test suites read this file, so a rule changed on one side and not the other fails immediately. Cases whose input is non-Latin belong in the per-suite tests instead: the frontend deliberately does not ship a transliteration table.",
+  "cases": [
+    { "why": "German expands umlauts rather than folding them", "value": "Über Größe", "language": "de", "expected": "ueber-groesse" },
+    { "why": "the same text in a language without the expansion folds", "value": "Über Größe", "language": "en", "expected": "uber-grosse" },
+    { "why": "French keeps the fold, which is what French wants", "value": "Über Größe", "language": "fr", "expected": "uber-grosse" },
+    { "why": "no language behaves like English", "value": "Über Größe", "language": null, "expected": "uber-grosse" },
+    { "why": "region subtags are dropped so de-AT does not produce sz", "value": "Straße", "language": "de-AT", "expected": "strasse" },
+    { "why": "Turkish dotless and dotted i both land on i", "value": "Ölçü Işık", "language": "tr", "expected": "olcu-isik" },
+    { "why": "Danish expands the Nordic vowels", "value": "Blåbær øl", "language": "da", "expected": "blaabaer-oel" },
+    { "why": "Swedish folds them instead", "value": "Blåbær øl", "language": "sv", "expected": "blabaer-ol" },
+    { "why": "Norwegian aliases nb to the no map", "value": "Blåbær øl", "language": "nb", "expected": "blaabaer-oel" },
+    { "why": "Polish letters with no decomposition still fold", "value": "Łódź Święto", "language": "pl", "expected": "lodz-swieto" },
+    { "why": "Croatian expands the barred d", "value": "Đakovo", "language": "hr", "expected": "djakovo" },
+    { "why": "ampersand becomes a word, not a gap", "value": "Bed & Breakfast", "language": "en", "expected": "bed-and-breakfast" },
+    { "why": "and it is the language's word", "value": "Bed & Breakfast", "language": "de", "expected": "bed-und-breakfast" },
+    { "why": "other symbols that carry meaning survive as words", "value": "100% Café @ Home", "language": "en", "expected": "100-percent-cafe-at-home" },
+    { "why": "path punctuation separates words instead of gluing them", "value": "{lang}/about", "language": "en", "expected": "lang-about" },
+    { "why": "underscores are a legal slug character and are preserved", "value": "my_page", "language": "en", "expected": "my_page" },
+    { "why": "an underscore next to a space does not double up", "value": "my_page name", "language": "en", "expected": "my_page-name" },
+    { "why": "leading and trailing separators are trimmed", "value": "  --Hello--  ", "language": "en", "expected": "hello" },
+    { "why": "runs of separators collapse", "value": "a---b", "language": "en", "expected": "a-b" },
+    { "why": "emoji leave nothing behind", "value": "🚀🚀", "language": "en", "expected": "" },
+    { "why": "so does pure punctuation", "value": "...", "language": "en", "expected": "" },
+    { "why": "an empty string stays empty", "value": "", "language": "en", "expected": "" },
+    { "why": "an already-clean slug is unchanged, so re-saving is idempotent", "value": "ueber-groesse", "language": "de", "expected": "ueber-groesse" },
+    { "why": "digits survive", "value": "Version 2.1", "language": "en", "expected": "version-2-1" },
+    { "why": "the eszett expands even without a language", "value": "Straße", "language": null, "expected": "strasse" },
+    { "why": "capital eszett too", "value": "STRAẞE", "language": "de", "expected": "strasse" },
+    { "why": "Icelandic thorn and eth fold", "value": "Þór og Eð", "language": "en", "expected": "thor-og-ed" },
+    { "why": "the ligature oe folds", "value": "Œuvre", "language": "fr", "expected": "oeuvre" }
+  ],
+  "truncation": [
+    { "why": "cuts on a word boundary rather than mid-word", "value": "one two three four five six seven eight nine ten eleven twelve thirteen", "maxLength": 40, "expected": "one-two-three-four-five-six-seven-eight" },
+    { "why": "a single word longer than the limit is cut anyway", "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "maxLength": 10, "expected": "aaaaaaaaaa" },
+    { "why": "input under the limit is untouched", "value": "short one", "maxLength": 40, "expected": "short-one" }
+  ],
+  "identifiers": [
+    { "why": "identifier slugs drop underscores their validators reject", "value": "my_data_source", "language": "en", "expected": "my-data-source" },
+    { "why": "and still transliterate", "value": "Übersicht", "language": "de", "expected": "uebersicht" }
+  ]
+}

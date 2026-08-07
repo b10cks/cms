@@ -4,6 +4,8 @@ namespace App\Http\Requests\Icon;
 
 use App\Http\Requests\Traits\ExternalIdValidation;
 use App\Models\Space\Icon;
+use App\Services\Slug\Slugger;
+use App\Services\Slug\SlugLanguage;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -69,7 +71,14 @@ class StoreIconRequest extends FormRequest
         $original = $this->file('file')?->getClientOriginalName();
 
         if (blank($this->input('key')) && $original) {
-            $this->merge(['key' => Str::slug(pathinfo($original, PATHINFO_FILENAME))]);
+            // Transliterated for the space's language, so "Übersicht.svg"
+            // becomes "uebersicht" instead of the "bersicht" the old
+            // [^a-z0-9] strip produced.
+            $this->merge(['key' => app(Slugger::class)->forIdentifier(
+                pathinfo($original, PATHINFO_FILENAME),
+                app(SlugLanguage::class)->current(),
+                100,
+            )]);
         }
 
         if (blank($this->input('name')) && $original) {

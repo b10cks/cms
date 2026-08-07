@@ -272,12 +272,18 @@ const placeholderEditor = createRowEditor<Placeholder>({
   create: () => ({ key: '', label: '' }),
 })
 
+const route = useRoute()
+// Schema keys transliterate for the space's language too, so a German space
+// gets "groesse" rather than "grosse".
+const { slugify } = useSlug()
+const slugLanguage = useSlugLanguage(() => route.params.space as string)
+
 const handleHtmlClassBlur = (row: HtmlClass) => {
   if (row.name && !row.className) {
-    row.className = row.name
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9-]/g, '')
+    row.className = slugify(row.name, {
+      language: slugLanguage.value,
+      allowUnderscore: false,
+    })
   }
 
   htmlClassEditor.commit()
@@ -285,10 +291,7 @@ const handleHtmlClassBlur = (row: HtmlClass) => {
 
 const handlePlaceholderBlur = (row: Placeholder) => {
   if (row.label && !row.key) {
-    row.key = row.label
-      .toLowerCase()
-      .replace(/\s+/g, '_')
-      .replace(/[^a-z0-9_]/g, '')
+    row.key = slugify(row.label, { language: slugLanguage.value, separator: '_' })
   }
 
   placeholderEditor.commit()
