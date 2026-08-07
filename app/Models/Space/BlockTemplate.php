@@ -2,6 +2,7 @@
 
 namespace App\Models\Space;
 
+use App\Models\Traits\BroadcastsSpaceModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\Traits\SpaceAuditable;
 use CodersCantina\Filter\Filterable;
@@ -51,6 +52,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class BlockTemplate extends SpaceModel
 {
+    use BroadcastsSpaceModelEvents;
     use Filterable;
     use HasFactory;
     use HasPurifiedAttributes;
@@ -59,6 +61,8 @@ class BlockTemplate extends SpaceModel
     use SpaceAuditable;
 
     protected $table = 'block_templates';
+
+    protected string $spaceChannel = 'blocks';
 
     protected $fillable = [
         'space_id',
@@ -88,6 +92,17 @@ class BlockTemplate extends SpaceModel
     public function block(): BelongsTo
     {
         return $this->belongsTo(Block::class, 'block_id', 'id');
+    }
+
+    /**
+     * Template queries are keyed by block on the frontend; the broadcast has
+     * to carry the parent id so listeners can target the right caches.
+     *
+     * @return array<string, mixed>
+     */
+    public function broadcastContext(): array
+    {
+        return ['block_id' => $this->block_id];
     }
 
     public function createdBy(): BelongsTo

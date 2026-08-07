@@ -232,6 +232,11 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
         .listen(
           '.content:updated',
           (broadcast: FlatContentMenuItem & { i18n_parent_id: string | null }) => {
+            // The tree gets patched below; the content list and detail caches
+            // hold more than the menu payload carries, so they refetch.
+            queryClient.invalidateQueries({ queryKey: queryKeys.contents(id).lists() })
+            queryClient.invalidateQueries({ queryKey: queryKeys.contents(id).detail(broadcast.id) })
+
             const contentTree =
               (queryClient.getQueryData(queryKeys.contentMenu(id).all()) as Record<
                 string,
@@ -265,6 +270,9 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
         .listen(
           '.content:deleted',
           (broadcast: { id: string; parent_id: string | null; i18n_parent_id: string | null }) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.contents(id).lists() })
+            queryClient.invalidateQueries({ queryKey: queryKeys.contents(id).detail(broadcast.id) })
+
             const contentTree = queryClient.getQueryData(queryKeys.contentMenu(id).all()) as
               | Record<string, FlatContentMenuItem>
               | undefined

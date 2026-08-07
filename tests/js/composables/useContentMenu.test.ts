@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 
 import type { ContentSettings } from '~/types/contents'
@@ -644,6 +644,21 @@ describe('content:updated broadcasts', () => {
     expect(menuOf(instance, space).a.i18n).toEqual([])
     expect(menuOf(instance, space)['new-translation']).toBeUndefined()
   })
+
+  it('invalidates the content list and detail caches', () => {
+    const space = nextSpace()
+    const instance = setup(space, [[queryKeys.contentMenu(space).all(), menu(item('a'))]])
+    const invalidate = vi.spyOn(instance.queryClient, 'invalidateQueries')
+
+    broadcast({ ...item('a', { name: 'New' }), i18n_parent_id: null })
+
+    expect(
+      (invalidate.mock.calls as Array<[{ queryKey: unknown[] }]>).map(([options]) => options.queryKey)
+    ).toEqual([
+      queryKeys.contents(space).lists(),
+      queryKeys.contents(space).detail('a'),
+    ])
+  })
 })
 
 describe('content:deleted broadcasts', () => {
@@ -710,6 +725,21 @@ describe('content:deleted broadcasts', () => {
     broadcast(deleted('translation', { i18n_parent_id: 'missing' }))
 
     expect(menuOf(instance, space)).toBe(before)
+  })
+
+  it('invalidates the content list and detail caches', () => {
+    const space = nextSpace()
+    const instance = setup(space, [[queryKeys.contentMenu(space).all(), menu(item('a'))]])
+    const invalidate = vi.spyOn(instance.queryClient, 'invalidateQueries')
+
+    broadcast(deleted('a'))
+
+    expect(
+      (invalidate.mock.calls as Array<[{ queryKey: unknown[] }]>).map(([options]) => options.queryKey)
+    ).toEqual([
+      queryKeys.contents(space).lists(),
+      queryKeys.contents(space).detail('a'),
+    ])
   })
 })
 

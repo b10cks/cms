@@ -27,6 +27,9 @@ interface EchoChannelLike {
 interface SpaceModelBroadcast {
   id: string
   action?: string
+  /** Parent ids some models broadcast so listeners can target nested caches. */
+  data_source_id?: string
+  block_id?: string
   data?: { id: string } & Record<string, unknown>
 }
 
@@ -144,11 +147,21 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
    * Standard lifecycle wiring for one broadcast model. Updates carrying a
    * slim `data` payload are patched straight into the list and detail caches
    * (no refetch round-trip); everything else falls back to invalidation.
+   * Keys are resolved per payload — nested resources (data entries, block
+   * templates) derive their cache keys from the broadcast's parent id.
    */
-  const listenModel = (channel: EchoChannelLike, model: string, keys: ResourceKeys) => {
+  const listenModel = (
+    channel: EchoChannelLike,
+    model: string,
+    keysFor: (payload?: SpaceModelBroadcast) => ResourceKeys
+  ) => {
     channel
-      .listen(`.${model}:created`, () => invalidate(keys.lists(), ...(keys.extra?.() ?? [])))
+      .listen(`.${model}:created`, (payload: SpaceModelBroadcast) => {
+        const keys = keysFor(payload)
+        invalidate(keys.lists(), ...(keys.extra?.() ?? []))
+      })
       .listen(`.${model}:updated`, (payload: SpaceModelBroadcast) => {
+        const keys = keysFor(payload)
         const extra = keys.extra?.() ?? []
 
         if (payload?.data?.id) {
@@ -164,6 +177,7 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
         )
       })
       .listen(`.${model}:deleted`, (payload: SpaceModelBroadcast) => {
+        const keys = keysFor(payload)
         removeFromQueries([keys.lists()], payload?.id)
         invalidate(
           keys.lists(),
@@ -207,48 +221,79 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
       if (!echo) return
 
       const blocks = echo.channel(`spaces.${id}.blocks`)
-      listenModel(blocks, 'block', {
+      listenModel(blocks, 'block', () => ({
         lists: () => queryKeys.blocks(id).lists(),
         details: () => queryKeys.blocks(id).details(),
         detail: (modelId) => queryKeys.blocks(id).detail(modelId),
-      })
-      listenModel(blocks, 'block_folder', {
+      }))
+      listenModel(blocks, 'block_folder', () => ({
         lists: () => queryKeys.blockFolders(id).lists(),
         details: () => queryKeys.blockFolders(id).details(),
         detail: (modelId) => queryKeys.blockFolders(id).detail(modelId),
-      })
-      listenModel(blocks, 'block_tag', {
+      }))
+      listenModel(blocks, 'block_tag', () => ({
         lists: () => queryKeys.blockTags(id).lists(),
-      })
+      }))
+      // Templates are cached per block; without the parent id (older message
+      // format) the blocks prefix covers their nested keys.
+      listenModel(blocks, 'block_template', (payload) =>
+        payload?.block_id
+          ? {
+              lists: () => queryKeys.blockTemplates(id, payload.block_id as string).lists(),
+              details: () => queryKeys.blockTemplates(id, payload.block_id as string).details(),
+              detail: (modelId) =>
+                queryKeys.blockTemplates(id, payload.block_id as string).detail(modelId),
+            }
+          : { lists: () => queryKeys.blocks(id).all() }
+      )
 
       const assets = echo.channel(`spaces.${id}.assets`)
-      listenModel(assets, 'asset', {
+      listenModel(assets, 'asset', () => ({
         lists: () => queryKeys.assets(id).lists(),
         details: () => queryKeys.assets(id).details(),
         detail: (modelId) => queryKeys.assets(id).detail(modelId),
-      })
-      listenModel(assets, 'asset_folder', {
+      }))
+      listenModel(assets, 'asset_folder', () => ({
         lists: () => queryKeys.assetFolders(id).lists(),
         details: () => queryKeys.assetFolders(id).details(),
         detail: (modelId) => queryKeys.assetFolders(id).detail(modelId),
-      })
-      listenModel(assets, 'asset_tag', {
+      }))
+      listenModel(assets, 'asset_tag', () => ({
         lists: () => queryKeys.assetTags(id).lists(),
-      })
+      }))
 
-      listenModel(echo.channel(`spaces.${id}.icons`), 'icon', {
+      listenModel(echo.channel(`spaces.${id}.icons`), 'icon', () => ({
         lists: () => queryKeys.icons(id).lists(),
         details: () => queryKeys.icons(id).details(),
         detail: (modelId) => queryKeys.icons(id).detail(modelId),
         // The tag facet is an aggregate a single-item patch cannot maintain.
         extra: () => [queryKeys.icons(id).tags()],
-      })
+      }))
 
-      listenModel(echo.channel(`spaces.${id}.redirects`), 'redirect', {
+      listenModel(echo.channel(`spaces.${id}.redirects`), 'redirect', () => ({
         lists: () => queryKeys.redirects(id).lists(),
         details: () => queryKeys.redirects(id).details(),
         detail: (modelId) => queryKeys.redirects(id).detail(modelId),
-      })
+      }))
+
+      const dataSources = echo.channel(`spaces.${id}.data_sources`)
+      listenModel(dataSources, 'data_source', () => ({
+        lists: () => queryKeys.dataSources(id).lists(),
+        details: () => queryKeys.dataSources(id).details(),
+        detail: (modelId) => queryKeys.dataSources(id).detail(modelId),
+      }))
+      // Entries are cached per data source; without the parent id the
+      // data-sources prefix covers their nested keys.
+      listenModel(dataSources, 'data_entry', (payload) =>
+        payload?.data_source_id
+          ? {
+              lists: () => queryKeys.dataEntries(id, payload.data_source_id as string).lists(),
+              details: () => queryKeys.dataEntries(id, payload.data_source_id as string).details(),
+              detail: (modelId) =>
+                queryKeys.dataEntries(id, payload.data_source_id as string).detail(modelId),
+            }
+          : { lists: () => queryKeys.dataSources(id).all() }
+      )
 
       getConnection()?.bind('state_change', onConnectionStateChange)
     } catch {
@@ -264,7 +309,7 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
     try {
       const echo = useEcho()
       if (!echo) return
-      for (const channel of ['blocks', 'assets', 'icons', 'redirects']) {
+      for (const channel of ['blocks', 'assets', 'icons', 'redirects', 'data_sources']) {
         echo.leave(`spaces.${idToLeave}.${channel}`)
       }
 

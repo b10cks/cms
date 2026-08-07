@@ -4,7 +4,7 @@ namespace App\Models\Space;
 
 use App\Casts\Slug;
 use App\Models\Traits\Auditable;
-use App\Models\Traits\BroadcastsModelEvents;
+use App\Models\Traits\BroadcastsSpaceModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\Traits\SpaceAuditable;
 use CodersCantina\Filter\Filterable;
@@ -52,7 +52,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class DataSource extends SpaceModel
 {
     use Auditable;
-//    use BroadcastsModelEvents;
+    use BroadcastsSpaceModelEvents;
     use Filterable;
     use HasFactory;
     use HasPurifiedAttributes;
@@ -60,6 +60,8 @@ class DataSource extends SpaceModel
     use SpaceAuditable;
 
     protected $table = 'data_sources';
+
+    protected string $spaceChannel = 'data_sources';
 
     protected $fillable = [
         'external_id',

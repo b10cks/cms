@@ -3,7 +3,7 @@
 namespace App\Models\Space;
 
 use App\Models\Traits\Auditable;
-use App\Models\Traits\BroadcastsModelEvents;
+use App\Models\Traits\BroadcastsSpaceModelEvents;
 use App\Models\Traits\SpaceAuditable;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -43,13 +43,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class DataEntry extends SpaceModel
 {
     use Auditable;
-//    use BroadcastsModelEvents;
+    use BroadcastsSpaceModelEvents;
     use Filterable;
     use HasFactory;
     use HasUlids;
     use SpaceAuditable;
 
     protected $table = 'data_entries';
+
+    protected string $spaceChannel = 'data_sources';
 
     protected $fillable = [
         'external_id',
@@ -67,5 +69,16 @@ class DataEntry extends SpaceModel
     public function dataSource(): BelongsTo
     {
         return $this->belongsTo(DataSource::class, 'data_source_id', 'id');
+    }
+
+    /**
+     * Entry queries are keyed by data source on the frontend; the broadcast
+     * has to carry the parent id so listeners can target the right caches.
+     *
+     * @return array<string, mixed>
+     */
+    public function broadcastContext(): array
+    {
+        return ['data_source_id' => $this->data_source_id];
     }
 }

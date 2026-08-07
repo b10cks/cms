@@ -92,6 +92,7 @@ describe('subscribing', () => {
       'spaces.space-1.assets',
       'spaces.space-1.icons',
       'spaces.space-1.redirects',
+      'spaces.space-1.data_sources',
     ])
   })
 
@@ -258,6 +259,7 @@ describe('teardown', () => {
       'spaces.space-1.assets',
       'spaces.space-1.icons',
       'spaces.space-1.redirects',
+      'spaces.space-1.data_sources',
     ])
   })
 
@@ -274,6 +276,65 @@ describe('teardown', () => {
     Reflect.deleteProperty(window, 'Echo')
 
     expect(() => harness?.unmount()).not.toThrow()
+  })
+})
+
+describe('data source events', () => {
+  beforeEach(() => setup())
+
+  it('invalidates data source lists on create', () => {
+    emit('spaces.space-1.data_sources', '.data_source:created')
+
+    expect(invalidated()).toEqual([queryKeys.dataSources('space-1').lists()])
+  })
+
+  it('invalidates data source list and detail on delete', () => {
+    emit('spaces.space-1.data_sources', '.data_source:deleted', { id: 'ds-1' })
+
+    expect(invalidated()).toEqual([
+      queryKeys.dataSources('space-1').lists(),
+      queryKeys.dataSources('space-1').detail('ds-1'),
+    ])
+  })
+
+  it('targets the entry caches of the broadcast data source', () => {
+    emit('spaces.space-1.data_sources', '.data_entry:deleted', {
+      id: 'entry-1',
+      data_source_id: 'ds-1',
+    })
+
+    expect(invalidated()).toEqual([
+      queryKeys.dataEntries('space-1', 'ds-1').lists(),
+      queryKeys.dataEntries('space-1', 'ds-1').detail('entry-1'),
+    ])
+  })
+
+  it('falls back to the data-sources prefix without a parent id', () => {
+    emit('spaces.space-1.data_sources', '.data_entry:updated', { id: 'entry-1' })
+
+    expect(invalidated()).toEqual([queryKeys.dataSources('space-1').all()])
+  })
+})
+
+describe('block template events', () => {
+  beforeEach(() => setup())
+
+  it('targets the template caches of the broadcast block', () => {
+    emit('spaces.space-1.blocks', '.block_template:deleted', {
+      id: 'template-1',
+      block_id: 'block-1',
+    })
+
+    expect(invalidated()).toEqual([
+      queryKeys.blockTemplates('space-1', 'block-1').lists(),
+      queryKeys.blockTemplates('space-1', 'block-1').detail('template-1'),
+    ])
+  })
+
+  it('falls back to the blocks prefix without a parent id', () => {
+    emit('spaces.space-1.blocks', '.block_template:created', { id: 'template-1' })
+
+    expect(invalidated()).toEqual([queryKeys.blocks('space-1').all()])
   })
 })
 
@@ -472,12 +533,14 @@ describe('switching space', () => {
       'spaces.space-1.assets',
       'spaces.space-1.icons',
       'spaces.space-1.redirects',
+      'spaces.space-1.data_sources',
     ])
-    expect(channelNames().slice(4)).toEqual([
+    expect(channelNames().slice(5)).toEqual([
       'spaces.space-2.blocks',
       'spaces.space-2.assets',
       'spaces.space-2.icons',
       'spaces.space-2.redirects',
+      'spaces.space-2.data_sources',
     ])
   })
 
@@ -501,8 +564,8 @@ describe('switching space', () => {
     spaceId.value = null
     await nextTick()
 
-    expect(fake.left).toHaveLength(4)
-    expect(channelNames()).toHaveLength(4)
+    expect(fake.left).toHaveLength(5)
+    expect(channelNames()).toHaveLength(5)
   })
 
   it('subscribes when a space id arrives after mounting without one', async () => {
@@ -512,7 +575,7 @@ describe('switching space', () => {
     spaceId.value = 'space-1'
     await nextTick()
 
-    expect(channelNames()).toHaveLength(4)
+    expect(channelNames()).toHaveLength(5)
     expect(fake.left).toEqual([])
   })
 })

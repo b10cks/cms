@@ -118,6 +118,17 @@ class BroadcastPayloadTest extends TestCase
      * outside a real request) must still broadcast their identifiers.
      */
     #[Test]
+    public function space_model_changed_carries_the_parent_context(): void
+    {
+        $entry = \App\Models\Space\DataEntry::factory()->create();
+
+        $payload = (new SpaceModelChanged($this->space, 'data_sources', 'updated', $entry))->broadcastWith();
+
+        $this->assertSame($entry->data_source_id, $payload['data_source_id']);
+        $this->assertFullyMaterialised($payload);
+    }
+
+    #[Test]
     public function space_model_changed_survives_a_model_without_a_resource(): void
     {
         $model = new class extends \Illuminate\Database\Eloquent\Model
