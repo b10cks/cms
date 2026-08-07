@@ -214,8 +214,8 @@ describe('icon events', () => {
 
     expect(invalidated()).toEqual([
       queryKeys.icons('space-1').lists(),
-      queryKeys.icons('space-1').tags(),
       queryKeys.icons('space-1').detail('icon-1'),
+      queryKeys.icons('space-1').tags(),
     ])
   })
 })
@@ -274,6 +274,136 @@ describe('teardown', () => {
     Reflect.deleteProperty(window, 'Echo')
 
     expect(() => harness?.unmount()).not.toThrow()
+  })
+})
+
+describe('payload-carrying updates', () => {
+  const seedAndSetup = (seed: [readonly unknown[], unknown][]) => {
+    harness = withSetup(() => useSpaceBroadcasts('space-1'), { seed })
+    invalidate = vi.spyOn(harness.queryClient, 'invalidateQueries')
+    return harness
+  }
+
+  it('patches the item into cached lists instead of invalidating', () => {
+    const listKey = queryKeys.redirects('space-1').list({ page: 1 })
+    const instance = seedAndSetup([
+      [listKey, { data: [{ id: 'r-1', source: '/old' }, { id: 'r-2', source: '/other' }], meta: { total: 2 } }],
+    ])
+
+    emit('spaces.space-1.redirects', '.redirect:updated', {
+      id: 'r-1',
+      action: 'updated',
+      data: { id: 'r-1', source: '/new' },
+    })
+
+    expect(instance.queryClient.getQueryData(listKey)).toEqual({
+      data: [{ id: 'r-1', source: '/new' }, { id: 'r-2', source: '/other' }],
+      meta: { total: 2 },
+    })
+    expect(invalidated()).toEqual([])
+  })
+
+  it('merges into the cached detail entry', () => {
+    const detailKey = queryKeys.redirects('space-1').detail('r-1')
+    const instance = seedAndSetup([[detailKey, { id: 'r-1', source: '/old', target: '/t' }]])
+
+    emit('spaces.space-1.redirects', '.redirect:updated', {
+      id: 'r-1',
+      action: 'updated',
+      data: { id: 'r-1', source: '/new' },
+    })
+
+    expect(instance.queryClient.getQueryData(detailKey)).toEqual({
+      id: 'r-1',
+      source: '/new',
+      target: '/t',
+    })
+  })
+
+  it('patches infinite-query pages', () => {
+    const listKey = queryKeys.assets('space-1').list({})
+    const instance = seedAndSetup([
+      [
+        listKey,
+        {
+          pages: [
+            { data: [{ id: 'a-1', name: 'old' }], meta: {} },
+            { data: [{ id: 'a-2', name: 'other' }], meta: {} },
+          ],
+          pageParams: [1, 2],
+        },
+      ],
+    ])
+
+    emit('spaces.space-1.assets', '.asset:updated', {
+      id: 'a-1',
+      action: 'updated',
+      data: { id: 'a-1', name: 'new' },
+    })
+
+    const cache = instance.queryClient.getQueryData(listKey) as {
+      pages: Array<{ data: Array<{ id: string; name: string }> }>
+    }
+    expect(cache.pages[0].data[0].name).toBe('new')
+    expect(cache.pages[1].data[0].name).toBe('other')
+  })
+
+  it('leaves caches without the item untouched', () => {
+    const listKey = queryKeys.redirects('space-1').list({ page: 1 })
+    const before = { data: [{ id: 'r-2' }], meta: {} }
+    const instance = seedAndSetup([[listKey, before]])
+
+    emit('spaces.space-1.redirects', '.redirect:updated', {
+      id: 'r-1',
+      action: 'updated',
+      data: { id: 'r-1', source: '/new' },
+    })
+
+    expect(instance.queryClient.getQueryData(listKey)).toBe(before)
+  })
+
+  it('still invalidates the icon tag facet alongside a patch', () => {
+    const listKey = queryKeys.icons('space-1').list({})
+    seedAndSetup([[listKey, { data: [{ id: 'i-1' }] }]])
+
+    emit('spaces.space-1.icons', '.icon:updated', {
+      id: 'i-1',
+      action: 'updated',
+      data: { id: 'i-1', name: 'new' },
+    })
+
+    expect(invalidated()).toEqual([queryKeys.icons('space-1').tags()])
+  })
+
+  it('falls back to invalidation when the broadcast carries no data', () => {
+    seedAndSetup([])
+
+    emit('spaces.space-1.redirects', '.redirect:updated', { id: 'r-1', action: 'updated' })
+
+    expect(invalidated()).toEqual([
+      queryKeys.redirects('space-1').lists(),
+      queryKeys.redirects('space-1').detail('r-1'),
+    ])
+  })
+})
+
+describe('deletes prune cached lists', () => {
+  it('removes the item from cached list data before invalidating', () => {
+    const listKey = queryKeys.redirects('space-1').list({ page: 1 })
+    harness = withSetup(() => useSpaceBroadcasts('space-1'), {
+      seed: [[listKey, { data: [{ id: 'r-1' }, { id: 'r-2' }], meta: { total: 2 } }]],
+    })
+    invalidate = vi.spyOn(harness.queryClient, 'invalidateQueries')
+
+    emit('spaces.space-1.redirects', '.redirect:deleted', { id: 'r-1' })
+
+    expect((harness.queryClient.getQueryData(listKey) as { data: unknown[] }).data).toEqual([
+      { id: 'r-2' },
+    ])
+    expect(invalidated()).toEqual([
+      queryKeys.redirects('space-1').lists(),
+      queryKeys.redirects('space-1').detail('r-1'),
+    ])
   })
 })
 

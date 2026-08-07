@@ -5,6 +5,7 @@ namespace Tests\Feature\Events;
 use App\Events\ModelChangedEvent;
 use App\Events\Space\ContentDeleted;
 use App\Events\Space\ContentUpdated;
+use App\Events\Space\SpaceModelChanged;
 use App\Http\Resources\Management\BlockResource;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
@@ -70,6 +71,67 @@ class BroadcastPayloadTest extends TestCase
         $event = new ModelChangedEvent($block, BlockResource::class, 'updated');
 
         $this->assertFullyMaterialised($event->broadcastWith());
+    }
+
+    #[Test]
+    public function space_model_changed_carries_a_materialised_data_payload(): void
+    {
+        $block = $this->makeBlock();
+
+        $event = new SpaceModelChanged($this->space, 'blocks', 'updated', $block);
+
+        $this->forgetSpaceConnection();
+        $payload = unserialize(serialize($event))->broadcastWith();
+
+        $this->assertSame($block->id, $payload['id']);
+        $this->assertSame('updated', $payload['action']);
+        $this->assertSame($block->id, $payload['data']['id']);
+        $this->assertFullyMaterialised($payload);
+    }
+
+    #[Test]
+    public function space_model_changed_deleted_carries_identifiers_only(): void
+    {
+        $event = new SpaceModelChanged($this->space, 'blocks', 'deleted', $this->makeBlock());
+
+        $this->assertArrayNotHasKey('data', $event->broadcastWith());
+    }
+
+    /**
+     * Reverb rejects messages above its size cap outright — a broadcast that
+     * exceeds it silently reaches nobody. Better to drop the slim payload and
+     * let the frontend fall back to invalidation.
+     */
+    #[Test]
+    public function space_model_changed_drops_data_over_the_size_cap(): void
+    {
+        $block = Block::factory()->create(['description' => str_repeat('x', 20_000)]);
+
+        $payload = (new SpaceModelChanged($this->space, 'blocks', 'updated', $block))->broadcastWith();
+
+        $this->assertArrayNotHasKey('data', $payload);
+        $this->assertSame($block->id, $payload['id']);
+    }
+
+    /**
+     * Models without a Management resource (or whose resource cannot build
+     * outside a real request) must still broadcast their identifiers.
+     */
+    #[Test]
+    public function space_model_changed_survives_a_model_without_a_resource(): void
+    {
+        $model = new class extends \Illuminate\Database\Eloquent\Model
+        {
+            public $incrementing = false;
+
+            protected $keyType = 'string';
+        };
+        $model->id = 'model-without-resource';
+
+        $payload = (new SpaceModelChanged($this->space, 'blocks', 'updated', $model))->broadcastWith();
+
+        $this->assertSame('model-without-resource', $payload['id']);
+        $this->assertArrayNotHasKey('data', $payload);
     }
 
     #[Test]
