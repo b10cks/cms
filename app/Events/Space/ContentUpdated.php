@@ -52,11 +52,7 @@ class ContentUpdated implements ShouldBroadcast
             return null;
         }
 
-        $field = Content::query()
-            ->whereKey($content->parent_id)
-            ->first(['id', 'settings'])
-            ?->settings
-            ?->getChildContentSortField();
+        $field = self::childSortFieldFor($this->space->id, $content->parent_id);
 
         if ($field === null) {
             return null;
@@ -65,6 +61,26 @@ class ContentUpdated implements ShouldBroadcast
         $value = $content->current_version?->content[$field] ?? null;
 
         return \is_string($value) || \is_int($value) || \is_float($value) ? $value : null;
+    }
+
+    /**
+     * Memoized per parent and request: bulk operations (move, publish, import)
+     * fire ContentUpdated once per sibling, and the parent's sort field cannot
+     * change mid-request. Static on purpose — once() keys its cache on the
+     * calling object, and a fresh event instance per save would never hit.
+     * The space id is part of the key: the query runs on the contextual space
+     * connection, so the same parent id may resolve differently per space.
+     */
+    protected static function childSortFieldFor(string $spaceId, string $parentId): ?string
+    {
+        // $spaceId is captured solely to scope the memo key.
+        return once(function () use ($spaceId, $parentId) {
+            return Content::query()
+                ->whereKey($parentId)
+                ->first(['id', 'settings'])
+                ?->settings
+                ?->getChildContentSortField();
+        });
     }
 
     public function broadcastOn()
