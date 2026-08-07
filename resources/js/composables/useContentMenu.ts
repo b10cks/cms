@@ -259,6 +259,39 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
             })
           }
         )
+        // Children are deleted per-model (deepest first) on the backend, so
+        // every node in a deleted subtree arrives as its own event — removing
+        // just the broadcast id is enough.
+        .listen(
+          '.content:deleted',
+          (broadcast: { id: string; parent_id: string | null; i18n_parent_id: string | null }) => {
+            const contentTree = queryClient.getQueryData(queryKeys.contentMenu(id).all()) as
+              | Record<string, FlatContentMenuItem>
+              | undefined
+            if (!contentTree) return
+
+            if (broadcast.i18n_parent_id) {
+              // Translations live in their canonical parent's i18n list, not
+              // as tree nodes of their own.
+              const parent = contentTree[broadcast.i18n_parent_id]
+              if (!parent) return
+
+              queryClient.setQueryData(queryKeys.contentMenu(id).all(), {
+                ...contentTree,
+                [parent.id]: {
+                  ...parent,
+                  i18n: (parent.i18n ?? []).filter((entry) => entry.id !== broadcast.id),
+                },
+              })
+              return
+            }
+
+            if (!contentTree[broadcast.id]) return
+
+            const { [broadcast.id]: _, ...rest } = contentTree
+            queryClient.setQueryData(queryKeys.contentMenu(id).all(), rest)
+          }
+        )
     } catch {
       /** */
     }

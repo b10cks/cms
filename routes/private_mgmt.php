@@ -65,7 +65,6 @@ use App\Http\Controllers\Mgmt\IconDataImportController;
 use App\Http\Controllers\Mgmt\MigrationController;
 use App\Http\Controllers\Mgmt\NotificationController;
 use App\Http\Controllers\Mgmt\PlanProposalController;
-use App\Http\Controllers\Mgmt\PresenceController;
 use App\Http\Controllers\Mgmt\Provider\ProviderNoteController;
 use App\Http\Controllers\Mgmt\Provider\ProviderStatsController;
 use App\Http\Controllers\Mgmt\RedirectController;
@@ -299,11 +298,6 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
 
     Route::get('content-menu', ContentMenuController::class);
     Route::get('stats', SpaceStatsController::class);
-
-    Route::post('presence', [PresenceController::class, 'updateSpacePresence'])->name('spaces.presence.update');
-    Route::delete('presence', [PresenceController::class, 'leaveSpacePresence'])->name('spaces.presence.leave');
-    Route::post('contents/{content}/presence', [PresenceController::class, 'updateContentPresence'])->name('spaces.contents.presence.update');
-    Route::delete('contents/{content}/presence', [PresenceController::class, 'leaveContentPresence'])->name('spaces.contents.presence.leave');
 
     Route::apiResource('asset-folders', AssetFolderController::class);
     Route::apiResource('asset-tags', AssetTagController::class)->parameters([

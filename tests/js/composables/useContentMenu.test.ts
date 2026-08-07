@@ -646,6 +646,73 @@ describe('content:updated broadcasts', () => {
   })
 })
 
+describe('content:deleted broadcasts', () => {
+  const broadcast = (payload: Record<string, unknown>) =>
+    fake.channels[0].listeners.get('.content:deleted')?.(payload)
+
+  const deleted = (id: string, overrides: Record<string, unknown> = {}) => ({
+    id,
+    parent_id: null,
+    i18n_parent_id: null,
+    ...overrides,
+  })
+
+  it('removes the deleted item from the cached menu', () => {
+    const space = nextSpace()
+    const instance = setup(space, [[queryKeys.contentMenu(space).all(), menu(item('a'), item('b'))]])
+
+    broadcast(deleted('a'))
+
+    expect(Object.keys(menuOf(instance, space))).toEqual(['b'])
+  })
+
+  it('ignores an item the cache has never seen', () => {
+    const space = nextSpace()
+    const before = menu(item('a'))
+    const instance = setup(space, [[queryKeys.contentMenu(space).all(), before]])
+
+    broadcast(deleted('ghost'))
+
+    expect(menuOf(instance, space)).toBe(before)
+  })
+
+  it('does nothing when no menu has been fetched yet', () => {
+    const space = nextSpace()
+    const instance = setup(space)
+
+    broadcast(deleted('a'))
+
+    expect(menuOf(instance, space)).toBeUndefined()
+  })
+
+  it('removes a deleted translation from its canonical parent', () => {
+    const space = nextSpace()
+    const parent = item('a', {
+      i18n: [
+        { id: 'de-translation', name: 'de', language_iso: 'de', published_at: null },
+        { id: 'fr-translation', name: 'fr', language_iso: 'fr', published_at: null },
+      ] as ContentMenuTranslation[],
+    })
+    const instance = setup(space, [[queryKeys.contentMenu(space).all(), menu(parent)]])
+
+    broadcast(deleted('de-translation', { i18n_parent_id: 'a' }))
+
+    // A fresh parent identity is what re-renders the tree.
+    expect(menuOf(instance, space).a).not.toBe(parent)
+    expect(menuOf(instance, space).a.i18n.map((entry) => entry.id)).toEqual(['fr-translation'])
+  })
+
+  it('ignores a translation whose canonical parent is not cached', () => {
+    const space = nextSpace()
+    const before = menu(item('a'))
+    const instance = setup(space, [[queryKeys.contentMenu(space).all(), before]])
+
+    broadcast(deleted('translation', { i18n_parent_id: 'missing' }))
+
+    expect(menuOf(instance, space)).toBe(before)
+  })
+})
+
 describe('useContentMenuQuery', () => {
   it('serves the seeded cache entry under the content-menu key', () => {
     const space = nextSpace()
