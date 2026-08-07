@@ -5,11 +5,46 @@ import { isClient } from '~/lib/env'
 
 import { queryKeys } from './useQueryClient'
 
+interface ConnectionStates {
+  previous: string
+  current: string
+}
+
+interface PusherConnectionLike {
+  bind: (event: string, callback: (states: ConnectionStates) => void) => void
+  unbind: (event: string, callback: (states: ConnectionStates) => void) => void
+}
+
 export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
   const queryClient = useQueryClient()
 
   const invalidate = (...keys: QueryKey[]) => {
     keys.forEach((k) => queryClient.invalidateQueries({ queryKey: k }))
+  }
+
+  const getConnection = (): PusherConnectionLike | null => {
+    const echo = useEcho() as unknown as {
+      connector?: { pusher?: { connection?: PusherConnectionLike } }
+    } | null
+
+    return echo?.connector?.pusher?.connection ?? null
+  }
+
+  // Invalidations broadcast while the socket was down are gone for good — and
+  // the content menu is patched via setQueryData, so it would drift forever.
+  // After a reconnect, refetch everything space-scoped once to catch up.
+  let wasDown = false
+  const onConnectionStateChange = ({ current }: ConnectionStates) => {
+    if (current === 'unavailable' || current === 'failed' || current === 'disconnected') {
+      wasDown = true
+      return
+    }
+
+    const id = toValue(spaceId)
+    if (current === 'connected' && wasDown && id) {
+      wasDown = false
+      invalidate(['spaces', id])
+    }
   }
 
   const setup = () => {
@@ -78,6 +113,8 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
         .listen('.redirect:deleted', ({ id: modelId }: { id: string }) =>
           invalidate(queryKeys.redirects(id).lists(), queryKeys.redirects(id).detail(modelId))
         )
+
+      getConnection()?.bind('state_change', onConnectionStateChange)
     } catch {
       /** */
     }
@@ -94,6 +131,8 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
       for (const channel of ['blocks', 'assets', 'icons', 'redirects']) {
         echo.leave(`spaces.${idToLeave}.${channel}`)
       }
+
+      getConnection()?.unbind('state_change', onConnectionStateChange)
     } catch {
       /** */
     }

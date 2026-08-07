@@ -14,8 +14,20 @@ interface FakeChannel {
 const createFakeEcho = () => {
   const left: string[] = []
   const channels: FakeChannel[] = []
+  const connectionHandlers: Array<(states: { previous: string; current: string }) => void> = []
+
+  const connection = {
+    bind: (_event: string, callback: (states: { previous: string; current: string }) => void) => {
+      connectionHandlers.push(callback)
+    },
+    unbind: (_event: string, callback: (states: { previous: string; current: string }) => void) => {
+      const index = connectionHandlers.indexOf(callback)
+      if (index >= 0) connectionHandlers.splice(index, 1)
+    },
+  }
 
   const echo = {
+    connector: { pusher: { connection } },
     channel: (name: string) => {
       const channel: FakeChannel = { name, listeners: new Map() }
       channels.push(channel)
@@ -34,7 +46,7 @@ const createFakeEcho = () => {
     },
   }
 
-  return { echo, left, channels }
+  return { echo, left, channels, connectionHandlers }
 }
 
 type FakeEcho = ReturnType<typeof createFakeEcho>
@@ -262,6 +274,58 @@ describe('teardown', () => {
     Reflect.deleteProperty(window, 'Echo')
 
     expect(() => harness?.unmount()).not.toThrow()
+  })
+})
+
+describe('reconnect catch-up', () => {
+  const stateChange = (previous: string, current: string) =>
+    fake.connectionHandlers.forEach((handler) => handler({ previous, current }))
+
+  it('invalidates everything space-scoped after a drop and reconnect', () => {
+    setup()
+
+    stateChange('connected', 'unavailable')
+    stateChange('unavailable', 'connected')
+
+    expect(invalidated()).toEqual([['spaces', 'space-1']])
+  })
+
+  it('does not invalidate on the initial connect', () => {
+    setup()
+
+    stateChange('connecting', 'connected')
+
+    expect(invalidated()).toEqual([])
+  })
+
+  it('invalidates only once per drop', () => {
+    setup()
+
+    stateChange('connected', 'unavailable')
+    stateChange('unavailable', 'connected')
+    stateChange('connecting', 'connected')
+
+    expect(invalidated()).toEqual([['spaces', 'space-1']])
+  })
+
+  it('unbinds the connection handler on unmount', () => {
+    setup()
+    harness?.unmount()
+    harness = undefined
+
+    expect(fake.connectionHandlers).toEqual([])
+  })
+
+  it('targets the space that is current at reconnect time', async () => {
+    const spaceId = ref<string | null>('space-1')
+    setup(spaceId)
+
+    stateChange('connected', 'unavailable')
+    spaceId.value = 'space-2'
+    await nextTick()
+    stateChange('unavailable', 'connected')
+
+    expect(invalidated()).toEqual([['spaces', 'space-2']])
   })
 })
 
