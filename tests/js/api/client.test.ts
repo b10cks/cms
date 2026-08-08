@@ -181,6 +181,45 @@ describe('query serialization', () => {
   })
 })
 
+describe('socket id header', () => {
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'Echo')
+  })
+
+  it('attaches X-Socket-ID on mutating requests so toOthers() can exclude the sender', async () => {
+    window.Echo = { socketId: () => 'socket-1' } as unknown as typeof window.Echo
+
+    await client().post('/things', { a: 1 })
+
+    expect(lastCall().headers['X-Socket-ID']).toBe('socket-1')
+  })
+
+  it('omits X-Socket-ID on safe methods', async () => {
+    window.Echo = { socketId: () => 'socket-1' } as unknown as typeof window.Echo
+
+    await client().get('/things')
+
+    expect(lastCall().headers['X-Socket-ID']).toBeUndefined()
+  })
+
+  it('omits X-Socket-ID on anonymous skipCsrf transports', async () => {
+    window.Echo = { socketId: () => 'socket-1' } as unknown as typeof window.Echo
+
+    await client().request('/share', { method: 'POST', skipCsrf: true, body: {} })
+
+    expect(lastCall().headers['X-Socket-ID']).toBeUndefined()
+  })
+
+  it('sends nothing without Echo or without a connected socket', async () => {
+    await client().post('/things', { a: 1 })
+    expect(lastCall().headers['X-Socket-ID']).toBeUndefined()
+
+    window.Echo = { socketId: () => undefined } as unknown as typeof window.Echo
+    await client().post('/things', { a: 1 })
+    expect(lastCall().headers['X-Socket-ID']).toBeUndefined()
+  })
+})
+
 describe('headers and credentials', () => {
   it('sends Accept and Content-Type JSON with credentials on a GET', async () => {
     await client().get('/things')

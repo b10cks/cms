@@ -2,6 +2,7 @@
 
 namespace App\Events\Space;
 
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Queue\SerializesModels;
@@ -12,10 +13,11 @@ use Illuminate\Queue\SerializesModels;
  * Fired from the same choke point that marks packages of the collection
  * stale, so both consumers stay in lockstep.
  *
- * Identifiers only: the channel is public (no subscription auth).
+ * Identifiers only: listeners refetch the derived membership anyway.
  */
 class AssetCollectionContentChanged implements ShouldBroadcast
 {
+    use InteractsWithSockets;
     use SerializesModels;
 
     public function __construct(

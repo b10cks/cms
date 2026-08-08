@@ -13,6 +13,22 @@ const CSRF_COOKIE_ENDPOINT = '/auth/v1/csrf-cookie'
 // An HTML error page can be arbitrarily large; keep just enough to identify it.
 const MAX_ERROR_BODY_LENGTH = 500
 
+/**
+ * The Echo socket id, so broadcast(...)->toOthers() can exclude the client
+ * that caused the change — without it every save self-echoes and triggers
+ * the saver's own cache invalidations.
+ */
+const getSocketId = (): string | null => {
+  if (!isClient) return null
+  try {
+    return (
+      (window as { Echo?: { socketId?: () => string | undefined } }).Echo?.socketId?.() ?? null
+    )
+  } catch {
+    return null
+  }
+}
+
 export interface RequestOptions extends RequestInit {
   query?: Record<string, unknown>
   body?: any
@@ -187,8 +203,16 @@ export class ApiClient {
 
     const url = this.resolveUrl(endpoint, query)
 
+    // Anonymous transports (skipCsrf) hold no session and no socket worth
+    // excluding; safe methods change nothing, so nothing self-echoes.
+    const socketId = !isSafeMethod && !skipCsrf ? getSocketId() : null
+
     const makeRequest = async (requestHeaders: Record<string, string>): Promise<T> => {
-      const headers = { ...this.getAuthHeaders(), ...requestHeaders }
+      const headers = {
+        ...this.getAuthHeaders(),
+        ...(socketId ? { 'X-Socket-ID': socketId } : {}),
+        ...requestHeaders,
+      }
       const response = await fetch(url, {
         ...fetchOptions,
         credentials: fetchOptions.credentials || 'include',

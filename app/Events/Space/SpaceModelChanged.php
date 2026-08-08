@@ -4,6 +4,7 @@ namespace App\Events\Space;
 
 use App\Events\Concerns\ResolvesBroadcastPayload;
 use App\Models\Management\Space;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +13,7 @@ use Illuminate\Support\Str;
 
 class SpaceModelChanged implements ShouldBroadcast
 {
+    use InteractsWithSockets;
     use ResolvesBroadcastPayload;
     use SerializesModels;
 

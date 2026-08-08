@@ -199,7 +199,7 @@ class Content extends SpaceModel
 
             self::scheduleContentMenuInvalidation();
             if ($space) {
-                event(new ContentUpdated($content, $space));
+                broadcast(new ContentUpdated($content, $space))->toOthers();
             }
         });
 
@@ -214,7 +214,7 @@ class Content extends SpaceModel
 
             self::scheduleContentMenuInvalidation();
             if ($space) {
-                event(new ContentDeleted($content, $space));
+                broadcast(new ContentDeleted($content, $space))->toOthers();
             }
         });
 

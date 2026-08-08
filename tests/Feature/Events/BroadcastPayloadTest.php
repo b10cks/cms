@@ -114,6 +114,30 @@ class BroadcastPayloadTest extends TestCase
     }
 
     /**
+     * broadcast(...)->toOthers() is a silent no-op unless the event uses
+     * InteractsWithSockets — without it every save self-echoes and the
+     * initiating client refetches its own caches.
+     */
+    #[Test]
+    public function space_events_can_exclude_the_originating_socket(): void
+    {
+        $events = [
+            SpaceModelChanged::class,
+            ContentUpdated::class,
+            ContentDeleted::class,
+            \App\Events\Space\AssetCollectionContentChanged::class,
+        ];
+
+        foreach ($events as $event) {
+            $this->assertContains(
+                \Illuminate\Broadcasting\InteractsWithSockets::class,
+                class_uses_recursive($event),
+                $event.' must use InteractsWithSockets or toOthers() cannot exclude the sender.',
+            );
+        }
+    }
+
+    /**
      * Models without a Management resource (or whose resource cannot build
      * outside a real request) must still broadcast their identifiers.
      */

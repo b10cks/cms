@@ -4,12 +4,14 @@ namespace App\Events\Space;
 
 use App\Models\Management\Space;
 use App\Models\Space\Content;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Queue\SerializesModels;
 
 class ContentDeleted implements ShouldBroadcast
 {
+    use InteractsWithSockets;
     use SerializesModels;
 
     public Space $space;
