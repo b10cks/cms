@@ -247,7 +247,10 @@ describe('asset collection events', () => {
     })
 
     // The rename patches caches, but the rules may have changed with it.
-    expect(invalidated()).toEqual([queryKeys.assetCollections('space-1').assets('col-1')])
+    expect(invalidated()).toEqual([
+      queryKeys.assetCollections('space-1').lists(),
+      queryKeys.assetCollections('space-1').assets('col-1'),
+    ])
   })
 
   it('targets the collection asset list and stale packages on content changes', () => {
@@ -437,7 +440,7 @@ describe('payload-carrying updates', () => {
     return harness
   }
 
-  it('patches the item into cached lists instead of invalidating', () => {
+  it('patches the item into cached lists as an instant overlay', () => {
     const listKey = queryKeys.redirects('space-1').list({ page: 1 })
     const instance = seedAndSetup([
       [listKey, { data: [{ id: 'r-1', source: '/old' }, { id: 'r-2', source: '/other' }], meta: { total: 2 } }],
@@ -453,7 +456,9 @@ describe('payload-carrying updates', () => {
       data: [{ id: 'r-1', source: '/new' }, { id: 'r-2', source: '/other' }],
       meta: { total: 2 },
     })
-    expect(invalidated()).toEqual([])
+    // The patch is only an optimistic overlay — the refetch behind it settles
+    // membership and ordering, which a per-item merge cannot decide.
+    expect(invalidated()).toEqual([queryKeys.redirects('space-1').lists()])
   })
 
   it('merges into the cached detail entry', () => {
@@ -512,7 +517,10 @@ describe('payload-carrying updates', () => {
       data: { id: 'r-1', source: '/new' },
     })
 
+    // A cache without the item may be a list the item just moved INTO — the
+    // overlay can't insert it, so the invalidation refetch has to.
     expect(instance.queryClient.getQueryData(listKey)).toBe(before)
+    expect(invalidated()).toEqual([queryKeys.redirects('space-1').lists()])
   })
 
   it('still invalidates the icon tag facet alongside a patch', () => {
@@ -525,7 +533,10 @@ describe('payload-carrying updates', () => {
       data: { id: 'i-1', name: 'new' },
     })
 
-    expect(invalidated()).toEqual([queryKeys.icons('space-1').tags()])
+    expect(invalidated()).toEqual([
+      queryKeys.icons('space-1').lists(),
+      queryKeys.icons('space-1').tags(),
+    ])
   })
 
   it('falls back to invalidation when the broadcast carries no data', () => {

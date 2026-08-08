@@ -165,8 +165,12 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
         const extra = keys.extra?.() ?? []
 
         if (payload?.data?.id) {
+          // The patch is an instant optimistic overlay; the list refetch
+          // behind it settles what a per-item merge cannot decide — membership
+          // and ordering (moves, tag filters, sorted columns). Details carry
+          // no membership, so they stay patch-only.
           patchQueries([keys.lists(), ...(keys.details ? [keys.details()] : [])], payload.data)
-          invalidate(...extra)
+          invalidate(keys.lists(), ...extra)
           return
         }
 
