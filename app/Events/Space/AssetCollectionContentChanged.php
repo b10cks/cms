@@ -2,7 +2,7 @@
 
 namespace App\Events\Space;
 
-use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Queue\SerializesModels;
 
@@ -26,7 +26,7 @@ class AssetCollectionContentChanged implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('spaces.'.$this->spaceId.'.assets'),
+            new PrivateChannel('spaces.'.$this->spaceId.'.assets'),
         ];
     }
 

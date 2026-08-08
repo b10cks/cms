@@ -226,7 +226,7 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
       const echo = useEcho()
       if (!echo) return
       echo
-        .channel(`spaces.${id}.content`)
+        .private(`spaces.${id}.content`)
         // The payload is already menu-shaped (the full content resource does
         // not fit into a broadcast message), so it drops straight into the tree.
         .listen(

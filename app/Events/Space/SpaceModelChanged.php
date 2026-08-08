@@ -4,7 +4,7 @@ namespace App\Events\Space;
 
 use App\Events\Concerns\ResolvesBroadcastPayload;
 use App\Models\Management\Space;
-use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Queue\SerializesModels;
@@ -81,7 +81,7 @@ class SpaceModelChanged implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('spaces.'.$this->space->id.'.'.$this->resourceType),
+            new PrivateChannel('spaces.'.$this->space->id.'.'.$this->resourceType),
         ];
     }
 

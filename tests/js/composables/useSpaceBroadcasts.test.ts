@@ -26,27 +26,37 @@ const createFakeEcho = () => {
     },
   }
 
+  const publicJoins: string[] = []
+
+  const join = (name: string) => {
+    const channel: FakeChannel = { name, listeners: new Map() }
+    channels.push(channel)
+
+    const chainable = {
+      listen: (event: string, callback: (payload: unknown) => void) => {
+        channel.listeners.set(event, callback)
+        return chainable
+      },
+    }
+
+    return chainable
+  }
+
   const echo = {
     connector: { pusher: { connection } },
+    // Space channels carry resource payloads and must be subscribed privately;
+    // public joins are recorded so a test can prove none happen.
+    private: join,
     channel: (name: string) => {
-      const channel: FakeChannel = { name, listeners: new Map() }
-      channels.push(channel)
-
-      const chainable = {
-        listen: (event: string, callback: (payload: unknown) => void) => {
-          channel.listeners.set(event, callback)
-          return chainable
-        },
-      }
-
-      return chainable
+      publicJoins.push(name)
+      return join(name)
     },
     leave: (name: string) => {
       left.push(name)
     },
   }
 
-  return { echo, left, channels, connectionHandlers }
+  return { echo, left, channels, connectionHandlers, publicJoins }
 }
 
 type FakeEcho = ReturnType<typeof createFakeEcho>
@@ -94,6 +104,10 @@ describe('subscribing', () => {
       'spaces.space-1.redirects',
       'spaces.space-1.data_sources',
     ])
+
+    // Every space channel is joined via echo.private() — resource payloads
+    // must never ride a channel the auth guards cannot see.
+    expect(fake.publicJoins).toEqual([])
   })
 
   it('joins nothing without a space id', () => {

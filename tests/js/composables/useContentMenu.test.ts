@@ -44,26 +44,34 @@ const createFakeEcho = () => {
   const left: string[] = []
   const channels: FakeChannel[] = []
 
+  const publicJoins: string[] = []
+
+  const join = (name: string) => {
+    const channel: FakeChannel = { name, listeners: new Map() }
+    channels.push(channel)
+
+    const chainable = {
+      listen: (event: string, callback: (payload: unknown) => void) => {
+        channel.listeners.set(event, callback)
+        return chainable
+      },
+    }
+
+    return chainable
+  }
+
   const echo = {
+    private: join,
     channel: (name: string) => {
-      const channel: FakeChannel = { name, listeners: new Map() }
-      channels.push(channel)
-
-      const chainable = {
-        listen: (event: string, callback: (payload: unknown) => void) => {
-          channel.listeners.set(event, callback)
-          return chainable
-        },
-      }
-
-      return chainable
+      publicJoins.push(name)
+      return join(name)
     },
     leave: (name: string) => {
       left.push(name)
     },
   }
 
-  return { echo, left, channels }
+  return { echo, left, channels, publicJoins }
 }
 
 type FakeEcho = ReturnType<typeof createFakeEcho>
@@ -495,6 +503,13 @@ describe('shared Echo channel', () => {
     await nextTick()
 
     expect(fake.channels).toHaveLength(1)
+  })
+
+  it('joins the content channel privately — its payloads must sit behind auth', () => {
+    setup(nextSpace())
+
+    expect(fake.channels).toHaveLength(1)
+    expect(fake.publicJoins).toEqual([])
   })
 
   it('does not subscribe without a space id', () => {

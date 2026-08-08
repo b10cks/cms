@@ -220,7 +220,7 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
       const echo = useEcho()
       if (!echo) return
 
-      const blocks = echo.channel(`spaces.${id}.blocks`)
+      const blocks = echo.private(`spaces.${id}.blocks`)
       listenModel(blocks, 'block', () => ({
         lists: () => queryKeys.blocks(id).lists(),
         details: () => queryKeys.blocks(id).details(),
@@ -247,7 +247,7 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
           : { lists: () => queryKeys.blocks(id).all() }
       )
 
-      const assets = echo.channel(`spaces.${id}.assets`)
+      const assets = echo.private(`spaces.${id}.assets`)
       listenModel(assets, 'asset', () => ({
         lists: () => queryKeys.assets(id).lists(),
         details: () => queryKeys.assets(id).details(),
@@ -295,7 +295,7 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
         )
       })
 
-      listenModel(echo.channel(`spaces.${id}.icons`), 'icon', () => ({
+      listenModel(echo.private(`spaces.${id}.icons`), 'icon', () => ({
         lists: () => queryKeys.icons(id).lists(),
         details: () => queryKeys.icons(id).details(),
         detail: (modelId) => queryKeys.icons(id).detail(modelId),
@@ -303,13 +303,13 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
         extra: () => [queryKeys.icons(id).tags()],
       }))
 
-      listenModel(echo.channel(`spaces.${id}.redirects`), 'redirect', () => ({
+      listenModel(echo.private(`spaces.${id}.redirects`), 'redirect', () => ({
         lists: () => queryKeys.redirects(id).lists(),
         details: () => queryKeys.redirects(id).details(),
         detail: (modelId) => queryKeys.redirects(id).detail(modelId),
       }))
 
-      const dataSources = echo.channel(`spaces.${id}.data_sources`)
+      const dataSources = echo.private(`spaces.${id}.data_sources`)
       listenModel(dataSources, 'data_source', () => ({
         lists: () => queryKeys.dataSources(id).lists(),
         details: () => queryKeys.dataSources(id).details(),

@@ -124,8 +124,43 @@ class BroadcastPayloadTest extends TestCase
 
         $this->assertSame(['id' => 'col-1'], $event->broadcastWith());
         $this->assertSame(
-            'spaces.'.$this->space->id.'.assets',
+            'private-spaces.'.$this->space->id.'.assets',
             $event->broadcastOn()[0]->name,
+        );
+    }
+
+    /**
+     * Space channels carry full resource payloads since this branch — they
+     * must ride private channels so the routes/channels.php guards apply.
+     * The public share ping is the one deliberate exception (empty payload,
+     * token-as-capability).
+     */
+    #[Test]
+    public function space_events_broadcast_on_private_channels_only(): void
+    {
+        $content = $this->makeContentWithVersion();
+
+        $events = [
+            new SpaceModelChanged($this->space, 'blocks', 'updated', $this->makeBlock()),
+            new ContentUpdated($content, $this->space),
+            new ContentDeleted($content, $this->space),
+            new \App\Events\Space\AssetCollectionContentChanged($this->space->id, 'col-1'),
+        ];
+
+        foreach ($events as $event) {
+            foreach ($event->broadcastOn() as $channel) {
+                $this->assertInstanceOf(
+                    \Illuminate\Broadcasting\PrivateChannel::class,
+                    $channel,
+                    $event::class.' must broadcast privately.',
+                );
+            }
+        }
+
+        $ping = new \App\Events\Space\PublicAssetShareTouched($this->space->id, 'token-1');
+        $this->assertNotInstanceOf(
+            \Illuminate\Broadcasting\PrivateChannel::class,
+            $ping->broadcastOn()[0],
         );
     }
 
