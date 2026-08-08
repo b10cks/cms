@@ -54,6 +54,12 @@ class SpaceModelChanged implements ShouldBroadcast
      */
     protected function resolveData(Model $model): ?array
     {
+        // `spaces.{space}.*` are public channels (no subscription auth) — a
+        // model whose resource carries secrets opts out and stays id-only.
+        if (method_exists($model, 'broadcastsResourceData') && ! $model->broadcastsResourceData()) {
+            return null;
+        }
+
         /** @var class-string<\Illuminate\Http\Resources\Json\JsonResource> $resourceClass */
         $resourceClass = 'App\\Http\\Resources\\Management\\'.$this->modelBaseClass.'Resource';
 

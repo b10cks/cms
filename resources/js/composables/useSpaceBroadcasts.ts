@@ -252,6 +252,10 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
         lists: () => queryKeys.assets(id).lists(),
         details: () => queryKeys.assets(id).details(),
         detail: (modelId) => queryKeys.assets(id).detail(modelId),
+        // Smart collections resolve membership from rules, so any asset
+        // change can alter any collection's asset list. One prefix covers
+        // them all; only actively viewed lists actually refetch.
+        extra: () => [[...queryKeys.assetCollections(id).all(), 'assets']],
       }))
       listenModel(assets, 'asset_folder', () => ({
         lists: () => queryKeys.assetFolders(id).lists(),
@@ -261,6 +265,35 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
       listenModel(assets, 'asset_tag', () => ({
         lists: () => queryKeys.assetTags(id).lists(),
       }))
+      listenModel(assets, 'asset_collection', (payload) => ({
+        lists: () => queryKeys.assetCollections(id).lists(),
+        details: () => queryKeys.assetCollections(id).details(),
+        detail: (modelId) => queryKeys.assetCollections(id).detail(modelId),
+        // A saved collection may have new rules — its resolved asset list is
+        // derived state a patch cannot maintain.
+        extra: () =>
+          payload?.id ? [queryKeys.assetCollections(id).assets(payload.id)] : [],
+      }))
+      listenModel(assets, 'asset_package', () => ({
+        lists: () => queryKeys.assetPackages(id).lists(),
+        details: () => queryKeys.assetPackages(id).details(),
+        detail: (modelId) => queryKeys.assetPackages(id).detail(modelId),
+      }))
+      listenModel(assets, 'asset_share', () => ({
+        lists: () => queryKeys.assetShares(id).lists(),
+        details: () => queryKeys.assetShares(id).details(),
+        detail: (modelId) => queryKeys.assetShares(id).detail(modelId),
+      }))
+      // Manual membership edits and smart-rule updates change a collection's
+      // content without touching the row the model events cover. Packages of
+      // the collection were marked stale in the same transaction.
+      assets.listen('.asset_collection:content_changed', (payload: SpaceModelBroadcast) => {
+        if (!payload?.id) return
+        invalidate(
+          queryKeys.assetCollections(id).assets(payload.id),
+          queryKeys.assetPackages(id).lists()
+        )
+      })
 
       listenModel(echo.channel(`spaces.${id}.icons`), 'icon', () => ({
         lists: () => queryKeys.icons(id).lists(),

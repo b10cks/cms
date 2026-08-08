@@ -2,6 +2,7 @@
 
 namespace App\Services\Asset;
 
+use App\Events\Space\AssetCollectionContentChanged;
 use App\Jobs\Space\BuildAssetPackageJob;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
@@ -9,6 +10,7 @@ use App\Models\Space\AssetFolder;
 use App\Models\Space\AssetPackage;
 use App\Models\Space\AssetShare;
 use App\Models\User;
+use App\Support\SpaceContext;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
@@ -128,6 +130,13 @@ class AssetPackageService
             ->where('source_type', AssetPackage::SOURCE_COLLECTION)
             ->where('collection_id', $collectionId)
             ->update(['is_stale' => true]);
+
+        // Every caller reaches this exactly when the collection's content
+        // changed, so the live-update broadcast rides the same choke point.
+        $space = request('space') ?? SpaceContext::current();
+        if ($space) {
+            broadcast(new AssetCollectionContentChanged($space->id, $collectionId))->toOthers();
+        }
     }
 
     /**

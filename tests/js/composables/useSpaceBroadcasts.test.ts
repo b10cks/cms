@@ -167,18 +167,23 @@ describe('block events', () => {
 describe('asset events', () => {
   beforeEach(() => setup())
 
-  it('invalidates asset lists on update', () => {
+  /** Smart-collection membership derives from assets, so every asset event
+   * also touches the per-collection asset caches (one shared prefix). */
+  const membershipPrefix = [...queryKeys.assetCollections('space-1').all(), 'assets']
+
+  it('invalidates asset lists and collection membership on update', () => {
     emit('spaces.space-1.assets', '.asset:updated')
 
-    expect(invalidated()).toEqual([queryKeys.assets('space-1').lists()])
+    expect(invalidated()).toEqual([queryKeys.assets('space-1').lists(), membershipPrefix])
   })
 
-  it('invalidates asset list and detail on delete', () => {
+  it('invalidates list, detail and collection membership on delete', () => {
     emit('spaces.space-1.assets', '.asset:deleted', { id: 'asset-1' })
 
     expect(invalidated()).toEqual([
       queryKeys.assets('space-1').lists(),
       queryKeys.assets('space-1').detail('asset-1'),
+      membershipPrefix,
     ])
   })
 
@@ -195,6 +200,79 @@ describe('asset events', () => {
     emit('spaces.space-1.assets', '.asset_tag:updated')
 
     expect(invalidated()).toEqual([queryKeys.assetTags('space-1').lists()])
+  })
+})
+
+describe('asset collection events', () => {
+  beforeEach(() => setup())
+
+  it('invalidates collection lists and the collection asset list on create', () => {
+    emit('spaces.space-1.assets', '.asset_collection:created', { id: 'col-1' })
+
+    expect(invalidated()).toEqual([
+      queryKeys.assetCollections('space-1').lists(),
+      queryKeys.assetCollections('space-1').assets('col-1'),
+    ])
+  })
+
+  it('invalidates lists, detail and the collection asset list on delete', () => {
+    emit('spaces.space-1.assets', '.asset_collection:deleted', { id: 'col-1' })
+
+    expect(invalidated()).toEqual([
+      queryKeys.assetCollections('space-1').lists(),
+      queryKeys.assetCollections('space-1').detail('col-1'),
+      queryKeys.assetCollections('space-1').assets('col-1'),
+    ])
+  })
+
+  it('still refetches the resolved asset list alongside a payload patch', () => {
+    emit('spaces.space-1.assets', '.asset_collection:updated', {
+      id: 'col-1',
+      action: 'updated',
+      data: { id: 'col-1', name: 'Renamed' },
+    })
+
+    // The rename patches caches, but the rules may have changed with it.
+    expect(invalidated()).toEqual([queryKeys.assetCollections('space-1').assets('col-1')])
+  })
+
+  it('targets the collection asset list and stale packages on content changes', () => {
+    emit('spaces.space-1.assets', '.asset_collection:content_changed', { id: 'col-1' })
+
+    expect(invalidated()).toEqual([
+      queryKeys.assetCollections('space-1').assets('col-1'),
+      queryKeys.assetPackages('space-1').lists(),
+    ])
+  })
+
+  it('ignores a content change without a collection id', () => {
+    emit('spaces.space-1.assets', '.asset_collection:content_changed', {})
+
+    expect(invalidated()).toEqual([])
+  })
+})
+
+describe('asset package and share events', () => {
+  beforeEach(() => setup())
+
+  it('invalidates package list and detail on delete', () => {
+    emit('spaces.space-1.assets', '.asset_package:deleted', { id: 'pkg-1' })
+
+    expect(invalidated()).toEqual([
+      queryKeys.assetPackages('space-1').lists(),
+      queryKeys.assetPackages('space-1').detail('pkg-1'),
+    ])
+  })
+
+  it('invalidates share list and detail on an id-only update', () => {
+    // Shares never broadcast a resource payload (the token must not ride the
+    // public channel), so updates always take the invalidation path.
+    emit('spaces.space-1.assets', '.asset_share:updated', { id: 'share-1' })
+
+    expect(invalidated()).toEqual([
+      queryKeys.assetShares('space-1').lists(),
+      queryKeys.assetShares('space-1').detail('share-1'),
+    ])
   })
 })
 

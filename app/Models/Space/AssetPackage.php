@@ -2,6 +2,7 @@
 
 namespace App\Models\Space;
 
+use App\Models\Traits\BroadcastsSpaceModelEvents;
 use App\Models\User;
 use CodersCantina\Filter\Filterable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -37,6 +38,7 @@ use Illuminate\Support\Carbon;
  */
 class AssetPackage extends SpaceModel
 {
+    use BroadcastsSpaceModelEvents;
     use Filterable;
     use HasUlids;
 
@@ -55,6 +57,8 @@ class AssetPackage extends SpaceModel
     public const string SOURCE_FOLDER = 'folder';
 
     protected $table = 'asset_packages';
+
+    protected string $spaceChannel = 'assets';
 
     protected $fillable = [
         'name',

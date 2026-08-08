@@ -118,6 +118,38 @@ class BroadcastPayloadTest extends TestCase
      * outside a real request) must still broadcast their identifiers.
      */
     #[Test]
+    public function asset_collection_content_changed_carries_identifiers_only(): void
+    {
+        $event = new \App\Events\Space\AssetCollectionContentChanged($this->space->id, 'col-1');
+
+        $this->assertSame(['id' => 'col-1'], $event->broadcastWith());
+        $this->assertSame(
+            'spaces.'.$this->space->id.'.assets',
+            $event->broadcastOn()[0]->name,
+        );
+    }
+
+    /**
+     * `spaces.{space}.assets` has no subscription auth; the share resource
+     * carries the share token and must never ride the broadcast.
+     */
+    #[Test]
+    public function asset_share_broadcasts_without_its_resource_payload(): void
+    {
+        $share = \App\Models\Space\AssetShare::create([
+            'token' => \App\Models\Space\AssetShare::generateToken(),
+            'name' => 'Press kit',
+            'source_type' => 'selection',
+            'asset_ids' => [],
+        ]);
+
+        $payload = (new SpaceModelChanged($this->space, 'assets', 'updated', $share))->broadcastWith();
+
+        $this->assertArrayNotHasKey('data', $payload);
+        $this->assertSame($share->id, $payload['id']);
+    }
+
+    #[Test]
     public function space_model_changed_carries_the_parent_context(): void
     {
         $entry = \App\Models\Space\DataEntry::factory()->create();

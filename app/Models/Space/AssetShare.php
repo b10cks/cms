@@ -2,6 +2,7 @@
 
 namespace App\Models\Space;
 
+use App\Models\Traits\BroadcastsSpaceModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
 use App\Models\User;
 use CodersCantina\Filter\Filterable;
@@ -51,12 +52,25 @@ use Illuminate\Support\Str;
  */
 class AssetShare extends SpaceModel
 {
+    use BroadcastsSpaceModelEvents;
     use Filterable;
     use HasPurifiedAttributes;
     use HasUlids;
     use SoftDeletes;
 
     protected $table = 'asset_shares';
+
+    protected string $spaceChannel = 'assets';
+
+    /**
+     * Never put the share resource on the broadcast: `spaces.{space}.assets`
+     * is a public channel and the resource carries the share token. Listeners
+     * refetch through the authenticated API instead.
+     */
+    public function broadcastsResourceData(): bool
+    {
+        return false;
+    }
 
     protected $fillable = [
         'token',
