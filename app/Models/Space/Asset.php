@@ -111,6 +111,11 @@ class Asset extends SpaceModel
                 $asset->rights_status = AssetRightsStatus::fromExpiry($asset->license_expires_at)->value;
             }
         });
+
+        // Any asset change can alter what a public share shows (smart rules,
+        // selections, folders) — one memoized ping burst per request.
+        static::saved(fn () => \App\Services\Asset\AssetSharePinger::pingAllAccessible());
+        static::deleted(fn () => \App\Services\Asset\AssetSharePinger::pingAllAccessible());
     }
 
     protected function filename(): Attribute

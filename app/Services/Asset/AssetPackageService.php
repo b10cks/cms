@@ -137,6 +137,7 @@ class AssetPackageService
         if ($space) {
             broadcast(new AssetCollectionContentChanged($space->id, $collectionId))->toOthers();
         }
+        AssetSharePinger::pingCollection($collectionId);
     }
 
     /**

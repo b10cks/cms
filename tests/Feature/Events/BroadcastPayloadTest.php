@@ -149,6 +149,24 @@ class BroadcastPayloadTest extends TestCase
         $this->assertSame($share->id, $payload['id']);
     }
 
+    /**
+     * The public share channel is unauthenticated by design — the token in the
+     * channel name is the capability. That makes an empty payload the security
+     * boundary: nothing about the share, its assets or its viewers may ride it.
+     */
+    #[Test]
+    public function public_share_ping_carries_no_payload(): void
+    {
+        $event = new \App\Events\Space\PublicAssetShareTouched($this->space->id, 'tok_abc');
+
+        $this->assertSame([], $event->broadcastWith());
+        $this->assertSame('share:updated', $event->broadcastAs());
+        $this->assertSame(
+            'public-share.'.$this->space->id.'.tok_abc',
+            $event->broadcastOn()[0]->name,
+        );
+    }
+
     #[Test]
     public function space_model_changed_carries_the_parent_context(): void
     {

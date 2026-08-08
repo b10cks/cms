@@ -3,6 +3,7 @@ import type { MaybeRef } from 'vue'
 
 import { api } from '~/api'
 import { PublicShare } from '~/api/resources/public-share'
+import { isClient } from '~/lib/env'
 import type { DownloadUrlResponse } from '~/types/asset-distribution'
 
 import { queryKeys } from './useQueryClient'
@@ -155,6 +156,49 @@ export function usePublicShare(spaceId: MaybeRef<string>, token: MaybeRef<string
     invalidateShare()
     return response
   }
+
+  /* Live updates -------------------------------------------------------
+   *
+   * `public-share.{space}.{token}` is a public channel — the anonymous viewer
+   * cannot authorize a private one, and the token in the name is the same
+   * capability the page URL already carries. The ping has no payload; the
+   * refetch goes through the public API, which re-checks accessibility, so a
+   * revoked/expired share resolves to the page's existing 404 state.
+   */
+  const channelFor = (space: string, value: string) => `public-share.${space}.${value}`
+
+  const subscribe = (space: string, value: string) => {
+    if (!isClient || !space || !value) return
+
+    try {
+      useEcho()
+        ?.channel(channelFor(space, value))
+        .listen('.share:updated', () => invalidateShare())
+    } catch {
+      // Realtime is optional — the page works without it.
+    }
+  }
+
+  const unsubscribe = (space: string, value: string) => {
+    if (!isClient || !space || !value) return
+
+    try {
+      useEcho()?.leave(channelFor(space, value))
+    } catch {
+      /** */
+    }
+  }
+
+  onMounted(() => subscribe(toValue(spaceId), toValue(token)))
+  onUnmounted(() => unsubscribe(toValue(spaceId), toValue(token)))
+
+  watch(
+    () => [toValue(spaceId), toValue(token)] as const,
+    ([space, value], previous) => {
+      if (previous) unsubscribe(previous[0], previous[1])
+      subscribe(space, value)
+    }
+  )
 
   return {
     accessToken,

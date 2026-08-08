@@ -72,6 +72,16 @@ class AssetShare extends SpaceModel
         return false;
     }
 
+    protected static function booted(): void
+    {
+        // Settings edits, revocation and (soft) deletion all reach any open
+        // public page for this share as a bare ping; the page refetches and
+        // renders 404s as its unavailable state.
+        $ping = fn (self $share) => \App\Services\Asset\AssetSharePinger::pingShare($share);
+        static::saved($ping);
+        static::deleted($ping);
+    }
+
     protected $fillable = [
         'token',
         'name',

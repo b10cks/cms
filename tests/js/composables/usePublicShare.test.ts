@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { ref } from 'vue'
 
 import { queryKeys } from '~/composables/useQueryClient'
 
@@ -85,6 +86,88 @@ afterEach(() => {
   while (mounted.length) mounted.pop()?.()
   vi.useRealTimers()
   vi.unstubAllGlobals()
+})
+
+describe('live updates', () => {
+  interface FakeChannel {
+    name: string
+    listeners: Map<string, () => void>
+  }
+
+  const left: string[] = []
+  const channels: FakeChannel[] = []
+
+  const fakeEcho = {
+    channel: (name: string) => {
+      const channel: FakeChannel = { name, listeners: new Map() }
+      channels.push(channel)
+      return {
+        listen: (event: string, callback: () => void) => {
+          channel.listeners.set(event, callback)
+        },
+      }
+    },
+    leave: (name: string) => {
+      left.push(name)
+    },
+  }
+
+  beforeEach(() => {
+    left.length = 0
+    channels.length = 0
+    window.Echo = fakeEcho as unknown as typeof window.Echo
+  })
+
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'Echo')
+  })
+
+  it('subscribes to the public channel named by space and token', () => {
+    mount(() => forShare())
+
+    expect(channels.map((channel) => channel.name)).toEqual([`public-share.${SPACE}.${TOKEN}`])
+    expect(Array.from(channels[0].listeners.keys())).toEqual(['.share:updated'])
+  })
+
+  it('refetches the share on a ping', () => {
+    const harness = mount(() => forShare())
+    const invalidate = vi.spyOn(harness.queryClient, 'invalidateQueries')
+
+    channels[0].listeners.get('.share:updated')?.()
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: keys.all() })
+  })
+
+  it('leaves the channel on unmount', () => {
+    mount(() => forShare())
+
+    mounted.pop()?.()
+
+    expect(left).toEqual([`public-share.${SPACE}.${TOKEN}`])
+  })
+
+  it('resubscribes when the viewed share changes', async () => {
+    const token = ref(TOKEN)
+    mount(() => usePublicShare(SPACE, token))
+
+    token.value = 'tok_two'
+    await flush()
+
+    expect(left).toEqual([`public-share.${SPACE}.${TOKEN}`])
+    expect(channels.map((channel) => channel.name)).toEqual([
+      `public-share.${SPACE}.${TOKEN}`,
+      `public-share.${SPACE}.tok_two`,
+    ])
+  })
+
+  it('works without Echo', () => {
+    Reflect.deleteProperty(window, 'Echo')
+
+    expect(() => {
+      mount(() => forShare())
+      mounted.pop()?.()
+    }).not.toThrow()
+  })
 })
 
 describe('access token storage', () => {
