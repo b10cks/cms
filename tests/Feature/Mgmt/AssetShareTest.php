@@ -237,6 +237,27 @@ class AssetShareTest extends TestCase
         $this->getJson(route('mgmt.shares.show', [$this->space, $expired->token]))->assertNotFound();
     }
 
+    /**
+     * The share page is served from the SPA origin, so Sanctum classifies its
+     * requests as stateful and runs VerifyCsrfToken — while the anonymous
+     * client sends no cookies and no CSRF token, which 419s every unlock.
+     * VerifyCsrfToken short-circuits under runningUnitTests(), so the 419
+     * cannot be reproduced here; guard the exemption pattern itself.
+     */
+    #[Test]
+    public function share_endpoints_are_exempt_from_csrf(): void
+    {
+        $middleware = app(\App\Http\Middleware\VerifyCsrfToken::class);
+        $inExceptArray = new \ReflectionMethod($middleware, 'inExceptArray');
+
+        $request = \Illuminate\Http\Request::create(
+            '/mgmt/v1/shares/'.$this->space->id.'/some-token/unlock',
+            'POST',
+        );
+
+        $this->assertTrue($inExceptArray->invoke($middleware, $request));
+    }
+
     #[Test]
     public function password_protected_shares_expose_only_a_minimal_shape_until_unlocked(): void
     {

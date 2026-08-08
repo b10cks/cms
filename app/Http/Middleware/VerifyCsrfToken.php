@@ -14,5 +14,11 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         'auth/v1/saml/*/acs',
         'auth/v1/saml/*/sls',
+        // Public share endpoints are anonymous by design (token in the URL is
+        // the capability, unlock returns a bearer token, nothing touches the
+        // session) — but the share page is served from the SPA origin, so
+        // Sanctum classifies its requests as stateful and would demand a CSRF
+        // token the cookie-less client cannot have.
+        'mgmt/v1/shares/*',
     ];
 }
