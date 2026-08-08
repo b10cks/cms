@@ -118,7 +118,6 @@ declare global {
   const useSeoMeta: typeof import('./composables/useSeoMeta').useSeoMeta
   const useSlots: typeof import('vue').useSlots
   const useSpacePresence: typeof import('./composables/usePresence').useSpacePresence
-  const useSpacePresencePeek: typeof import('./composables/useSpacePresencePeek').useSpacePresencePeek
   const useSpaceSettings: typeof import('./composables/useSpaceSettings').default
   const useSpaces: typeof import('./composables/useSpace').useSpaces
   const useTeams: typeof import('./composables/useTeams').useTeams
@@ -184,9 +183,6 @@ declare global {
   // @ts-ignore
   export type { SeoMetaOptions } from './composables/useSeoMeta'
   import('./composables/useSeoMeta')
-  // @ts-ignore
-  export type { SpacePresenceInfo } from './composables/useSpacePresencePeek'
-  import('./composables/useSpacePresencePeek')
   // @ts-ignore
   export type { MessageSchema, LocaleCode } from './plugins/i18n'
   import('./plugins/i18n')
@@ -345,9 +341,6 @@ declare module 'vue' {
     readonly useSlots: UnwrapRef<(typeof import('vue'))['useSlots']>
     readonly useSpacePresence: UnwrapRef<
       (typeof import('./composables/usePresence'))['useSpacePresence']
-    >
-    readonly useSpacePresencePeek: UnwrapRef<
-      (typeof import('./composables/useSpacePresencePeek'))['useSpacePresencePeek']
     >
     readonly useSpaceSettings: UnwrapRef<
       (typeof import('./composables/useSpaceSettings'))['default']

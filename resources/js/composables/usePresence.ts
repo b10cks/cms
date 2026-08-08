@@ -248,7 +248,6 @@ export function usePresence(
 /**
  * Join space presence channel - use this when user is INSIDE the space
  * This makes the user visible to others in the space
- * For read-only peeking (space overview), use useSpacePresencePeek instead
  */
 export function useSpacePresence(spaceIdRef: MaybeRefOrComputed<string | null>) {
   const spaceId = computed(() => unref(spaceIdRef))
