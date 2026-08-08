@@ -449,12 +449,36 @@ class ContentTreeOperationService
             ->pluck('slug')
             ->flip();
 
-        while ($existing->has($slug)) {
+        while (true) {
+            // slugWithSuffix truncates a near-limit base to make room for the
+            // suffix — that candidate escapes the LIKE prefix above, so its
+            // collisions have to be checked directly.
+            $taken = str_starts_with($slug, $base)
+                ? $existing->has($slug)
+                : $this->contentSlugTaken($slug, $parentId, $languageIso, $ignoreId);
+
+            if (! $taken) {
+                return $slug;
+            }
+
             $slug = $this->slugWithSuffix($base, $suffix);
             $suffix++;
         }
+    }
 
-        return $slug;
+    protected function contentSlugTaken(
+        string $slug,
+        ?string $parentId,
+        string $languageIso,
+        ?string $ignoreId,
+    ): bool {
+        return Content::query()
+            ->where('parent_id', $parentId)
+            ->where('language_iso', $languageIso)
+            ->where('slug', $slug)
+            ->whereNull('deleted_at')
+            ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+            ->exists();
     }
 
     /**

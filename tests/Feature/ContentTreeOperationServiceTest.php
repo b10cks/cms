@@ -211,6 +211,40 @@ class ContentTreeOperationServiceTest extends TestCase
         $this->assertNotNull($content->published_at);
     }
 
+    /**
+     * A base at the 75-char slug cap gets truncated by slugWithSuffix to make
+     * room for "-N" — that candidate escapes the LIKE '{base}%' prefetch, so
+     * its collisions must be checked directly or an already-taken slug is
+     * silently returned (two siblings sharing a slug).
+     */
+    #[Test]
+    public function unique_slugs_survive_suffix_truncation_at_the_length_cap(): void
+    {
+        $this->createAndActAs();
+
+        $space = Space::factory()->create();
+        $this->setUpSpaceTesting($space);
+        app()->instance('currentSpace', $space);
+
+        $block = Block::factory()->create(['type' => 'root']);
+
+        $base = str_repeat('a', 75);
+        $takenCandidate = str_repeat('a', 73).'-2';
+
+        $this->createContentItem($space, $block, 'Original', $base);
+        $this->createContentItem($space, $block, 'First copy', $takenCandidate);
+
+        $makeUniqueSlug = new \ReflectionMethod(ContentTreeOperationService::class, 'makeUniqueSlug');
+        $slug = $makeUniqueSlug->invoke(
+            app(ContentTreeOperationService::class),
+            $base,
+            null,
+            'en',
+        );
+
+        $this->assertSame(str_repeat('a', 73).'-3', $slug);
+    }
+
     protected function enableContentSorting(Space $space): void
     {
         $space->settings = array_merge($space->settings->toArray(), ['content_sorting' => true]);
