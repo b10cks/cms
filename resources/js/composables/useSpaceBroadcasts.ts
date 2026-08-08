@@ -203,8 +203,17 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
   // the content menu is patched via setQueryData, so it would drift forever.
   // After a reconnect, refetch everything space-scoped once to catch up.
   let wasDown = false
-  const onConnectionStateChange = ({ current }: ConnectionStates) => {
-    if (current === 'unavailable' || current === 'failed' || current === 'disconnected') {
+  const onConnectionStateChange = ({ previous, current }: ConnectionStates) => {
+    // A transient drop reconnecting within pusher-js's 10s unavailableTimeout
+    // only ever shows as connected → connecting → connected, so leaving
+    // 'connected' at all has to arm the catch-up — the terminal down states
+    // alone would miss every fast drop.
+    if (
+      (previous === 'connected' && current === 'connecting') ||
+      current === 'unavailable' ||
+      current === 'failed' ||
+      current === 'disconnected'
+    ) {
       wasDown = true
       return
     }

@@ -592,6 +592,17 @@ describe('reconnect catch-up', () => {
     expect(invalidated()).toEqual([])
   })
 
+  it('catches up after a fast drop that never reaches unavailable', () => {
+    setup()
+
+    // pusher-js reconnects within its 10s unavailableTimeout as
+    // connected → connecting → connected — no terminal down state fires.
+    stateChange('connected', 'connecting')
+    stateChange('connecting', 'connected')
+
+    expect(invalidated()).toEqual([['spaces', 'space-1']])
+  })
+
   it('invalidates only once per drop', () => {
     setup()
 
