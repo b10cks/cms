@@ -340,6 +340,12 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
             }
           : { lists: () => queryKeys.dataSources(id).all() }
       )
+      // Bulk operations (import, replacement delete, bulk translation) mute
+      // their per-entry broadcasts and send this single event instead.
+      dataSources.listen('.data_source:content_changed', (payload: SpaceModelBroadcast) => {
+        if (!payload?.id) return
+        invalidate(queryKeys.dataEntries(id, payload.id).all(), queryKeys.dataSources(id).lists())
+      })
 
       getConnection()?.bind('state_change', onConnectionStateChange)
     } catch {

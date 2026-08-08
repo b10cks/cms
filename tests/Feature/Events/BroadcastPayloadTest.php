@@ -137,6 +137,60 @@ class BroadcastPayloadTest extends TestCase
         }
     }
 
+    #[Test]
+    public function data_source_content_changed_carries_identifiers_only(): void
+    {
+        $event = new \App\Events\Space\DataSourceContentChanged($this->space->id, 'ds-1');
+
+        $this->assertSame(['id' => 'ds-1'], $event->broadcastWith());
+        $this->assertSame('data_source:content_changed', $event->broadcastAs());
+        $this->assertSame(
+            'private-spaces.'.$this->space->id.'.data_sources',
+            $event->broadcastOn()[0]->name,
+        );
+    }
+
+    /**
+     * Bulk operations mute the per-model broadcasts (a 1,000-row import must
+     * not produce 1,000 events) and stand in for them with one
+     * content-changed event; normal saves keep broadcasting afterwards.
+     */
+    #[Test]
+    public function without_broadcasts_mutes_per_model_events_and_restores_after(): void
+    {
+        // Created first: the factory would otherwise create it inside the
+        // muted block, and muting DataEntry deliberately leaves DataSource
+        // broadcasting (the flag is per class).
+        $dataSource = \App\Models\Space\DataSource::factory()->create();
+
+        \Illuminate\Support\Facades\Event::fake([SpaceModelChanged::class]);
+
+        \App\Models\Space\DataEntry::withoutBroadcasts(function () use ($dataSource) {
+            \App\Models\Space\DataEntry::factory()->create(['data_source_id' => $dataSource->id]);
+        });
+        \Illuminate\Support\Facades\Event::assertNotDispatched(SpaceModelChanged::class);
+
+        \App\Models\Space\DataEntry::factory()->create(['data_source_id' => $dataSource->id]);
+        \Illuminate\Support\Facades\Event::assertDispatched(SpaceModelChanged::class);
+    }
+
+    #[Test]
+    public function without_broadcasts_unmutes_even_when_the_callback_throws(): void
+    {
+        \Illuminate\Support\Facades\Event::fake([SpaceModelChanged::class]);
+
+        try {
+            \App\Models\Space\DataEntry::withoutBroadcasts(function (): void {
+                throw new \RuntimeException('bulk operation failed');
+            });
+        } catch (\RuntimeException) {
+            // expected
+        }
+
+        \App\Models\Space\DataEntry::factory()->create();
+        \Illuminate\Support\Facades\Event::assertDispatched(SpaceModelChanged::class);
+    }
+
     /**
      * Models without a Management resource (or whose resource cannot build
      * outside a real request) must still broadcast their identifiers.

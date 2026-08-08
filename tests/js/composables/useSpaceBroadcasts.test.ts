@@ -411,6 +411,25 @@ describe('data source events', () => {
   })
 })
 
+describe('data source content changes', () => {
+  beforeEach(() => setup())
+
+  it('refetches the entry caches and source lists on a bulk change', () => {
+    emit('spaces.space-1.data_sources', '.data_source:content_changed', { id: 'ds-1' })
+
+    expect(invalidated()).toEqual([
+      queryKeys.dataEntries('space-1', 'ds-1').all(),
+      queryKeys.dataSources('space-1').lists(),
+    ])
+  })
+
+  it('ignores a content change without a data source id', () => {
+    emit('spaces.space-1.data_sources', '.data_source:content_changed', {})
+
+    expect(invalidated()).toEqual([])
+  })
+})
+
 describe('block template events', () => {
   beforeEach(() => setup())
 

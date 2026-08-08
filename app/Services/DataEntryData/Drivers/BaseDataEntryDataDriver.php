@@ -5,6 +5,7 @@ namespace App\Services\DataEntryData\Drivers;
 use App\Contracts\DataEntryData\DataEntryDataDriver;
 use App\DTOs\ImportExport\ImportResult;
 use App\Enums\RedirectImportMode;
+use App\Events\Space\DataSourceContentChanged;
 use App\Models\Management\Space;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
@@ -57,18 +58,27 @@ abstract class BaseDataEntryDataDriver implements DataEntryDataDriver
             // tracking stay intact.
             $connection = new DataEntry()->getConnection();
 
-            foreach (array_chunk($rows, self::IMPORT_CHUNK_SIZE, preserve_keys: true) as $chunk) {
-                $connection->transaction(function () use ($space, $dataSource, $chunk): void {
-                    $lookup = $this->prefetchEntries($dataSource, $chunk);
+            // One broadcast per saved row would flood Reverb and every client
+            // on a large file — mute the per-model events and stand in for
+            // them with a single content-changed event below.
+            DataEntry::withoutBroadcasts(function () use ($connection, $rows, $space, $dataSource, $mode): void {
+                foreach (array_chunk($rows, self::IMPORT_CHUNK_SIZE, preserve_keys: true) as $chunk) {
+                    $connection->transaction(function () use ($space, $dataSource, $chunk): void {
+                        $lookup = $this->prefetchEntries($dataSource, $chunk);
 
-                    foreach ($chunk as $rowNumber => $rowData) {
-                        $this->importRow($space, $dataSource, $rowNumber, $rowData, $lookup);
-                    }
-                });
-            }
+                        foreach ($chunk as $rowNumber => $rowData) {
+                            $this->importRow($space, $dataSource, $rowNumber, $rowData, $lookup);
+                        }
+                    });
+                }
 
-            if ($mode === RedirectImportMode::Replacement && $this->errors === []) {
-                $this->deleteUntouchedEntries($dataSource);
+                if ($mode === RedirectImportMode::Replacement && $this->errors === []) {
+                    $this->deleteUntouchedEntries($dataSource);
+                }
+            });
+
+            if ($this->successes !== [] || $this->deleted !== []) {
+                broadcast(new DataSourceContentChanged($space->id, $dataSource->id))->toOthers();
             }
         } catch (\Throwable $e) {
             Log::error('Data entry import parsing error', [

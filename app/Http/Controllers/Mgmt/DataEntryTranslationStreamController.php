@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Mgmt;
 
 use App\Http\Controllers\Controller;
 use App\Models\Management\Space;
+use App\Events\Space\DataSourceContentChanged;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
 use App\Services\Ai\AiStreamService;
@@ -190,7 +191,9 @@ class DataEntryTranslationStreamController extends Controller
                 throw AiServiceException::noResult();
             }
 
-            DB::transaction(function () use ($chunk, $decoded, $targetDimension, &$translated, &$skipped, &$processed): void {
+            // Mute the per-entry broadcasts; one content-changed event after
+            // the run stands in for the whole batch.
+            DataEntry::withoutBroadcasts(fn () => DB::transaction(function () use ($chunk, $decoded, $targetDimension, &$translated, &$skipped, &$processed): void {
                 foreach ($chunk as $entry) {
                     $processed++;
                     $value = $decoded[$entry->key] ?? null;
@@ -214,11 +217,15 @@ class DataEntryTranslationStreamController extends Controller
                     $entry->save();
                     $translated++;
                 }
-            });
+            }));
 
             Cache::forget("data_source:{$dataSource->id}:entries");
 
             yield $this->progress('processing', $processed, $translated, $skipped, $total, $targetDimension);
+        }
+
+        if ($translated > 0) {
+            broadcast(new DataSourceContentChanged($space->id, $dataSource->id))->toOthers();
         }
 
         yield $this->summary($translated, $skipped, $processed, $total, $targetDimension, $sourceLocale);
