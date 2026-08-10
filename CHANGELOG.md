@@ -3,6 +3,53 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.10-d2c56545] — 2026-8-10
+
+- 🔥 Delete the dead presence-peek composable
+- 🚚 Collapse bulk data-entry broadcasts into one content-changed event
+- 📶 Arm the reconnect catch-up on fast socket drops too
+- 🔇 Stop broadcasting saves back to the client that made them
+- 🐛 Treat broadcast patches as an overlay, not a substitute for refetch
+- 🐛 Check truncated slug candidates against the DB, not the LIKE prefetch
+- 🐛 Exempt public share endpoints from CSRF
+- 🔒 Move space broadcast channels behind their auth guards
+- 🌐 Auto-update the public share page over a token-named channel
+- 🤝 Live-update asset collections, packages and shares in the space UI
+- 📡 Extend live updates to data sources, block templates and content lists
+- 🚀 Patch caches from broadcasts instead of refetching
+- ⚡ Memoize the per-save parent sort-field lookup in ContentUpdated
+- 📶 Catch up space queries after a socket drop
+- 🗑️ Wire content:deleted into the tree, drop the dead presence event
+- 🔤 Expand umlauts in slugs via one shared, language-aware normalizer
+- 🗃️ Widen content slugs from 70 to 75 characters
+- 📝 Close the last two open findings in the sweep record
+- ✅ Land the frontend test suite and the fixes it surfaced
+- 👷 Enforce typecheck and linting in CI
+- 🏷️ Fix the remaining type errors across components and pages
+- 🏷️ Align the ambient and API resource types with the backend
+- 🏷️ Type the shared form, table and select primitives
+- 🔥 Drop the dead Nuxt image provider
+- 🐛 Fix shadowed identifiers and a clobbered maxlength
+- 🐛 Return last_used_at on personal access tokens
+- ➕ Add qrcode types and pin a single prosemirror-model
+- ♿️ Label icon-only buttons and make click targets keyboard-operable
+- 🏷️ Restore global ambient types and type the i18n composer
+- ➖ Remove the unused @tanstack/vue-table dependency
+- 🐛 Apply assorted backend hardening quick wins
+- 🐛 Stop long-running jobs from being re-dispatched mid-flight
+- 🔒 Sanitize block preview titles and lock down the preview bridge
+- 🥅 Report unhandled exceptions to PostHog error tracking
+- 🌐 Sync the German locale with the English key set
+- 🔒 Enforce delivery-token abilities and gate drafts behind preview
+- 🔒 Keep a stale tenant space from leaking across Octane requests
+- 🐛 Open content transactions on the space connection
+- 📝 Fold the deleted v2026.7.29-739eae81 changelog entry into the shipped release
+- Bump actions/cache from 4.3.0 to 6.1.0
+- Bump docker/login-action from 3.7.0 to 4.6.0
+- Bump softprops/action-gh-release from 2.6.2 to 3.0.2
+- Bump docker/setup-buildx-action from 3.12.0 to 4.2.0
+- Bump docker/build-push-action from 6.19.2 to 7.3.0
+
 ## [v2026.7.29-80aae291] — 2026-7-29
 
 - ✅ Fake the Vite manifest in the app-shell payload test
