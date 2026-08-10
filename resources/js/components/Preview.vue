@@ -57,7 +57,8 @@ const mobileWidth = ref<number>(384)
 const isResizing = ref<boolean>(false)
 // Named apart from the `content` prop, which carries the unsaved draft.
 const injectedContent = inject<Ref<ContentResource | null>>('content', ref(null))
-let previewBridge: PreviewBridge
+const previewBridge = shallowRef<PreviewBridge | null>(null)
+let readyFallbackTimer: ReturnType<typeof setTimeout> | undefined
 
 const effectiveEnvironment = computed<SpaceEnvironment | null>(() => {
   const userEnv = settings.value.content.environment as SpaceEnvironment | null
@@ -126,78 +127,85 @@ const originOf = (url: string | null | undefined): string | null => {
   }
 }
 
-// Initialize connection with the iframe
-const setupConnection = async () => {
-  if (!iframeRef.value || !baseSrc.value) return
-
-  // Trust exactly the origins of the configured preview environments; the
-  // active one is where outgoing draft updates are addressed.
-  const allowedOrigins = availableEnvironments.value
-    .map((environment) => originOf(environment.url))
-    .filter((origin): origin is string => origin !== null)
-
-  previewBridge = new PreviewBridge(iframeRef.value, {
-    allowedOrigins,
-    targetOrigin: originOf(currentEnvironmentUrl.value) ?? undefined,
-  })
-  previewBridge.on('SELECT_UPDATE', ({ selectedItem }) => {
-    emit('selectItem', selectedItem)
-  })
-  previewBridge.on('FIELD_UPDATE', (payload) => {
-    emit('updateField', payload)
-  })
-  previewBridge.on('COMMENT_CLICK', (payload) => {
-    emit('commentClick', payload)
-  })
-  previewBridge.on('COMMENT_CREATE', (payload) => {
-    emit('commentCreate', payload)
-  })
-  previewBridge.on('COMMENT_UPDATE', (payload) => {
-    emit('commentUpdate', payload)
-  })
-  isConnected.value = true
+const teardownBridge = () => {
+  clearTimeout(readyFallbackTimer)
+  previewBridge.value?.destroy()
+  previewBridge.value = null
+  isConnected.value = false
 }
 
-onMounted(() => {
-  if (!loading.value) {
-    setupConnection()
-  }
-})
+// One bridge per iframe element: refresh and environment/locale switches
+// remount the iframe (via iframeKey), which recreates the bridge with the
+// then-current target origin. Stacking a second bridge onto the same iframe
+// would duplicate every incoming event.
+watch(
+  iframeRef,
+  (iframe) => {
+    teardownBridge()
+    if (!iframe) return
 
-watch(loading, (isLoading) => {
-  if (!isLoading) {
-    setupConnection()
+    // Trust exactly the origins of the configured preview environments; the
+    // active one is where outgoing draft updates are addressed.
+    const allowedOrigins = availableEnvironments.value
+      .map((environment) => originOf(environment.url))
+      .filter((origin): origin is string => origin !== null)
+
+    const bridge = new PreviewBridge(iframe, {
+      allowedOrigins,
+      targetOrigin: originOf(currentEnvironmentUrl.value) ?? undefined,
+    })
+    bridge.on('SELECT_UPDATE', ({ selectedItem }) => {
+      emit('selectItem', selectedItem)
+    })
+    bridge.on('FIELD_UPDATE', (payload) => {
+      emit('updateField', payload)
+    })
+    bridge.on('COMMENT_CLICK', (payload) => {
+      emit('commentClick', payload)
+    })
+    bridge.on('COMMENT_CREATE', (payload) => {
+      emit('commentCreate', payload)
+    })
+    bridge.on('COMMENT_UPDATE', (payload) => {
+      emit('commentUpdate', payload)
+    })
+    bridge.onReady(() => {
+      isConnected.value = true
+    })
+    previewBridge.value = bridge
+  },
+  { flush: 'post' }
+)
+
+// The bridge buffers these until the preview announces it is ready and
+// replays them after every in-iframe navigation, so sending "too early" here
+// is safe.
+watchEffect(() => {
+  if (props.content) {
+    previewBridge.value?.updateContent(props.content)
   }
 })
 
 watchEffect(() => {
-  if (isConnected.value && props.content) {
-    previewBridge.updateContent(props.content)
+  if (props.itemId !== undefined) {
+    previewBridge.value?.updateSelectedItem(props.itemId)
   }
 })
 
 watchEffect(() => {
-  if (isConnected.value && props.itemId !== undefined) {
-    previewBridge.updateSelectedItem(props.itemId)
-  }
-})
-
-watchEffect(() => {
-  if (isConnected.value && props.comments) {
-    previewBridge.updateComments(props.comments)
+  if (props.comments) {
+    previewBridge.value?.updateComments(props.comments)
   }
 })
 
 const switchEnvironment = (env: SpaceEnvironment) => {
-  loading.value = true
   ;(settings.value.content as { environment: SpaceEnvironment | null }).environment = env
-  isConnected.value = false
+  refresh()
 }
 
 const switchSiteLocale = (segment: string) => {
-  loading.value = true
   settings.value.content.siteLocale = segment
-  isConnected.value = false
+  refresh()
 }
 
 const openExternal = () => {
@@ -213,14 +221,10 @@ const refresh = () => {
 }
 
 const updateItem = (item: Record<string, unknown>) => {
-  if (previewBridge) {
-    previewBridge.updateContent(JSON.parse(JSON.stringify(item)))
-  }
+  previewBridge.value?.updateContent(JSON.parse(JSON.stringify(item)))
 }
 const updateHover = (itemId: string | null) => {
-  if (previewBridge) {
-    previewBridge.updateHover(itemId)
-  }
+  previewBridge.value?.updateHover(itemId)
 }
 
 const copyLink = () => {
@@ -240,10 +244,14 @@ defineExpose({
   updateHover,
 })
 
-onBeforeUnmount(() => previewBridge && previewBridge.destroy())
+onBeforeUnmount(teardownBridge)
 
 const handleLoad = () => {
   loading.value = false
+  // Site SDKs announce B10CKS_BRIDGE_READY once their listener is attached;
+  // older ones never do, so after a grace period start sending anyway.
+  clearTimeout(readyFallbackTimer)
+  readyFallbackTimer = setTimeout(() => previewBridge.value?.markReady(), 500)
 }
 
 const containerRef = ref<HTMLElement | null>(null)

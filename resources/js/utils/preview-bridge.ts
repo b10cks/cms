@@ -67,6 +67,20 @@ export type BridgeEvent = {
   payload: ContentUpdateEvent | SelectUpdateEvent
 }
 
+/** Sent by the site SDK once its message listener is attached. */
+const BRIDGE_READY = 'B10CKS_BRIDGE_READY'
+
+/**
+ * State (not transient) events: the latest payload of each is replayed
+ * whenever the preview announces readiness, so a document that loads (or
+ * navigates) after the editor sent them still catches up.
+ */
+const STATE_EVENTS: ReadonlySet<EventType> = new Set([
+  'CONTENT_UPDATE',
+  'SELECT_UPDATE',
+  'COMMENTS_UPDATE',
+])
+
 export type PreviewBridgeOptions = {
   /**
    * Origins of the space's configured preview environments. Messages from any
@@ -82,6 +96,9 @@ export class PreviewBridge extends MessageEmitter<EventPayloadMap> {
   private iframeElement: HTMLIFrameElement | null = null
   private allowedOrigins: Set<string>
   private targetOrigin: string
+  private ready = false
+  private lastState = new Map<EventType, EventPayloadMap[EventType]>()
+  private readyListeners = new Set<() => void>()
 
   constructor(iframeElement: HTMLIFrameElement, options: PreviewBridgeOptions = {}) {
     super()
@@ -104,10 +121,57 @@ export class PreviewBridge extends MessageEmitter<EventPayloadMap> {
     }
     const { type, payload } = event.data
 
+    if (type === BRIDGE_READY) {
+      this.handleReady()
+      return
+    }
+
     this.notifyListeners(type as EventType, payload)
   }
 
+  /**
+   * The preview document (re)announced readiness — its listener is attached,
+   * so replay the current state. Runs again on every in-iframe navigation,
+   * which is what keeps the new document in sync.
+   */
+  private handleReady(): void {
+    this.ready = true
+    for (const [type, payload] of this.lastState) {
+      this.post(type, payload)
+    }
+    this.readyListeners.forEach((listener) => listener())
+  }
+
+  /** Runs on every readiness announcement, not just the first. */
+  public onReady(listener: () => void): () => void {
+    this.readyListeners.add(listener)
+    return () => this.readyListeners.delete(listener)
+  }
+
+  /**
+   * Fallback for site SDKs that predate the readiness announcement: start
+   * posting directly. A later announcement still triggers a full replay, so
+   * calling this early only risks a harmless duplicate send.
+   */
+  public markReady(): void {
+    if (this.ready) return
+    this.handleReady()
+  }
+
   private postMessageToIframe(type: EventType, payload: EventPayloadMap[typeof type]): void {
+    if (STATE_EVENTS.has(type)) {
+      this.lastState.set(type, payload)
+    }
+    // Until the preview's listener is attached the message would be lost;
+    // the stored state is replayed by handleReady instead.
+    if (!this.ready) {
+      return
+    }
+
+    this.post(type, payload)
+  }
+
+  private post(type: EventType, payload: EventPayloadMap[EventType]): void {
     if (!this.iframeElement || !this.iframeElement.contentWindow) {
       return
     }
@@ -143,6 +207,8 @@ export class PreviewBridge extends MessageEmitter<EventPayloadMap> {
   public destroy(): void {
     window.removeEventListener('message', this.handleMessage)
     this.clearListeners()
+    this.readyListeners.clear()
+    this.lastState.clear()
     this.iframeElement = null
   }
 }

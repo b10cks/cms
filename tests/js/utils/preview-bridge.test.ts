@@ -23,8 +23,13 @@ const deliver = (data: unknown, { origin = 'https://site.test', source = fakeCon
 
 let bridges: PreviewBridge[] = []
 
-const createBridge = (options: PreviewBridgeOptions = {}, element = iframe()) => {
+/**
+ * Bridges start out buffering until the preview announces readiness; most
+ * tests exercise the steady state, so mark them ready up front.
+ */
+const createBridge = (options: PreviewBridgeOptions = {}, element = iframe(), ready = true) => {
   const bridge = new PreviewBridge(element, options)
+  if (ready) bridge.markReady()
   bridges.push(bridge)
   return bridge
 }
@@ -267,6 +272,106 @@ describe('inbound message trust', () => {
     deliver({ payload: { commentId: 'c1' } })
 
     expect(listener).not.toHaveBeenCalled()
+  })
+})
+
+describe('readiness handshake', () => {
+  const ready = (overrides = {}) => deliver({ type: 'B10CKS_BRIDGE_READY' }, overrides)
+
+  it('buffers state events until the preview announces readiness', () => {
+    const bridge = createBridge({}, iframe(), false)
+
+    bridge.updateContent({ title: 'Draft' })
+    bridge.updateSelectedItem('block-1')
+    expect(postToIframe).not.toHaveBeenCalled()
+
+    ready()
+
+    expect(postToIframe).toHaveBeenCalledWith(
+      { type: 'CONTENT_UPDATE', payload: { content: { title: 'Draft' } } },
+      '*'
+    )
+    expect(postToIframe).toHaveBeenCalledWith(
+      { type: 'SELECT_UPDATE', payload: { selectedItem: 'block-1' } },
+      '*'
+    )
+  })
+
+  it('replays only the latest payload per state event', () => {
+    const bridge = createBridge({}, iframe(), false)
+
+    bridge.updateContent({ title: 'First' })
+    bridge.updateContent({ title: 'Second' })
+    ready()
+
+    expect(postToIframe).toHaveBeenCalledTimes(1)
+    expect(postToIframe).toHaveBeenCalledWith(
+      { type: 'CONTENT_UPDATE', payload: { content: { title: 'Second' } } },
+      '*'
+    )
+  })
+
+  it('replays state on every announcement, so a navigated document catches up', () => {
+    const bridge = createBridge({}, iframe(), false)
+
+    bridge.updateContent({ title: 'Draft' })
+    ready()
+    ready()
+
+    expect(postToIframe).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not buffer or replay transient hover events', () => {
+    const bridge = createBridge({}, iframe(), false)
+
+    bridge.updateHover('block-1')
+    ready()
+
+    expect(postToIframe).not.toHaveBeenCalled()
+  })
+
+  it('markReady flushes the buffer for previews that never announce', () => {
+    const bridge = createBridge({}, iframe(), false)
+
+    bridge.updateContent({ title: 'Draft' })
+    bridge.markReady()
+
+    expect(postToIframe).toHaveBeenCalledTimes(1)
+
+    bridge.markReady()
+
+    expect(postToIframe).toHaveBeenCalledTimes(1)
+  })
+
+  it('notifies onReady listeners on each announcement until unsubscribed', () => {
+    const listener = vi.fn()
+    const bridge = createBridge({}, iframe(), false)
+    const off = bridge.onReady(listener)
+
+    ready()
+    ready()
+    off()
+    ready()
+
+    expect(listener).toHaveBeenCalledTimes(2)
+  })
+
+  it('ignores an announcement from a window that is not the preview iframe', () => {
+    const bridge = createBridge({}, iframe(), false)
+
+    bridge.updateContent({ title: 'Draft' })
+    ready({ source: { postMessage: vi.fn() } as unknown as Window })
+
+    expect(postToIframe).not.toHaveBeenCalled()
+  })
+
+  it('ignores an announcement from an origin that is not configured', () => {
+    const bridge = createBridge({ allowedOrigins: ['https://site.test'] }, iframe(), false)
+
+    bridge.updateContent({ title: 'Draft' })
+    ready({ origin: 'https://evil.test' })
+
+    expect(postToIframe).not.toHaveBeenCalled()
   })
 })
 
