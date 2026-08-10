@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.10-cf0e7ac1] — 2026-8-10
+
+- 📝 Regenerate the management OpenAPI spec
+- ✨ Publish a new language version without saving it first
+- ⬆️ Bump CI actions and PHP/JS dependencies
+
 ## [v2026.8.10-44b30b98] — 2026-8-10
 
 - 🐛 Stop draft saves from taking live content off the delivery API
