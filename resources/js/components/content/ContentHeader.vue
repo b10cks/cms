@@ -53,9 +53,15 @@ watch(breadcrumbs, (crumbs) => {
   settings.value.content.expanded = [...settings.value.content.expanded, ...path]
 })
 
-const status = computed<'draft' | 'published'>(() =>
-  props.content?.published_at ? 'published' : 'draft'
-)
+// `published_at` is live-since, not up-to-date: an entry can be live and still
+// carry a newer draft, which is its own state rather than either extreme.
+const status = computed<'draft' | 'published' | 'changed'>(() => {
+  if (!props.content?.published_at) return 'draft'
+
+  return props.content.current_version_id !== props.content.published_version_id
+    ? 'changed'
+    : 'published'
+})
 
 const togglePreview = () => {
   settings.value.content.showPreview = !settings.value.content.showPreview

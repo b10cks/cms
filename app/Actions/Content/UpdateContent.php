@@ -52,7 +52,6 @@ class UpdateContent
             }
         }
 
-        $wasPublished = $content->published_at !== null;
         $content->loadMissing('block');
         $targetParent = array_key_exists('parent_id', $data)
             ? Content::query()->with('block')->find($data['parent_id'])
@@ -111,7 +110,9 @@ class UpdateContent
             throw new ContentVersionConflictException($content->current_version);
         }
 
-        $content->getConnection()->transaction(function () use ($data, $content, $space, $owner, $validatedContent, $clientParentVersionId) {
+        $indexedColumnsChanged = false;
+
+        $content->getConnection()->transaction(function () use ($data, $content, $space, $owner, $validatedContent, $clientParentVersionId, &$indexedColumnsChanged) {
             $contentData = $validatedContent;
             $message = data_get($data, 'message');
             $sortingEnabled = $space->settings->isContentSortingEnabled();
@@ -142,9 +143,11 @@ class UpdateContent
                     'created_by_id' => $owner->id,
                 ], $content);
                 $content->current_version_id = $version->id;
-                $content->published_at = null;
             }
             $content->save();
+            // Read before repositioning: that path saves the model again and
+            // replaces the recorded changes with its own.
+            $indexedColumnsChanged = $content->wasChanged(['name', 'slug', 'full_slug']);
 
             if ($shouldReposition) {
                 $this->contentPositionService->moveItemToPosition(
@@ -157,8 +160,16 @@ class UpdateContent
             $space->touch('content_updated_at');
         });
 
-        if ($wasPublished && ($content->published_at === null)) {
-            $this->searchService->removeContent($content, $space);
+        // A draft save leaves `published_at` alone — the entry stays live on the
+        // published version it already had, so it must not be dropped from the
+        // index the way it used to be. What it can change is the row's own name
+        // and slug, which the index stores alongside the published payload;
+        // edits to the payload itself are staged in a draft version the
+        // published-scope indexer never reads. Reindexing is a full i18n
+        // resolve (plus an HTTP round trip on OpenSearch), so it is worth
+        // limiting to the saves that actually move something indexed.
+        if ($indexedColumnsChanged) {
+            $this->searchService->indexContent($content, $space);
         }
     }
 }

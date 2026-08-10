@@ -55,7 +55,7 @@ export interface ContentLanguageVersion {
   content_id: string | null
   is_default: boolean
   is_current: boolean
-  status: 'missing' | 'draft' | 'published'
+  status: 'missing' | 'draft' | 'published' | 'changed'
   published_at: string | null
   fallback_language: string | null
 }

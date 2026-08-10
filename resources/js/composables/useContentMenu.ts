@@ -215,7 +215,7 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
       ...parent,
       i18n: (parent.i18n ?? []).map((entry) =>
         entry.id === translation.id
-          ? { ...entry, name: translation.name, published_at: translation.pat }
+          ? { ...entry, name: translation.name, published_at: translation.pat, drf: translation.drf }
           : entry
       ),
     }

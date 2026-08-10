@@ -965,6 +965,7 @@
       "status": {
         "draft": "Entwurf",
         "published": "Veröffentlicht",
+        "changed": "Änderungen offen",
         "archived": "Archiviert"
       },
       "settings": {
@@ -1132,7 +1133,8 @@
         "noMatches": "Keine Treffer"
       },
       "status": {
-        "draft": "Entwurf"
+        "draft": "Entwurf",
+        "pendingChanges": "Unveröffentlichte Änderungen"
       }
     },
     "comments": {

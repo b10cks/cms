@@ -19,6 +19,7 @@ class ContentTranslationResource extends JsonResource
             'full_slug' => $this->full_slug,
             'language_iso' => $this->language_iso,
             'published_at' => $this->published_at?->toIso8601String(),
+            'drf' => $this->current_version_id !== $this->published_version_id,
         ];
     }
 }

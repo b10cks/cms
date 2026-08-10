@@ -126,7 +126,7 @@ class Content extends SpaceModel
         'first_published_at' => 'datetime',
     ];
 
-    protected const array REDUCED_FIELDSET = ['id', 'name', 'slug', 'full_slug', 'language_iso', 'position', 'published_at', 'first_published_at', 'created_at', 'updated_at', 'i18n_parent_id'];
+    protected const array REDUCED_FIELDSET = ['id', 'name', 'slug', 'full_slug', 'language_iso', 'position', 'current_version_id', 'published_version_id', 'published_at', 'first_published_at', 'created_at', 'updated_at', 'i18n_parent_id'];
 
     /**
      * Every persisted column except the heavy `searchable_content` LONGTEXT, which
@@ -158,17 +158,10 @@ class Content extends SpaceModel
         parent::boot();
 
         static::updated(function (Content $content) {
-            if (! $content->wasChanged('published_at')) {
-                return;
-            }
+            $trigger = $content->publicationTrigger();
 
-            $before = $content->getOriginal('published_at');
-            $isNowPublished = $content->getAttribute('published_at') !== null;
-
-            if ($before === null && $isNowPublished) {
-                $content->dispatchAutomationTrigger(TriggerType::CONTENT_PUBLISHED);
-            } elseif ($before !== null && ! $isNowPublished) {
-                $content->dispatchAutomationTrigger(TriggerType::CONTENT_UNPUBLISHED);
+            if ($trigger !== null) {
+                $content->dispatchAutomationTrigger($trigger);
             }
         });
 
@@ -350,6 +343,29 @@ class Content extends SpaceModel
     public function published_version(): BelongsTo
     {
         return $this->belongsTo(ContentVersion::class, 'published_version_id', 'id');
+    }
+
+    /**
+     * Which publication automation, if any, the save that just happened
+     * represents.
+     *
+     * `published_at` is live-since, not up-to-date: it stays put across an edit
+     * and is merely restamped by the next publish. So only the first publish of
+     * an entry — and a publish after an explicit unpublish — is a null → date
+     * transition, and keying the trigger on that alone would fire once in an
+     * entry's lifetime. What every publish does move is the version pointer.
+     * Unpublishing remains the one thing that clears the column.
+     */
+    public function publicationTrigger(): ?TriggerType
+    {
+        $isLive = $this->getAttribute('published_at') !== null;
+        $wasLive = $this->getOriginal('published_at') !== null;
+
+        if ($isLive && (! $wasLive || $this->wasChanged('published_version_id'))) {
+            return TriggerType::CONTENT_PUBLISHED;
+        }
+
+        return $wasLive && ! $isLive ? TriggerType::CONTENT_UNPUBLISHED : null;
     }
 
     /**

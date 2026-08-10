@@ -14,7 +14,7 @@ class ContentMenuCache
      * Bump whenever the cached menu payload shape changes so stale-format
      * entries are not served after a deployment.
      */
-    private const int MENU_FORMAT_VERSION = 2;
+    private const int MENU_FORMAT_VERSION = 3;
 
     private const int VERSION_TTL_SECONDS = 2592000;
 

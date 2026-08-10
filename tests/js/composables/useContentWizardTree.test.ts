@@ -39,6 +39,7 @@ const item = (over: Partial<FlatContentMenuItem> & { id: string }): FlatContentM
   settings: {},
   i18n: [],
   pat: null,
+  drf: true,
   uat: '2026-01-01',
   ...over,
 })

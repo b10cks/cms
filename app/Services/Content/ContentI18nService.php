@@ -89,7 +89,14 @@ class ContentI18nService
                 'content_id' => $row?->id,
                 'is_default' => $languageIso === $defaultLanguage,
                 'is_current' => $content->language_iso === $languageIso,
-                'status' => $row === null ? 'missing' : ($row->published_at ? 'published' : 'draft'),
+                // Same three states the content header shows: live, live with a
+                // draft staged on top, or not live at all.
+                'status' => match (true) {
+                    $row === null => 'missing',
+                    $row->published_at === null => 'draft',
+                    $row->current_version_id !== $row->published_version_id => 'changed',
+                    default => 'published',
+                },
                 'published_at' => $row?->published_at?->toIso8601String(),
                 'fallback_language' => $space->settings->getFallbackLanguage($languageIso),
             ];

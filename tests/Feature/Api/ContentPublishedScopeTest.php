@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\Api;
 
+use App\Actions\Content\UpdateContent;
 use App\Models\Management\Space;
 use App\Models\Management\Token;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
+use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -244,6 +246,52 @@ class ContentPublishedScopeTest extends TestCase
         );
     }
 
+    /**
+     * The mirror image of the unpublish rule: editing a live entry stages a
+     * draft, it does not take the entry down. `published_at` used to be cleared
+     * on every save that produced a new version, which dropped the entry out of
+     * the published scope entirely — the old payload was still there, still
+     * pointed at, and 404'd anyway.
+     */
+    #[Test]
+    public function a_draft_save_keeps_the_published_version_live(): void
+    {
+        $home = $this->createPublishedContent('home', ['title' => 'Published title']);
+        $publishedVersionId = $home->published_version_id;
+
+        $this->saveDraft($home, ['title' => 'Draft title']);
+
+        $home->refresh();
+        $this->assertNotNull($home->published_at, 'A draft save unpublished the entry.');
+        $this->assertSame($publishedVersionId, $home->published_version_id);
+        $this->assertNotSame($publishedVersionId, $home->current_version_id);
+
+        $response = $this->getJson($this->showUrl('home'))->assertOk();
+        $this->assertSame('Published title', data_get($response->json(), 'data.content.title'));
+
+        $this->getJson($this->indexUrl())
+            ->assertOk()
+            ->assertJsonPath('data.0.content.title', 'Published title');
+
+        $draft = $this->getJson($this->showUrl('home', ['vid' => 'draft']))->assertOk();
+        $this->assertSame('Draft title', data_get($draft->json(), 'data.content.title'));
+    }
+
+    /**
+     * A save that stages nothing new must not disturb the entry either.
+     */
+    #[Test]
+    public function a_save_without_content_changes_keeps_the_entry_live(): void
+    {
+        $home = $this->createPublishedContent('home', ['title' => 'Published title']);
+
+        $this->saveDraft($home, ['title' => 'Published title']);
+
+        $home->refresh();
+        $this->assertNotNull($home->published_at);
+        $this->assertSame($home->published_version_id, $home->current_version_id);
+    }
+
     #[Test]
     public function an_unrecognized_version_scope_is_rejected(): void
     {
@@ -282,6 +330,16 @@ class ContentPublishedScopeTest extends TestCase
         DB::disableQueryLog();
 
         return $count;
+    }
+
+    private function saveDraft(Content $content, array $payload): void
+    {
+        app(UpdateContent::class)->execute(
+            ['content' => $payload],
+            $content,
+            $this->space,
+            User::factory()->create(),
+        );
     }
 
     private function unpublish(Content $content): void

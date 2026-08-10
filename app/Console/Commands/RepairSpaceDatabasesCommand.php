@@ -73,6 +73,12 @@ class RepairSpaceDatabasesCommand extends Command
 
                     $migrator->migrate($connection);
 
+                    // A migration can rewrite delivered content (a data backfill
+                    // as much as a schema change), and the delivery cache is
+                    // keyed on this timestamp — without the bump the CDN keeps
+                    // serving the pre-migration payload for up to a day.
+                    $space->touch('content_updated_at');
+
                     if ($connection->state !== 'live') {
                         $connection->update(['state' => 'live']);
                     }

@@ -947,6 +947,10 @@ const openEdit = async (itemId: string) => {
 
 const isPublishingAction = computed(() => isPublishing.value || isScheduling.value)
 
+// There is something to publish when the draft differs from the published
+// version, or when the entry is offline and can be put back live as it stands.
+const hasPendingChanges = (item: FlatContentMenuItem) => item.drf || !item.pat
+
 const executePublish = async (item: FlatContentMenuItem) => {
   await publishContent({ id: item.id, payload: {} })
 }
@@ -1014,21 +1018,21 @@ const buildItemMenuActions = (item: FlatContentMenuItem): ContentTreeMenuAction[
       label: t('labels.contentTree.actions.publish') as string,
       icon: 'send',
       separatorBefore: true,
-      disabled: !canPublishContent.value || isPublishingAction.value || !!item.pat,
+      disabled: !canPublishContent.value || isPublishingAction.value || !hasPendingChanges(item),
       onSelect: () => executePublish(item),
     },
     {
       id: 'publish-with-message',
       label: t('labels.contentTree.actions.publishWithMessage') as string,
       icon: 'message-square-share',
-      disabled: !canPublishContent.value || isPublishingAction.value || !!item.pat,
+      disabled: !canPublishContent.value || isPublishingAction.value || !hasPendingChanges(item),
       onSelect: () => openPublishWithMessage(item),
     },
     {
       id: 'schedule',
       label: t('labels.contentTree.actions.schedule') as string,
       icon: 'clock-fading',
-      disabled: !canPublishContent.value || isPublishingAction.value || !!item.pat,
+      disabled: !canPublishContent.value || isPublishingAction.value || !hasPendingChanges(item),
       onSelect: () => openSchedulePublish(item),
     },
     {
@@ -2368,6 +2372,14 @@ onBeforeUnmount(() => {
               class="h-2 w-2 rounded-full bg-text-muted"
               :title="$t('labels.contentTree.status.draft')"
             />
+            <SimpleTooltip
+              v-else-if="item.value.drf"
+              :tooltip="`${$t('labels.contentTree.status.pendingChanges')} · ${item.value.pat}`"
+            >
+              <div
+                class="h-2 w-2 rounded-full bg-text-muted ring-1 ring-success ring-offset-1 ring-offset-background"
+              />
+            </SimpleTooltip>
             <SimpleTooltip
               v-else
               :tooltip="item.value.pat"

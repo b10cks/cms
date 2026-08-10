@@ -31,6 +31,9 @@ class ContentMenuResource extends JsonResource
             'settings' => $settings !== [] ? $settings : new \StdClass,
             'i18n' => $this->whenLoaded('i18n_children', fn () => ContentTranslationResource::collection($this->i18n_children)),
             'pat' => $this->published_at?->toIso8601String(),
+            // `pat` is "live since" and says nothing about pending edits, so the
+            // tree needs the draft state as its own flag.
+            'drf' => $this->current_version_id !== $this->published_version_id,
             'cat' => $this->created_at?->toIso8601String(),
             'uat' => $this->updated_at?->toIso8601String(),
             'sv' => $this->when(($this->menu_sort_value ?? null) !== null, fn () => $this->menu_sort_value),

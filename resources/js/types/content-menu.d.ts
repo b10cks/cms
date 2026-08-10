@@ -11,7 +11,10 @@ interface FlatContentMenuItem {
   icon?: string
   settings: Partial<ContentSettings>
   i18n: ContentMenuTranslation[]
+  /** Live since — `null` means never published or unpublished again. */
   pat: string | null
+  /** Has a draft version that is not the published one. */
+  drf: boolean
   cat?: string
   uat: string
   sv?: string | number | null
@@ -26,6 +29,7 @@ interface ContentMenuTranslation {
   name: string
   language_iso: string
   published_at: string | null
+  drf: boolean
 }
 
 interface ContentMenuResponse {

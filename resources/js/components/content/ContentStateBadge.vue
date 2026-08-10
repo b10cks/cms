@@ -4,7 +4,7 @@ import { Badge } from '~/components/ui/badge'
 
 const props = withDefaults(
   defineProps<{
-    status: 'draft' | 'published' | 'missing'
+    status: 'draft' | 'published' | 'changed' | 'missing'
     size?: BadgeVariants['size']
   }>(),
   {
@@ -12,11 +12,25 @@ const props = withDefaults(
   }
 )
 
-const badge = computed<{ variant: BadgeVariants['variant']; label: string }>(() => {
+const badge = computed<{
+  variant: BadgeVariants['variant']
+  type?: BadgeVariants['type']
+  label: string
+}>(() => {
   if (props.status === 'published') {
     return {
       variant: 'success',
       label: 'labels.contents.status.published',
+    }
+  }
+
+  // Live, but the draft has moved on: the outline keeps the published green
+  // while reading as unfinished next to a solid one.
+  if (props.status === 'changed') {
+    return {
+      variant: 'success',
+      type: 'outline',
+      label: 'labels.contents.status.changed',
     }
   }
 
@@ -39,6 +53,7 @@ const isDotOnly = computed(() => props.size === 'indicator')
 <template>
   <Badge
     :variant="badge.variant"
+    :type="badge.type"
     :size="size"
   >
     <span

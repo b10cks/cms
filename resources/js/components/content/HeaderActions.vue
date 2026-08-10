@@ -547,8 +547,11 @@ const draftReleases = computed(() =>
   (releases.value?.data || []).filter((release) => getReleaseState(release) === 'draft')
 )
 
+// What a release can carry is an unpublished draft version — which a live entry
+// can have too, so this asks the version, not the entry's live-since date.
 const canPublishToRelease = computed(
-  () => !!props.content.id && !isInScheduledRelease.value && !contentModel.value.isPublished
+  () =>
+    !!props.content.id && !isInScheduledRelease.value && contentModel.value.hasUnpublishedChanges
 )
 
 const handleAssignToRelease = (release: any) => {

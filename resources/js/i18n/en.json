@@ -965,6 +965,7 @@
       "status": {
         "draft": "Draft",
         "published": "Published",
+        "changed": "Changes pending",
         "archived": "Archived"
       },
       "settings": {
@@ -1132,7 +1133,8 @@
         "noMatches": "No matches"
       },
       "status": {
-        "draft": "Draft"
+        "draft": "Draft",
+        "pendingChanges": "Unpublished changes"
       }
     },
     "comments": {
