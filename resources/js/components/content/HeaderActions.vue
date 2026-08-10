@@ -36,7 +36,11 @@ import {
   sanitizeContentMutationPayload,
   withContentLanguageQuery,
 } from '~/lib/content-i18n'
-import type { ContentResource, ContentVersionConflictResponse } from '~/types/contents'
+import type {
+  ContentResource,
+  ContentVersionConflictResponse,
+  UpdateContentPayload,
+} from '~/types/contents'
 
 import PublishDialog from './PublishDialog.vue'
 
@@ -114,6 +118,7 @@ const {
   useCreateContentMutation,
   useUpdateContentMutation,
   usePublishContentMutation,
+  useCreateAndPublishContentMutation,
   useScheduleContentMutation,
   useUnpublishContentMutation,
 } = useContent(props.spaceId)
@@ -140,6 +145,8 @@ const { mutate: assignVersions, isPending: isAssigning } = useAssignVersionsMuta
 const { mutateAsync: createContent, isPending: isCreating } = useCreateContentMutation()
 const { mutateAsync: updateContent, isPending: isUpdating } = useUpdateContentMutation()
 const { mutateAsync: publishContent, isPending: isPublishing } = usePublishContentMutation()
+const { mutateAsync: createAndPublishContent, isPending: isCreatingAndPublishing } =
+  useCreateAndPublishContentMutation()
 const { mutateAsync: scheduleContent, isPending: isScheduling } = useScheduleContentMutation()
 const { mutateAsync: unpublishContent, isPending: isUnpublishing } = useUnpublishContentMutation()
 
@@ -150,9 +157,19 @@ const assignReleaseDialogOpen = ref(false)
 const selectedReleaseForAssign = ref<any>(null)
 const lastReviewedValidationSignature = ref<string | null>(null)
 const contentModel = computed(() => new ContentModel(props.content))
+// An entry that does not exist server side yet is always publishable — it goes
+// through create-and-publish. An existing one needs an unpublished current
+// version or pending edits.
+const canCommitPublish = computed(
+  () => !props.content.id || contentModel.value.canPublish || props.isDirty
+)
 const isSaving = computed(() => isCreating.value || isUpdating.value)
 const isPublishingAction = computed(
-  () => isPublishing.value || isScheduling.value || isUnpublishing.value
+  () =>
+    isPublishing.value ||
+    isCreatingAndPublishing.value ||
+    isScheduling.value ||
+    isUnpublishing.value
 )
 const isAnyActionPending = computed(
   () => isSaving.value || isPublishingAction.value || isAssigning.value
@@ -433,15 +450,24 @@ const handleValidationStatusClick = async () => {
   await revealAndFocusValidationIssues()
 }
 
+/**
+ * Publish, whether or not the entry exists server side yet.
+ *
+ * A language version that has only been drafted in the editor has no id, so it
+ * goes to the create-and-publish endpoint instead — no save-first detour.
+ */
+const commitPublish = async (payload: UpdateContentPayload) => {
+  return props.content.id
+    ? await publishContent({ id: props.content.id, payload })
+    : await createAndPublishContent(payload)
+}
+
 const publishDirectly = async () => {
   if (!(await confirmRemoteDrafts())) return
   if (!(await guardSubmit({ revealOnFail: true }))) return
 
   try {
-    const nextContent = await publishContent({
-      id: props.content.id,
-      payload: mutationPayload.value,
-    })
+    const nextContent = await commitPublish(mutationPayload.value)
     handlePersistedContent(nextContent, 'publish')
   } catch (error) {
     handleMutationError(error)
@@ -473,7 +499,7 @@ const handlePublish = async (payload: { message?: string; published_at?: string 
     ...payload,
   })
   try {
-    const nextContent = await publishContent({ id: props.content.id, payload: publishPayload })
+    const nextContent = await commitPublish(publishPayload)
     handlePersistedContent(nextContent, 'publish')
     publishDialogOpen.value = false
   } catch (error) {
@@ -669,18 +695,14 @@ const handleConfirmAssign = (versionIds: string[]) => {
       v-if="canPublishContent"
       variant="accent"
       :primary-action="publishDirectly"
-      :disabled="
-        disabled || isAnyActionPending || !content.id || !(contentModel.canPublish || isDirty)
-      "
+      :disabled="disabled || isAnyActionPending || !canCommitPublish"
       :loading="isPublishingAction"
     >
       <span>{{ $t('actions.content.publish') }}</span>
       <template #menu>
         <DropdownMenuLabel>{{ $t('actions.content.publish') }}</DropdownMenuLabel>
         <DropdownMenuItem
-          :disabled="
-            disabled || isAnyActionPending || !content.id || !(contentModel.canPublish || isDirty)
-          "
+          :disabled="disabled || isAnyActionPending || !canCommitPublish"
           @select="publishWithMessage"
         >
           <Icon name="lucide:send" />

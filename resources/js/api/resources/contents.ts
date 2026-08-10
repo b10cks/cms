@@ -60,6 +60,18 @@ export class Contents extends BaseResource<
   }
 
   /**
+   * Create a content item and publish it in one request.
+   *
+   * For entries that do not exist server side yet — a language version the
+   * editor has only drafted locally — so publishing them needs no prior save.
+   */
+  public async createAndPublish(
+    payload: ForceableContentPayload
+  ): Promise<ApiResponse<ContentResource>> {
+    return this.client.post<ApiResponse<ContentResource>>(`${this.basePath}/publish`, payload)
+  }
+
+  /**
    * Schedule a content item for publishing
    */
   public async schedule(

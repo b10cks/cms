@@ -33,6 +33,9 @@ class ContentPublishingVersioningTest extends TestCase
         $this->space = Space::factory()->withLive()->create([
             'settings' => [
                 'default_language' => 'en',
+                'languages' => [
+                    ['code' => 'de', 'name' => 'German', 'fallback_language' => null],
+                ],
             ],
         ]);
         $this->assignSpaceRole($this->space, $this->owner, 'owner');
@@ -288,6 +291,60 @@ class ContentPublishingVersioningTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['translations.0.published_at']);
+    }
+
+    #[Test]
+    public function create_and_publish_makes_a_new_language_version_live_without_a_prior_save(): void
+    {
+        $this->actingAs($this->owner);
+
+        $canonical = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+        );
+
+        $response = $this->postJson(route('mgmt.contents.create-publish', [
+            'space' => $this->space->id,
+        ]), [
+            'block_id' => $this->pageBlock->id,
+            'name' => 'Seite',
+            'language_iso' => 'de',
+            'i18n_parent_id' => $canonical->id,
+            'content' => ['summary' => 'Entwurf'],
+            'message' => 'Direkt veroeffentlicht',
+        ])->assertCreated();
+
+        $created = Content::query()->findOrFail($response->json('data.id'));
+        $created->load(['current_version', 'published_version']);
+
+        $this->assertSame('de', $created->language_iso);
+        $this->assertSame($canonical->id, $created->i18n_parent_id);
+        $this->assertNotNull($created->published_at);
+        $this->assertNotNull($created->first_published_at);
+        // One version, published — not a draft plus a published copy.
+        $this->assertSame($created->current_version_id, $created->published_version_id);
+        $this->assertSame(1, ContentVersion::query()->where('content_id', $created->id)->count());
+        $this->assertSame(['summary' => 'Entwurf'], $created->published_version?->content);
+        $this->assertSame('Direkt veroeffentlicht', $created->published_version?->message);
+    }
+
+    #[Test]
+    public function create_and_publish_leaves_nothing_behind_when_publish_validation_fails(): void
+    {
+        $this->actingAs($this->owner);
+
+        $before = Content::query()->count();
+
+        // `summary` is required, so publish-mode validation rejects this.
+        $this->postJson(route('mgmt.contents.create-publish', [
+            'space' => $this->space->id,
+        ]), [
+            'block_id' => $this->pageBlock->id,
+            'name' => 'Seite',
+            'language_iso' => 'de',
+            'content' => [],
+        ])->assertStatus(422);
+
+        $this->assertSame($before, Content::query()->count());
     }
 
     private function createVersionedContent(

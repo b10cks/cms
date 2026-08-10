@@ -167,6 +167,29 @@ export function useContent(spaceId: MaybeRef<string>) {
     })
   }
 
+  const useCreateAndPublishContentMutation = () => {
+    return useMutation({
+      mutationFn: async (payload: UpdateContentPayload) => {
+        const response = await spaceAPI.value.contents.createAndPublish(payload)
+        return response.data
+      },
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
+        invalidateContentFamily(data)
+
+        toast.success(t('composables.content.publishSuccess', { name: data.name }) as string)
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.content.publishError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
   const useScheduleContentMutation = () => {
     return useMutation({
       mutationFn: async ({ id, payload }: { id: string; payload: UpdateContentPayload }) => {
@@ -447,6 +470,7 @@ export function useContent(spaceId: MaybeRef<string>) {
     useCreateContentMutation,
     useUpdateContentMutation,
     usePublishContentMutation,
+    useCreateAndPublishContentMutation,
     useScheduleContentMutation,
     useUnpublishContentMutation,
     useDuplicateContentMutation,

@@ -42,6 +42,7 @@ use App\Http\Controllers\Mgmt\Content\BulkCreateContentController;
 use App\Http\Controllers\Mgmt\Content\CommentController;
 use App\Http\Controllers\Mgmt\Content\CommentReactionController;
 use App\Http\Controllers\Mgmt\Content\ContentController;
+use App\Http\Controllers\Mgmt\Content\ContentCreateAndPublishController;
 use App\Http\Controllers\Mgmt\Content\ContentDataExportController;
 use App\Http\Controllers\Mgmt\Content\ContentDataImportController;
 use App\Http\Controllers\Mgmt\Content\ContentMenuController;
@@ -373,6 +374,10 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
         ->name('contents.data.import');
 
     // Additional content actions
+    // Create-and-publish for entries that do not exist yet (e.g. a language
+    // version the editor has only drafted client side).
+    Route::post('contents/publish', ContentCreateAndPublishController::class)
+        ->name('contents.create-publish');
     Route::post('contents/{content}/publish', ContentPublishController::class)
         ->name('contents.publish');
     Route::post('contents/{content}/unpublish', ContentUnpublishController::class)
