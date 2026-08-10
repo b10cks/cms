@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.10-44b30b98] — 2026-8-10
+
+- 🐛 Stop draft saves from taking live content off the delivery API
+
 ## [v2026.8.10-d2c56545] — 2026-8-10
 
 - 🔥 Delete the dead presence-peek composable
