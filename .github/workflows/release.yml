@@ -47,7 +47,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # The whole tag list is needed to decide whether this release is the newest.
           fetch-depth: 0
@@ -175,7 +175,7 @@ jobs:
 
       - name: Attest image provenance (Docker Hub)
         if: steps.image-exists.outputs.exists != 'true'
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
           subject-name: index.docker.io/${{ env.DOCKERHUB_REPOSITORY }}
           subject-digest: ${{ steps.build.outputs.digest }}
@@ -183,7 +183,7 @@ jobs:
 
       - name: Attest image provenance (GHCR)
         if: steps.image-exists.outputs.exists != 'true'
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
           subject-name: ${{ env.GHCR_REPOSITORY }}
           subject-digest: ${{ steps.build.outputs.digest }}
@@ -219,7 +219,7 @@ jobs:
       # newest release publishes it, for the same reason it owns the `latest` tag.
       - name: Configure AWS credentials
         if: steps.latest.outputs.is_latest == 'true'
-        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
