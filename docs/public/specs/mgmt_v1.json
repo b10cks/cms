@@ -229,7 +229,8 @@
                                         "type": "string"
                                     },
                                     "password": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "minLength": 8
                                     }
                                 },
                                 "required": [
@@ -7479,6 +7480,13 @@
                                         "type": "string",
                                         "maxLength": 100
                                     },
+                                    "abilities": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 100
+                                        }
+                                    },
                                     "expires_at": {
                                         "type": "string",
                                         "format": "date",
@@ -8267,150 +8275,6 @@
                             "format": "uuid"
                         },
                         "description": "The space identifier"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/mgmt/v1/spaces/{space}/presence": {
-            "post": {
-                "summary": "Create presence",
-                "description": "",
-                "tags": [
-                    "Presence"
-                ],
-                "operationId": "post_spaces_by_space_presence",
-                "parameters": [
-                    {
-                        "name": "space",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "The space identifier"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "summary": "Delete presence",
-                "description": "",
-                "tags": [
-                    "Presence"
-                ],
-                "operationId": "delete_spaces_by_space_presence",
-                "parameters": [
-                    {
-                        "name": "space",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "The space identifier"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/mgmt/v1/spaces/{space}/contents/{content}/presence": {
-            "post": {
-                "summary": "Create presence",
-                "description": "",
-                "tags": [
-                    "Contents"
-                ],
-                "operationId": "post_spaces_by_space_contents_by_content_presence",
-                "parameters": [
-                    {
-                        "name": "space",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "The space identifier"
-                    },
-                    {
-                        "name": "content",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "The content identifier"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "summary": "Delete presence",
-                "description": "",
-                "tags": [
-                    "Contents"
-                ],
-                "operationId": "delete_spaces_by_space_contents_by_content_presence",
-                "parameters": [
-                    {
-                        "name": "space",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "The space identifier"
-                    },
-                    {
-                        "name": "content",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "description": "The content identifier"
                     }
                 ],
                 "responses": {
@@ -11656,6 +11520,45 @@
                 "responses": {
                     "200": {
                         "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/contents/publish": {
+            "post": {
+                "summary": "Create an entry and publish it in one round trip",
+                "description": "Create an entry and publish it in one round trip.\n\nA new language version only exists client side until it is saved, so the\npublish route \u2014 which binds an existing {content} \u2014 cannot reach it. Without\nthis endpoint a translation has to be saved before it can go live, which is\nan extra step for the editor and leaves an unpublished row behind whenever\nthe publish then fails.\n\nCreate and publish share one transaction: publish validation is stricter than\nsave validation, so a failure here must not leave the just-created draft\nbehind.",
+                "tags": [
+                    "Contents"
+                ],
+                "operationId": "post_spaces_by_space_contents_publish",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContentResource"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
