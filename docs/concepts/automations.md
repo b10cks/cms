@@ -24,6 +24,8 @@ Two pieces, managed separately:
 
 Triggers can carry **conditions** (fire only when the record matches rules) and a static **payload** merged into the context.
 
+A manual automation can be marked as a **content action** (`config.table: "contents"`). It then shows up in the content tree's *Actions* context submenu, where it can be run against a single entry; the triggered execution receives the full record context of that entry, exactly like a record-based trigger. Optionally restrict it to specific block types via `config.block_ids` — the restriction is enforced server-side, and the tree only offers matching actions per entry.
+
 ## The context
 
 Every execution builds a context object; it's what conditions evaluate against, what template placeholders resolve from, and what's stored with the execution for inspection and replay. For record-based triggers it looks like:

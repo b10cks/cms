@@ -14,8 +14,10 @@ import {
   getTriggerTable,
   getTriggerTableLabel,
   getTriggerTypeLabel,
+  automationAppliesToBlock,
   isContentLifecycleTrigger,
   isEventTrigger,
+  isManualContentAutomation,
   objectToRows,
   rowsToConditions,
   rowsToObject,
@@ -190,6 +192,36 @@ describe('trigger classification', () => {
     ['manual', false],
   ] as const)('isContentLifecycleTrigger(%s) is %s', (type, expected) => {
     expect(isContentLifecycleTrigger(type)).toBe(expected)
+  })
+})
+
+describe('manual content automations', () => {
+  const automation = (
+    trigger_type: AutomationTriggerType,
+    config: AutomationTriggerConfig = {}
+  ) => ({ trigger_type, trigger: { type: trigger_type, config } }) as AutomationResource
+
+  it('detects manual automations targeting contents', () => {
+    expect(isManualContentAutomation(automation('manual', { table: 'contents' }))).toBe(true)
+    expect(isManualContentAutomation(automation('manual', { resource: 'contents' }))).toBe(true)
+    expect(isManualContentAutomation(automation('manual'))).toBe(false)
+    expect(isManualContentAutomation(automation('manual', { table: 'assets' }))).toBe(false)
+    expect(isManualContentAutomation(automation('on_insert', { table: 'contents' }))).toBe(false)
+  })
+
+  it('applies to every block when no restriction is configured', () => {
+    expect(automationAppliesToBlock(automation('manual', { table: 'contents' }), 'block-1')).toBe(
+      true
+    )
+    expect(
+      automationAppliesToBlock(automation('manual', { table: 'contents', block_ids: [] }), 'block-1')
+    ).toBe(true)
+  })
+
+  it('applies only to listed blocks when restricted', () => {
+    const restricted = automation('manual', { table: 'contents', block_ids: ['block-1'] })
+    expect(automationAppliesToBlock(restricted, 'block-1')).toBe(true)
+    expect(automationAppliesToBlock(restricted, 'block-2')).toBe(false)
   })
 })
 

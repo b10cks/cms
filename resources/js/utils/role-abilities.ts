@@ -21,6 +21,7 @@ type RoleAbilityAction =
   | 'delete'
   | 'archive'
   | 'publish'
+  | 'trigger'
   | 'updateOwn'
   | 'deleteOwn'
   | 'resolveOwn'
@@ -158,6 +159,7 @@ const ROLE_ABILITY_META: Record<string, RoleAbilityMeta> = {
   },
   'automations.view': { group: 'operations', action: 'view', resource: 'automations' },
   'automations.manage': { group: 'operations', action: 'manage', resource: 'automations' },
+  'automations.trigger': { group: 'operations', action: 'trigger', resource: 'automations' },
   'ai.view': { group: 'ai', action: 'view', resource: 'ai' },
   'ai.manage': { group: 'ai', action: 'manage', resource: 'ai' },
   'audit_logs.view': { group: 'operations', action: 'view', resource: 'auditLogs' },

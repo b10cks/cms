@@ -33,6 +33,7 @@ interface AutomationTriggerConfig {
   schedule?: string
   timezone?: string
   watch_columns?: string[]
+  block_ids?: string[]
   payload?: Record<string, string>
   conditions?: AutomationConditionRule[]
 }
@@ -146,6 +147,7 @@ interface UpdateAutomationPayload {
 
 interface TriggerAutomationPayload {
   payload?: Record<string, string>
+  content_id?: string
 }
 
 interface AutomationTriggerTableDefinition {

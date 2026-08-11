@@ -156,6 +156,17 @@ export function isEventTrigger(type: AutomationTriggerType): boolean {
   return ['on_insert', 'on_update', 'on_delete'].includes(type)
 }
 
+export function isManualContentAutomation(automation: AutomationResource): boolean {
+  return (
+    automation.trigger_type === 'manual' && getTriggerTable(automation.trigger?.config) === 'contents'
+  )
+}
+
+export function automationAppliesToBlock(automation: AutomationResource, blockId: string): boolean {
+  const blockIds = automation.trigger?.config?.block_ids ?? []
+  return blockIds.length === 0 || blockIds.includes(blockId)
+}
+
 export function isContentLifecycleTrigger(type: AutomationTriggerType): boolean {
   return ['content_published', 'content_unpublished'].includes(type)
 }

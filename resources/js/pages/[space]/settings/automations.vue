@@ -252,6 +252,7 @@ useSeoMeta({
 
     <AutomationDialog
       :open="dialogOpen"
+      :space-id="spaceId"
       :automation="selectedAutomation"
       :actions="availableActions"
       :trigger-catalog="triggerCatalog"

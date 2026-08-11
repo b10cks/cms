@@ -1104,7 +1104,8 @@
         "pasteIn": "Einfügen in",
         "pasteAfter": "Einfügen nach",
         "delete": "Löschen",
-        "more": "Weitere Aktionen"
+        "more": "Weitere Aktionen",
+        "automations": "Aktionen"
       },
       "confirmations": {
         "deleteTitle": "Inhalt löschen",
@@ -3374,6 +3375,11 @@
         "watchColumns": "Beobachtete Spalten",
         "watchColumnsDescription": "Optional. Führe diese Automation nur aus, wenn sich eine dieser Spalten ändert.",
         "watchColumnsPlaceholder": "Spalten durchsuchen",
+        "contentAction": "Inhaltsaktion",
+        "contentActionDescription": "Biete diese Automation im Inhaltsbaum an, damit sie für einen Inhalt ausgelöst werden kann.",
+        "blockRestriction": "Auf Block-Typen einschränken",
+        "blockRestrictionDescription": "Optional. Biete diese Aktion nur für Inhalte der ausgewählten Block-Typen an.",
+        "blockRestrictionPlaceholder": "Block-Typen durchsuchen",
         "schedule": "Cron-Zeitplan",
         "scheduleDescription": "Verwende einen normalen Cron-Ausdruck mit fünf Feldern in der Zeitzone unten.",
         "timezone": "Zeitzone",
@@ -3497,6 +3503,7 @@
         "delete": "{resource} löschen",
         "archive": "{resource} archivieren",
         "publish": "{resource} veröffentlichen",
+        "trigger": "{resource} auslösen",
         "updateOwn": "Eigene {resource} bearbeiten",
         "deleteOwn": "Eigene {resource} löschen",
         "resolveOwn": "Eigene {resource} lösen",

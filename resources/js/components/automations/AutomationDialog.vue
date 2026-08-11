@@ -44,6 +44,7 @@ import AutomationTriggerTypeBadge from './AutomationTriggerTypeBadge.vue'
 
 const props = defineProps<{
   open: boolean
+  spaceId: string
   automation: AutomationResource | null
   actions: AutomationActionResource[]
   triggerCatalog?: AutomationTriggerCatalogResource | null
@@ -103,6 +104,36 @@ const isEventTriggerSelected = computed(() => isEventTrigger(form.value.trigger_
 const isContentLifecycleTriggerSelected = computed(() =>
   isContentLifecycleTrigger(form.value.trigger_type)
 )
+const isManualTriggerSelected = computed(() => form.value.trigger_type === 'manual')
+
+const isContentAction = computed(() => getTriggerTable(form.value.trigger_config) === 'contents')
+
+const handleContentActionChange = (value: boolean) => {
+  form.value.trigger_config.table = value ? 'contents' : undefined
+  if (!value) {
+    form.value.trigger_config.block_ids = []
+  }
+}
+
+const { useBlocksQuery } = useBlocks(computed(() => props.spaceId))
+const { data: blocks } = useBlocksQuery(
+  { per_page: 1000 },
+  computed(() => isManualTriggerSelected.value && isContentAction.value)
+)
+
+const blockOptions = computed(() =>
+  (blocks.value?.data || []).map((block) => ({
+    value: block.id,
+    label: block.name,
+  }))
+)
+
+const blockIdsModel = computed({
+  get: () => form.value.trigger_config.block_ids || [],
+  set: (value: string[]) => {
+    form.value.trigger_config.block_ids = value
+  },
+})
 
 const selectedAction = computed(
   () => props.actions.find((action) => action.id === form.value.action_id) || null
@@ -281,6 +312,14 @@ const buildTriggerConfig = (): AutomationTriggerConfig => {
 
     if (form.value.trigger_type === 'on_update' && watchedColumnsModel.value.length > 0) {
       config.watch_columns = watchedColumnsModel.value
+    }
+  }
+
+  if (isManualTriggerSelected.value && isContentAction.value) {
+    config.table = 'contents'
+
+    if (blockIdsModel.value.length > 0) {
+      config.block_ids = blockIdsModel.value
     }
   }
 
@@ -584,6 +623,37 @@ const summaryText = computed(() => {
                   }}
                 </p>
               </div>
+            </template>
+
+            <template v-if="isManualTriggerSelected">
+              <div
+                class="flex items-center justify-between rounded-xl border border-border bg-surface/70 px-4 py-3"
+              >
+                <div>
+                  <p class="font-medium text-sm">
+                    {{ $t('labels.automations.fields.contentAction') }}
+                  </p>
+                  <p class="text-muted-foreground text-sm">
+                    {{ $t('labels.automations.fields.contentActionDescription') }}
+                  </p>
+                </div>
+                <Switch
+                  :checked="isContentAction"
+                  :disabled="loading"
+                  @update:checked="handleContentActionChange"
+                />
+              </div>
+
+              <ComboboxField
+                v-if="isContentAction"
+                v-model="blockIdsModel"
+                name="trigger-block-ids"
+                :label="$t('labels.automations.fields.blockRestriction')"
+                :description="$t('labels.automations.fields.blockRestrictionDescription')"
+                :placeholder="'labels.automations.fields.blockRestrictionPlaceholder'"
+                :options="blockOptions"
+                multiple
+              />
             </template>
 
             <template v-if="form.trigger_type === 'time_based'">

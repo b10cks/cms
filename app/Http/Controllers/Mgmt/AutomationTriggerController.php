@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Management\AutomationResource;
 use App\Models\Management\Automation;
 use App\Models\Management\Space;
+use App\Models\Space\Content;
 use App\Services\Automation\AutomationContextFactory;
 use App\Services\Automation\AutomationDispatcher;
 use App\Services\Automation\AutomationUsageService;
@@ -23,7 +24,7 @@ class AutomationTriggerController extends Controller
         AutomationContextFactory $contextFactory,
         AutomationDispatcher $dispatcher,
     ): AutomationResource {
-        $this->authorize('update', [$automation, $space]);
+        $this->authorize('trigger', [$automation, $space]);
         $automation->loadMissing('action');
 
         if ($automation->trigger_type !== TriggerType::MANUAL) {
@@ -52,11 +53,39 @@ class AutomationTriggerController extends Controller
 
         $request->validate([
             'payload' => ['nullable', 'array'],
+            'content_id' => ['nullable', 'string'],
         ]);
+
+        $contentContext = [];
+        if ($contentId = $request->input('content_id')) {
+            $content = Content::query()->whereNull('deleted_at')->find($contentId);
+
+            if (! $content) {
+                throw ValidationException::withMessages([
+                    'content_id' => ['This content does not exist.'],
+                ]);
+            }
+
+            $blockIds = array_filter((array) data_get($automation->trigger_config, 'block_ids', []));
+            if ($blockIds !== [] && ! in_array($content->block_id, $blockIds, true)) {
+                throw ValidationException::withMessages([
+                    'content_id' => ['This automation is not available for this content type.'],
+                ]);
+            }
+
+            $contentContext = $contextFactory->forModelEvent(
+                $content,
+                TriggerType::MANUAL,
+                null,
+                $contextFactory->normalizeSnapshot($content->attributesToArray()),
+                [],
+                $space,
+            );
+        }
 
         $dispatchContext = $contextFactory->forAutomation(
             $automation,
-            (array) $request->input('payload', []),
+            [...$contentContext, ...(array) $request->input('payload', [])],
             [
                 'triggered_by' => $request->user()?->id,
                 'source' => 'manual',

@@ -1104,7 +1104,8 @@
         "pasteIn": "Paste in",
         "pasteAfter": "Paste after",
         "delete": "Delete",
-        "more": "More actions"
+        "more": "More actions",
+        "automations": "Actions"
       },
       "confirmations": {
         "deleteTitle": "Delete content",
@@ -3374,6 +3375,11 @@
         "watchColumns": "Watched columns",
         "watchColumnsDescription": "Optional. Only run this automation when one of these columns changes.",
         "watchColumnsPlaceholder": "Search columns",
+        "contentAction": "Content action",
+        "contentActionDescription": "Offer this automation in the content tree so it can be triggered for a content item.",
+        "blockRestriction": "Limit to block types",
+        "blockRestrictionDescription": "Optional. Only offer this action for contents of the selected block types.",
+        "blockRestrictionPlaceholder": "Search block types",
         "schedule": "Cron schedule",
         "scheduleDescription": "Use a standard five-field cron expression in the timezone below.",
         "timezone": "Timezone",
@@ -3497,6 +3503,7 @@
         "delete": "Delete {resource}",
         "archive": "Archive {resource}",
         "publish": "Publish {resource}",
+        "trigger": "Trigger {resource}",
         "updateOwn": "Edit own {resource}",
         "deleteOwn": "Delete own {resource}",
         "resolveOwn": "Resolve own {resource}",

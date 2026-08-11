@@ -22,6 +22,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from '~/components/ui/dropdown-menu'
 import DropIndicator from '~/components/ui/DropIndicator.vue'
 import RenamableTitle from '~/components/ui/RenamableTitle.vue'
@@ -34,6 +37,7 @@ import { queryKeys } from '~/composables/useQueryClient'
 import { normalizeLanguageIso } from '~/lib/content-i18n'
 import { fuzzyMatch, prepareFuzzyQuery, prepareFuzzyTarget } from '~/lib/fuzzy-match'
 import { buildPreviewUrl } from '~/lib/preview-url'
+import { automationAppliesToBlock } from '~/utils/automations'
 import type {
   ContentTreeActionContext,
   ContentTreeClipboardItem,
@@ -61,7 +65,8 @@ type ContentTreeMenuAction = {
   disabled?: boolean
   destructive?: boolean
   separatorBefore?: boolean
-  onSelect: () => void | Promise<void>
+  children?: ContentTreeMenuAction[]
+  onSelect?: () => void | Promise<void>
 }
 
 type RenamableTitleInstance = InstanceType<typeof RenamableTitle>
@@ -91,6 +96,9 @@ const {
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageContent = computed(() => access.hasAbility('content.manage'))
 const canPublishContent = computed(() => access.hasAbility('content.publish'))
+// automations.trigger also implies listing automations (policy viewAny), so
+// gating discovery and the submenu on it alone is safe.
+const canTriggerAutomations = computed(() => access.hasAbility('automations.trigger'))
 // Manual drag-to-reorder is opt-in per space. When disabled, dragging may only
 // reparent items (the "into" gesture); before/after reordering is suppressed.
 const sortingEnabled = computed(() => !!selectedSpace.value?.settings?.content_sorting)
@@ -123,6 +131,15 @@ const { mutateAsync: runTreeOperations } = useTreeOperationsMutation()
 const { mutate: updateContent } = useUpdateContentMutation()
 const { mutateAsync: publishContent, isPending: isPublishing } = usePublishContentMutation()
 const { mutateAsync: scheduleContent, isPending: isScheduling } = useScheduleContentMutation()
+
+const { useAutomationsQuery, useTriggerAutomationMutation } = useAutomations(props.spaceId)
+const { data: manualAutomationsData } = useAutomationsQuery(
+  { trigger_type: 'manual', table: 'contents', is_active: true, per_page: 100 },
+  canTriggerAutomations
+)
+const { mutateAsync: triggerAutomation, isPending: isTriggeringAutomation } =
+  useTriggerAutomationMutation()
+const manualContentAutomations = computed(() => manualAutomationsData.value?.data || [])
 
 const { isLoading, error, data } = useContentMenuQuery()
 
@@ -984,6 +1001,35 @@ const handleScheduleDialog = async (payload: {
   publishDialogItem.value = null
 }
 
+const buildItemAutomationActions = (item: FlatContentMenuItem): ContentTreeMenuAction[] => {
+  if (!canTriggerAutomations.value) {
+    return []
+  }
+
+  const automations = manualContentAutomations.value.filter((automation) =>
+    automationAppliesToBlock(automation, item.block_id)
+  )
+
+  return [
+    {
+      id: 'automations',
+      label: t('labels.contentTree.actions.automations') as string,
+      icon: 'zap',
+      separatorBefore: true,
+      disabled: automations.length === 0,
+      children: automations.map((automation) => ({
+        id: `automation-${automation.id}`,
+        label: automation.name,
+        icon: 'zap',
+        disabled: isTriggeringAutomation.value,
+        onSelect: async () => {
+          await triggerAutomation({ id: automation.id, payload: { content_id: item.id } })
+        },
+      })),
+    },
+  ]
+}
+
 const buildItemMenuActions = (item: FlatContentMenuItem): ContentTreeMenuAction[] => {
   const context = resolveMenuContext(item.id)
   const activeClipboardItem = getActiveClipboardItem()
@@ -1035,6 +1081,7 @@ const buildItemMenuActions = (item: FlatContentMenuItem): ContentTreeMenuAction[
       disabled: !canPublishContent.value || isPublishingAction.value || !hasPendingChanges(item),
       onSelect: () => openSchedulePublish(item),
     },
+    ...buildItemAutomationActions(item),
     {
       id: 'rename',
       label: t('labels.contentTree.actions.rename') as string,
@@ -1135,7 +1182,7 @@ const clearTreeClipboard = async () => {
 }
 
 const handleActionSelect = async (action: ContentTreeMenuAction) => {
-  if (action.disabled) {
+  if (action.disabled || !action.onSelect) {
     return
   }
 
@@ -2422,7 +2469,25 @@ onBeforeUnmount(() => {
           :key="action.id"
         >
           <DropdownMenuSeparator v-if="action.separatorBefore" />
+          <DropdownMenuSub v-if="action.children">
+            <DropdownMenuSubTrigger :disabled="action.disabled">
+              <Icon :name="`lucide:${action.icon}`" />
+              <span>{{ action.label }}</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem
+                v-for="child in action.children"
+                :key="child.id"
+                :disabled="child.disabled"
+                @select.prevent="handleActionSelect(child)"
+              >
+                <Icon :name="`lucide:${child.icon}`" />
+                <span>{{ child.label }}</span>
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
           <DropdownMenuItem
+            v-else
             :disabled="action.disabled"
             :class="action.destructive ? 'text-destructive focus:text-destructive' : ''"
             @select.prevent="handleActionSelect(action)"

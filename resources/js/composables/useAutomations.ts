@@ -16,7 +16,10 @@ export function useAutomations(spaceIdRef: MaybeRefOrComputed<string>) {
   const spaceId = computed(() => unref(spaceIdRef))
   const spaceAPI = computed(() => api.forSpace(spaceId.value))
 
-  const useAutomationsQuery = (paramsRef: MaybeRefOrComputed<AutomationsQueryParams> = {}) => {
+  const useAutomationsQuery = (
+    paramsRef: MaybeRefOrComputed<AutomationsQueryParams> = {},
+    enabledRef: MaybeRefOrComputed<boolean> = true
+  ) => {
     const params = computed(() => unref(paramsRef))
 
     return useQuery({
@@ -24,7 +27,7 @@ export function useAutomations(spaceIdRef: MaybeRefOrComputed<string>) {
       queryFn: async () => {
         return await spaceAPI.value.automations.index(params.value)
       },
-      enabled: computed(() => !!spaceId.value),
+      enabled: computed(() => !!spaceId.value && !!unref(enabledRef)),
       placeholderData: keepPreviousData,
     })
   }

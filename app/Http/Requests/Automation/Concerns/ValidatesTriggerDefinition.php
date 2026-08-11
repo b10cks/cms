@@ -27,6 +27,7 @@ trait ValidatesTriggerDefinition
         }
 
         $this->validateTableConfiguration($validator, $type, $config);
+        $this->validateManualConfiguration($validator, $type, $config);
 
         if ($type === TriggerType::TIME_BASED) {
             $schedule = trim((string) ($config['schedule'] ?? ''));
@@ -104,6 +105,40 @@ trait ValidatesTriggerDefinition
                     "trigger.config.watch_columns.$index",
                     sprintf('The column "%s" is not available on %s.', $column, $table),
                 );
+            }
+        }
+    }
+
+    protected function validateManualConfiguration(Validator $validator, TriggerType $type, array $config): void
+    {
+        if ($type !== TriggerType::MANUAL) {
+            if (! empty($config['block_ids'])) {
+                $validator->errors()->add('trigger.config.block_ids', 'Block restrictions can only be used with manual triggers.');
+            }
+
+            return;
+        }
+
+        /** @var TriggerCatalog $catalog */
+        $catalog = app(TriggerCatalog::class);
+        $table = $catalog->resolveTableFromConfig($config);
+
+        if ($table !== null && ! $catalog->supportsTable($table)) {
+            $validator->errors()->add('trigger.config.table', 'Choose one of the supported CMS tables.');
+        }
+
+        $blockIds = (array) ($config['block_ids'] ?? []);
+        if ($blockIds === []) {
+            return;
+        }
+
+        if ($table !== 'contents') {
+            $validator->errors()->add('trigger.config.block_ids', 'Block restrictions require the trigger to target contents.');
+        }
+
+        foreach ($blockIds as $index => $blockId) {
+            if (! is_string($blockId) || trim($blockId) === '') {
+                $validator->errors()->add("trigger.config.block_ids.$index", 'Each block restriction must be a block id.');
             }
         }
     }

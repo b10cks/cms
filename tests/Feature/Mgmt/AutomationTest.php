@@ -574,4 +574,234 @@ class AutomationTest extends TestCase
         $response->assertJsonPath('data.0.automation.action.name', 'Original Email');
         $response->assertJsonPath('data.0.automation.action.type', 'email');
     }
+
+    #[Test]
+    public function manual_content_triggers_build_a_record_context_for_the_targeted_content(): void
+    {
+        $this->actingAs($this->owner);
+        Queue::fake();
+
+        $action = AutomationAction::factory()->create([
+            'space_id' => $this->space->id,
+            'type' => 'void',
+        ]);
+
+        $automation = Automation::factory()->create([
+            'space_id' => $this->space->id,
+            'action_id' => $action->id,
+            'trigger_type' => 'manual',
+            'trigger_config' => [
+                'table' => 'contents',
+            ],
+        ]);
+
+        $content = Content::factory()->create([
+            'name' => 'Spring Launch',
+            'slug' => 'spring-launch',
+            'full_slug' => '/spring-launch',
+        ]);
+
+        $response = $this->postJson(route('mgmt.automations.trigger', [
+            'space' => $this->space->id,
+            'automation' => $automation->id,
+        ]), [
+            'content_id' => $content->id,
+        ]);
+
+        $response->assertOk();
+        Queue::assertPushed(ProcessAutomation::class);
+
+        $execution = AutomationExecution::query()
+            ->where('automation_id', $automation->id)
+            ->latest('created_at')
+            ->first();
+
+        $this->assertNotNull($execution);
+        $this->assertSame('manual', data_get($execution->context, 'source'));
+        $this->assertSame('manual', data_get($execution->context, 'operation'));
+        $this->assertSame('contents', data_get($execution->context, 'table'));
+        $this->assertSame($content->id, data_get($execution->context, 'record_id'));
+        $this->assertSame('Spring Launch', data_get($execution->context, 'record.name'));
+        $this->assertSame('Spring Launch', data_get($execution->context, 'content.title'));
+        $this->assertSame($this->space->id, data_get($execution->context, 'space.id'));
+    }
+
+    #[Test]
+    public function manual_content_triggers_enforce_block_restrictions(): void
+    {
+        $this->actingAs($this->owner);
+        Queue::fake();
+
+        $action = AutomationAction::factory()->create([
+            'space_id' => $this->space->id,
+            'type' => 'void',
+        ]);
+
+        $content = Content::factory()->create([
+            'name' => 'Restricted Item',
+            'slug' => 'restricted-item',
+            'full_slug' => '/restricted-item',
+        ]);
+
+        $automation = Automation::factory()->create([
+            'space_id' => $this->space->id,
+            'action_id' => $action->id,
+            'trigger_type' => 'manual',
+            'trigger_config' => [
+                'table' => 'contents',
+                'block_ids' => [fake()->uuid()],
+            ],
+        ]);
+
+        $response = $this->postJson(route('mgmt.automations.trigger', [
+            'space' => $this->space->id,
+            'automation' => $automation->id,
+        ]), [
+            'content_id' => $content->id,
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['content_id']);
+        Queue::assertNotPushed(ProcessAutomation::class);
+
+        $automation->update([
+            'trigger' => [
+                'type' => 'manual',
+                'config' => [
+                    'table' => 'contents',
+                    'block_ids' => [$content->block_id],
+                ],
+            ],
+        ]);
+
+        $this->postJson(route('mgmt.automations.trigger', [
+            'space' => $this->space->id,
+            'automation' => $automation->id,
+        ]), [
+            'content_id' => $content->id,
+        ])->assertOk();
+
+        Queue::assertPushed(ProcessAutomation::class);
+    }
+
+    #[Test]
+    public function editors_can_list_and_trigger_manual_automations_but_not_manage_them(): void
+    {
+        $this->actingAs($this->editor);
+        Queue::fake();
+
+        $action = AutomationAction::factory()->create([
+            'space_id' => $this->space->id,
+            'type' => 'void',
+        ]);
+
+        $automation = Automation::factory()->create([
+            'space_id' => $this->space->id,
+            'action_id' => $action->id,
+            'trigger_type' => 'manual',
+            'trigger_config' => [
+                'table' => 'contents',
+            ],
+        ]);
+
+        $this->getJson(route('mgmt.automations.index', [
+            'space' => $this->space->id,
+            'trigger_type' => 'manual',
+        ]))->assertOk();
+
+        $content = Content::factory()->create([
+            'name' => 'Editor Item',
+            'slug' => 'editor-item',
+            'full_slug' => '/editor-item',
+        ]);
+
+        $this->postJson(route('mgmt.automations.trigger', [
+            'space' => $this->space->id,
+            'automation' => $automation->id,
+        ]), [
+            'content_id' => $content->id,
+        ])->assertOk();
+
+        Queue::assertPushed(ProcessAutomation::class);
+
+        $this->patchJson(route('mgmt.automations.update', [
+            'space' => $this->space->id,
+            'automation' => $automation->id,
+        ]), [
+            'name' => 'Renamed by editor',
+        ])->assertStatus(403);
+    }
+
+    #[Test]
+    public function manual_content_triggers_reject_missing_contents(): void
+    {
+        $this->actingAs($this->owner);
+        Queue::fake();
+
+        $action = AutomationAction::factory()->create([
+            'space_id' => $this->space->id,
+            'type' => 'void',
+        ]);
+
+        $automation = Automation::factory()->create([
+            'space_id' => $this->space->id,
+            'action_id' => $action->id,
+            'trigger_type' => 'manual',
+            'trigger_config' => [
+                'table' => 'contents',
+            ],
+        ]);
+
+        $this->postJson(route('mgmt.automations.trigger', [
+            'space' => $this->space->id,
+            'automation' => $automation->id,
+        ]), [
+            'content_id' => fake()->uuid(),
+        ])->assertStatus(422);
+
+        Queue::assertNotPushed(ProcessAutomation::class);
+    }
+
+    #[Test]
+    public function manual_trigger_config_validates_table_and_block_restrictions(): void
+    {
+        $this->actingAs($this->owner);
+
+        $action = AutomationAction::factory()->create([
+            'space_id' => $this->space->id,
+        ]);
+
+        $basePayload = [
+            'name' => 'Content Action',
+            'action_id' => $action->id,
+        ];
+
+        $this->postJson(route('mgmt.automations.store', $this->space->id), $basePayload + [
+            'trigger' => [
+                'type' => 'manual',
+                'config' => ['table' => 'not_a_table'],
+            ],
+        ])->assertStatus(422)->assertJsonValidationErrors(['trigger.config.table']);
+
+        $this->postJson(route('mgmt.automations.store', $this->space->id), $basePayload + [
+            'trigger' => [
+                'type' => 'manual',
+                'config' => ['block_ids' => [fake()->uuid()]],
+            ],
+        ])->assertStatus(422)->assertJsonValidationErrors(['trigger.config.block_ids']);
+
+        $this->postJson(route('mgmt.automations.store', $this->space->id), $basePayload + [
+            'trigger' => [
+                'type' => 'time_based',
+                'config' => ['schedule' => '0 * * * *', 'block_ids' => [fake()->uuid()]],
+            ],
+        ])->assertStatus(422)->assertJsonValidationErrors(['trigger.config.block_ids']);
+
+        $this->postJson(route('mgmt.automations.store', $this->space->id), $basePayload + [
+            'trigger' => [
+                'type' => 'manual',
+                'config' => ['table' => 'contents', 'block_ids' => [fake()->uuid()]],
+            ],
+        ])->assertStatus(201);
+    }
 }
