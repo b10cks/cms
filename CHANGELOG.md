@@ -3,6 +3,13 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.11-68245eba] — 2026-8-11
+
+- 📝 Document custom posters for arbitrary assets
+- ✨ Surface custom asset thumbnails across the UI
+- 🐛 Enrich share thumbnails with full_path server-side
+- ✨ Allow custom posters on any non-image asset, reversibly
+
 ## [v2026.8.11-eb4fb8bd] — 2026-8-11
 
 - 🐛 Fix inert Switch bindings in the automations UI
