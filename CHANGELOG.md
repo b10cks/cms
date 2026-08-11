@@ -3,6 +3,14 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.11-835b0a1c] — 2026-8-11
+
+- ✨ Add an automations guide to the native MCP server
+- ✨ Reconcile system roles during b10cks:upgrade
+- 📝 Document content actions and the role sync command
+- ✨ Trigger manual automations from the content tree
+- 🐛 Fix preview bridge live-update races
+
 ## [v2026.8.10-cf0e7ac1] — 2026-8-10
 
 - 📝 Regenerate the management OpenAPI spec
