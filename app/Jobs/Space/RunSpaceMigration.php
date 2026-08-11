@@ -671,8 +671,12 @@ class RunSpaceMigration extends QueuedJob
             return $metadata;
         }
 
-        if (! empty($decoded['thumbnails']) && is_array($decoded['thumbnails'])) {
-            foreach ($decoded['thumbnails'] as &$thumbnail) {
+        foreach (['thumbnails', 'generated_thumbnails'] as $key) {
+            if (empty($decoded[$key]) || ! is_array($decoded[$key])) {
+                continue;
+            }
+
+            foreach ($decoded[$key] as &$thumbnail) {
                 if (isset($thumbnail['path']) && is_string($thumbnail['path'])) {
                     $thumbnail['path'] = str_replace(
                         "{$sourceSpaceId}/{$sourceAssetId}/",

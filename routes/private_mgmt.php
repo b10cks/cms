@@ -312,6 +312,8 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
         ->name('assets.replace-file');
     Route::post('assets/{asset}/poster', [AssetController::class, 'uploadPoster'])
         ->name('assets.poster');
+    Route::delete('assets/{asset}/poster', [AssetController::class, 'removePoster'])
+        ->name('assets.poster.remove');
     Route::get('assets/{asset}/versions', [AssetVersionController::class, 'index'])
         ->name('assets.versions.index');
     Route::post('assets/{asset}/versions/{version}/restore', [AssetVersionController::class, 'restore'])

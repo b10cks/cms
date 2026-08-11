@@ -58,7 +58,7 @@ class ImageController extends Controller
     }
 
     /**
-     * Deliver the poster frame for a video (or audio) asset.
+     * Deliver the poster frame for a non-image asset.
      *
      * Poster URLs mirror the image grammar, so the same transformation segment
      * and format/quality parameters apply — a poster is just another image
@@ -78,14 +78,23 @@ class ImageController extends Controller
             return $this->notFound();
         }
 
-        // Only video and audio carry poster frames — the same rule the upload
-        // endpoint enforces. Other types can have `thumbnails` metadata for
-        // unrelated reasons, and those are not posters.
-        if (! Str::startsWith((string) $source->asset->mime_type, ['video/', 'audio/'])) {
+        $mime = (string) $source->asset->mime_type;
+
+        // Images are their own preview and never carry a poster.
+        if (Str::startsWith($mime, 'image/')) {
             return $this->notFound();
         }
 
-        $posterPath = $this->resolvePosterPath($source->asset, $request->integer('frame'));
+        $thumbnails = $this->posterThumbnails($source->asset);
+
+        // Video and audio legitimately expose their generated frames; every
+        // other type only carries a poster once one was explicitly uploaded —
+        // `thumbnails` metadata from unrelated sources is not a poster.
+        if (! Str::startsWith($mime, ['video/', 'audio/']) && empty($thumbnails[0]['custom'])) {
+            return $this->notFound();
+        }
+
+        $posterPath = $this->resolvePosterPath($thumbnails, $request->integer('frame'));
 
         if ($posterPath === null) {
             return response()->json(['error' => 'No poster available for this asset'], 404);
@@ -156,16 +165,24 @@ class ImageController extends Controller
     }
 
     /**
-     * Pick a stored poster frame. `frame` indexes into the thumbnail list in
-     * capture order; a custom uploaded poster collapses that list to one entry.
+     * @return array<int, array<string, mixed>>
      */
-    private function resolvePosterPath(Asset $asset, ?int $frame): ?string
+    private function posterThumbnails(Asset $asset): array
     {
-        $thumbnails = array_values(array_filter(
+        return array_values(array_filter(
             (array) ($asset->metadata['thumbnails'] ?? []),
             static fn ($thumb): bool => is_array($thumb) && ! empty($thumb['path']),
         ));
+    }
 
+    /**
+     * Pick a stored poster frame. `frame` indexes into the thumbnail list in
+     * capture order; a custom uploaded poster collapses that list to one entry.
+     *
+     * @param  array<int, array<string, mixed>>  $thumbnails
+     */
+    private function resolvePosterPath(array $thumbnails, ?int $frame): ?string
+    {
         if ($thumbnails === []) {
             return null;
         }

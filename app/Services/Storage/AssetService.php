@@ -296,15 +296,14 @@ class AssetService
     }
 
     /**
-     * Replace an asset's generated thumbnails with a single, hand-picked
-     * poster image.
+     * Replace an asset's thumbnails with a single, hand-picked poster image.
      *
-     * The generated frames are deliberately dropped rather than kept alongside
-     * the upload: the poster API serves `thumbnails` in capture order, so
-     * leaving them in place would mean the custom poster competes with frames
-     * the editor explicitly rejected. The stored filename carries a random
-     * suffix so a re-upload lands on a new path and cannot be served from a
-     * warm CDN cache.
+     * `thumbnails` collapses to the custom poster so it never competes with
+     * generated frames the editor explicitly rejected — but those frames are
+     * stashed under `generated_thumbnails` (files kept) so removing the poster
+     * can restore them without re-running ffmpeg. The stored filename carries
+     * a random suffix so a re-upload lands on a new path and cannot be served
+     * from a warm CDN cache.
      */
     public function setCustomPoster(Asset $asset, UploadedFile $file, Space $space): Asset
     {
@@ -343,17 +342,68 @@ class AssetService
             'custom' => true,
         ], fn ($value) => $value !== null);
 
-        $previousThumbnails = (array) ($asset->metadata['thumbnails'] ?? []);
+        $previousThumbnails = array_values(array_filter(
+            (array) ($asset->metadata['thumbnails'] ?? []),
+            static fn ($thumb): bool => is_array($thumb) && ! empty($thumb['path']),
+        ));
 
-        $asset->metadata = [
+        // Generated frames are stashed for a later restore; only a previously
+        // uploaded custom poster is actually replaced, so only its file goes.
+        $generated = array_values(array_filter($previousThumbnails, static fn (array $thumb): bool => empty($thumb['custom'])));
+        $replacedPosters = array_values(array_filter($previousThumbnails, static fn (array $thumb): bool => ! empty($thumb['custom'])));
+
+        $metadata = [
             ...(array) $asset->metadata,
             'thumbnails' => [$poster],
             ...$this->videoColorMetadata([$poster]),
         ];
 
+        if ($generated !== []) {
+            $metadata['generated_thumbnails'] = $generated;
+        }
+
+        $asset->metadata = $metadata;
+
         $asset->save();
 
-        $this->deleteThumbnailFiles($previousThumbnails, $filesystem);
+        $this->deleteThumbnailFiles($replacedPosters, $filesystem);
+
+        return $asset;
+    }
+
+    /**
+     * Remove a custom poster, restoring the stashed generated frames (if the
+     * asset ever had any) as the visible thumbnails.
+     */
+    public function removeCustomPoster(Asset $asset): Asset
+    {
+        $storage = StorageModel::findOrFail($asset->storage_id);
+        $filesystem = $this->storageService->getStorage($storage);
+
+        $customPosters = array_values(array_filter(
+            (array) ($asset->metadata['thumbnails'] ?? []),
+            static fn ($thumb): bool => is_array($thumb) && ! empty($thumb['path']) && ! empty($thumb['custom']),
+        ));
+
+        $restored = array_values(array_filter(
+            (array) ($asset->metadata['generated_thumbnails'] ?? []),
+            static fn ($thumb): bool => is_array($thumb) && ! empty($thumb['path']),
+        ));
+
+        $metadata = (array) $asset->metadata;
+        // The promoted color metadata described the poster; it is recomputed
+        // from the restored frames, or dropped when nothing remains.
+        unset($metadata['thumbnails'], $metadata['generated_thumbnails'], $metadata['dominant_color'], $metadata['a11y']);
+
+        if ($restored !== []) {
+            $metadata['thumbnails'] = $restored;
+            $metadata = [...$metadata, ...$this->videoColorMetadata($restored)];
+        }
+
+        $asset->metadata = $metadata;
+        $asset->save();
+
+        $this->deleteThumbnailFiles($customPosters, $filesystem);
 
         return $asset;
     }
@@ -380,15 +430,28 @@ class AssetService
     /**
      * Build the delivery URL for an asset's poster frame, pinned to the stored
      * poster path so a poster change produces a new, separately cacheable URL.
+     *
+     * Mirrors the delivery gate in ImageController::poster() — a URL is only
+     * advertised when the endpoint would actually serve it.
      */
     public function getPosterUrl(Asset $asset): ?string
     {
+        $mime = (string) $asset->mime_type;
+
+        if (Str::startsWith($mime, 'image/')) {
+            return null;
+        }
+
         $thumbnails = array_values(array_filter(
             (array) ($asset->metadata['thumbnails'] ?? []),
             static fn ($thumb): bool => is_array($thumb) && ! empty($thumb['path']),
         ));
 
         if ($thumbnails === []) {
+            return null;
+        }
+
+        if (! Str::startsWith($mime, ['video/', 'audio/']) && empty($thumbnails[0]['custom'])) {
             return null;
         }
 
@@ -920,7 +983,7 @@ class AssetService
                 $files[] = $asset->path;
             }
 
-            foreach (($asset->metadata['thumbnails'] ?? []) as $thumbnail) {
+            foreach ([...($asset->metadata['thumbnails'] ?? []), ...($asset->metadata['generated_thumbnails'] ?? [])] as $thumbnail) {
                 if (! empty($thumbnail['path'])) {
                     $files[] = $thumbnail['path'];
                 }
@@ -1008,7 +1071,10 @@ class AssetService
             }
         }
 
-        $oldThumbnails = $asset->metadata['thumbnails'] ?? [];
+        $oldThumbnails = [
+            ...($asset->metadata['thumbnails'] ?? []),
+            ...($asset->metadata['generated_thumbnails'] ?? []),
+        ];
 
         // filename (display name) is intentionally preserved
         $asset->extension = $extension;

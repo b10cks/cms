@@ -181,7 +181,10 @@ class AssetController extends Controller
     }
 
     /**
-     * Upload a custom poster frame, replacing the auto-generated thumbnails.
+     * Upload a custom poster/thumbnail for a non-image asset.
+     *
+     * The image is shown in place of the generated video frames or the
+     * file-type icon.
      */
     public function uploadPoster(
         Space $space,
@@ -191,9 +194,9 @@ class AssetController extends Controller
     ): AssetResource|JsonResponse {
         abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
 
-        if (! Str::startsWith((string) $asset->mime_type, ['video/', 'audio/'])) {
+        if (Str::startsWith((string) $asset->mime_type, 'image/')) {
             return response()->json([
-                'message' => 'Only video and audio assets can have a poster.',
+                'message' => 'Image assets are their own preview and cannot have a custom poster.',
                 'code' => 'poster_not_supported',
             ], 422);
         }
@@ -209,6 +212,42 @@ class AssetController extends Controller
             ]);
 
             return response()->json(['message' => 'Failed to upload poster: '.$e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Remove a custom poster.
+     *
+     * Restores the stashed generated video frames when the asset has any.
+     */
+    public function removePoster(
+        Space $space,
+        Asset $asset,
+        AssetService $assetService
+    ): AssetResource|JsonResponse {
+        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
+
+        $hasCustomPoster = collect((array) ($asset->metadata['thumbnails'] ?? []))
+            ->contains(fn ($thumb) => is_array($thumb) && ! empty($thumb['path']) && ! empty($thumb['custom']));
+
+        if (! $hasCustomPoster) {
+            return response()->json([
+                'message' => 'This asset has no custom poster to remove.',
+                'code' => 'no_custom_poster',
+            ], 422);
+        }
+
+        try {
+            $asset = $assetService->removeCustomPoster($asset);
+
+            return new AssetResource($asset->load('folder'));
+        } catch (\Exception $e) {
+            Log::error('Failed to remove asset poster', [
+                'asset_id' => $asset->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['message' => 'Failed to remove poster: '.$e->getMessage()], 500);
         }
     }
 

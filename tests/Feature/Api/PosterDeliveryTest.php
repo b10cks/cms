@@ -264,8 +264,12 @@ class PosterDeliveryTest extends TestCase
             ->assertNotFound();
     }
 
+    /**
+     * Non-media types only carry a poster once one was explicitly uploaded —
+     * `thumbnails` metadata from other sources must not leak out as one.
+     */
     #[Test]
-    public function it_does_not_serve_a_poster_for_a_non_media_asset(): void
+    public function it_does_not_serve_generated_frames_as_a_poster_for_a_non_media_asset(): void
     {
         $asset = $this->createVideoAsset();
         $asset->mime_type = 'application/pdf';
@@ -353,10 +357,164 @@ class PosterDeliveryTest extends TestCase
         $disk = app(StorageService::class)->getDefaultStorage($this->space);
         $this->assertTrue($disk->exists($thumbnails[0]['path']));
 
-        // The frames the editor rejected are cleaned up rather than orphaned.
+        // The generated frames are stashed (metadata and files) so removing
+        // the poster can restore them without re-running ffmpeg.
+        $this->assertSame($originalPaths, array_column($response->json('metadata.generated_thumbnails'), 'path'));
+
         foreach ($originalPaths as $path) {
-            $this->assertFalse($disk->exists($path));
+            $this->assertTrue($disk->exists($path));
         }
+    }
+
+    #[Test]
+    public function removing_the_poster_restores_the_generated_frames(): void
+    {
+        $asset = $this->createVideoAsset(3);
+        $originalPaths = array_column($asset->metadata['thumbnails'], 'path');
+        $endpoint = "/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}/poster";
+
+        $posterPath = $this->postJson($endpoint, ['poster' => UploadedFile::fake()->image('custom.jpg', 200, 120)])
+            ->assertOk()->json('metadata.thumbnails.0.path');
+
+        $response = $this->deleteJson($endpoint)->assertOk();
+
+        $this->assertSame($originalPaths, array_column($response->json('metadata.thumbnails'), 'path'));
+        $this->assertNull($response->json('metadata.generated_thumbnails'));
+
+        $disk = app(StorageService::class)->getDefaultStorage($this->space);
+        $this->assertFalse($disk->exists($posterPath), 'the removed poster should not be orphaned');
+
+        // The restored first frame serves again.
+        $this->get($this->posterUrl($asset))->assertOk();
+    }
+
+    /**
+     * The stash must survive a poster re-upload: only the replaced custom
+     * poster's file may be deleted, never the stashed generated frames.
+     */
+    #[Test]
+    public function re_uploading_a_poster_keeps_the_stashed_generated_frames(): void
+    {
+        $asset = $this->createVideoAsset(2);
+        $originalPaths = array_column($asset->metadata['thumbnails'], 'path');
+        $endpoint = "/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}/poster";
+
+        $this->postJson($endpoint, ['poster' => UploadedFile::fake()->image('a.jpg')])->assertOk();
+        $second = $this->postJson($endpoint, ['poster' => UploadedFile::fake()->image('b.jpg')])->assertOk();
+
+        $this->assertSame($originalPaths, array_column($second->json('metadata.generated_thumbnails'), 'path'));
+
+        $disk = app(StorageService::class)->getDefaultStorage($this->space);
+
+        foreach ($originalPaths as $path) {
+            $this->assertTrue($disk->exists($path));
+        }
+
+        // And a remove after the re-upload still restores the original frames.
+        $restored = $this->deleteJson($endpoint)->assertOk();
+        $this->assertSame($originalPaths, array_column($restored->json('metadata.thumbnails'), 'path'));
+    }
+
+    #[Test]
+    public function removing_a_poster_requires_the_manage_ability(): void
+    {
+        $asset = $this->createDocumentAsset();
+        $endpoint = "/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}/poster";
+
+        $this->postJson($endpoint, ['poster' => UploadedFile::fake()->image('cover.jpg')])->assertOk();
+
+        $viewer = User::factory()->create();
+        $this->assignSpaceRole($this->space, $viewer, 'viewer');
+        Sanctum::actingAs($viewer);
+
+        $this->deleteJson($endpoint)->assertForbidden();
+    }
+
+    /**
+     * poster_url must only advertise what the delivery gate will serve: for a
+     * non-media asset, `thumbnails` metadata without the custom flag is not a
+     * poster.
+     */
+    #[Test]
+    public function it_exposes_no_poster_url_for_a_non_media_asset_without_a_custom_poster(): void
+    {
+        $asset = $this->createVideoAsset();
+        $asset->mime_type = 'application/pdf';
+        $asset->save();
+
+        $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}")
+            ->assertOk()
+            ->assertJsonPath('poster_url', null);
+    }
+
+    #[Test]
+    public function removing_a_poster_requires_a_custom_one(): void
+    {
+        $asset = $this->createVideoAsset();
+
+        $this->deleteJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}/poster")
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'no_custom_poster');
+    }
+
+    // --- Posters on arbitrary (non-media) assets ----------------------------
+
+    private function createDocumentAsset(): Asset
+    {
+        $asset = Asset::create([
+            'filename' => 'report',
+            'extension' => 'pdf',
+            'mime_type' => 'application/pdf',
+            'storage_id' => $this->storage->id,
+            'size' => strlen('pdf-bytes'),
+            'metadata' => [],
+        ]);
+
+        $asset->path = "{$this->space->id}/{$asset->id}/report.pdf";
+        $asset->save();
+
+        app(StorageService::class)->getDefaultStorage($this->space)->put($asset->path, 'pdf-bytes');
+
+        return $asset;
+    }
+
+    #[Test]
+    public function a_document_asset_accepts_a_custom_poster_and_serves_it(): void
+    {
+        $asset = $this->createDocumentAsset();
+
+        $thumbnails = $this->postJson(
+            "/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}/poster",
+            ['poster' => UploadedFile::fake()->image('cover.jpg', 200, 120)],
+        )->assertOk()->json('metadata.thumbnails');
+
+        $this->assertCount(1, $thumbnails);
+        $this->assertTrue($thumbnails[0]['custom']);
+
+        $response = $this->get("/ilum/{$this->storage->id}/{$this->space->id}/{$asset->id}/report.pdf/poster");
+
+        $response->assertOk();
+        $this->assertStringStartsWith('image/', (string) $response->headers->get('content-type'));
+    }
+
+    #[Test]
+    public function removing_a_document_poster_leaves_the_asset_without_one(): void
+    {
+        $asset = $this->createDocumentAsset();
+        $endpoint = "/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}/poster";
+
+        $posterPath = $this->postJson($endpoint, ['poster' => UploadedFile::fake()->image('cover.jpg', 200, 120)])
+            ->assertOk()->json('metadata.thumbnails.0.path');
+
+        $response = $this->deleteJson($endpoint)->assertOk();
+
+        $this->assertNull($response->json('metadata.thumbnails'));
+
+        $disk = app(StorageService::class)->getDefaultStorage($this->space);
+        $this->assertFalse($disk->exists($posterPath));
+
+        $this->get("/ilum/{$this->storage->id}/{$this->space->id}/{$asset->id}/report.pdf/poster")
+            ->assertNotFound();
     }
 
     #[Test]
@@ -389,7 +547,7 @@ class PosterDeliveryTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_a_poster_on_a_non_media_asset(): void
+    public function it_rejects_a_poster_on_an_image_asset(): void
     {
         $asset = Asset::create([
             'filename' => 'photo',
