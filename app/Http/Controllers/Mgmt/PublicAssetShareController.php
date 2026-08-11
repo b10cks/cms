@@ -126,7 +126,7 @@ class PublicAssetShareController extends Controller
                 'width' => $asset->metadata['width'] ?? null,
                 'height' => $asset->metadata['height'] ?? null,
                 'dominant_color' => $asset->metadata['dominant_color'] ?? null,
-                'thumbnails' => $asset->metadata['thumbnails'] ?? null,
+                'thumbnails' => $this->enrichedThumbnails($asset),
             ], fn ($value) => $value !== null),
             'preview_url' => $this->previewUrl($space, $share, $asset, $request),
         ])->values();
@@ -301,6 +301,24 @@ class PublicAssetShareController extends Controller
     private function ensureUnlocked(AssetShare $share, Request $request): void
     {
         abort_unless($this->isUnlocked($share, $request), 403, 'This share is password protected.');
+    }
+
+    /**
+     * The share page renders thumbnails via `full_path` (storage-prefixed, the
+     * same shape the management AssetResource serves), so the raw stored paths
+     * are enriched here rather than trusting whatever the row happens to hold.
+     *
+     * @return array<int, array<string, mixed>>|null
+     */
+    private function enrichedThumbnails(Asset $asset): ?array
+    {
+        $thumbnails = collect((array) ($asset->metadata['thumbnails'] ?? []))
+            ->filter(fn ($thumb) => is_array($thumb) && ! empty($thumb['path']))
+            ->map(fn (array $thumb) => [...$thumb, 'full_path' => $asset->storage_id.'/'.$thumb['path']])
+            ->values()
+            ->all();
+
+        return $thumbnails === [] ? null : $thumbnails;
     }
 
     /**
