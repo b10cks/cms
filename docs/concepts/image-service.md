@@ -156,7 +156,7 @@ For Nuxt, a ready-made `@nuxt/image` provider generates these URLs (including re
 
 ## Poster frames
 
-Video assets get thumbnail frames extracted at upload time. Those frames are addressable through the same URL grammar by appending `/poster`, which turns a video URL into an image URL — every transformation and query parameter above still applies:
+Video assets get thumbnail frames extracted at upload time. Those frames are addressable through the same URL grammar by appending `/poster`, which turns a video URL into an image URL — every transformation and query parameter above still applies. Other non-image assets (audio, PDFs, archives, …) get the same `/poster` sub-path once a custom poster (below) has been uploaded for them:
 
 ```
 …/clip.mp4/poster                                  # first frame, default format
@@ -171,7 +171,7 @@ Video assets get thumbnail frames extracted at upload time. Those frames are add
 <video src="…/clip.mp4" poster="…/clip.mp4/poster/w_1280,h_720,c_fill" controls></video>
 ```
 
-**Custom posters.** Editors can replace the auto-generated captures with a hand-picked still via `POST /mgmt/v1/spaces/{space}/assets/{asset}/poster` (multipart, field `poster`, raster image formats only). The upload replaces the generated frames entirely — afterwards `/poster` serves the uploaded image and the old captures are deleted from storage.
+**Custom posters.** Editors can set a hand-picked still via `POST /mgmt/v1/spaces/{space}/assets/{asset}/poster` (multipart, field `poster`, raster image formats only). This works for **any non-image asset** — videos, audio, PDFs, archives — so a zip or PDF can carry a designed cover instead of a generic file icon. Afterwards `/poster` serves the uploaded image; for videos the generated captures are stashed rather than deleted, and `DELETE …/assets/{asset}/poster` removes the custom poster and restores them. Non-media assets only expose `/poster` while a custom poster is set — thumbnail metadata from other sources is never served.
 
 Because the `/poster` URL stays the same when the poster changes, unpinned poster responses are cached for an hour and revalidate with an `ETag`. The management API exposes a `poster_url` on every asset that pins the current poster with a `v` parameter; pinned URLs are cached immutably like any other transformation.
 

@@ -8845,8 +8845,8 @@
         },
         "/mgmt/v1/spaces/{space}/assets/{asset}/poster": {
             "post": {
-                "summary": "Upload a custom poster frame, replacing the auto-generated thumbnails",
-                "description": "Upload a custom poster frame, replacing the auto-generated thumbnails.",
+                "summary": "Upload a custom poster/thumbnail for a non-image asset",
+                "description": "Upload a custom poster/thumbnail for a non-image asset.\n\nThe image is shown in place of the generated video frames or the\nfile-type icon.",
                 "tags": [
                     "Assets"
                 ],
@@ -8893,6 +8893,53 @@
                         }
                     }
                 },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssetResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Remove a custom poster",
+                "description": "Remove a custom poster.\n\nRestores the stashed generated video frames when the asset has any.",
+                "tags": [
+                    "Assets"
+                ],
+                "operationId": "delete_spaces_by_space_assets_by_asset_poster",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "asset",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The asset identifier"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Successful response",

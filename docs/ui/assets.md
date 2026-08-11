@@ -59,9 +59,11 @@ Filename, alt text, title, description, and any custom fields your space (or thi
 
 Click the image to set its **focus point** — the spot that must stay visible when the website crops the image to different shapes (wide header, square card, tall banner). One image, every format, face always in frame. ([How cropping works](../concepts/image-service.md#crop-modes))
 
-### Video poster
+### Posters & thumbnails
 
-Videos show the frames grabbed at upload; click one to jump the player to that moment. If none of them is the still you want to lead with, **Upload poster** replaces them with an image of your choosing — a designed title card, a frame from elsewhere in the shoot, anything. The uploaded image becomes what the [poster URL](../concepts/image-service.md#poster-frames) serves, so every frontend using it updates without re-linking. Replacing the generated frames is permanent; re-upload a different image to change it again.
+Videos show the frames grabbed at upload; click one to jump the player to that moment. If none of them is the still you want to lead with, **Upload poster** shows an image of your choosing instead — a designed title card, a frame from elsewhere in the shoot, anything. The uploaded image becomes what the [poster URL](../concepts/image-service.md#poster-frames) serves, so every frontend using it updates without re-linking. **Remove poster** brings the generated frames back.
+
+Every other non-image file — PDFs, archives, audio, anything that would otherwise show a file icon — takes a custom thumbnail the same way: **Upload thumbnail** in the detail view, and the image appears wherever the asset is shown (library grid and list, content editor, public shares) and at the asset's poster URL.
 
 ### Colors & accessibility
 
