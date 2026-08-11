@@ -24,7 +24,7 @@ class AutomationController extends Controller
             ->filter(AutomationFilter::fromRequest($request))
             ->where('space_id', $space->id)
             ->with('action')
-            ->paginate();
+            ->paginate($this->perPage($request));
 
         return AutomationResource::collection($automations);
     }

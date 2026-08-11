@@ -333,9 +333,9 @@ const isTogglePending = (automation: AutomationResource) => {
 
                   <Switch
                     v-if="canManage"
-                    :checked="getCheckedState(automation)"
+                    :model-value="getCheckedState(automation)"
                     :disabled="isTogglePending(automation)"
-                    @update:checked="handleToggle(automation, $event)"
+                    @update:model-value="handleToggle(automation, $event)"
                   />
 
                   <DropdownMenu v-if="canManage">

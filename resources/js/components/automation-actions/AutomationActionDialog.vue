@@ -442,9 +442,9 @@ const summaryText = computed(() => {
                 </p>
               </div>
               <Switch
-                :checked="form.is_active"
+                :model-value="form.is_active"
                 :disabled="loading"
-                @update:checked="handleActiveChange"
+                @update:model-value="handleActiveChange"
               />
             </div>
           </div>

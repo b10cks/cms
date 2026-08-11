@@ -351,9 +351,9 @@ const handleKeyPress = (event: KeyboardEvent): void => {
 
               <Switch
                 v-else-if="column.type === 'checkbox'"
-                :checked="Boolean(item[column.key])"
+                :model-value="Boolean(item[column.key])"
                 :disabled="disabled || column.readonly || column.editable === false"
-                @update:checked="updateItem(index, column.key, $event)"
+                @update:model-value="updateItem(index, column.key, $event)"
               />
 
               <span

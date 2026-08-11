@@ -287,9 +287,9 @@ const isTogglePending = (action: AutomationActionResource) => {
                 <div class="flex items-center justify-end gap-2">
                   <Switch
                     v-if="canManage"
-                    :checked="getCheckedState(action)"
+                    :model-value="getCheckedState(action)"
                     :disabled="isTogglePending(action)"
-                    @update:checked="handleToggle(action, $event)"
+                    @update:model-value="handleToggle(action, $event)"
                   />
 
                   <DropdownMenu v-if="canManage">

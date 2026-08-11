@@ -733,6 +733,59 @@ class AutomationTest extends TestCase
     }
 
     #[Test]
+    public function content_tree_discovery_query_returns_active_manual_content_actions(): void
+    {
+        $this->actingAs($this->editor);
+
+        $action = AutomationAction::factory()->create([
+            'space_id' => $this->space->id,
+            'type' => 'void',
+        ]);
+
+        $contentAction = Automation::factory()->create([
+            'space_id' => $this->space->id,
+            'action_id' => $action->id,
+            'name' => 'Content Action',
+            'trigger_type' => 'manual',
+            'trigger_config' => ['table' => 'contents'],
+            'is_active' => true,
+        ]);
+
+        Automation::factory()->create([
+            'space_id' => $this->space->id,
+            'action_id' => $action->id,
+            'name' => 'Inactive Content Action',
+            'trigger_type' => 'manual',
+            'trigger_config' => ['table' => 'contents'],
+            'is_active' => false,
+        ]);
+
+        Automation::factory()->create([
+            'space_id' => $this->space->id,
+            'action_id' => $action->id,
+            'name' => 'Plain Manual Automation',
+            'trigger_type' => 'manual',
+            'trigger_config' => [],
+            'is_active' => true,
+        ]);
+
+        // Mirrors the ContentTree discovery query verbatim: booleans reach the
+        // API as the strings the URLSearchParams serializer produces.
+        $response = $this->getJson(route('mgmt.automations.index', [
+            'space' => $this->space->id,
+            'trigger_type' => 'manual',
+            'table' => 'contents',
+            'is_active' => 'true',
+            'per_page' => 100,
+        ]));
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.id', $contentAction->id);
+        $response->assertJsonPath('meta.per_page', 100);
+    }
+
+    #[Test]
     public function manual_content_triggers_reject_missing_contents(): void
     {
         $this->actingAs($this->owner);
