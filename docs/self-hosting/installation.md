@@ -157,6 +157,8 @@ For the webhost package: extract the new archive over the old tree (keep your `.
 
 ::: warning Migrate space databases too, not just the management one
 `php artisan migrate` alone is **not** enough on any of these paths. It updates the management database, while each space carries its own schema — one database per space on the standard profile, prefixed tables or a SQLite file per space on the shared profile. `b10cks:upgrade` runs both, applying space migrations only where they are actually pending. If you have previously upgraded with `migrate` alone, run `php artisan b10cks:upgrade --force` once to catch the spaces up.
+
+When a release changes the built-in role definitions (new or changed abilities), reconcile the seeded system roles with `php artisan authorization:sync-roles` (`--dry-run` to preview, `--prune` to also remove roles dropped from the config). Custom roles are never touched; add newly introduced abilities to them by hand where wanted.
 :::
 
 ## Generating API docs

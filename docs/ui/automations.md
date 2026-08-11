@@ -34,9 +34,17 @@ An automation picks a **trigger**, links an **action**, and sets guardrails:
 | **Content unpublished** | When a published entry is taken offline |
 | **On insert / update / delete** | On row-level changes of a chosen resource type; *on update* can watch specific columns |
 | **Time based** | On a cron expression |
-| **Manual** | Only when run by hand |
+| **Manual** | Only when run by hand — from the automations page, the Management API, or the content tree (see below) |
 
 Triggers can carry **conditions** (only fire when the record matches rules) and **payload values** — including placeholders resolved from the trigger context (e.g. the entry's slug or [cache tags](content.md#tabs) for targeted CDN invalidation).
+
+### Content actions
+
+A manual automation can be offered directly in the [content tree](content.md#the-content-tree): enable **Content action** on the trigger, and the automation appears in the tree's right-click menu under **Actions**, ready to run against a single entry — *send this page to translation*, *re-index this article*, *notify the team about this entry*.
+
+- **Limit to block types** (optional) restricts where the action is offered — a "Request translation" action only on articles, not on folders. Leave it empty to offer the action on every entry. The restriction is enforced by the server too, not just hidden in the menu.
+- The run receives the **full entry as context**, exactly like a content-published trigger — so templates like `{{ record.full_slug }}`{v-pre} or conditions on the record work unchanged.
+- The **Actions** submenu is shown to everyone with the *Trigger automations* permission (included in the built-in owner, admin, and editor roles); it appears greyed out when no action matches the entry's block type. Triggering does not grant editing automations.
 
 ### Guardrails
 

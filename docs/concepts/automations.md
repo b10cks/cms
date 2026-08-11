@@ -24,7 +24,13 @@ Two pieces, managed separately:
 
 Triggers can carry **conditions** (fire only when the record matches rules) and a static **payload** merged into the context.
 
-A manual automation can be marked as a **content action** (`config.table: "contents"`). It then shows up in the content tree's *Actions* context submenu, where it can be run against a single entry; the triggered execution receives the full record context of that entry, exactly like a record-based trigger. Optionally restrict it to specific block types via `config.block_ids` — the restriction is enforced server-side, and the tree only offers matching actions per entry.
+### Manual content actions
+
+A manual automation can be marked as a **content action** (`config.table: "contents"`). It then shows up in the content tree's *Actions* context submenu, where it can be run against a single entry. Optionally restrict it to specific block types via `config.block_ids` (block IDs; empty = all) — the tree only offers matching actions per entry, and the server rejects mismatches on trigger.
+
+Programmatically, pass `content_id` to the trigger endpoint (`POST …/automations/{id}/trigger`, also exposed as `automations.trigger` in the Management API/MCP). The execution then receives the full record context of that entry — `record` / `content` (with the `title` alias), `record_id`, `space`, `actor`, `meta` — with `operation: "manual"` and `source: "manual"`, so templates and conditions behave exactly as on record-based triggers. Any request `payload` is merged on top. Without `content_id`, manual triggering stays payload-only as before.
+
+Triggering is guarded by its own **`automations.trigger`** ability (built-in owner, admin, and editor roles have it). It implies read access to automations — you must see what's triggerable — but not managing them; secrets stay write-only either way.
 
 ## The context
 

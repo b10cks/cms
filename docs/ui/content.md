@@ -12,7 +12,7 @@ The tree on the left holds every page and folder of your project, nested the way
 
 - **Rearrange** — drag items where you want them. Select several at once and move them together; while dragging, the tree shows exactly where things will land (_into_, _before_, _after_, _to root_). Whether you can hand-sort or things stay alphabetical is a space setting — and any folder can define its own order (see [page settings](#the-config-tab)).
 - **Find things fast** — the tree search is fuzzy: type a few letters of what you remember (`prcng` finds "Pricing") and jump between matches with the arrows.
-- **Right-click for everything** — view, edit, rename, copy, cut, paste (_into_ a folder or _after_ an item), publish, publish with message, schedule, delete. Deleting removes the item _and everything underneath it_, so the app asks first.
+- **Right-click for everything** — view, edit, rename, copy, cut, paste (_into_ a folder or _after_ an item), publish, publish with message, schedule, delete. Deleting removes the item _and everything underneath it_, so the app asks first. If your space defines [content actions](automations.md#content-actions), they appear here under **Actions** — run an automation against exactly this entry.
 - **Read the badges** — each item shows its state at a glance: draft, published, published-but-edited-since, or scheduled.
 
 > **Tip:** for restructuring whole sections at once — moving dozens of pages, planning new areas — switch to the [Canvas](canvas.md), stage everything visually, and apply it in one click.
