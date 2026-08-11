@@ -100,15 +100,16 @@ Same JSON shape in `~/.codeium/windsurf/mcp_config.json`.
 
 ## Tools
 
-The server exposes three tools and one resource:
+The server exposes four tools and two resources:
 
 | Tool | Purpose |
 | --- | --- |
 | `b10cks_mgmt_operations` | Lists all operations with descriptions and required/optional arguments — the assistant's index into the API |
 | `b10cks_content_model_guide` | Returns the content modeling guide: block types, field types, tag hierarchy, editor layout, and canonical block examples |
+| `b10cks_automations_guide` | Returns the automations guide: action/trigger payload schemas, conditions, template placeholders, [content actions](../concepts/automations.md#manual-content-actions), and recipes (e.g. a CDN cache-clear action editors run from the content tree) |
 | `b10cks_mgmt_call` | Executes any operation |
 
-The guide is also published as the MCP resource `b10cks://content-model-guide`, so clients that surface resources can pin it into context. Assistants are instructed to read it before designing or creating blocks — it encodes the same rules the API validates (slug format, translatable/indexable constraints, editor-tab assignment) plus patterns from a production project, which turns "make me a hero block" from trial-and-error into a one-shot call.
+The guides are also published as the MCP resources `b10cks://content-model-guide` and `b10cks://automations-guide`, so clients that surface resources can pin them into context. Assistants are instructed to read them before designing blocks or creating automations — they encode the same rules the API validates (slug format, translatable/indexable constraints, trigger/action config schemas) plus patterns from production projects, which turns "make me a hero block" or "add a cache-clear action to articles" from trial-and-error into a one-shot call.
 
 ## Calling operations
 

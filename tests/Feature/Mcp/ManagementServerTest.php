@@ -2,15 +2,23 @@
 
 namespace Tests\Feature\Mcp;
 
+use App\Jobs\ProcessAutomation;
+use App\Mcp\Resources\AutomationsGuideResource;
+use App\Mcp\Resources\ContentModelGuideResource;
 use App\Mcp\Servers\ManagementServer;
 use App\Mcp\Support\OperationRegistry;
+use App\Mcp\Tools\AutomationsGuideTool;
 use App\Mcp\Tools\ContentModelGuideTool;
 use App\Mcp\Tools\MgmtCallTool;
 use App\Mcp\Tools\MgmtOperationsTool;
+use App\Models\Management\Automation;
+use App\Models\Management\AutomationAction;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
+use App\Models\Space\Content;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -66,9 +74,83 @@ class ManagementServerTest extends TestCase
     #[Test]
     public function it_serves_the_content_model_guide_resource()
     {
-        ManagementServer::resource(\App\Mcp\Resources\ContentModelGuideResource::class)
+        ManagementServer::resource(ContentModelGuideResource::class)
             ->assertOk()
             ->assertSee('b10cks Content Modeling Guide');
+    }
+
+    #[Test]
+    public function it_returns_the_automations_guide()
+    {
+        ManagementServer::tool(AutomationsGuideTool::class)
+            ->assertOk()
+            ->assertSee('b10cks Automations Guide')
+            ->assertSee('Cache clear as a content action');
+    }
+
+    #[Test]
+    public function it_serves_the_automations_guide_resource()
+    {
+        ManagementServer::resource(AutomationsGuideResource::class)
+            ->assertOk()
+            ->assertSee('b10cks Automations Guide');
+    }
+
+    #[Test]
+    public function it_creates_and_triggers_a_content_action_end_to_end()
+    {
+        Queue::fake();
+
+        ManagementServer::tool(MgmtCallTool::class, [
+            'operation' => 'automations.createAction',
+            'spaceId' => $this->space->id,
+            'payload' => [
+                'name' => 'CDN purge',
+                'type' => 'webhook',
+                'config' => [
+                    'url' => 'https://cdn.example.com/purge',
+                    'method' => 'POST',
+                    'parameters' => ['tags' => '{{ cache_tags }}'],
+                ],
+            ],
+        ])->assertOk();
+
+        $action = AutomationAction::query()
+            ->where('space_id', $this->space->id)
+            ->firstOrFail();
+
+        $content = Content::factory()->create([
+            'name' => 'Purge Me',
+            'slug' => 'purge-me',
+            'full_slug' => '/purge-me',
+        ]);
+
+        ManagementServer::tool(MgmtCallTool::class, [
+            'operation' => 'automations.create',
+            'spaceId' => $this->space->id,
+            'payload' => [
+                'name' => 'Clear cache',
+                'action_id' => $action->id,
+                'trigger' => [
+                    'type' => 'manual',
+                    'config' => ['table' => 'contents', 'block_ids' => [$content->block_id]],
+                ],
+                'is_active' => true,
+            ],
+        ])->assertOk();
+
+        $automation = Automation::query()
+            ->where('space_id', $this->space->id)
+            ->firstOrFail();
+
+        ManagementServer::tool(MgmtCallTool::class, [
+            'operation' => 'automations.trigger',
+            'spaceId' => $this->space->id,
+            'automationId' => $automation->id,
+            'payload' => ['content_id' => $content->id],
+        ])->assertOk();
+
+        Queue::assertPushed(ProcessAutomation::class);
     }
 
     #[Test]

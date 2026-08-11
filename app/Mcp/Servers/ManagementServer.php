@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Resources\AutomationsGuideResource;
 use App\Mcp\Resources\ContentModelGuideResource;
+use App\Mcp\Tools\AutomationsGuideTool;
 use App\Mcp\Tools\ContentModelGuideTool;
 use App\Mcp\Tools\MgmtCallTool;
 use App\Mcp\Tools\MgmtOperationsTool;
@@ -20,15 +22,19 @@ class ManagementServer extends Server
         MCP server for the b10cks Management API. Use b10cks_mgmt_operations to
         discover the available operations, then execute them with b10cks_mgmt_call.
         Before designing or creating blocks, read b10cks_content_model_guide.
+        Before creating automation actions or automations (webhooks, emails,
+        content actions like cache purges), read b10cks_automations_guide.
     MARKDOWN;
 
     protected array $tools = [
         MgmtOperationsTool::class,
         ContentModelGuideTool::class,
+        AutomationsGuideTool::class,
         MgmtCallTool::class,
     ];
 
     protected array $resources = [
         ContentModelGuideResource::class,
+        AutomationsGuideResource::class,
     ];
 }

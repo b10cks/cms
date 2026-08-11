@@ -773,14 +773,14 @@ return [
     // ─── Automations ─────────────────────────────────────────────────────────────
     // Actions
     'automations.listActions' => [
-        'description' => 'List automation actions in a space.',
+        'description' => 'List automation actions (reusable delivery targets: webhook/email/void) in a space. Check for a reusable target before creating a new one.',
         'required' => ['spaceId'],
         'accepts' => ['spaceId', 'params'],
         'method' => 'GET',
         'uri' => '/mgmt/v1/spaces/{spaceId}/automation-actions',
     ],
     'automations.createAction' => [
-        'description' => 'Create an automation action.',
+        'description' => 'Create an automation action (delivery target). Payload: {name, type: webhook|email|void, config, secrets?}. Read b10cks_automations_guide for config schemas and template placeholders first.',
         'required' => ['spaceId', 'payload'],
         'accepts' => ['spaceId', 'payload'],
         'method' => 'POST',
@@ -809,21 +809,21 @@ return [
     ],
     // Automation CRUD
     'automations.getTriggerCatalog' => [
-        'description' => 'Get the catalog of available automation triggers.',
+        'description' => 'Get the catalog of tables/columns available to record-level automation triggers (on_insert/on_update/on_delete) plus the content lifecycle triggers.',
         'required' => ['spaceId'],
         'accepts' => ['spaceId'],
         'method' => 'GET',
         'uri' => '/mgmt/v1/spaces/{spaceId}/automations/trigger-catalog',
     ],
     'automations.list' => [
-        'description' => 'List automations in a space.',
+        'description' => 'List automations in a space. Filter params: trigger_type, table, action_id, action_type, is_active (e.g. trigger_type=manual&table=contents lists content actions).',
         'required' => ['spaceId'],
         'accepts' => ['spaceId', 'params'],
         'method' => 'GET',
         'uri' => '/mgmt/v1/spaces/{spaceId}/automations',
     ],
     'automations.create' => [
-        'description' => 'Create an automation.',
+        'description' => 'Create an automation binding a trigger to an action. Payload: {name, action_id, trigger: {type, config}, is_active?, execution_limit?}. A manual trigger with config {table: "contents", block_ids?} becomes a content action editors can run from the content tree. Read b10cks_automations_guide first.',
         'required' => ['spaceId', 'payload'],
         'accepts' => ['spaceId', 'payload'],
         'method' => 'POST',
@@ -851,7 +851,7 @@ return [
         'uri' => '/mgmt/v1/spaces/{spaceId}/automations/{automationId}',
     ],
     'automations.trigger' => [
-        'description' => 'Manually trigger an automation.',
+        'description' => 'Manually trigger a manual-type automation. Payload may carry content_id (run against one content entry, full record context, block_ids enforced) and/or extra context keys under payload.',
         'required' => ['spaceId', 'automationId'],
         'accepts' => ['spaceId', 'automationId', 'payload'],
         'method' => 'POST',
