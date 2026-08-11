@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.11-eb4fb8bd] — 2026-8-11
+
+- 🐛 Fix inert Switch bindings in the automations UI
+
 ## [v2026.8.11-835b0a1c] — 2026-8-11
 
 - ✨ Add an automations guide to the native MCP server
