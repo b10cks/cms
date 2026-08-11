@@ -88,7 +88,7 @@ class B10cksUpgradeCommandTest extends TestCase
         $command = $this->makeCommand();
 
         $this->assertSame(0, $command->handle());
-        $this->assertSame(['migrate', 'spaces:repair-databases'], $command->recordedCalls);
+        $this->assertSame(['migrate', 'authorization:sync-roles', 'spaces:repair-databases'], $command->recordedCalls);
 
         $payload = json_decode((string) file_get_contents($this->statePath), true, 512, JSON_THROW_ON_ERROR);
         $this->assertSame('2026.8.0', $payload['app_version']);
@@ -118,7 +118,7 @@ class B10cksUpgradeCommandTest extends TestCase
         $command = $this->makeCommand(force: true);
 
         $this->assertSame(0, $command->handle());
-        $this->assertSame(['migrate', 'spaces:repair-databases'], $command->recordedCalls);
+        $this->assertSame(['migrate', 'authorization:sync-roles', 'spaces:repair-databases'], $command->recordedCalls);
     }
 
     /**
@@ -134,7 +134,7 @@ class B10cksUpgradeCommandTest extends TestCase
         $command = $this->makeCommand();
 
         $this->assertSame(0, $command->handle());
-        $this->assertSame(['migrate', 'spaces:repair-databases'], $command->recordedCalls);
+        $this->assertSame(['migrate', 'authorization:sync-roles', 'spaces:repair-databases'], $command->recordedCalls);
     }
 
     #[Test]
@@ -148,7 +148,7 @@ class B10cksUpgradeCommandTest extends TestCase
         $command = $this->makeCommand();
 
         $this->assertSame(0, $command->handle());
-        $this->assertSame(['migrate', 'spaces:repair-databases'], $command->recordedCalls);
+        $this->assertSame(['migrate', 'authorization:sync-roles', 'spaces:repair-databases'], $command->recordedCalls);
     }
 
     #[Test]

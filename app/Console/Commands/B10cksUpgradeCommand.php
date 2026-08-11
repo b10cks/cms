@@ -60,6 +60,10 @@ class B10cksUpgradeCommand extends Command
 
         $this->callOrFail('migrate', ['--force' => true]);
 
+        // Idempotent; only touches system roles whose config definition
+        // drifted. Deliberately without --prune, which would drop roles.
+        $this->callOrFail('authorization:sync-roles', []);
+
         // Migrates only the spaces with pending migrations: the repair command
         // treats a space with unapplied space migrations as uninitialized.
         // Deliberately without --force, which would re-run every space.
