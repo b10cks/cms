@@ -690,7 +690,11 @@
       "uploading": "Wird hochgeladen...",
       "replaceMedia": "Medien ersetzen",
       "uploadPoster": "Poster hochladen",
-      "uploadPosterHint": "Ersetzt die generierten Frames",
+      "uploadPosterHint": "Wird anstelle der generierten Frames angezeigt",
+      "removePoster": "Poster entfernen",
+      "uploadThumbnail": "Vorschaubild hochladen",
+      "uploadThumbnailHint": "Wird anstelle des Datei-Symbols angezeigt",
+      "removeThumbnail": "Vorschaubild entfernen",
       "finish": "Fertig",
       "forceDeleteTitle": "Löschen erzwingen",
       "rights": {
@@ -4633,7 +4637,9 @@
       "replaceSuccess": "Asset-Datei erfolgreich ersetzt",
       "replaceError": "Fehler beim Ersetzen der Asset-Datei: {error}",
       "posterSuccess": "Poster erfolgreich aktualisiert",
-      "posterError": "Fehler beim Hochladen des Posters: {error}"
+      "posterError": "Fehler beim Hochladen des Posters: {error}",
+      "posterRemoveSuccess": "Poster entfernt",
+      "posterRemoveError": "Fehler beim Entfernen des Posters: {error}"
     },
     "assetVersions": {
       "restoreSuccess": "Asset-Version erfolgreich wiederhergestellt",
@@ -4943,6 +4949,7 @@
       "bulkDeleteConfirmation": "{count} Ordner löschen? Dies kann nicht rückgängig gemacht werden."
     },
     "assets": {
+      "removePosterConfirmation": "Es sind keine generierten Vorschau-Frames zum Wiederherstellen vorhanden — nach dem Entfernen des Posters hat diese Datei kein Vorschaubild mehr. Trotzdem entfernen?",
       "deleteConfirmation": "Lösche \"{name}\"? Diese Aktion kann nicht rückgängig gemacht werden.",
       "deleteFromCollectionConfirmation": "\"{name}\" endgültig aus der gesamten Bibliothek löschen? Das Asset wird aus allen Sammlungen und Ordnern entfernt, in denen es vorkommt – nicht nur aus dieser Sammlung – und kann nicht wiederhergestellt werden. Um es nur aus dieser Sammlung zu nehmen, nutze stattdessen „Aus Sammlung entfernen“.",
       "bulkDeleteFromCollectionConfirmation": "{count} Asset endgültig aus der gesamten Bibliothek löschen? Es wird aus allen Sammlungen und Ordnern entfernt, in denen es vorkommt – nicht nur aus dieser Sammlung – und kann nicht wiederhergestellt werden. Um es nur aus dieser Sammlung zu nehmen, nutze stattdessen „Aus Sammlung entfernen“. | {count} Assets endgültig aus der gesamten Bibliothek löschen? Sie werden aus allen Sammlungen und Ordnern entfernt, in denen sie vorkommen – nicht nur aus dieser Sammlung – und können nicht wiederhergestellt werden. Um sie nur aus dieser Sammlung zu nehmen, nutze stattdessen „Aus Sammlung entfernen“.",

@@ -138,7 +138,8 @@ export class Assets extends BaseResource<
   }
 
   /**
-   * Replace the auto-generated video thumbnails with a hand-picked poster.
+   * Upload a hand-picked poster/thumbnail, shown in place of the generated
+   * video frames or the file-type icon.
    */
   public async uploadPoster(assetId: string, file: File): Promise<ApiResponse<AssetResource>> {
     const formData = new FormData()
@@ -148,6 +149,13 @@ export class Assets extends BaseResource<
       `${this.basePath}/${assetId}/poster`,
       formData
     )
+  }
+
+  /**
+   * Remove the custom poster, restoring generated video frames when present.
+   */
+  public async removePoster(assetId: string): Promise<ApiResponse<AssetResource>> {
+    return this.client.delete<ApiResponse<AssetResource>>(`${this.basePath}/${assetId}/poster`)
   }
 
   public async getLinkedContents(

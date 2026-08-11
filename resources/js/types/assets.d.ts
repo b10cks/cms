@@ -56,6 +56,8 @@ interface AssetMediaMetadata {
   width?: number
   height?: number
   thumbnails?: AssetVideoThumbnail[]
+  /** Generated frames stashed while a custom poster is active (paths only) */
+  generated_thumbnails?: Omit<AssetVideoThumbnail, 'full_path'>[]
   duration?: number
   dominant_color?: string
   palette?: string[]

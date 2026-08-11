@@ -11,6 +11,7 @@ const assets = {
   delete: vi.fn(),
   replaceFile: vi.fn(),
   uploadPoster: vi.fn(),
+  removePoster: vi.fn(),
   export: vi.fn(),
   importData: vi.fn(),
   getLinkedContents: vi.fn(),
@@ -46,6 +47,7 @@ const mountAssets = () => {
     remove: composable.useDeleteAssetMutation(),
     replace: composable.useReplaceAssetFileMutation(),
     poster: composable.useUploadAssetPosterMutation(),
+    removePoster: composable.useRemoveAssetPosterMutation(),
     exportAssets: composable.useExportAssetsMutation(),
     importAssets: composable.useImportAssetsMutation(),
   }
@@ -467,6 +469,42 @@ describe('useUploadAssetPosterMutation', () => {
       mutations().poster.mutateAsync({ id: 'a2', file: new File(['x'], 'p.jpg') })
     ).rejects.toThrow('not a video')
     expect(failure).toHaveBeenCalledWith('Failed to upload poster: not a video')
+  })
+})
+
+describe('useRemoveAssetPosterMutation', () => {
+  it('reads the id out of the response envelope', async () => {
+    assets.removePoster.mockResolvedValue({ data: asset('a2') })
+    const { removePoster } = mutations()
+    const invalidate = spyInvalidate()
+
+    await removePoster.mutateAsync('a2')
+
+    expect(assets.removePoster).toHaveBeenCalledWith('a2')
+    expect(invalidatedKeys(invalidate)).toEqual([
+      queryKeys.assets(SPACE).lists(),
+      queryKeys.assets(SPACE).detail('a2'),
+    ])
+    expect(success).toHaveBeenCalledWith('Poster removed')
+  })
+
+  it('reports a failure for an empty envelope', async () => {
+    assets.removePoster.mockResolvedValue({})
+    const { removePoster } = mutations()
+    const invalidate = spyInvalidate()
+
+    await removePoster.mutateAsync('a2')
+
+    expect(invalidate).not.toHaveBeenCalled()
+    expect(success).not.toHaveBeenCalled()
+    expect(failure).toHaveBeenCalledWith('Failed to remove poster: Unknown error')
+  })
+
+  it('reports failure', async () => {
+    assets.removePoster.mockRejectedValue(new Error('no custom poster'))
+
+    await expect(mutations().removePoster.mutateAsync('a2')).rejects.toThrow('no custom poster')
+    expect(failure).toHaveBeenCalledWith('Failed to remove poster: no custom poster')
   })
 })
 

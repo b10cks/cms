@@ -104,7 +104,7 @@ const hoverThumbnailIndex = ref(0)
 let thumbnailInterval: ReturnType<typeof setInterval> | null = null
 
 const startThumbnailCycle = () => {
-  const thumbs = props.asset.metadata.thumbnails
+  const thumbs = props.asset.metadata?.thumbnails
   if (!thumbs || thumbs.length <= 1) return
   thumbnailInterval = setInterval(() => {
     hoverThumbnailIndex.value = (hoverThumbnailIndex.value + 1) % thumbs.length
@@ -249,13 +249,14 @@ watchEffect((onCleanup) => {
             :modifiers="{ crop: 'fill' }"
             class="pointer-events-none h-full w-full object-cover"
           />
-          <template
+          <div
             v-else-if="getFileType(asset.mime_type) === 'video'"
+            class="h-full"
             @mouseenter="startThumbnailCycle"
             @mouseleave="stopThumbnailCycle"
           >
             <NuxtImg
-              v-if="asset.metadata.thumbnails?.[hoverThumbnailIndex]"
+              v-if="asset.metadata?.thumbnails?.[hoverThumbnailIndex]"
               :src="asset.metadata.thumbnails[hoverThumbnailIndex].full_path"
               :alt="asset.filename"
               :width="size"
@@ -281,7 +282,16 @@ watchEffect((onCleanup) => {
                 />
               </div>
             </div>
-          </template>
+          </div>
+          <NuxtImg
+            v-else-if="asset.metadata?.thumbnails?.[0]?.full_path"
+            :src="asset.metadata.thumbnails[0].full_path"
+            :alt="asset.filename"
+            :width="size"
+            :height="size"
+            crop="fill"
+            class="pointer-events-none h-full w-full object-cover"
+          />
           <div
             v-else
             class="flex h-full items-center justify-center"
@@ -345,7 +355,7 @@ watchEffect((onCleanup) => {
             </div>
             <div class="text-sm text-muted">
               {{ asset.extension }} • {{ formatFileSize(asset.size)
-              }}<template v-if="asset.metadata.duration">
+              }}<template v-if="asset.metadata?.duration">
                 • {{ formatVideoDuration(asset.metadata.duration) }}</template
               >
               • {{ linkedContentsLabel }}

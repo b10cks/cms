@@ -72,6 +72,7 @@ const emit = defineEmits<{
 
 const { $t } = useI18n()
 const { alert } = useAlertDialog()
+const { getFileIcon, getFileType } = useFileUtils()
 const { useAccessControl } = useAuthorization()
 const { settings } = useSpaceSettings(props.spaceId)
 const { useAssetsQuery, useDeleteAssetMutation, useUpdateAssetMutation } = useAssets(props.spaceId)
@@ -921,11 +922,20 @@ onUnmounted(() => {
             >
               <div class="checkerboard relative size-20 shrink-0 overflow-hidden rounded-md">
                 <NuxtImg
-                  v-if="asset.mime_type?.startsWith('image/')"
+                  v-if="getFileType(asset.mime_type) === 'image'"
                   :src="asset.full_path"
                   :alt="asset.filename"
                   :width="160"
                   :height="160"
+                  class="h-full w-full object-cover"
+                />
+                <NuxtImg
+                  v-else-if="asset.metadata?.thumbnails?.[0]?.full_path"
+                  :src="asset.metadata.thumbnails[0].full_path"
+                  :alt="asset.filename"
+                  :width="160"
+                  :height="160"
+                  crop="fill"
                   class="h-full w-full object-cover"
                 />
                 <div
@@ -933,7 +943,7 @@ onUnmounted(() => {
                   class="flex h-full w-full items-center justify-center"
                 >
                   <Icon
-                    name="lucide:file"
+                    :name="getFileIcon(getFileType(asset.mime_type))"
                     size="1.5rem"
                     class="text-muted-foreground"
                   />

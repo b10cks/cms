@@ -305,6 +305,32 @@ export function useAssets(spaceId: MaybeRef<string>) {
     })
   }
 
+  const useRemoveAssetPosterMutation = () => {
+    return useMutation({
+      mutationFn: async (id: string) => {
+        return await spaceAPI.value.assets.removePoster(id)
+      },
+      onSuccess: (response) => {
+        const asset = response?.data
+
+        if (!asset) {
+          // An empty response is not a success we can report on.
+          toast.error(t('composables.assets.posterRemoveError', { error: 'Unknown error' }) as string)
+          return
+        }
+
+        queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).detail(asset.id) })
+        toast.success(t('composables.assets.posterRemoveSuccess') as string)
+      },
+      onError: (err: Error) => {
+        toast.error(
+          t('composables.assets.posterRemoveError', { error: err.message || 'Unknown error' }) as string
+        )
+      },
+    })
+  }
+
   const useExportAssetsMutation = () => {
     return useMutation({
       mutationFn: async (params: AssetsQueryParams & { as: ExportTypes }) => {
@@ -353,6 +379,7 @@ export function useAssets(spaceId: MaybeRef<string>) {
     useDeleteAssetMutation,
     useReplaceAssetFileMutation,
     useUploadAssetPosterMutation,
+    useRemoveAssetPosterMutation,
     useExportAssetsMutation,
     useImportAssetsMutation,
     uploadAsset,

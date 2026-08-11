@@ -11,17 +11,6 @@ import useSpaceSettings from '~/composables/useSpaceSettings'
 
 import Label from '../ui/form/Label.vue'
 
-interface AssetValue {
-  id: string
-  type: 'asset'
-  full_path: string
-  extension: string
-  mime_type: string
-  size: number
-  filename: string
-  data: object
-}
-
 const props = defineProps<{
   modelValue?: AssetValue[] | null
   item: {
@@ -259,6 +248,19 @@ const handleFolderChange = (folderId: string | null) => {
                 <NuxtImg
                   :src="asset.full_path"
                   :alt="String((asset.data as Record<string, unknown>)?.altText || asset.filename)"
+                  :width="128"
+                  :height="128"
+                  :modifiers="{ crop: 'fill' }"
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <div
+                v-else-if="asset.metadata?.thumbnails?.[0]?.full_path"
+                class="h-14 w-14 overflow-hidden rounded-md border border-border bg-surface"
+              >
+                <NuxtImg
+                  :src="asset.metadata.thumbnails[0].full_path"
+                  :alt="asset.filename"
                   :width="128"
                   :height="128"
                   :modifiers="{ crop: 'fill' }"

@@ -75,9 +75,11 @@ const {
 const ilumBaseUrl = (runtimeConfig.public.ilum.baseURL || '').replace(/\/$/, '')
 
 const { alert } = useAlertDialog()
-const { useReplaceAssetFileMutation, useUploadAssetPosterMutation } = useAssets(props.spaceId)
+const { useReplaceAssetFileMutation, useUploadAssetPosterMutation, useRemoveAssetPosterMutation } =
+  useAssets(props.spaceId)
 const { mutate: replaceFile, isPending: isReplacing } = useReplaceAssetFileMutation()
 const { mutate: uploadPoster, isPending: isUploadingPoster } = useUploadAssetPosterMutation()
+const { mutate: removePoster, isPending: isRemovingPoster } = useRemoveAssetPosterMutation()
 const replaceProgress = ref(0)
 const { useAssetVersionsQuery, useRestoreAssetVersionMutation } = useAssetVersions(
   props.spaceId,
@@ -92,6 +94,45 @@ const triggerReplaceFile = () => replaceFileInputRef.value?.click()
 
 const triggerPosterUpload = () => posterInputRef.value?.click()
 
+// Everything but images (which are their own preview) can carry a custom
+// poster/thumbnail; video and audio keep the "poster" wording.
+const assetFileType = computed(() => (props.asset ? getFileType(props.asset.mime_type) : 'other'))
+const supportsPoster = computed(() => Boolean(props.asset) && assetFileType.value !== 'image')
+const usesPosterWording = computed(() => ['video', 'audio'].includes(assetFileType.value))
+const customPoster = computed(
+  () => assetCopy.value?.metadata?.thumbnails?.find((thumb) => thumb?.custom && thumb.path) ?? null
+)
+
+const applyAssetResponse = (updated?: AssetResource | null) => {
+  if (updated) {
+    assetCopy.value = deepClone(updated)
+    originalSnapshot = editableSnapshot(updated)
+  }
+}
+
+const onRemovePoster = async () => {
+  if (!assetCopy.value) return
+
+  // For video/audio the poster normally gives way to restored generated
+  // frames — when none are stashed (poster set before stashing existed),
+  // removal leaves the asset without any preview, so ask first.
+  const restoresFrames = Boolean(assetCopy.value.metadata?.generated_thumbnails?.length)
+
+  if (usesPosterWording.value && !restoresFrames) {
+    const confirmed = await alert.confirm(String(t('messages.assets.removePosterConfirmation')), {
+      title: String(t('labels.assets.removePoster')),
+      confirmLabel: String(t('labels.assets.removePoster')),
+      variant: 'destructive',
+    })
+
+    if (!confirmed) return
+  }
+
+  removePoster(assetCopy.value.id, {
+    onSuccess: (response) => applyAssetResponse(response?.data),
+  })
+}
+
 const onPosterSelected = (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0]
   if (!file || !assetCopy.value) return
@@ -104,11 +145,7 @@ const onPosterSelected = (event: Event) => {
     { id: assetCopy.value.id, file },
     {
       onSuccess: (response) => {
-        const updated = response?.data
-        if (updated) {
-          assetCopy.value = deepClone(updated)
-          originalSnapshot = editableSnapshot(updated)
-        }
+        applyAssetResponse(response?.data)
         clearInput()
       },
       onError: clearInput,
@@ -710,9 +747,9 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                 controls
                 :src="asset.url ?? undefined"
                 :poster="
-                  asset.metadata.thumbnails?.[0]?.full_path
+                  assetCopy.metadata?.thumbnails?.[0]?.full_path
                     ? buildIlumUrl(
-                        asset.metadata.thumbnails[0].full_path,
+                        assetCopy.metadata.thumbnails[0].full_path,
                         { width: 1200, crop: 'fit', quality: 75 },
                         ilumBaseUrl
                       )
@@ -721,11 +758,11 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                 class="max-h-[calc(60svh)] w-full rounded-lg object-contain"
               />
               <div
-                v-if="asset.metadata.thumbnails?.length"
+                v-if="assetCopy.metadata?.thumbnails?.length"
                 class="flex gap-2 overflow-x-auto pb-1"
               >
                 <button
-                  v-for="thumb in asset.metadata.thumbnails"
+                  v-for="thumb in assetCopy.metadata.thumbnails"
                   :key="thumb.position"
                   type="button"
                   class="group relative shrink-0 overflow-hidden rounded"
@@ -745,34 +782,22 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                   </span>
                 </button>
               </div>
-              <div v-if="!props.readOnly" class="flex items-center gap-2">
-                <input
-                  ref="posterInput"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
-                  class="hidden"
-                  @change="onPosterSelected"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  class="flex items-center gap-2"
-                  :loading="isUploadingPoster"
-                  @click="triggerPosterUpload"
-                >
-                  <Icon name="lucide:image-up" />
-                  <span>{{ $t('labels.assets.uploadPoster') }}</span>
-                </Button>
-                <span class="text-muted-foreground text-xs">
-                  {{ $t('labels.assets.uploadPosterHint') }}
-                </span>
-              </div>
             </div>
             <div
               v-else-if="getFileType(asset.mime_type) === 'audio'"
               class="flex w-full flex-col items-center gap-4 py-8"
             >
+              <NuxtImg
+                v-if="assetCopy.metadata?.thumbnails?.[0]?.full_path"
+                :src="assetCopy.metadata.thumbnails[0].full_path"
+                :alt="asset.filename"
+                :width="480"
+                :height="270"
+                crop="fit"
+                class="max-h-48 rounded-lg object-contain"
+              />
               <Icon
+                v-else
                 name="lucide:file-audio"
                 size="3rem"
                 class="text-muted"
@@ -797,7 +822,17 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
               v-else
               class="flex h-75 w-full flex-col items-center justify-center gap-4"
             >
+              <NuxtImg
+                v-if="assetCopy.metadata?.thumbnails?.[0]?.full_path"
+                :src="assetCopy.metadata.thumbnails[0].full_path"
+                :alt="asset.filename"
+                :width="480"
+                :height="270"
+                crop="fit"
+                class="max-h-40 rounded-lg object-contain"
+              />
               <Icon
+                v-else
                 :name="getFileIcon(getFileType(asset.mime_type))"
                 size="3rem"
               />
@@ -806,6 +841,71 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                 <p class="text-sm text-muted">{{ formatFileSize(asset.size) }}</p>
               </div>
             </div>
+          </div>
+          <div
+            v-if="!props.readOnly && supportsPoster"
+            class="flex w-full shrink-0 flex-wrap items-center gap-2"
+          >
+            <input
+              ref="posterInput"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+              class="hidden"
+              @change="onPosterSelected"
+            />
+            <!-- The PDF branch previews the document itself, so the uploaded
+                 thumbnail needs its own visual confirmation here. -->
+            <NuxtImg
+              v-if="customPoster?.full_path && asset.mime_type === 'application/pdf'"
+              :src="customPoster.full_path"
+              :alt="asset.filename"
+              :width="96"
+              :height="54"
+              crop="fill"
+              class="h-9 w-16 rounded object-cover"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              class="flex items-center gap-2"
+              :loading="isUploadingPoster"
+              @click="triggerPosterUpload"
+            >
+              <Icon name="lucide:image-up" />
+              <span>{{
+                $t(
+                  usesPosterWording
+                    ? 'labels.assets.uploadPoster'
+                    : 'labels.assets.uploadThumbnail'
+                )
+              }}</span>
+            </Button>
+            <Button
+              v-if="customPoster"
+              variant="outline"
+              size="sm"
+              class="flex items-center gap-2"
+              :loading="isRemovingPoster"
+              @click="onRemovePoster"
+            >
+              <Icon name="lucide:image-off" />
+              <span>{{
+                $t(
+                  usesPosterWording
+                    ? 'labels.assets.removePoster'
+                    : 'labels.assets.removeThumbnail'
+                )
+              }}</span>
+            </Button>
+            <span class="text-muted-foreground text-xs">
+              {{
+                $t(
+                  usesPosterWording
+                    ? 'labels.assets.uploadPosterHint'
+                    : 'labels.assets.uploadThumbnailHint'
+                )
+              }}
+            </span>
           </div>
           <div
             class="flex w-full shrink-0 flex-wrap gap-2"

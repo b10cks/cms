@@ -149,6 +149,19 @@ const handleAssetDetailsUpdate = (asset: AssetResource) => {
             />
           </div>
           <div
+            v-else-if="currentAsset.metadata?.thumbnails?.[0]?.full_path"
+            class="h-14 w-14 overflow-hidden rounded border border-input bg-background"
+          >
+            <NuxtImg
+              :src="currentAsset.metadata.thumbnails[0].full_path"
+              :alt="currentAsset.filename"
+              :width="56"
+              :height="56"
+              :modifiers="{ crop: 'fill' }"
+              class="h-full w-full object-cover"
+            />
+          </div>
+          <div
             v-else
             class="flex h-12 w-12 items-center justify-center rounded border border-input bg-background"
           >

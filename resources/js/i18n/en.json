@@ -690,7 +690,11 @@
       "uploading": "Uploading...",
       "replaceMedia": "Replace Media",
       "uploadPoster": "Upload Poster",
-      "uploadPosterHint": "Replaces the generated frames",
+      "uploadPosterHint": "Shown instead of the generated frames",
+      "removePoster": "Remove Poster",
+      "uploadThumbnail": "Upload Thumbnail",
+      "uploadThumbnailHint": "Shown instead of the file icon",
+      "removeThumbnail": "Remove Thumbnail",
       "finish": "Finish",
       "forceDeleteTitle": "Force Delete Asset",
       "rights": {
@@ -4633,7 +4637,9 @@
       "replaceSuccess": "Asset file replaced successfully",
       "replaceError": "Failed to replace asset file: {error}",
       "posterSuccess": "Poster updated successfully",
-      "posterError": "Failed to upload poster: {error}"
+      "posterError": "Failed to upload poster: {error}",
+      "posterRemoveSuccess": "Poster removed",
+      "posterRemoveError": "Failed to remove poster: {error}"
     },
     "assetVersions": {
       "restoreSuccess": "Asset version restored successfully",
@@ -4943,6 +4949,7 @@
       "bulkDeleteConfirmation": "Delete {count} folders? This cannot be undone."
     },
     "assets": {
+      "removePosterConfirmation": "No generated preview frames are available to restore — removing the poster leaves this file without a preview image. Remove it anyway?",
       "deleteConfirmation": "Delete \"{name}\"? This cannot be undone.",
       "deleteFromCollectionConfirmation": "Permanently delete \"{name}\" from your entire library? This removes the asset from every collection and folder it appears in — not just this collection — and cannot be undone. To only take it out of this collection, use “Remove from collection” instead.",
       "bulkDeleteFromCollectionConfirmation": "Permanently delete {count} asset from your entire library? This removes it from every collection and folder it appears in — not just this collection — and cannot be undone. To only take it out of this collection, use “Remove from collection” instead. | Permanently delete {count} assets from your entire library? This removes them from every collection and folder they appear in — not just this collection — and cannot be undone. To only take them out of this collection, use “Remove from collection” instead.",
