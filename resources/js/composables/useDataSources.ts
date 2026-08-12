@@ -1,134 +1,39 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import { toast } from 'vue-sonner'
-
 import { api } from '~/api'
 import type { DataSourcesQueryParams } from '~/api/resources/data-sources'
-import type { CreateDataSourcePayload, UpdateDataSourcePayload } from '~/types/data-sources'
+import { createCrudComposable } from '~/lib/crud-composable'
+import type {
+  CreateDataSourcePayload,
+  DataSourceResource,
+  UpdateDataSourcePayload,
+} from '~/types/data-sources'
 
 import { queryKeys } from './useQueryClient'
 
+const useDataSourcesCrud = createCrudComposable<
+  DataSourceResource,
+  ApiCollectionResponse<DataSourceResource>,
+  DataSourcesQueryParams,
+  CreateDataSourcePayload,
+  UpdateDataSourcePayload
+>({
+  i18nKey: 'dataSources',
+  keys: (spaceId) => queryKeys.dataSources(spaceId),
+  resource: (spaceId) => api.forSpace(spaceId).dataSources,
+  defaultParams: { sort: '+name' },
+  toastValues: (data) => ({ name: data.name }),
+})
+
 export function useDataSources(spaceId: MaybeRef<string>) {
-  const { t } = useI18n()
-  const queryClient = useQueryClient()
-
-  // Get the API instance for this space
-  const spaceAPI = computed(() => api.forSpace(toValue(spaceId)))
-
-  /**
-   * Query all data sources in a space
-   */
-  const useDataSourcesQuery = (
-    params: MaybeRef<DataSourcesQueryParams> = {},
-    enabled: MaybeRef<boolean> = true
-  ) => {
-    return useQuery({
-      queryKey: computed(() => queryKeys.dataSources(spaceId).list(params)),
-      queryFn: async () => {
-        return await spaceAPI.value.dataSources.index({
-          sort: '+name',
-          ...toValue(params),
-        })
-      },
-      enabled: computed(() => !!toValue(spaceId) && !!toValue(enabled)),
-      placeholderData: keepPreviousData,
-    })
-  }
-
-  /**
-   * Query a single data source by ID
-   */
-  const useDataSourceQuery = (id: MaybeRef<string>, enabled: MaybeRef<boolean> = true) => {
-    return useQuery({
-      queryKey: computed(() => queryKeys.dataSources(spaceId).detail(id)),
-      queryFn: async () => {
-        const response = await spaceAPI.value.dataSources.get(toValue(id))
-        return response.data
-      },
-      enabled: computed(() => !!toValue(spaceId) && !!toValue(id) && !!toValue(enabled)),
-    })
-  }
-
-  /**
-   * Create a new data source
-   */
-  const useCreateDataSourceMutation = () => {
-    return useMutation({
-      mutationFn: async (payload: CreateDataSourcePayload) => {
-        const response = await spaceAPI.value.dataSources.create(payload)
-        return response.data
-      },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.dataSources(spaceId).lists() })
-        toast.success(t('composables.dataSources.createSuccess', { name: data.name }) as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.dataSources.createError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
-
-  /**
-   * Update an existing data source
-   */
-  const useUpdateDataSourceMutation = () => {
-    return useMutation({
-      mutationFn: async ({ id, payload }: { id: string; payload: UpdateDataSourcePayload }) => {
-        const response = await spaceAPI.value.dataSources.update(id, payload)
-        return response.data
-      },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.dataSources(spaceId).lists() })
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.dataSources(spaceId).detail(data.id),
-        })
-        toast.success(t('composables.dataSources.updateSuccess', { name: data.name }) as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.dataSources.updateError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
-
-  /**
-   * Delete a data source
-   */
-  const useDeleteDataSourceMutation = () => {
-    return useMutation({
-      mutationFn: async (id: string) => {
-        await spaceAPI.value.dataSources.delete(id)
-        return id
-      },
-      onSuccess: (id) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.dataSources(spaceId).lists() })
-        queryClient.removeQueries({ queryKey: queryKeys.dataSources(spaceId).detail(id) })
-        toast.success(t('composables.dataSources.deleteSuccess') as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.dataSources.deleteError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
+  const crud = useDataSourcesCrud(spaceId)
 
   return {
     // Queries
-    useDataSourcesQuery,
-    useDataSourceQuery,
+    useDataSourcesQuery: crud.useListQuery,
+    useDataSourceQuery: crud.useDetailQuery,
 
     // Mutations
-    useCreateDataSourceMutation,
-    useUpdateDataSourceMutation,
-    useDeleteDataSourceMutation,
+    useCreateDataSourceMutation: crud.useCreateMutation,
+    useUpdateDataSourceMutation: crud.useUpdateMutation,
+    useDeleteDataSourceMutation: crud.useDeleteMutation,
   }
 }

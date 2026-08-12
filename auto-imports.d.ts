@@ -130,6 +130,7 @@ declare global {
   const useComments: typeof import('./resources/js/composables/useComments').useComments
   const useContent: typeof import('./resources/js/composables/useContent').useContent
   const useContentCanvasCommands: typeof import('./resources/js/composables/useContentCanvasCommands').useContentCanvasCommands
+  const useContentEditorPage: typeof import('./resources/js/composables/useContentEditorPage').useContentEditorPage
   const useContentJson: typeof import('./resources/js/composables/useContentJson').useContentJson
   const useContentLiveCollaboration: typeof import('./resources/js/composables/useContentLiveCollaboration').useContentLiveCollaboration
   const useContentMenu: typeof import('./resources/js/composables/useContentMenu').useContentMenu
@@ -258,6 +259,9 @@ declare global {
   // @ts-ignore
   export type { ContentCanvasCommand, ContentCanvasHistoryEntry } from './resources/js/composables/useContentCanvasCommands'
   import('./resources/js/composables/useContentCanvasCommands')
+  // @ts-ignore
+  export type { ContentValidationState, ContentDirtyStrategy, UseContentEditorPageOptions, UseContentEditorPageReturn } from './resources/js/composables/useContentEditorPage'
+  import('./resources/js/composables/useContentEditorPage')
   // @ts-ignore
   export type { CollaborationPresenceUser, ContentFieldUpdatePayload, ContentFieldRef, ContentFieldFocusPayload, ContentBlockOperationPayload, ContentCommitAction } from './resources/js/composables/useContentLiveCollaboration'
   import('./resources/js/composables/useContentLiveCollaboration')
@@ -435,6 +439,7 @@ declare module 'vue' {
     readonly useComments: UnwrapRef<typeof import('./resources/js/composables/useComments')['useComments']>
     readonly useContent: UnwrapRef<typeof import('./resources/js/composables/useContent')['useContent']>
     readonly useContentCanvasCommands: UnwrapRef<typeof import('./resources/js/composables/useContentCanvasCommands')['useContentCanvasCommands']>
+    readonly useContentEditorPage: UnwrapRef<typeof import('./resources/js/composables/useContentEditorPage')['useContentEditorPage']>
     readonly useContentJson: UnwrapRef<typeof import('./resources/js/composables/useContentJson')['useContentJson']>
     readonly useContentLiveCollaboration: UnwrapRef<typeof import('./resources/js/composables/useContentLiveCollaboration')['useContentLiveCollaboration']>
     readonly useContentMenu: UnwrapRef<typeof import('./resources/js/composables/useContentMenu')['useContentMenu']>

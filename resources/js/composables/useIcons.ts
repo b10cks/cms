@@ -1,46 +1,38 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useMutation, useQuery } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { IconsQueryParams } from '~/api/resources/icons'
+import { createCrudComposable } from '~/lib/crud-composable'
+import { toastError, type Translate } from '~/lib/toast-error'
 
 import { queryKeys } from './useQueryClient'
 
+const useIconsCrud = createCrudComposable<
+  IconResource,
+  ApiCollectionResponse<IconResource>,
+  IconsQueryParams,
+  UploadIconPayload,
+  UpdateIconPayload
+>({
+  i18nKey: 'icons',
+  keys: (spaceId) => queryKeys.icons(spaceId),
+  resource: (spaceId) => api.forSpace(spaceId).icons,
+  defaultParams: { sort: '+key' },
+  toastValues: (data) => ({ name: data.name }),
+  // The detail query was never gated here; components call it before an id resolves.
+  detailGate: 'none',
+  // The tag facet is derived from the icons themselves, so it goes stale with them.
+  invalidateAlso: (spaceId) => [queryKeys.icons(spaceId).tags()],
+})
+
 export function useIcons(spaceId: MaybeRef<string>) {
   const { t } = useI18n()
-  const queryClient = useQueryClient()
+  const crud = useIconsCrud(spaceId)
 
   const spaceAPI = computed(() => api.forSpace(toValue(spaceId)))
 
-  const invalidateLists = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.icons(spaceId).lists() })
-    queryClient.invalidateQueries({ queryKey: queryKeys.icons(spaceId).tags() })
-  }
-
-  const useIconsQuery = (params: MaybeRef<IconsQueryParams> = {}) => {
-    return useQuery({
-      queryKey: computed(() => queryKeys.icons(spaceId).list(params)),
-      queryFn: async () => {
-        const response = await spaceAPI.value.icons.index({
-          sort: '+key',
-          ...toValue(params),
-        })
-        return response
-      },
-      enabled: computed(() => Boolean(toValue(spaceId))),
-      placeholderData: keepPreviousData,
-    })
-  }
-
-  const useIconQuery = (id: MaybeRef<string>) => {
-    return useQuery({
-      queryKey: computed(() => queryKeys.icons(spaceId).detail(id)),
-      queryFn: async () => {
-        const response = await spaceAPI.value.icons.get(toValue(id))
-        return response.data
-      },
-    })
-  }
+  const invalidateLists = () => crud.invalidateLists('create')
 
   const useIconTagsQuery = () => {
     return useQuery({
@@ -64,44 +56,6 @@ export function useIcons(spaceId: MaybeRef<string>) {
     return response.data
   }
 
-  const useUpdateIconMutation = () => {
-    return useMutation({
-      mutationFn: async ({ id, payload }: { id: string; payload: UpdateIconPayload }) => {
-        const response = await spaceAPI.value.icons.update(id, payload)
-        return response.data
-      },
-      onSuccess: (data) => {
-        invalidateLists()
-        queryClient.invalidateQueries({ queryKey: queryKeys.icons(spaceId).detail(data.id) })
-        toast.success(t('composables.icons.updateSuccess', { name: data.name }) as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.icons.updateError', { error: error.message || 'Unknown error' }) as string
-        )
-      },
-    })
-  }
-
-  const useDeleteIconMutation = () => {
-    return useMutation({
-      mutationFn: async (id: string) => {
-        await spaceAPI.value.icons.delete(id)
-        return id
-      },
-      onSuccess: (id) => {
-        invalidateLists()
-        queryClient.removeQueries({ queryKey: queryKeys.icons(spaceId).detail(id) })
-        toast.success(t('composables.icons.deleteSuccess') as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.icons.deleteError', { error: error.message || 'Unknown error' }) as string
-        )
-      },
-    })
-  }
-
   const useImportIconsMutation = () => {
     return useMutation({
       mutationFn: async ({ file, mode }: { file: File; mode: IconImportMode }) => {
@@ -111,24 +65,20 @@ export function useIcons(spaceId: MaybeRef<string>) {
         invalidateLists()
         toast.success(t('composables.icons.importSuccess') as string)
       },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.icons.importError', { error: error.message || 'Unknown error' }) as string
-        )
-      },
+      onError: (error: Error) => toastError(t as Translate, 'composables.icons.importError', error),
     })
   }
 
   return {
     // Queries
-    useIconsQuery,
-    useIconQuery,
+    useIconsQuery: crud.useListQuery,
+    useIconQuery: crud.useDetailQuery,
     useIconTagsQuery,
 
     // Mutations / actions
     uploadIcon,
-    useUpdateIconMutation,
-    useDeleteIconMutation,
+    useUpdateIconMutation: crud.useUpdateMutation,
+    useDeleteIconMutation: crud.useDeleteMutation,
     useImportIconsMutation,
   }
 }

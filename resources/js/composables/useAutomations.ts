@@ -1,49 +1,34 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import type { ComputedRef, MaybeRef } from 'vue'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import type { MaybeRefOrGetter } from 'vue'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { AutomationsQueryParams } from '~/api/resources/automations'
+import { createCrudComposable } from '~/lib/crud-composable'
+import { toastError, type Translate } from '~/lib/toast-error'
 
 import { queryKeys } from './useQueryClient'
 
-type MaybeRefOrComputed<T> = MaybeRef<T> | ComputedRef<T>
+const useAutomationsCrud = createCrudComposable<
+  AutomationResource,
+  ApiCollectionResponse<AutomationResource>,
+  AutomationsQueryParams,
+  CreateAutomationPayload,
+  UpdateAutomationPayload
+>({
+  i18nKey: 'automations',
+  keys: (spaceId) => queryKeys.automations(spaceId),
+  resource: (spaceId) => api.forSpace(spaceId).automations,
+  toastValues: (data) => ({ name: data.name }),
+})
 
-export function useAutomations(spaceIdRef: MaybeRefOrComputed<string>) {
-  const queryClient = useQueryClient()
+export function useAutomations(spaceIdSource: MaybeRefOrGetter<string>) {
   const { t } = useI18n()
+  const queryClient = useQueryClient()
+  const crud = useAutomationsCrud(spaceIdSource)
 
-  const spaceId = computed(() => unref(spaceIdRef))
+  const spaceId = crud.spaceId
   const spaceAPI = computed(() => api.forSpace(spaceId.value))
-
-  const useAutomationsQuery = (
-    paramsRef: MaybeRefOrComputed<AutomationsQueryParams> = {},
-    enabledRef: MaybeRefOrComputed<boolean> = true
-  ) => {
-    const params = computed(() => unref(paramsRef))
-
-    return useQuery({
-      queryKey: computed(() => queryKeys.automations(spaceId.value).list(params.value)),
-      queryFn: async () => {
-        return await spaceAPI.value.automations.index(params.value)
-      },
-      enabled: computed(() => !!spaceId.value && !!unref(enabledRef)),
-      placeholderData: keepPreviousData,
-    })
-  }
-
-  const useAutomationQuery = (idRef: MaybeRefOrComputed<string>) => {
-    const id = computed(() => unref(idRef))
-
-    return useQuery({
-      queryKey: computed(() => queryKeys.automations(spaceId.value).detail(id.value)),
-      queryFn: async () => {
-        const response = await spaceAPI.value.automations.get(id.value)
-        return response.data
-      },
-      enabled: computed(() => !!spaceId.value && !!id.value),
-    })
-  }
 
   const useAutomationTriggerCatalogQuery = () => {
     return useQuery({
@@ -54,70 +39,6 @@ export function useAutomations(spaceIdRef: MaybeRefOrComputed<string>) {
       },
       enabled: computed(() => !!spaceId.value),
       staleTime: 5 * 60 * 1000,
-    })
-  }
-
-  const useCreateAutomationMutation = () => {
-    return useMutation({
-      mutationFn: async (payload: CreateAutomationPayload) => {
-        const response = await spaceAPI.value.automations.create(payload)
-        return response.data
-      },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.automations(spaceId.value).lists() })
-        toast.success(t('composables.automations.createSuccess', { name: data.name }) as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.automations.createError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
-
-  const useUpdateAutomationMutation = () => {
-    return useMutation({
-      mutationFn: async ({ id, payload }: { id: string; payload: UpdateAutomationPayload }) => {
-        const response = await spaceAPI.value.automations.update(id, payload)
-        return response.data
-      },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.automations(spaceId.value).lists() })
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.automations(spaceId.value).detail(data.id),
-        })
-        toast.success(t('composables.automations.updateSuccess', { name: data.name }) as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.automations.updateError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
-
-  const useDeleteAutomationMutation = () => {
-    return useMutation({
-      mutationFn: async (id: string) => {
-        await spaceAPI.value.automations.delete(id)
-        return id
-      },
-      onSuccess: (id) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.automations(spaceId.value).lists() })
-        queryClient.removeQueries({ queryKey: queryKeys.automations(spaceId.value).detail(id) })
-        toast.success(t('composables.automations.deleteSuccess') as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.automations.deleteError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
     })
   }
 
@@ -140,23 +61,18 @@ export function useAutomations(spaceIdRef: MaybeRefOrComputed<string>) {
         })
         toast.success(t('composables.automations.triggerSuccess', { name: data.name }) as string)
       },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.automations.triggerError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
+      onError: (error: Error) =>
+        toastError(t as Translate, 'composables.automations.triggerError', error),
     })
   }
 
   return {
-    useAutomationsQuery,
-    useAutomationQuery,
+    useAutomationsQuery: crud.useListQuery,
+    useAutomationQuery: crud.useDetailQuery,
     useAutomationTriggerCatalogQuery,
-    useCreateAutomationMutation,
-    useUpdateAutomationMutation,
-    useDeleteAutomationMutation,
+    useCreateAutomationMutation: crud.useCreateMutation,
+    useUpdateAutomationMutation: crud.useUpdateMutation,
+    useDeleteAutomationMutation: crud.useDeleteMutation,
     useTriggerAutomationMutation,
   }
 }

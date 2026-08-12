@@ -1,137 +1,35 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import type { ComputedRef, MaybeRef } from 'vue'
-import { toast } from 'vue-sonner'
+import type { MaybeRefOrGetter } from 'vue'
 
 import { api } from '~/api'
 import type { AutomationActionsQueryParams } from '~/api/resources/automation-actions'
+import { createCrudComposable } from '~/lib/crud-composable'
 
 import { queryKeys } from './useQueryClient'
 
-type MaybeRefOrComputed<T> = MaybeRef<T> | ComputedRef<T>
+const useAutomationActionsCrud = createCrudComposable<
+  AutomationActionResource,
+  ApiCollectionResponse<AutomationActionResource>,
+  AutomationActionsQueryParams,
+  CreateAutomationActionPayload,
+  UpdateAutomationActionPayload
+>({
+  i18nKey: 'automationActions',
+  keys: (spaceId) => queryKeys.automationActions(spaceId),
+  resource: (spaceId) => api.forSpace(spaceId).automationActions,
+  toastValues: (data) => ({ name: data.name }),
+  // An automation embeds its actions, so editing one restages the parent list.
+  invalidateAlso: (spaceId, operation) =>
+    operation === 'update' ? [queryKeys.automations(spaceId).lists()] : [],
+})
 
-export function useAutomationActions(spaceIdRef: MaybeRefOrComputed<string>) {
-  const queryClient = useQueryClient()
-  const { t } = useI18n()
-
-  const spaceId = computed(() => unref(spaceIdRef))
-  const spaceAPI = computed(() => api.forSpace(spaceId.value))
-
-  const useAutomationActionsQuery = (
-    paramsRef: MaybeRefOrComputed<AutomationActionsQueryParams> = {}
-  ) => {
-    const params = computed(() => unref(paramsRef))
-
-    return useQuery({
-      queryKey: computed(() => queryKeys.automationActions(spaceId.value).list(params.value)),
-      queryFn: async () => {
-        return await spaceAPI.value.automationActions.index(params.value)
-      },
-      enabled: computed(() => !!spaceId.value),
-      placeholderData: keepPreviousData,
-    })
-  }
-
-  const useAutomationActionQuery = (idRef: MaybeRefOrComputed<string>) => {
-    const id = computed(() => unref(idRef))
-
-    return useQuery({
-      queryKey: computed(() => queryKeys.automationActions(spaceId.value).detail(id.value)),
-      queryFn: async () => {
-        const response = await spaceAPI.value.automationActions.get(id.value)
-        return response.data
-      },
-      enabled: computed(() => !!spaceId.value && !!id.value),
-    })
-  }
-
-  const useCreateAutomationActionMutation = () => {
-    return useMutation({
-      mutationFn: async (payload: CreateAutomationActionPayload) => {
-        const response = await spaceAPI.value.automationActions.create(payload)
-        return response.data
-      },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.automationActions(spaceId.value).lists(),
-        })
-        toast.success(
-          t('composables.automationActions.createSuccess', { name: data.name }) as string
-        )
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.automationActions.createError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
-
-  const useUpdateAutomationActionMutation = () => {
-    return useMutation({
-      mutationFn: async ({
-        id,
-        payload,
-      }: {
-        id: string
-        payload: UpdateAutomationActionPayload
-      }) => {
-        const response = await spaceAPI.value.automationActions.update(id, payload)
-        return response.data
-      },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.automationActions(spaceId.value).lists(),
-        })
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.automationActions(spaceId.value).detail(data.id),
-        })
-        queryClient.invalidateQueries({ queryKey: queryKeys.automations(spaceId.value).lists() })
-        toast.success(
-          t('composables.automationActions.updateSuccess', { name: data.name }) as string
-        )
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.automationActions.updateError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
-
-  const useDeleteAutomationActionMutation = () => {
-    return useMutation({
-      mutationFn: async (id: string) => {
-        await spaceAPI.value.automationActions.delete(id)
-        return id
-      },
-      onSuccess: (id) => {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.automationActions(spaceId.value).lists(),
-        })
-        queryClient.removeQueries({
-          queryKey: queryKeys.automationActions(spaceId.value).detail(id),
-        })
-        toast.success(t('composables.automationActions.deleteSuccess') as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.automationActions.deleteError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
+export function useAutomationActions(spaceId: MaybeRefOrGetter<string>) {
+  const crud = useAutomationActionsCrud(spaceId)
 
   return {
-    useAutomationActionsQuery,
-    useAutomationActionQuery,
-    useCreateAutomationActionMutation,
-    useUpdateAutomationActionMutation,
-    useDeleteAutomationActionMutation,
+    useAutomationActionsQuery: crud.useListQuery,
+    useAutomationActionQuery: crud.useDetailQuery,
+    useCreateAutomationActionMutation: crud.useCreateMutation,
+    useUpdateAutomationActionMutation: crud.useUpdateMutation,
+    useDeleteAutomationActionMutation: crud.useDeleteMutation,
   }
 }

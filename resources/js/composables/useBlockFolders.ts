@@ -1,111 +1,41 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import { toast } from 'vue-sonner'
-
 import { api } from '~/api'
-import type { BlockFolderResource, UpsertBlockFolderPayload } from '~/api/resources/block-folders'
+import type {
+  BlockFolderResource,
+  BlockFoldersQueryParams,
+  UpsertBlockFolderPayload,
+} from '~/api/resources/block-folders'
+import { createCrudComposable } from '~/lib/crud-composable'
 
 import { queryKeys } from './useQueryClient'
 
+const useBlockFoldersCrud = createCrudComposable<
+  BlockFolderResource,
+  ApiCollectionResponse<BlockFolderResource>,
+  BlockFoldersQueryParams,
+  UpsertBlockFolderPayload,
+  UpsertBlockFolderPayload,
+  BlockFolderResource[],
+  { folderId: string; payload: UpsertBlockFolderPayload }
+>({
+  i18nKey: 'blockFolders',
+  keys: (spaceId) => queryKeys.blockFolders(spaceId),
+  resource: (spaceId) => api.forSpace(spaceId).blockFolders,
+  defaultParams: { sort: '+name' },
+  // The tree helpers below want the folders themselves, not the envelope.
+  selectList: (response) => response.data,
+  listGate: 'none',
+  // Callers have always passed `folderId`; keep their call sites untouched.
+  updateVariables: ({ folderId, payload }) => ({ id: folderId, payload }),
+  toastValues: (data) => ({ name: data.name }),
+  // Blocks carry their folder, so every cached block list is stale too.
+  invalidateAlso: (spaceId) => [queryKeys.blocks(spaceId).lists()],
+})
+
 export function useBlockFolders(spaceId: MaybeRef<string>) {
-  const { t } = useI18n()
-  const queryClient = useQueryClient()
-  const spaceAPI = computed(() => api.forSpace(toValue(spaceId)))
+  const crud = useBlockFoldersCrud(spaceId)
 
-  const useBlockFoldersQuery = (filters = {}) => {
-    return useQuery({
-      queryKey: queryKeys.blockFolders(spaceId).list(filters),
-      queryFn: async () => {
-        const response = await spaceAPI.value.blockFolders.index({
-          sort: '+name',
-          ...filters,
-        })
-        return response.data
-      },
-      placeholderData: keepPreviousData,
-    })
-  }
-
-  const useBlockFolderQuery = (folderId: string) => {
-    return useQuery({
-      queryKey: queryKeys.blockFolders(spaceId).detail(folderId),
-      queryFn: async () => {
-        const response = await spaceAPI.value.blockFolders.get(folderId)
-        return response.data
-      },
-      enabled: !!folderId,
-    })
-  }
-
-  const useCreateBlockFolderMutation = () => {
-    return useMutation({
-      mutationFn: async (payload: UpsertBlockFolderPayload) => {
-        const response = await spaceAPI.value.blockFolders.create(payload)
-        return response.data
-      },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.blockFolders(spaceId).lists() })
-        queryClient.invalidateQueries({ queryKey: queryKeys.blocks(spaceId).lists() })
-        toast.success(t('composables.blockFolders.createSuccess', { name: data.name }) as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.blockFolders.createError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
-
-  const useUpdateBlockFolderMutation = () => {
-    return useMutation({
-      mutationFn: async ({
-        folderId,
-        payload,
-      }: {
-        folderId: string
-        payload: UpsertBlockFolderPayload
-      }) => {
-        const response = await spaceAPI.value.blockFolders.update(folderId, payload)
-        return response.data
-      },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.blockFolders(spaceId).lists() })
-        queryClient.invalidateQueries({ queryKey: queryKeys.blockFolders(spaceId).detail(data.id) })
-        queryClient.invalidateQueries({ queryKey: queryKeys.blocks(spaceId).lists() })
-        toast.success(t('composables.blockFolders.updateSuccess', { name: data.name }) as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.blockFolders.updateError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
-
-  const useDeleteBlockFolderMutation = () => {
-    return useMutation({
-      mutationFn: async (folderId: string) => {
-        await spaceAPI.value.blockFolders.delete(folderId)
-        return folderId
-      },
-      onSuccess: (folderId) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.blockFolders(spaceId).lists() })
-        queryClient.removeQueries({ queryKey: queryKeys.blockFolders(spaceId).detail(folderId) })
-        queryClient.invalidateQueries({ queryKey: queryKeys.blocks(spaceId).lists() })
-        toast.success(t('composables.blockFolders.deleteSuccess') as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.blockFolders.deleteError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
+  const useBlockFoldersQuery = crud.useListQuery
+  const useBlockFolderQuery = crud.useDetailQuery
 
   const useFolderStructure = () => {
     const { data: folders, isLoading, error } = useBlockFoldersQuery()
@@ -159,8 +89,8 @@ export function useBlockFolders(spaceId: MaybeRef<string>) {
 
     useFolderStructure,
 
-    useCreateBlockFolderMutation,
-    useUpdateBlockFolderMutation,
-    useDeleteBlockFolderMutation,
+    useCreateBlockFolderMutation: crud.useCreateMutation,
+    useUpdateBlockFolderMutation: crud.useUpdateMutation,
+    useDeleteBlockFolderMutation: crud.useDeleteMutation,
   }
 }
