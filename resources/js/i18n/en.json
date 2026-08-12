@@ -274,7 +274,6 @@
     },
     "assetTags": {
       "title": "Asset Tags",
-      "description": "Tag your assets to organize and filter them.",
       "createTag": "New tag",
       "editTag": "Edit tag",
       "deleteTitle": "Delete this tag?",
@@ -284,10 +283,7 @@
         "name": "Tag name",
         "namePlaceholder": "Enter a tag name",
         "color": "Color",
-        "icon": "Icon",
-        "assetsCount": "Assets tagged",
-        "createdAt": "Created",
-        "updatedAt": "Last updated"
+        "icon": "Icon"
       }
     },
     "assetCollections": {
@@ -818,8 +814,6 @@
         "rootNodeTitle": "Root",
         "rootType": "Global",
         "addToRoot": "Add top-level page",
-        "deleted": "Deleted",
-        "deletedInherited": "Deleted with parent",
         "inheritedDeletion": "Deleted by parent",
         "markedForDeletion": "Marked for deletion",
         "deletedWithAncestorHint": "Restore the deleted ancestor, or drag this card out of the deleted branch to keep it.",
@@ -892,9 +886,6 @@
             "toolbarZoom": "Use the toolbar controls to zoom, reset to 100%, or fit the current tree into view."
           }
         },
-        "aiPlaceholderTitle": "AI Assistant",
-        "aiPlaceholderDescription": "Use AI to help create and edit your content",
-        "comingSoon": "Coming soon",
         "addChild": "Add child",
         "addSibling": "Add sibling"
       },
@@ -1924,8 +1915,6 @@
         "name": "Release Name",
         "state": "State",
         "publishAt": "Scheduled at",
-        "createdAt": "Created",
-        "updatedAt": "Updated",
         "versionsCount": "No items|1 item|{count} items",
         "scheduled": "Scheduled"
       },
@@ -4396,9 +4385,6 @@
       "import": "Import set"
     },
     "assetTags": {
-      "add": "New Tag",
-      "edit": "Edit Tag",
-      "delete": "Delete Tag",
       "save": "Save tag"
     },
     "assetCollections": {

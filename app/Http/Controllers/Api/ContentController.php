@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\ResolvesDeliveryContent;
 use App\Http\Filters\Api\ContentFilter;
-use App\Http\Middleware\CacheDataApi;
 use App\Http\Resources\Api\ContentResource;
 use App\Http\Resources\Api\ContentResourceCollection;
 use App\Models\Management\Space;
@@ -15,10 +15,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Str;
 
 class ContentController
 {
+    use ResolvesDeliveryContent;
+
     protected LocalizedContentSlugService $slugService;
 
     public function __construct(LocalizedContentSlugService $slugService)
@@ -99,37 +100,6 @@ class ContentController
     }
 
     /**
-     * The version scope a request asks for, rejecting anything else.
-     *
-     * `vid` used to be taken verbatim. On show, an unrecognized value fell
-     * through to a lookup by version id and then quietly back to the published
-     * version; on index it left the query selecting `content_versions` columns
-     * with no join at all, which is a database error rather than a listing. Both
-     * scopes are now stated explicitly, and only show — where a version id
-     * identifies one row of one entry — accepts one.
-     */
-    private function versionScope(Request $request, bool $allowVersionId = true): string
-    {
-        $vid = $request->input('vid', 'published');
-
-        if (! \is_string($vid) || $vid === '') {
-            abort(422, 'Parameter "vid" must be "published", "draft" or a version id.');
-        }
-
-        if ($vid === 'published' || $vid === 'draft') {
-            return $vid;
-        }
-
-        abort_unless(
-            $allowVersionId && Str::isUlid($vid),
-            422,
-            'Parameter "vid" must be "published", "draft" or a version id.',
-        );
-
-        return $vid;
-    }
-
-    /**
      * When a request lists the children of a single parent without an explicit
      * `sort`, order them by the sorting configured on that parent (e.g. a news
      * folder sorted by `published_at`). Requests without such a configuration
@@ -201,10 +171,7 @@ class ContentController
             $request->boolean('resolve_relations') ? 1 : 0,
         );
 
-        $language = $request->input('language') ?? $request->input('language_iso') ?? $space->settings->getDefaultLanguage();
-        if (! \in_array($language, $space->settings->getEnabledLanguages())) {
-            $language = $space->settings->getDefaultLanguage();
-        }
+        $language = $this->resolveLanguage($request, $space);
 
         $redirect = Redirect::where('source', "/$language/$slug")
             ->first();
@@ -219,7 +186,12 @@ class ContentController
             ], $redirect->status_code);
         }
 
-        $candidate = $this->findFamilyCandidate($slug, $language, $space);
+        $candidate = $this->findFamilyCandidate($slug, $language, $space, [
+            'block',
+            'i18n_parent',
+            'i18n_children',
+            'i18n_siblings',
+        ]);
         abort_if(! $candidate, 404);
 
         $versionScope = $this->versionScope($request);
@@ -255,55 +227,4 @@ class ContentController
         return new ContentResource($resolved);
     }
 
-    protected function applyCacheAttributes(Request $request, ?Content $row): void
-    {
-        $settings = $row?->settings;
-        if (! $settings) {
-            return;
-        }
-
-        $ttl = $settings->cacheTtl();
-        if ($ttl !== null) {
-            $request->attributes->set(CacheDataApi::TTL_ATTRIBUTE, $ttl);
-        }
-
-        $tags = $settings->cacheTags();
-        if ($tags !== []) {
-            $request->attributes->set(CacheDataApi::TAGS_ATTRIBUTE, $tags);
-        }
-    }
-
-    protected function findFamilyCandidate(string $slug, string $language, Space $space): ?Content
-    {
-        $candidates = Content::query()
-            ->select(Content::deliveryColumns())
-            ->where('full_slug', "/$slug")
-            ->whereNull('deleted_at')
-            ->with([
-                'block',
-                'i18n_parent',
-                'i18n_children',
-                'i18n_siblings',
-            ])
-            ->get();
-
-        if ($candidates->isEmpty()) {
-            return null;
-        }
-
-        $priority = array_values(array_unique(array_filter([
-            $language,
-            $space->settings->getFallbackLanguage($language),
-            $space->settings->getDefaultLanguage(),
-        ])));
-
-        foreach ($priority as $priorityLanguage) {
-            $match = $candidates->firstWhere('language_iso', $priorityLanguage);
-            if ($match) {
-                return $match;
-            }
-        }
-
-        return $candidates->first();
-    }
 }
