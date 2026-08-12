@@ -763,7 +763,7 @@ useSeoMeta({
           ref="previewRef"
           class="h-full"
           :space-id="spaceId"
-          :content-id="translatableContent.id || canonicalContentId"
+          :content-id="previewRootId"
           :full-slug="translatableContent.full_slug"
           :updated-at="translatableContent.updated_at"
           @update-field="handlePreviewFieldUpdate"

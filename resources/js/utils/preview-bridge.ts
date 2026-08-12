@@ -90,12 +90,19 @@ export type PreviewBridgeOptions = {
   allowedOrigins?: string[]
   /** Origin outgoing messages are addressed to; defaults to the first allowed origin. */
   targetOrigin?: string
+  /**
+   * Id of the content the preview renders, read on every push so it can change
+   * with the edited content. Only a CONTENT_UPDATE carrying it describes the
+   * whole tree and is kept as the replay snapshot.
+   */
+  rootId?: () => string | null | undefined
 }
 
 export class PreviewBridge extends MessageEmitter<EventPayloadMap> {
   private iframeElement: HTMLIFrameElement | null = null
   private allowedOrigins: Set<string>
   private targetOrigin: string
+  private rootId: () => string | null | undefined
   private ready = false
   private lastState = new Map<EventType, EventPayloadMap[EventType]>()
   private readyListeners = new Set<() => void>()
@@ -105,6 +112,7 @@ export class PreviewBridge extends MessageEmitter<EventPayloadMap> {
     this.iframeElement = iframeElement
     this.allowedOrigins = new Set(options.allowedOrigins ?? [])
     this.targetOrigin = options.targetOrigin ?? options.allowedOrigins?.[0] ?? '*'
+    this.rootId = options.rootId ?? (() => null)
     window.addEventListener('message', this.handleMessage)
   }
 
@@ -149,17 +157,35 @@ export class PreviewBridge extends MessageEmitter<EventPayloadMap> {
   }
 
   /**
-   * Fallback for site SDKs that predate the readiness announcement: start
-   * posting directly. A later announcement still triggers a full replay, so
-   * calling this early only risks a harmless duplicate send.
+   * Fallback for site SDKs that predate the readiness announcement: replay the
+   * current state and start posting directly. Runs after every document load,
+   * not just the first — an in-iframe navigation leaves such an SDK with a
+   * document that was never sent anything. Replays are idempotent, so a
+   * duplicate after a real announcement is harmless.
    */
   public markReady(): void {
-    if (this.ready) return
     this.handleReady()
   }
 
+  /**
+   * A CONTENT_UPDATE is only a usable snapshot for a document that holds
+   * nothing yet when it carries the whole tree — block-scoped pushes are
+   * patches against a tree the receiver already has. Replaying one as the
+   * content state would hand a freshly loaded document a single block instead
+   * of the page.
+   */
+  private isReplayableState(type: EventType, payload: EventPayloadMap[EventType]): boolean {
+    if (!STATE_EVENTS.has(type)) return false
+    if (type !== 'CONTENT_UPDATE') return true
+
+    const rootId = this.rootId()
+    if (!rootId) return true
+
+    return (payload as ContentUpdateEvent).content?.id === rootId
+  }
+
   private postMessageToIframe(type: EventType, payload: EventPayloadMap[typeof type]): void {
-    if (STATE_EVENTS.has(type)) {
+    if (this.isReplayableState(type, payload)) {
       this.lastState.set(type, payload)
     }
     // Until the preview's listener is attached the message would be lost;

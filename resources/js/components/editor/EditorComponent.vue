@@ -317,8 +317,12 @@ const formatOutOfSchemaValue = (value: unknown): string => {
 
 const applyContentUpdate = (data: Record<string, unknown>): void => {
   if (currentContentItem.value && props.itemId) {
+    // Focused block: the tree is mutated in place, so nothing bubbles up to the
+    // whole-tree push the expanded path gets for free. Push the updated tree
+    // here — a block-scoped push alone is lost on any site that cannot address
+    // that block by id, and it is not a valid state snapshot for replay.
     contentTree.updateItem(props.itemId, data as ContentTreeItem)
-    updatePreviewItem?.(data as Record<string, unknown>)
+    updatePreviewItem?.({ ...(contentModel.value as unknown as Record<string, unknown>) })
   } else {
     contentModel.value = data as ContentTreeItem
     updatePreviewItem?.({ id: props.rootId, ...data })

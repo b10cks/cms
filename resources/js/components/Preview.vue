@@ -28,6 +28,7 @@ import { PreviewBridge } from '~/utils/preview-bridge'
 const { t } = useI18n()
 const props = defineProps<{
   spaceId: string
+  /** Id the site reports for the root block; whole-tree pushes carry it. */
   contentId: string
   fullSlug?: string
   updatedAt?: string
@@ -153,6 +154,7 @@ watch(
     const bridge = new PreviewBridge(iframe, {
       allowedOrigins,
       targetOrigin: originOf(currentEnvironmentUrl.value) ?? undefined,
+      rootId: () => props.contentId,
     })
     bridge.on('SELECT_UPDATE', ({ selectedItem }) => {
       emit('selectItem', selectedItem)

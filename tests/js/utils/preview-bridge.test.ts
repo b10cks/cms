@@ -337,10 +337,49 @@ describe('readiness handshake', () => {
     bridge.markReady()
 
     expect(postToIframe).toHaveBeenCalledTimes(1)
+  })
 
+  it('markReady replays again after a navigation, for previews that never announce', () => {
+    const bridge = createBridge({}, iframe(), false)
+
+    bridge.updateContent({ title: 'Draft' })
+    bridge.markReady()
+    // The iframe navigated: the new document was never sent anything, and an
+    // SDK that predates the announcement can only be caught up by the fallback.
     bridge.markReady()
 
+    expect(postToIframe).toHaveBeenCalledTimes(2)
+  })
+
+  it('replays the whole tree rather than the last block-scoped patch', () => {
+    const bridge = createBridge({ rootId: () => 'entry-1' }, iframe(), false)
+
+    bridge.updateContent({ id: 'entry-1', block: 'page', body: [{ id: 'hero-1' }] })
+    bridge.updateContent({ id: 'hero-1', block: 'hero', headline: 'Edited' })
+    ready()
+
     expect(postToIframe).toHaveBeenCalledTimes(1)
+    expect(postToIframe).toHaveBeenCalledWith(
+      {
+        type: 'CONTENT_UPDATE',
+        payload: { content: { id: 'entry-1', block: 'page', body: [{ id: 'hero-1' }] } },
+      },
+      '*'
+    )
+  })
+
+  it('still posts block-scoped updates live', () => {
+    const bridge = createBridge({ rootId: () => 'entry-1' })
+
+    bridge.updateContent({ id: 'hero-1', block: 'hero', headline: 'Edited' })
+
+    expect(postToIframe).toHaveBeenCalledWith(
+      {
+        type: 'CONTENT_UPDATE',
+        payload: { content: { id: 'hero-1', block: 'hero', headline: 'Edited' } },
+      },
+      '*'
+    )
   })
 
   it('notifies onReady listeners on each announcement until unsubscribed', () => {
