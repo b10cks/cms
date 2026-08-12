@@ -7,8 +7,7 @@ import { TransitionGroup } from 'vue'
 
 import BlockTemplateCreateDialog from '~/components/blocks/BlockTemplateCreateDialog.vue'
 import CommentsSidebar from '~/components/comments/CommentsSidebar.vue'
-import ContentHeader from '~/components/content/ContentHeader.vue'
-import HeaderActions from '~/components/content/HeaderActions.vue'
+import ContentPageHeaderPortals from '~/components/content/ContentPageHeaderPortals.vue'
 import ContentInfo from '~/components/ContentInfo.vue'
 import ContentSettings from '~/components/ContentSettings.vue'
 import EditorComponent from '~/components/editor/EditorComponent.vue'
@@ -20,11 +19,11 @@ import { Badge, type BadgeVariants } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { SimpleTooltip } from '~/components/ui/tooltip'
-import { useAlertDialog } from '~/composables/useAlertDialog'
 import {
   createContentDefaultsBlockLookup,
   hydrateContentWithSchema,
 } from '~/composables/useSchemaDefaults'
+import { useContentEditorPage } from '~/composables/useContentEditorPage'
 import {
   useContentLiveCollaboration,
   type ContentCommitAction,
@@ -34,17 +33,16 @@ import type { ContentTreeItem } from '~/composables/useContentTree'
 import { useGlobalClipboard } from '~/composables/useGlobalClipboard'
 import {
   buildMissingLanguageDraft,
-  getContentDefaultLanguage,
   resolveContentLanguage,
   resolveContentRouteName,
   withContentLanguageQuery,
 } from '~/lib/content-i18n'
+import { createVersionConflictState } from '~/lib/contentEditorState'
 import { queryKeys } from '~/composables/useQueryClient'
 import type { ContentResource } from '~/types/contents'
 import type { FieldUpdateEvent } from '~/utils/preview-bridge'
 
 const { t } = useI18n()
-const { alert } = useAlertDialog()
 const queryClient = useQueryClient()
 const route = useRoute()
 const router = useRouter()
@@ -65,27 +63,37 @@ const blocks = computed(() => blockResponse.value?.data || [])
 
 const { useSpaceQuery } = useSpaces()
 const { data: spaceData } = useSpaceQuery(spaceId.value)
-const defaultLanguage = computed(() =>
-  getContentDefaultLanguage(
-    spaceData.value?.settings.default_language,
-    routeContent.value?.language_versions,
-    routeContent.value?.language_iso
-  )
-)
-const activeLanguage = useRouteQuery<string | undefined>('lang')
 const canonicalContentIdForQuery = computed(
   () => routeContent.value?.i18n_canonical_id || canonicalContentId.value
 )
 const { data: canonicalContentResponse } = useContentQuery(canonicalContentIdForQuery)
 const canonicalContent = computed(() => canonicalContentResponse.value || null)
-const resolvedActiveLanguage = computed(() =>
-  resolveContentLanguage(
-    activeLanguage.value,
-    defaultLanguage.value,
-    canonicalContent.value?.language_versions,
-    routeContent.value?.language_iso
-  )
-)
+
+const content = ref<ContentResource | null>(null)
+// persistedContent is only ever replaced wholesale (never mutated in place), so a
+// shallowRef + markRaw avoids paying for a deep reactive proxy over the baseline.
+const persistedContent = shallowRef<ContentResource | null>(null)
+
+const {
+  defaultLanguage,
+  languageQuery: activeLanguage,
+  resolvedLanguage: resolvedActiveLanguage,
+  isDirty,
+  markSaved,
+  provideValidationState,
+} = useContentEditorPage({
+  content,
+  persistedContent,
+  routeContent,
+  canonicalContent,
+  spaceDefaultLanguage: computed(() => spaceData.value?.settings.default_language),
+  dirtyStrategy: 'edit-version',
+  onDiscardChanges: () => {
+    discardLocalContentChanges()
+    discardOwnDrafts()
+  },
+})
+
 const activeLanguageVersion = computed(() => {
   const languageVersions = canonicalContent.value?.language_versions || []
   const resolvedLanguage = resolveContentLanguage(
@@ -248,21 +256,7 @@ const currentContentSource = computed<ContentResource | null>(() => {
   return null
 })
 
-const content = ref<ContentResource | null>(null)
-// persistedContent is only ever replaced wholesale (never mutated in place), so a
-// shallowRef + markRaw avoids paying for a deep reactive proxy over the baseline.
-const persistedContent = shallowRef<ContentResource | null>(null)
 const editorContentTree = ref<ContentTreeItem | null>(null)
-const editingFromVersionId = ref<string | null>(null)
-
-// Dirty tracking via an edit-version counter instead of stringifying the whole
-// tree on every keystroke: any mutation of `content` bumps the counter, and each
-// persist snapshots the current counter into savedEditVersion. flush: 'sync' keeps
-// the counter current so persist paths can re-baseline immediately afterwards.
-const contentEditVersion = ref(0)
-const savedEditVersion = ref(0)
-watch(content, () => contentEditVersion.value++, { deep: true, flush: 'sync' })
-const isDirty = computed(() => contentEditVersion.value !== savedEditVersion.value)
 
 // Guards for the two tree<->content sync watchers below. The paired flags cancel a
 // write's echo in the opposite direction; suppressTreeSync hard-disables both while
@@ -271,25 +265,11 @@ let contentWriteFromTree = false
 let treeWriteFromContent = false
 let suppressTreeSync = false
 
-// Reset when the content identity changes (navigation or language switch)
-watch(
-  () => currentContentSource.value?.id,
-  (newId, oldId) => {
-    if (newId !== oldId) {
-      editingFromVersionId.value = null
-    }
-  },
-)
-
-watch(
-  () => currentContentSource.value?.current_version_id,
-  (id) => {
-    if (editingFromVersionId.value === null && id) {
-      editingFromVersionId.value = id
-    }
-  },
-  { immediate: true }
-)
+const versionConflict = createVersionConflictState({
+  contentId: computed(() => currentContentSource.value?.id),
+  serverVersionId: computed(() => currentContentSource.value?.current_version_id),
+  persistedVersionId: computed(() => persistedContent.value?.current_version_id),
+})
 
 const buildEditorContentTree = (value: ContentResource | null): ContentTreeItem | null => {
   if (!value) return null
@@ -327,26 +307,12 @@ const editorContentModel = computed<ContentTreeItem>({
     content.value.content = stripEditorContentTree(value)
   },
 })
-const {
-  sanitizedContent,
-  validationSummary,
-  markFieldDirty,
-  setServerErrors,
-  clearServerErrors,
-  getFieldError,
-  shouldShowFieldError,
-  getClientErrors,
-  getVisibleValidationEntries,
-  getValidationIssueSignature,
-  validateAllForSubmit,
-  revealValidationState,
-  focusFirstInvalidField,
-  resetValidationState,
-  submitAttempted,
-} = useContentSchemaState({
+const validation = useContentSchemaState({
   content,
   blocks,
 })
+provideValidationState(validation)
+const { clearServerErrors, resetValidationState, sanitizedContent } = validation
 
 const { useCommentsQuery } = useComments(
   spaceId,
@@ -396,7 +362,7 @@ const syncPersistedContent = (
     content.value = cloneContent(cloned)
     editorContentTree.value = buildEditorContentTree(content.value)
     // Baseline is now in sync with the editing model: clear dirty state.
-    savedEditVersion.value = contentEditVersion.value
+    markSaved()
   } else {
     // preserve-local: keep the user's in-flight edits (dirty state untouched).
     content.value = {
@@ -476,7 +442,7 @@ watchDebounced(
 
     const wasDirty = isDirty.value
     content.value.content = JSON.parse(sanitizedSerialized)
-    if (!wasDirty) savedEditVersion.value = contentEditVersion.value
+    if (!wasDirty) markSaved()
   },
   { deep: true, debounce: 300 }
 )
@@ -486,62 +452,12 @@ const discardLocalContentChanges = () => {
     suppressTreeSync = true
     content.value = cloneContent(persistedContent.value)
     editorContentTree.value = buildEditorContentTree(content.value)
-    savedEditVersion.value = contentEditVersion.value
+    markSaved()
     nextTick(() => {
       suppressTreeSync = false
     })
   }
 }
-
-async function guardLeave(to: any, from: any, next: any) {
-  if (to && from && to.path === from.path) {
-    return next()
-  }
-
-  if (isDirty.value) {
-    const answer = await alert.confirm(
-      t(
-        'labels.content.unsavedChanges',
-        'You have unsaved changes. Are you sure you want to leave?'
-      )
-    )
-    if (answer) {
-      discardLocalContentChanges()
-      discardOwnDrafts()
-      next()
-    } else {
-      next(false)
-    }
-  } else {
-    next()
-  }
-}
-
-onBeforeRouteUpdate(guardLeave)
-onBeforeRouteLeave(guardLeave)
-
-onBeforeUnmount(() => {
-  window.removeEventListener('beforeunload', handleBeforeUnload)
-})
-
-const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-  if (isDirty.value) {
-    e.preventDefault()
-    e.returnValue = ''
-  }
-}
-
-watch(
-  isDirty,
-  (newValue) => {
-    if (newValue) {
-      window.addEventListener('beforeunload', handleBeforeUnload)
-    } else {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-    }
-  },
-  { immediate: true }
-)
 
 const resetDirtyState = () => {
   if (content.value) {
@@ -669,7 +585,7 @@ const commitPersistedContent = (
   nextContent: ContentResource,
   action: ContentCommitAction = 'save'
 ) => {
-  editingFromVersionId.value = nextContent.current_version_id ?? null
+  versionConflict.anchor(nextContent.current_version_id)
   syncPersistedContent(nextContent, 'replace')
   clearServerErrors()
   resetValidationState()
@@ -760,34 +676,12 @@ provide('updateHoverItem', (id: string) => {
   }
 })
 provide('resetDirtyState', resetDirtyState)
-provide('markFieldDirty', markFieldDirty)
-provide('getFieldError', getFieldError)
-provide('shouldShowFieldError', shouldShowFieldError)
-provide('setValidationErrors', setServerErrors)
-provide('clearValidationErrors', clearServerErrors)
-provide('getClientValidationErrors', getClientErrors)
-provide('getValidationSummary', () => validationSummary.value)
-provide('getVisibleValidationEntries', getVisibleValidationEntries)
-provide('getValidationIssueSignature', getValidationIssueSignature)
-provide('sanitizeContentForSubmit', () => sanitizedContent.value)
-provide('validateContentForSubmit', validateAllForSubmit)
-provide('revealValidationState', revealValidationState)
-provide('submitValidationAttempted', submitAttempted)
-provide('focusFirstValidationError', focusFirstInvalidField)
-provide('editingFromVersionId', editingFromVersionId)
-provide(
-  'serverVersionDrifted',
-  computed(
-    () =>
-      editingFromVersionId.value !== null &&
-      persistedContent.value?.current_version_id != null &&
-      persistedContent.value?.current_version_id !== editingFromVersionId.value,
-  ),
-)
+provide('editingFromVersionId', versionConflict.editingFromVersionId)
+provide('serverVersionDrifted', versionConflict.hasDrifted)
 provide('serverCurrentVersion', computed(() => currentContentSource.value?.current_version))
 
 const reloadServerContent = () => {
-  editingFromVersionId.value = null
+  versionConflict.reset()
   discardLocalContentChanges()
   const contentIdToInvalidate = activeContentId.value || canonicalContentId.value
   queryClient.invalidateQueries({
@@ -1018,28 +912,12 @@ provide('reloadServerContent', reloadServerContent)
     v-model:open="template.isOpen"
   />
 
-  <Teleport
-    defer
-    to="#appHeader"
-  >
-    <ContentHeader
-      v-if="content"
-      :content="content"
-      :show-preview-toggle="!isPreviewDisabled"
-    />
-  </Teleport>
-
-  <Teleport
-    defer
-    to="#appHeaderActions"
-  >
-    <HeaderActions
-      v-if="content"
-      :content="content"
-      :present-users="collaborators"
-      :remote-draft-users="remoteDraftCollaborators"
-      :space-id="spaceId"
-      :is-dirty="isDirty"
-    />
-  </Teleport>
+  <ContentPageHeaderPortals
+    :content="content"
+    :space-id="spaceId"
+    :is-dirty="isDirty"
+    :show-preview-toggle="!isPreviewDisabled"
+    :present-users="collaborators"
+    :remote-draft-users="remoteDraftCollaborators"
+  />
 </template>

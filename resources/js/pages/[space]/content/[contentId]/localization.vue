@@ -1,21 +1,19 @@
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
 import { refDebounced, useStorage } from '@vueuse/core'
-import { useRouteQuery } from '@vueuse/router'
 import { toRaw } from 'vue'
 
 import { api } from '~/api'
-import ContentHeader from '~/components/content/ContentHeader.vue'
-import HeaderActions from '~/components/content/HeaderActions.vue'
+import ContentPageHeaderPortals from '~/components/content/ContentPageHeaderPortals.vue'
 import Icon from '~/components/Icon.vue'
-import FlattenedLocalization from '~/components/localization/FlattendeLocalization.vue'
+import FlattenedLocalization from '~/components/localization/FlattenedLocalization.vue'
 import Preview from '~/components/Preview.vue'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/components/ui/resizable'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { Spinner } from '~/components/ui/spinner'
-import { useAlertDialog } from '~/composables/useAlertDialog'
+import { useContentEditorPage } from '~/composables/useContentEditorPage'
 import {
   useContentLiveCollaboration,
   type ContentCommitAction,
@@ -23,7 +21,6 @@ import {
 import { useContentSchemaState } from '~/composables/useContentSchemaState'
 import {
   buildMissingLanguageDraft,
-  getContentDefaultLanguage,
   resolveContentLanguage,
   resolveContentRouteName,
   withContentLanguageQuery,
@@ -42,7 +39,6 @@ import type { FieldUpdateEvent } from '~/utils/preview-bridge'
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
-const { alert } = useAlertDialog()
 const spaceId = computed<string>(() => route.params.space as string)
 const canonicalContentId = computed<string>(() => route.params.contentId as string)
 const { settings } = useSpaceSettings(spaceId.value)
@@ -54,14 +50,6 @@ const { slugify } = useContentWizardSlug()
 const spaceAPI = computed(() => api.forSpace(spaceId.value))
 const { data: routeContent } = useContentQuery(canonicalContentId)
 
-const defaultLanguage = computed(() =>
-  getContentDefaultLanguage(
-    currentSpace.value?.settings?.default_language,
-    routeContent.value?.language_versions,
-    routeContent.value?.language_iso
-  )
-)
-const language = useRouteQuery<string | undefined>('lang')
 const canonicalContent = computed(() => {
   if (!routeContent.value) {
     return null
@@ -76,14 +64,28 @@ const canonicalContent = computed(() => {
     id: routeContent.value.i18n_canonical_id,
   }
 })
-const resolvedLanguage = computed(() =>
-  resolveContentLanguage(
-    language.value,
-    defaultLanguage.value,
-    canonicalContent.value?.language_versions,
-    routeContent.value?.language_iso
-  )
-)
+
+const translatableContent = ref<ContentResource | null>(null)
+const persistedContent = ref<ContentResource | null>(null)
+
+const {
+  defaultLanguage,
+  languageQuery: language,
+  resolvedLanguage,
+  isDirty,
+  provideValidationState,
+} = useContentEditorPage({
+  content: translatableContent,
+  persistedContent,
+  routeContent,
+  canonicalContent,
+  spaceDefaultLanguage: computed(() => currentSpace.value?.settings?.default_language),
+  // A translation is a handful of fields, so comparing against the baseline is
+  // cheap — and undoing an edit by hand makes the page clean again.
+  dirtyStrategy: 'snapshot',
+  onDiscardChanges: () => discardOwnDrafts(),
+})
+
 const selectedLanguageVersion = computed(
   () =>
     canonicalContent.value?.language_versions?.find(
@@ -153,9 +155,6 @@ const { data: sourceChainContents } = useQuery({
       .filter((content): content is ContentResource => !!content)
   },
 })
-
-const translatableContent = ref<ContentResource | null>(null)
-const persistedContent = ref<ContentResource | null>(null)
 
 /**
  * `auto` follows the block's slug pattern (or the translated name) and lets the
@@ -439,28 +438,14 @@ watch(
 const { useBlocksQuery } = useBlocks(spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 const blockList = computed(() => blocks.value?.data || [])
-const {
-  sanitizedContent,
-  validationSummary,
-  markFieldDirty,
-  setServerErrors,
-  clearServerErrors,
-  getFieldError,
-  shouldShowFieldError,
-  getClientErrors,
-  getVisibleValidationEntries,
-  getValidationIssueSignature,
-  validateAllForSubmit,
-  revealValidationState,
-  focusFirstInvalidField,
-  resetValidationState,
-  submitAttempted,
-} = useContentSchemaState({
+const validation = useContentSchemaState({
   content: translatableContent,
   blocks: blockList,
   effectiveContent: sourceContentPayload,
   ignoreAbsentNonTranslatableFields: true,
 })
+provideValidationState(validation)
+const { clearServerErrors, resetValidationState } = validation
 
 const block = computed(() => {
   if (!canonicalContent.value || !blocks.value) return null
@@ -597,11 +582,6 @@ const getBlockSchemaFn = (blockSlug: string) => {
   return blockSchemaCache.value.get(blockSlug)
 }
 
-const isDirty = computed(() => {
-  if (!translatableContent.value || !persistedContent.value) return false
-  return JSON.stringify(translatableContent.value) !== JSON.stringify(persistedContent.value)
-})
-
 // Live collaboration: translations may not be persisted yet (no content id), so
 // the presence channel is keyed by canonical content + language instead. That
 // key stays stable when a peer's save creates the translation row mid-session.
@@ -706,55 +686,6 @@ const getLocalizedFieldCollaborators = (key: string) =>
 const getLocalizedFieldDraftOwners = (key: string) =>
   collaborationContentKey.value ? getDraftOwners(collaborationContentKey.value, key) : []
 
-async function guardLeave(to: any, from: any, next: any) {
-  if (to && from && to.path === from.path) {
-    return next()
-  }
-
-  if (isDirty.value) {
-    const answer = await alert.confirm(
-      t(
-        'labels.content.unsavedChanges',
-        'You have unsaved changes. Are you sure you want to leave?'
-      )
-    )
-    if (answer) {
-      discardOwnDrafts()
-      next()
-    } else {
-      next(false)
-    }
-  } else {
-    next()
-  }
-}
-
-onBeforeRouteUpdate(guardLeave)
-onBeforeRouteLeave(guardLeave)
-
-onBeforeUnmount(() => {
-  window.removeEventListener('beforeunload', handleBeforeUnload)
-})
-
-const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-  if (isDirty.value) {
-    e.preventDefault()
-    e.returnValue = ''
-  }
-}
-
-watch(
-  isDirty,
-  (newValue) => {
-    if (newValue) {
-      window.addEventListener('beforeunload', handleBeforeUnload)
-    } else {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-    }
-  },
-  { immediate: true }
-)
-
 watch(
   showPreview,
   (enabled) => {
@@ -808,20 +739,6 @@ provide('resetDirtyState', () => {
   resetValidationState()
 })
 provide('content', previewContentRef)
-provide('markFieldDirty', markFieldDirty)
-provide('getFieldError', getFieldError)
-provide('shouldShowFieldError', shouldShowFieldError)
-provide('setValidationErrors', setServerErrors)
-provide('clearValidationErrors', clearServerErrors)
-provide('getClientValidationErrors', getClientErrors)
-provide('getValidationSummary', () => validationSummary.value)
-provide('getVisibleValidationEntries', getVisibleValidationEntries)
-provide('getValidationIssueSignature', getValidationIssueSignature)
-provide('sanitizeContentForSubmit', () => sanitizedContent.value)
-provide('validateContentForSubmit', validateAllForSubmit)
-provide('revealValidationState', revealValidationState)
-provide('submitValidationAttempted', submitAttempted)
-provide('focusFirstValidationError', focusFirstInvalidField)
 
 useSeoMeta({
   title: computed(
@@ -1000,28 +917,12 @@ useSeoMeta({
       </ResizablePanel>
     </ResizablePanelGroup>
   </div>
-  <Teleport
-    defer
-    to="#appHeader"
-  >
-    <ContentHeader
-      v-if="translatableContent"
-      :content="translatableContent"
-      :show-preview-toggle="!isPreviewDisabled"
-    />
-  </Teleport>
-
-  <Teleport
-    defer
-    to="#appHeaderActions"
-  >
-    <HeaderActions
-      v-if="translatableContent"
-      :content="translatableContent"
-      :present-users="collaborators"
-      :remote-draft-users="remoteDraftCollaborators"
-      :space-id="spaceId"
-      :is-dirty="isDirty"
-    />
-  </Teleport>
+  <ContentPageHeaderPortals
+    :content="translatableContent"
+    :space-id="spaceId"
+    :is-dirty="isDirty"
+    :show-preview-toggle="!isPreviewDisabled"
+    :present-users="collaborators"
+    :remote-draft-users="remoteDraftCollaborators"
+  />
 </template>
