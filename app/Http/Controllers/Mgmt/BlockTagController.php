@@ -11,7 +11,6 @@ use App\Models\Space\BlockTag;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Facades\Log;
 
 class BlockTagController extends Controller
 {
@@ -23,8 +22,7 @@ class BlockTagController extends Controller
 
         $tags = BlockTag::filter($filter)
             ->withCount(['blocks'])
-            ->paginate(min(request()->per_page ?? 20, 500));
-
+            ->paginate($this->perPage($request, 20, 500));
 
         return BlockTagResource::collection($tags);
     }
@@ -60,19 +58,8 @@ class BlockTagController extends Controller
     {
         $this->authorizeSpace($space, 'blocks.manage');
 
-        try {
-            $tag->delete();
+        $tag->delete();
 
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete block tag', [
-                'tag_name' => $tag->name,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while deleting the block tag',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 }

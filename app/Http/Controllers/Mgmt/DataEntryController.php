@@ -15,7 +15,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 
 class DataEntryController extends Controller
 {
@@ -113,23 +112,10 @@ class DataEntryController extends Controller
     {
         $this->authorize('delete', [$entry, $dataSource, $space]);
 
-        try {
-            $entry->delete();
-            $this->clearEntryCache($dataSource);
+        $entry->delete();
+        $this->clearEntryCache($dataSource);
 
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete data entry', [
-                'entry_id' => $entry->id,
-                'data_source_id' => $dataSource->id,
-                'space_id' => $space->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while deleting the data entry',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 
     /**

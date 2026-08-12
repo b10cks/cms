@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\Space\BackfillAssetChecksumsJob;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
+use App\Support\SpaceContext;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -44,8 +45,13 @@ class BackfillAssetChecksumsCommand extends Command
             foreach ($spaces as $space) {
                 try {
                     if ($dryRun) {
-                        app()->offsetSet('currentSpace', $space);
-                        $missing = Asset::query()->whereNull('checksum')->count();
+                        $restore = SpaceContext::enter($space);
+
+                        try {
+                            $missing = Asset::query()->whereNull('checksum')->count();
+                        } finally {
+                            $restore();
+                        }
 
                         if ($missing > 0) {
                             $this->line("  {$space->id}  {$missing} asset(s) missing checksum");

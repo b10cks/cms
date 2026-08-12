@@ -72,19 +72,8 @@ class BackupController extends Controller
     {
         $this->authorize('delete', $backup);
         
-        try {
-            $action->execute($backup);
-            
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete backup', [
-                'backup_id' => $backup->id,
-                'error' => $e->getMessage(),
-            ]);
+        $action->execute($backup);
 
-            return response()->json([
-                'message' => 'An error occurred while deleting the backup',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 }

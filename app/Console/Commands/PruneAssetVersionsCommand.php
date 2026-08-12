@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Models\Space\AssetVersion;
+use App\Support\SpaceContext;
 use App\Services\Storage\StorageService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
@@ -82,58 +83,62 @@ class PruneAssetVersionsCommand extends Command
 
     private function pruneSpace(Space $space, int $keep, Carbon $cutoff, bool $dryRun): int
     {
-        app()->offsetSet('currentSpace', $space);
+        $restore = SpaceContext::enter($space);
 
         $deleted = 0;
         $filesystem = null;
 
-        Asset::query()
-            ->select('id')
-            ->orderBy('id')
-            ->chunkById(100, function ($assets) use ($keep, $cutoff, $dryRun, $space, &$deleted, &$filesystem) {
-                foreach ($assets as $asset) {
-                    $versions = AssetVersion::query()
-                        ->where('asset_id', $asset->id)
-                        ->orderByDesc('version_number')
-                        ->get()
-                        ->values();
+        try {
+            Asset::query()
+                ->select('id')
+                ->orderBy('id')
+                ->chunkById(100, function ($assets) use ($keep, $cutoff, $dryRun, $space, &$deleted, &$filesystem) {
+                    foreach ($assets as $asset) {
+                        $versions = AssetVersion::query()
+                            ->where('asset_id', $asset->id)
+                            ->orderByDesc('version_number')
+                            ->get()
+                            ->values();
 
-                    foreach ($versions as $index => $version) {
-                        $rank = $index + 1;
-                        $isTooOld = $version->created_at !== null && $version->created_at->lt($cutoff);
-                        $isBeyondKeepCount = $rank > $keep;
+                        foreach ($versions as $index => $version) {
+                            $rank = $index + 1;
+                            $isTooOld = $version->created_at !== null && $version->created_at->lt($cutoff);
+                            $isBeyondKeepCount = $rank > $keep;
 
-                        if (! $isBeyondKeepCount && ! $isTooOld) {
-                            continue;
-                        }
-
-                        $deleted++;
-
-                        if ($dryRun) {
-                            continue;
-                        }
-
-                        if ($version->path) {
-                            try {
-                                $filesystem ??= app(StorageService::class)->getDefaultStorage($space);
-
-                                if ($filesystem->fileExists($version->path)) {
-                                    $filesystem->delete($version->path);
-                                }
-                            } catch (\Throwable $e) {
-                                Log::warning('Failed to delete pruned asset version file', [
-                                    'space_id' => $space->id,
-                                    'asset_version_id' => $version->id,
-                                    'path' => $version->path,
-                                    'error' => $e->getMessage(),
-                                ]);
+                            if (! $isBeyondKeepCount && ! $isTooOld) {
+                                continue;
                             }
-                        }
 
-                        $version->delete();
+                            $deleted++;
+
+                            if ($dryRun) {
+                                continue;
+                            }
+
+                            if ($version->path) {
+                                try {
+                                    $filesystem ??= app(StorageService::class)->getDefaultStorage($space);
+
+                                    if ($filesystem->fileExists($version->path)) {
+                                        $filesystem->delete($version->path);
+                                    }
+                                } catch (\Throwable $e) {
+                                    Log::warning('Failed to delete pruned asset version file', [
+                                        'space_id' => $space->id,
+                                        'asset_version_id' => $version->id,
+                                        'path' => $version->path,
+                                        'error' => $e->getMessage(),
+                                    ]);
+                                }
+                            }
+
+                            $version->delete();
+                        }
                     }
-                }
-            });
+                });
+        } finally {
+            $restore();
+        }
 
         return $deleted;
     }

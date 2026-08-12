@@ -25,7 +25,7 @@ class BlockVersionController extends Controller
         $versions = BlockVersion::filter(BlockVersionFilter::fromRequest($request))
             ->where('block_id', $block->id)
             ->with(['createdBy', 'parent'])
-            ->paginate(min($request->per_page ?? 20, 1000));
+            ->paginate($this->perPage($request, 20, 1000));
 
         return BlockVersionResource::collection($versions);
     }
@@ -55,20 +55,9 @@ class BlockVersionController extends Controller
     {
         $this->authorize('delete', [$version, $space]);
 
-        try {
-            $version->delete();
+        $version->delete();
 
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete block version', [
-                'version_id' => $version->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while deleting the block version',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 
     public function restore(Space $space, Block $block, BlockVersion $version, RestoreBlockVersion $restoreAction): BlockResource

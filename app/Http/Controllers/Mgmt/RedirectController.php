@@ -65,19 +65,8 @@ class RedirectController extends Controller
     {
         $this->authorize('delete', [$redirect, $space]);
 
-        try {
-            $redirect->delete();
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete redirect', [
-                'redirect_id' => $redirect->id,
-                'space_id' => $space->id,
-                'error' => $e->getMessage(),
-            ]);
+        $redirect->delete();
 
-            return response()->json([
-                'message' => 'An error occurred while deleting the redirect',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 }

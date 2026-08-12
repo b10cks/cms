@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Management\Space;
+use App\Support\SpaceContext;
 use App\Models\Space\AssetPackage;
 use App\Models\Space\AssetShare;
 use App\Models\Space\AssetShareEvent;
@@ -38,31 +39,22 @@ class PruneAssetPackagesCommand extends Command
         $failed = 0;
         $prunedEvents = 0;
 
-        $hadSpace = app()->bound('currentSpace');
-        $priorSpace = $hadSpace ? app('currentSpace') : null;
+        foreach (Space::query()->cursor() as $space) {
+            $restore = SpaceContext::enter($space);
 
-        try {
-            foreach (Space::query()->cursor() as $space) {
-                app()->offsetSet('currentSpace', $space);
-
-                try {
-                    $pruned += $this->prunePackages($dryRun, $failed);
-                    $prunedEvents += $this->pruneShareEvents($dryRun);
-                } catch (\Throwable $e) {
-                    // A space whose database is unreachable (or not yet
-                    // migrated) must not stop the sweep for everyone else.
-                    $failed++;
-                    Log::warning('Skipping space while pruning asset packages', [
-                        'space_id' => $space->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
-        } finally {
-            if ($hadSpace) {
-                app()->offsetSet('currentSpace', $priorSpace);
-            } else {
-                app()->offsetUnset('currentSpace');
+            try {
+                $pruned += $this->prunePackages($dryRun, $failed);
+                $prunedEvents += $this->pruneShareEvents($dryRun);
+            } catch (\Throwable $e) {
+                // A space whose database is unreachable (or not yet
+                // migrated) must not stop the sweep for everyone else.
+                $failed++;
+                Log::warning('Skipping space while pruning asset packages', [
+                    'space_id' => $space->id,
+                    'error' => $e->getMessage(),
+                ]);
+            } finally {
+                $restore();
             }
         }
 

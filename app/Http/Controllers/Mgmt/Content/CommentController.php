@@ -132,19 +132,9 @@ class CommentController extends Controller
     {
         $this->authorize('delete', [$comment, $space]);
 
-        try {
-            $comment->delete();
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete comment', [
-                'comment_id' => $comment->id,
-                'error' => $e->getMessage(),
-            ]);
+        $comment->delete();
 
-            return response()->json([
-                'message' => 'An error occurred while deleting the comment',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 
     /**

@@ -26,7 +26,7 @@ class IconController extends Controller
         $filter = new IconFilter($request->all());
 
         $icons = Icon::filter($filter)
-            ->paginate(min((int) $request->get('per_page', 60), 200));
+            ->paginate($this->perPage($request, 60, 200));
 
         return IconResource::collection($icons);
     }

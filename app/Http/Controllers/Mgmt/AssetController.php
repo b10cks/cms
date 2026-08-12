@@ -261,37 +261,20 @@ class AssetController extends Controller
         AssetUsageService $assetUsageService
     ): JsonResponse {
         $this->authorizeSpace($space, 'assets.manage');
-        try {
-            $linkedContentsCount = $assetUsageService->getUsageCountForAsset($asset);
+        $linkedContentsCount = $assetUsageService->getUsageCountForAsset($asset);
 
-            if ($linkedContentsCount > 0 && !$request->boolean('force')) {
-                return response()->json([
-                    'message' => 'Asset is currently linked to content.',
-                    'code' => 'asset_in_use',
-                    'linked_contents_count' => $linkedContentsCount,
-                    'can_force_delete' => true,
-                ], 409);
-            }
-
-            $result = $assetService->deleteAsset($asset);
-
-            if ($result) {
-                return response()->json(null, 204);
-            } else {
-                return response()->json([
-                    'message' => 'Failed to delete asset',
-                ], 500);
-            }
-        } catch (\Exception $e) {
-            Log::error('Failed to delete asset', [
-                'asset_id' => $asset->id,
-                'error' => $e->getMessage(),
-            ]);
-
+        if ($linkedContentsCount > 0 && !$request->boolean('force')) {
             return response()->json([
-                'message' => 'An error occurred while deleting the asset',
-            ], 500);
+                'message' => 'Asset is currently linked to content.',
+                'code' => 'asset_in_use',
+                'linked_contents_count' => $linkedContentsCount,
+                'can_force_delete' => true,
+            ], 409);
         }
+
+        abort_unless($assetService->deleteAsset($asset), 500, 'Failed to delete asset');
+
+        return response()->json(null, 204);
     }
 
     private function attachUsageCounts(iterable $assets, AssetUsageService $assetUsageService): void

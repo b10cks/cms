@@ -25,7 +25,7 @@ class ContentVersionController extends Controller
             ->with(['createdBy', 'release', 'publishedBy'])
             ->filter(ContentVersionFilter::fromRequest($request))
             ->orderByDesc('created_at')
-            ->paginate(min((int) $request->input('per_page', 50), 200));
+            ->paginate($this->perPage($request, 50, 200));
 
         return ContentVersionListResource::collection($versions);
     }

@@ -104,7 +104,7 @@ class PublicAssetShareController extends Controller
         $share = $this->resolveShare($space, $token);
         $this->ensureUnlocked($share, $request);
 
-        $perPage = min(100, max(1, (int) $request->query('per_page', 50)));
+        $perPage = $this->perPage($request, 50, 100);
 
         $assets = $this->packageService
             ->resolveAssetQueryFor($share)

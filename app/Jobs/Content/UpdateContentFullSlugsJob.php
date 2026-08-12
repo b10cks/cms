@@ -5,6 +5,7 @@ namespace App\Jobs\Content;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Services\Content\LocalizedContentSlugService;
+use App\Support\SpaceContext;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -45,14 +46,11 @@ class UpdateContentFullSlugsJob implements ShouldQueue
      */
     public function handle()
     {
-        // Snapshot/restore the tenant binding so this per-space context does not
+        // Restore the prior tenant binding so this per-space context does not
         // leak into the next job on a long-lived worker.
-        $hadSpace = app()->bound('currentSpace');
-        $priorSpace = $hadSpace ? app('currentSpace') : null;
+        $restore = SpaceContext::enter($this->space);
 
         try {
-            app()->offsetSet('currentSpace', $this->space);
-
             $slugService = new LocalizedContentSlugService($this->space);
 
             $content = Content::query()->find($this->contentId);
@@ -72,11 +70,7 @@ class UpdateContentFullSlugsJob implements ShouldQueue
             Log::error("Error processing children for content {$this->contentId}: " . $e->getMessage());
             throw $e;
         } finally {
-            if ($hadSpace) {
-                app()->offsetSet('currentSpace', $priorSpace);
-            } else {
-                app()->offsetUnset('currentSpace');
-            }
+            $restore();
         }
     }
 }

@@ -24,7 +24,7 @@ class BlockTemplateController extends Controller
         $templates = BlockTemplate::filter(BlockTemplateFilter::fromRequest($request))
             ->where('block_id', $block->id)
             ->with(['createdBy'])
-            ->paginate(min($request->per_page ?? 20, 1000));
+            ->paginate($this->perPage($request, 20, 1000));
 
         return BlockTemplateResource::collection($templates);
     }
@@ -67,19 +67,8 @@ class BlockTemplateController extends Controller
     {
         $this->authorize('delete', [$template, $space]);
 
-        try {
-            $template->delete();
+        $template->delete();
 
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete block template', [
-                'template_id' => $template->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while deleting the block template',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 }

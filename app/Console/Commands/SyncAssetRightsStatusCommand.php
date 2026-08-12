@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\AssetRightsStatus;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
+use App\Support\SpaceContext;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -73,26 +74,30 @@ class SyncAssetRightsStatusCommand extends Command
 
     private function syncSpace(Space $space, bool $dryRun): int
     {
-        app()->offsetSet('currentSpace', $space);
+        $restore = SpaceContext::enter($space);
 
         $updated = 0;
 
-        $expiredQuery = Asset::query()
-            ->whereNotNull('license_expires_at')
-            ->where('license_expires_at', '<', now())
-            ->where('rights_status', '!=', AssetRightsStatus::EXPIRED->value);
-        $updated += $dryRun ? $expiredQuery->count() : $expiredQuery->update(['rights_status' => AssetRightsStatus::EXPIRED->value]);
+        try {
+            $expiredQuery = Asset::query()
+                ->whereNotNull('license_expires_at')
+                ->where('license_expires_at', '<', now())
+                ->where('rights_status', '!=', AssetRightsStatus::EXPIRED->value);
+            $updated += $dryRun ? $expiredQuery->count() : $expiredQuery->update(['rights_status' => AssetRightsStatus::EXPIRED->value]);
 
-        $restrictedQuery = Asset::query()
-            ->whereNotNull('license_expires_at')
-            ->where('license_expires_at', '>=', now())
-            ->where('rights_status', '!=', AssetRightsStatus::RESTRICTED->value);
-        $updated += $dryRun ? $restrictedQuery->count() : $restrictedQuery->update(['rights_status' => AssetRightsStatus::RESTRICTED->value]);
+            $restrictedQuery = Asset::query()
+                ->whereNotNull('license_expires_at')
+                ->where('license_expires_at', '>=', now())
+                ->where('rights_status', '!=', AssetRightsStatus::RESTRICTED->value);
+            $updated += $dryRun ? $restrictedQuery->count() : $restrictedQuery->update(['rights_status' => AssetRightsStatus::RESTRICTED->value]);
 
-        $unrestrictedQuery = Asset::query()
-            ->whereNull('license_expires_at')
-            ->where('rights_status', '!=', AssetRightsStatus::UNRESTRICTED->value);
-        $updated += $dryRun ? $unrestrictedQuery->count() : $unrestrictedQuery->update(['rights_status' => AssetRightsStatus::UNRESTRICTED->value]);
+            $unrestrictedQuery = Asset::query()
+                ->whereNull('license_expires_at')
+                ->where('rights_status', '!=', AssetRightsStatus::UNRESTRICTED->value);
+            $updated += $dryRun ? $unrestrictedQuery->count() : $unrestrictedQuery->update(['rights_status' => AssetRightsStatus::UNRESTRICTED->value]);
+        } finally {
+            $restore();
+        }
 
         return $updated;
     }

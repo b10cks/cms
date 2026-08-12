@@ -11,7 +11,6 @@ use App\Models\Space\BlockFolder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Facades\Log;
 
 class BlockFolderController extends Controller
 {
@@ -65,19 +64,8 @@ class BlockFolderController extends Controller
             ], 422);
         }
 
-        try {
-            $folder->delete();
+        $folder->delete();
 
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete block folder', [
-                'folder_id' => $folder->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while deleting the block folder',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 }
