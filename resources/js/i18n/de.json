@@ -651,6 +651,12 @@
       },
       "export": "Exportieren",
       "import": "Importieren",
+      "exportDialog": {
+        "title": "Assets exportieren",
+        "description": "Asset-Metadaten im gewünschten Format exportieren",
+        "formatLabel": "Exportformat",
+        "exportError": "Export fehlgeschlagen"
+      },
       "importDialog": {
         "title": "Assets importieren",
         "description": "Asset-Metadaten aus einer Datei importieren.",
@@ -1061,7 +1067,8 @@
         "title": "Inhaltsübersetzungen exportieren",
         "description": "Exportiere übersetzbare Inhaltsfelder und ihre Übersetzungen im gewünschten Format.",
         "formatLabel": "Exportformat",
-        "submit": "Exportieren"
+        "submit": "Exportieren",
+        "exportError": "Export fehlgeschlagen"
       },
       "translationImport": {
         "entry": "Übersetzungen importieren",
@@ -1091,7 +1098,8 @@
         "modifiedContent": "Geänderte Inhalte",
         "changeCount": "{count} Feld(er)",
         "ignoredFields": "Ignoriert",
-        "errorsTitle": "Fehler"
+        "errorsTitle": "Fehler",
+        "importError": "Import fehlgeschlagen"
       }
     },
     "contentTree": {

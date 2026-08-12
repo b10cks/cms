@@ -651,6 +651,12 @@
       },
       "export": "Export",
       "import": "Import",
+      "exportDialog": {
+        "title": "Export Assets",
+        "description": "Export asset metadata in your preferred format",
+        "formatLabel": "Export Format",
+        "exportError": "Export failed"
+      },
       "importDialog": {
         "title": "Import Assets",
         "description": "Import asset metadata from a file.",
@@ -1061,7 +1067,8 @@
         "title": "Export content translations",
         "description": "Export translatable content fields and their translations in your preferred format.",
         "formatLabel": "Export format",
-        "submit": "Export"
+        "submit": "Export",
+        "exportError": "Export failed"
       },
       "translationImport": {
         "entry": "Import translations",
@@ -1091,7 +1098,8 @@
         "modifiedContent": "Modified content",
         "changeCount": "{count} field(s)",
         "ignoredFields": "Ignored",
-        "errorsTitle": "Errors"
+        "errorsTitle": "Errors",
+        "importError": "Import failed"
       }
     },
     "contentTree": {

@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-import { Button } from '~/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
-import SelectField from '~/components/ui/form/SelectField.vue'
-import { buildTimestampedExportFilename, downloadBlob } from '~/lib/import-export'
+import ExportDialog from '~/components/import-export/ExportDialog.vue'
 import type { ContentTranslationExportFormat } from '~/types/content-translations'
+import type { ExportDialogLabels } from '~/types/import-export'
 
 const props = defineProps<{
   spaceId: string
@@ -15,85 +12,34 @@ const open = defineModel<boolean>('open', { default: false })
 
 const { t } = useI18n()
 const { useExportContentTranslationsMutation } = useContent(props.spaceId)
-const { mutate: exportTranslations } = useExportContentTranslationsMutation()
+const exportMutation = useExportContentTranslationsMutation()
 
-const format = ref<ContentTranslationExportFormat>('xliff')
-const isExporting = ref(false)
-const errorMessage = ref('')
+const labels = computed<ExportDialogLabels>(() => ({
+  title: t('labels.contents.translationExport.title'),
+  description: t('labels.contents.translationExport.description'),
+  formatLabel: t('labels.contents.translationExport.formatLabel'),
+  submit: t('labels.contents.translationExport.submit'),
+  fallbackError: t('labels.contents.translationExport.exportError'),
+}))
 
-const handleExport = () => {
-  isExporting.value = true
-  errorMessage.value = ''
+const formats: { value: ContentTranslationExportFormat; label: string }[] = [
+  { value: 'xliff', label: 'XLIFF' },
+  { value: 'csv', label: 'CSV' },
+  { value: 'excel', label: 'Excel' },
+  { value: 'json', label: 'JSON' },
+  { value: 'yaml', label: 'YAML' },
+]
 
-  exportTranslations(
-    { ...props.filters, as: format.value },
-    {
-      onSuccess: (blob) => {
-        downloadBlob(blob, buildTimestampedExportFilename('content-translations', format.value))
-        isExporting.value = false
-        open.value = false
-      },
-      onError: (error) => {
-        errorMessage.value = error instanceof Error ? error.message : 'Export failed'
-        isExporting.value = false
-      },
-    }
-  )
-}
+const submit = (format: ContentTranslationExportFormat): Promise<Blob> =>
+  exportMutation.mutateAsync({ ...props.filters, as: format })
 </script>
 
 <template>
-  <Dialog
-    :open="open"
-    @update:open="(value) => (open = value)"
-  >
-    <DialogContent>
-      <DialogHeaderCombined
-        :title="t('labels.contents.translationExport.title')"
-        :description="t('labels.contents.translationExport.description')"
-      />
-
-      <form
-        class="space-y-4"
-        @submit.prevent="handleExport"
-      >
-        <SelectField
-          name="format"
-          :label="t('labels.contents.translationExport.formatLabel')"
-          v-model="format"
-          :options="[
-            { value: 'xliff', label: 'XLIFF' },
-            { value: 'csv', label: 'CSV' },
-            { value: 'excel', label: 'Excel' },
-            { value: 'json', label: 'JSON' },
-            { value: 'yaml', label: 'YAML' },
-          ]"
-        />
-
-        <div
-          v-if="errorMessage"
-          class="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-        >
-          {{ errorMessage }}
-        </div>
-
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            :disabled="isExporting"
-            @click="open = false"
-          >
-            {{ t('alertDialog.cancel') }}
-          </Button>
-          <Button
-            type="submit"
-            :loading="isExporting"
-          >
-            {{ isExporting ? t('labels.loading') : t('labels.contents.translationExport.submit') }}
-          </Button>
-        </DialogFooter>
-      </form>
-    </DialogContent>
-  </Dialog>
+  <ExportDialog
+    v-model:open="open"
+    :labels="labels"
+    :formats="formats"
+    :submit="submit"
+    filename-prefix="content-translations"
+  />
 </template>

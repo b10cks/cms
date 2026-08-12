@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import type { AssetsQueryParams } from '~/api/resources/assets'
-import Icon from '~/components/Icon.vue'
-import { Button } from '~/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
-import { buildTimestampedExportFilename, downloadBlob } from '~/lib/import-export'
-
-import SelectField from '../ui/form/SelectField.vue'
+import ExportDialog from '~/components/import-export/ExportDialog.vue'
+import type { ExportDialogLabels } from '~/types/import-export'
 
 const props = defineProps<{
   spaceId: string
@@ -14,97 +10,46 @@ const props = defineProps<{
   tagId?: string | null
 }>()
 
+const open = defineModel<boolean>('open', { default: false })
+
+const { t } = useI18n()
 const { useExportAssetsMutation } = useAssets(props.spaceId)
+const exportMutation = useExportAssetsMutation()
 
-const emit = defineEmits<{
-  'update:open': [value: boolean]
-}>()
+const labels = computed<ExportDialogLabels>(() => ({
+  title: t('labels.assets.exportDialog.title'),
+  description: t('labels.assets.exportDialog.description'),
+  formatLabel: t('labels.assets.exportDialog.formatLabel'),
+  submit: t('labels.assets.export'),
+  fallbackError: t('labels.assets.exportDialog.exportError'),
+}))
 
-const open = defineModel<boolean>('open')
+const formats: { value: ExportTypes; label: string }[] = [
+  { value: 'csv', label: 'CSV' },
+  { value: 'excel', label: 'Excel' },
+  { value: 'json', label: 'JSON' },
+  { value: 'xliff', label: 'XLIFF' },
+  { value: 'yaml', label: 'YAML' },
+]
 
-const format = ref<ExportTypes>('csv')
-const isExporting = ref(false)
-const errorMessage = ref<string>('')
-
-const { mutate: exportAssets } = useExportAssetsMutation()
-
-const handleExport = async () => {
-  isExporting.value = true
-  errorMessage.value = ''
-
-  try {
-    const params: AssetsQueryParams & { as: ExportTypes } = {
-      ...props.filters,
-      folder: props.folderId ?? undefined,
-      tags: props.tagId ?? undefined,
-      as: format.value,
-    }
-
-    exportAssets(params, {
-      onSuccess: (blob) => {
-        downloadBlob(blob, buildTimestampedExportFilename('assets-export', format.value))
-
-        open.value = false
-      },
-      onError: (error) => {
-        errorMessage.value = error instanceof Error ? error.message : 'Export failed'
-      },
-    })
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Export failed'
-  } finally {
-    isExporting.value = false
+const submit = (format: ExportTypes): Promise<Blob> => {
+  const params: AssetsQueryParams & { as: ExportTypes } = {
+    ...props.filters,
+    folder: props.folderId ?? undefined,
+    tags: props.tagId ?? undefined,
+    as: format,
   }
+
+  return exportMutation.mutateAsync(params)
 }
 </script>
 
 <template>
-  <Dialog
-    :open="open"
-    @update:open="(value) => (open = value)"
-  >
-    <DialogContent>
-      <DialogHeaderCombined
-        title="Export Assets"
-        description="Export asset metadata in your preferred format"
-      />
-
-      <form
-        @submit.prevent="handleExport"
-        class="space-y-4"
-      >
-        <div class="space-y-2">
-          <SelectField
-            name="format"
-            label="Export Format"
-            v-model="format"
-            :options="[
-              { value: 'csv', label: 'CSV' },
-              { value: 'excel', label: 'Excel' },
-              { value: 'json', label: 'JSON' },
-              { value: 'xliff', label: 'XLIFF' },
-              { value: 'yaml', label: 'YAML' },
-            ]"
-          >
-          </SelectField>
-        </div>
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            @click="open = false"
-            :disabled="isExporting"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            :loading="isExporting"
-          >
-            {{ isExporting ? 'Exporting...' : 'Export' }}
-          </Button>
-        </DialogFooter>
-      </form>
-    </DialogContent>
-  </Dialog>
+  <ExportDialog
+    v-model:open="open"
+    :labels="labels"
+    :formats="formats"
+    :submit="submit"
+    filename-prefix="assets-export"
+  />
 </template>
