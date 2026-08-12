@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.12-ea491530] — 2026-8-12
+
+- 🐛 Fix live preview for a focused block
+
 ## [v2026.8.12-91983492] — 2026-8-12
 
 - 🐛 Fix build: drop UploadError re-export from useFileUpload
