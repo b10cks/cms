@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\Space\BackfillAssetColorsJob;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
+use App\Support\SpaceContext;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -44,16 +45,21 @@ class BackfillAssetColorsCommand extends Command
             foreach ($spaces as $space) {
                 try {
                     if ($dryRun) {
-                        app()->offsetSet('currentSpace', $space);
-                        $pending = Asset::query()
-                            ->where(fn ($q) => $q
-                                ->where('mime_type', 'like', 'image/%')
-                                ->orWhere('mime_type', 'like', 'video/%'))
-                            ->get()
-                            ->filter(fn (Asset $asset) => BackfillAssetColorsJob::needsWork($asset->metadata ?? [], $asset->mime_type));
+                        $restore = SpaceContext::enter($space);
 
-                        foreach ($pending as $asset) {
-                            $this->line("  {$space->id}  {$asset->id}  {$asset->filename}.{$asset->extension} ({$asset->mime_type}): ".implode(', ', $this->pendingReasons($asset)));
+                        try {
+                            $pending = Asset::query()
+                                ->where(fn ($q) => $q
+                                    ->where('mime_type', 'like', 'image/%')
+                                    ->orWhere('mime_type', 'like', 'video/%'))
+                                ->get()
+                                ->filter(fn (Asset $asset) => BackfillAssetColorsJob::needsWork($asset->metadata ?? [], $asset->mime_type));
+
+                            foreach ($pending as $asset) {
+                                $this->line("  {$space->id}  {$asset->id}  {$asset->filename}.{$asset->extension} ({$asset->mime_type}): ".implode(', ', $this->pendingReasons($asset)));
+                            }
+                        } finally {
+                            $restore();
                         }
 
                         continue;

@@ -13,7 +13,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 
 class DataSourceController extends Controller
 {
@@ -100,23 +99,11 @@ class DataSourceController extends Controller
     {
         $this->authorize('delete', [$dataSource, $space]);
 
-        try {
-            $this->clearCache($dataSource);
+        $this->clearCache($dataSource);
 
-            $dataSource->delete();
+        $dataSource->delete();
 
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete data source', [
-                'data_source_id' => $dataSource->id,
-                'space_id' => $space->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while deleting the data source',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 
     protected function clearCache(DataSource $dataSource): void

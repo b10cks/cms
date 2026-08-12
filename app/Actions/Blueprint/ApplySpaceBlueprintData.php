@@ -12,6 +12,7 @@ use App\Models\Space\BlockFolder;
 use App\Models\Space\BlockTag;
 use App\Models\Space\BlockTemplate;
 use App\Models\Space\DataSource;
+use App\Support\SpaceContext;
 use Illuminate\Database\Eloquent\Model;
 
 class ApplySpaceBlueprintData
@@ -42,8 +43,7 @@ class ApplySpaceBlueprintData
             return;
         }
 
-        $previousSpace = app()->offsetExists('currentSpace') ? app()->get('currentSpace') : null;
-        app()->offsetSet('currentSpace', $space);
+        $restore = SpaceContext::enter($space);
 
         try {
             Model::unguarded(function () use ($blueprint) {
@@ -66,11 +66,7 @@ class ApplySpaceBlueprintData
                 }
             });
         } finally {
-            if ($previousSpace) {
-                app()->offsetSet('currentSpace', $previousSpace);
-            } else {
-                app()->offsetUnset('currentSpace');
-            }
+            $restore();
         }
     }
 

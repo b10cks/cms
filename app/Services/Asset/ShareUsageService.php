@@ -5,6 +5,7 @@ namespace App\Services\Asset;
 use App\Models\Management\Space;
 use App\Models\Space\AssetShare;
 use App\Models\Space\AssetShareEvent;
+use App\Support\SpaceContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -34,9 +35,7 @@ class ShareUsageService
         dispatch(function () use ($space, $shareId, $event, $assetId, $ipHash, $userAgent) {
             // The deferred closure runs after the response; the space models
             // need the space bound to resolve their database connection.
-            $hadSpace = app()->bound('currentSpace');
-            $priorSpace = $hadSpace ? app('currentSpace') : null;
-            app()->offsetSet('currentSpace', $space);
+            $restore = SpaceContext::enter($space);
 
             try {
                 (new AssetShareEvent)->getConnection()->transaction(function () use ($shareId, $event, $assetId, $ipHash, $userAgent) {
@@ -66,11 +65,7 @@ class ShareUsageService
                     'error' => $e->getMessage(),
                 ]);
             } finally {
-                if ($hadSpace) {
-                    app()->offsetSet('currentSpace', $priorSpace);
-                } else {
-                    app()->offsetUnset('currentSpace');
-                }
+                $restore();
             }
         })->afterResponse();
     }

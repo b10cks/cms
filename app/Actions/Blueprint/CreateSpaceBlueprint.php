@@ -14,6 +14,7 @@ use App\Models\Space\BlockTag;
 use App\Models\Space\BlockTemplate;
 use App\Models\Space\DataSource;
 use App\Models\User;
+use App\Support\SpaceContext;
 
 class CreateSpaceBlueprint
 {
@@ -69,8 +70,7 @@ class CreateSpaceBlueprint
             return [];
         }
 
-        $previousSpace = app()->offsetExists('currentSpace') ? app()->get('currentSpace') : null;
-        app()->offsetSet('currentSpace', $sourceSpace);
+        $restore = SpaceContext::enter($sourceSpace);
 
         try {
             $data = [];
@@ -88,11 +88,7 @@ class CreateSpaceBlueprint
 
             return $data;
         } finally {
-            if ($previousSpace) {
-                app()->offsetSet('currentSpace', $previousSpace);
-            } else {
-                app()->offsetUnset('currentSpace');
-            }
+            $restore();
         }
     }
 }

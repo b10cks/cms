@@ -45,7 +45,7 @@ class SpaceController extends Controller
                 'subscriptions' => fn($query) => $query->with('plan')->latest('created_at'),
             ])
             ->withCount(['users'])
-            ->paginate(min($request->per_page ?? 20, 1000));
+            ->paginate($this->perPage($request, 20, 1000));
 
         return SpaceResource::collection($spaces);
     }
@@ -212,27 +212,17 @@ class SpaceController extends Controller
     public function destroy(Space $space, AuthorizationService $authorizationService): JsonResponse
     {
         $this->authorize('delete', $space);
-        try {
-            // Check if the space is empty before deletion
-            if ($space->connections()->count() > 0) {
-                return response()->json([
-                    'message' => 'Cannot delete a space that has connections. Please delete all connections first.',
-                ], 422);
-            }
 
-            $space->delete();
-            $authorizationService->invalidateSpace($space);
-
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete space', [
-                'space_id' => $space->id,
-                'error' => $e->getMessage(),
-            ]);
-
+        // Check if the space is empty before deletion
+        if ($space->connections()->count() > 0) {
             return response()->json([
-                'message' => 'An error occurred while deleting the space',
-            ], 500);
+                'message' => 'Cannot delete a space that has connections. Please delete all connections first.',
+            ], 422);
         }
+
+        $space->delete();
+        $authorizationService->invalidateSpace($space);
+
+        return response()->json(null, 204);
     }
 }

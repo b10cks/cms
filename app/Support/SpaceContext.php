@@ -22,10 +22,6 @@ use Closure;
 class SpaceContext
 {
     /**
-     * Bind the given space as the current one and return a callable that
-     * restores whatever was bound before.
-     */
-    /**
      * The currently bound space, or null when none is bound (e.g. on a queue
      * worker outside SpaceContext::enter()). Never throws.
      */
@@ -36,6 +32,10 @@ class SpaceContext
         return $space instanceof Space ? $space : null;
     }
 
+    /**
+     * Bind the given space as the current one and return a callable that
+     * restores whatever was bound before.
+     */
     public static function enter(Space $space): Closure
     {
         $hadSpace = app()->bound('currentSpace');

@@ -85,20 +85,8 @@ class ReleaseController extends Controller
     {
         $this->authorize('delete', [$release, $space]);
 
-        try {
-            $release->delete();
+        $release->delete();
 
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete release', [
-                'release_id' => $release->id,
-                'space_id' => $space->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while deleting the release',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 }

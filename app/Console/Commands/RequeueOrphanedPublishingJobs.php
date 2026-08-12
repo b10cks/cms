@@ -7,6 +7,7 @@ use App\Jobs\Release\PublishScheduledReleaseJob;
 use App\Models\Management\Space;
 use App\Models\Space\ContentVersion;
 use App\Models\Space\Release;
+use App\Support\SpaceContext;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -66,19 +67,23 @@ class RequeueOrphanedPublishingJobs extends Command
         $orphaned = [];
 
         foreach (Space::query()->get() as $space) {
-            app()->offsetSet('currentSpace', $space);
+            $restore = SpaceContext::enter($space);
 
-            $versions = ContentVersion::query()
-                ->where('scheduled_at', '<=', now()->subMinutes(30))
-                ->whereNull('published_at')
-                ->select('id', 'scheduled_at')
-                ->lazy()
-                ->map(fn($version) => [
-                    'space_id' => $space->id,
-                    'space_name' => $space->name,
-                    'version_id' => $version->id,
-                    'scheduled_at' => $version->scheduled_at?->toDateTimeString(),
-                ])->toArray();
+            try {
+                $versions = ContentVersion::query()
+                    ->where('scheduled_at', '<=', now()->subMinutes(30))
+                    ->whereNull('published_at')
+                    ->select('id', 'scheduled_at')
+                    ->lazy()
+                    ->map(fn($version) => [
+                        'space_id' => $space->id,
+                        'space_name' => $space->name,
+                        'version_id' => $version->id,
+                        'scheduled_at' => $version->scheduled_at?->toDateTimeString(),
+                    ])->toArray();
+            } finally {
+                $restore();
+            }
 
             $orphaned = \array_merge($orphaned, $versions);
         }
@@ -96,22 +101,26 @@ class RequeueOrphanedPublishingJobs extends Command
         $orphaned = [];
 
         foreach (Space::query()->get() as $space) {
-            app()->offsetSet('currentSpace', $space);
+            $restore = SpaceContext::enter($space);
 
-            $releases = Release::query()
-                ->where('publish_at', '<=', now()->subMinutes(30))
-                ->whereNull('published_at')
-                ->whereNotNull('committed_at')
-                ->select('id', 'publish_at')
-                ->lazy()
-                ->map(
-                    fn($release) => [
-                        'space_id' => $space->id,
-                        'space_name' => $space->name,
-                        'release_id' => $release->id,
-                        'publish_at' => $release->publish_at?->toDateTimeString(),
-                    ]
-                )->toArray();
+            try {
+                $releases = Release::query()
+                    ->where('publish_at', '<=', now()->subMinutes(30))
+                    ->whereNull('published_at')
+                    ->whereNotNull('committed_at')
+                    ->select('id', 'publish_at')
+                    ->lazy()
+                    ->map(
+                        fn($release) => [
+                            'space_id' => $space->id,
+                            'space_name' => $space->name,
+                            'release_id' => $release->id,
+                            'publish_at' => $release->publish_at?->toDateTimeString(),
+                        ]
+                    )->toArray();
+            } finally {
+                $restore();
+            }
 
             $orphaned = \array_merge($orphaned, $releases);
         }

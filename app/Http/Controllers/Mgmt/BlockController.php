@@ -30,7 +30,7 @@ class BlockController extends Controller
         $blocks = Block::filter(BlockFilter::fromRequest($request))
             ->with(['folder'])
             ->withCount(['templates', 'versions'])
-            ->paginate(min($request->per_page ?? 20, 1000));
+            ->paginate($this->perPage($request, 20, 1000));
 
         return BlockResource::collection($blocks);
     }
@@ -123,19 +123,8 @@ class BlockController extends Controller
     {
         $this->authorize('delete', [$block, $space]);
 
-        try {
-            $block->delete();
+        $block->delete();
 
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete block', [
-                'block_id' => $block->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while deleting the block',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 }

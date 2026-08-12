@@ -15,7 +15,6 @@ use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Facades\Log;
 
 class AssetCollectionController extends Controller
 {
@@ -86,25 +85,14 @@ class AssetCollectionController extends Controller
     {
         abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_collections.manage'), 403);
 
-        try {
-            // Soft-delete only, keeping the items — restoring the collection
-            // restores its membership. Packages built from it must not keep
-            // serving a deleted collection's assets, though.
-            $collection->delete();
+        // Soft-delete only, keeping the items — restoring the collection
+        // restores its membership. Packages built from it must not keep
+        // serving a deleted collection's assets, though.
+        $collection->delete();
 
-            AssetPackageService::markStaleForCollection($collection->id);
+        AssetPackageService::markStaleForCollection($collection->id);
 
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete asset collection', [
-                'collection_id' => $collection->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while deleting the asset collection',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 
     /**

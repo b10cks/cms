@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Actions\Release\PublishRelease;
 use App\Models\Management\Space;
 use App\Models\Space\Release;
+use App\Support\SpaceContext;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -97,7 +98,7 @@ class PublishScheduledReleases extends Command
 
     protected function publishScheduledReleasesForSpace(Space $space): array
     {
-        app()->offsetSet('currentSpace', $space);
+        $restore = SpaceContext::enter($space);
 
         $published = 0;
         $failed = 0;
@@ -131,6 +132,8 @@ class PublishScheduledReleases extends Command
                 'trace' => $e->getTraceAsString(),
             ]);
             throw $e;
+        } finally {
+            $restore();
         }
 
         return [

@@ -12,7 +12,6 @@ use App\Models\Management\Token;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Facades\Log;
 
 class SpaceTokenController extends Controller
 {
@@ -52,20 +51,8 @@ class SpaceTokenController extends Controller
     {
         $this->authorize('delete', [$token, $space]);
 
-        try {
-            $token->delete();
+        $token->delete();
 
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete token', [
-                'token_id' => $token->id,
-                'space_id' => $space->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while deleting the token'
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 }

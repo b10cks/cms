@@ -120,19 +120,8 @@ class ContentController extends Controller
     {
         $this->authorize('delete', [$content, $space]);
 
-        try {
-            $action->execute($content, $space, auth()->user());
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete content', [
-                'content_id' => $content->id,
-                'space_id' => $space->id,
-                'error' => $e->getMessage(),
-            ]);
+        $action->execute($content, $space, auth()->user());
 
-            return response()->json([
-                'message' => 'An error occurred while deleting the content',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 }

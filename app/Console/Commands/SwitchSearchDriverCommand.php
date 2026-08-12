@@ -26,12 +26,13 @@ class SwitchSearchDriverCommand extends Command
         $driverValue = $this->argument('driver');
 
         $space = Space::find($spaceId);
-        app()->offsetSet('currentSpace', $space);
 
         if (!$space) {
             $this->error("Space with ID {$spaceId} not found.");
             return 1;
         }
+
+        app()->offsetSet('currentSpace', $space);
 
         try {
             $newDriver = SearchDriver::from($driverValue);

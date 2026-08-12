@@ -13,7 +13,6 @@ use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Facades\Log;
 
 class AssetTagController extends Controller
 {
@@ -25,7 +24,7 @@ class AssetTagController extends Controller
 
         $tags = AssetTag::filter($filter)
             ->withCount(['assets'])
-            ->paginate(min($request->per_page ?? 25, 500));
+            ->paginate($this->perPage($request, 25, 500));
 
         return AssetTagResource::collection($tags);
     }
@@ -86,19 +85,8 @@ class AssetTagController extends Controller
     {
         abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_tags.manage'), 403);
 
-        try {
-            $tag->delete();
+        $tag->delete();
 
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete asset tag', [
-                'tag_id' => $tag->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while deleting the asset tag',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 }

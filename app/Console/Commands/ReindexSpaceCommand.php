@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Management\Space;
+use App\Support\SpaceContext;
 use App\Services\Database\ConnectionFactory;
 use App\Services\Search\SearchService;
 use Illuminate\Console\Command;
@@ -28,12 +29,16 @@ class ReindexSpaceCommand extends Command
 
         try {
             foreach ($query->get() as $space) {
-                app()->offsetSet('currentSpace', $space);
+                $restore = SpaceContext::enter($space);
 
-                $this->info("Starting reindexing for space: {$space->name} ({$space->id})");
-                $this->info("Search driver: {$space->getSearchDriver()->value}");
+                try {
+                    $this->info("Starting reindexing for space: {$space->name} ({$space->id})");
+                    $this->info("Search driver: {$space->getSearchDriver()->value}");
 
-                $this->searchService->reindexSpace($space);
+                    $this->searchService->reindexSpace($space);
+                } finally {
+                    $restore();
+                }
             }
 
             $this->info('Reindexing completed successfully.');

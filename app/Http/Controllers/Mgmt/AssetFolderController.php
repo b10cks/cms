@@ -13,7 +13,6 @@ use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Facades\Log;
 
 class AssetFolderController extends Controller
 {
@@ -89,20 +88,9 @@ class AssetFolderController extends Controller
             ], 422);
         }
 
-        try {
-            $assetFolder->delete();
+        $assetFolder->delete();
 
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete asset folder', [
-                'folder_id' => $assetFolder->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while deleting the folder',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 
     private function wouldCreateCircularReference(AssetFolder $assetFolder, string $parentId): bool

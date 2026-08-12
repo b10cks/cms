@@ -11,7 +11,6 @@ use App\Models\Space\CommentReaction;
 use App\Models\Space\Content;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Facades\Log;
 
 class CommentReactionController extends Controller
 {
@@ -51,23 +50,11 @@ class CommentReactionController extends Controller
         $this->authorize('unreact', [$comment, $space]);
         $emoji = $request->input('emoji');
 
-        try {
-            CommentReaction::where('comment_id', $comment->id)
-                ->where('author_id', auth()->id())
-                ->where('emoji', $emoji)
-                ->delete();
+        CommentReaction::where('comment_id', $comment->id)
+            ->where('author_id', auth()->id())
+            ->where('emoji', $emoji)
+            ->delete();
 
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete reaction', [
-                'emoji' => $emoji,
-                'comment_id' => $comment->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred while deleting the reaction',
-            ], 500);
-        }
+        return response()->json(null, 204);
     }
 }

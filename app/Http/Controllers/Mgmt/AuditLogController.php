@@ -17,7 +17,7 @@ class AuditLogController extends Controller
     {
         $this->authorize('viewAny', [AuditLog::class, $space]);
 
-        $perPage = min((int) $request->get('per_page', 20), 100);
+        $perPage = $this->perPage($request, 20, 100);
 
         $logs = AuditLog::filter(AuditLogFilter::fromRequest($request))
             ->orderBy('created_at', 'desc')

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Actions\Content\PublishScheduledContent as PublishAction;
 use App\Models\Management\Space;
 use App\Models\Space\ContentVersion;
+use App\Support\SpaceContext;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -97,7 +98,7 @@ class PublishScheduledContent extends Command
 
     protected function publishScheduledContentForSpace(Space $space): array
     {
-        app()->offsetSet('currentSpace', $space);
+        $restore = SpaceContext::enter($space);
 
         $published = 0;
         $failed = 0;
@@ -142,6 +143,8 @@ class PublishScheduledContent extends Command
                 'trace' => $e->getTraceAsString(),
             ]);
             throw $e;
+        } finally {
+            $restore();
         }
 
         return [

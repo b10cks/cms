@@ -8,6 +8,7 @@ use App\Models\Space\Asset;
 use App\Models\Space\AssetPackage;
 use App\Services\Asset\AssetPackageService;
 use App\Services\Storage\StorageService;
+use App\Support\SpaceContext;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
@@ -295,17 +296,12 @@ class BuildAssetPackageJob extends QueuedJob
 
         // failed() runs outside handle()'s currentSpace snapshot/restore
         // guard, so restore the ambient binding ourselves.
-        $hadSpace = app()->bound('currentSpace');
-        $priorSpace = $hadSpace ? app('currentSpace') : null;
+        $restore = SpaceContext::enter($this->space);
 
         try {
             $this->package()->markAsFailed($e->getMessage());
         } finally {
-            if ($hadSpace) {
-                app()->offsetSet('currentSpace', $priorSpace);
-            } else {
-                app()->offsetUnset('currentSpace');
-            }
+            $restore();
         }
 
         // Also runs when the worker killed the job (timeout), where execute()'s

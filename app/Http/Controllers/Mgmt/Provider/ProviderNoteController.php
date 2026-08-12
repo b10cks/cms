@@ -21,7 +21,7 @@ class ProviderNoteController extends Controller
         $notes = ProviderNote::query()
             ->orderByDesc('is_pinned')
             ->latest('updated_at')
-            ->paginate(min((int) $request->integer('per_page', 50), 50));
+            ->paginate($this->perPage($request, 50, 50));
 
         return ProviderNoteResource::collection($notes);
     }
