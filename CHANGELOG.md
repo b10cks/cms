@@ -3,6 +3,20 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.12-0b381da3] — 2026-8-12
+
+- ⬆️ Bump versions
+- ♻️ Extract generic Import/Export dialogs
+- ♻️ Extract a CRUD composable factory and a query-key generator
+- ♻️ Share list-table query state via useTableQueryState
+- ♻️ Extract shared content editor page wiring
+- ♻️ Unify the import/export driver stacks on a shared base
+- ♻️ Deduplicate XHR uploads and asset backfills
+- ♻️ Drop hand-rolled destroy try/catch, unify space context & per_page clamps
+- ♻️ Collapse repetitive space-migration table copies
+- ♻️ Consolidate space authorization into a helper and a base policy
+- 🔥 Drop dead code and share the delivery content lookup
+
 ## [v2026.8.11-68245eba] — 2026-8-11
 
 - 📝 Document custom posters for arbitrary assets
