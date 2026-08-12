@@ -7,7 +7,6 @@ use App\Http\Resources\Management\AssetPackageResource;
 use App\Models\Management\Space;
 use App\Models\Space\AssetPackage;
 use App\Services\Asset\AssetPackageService;
-use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -19,7 +18,7 @@ class AssetPackageController extends Controller
 {
     public function index(Space $space, Request $request): ResourceCollection
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.view'), 403);
+        $this->authorizeSpace($space, 'assets.view');
 
         $packages = AssetPackage::query()
             ->with('creator')
@@ -31,7 +30,7 @@ class AssetPackageController extends Controller
 
     public function store(Space $space, Request $request, AssetPackageService $service): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
+        $this->authorizeSpace($space, 'assets.manage');
 
         $validated = $request->validate([
             'name' => ['nullable', 'string', 'max:150'],
@@ -51,7 +50,7 @@ class AssetPackageController extends Controller
 
     public function show(Space $space, AssetPackage $package): AssetPackageResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.view'), 403);
+        $this->authorizeSpace($space, 'assets.view');
 
         return new AssetPackageResource($package->load('creator'));
     }
@@ -62,7 +61,7 @@ class AssetPackageController extends Controller
      */
     public function download(Space $space, AssetPackage $package): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.view'), 403);
+        $this->authorizeSpace($space, 'assets.view');
 
         if (! $package->isCompleted() || empty($package->s3_path)) {
             return response()->json([
@@ -82,7 +81,7 @@ class AssetPackageController extends Controller
 
     public function destroy(Space $space, AssetPackage $package): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
+        $this->authorizeSpace($space, 'assets.manage');
 
         try {
             if ($package->s3_path) {

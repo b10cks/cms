@@ -8,7 +8,6 @@ use App\Http\Resources\Management\SpaceAiConfigResource;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceAiConfig;
 use App\Services\Ai\ModelRegistry;
-use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -21,7 +20,7 @@ class SpaceAiConfigController extends Controller
 
     public function index(Space $space): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'ai.view'), 403);
+        $this->authorizeSpace($space, 'ai.view');
 
         $configs = $space->aiConfigs()
             ->orderBy('is_default', 'desc')
@@ -35,7 +34,7 @@ class SpaceAiConfigController extends Controller
 
     public function store(Request $request, Space $space): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'ai.manage'), 403);
+        $this->authorizeSpace($space, 'ai.manage');
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -77,7 +76,7 @@ class SpaceAiConfigController extends Controller
 
     public function show(Space $space, SpaceAiConfig $aiConfig): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'ai.view'), 403);
+        $this->authorizeSpace($space, 'ai.view');
 
         if ($aiConfig->space_id !== $space->id) {
             abort(404);
@@ -90,7 +89,7 @@ class SpaceAiConfigController extends Controller
 
     public function update(Request $request, Space $space, SpaceAiConfig $aiConfig): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'ai.manage'), 403);
+        $this->authorizeSpace($space, 'ai.manage');
 
         if ($aiConfig->space_id !== $space->id) {
             abort(404);
@@ -134,7 +133,7 @@ class SpaceAiConfigController extends Controller
 
     public function destroy(Space $space, SpaceAiConfig $aiConfig): Response
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'ai.manage'), 403);
+        $this->authorizeSpace($space, 'ai.manage');
 
         if ($aiConfig->space_id !== $space->id) {
             abort(404);

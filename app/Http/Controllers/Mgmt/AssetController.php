@@ -14,7 +14,6 @@ use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Models\Space\AssetFolder;
 use App\Services\Asset\AssetUsageService;
-use App\Services\Auth\AuthorizationService;
 use App\Services\Storage\AssetService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,7 +28,7 @@ class AssetController extends Controller
      */
     public function index(Space $space, Request $request): ResourceCollection
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.view'), 403);
+        $this->authorizeSpace($space, 'assets.view');
         $filter = new AssetFilter($request->all());
 
         $assets = Asset::filter($filter)
@@ -49,7 +48,7 @@ class AssetController extends Controller
         StoreAssetRequest $request,
         AssetService $assetService
     ): AssetResource|JsonResponse {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
+        $this->authorizeSpace($space, 'assets.manage');
         $validated = $request->validated();
 
         // If folder_id provided, check it belongs to this space
@@ -99,7 +98,7 @@ class AssetController extends Controller
      */
     public function show(Space $space, Asset $asset, AssetUsageService $assetUsageService): AssetResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.view'), 403);
+        $this->authorizeSpace($space, 'assets.view');
 
         $asset->load('folder');
         $asset->setAttribute('linked_contents_count', $assetUsageService->getUsageCountForAsset($asset));
@@ -116,7 +115,7 @@ class AssetController extends Controller
         Asset $asset,
         AssetService $assetService
     ): AssetResource|JsonResponse {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
+        $this->authorizeSpace($space, 'assets.manage');
         $validated = $request->validated();
 
         if (array_key_exists('folder_id', $validated)) {
@@ -164,7 +163,7 @@ class AssetController extends Controller
         ReplaceAssetFileRequest $request,
         AssetService $assetService
     ): AssetResource|JsonResponse {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
+        $this->authorizeSpace($space, 'assets.manage');
 
         try {
             $asset = $assetService->replaceFile($asset, $request->file('file'), $space);
@@ -192,7 +191,7 @@ class AssetController extends Controller
         UploadAssetPosterRequest $request,
         AssetService $assetService
     ): AssetResource|JsonResponse {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
+        $this->authorizeSpace($space, 'assets.manage');
 
         if (Str::startsWith((string) $asset->mime_type, 'image/')) {
             return response()->json([
@@ -225,7 +224,7 @@ class AssetController extends Controller
         Asset $asset,
         AssetService $assetService
     ): AssetResource|JsonResponse {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
+        $this->authorizeSpace($space, 'assets.manage');
 
         $hasCustomPoster = collect((array) ($asset->metadata['thumbnails'] ?? []))
             ->contains(fn ($thumb) => is_array($thumb) && ! empty($thumb['path']) && ! empty($thumb['custom']));
@@ -261,7 +260,7 @@ class AssetController extends Controller
         AssetService $assetService,
         AssetUsageService $assetUsageService
     ): JsonResponse {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
+        $this->authorizeSpace($space, 'assets.manage');
         try {
             $linkedContentsCount = $assetUsageService->getUsageCountForAsset($asset);
 

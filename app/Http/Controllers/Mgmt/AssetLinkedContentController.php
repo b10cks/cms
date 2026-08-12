@@ -7,7 +7,6 @@ use App\Http\Resources\Management\LinkedAssetContentResource;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Services\Asset\AssetUsageService;
-use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
@@ -19,10 +18,7 @@ class AssetLinkedContentController extends Controller
         Request $request,
         AssetUsageService $assetUsageService
     ): ResourceCollection {
-        abort_unless(
-            app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.view'),
-            403
-        );
+        $this->authorizeSpace($space, 'assets.view');
 
         $contents = $assetUsageService
             ->getLinkedContentsQuery($asset)

@@ -11,7 +11,6 @@ use App\Models\Space\AssetCollection;
 use App\Models\Space\AssetCollectionItem;
 use App\Services\Asset\AssetPackageService;
 use App\Services\Asset\SmartCollectionRuleService;
-use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -29,7 +28,7 @@ class AssetCollectionAssetController extends Controller
      */
     public function index(Space $space, AssetCollection $collection, Request $request): ResourceCollection
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_collections.view'), 403);
+        $this->authorizeSpace($space, 'asset_collections.view');
 
         $filter = new AssetFilter($request->all());
         $query = Asset::filter($filter)->with('folder');
@@ -63,7 +62,7 @@ class AssetCollectionAssetController extends Controller
      */
     public function store(Space $space, AssetCollection $collection, Request $request): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_collections.manage'), 403);
+        $this->authorizeSpace($space, 'asset_collections.manage');
         abort_if($collection->isSmart(), 422, 'Smart collections resolve their assets from rules and cannot be modified manually.');
 
         $validated = $this->validateAssetIds($request, checkExistence: true);
@@ -111,7 +110,7 @@ class AssetCollectionAssetController extends Controller
      */
     public function destroy(Space $space, AssetCollection $collection, Request $request): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_collections.manage'), 403);
+        $this->authorizeSpace($space, 'asset_collections.manage');
         abort_if($collection->isSmart(), 422, 'Smart collections resolve their assets from rules and cannot be modified manually.');
 
         $validated = $this->validateAssetIds($request);
@@ -132,7 +131,7 @@ class AssetCollectionAssetController extends Controller
      */
     public function reorder(Space $space, AssetCollection $collection, Request $request): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_collections.manage'), 403);
+        $this->authorizeSpace($space, 'asset_collections.manage');
         abort_if($collection->isSmart(), 422, 'Smart collections resolve their assets from rules and cannot be reordered.');
 
         $validated = $this->validateAssetIds($request);

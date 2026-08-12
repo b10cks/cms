@@ -8,7 +8,6 @@ use App\Http\Resources\Management\AssetVersionResource;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Models\Space\AssetVersion;
-use App\Services\Auth\AuthorizationService;
 use App\Services\Storage\AssetService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,7 +20,7 @@ class AssetVersionController extends Controller
      */
     public function index(Space $space, Asset $asset, Request $request): ResourceCollection
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.view'), 403);
+        $this->authorizeSpace($space, 'assets.view');
 
         $versions = AssetVersion::query()
             ->where('asset_id', $asset->id)
@@ -46,7 +45,7 @@ class AssetVersionController extends Controller
         AssetVersion $version,
         AssetService $assetService
     ): AssetResource|JsonResponse {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
+        $this->authorizeSpace($space, 'assets.manage');
         abort_unless($version->asset_id === $asset->id, 404);
 
         try {

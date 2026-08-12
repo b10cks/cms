@@ -6,7 +6,6 @@ use App\Enums\ContentTranslationImportMode;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Content\ImportContentDataRequest;
 use App\Models\Management\Space;
-use App\Services\Auth\AuthorizationService;
 use App\Services\ContentData\ContentDataImportExportService;
 use App\Services\ImportExport\Exceptions\ImportValidationException;
 use Illuminate\Http\JsonResponse;
@@ -19,15 +18,14 @@ class ContentDataImportController extends Controller
         Space $space,
         ContentDataImportExportService $service
     ): JsonResponse {
-        $authorization = app(AuthorizationService::class);
         $user = auth()->user();
 
-        abort_unless($authorization->canInSpace($user, $space, 'content.manage'), 403);
+        $this->authorizeSpace($space, 'content.manage');
 
         $mode = $request->getImportMode();
 
         if ($mode === ContentTranslationImportMode::PUBLISH) {
-            abort_unless($authorization->canInSpace($user, $space, 'content.publish'), 403);
+            $this->authorizeSpace($space, 'content.publish');
         }
 
         try {

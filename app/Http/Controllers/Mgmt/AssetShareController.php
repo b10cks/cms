@@ -7,7 +7,6 @@ use App\Http\Resources\Management\AssetShareResource;
 use App\Models\Management\Space;
 use App\Models\Space\AssetShare;
 use App\Services\Asset\AssetPackageService;
-use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -19,7 +18,7 @@ class AssetShareController extends Controller
 {
     public function index(Space $space, Request $request): ResourceCollection
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_shares.view'), 403);
+        $this->authorizeSpace($space, 'asset_shares.view');
 
         $filters = $request->validate([
             'source_type' => ['sometimes', Rule::in(['collection', 'selection', 'folder'])],
@@ -40,7 +39,7 @@ class AssetShareController extends Controller
 
     public function store(Space $space, Request $request, AssetPackageService $packageService): AssetShareResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_shares.manage'), 403);
+        $this->authorizeSpace($space, 'asset_shares.manage');
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -73,7 +72,7 @@ class AssetShareController extends Controller
 
     public function show(Space $space, AssetShare $share): AssetShareResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_shares.view'), 403);
+        $this->authorizeSpace($space, 'asset_shares.view');
 
         return new AssetShareResource($share->load(['creator', 'package']));
     }
@@ -84,7 +83,7 @@ class AssetShareController extends Controller
      */
     public function update(Space $space, Request $request, AssetShare $share): AssetShareResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_shares.manage'), 403);
+        $this->authorizeSpace($space, 'asset_shares.manage');
 
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:150'],
@@ -140,7 +139,7 @@ class AssetShareController extends Controller
 
     public function revoke(Space $space, AssetShare $share): AssetShareResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_shares.manage'), 403);
+        $this->authorizeSpace($space, 'asset_shares.manage');
 
         if (! $share->isRevoked()) {
             $share->forceFill(['revoked_at' => now()])->save();
@@ -151,7 +150,7 @@ class AssetShareController extends Controller
 
     public function destroy(Space $space, AssetShare $share): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_shares.manage'), 403);
+        $this->authorizeSpace($space, 'asset_shares.manage');
 
         $share->delete();
 

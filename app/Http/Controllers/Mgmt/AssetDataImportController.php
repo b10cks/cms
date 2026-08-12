@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Asset\ImportAssetDataRequest;
 use App\Models\Management\Space;
 use App\Services\AssetData\AssetDataExportImportService;
-use App\Services\Auth\AuthorizationService;
 use App\Services\ImportExport\Exceptions\ImportValidationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +17,7 @@ class AssetDataImportController extends Controller
         Space $space,
         AssetDataExportImportService $service
     ): JsonResponse {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'assets.manage'), 403);
+        $this->authorizeSpace($space, 'assets.manage');
 
         try {
             $format = $request->getAssetDataFormat();

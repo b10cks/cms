@@ -11,7 +11,6 @@ use App\Models\Space\Asset;
 use App\Models\Space\AssetCollection;
 use App\Services\Asset\AssetPackageService;
 use App\Services\Asset\SmartCollectionRuleService;
-use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -23,7 +22,7 @@ class AssetCollectionController extends Controller
 
     public function index(Space $space, Request $request): ResourceCollection
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_collections.view'), 403);
+        $this->authorizeSpace($space, 'asset_collections.view');
 
         $filter = new AssetCollectionFilter($request->all());
 
@@ -45,7 +44,7 @@ class AssetCollectionController extends Controller
 
     public function store(Space $space, UpsertAssetCollectionRequest $request): AssetCollectionResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_collections.manage'), 403);
+        $this->authorizeSpace($space, 'asset_collections.manage');
 
         $validated = $this->prepareAttributes($request->validated());
 
@@ -58,7 +57,7 @@ class AssetCollectionController extends Controller
 
     public function show(Space $space, AssetCollection $collection): AssetCollectionResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_collections.view'), 403);
+        $this->authorizeSpace($space, 'asset_collections.view');
 
         $collection->load('coverAsset');
 
@@ -70,7 +69,7 @@ class AssetCollectionController extends Controller
         Space $space,
         AssetCollection $collection
     ): AssetCollectionResource {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_collections.manage'), 403);
+        $this->authorizeSpace($space, 'asset_collections.manage');
 
         $collection->fill($this->prepareAttributes($request->validated(), $collection));
         abort_unless($collection->save(), 500, 'Failed to update asset collection');
@@ -84,7 +83,7 @@ class AssetCollectionController extends Controller
 
     public function destroy(Space $space, AssetCollection $collection): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_collections.manage'), 403);
+        $this->authorizeSpace($space, 'asset_collections.manage');
 
         try {
             // Soft-delete only, keeping the items — restoring the collection

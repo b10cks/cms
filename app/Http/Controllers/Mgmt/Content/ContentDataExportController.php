@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\ContentFilter;
 use App\Http\Requests\Content\ExportContentDataRequest;
 use App\Models\Management\Space;
-use App\Services\Auth\AuthorizationService;
 use App\Services\ContentData\ContentDataImportExportService;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,7 +18,7 @@ class ContentDataExportController extends Controller
         Space $space,
         ContentDataImportExportService $service
     ): Response {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'content.view'), 403);
+        $this->authorizeSpace($space, 'content.view');
 
         try {
             $format = ImportExportFormat::from($request->validated('as'));
