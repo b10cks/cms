@@ -12,7 +12,6 @@ declare global {
   const EffectScope: typeof import('vue').EffectScope
   const GLOBAL_TEAM_QUERY_PARAMS: typeof import('./resources/js/composables/useGlobalTeam').GLOBAL_TEAM_QUERY_PARAMS
   const TEAM_TYPE_KEYS: typeof import('./resources/js/composables/useTeamTypes').TEAM_TYPE_KEYS
-  const UploadError: typeof import('./resources/js/composables/useFileUpload').UploadError
   const buildShareUrl: typeof import('./resources/js/composables/useAssetShares').buildShareUrl
   const computed: typeof import('vue').computed
   const createAccessEvaluationContext: typeof import('./resources/js/composables/useAuthorization').createAccessEvaluationContext
@@ -321,7 +320,6 @@ declare module 'vue' {
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly GLOBAL_TEAM_QUERY_PARAMS: UnwrapRef<typeof import('./resources/js/composables/useGlobalTeam')['GLOBAL_TEAM_QUERY_PARAMS']>
     readonly TEAM_TYPE_KEYS: UnwrapRef<typeof import('./resources/js/composables/useTeamTypes')['TEAM_TYPE_KEYS']>
-    readonly UploadError: UnwrapRef<typeof import('./resources/js/composables/useFileUpload')['UploadError']>
     readonly buildShareUrl: UnwrapRef<typeof import('./resources/js/composables/useAssetShares')['buildShareUrl']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createAccessEvaluationContext: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['createAccessEvaluationContext']>

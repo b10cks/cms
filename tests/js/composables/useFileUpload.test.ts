@@ -8,9 +8,7 @@ vi.mock('~/api', () => ({ api: { client: { ensureCsrfCookie } } }))
 
 const { useFileUpload } = await import('~/composables/useFileUpload')
 
-type UploadError = InstanceType<
-  typeof import('~/composables/useFileUpload')['UploadError']
->
+type UploadError = InstanceType<typeof import('~/lib/xhr-upload')['UploadError']>
 
 /** Minimal XMLHttpRequest double: the test drives load/error/abort by hand. */
 class FakeXhr {

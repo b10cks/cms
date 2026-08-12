@@ -3,8 +3,6 @@ import type { Ref } from 'vue'
 import { useApiClient } from '~/composables/useApiClient'
 import { UploadError, xhrUpload } from '~/lib/xhr-upload'
 
-export { UploadError } from '~/lib/xhr-upload'
-
 interface UploadOptions {
   url: string
   fieldName?: string // default: 'file'
