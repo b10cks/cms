@@ -274,7 +274,6 @@
     },
     "assetTags": {
       "title": "Asset-Tags",
-      "description": "Markiere deine Assets mit Tags, um sie zu organisieren und zu filtern.",
       "createTag": "Neuer Tag",
       "editTag": "Tag bearbeiten",
       "deleteTitle": "Diesen Tag löschen?",
@@ -284,10 +283,7 @@
         "name": "Tag-Name",
         "namePlaceholder": "Tag-Namen eingeben",
         "color": "Farbe",
-        "icon": "Symbol",
-        "assetsCount": "Markierte Assets",
-        "createdAt": "Erstellt",
-        "updatedAt": "Zuletzt aktualisiert"
+        "icon": "Symbol"
       }
     },
     "assetCollections": {
@@ -818,8 +814,6 @@
         "rootNodeTitle": "Root",
         "rootType": "Global",
         "addToRoot": "Top-Level-Seite hinzufügen",
-        "deleted": "Gelöscht",
-        "deletedInherited": "Mit Parent gelöscht",
         "inheritedDeletion": "Durch Parent gelöscht",
         "markedForDeletion": "Zum Löschen markiert",
         "deletedWithAncestorHint": "Stelle den gelöschten Parent wieder her oder ziehe diese Karte aus dem gelöschten Branch heraus, um sie zu behalten.",
@@ -892,9 +886,6 @@
             "toolbarZoom": "Mit den Toolbar-Steuerelementen kannst du zoomen, auf 100 % zurücksetzen oder den aktuellen Baum einpassen."
           }
         },
-        "aiPlaceholderTitle": "KI-Assistent",
-        "aiPlaceholderDescription": "Verwenden Sie KI, um Ihren Inhalt zu erstellen und zu bearbeiten",
-        "comingSoon": "Bald verfügbar",
         "addChild": "Unterelement hinzufügen",
         "addSibling": "Gleichrangiges Element hinzufügen"
       },
@@ -1924,8 +1915,6 @@
         "name": "Release-Name",
         "state": "Status",
         "publishAt": "Geplant für",
-        "createdAt": "Erstellt",
-        "updatedAt": "Aktualisiert",
         "versionsCount": "Keine Elemente|1 Element|{count} Elemente",
         "scheduled": "Geplant"
       },
@@ -4396,9 +4385,6 @@
       "import": "Set importieren"
     },
     "assetTags": {
-      "add": "Neuer Tag",
-      "edit": "Tag bearbeiten",
-      "delete": "Tag löschen",
       "save": "Tag speichern"
     },
     "assetCollections": {

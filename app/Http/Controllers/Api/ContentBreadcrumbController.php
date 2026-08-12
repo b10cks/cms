@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Middleware\CacheDataApi;
+use App\Http\Controllers\Api\Concerns\ResolvesDeliveryContent;
 use App\Http\Resources\Api\ContentBreadcrumbCollection;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
@@ -29,6 +29,8 @@ use Illuminate\Support\Str;
  */
 class ContentBreadcrumbController
 {
+    use ResolvesDeliveryContent;
+
     public function __construct(private readonly ContentBreadcrumbService $breadcrumbService) {}
 
     /**
@@ -43,8 +45,10 @@ class ContentBreadcrumbController
         /** @var Space $space */
         $space = app('currentSpace');
 
-        $versionScope = $this->versionScope($request);
-        $language = $this->language($request, $space);
+        // A breadcrumb has no meaningful notion of a single version id — every
+        // level is a different entry — so only the two scopes are accepted here.
+        $versionScope = $this->versionScope($request, allowVersionId: false);
+        $language = $this->resolveLanguage($request, $space);
 
         $entry = $this->findEntry($slug, $language, $space);
         abort_if($entry === null, 404);
@@ -98,66 +102,6 @@ class ContentBreadcrumbController
     }
 
     /**
-     * The same language-priority pick as `contents/{slug}`: one path can exist
-     * in several languages, and the requested one wins before its fallback and
-     * the space default.
-     */
-    private function findFamilyCandidate(string $slug, string $language, Space $space): ?Content
-    {
-        $candidates = Content::query()
-            ->select(Content::deliveryColumns())
-            ->where('full_slug', '/'.ltrim($slug, '/'))
-            ->get();
-
-        if ($candidates->isEmpty()) {
-            return null;
-        }
-
-        $priority = array_values(array_unique(array_filter([
-            $language,
-            $space->settings->getFallbackLanguage($language),
-            $space->settings->getDefaultLanguage(),
-        ])));
-
-        foreach ($priority as $priorityLanguage) {
-            $match = $candidates->firstWhere('language_iso', $priorityLanguage);
-            if ($match) {
-                return $match;
-            }
-        }
-
-        return $candidates->first();
-    }
-
-    private function language(Request $request, Space $space): string
-    {
-        $language = $request->input('language')
-            ?? $request->input('language_iso')
-            ?? $space->settings->getDefaultLanguage();
-
-        return \in_array($language, $space->settings->getEnabledLanguages(), true)
-            ? $language
-            : $space->settings->getDefaultLanguage();
-    }
-
-    /**
-     * A breadcrumb has no meaningful notion of a single version id — every level
-     * is a different entry — so only the two scopes are accepted here.
-     */
-    private function versionScope(Request $request): string
-    {
-        $vid = $request->input('vid', 'published');
-
-        abort_unless(
-            \is_string($vid) && \in_array($vid, ['published', 'draft'], true),
-            422,
-            'Parameter "vid" must be "published" or "draft".',
-        );
-
-        return $vid;
-    }
-
-    /**
      * @param  Collection<int, BreadcrumbLevel>  $levels
      * @return array<string, mixed>
      */
@@ -174,23 +118,5 @@ class ContentBreadcrumbController
             'root_id' => $root?->row->getRouteKey(),
             'current_id' => $current?->row->getRouteKey(),
         ];
-    }
-
-    private function applyCacheAttributes(Request $request, Content $row): void
-    {
-        $settings = $row->settings;
-        if (! $settings) {
-            return;
-        }
-
-        $ttl = $settings->cacheTtl();
-        if ($ttl !== null) {
-            $request->attributes->set(CacheDataApi::TTL_ATTRIBUTE, $ttl);
-        }
-
-        $tags = $settings->cacheTags();
-        if ($tags !== []) {
-            $request->attributes->set(CacheDataApi::TAGS_ATTRIBUTE, $tags);
-        }
     }
 }

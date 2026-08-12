@@ -173,6 +173,58 @@ class ContentBreadcrumbTest extends TestCase
         $this->getJson($this->url($shoes->full_slug, ['vid' => 'draft']))->assertOk();
     }
 
+    /**
+     * The breadcrumb resolved its own entry with a copy of the content endpoint's
+     * family lookup that had drifted — it was missing the soft-delete guard, so a
+     * trashed entry still answered here while `contents/{slug}` refused it.
+     */
+    #[Test]
+    public function a_soft_deleted_entry_is_not_reachable(): void
+    {
+        [, , $shoes] = $this->createEnglishTree();
+
+        $shoes->delete();
+
+        $this->getJson($this->url($shoes->full_slug))->assertNotFound();
+        $this->getJson($this->url($shoes->full_slug, ['vid' => 'draft']))->assertNotFound();
+        $this->getJson($this->url($shoes->id))->assertNotFound();
+    }
+
+    /**
+     * A trashed entry must not be reachable through a live sibling of its own
+     * i18n family either: the German row still exists, so the family pick has to
+     * skip the deleted English one rather than answer with it.
+     */
+    #[Test]
+    public function a_soft_deleted_ancestor_drops_out_of_the_trail(): void
+    {
+        [, $products, $shoes] = $this->createEnglishTree();
+
+        $products->forceFill(['name' => 'Secret Range'])->save();
+        $products->delete();
+
+        $response = $this->getJson($this->url($shoes->full_slug))->assertOk();
+
+        // The trail stops at the deleted level rather than resolving through it,
+        // so nothing above a trashed ancestor is reachable from below it either.
+        $this->assertSame(['/home/products/shoes'], collect($response->json('breadcrumb'))->pluck('full_slug')->all());
+        $response->assertDontSee('Secret Range');
+    }
+
+    #[Test]
+    public function a_live_entry_stays_reachable_next_to_a_trashed_namesake(): void
+    {
+        [$home, , ] = $this->createEnglishTree();
+        $germanHome = $this->translate($home, 'startseite', 'Startseite');
+
+        $home->delete();
+
+        $response = $this->getJson($this->url($germanHome->full_slug, ['language' => 'de']))->assertOk();
+
+        $this->assertSame('Startseite', $response->json('breadcrumb.0.name'));
+        $this->assertSame($germanHome->id, $response->json('meta.current_id'));
+    }
+
     #[Test]
     public function it_can_be_addressed_by_id_and_can_drop_the_entry_itself(): void
     {
