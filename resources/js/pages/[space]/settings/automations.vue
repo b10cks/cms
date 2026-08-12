@@ -30,23 +30,12 @@ const {
 
 const { useAutomationActionsQuery } = useAutomationActions(spaceId)
 
-const currentPage = ref(1)
-const perPage = ref(20)
-const filters = ref<Record<string, unknown>>({})
-const sortBy = ref<{
-  column: string
-  direction: 'asc' | 'desc'
-}>({
-  column: 'updated_at',
-  direction: 'desc' as const,
+const { sortBy, paginationBindings, queryParams, setSortBy, setFilters } = useTableQueryState({
+  defaultSort: { column: 'updated_at', direction: 'desc' },
+  pageSize: 20,
+  resetOnSort: true,
+  resetOnFilters: true,
 })
-
-const queryParams = computed(() => ({
-  page: currentPage.value,
-  per_page: perPage.value,
-  sort: `${sortBy.value.direction === 'desc' ? '-' : ''}${sortBy.value.column}`,
-  ...filters.value,
-}))
 
 const actionOptionsParams = computed(() => ({
   per_page: 500,
@@ -225,29 +214,16 @@ useSeoMeta({
       :is-loading="isLoading"
       :is-fetching="isFetching"
       :meta="automationCollection?.meta"
-      :current-page="currentPage"
-      :per-page="perPage"
       :sort-by="sortBy"
+      v-bind="paginationBindings"
       :can-manage="canManageAutomations"
       :toggle-pending="togglePending"
       @edit="handleEdit"
       @delete="handleDelete"
       @toggle="handleToggle"
       @trigger="handleTrigger"
-      @update:current-page="(value) => (currentPage = value)"
-      @update:per-page="(value) => (perPage = value)"
-      @update:sort-by="
-        (value) => {
-          sortBy = value
-          currentPage = 1
-        }
-      "
-      @update:filters="
-        (value) => {
-          filters = value
-          currentPage = 1
-        }
-      "
+      @update:sort-by="setSortBy"
+      @update:filters="setFilters"
     />
 
     <AutomationDialog

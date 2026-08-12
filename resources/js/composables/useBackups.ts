@@ -26,8 +26,7 @@ export function useBackups(spaceIdRef: MaybeRefOrComputed<string>) {
       queryKey: computed(() => queryKeys.backups(spaceId.value).list(params.value)),
       queryFn: async () => {
         const response = await spaceAPI.value.backups.index({
-          sort: 'created_at',
-          order: 'desc',
+          sort: '-created_at',
           ...params.value,
         })
         return response

@@ -49,6 +49,5 @@ interface UpdateBackupPayload {
 interface BackupsQueryParams extends BaseQueryParams {
   name?: string
   state?: BackupState
-  sort?: BackupSortColumn
-  order?: SortOrder
+  // `sort` carries the shared `+column` / `-column` encoding.
 }

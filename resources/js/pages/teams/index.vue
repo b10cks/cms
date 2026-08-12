@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { TeamsQueryParams } from '~/api/resources/teams'
 import StopIcon from '~/assets/images/error.svg?component'
 import CreateTeamDialog from '~/components/teams/CreateTeamDialog.vue'
 import EditTeamDialog from '~/components/teams/EditTeamDialog.vue'
@@ -25,22 +24,17 @@ useSeoMeta({
   title: computed(() => t('labels.teams.pageTitle')),
 })
 
-const currentPage = ref(1)
-const perPage = ref(20)
-const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
-  column: 'name',
-  direction: 'asc',
-})
-const filters = ref<Record<string, unknown>>({})
+const { sortBy, filters, paginationBindings, queryParams, setSortBy, setFilters } =
+  useTableQueryState({
+    defaultSort: { column: 'name', direction: 'asc' },
+    pageSize: 20,
+    resetOnSort: true,
+    resetOnFilters: true,
+    resetOnPageSize: true,
+  })
+
 const selectedTeamForEdit = ref<TeamResource | null>(null)
 const isEditDialogOpen = ref(false)
-
-const queryParams = computed<TeamsQueryParams>(() => ({
-  ...filters.value,
-  sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
-  page: currentPage.value,
-  per_page: perPage.value,
-}))
 
 const {
   useTeamsQuery,
@@ -101,25 +95,6 @@ const handleViewTeam = (teamId: string) => {
   router.push({ name: 'team', params: { team: teamId } })
 }
 
-const handleCurrentPageUpdate = (page: number) => {
-  currentPage.value = page
-}
-
-const handlePerPageUpdate = (perPageValue: number) => {
-  perPage.value = perPageValue
-  currentPage.value = 1
-}
-
-const handleSortByUpdate = (sort: { column: string; direction: 'asc' | 'desc' }) => {
-  sortBy.value = sort
-  currentPage.value = 1
-}
-
-const handleFiltersUpdate = (filtersValue: Record<string, unknown>) => {
-  filters.value = filtersValue
-  currentPage.value = 1
-}
-
 const hasActiveFilters = computed(() => Object.keys(filters.value).length > 0)
 </script>
 
@@ -158,16 +133,13 @@ const hasActiveFilters = computed(() => Object.keys(filters.value).length > 0)
       :is-loading="isLoadingTeams"
       :is-fetching="isFetchingTeams"
       :meta="meta"
-      :current-page="currentPage"
-      :per-page="perPage"
       :sort-by="sortBy"
+      v-bind="paginationBindings"
       @view="handleViewTeam"
       @edit="handleEditTeam"
       @delete="handleDeleteTeam"
-      @update:current-page="handleCurrentPageUpdate"
-      @update:per-page="handlePerPageUpdate"
-      @update:sort-by="handleSortByUpdate"
-      @update:filters="handleFiltersUpdate"
+      @update:sort-by="setSortBy"
+      @update:filters="setFilters"
     >
       <template
         v-if="canCreateTeam && !hasActiveFilters"

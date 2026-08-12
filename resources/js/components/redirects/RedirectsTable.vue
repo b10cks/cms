@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { RedirectsQueryParams } from '~/api/resources/redirects'
 import RedirectsIcon from '~/assets/images/redirects.svg?component'
 import Icon from '~/components/Icon.vue'
 import type { FilterableField } from '~/components/SearchFilter.vue'
@@ -90,12 +89,9 @@ const sortOptions = computed(() => [
   { value: 'updated_at', label: t('labels.redirects.columns.updatedAt') as string },
 ])
 
-const filters = ref<Record<string, unknown>>({})
-const currentPage = ref(1)
-const perPage = ref(24)
-const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
-  column: 'created_at',
-  direction: 'desc',
+const { currentPage, sortBy, filters, paginationBindings, queryParams } = useTableQueryState({
+  defaultSort: { column: 'created_at', direction: 'desc' },
+  pageSize: 24,
 })
 
 const selectedRedirects = ref<Map<string, RedirectResource>>(new Map())
@@ -103,13 +99,6 @@ const redirectDialogOpen = ref(false)
 const exportDialogOpen = ref(false)
 const importDialogOpen = ref(false)
 const redirectToEdit = ref<RedirectResource | null>(null)
-
-const queryParams = computed<RedirectsQueryParams>(() => ({
-  ...filters.value,
-  sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
-  page: currentPage.value,
-  per_page: perPage.value,
-}))
 
 const tableColumnCount = computed(() => (canManageRedirects.value ? 8 : 7))
 
@@ -532,10 +521,7 @@ defineExpose({
     <TablePaginationFooter
       v-if="redirects?.meta"
       :meta="redirects.meta"
-      :current-page="currentPage"
-      :per-page="perPage"
-      @update:current-page="(value) => (currentPage = value)"
-      @update:per-page="(value) => (perPage = value)"
+      v-bind="paginationBindings"
     />
 
     <RedirectDialog

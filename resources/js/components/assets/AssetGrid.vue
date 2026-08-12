@@ -132,12 +132,15 @@ const rootBreadcrumbRef = ref<HTMLElement | null>(null)
 const isRootDropActive = ref(false)
 const activeBreadcrumbDropId = ref<string | null>(null)
 const activeFolderId = computed(() => folderId.value ?? null)
-const currentPage = ref(1)
-const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
-  column: 'created_at',
-  direction: 'desc',
+const assetPageSize = computed({
+  get: () => settings.value.assets.pageSize || 12,
+  set: (value: number) => (settings.value.assets.pageSize = value),
 })
-const filters = ref<Record<string, unknown>>({})
+const { currentPage, sortBy, filters, sortParam, paginationBindings } = useTableQueryState({
+  defaultSort: { column: 'created_at', direction: 'desc' },
+  perPage: assetPageSize,
+  pageSizeOptions: [12, 24, 48, 96, 120],
+})
 const q = ref('')
 
 const moveDialogOpen = ref(false)
@@ -204,9 +207,9 @@ const assetQueryParams = computed<AssetsQueryParams & { collection?: string }>((
     folder: collectionId.value ? undefined : (folderId.value ?? undefined),
     tags: collectionId.value ? undefined : (tagId.value ?? undefined),
     q: q.value || undefined,
-    sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
+    sort: sortParam.value,
     page: currentPage.value,
-    per_page: settings.value.assets.pageSize || 12,
+    per_page: assetPageSize.value,
   }
 })
 
@@ -1880,12 +1883,8 @@ onUnmounted(() => {
               <TablePaginationFooter
                 v-if="assetResponse.meta"
                 :meta="assetResponse.meta"
-                :current-page="currentPage"
-                :per-page="settings.assets.pageSize"
-                :page-size-options="[12, 24, 48, 96, 120]"
+                v-bind="paginationBindings"
                 data-no-marquee
-                @update:current-page="(value) => (currentPage = value)"
-                @update:per-page="(value) => (settings.assets.pageSize = value)"
               />
             </div>
           </section>

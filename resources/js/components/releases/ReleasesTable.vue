@@ -88,22 +88,13 @@ const sortOptions = [
   { value: 'updated_at', label: $t('labels.releases.fields.updatedAt') },
 ]
 
-const filters = ref<Record<string, unknown>>({})
 const searchQuery = ref('')
-const currentPage = ref(1)
-const perPage = ref(20)
-const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
-  column: 'publish_at',
-  direction: 'desc',
+const { sortBy, filters, paginationBindings, queryParams, resetPage } = useTableQueryState({
+  defaultSort: { column: 'publish_at', direction: 'desc' },
+  pageSize: 20,
+  resetOn: searchQuery,
+  resetOnPageSize: true,
 })
-
-const queryParams = computed(() => ({
-  ...filters.value,
-  page: currentPage.value,
-  per_page: perPage.value,
-  sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
-  direction: sortBy.value.direction,
-}))
 
 const {
   data: releases,
@@ -161,7 +152,7 @@ const handleSort = (column: string) => {
     sortBy.value.column = column
     sortBy.value.direction = 'asc'
   }
-  currentPage.value = 1
+  resetPage()
 }
 </script>
 
@@ -173,18 +164,8 @@ const handleSort = (column: string) => {
           v-model="filters"
           :filterable-fields="releaseFilters"
           class="flex-1"
-          @search="
-            (query) => {
-              searchQuery = query
-              currentPage = 1
-            }
-          "
-          @reset="
-            () => {
-              searchQuery = ''
-              currentPage = 1
-            }
-          "
+          @search="searchQuery = $event"
+          @reset="searchQuery = ''"
         />
         <SortSelect
           v-model="sortBy"
@@ -332,15 +313,7 @@ const handleSort = (column: string) => {
     <TablePaginationFooter
       v-if="releases?.meta"
       :meta="releases.meta"
-      :current-page="currentPage"
-      :per-page="perPage"
-      @update:current-page="currentPage = $event"
-      @update:per-page="
-        (v) => {
-          perPage = v
-          currentPage = 1
-        }
-      "
+      v-bind="paginationBindings"
     />
   </div>
 </template>

@@ -13,18 +13,10 @@ useSeoMeta({
   title: computed(() => t('labels.account.invites.title')),
 })
 
-const currentPage = ref(1)
-const perPage = ref(25)
-const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
-  column: 'created_at',
-  direction: 'desc',
+const { sortBy, paginationBindings, queryParams, setSortBy } = useTableQueryState({
+  defaultSort: { column: 'created_at', direction: 'desc' },
+  pageSize: 25,
 })
-
-const queryParams = computed(() => ({
-  page: currentPage.value,
-  per_page: perPage.value,
-  sort: sortBy.value.direction === 'asc' ? `+${sortBy.value.column}` : `-${sortBy.value.column}`,
-}))
 
 const { data: invitesData, isLoading, isFetching } = useMyInvitesQuery(queryParams)
 
@@ -83,13 +75,10 @@ const handleDecline = (invite: InviteResource) => {
           :is-loading="isLoading"
           :is-fetching="isFetching || isAccepting || isDeclining"
           :meta="meta"
-          :current-page="currentPage"
-          :per-page="perPage"
           :sort-by="sortBy"
+          v-bind="paginationBindings"
           :acting-invite-id="actingInviteId"
-          @update:current-page="currentPage = $event"
-          @update:per-page="perPage = $event"
-          @update:sort-by="sortBy = $event"
+          @update:sort-by="setSortBy"
           @accept="handleAccept"
           @decline="handleDecline"
         />

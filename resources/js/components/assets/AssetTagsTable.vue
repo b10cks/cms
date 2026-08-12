@@ -30,19 +30,19 @@ const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageTags = computed(() => access.hasAbility('asset_tags.manage'))
 
 const searchQuery = ref('')
-const currentPage = ref(1)
-const perPage = ref(25)
-const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
-  column: 'name',
-  direction: 'asc',
+const {
+  sortBy,
+  filters,
+  paginationBindings,
+  queryParams: tableParams,
+} = useTableQueryState({
+  defaultSort: { column: 'name', direction: 'asc' },
+  pageSize: 25,
+  pageSizeOptions: [25, 50, 100, 500],
 })
-const filters = ref<Record<string, unknown>>({})
 const queryParams = computed(() => ({
-  ...filters.value,
-  page: currentPage.value,
-  per_page: perPage.value,
+  ...tableParams.value,
   q: searchQuery.value || undefined,
-  sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
 }))
 
 const { useAssetTagsQuery, useDeleteAssetTagMutation } = useAssetTags(props.spaceId)
@@ -52,7 +52,6 @@ const { mutate: deleteAssetTag } = useDeleteAssetTagMutation()
 const showTagDialog = ref(false)
 const selectedTag = ref<AssetTagResource | null>(null)
 
-const pageSizeOptions = [25, 50, 100, 500]
 const sortOptions = [
   { value: 'name', label: $t('labels.assetTags.fields.name') },
   { value: 'assets_count', label: $t('labels.assetTags.fields.assetsCount') },
@@ -208,11 +207,7 @@ watch(showTagDialog, (isOpen) => {
         <TablePaginationFooter
           v-if="assetTags?.meta"
           :meta="assetTags.meta"
-          :current-page="currentPage"
-          :per-page="perPage"
-          :page-size-options="pageSizeOptions"
-          @update:current-page="(val) => (currentPage = val)"
-          @update:per-page="(val) => (perPage = val)"
+          v-bind="paginationBindings"
         />
       </div>
     </div>

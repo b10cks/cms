@@ -2,7 +2,6 @@
 import { useClipboard } from '@vueuse/core'
 import { useRouter } from 'vue-router'
 
-import type { DataSourcesQueryParams } from '~/api/resources/data-sources'
 import DataSourcesIcon from '~/assets/images/datasources.svg?component'
 import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
@@ -43,10 +42,11 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageDataSources = computed(() => access.hasAbility('data_sources.manage'))
 
-const filters = ref<Record<string, unknown>>({})
 const searchQuery = ref('')
-const currentPage = ref(1)
-const perPage = ref(10)
+const { sortBy, filters, paginationBindings, queryParams } = useTableQueryState({
+  defaultSort: { column: 'name', direction: 'asc' },
+  pageSize: 10,
+})
 
 const possibleFilters = [
   {
@@ -79,20 +79,6 @@ const sortOptions = [
   { value: 'created_at', label: $t('labels.datasets.fields.createdAt') },
   { value: 'updated_at', label: $t('labels.datasets.fields.updatedAt') },
 ]
-
-const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
-  column: 'name',
-  direction: 'asc',
-})
-
-const queryParams = computed<DataSourcesQueryParams>(() => {
-  return {
-    ...filters.value,
-    sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
-    page: currentPage.value,
-    per_page: perPage.value,
-  }
-})
 
 const { data: dataSources, isLoading, isFetching, refetch } = useDataSourcesQuery(queryParams)
 
@@ -283,10 +269,7 @@ const confirmDelete = async () => {
     <TablePaginationFooter
       v-if="dataSources?.meta"
       :meta="dataSources.meta"
-      :current-page="currentPage"
-      :per-page="perPage"
-      @update:current-page="(val) => (currentPage = val)"
-      @update:per-page="(val) => (perPage = val)"
+      v-bind="paginationBindings"
     />
   </div>
 </template>
