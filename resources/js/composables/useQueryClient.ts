@@ -1,339 +1,176 @@
 import type { MaybeRef } from 'vue'
 
+import {
+  entityKeys,
+  listKeys,
+  nestedEntityKeys,
+  spaceEntityKeys,
+  spaceListKeys,
+} from '~/lib/query-keys'
+
+/**
+ * The app's query-key registry.
+ *
+ * Most namespaces are the same five levels (`all`/`lists`/`list`/`details`/`detail`)
+ * hanging off `['spaces', spaceId, segment]`, so they are generated rather than
+ * spelled out — see `~/lib/query-keys`. The arrays produced are unchanged; only
+ * the namespaces with extra branches (or a non-standard root) stay hand-written,
+ * and those spread a generated base so the shared levels can't drift.
+ */
 export const queryKeys = {
-  spaces: {
-    all: () => ['spaces'] as const,
-    lists: () => [...queryKeys.spaces.all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.spaces.lists(), filters] as const,
-    details: () => [...queryKeys.spaces.all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.spaces.details(), id] as const,
+  spaces: entityKeys(() => ['spaces'] as const),
+  automationActions: spaceEntityKeys('automation-actions'),
+  automationExecutions: spaceEntityKeys('automation-executions'),
+  automations: spaceEntityKeys('automations'),
+  assetFolders: spaceEntityKeys('asset-folders'),
+  blockFolders: spaceEntityKeys('block-folders'),
+  blockTags: spaceEntityKeys('block-tags'),
+  assetCollections: (spaceId: MaybeRef<string>) => {
+    const keys = spaceEntityKeys('asset-collections')(spaceId)
+    return {
+      ...keys,
+      assets: (id: MaybeRef<string>) => [...keys.all(), 'assets', id] as const,
+      assetsList: (id: MaybeRef<string>, filters: unknown = {}) =>
+        [...keys.all(), 'assets', id, filters] as const,
+    }
   },
-  automationActions: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'automation-actions'] as const,
-    lists: () => [...queryKeys.automationActions(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.automationActions(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.automationActions(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) =>
-      [...queryKeys.automationActions(spaceId).details(), id] as const,
-  }),
-  automationExecutions: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'automation-executions'] as const,
-    lists: () => [...queryKeys.automationExecutions(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.automationExecutions(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.automationExecutions(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) =>
-      [...queryKeys.automationExecutions(spaceId).details(), id] as const,
-  }),
-  automations: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'automations'] as const,
-    lists: () => [...queryKeys.automations(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.automations(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.automations(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.automations(spaceId).details(), id] as const,
-  }),
-  assetFolders: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'asset-folders'] as const,
-    lists: () => [...queryKeys.assetFolders(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.assetFolders(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.assetFolders(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.assetFolders(spaceId).details(), id] as const,
-  }),
-  blockFolders: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'block-folders'] as const,
-    lists: () => [...queryKeys.blockFolders(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.blockFolders(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.blockFolders(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.blockFolders(spaceId).details(), id] as const,
-  }),
-  blockTags: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'block-tags'] as const,
-    lists: () => [...queryKeys.blockTags(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.blockTags(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.blockTags(spaceId).all(), 'detail'] as const,
-    detail: (tagName: MaybeRef<string>) =>
-      [...queryKeys.blockTags(spaceId).details(), tagName] as const,
-  }),
-  assetCollections: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'asset-collections'] as const,
-    lists: () => [...queryKeys.assetCollections(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.assetCollections(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.assetCollections(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) =>
-      [...queryKeys.assetCollections(spaceId).details(), id] as const,
-    assets: (id: MaybeRef<string>) =>
-      [...queryKeys.assetCollections(spaceId).all(), 'assets', id] as const,
-    assetsList: (id: MaybeRef<string>, filters: any = {}) =>
-      [...queryKeys.assetCollections(spaceId).assets(id), filters] as const,
-  }),
-  assetPackages: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'asset-packages'] as const,
-    lists: () => [...queryKeys.assetPackages(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.assetPackages(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.assetPackages(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.assetPackages(spaceId).details(), id] as const,
-  }),
-  assetShares: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'asset-shares'] as const,
-    lists: () => [...queryKeys.assetShares(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.assetShares(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.assetShares(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.assetShares(spaceId).details(), id] as const,
-  }),
-  publicShare: (spaceId: MaybeRef<string>, token: MaybeRef<string>) => ({
-    all: () => ['public-share', spaceId, token] as const,
-    meta: () => [...queryKeys.publicShare(spaceId, token).all(), 'meta'] as const,
-    assets: () => [...queryKeys.publicShare(spaceId, token).all(), 'assets'] as const,
-    assetsList: (filters: any = {}) =>
-      [...queryKeys.publicShare(spaceId, token).assets(), filters] as const,
-  }),
-  assetTags: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'asset-tags'] as const,
-    lists: () => [...queryKeys.assetTags(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.assetTags(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.assetTags(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.assetTags(spaceId).details(), id] as const,
-  }),
-  tokens: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'tokens'] as const,
-    lists: () => [...queryKeys.tokens(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.tokens(spaceId).lists(), filters] as const,
-  }),
+  assetPackages: spaceEntityKeys('asset-packages'),
+  assetShares: spaceEntityKeys('asset-shares'),
+  publicShare: (spaceId: MaybeRef<string>, token: MaybeRef<string>) => {
+    const all = () => ['public-share', spaceId, token] as const
+    return {
+      all,
+      meta: () => [...all(), 'meta'] as const,
+      assets: () => [...all(), 'assets'] as const,
+      assetsList: (filters: unknown = {}) => [...all(), 'assets', filters] as const,
+    }
+  },
+  assetTags: spaceEntityKeys('asset-tags'),
+  tokens: spaceListKeys('tokens'),
   teams: {
-    all: () => ['teams'] as const,
-    lists: () => [...queryKeys.teams.all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.teams.lists(), filters] as const,
-    details: () => [...queryKeys.teams.all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.teams.details(), id] as const,
+    ...entityKeys(() => ['teams'] as const),
     hierarchy: () => [...queryKeys.teams.all(), 'hierarchy'] as const,
     samlProvider: (teamId: MaybeRef<string>) =>
       [...queryKeys.teams.detail(teamId), 'saml-provider'] as const,
     roles: (teamId: MaybeRef<string>) => ({
       all: () => [...queryKeys.teams.detail(teamId), 'roles'] as const,
-      space: () => [...queryKeys.teams.roles(teamId).all(), 'space'] as const,
+      space: () => [...queryKeys.teams.detail(teamId), 'roles', 'space'] as const,
     }),
   },
   provider: {
     all: () => ['provider'] as const,
-    stats: (params: any = {}) => [...queryKeys.provider.all(), 'stats', params] as const,
-    notes: () => [...queryKeys.provider.all(), 'notes'] as const,
-    notesList: (params: any = {}) => [...queryKeys.provider.notes(), 'list', params] as const,
+    stats: (params: unknown = {}) => ['provider', 'stats', params] as const,
+    notes: () => ['provider', 'notes'] as const,
+    notesList: (params: unknown = {}) => ['provider', 'notes', 'list', params] as const,
   },
-  redirects: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'redirects'] as const,
-    lists: () => [...queryKeys.redirects(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.redirects(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.redirects(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.redirects(spaceId).details(), id] as const,
-  }),
-  assets: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'assets'] as const,
-    lists: () => [...queryKeys.assets(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.assets(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.assets(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.assets(spaceId).details(), id] as const,
-    linkedContents: (id: MaybeRef<string>) =>
-      [...queryKeys.assets(spaceId).detail(id), 'linked-contents'] as const,
-    linkedContentsPage: (id: MaybeRef<string>, page: MaybeRef<number>) =>
-      [...queryKeys.assets(spaceId).linkedContents(id), page] as const,
-  }),
-  assetVersions: (spaceId: MaybeRef<string>, assetId: MaybeRef<string>) => ({
-    // Nested under the asset's own detail key, like `linkedContents` above, so
-    // invalidating an asset cascades to its versions.
-    all: () => [...queryKeys.assets(spaceId).detail(assetId), 'versions'] as const,
-    lists: () => [...queryKeys.assetVersions(spaceId, assetId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.assetVersions(spaceId, assetId).lists(), filters] as const,
-  }),
-  icons: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'icons'] as const,
-    lists: () => [...queryKeys.icons(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.icons(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.icons(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.icons(spaceId).details(), id] as const,
-    tags: () => [...queryKeys.icons(spaceId).all(), 'tags'] as const,
-  }),
-  blocks: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'blocks'] as const,
-    lists: () => [...queryKeys.blocks(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.blocks(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.blocks(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.blocks(spaceId).details(), id] as const,
-  }),
-  blockTemplates: (spaceId: MaybeRef<string>, blockId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'blocks', blockId, 'templates'] as const,
-    lists: () => [...queryKeys.blockTemplates(spaceId, blockId).all(), 'list'] as const,
-    list: (filters: any = {}) =>
-      [...queryKeys.blockTemplates(spaceId, blockId).lists(), filters] as const,
-    details: () => [...queryKeys.blockTemplates(spaceId, blockId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) =>
-      [...queryKeys.blockTemplates(spaceId, blockId).details(), id] as const,
-  }),
-  blockVersions: (spaceId: MaybeRef<string>, blockId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'blocks', blockId, 'versions'] as const,
-    lists: () => [...queryKeys.blockVersions(spaceId, blockId).all(), 'list'] as const,
-    list: (filters: any = {}) =>
-      [...queryKeys.blockVersions(spaceId, blockId).lists(), filters] as const,
-    details: () => [...queryKeys.blockVersions(spaceId, blockId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) =>
-      [...queryKeys.blockVersions(spaceId, blockId).details(), id] as const,
-  }),
-  contents: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'contents'] as const,
-    lists: () => [...queryKeys.contents(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.contents(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.contents(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.contents(spaceId).details(), id] as const,
-  }),
-  contentVersions: (spaceId: MaybeRef<string>, contentId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'contents', contentId, 'history'] as const,
-    lists: () => [...queryKeys.contentVersions(spaceId, contentId).all(), 'list'] as const,
-    list: (filters: any = {}) =>
-      [...queryKeys.contentVersions(spaceId, contentId).lists(), filters] as const,
-    details: () => [...queryKeys.contentVersions(spaceId, contentId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) =>
-      [...queryKeys.contentVersions(spaceId, contentId).details(), id] as const,
-  }),
-  comments: (spaceId: MaybeRef<string>, contentId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'contents', contentId, 'comments'] as const,
-    lists: () => [...queryKeys.comments(spaceId, contentId).all(), 'list'] as const,
-    list: (filters: any = {}) =>
-      [...queryKeys.comments(spaceId, contentId).lists(), filters] as const,
-    details: () => [...queryKeys.comments(spaceId, contentId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) =>
-      [...queryKeys.comments(spaceId, contentId).details(), id] as const,
-  }),
+  redirects: spaceEntityKeys('redirects'),
+  assets: (spaceId: MaybeRef<string>) => {
+    const keys = spaceEntityKeys('assets')(spaceId)
+    return {
+      ...keys,
+      linkedContents: (id: MaybeRef<string>) => [...keys.detail(id), 'linked-contents'] as const,
+      linkedContentsPage: (id: MaybeRef<string>, page: MaybeRef<number>) =>
+        [...keys.detail(id), 'linked-contents', page] as const,
+    }
+  },
+  // Nested under the asset's own detail key, like `linkedContents` above, so
+  // invalidating an asset cascades to its versions.
+  assetVersions: (spaceId: MaybeRef<string>, assetId: MaybeRef<string>) =>
+    listKeys(() => [...queryKeys.assets(spaceId).detail(assetId), 'versions'] as const),
+  icons: (spaceId: MaybeRef<string>) => {
+    const keys = spaceEntityKeys('icons')(spaceId)
+    return {
+      ...keys,
+      tags: () => [...keys.all(), 'tags'] as const,
+    }
+  },
+  blocks: spaceEntityKeys('blocks'),
+  blockTemplates: nestedEntityKeys('blocks', 'templates'),
+  blockVersions: nestedEntityKeys('blocks', 'versions'),
+  contents: spaceEntityKeys('contents'),
+  contentVersions: nestedEntityKeys('contents', 'history'),
+  comments: nestedEntityKeys('contents', 'comments'),
   contentMenu: (spaceId: MaybeRef<string>) => ({
     all: () => ['spaces', spaceId, 'content-menu'] as const,
   }),
-  fieldPlugins: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'field-plugins'] as const,
-    lists: () => [...queryKeys.fieldPlugins(spaceId).all(), 'list'] as const,
-    list: (filters: unknown = {}) => [...queryKeys.fieldPlugins(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.fieldPlugins(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.fieldPlugins(spaceId).details(), id] as const,
-  }),
-  // Add data sources and entries query keys
-  dataSources: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'data-sources'] as const,
-    lists: () => [...queryKeys.dataSources(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.dataSources(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.dataSources(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.dataSources(spaceId).details(), id] as const,
-  }),
-  dataEntries: (spaceId: MaybeRef<string>, dataSourceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'data-sources', dataSourceId, 'entries'] as const,
-    lists: () => [...queryKeys.dataEntries(spaceId, dataSourceId).all(), 'list'] as const,
-    list: (filters: any = {}) =>
-      [...queryKeys.dataEntries(spaceId, dataSourceId).lists(), filters] as const,
-    details: () => [...queryKeys.dataEntries(spaceId, dataSourceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) =>
-      [...queryKeys.dataEntries(spaceId, dataSourceId).details(), id] as const,
-  }),
-  spaceMembers: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'members'] as const,
-    lists: () => [...queryKeys.spaceMembers(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.spaceMembers(spaceId).lists(), filters] as const,
-  }),
-  spacePeople: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'people'] as const,
-    lists: () => [...queryKeys.spacePeople(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.spacePeople(spaceId).lists(), filters] as const,
-  }),
-  teamPeople: (teamId: MaybeRef<string>) => ({
-    all: () => ['teams', teamId, 'people'] as const,
-    lists: () => [...queryKeys.teamPeople(teamId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.teamPeople(teamId).lists(), filters] as const,
-  }),
+  fieldPlugins: spaceEntityKeys('field-plugins'),
+  dataSources: spaceEntityKeys('data-sources'),
+  dataEntries: nestedEntityKeys('data-sources', 'entries'),
+  spaceMembers: spaceListKeys('members'),
+  spacePeople: spaceListKeys('people'),
+  teamPeople: (teamId: MaybeRef<string>) => listKeys(() => ['teams', teamId, 'people'] as const),
   invites: {
     all: () => ['invites'] as const,
     public: (inviteId: MaybeRef<string | undefined>) =>
-      [...queryKeys.invites.all(), 'public', inviteId] as const,
-    my: () => [...queryKeys.invites.all(), 'my'] as const,
-    myLists: () => [...queryKeys.invites.my(), 'list'] as const,
-    myList: (filters: any = {}) => [...queryKeys.invites.myLists(), filters] as const,
-    myDetails: () => [...queryKeys.invites.my(), 'detail'] as const,
-    myDetail: (id: MaybeRef<string>) => [...queryKeys.invites.myDetails(), id] as const,
+      ['invites', 'public', inviteId] as const,
+    my: () => ['invites', 'my'] as const,
+    myLists: () => ['invites', 'my', 'list'] as const,
+    myList: (filters: unknown = {}) => ['invites', 'my', 'list', filters] as const,
+    myDetails: () => ['invites', 'my', 'detail'] as const,
+    myDetail: (id: MaybeRef<string>) => ['invites', 'my', 'detail', id] as const,
   },
-  releases: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'releases'] as const,
-    lists: () => [...queryKeys.releases(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.releases(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.releases(spaceId).all(), 'detail'] as const,
-    detail: (id: MaybeRef<string>) => [...queryKeys.releases(spaceId).details(), id] as const,
-  }),
+  releases: spaceEntityKeys('releases'),
   users: {
     all: () => ['users'] as const,
-    me: () => [...queryKeys.users.all(), 'me'] as const,
-    socialLinks: () => [...queryKeys.users.me(), 'social-links'] as const,
+    me: () => ['users', 'me'] as const,
+    socialLinks: () => ['users', 'me', 'social-links'] as const,
   },
   notifications: {
-    all: () => ['notifications'] as const,
-    lists: () => [...queryKeys.notifications.all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.notifications.lists(), filters] as const,
-    unreadCount: () => [...queryKeys.notifications.all(), 'unread-count'] as const,
+    ...listKeys(() => ['notifications'] as const),
+    unreadCount: () => ['notifications', 'unread-count'] as const,
   },
   authorization: {
     all: () => ['authorization'] as const,
-    context: (params: any = {}) => [...queryKeys.authorization.all(), params] as const,
+    context: (params: unknown = {}) => ['authorization', params] as const,
   },
-  personalAccessTokens: {
-    all: () => ['users', 'me', 'tokens'] as const,
-    lists: () => [...queryKeys.personalAccessTokens.all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.personalAccessTokens.lists(), filters] as const,
-  },
+  personalAccessTokens: listKeys(() => ['users', 'me', 'tokens'] as const),
   twoFactor: {
     all: () => ['two-factor'] as const,
-    status: () => [...queryKeys.twoFactor.all(), 'status'] as const,
+    status: () => ['two-factor', 'status'] as const,
   },
-  ai: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'ai'] as const,
-    models: () => [...queryKeys.ai(spaceId).all(), 'models'] as const,
-    settings: () => [...queryKeys.ai(spaceId).all(), 'settings'] as const,
-    usage: () => [...queryKeys.ai(spaceId).all(), 'usage'] as const,
-    configs: () => [...queryKeys.ai(spaceId).all(), 'configs'] as const,
-    config: (configId: MaybeRef<string>) =>
-      [...queryKeys.ai(spaceId).configs(), configId] as const,
-  }),
-  migrations: (spaceId: string) => ({
-    all: () => ['spaces', spaceId, 'migrations'] as const,
-    lists: () => [...queryKeys.migrations(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.migrations(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.migrations(spaceId).all(), 'detail'] as const,
-    detail: (id: string) => [...queryKeys.migrations(spaceId).details(), id] as const,
-  }),
-  backups: (spaceId: string) => ({
-    all: () => ['spaces', spaceId, 'backups'] as const,
-    lists: () => [...queryKeys.backups(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.backups(spaceId).lists(), filters] as const,
-    details: () => [...queryKeys.backups(spaceId).all(), 'detail'] as const,
-    detail: (id: string) => [...queryKeys.backups(spaceId).details(), id] as const,
-  }),
-  auditLogs: (spaceId: MaybeRef<string>) => ({
-    all: () => ['spaces', spaceId, 'audit-logs'] as const,
-    lists: () => [...queryKeys.auditLogs(spaceId).all(), 'list'] as const,
-    list: (filters: any = {}) => [...queryKeys.auditLogs(spaceId).lists(), filters] as const,
-  }),
+  ai: (spaceId: MaybeRef<string>) => {
+    const all = () => ['spaces', spaceId, 'ai'] as const
+    return {
+      all,
+      models: () => [...all(), 'models'] as const,
+      settings: () => [...all(), 'settings'] as const,
+      usage: () => [...all(), 'usage'] as const,
+      configs: () => [...all(), 'configs'] as const,
+      config: (configId: MaybeRef<string>) => [...all(), 'configs', configId] as const,
+    }
+  },
+  migrations: spaceEntityKeys('migrations'),
+  backups: spaceEntityKeys('backups'),
+  auditLogs: spaceListKeys('audit-logs'),
   plans: {
     all: () => ['plans'] as const,
-    lists: () => [...queryKeys.plans.all(), 'list'] as const,
-    forSpace: (spaceId: string) => [...queryKeys.plans.all(), 'space', spaceId] as const,
+    lists: () => ['plans', 'list'] as const,
+    forSpace: (spaceId: MaybeRef<string>) => ['plans', 'space', spaceId] as const,
   },
-  subscriptions: (spaceId: string) => ({
-    all: () => ['spaces', spaceId, 'subscriptions'] as const,
-    lists: () => [...queryKeys.subscriptions(spaceId).all(), 'list'] as const,
-    current: () => [...queryKeys.subscriptions(spaceId).all(), 'current'] as const,
-    proposal: () => [...queryKeys.subscriptions(spaceId).all(), 'proposal'] as const,
-  }),
+  // `all` + a few siblings, but deliberately no `list(filters)` — do not add one,
+  // the shape is asserted by tests and consumed by prefix-based invalidation.
+  subscriptions: (spaceId: MaybeRef<string>) => {
+    const all = () => ['spaces', spaceId, 'subscriptions'] as const
+    return {
+      all,
+      lists: () => [...all(), 'list'] as const,
+      current: () => [...all(), 'current'] as const,
+      proposal: () => [...all(), 'proposal'] as const,
+    }
+  },
   spaceUsage: (spaceId: MaybeRef<string | null>) => ({
     all: () => ['spaces', spaceId, 'usage'] as const,
   }),
-  usageHistory: (spaceId: string) => ({
-    all: () => ['spaces', spaceId, 'usage-history'] as const,
-    lists: () => [...queryKeys.usageHistory(spaceId).all(), 'list'] as const,
-    timeseries: (periodId: string) =>
-      [...queryKeys.usageHistory(spaceId).all(), 'timeseries', periodId] as const,
-  }),
-  invoices: (spaceId: string) => ({
-    all: () => ['spaces', spaceId, 'invoices'] as const,
-    lists: () => [...queryKeys.invoices(spaceId).all(), 'list'] as const,
-  }),
+  usageHistory: (spaceId: MaybeRef<string>) => {
+    const all = () => ['spaces', spaceId, 'usage-history'] as const
+    return {
+      all,
+      lists: () => [...all(), 'list'] as const,
+      timeseries: (periodId: MaybeRef<string>) => [...all(), 'timeseries', periodId] as const,
+    }
+  },
+  invoices: (spaceId: MaybeRef<string>) => {
+    const all = () => ['spaces', spaceId, 'invoices'] as const
+    return { all, lists: () => [...all(), 'list'] as const }
+  },
 }

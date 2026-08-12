@@ -1,105 +1,44 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import { toast } from 'vue-sonner'
-
 import { api } from '~/api'
+import type { AssetFoldersQueryParams } from '~/api/resources/asset-folders'
+import { createCrudComposable } from '~/lib/crud-composable'
 
 import { queryKeys } from './useQueryClient'
 
+/**
+ * The resource nests `parent_id` under `filter`, but callers have always passed
+ * it flat and the server accepts both — typing only the nested form here would
+ * break existing call sites.
+ */
+type AssetFolderListParams = AssetFoldersQueryParams & { parent_id?: string | null }
+
+const useAssetFoldersCrud = createCrudComposable<
+  AssetFolderResource,
+  ApiCollectionResponse<AssetFolderResource>,
+  AssetFolderListParams,
+  UpsertAssetFolderPayload,
+  UpsertAssetFolderPayload,
+  AssetFolderResource[]
+>({
+  i18nKey: 'assetFolders',
+  keys: (spaceId) => queryKeys.assetFolders(spaceId),
+  resource: (spaceId) => api.forSpace(spaceId).assetFolders,
+  defaultParams: { sort: '+name' },
+  // The tree helpers below want the folders themselves, not the envelope.
+  selectList: (response) => response.data,
+  listGate: 'none',
+  // The default `space+id` detail gate matters here: without it a component
+  // rendering before its id resolves would request `/asset-folders/`.
+  toastValues: (data) => ({ name: data.name }),
+  // A move changes which folder the assets are browsed under.
+  invalidateAlso: (spaceId, operation) =>
+    operation === 'update' ? [queryKeys.assets(spaceId).lists()] : [],
+})
+
 export function useAssetFolders(spaceId: MaybeRef<string>) {
-  const { t } = useI18n()
-  const queryClient = useQueryClient()
-  const spaceAPI = computed(() => api.forSpace(toValue(spaceId)))
+  const crud = useAssetFoldersCrud(spaceId)
 
-  const useAssetFoldersQuery = (filters = {}) => {
-    return useQuery({
-      queryKey: queryKeys.assetFolders(spaceId).list(filters),
-      queryFn: async () => {
-        const response = await spaceAPI.value.assetFolders.index({
-          sort: '+name',
-          ...filters,
-        })
-        return response.data
-      },
-      placeholderData: keepPreviousData,
-    })
-  }
-
-  const useAssetFolderQuery = (id: string) => {
-    return useQuery({
-      queryKey: queryKeys.assetFolders(spaceId).detail(id),
-      queryFn: async () => {
-        const response = await spaceAPI.value.assetFolders.get(id)
-        return response.data
-      },
-      // Without this a component rendering before its id resolves would
-      // request `/asset-folders/`.
-      enabled: computed(() => Boolean(id)),
-    })
-  }
-
-  const useCreateAssetFolderMutation = () => {
-    return useMutation({
-      mutationFn: async (payload: UpsertAssetFolderPayload) => {
-        const response = await spaceAPI.value.assetFolders.create(payload)
-        return response.data
-      },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.assetFolders(spaceId).lists() })
-        toast.success(t('composables.assetFolders.createSuccess', { name: data.name }) as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.assetFolders.createError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
-
-  const useUpdateAssetFolderMutation = () => {
-    return useMutation({
-      mutationFn: async ({ id, payload }: { id: string; payload: UpsertAssetFolderPayload }) => {
-        const response = await spaceAPI.value.assetFolders.update(id, payload)
-        return response.data
-      },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.assetFolders(spaceId).lists() })
-        queryClient.invalidateQueries({ queryKey: queryKeys.assetFolders(spaceId).detail(data.id) })
-        // A move changes which folder the assets are browsed under.
-        queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
-        toast.success(t('composables.assetFolders.updateSuccess', { name: data.name }) as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.assetFolders.updateError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
-
-  const useDeleteAssetFolderMutation = () => {
-    return useMutation({
-      mutationFn: async (id: string) => {
-        await spaceAPI.value.assetFolders.delete(id)
-        return id
-      },
-      onSuccess: (id) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.assetFolders(spaceId).lists() })
-        queryClient.removeQueries({ queryKey: queryKeys.assetFolders(spaceId).detail(id) })
-        toast.success(t('composables.assetFolders.deleteSuccess') as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('composables.assetFolders.deleteError', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
+  const useAssetFoldersQuery = crud.useListQuery
+  const useAssetFolderQuery = crud.useDetailQuery
 
   const useFolderStructure = () => {
     const { data: folders, isLoading, error } = useAssetFoldersQuery()
@@ -187,8 +126,8 @@ export function useAssetFolders(spaceId: MaybeRef<string>) {
 
     useFolderStructure,
 
-    useCreateAssetFolderMutation,
-    useUpdateAssetFolderMutation,
-    useDeleteAssetFolderMutation,
+    useCreateAssetFolderMutation: crud.useCreateMutation,
+    useUpdateAssetFolderMutation: crud.useUpdateMutation,
+    useDeleteAssetFolderMutation: crud.useDeleteMutation,
   }
 }
