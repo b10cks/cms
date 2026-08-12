@@ -8,19 +8,15 @@ use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Services\Asset\AssetMetadataFieldResolver;
 use App\Services\AssetData\DataMapper;
+use App\Services\ImportExport\BaseImportExportDriver;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
-abstract class BaseAssetDataDriver implements AssetDataDriver
+abstract class BaseAssetDataDriver extends BaseImportExportDriver implements AssetDataDriver
 {
-    protected array $successes = [];
-    protected array $changes = [];
-    protected array $ignoredFields = [];
-    protected array $errors = [];
-
     public function __construct(
         protected readonly DataMapper $mapper,
         protected readonly AssetMetadataFieldResolver $fieldResolver,
@@ -34,20 +30,13 @@ abstract class BaseAssetDataDriver implements AssetDataDriver
         array $languages
     ): Response;
 
-    abstract public function parseFile(UploadedFile $file): array;
-
-    abstract public function getFormat(): string;
-
     public function import(
         Space $space,
         UploadedFile $file,
         array $assetFields,
         array $languages
     ): ImportResult {
-        $this->successes = [];
-        $this->changes = [];
-        $this->ignoredFields = [];
-        $this->errors = [];
+        $this->resetState();
 
         try {
             $rows = $this->parseFile($file);
@@ -77,7 +66,7 @@ abstract class BaseAssetDataDriver implements AssetDataDriver
             return new ImportResult([], [], [], [['message' => 'Failed to parse file: ' . $e->getMessage()]]);
         }
 
-        return new ImportResult($this->successes, $this->changes, $this->ignoredFields, $this->errors);
+        return $this->buildResult();
     }
 
     protected function importRow(
@@ -245,8 +234,6 @@ abstract class BaseAssetDataDriver implements AssetDataDriver
 
     protected function generateFilename(Space $space, string $extension): string
     {
-        $date = now()->format('Y-m-d');
-
-        return "{$space->id}_assets_{$date}.{$extension}";
+        return $this->buildExportFilename($space, 'assets', $extension);
     }
 }

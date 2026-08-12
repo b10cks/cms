@@ -17,6 +17,9 @@ use CodersCantina\Filter\Filter;
 use Illuminate\Http\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * @extends ImportExportService<RedirectDataDriver>
+ */
 class RedirectDataImportExportService extends ImportExportService
 {
     public function __construct(
@@ -38,7 +41,7 @@ class RedirectDataImportExportService extends ImportExportService
         ImportExportFormat $format,
         ?Filter $filter = null,
     ): Response {
-        $driver = $this->getRedirectDriver($format);
+        $driver = $this->getDriver($format);
 
         $query = Redirect::query();
 
@@ -57,18 +60,10 @@ class RedirectDataImportExportService extends ImportExportService
         ImportExportFormat $format,
         RedirectImportMode $mode = RedirectImportMode::Addition,
     ): ImportResult {
-        $driver = $this->getRedirectDriver($format);
+        $driver = $this->getDriver($format);
 
         $this->ensureImportIsValid(fn (): array => $driver->validate($file));
 
         return $driver->import($space, $file, $mode);
-    }
-
-    protected function getRedirectDriver(ImportExportFormat $format): RedirectDataDriver
-    {
-        /** @var RedirectDataDriver $driver */
-        $driver = $this->getDriver($format);
-
-        return $driver;
     }
 }

@@ -17,6 +17,9 @@ use App\Services\ImportExport\ImportExportService;
 use Illuminate\Http\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * @extends ImportExportService<DataEntryDataDriver>
+ */
 class DataEntryDataImportExportService extends ImportExportService
 {
     public function __construct(
@@ -38,7 +41,7 @@ class DataEntryDataImportExportService extends ImportExportService
         DataSource $dataSource,
         ImportExportFormat $format,
     ): Response {
-        $driver = $this->getDataEntryDriver($format);
+        $driver = $this->getDriver($format);
 
         // cursor() streams rows into the driver instead of hydrating the
         // whole table up front.
@@ -57,18 +60,10 @@ class DataEntryDataImportExportService extends ImportExportService
         ImportExportFormat $format,
         RedirectImportMode $mode = RedirectImportMode::Addition,
     ): ImportResult {
-        $driver = $this->getDataEntryDriver($format);
+        $driver = $this->getDriver($format);
 
         $this->ensureImportIsValid(fn (): array => $driver->validate($file));
 
         return $driver->import($space, $dataSource, $file, $mode);
-    }
-
-    protected function getDataEntryDriver(ImportExportFormat $format): DataEntryDataDriver
-    {
-        /** @var DataEntryDataDriver $driver */
-        $driver = $this->getDriver($format);
-
-        return $driver;
     }
 }

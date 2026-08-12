@@ -19,6 +19,9 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * @extends ImportExportService<ContentDataDriver>
+ */
 class ContentDataImportExportService extends ImportExportService
 {
     public function __construct(
@@ -35,7 +38,7 @@ class ContentDataImportExportService extends ImportExportService
 
     public function exportContents(Space $space, ImportExportFormat $format, ?Filter $filter = null): Response
     {
-        $driver = $this->getContentDriver($format);
+        $driver = $this->getDriver($format);
 
         $query = Content::query()
             ->with('block')
@@ -58,20 +61,12 @@ class ContentDataImportExportService extends ImportExportService
         bool $createMissing,
         Authenticatable $owner,
     ): ImportResult {
-        $driver = $this->getContentDriver($format);
+        $driver = $this->getDriver($format);
 
         $this->ensureImportIsValid(fn (): array => $driver->validate($file));
 
         $documents = $driver->parse($file);
 
         return $this->applier->apply($space, $documents, $mode, $createMissing, $owner);
-    }
-
-    private function getContentDriver(ImportExportFormat $format): ContentDataDriver
-    {
-        /** @var ContentDataDriver $driver */
-        $driver = $this->getDriver($format);
-
-        return $driver;
     }
 }
