@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { BackupsQueryParams } from '~/api/resources/backups'
 import BackupIcon from '~/assets/images/backups.svg?component'
 import Icon from '~/components/Icon.vue'
 import SearchFilter from '~/components/SearchFilter.vue'
@@ -71,25 +70,13 @@ const sortOptions = [
   { value: 'expires_at', label: $t('labels.backups.columns.expiresAt') },
 ]
 
-const filters = ref<Record<string, unknown>>({})
-const currentPage = ref(1)
-const perPage = ref(24)
-const sortBy = ref<{ column: BackupSortColumn; direction: SortOrder }>({
-  column: 'created_at',
-  direction: 'desc',
-})
+const { currentPage, sortBy, filters, paginationBindings, queryParams } =
+  useTableQueryState<BackupSortColumn>({
+    defaultSort: { column: 'created_at', direction: 'desc' },
+    pageSize: 24,
+  })
 
 const selectedBackups = ref<Map<string, BackupResource>>(new Map())
-
-const queryParams = computed<BackupsQueryParams>(() => {
-  return {
-    ...filters.value,
-    sort: sortBy.value.column,
-    order: sortBy.value.direction,
-    page: currentPage.value,
-    per_page: perPage.value,
-  }
-})
 
 const props = defineProps<{
   spaceId: string
@@ -415,10 +402,7 @@ watch(
     <TablePaginationFooter
       v-if="backups?.meta"
       :meta="backups.meta"
-      :current-page="currentPage"
-      :per-page="perPage"
-      @update:current-page="(val) => (currentPage = val)"
-      @update:per-page="(val) => (perPage = val)"
+      v-bind="paginationBindings"
     />
   </div>
 </template>

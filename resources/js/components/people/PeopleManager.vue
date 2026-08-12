@@ -25,20 +25,25 @@ const props = withDefaults(
 const { t } = useI18n()
 
 const segment = ref<PersonSegment>('all')
-const currentPage = ref(1)
-const perPage = ref(20)
-const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
-  column: 'firstname',
-  direction: 'asc',
+const {
+  currentPage,
+  sortBy,
+  filters,
+  paginationBindings,
+  queryParams: tableParams,
+  setSortBy,
+  setFilters,
+} = useTableQueryState({
+  defaultSort: { column: 'firstname', direction: 'asc' },
+  pageSize: 20,
+  resetOnSort: true,
+  resetOnFilters: true,
+  resetOnPageSize: true,
 })
-const filters = ref<Record<string, unknown>>({})
 
 const queryParams = computed<PeopleQueryParams>(() => ({
-  ...filters.value,
+  ...tableParams.value,
   segment: segment.value,
-  sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
-  page: currentPage.value,
-  per_page: perPage.value,
 }))
 
 const resourceId = computed(() => props.resourceId)
@@ -107,21 +112,6 @@ const sortOptions = computed(() => [
 const selectSegment = (value: PersonSegment) => {
   if (segment.value === value) return
   segment.value = value
-  currentPage.value = 1
-}
-
-const handleSort = (value: { column: string; direction: 'asc' | 'desc' }) => {
-  sortBy.value = value
-  currentPage.value = 1
-}
-
-const handleFilters = (value: Record<string, unknown>) => {
-  filters.value = value
-  currentPage.value = 1
-}
-
-const handlePerPage = (value: number) => {
-  perPage.value = value
   currentPage.value = 1
 }
 
@@ -204,12 +194,12 @@ const handleDeleteInvite = (inviteId: string) => {
         <SearchFilter
           :model-value="filters"
           :filterable-fields="peopleFilters"
-          @update:model-value="handleFilters"
+          @update:model-value="setFilters"
         />
         <SortSelect
           :model-value="sortBy"
           :options="sortOptions"
-          @update:model-value="handleSort"
+          @update:model-value="setSortBy"
         />
       </div>
     </div>
@@ -219,9 +209,8 @@ const handleDeleteInvite = (inviteId: string) => {
       :is-loading="isLoading"
       :is-fetching="isFetching"
       :meta="meta"
-      :current-page="currentPage"
-      :per-page="perPage"
       :sort-by="sortBy"
+      v-bind="paginationBindings"
       :available-roles="availableRoles"
       :resource-type="resourceType"
       :can-manage-invites="canManageInvites"
@@ -229,9 +218,7 @@ const handleDeleteInvite = (inviteId: string) => {
       @remove-member="handleRemoveMember"
       @resend-invite="handleResendInvite"
       @delete-invite="handleDeleteInvite"
-      @update:current-page="(val) => (currentPage = val)"
-      @update:per-page="handlePerPage"
-      @update:sort-by="handleSort"
+      @update:sort-by="setSortBy"
     />
   </div>
 </template>

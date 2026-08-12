@@ -119,16 +119,15 @@ const isManualCollectionView = computed(
 
 const showUploadDialog = ref(false)
 const folderDialogOpen = ref(false)
-const currentPage = ref(1)
-const perPage = ref(25)
-const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
-  column: 'created_at',
-  direction: 'desc',
-})
+const { currentPage, perPage, sortBy, filters, sortParam, paginationBindings } =
+  useTableQueryState({
+    defaultSort: { column: 'created_at', direction: 'desc' },
+    pageSize: 25,
+    pageSizeOptions: [25, 50, 100, 500],
+  })
 const editingAssetId = ref<string | null>(null)
 const editingAssetData = ref<AssetResource | null>(null)
 const pendingChanges = ref<Set<string>>(new Set())
-const filters = ref<Record<string, unknown>>({})
 const q = ref('')
 
 const moveDialogOpen = ref(false)
@@ -184,7 +183,7 @@ const assetQueryParams = computed<AssetsQueryParams & { collection?: string }>((
     folder: collectionId.value ? undefined : (folderId.value ?? undefined),
     tags: collectionId.value ? undefined : (tagId.value ?? undefined),
     q: q.value || undefined,
-    sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
+    sort: sortParam.value,
     page: currentPage.value,
     per_page: perPage.value,
   }
@@ -500,8 +499,6 @@ const nonCompliantAssets = computed(() => {
 const allLanguageCodes = computed(() => languageTabs.value.map((language) => language.code))
 const availableFields = computed(() => getEffectiveFields({ folderId: folderId.value }))
 const allFieldKeys = computed(() => availableFields.value.map((field) => field.key))
-
-const pageSizeOptions = [25, 50, 100, 500]
 
 const getEditableAsset = (asset: AssetResource): AssetResource => {
   if (editingAssetData.value?.id === asset.id) {
@@ -1067,11 +1064,7 @@ onUnmounted(() => {
     <TablePaginationFooter
       v-if="meta"
       :meta="meta"
-      :current-page="currentPage"
-      :per-page="perPage"
-      :page-size-options="pageSizeOptions"
-      @update:current-page="currentPage = $event"
-      @update:per-page="perPage = $event"
+      v-bind="paginationBindings"
     />
 
     <UploadDialog

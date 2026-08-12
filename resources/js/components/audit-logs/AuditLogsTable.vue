@@ -27,15 +27,20 @@ const props = defineProps<{
 const { $t } = useI18n()
 const { formatDateTime } = useFormat()
 
-const currentPage = ref(1)
-const perPage = ref(20)
-const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
-  column: 'created_at',
-  direction: 'desc',
-})
-
-const filters = ref<Record<string, unknown>>({})
 const dateRange = ref<DateRangeValue>({ start: null, end: null, preset: null })
+
+const {
+  sortBy,
+  filters,
+  paginationBindings,
+  queryParams: tableParams,
+} = useTableQueryState({
+  defaultSort: { column: 'created_at', direction: 'desc' },
+  pageSize: 20,
+  // Reset to the first page whenever the active filters change
+  resetOnFilters: true,
+  resetOn: () => dateRange.value,
+})
 
 const createdAtFilter = computed<string | undefined>(() => {
   const { start, end } = dateRange.value
@@ -150,21 +155,9 @@ const auditLogFilters = computed<FilterableField[]>(() => [
 ])
 
 const queryParams = computed<AuditLogsQueryParams>(() => ({
-  ...filters.value,
+  ...tableParams.value,
   ...(createdAtFilter.value ? { created_at: createdAtFilter.value } : {}),
-  sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
-  page: currentPage.value,
-  per_page: perPage.value,
 }))
-
-// Reset to the first page whenever the active filters change
-watch(
-  [filters, dateRange],
-  () => {
-    currentPage.value = 1
-  },
-  { deep: true }
-)
 
 const { useAuditLogsQuery } = useAuditLogs(props.spaceId)
 const { data: logs, isLoading, isFetching } = useAuditLogsQuery(queryParams)
@@ -361,10 +354,7 @@ function buildItemRoute(row: AuditLogResource): object | null {
     <TablePaginationFooter
       v-if="logs?.meta"
       :meta="logs.meta"
-      :current-page="currentPage"
-      :per-page="perPage"
-      @update:current-page="(val) => (currentPage = val)"
-      @update:per-page="(val) => (perPage = val)"
+      v-bind="paginationBindings"
     />
   </div>
 </template>

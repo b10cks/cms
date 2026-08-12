@@ -33,19 +33,19 @@ const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageBlockTags = computed(() => access.hasAbility('blocks.manage'))
 
 const searchQuery = ref('')
-const currentPage = ref(1)
-const perPage = ref(25)
-const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
-  column: 'name',
-  direction: 'asc',
+const {
+  sortBy,
+  filters,
+  paginationBindings,
+  queryParams: tableParams,
+} = useTableQueryState({
+  defaultSort: { column: 'name', direction: 'asc' },
+  pageSize: 25,
+  pageSizeOptions: [25, 50, 100, 500, 1000],
 })
-const filters = ref<Record<string, unknown>>({})
 const queryParams = computed(() => ({
-  ...filters.value,
-  page: currentPage.value,
-  per_page: perPage.value,
+  ...tableParams.value,
   q: searchQuery.value,
-  sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
 }))
 
 const { useBlockTagsQuery, useDeleteBlockTagMutation } = useBlockTags(props.spaceId)
@@ -55,7 +55,6 @@ const { mutate: deleteBlockTag } = useDeleteBlockTagMutation()
 const showTagDialog = ref(false)
 const selectedTag = ref<BlockTagResource | null>(null)
 
-const pageSizeOptions = [25, 50, 100, 500, 1000]
 const sortOptions = [
   { value: 'name', label: $t('labels.blockTags.fields.name') },
   { value: 'blocks_count', label: $t('labels.blockTags.fields.blocks_count') },
@@ -209,11 +208,7 @@ watch(showTagDialog, (isOpen) => {
         <TablePaginationFooter
           v-if="blockTags?.meta"
           :meta="blockTags.meta"
-          :current-page="currentPage"
-          :per-page="perPage"
-          :page-size-options="pageSizeOptions"
-          @update:current-page="(val) => (currentPage = val)"
-          @update:per-page="(val) => (perPage = val)"
+          v-bind="paginationBindings"
         />
       </div>
     </div>

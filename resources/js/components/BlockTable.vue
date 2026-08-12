@@ -43,19 +43,21 @@ const showDuplicateBlockDialog = ref(false)
 const duplicateSourceBlock = ref<BlockResource | null>(null)
 
 const searchQuery = useRouteQuery('q')
-const currentPage = useRouteQuery('page', 1, { transform: Number })
-const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
-  column: 'name',
-  direction: 'asc',
+const blockPageSize = computed({
+  get: () => settings.value.blocks.pageSize || 25,
+  set: (value: number) => (settings.value.blocks.pageSize = value),
 })
-const filters = ref<Record<string, unknown>>({})
+const { sortBy, filters, paginationBindings, queryParams: tableParams } = useTableQueryState({
+  defaultSort: { column: 'name', direction: 'asc' },
+  page: useRouteQuery('page', 1, { transform: Number }),
+  perPage: blockPageSize,
+  pageSizeOptions: [25, 50, 100, 500, 1000],
+})
+
 const queryParams = computed(() => ({
-  ...filters.value,
+  ...tableParams.value,
   folder_id: props.folder || undefined,
-  page: currentPage.value,
-  per_page: settings.value.blocks.pageSize || 25,
   q: searchQuery.value,
-  sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
 }))
 
 const { useBlocksQuery, useDeleteBlockMutation } = useBlocks(props.spaceId)
@@ -76,7 +78,6 @@ const isLoading = computed(
   () => isLoadingBlocks.value || isLoadingTags.value || isLoadingFolders.value
 )
 
-const pageSizeOptions = [25, 50, 100, 500, 1000]
 const sortOptions = [
   { value: 'name', label: $t('labels.blocks.fields.name') },
   { value: 'type', label: $t('labels.blocks.fields.type') },
@@ -339,11 +340,7 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
         <TablePaginationFooter
           v-if="blocks?.meta"
           :meta="blocks.meta"
-          :current-page="currentPage"
-          :per-page="settings.blocks.pageSize"
-          :page-size-options="pageSizeOptions"
-          @update:current-page="(val) => (currentPage = val)"
-          @update:per-page="(val) => (settings.blocks.pageSize = val)"
+          v-bind="paginationBindings"
         />
       </div>
     </div>

@@ -71,20 +71,20 @@ const {
 const { settings } = useSpaceSettings(spaceId.value)
 
 const searchQuery = ref('')
-const currentPage = ref(1)
-const perPage = ref(25)
-const sortBy = ref<{ column: string; direction: 'asc' | 'desc' }>({
-  column: 'created_at',
-  direction: 'desc',
+const {
+  sortBy,
+  filters,
+  paginationBindings,
+  queryParams: tableParams,
+} = useTableQueryState({
+  defaultSort: { column: 'created_at', direction: 'desc' },
+  pageSize: 25,
+  pageSizeOptions: [25, 50, 100, 500, 1000],
 })
-const filters = ref<Record<string, unknown>>({})
 
 const queryParams = computed(() => ({
-  ...filters.value,
-  page: currentPage.value,
-  per_page: perPage.value,
+  ...tableParams.value,
   q: searchQuery.value,
-  sort: `${sortBy.value.direction === 'asc' ? '+' : '-'}${sortBy.value.column}`,
 }))
 
 const possibleFilters = computed<FilterableField[]>(() => {
@@ -130,7 +130,6 @@ const selectedDimension = useRouteQuery('dimension', 'default', {
 const editingEntries = ref<Map<string, DataEntryResource>>(new Map())
 const pendingChanges = ref<Set<string>>(new Set())
 
-const pageSizeOptions = [25, 50, 100, 500, 1000]
 const sortOptions = [
   { value: 'key', label: $t('labels.dataEntries.fields.key') },
   { value: 'value', label: $t('labels.dataEntries.fields.value') },
@@ -960,11 +959,7 @@ const handleTranslateMissingDimensions = async () => {
           <TablePaginationFooter
             v-if="dataEntriesResponse?.meta"
             :meta="dataEntriesResponse.meta"
-            :current-page="currentPage"
-            :per-page="perPage"
-            :page-size-options="pageSizeOptions"
-            @update:current-page="(val) => (currentPage = val)"
-            @update:per-page="(val) => (perPage = val)"
+            v-bind="paginationBindings"
           />
         </div>
       </div>

@@ -71,14 +71,14 @@ describe('useBackupsQuery', () => {
     withSetup(() => useBackups(SPACE).useBackupsQuery())
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: 'created_at', order: 'desc' })
+    expect(index).toHaveBeenCalledWith({ sort: '-created_at' })
   })
 
   it('lets the caller params override the default sort', async () => {
-    withSetup(() => useBackups(SPACE).useBackupsQuery({ sort: 'name', order: 'asc' }))
+    withSetup(() => useBackups(SPACE).useBackupsQuery({ sort: '+name' }))
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: 'name', order: 'asc' })
+    expect(index).toHaveBeenCalledWith({ sort: '+name' })
   })
 
   it('scopes the API client to the space', async () => {

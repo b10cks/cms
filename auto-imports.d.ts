@@ -200,6 +200,7 @@ declare global {
   const useSpaceUsage: typeof import('./resources/js/composables/useSpaceUsage').useSpaceUsage
   const useSpaces: typeof import('./resources/js/composables/useSpace').useSpaces
   const useSubscription: typeof import('./resources/js/composables/useSubscription').useSubscription
+  const useTableQueryState: typeof import('./resources/js/composables/useTableQueryState').useTableQueryState
   const useTeamTypes: typeof import('./resources/js/composables/useTeamTypes').useTeamTypes
   const useTeams: typeof import('./resources/js/composables/useTeams').useTeams
   const useTemplateRef: typeof import('vue').useTemplateRef
@@ -293,6 +294,9 @@ declare global {
   // @ts-ignore
   export type { SlugOptions } from './resources/js/composables/useSlug'
   import('./resources/js/composables/useSlug')
+  // @ts-ignore
+  export type { TableSortDirection, TableSort, TableQueryParams, TablePaginationBindings, UseTableQueryStateOptions, UseTableQueryStateReturn } from './resources/js/composables/useTableQueryState'
+  import('./resources/js/composables/useTableQueryState')
   // @ts-ignore
   export type { TeamType } from './resources/js/composables/useTeamTypes'
   import('./resources/js/composables/useTeamTypes')
@@ -500,6 +504,7 @@ declare module 'vue' {
     readonly useSpaceUsage: UnwrapRef<typeof import('./resources/js/composables/useSpaceUsage')['useSpaceUsage']>
     readonly useSpaces: UnwrapRef<typeof import('./resources/js/composables/useSpace')['useSpaces']>
     readonly useSubscription: UnwrapRef<typeof import('./resources/js/composables/useSubscription')['useSubscription']>
+    readonly useTableQueryState: UnwrapRef<typeof import('./resources/js/composables/useTableQueryState')['useTableQueryState']>
     readonly useTeamTypes: UnwrapRef<typeof import('./resources/js/composables/useTeamTypes')['useTeamTypes']>
     readonly useTeams: UnwrapRef<typeof import('./resources/js/composables/useTeams')['useTeams']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
