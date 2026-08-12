@@ -133,21 +133,19 @@ class RunSpaceMigration extends QueuedJob
      */
     private function migrateFieldPlugins(ConnectionInterface $src, ConnectionInterface $tgt, string $strategy): void
     {
-        $rows = $src->table('field_plugins')->get();
-
-        foreach ($rows as $row) {
-            $row = (array) $row;
-            $externalId = $row['id'];
-
-            $existing = $tgt->table('field_plugins')
-                ->where(function ($q) use ($externalId, $row) {
-                    $q->where('external_id', $externalId)
+        $this->upsertRows(
+            $tgt,
+            $strategy,
+            'field_plugins',
+            $src->table('field_plugins')->get(),
+            fn (array $row) => $tgt->table('field_plugins')
+                ->where(function ($q) use ($row) {
+                    $q->where('external_id', $row['id'])
                         ->orWhere('handle', $row['handle']);
                 })
-                ->first();
-
-            $data = [
-                'external_id' => $externalId,
+                ->first(),
+            fn (array $row) => [
+                'external_id' => $row['id'],
                 'name' => $row['name'],
                 'handle' => $row['handle'],
                 'description' => $row['description'],
@@ -160,23 +158,8 @@ class RunSpaceMigration extends QueuedJob
                 'manifest' => $row['manifest'],
                 'is_active' => $row['is_active'],
                 'updated_at' => $row['updated_at'],
-            ];
-
-            if ($existing) {
-                $resolved = $this->resolveConflict($tgt, 'field_plugins', $existing->id, $data, $strategy, $row['updated_at']);
-                if ($resolved === 'updated') {
-                    $this->result->incrementUpdated('field_plugins');
-                } elseif ($resolved === 'skipped') {
-                    $this->result->incrementSkipped('field_plugins');
-                }
-            } else {
-                $tgt->table('field_plugins')->insert(array_merge($data, [
-                    'id' => (string) Str::ulid(),
-                    'created_at' => $row['created_at'],
-                ]));
-                $this->result->incrementCreated('field_plugins');
-            }
-        }
+            ],
+        );
     }
 
     // -------------------------------------------------------------------------
@@ -185,49 +168,26 @@ class RunSpaceMigration extends QueuedJob
 
     private function migrateBlockFolders(ConnectionInterface $src, ConnectionInterface $tgt, string $strategy): void
     {
-        $rows = $src->table('block_folders')->get()->all();
-        $sorted = $this->sortByParentDepth($rows, 'id', 'parent_id');
-
-        foreach ($sorted as $row) {
-            $row = (array) $row;
-            $externalId = $row['id'];
-
-            $existing = $tgt->table('block_folders')
-                ->where('external_id', $externalId)
-                ->first();
-
-            $targetParentId = $row['parent_id']
-                ? ($this->blockFolderIdMap[$row['parent_id']] ?? null)
-                : null;
-
-            $data = [
-                'external_id' => $externalId,
+        $this->upsertRows(
+            $tgt,
+            $strategy,
+            'block_folders',
+            $this->sortByParentDepth($src->table('block_folders')->get()->all(), 'id', 'parent_id'),
+            fn (array $row) => $tgt->table('block_folders')
+                ->where('external_id', $row['id'])
+                ->first(),
+            fn (array $row) => [
+                'external_id' => $row['id'],
                 'name' => $row['name'],
                 'icon' => $row['icon'],
                 'color' => $row['color'],
-                'parent_id' => $targetParentId,
+                'parent_id' => $row['parent_id']
+                    ? ($this->blockFolderIdMap[$row['parent_id']] ?? null)
+                    : null,
                 'updated_at' => $row['updated_at'],
-            ];
-
-            if ($existing) {
-                $targetId = $existing->id;
-                $resolved = $this->resolveConflict($tgt, 'block_folders', $existing->id, $data, $strategy, $row['updated_at']);
-                if ($resolved === 'updated') {
-                    $this->result->incrementUpdated('block_folders');
-                } elseif ($resolved === 'skipped') {
-                    $this->result->incrementSkipped('block_folders');
-                }
-            } else {
-                $targetId = (string) Str::ulid();
-                $tgt->table('block_folders')->insert(array_merge($data, [
-                    'id' => $targetId,
-                    'created_at' => $row['created_at'],
-                ]));
-                $this->result->incrementCreated('block_folders');
-            }
-
-            $this->blockFolderIdMap[$externalId] = $targetId;
-        }
+            ],
+            $this->blockFolderIdMap,
+        );
     }
 
     // -------------------------------------------------------------------------
@@ -288,25 +248,20 @@ class RunSpaceMigration extends QueuedJob
                 $this->blockSlugToIdMap[$b->slug] = $b->id;
             });
 
-        foreach ($rows as $row) {
-            $row = (array) $row;
-            $externalId = $row['id'];
-            $slug = $row['slug'];
-
+        $this->upsertRows(
+            $tgt,
+            $strategy,
+            'blocks',
+            $rows,
             // Match by external_id first, then fall back to slug
-            $existing = $tgt->table('blocks')
-                ->where('external_id', $externalId)
-                ->orWhere('slug', $slug)
+            fn (array $row) => $tgt->table('blocks')
+                ->where('external_id', $row['id'])
+                ->orWhere('slug', $row['slug'])
                 ->whereNull('deleted_at')
-                ->first();
-
-            $targetFolderId = $row['folder_id']
-                ? ($this->blockFolderIdMap[$row['folder_id']] ?? null)
-                : null;
-
-            $data = [
-                'external_id' => $externalId,
-                'slug' => $slug,
+                ->first(),
+            fn (array $row) => [
+                'external_id' => $row['id'],
+                'slug' => $row['slug'],
                 'name' => $row['name'],
                 'icon' => $row['icon'],
                 'color' => $row['color'],
@@ -317,35 +272,23 @@ class RunSpaceMigration extends QueuedJob
                 'schema' => $row['schema'],
                 'editor' => $row['editor'],
                 'tags' => $row['tags'],
-                'folder_id' => $targetFolderId,
+                'folder_id' => $row['folder_id']
+                    ? ($this->blockFolderIdMap[$row['folder_id']] ?? null)
+                    : null,
                 'updated_at' => $row['updated_at'],
-            ];
-
-            if ($existing) {
-                $targetId = $existing->id;
-                $resolved = $this->resolveConflict($tgt, 'blocks', $existing->id, $data, $strategy, $row['updated_at']);
-                if ($resolved === 'updated') {
-                    $this->result->incrementUpdated('blocks');
-                } elseif ($resolved === 'skipped') {
-                    $this->result->incrementSkipped('blocks');
+            ],
+            $this->blockIdMap,
+            function (array $row, string $targetId, bool $created) use ($src, $tgt, $strategy, $includeTemplates) {
+                if ($created) {
+                    $this->blockSlugToIdMap[$row['slug']] = $targetId;
                 }
-            } else {
-                $targetId = (string) Str::ulid();
-                $tgt->table('blocks')->insert(array_merge($data, [
-                    'id' => $targetId,
-                    'created_at' => $row['created_at'],
-                ]));
-                $this->result->incrementCreated('blocks');
-                $this->blockSlugToIdMap[$slug] = $targetId;
-            }
 
-            $this->blockIdMap[$externalId] = $targetId;
-
-            // Migrate block templates if in scope
-            if ($includeTemplates) {
-                $this->migrateBlockTemplates($src, $tgt, $externalId, $targetId, $strategy);
-            }
-        }
+                // Migrate block templates if in scope
+                if ($includeTemplates) {
+                    $this->migrateBlockTemplates($src, $tgt, $row['id'], $targetId, $strategy);
+                }
+            },
+        );
     }
 
     private function migrateBlockTemplates(
@@ -355,20 +298,20 @@ class RunSpaceMigration extends QueuedJob
         string $targetBlockId,
         string $strategy
     ): void {
-        $templates = $src->table('block_templates')
-            ->where('block_id', $sourceBlockId)
-            ->whereNull('deleted_at')
-            ->get();
-
-        foreach ($templates as $tpl) {
-            $tpl = (array) $tpl;
-            $existing = $tgt->table('block_templates')
+        $this->upsertRows(
+            $tgt,
+            $strategy,
+            'block_templates',
+            $src->table('block_templates')
+                ->where('block_id', $sourceBlockId)
+                ->whereNull('deleted_at')
+                ->get(),
+            fn (array $tpl) => $tgt->table('block_templates')
                 ->where('block_id', $targetBlockId)
                 ->where('name', $tpl['name'])
                 ->whereNull('deleted_at')
-                ->first();
-
-            $data = [
+                ->first(),
+            fn (array $tpl) => [
                 'name' => $tpl['name'],
                 'icon' => $tpl['icon'],
                 'color' => $tpl['color'],
@@ -378,29 +321,8 @@ class RunSpaceMigration extends QueuedJob
                 'block_id' => $targetBlockId,
                 'created_by_id' => null,
                 'updated_at' => $tpl['updated_at'],
-            ];
-
-            if ($existing) {
-                if ($strategy === 'skip') {
-                    $this->result->incrementSkipped('block_templates');
-
-                    continue;
-                }
-                if ($strategy === 'merge_newer' && $tpl['updated_at'] <= $existing->updated_at) {
-                    $this->result->incrementSkipped('block_templates');
-
-                    continue;
-                }
-                $tgt->table('block_templates')->where('id', $existing->id)->update($data);
-                $this->result->incrementUpdated('block_templates');
-            } else {
-                $tgt->table('block_templates')->insert(array_merge($data, [
-                    'id' => (string) Str::ulid(),
-                    'created_at' => $tpl['created_at'],
-                ]));
-                $this->result->incrementCreated('block_templates');
-            }
-        }
+            ],
+        );
     }
 
     // -------------------------------------------------------------------------
@@ -409,97 +331,54 @@ class RunSpaceMigration extends QueuedJob
 
     private function migrateAssetFolders(ConnectionInterface $src, ConnectionInterface $tgt, string $strategy): void
     {
-        $rows = $src->table('asset_folders')->whereNull('deleted_at')->get()->all();
-        $sorted = $this->sortByParentDepth($rows, 'id', 'parent_id');
-
-        foreach ($sorted as $row) {
-            $row = (array) $row;
-            $externalId = $row['id'];
-
-            $existing = $tgt->table('asset_folders')
-                ->where('external_id', $externalId)
+        $this->upsertRows(
+            $tgt,
+            $strategy,
+            'asset_folders',
+            $this->sortByParentDepth($src->table('asset_folders')->whereNull('deleted_at')->get()->all(), 'id', 'parent_id'),
+            fn (array $row) => $tgt->table('asset_folders')
+                ->where('external_id', $row['id'])
                 ->whereNull('deleted_at')
-                ->first();
-
-            $targetParentId = $row['parent_id']
-                ? ($this->assetFolderIdMap[$row['parent_id']] ?? null)
-                : null;
-
-            $data = [
-                'external_id' => $externalId,
+                ->first(),
+            fn (array $row) => [
+                'external_id' => $row['id'],
                 'name' => $row['name'],
                 'description' => $row['description'] ?? null,
                 'icon' => $row['icon'],
                 'color' => $row['color'],
-                'parent_id' => $targetParentId,
+                'parent_id' => $row['parent_id']
+                    ? ($this->assetFolderIdMap[$row['parent_id']] ?? null)
+                    : null,
                 'updated_at' => $row['updated_at'],
-            ];
-
-            if ($existing) {
-                $targetId = $existing->id;
-                $resolved = $this->resolveConflict($tgt, 'asset_folders', $existing->id, $data, $strategy, $row['updated_at']);
-                if ($resolved === 'updated') {
-                    $this->result->incrementUpdated('asset_folders');
-                } elseif ($resolved === 'skipped') {
-                    $this->result->incrementSkipped('asset_folders');
-                }
-            } else {
-                $targetId = (string) Str::ulid();
-                $tgt->table('asset_folders')->insert(array_merge($data, [
-                    'id' => $targetId,
-                    'created_at' => $row['created_at'],
-                ]));
-                $this->result->incrementCreated('asset_folders');
-            }
-
-            $this->assetFolderIdMap[$externalId] = $targetId;
-        }
+            ],
+            $this->assetFolderIdMap,
+        );
     }
 
     private function migrateAssetTags(ConnectionInterface $src, ConnectionInterface $tgt, string $strategy): void
     {
-        $rows = $src->table('asset_tags')->whereNull('deleted_at')->get();
-
-        foreach ($rows as $row) {
-            $row = (array) $row;
-            $externalId = $row['id'];
-
-            $existing = $tgt->table('asset_tags')
-                ->where('external_id', $externalId)
+        $this->upsertRows(
+            $tgt,
+            $strategy,
+            'asset_tags',
+            $src->table('asset_tags')->whereNull('deleted_at')->get(),
+            // Match by external_id, and fall back to the name
+            fn (array $row) => $tgt->table('asset_tags')
+                ->where('external_id', $row['id'])
                 ->whereNull('deleted_at')
-                ->first();
-
-            // Also try matching by name as fallback
-            if (! $existing) {
-                $existing = $tgt->table('asset_tags')
+                ->first()
+                ?? $tgt->table('asset_tags')
                     ->where('name', $row['name'])
                     ->whereNull('deleted_at')
-                    ->first();
-            }
-
-            $data = [
-                'external_id' => $externalId,
+                    ->first(),
+            fn (array $row) => [
+                'external_id' => $row['id'],
                 'name' => $row['name'],
                 'icon' => $row['icon'],
                 'color' => $row['color'],
                 'updated_at' => $row['updated_at'],
-            ];
-
-            if ($existing) {
-                $resolved = $this->resolveConflict($tgt, 'asset_tags', $existing->id, $data, $strategy, $row['updated_at']);
-                if ($resolved === 'updated') {
-                    $this->result->incrementUpdated('asset_tags');
-                } elseif ($resolved === 'skipped') {
-                    $this->result->incrementSkipped('asset_tags');
-                }
-            } else {
-                $tgt->table('asset_tags')->insert(array_merge($data, [
-                    'id' => (string) Str::ulid(),
-                    'created_at' => $row['created_at'],
-                ]));
-                $this->result->incrementCreated('asset_tags');
-            }
-        }
+            ],
+        );
     }
 
     // -------------------------------------------------------------------------
@@ -973,21 +852,19 @@ class RunSpaceMigration extends QueuedJob
 
     private function migrateDataSources(ConnectionInterface $src, ConnectionInterface $tgt, string $strategy): void
     {
-        $dataSources = $src->table('data_sources')->get();
-
-        foreach ($dataSources as $ds) {
-            $ds = (array) $ds;
-            $externalId = $ds['id'];
-
-            $existing = $tgt->table('data_sources')
-                ->where(function ($q) use ($externalId, $ds) {
-                    $q->where('external_id', $externalId)
+        $this->upsertRows(
+            $tgt,
+            $strategy,
+            'data_sources',
+            $src->table('data_sources')->get(),
+            fn (array $ds) => $tgt->table('data_sources')
+                ->where(function ($q) use ($ds) {
+                    $q->where('external_id', $ds['id'])
                         ->orWhere('slug', $ds['slug']);
                 })
-                ->first();
-
-            $data = [
-                'external_id' => $externalId,
+                ->first(),
+            fn (array $ds) => [
+                'external_id' => $ds['id'],
                 'name' => $ds['name'],
                 'slug' => $ds['slug'],
                 'description' => $ds['description'],
@@ -995,30 +872,11 @@ class RunSpaceMigration extends QueuedJob
                 'settings' => $ds['settings'],
                 'is_active' => $ds['is_active'],
                 'updated_at' => $ds['updated_at'],
-            ];
-
-            if ($existing) {
-                $targetId = $existing->id;
-                $resolved = $this->resolveConflict($tgt, 'data_sources', $existing->id, $data, $strategy, $ds['updated_at']);
-                if ($resolved === 'updated') {
-                    $this->result->incrementUpdated('data_sources');
-                } elseif ($resolved === 'skipped') {
-                    $this->result->incrementSkipped('data_sources');
-                }
-            } else {
-                $targetId = (string) Str::ulid();
-                $tgt->table('data_sources')->insert(array_merge($data, [
-                    'id' => $targetId,
-                    'created_at' => $ds['created_at'],
-                ]));
-                $this->result->incrementCreated('data_sources');
-            }
-
-            $this->dataSourceIdMap[$externalId] = $targetId;
-
+            ],
+            $this->dataSourceIdMap,
             // Migrate entries for this data source
-            $this->migrateDataEntries($src, $tgt, $externalId, $targetId, $strategy);
-        }
+            fn (array $ds, string $targetId) => $this->migrateDataEntries($src, $tgt, $ds['id'], $targetId, $strategy),
+        );
     }
 
     private function migrateDataEntries(
@@ -1028,50 +886,25 @@ class RunSpaceMigration extends QueuedJob
         string $targetDataSourceId,
         string $strategy
     ): void {
-        $entries = $src->table('data_entries')
-            ->where('data_source_id', $sourceDataSourceId)
-            ->get();
-
-        foreach ($entries as $entry) {
-            $entry = (array) $entry;
-            $externalId = $entry['id'];
-
-            $existing = $tgt->table('data_entries')
+        $this->upsertRows(
+            $tgt,
+            $strategy,
+            'data_entries',
+            $src->table('data_entries')->where('data_source_id', $sourceDataSourceId)->get(),
+            fn (array $entry) => $tgt->table('data_entries')
                 ->where('data_source_id', $targetDataSourceId)
                 ->where('key', $entry['key'])
-                ->first();
-
-            $data = [
-                'external_id' => $externalId,
+                ->first(),
+            fn (array $entry) => [
+                'external_id' => $entry['id'],
                 'data_source_id' => $targetDataSourceId,
                 'key' => $entry['key'],
                 'value' => $entry['value'],
                 'dimensions' => $entry['dimensions'],
                 'is_active' => $entry['is_active'],
                 'updated_at' => $entry['updated_at'],
-            ];
-
-            if ($existing) {
-                if ($strategy === 'skip') {
-                    $this->result->incrementSkipped('data_entries');
-
-                    continue;
-                }
-                if ($strategy === 'merge_newer' && $entry['updated_at'] <= $existing->updated_at) {
-                    $this->result->incrementSkipped('data_entries');
-
-                    continue;
-                }
-                $tgt->table('data_entries')->where('id', $existing->id)->update($data);
-                $this->result->incrementUpdated('data_entries');
-            } else {
-                $tgt->table('data_entries')->insert(array_merge($data, [
-                    'id' => (string) Str::ulid(),
-                    'created_at' => $entry['created_at'],
-                ]));
-                $this->result->incrementCreated('data_entries');
-            }
-        }
+            ],
+        );
     }
 
     // -------------------------------------------------------------------------
@@ -1080,50 +913,27 @@ class RunSpaceMigration extends QueuedJob
 
     private function migrateRedirects(ConnectionInterface $src, ConnectionInterface $tgt, string $strategy): void
     {
-        $rows = $src->table('redirects')->get();
-
-        foreach ($rows as $row) {
-            $row = (array) $row;
-            $externalId = $row['id'];
-
-            $existing = $tgt->table('redirects')
-                ->where(function ($q) use ($externalId, $row) {
-                    $q->where('external_id', $externalId)
+        $this->upsertRows(
+            $tgt,
+            $strategy,
+            'redirects',
+            $src->table('redirects')->get(),
+            fn (array $row) => $tgt->table('redirects')
+                ->where(function ($q) use ($row) {
+                    $q->where('external_id', $row['id'])
                         ->orWhere('source', $row['source']);
                 })
-                ->first();
-
-            $data = [
-                'external_id' => $externalId,
+                ->first(),
+            fn (array $row) => [
+                'external_id' => $row['id'],
                 'source' => $row['source'],
                 'target' => $row['target'],
                 'status_code' => $row['status_code'],
                 'hits' => 0,
                 'last_used_at' => null,
                 'updated_at' => $row['updated_at'],
-            ];
-
-            if ($existing) {
-                if ($strategy === 'skip') {
-                    $this->result->incrementSkipped('redirects');
-
-                    continue;
-                }
-                if ($strategy === 'merge_newer' && $row['updated_at'] <= $existing->updated_at) {
-                    $this->result->incrementSkipped('redirects');
-
-                    continue;
-                }
-                $tgt->table('redirects')->where('id', $existing->id)->update($data);
-                $this->result->incrementUpdated('redirects');
-            } else {
-                $tgt->table('redirects')->insert(array_merge($data, [
-                    'id' => (string) Str::ulid(),
-                    'created_at' => $row['created_at'],
-                ]));
-                $this->result->incrementCreated('redirects');
-            }
-        }
+            ],
+        );
     }
 
     // -------------------------------------------------------------------------
@@ -1161,6 +971,63 @@ class RunSpaceMigration extends QueuedJob
         }
 
         return $sorted;
+    }
+
+    /**
+     * Copy a set of source rows into a target table.
+     *
+     * Every straightforward table migrates the same way: find the counterpart
+     * row, either resolve the conflict or insert it under a fresh ULID, and
+     * count the outcome. Only the matching rule and the column list differ, so
+     * both arrive as closures.
+     *
+     * @param  iterable<mixed>  $rows  source rows (pre-sorted where order matters, e.g. folder trees)
+     * @param  \Closure(array): ?object  $match  locates the counterpart row in the target table
+     * @param  \Closure(array): array  $buildData  column values to write (without id/created_at)
+     * @param  array<string, string>|null  $idMap  source id → target id, written by reference for later remapping
+     * @param  \Closure(array, string, bool): void|null  $afterEach  runs per row with (row, targetId, wasCreated)
+     */
+    private function upsertRows(
+        ConnectionInterface $tgt,
+        string $strategy,
+        string $table,
+        iterable $rows,
+        \Closure $match,
+        \Closure $buildData,
+        ?array &$idMap = null,
+        ?\Closure $afterEach = null,
+    ): void {
+        foreach ($rows as $row) {
+            $row = (array) $row;
+
+            $existing = $match($row);
+            $data = $buildData($row);
+
+            if ($existing) {
+                $targetId = $existing->id;
+                $resolved = $this->resolveConflict($tgt, $table, $existing->id, $data, $strategy, $row['updated_at']);
+                if ($resolved === 'updated') {
+                    $this->result->incrementUpdated($table);
+                } elseif ($resolved === 'skipped') {
+                    $this->result->incrementSkipped($table);
+                }
+            } else {
+                $targetId = (string) Str::ulid();
+                $tgt->table($table)->insert(array_merge($data, [
+                    'id' => $targetId,
+                    'created_at' => $row['created_at'],
+                ]));
+                $this->result->incrementCreated($table);
+            }
+
+            if ($idMap !== null) {
+                $idMap[$row['id']] = $targetId;
+            }
+
+            if ($afterEach) {
+                $afterEach($row, $targetId, $existing === null);
+            }
+        }
     }
 
     /**
