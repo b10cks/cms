@@ -7,11 +7,15 @@ use App\Enums\ImportExportFormat;
 use App\Services\ImportExport\Exceptions\ImportValidationException;
 use App\Services\ImportExport\Exceptions\InvalidFormatException;
 
+/**
+ * @template TDriver of ImportExportDriver
+ */
 abstract class ImportExportService
 {
-    /** @var array<string, ImportExportDriver> */
+    /** @var array<string, TDriver> */
     protected array $drivers = [];
 
+    /** @param  TDriver  ...$drivers */
     protected function registerDrivers(ImportExportDriver ...$drivers): void
     {
         foreach ($drivers as $driver) {
@@ -19,6 +23,7 @@ abstract class ImportExportService
         }
     }
 
+    /** @return TDriver */
     protected function getDriver(ImportExportFormat $format): ImportExportDriver
     {
         if (!isset($this->drivers[$format->value])) {

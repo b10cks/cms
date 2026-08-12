@@ -5,15 +5,18 @@ namespace App\Services\ContentData\Drivers;
 use App\Contracts\ContentData\ContentDataDriver;
 use App\DTOs\ContentData\TranslationDocument;
 use App\Models\Management\Space;
+use App\Services\ImportExport\BuildsExportFilename;
 
 abstract class BaseContentDataDriver implements ContentDataDriver
 {
+    use BuildsExportFilename;
+
     /** Reserved (non-language) column headers used by the flat formats. */
     protected const RESERVED_COLUMNS = ['content_id', 'content_name', 'unit_id', 'type', 'field', 'source'];
 
     protected function generateFilename(Space $space, string $extension): string
     {
-        return "{$space->id}_content_translations_" . now()->format('Y-m-d') . ".{$extension}";
+        return $this->buildExportFilename($space, 'content_translations', $extension);
     }
 
     /**

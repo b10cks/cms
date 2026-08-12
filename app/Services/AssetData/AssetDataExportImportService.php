@@ -19,6 +19,9 @@ use CodersCantina\Filter\Filter;
 use Illuminate\Http\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * @extends ImportExportService<AssetDataDriver>
+ */
 class AssetDataExportImportService extends ImportExportService
 {
     public function __construct(
@@ -43,7 +46,7 @@ class AssetDataExportImportService extends ImportExportService
         ImportExportFormat $format,
         ?Filter $filter = null
     ): Response {
-        $driver = $this->getAssetDriver($format);
+        $driver = $this->getDriver($format);
 
         $assetFields = $space->settings->asset_fields ?? [];
         $languages = $space->settings->languages ?? [];
@@ -65,7 +68,7 @@ class AssetDataExportImportService extends ImportExportService
         UploadedFile $file,
         ImportExportFormat $format
     ): ImportResult {
-        $driver = $this->getAssetDriver($format);
+        $driver = $this->getDriver($format);
 
         $assetFields = $this->fieldResolver->getAllPossibleFields($space);
         $languages = $space->settings->languages ?? [];
@@ -73,13 +76,5 @@ class AssetDataExportImportService extends ImportExportService
         $this->ensureImportIsValid(fn (): array => $driver->validate($file, $assetFields, $languages));
 
         return $driver->import($space, $file, $assetFields, $languages);
-    }
-
-    protected function getAssetDriver(ImportExportFormat $format): AssetDataDriver
-    {
-        /** @var AssetDataDriver $driver */
-        $driver = $this->getDriver($format);
-
-        return $driver;
     }
 }
