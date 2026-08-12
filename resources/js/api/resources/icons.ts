@@ -1,5 +1,5 @@
-import { getXsrfHeaders } from '~/lib/csrf'
 import { requestImportJson } from '~/lib/import-export'
+import { xhrUpload } from '~/lib/xhr-upload'
 
 import type { ApiClient } from '../client'
 import { BaseResource } from './base-resource'
@@ -58,47 +58,7 @@ export class Icons extends BaseResource<
     }
 
     if (onProgress && typeof window !== 'undefined') {
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
-
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable && onProgress) {
-            onProgress(Math.round((event.loaded / event.total) * 100))
-          }
-        })
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              resolve(JSON.parse(xhr.responseText))
-            } catch {
-              reject(new Error('Failed to parse server response'))
-            }
-          } else {
-            let message = `Upload failed with status ${xhr.status}`
-            try {
-              const body = JSON.parse(xhr.responseText)
-              if (body?.message) {
-                message = body.message
-              } else if (body?.errors) {
-                message = Object.values(body.errors).flat().join(' ')
-              }
-            } catch {
-              // keep the default message
-            }
-            reject(new Error(message))
-          }
-        })
-        xhr.addEventListener('error', () => reject(new Error('Network error occurred during upload')))
-        xhr.addEventListener('abort', () => reject(new Error('Upload was aborted')))
-
-        xhr.open('POST', this.basePath)
-        xhr.withCredentials = true
-        Object.entries(getXsrfHeaders()).forEach(([key, value]) => {
-          xhr.setRequestHeader(key, value)
-        })
-
-        xhr.send(formData)
-      })
+      return xhrUpload<ApiResponse<IconResource>>(this.basePath, formData, { onProgress })
     }
 
     return this.client.post<ApiResponse<IconResource>>(this.basePath, formData)

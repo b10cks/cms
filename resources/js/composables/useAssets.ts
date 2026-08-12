@@ -4,13 +4,35 @@ import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { AssetsQueryParams } from '~/api/resources/assets'
-import { getXsrfHeaders } from '~/lib/csrf'
+import { UploadError, xhrUpload } from '~/lib/xhr-upload'
 
 import { queryKeys } from './useQueryClient'
 
 export type UploadAssetOutcome =
   | { status: 'success'; asset: AssetResource }
   | { status: 'duplicate'; duplicate: AssetUploadDuplicate }
+
+/** A 409 the server flagged as a checksum match, as an outcome rather than an error. */
+const asDuplicateOutcome = (err: unknown): UploadAssetOutcome | null => {
+  if (!(err instanceof UploadError) || err.status !== 409) {
+    return null
+  }
+
+  const body = err.body as AssetUploadDuplicate | null
+
+  if (body?.code !== 'duplicate_asset') {
+    return null
+  }
+
+  return {
+    status: 'duplicate',
+    duplicate: {
+      code: 'duplicate_asset',
+      message: body.message,
+      existing_asset: body.existing_asset,
+    },
+  }
+}
 
 export function useAssets(spaceId: MaybeRef<string>) {
   const { t } = useI18n()
@@ -121,72 +143,32 @@ export function useAssets(spaceId: MaybeRef<string>) {
         formData.append('force', '1')
       }
 
-      // Use XMLHttpRequest for progress tracking
-      const xhr = new XMLHttpRequest()
+      const response = await xhrUpload<{ data?: AssetResource }>(
+        `/mgmt/v1/spaces/${toValue(spaceId)}/assets`,
+        formData,
+        {
+          onProgress,
+          fallbackMessage: (status, statusText) =>
+            `Upload failed with status ${status}: ${statusText}`,
+        }
+      )
 
-      const promise = new Promise<UploadAssetOutcome | null>((resolve, reject) => {
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable && onProgress) {
-            const percentComplete = Math.round((event.loaded / event.total) * 100)
-            onProgress(percentComplete)
-          }
-        })
+      if (!response.data) {
+        return null
+      }
 
-        xhr.addEventListener('load', () => {
-          try {
-            const response = JSON.parse(xhr.responseText)
+      debouncedInvalidateQueries()
 
-            if (xhr.status >= 200 && xhr.status < 300) {
-              const assetData = response.data
-
-              if (assetData) {
-                debouncedInvalidateQueries()
-                resolve({ status: 'success', asset: assetData })
-              } else {
-                resolve(null)
-              }
-            } else if (xhr.status === 409 && response.code === 'duplicate_asset') {
-              resolve({
-                status: 'duplicate',
-                duplicate: {
-                  code: 'duplicate_asset',
-                  message: response.message,
-                  existing_asset: response.existing_asset,
-                },
-              })
-            } else {
-              reject(
-                new Error(response.message || `Upload failed with status ${xhr.status}: ${xhr.statusText}`)
-              )
-            }
-          } catch {
-            reject(new Error('Failed to parse server response'))
-          }
-        })
-
-        xhr.addEventListener('error', () => {
-          reject(new Error('Network error occurred during upload'))
-        })
-
-        xhr.addEventListener('abort', () => {
-          reject(new Error('Upload was aborted'))
-        })
-
-        const apiBaseUrl = ''
-        xhr.open('POST', `${apiBaseUrl}/mgmt/v1/spaces/${toValue(spaceId)}/assets`)
-        xhr.withCredentials = true
-
-        // Set headers
-        xhr.setRequestHeader('accept', 'application/json')
-        const xsrfHeaders = getXsrfHeaders()
-        Object.entries(xsrfHeaders).forEach(([key, value]) => {
-          xhr.setRequestHeader(key, value)
-        })
-        xhr.send(formData)
-      })
-
-      return await promise
+      return { status: 'success', asset: response.data }
     } catch (err) {
+      // A checksum match is not a failure: the caller gets the existing asset
+      // back and may retry with `{ force: true }`.
+      const duplicate = asDuplicateOutcome(err)
+
+      if (duplicate) {
+        return duplicate
+      }
+
       console.error(err)
       const message =
         err instanceof Error ? err.message : (t('composables.assets.uploadError') as string)

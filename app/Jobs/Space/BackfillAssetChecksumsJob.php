@@ -2,89 +2,43 @@
 
 namespace App\Jobs\Space;
 
-use App\Jobs\QueuedJob;
-use App\Models\Management\Space;
-use App\Models\Management\Storage as StorageModel;
 use App\Models\Space\Asset;
-use App\Services\Storage\StorageService;
 use Illuminate\Contracts\Filesystem\Filesystem;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Backfills the sha256 `checksum` column for pre-existing assets (uploaded
  * before checksum computation was added) across a single space's database.
- * Progress is tracked in cache under progressCacheKey() since this is an
- * ops backfill with no dedicated tracking model/UI, following the same
- * progress-percentage convention as SpaceBackup/SpaceMigration.
+ * The chunked walk, progress tracking and counters come from AssetBackfillJob.
  */
-class BackfillAssetChecksumsJob extends QueuedJob
+class BackfillAssetChecksumsJob extends AssetBackfillJob
 {
-    public int $timeout = 3600;
-
-    public function __construct(
-        protected Space $space
-    ) {}
-
-    protected function execute(): void
+    protected function name(): string
     {
-        app()->offsetSet('currentSpace', $this->space);
+        return 'asset-checksum-backfill';
+    }
 
-        $this->updateProgress(0);
+    protected function subject(): string
+    {
+        return 'checksum';
+    }
 
-        $total = Asset::query()->whereNull('checksum')->count();
+    protected function assetQuery(): Builder
+    {
+        return Asset::query()->whereNull('checksum');
+    }
 
-        if ($total === 0) {
-            $this->updateProgress(100);
+    protected function backfillAsset(Asset $asset, Filesystem $filesystem): string
+    {
+        $checksum = $this->computeChecksum($asset, $filesystem);
 
-            return;
+        if (! $checksum) {
+            return 'skipped';
         }
 
-        // Assets can live on different storages within one space, so the
-        // filesystem is resolved per asset (cached per storage id) instead
-        // of assuming the space default.
-        $filesystems = [];
-        $processed = 0;
-        $updated = 0;
-        $failed = 0;
+        $asset->forceFill(['checksum' => $checksum])->saveQuietly();
 
-        Asset::query()
-            ->whereNull('checksum')
-            ->orderBy('id')
-            ->chunkById(50, function ($assets) use (&$processed, &$updated, &$failed, $total, &$filesystems) {
-                foreach ($assets as $asset) {
-                    try {
-                        $filesystem = $filesystems[$asset->storage_id] ??= app(StorageService::class)
-                            ->getStorage(StorageModel::findOrFail($asset->storage_id));
-
-                        $checksum = $this->computeChecksum($asset, $filesystem);
-
-                        if ($checksum) {
-                            $asset->forceFill(['checksum' => $checksum])->saveQuietly();
-                            $updated++;
-                        }
-                    } catch (\Throwable $e) {
-                        $failed++;
-                        Log::warning('Failed to backfill checksum for asset', [
-                            'space_id' => $this->space->id,
-                            'asset_id' => $asset->id,
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
-
-                    $processed++;
-                    $this->updateProgress((int) min(99, floor($processed / $total * 100)));
-                }
-            });
-
-        $this->updateProgress(100);
-
-        Log::info('Asset checksum backfill finished', [
-            'space_id' => $this->space->id,
-            'total' => $total,
-            'updated' => $updated,
-            'failed' => $failed,
-        ]);
+        return 'updated';
     }
 
     private function computeChecksum(Asset $asset, Filesystem $filesystem): ?string
@@ -111,32 +65,5 @@ class BackfillAssetChecksumsJob extends QueuedJob
         fclose($stream);
 
         return hash_final($context);
-    }
-
-    protected function updateProgress(int $progress): void
-    {
-        Cache::put($this->progressCacheKey(), min(100, max(0, $progress)), now()->addHours(6));
-    }
-
-    public function progressCacheKey(): string
-    {
-        return "asset-checksum-backfill:{$this->space->id}:progress";
-    }
-
-    protected function handleFailure(\Throwable $e): void
-    {
-        Log::error('Failed to backfill asset checksums', [
-            'space_id' => $this->space->id,
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-        ]);
-    }
-
-    public function tags(): array
-    {
-        return [
-            'asset-checksum-backfill',
-            'space:'.$this->space->id,
-        ];
     }
 }

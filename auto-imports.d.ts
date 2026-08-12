@@ -276,7 +276,7 @@ declare global {
   export type { ResolvedOptionChoice } from './resources/js/composables/useFieldOptionChoices'
   import('./resources/js/composables/useFieldOptionChoices')
   // @ts-ignore
-  export type { UploadError, UploadTask } from './resources/js/composables/useFileUpload'
+  export type { UploadTask } from './resources/js/composables/useFileUpload'
   import('./resources/js/composables/useFileUpload')
   // @ts-ignore
   export type { ClipboardSingleItem, ClipboardMultipleItems, ClipboardItem } from './resources/js/composables/useGlobalClipboard'
