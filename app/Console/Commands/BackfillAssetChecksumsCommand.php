@@ -5,15 +5,13 @@ namespace App\Console\Commands;
 use App\Jobs\Space\BackfillAssetChecksumsJob;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Dispatches a BackfillAssetChecksumsJob for every space (or a single one)
  * to compute the sha256 `checksum` for assets that were uploaded before
  * checksum computation existed.
  */
-class BackfillAssetChecksumsCommand extends Command
+class BackfillAssetChecksumsCommand extends AssetBackfillCommand
 {
     protected $signature = 'assets:backfill-checksums
         {--space= : Limit to a single space (id or slug)}
@@ -22,65 +20,22 @@ class BackfillAssetChecksumsCommand extends Command
 
     protected $description = 'Backfill the checksum column for pre-existing assets across space databases';
 
-    public function handle(): int
+    protected function jobClass(): string
     {
-        $dryRun = (bool) $this->option('dry-run');
-        $sync = (bool) $this->option('sync');
+        return BackfillAssetChecksumsJob::class;
+    }
 
-        if ($dryRun) {
-            $this->warn('DRY RUN - no jobs will be dispatched');
+    protected function subject(): string
+    {
+        return 'asset checksum';
+    }
+
+    protected function reportDryRun(Space $space): void
+    {
+        $missing = Asset::query()->whereNull('checksum')->count();
+
+        if ($missing > 0) {
+            $this->line("  {$space->id}  {$missing} asset(s) missing checksum");
         }
-
-        $query = Space::query();
-
-        if ($spaceArg = $this->option('space')) {
-            $query->where(fn ($q) => $q->where('id', $spaceArg)->orWhere('slug', $spaceArg));
-        }
-
-        $spacesQueued = 0;
-        $failed = 0;
-
-        $query->orderBy('id')->chunkById(100, function ($spaces) use ($dryRun, $sync, &$spacesQueued, &$failed) {
-            foreach ($spaces as $space) {
-                try {
-                    if ($dryRun) {
-                        app()->offsetSet('currentSpace', $space);
-                        $missing = Asset::query()->whereNull('checksum')->count();
-
-                        if ($missing > 0) {
-                            $this->line("  {$space->id}  {$missing} asset(s) missing checksum");
-                        }
-
-                        continue;
-                    }
-
-                    if ($sync) {
-                        (new BackfillAssetChecksumsJob($space))->handle();
-                    } else {
-                        BackfillAssetChecksumsJob::dispatch($space);
-                    }
-
-                    $spacesQueued++;
-                } catch (\Throwable $e) {
-                    $failed++;
-                    $this->error("  {$space->id}: {$e->getMessage()}");
-                    Log::error('Failed to queue asset checksum backfill for space', [
-                        'space' => $space->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
-        });
-
-        $this->newLine();
-
-        if ($dryRun) {
-            $this->info('Dry run complete.');
-        } else {
-            $verb = $sync ? 'Processed' : 'Queued';
-            $this->info("{$verb} {$spacesQueued} space(s); {$failed} failed.");
-        }
-
-        return $failed > 0 ? self::FAILURE : self::SUCCESS;
     }
 }

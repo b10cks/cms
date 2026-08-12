@@ -2,15 +2,11 @@
 
 namespace App\Jobs\Space;
 
-use App\Jobs\QueuedJob;
-use App\Models\Management\Space;
-use App\Models\Management\Storage as StorageModel;
 use App\Models\Space\Asset;
 use App\Services\Asset\DominantColorExtractor;
 use App\Services\Storage\AssetService;
-use App\Services\Storage\StorageService;
 use Illuminate\Contracts\Filesystem\Filesystem;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -21,107 +17,42 @@ use Illuminate\Support\Facades\Log;
  * (`extraction_error` in metadata) by re-running the current extraction
  * pipeline against the stored file. Videos use their first generated
  * thumbnail as the color source; assets that already have a color get only
- * the a11y stats topped up (no file read). Follows the same cache-based
- * progress convention as BackfillAssetChecksumsJob.
+ * the a11y stats topped up (no file read). The chunked walk, progress
+ * tracking and counters come from AssetBackfillJob.
  */
-class BackfillAssetColorsJob extends QueuedJob
+class BackfillAssetColorsJob extends AssetBackfillJob
 {
-    public int $timeout = 3600;
-
-    /**
-     * Result counters from the last run, so synchronous callers (the
-     * backfill command with --sync) can report what happened. `skipped`
-     * counts assets that need work but could not be updated (unsupported
-     * format, missing file, undecodable content) — details are logged per
-     * asset at warning level.
-     *
-     * @var array{total: int, updated: int, failed: int, skipped: int}|null
-     */
-    public ?array $stats = null;
-
     /** Source files larger than this are skipped to bound memory usage. */
     private const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
-    public function __construct(
-        protected Space $space
-    ) {}
+    /** Resolved once per run, not once per asset. */
+    private ?DominantColorExtractor $extractor = null;
 
-    protected function execute(): void
+    protected function name(): string
     {
-        app()->offsetSet('currentSpace', $this->space);
+        return 'asset-color-backfill';
+    }
 
-        $this->updateProgress(0);
+    protected function subject(): string
+    {
+        return 'dominant color';
+    }
 
-        $query = fn () => Asset::query()
+    protected function assetQuery(): Builder
+    {
+        return Asset::query()
             ->where(fn ($q) => $q
                 ->where('mime_type', 'like', 'image/%')
                 ->orWhere('mime_type', 'like', 'video/%'));
-
-        $total = $query()->count();
-
-        if ($total === 0) {
-            $this->stats = ['total' => 0, 'updated' => 0, 'failed' => 0, 'skipped' => 0];
-            $this->updateProgress(100);
-
-            return;
-        }
-
-        $extractor = app(DominantColorExtractor::class);
-        // Assets can live on different storages within one space, so the
-        // filesystem is resolved per asset (cached per storage id) instead
-        // of assuming the space default.
-        $filesystems = [];
-        $processed = 0;
-        $updated = 0;
-        $failed = 0;
-        $skipped = 0;
-
-        $query()
-            ->orderBy('id')
-            ->chunkById(50, function ($assets) use (&$processed, &$updated, &$failed, &$skipped, $total, &$filesystems, $extractor) {
-                foreach ($assets as $asset) {
-                    try {
-                        $filesystem = $filesystems[$asset->storage_id] ??= app(StorageService::class)
-                            ->getStorage(StorageModel::findOrFail($asset->storage_id));
-
-                        match ($this->backfillAsset($asset, $filesystem, $extractor)) {
-                            'updated' => $updated++,
-                            'skipped' => $skipped++,
-                            default => null,
-                        };
-                    } catch (\Throwable $e) {
-                        $failed++;
-                        Log::warning('Failed to backfill dominant color for asset', [
-                            'space_id' => $this->space->id,
-                            'asset_id' => $asset->id,
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
-
-                    $processed++;
-                    $this->updateProgress((int) min(99, floor($processed / $total * 100)));
-                }
-            });
-
-        $this->stats = ['total' => $total, 'updated' => $updated, 'failed' => $failed, 'skipped' => $skipped];
-
-        $this->updateProgress(100);
-
-        Log::info('Asset dominant-color backfill finished', [
-            'space_id' => $this->space->id,
-            'total' => $total,
-            'updated' => $updated,
-            'failed' => $failed,
-            'skipped' => $skipped,
-        ]);
     }
 
     /**
      * @return 'updated'|'unchanged'|'skipped' `skipped` = the asset needs
      *                                         work but nothing could be extracted; diagnostics are logged.
      */
-    private function backfillAsset(Asset $asset, Filesystem $filesystem, DominantColorExtractor $extractor): string
+    protected function backfillAsset(Asset $asset, Filesystem $filesystem): string
     {
+        $extractor = $this->extractor ??= app(DominantColorExtractor::class);
         $metadata = $asset->metadata ?? [];
         $changed = false;
 
@@ -245,32 +176,5 @@ class BackfillAssetColorsJob extends QueuedJob
         $contents = $filesystem->get($path);
 
         return $contents === false ? null : $contents;
-    }
-
-    protected function updateProgress(int $progress): void
-    {
-        Cache::put($this->progressCacheKey(), min(100, max(0, $progress)), now()->addHours(6));
-    }
-
-    public function progressCacheKey(): string
-    {
-        return "asset-color-backfill:{$this->space->id}:progress";
-    }
-
-    protected function handleFailure(\Throwable $e): void
-    {
-        Log::error('Failed to backfill asset dominant colors', [
-            'space_id' => $this->space->id,
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-        ]);
-    }
-
-    public function tags(): array
-    {
-        return [
-            'asset-color-backfill',
-            'space:'.$this->space->id,
-        ];
     }
 }

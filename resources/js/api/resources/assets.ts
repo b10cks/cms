@@ -1,5 +1,5 @@
-import { getXsrfHeaders } from '~/lib/csrf'
 import { requestExportBlob, requestImportJson } from '~/lib/import-export'
+import { xhrUpload } from '~/lib/xhr-upload'
 
 import type { ApiClient } from '../client'
 import { BaseResource } from './base-resource'
@@ -54,43 +54,7 @@ export class Assets extends BaseResource<
 
     // If progress tracking is needed, use XMLHttpRequest
     if (onProgress && typeof window !== 'undefined') {
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
-
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable && onProgress) {
-            const percentComplete = Math.round((event.loaded / event.total) * 100)
-            onProgress(percentComplete)
-          }
-        })
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const response = JSON.parse(xhr.responseText)
-              resolve(response)
-            } catch {
-              reject(new Error('Failed to parse server response'))
-            }
-          } else {
-            reject(new Error(`Upload failed with status ${xhr.status}: ${xhr.statusText}`))
-          }
-        })
-        xhr.addEventListener('error', () => {
-          reject(new Error('Network error occurred during upload'))
-        })
-        xhr.addEventListener('abort', () => {
-          reject(new Error('Upload was aborted'))
-        })
-
-        xhr.open('POST', this.basePath)
-        xhr.withCredentials = true
-        const xsrfHeaders = getXsrfHeaders()
-        Object.entries(xsrfHeaders).forEach(([key, value]) => {
-          xhr.setRequestHeader(key, value)
-        })
-
-        xhr.send(formData)
-      })
+      return xhrUpload<ApiResponse<AssetResource>>(this.basePath, formData, { onProgress })
     }
 
     return this.client.post<ApiResponse<AssetResource>>(this.basePath, formData)
@@ -104,37 +68,13 @@ export class Assets extends BaseResource<
     const formData = new FormData()
     formData.append('file', file)
 
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest()
+    const response = await xhrUpload<ApiResponse<AssetResource>>(
+      `${this.basePath}/${assetId}/replace-file`,
+      formData,
+      { onProgress }
+    )
 
-      if (onProgress) {
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            onProgress(Math.round((event.loaded / event.total) * 100))
-          }
-        })
-      }
-
-      xhr.addEventListener('load', () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const response = JSON.parse(xhr.responseText)
-            resolve(response.data ?? null)
-          } catch {
-            reject(new Error('Failed to parse server response'))
-          }
-        } else {
-          reject(new Error(`Replace failed with status ${xhr.status}: ${xhr.statusText}`))
-        }
-      })
-      xhr.addEventListener('error', () => reject(new Error('Network error during file replace')))
-      xhr.addEventListener('abort', () => reject(new Error('File replace was aborted')))
-
-      xhr.open('POST', `${this.basePath}/${assetId}/replace-file`)
-      xhr.withCredentials = true
-      Object.entries(getXsrfHeaders()).forEach(([k, v]) => xhr.setRequestHeader(k, v))
-      xhr.send(formData)
-    })
+    return response.data ?? null
   }
 
   /**

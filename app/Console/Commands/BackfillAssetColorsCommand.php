@@ -2,18 +2,17 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\Space\AssetBackfillJob;
 use App\Jobs\Space\BackfillAssetColorsJob;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Dispatches a BackfillAssetColorsJob for every space (or a single one) to
  * extract `metadata.dominant_color` for image/video assets uploaded before
  * dominant-color extraction existed.
  */
-class BackfillAssetColorsCommand extends Command
+class BackfillAssetColorsCommand extends AssetBackfillCommand
 {
     protected $signature = 'assets:backfill-colors
         {--space= : Limit to a single space (id or slug)}
@@ -22,79 +21,39 @@ class BackfillAssetColorsCommand extends Command
 
     protected $description = 'Backfill metadata.dominant_color for pre-existing image/video assets across space databases';
 
-    public function handle(): int
+    protected function jobClass(): string
     {
-        $dryRun = (bool) $this->option('dry-run');
-        $sync = (bool) $this->option('sync');
+        return BackfillAssetColorsJob::class;
+    }
 
-        if ($dryRun) {
-            $this->warn('DRY RUN - no jobs will be dispatched');
+    protected function subject(): string
+    {
+        return 'asset color';
+    }
+
+    protected function reportDryRun(Space $space): void
+    {
+        $pending = Asset::query()
+            ->where(fn ($q) => $q
+                ->where('mime_type', 'like', 'image/%')
+                ->orWhere('mime_type', 'like', 'video/%'))
+            ->get()
+            ->filter(fn (Asset $asset) => BackfillAssetColorsJob::needsWork($asset->metadata ?? [], $asset->mime_type));
+
+        foreach ($pending as $asset) {
+            $this->line("  {$space->id}  {$asset->id}  {$asset->filename}.{$asset->extension} ({$asset->mime_type}): ".implode(', ', $this->pendingReasons($asset)));
         }
+    }
 
-        $query = Space::query();
+    protected function reportSyncRun(Space $space, AssetBackfillJob $job): void
+    {
+        $stats = $job->stats;
 
-        if ($spaceArg = $this->option('space')) {
-            $query->where(fn ($q) => $q->where('id', $spaceArg)->orWhere('slug', $spaceArg));
-        }
-
-        $spacesQueued = 0;
-        $failed = 0;
-
-        $query->orderBy('id')->chunkById(100, function ($spaces) use ($dryRun, $sync, &$spacesQueued, &$failed) {
-            foreach ($spaces as $space) {
-                try {
-                    if ($dryRun) {
-                        app()->offsetSet('currentSpace', $space);
-                        $pending = Asset::query()
-                            ->where(fn ($q) => $q
-                                ->where('mime_type', 'like', 'image/%')
-                                ->orWhere('mime_type', 'like', 'video/%'))
-                            ->get()
-                            ->filter(fn (Asset $asset) => BackfillAssetColorsJob::needsWork($asset->metadata ?? [], $asset->mime_type));
-
-                        foreach ($pending as $asset) {
-                            $this->line("  {$space->id}  {$asset->id}  {$asset->filename}.{$asset->extension} ({$asset->mime_type}): ".implode(', ', $this->pendingReasons($asset)));
-                        }
-
-                        continue;
-                    }
-
-                    if ($sync) {
-                        $job = new BackfillAssetColorsJob($space);
-                        $job->handle();
-
-                        $stats = $job->stats;
-                        $this->line(
-                            "  {$space->id}  ".($stats
-                                ? "{$stats['updated']} updated, {$stats['skipped']} skipped, {$stats['failed']} failed of {$stats['total']} image/video asset(s)"
-                                : 'done')
-                        );
-                    } else {
-                        BackfillAssetColorsJob::dispatch($space);
-                    }
-
-                    $spacesQueued++;
-                } catch (\Throwable $e) {
-                    $failed++;
-                    $this->error("  {$space->id}: {$e->getMessage()}");
-                    Log::error('Failed to queue asset color backfill for space', [
-                        'space' => $space->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
-        });
-
-        $this->newLine();
-
-        if ($dryRun) {
-            $this->info('Dry run complete.');
-        } else {
-            $verb = $sync ? 'Processed' : 'Queued';
-            $this->info("{$verb} {$spacesQueued} space(s); {$failed} failed.");
-        }
-
-        return $failed > 0 ? self::FAILURE : self::SUCCESS;
+        $this->line(
+            "  {$space->id}  ".($stats
+                ? "{$stats['updated']} updated, {$stats['skipped']} skipped, {$stats['failed']} failed of {$stats['total']} image/video asset(s)"
+                : 'done')
+        );
     }
 
     /**
