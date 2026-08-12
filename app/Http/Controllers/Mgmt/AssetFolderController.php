@@ -9,7 +9,6 @@ use App\Http\Requests\Asset\UpdateAssetFolderRequest;
 use App\Http\Resources\Management\AssetFolderResource;
 use App\Models\Management\Space;
 use App\Models\Space\AssetFolder;
-use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -22,7 +21,7 @@ class AssetFolderController extends Controller
      */
     public function index(Space $space, Request $request): ResourceCollection
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_folders.view'), 403);
+        $this->authorizeSpace($space, 'asset_folders.view');
         $filter = new AssetFolderFilter($request->all());
 
         $assetFolders = AssetFolder::filter($filter)
@@ -37,7 +36,7 @@ class AssetFolderController extends Controller
      */
     public function store(Space $space, StoreAssetFolderRequest $request): AssetFolderResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_folders.manage'), 403);
+        $this->authorizeSpace($space, 'asset_folders.manage');
         $assetFolder = new AssetFolder;
         $assetFolder->fill($request->validated());
         $assetFolder->save();
@@ -50,7 +49,7 @@ class AssetFolderController extends Controller
      */
     public function show(Space $space, AssetFolder $assetFolder): AssetFolderResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_folders.view'), 403);
+        $this->authorizeSpace($space, 'asset_folders.view');
 
         return new AssetFolderResource($assetFolder->load(['parent', 'children'])->loadCount(['children', 'assets']));
     }
@@ -60,7 +59,7 @@ class AssetFolderController extends Controller
      */
     public function update(UpdateAssetFolderRequest $request, Space $space, AssetFolder $assetFolder): AssetFolderResource|JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_folders.manage'), 403);
+        $this->authorizeSpace($space, 'asset_folders.manage');
         // Prevent circular references
         if ($request->has('parent_id') && $request->parent_id === $assetFolder->id) {
             return response()->json(['message' => 'Folder cannot be its own parent'], 422);
@@ -81,7 +80,7 @@ class AssetFolderController extends Controller
      */
     public function destroy(Space $space, AssetFolder $assetFolder): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'asset_folders.manage'), 403);
+        $this->authorizeSpace($space, 'asset_folders.manage');
         // Check if folder has children or assets
         if ($assetFolder->children()->exists() || $assetFolder->assets()->exists()) {
             return response()->json([

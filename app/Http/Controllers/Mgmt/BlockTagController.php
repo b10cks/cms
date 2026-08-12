@@ -8,7 +8,6 @@ use App\Http\Requests\BlockTag\UpsertBlockTagRequest;
 use App\Http\Resources\Management\BlockTagResource;
 use App\Models\Management\Space;
 use App\Models\Space\BlockTag;
-use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -18,7 +17,7 @@ class BlockTagController extends Controller
 {
     public function index(Space $space, Request $request): ResourceCollection
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'blocks.view'), 403);
+        $this->authorizeSpace($space, 'blocks.view');
 
         $filter = new BlockTagFilter($request->all());
 
@@ -32,7 +31,7 @@ class BlockTagController extends Controller
 
     public function store(Space $space, UpsertBlockTagRequest $request): BlockTagResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'blocks.manage'), 403);
+        $this->authorizeSpace($space, 'blocks.manage');
 
         $tag = new BlockTag($request->validated());
         abort_unless($tag->save(), 500, 'Failed to create block tag');
@@ -42,14 +41,14 @@ class BlockTagController extends Controller
 
     public function show(Space $space, BlockTag $tag): BlockTagResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'blocks.view'), 403);
+        $this->authorizeSpace($space, 'blocks.view');
 
         return new BlockTagResource($tag->loadCount(['blocks']));
     }
 
     public function update(UpsertBlockTagRequest $request, Space $space, BlockTag $tag): BlockTagResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'blocks.manage'), 403);
+        $this->authorizeSpace($space, 'blocks.manage');
 
         $tag->fill($request->validated());
         abort_unless($tag->save(), 500, 'Failed to update block tag');
@@ -59,7 +58,7 @@ class BlockTagController extends Controller
 
     public function destroy(Space $space, BlockTag $tag): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'blocks.manage'), 403);
+        $this->authorizeSpace($space, 'blocks.manage');
 
         try {
             $tag->delete();

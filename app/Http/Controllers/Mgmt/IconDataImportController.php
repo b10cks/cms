@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Mgmt;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Icon\ImportIconDataRequest;
 use App\Models\Management\Space;
-use App\Services\Auth\AuthorizationService;
 use App\Services\IconData\IconDataImportService;
 use App\Services\ImportExport\Exceptions\ImportValidationException;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +17,7 @@ class IconDataImportController extends Controller
         Space $space,
         IconDataImportService $service,
     ): JsonResponse {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'icons.manage'), 403);
+        $this->authorizeSpace($space, 'icons.manage');
 
         try {
             $result = $service->importIcons($space, $request->file('file'), $request->getImportMode());

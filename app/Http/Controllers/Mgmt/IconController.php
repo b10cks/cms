@@ -9,7 +9,6 @@ use App\Http\Requests\Icon\UpdateIconRequest;
 use App\Http\Resources\Management\IconResource;
 use App\Models\Management\Space;
 use App\Models\Space\Icon;
-use App\Services\Auth\AuthorizationService;
 use App\Services\Icon\IconSvgParser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,7 +21,7 @@ class IconController extends Controller
      */
     public function index(Space $space, Request $request): ResourceCollection
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'icons.view'), 403);
+        $this->authorizeSpace($space, 'icons.view');
 
         $filter = new IconFilter($request->all());
 
@@ -37,7 +36,7 @@ class IconController extends Controller
      */
     public function tags(Space $space): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'icons.view'), 403);
+        $this->authorizeSpace($space, 'icons.view');
 
         $tags = Icon::query()
             ->pluck('tags')
@@ -55,7 +54,7 @@ class IconController extends Controller
      */
     public function store(Space $space, StoreIconRequest $request, IconSvgParser $parser): IconResource|JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'icons.manage'), 403);
+        $this->authorizeSpace($space, 'icons.manage');
 
         $validated = $request->validated();
 
@@ -86,7 +85,7 @@ class IconController extends Controller
      */
     public function show(Space $space, Icon $icon): IconResource
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'icons.view'), 403);
+        $this->authorizeSpace($space, 'icons.view');
 
         return new IconResource($icon);
     }
@@ -96,7 +95,7 @@ class IconController extends Controller
      */
     public function update(UpdateIconRequest $request, Space $space, Icon $icon, IconSvgParser $parser): IconResource|JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'icons.manage'), 403);
+        $this->authorizeSpace($space, 'icons.manage');
 
         $validated = $request->validated();
         $replacesSvg = $request->hasFile('file') || filled($request->input('body'));
@@ -143,7 +142,7 @@ class IconController extends Controller
      */
     public function destroy(Space $space, Icon $icon): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'icons.manage'), 403);
+        $this->authorizeSpace($space, 'icons.manage');
 
         $icon->delete();
 
