@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import Icon from '~/components/Icon.vue'
-import { Button } from '~/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
-import FileDropZone from '~/components/ui/FileDropZone.vue'
-import { ScrollArea } from '~/components/ui/scroll-area'
+import ImportDialog from '~/components/import-export/ImportDialog.vue'
 import { Switch } from '~/components/ui/switch'
 import type {
   ContentTranslationImportMode,
   ContentTranslationImportResult,
 } from '~/types/content-translations'
+import type { ImportDialogLabels, ImportDialogMode } from '~/types/import-export'
 
 const props = defineProps<{
   spaceId: string
@@ -20,327 +17,96 @@ const { t } = useI18n()
 const { useImportContentTranslationsMutation } = useContent(props.spaceId)
 const importMutation = useImportContentTranslationsMutation()
 
-const selectedFile = ref<File | null>(null)
-const importMode = ref<ContentTranslationImportMode>('draft')
 const createMissing = ref(false)
-const errorMessage = ref('')
-const importResult = ref<ContentTranslationImportResult | null>(null)
-const expanded = ref<Set<string>>(new Set())
 
-const showSummary = computed(() => importResult.value !== null)
+const labels = computed<ImportDialogLabels>(() => ({
+  title: t('labels.contents.translationImport.title'),
+  description: t('labels.contents.translationImport.description'),
+  formats: t('labels.contents.translationImport.supportedFormats'),
+  selectFileError: t('labels.contents.translationImport.selectFileError'),
+  fallbackError: t('labels.contents.translationImport.importError'),
+  submit: t('labels.contents.translationImport.submit'),
+  modeLabel: t('labels.contents.translationImport.mode.label'),
+  summaryTitle: t('labels.contents.translationImport.summaryTitle'),
+  summaryDescription: t('labels.contents.translationImport.summaryDescription'),
+  summarySuccess: t('labels.contents.translationImport.summary.success'),
+  summaryChanges: t('labels.contents.translationImport.summary.changes'),
+  summaryErrors: t('labels.contents.translationImport.summary.errors'),
+  changesTitle: t('labels.contents.translationImport.modifiedContent'),
+  ignoredFieldsTitle: t('labels.contents.translationImport.ignoredFields'),
+  errorsTitle: t('labels.contents.translationImport.errorsTitle'),
+}))
 
-const rowKey = (contentId: string, language: string) => `${contentId}:${language}`
+const modes = computed<ImportDialogMode<ContentTranslationImportMode>[]>(() => [
+  {
+    value: 'draft',
+    icon: 'lucide:file-pen-line',
+    label: t('labels.contents.translationImport.mode.draft'),
+    description: t('labels.contents.translationImport.mode.draftDescription'),
+  },
+  {
+    value: 'publish',
+    icon: 'lucide:globe',
+    label: t('labels.contents.translationImport.mode.publish'),
+    description: t('labels.contents.translationImport.mode.publishDescription'),
+  },
+])
 
-const handleImport = async () => {
-  if (!selectedFile.value) {
-    errorMessage.value = t('labels.contents.translationImport.selectFileError') as string
-    return
-  }
-
-  errorMessage.value = ''
-  importResult.value = null
-
-  try {
-    importResult.value = await importMutation.mutateAsync({
-      file: selectedFile.value,
-      mode: importMode.value,
-      createMissing: createMissing.value,
-    })
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Import failed'
-  }
-}
-
-const resetState = () => {
-  selectedFile.value = null
-  importMode.value = 'draft'
-  createMissing.value = false
-  errorMessage.value = ''
-  importResult.value = null
-  expanded.value.clear()
-}
-
-const handleOpenChange = (value: boolean) => {
-  open.value = value
-
-  if (!value && !importMutation.isPending.value) {
-    resetState()
-  }
-}
-
-const toggleExpanded = (key: string) => {
-  if (expanded.value.has(key)) {
-    expanded.value.delete(key)
-    return
-  }
-  expanded.value.add(key)
-}
+const submit = (
+  file: File,
+  mode: ContentTranslationImportMode
+): Promise<ContentTranslationImportResult> =>
+  importMutation.mutateAsync({ file, mode, createMissing: createMissing.value })
 </script>
 
 <template>
-  <Dialog
-    :open="open"
-    @update:open="handleOpenChange"
+  <ImportDialog
+    v-model:open="open"
+    accept=".xlf,.xliff,.xml,.csv,.xlsx,.xls,.json,.yaml,.yml"
+    :labels="labels"
+    :modes="modes"
+    :submit="submit"
+    :pending="importMutation.isPending.value"
+    :item-key="(entry) => `${entry.content_id}:${entry.language}`"
+    :change-count="
+      (entry) =>
+        t('labels.contents.translationImport.changeCount', { count: entry.changes.length })
+    "
+    :error-title="(error) => error.id || error.message"
+    :error-body="(error) => (error.id ? error.message : '')"
+    @reset="createMissing = false"
   >
-    <DialogContent class="max-w-3xl">
-      <template v-if="!showSummary">
-        <DialogHeaderCombined
-          :title="t('labels.contents.translationImport.title')"
-          :description="t('labels.contents.translationImport.description')"
-        />
+    <template #options>
+      <label class="flex items-start gap-3 rounded-lg border p-3">
+        <Switch v-model="createMissing" />
+        <span class="space-y-1">
+          <span class="block text-sm font-medium text-foreground">
+            {{ t('labels.contents.translationImport.createMissing.label') }}
+          </span>
+          <span class="block text-xs text-muted-foreground">
+            {{ t('labels.contents.translationImport.createMissing.description') }}
+          </span>
+        </span>
+      </label>
+    </template>
 
-        <div class="space-y-4 py-4">
-          <FileDropZone
-            v-model="selectedFile"
-            accept=".xlf,.xliff,.xml,.csv,.xlsx,.xls,.json,.yaml,.yml"
-            :hint="t('labels.contents.translationImport.supportedFormats')"
-            @error="errorMessage = $event"
-          />
+    <template #label="{ item }">
+      {{ item.name || item.content_id }}
+      <span class="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs uppercase text-muted-foreground">
+        {{ item.language }}
+      </span>
+    </template>
 
-          <div class="space-y-2">
-            <p class="text-sm font-medium text-foreground">
-              {{ t('labels.contents.translationImport.mode.label') }}
-            </p>
-            <div class="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                :class="[
-                  'rounded-lg border p-3 text-left transition-colors',
-                  importMode === 'draft'
-                    ? 'border-primary bg-primary/5 text-foreground'
-                    : 'border-border text-muted-foreground hover:border-muted-foreground',
-                ]"
-                @click="importMode = 'draft'"
-              >
-                <div class="flex items-center gap-2">
-                  <Icon
-                    name="lucide:file-pen-line"
-                    class="h-4 w-4 shrink-0"
-                  />
-                  <span class="text-sm font-medium">
-                    {{ t('labels.contents.translationImport.mode.draft') }}
-                  </span>
-                </div>
-                <p class="mt-1 text-xs">
-                  {{ t('labels.contents.translationImport.mode.draftDescription') }}
-                </p>
-              </button>
-              <button
-                type="button"
-                :class="[
-                  'rounded-lg border p-3 text-left transition-colors',
-                  importMode === 'publish'
-                    ? 'border-primary bg-primary/5 text-foreground'
-                    : 'border-border text-muted-foreground hover:border-muted-foreground',
-                ]"
-                @click="importMode = 'publish'"
-              >
-                <div class="flex items-center gap-2">
-                  <Icon
-                    name="lucide:globe"
-                    class="h-4 w-4 shrink-0"
-                  />
-                  <span class="text-sm font-medium">
-                    {{ t('labels.contents.translationImport.mode.publish') }}
-                  </span>
-                </div>
-                <p class="mt-1 text-xs">
-                  {{ t('labels.contents.translationImport.mode.publishDescription') }}
-                </p>
-              </button>
-            </div>
-          </div>
-
-          <label class="flex items-start gap-3 rounded-lg border p-3">
-            <Switch v-model="createMissing" />
-            <span class="space-y-1">
-              <span class="block text-sm font-medium text-foreground">
-                {{ t('labels.contents.translationImport.createMissing.label') }}
-              </span>
-              <span class="block text-xs text-muted-foreground">
-                {{ t('labels.contents.translationImport.createMissing.description') }}
-              </span>
-            </span>
-          </label>
-
-          <div
-            v-if="errorMessage"
-            class="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-          >
-            {{ errorMessage }}
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              :disabled="importMutation.isPending.value"
-              @click="handleOpenChange(false)"
-            >
-              {{ t('alertDialog.cancel') }}
-            </Button>
-            <Button
-              type="button"
-              :loading="importMutation.isPending.value"
-              :disabled="!selectedFile"
-              @click="handleImport"
-            >
-              {{
-                importMutation.isPending.value
-                  ? t('labels.loading')
-                  : t('labels.contents.translationImport.submit')
-              }}
-            </Button>
-          </DialogFooter>
-        </div>
-      </template>
-
-      <template v-else>
-        <DialogHeaderCombined
-          :title="t('labels.contents.translationImport.summaryTitle')"
-          :description="t('labels.contents.translationImport.summaryDescription')"
-        />
-
-        <ScrollArea class="h-[28rem] w-full pr-4">
-          <div
-            v-if="importResult"
-            class="space-y-6 p-1"
-          >
-            <div class="grid gap-4 md:grid-cols-3">
-              <div class="rounded-lg border p-4">
-                <div class="text-sm font-medium text-muted-foreground">
-                  {{ t('labels.contents.translationImport.summary.success') }}
-                </div>
-                <div class="text-2xl font-semibold text-foreground">
-                  {{ importResult.summary.total_success }}
-                </div>
-              </div>
-              <div class="rounded-lg border p-4">
-                <div class="text-sm font-medium text-muted-foreground">
-                  {{ t('labels.contents.translationImport.summary.changes') }}
-                </div>
-                <div class="text-2xl font-semibold text-foreground">
-                  {{ importResult.summary.total_changes }}
-                </div>
-              </div>
-              <div class="rounded-lg border p-4">
-                <div class="text-sm font-medium text-muted-foreground">
-                  {{ t('labels.contents.translationImport.summary.errors') }}
-                </div>
-                <div class="text-2xl font-semibold text-foreground">
-                  {{ importResult.summary.total_errors }}
-                </div>
-              </div>
-            </div>
-
-            <div
-              v-if="importResult.changes.length > 0"
-              class="space-y-2"
-            >
-              <h3 class="font-medium text-foreground">
-                {{ t('labels.contents.translationImport.modifiedContent') }}
-              </h3>
-              <div class="space-y-2">
-                <div
-                  v-for="entry in importResult.changes"
-                  :key="rowKey(entry.content_id, entry.language)"
-                  class="rounded-lg border"
-                >
-                  <button
-                    type="button"
-                    class="flex w-full items-center justify-between gap-4 p-3 text-left hover:bg-muted/40"
-                    @click="toggleExpanded(rowKey(entry.content_id, entry.language))"
-                  >
-                    <span class="font-medium text-foreground">
-                      {{ entry.name || entry.content_id }}
-                      <span
-                        class="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs uppercase text-muted-foreground"
-                      >
-                        {{ entry.language }}
-                      </span>
-                    </span>
-                    <span class="flex items-center gap-2 text-xs text-muted-foreground">
-                      {{
-                        t('labels.contents.translationImport.changeCount', {
-                          count: entry.changes.length,
-                        })
-                      }}
-                      <Icon
-                        :name="
-                          expanded.has(rowKey(entry.content_id, entry.language))
-                            ? 'lucide:chevron-down'
-                            : 'lucide:chevron-right'
-                        "
-                        class="h-4 w-4"
-                      />
-                    </span>
-                  </button>
-                  <div
-                    v-if="expanded.has(rowKey(entry.content_id, entry.language))"
-                    class="border-t p-3"
-                  >
-                    <div class="flex flex-wrap gap-2">
-                      <span
-                        v-for="(change, index) in entry.changes"
-                        :key="`${entry.content_id}-${entry.language}-${index}`"
-                        class="rounded-md bg-muted/50 px-2 py-1 text-xs text-foreground"
-                      >
-                        {{ change.label }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div
-              v-if="importResult.ignored_fields.length > 0"
-              class="space-y-2"
-            >
-              <h3 class="font-medium text-foreground">
-                {{ t('labels.contents.translationImport.ignoredFields') }}
-              </h3>
-              <div class="flex flex-wrap gap-2">
-                <span
-                  v-for="field in importResult.ignored_fields"
-                  :key="field"
-                  class="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground"
-                >
-                  {{ field }}
-                </span>
-              </div>
-            </div>
-
-            <div
-              v-if="importResult.errors.length > 0"
-              class="space-y-2"
-            >
-              <h3 class="font-medium text-foreground">
-                {{ t('labels.contents.translationImport.errorsTitle') }}
-              </h3>
-              <div class="space-y-2">
-                <div
-                  v-for="(error, index) in importResult.errors"
-                  :key="`${index}-${error.message}`"
-                  class="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-                >
-                  <div class="font-medium">{{ error.id || error.message }}</div>
-                  <div v-if="error.id">{{ error.message }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </ScrollArea>
-
-        <DialogFooter>
-          <Button
-            type="button"
-            @click="handleOpenChange(false)"
-          >
-            {{ t('actions.close') }}
-          </Button>
-        </DialogFooter>
-      </template>
-    </DialogContent>
-  </Dialog>
+    <template #details="{ item }">
+      <div class="flex flex-wrap gap-2">
+        <span
+          v-for="(change, index) in item.changes"
+          :key="`${item.content_id}-${item.language}-${index}`"
+          class="rounded-md bg-muted/50 px-2 py-1 text-xs text-foreground"
+        >
+          {{ change.label }}
+        </span>
+      </div>
+    </template>
+  </ImportDialog>
 </template>
