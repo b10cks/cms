@@ -19,6 +19,7 @@ import {
   TableRow,
   TableSortableHead,
 } from '~/components/ui/table'
+import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 
@@ -201,6 +202,22 @@ watch(showTagDialog, (isOpen) => {
                   </TableCell>
                 </TableRow>
               </template>
+              <TableEmptyRow
+                v-else
+                :colspan="3"
+                :label="$t('labels.blockTags.noTags')"
+              >
+                <template #actions>
+                  <Button
+                    v-if="canManageBlockTags"
+                    variant="primary"
+                    @click="handleCreateClick"
+                  >
+                    <Icon name="lucide:plus" />
+                    {{ $t('actions.blockTags.add') }}
+                  </Button>
+                </template>
+              </TableEmptyRow>
             </TableBody>
           </Table>
         </div>

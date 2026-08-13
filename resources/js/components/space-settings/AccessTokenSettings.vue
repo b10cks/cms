@@ -15,13 +15,15 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/ui/table'
+import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
+import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 
 const props = defineProps<{ space: SpaceResource }>()
 
 const { $t } = useI18n()
 const { formatNumber, formatDateTime } = useFormat()
 const { useTokensQuery, useCreateTokenMutation, useDeleteTokenMutation } = useTokens(props.space.id)
-const { data: tokens } = useTokensQuery()
+const { data: tokens, isLoading: isLoadingTokens } = useTokensQuery()
 
 const { mutate: createToken, isPending: isGenerating } = useCreateTokenMutation()
 const { mutate: deleteToken } = useDeleteTokenMutation()
@@ -107,6 +109,11 @@ const copyToken = (token: string) => {
               </TableRow>
             </TableHeader>
             <TableBody>
+              <TableLoadingRow
+                v-if="isLoadingTokens"
+                :colspan="6"
+                :rows="3"
+              />
               <TableRow
                 v-for="token in tokens"
                 :key="token.id"
@@ -143,14 +150,11 @@ const copyToken = (token: string) => {
                   </div>
                 </TableCell>
               </TableRow>
-              <TableRow v-if="tokens?.length === 0">
-                <TableCell
-                  colspan="3"
-                  class="text-center text-muted"
-                >
-                  {{ $t('labels.settings.accessTokens.noTokens') }}
-                </TableCell>
-              </TableRow>
+              <TableEmptyRow
+                v-if="!isLoadingTokens && tokens?.length === 0"
+                :colspan="6"
+                :label="$t('labels.settings.accessTokens.noTokens')"
+              />
             </TableBody>
           </Table>
         </div>

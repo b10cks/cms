@@ -33,11 +33,11 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableEmpty,
   TableHead,
   TableHeader,
   TableRow,
 } from '~/components/ui/table'
+import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type { AssetSelectionEntry } from '~/composables/useAssetSelection'
 import type { AssetManagerDragItem } from '~/lib/assets/assetDragAndDrop'
@@ -274,6 +274,17 @@ const handleRowPointer = (asset: AssetResource, event: MouseEvent) => {
     { meta: event.metaKey || event.ctrlKey, shift: event.shiftKey }
   )
 }
+
+const { container: tableRef } = useTableKeyboard({
+  page: currentPage,
+  lastPage: () => meta.value?.last_page,
+  onOpen: (row) => {
+    const asset = assets.value.find((entry) => entry.id === row.dataset.assetId)
+    if (asset) {
+      emit('asset-select', asset)
+    }
+  },
+})
 
 const openMoveDialog = () => {
   const items = selection.selectedDragItems.value
@@ -861,7 +872,10 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div class="overflow-hidden rounded-md border border-input">
+    <div
+      ref="tableRef"
+      class="overflow-hidden rounded-md border border-input"
+    >
       <Table>
         <TableHeader>
           <TableRow>
@@ -888,17 +902,32 @@ onUnmounted(() => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableEmpty
+          <TableEmptyRow
             v-if="!assets.length"
             :colspan="visibleLanguageTabs.length + (isManageMode && multiSelect ? 4 : 3)"
+            :label="$t('labels.assets.noAssetsFound')"
           >
-            {{ $t('labels.assets.noAssetsFound') }}
-          </TableEmpty>
+            <template #actions>
+              <Button
+                v-if="allowUpload && canManageAssets"
+                variant="primary"
+                @click="showUploadDialog = true"
+              >
+                <Icon name="lucide:upload" />
+                {{ $t('actions.assets.upload') }}
+              </Button>
+            </template>
+          </TableEmptyRow>
 
           <TableRow
             v-for="asset in assets"
             :key="asset.id"
-            :class="{ 'bg-accent/5': selectedAssets.has(asset.id) }"
+            :data-asset-id="asset.id"
+            data-table-row
+            :class="[
+              'focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-ring',
+              { 'bg-accent/5': selectedAssets.has(asset.id) },
+            ]"
             :aria-selected="selectedAssets.has(asset.id)"
           >
             <TableCell v-if="isManageMode && multiSelect">

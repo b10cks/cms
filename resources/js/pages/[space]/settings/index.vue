@@ -5,7 +5,7 @@ import { toast } from 'vue-sonner'
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import ServerLocationSelect from '~/components/ServerLocationSelect.vue'
-import AccssTokenSettings from '~/components/space-settings/AccssTokenSettings.vue'
+import AccessTokenSettings from '~/components/space-settings/AccessTokenSettings.vue'
 import DangerZone from '~/components/space-settings/DangerZone.vue'
 import OnboardingSettings from '~/components/space-settings/OnboardingSettings.vue'
 import { Button } from '~/components/ui/button'
@@ -228,7 +228,7 @@ const onDragOverIcon = (e: DragEvent) => {
           </Button>
         </CardFooter>
       </Card>
-      <AccssTokenSettings
+      <AccessTokenSettings
         v-if="space"
         :space="space"
       />
