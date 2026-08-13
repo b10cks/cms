@@ -33,6 +33,7 @@ const formData = ref<{
 
 const twoFactorDialogOpen = ref(false)
 const isSocialTwoFactor = ref(false)
+const sessionExpired = ref(false)
 
 watch(requiresTwoFactor, (value) => {
   if (value) {
@@ -83,10 +84,10 @@ const signupUrl = computed(() => {
   return query ? `/login/signup?${query}` : '/login/signup'
 })
 
-// Handle session expired message
+// A timed-out session is a routine, expected sign-out, so it reads as a notice rather than an error.
 onMounted(() => {
   if (route.query.message === 'session_expired') {
-    error.value = t('composables.auth.sessionExpired') as string
+    sessionExpired.value = true
   }
 
   if (route.query.social_error === '1') {
@@ -117,6 +118,15 @@ onMounted(() => {
       class="grid gap-6"
       @submit.prevent="login(formData)"
     >
+      <Alert
+        v-if="sessionExpired && !requiresTwoFactor"
+        color="success"
+        variant="modern"
+        icon="lucide:shield-check"
+        class="select-text"
+      >
+        {{ $t('composables.auth.sessionExpired') }}
+      </Alert>
       <Alert
         v-if="error && !requiresTwoFactor"
         color="destructive"

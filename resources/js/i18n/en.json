@@ -4874,7 +4874,7 @@
       "forgotPasswordFailed": "We couldn't send the reset link. Please try again.",
       "resetPasswordFailed": "We couldn't reset your password. Please try again.",
       "tokenRefreshFailed": "Session expired. Please log in again.",
-      "sessionExpired": "Your session timed out. Let's log you back in.",
+      "sessionExpired": "We signed you out after a while of inactivity to keep your account safe. Sign in again and pick up right where you left off.",
       "failedToLoadUser": "Couldn't load your profile. Refresh the page?"
     },
     "icons": {

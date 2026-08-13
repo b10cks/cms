@@ -4874,7 +4874,7 @@
       "forgotPasswordFailed": "Der Link zum Zurücksetzen konnte nicht gesendet werden. Bitte versuche es erneut.",
       "resetPasswordFailed": "Das Passwort konnte nicht zurückgesetzt werden. Bitte versuche es erneut.",
       "tokenRefreshFailed": "Sitzung abgelaufen. Bitte melde dich erneut an.",
-      "sessionExpired": "Deine Sitzung ist abgelaufen. Lass mich dich erneut anmelden.",
+      "sessionExpired": "Wir haben dich nach einer Weile Inaktivität abgemeldet, um dein Konto zu schützen. Melde dich einfach wieder an und mach dort weiter, wo du aufgehört hast.",
       "failedToLoadUser": "Konnte dein Profil nicht laden. Aktualisiere die Seite?"
     },
     "icons": {
