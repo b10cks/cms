@@ -3,6 +3,15 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.13-13524779] — 2026-8-13
+
+- 🏗️ Regenerate auto-import declarations
+- 💄 Add missing table empty states
+- 🚸 Guard unsaved changes in the block editor
+- ✨ Add a keyboard shortcut registry and app-wide navigation
+- ⬆️ Bump versions
+- 🚸 Improve session timeout experience
+
 ## [v2026.8.12-ea491530] — 2026-8-12
 
 - 🐛 Fix live preview for a focused block
