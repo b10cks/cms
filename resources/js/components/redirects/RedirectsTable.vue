@@ -111,6 +111,17 @@ const {
 } = useRedirects(props.spaceId)
 
 const { data: redirects, isLoading, isFetching } = useRedirectsQuery(queryParams)
+
+const { container: tableRef } = useTableKeyboard({
+  page: currentPage,
+  lastPage: () => redirects.value?.meta?.last_page,
+  onOpen: (row) => {
+    const redirect = redirectRows.value.find((entry) => entry.id === row.dataset.redirectId)
+    if (redirect) {
+      openEditDialog(redirect)
+    }
+  },
+})
 const createRedirectMutation = useCreateRedirectMutation()
 const updateRedirectMutation = useUpdateRedirectMutation()
 const deleteRedirectMutation = useDeleteRedirectMutation()
@@ -338,7 +349,10 @@ defineExpose({
       </div>
     </div>
 
-    <div class="overflow-hidden rounded-md border border-input">
+    <div
+      ref="tableRef"
+      class="overflow-hidden rounded-md border border-input"
+    >
       <Table>
         <TableHeader>
           <TableRow>
@@ -409,7 +423,9 @@ defineExpose({
             <TableRow
               v-for="redirect in redirectRows"
               :key="redirect.id"
-              class="hover:bg-muted/50"
+              :data-redirect-id="redirect.id"
+              data-table-row
+              class="hover:bg-muted/50 focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-ring"
               :data-state="isRedirectSelected(redirect) ? 'selected' : undefined"
             >
               <TableCell v-if="canManageRedirects">

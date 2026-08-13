@@ -6,6 +6,7 @@ import { Toaster } from 'vue-sonner'
 
 import { AlertDialogProvider } from '@/composables/useAlertDialog'
 import Command from '~/components/Command.vue'
+import KeyboardShortcutsDialog from '~/components/KeyboardShortcutsDialog.vue'
 import { useUrlNotifications } from '~/composables/useUrlNotifications'
 import DefaultLayout from '~/layouts/default.vue'
 import ShareLayout from '~/layouts/share.vue'
@@ -47,5 +48,6 @@ const currentLayout = computed(() => {
     </AlertDialogProvider>
     <Toaster rich-colors />
     <Command />
+    <KeyboardShortcutsDialog />
   </div>
 </template>

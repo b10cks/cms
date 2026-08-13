@@ -337,7 +337,11 @@ watch(
     :open="open"
     @update:open="updateOpenState"
   >
-    <DialogContent class="max-h-[90svh] overflow-y-auto sm:max-w-4xl">
+    <DialogContent
+      class="max-h-[90svh] overflow-y-auto sm:max-w-4xl"
+      submit-shortcut
+      @submit="!isLoading && handleSubmit()"
+    >
       <DialogHeaderCombined
         :title="title"
         :description="description"

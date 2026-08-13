@@ -765,32 +765,10 @@
         "toolbar": "Auswahlaktionen",
         "onOtherPages": "({count} auf anderen Seiten)",
         "selectAllMatching": "Alle {count} Treffer auswählen"
-      },
-      "shortcuts": {
-        "title": "Tastaturkürzel",
-        "description": "Arbeite mit Assets wie in deinem Dateimanager.",
-        "navigation": "Navigation",
-        "selection": "Auswahl",
-        "actions": "Aktionen",
-        "moveFocus": "Fokus bewegen",
-        "open": "Ordner / Asset öffnen",
-        "openDetails": "Asset-Details öffnen",
-        "parentFolder": "Zum übergeordneten Ordner",
-        "selectAll": "Alle auf der Seite auswählen",
-        "extendSelection": "Auswahl erweitern",
-        "click": "Klick",
-        "rangeSelect": "Bereich auswählen",
-        "toggleSelect": "Element zur Auswahl hinzufügen/entfernen",
-        "clearSelection": "Auswahl aufheben / Ausschneiden abbrechen",
-        "typeAhead": "Namen tippen",
-        "typeAheadHint": "Zum ersten Treffer springen",
-        "cut": "Auswahl ausschneiden",
-        "paste": "In aktuellen Ordner einfügen",
-        "delete": "Auswahl löschen",
-        "showHelp": "Diese Übersicht anzeigen"
       }
     },
     "contents": {
+      "unsavedChanges": "Du hast ungespeicherte Änderungen. Willst du die Seite wirklich verlassen?",
       "validationWarning": {
         "title": "Validierungswarnung",
         "description": "Dieser Inhalt hat Validierungswarnungen. Du kannst ihn trotzdem speichern, solltest aber die folgenden Hinweise zuerst prüfen:"
@@ -867,30 +845,7 @@
         "aiSummaryDelete": "{count} Löschung | {count} Löschungen",
         "aiSummaryRestore": "{count} Wiederherstellung | {count} Wiederherstellungen",
         "help": {
-          "open": "Canvas-Hilfe öffnen",
-          "title": "So nutzt du den Canvas",
-          "description": "Mit dem Canvas bereitest du Hierarchie-Änderungen vor, arbeitest schneller per Tastatur und steuerst den Viewport direkt im Entwurf.",
-          "sections": {
-            "navigation": "Navigation",
-            "editing": "Bearbeitung",
-            "history": "Verlauf",
-            "viewport": "Viewport"
-          },
-          "items": {
-            "moveFocus": "Bewege den Fokus zum nächsten sichtbaren Knoten in diese Richtung.",
-            "toggleCollapse": "Nutze die Collapse-Aktion an einem Knoten, um seine Nachfahren für alle im Canvas ein- oder auszublenden.",
-            "rename": "Starte sofort die Bearbeitung des Titels des fokussierten Knotens.",
-            "createChild": "Erstellt, wenn möglich, ein Kind mit demselben Block. Wenn die Platzierung nicht gültig ist, öffnet sich stattdessen das Menü zum Hinzufügen eines Kindes.",
-            "createSibling": "Erstellt, wenn möglich, ein Geschwister mit demselben Block. Wenn die Platzierung nicht gültig ist, öffnet sich stattdessen das Menü zum Hinzufügen eines Geschwisters.",
-            "toggleDelete": "Schaltet das Löschen im Entwurf für den fokussierten Knoten um.",
-            "undo": "Macht die zuletzt aufgezeichnete Entwurfsänderung rückgängig.",
-            "redo": "Stellt die zuletzt rückgängig gemachte Entwurfsänderung wieder her.",
-            "redoAlternative": "Alternativer Wiederholen-Shortcut auf Plattformen, die ihn unterstützen.",
-            "dragPan": "Ziehe auf einer freien Canvas-Fläche, um in jede Richtung zu pannen.",
-            "scrollPan": "Normales Scrollen oder Trackpad-Bewegungen verschieben den Canvas.",
-            "modifiedZoom": "Halte Ctrl oder Cmd gedrückt und nutze Mausrad oder Trackpad-Geste zum Zoomen.",
-            "toolbarZoom": "Mit den Toolbar-Steuerelementen kannst du zoomen, auf 100 % zurücksetzen oder den aktuellen Baum einpassen."
-          }
+          "open": "Canvas-Hilfe öffnen"
         },
         "addChild": "Unterelement hinzufügen",
         "addSibling": "Gleichrangiges Element hinzufügen"
@@ -4976,6 +4931,92 @@
     },
     "dataEntries": {
       "deleteConfirmation": "Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?"
+    }
+  },
+  "shortcuts": {
+    "title": "Tastenkürzel",
+    "description": "Alles, was gerade belegt ist. Die Liste folgt dem, was am Bildschirm ist.",
+    "empty": "In dieser Ansicht sind keine Tastenkürzel verfügbar.",
+    "scopes": {
+      "global": "Überall",
+      "editor": "Editoren",
+      "content-editor": "Inhaltseditor",
+      "content-tree": "Inhaltsbaum",
+      "canvas": "Inhalts-Canvas",
+      "assets": "Medienbibliothek",
+      "table": "Tabellen",
+      "dialog": "Dialoge",
+      "fields": "Block-Felder"
+    },
+    "global": {
+      "commandPalette": "Befehlspalette öffnen",
+      "spacePalette": "Space wechseln",
+      "help": "Diese Kürzelliste anzeigen",
+      "search": "Suchfeld fokussieren",
+      "toggleSidebar": "Seitenleiste ein- oder ausblenden",
+      "skipToContent": "Zum Hauptinhalt springen"
+    },
+    "editor": {
+      "save": "Aktuellen Eintrag oder Block speichern"
+    },
+    "contentEditor": {
+      "publish": "Aktuellen Eintrag veröffentlichen",
+      "nextSibling": "Zum nächsten Eintrag springen",
+      "prevSibling": "Zum vorherigen Eintrag springen"
+    },
+    "contentTree": {
+      "newChild": "Untereintrag unter dem fokussierten Eintrag anlegen",
+      "moveUp": "Fokussierten Eintrag zwischen den Geschwistern nach oben schieben",
+      "moveDown": "Fokussierten Eintrag zwischen den Geschwistern nach unten schieben",
+      "open": "Fokussierten Eintrag öffnen",
+      "rename": "Fokussierten Eintrag umbenennen",
+      "delete": "Fokussierten Eintrag löschen",
+      "copy": "Fokussierten Eintrag kopieren",
+      "cut": "Fokussierten Eintrag ausschneiden",
+      "paste": "In den fokussierten Eintrag einfügen",
+      "contextMenu": "Kontextmenü des fokussierten Eintrags öffnen",
+      "search": "Beliebigen Buchstaben tippen, um den Baum zu durchsuchen"
+    },
+    "canvas": {
+      "moveFocus": "Fokus zwischen Knoten bewegen",
+      "createChild": "Untergeordneten Knoten anlegen",
+      "createSibling": "Geschwisterknoten anlegen",
+      "addMenuChild": "Block für einen neuen untergeordneten Knoten wählen",
+      "addMenuSibling": "Block für einen neuen Geschwisterknoten wählen",
+      "rename": "Fokussierten Knoten umbenennen",
+      "toggleDelete": "Fokussierten Knoten zum Löschen markieren oder freigeben",
+      "undo": "Letzte Canvas-Änderung rückgängig machen",
+      "redo": "Rückgängig gemachte Änderung wiederherstellen",
+      "redoAlternative": "Wiederherstellen (Alternative)",
+      "zoom": "Canvas zoomen"
+    },
+    "assets": {
+      "moveFocus": "Fokus zwischen Medien bewegen",
+      "open": "Fokussiertes Medium oder Ordner öffnen",
+      "openDetails": "Details des fokussierten Mediums öffnen",
+      "parentFolder": "Zum übergeordneten Ordner wechseln",
+      "selectAll": "Alles in diesem Ordner auswählen",
+      "extendSelection": "Auswahl erweitern",
+      "clearSelection": "Auswahl aufheben",
+      "typeAhead": "Beliebigen Buchstaben tippen, um zu einem Medium zu springen",
+      "cut": "Ausgewählte Medien ausschneiden",
+      "paste": "Ausgeschnittene Medien hier einfügen",
+      "delete": "Ausgewählte Medien löschen",
+      "help": "Diese Kürzelliste anzeigen"
+    },
+    "table": {
+      "rowDown": "Nächste Zeile fokussieren",
+      "rowUp": "Vorherige Zeile fokussieren",
+      "open": "Fokussierte Zeile öffnen",
+      "nextPage": "Zur nächsten Seite",
+      "prevPage": "Zur vorherigen Seite"
+    },
+    "fields": {
+      "moveBlockUp": "Fokussierten Block nach oben schieben",
+      "moveBlockDown": "Fokussierten Block nach unten schieben"
+    },
+    "dialog": {
+      "submit": "Diesen Dialog bestätigen"
     }
   }
 }

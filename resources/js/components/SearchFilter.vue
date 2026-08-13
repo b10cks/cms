@@ -633,6 +633,7 @@ onBeforeUnmount(() => {
           v-model="inputValue"
           type="text"
           role="combobox"
+          data-shortcut-search
           class="w-full border-none bg-transparent p-1 text-sm font-semibold text-primary focus:outline-none"
           :placeholder="String(placeholder)"
           :aria-label="String(placeholder)"

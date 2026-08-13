@@ -7,22 +7,47 @@ import {
   DialogPortal,
   useForwardPropsEmits,
 } from 'reka-ui'
-import type { HTMLAttributes } from 'vue'
-import { computed } from 'vue'
+import type { ComponentPublicInstance, HTMLAttributes } from 'vue'
+import { computed, ref } from 'vue'
 
 import { cn } from '@/lib/utils'
 import Icon from '~/components/Icon.vue'
+import { useI18n } from '~/plugins/i18n'
 
-const props = defineProps<DialogContentProps & { class?: HTMLAttributes['class'] }>()
-const emits = defineEmits<DialogContentEmits>()
+const props = defineProps<
+  DialogContentProps & {
+    class?: HTMLAttributes['class']
+    /** Opt in to Cmd/Ctrl+Enter for this dialog's primary action. */
+    submitShortcut?: boolean
+  }
+>()
+const emits = defineEmits<DialogContentEmits & { submit: [event: KeyboardEvent] }>()
 
 const delegatedProps = computed(() => {
-  const { class: _, ...delegated } = props
+  const { class: _class, submitShortcut: _submitShortcut, ...delegated } = props
 
   return delegated
 })
 
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
+
+// Only set once the portal has actually mounted the content, so a closed
+// dialog never claims the chord.
+const contentRef = ref<ComponentPublicInstance | null>(null)
+
+if (props.submitShortcut) {
+  const { t } = useI18n()
+
+  useShortcut({
+    keys: 'mod+enter',
+    scope: 'dialog',
+    description: () => t('shortcuts.dialog.submit'),
+    allowInInput: true,
+    allowInOverlay: true,
+    enabled: () => contentRef.value !== null,
+    handler: (event) => emits('submit', event),
+  })
+}
 </script>
 
 <template>
@@ -31,6 +56,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-overlay backdrop-blur-xs"
     />
     <DialogContent
+      ref="contentRef"
       v-bind="forwarded"
       :class="
         cn(

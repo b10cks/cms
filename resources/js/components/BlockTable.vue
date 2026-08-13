@@ -47,7 +47,13 @@ const blockPageSize = computed({
   get: () => settings.value.blocks.pageSize || 25,
   set: (value: number) => (settings.value.blocks.pageSize = value),
 })
-const { sortBy, filters, paginationBindings, queryParams: tableParams } = useTableQueryState({
+const {
+  currentPage,
+  sortBy,
+  filters,
+  paginationBindings,
+  queryParams: tableParams,
+} = useTableQueryState({
   defaultSort: { column: 'name', direction: 'asc' },
   page: useRouteQuery('page', 1, { transform: Number }),
   perPage: blockPageSize,
@@ -67,6 +73,17 @@ const {
   isFetching: isFetchingBlocks,
 } = useBlocksQuery(queryParams)
 const { mutate: deleteBlock } = useDeleteBlockMutation()
+
+const { container: tableRef } = useTableKeyboard({
+  page: currentPage,
+  lastPage: () => blocks.value?.meta?.last_page,
+  onOpen: (row) => {
+    const blockId = row.dataset.blockId
+    if (blockId) {
+      router.push(buildBlockRoute(blockId))
+    }
+  },
+})
 
 const { useBlockTagsQuery } = useBlockTags(props.spaceId)
 const { data: blockTags, isLoading: isLoadingTags } = useBlockTagsQuery({ per_page: 500 })
@@ -200,7 +217,10 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
           />
         </div>
 
-        <div class="overflow-hidden rounded-md border border-input">
+        <div
+          ref="tableRef"
+          class="overflow-hidden rounded-md border border-input"
+        >
           <Table>
             <TableHeader>
               <TableRow>
@@ -249,7 +269,9 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
                 <TableRow
                   v-for="block in blocks?.data"
                   :key="block.id"
-                  class="cursor-pointer hover:bg-accent"
+                  :data-block-id="block.id"
+                  data-table-row
+                  class="cursor-pointer hover:bg-accent focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-ring"
                 >
                   <TableCell>
                     <RouterLink :to="buildBlockRoute(block.id)">

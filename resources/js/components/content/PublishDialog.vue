@@ -27,6 +27,13 @@ const minDateTime = computed(() => {
   return now.toISOString()
 })
 
+// Cmd/Ctrl+Enter mirrors the confirm button, including its disabled state.
+const handleSubmitShortcut = () => {
+  if (props.loading || !isScheduleValid.value) return
+
+  handlePublish()
+}
+
 const handlePublish = () => {
   if (props.publishType === 'schedule') {
     const payload = {
@@ -64,7 +71,11 @@ const resetForm = () => {
     :open="open"
     @update:open="emits('update:open', $event)"
   >
-    <DialogContent class="max-w-md">
+    <DialogContent
+      class="max-w-md"
+      submit-shortcut
+      @submit="handleSubmitShortcut"
+    >
       <DialogHeaderCombined
         :title="
           publishType === 'now'

@@ -19,6 +19,8 @@ interface Props extends PrimitiveProps {
   menuDisabled?: boolean
   hasMenu?: boolean
   loading?: boolean
+  /** Announced on the primary button, e.g. `Control+Shift+P Meta+Shift+P`. */
+  ariaKeyshortcuts?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -57,6 +59,7 @@ const triggerButtonClasses = computed(() => {
         :class="primaryButtonClasses"
         :disabled="disabled || loading"
         :aria-busy="loading || undefined"
+        :aria-keyshortcuts="ariaKeyshortcuts"
         @click="primaryAction && primaryAction()"
       >
         <Spinner v-if="loading" />

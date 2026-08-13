@@ -36,6 +36,7 @@ import {
   sanitizeContentMutationPayload,
   withContentLanguageQuery,
 } from '~/lib/content-i18n'
+import { useSaveShortcut } from '~/lib/editorShortcuts'
 import type {
   ContentResource,
   ContentVersionConflictResponse,
@@ -440,6 +441,70 @@ const handleSaveClick = async (event?: MouseEvent) => {
   await save()
 }
 
+// Mirrors the save button: same guard conditions, same action.
+const canSaveNow = () =>
+  canSaveContent.value &&
+  !props.disabled &&
+  !isAnyActionPending.value &&
+  !(!!props.content.id && !props.isDirty)
+
+useSaveShortcut({
+  canSave: canSaveNow,
+  save: () => save(),
+  scope: 'content-editor',
+})
+
+const { useContentMenuQuery, getChildren } = useContentMenu(props.spaceId)
+const { data: contentMenu } = useContentMenuQuery()
+
+/** Walks the menu order the tree shows, so the jump matches what the user sees. */
+const goToSibling = (offset: 1 | -1) => {
+  const menu = contentMenu.value
+  const currentId = props.content.i18n_canonical_id || props.content.id
+  const current = menu?.[currentId]
+  if (!menu || !current) return
+
+  const siblings = getChildren(menu, current.pid ?? null)
+  const target = siblings[siblings.findIndex((item) => item.id === currentId) + offset]
+
+  if (target) {
+    router.push(`/${props.spaceId}/content/${target.id}`)
+  }
+}
+
+useShortcut({
+  keys: 'shift+mod+.',
+  scope: 'content-editor',
+  description: () => t('shortcuts.contentEditor.nextSibling'),
+  handler: () => goToSibling(1),
+})
+
+useShortcut({
+  keys: 'shift+mod+,',
+  scope: 'content-editor',
+  description: () => t('shortcuts.contentEditor.prevSibling'),
+  handler: () => goToSibling(-1),
+})
+
+// Mirrors the publish button, so the BasePublishAction gate still applies.
+const canPublishNow = () =>
+  canPublishContent.value &&
+  !props.disabled &&
+  !isAnyActionPending.value &&
+  canCommitPublish.value
+
+useShortcut({
+  keys: 'shift+mod+p',
+  scope: 'content-editor',
+  description: () => t('shortcuts.contentEditor.publish'),
+  allowInInput: true,
+  handler: () => {
+    if (!canPublishNow()) return
+
+    void publishDirectly()
+  },
+})
+
 const handleValidationStatusClick = async () => {
   if (validationSummary.value.isValid) {
     lastReviewedValidationSignature.value = null
@@ -687,6 +752,7 @@ const handleConfirmAssign = (versionIds: string[]) => {
       v-if="canSaveContent"
       :loading="isSaving"
       :disabled="disabled || isAnyActionPending || (!!content.id && !isDirty)"
+      aria-keyshortcuts="Control+S Meta+S"
       @click="handleSaveClick"
     >
       {{ $t('actions.save') }}
@@ -694,6 +760,7 @@ const handleConfirmAssign = (versionIds: string[]) => {
     <SplitButton
       v-if="canPublishContent"
       variant="accent"
+      :aria-keyshortcuts="'Control+Shift+P Meta+Shift+P'"
       :primary-action="publishDirectly"
       :disabled="disabled || isAnyActionPending || !canCommitPublish"
       :loading="isPublishingAction"

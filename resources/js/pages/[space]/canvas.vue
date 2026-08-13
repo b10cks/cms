@@ -3,7 +3,6 @@ import { useThrottleFn } from '@vueuse/core'
 import { toast } from 'vue-sonner'
 
 import type { MentionItem } from '~/api/resources/ai'
-import ContentCanvasHelpDialog from '~/components/content-wizard/ContentCanvasHelpDialog.vue'
 import ContentWizardAiDock from '~/components/content-wizard/ContentWizardAiDock.vue'
 import ContentWizardCanvas from '~/components/content-wizard/ContentWizardCanvas.vue'
 import ContentWizardToolbar from '~/components/content-wizard/ContentWizardToolbar.vue'
@@ -105,7 +104,6 @@ const draggingNodeId = ref<string | null>(null)
 const draggingNodeIds = ref<string[]>([])
 const dropTargetId = ref<string | null>(null)
 const rootDropActive = ref(false)
-const isHelpDialogOpen = ref(false)
 const initialized = ref(false)
 const isTreeBooting = ref(false)
 const aiStatus = ref<{
@@ -2015,42 +2013,52 @@ const handleRedo = () => {
   history.redo()
 }
 
-const handleGlobalKeydown = (event: KeyboardEvent) => {
-  const target = event.target as HTMLElement | null
-  if (target?.closest('input,textarea,[contenteditable="true"]')) {
-    return
-  }
+const { show: showShortcutHelp } = useShortcutHelp()
 
-  if (!(event.metaKey || event.ctrlKey) || event.altKey) {
-    return
-  }
+useShortcut({
+  keys: 'mod+z',
+  scope: 'canvas',
+  description: () => t('shortcuts.canvas.undo'),
+  handler: handleUndo,
+})
 
-  if (event.key.toLowerCase() === 'z') {
-    event.preventDefault()
-    if (event.shiftKey) {
-      handleRedo()
-      return
-    }
+useShortcut({
+  keys: 'shift+mod+z',
+  scope: 'canvas',
+  description: () => t('shortcuts.canvas.redo'),
+  handler: handleRedo,
+})
 
-    handleUndo()
-  }
+useShortcut({
+  keys: 'mod+y',
+  scope: 'canvas',
+  description: () => t('shortcuts.canvas.redoAlternative'),
+  handler: handleRedo,
+})
 
-  if (event.key.toLowerCase() === 'y') {
-    event.preventDefault()
-    handleRedo()
-  }
+// Documentation-only: the node-level engine in `useContentWizardKeyboard`
+// owns these keys. Registering them keeps the generated overlay complete
+// without routing focus-driven interactions through the registry.
+const canvasNodeShortcuts: Array<[string, () => string]> = [
+  ['arrowup+arrowdown+arrowleft+arrowright', () => t('shortcuts.canvas.moveFocus')],
+  ['tab', () => t('shortcuts.canvas.createChild')],
+  ['enter', () => t('shortcuts.canvas.createSibling')],
+  ['alt+tab', () => t('shortcuts.canvas.addMenuChild')],
+  ['alt+enter', () => t('shortcuts.canvas.addMenuSibling')],
+  ['F2', () => t('shortcuts.canvas.rename')],
+  ['delete', () => t('shortcuts.canvas.toggleDelete')],
+  ['mod+Wheel', () => t('shortcuts.canvas.zoom')],
+]
+
+for (const [keys, description] of canvasNodeShortcuts) {
+  useShortcut({ keys, scope: 'canvas', description, handler: null })
 }
 
 useSeoMeta({
   title: computed(() => t('labels.contents.canvas.title')),
 })
 
-onMounted(() => {
-  window.addEventListener('keydown', handleGlobalKeydown)
-})
-
 onBeforeUnmount(() => {
-  window.removeEventListener('keydown', handleGlobalKeydown)
   clearLiveFieldBroadcasts()
   clearEditSessions()
   stopRemoteOperationListener()
@@ -2139,7 +2147,7 @@ onBeforeUnmount(() => {
           :can-redo="history.canRedo.value"
           :apply-error="applyError"
           @reload="reloadFromServer"
-          @help="isHelpDialogOpen = true"
+          @help="showShortcutHelp"
           @undo="handleUndo"
           @redo="handleRedo"
           @zoom-reset="canvasRef?.setZoom100()"
@@ -2201,8 +2209,6 @@ onBeforeUnmount(() => {
           @cancel="handleAiCancel"
           @focus-warning="handleFocusAiWarning"
         />
-
-        <ContentCanvasHelpDialog v-model:open="isHelpDialogOpen" />
       </template>
     </main>
   </div>

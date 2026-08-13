@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { useMagicKeys } from '@vueuse/core'
-
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import SpaceBadge from '~/components/space/SpaceBadge.vue'
@@ -34,18 +32,39 @@ const { data: blocks } = useBlocksQuery({ per_page: 1000 }, canViewBlocks)
 const { useContentMenuQuery } = useContentMenu(spaceId)
 const { data: contents } = useContentMenuQuery(canViewContent)
 
-const keys = useMagicKeys()
-const triggerKey = keys['Cmd+K']
+const { t } = useI18n()
 
 const open = inject('commandOpen', ref(true))
+// Spaces-only mode reuses the very same Spaces group, it just hides the rest.
+const spacesOnly = ref(false)
+
 function handleOpenChange() {
   open.value = !open.value
+  if (!open.value) {
+    spacesOnly.value = false
+  }
 }
 
-watch(triggerKey, (v) => {
-  if (v) {
+useShortcut({
+  keys: 'mod+k',
+  description: () => t('shortcuts.global.commandPalette'),
+  allowInInput: true,
+  allowInOverlay: true,
+  handler: () => {
+    spacesOnly.value = false
     handleOpenChange()
-  }
+  },
+})
+
+useShortcut({
+  keys: 'shift+mod+k',
+  description: () => t('shortcuts.global.spacePalette'),
+  allowInInput: true,
+  allowInOverlay: true,
+  handler: () => {
+    spacesOnly.value = true
+    open.value = true
+  },
 })
 
 const jumpTo = (url: string) => {
@@ -63,7 +82,7 @@ const jumpTo = (url: string) => {
     <CommandList>
       <CommandEmpty>{{ $t('labels.command.empty') }}</CommandEmpty>
       <CommandGroup
-        v-if="canViewBlocks && blocks"
+        v-if="!spacesOnly && canViewBlocks && blocks"
         heading="Blocks"
       >
         <CommandItem
@@ -81,7 +100,7 @@ const jumpTo = (url: string) => {
         </CommandItem>
       </CommandGroup>
       <CommandGroup
-        v-if="canViewContent && contents"
+        v-if="!spacesOnly && canViewContent && contents"
         heading="Contents"
       >
         <CommandItem

@@ -143,6 +143,37 @@ const openItems = ref<string[]>([])
   handle: '[draggable]',
 })
 
+/**
+ * Alt+Up/Down on a focused block header. Writes through the same `blockItems`
+ * setter the drag handle uses, so the reorder operation broadcast to
+ * collaborators is identical.
+ */
+const moveItem = (index: number, direction: -1 | 1) => {
+  if (props.readOnly) return
+
+  const items = [...blockItems.value]
+  const target = index + direction
+  if (target < 0 || target >= items.length) return
+
+  const [moved] = items.splice(index, 1)
+  items.splice(target, 0, moved)
+  blockItems.value = items
+}
+
+useShortcut({
+  keys: 'alt+arrowup',
+  scope: 'fields',
+  description: () => $t('shortcuts.fields.moveBlockUp'),
+  handler: null,
+})
+
+useShortcut({
+  keys: 'alt+arrowdown',
+  scope: 'fields',
+  description: () => $t('shortcuts.fields.moveBlockDown'),
+  handler: null,
+})
+
 const blocksBySlug = computed(() =>
   Object.fromEntries((blocks.value?.data || []).map((block) => [block.slug, block]))
 )
@@ -578,7 +609,11 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                 @update:model-value="(checked) => toggleSelected(i, checked)"
               />
             </div>
-            <AccordionTrigger class="flex w-full items-center gap-2">
+            <AccordionTrigger
+              class="flex w-full items-center gap-2"
+              @keydown.alt.up.prevent.stop="moveItem(i, -1)"
+              @keydown.alt.down.prevent.stop="moveItem(i, 1)"
+            >
               <BlockHeader
                 :content="content"
                 :block="getBlockHeaderBlock(content)"

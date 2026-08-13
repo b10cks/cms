@@ -9,7 +9,6 @@ import AssetDetailsDialog from '~/components/assets/AssetDetailsDialog.vue'
 import AssetFolder from '~/components/assets/AssetFolder.vue'
 import AssetItem from '~/components/assets/AssetItem.vue'
 import AssetSelectionBar from '~/components/assets/AssetSelectionBar.vue'
-import AssetShortcutsDialog from '~/components/assets/AssetShortcutsDialog.vue'
 import BulkTagDialog from '~/components/assets/BulkTagDialog.vue'
 import CreateAssetShareDialog from '~/components/assets/CreateAssetShareDialog.vue'
 import CreateFolderDialog from '~/components/assets/CreateFolderDialog.vue'
@@ -35,6 +34,7 @@ import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type { AssetSelectionEntry } from '~/composables/useAssetSelection'
 import { getAssetManagerDragItems, type AssetManagerDragItem } from '~/lib/assets/assetDragAndDrop'
 import { downloadAssetFiles } from '~/lib/assets/downloadAssets'
+import { isEditableTarget } from '~/lib/shortcuts'
 import type { AssetShareSource } from '~/types/asset-distribution'
 
 export interface AssetGridProps {
@@ -72,7 +72,7 @@ const emit = defineEmits<{
   'tag-change': [tagId: string | null]
 }>()
 
-const { $t } = useI18n()
+const { t, $t } = useI18n()
 const { alert } = useAlertDialog()
 const { useAccessControl } = useAuthorization()
 const { settings } = useSpaceSettings(props.spaceId)
@@ -151,7 +151,6 @@ const addToCollectionOpen = ref(false)
 const addToCollectionAssetIds = ref<string[]>([])
 const shareDialogOpen = ref(false)
 const shareSource = ref<AssetShareSource | null>(null)
-const shortcutsOpen = ref(false)
 const isSelectingAllMatching = ref(false)
 const clipboard = ref<AssetManagerDragItem[] | null>(null)
 const focusedKey = ref<string | null>(null)
@@ -1020,15 +1019,7 @@ const anyDialogOpen = () => {
     folderDialogOpen.value ||
     moveDialogOpen.value ||
     bulkTagOpen.value ||
-    shortcutsOpen.value ||
     document.querySelector('[role="dialog"], [role="alertdialog"], [role="menu"]')
-  )
-}
-
-const isEditableTarget = (target: EventTarget | null): boolean => {
-  const element = target as HTMLElement | null
-  return Boolean(
-    element?.closest?.('input, textarea, select, [contenteditable="true"], [role="combobox"]')
   )
 }
 
@@ -1128,6 +1119,26 @@ const handleTypeahead = (char: string) => {
   }
 }
 
+// Documentation-only: the selection / arrow / typeahead engine below owns
+// these keys. Registering them keeps the generated overlay complete.
+const assetShortcuts: Array<[string, () => string]> = [
+  ['arrowup+arrowdown+arrowleft+arrowright', () => t('shortcuts.assets.moveFocus')],
+  ['enter', () => t('shortcuts.assets.open')],
+  ['space', () => t('shortcuts.assets.openDetails')],
+  ['backspace', () => t('shortcuts.assets.parentFolder')],
+  ['mod+a', () => t('shortcuts.assets.selectAll')],
+  ['shift+arrowup', () => t('shortcuts.assets.extendSelection')],
+  ['escape', () => t('shortcuts.assets.clearSelection')],
+  ['A-Z', () => t('shortcuts.assets.typeAhead')],
+  ['mod+x', () => t('shortcuts.assets.cut')],
+  ['mod+v', () => t('shortcuts.assets.paste')],
+  ['delete', () => t('shortcuts.assets.delete')],
+]
+
+for (const [keys, description] of assetShortcuts) {
+  useShortcut({ keys, scope: 'assets', description, handler: null })
+}
+
 const handleWindowKeydown = (event: KeyboardEvent) => {
   if (!selectionEnabled.value || isEditableTarget(event.target)) {
     return
@@ -1210,12 +1221,6 @@ const handleWindowKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Backspace' && !meta) {
     event.preventDefault()
     navigateToParent()
-    return
-  }
-
-  if (event.key === '?') {
-    event.preventDefault()
-    shortcutsOpen.value = true
     return
   }
 
@@ -2010,8 +2015,6 @@ onUnmounted(() => {
       :space-id="spaceId"
       :source="shareSource"
     />
-
-    <AssetShortcutsDialog v-model:open="shortcutsOpen" />
 
     <AssetDetailsDialog
       v-if="mode === 'manage'"

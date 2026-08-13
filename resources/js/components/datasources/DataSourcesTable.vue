@@ -43,7 +43,7 @@ const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageDataSources = computed(() => access.hasAbility('data_sources.manage'))
 
 const searchQuery = ref('')
-const { sortBy, filters, paginationBindings, queryParams } = useTableQueryState({
+const { currentPage, sortBy, filters, paginationBindings, queryParams } = useTableQueryState({
   defaultSort: { column: 'name', direction: 'asc' },
   pageSize: 10,
 })
@@ -81,6 +81,20 @@ const sortOptions = [
 ]
 
 const { data: dataSources, isLoading, isFetching, refetch } = useDataSourcesQuery(queryParams)
+
+const { container: tableRef } = useTableKeyboard({
+  page: currentPage,
+  lastPage: () => dataSources.value?.meta?.last_page,
+  onOpen: (row) => {
+    const dataSourceId = row.dataset.dataSourceId
+    if (dataSourceId) {
+      router.push({
+        name: 'space-datasources-dataSourceId',
+        params: { space: route.params.space, dataSourceId },
+      })
+    }
+  },
+})
 
 const deleteDialogOpen = ref(false)
 const dataSourceToDelete = ref<DataSourceResource | null>(null)
@@ -132,7 +146,10 @@ const confirmDelete = async () => {
         :placeholder="String($t('labels.sortBy'))"
       />
     </div>
-    <div class="overflow-hidden rounded-md border border-border">
+    <div
+      ref="tableRef"
+      class="overflow-hidden rounded-md border border-border"
+    >
       <Table>
         <TableHeader>
           <TableRow>
@@ -180,7 +197,12 @@ const confirmDelete = async () => {
             <TableRow
               v-for="(dataSource, index) in dataSources?.data ?? []"
               :key="dataSource.id"
-              :class="{ 'bg-background/50': index % 2 === 0 }"
+              :data-data-source-id="dataSource.id"
+              data-table-row
+              :class="[
+                'focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-ring',
+                { 'bg-background/50': index % 2 === 0 },
+              ]"
             >
               <TableCell class="cursor-pointer">
                 <RouterLink

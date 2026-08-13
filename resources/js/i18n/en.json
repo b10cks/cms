@@ -765,32 +765,10 @@
         "toolbar": "Selection actions",
         "onOtherPages": "({count} on other pages)",
         "selectAllMatching": "Select all {count} matching"
-      },
-      "shortcuts": {
-        "title": "Keyboard shortcuts",
-        "description": "Work with assets like in your file manager.",
-        "navigation": "Navigation",
-        "selection": "Selection",
-        "actions": "Actions",
-        "moveFocus": "Move focus",
-        "open": "Open folder / asset",
-        "openDetails": "Open asset details",
-        "parentFolder": "Go to parent folder",
-        "selectAll": "Select all on page",
-        "extendSelection": "Extend selection",
-        "click": "Click",
-        "rangeSelect": "Select range",
-        "toggleSelect": "Toggle item in selection",
-        "clearSelection": "Clear selection / cancel cut",
-        "typeAhead": "Type a name",
-        "typeAheadHint": "Jump to first match",
-        "cut": "Cut selection",
-        "paste": "Paste into current folder",
-        "delete": "Delete selection",
-        "showHelp": "Show this overview"
       }
     },
     "contents": {
+      "unsavedChanges": "You have unsaved changes. Are you sure you want to leave?",
       "validationWarning": {
         "title": "Validation warning",
         "description": "This content has validation warnings. You can still save it, but you should review the following issues first:"
@@ -867,30 +845,7 @@
         "aiSummaryDelete": "{count} delete | {count} deletes",
         "aiSummaryRestore": "{count} restore | {count} restores",
         "help": {
-          "open": "Open canvas help",
-          "title": "How to use the canvas",
-          "description": "Use the canvas to stage hierarchy changes, move quickly with the keyboard, and manage the viewport without leaving the draft.",
-          "sections": {
-            "navigation": "Navigation",
-            "editing": "Editing",
-            "history": "History",
-            "viewport": "Viewport"
-          },
-          "items": {
-            "moveFocus": "Move focus to the nearest visible node in that direction.",
-            "toggleCollapse": "Use the collapse action on a node to hide or reveal its descendants for everyone on the canvas.",
-            "rename": "Start editing the focused node title immediately.",
-            "createChild": "Create a child of the same block when possible. If that placement is not valid, the child add menu opens instead.",
-            "createSibling": "Create a sibling of the same block when possible. If that placement is not valid, the sibling add menu opens instead.",
-            "toggleDelete": "Toggle draft deletion for the focused node.",
-            "undo": "Undo the last recorded draft change.",
-            "redo": "Redo the most recently undone draft change.",
-            "redoAlternative": "Alternative redo shortcut on platforms that support it.",
-            "dragPan": "Drag on empty canvas space to pan in any direction.",
-            "scrollPan": "Use normal scrolling or trackpad movement to pan the canvas.",
-            "modifiedZoom": "Hold Ctrl or Cmd while using the wheel or trackpad gesture to zoom.",
-            "toolbarZoom": "Use the toolbar controls to zoom, reset to 100%, or fit the current tree into view."
-          }
+          "open": "Open canvas help"
         },
         "addChild": "Add child",
         "addSibling": "Add sibling"
@@ -4976,6 +4931,92 @@
     },
     "dataEntries": {
       "deleteConfirmation": "Are you sure you want to delete this entry?"
+    }
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "description": "Everything bound right now. The list follows what is on screen.",
+    "empty": "No shortcuts are available in this view.",
+    "scopes": {
+      "global": "Everywhere",
+      "editor": "Editors",
+      "content-editor": "Content editor",
+      "content-tree": "Content tree",
+      "canvas": "Content canvas",
+      "assets": "Asset library",
+      "table": "Tables",
+      "dialog": "Dialogs",
+      "fields": "Block fields"
+    },
+    "global": {
+      "commandPalette": "Open the command palette",
+      "spacePalette": "Switch space",
+      "help": "Show this shortcut list",
+      "search": "Focus the search field",
+      "toggleSidebar": "Show or hide the sidebar",
+      "skipToContent": "Skip to main content"
+    },
+    "editor": {
+      "save": "Save the current entry or block"
+    },
+    "contentEditor": {
+      "publish": "Publish the current entry",
+      "nextSibling": "Go to the next entry",
+      "prevSibling": "Go to the previous entry"
+    },
+    "contentTree": {
+      "newChild": "Create a child entry under the focused one",
+      "moveUp": "Move the focused entry up among its siblings",
+      "moveDown": "Move the focused entry down among its siblings",
+      "open": "Open the focused entry",
+      "rename": "Rename the focused entry",
+      "delete": "Delete the focused entry",
+      "copy": "Copy the focused entry",
+      "cut": "Cut the focused entry",
+      "paste": "Paste into the focused entry",
+      "contextMenu": "Open the context menu of the focused entry",
+      "search": "Type any letter to search the tree"
+    },
+    "canvas": {
+      "moveFocus": "Move focus between nodes",
+      "createChild": "Create a child node",
+      "createSibling": "Create a sibling node",
+      "addMenuChild": "Pick a block for a new child node",
+      "addMenuSibling": "Pick a block for a new sibling node",
+      "rename": "Rename the focused node",
+      "toggleDelete": "Mark or unmark the focused node for deletion",
+      "undo": "Undo the last canvas change",
+      "redo": "Redo the last undone change",
+      "redoAlternative": "Redo (alternative)",
+      "zoom": "Zoom the canvas"
+    },
+    "assets": {
+      "moveFocus": "Move focus between assets",
+      "open": "Open the focused asset or folder",
+      "openDetails": "Open the details of the focused asset",
+      "parentFolder": "Go to the parent folder",
+      "selectAll": "Select everything in this folder",
+      "extendSelection": "Extend the selection",
+      "clearSelection": "Clear the selection",
+      "typeAhead": "Type any letter to jump to an asset by name",
+      "cut": "Cut the selected assets",
+      "paste": "Paste the cut assets here",
+      "delete": "Delete the selected assets",
+      "help": "Show this shortcut list"
+    },
+    "table": {
+      "rowDown": "Focus the next row",
+      "rowUp": "Focus the previous row",
+      "open": "Open the focused row",
+      "nextPage": "Go to the next page",
+      "prevPage": "Go to the previous page"
+    },
+    "fields": {
+      "moveBlockUp": "Move the focused block up",
+      "moveBlockDown": "Move the focused block down"
+    },
+    "dialog": {
+      "submit": "Confirm this dialog"
     }
   }
 }

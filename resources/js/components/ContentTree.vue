@@ -37,6 +37,7 @@ import { queryKeys } from '~/composables/useQueryClient'
 import { normalizeLanguageIso } from '~/lib/content-i18n'
 import { fuzzyMatch, prepareFuzzyQuery, prepareFuzzyTarget } from '~/lib/fuzzy-match'
 import { buildPreviewUrl } from '~/lib/preview-url'
+import { isEditableTarget } from '~/lib/shortcuts'
 import { automationAppliesToBlock } from '~/utils/automations'
 import type {
   ContentTreeActionContext,
@@ -2045,16 +2046,10 @@ const handleSearchBlur = (event: FocusEvent) => {
   closeSearch(false)
 }
 
-const isTextEntryTarget = (target: EventTarget | null) =>
-  target instanceof HTMLElement &&
-  (target instanceof HTMLInputElement ||
-    target instanceof HTMLTextAreaElement ||
-    target.isContentEditable)
-
 // Capture-phase so a printable keystroke anywhere in the tree opens the search
 // before reka-ui's built-in single-character typeahead can swallow it.
 const handleTreeKeydownCapture = (event: KeyboardEvent) => {
-  if (event.defaultPrevented || currentlyEditingId.value || isTextEntryTarget(event.target)) {
+  if (event.defaultPrevented || currentlyEditingId.value || isEditableTarget(event.target)) {
     return
   }
 
@@ -2067,6 +2062,33 @@ const handleTreeKeydownCapture = (event: KeyboardEvent) => {
   event.preventDefault()
   event.stopPropagation()
   openSearch(event.key)
+}
+
+/**
+ * Alt+Up/Down: the very same move operation a drag commits, resolved through
+ * `resolveDrop` so keyboard and pointer reordering cannot drift apart.
+ */
+const moveAmongSiblings = async (item: FlatContentMenuItem, direction: -1 | 1) => {
+  const parentId = item.pid ?? null
+  if (!canManageContent.value || !allowsManualSort(parentId)) return
+
+  const siblings = childIdMap.value.get(parentId) || []
+  const index = siblings.indexOf(item.id)
+  const neighbourId = siblings[index + direction]
+  if (index < 0 || !neighbourId) return
+
+  const resolution = resolveDrop(neighbourId, direction === -1 ? 'top' : 'bottom', [item.id])
+  if (!resolution) return
+
+  await executeTreeOperations([
+    {
+      type: 'move',
+      ids: [item.id],
+      parent_id: resolution.parentId,
+      after_id: resolution.afterId,
+      position: resolution.insertIndex,
+    },
+  ])
 }
 
 // --- Keyboard actions on tree rows (arrows / expand / collapse come from reka-ui) ---
@@ -2090,6 +2112,26 @@ const handleItemKeydown = (event: KeyboardEvent, item: FlatContentMenuItem) => {
   if (event.key === 'F2') {
     event.preventDefault()
     void openRename(item.id)
+    return
+  }
+
+  if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+    event.preventDefault()
+    event.stopPropagation()
+    void moveAmongSiblings(item, event.key === 'ArrowUp' ? -1 : 1)
+    return
+  }
+
+  if (
+    meta &&
+    event.shiftKey &&
+    event.key.toLowerCase() === 'n' &&
+    canManageContent.value &&
+    item.type !== 'single'
+  ) {
+    event.preventDefault()
+    event.stopPropagation()
+    initCreate(item.id)
     return
   }
 
@@ -2131,6 +2173,27 @@ const handleItemKeydown = (event: KeyboardEvent, item: FlatContentMenuItem) => {
       )
     }
   }
+}
+
+// Documentation-only: every one of these is handled on the focused row by
+// `handleItemKeydown` / reka-ui's tree primitive, not by the registry.
+const treeShortcuts: Array<[string, () => string]> = [
+  ['arrowup+arrowdown+arrowleft+arrowright', () => t('shortcuts.contentTree.open')],
+  ['enter', () => t('shortcuts.contentTree.open')],
+  ['F2', () => t('shortcuts.contentTree.rename')],
+  ['shift+mod+n', () => t('shortcuts.contentTree.newChild')],
+  ['alt+arrowup', () => t('shortcuts.contentTree.moveUp')],
+  ['alt+arrowdown', () => t('shortcuts.contentTree.moveDown')],
+  ['mod+c', () => t('shortcuts.contentTree.copy')],
+  ['mod+x', () => t('shortcuts.contentTree.cut')],
+  ['mod+v', () => t('shortcuts.contentTree.paste')],
+  ['delete', () => t('shortcuts.contentTree.delete')],
+  ['shift+F10', () => t('shortcuts.contentTree.contextMenu')],
+  ['A-Z', () => t('shortcuts.contentTree.search')],
+]
+
+for (const [keys, description] of treeShortcuts) {
+  useShortcut({ keys, scope: 'content-tree', description, handler: null })
 }
 
 onMounted(() => {
