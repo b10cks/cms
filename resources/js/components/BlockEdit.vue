@@ -81,6 +81,10 @@ const handleTypeChange = (type: 'root' | 'nestable' | 'single' | 'universal') =>
     editableBlock.value.type = type
   }
 }
+
+// Lets the hosting page track the edited model (dirty state, save shortcut)
+// without threading it back out through the default slot.
+defineExpose({ editableBlock })
 </script>
 
 <template>

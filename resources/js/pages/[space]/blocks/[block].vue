@@ -13,6 +13,9 @@ import { HistoryIcon } from '~/components/icons'
 import { Button } from '~/components/ui/button'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { Skeleton } from '~/components/ui/skeleton'
+import { createSnapshotDirtyTracker } from '~/lib/contentEditorState'
+import { useSaveShortcut } from '~/lib/editorShortcuts'
+import { useUnsavedChangesGuard } from '~/lib/unsavedChangesGuard'
 
 const route = useRoute()
 const router = useRouter()
@@ -25,7 +28,7 @@ const canManageBlocks = computed(() => access.hasAbility('blocks.manage'))
 const { useBlockQuery, useUpdateBlockMutation } = useBlocks(spaceId)
 const { isLoading, data: block } = useBlockQuery(blockId)
 
-const { mutate: updateBlock } = useUpdateBlockMutation()
+const { mutate: updateBlock, isPending: isSaving } = useUpdateBlockMutation()
 
 const overviewRoute = computed(() => ({
   name: 'space-blocks-index' as const,
@@ -47,6 +50,48 @@ const submit = async (b: BlockResource) => {
     payload: { ...b },
   })
 }
+
+const blockEdit = useTemplateRef<InstanceType<typeof BlockEdit>>('blockEdit')
+
+/**
+ * Only the fields the block editor actually writes, normalised the same way
+ * `BlockEdit` seeds them — so a freshly loaded block is never reported dirty
+ * and server-side bookkeeping (`updated_at`, counters) never is either.
+ */
+const editableSnapshot = (source: BlockResource | null | undefined) =>
+  source
+    ? {
+        name: source.name,
+        slug: source.slug,
+        description: source.description,
+        type: source.type || 'nestable',
+        icon: source.icon || 'block',
+        color: source.color,
+        tags: source.tags,
+        preview_template: source.preview_template,
+        preview_file: source.preview_file,
+        settings: source.settings,
+        schema: source.schema,
+        editor: source.editor,
+      }
+    : null
+
+const editedBlock = computed(() => editableSnapshot(blockEdit.value?.editableBlock))
+const savedBlock = computed(() => editableSnapshot(block.value))
+
+const { isDirty } = createSnapshotDirtyTracker(editedBlock, savedBlock)
+
+useUnsavedChangesGuard({ isDirty })
+
+useSaveShortcut({
+  canSave: () => canManageBlocks.value && isDirty.value && !isSaving.value,
+  save: () => {
+    const edited = blockEdit.value?.editableBlock
+    if (edited) {
+      return submit(edited)
+    }
+  },
+})
 
 const handleDuplicateCreated = (createdBlock: BlockResource) => {
   showDuplicateBlockDialog.value = false
@@ -153,6 +198,7 @@ const handleDuplicateCreated = (createdBlock: BlockResource) => {
 
       <div class="mx-auto max-w-4xl">
         <BlockEdit
+          ref="blockEdit"
           v-slot="{ editBlock }"
           :block="block"
           :space-id="spaceId"
@@ -166,6 +212,7 @@ const handleDuplicateCreated = (createdBlock: BlockResource) => {
               type="button"
               variant="primary"
               class="ml-auto"
+              :loading="isSaving"
               @click="submit(editBlock)"
             >
               {{ $t('actions.blocks.save') }}

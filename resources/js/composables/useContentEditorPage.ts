@@ -1,6 +1,5 @@
 import { useRouteQuery } from '@vueuse/router'
 import type { Ref } from 'vue'
-import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
 
 import { getContentDefaultLanguage, resolveContentLanguage } from '~/lib/content-i18n'
 import {
@@ -8,6 +7,7 @@ import {
   createSnapshotDirtyTracker,
   type DirtyTracker,
 } from '~/lib/contentEditorState'
+import { useUnsavedChangesGuard } from '~/lib/unsavedChangesGuard'
 import type { ContentResource } from '~/types/contents'
 
 import type { useContentSchemaState } from './useContentSchemaState'
@@ -64,9 +64,6 @@ export interface UseContentEditorPageReturn {
 export function useContentEditorPage(
   options: UseContentEditorPageOptions
 ): UseContentEditorPageReturn {
-  const { t } = useI18n()
-  const { alert } = useAlertDialog()
-
   const defaultLanguage = computed(() =>
     getContentDefaultLanguage(
       options.spaceDefaultLanguage.value,
@@ -91,58 +88,7 @@ export function useContentEditorPage(
 
   const { isDirty } = dirty
 
-  async function guardLeave(
-    to: RouteLocationNormalized,
-    from: RouteLocationNormalized,
-    next: NavigationGuardNext
-  ) {
-    if (to && from && to.path === from.path) {
-      return next()
-    }
-
-    if (isDirty.value) {
-      const answer = await alert.confirm(
-        t(
-          'labels.content.unsavedChanges',
-          'You have unsaved changes. Are you sure you want to leave?'
-        )
-      )
-      if (answer) {
-        options.onDiscardChanges?.()
-        next()
-      } else {
-        next(false)
-      }
-    } else {
-      next()
-    }
-  }
-
-  onBeforeRouteUpdate(guardLeave)
-  onBeforeRouteLeave(guardLeave)
-
-  const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-    if (isDirty.value) {
-      e.preventDefault()
-      e.returnValue = ''
-    }
-  }
-
-  onBeforeUnmount(() => {
-    window.removeEventListener('beforeunload', handleBeforeUnload)
-  })
-
-  watch(
-    isDirty,
-    (dirtyNow) => {
-      if (dirtyNow) {
-        window.addEventListener('beforeunload', handleBeforeUnload)
-      } else {
-        window.removeEventListener('beforeunload', handleBeforeUnload)
-      }
-    },
-    { immediate: true }
-  )
+  useUnsavedChangesGuard({ isDirty, onDiscardChanges: options.onDiscardChanges })
 
   const provideValidationState = (validation: ContentValidationState) => {
     provide('markFieldDirty', validation.markFieldDirty)
