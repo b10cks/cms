@@ -11,6 +11,7 @@ declare global {
   const AlertDialogProvider: typeof import('./resources/js/composables/useAlertDialog').AlertDialogProvider
   const EffectScope: typeof import('vue').EffectScope
   const GLOBAL_TEAM_QUERY_PARAMS: typeof import('./resources/js/composables/useGlobalTeam').GLOBAL_TEAM_QUERY_PARAMS
+  const TABLE_ROW_ATTR: typeof import('./resources/js/composables/useTableKeyboard').TABLE_ROW_ATTR
   const TEAM_TYPE_KEYS: typeof import('./resources/js/composables/useTeamTypes').TEAM_TYPE_KEYS
   const buildShareUrl: typeof import('./resources/js/composables/useAssetShares').buildShareUrl
   const computed: typeof import('vue').computed
@@ -188,6 +189,9 @@ declare global {
   const useRouter: typeof import('vue-router').useRouter
   const useRuntimeConfig: typeof import('~/env').useRuntimeConfig
   const useSeoMeta: typeof import('./resources/js/composables/useSeoMeta').useSeoMeta
+  const useShortcut: typeof import('./resources/js/composables/useShortcuts').useShortcut
+  const useShortcutHelp: typeof import('./resources/js/composables/useShortcuts').useShortcutHelp
+  const useShortcutRegistry: typeof import('./resources/js/composables/useShortcuts').useShortcutRegistry
   const useSlots: typeof import('vue').useSlots
   const useSlug: typeof import('./resources/js/composables/useSlug').useSlug
   const useSlugLanguage: typeof import('./resources/js/composables/useSlugLanguage').useSlugLanguage
@@ -200,6 +204,7 @@ declare global {
   const useSpaceUsage: typeof import('./resources/js/composables/useSpaceUsage').useSpaceUsage
   const useSpaces: typeof import('./resources/js/composables/useSpace').useSpaces
   const useSubscription: typeof import('./resources/js/composables/useSubscription').useSubscription
+  const useTableKeyboard: typeof import('./resources/js/composables/useTableKeyboard').useTableKeyboard
   const useTableQueryState: typeof import('./resources/js/composables/useTableQueryState').useTableQueryState
   const useTeamTypes: typeof import('./resources/js/composables/useTeamTypes').useTeamTypes
   const useTeams: typeof import('./resources/js/composables/useTeams').useTeams
@@ -298,6 +303,9 @@ declare global {
   export type { SlugOptions } from './resources/js/composables/useSlug'
   import('./resources/js/composables/useSlug')
   // @ts-ignore
+  export type { TableKeyboardOptions } from './resources/js/composables/useTableKeyboard'
+  import('./resources/js/composables/useTableKeyboard')
+  // @ts-ignore
   export type { TableSortDirection, TableSort, TableQueryParams, TablePaginationBindings, UseTableQueryStateOptions, UseTableQueryStateReturn } from './resources/js/composables/useTableQueryState'
   import('./resources/js/composables/useTableQueryState')
   // @ts-ignore
@@ -319,6 +327,7 @@ declare module 'vue' {
     readonly AlertDialogProvider: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['AlertDialogProvider']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly GLOBAL_TEAM_QUERY_PARAMS: UnwrapRef<typeof import('./resources/js/composables/useGlobalTeam')['GLOBAL_TEAM_QUERY_PARAMS']>
+    readonly TABLE_ROW_ATTR: UnwrapRef<typeof import('./resources/js/composables/useTableKeyboard')['TABLE_ROW_ATTR']>
     readonly TEAM_TYPE_KEYS: UnwrapRef<typeof import('./resources/js/composables/useTeamTypes')['TEAM_TYPE_KEYS']>
     readonly buildShareUrl: UnwrapRef<typeof import('./resources/js/composables/useAssetShares')['buildShareUrl']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
@@ -496,6 +505,9 @@ declare module 'vue' {
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
     readonly useRuntimeConfig: UnwrapRef<typeof import('~/env')['useRuntimeConfig']>
     readonly useSeoMeta: UnwrapRef<typeof import('./resources/js/composables/useSeoMeta')['useSeoMeta']>
+    readonly useShortcut: UnwrapRef<typeof import('./resources/js/composables/useShortcuts')['useShortcut']>
+    readonly useShortcutHelp: UnwrapRef<typeof import('./resources/js/composables/useShortcuts')['useShortcutHelp']>
+    readonly useShortcutRegistry: UnwrapRef<typeof import('./resources/js/composables/useShortcuts')['useShortcutRegistry']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
     readonly useSlug: UnwrapRef<typeof import('./resources/js/composables/useSlug')['useSlug']>
     readonly useSlugLanguage: UnwrapRef<typeof import('./resources/js/composables/useSlugLanguage')['useSlugLanguage']>
@@ -507,6 +519,7 @@ declare module 'vue' {
     readonly useSpaceUsage: UnwrapRef<typeof import('./resources/js/composables/useSpaceUsage')['useSpaceUsage']>
     readonly useSpaces: UnwrapRef<typeof import('./resources/js/composables/useSpace')['useSpaces']>
     readonly useSubscription: UnwrapRef<typeof import('./resources/js/composables/useSubscription')['useSubscription']>
+    readonly useTableKeyboard: UnwrapRef<typeof import('./resources/js/composables/useTableKeyboard')['useTableKeyboard']>
     readonly useTableQueryState: UnwrapRef<typeof import('./resources/js/composables/useTableQueryState')['useTableQueryState']>
     readonly useTeamTypes: UnwrapRef<typeof import('./resources/js/composables/useTeamTypes')['useTeamTypes']>
     readonly useTeams: UnwrapRef<typeof import('./resources/js/composables/useTeams')['useTeams']>

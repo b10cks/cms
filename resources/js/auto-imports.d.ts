@@ -116,10 +116,14 @@ declare global {
   const useRouter: typeof import('vue-router').useRouter
   const useRuntimeConfig: typeof import('~/env').useRuntimeConfig
   const useSeoMeta: typeof import('./composables/useSeoMeta').useSeoMeta
+  const useShortcut: typeof import('./composables/useShortcuts').useShortcut
+  const useShortcutHelp: typeof import('./composables/useShortcuts').useShortcutHelp
+  const useShortcutRegistry: typeof import('./composables/useShortcuts').useShortcutRegistry
   const useSlots: typeof import('vue').useSlots
   const useSpacePresence: typeof import('./composables/usePresence').useSpacePresence
   const useSpaceSettings: typeof import('./composables/useSpaceSettings').default
   const useSpaces: typeof import('./composables/useSpace').useSpaces
+  const useTableKeyboard: typeof import('./composables/useTableKeyboard').useTableKeyboard
   const useTeams: typeof import('./composables/useTeams').useTeams
   const useTemplateRef: typeof import('vue').useTemplateRef
   const useTokens: typeof import('./composables/useTokens').useTokens
@@ -338,6 +342,13 @@ declare module 'vue' {
     readonly useRouter: UnwrapRef<(typeof import('vue-router'))['useRouter']>
     readonly useRuntimeConfig: UnwrapRef<(typeof import('~/env'))['useRuntimeConfig']>
     readonly useSeoMeta: UnwrapRef<(typeof import('./composables/useSeoMeta'))['useSeoMeta']>
+    readonly useShortcut: UnwrapRef<(typeof import('./composables/useShortcuts'))['useShortcut']>
+    readonly useShortcutHelp: UnwrapRef<
+      (typeof import('./composables/useShortcuts'))['useShortcutHelp']
+    >
+    readonly useShortcutRegistry: UnwrapRef<
+      (typeof import('./composables/useShortcuts'))['useShortcutRegistry']
+    >
     readonly useSlots: UnwrapRef<(typeof import('vue'))['useSlots']>
     readonly useSpacePresence: UnwrapRef<
       (typeof import('./composables/usePresence'))['useSpacePresence']
@@ -346,6 +357,9 @@ declare module 'vue' {
       (typeof import('./composables/useSpaceSettings'))['default']
     >
     readonly useSpaces: UnwrapRef<(typeof import('./composables/useSpace'))['useSpaces']>
+    readonly useTableKeyboard: UnwrapRef<
+      (typeof import('./composables/useTableKeyboard'))['useTableKeyboard']
+    >
     readonly useTeams: UnwrapRef<(typeof import('./composables/useTeams'))['useTeams']>
     readonly useTemplateRef: UnwrapRef<(typeof import('vue'))['useTemplateRef']>
     readonly useTokens: UnwrapRef<(typeof import('./composables/useTokens'))['useTokens']>
