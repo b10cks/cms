@@ -200,14 +200,6 @@ const resolveDuplicatePrompt = (decision: DuplicateDecision) => {
   duplicatePrompt.value = null
 }
 
-const markFileComplete = (file: UploadFileWithProgress) => {
-  updateFileStatus(file.id, 'complete')
-  if (file.preview) {
-    URL.revokeObjectURL(file.preview)
-    file.preview = undefined
-  }
-}
-
 const performUpload = async (file: UploadFileWithProgress) => {
   updateFileStatus(file.id, 'uploading')
 
@@ -218,7 +210,7 @@ const performUpload = async (file: UploadFileWithProgress) => {
     })
 
     if (result?.status === 'success') {
-      markFileComplete(file)
+      updateFileStatus(file.id, 'complete')
       return
     }
 
@@ -233,13 +225,13 @@ const performUpload = async (file: UploadFileWithProgress) => {
         )
 
         if (forced?.status === 'success') {
-          markFileComplete(file)
+          updateFileStatus(file.id, 'complete')
         } else {
           updateFileStatus(file.id, 'error', String(t('composables.assets.uploadError')))
         }
       } else if (decision === 'use-existing') {
         // The existing asset already satisfies the intent of this upload.
-        markFileComplete(file)
+        updateFileStatus(file.id, 'complete')
       } else {
         updateFileStatus(file.id, 'pending')
         updateFileProgress(file.id, 0)
