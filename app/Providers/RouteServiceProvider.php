@@ -82,6 +82,13 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->user()?->id ?: $request->ip());
         });
 
+        // Invites are sent in batches (a bulk resend fires one request per
+        // invite), so they get their own bucket instead of sharing the
+        // credential-change limiter and blocking a password change.
+        RateLimiter::for('invites', function (Request $request) {
+            return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
+        });
+
         $this->routes(function () {
             Route::prefix('auth/v1')
                 ->middleware('api')

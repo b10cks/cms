@@ -212,11 +212,11 @@ Route::group(['prefix' => 'teams/{team}'], function () {
 
     Route::get('invites', [TeamInviteController::class, 'index'])->name('teams.invites.index');
     Route::post('invites', [TeamInviteController::class, 'store'])
-        ->middleware('throttle:crucial')
+        ->middleware('throttle:invites')
         ->name('teams.invites.store');
     Route::delete('invites/{invite}', [TeamInviteController::class, 'destroy'])->name('teams.invites.destroy');
     Route::post('invites/{invite}/resend', TeamInviteResendController::class)
-        ->middleware('throttle:crucial')
+        ->middleware('throttle:invites')
         ->name('teams.invites.resend');
 
     Route::get('saml-provider', [TeamSamlProviderController::class, 'show'])->name('teams.saml-provider.show');
@@ -251,11 +251,11 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
 
     Route::get('invites', [SpaceInviteController::class, 'index'])->name('spaces.invites.index');
     Route::post('invites', [SpaceInviteController::class, 'store'])
-        ->middleware('throttle:crucial')
+        ->middleware('throttle:invites')
         ->name('spaces.invites.store');
     Route::delete('invites/{invite}', [SpaceInviteController::class, 'destroy'])->name('spaces.invites.destroy');
     Route::post('invites/{invite}/resend', SpaceInviteResendController::class)
-        ->middleware('throttle:crucial')
+        ->middleware('throttle:invites')
         ->name('spaces.invites.resend');
 
     Route::get('people', [SpacePeopleController::class, 'index'])->name('spaces.people.index');
