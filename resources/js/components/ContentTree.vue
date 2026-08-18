@@ -1602,33 +1602,46 @@ const moveDraggedItemsToTarget = async (
   }
 }
 
+// A renamed row must be explicitly undraggable, not merely stripped of
+// pragmatic-dnd's `draggable="true"`: rows are links, and a link drags by
+// default. Chrome then drags the row when text is selected in the rename
+// field, and Firefox focuses the row on mousedown — which ends the rename.
+const suspendDragging = (element: HTMLElement) => {
+  element.setAttribute('draggable', 'false')
+
+  return () => element.removeAttribute('draggable')
+}
+
 const registerItemInteractions = (item: FlatContentMenuItem, element: HTMLElement) => {
+  // `data-renaming` keeps this in sync by re-running the ref callback.
+  const isRenaming = currentlyEditingId.value === item.id
+
   const cleanup = combine(
-    draggable({
-      element,
-      // A text-selection drag inside the rename input must not start a row drag.
-      canDrag: () => currentlyEditingId.value !== item.id,
-      getInitialData: () => {
-        const dragItems = getSelectedDragItemsFor(item.id)
-        dragSelectionSnapshot.value = dragItems.map((dragItem) => dragItem.id)
-        return createContentTreeDragData(dragItems, item.id)
-      },
-      onGenerateDragPreview: ({ nativeSetDragImage }) => {
-        const dragItems = getSelectedDragItemsFor(item.id)
-        setContentTreeDragPreview({
-          nativeSetDragImage,
-          count: dragItems.length,
-          title: getDragPreviewTitle(item, dragItems),
-        })
-      },
-      onDragStart: () => {
-        restoreDragSelection()
-        isDragging.value = true
-      },
-      onDrop: () => {
-        finishDragState()
-      },
-    }),
+    isRenaming
+      ? suspendDragging(element)
+      : draggable({
+          element,
+          getInitialData: () => {
+            const dragItems = getSelectedDragItemsFor(item.id)
+            dragSelectionSnapshot.value = dragItems.map((dragItem) => dragItem.id)
+            return createContentTreeDragData(dragItems, item.id)
+          },
+          onGenerateDragPreview: ({ nativeSetDragImage }) => {
+            const dragItems = getSelectedDragItemsFor(item.id)
+            setContentTreeDragPreview({
+              nativeSetDragImage,
+              count: dragItems.length,
+              title: getDragPreviewTitle(item, dragItems),
+            })
+          },
+          onDragStart: () => {
+            restoreDragSelection()
+            isDragging.value = true
+          },
+          onDrop: () => {
+            finishDragState()
+          },
+        }),
     dropTargetForElements({
       element,
       canDrop: ({ source }) => {
@@ -2500,6 +2513,7 @@ onBeforeUnmount(() => {
           :as="RouterLink"
           :to="buildLink(item.value.id)"
           :data-content-id="item.value.id"
+          :data-renaming="currentlyEditingId === item.value.id || undefined"
           :class="[
             'group relative my-0.5 flex items-center gap-2 rounded-md border border-transparent py-1 pr-2 pl-0 outline-none',
             'transition-colors duration-150 hover:bg-tree-hover',

@@ -50,6 +50,27 @@ function startEdit() {
   }, 0)
 }
 
+// Deactivating the window blurs the input while it keeps DOM focus, so only a
+// real focus move inside the page ends the rename — an alt-tab does not.
+function handleBlur(event: FocusEvent) {
+  const input = inputRef.value
+  const next = event.relatedTarget as HTMLElement | null
+
+  if (document.activeElement === input) return
+
+  // Firefox hands focus to the enclosing row when the field is clicked, since
+  // the row is a link. Take it back instead of ending the rename.
+  if (input && next?.contains(input)) {
+    const start = input.selectionStart
+    const end = input.selectionEnd
+    input.focus()
+    if (start !== null && end !== null) input.setSelectionRange(start, end)
+    return
+  }
+
+  submitRename()
+}
+
 function submitRename() {
   if (inputValue.value?.trim() && inputValue.value.trim() !== props.name) {
     emit('update', inputValue.value.trim())
@@ -67,6 +88,11 @@ function cancelRename() {
 }
 
 function handleKeyDown(event: KeyboardEvent) {
+  // Nothing typed into the field may reach the list behind it: reka-ui's tree
+  // rows act on ArrowLeft/ArrowRight (expand, collapse, focus the parent row),
+  // and moving focus off the input ends the rename mid-edit.
+  event.stopPropagation()
+
   if (event.key === 'Enter') {
     event.preventDefault()
     submitRename()
@@ -122,10 +148,12 @@ defineExpose({
     type="text"
     :class="inputClass"
     :disabled="disabled"
+    draggable="false"
     @keydown="handleKeyDown"
-    @blur="submitRename"
+    @blur="handleBlur"
     @mousedown.stop
     @click.stop.prevent
+    @dragstart.stop.prevent
   />
   <span
     v-else

@@ -228,6 +228,57 @@ describe('committing a rename', () => {
     expect(wrapper.emitted('update')).toEqual([['Growth']])
   })
 
+  // startEdit selects the whole name, so a mousedown on that selection plus a
+  // pixel of movement makes the browser drag it — which pulls focus out of the
+  // input and ends the rename mid-edit.
+  it('cancels a drag started inside the input', async () => {
+    const wrapper = mountTitle()
+    const input = await startEditing(wrapper)
+
+    const event = new Event('dragstart', { bubbles: true, cancelable: true })
+    input.element.dispatchEvent(event)
+
+    expect(event.defaultPrevented).toBe(true)
+    expect(wrapper.find('input').exists()).toBe(true)
+  })
+
+  // Firefox focuses the enclosing element when a field nested inside a link is
+  // clicked, which used to blur the input and end the rename on the first click.
+  it('takes focus back when an ancestor steals it', async () => {
+    const anchor = document.createElement('a')
+    anchor.href = '/somewhere'
+    document.body.append(anchor)
+
+    const wrapper = mount(RenamableTitle, { props: { name: 'Marketing' }, attachTo: anchor })
+    mounted.push(wrapper)
+
+    const input = await startEditing(wrapper)
+    input.element.setSelectionRange(3, 3)
+    await input.trigger('blur', { relatedTarget: anchor })
+
+    expect(wrapper.emitted('update')).toBeUndefined()
+    expect(wrapper.emitted('cancel')).toBeUndefined()
+    expect(wrapper.find('input').exists()).toBe(true)
+    expect(document.activeElement).toBe(input.element)
+    expect(input.element.selectionStart).toBe(3)
+
+    anchor.remove()
+  })
+
+  // Switching windows blurs the input while it keeps DOM focus.
+  it('survives the window losing focus', async () => {
+    const wrapper = mountTitle()
+    const input = await startEditing(wrapper)
+
+    await input.setValue('Growth')
+    input.element.focus()
+    await input.trigger('blur')
+
+    expect(wrapper.emitted('update')).toBeUndefined()
+    expect(wrapper.emitted('cancel')).toBeUndefined()
+    expect(wrapper.find('input').exists()).toBe(true)
+  })
+
   it('commits when the user clicks away', async () => {
     const wrapper = mountTitle()
     const input = await startEditing(wrapper)
@@ -265,6 +316,33 @@ describe('committing a rename', () => {
     expect(event.defaultPrevented).toBe(true)
 
     anchor.remove()
+  })
+})
+
+// The tree rows behind the field act on ArrowLeft/ArrowRight (collapse, expand,
+// focus the parent row) and on plain letters (type-ahead search), all of which
+// move focus off the input and end the rename.
+describe('keys typed into the field', () => {
+  it.each(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'a', ' '])('keeps %s to itself', async (key) => {
+    const wrapper = mountTitle()
+    const onKeydown = vi.fn()
+    wrapper.element.parentElement?.addEventListener('keydown', onKeydown)
+    const input = await startEditing(wrapper)
+
+    await input.trigger('keydown', { key })
+
+    expect(onKeydown).not.toHaveBeenCalled()
+    expect(wrapper.find('input').exists()).toBe(true)
+  })
+
+  it('still commits on Enter', async () => {
+    const wrapper = mountTitle()
+    const input = await startEditing(wrapper)
+
+    await input.setValue('Growth')
+    await input.trigger('keydown', { key: 'Enter' })
+
+    expect(wrapper.emitted('update')).toEqual([['Growth']])
   })
 })
 
