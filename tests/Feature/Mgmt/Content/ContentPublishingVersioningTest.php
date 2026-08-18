@@ -328,6 +328,85 @@ class ContentPublishingVersioningTest extends TestCase
     }
 
     #[Test]
+    public function update_with_a_stale_parent_version_id_conflicts(): void
+    {
+        $this->actingAs($this->owner);
+
+        $content = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+            currentContent: ['summary' => 'Draft summary'],
+        );
+
+        $this->patchJson(route('mgmt.contents.update', [
+            'space' => $this->space->id,
+            'content' => $content->id,
+        ]), [
+            'parent_version_id' => (string) Str::ulid(),
+            'content' => ['summary' => 'Stale write'],
+        ])->assertStatus(409);
+
+        $content->refresh()->load('current_version');
+
+        $this->assertSame(['summary' => 'Draft summary'], $content->current_version?->content);
+    }
+
+    #[Test]
+    public function update_with_a_matching_parent_version_id_succeeds(): void
+    {
+        $this->actingAs($this->owner);
+
+        $content = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+            currentContent: ['summary' => 'Draft summary'],
+        );
+
+        $this->patchJson(route('mgmt.contents.update', [
+            'space' => $this->space->id,
+            'content' => $content->id,
+        ]), [
+            'parent_version_id' => $content->current_version_id,
+            'content' => ['summary' => 'Matching write'],
+        ])->assertOk();
+
+        $content->refresh()->load('current_version');
+
+        $this->assertSame(['summary' => 'Matching write'], $content->current_version?->content);
+    }
+
+    #[Test]
+    public function update_without_a_parent_version_id_is_last_write_wins(): void
+    {
+        $this->actingAs($this->owner);
+
+        $content = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+            currentContent: ['summary' => 'Draft summary'],
+        );
+        $originalCurrentVersionId = $content->current_version_id;
+
+        $this->patchJson(route('mgmt.contents.update', [
+            'space' => $this->space->id,
+            'content' => $content->id,
+        ]), [
+            'content' => ['summary' => 'First write'],
+        ])->assertOk();
+
+        $content->refresh();
+        $this->assertNotSame($originalCurrentVersionId, $content->current_version_id);
+
+        $this->patchJson(route('mgmt.contents.update', [
+            'space' => $this->space->id,
+            'content' => $content->id,
+        ]), [
+            'content' => ['summary' => 'Second write'],
+        ])->assertOk();
+
+        $content->refresh()->load('current_version');
+
+        $this->assertSame(['summary' => 'Second write'], $content->current_version?->content);
+    }
+
+    #[Test]
     public function create_and_publish_leaves_nothing_behind_when_publish_validation_fails(): void
     {
         $this->actingAs($this->owner);

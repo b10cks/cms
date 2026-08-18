@@ -102,17 +102,23 @@ class UpdateContent
 
         $content->loadMissing('current_version');
         $clientParentVersionId = data_get($data, 'parent_version_id');
-        if (
-            $clientParentVersionId !== null
-            && $clientParentVersionId !== $content->current_version_id
-            && ! (bool) data_get($data, 'force_conflict', false)
-        ) {
-            throw new ContentVersionConflictException($content->current_version);
-        }
 
         $indexedColumnsChanged = false;
 
         $content->getConnection()->transaction(function () use ($data, $content, $space, $owner, $validatedContent, $clientParentVersionId, &$indexedColumnsChanged) {
+            $locked = Content::query()->lockForUpdate()->findOrFail($content->id);
+            $content->current_version_id = $locked->current_version_id;
+            $content->load('current_version');
+
+            // Omitted parent_version_id stays last-write-wins for older clients.
+            if (
+                $clientParentVersionId !== null
+                && $clientParentVersionId !== $content->current_version_id
+                && ! (bool) data_get($data, 'force_conflict', false)
+            ) {
+                throw new ContentVersionConflictException($content->current_version);
+            }
+
             $contentData = $validatedContent;
             $message = data_get($data, 'message');
             $sortingEnabled = $space->settings->isContentSortingEnabled();
