@@ -44,24 +44,10 @@ export function createSnapshotDirtyTracker(
   current: Ref<unknown>,
   baseline: Ref<unknown>
 ): DirtyTracker {
-  const currentSnapshot = ref<string | null>(null)
-  const baselineSnapshot = ref<string | null>(null)
-
-  watch(
-    current,
-    (value) => {
-      currentSnapshot.value = value ? JSON.stringify(value) : null
-    },
-    { deep: true, flush: 'sync', immediate: true }
-  )
-
-  watch(
-    baseline,
-    (value) => {
-      baselineSnapshot.value = value ? JSON.stringify(value) : null
-    },
-    { deep: true, flush: 'sync', immediate: true }
-  )
+  // Lazy per side: each snapshot is recomputed only when its own document
+  // changed and `isDirty` is actually read — never eagerly per reactive set.
+  const currentSnapshot = computed(() => JSON.stringify(current.value))
+  const baselineSnapshot = computed(() => JSON.stringify(baseline.value))
 
   return {
     isDirty: computed(() => {
