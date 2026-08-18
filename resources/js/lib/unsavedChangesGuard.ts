@@ -23,6 +23,29 @@ export interface UnsavedChangesGuardOptions {
   onDiscardChanges?: () => void
 }
 
+/** Query keys that pick which document is being edited, not just UI state. */
+const DOCUMENT_IDENTITY_QUERY_KEYS = ['lang'] as const
+
+function queryParam(
+  query: RouteLocationNormalized['query'] | undefined,
+  key: string
+): string | undefined {
+  const value = query?.[key]
+  if (Array.isArray(value)) {
+    return value[0] ?? undefined
+  }
+  return value ?? undefined
+}
+
+export function isDocumentIdentityChange(
+  to: Pick<RouteLocationNormalized, 'query'>,
+  from: Pick<RouteLocationNormalized, 'query'>
+): boolean {
+  return DOCUMENT_IDENTITY_QUERY_KEYS.some(
+    (key) => queryParam(to.query, key) !== queryParam(from.query, key)
+  )
+}
+
 export function useUnsavedChangesGuard(options: UnsavedChangesGuardOptions): void {
   const { t } = useI18n()
   const { alert } = useAlertDialog()
@@ -33,7 +56,9 @@ export function useUnsavedChangesGuard(options: UnsavedChangesGuardOptions): voi
     from: RouteLocationNormalized,
     next: NavigationGuardNext
   ) {
-    if (to && from && to.path === from.path) {
+    // Same path is usually UI state (tabs, hash). A `lang` (or other identity)
+    // query change is a different document and must confirm like a leave.
+    if (to && from && to.path === from.path && !isDocumentIdentityChange(to, from)) {
       return next()
     }
 

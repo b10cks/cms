@@ -272,7 +272,7 @@ describe('unsaved-changes guards', () => {
     const { next, result } = navigate(leaveGuards[0], { path: '/a' }, { path: '/a' })
     await result
 
-    // Switching language re-enters the same page; the edits survive it.
+    // Same-path UI query/hash changes are not a leave; `lang` is handled separately.
     expect(confirm).not.toHaveBeenCalled()
     expect(next).toHaveBeenCalledWith()
   })

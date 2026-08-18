@@ -364,10 +364,16 @@ const syncPersistedContent = (
     // Baseline is now in sync with the editing model: clear dirty state.
     markSaved()
   } else {
-    // preserve-local: keep the user's in-flight edits (dirty state untouched).
+    // preserve-local: keep the user's in-flight edits and the document they
+    // are editing. Taking `id` / language identity from `cloned` would save
+    // those edits onto another language version.
     content.value = {
       ...content.value,
       ...cloned,
+      id: content.value.id,
+      language_iso: content.value.language_iso,
+      i18n_parent_id: content.value.i18n_parent_id,
+      i18n_canonical_id: content.value.i18n_canonical_id,
       content: content.value.content,
     }
 
@@ -384,6 +390,14 @@ watch(
   [currentContentSource, hydrationBlockLookup],
   ([newContent]) => {
     if (newContent) {
+      const isIncomingDifferentDocument =
+        !!content.value?.id && !!newContent.id && content.value.id !== newContent.id
+      // A different content row while dirty is a leave, not a refetch. The
+      // guard confirms first; until then keep the in-edit document as-is.
+      if (isIncomingDifferentDocument && isDirty.value) {
+        return
+      }
+
       const shouldReplace = !content.value || !persistedContent.value || !isDirty.value
 
       syncPersistedContent(newContent, shouldReplace ? 'replace' : 'preserve-local')
