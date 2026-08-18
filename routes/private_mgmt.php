@@ -211,9 +211,13 @@ Route::group(['prefix' => 'teams/{team}'], function () {
     Route::delete('users/{user}', [TeamUserController::class, 'destroy'])->name('teams.users.destroy');
 
     Route::get('invites', [TeamInviteController::class, 'index'])->name('teams.invites.index');
-    Route::post('invites', [TeamInviteController::class, 'store'])->name('teams.invites.store');
+    Route::post('invites', [TeamInviteController::class, 'store'])
+        ->middleware('throttle:crucial')
+        ->name('teams.invites.store');
     Route::delete('invites/{invite}', [TeamInviteController::class, 'destroy'])->name('teams.invites.destroy');
-    Route::post('invites/{invite}/resend', TeamInviteResendController::class)->name('teams.invites.resend');
+    Route::post('invites/{invite}/resend', TeamInviteResendController::class)
+        ->middleware('throttle:crucial')
+        ->name('teams.invites.resend');
 
     Route::get('saml-provider', [TeamSamlProviderController::class, 'show'])->name('teams.saml-provider.show');
     Route::put('saml-provider', [TeamSamlProviderController::class, 'upsert'])->name('teams.saml-provider.upsert');
@@ -246,9 +250,13 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::delete('ai-configs/{aiConfig}', [SpaceAiConfigController::class, 'destroy'])->name('spaces.ai-configs.destroy');
 
     Route::get('invites', [SpaceInviteController::class, 'index'])->name('spaces.invites.index');
-    Route::post('invites', [SpaceInviteController::class, 'store'])->name('spaces.invites.store');
+    Route::post('invites', [SpaceInviteController::class, 'store'])
+        ->middleware('throttle:crucial')
+        ->name('spaces.invites.store');
     Route::delete('invites/{invite}', [SpaceInviteController::class, 'destroy'])->name('spaces.invites.destroy');
-    Route::post('invites/{invite}/resend', SpaceInviteResendController::class)->name('spaces.invites.resend');
+    Route::post('invites/{invite}/resend', SpaceInviteResendController::class)
+        ->middleware('throttle:crucial')
+        ->name('spaces.invites.resend');
 
     Route::get('people', [SpacePeopleController::class, 'index'])->name('spaces.people.index');
 
