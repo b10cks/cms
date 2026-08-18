@@ -35,6 +35,21 @@ interface UploadFileWithProgress extends UploadFile {
 const { uploadAsset } = useAssets(props.spaceId)
 const { ensureAssetFieldData, getMissingRequiredFields } = useAssetRequirements(props.spaceId)
 const files = ref<UploadFileWithProgress[]>([])
+
+const revokeFilePreviews = (items: UploadFileWithProgress[]) => {
+  for (const file of items) {
+    if (file.preview) {
+      URL.revokeObjectURL(file.preview)
+      file.preview = undefined
+    }
+  }
+}
+
+const clearFiles = () => {
+  revokeFilePreviews(files.value)
+  files.value = []
+}
+
 const detailsOpen = ref(false)
 const selectedFile = ref<UploadFileWithProgress | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -189,6 +204,7 @@ const markFileComplete = (file: UploadFileWithProgress) => {
   updateFileStatus(file.id, 'complete')
   if (file.preview) {
     URL.revokeObjectURL(file.preview)
+    file.preview = undefined
   }
 }
 
@@ -273,7 +289,7 @@ const handleUpload = async () => {
       props.onUploadComplete()
     }
     emit('update:open', false)
-    files.value = []
+    clearFiles()
   }
 }
 
@@ -291,10 +307,14 @@ const onOpenChange = (open: boolean) => {
 
   if (!open) {
     selectedFile.value = null
-    files.value = []
+    clearFiles()
   }
   emit('update:open', open)
 }
+
+onBeforeUnmount(() => {
+  revokeFilePreviews(files.value)
+})
 
 const handleReplaceFile = () => {
   if (!selectedFile.value) return
