@@ -65,6 +65,7 @@ class PublishContent extends BasePublishAction
         $publishedAt = $this->resolvePublishedAt($data);
 
         $content->getConnection()->transaction(function () use ($data, $content, $space, $owner, &$success, $validatedContent, $publishedAt) {
+            $this->lockContentForUpdate($content);
             $this->clearScheduledVersions($content);
             $this->processPublish($data, $content, $owner, $validatedContent);
             $this->finalizePublish($content, $space, $publishedAt);

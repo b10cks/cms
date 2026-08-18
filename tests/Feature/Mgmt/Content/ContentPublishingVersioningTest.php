@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Mgmt\Content;
 
+use App\Actions\Content\PublishContent;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
@@ -404,6 +405,39 @@ class ContentPublishingVersioningTest extends TestCase
         $content->refresh()->load('current_version');
 
         $this->assertSame(['summary' => 'Second write'], $content->current_version?->content);
+    }
+
+    #[Test]
+    public function publish_branches_from_the_committed_version_not_the_one_it_was_resolved_with(): void
+    {
+        $this->actingAs($this->owner);
+
+        $content = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+            currentContent: ['summary' => 'Draft summary'],
+        );
+        $staleModel = Content::query()->findOrFail($content->id);
+
+        // A concurrent update advances the pointer after publish resolved its model.
+        $this->patchJson(route('mgmt.contents.update', [
+            'space' => $this->space->id,
+            'content' => $content->id,
+        ]), [
+            'content' => ['summary' => 'Concurrent draft'],
+        ])->assertOk();
+        $concurrentVersionId = $content->refresh()->current_version_id;
+
+        app(PublishContent::class)->execute(
+            ['content' => ['summary' => 'Published from stale model']],
+            $staleModel,
+            $this->space,
+            $this->owner,
+        );
+
+        $content->refresh()->load('published_version');
+
+        $this->assertSame($concurrentVersionId, $content->published_version?->parent_id);
+        $this->assertSame(['summary' => 'Published from stale model'], $content->published_version?->content);
     }
 
     #[Test]

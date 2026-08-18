@@ -117,9 +117,18 @@ abstract class BasePublishAction
         $content->load('published_version');
     }
 
-    protected function lockContentForUpdate(Content $content): Content
+    /**
+     * Lock the content row and adopt its version pointers, so the version this
+     * action branches from is the one committed right now, not the one the
+     * route model resolved before a concurrent update. Call inside the
+     * transaction — a lock taken outside is released immediately.
+     */
+    protected function lockContentForUpdate(Content $content): void
     {
-        return Content::lockForUpdate()->findOrFail($content->id);
+        $locked = Content::query()->lockForUpdate()->findOrFail($content->id);
+        $content->current_version_id = $locked->current_version_id;
+        $content->published_version_id = $locked->published_version_id;
+        $content->load('current_version');
     }
 
     protected function clearScheduledVersions(Content $content, ?ContentVersion $exceptVersion = null): void
