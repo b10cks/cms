@@ -14,7 +14,10 @@ interface IndicatorProps {
 const mountIndicator = (props: IndicatorProps) => mount(DropIndicator, { props })
 
 // The first child div is the line itself; the optional second one is the label.
-const line = (wrapper: ReturnType<typeof mountIndicator>) => wrapper.findAll('div')[1]
+const line = (wrapper: ReturnType<typeof mountIndicator>) => wrapper.findAll('div')[1]!
+const lineStyle = (props: IndicatorProps) => (line(mountIndicator(props)).element as HTMLElement).style
+const labelStyle = (props: IndicatorProps) =>
+  (mountIndicator(props).findAll('div')[2]!.element as HTMLElement).style
 
 describe('root', () => {
   it('is hidden from assistive tech and does not swallow the drop', () => {
@@ -28,63 +31,63 @@ describe('root', () => {
 })
 
 describe('orientation', () => {
-  it.each(['top', 'bottom'] as const)('draws %s as a horizontal line', (edge) => {
-    expect(line(mountIndicator({ edge })).classes().join(' ')).toContain('h-[--line-thickness]')
+  it.each(['top', 'bottom'] as const)('draws %s as a 3px horizontal stroke', (edge) => {
+    const style = lineStyle({ edge })
+
+    expect(style.height).toBe('3px')
+    expect(style.width).toBe('')
   })
 
-  it.each(['left', 'right'] as const)('draws %s as a vertical line', (edge) => {
-    expect(line(mountIndicator({ edge })).classes().join(' ')).toContain('w-[--line-thickness]')
+  it.each(['left', 'right'] as const)('draws %s as a 3px vertical stroke', (edge) => {
+    const style = lineStyle({ edge })
+
+    expect(style.width).toBe('3px')
+    expect(style.height).toBe('')
   })
 
-  it('anchors the line to the named edge', () => {
-    expect(line(mountIndicator({ edge: 'top' })).classes()).toContain('top-[--line-offset]')
-    expect(line(mountIndicator({ edge: 'right' })).classes()).toContain('right-[--line-offset]')
-    expect(line(mountIndicator({ edge: 'bottom' })).classes()).toContain('bottom-[--line-offset]')
-    expect(line(mountIndicator({ edge: 'left' })).classes()).toContain('left-[--line-offset]')
+  it.each(['top', 'right', 'bottom', 'left'] as const)('anchors the line to the %s edge', (edge) => {
+    expect(lineStyle({ edge })[edge]).not.toBe('')
   })
 })
 
-describe('geometry custom properties', () => {
-  const styleOf = (props: IndicatorProps) =>
-    line(mountIndicator(props)).attributes('style') ?? ''
-
-  it('pins the stroke, terminal and glow sizes', () => {
-    const style = styleOf({ edge: 'top' })
-
-    expect(style).toContain('--line-thickness: 3px')
-    expect(style).toContain('--terminal-size: 10px')
-    expect(style).toContain('--glow-size: 8px')
-  })
-
+describe('geometry', () => {
   it('centres the line in the gap between the two items', () => {
-    expect(styleOf({ edge: 'top', gap: '8px' })).toContain(
-      '--line-offset: calc(-0.5 * (8px + 3px))'
-    )
+    // -(gap + stroke) / 2 = -(8 + 3) / 2
+    expect(lineStyle({ edge: 'top', gap: '8px' }).top).toBe('calc(-5.5px)')
   })
 
   it('treats a missing gap as no gap', () => {
-    expect(styleOf({ edge: 'top' })).toContain('--line-offset: calc(-0.5 * (0px + 3px))')
+    expect(lineStyle({ edge: 'bottom' }).bottom).toBe('calc(-1.5px)')
   })
 
   it('applies the inset to both ends by default', () => {
-    const style = styleOf({ edge: 'top', inset: '12px' })
+    const style = lineStyle({ edge: 'top', inset: '12px' })
 
-    expect(style).toContain('--indicator-inset: 12px')
-    expect(style).toContain('--indicator-leading: 12px')
+    expect(style.left).toBe('12px')
+    expect(style.right).toBe('12px')
   })
 
   it('lets indent override the leading edge to reflect tree depth', () => {
-    const style = styleOf({ edge: 'top', inset: '4px', indent: '40px' })
+    const style = lineStyle({ edge: 'top', inset: '4px', indent: '40px' })
 
-    expect(style).toContain('--indicator-inset: 4px')
-    expect(style).toContain('--indicator-leading: 40px')
+    expect(style.left).toBe('40px')
+    expect(style.right).toBe('4px')
   })
 
-  it('defaults both offsets to zero', () => {
-    const style = styleOf({ edge: 'left' })
+  it('insets vertical lines top and bottom', () => {
+    const style = lineStyle({ edge: 'left', inset: '6px' })
 
-    expect(style).toContain('--indicator-inset: 0px')
-    expect(style).toContain('--indicator-leading: 0px')
+    expect(style.top).toBe('6px')
+    expect(style.bottom).toBe('6px')
+  })
+
+  it('places the terminal dot on the leading end of the line', () => {
+    const terminal = line(mountIndicator({ edge: 'top' })).find('span').element as HTMLElement
+
+    expect(terminal.style.width).toBe('10px')
+    expect(terminal.style.height).toBe('10px')
+    expect(terminal.style.left).toBe('0px')
+    expect(terminal.style.transform).toBe('translate(-50%, -50%)')
   })
 })
 
@@ -102,20 +105,27 @@ describe('label', () => {
     expect(mountIndicator({ edge: 'top', label: 'Move inside' }).text()).toBe('Move inside')
   })
 
-  it('positions the label per edge', () => {
-    const labelFor = (edge: IndicatorProps['edge']) =>
-      mountIndicator({ edge, label: 'x' }).findAll('div')[2].classes()
+  it('hugs the trailing end of a horizontal line, centred on the stroke', () => {
+    const top = labelStyle({ edge: 'top', label: 'x', gap: '4px' })
+    expect(top.right).toBe('0.5rem')
+    expect(top.top).toBe('calc(-2px)')
+    expect(top.transform).toBe('translateY(-50%)')
 
-    expect(labelFor('top')).toContain('top-[calc(var(--line-offset)-1.5rem)]')
-    expect(labelFor('bottom')).toContain('bottom-[calc(var(--line-offset)-1.5rem)]')
-    expect(labelFor('left')).toContain('left-[calc(var(--line-offset)+0.5rem)]')
-    expect(labelFor('right')).toContain('right-[calc(var(--line-offset)+0.5rem)]')
+    const bottom = labelStyle({ edge: 'bottom', label: 'x', gap: '4px' })
+    expect(bottom.right).toBe('0.5rem')
+    expect(bottom.bottom).toBe('calc(-2px)')
+    expect(bottom.transform).toBe('translateY(50%)')
+  })
+
+  it('sits beside a vertical line', () => {
+    expect(labelStyle({ edge: 'left', label: 'x' }).left).not.toBe('')
+    expect(labelStyle({ edge: 'right', label: 'x' }).right).not.toBe('')
   })
 
   it('stays inside the aria-hidden wrapper, so the label is purely visual', () => {
     const wrapper = mountIndicator({ edge: 'top', label: 'Move inside' })
 
     expect(wrapper.attributes('aria-hidden')).toBe('true')
-    expect(wrapper.findAll('div')[2].attributes('aria-hidden')).toBeUndefined()
+    expect(wrapper.findAll('div')[2]!.attributes('aria-hidden')).toBeUndefined()
   })
 })

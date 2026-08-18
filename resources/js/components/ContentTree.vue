@@ -407,6 +407,7 @@ const resolveMenuContext = (targetId: string | null): ContentTreeActionContext =
 }
 
 const clearDropState = () => {
+  cancelExpandOnHover()
   activeDropTargetId.value = null
   activeDropEdge.value = null
   rootDropMode.value = null
@@ -1341,18 +1342,22 @@ const isSelfDrop = (dragItems: ContentTreeDragItem[], targetId: string | null) =
 }
 
 // A fully-resolved drop: the concrete destination (parent + index) plus exactly
-// where the indicator should render. Both the live indicator and the committed
-// move derive from this single function, so what the user sees is always what
-// lands. The indicator is always anchored to the hovered row because every
-// outcome (before / after / first-child) lands adjacent to it.
+// what feedback to render. Both the live feedback and the committed move derive
+// from this single function, so what the user sees is always what lands.
+//   lineRowId      – row whose `side` edge carries the insertion line, drawn at
+//                    `level`; null when the drop only re-parents (the receiving
+//                    folder dictates its own order, so a position would lie).
+//   containerRowId – row painted as the receiving container: the hovered folder
+//                    for a nest, or the (unsorted) parent of a hovered leaf.
+// The destination parent's indent guide is highlighted on top of either.
 type DropResolution = {
   parentId: string | null
   insertIndex: number
   afterId: string | null
-  rowId: string
+  lineRowId: string | null
   side: 'top' | 'bottom'
   level: number
-  nest: boolean
+  containerRowId: string | null
   label: string
 }
 
@@ -1377,10 +1382,10 @@ const resolveDrop = (targetId: string, edge: Edge, draggedIds: string[]): DropRe
       parentId: targetParentId,
       insertIndex: index,
       afterId: index > 0 ? (siblings[index - 1] ?? null) : null,
-      rowId: targetId,
+      lineRowId: targetId,
       side: 'top',
       level: targetLevel,
-      nest: false,
+      containerRowId: null,
       label: t('labels.contentTree.drop.moveBefore') as string,
     }
   }
@@ -1395,10 +1400,10 @@ const resolveDrop = (targetId: string, edge: Edge, draggedIds: string[]): DropRe
       afterId: insertIndex > 0 ? (siblings[insertIndex - 1] ?? null) : null,
       // Anchor below the target's whole visible subtree so the line sits exactly
       // where the new sibling will appear, not under the (expanded) parent header.
-      rowId: lastVisibleDescendant(targetId),
+      lineRowId: lastVisibleDescendant(targetId),
       side: 'bottom',
       level: targetLevel,
-      nest: false,
+      containerRowId: null,
       label: t('labels.contentTree.drop.moveAfter') as string,
     }
   }
@@ -1409,10 +1414,24 @@ const resolveDrop = (targetId: string, edge: Edge, draggedIds: string[]): DropRe
     parentId: targetId,
     insertIndex: 0,
     afterId: null,
-    rowId: targetId,
+    lineRowId: targetId,
     side: 'bottom',
     level: targetLevel + 1,
-    nest: true,
+    containerRowId: targetId,
+    label: t('labels.contentTree.drop.moveInto') as string,
+  })
+
+  // A leaf inside a folder that dictates its own order: the drop can only file
+  // the items into that folder, so highlight the folder instead of drawing a
+  // position line that would not hold.
+  const fileIntoParent = (parentId: string): DropResolution => ({
+    parentId,
+    insertIndex: siblingsOf(parentId).length,
+    afterId: null,
+    lineRowId: null,
+    side: 'bottom',
+    level: targetLevel,
+    containerRowId: parentId,
     label: t('labels.contentTree.drop.moveInto') as string,
   })
 
@@ -1420,10 +1439,17 @@ const resolveDrop = (targetId: string, edge: Edge, draggedIds: string[]): DropRe
     return reorderBefore()
   }
 
-  // The middle band ('left') nests into a container; for a leaf it falls back to
-  // reordering after, since a leaf cannot hold children.
+  // The middle band ('left') nests into a container. A leaf cannot hold
+  // children: it reorders after itself where its parent is manually sorted,
+  // otherwise the drop just files the items into that parent.
   if (edge === 'left') {
-    return isContainer ? nestAsFirstChild() : reorderAfter()
+    if (isContainer) {
+      return nestAsFirstChild()
+    }
+
+    return targetParentId !== null && !allowsManualSort(targetParentId)
+      ? fileIntoParent(targetParentId)
+      : reorderAfter()
   }
 
   // edge === 'bottom' always reorders after the row (same parent), so items can be
@@ -1442,6 +1468,72 @@ const dropResolution = computed<DropResolution | null>(() => {
 
   return resolveDrop(targetId, edge, currentDragIds.value)
 })
+
+// Indent guides: one vertical hairline per ancestor level, drawn in that
+// ancestor's chevron column. Level k's column is (k - 0.5)rem of row padding
+// plus half of the 16px chevron icon, so a 1rem-period gradient starting at
+// level 1 covers every ancestor of a row in a single element.
+const guideOffset = (level: number) => `calc(${level - 0.5}rem + 8px)`
+
+// While dragging, the destination parent's guide lights up along its whole
+// visible subtree, connecting the insertion line to the folder it lands in.
+const dropGuide = computed(() => {
+  const resolution = dropResolution.value
+  if (!resolution?.parentId) {
+    return null
+  }
+
+  return { parentId: resolution.parentId, level: resolution.level - 1 }
+})
+
+const isInDropGuideSubtree = (id: string): boolean => {
+  const guide = dropGuide.value
+  return !!guide && (descendantIdsMap.value.get(guide.parentId)?.has(id) ?? false)
+}
+
+// The insertion line starts on the parent's guide so its terminal dot reads as
+// a node on the connector; root-level lines have no guide to join.
+const dropLineIndent = (level: number) => (level > 1 ? guideOffset(level - 1) : '0.5rem')
+
+// Hovering a collapsed folder with nest intent expands it after a short dwell,
+// so items can be dropped between its children without leaving the drag.
+const EXPAND_ON_HOVER_DELAY = 600
+let expandOnHoverTimer: ReturnType<typeof setTimeout> | null = null
+let expandOnHoverId: string | null = null
+
+const cancelExpandOnHover = () => {
+  if (expandOnHoverTimer) {
+    clearTimeout(expandOnHoverTimer)
+  }
+  expandOnHoverTimer = null
+  expandOnHoverId = null
+}
+
+const scheduleExpandOnHover = (item: FlatContentMenuItem, edge: Edge | null) => {
+  const wantsExpand =
+    edge === 'left' && hasVisibleChildren(item.id) && !expandedSet.value.has(item.id)
+
+  if (!wantsExpand) {
+    if (expandOnHoverId === item.id) {
+      cancelExpandOnHover()
+    }
+    return
+  }
+
+  if (expandOnHoverId === item.id) {
+    return
+  }
+
+  cancelExpandOnHover()
+  expandOnHoverId = item.id
+  expandOnHoverTimer = setTimeout(() => {
+    expandOnHoverTimer = null
+    expandOnHoverId = null
+    if (activeDropTargetId.value === item.id && !expandedSet.value.has(item.id)) {
+      treeExpanded.value = [...treeExpanded.value, item.id]
+    }
+  }, EXPAND_ON_HOVER_DELAY)
+}
 
 const moveDraggedItemsToRoot = async (dragItems: ContentTreeDragItem[]) => {
   const orderedDraggedIds = getNormalizedIds(
@@ -1568,6 +1660,7 @@ const registerItemInteractions = (item: FlatContentMenuItem, element: HTMLElemen
         activeDropTargetId.value = item.id
         activeDropEdge.value = closestEdge
         rootDropMode.value = null
+        scheduleExpandOnHover(item, closestEdge)
       },
       onDrag: ({ self, source }) => {
         const dragItems = getContentTreeDragItems(source.data)
@@ -1595,8 +1688,12 @@ const registerItemInteractions = (item: FlatContentMenuItem, element: HTMLElemen
         }
 
         rootDropMode.value = null
+        scheduleExpandOnHover(item, closestEdge)
       },
       onDragLeave: () => {
+        if (expandOnHoverId === item.id) {
+          cancelExpandOnHover()
+        }
         if (activeDropTargetId.value === item.id) {
           activeDropTargetId.value = null
           activeDropEdge.value = null
@@ -2413,7 +2510,7 @@ onBeforeUnmount(() => {
             isItemSelected(item.value.id)
               ? 'bg-tree-selected border-tree-selected-border text-tree-selected-foreground'
               : '',
-            dropResolution?.nest && dropResolution.rowId === item.value.id
+            dropResolution?.containerRowId === item.value.id
               ? 'bg-tree-drop ring-1 ring-ring/40'
               : '',
           ]"
@@ -2427,12 +2524,24 @@ onBeforeUnmount(() => {
           @keydown="handleItemKeydown($event, item.value)"
           @toggle="handleToggle"
         >
+          <span
+            v-if="item.level > 1"
+            aria-hidden="true"
+            class="pointer-events-none absolute -top-0.5 -bottom-0.5 bg-[linear-gradient(to_right,var(--color-tree-guide)_1px,transparent_1px)] bg-[length:1rem_100%] bg-repeat-x"
+            :style="{ left: guideOffset(1), width: `${item.level - 1}rem` }"
+          />
+          <span
+            v-if="dropGuide && isInDropGuideSubtree(item.value.id)"
+            aria-hidden="true"
+            class="pointer-events-none absolute -top-0.5 -bottom-0.5 w-0.5 -translate-x-px bg-info"
+            :style="{ left: guideOffset(dropGuide.level) }"
+          />
           <DropIndicator
-            v-if="dropResolution && dropResolution.rowId === item.value.id"
+            v-if="dropResolution && dropResolution.lineRowId === item.value.id"
             :edge="dropResolution.side"
             gap="4px"
             inset="6px"
-            :indent="`${dropResolution.level - 0.5}rem`"
+            :indent="dropLineIndent(dropResolution.level)"
             :label="dropResolution.label"
           />
 

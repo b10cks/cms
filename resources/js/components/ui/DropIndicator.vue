@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { CSSProperties } from 'vue'
+
 type Edge = 'top' | 'right' | 'bottom' | 'left'
 
 const {
@@ -9,6 +11,7 @@ const {
   label,
 } = defineProps<{
   edge: Edge
+  /** Distance between the host and its neighbour; the line is centred inside it. */
   gap?: string
   inset?: string
   /** Leading (left) offset for horizontal lines, used to reflect tree depth. Falls back to `inset`. */
@@ -16,39 +19,46 @@ const {
   label?: string
 }>()
 
-type Orientation = 'horizontal' | 'vertical'
+const STROKE = 3
+const TERMINAL = 10
 
-const edgeToOrientationMap: Record<Edge, Orientation> = {
-  top: 'horizontal',
-  bottom: 'horizontal',
-  left: 'vertical',
-  right: 'vertical',
-}
+const isHorizontal = computed(() => edge === 'top' || edge === 'bottom')
 
-const orientationStyles: Record<Orientation, string> = {
-  horizontal:
-    'h-[--line-thickness] left-[--indicator-leading] right-[--indicator-inset] before:left-0 before:-translate-x-1/2',
-  vertical:
-    'w-[--line-thickness] top-[--indicator-inset] bottom-[--indicator-inset] before:top-0 before:-translate-y-1/2',
-}
+// Half the gap plus half the stroke, pushed outside the host's edge, so the
+// line sits exactly between the host and its neighbour.
+const offset = computed(() => `calc(-0.5 * (${gap} + ${STROKE}px))`)
 
-const edgeStyles: Record<Edge, string> = {
-  top: 'top-[--line-offset] before:top-0',
-  right: 'right-[--line-offset] before:right-0',
-  bottom: 'bottom-[--line-offset] before:bottom-0',
-  left: 'left-[--line-offset] before:left-0',
-}
+const lineStyle = computed<CSSProperties>(() =>
+  isHorizontal.value
+    ? { height: `${STROKE}px`, left: indent ?? inset, right: inset, [edge]: offset.value }
+    : { width: `${STROKE}px`, top: inset, bottom: inset, [edge]: offset.value }
+)
 
-const labelStyles: Record<Edge, string> = {
-  top: 'left-3 top-[calc(var(--line-offset)-1.5rem)]',
-  right: 'right-[calc(var(--line-offset)+0.5rem)] top-2',
-  bottom: 'left-3 bottom-[calc(var(--line-offset)-1.5rem)]',
-  left: 'left-[calc(var(--line-offset)+0.5rem)] top-2',
-}
+const terminalStyle = computed<CSSProperties>(() => ({
+  width: `${TERMINAL}px`,
+  height: `${TERMINAL}px`,
+  borderWidth: `${STROKE}px`,
+  ...(isHorizontal.value
+    ? { left: 0, top: '50%', transform: 'translate(-50%, -50%)' }
+    : { top: 0, left: '50%', transform: 'translate(-50%, -50%)' }),
+}))
 
-const strokeSize = 3
-const terminalSize = 10
-const glowSize = 8
+// The label hugs the far end of the line and is centred on it, so it never
+// covers the host row's own content.
+const labelStyle = computed<CSSProperties>(() => {
+  const centre = `calc(${offset.value} + ${STROKE / 2}px)`
+
+  switch (edge) {
+    case 'top':
+      return { right: '0.5rem', top: centre, transform: 'translateY(-50%)' }
+    case 'bottom':
+      return { right: '0.5rem', bottom: centre, transform: 'translateY(50%)' }
+    case 'left':
+      return { left: `calc(${centre} + 0.75rem)`, top: '0.5rem' }
+    case 'right':
+      return { right: `calc(${centre} + 0.75rem)`, top: '0.5rem' }
+  }
+})
 </script>
 
 <template>
@@ -57,27 +67,18 @@ const glowSize = 8
     class="pointer-events-none absolute inset-0 z-20"
   >
     <div
-      :class="[
-        'absolute rounded-full bg-info shadow-[0_0_0_1px_hsl(var(--info)/0.15),0_0_0_var(--glow-size)_hsl(var(--info)/0.18)]',
-        `before:content-[''] before:absolute before:h-[--terminal-size] before:w-[--terminal-size] before:rounded-full before:border-[length:--line-thickness] before:border-solid before:border-info before:bg-background before:shadow-[0_0_0_1px_hsl(var(--background)),0_0_0_6px_hsl(var(--info)/0.2)]`,
-        orientationStyles[edgeToOrientationMap[edge]],
-        edgeStyles[edge],
-      ]"
-      :style="{
-        '--line-thickness': `${strokeSize}px`,
-        '--line-offset': `calc(-0.5 * (${gap} + ${strokeSize}px))`,
-        '--terminal-size': `${terminalSize}px`,
-        '--glow-size': `${glowSize}px`,
-        '--indicator-inset': inset,
-        '--indicator-leading': indent ?? inset,
-      }"
-    />
+      class="absolute rounded-full bg-info ring-4 ring-info/20"
+      :style="lineStyle"
+    >
+      <span
+        class="absolute rounded-full border-solid border-info bg-background"
+        :style="terminalStyle"
+      />
+    </div>
     <div
       v-if="label"
-      :class="[
-        'absolute rounded-md border border-info/30 bg-background/95 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-info shadow-sm backdrop-blur-sm',
-        labelStyles[edge],
-      ]"
+      class="absolute rounded-md border border-info/30 bg-background/95 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide whitespace-nowrap text-info shadow-sm backdrop-blur-sm"
+      :style="labelStyle"
     >
       {{ label }}
     </div>
