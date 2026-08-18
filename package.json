@@ -51,13 +51,13 @@
     "@vueuse/integrations": "^14.4.0",
     "chart.js": "^4.5.1",
     "class-variance-authority": "^0.7.1",
-    "dayjs": "^1.11.21",
+    "dayjs": "^1.11.23",
     "diff": "^9.0.0",
     "dompurify": "^3.4.13",
     "laravel-echo": "^2.4.0",
     "leaflet": "^1.9.4",
-    "marked": "^18.0.9",
-    "posthog-js": "^1.416.1",
+    "marked": "^18.0.10",
+    "posthog-js": "^1.417.4",
     "pusher-js": "^8.6.0",
     "qrcode": "^1.5.4",
     "reka-ui": "^2.10.3",
@@ -92,7 +92,7 @@
     "vitepress": "^1.6.4",
     "vitepress-openapi": "^0.2.4",
     "vitest": "^4.1.10",
-    "vue-tsc": "^3.3.9"
+    "vue-tsc": "^3.3.10"
   },
   "lint-staged": {
     "*.{js,json,md,jsx,ts,tsx,vue,yaml}": "oxlint --fix"
