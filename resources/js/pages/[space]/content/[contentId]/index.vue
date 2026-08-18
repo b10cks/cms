@@ -325,6 +325,31 @@ const aiInteractionRef = useTemplateRef('aiInteractionRef')
 const showAi = ref(false)
 
 const cloneContent = (value: ContentResource): ContentResource => JSON.parse(JSON.stringify(value))
+
+const isSameJsonValue = (left: unknown, right: unknown): boolean => {
+  if (left === right) return true
+  if (left == null || right == null || typeof left !== typeof right) return left === right
+  if (typeof left !== 'object') return Object.is(left, right)
+
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
+      return false
+    }
+
+    return left.every((item, index) => isSameJsonValue(item, right[index]))
+  }
+
+  const leftRecord = left as Record<string, unknown>
+  const rightRecord = right as Record<string, unknown>
+  const leftKeys = Object.keys(leftRecord)
+  if (leftKeys.length !== Object.keys(rightRecord).length) return false
+
+  return leftKeys.every(
+    (key) =>
+      Object.prototype.hasOwnProperty.call(rightRecord, key) &&
+      isSameJsonValue(leftRecord[key], rightRecord[key])
+  )
+}
 const hydrationBlockLookup = computed<
   Record<string, Pick<BlockResource, 'slug' | 'schema' | 'name'>>
 >(() => {
@@ -451,11 +476,14 @@ watchDebounced(
   () => {
     if (!content.value) return
 
-    const sanitizedSerialized = JSON.stringify(sanitizedContent.value || {})
-    if (JSON.stringify(content.value.content || {}) === sanitizedSerialized) return
+    const sanitized = sanitizedContent.value || {}
+    const current = content.value.content || {}
+    // pruneScope already cloned `sanitized`; only write it back when it
+    // actually dropped something. Walk both trees instead of stringifying.
+    if (isSameJsonValue(sanitized, current)) return
 
     const wasDirty = isDirty.value
-    content.value.content = JSON.parse(sanitizedSerialized)
+    content.value.content = sanitized
     if (!wasDirty) markSaved()
   },
   { deep: true, debounce: 300 }

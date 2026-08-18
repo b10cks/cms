@@ -316,19 +316,24 @@ watch(
       return
     }
 
-    const isSame = JSON.stringify(editor.value.getJSON()) === JSON.stringify(newValue)
-    if (!isSame) {
-      isApplyingExternalContent.value = true
-      try {
-        editor.value.commands.setContent(newValue)
-        isBroken.value = false
-      } catch {
-        isBroken.value = true
-      }
-      nextTick(() => {
-        isApplyingExternalContent.value = false
-      })
+    try {
+      const incoming = editor.value.schema.nodeFromJSON(newValue)
+      if (editor.value.state.doc.eq(incoming)) return
+    } catch {
+      isBroken.value = true
+      return
     }
+
+    isApplyingExternalContent.value = true
+    try {
+      editor.value.commands.setContent(newValue)
+      isBroken.value = false
+    } catch {
+      isBroken.value = true
+    }
+    nextTick(() => {
+      isApplyingExternalContent.value = false
+    })
   }
 )
 

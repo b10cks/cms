@@ -44,11 +44,30 @@ export function createSnapshotDirtyTracker(
   current: Ref<unknown>,
   baseline: Ref<unknown>
 ): DirtyTracker {
+  const currentSnapshot = ref<string | null>(null)
+  const baselineSnapshot = ref<string | null>(null)
+
+  watch(
+    current,
+    (value) => {
+      currentSnapshot.value = value ? JSON.stringify(value) : null
+    },
+    { deep: true, flush: 'sync', immediate: true }
+  )
+
+  watch(
+    baseline,
+    (value) => {
+      baselineSnapshot.value = value ? JSON.stringify(value) : null
+    },
+    { deep: true, flush: 'sync', immediate: true }
+  )
+
   return {
     isDirty: computed(() => {
       if (!current.value || !baseline.value) return false
 
-      return JSON.stringify(current.value) !== JSON.stringify(baseline.value)
+      return currentSnapshot.value !== baselineSnapshot.value
     }),
     markSaved: () => {},
   }
