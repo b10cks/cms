@@ -107,6 +107,10 @@ class Token extends GlobalModel
         return $this->abilities->getResourceAbilities($table);
     }
 
+    /**
+     * Lookup by the raw delivery secret. These tokens are stored in plaintext
+     * so Settings can copy them after creation — unlike hashed Sanctum PATs.
+     */
     public static function findValidToken(string $plainTextToken): ?Token
     {
         return Token::with(['space'])

@@ -21,6 +21,7 @@ Create and revoke tokens in **Settings → Access tokens**. Tokens:
 - need the **`preview` ability** (`*:preview` / `contents:preview`) to fetch unpublished versions via `vid=draft`; tokens without it serve published content only
 - can expire, and record usage statistics (request counts, execution stats) you can inspect in the space's usage page
 - only work while the space is `live`
+- stay copyable from **Settings → Access tokens** after creation (stored in plaintext so an operator can retrieve the value later). Management API personal access tokens are hashed and shown once; delivery tokens are not.
 
 Use one token per environment (production, staging, preview) so each can be revoked independently — and grant `preview` only to the tokens preview environments actually use. A leaked delivery token exposes *read* access to the space's published content — and to drafts if it carries `preview`. Rotate it in settings. Tokens issued before ability enforcement were grandfathered with `preview` so embedded tokens keep working; revoke and re-issue them to tighten scope.
 

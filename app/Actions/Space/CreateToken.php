@@ -22,6 +22,8 @@ class CreateToken
             $token->abilities = ['*:read'];
         }
 
+        // Delivery tokens stay plaintext so Settings can copy them later.
+        // Sanctum personal access tokens are hashed; these are not.
         $plainTextToken = 'blx_' . Str::random(24);
         $token->token = $plainTextToken;
 

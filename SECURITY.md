@@ -73,6 +73,7 @@ The following are typically normal bugs or feature requests rather than security
 
 - Cosmetic UI defects
 - Performance issues without a plausible security impact
+- Space Data API delivery tokens stored and listed in plaintext (operators copy them from Settings after creation; documented product behavior)
 - Misconfiguration by an authorized administrator that is documented behavior
 - Dependency version bumps (unless they introduce a new vulnerability surface in b10cks)
 - End-of-life environment compatibility (unsupported PHP/DB versions)

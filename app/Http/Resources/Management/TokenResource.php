@@ -16,6 +16,7 @@ class TokenResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            // Listed so Settings can copy an existing delivery token. Deliberate.
             'token' => $this->token,
             'abilities' => $this->abilities->toArray(),
             'execution_count' => $this->execution_count,

@@ -14,7 +14,7 @@ description: "Space settings: access tokens, people and roles, configuration, AI
 
 ## Access tokens
 
-Create and revoke [Data API tokens](../concepts/access-tokens.md). Each token shows creation, expiry, last-used time, and usage count. **The token value is shown once at creation — copy it then.**
+Create and revoke [Data API tokens](../concepts/access-tokens.md). Each token shows creation, expiry, last-used time, and usage count. The token value stays available here so it can be copied later — revoke it if it leaks. (Management API personal access tokens are different: those are shown once at creation.)
 
 ## Editor
 
