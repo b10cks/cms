@@ -142,9 +142,12 @@ const navigate = (
   to: Partial<RouteLocationNormalized>
 ) => {
   const next = vi.fn()
+  // A real router always normalizes `query`; the guard reads `?lang` off it.
+  const normalize = (location: Partial<RouteLocationNormalized>) =>
+    ({ query: {}, ...location }) as RouteLocationNormalized
   const result = guard(
-    to as RouteLocationNormalized,
-    from as RouteLocationNormalized,
+    normalize(to),
+    normalize(from),
     next as unknown as NavigationGuardNext
   )
 
