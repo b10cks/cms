@@ -183,6 +183,73 @@ class ContentTreeOperationServiceTest extends TestCase
     }
 
     #[Test]
+    public function it_reorders_inside_a_manually_sorted_folder_when_space_sorting_is_disabled(): void
+    {
+        $this->createAndActAs();
+
+        $space = Space::factory()->create();
+        $this->setUpSpaceTesting($space);
+        app()->instance('currentSpace', $space);
+
+        $block = Block::factory()->create(['type' => 'root']);
+
+        $folder = $this->createContentItem($space, $block, 'Folder', 'folder');
+        $folder->settings = ['child_sort_by' => 'manual'];
+        $folder->save();
+
+        $first = $this->createContentItem($space, $block, 'First', 'first', $folder);
+        $second = $this->createContentItem($space, $block, 'Second', 'second', $folder);
+        $third = $this->createContentItem($space, $block, 'Third', 'third', $folder);
+
+        // Creation inside the folder already appends positions …
+        $this->assertSame([0, 1, 2], [
+            $first->fresh()->position,
+            $second->fresh()->position,
+            $third->fresh()->position,
+        ]);
+
+        // … and a drop between siblings resequences them, even though the
+        // space-level toggle is off.
+        app(ContentTreeOperationService::class)->moveItems([$third->id], $folder->id, $first->id, $space);
+
+        $orderedIds = Content::query()
+            ->where('parent_id', $folder->id)
+            ->orderBy('position')
+            ->pluck('id')
+            ->all();
+
+        $this->assertSame([$first->id, $third->id, $second->id], $orderedIds);
+    }
+
+    #[Test]
+    public function it_reparents_without_reordering_into_an_attribute_sorted_folder(): void
+    {
+        $this->createAndActAs();
+
+        $space = Space::factory()->create();
+        $this->setUpSpaceTesting($space);
+        app()->instance('currentSpace', $space);
+        $this->enableContentSorting($space);
+
+        $block = Block::factory()->create(['type' => 'root']);
+
+        $folder = $this->createContentItem($space, $block, 'Folder', 'folder');
+        $folder->settings = ['child_sort_by' => 'name'];
+        $folder->save();
+
+        $first = $this->createContentItem($space, $block, 'First', 'first', $folder);
+        $loose = $this->createContentItem($space, $block, 'Loose', 'loose');
+        $loosePosition = $loose->position;
+
+        app(ContentTreeOperationService::class)->moveItems([$loose->id], $folder->id, null, $space, 0);
+
+        $this->assertSame($folder->id, $loose->fresh()->parent_id);
+        // The folder dictates its own order, so nothing is resequenced.
+        $this->assertSame(0, $first->fresh()->position);
+        $this->assertSame($loosePosition, $loose->fresh()->position);
+    }
+
+    #[Test]
     public function moving_content_does_not_unpublish_it(): void
     {
         $this->createAndActAs();

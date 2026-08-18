@@ -64,7 +64,11 @@ class CreateContent
             if (! \Arr::has($data, 'language_iso')) {
                 $data['language_iso'] = $space->settings->getDefaultLanguage();
             }
-            $sortingEnabled = $space->settings->isContentSortingEnabled();
+            /** @var Block $block */
+            $block ??= Block::query()->findOrFail($data['block_id']);
+            $parent = isset($data['parent_id']) ? Content::query()->with('block')->find($data['parent_id']) : null;
+
+            $sortingEnabled = $this->contentPositionService->allowsManualSort($space, $parent);
             $requestedPosition = $sortingEnabled && array_key_exists('position', $data) && $data['position'] !== null
                 ? (int) $data['position']
                 : null;
@@ -75,10 +79,6 @@ class CreateContent
                 // Sorting disabled: leave position at the column default (0) so ordering falls back to name.
                 unset($data['position']);
             }
-
-            /** @var Block $block */
-            $block ??= Block::query()->findOrFail($data['block_id']);
-            $parent = isset($data['parent_id']) ? Content::query()->with('block')->find($data['parent_id']) : null;
 
             $this->contentHierarchyValidator->validatePlacement(
                 $space,

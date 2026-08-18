@@ -80,7 +80,6 @@ class ContentTreeOperationService
 
         return $connection->transaction(function () use ($connection, $orderedIds, $parentId, $afterId, $space, $position): array {
             $warnings = [];
-            $sortingEnabled = $space->settings->isContentSortingEnabled();
             // Callers pass an already root-resolved selection (the controller
             // resolves it once for authorization) — no need to resolve again.
             $normalizedIds = $orderedIds;
@@ -104,6 +103,8 @@ class ContentTreeOperationService
                 ? Content::query()->with('block')->whereNull('deleted_at')->findOrFail($parentId)
                 : null;
             $after = $afterId ? Content::query()->whereNull('deleted_at')->findOrFail($afterId) : null;
+            // Decided once from the canonical destination; translations follow suit.
+            $sortingEnabled = $this->contentPositionService->allowsManualSort($space, $targetParent);
 
             $this->ensureAfterTargetIsCompatible($orderedItems, $targetParent?->id, $after);
             $this->validateBatchPlacement($orderedItems, $targetParent, $space);
@@ -261,7 +262,7 @@ class ContentTreeOperationService
             }
 
             if ($createdRoots->isNotEmpty()) {
-                if ($space->settings->isContentSortingEnabled()) {
+                if ($this->contentPositionService->allowsManualSort($space, $targetParent)) {
                     $this->contentPositionService->moveItems($createdRoots, $targetParent?->id, $after?->id, $position);
                 }
                 $space->touch('content_updated_at');

@@ -105,7 +105,7 @@ class UpdateContent
 
         $indexedColumnsChanged = false;
 
-        $content->getConnection()->transaction(function () use ($data, $content, $space, $owner, $validatedContent, $clientParentVersionId, &$indexedColumnsChanged) {
+        $content->getConnection()->transaction(function () use ($data, $content, $space, $owner, $validatedContent, $clientParentVersionId, $targetParent, &$indexedColumnsChanged) {
             $locked = Content::query()->lockForUpdate()->findOrFail($content->id);
             $content->current_version_id = $locked->current_version_id;
             $content->load('current_version');
@@ -121,7 +121,7 @@ class UpdateContent
 
             $contentData = $validatedContent;
             $message = data_get($data, 'message');
-            $sortingEnabled = $space->settings->isContentSortingEnabled();
+            $sortingEnabled = $this->contentPositionService->allowsManualSort($space, $targetParent);
             $shouldReposition = $sortingEnabled
                 && (array_key_exists('position', $data) || array_key_exists('parent_id', $data));
             $requestedPosition = $sortingEnabled && array_key_exists('position', $data) && $data['position'] !== null

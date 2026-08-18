@@ -55,9 +55,9 @@ class MoveContent
                 $this->reallocateSerials($content, $parent, $space);
             }
 
-            // Resequence siblings only when manual sorting is enabled for the space;
-            // otherwise the move is a pure reparent and ordering stays alphabetical.
-            if ($space->settings->isContentSortingEnabled()) {
+            // Resequence siblings only when the destination is manually sorted;
+            // otherwise the move is a pure reparent and the configured sort applies.
+            if ($this->contentPositionService->allowsManualSort($space, $parent)) {
                 $this->contentPositionService->moveItemToPosition($content, $parentId, $position);
             }
 

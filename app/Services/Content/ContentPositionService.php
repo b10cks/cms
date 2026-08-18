@@ -2,12 +2,34 @@
 
 namespace App\Services\Content;
 
+use App\Models\Management\Space;
 use App\Models\Space\Content;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class ContentPositionService
 {
+    /**
+     * Whether the children of `$parent` are ordered by hand. A folder's own
+     * `child_sort_by` wins ('manual' → yes, an attribute or content field → no);
+     * 'inherit' and the root fall back to the space-level content_sorting toggle.
+     * Mirrors allowsManualSort() in ContentTree.vue.
+     */
+    public function allowsManualSort(Space $space, ?Content $parent): bool
+    {
+        $settings = $parent?->settings;
+
+        if ($settings?->getChildContentSortField() !== null) {
+            return false;
+        }
+
+        $column = $settings?->getChildSortColumn();
+
+        return $column === null
+            ? $space->settings->isContentSortingEnabled()
+            : $column === 'position';
+    }
+
     public function nextPosition(?string $parentId, string $languageIso): int
     {
         $maxPosition = $this->baseQuery($parentId, $languageIso)->max('position');
