@@ -3,6 +3,28 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.18-3a365362] — 2026-8-18
+
+- ✅ Give guard navigation fixtures a normalized query
+- 💄 Draw connector guides and a real drop line in the content tree
+- 🐛 Honor a folder's manual child sort when repositioning content
+- 🐛 Fix latent renaming bug
+- 🔒 Give invites their own rate limiter
+- 🔒 Lock the content row inside the publish transaction
+- 🐛 Keep image previews after an upload completes
+- 🐛 Apply external editor docs the schema cannot parse
+- ⚡️ Stringify snapshot dirty state lazily again
+- 🐛 Keep language switches from carrying or duplicating drafts
+- ⚡️ Stop stringifying the editor document on every keystroke
+- 🔒 Open preview tabs without an opener
+- 🐛 Revoke upload preview URLs when the dialog closes
+- 🔒 Throttle invite create and resend
+- 🐛 Compare content versions under a row lock
+- 🐛 Keep dirty language edits from saving onto another version
+- 🔒 Harden login redirects and fail closed while auth is loading
+- 📝 Document that delivery tokens stay plaintext by design
+- ⬆️ Bump versions
+
 ## [v2026.8.18-2a8bf24f] — 2026-8-18
 
 - 💄 Draw connector guides and a real drop line in the content tree
