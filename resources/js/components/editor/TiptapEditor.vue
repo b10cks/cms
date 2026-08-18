@@ -302,6 +302,14 @@ const resetDocument = () => {
   })
 }
 
+const parseIncomingDoc = (value: Record<string, unknown>) => {
+  try {
+    return editor.value?.schema.nodeFromJSON(value) ?? null
+  } catch {
+    return null
+  }
+}
+
 watch(
   () => props.modelValue,
   (newValue) => {
@@ -316,18 +324,19 @@ watch(
       return
     }
 
-    try {
-      const incoming = editor.value.schema.nodeFromJSON(newValue)
-      if (editor.value.state.doc.eq(incoming)) return
-    } catch {
-      isBroken.value = true
+    // A doc the schema can't parse (e.g. a mark whose feature is now disabled)
+    // is still applied below — leniently, by tiptap — so the editor never keeps
+    // emitting the previous document over the incoming one.
+    const incoming = parseIncomingDoc(newValue)
+    if (incoming && editor.value.state.doc.eq(incoming)) {
+      isBroken.value = false
       return
     }
 
     isApplyingExternalContent.value = true
     try {
       editor.value.commands.setContent(newValue)
-      isBroken.value = false
+      isBroken.value = incoming === null
     } catch {
       isBroken.value = true
     }
