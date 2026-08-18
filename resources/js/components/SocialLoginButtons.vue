@@ -3,6 +3,7 @@ import GithubIcon from '~/assets/icons/github.svg?component'
 import GoogleIcon from '~/assets/icons/google.svg?component'
 import { Button } from '~/components/ui/button'
 import { runtimeConfig } from '~/lib/runtime-config'
+import { safeReturnPath } from '~/lib/safeReturnPath'
 
 const route = useRoute()
 
@@ -26,7 +27,11 @@ const providerUrl = (url: string) => {
   const inviteId = route.query.invite_id
   const inviteToken = route.query.invite_token
 
-  if (typeof returnPath === 'string' && returnPath.length > 0) {
+  if (
+    typeof returnPath === 'string' &&
+    returnPath.length > 0 &&
+    safeReturnPath(returnPath) === returnPath
+  ) {
     params.set('return', returnPath)
   }
 

@@ -187,6 +187,14 @@ describe('login', () => {
     expect(push).toHaveBeenCalledWith('/spaces/space-1')
   })
 
+  it('does not push a protocol-relative return query', async () => {
+    currentRoute.value = { query: { return: '//evil.example' }, meta: {}, fullPath: '/login' }
+
+    await auth.login({ email: 'ada@b10cks.test', password: 'secret' })
+
+    expect(push).toHaveBeenCalledWith('/')
+  })
+
   it('sends the TOTP code as a header rather than in the body', async () => {
     await auth.login({ email: 'ada@b10cks.test', password: 'secret' }, '123456')
 
@@ -417,6 +425,14 @@ describe('register', () => {
     expect(push).toHaveBeenCalledWith('/')
   })
 
+  it('does not push a protocol-relative return query', async () => {
+    currentRoute.value = { query: { return: '//evil.example' }, meta: {}, fullPath: '/login/signup' }
+
+    await auth.register(payload)
+
+    expect(push).toHaveBeenCalledWith('/')
+  })
+
   it('reports a taken email address for a 409', async () => {
     post.mockRejectedValue(apiError(409))
 
@@ -493,6 +509,21 @@ describe('logout', () => {
     await auth.logout({ returnPath: '/spaces/space-2' })
 
     expect(push).toHaveBeenCalledWith({ name: 'login', query: { return: '/spaces/space-2' } })
+  })
+
+  it('does not echo a protocol-relative return onto login', async () => {
+    currentRoute.value = {
+      query: { return: '//evil.example' },
+      meta: {},
+      fullPath: '/spaces/space-1/content',
+    }
+
+    await auth.logout()
+
+    expect(push).toHaveBeenCalledWith({
+      name: 'login',
+      query: { return: '/' },
+    })
   })
 
   it('skips the API call for an already expired session and flags the message', async () => {
@@ -700,14 +731,42 @@ describe('initAuth', () => {
 
     const first = auth.initAuth()
     await vi.waitUntil(() => request.mock.calls.length === 1)
-    await auth.initAuth()
+    const second = auth.initAuth()
 
     expect(request).toHaveBeenCalledTimes(1)
 
     resolveRequest?.({ data: user() })
-    await first
+    await Promise.all([first, second])
 
     expect(auth.user.value).toEqual(user())
+  })
+
+  it('resolves a second initAuth only after the in-flight probe finishes', async () => {
+    let resolveRequest: ((value: unknown) => void) | undefined
+    request.mockReturnValue(
+      new Promise((resolve) => {
+        resolveRequest = resolve as (value: unknown) => void
+      })
+    )
+
+    const first = auth.initAuth()
+    await vi.waitUntil(() => request.mock.calls.length === 1)
+
+    let secondSettled = false
+    const second = auth.initAuth().then(() => {
+      secondSettled = true
+    })
+
+    await Promise.resolve()
+    expect(secondSettled).toBe(false)
+    expect(auth.isReady.value).toBe(false)
+
+    resolveRequest?.({ data: user() })
+    await Promise.all([first, second])
+
+    expect(secondSettled).toBe(true)
+    expect(auth.isReady.value).toBe(true)
+    expect(request).toHaveBeenCalledTimes(1)
   })
 })
 

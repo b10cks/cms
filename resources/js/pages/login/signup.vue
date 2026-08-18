@@ -6,6 +6,7 @@ import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
 import { runtimeConfig } from '~/lib/runtime-config'
+import { safeReturnPath } from '~/lib/safeReturnPath'
 import { digest } from '~/lib/utils'
 import { InviteStatus } from '~/types/invites.d'
 
@@ -22,7 +23,10 @@ useSeoMeta({
 
 const inviteId = computed(() => route.query.invite_id as string | undefined)
 const inviteToken = computed(() => route.query.invite_token as string | undefined)
-const returnPath = computed(() => route.query.return as string | undefined)
+const returnPath = computed(() => {
+  const raw = route.query.return
+  return typeof raw === 'string' && raw.length > 0 && safeReturnPath(raw) === raw ? raw : undefined
+})
 
 const { data: publicInvite, error: inviteError } = usePublicInviteQuery(inviteId, inviteToken)
 const inviteErrorMessage = computed(() => {

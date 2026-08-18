@@ -1,6 +1,7 @@
 import { computed, readonly, ref } from 'vue'
 
 import { isClient } from '~/lib/env'
+import { safeReturnPath } from '~/lib/safeReturnPath'
 import { useI18n } from '~/plugins/i18n'
 import { getPosthog } from '~/plugins/posthog'
 import { router } from '~/router'
@@ -97,6 +98,9 @@ let pendingSessionExpiry: Promise<void> | null = null
 // Once we know the session is gone, stop re-probing /users/me on every navigation —
 // that probe would 401 again and re-enter the redirect.
 const globalSessionExpired = ref(false)
+
+// Concurrent initAuth() callers share one /users/me probe.
+let initAuthPromise: Promise<void> | null = null
 
 export function useAuth() {
   const { t } = useI18n()
@@ -195,7 +199,7 @@ export function useAuth() {
 
       return await handleAuthResponse(() => {
         const currentRoute = router.currentRoute.value
-        router.push((currentRoute.query.return as string) || '/')
+        router.push(safeReturnPath(currentRoute.query.return))
       })
     } catch (err: any) {
       const { status, errorCode, message } = parseErrorResponse(err)
@@ -243,7 +247,7 @@ export function useAuth() {
 
       return await handleAuthResponse(() => {
         const currentRoute = router.currentRoute.value
-        router.push((currentRoute.query.return as string) || '/')
+        router.push(safeReturnPath(currentRoute.query.return))
       })
     } catch (err: any) {
       const { status, errorCode, message } = parseErrorResponse(err)
@@ -321,7 +325,7 @@ export function useAuth() {
 
       return await handleAuthResponse(() => {
         const currentRoute = router.currentRoute.value
-        router.push((currentRoute.query.return as string) || '/')
+        router.push(safeReturnPath(currentRoute.query.return))
       })
     } catch (err: any) {
       const parsedError = parseErrorResponse(err)
@@ -375,7 +379,9 @@ export function useAuth() {
     await router.push({
       name: 'login',
       query: {
-        return: returnPath || (currentRoute.query.return as string) || currentRoute.fullPath || '/',
+        return: safeReturnPath(
+          returnPath || currentRoute.query.return || currentRoute.fullPath || '/'
+        ),
         ...(expired ? { message: 'session_expired' } : {}),
       },
     })
@@ -418,7 +424,7 @@ export function useAuth() {
 
   const initAuth = async (): Promise<void> => {
     if (!isClient) return
-    if (isInitializing.value) return
+    if (initAuthPromise) return initAuthPromise
     // Already initialized with a loaded user — don't block navigation on a refetch
     if (isReady.value && user.value) return
     // Session already known to be gone — probing again would just 401 in a loop
@@ -428,14 +434,19 @@ export function useAuth() {
     }
 
     isInitializing.value = true
-    try {
-      await loadUser(true)
-    } catch (error) {
-      console.error('[Auth] Failed to load user during init:', error)
-    } finally {
-      isReady.value = true
-      isInitializing.value = false
-    }
+    initAuthPromise = (async () => {
+      try {
+        await loadUser(true)
+      } catch (error) {
+        console.error('[Auth] Failed to load user during init:', error)
+      } finally {
+        isReady.value = true
+        isInitializing.value = false
+        initAuthPromise = null
+      }
+    })()
+
+    return initAuthPromise
   }
 
   return {

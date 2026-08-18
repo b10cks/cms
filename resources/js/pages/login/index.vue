@@ -7,6 +7,7 @@ import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
 import { runtimeConfig } from '~/lib/runtime-config'
+import { safeReturnPath } from '~/lib/safeReturnPath'
 
 const {
   login,
@@ -76,7 +77,11 @@ const signupUrl = computed(() => {
     params.set('invite_token', inviteToken)
   }
 
-  if (typeof returnPath === 'string' && returnPath.length > 0) {
+  if (
+    typeof returnPath === 'string' &&
+    returnPath.length > 0 &&
+    safeReturnPath(returnPath) === returnPath
+  ) {
     params.set('return', returnPath)
   }
 

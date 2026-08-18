@@ -424,15 +424,13 @@ router.beforeEach(async (to) => {
   const needsAccessCheck =
     !!routeName && (Boolean(spaceId || teamId) || !!getRouteAccessRequirement(routeName))
 
-  if (!isReady) {
-    return true
-  }
-
   if (isGuestRoute && isAuthenticated) {
     return { name: 'index' }
   }
 
-  if (!isGuestRoute && !isPublicRoute && !isAuthenticated) {
+  // Fail closed: a protected route must not proceed just because auth is
+  // still (or again) unready after initAuth(). Treat that as logged out.
+  if (!isGuestRoute && !isPublicRoute && (!isReady || !isAuthenticated)) {
     return {
       name: 'login',
       query: { return: to.fullPath },
