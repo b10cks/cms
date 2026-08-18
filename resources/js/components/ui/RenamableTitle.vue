@@ -124,7 +124,8 @@ defineExpose({
     :disabled="disabled"
     @keydown="handleKeyDown"
     @blur="submitRename"
-    @click.stop
+    @mousedown.stop
+    @click.stop.prevent
   />
   <span
     v-else

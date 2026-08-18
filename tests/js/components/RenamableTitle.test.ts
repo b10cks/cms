@@ -239,6 +239,33 @@ describe('committing a rename', () => {
 
     expect(wrapper.emitted('update')).toEqual([['Growth']])
   })
+
+  // The content tree renders rows as router links, so a click that reaches the
+  // anchor with its default action intact triggers a full page load.
+  it('keeps a click in the input from activating an ancestor link', async () => {
+    const anchor = document.createElement('a')
+    anchor.href = '/somewhere'
+    document.body.append(anchor)
+
+    const wrapper = mount(RenamableTitle, {
+      props: { name: 'Marketing' },
+      attachTo: anchor,
+    })
+    mounted.push(wrapper)
+
+    const onAnchorClick = vi.fn()
+    anchor.addEventListener('click', onAnchorClick)
+
+    await startEditing(wrapper)
+
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true })
+    wrapper.find('input').element.dispatchEvent(event)
+
+    expect(onAnchorClick).not.toHaveBeenCalled()
+    expect(event.defaultPrevented).toBe(true)
+
+    anchor.remove()
+  })
 })
 
 describe('cancelling a rename', () => {

@@ -1514,6 +1514,8 @@ const registerItemInteractions = (item: FlatContentMenuItem, element: HTMLElemen
   const cleanup = combine(
     draggable({
       element,
+      // A text-selection drag inside the rename input must not start a row drag.
+      canDrag: () => currentlyEditingId.value !== item.id,
       getInitialData: () => {
         const dragItems = getSelectedDragItemsFor(item.id)
         dragSelectionSnapshot.value = dragItems.map((dragItem) => dragItem.id)
