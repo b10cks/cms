@@ -83,7 +83,10 @@ const {
   // A translation is a handful of fields, so comparing against the baseline is
   // cheap — and undoing an edit by hand makes the page clean again.
   dirtyStrategy: 'snapshot',
-  onDiscardChanges: () => discardOwnDrafts(),
+  onDiscardChanges: () => {
+    discardLocalContentChanges()
+    discardOwnDrafts()
+  },
 })
 
 const selectedLanguageVersion = computed(
@@ -284,6 +287,14 @@ const syncPersistedContent = (nextContent: ContentResource) => {
   cloned.content = getLocalizedDraftContent(cloned)
   persistedContent.value = cloned
   translatableContent.value = cloneContent(cloned)
+}
+
+// Back to the persisted baseline, so the page is clean and a following
+// language switch seeds the next document instead of carrying stale edits.
+const discardLocalContentChanges = () => {
+  if (persistedContent.value) {
+    translatableContent.value = cloneContent(persistedContent.value)
+  }
 }
 
 watch(

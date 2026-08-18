@@ -391,11 +391,12 @@ const syncPersistedContent = (
   } else {
     // preserve-local: keep the user's in-flight edits and the document they
     // are editing. Taking `id` / language identity from `cloned` would save
-    // those edits onto another language version.
+    // those edits onto another language version. A missing-language draft has
+    // no id yet and adopts the row a peer just created, so save updates it.
     content.value = {
       ...content.value,
       ...cloned,
-      id: content.value.id,
+      id: content.value.id || cloned.id,
       language_iso: content.value.language_iso,
       i18n_parent_id: content.value.i18n_parent_id,
       i18n_canonical_id: content.value.i18n_canonical_id,

@@ -44,14 +44,14 @@ const navigate = (from: RouteLocationNormalized, to: RouteLocationNormalized) =>
 
 let wrappers: VueWrapper[] = []
 
-const setup = (dirty = true) => {
+const setup = (dirty = true, defaultLanguage?: string) => {
   const isDirty = ref(dirty)
   const onDiscardChanges = vi.fn()
 
   const wrapper = mount(
     defineComponent({
       setup() {
-        useUnsavedChangesGuard({ isDirty, onDiscardChanges })
+        useUnsavedChangesGuard({ isDirty, onDiscardChanges, defaultLanguage: ref(defaultLanguage) })
         return () => h('div')
       },
     })
@@ -94,6 +94,20 @@ describe('useUnsavedChangesGuard', () => {
     const { next, result } = navigate(
       route('/spaces/s/content/c', { mode: 'edit' }),
       route('/spaces/s/content/c', { mode: 'comments' })
+    )
+    await result
+
+    expect(confirm).not.toHaveBeenCalled()
+    expect(onDiscardChanges).not.toHaveBeenCalled()
+    expect(next).toHaveBeenCalledWith()
+  })
+
+  it('does not prompt when lang normalizes to the default language', async () => {
+    const { onDiscardChanges } = setup(true, 'de')
+
+    const { next, result } = navigate(
+      route('/spaces/s/content/c', { lang: 'de' }),
+      route('/spaces/s/content/c')
     )
     await result
 

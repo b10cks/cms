@@ -88,7 +88,11 @@ export function useContentEditorPage(
 
   const { isDirty } = dirty
 
-  useUnsavedChangesGuard({ isDirty, onDiscardChanges: options.onDiscardChanges })
+  useUnsavedChangesGuard({
+    isDirty,
+    onDiscardChanges: options.onDiscardChanges,
+    defaultLanguage,
+  })
 
   const provideValidationState = (validation: ContentValidationState) => {
     provide('markFieldDirty', validation.markFieldDirty)

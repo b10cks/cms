@@ -21,29 +21,26 @@ export interface UnsavedChangesGuardOptions {
   isDirty: Ref<boolean>
   /** Run when the user confirms leaving with unsaved changes. */
   onDiscardChanges?: () => void
+  /**
+   * Language shown when `?lang` is absent. Lets a page's own normalization
+   * (`?lang=de` → no `lang` once `de` became the default) pass as the same
+   * document instead of prompting for a switch the user never made.
+   */
+  defaultLanguage?: Ref<string | undefined>
 }
 
-/** Query keys that pick which document is being edited, not just UI state. */
-const DOCUMENT_IDENTITY_QUERY_KEYS = ['lang'] as const
-
-function queryParam(
-  query: RouteLocationNormalized['query'] | undefined,
-  key: string
-): string | undefined {
-  const value = query?.[key]
-  if (Array.isArray(value)) {
-    return value[0] ?? undefined
-  }
-  return value ?? undefined
-}
-
+/** `?lang` picks which document is being edited, not just UI state. */
 export function isDocumentIdentityChange(
   to: Pick<RouteLocationNormalized, 'query'>,
-  from: Pick<RouteLocationNormalized, 'query'>
+  from: Pick<RouteLocationNormalized, 'query'>,
+  defaultLanguage?: string
 ): boolean {
-  return DOCUMENT_IDENTITY_QUERY_KEYS.some(
-    (key) => queryParam(to.query, key) !== queryParam(from.query, key)
-  )
+  const lang = (query: RouteLocationNormalized['query']) => {
+    const value = query.lang
+    return (Array.isArray(value) ? value[0] : value) ?? defaultLanguage
+  }
+
+  return lang(to.query) !== lang(from.query)
 }
 
 export function useUnsavedChangesGuard(options: UnsavedChangesGuardOptions): void {
@@ -58,7 +55,12 @@ export function useUnsavedChangesGuard(options: UnsavedChangesGuardOptions): voi
   ) {
     // Same path is usually UI state (tabs, hash). A `lang` (or other identity)
     // query change is a different document and must confirm like a leave.
-    if (to && from && to.path === from.path && !isDocumentIdentityChange(to, from)) {
+    if (
+      to &&
+      from &&
+      to.path === from.path &&
+      !isDocumentIdentityChange(to, from, options.defaultLanguage?.value)
+    ) {
       return next()
     }
 
