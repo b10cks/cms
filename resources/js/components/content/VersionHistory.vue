@@ -335,7 +335,7 @@ const previewSource = computed(() => {
 
 const openInTab = () => {
   if (!previewSource.value) return
-  window.open(previewSource.value, '_blank')
+  window.open(previewSource.value, '_blank', 'noopener,noreferrer')
 }
 
 const openVersionJsonInNewTab = (versionId: string) => {

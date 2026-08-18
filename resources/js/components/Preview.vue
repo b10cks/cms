@@ -212,7 +212,7 @@ const switchSiteLocale = (segment: string) => {
 
 const openExternal = () => {
   if (src.value) {
-    window.open(src.value, '_blank')
+    window.open(src.value, '_blank', 'noopener,noreferrer')
   }
 }
 
