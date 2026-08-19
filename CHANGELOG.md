@@ -3,6 +3,20 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.19-61b6c9e1] — 2026-8-19
+
+- 📝 Document the grid round trip and batched saves
+- ♻️ Use the shared space authorization helpers in mass edit
+- 🚸 Confirm hidden edits when a language is dropped
+- 🔒 Hide save & publish without the publish ability
+- 🚸 Send large mass-edit saves in batches and keep failed cells
+- 🐛 Round-trip mass-edit grid exports without dropping cells
+- ⚡️ Load mass-edit grid rows without an N+1 per content
+- ⚡️ Resolve nested block fields without walking every nesting path
+- ✅ Register massEdit in the space resource set fixture
+- ✨ Add mass content editing
+- 🐛 Keep a content tree rename alive once the field is clicked
+
 ## [v2026.8.18-3a365362] — 2026-8-18
 
 - ✅ Give guard navigation fixtures a normalized query
