@@ -589,6 +589,49 @@ class ContentMassEditTest extends TestCase
         ])->assertJsonValidationErrorFor('fields');
     }
 
+    #[Test]
+    public function field_discovery_resolves_unrestricted_nesting_without_walking_every_path(): void
+    {
+        $this->actingAs($this->owner);
+
+        // Each container nests any block. Walking paths here is factorial; the closure
+        // has to stay quick and still reach every nested field key.
+        foreach (range(1, 14) as $index) {
+            Block::query()->create([
+                'external_id' => (string) Str::uuid(),
+                'name' => "Container {$index}",
+                'slug' => "container-{$index}",
+                'type' => 'nestable',
+                'schema' => [
+                    'body' => ['type' => 'blocks', 'name' => 'Body'],
+                    "text_{$index}" => ['type' => 'text', 'name' => "Text {$index}", 'translatable' => true],
+                ],
+            ]);
+        }
+
+        $root = Block::query()->create([
+            'external_id' => (string) Str::uuid(),
+            'name' => 'Landing',
+            'slug' => 'landing',
+            'type' => 'root',
+            'schema' => ['body' => ['type' => 'blocks', 'name' => 'Body']],
+        ]);
+
+        $start = microtime(true);
+        $fields = collect($this->getJson(route('mgmt.contents.mass-edit.fields', [
+            'space' => $this->space->id,
+        ]))->assertOk()->json('data'));
+        $elapsed = microtime(true) - $start;
+
+        $this->assertLessThan(5, $elapsed, 'Field discovery must not walk every nesting path.');
+
+        foreach (range(1, 14) as $index) {
+            $field = $fields->firstWhere('key', "text_{$index}");
+            $this->assertNotNull($field, "Nested field text_{$index} must be reachable.");
+            $this->assertContains($root->slug, array_column($field['blocks'], 'slug'));
+        }
+    }
+
     private function createContent(
         string $slug,
         ?Block $block = null,

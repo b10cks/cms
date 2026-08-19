@@ -196,32 +196,76 @@ class ContentTranslationExtractor
             $schemaBySlug[(string) $block->slug] = $block->schema?->toArray() ?? [];
         }
 
+        $closure = $this->nestingClosure($schemaBySlug);
+
         $this->schemaFieldsByBlock = [];
         foreach ($blocks as $block) {
             if (! \in_array((string) $block->type, self::CONTENT_BLOCK_TYPES, true)) {
                 continue;
             }
 
-            $slug = (string) $block->slug;
-            $this->schemaFieldsByBlock[$block->id] = $this->collectSchemaFields(
-                $schemaBySlug[$slug] ?? [],
-                $schemaBySlug,
-                [$slug => true],
-            );
+            $this->schemaFieldsByBlock[$block->id] = $closure[(string) $block->slug] ?? [];
         }
 
         return $this->schemaFieldsByBlock;
     }
 
     /**
+     * Fields reachable from each block slug, resolved as a fixed point over the
+     * nesting graph rather than by walking paths. Walking is factorial: with N
+     * unrestricted `blocks` fields every simple path through the block graph gets
+     * visited, and `restrict_blocks` defaults to off, so a normal-sized space is
+     * already unrunnable. Iterating to a fixed point yields the same closure,
+     * handles cycles without a visited set, and is polynomial.
+     *
+     * @param  array<string, array<string, mixed>>  $schemaBySlug
+     * @return array<string, array<string, array{type: string, label: string, translatable: bool}>>
+     */
+    private function nestingClosure(array $schemaBySlug): array
+    {
+        /** @var array<string, array<string, array{type: string, label: string, translatable: bool}>> $fields */
+        $fields = [];
+        /** @var array<string, array<int, string>> $edges */
+        $edges = [];
+
+        foreach ($schemaBySlug as $slug => $schema) {
+            [$fields[$slug], $edges[$slug]] = $this->splitSchema($schema, $schemaBySlug);
+        }
+
+        // Propagate nested fields upwards until nothing changes. Each round can only
+        // add keys or flip translatable false→true, so this always terminates.
+        do {
+            $changed = false;
+
+            foreach ($edges as $slug => $nested) {
+                foreach ($nested as $nestedSlug) {
+                    foreach ($fields[$nestedSlug] ?? [] as $key => $field) {
+                        $merged = $this->mergeSchemaField($fields[$slug][$key] ?? null, $field);
+
+                        if (($fields[$slug][$key] ?? null) !== $merged) {
+                            $fields[$slug][$key] = $merged;
+                            $changed = true;
+                        }
+                    }
+                }
+            }
+        } while ($changed);
+
+        return $fields;
+    }
+
+    /**
+     * Split one block schema into its own translatable-capable fields and the slugs
+     * its `blocks` fields can nest.
+     *
      * @param  array<string, mixed>  $schema
      * @param  array<string, array<string, mixed>>  $schemaBySlug
-     * @param  array<string, bool>  $visited  Slugs already on the path — guards recursive nesting.
-     * @return array<string, array{type: string, label: string, translatable: bool}>
+     * @return array{0: array<string, array{type: string, label: string, translatable: bool}>, 1: array<int, string>}
      */
-    private function collectSchemaFields(array $schema, array $schemaBySlug, array $visited): array
+    private function splitSchema(array $schema, array $schemaBySlug): array
     {
         $fields = [];
+        $nested = [];
 
         foreach ($schema as $fieldKey => $definition) {
             if (! \is_array($definition)) {
@@ -232,19 +276,7 @@ class ContentTranslationExtractor
 
             if ($type === 'blocks') {
                 foreach ($this->nestableSlugs($definition, $schemaBySlug) as $slug) {
-                    if (isset($visited[$slug])) {
-                        continue;
-                    }
-
-                    $nested = $this->collectSchemaFields(
-                        $schemaBySlug[$slug],
-                        $schemaBySlug,
-                        [...$visited, $slug => true],
-                    );
-
-                    foreach ($nested as $nestedKey => $nestedField) {
-                        $fields[$nestedKey] = $this->mergeSchemaField($fields[$nestedKey] ?? null, $nestedField);
-                    }
+                    $nested[$slug] = true;
                 }
 
                 continue;
@@ -261,7 +293,7 @@ class ContentTranslationExtractor
             ]);
         }
 
-        return $fields;
+        return [$fields, array_keys($nested)];
     }
 
     /**
