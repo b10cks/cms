@@ -10,7 +10,6 @@ use App\Http\Requests\Content\MassEditSaveRequest;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
-use App\Services\Auth\AuthorizationService;
 use App\Services\ContentData\ContentTranslationApplier;
 use App\Services\ContentData\ContentTranslationExtractor;
 use Illuminate\Http\JsonResponse;
@@ -24,7 +23,7 @@ class ContentMassEditController extends Controller
      */
     public function fields(Space $space, ContentTranslationExtractor $extractor): JsonResponse
     {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'content.view'), 403);
+        $this->authorizeSpace($space, 'content.view');
 
         $blocks = Block::query()->get(['id', 'name', 'slug'])->keyBy('id');
         $fields = [];
@@ -75,7 +74,7 @@ class ContentMassEditController extends Controller
         Space $space,
         ContentTranslationExtractor $extractor,
     ): JsonResponse {
-        abort_unless(app(AuthorizationService::class)->canInSpace(auth()->user(), $space, 'content.view'), 403);
+        $this->authorizeSpace($space, 'content.view');
 
         $fieldKeys = $request->getFieldKeys();
         $blockIds = $extractor->blockIdsWithFields($fieldKeys);
@@ -88,7 +87,7 @@ class ContentMassEditController extends Controller
             // Without an explicit order the DB may hand back rows in any order, which
             // makes paging skip or repeat items. Keep it in sync with the grid export.
             ->orderBy('id')
-            ->paginate($request->integer('per_page', 25));
+            ->paginate($this->perPage($request, 25));
 
         $documents = $extractor->extractForContents(
             $space,
@@ -140,15 +139,12 @@ class ContentMassEditController extends Controller
         Space $space,
         ContentTranslationApplier $applier,
     ): JsonResponse {
-        $authorization = app(AuthorizationService::class);
-        $user = auth()->user();
-
-        abort_unless($authorization->canInSpace($user, $space, 'content.manage'), 403);
+        $this->authorizeSpace($space, 'content.manage');
 
         $mode = $request->getMode();
 
         if ($mode === ContentTranslationImportMode::PUBLISH) {
-            abort_unless($authorization->canInSpace($user, $space, 'content.publish'), 403);
+            $this->authorizeSpace($space, 'content.publish');
         }
 
         $result = $applier->apply(
@@ -156,7 +152,7 @@ class ContentMassEditController extends Controller
             $request->validated('documents'),
             $mode,
             $request->shouldCreateMissing(),
-            $user,
+            auth()->user(),
             allowSourceEdits: true,
             applyEmpty: true,
         );
