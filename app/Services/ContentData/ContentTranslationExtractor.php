@@ -7,7 +7,6 @@ use App\DTOs\ContentData\TranslationUnit;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
-use App\Services\Content\ContentI18nService;
 use App\Services\Content\RichText\ProseMirrorHtmlConverter;
 use App\Services\Content\Schema\ContentSchemaValueMerger;
 use App\Services\Content\Schema\SchemaField;
@@ -32,7 +31,6 @@ class ContentTranslationExtractor
 
     public function __construct(
         private readonly ContentSchemaValueMerger $schema,
-        private readonly ContentI18nService $i18n,
         private readonly ProseMirrorHtmlConverter $richtext,
     ) {}
 
@@ -62,10 +60,19 @@ class ContentTranslationExtractor
                 && ($languages === null || \in_array($language, $languages, true)),
         ));
 
+        $families = $this->loadFamilies($canonicals);
         $documents = [];
 
         foreach ($canonicals as $canonical) {
-            $document = $this->extractDocument($canonical, $defaultLanguage, $targetLanguages, $fieldKeys, $includeEmptyUnits, $includeNonTranslatable);
+            $document = $this->extractDocument(
+                $canonical,
+                $families[$canonical->id] ?? collect(),
+                $defaultLanguage,
+                $targetLanguages,
+                $fieldKeys,
+                $includeEmptyUnits,
+                $includeNonTranslatable,
+            );
 
             if ($includeEmptyUnits || $document->units !== []) {
                 $documents[] = $document;
@@ -75,8 +82,40 @@ class ContentTranslationExtractor
         return $documents;
     }
 
+    /**
+     * Translation rows for a whole page of canonicals, keyed by canonical id then by
+     * language. Two queries for the page instead of one `getFamily()` plus one
+     * `current_version` load per row, which is what makes the mass-edit grid usable
+     * at `per_page=100`.
+     *
+     * @param  Collection<int, Content>  $canonicals
+     * @return array<string, Collection<string, Content>>
+     */
+    private function loadFamilies(Collection $canonicals): array
+    {
+        $canonicals->loadMissing('current_version');
+
+        $ids = $canonicals->pluck('id')->all();
+
+        if ($ids === []) {
+            return [];
+        }
+
+        return Content::query()
+            ->whereIn('i18n_parent_id', $ids)
+            ->with('current_version')
+            ->get()
+            ->groupBy('i18n_parent_id')
+            ->map(static fn (Collection $rows): Collection => $rows->keyBy('language_iso'))
+            ->all();
+    }
+
+    /**
+     * @param  Collection<string, Content>  $family  Translation rows of this canonical, keyed by language.
+     */
     private function extractDocument(
         Content $canonical,
+        Collection $family,
         string $defaultLanguage,
         array $targetLanguages,
         ?array $fieldKeys = null,
@@ -93,8 +132,6 @@ class ContentTranslationExtractor
                 static fn (array $unit): bool => \in_array($unit['fieldKey'], $fieldKeys, true),
             );
         }
-
-        $family = $this->i18n->getFamily($canonical)->keyBy('language_iso');
 
         $targetValues = [];
         foreach ($targetLanguages as $language) {

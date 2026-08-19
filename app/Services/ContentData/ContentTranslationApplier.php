@@ -12,6 +12,7 @@ use App\Models\Space\Content;
 use App\Services\Content\ContentI18nService;
 use App\Services\Content\RichText\ProseMirrorHtmlConverter;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -84,6 +85,9 @@ class ContentTranslationApplier
             }
 
             $rootSchema = $canonical->block?->schema?->toArray() ?? [];
+            // Resolved once per document: applyLanguage used to refetch the whole
+            // family for every language column of the same content.
+            $family = $this->i18n->getFamily($canonical);
 
             foreach ($targets as $language => $values) {
                 $language = (string) $language;
@@ -100,7 +104,7 @@ class ContentTranslationApplier
                     continue;
                 }
 
-                $this->applyLanguage($space, $canonical, $rootSchema, $language, $values, $mode, $createMissing, $owner, $applyEmpty, $isSourceLanguage);
+                $family = $this->applyLanguage($space, $canonical, $family, $rootSchema, $language, $values, $mode, $createMissing, $owner, $applyEmpty, $isSourceLanguage);
             }
         }
 
@@ -108,12 +112,19 @@ class ContentTranslationApplier
     }
 
     /**
+     * Apply one language column of one document. Returns the family, extended with a
+     * translation row when this call had to create one, so the caller can reuse it for
+     * the document's remaining languages.
+     *
+     * @param  Collection<int, Content>  $family
      * @param  array<string, mixed>  $rootSchema
      * @param  array<string, string>  $values
+     * @return Collection<int, Content>
      */
     private function applyLanguage(
         Space $space,
         Content $canonical,
+        Collection $family,
         array $rootSchema,
         string $language,
         array $values,
@@ -122,16 +133,15 @@ class ContentTranslationApplier
         Authenticatable $owner,
         bool $applyEmpty = false,
         bool $isSourceLanguage = false,
-    ): void {
+    ): Collection {
         try {
-            $family = $this->i18n->getFamily($canonical);
             /** @var Content|null $row */
             $row = $family->firstWhere('language_iso', $language);
 
             if ($row === null && ! $createMissing) {
                 $this->ignoredFields[] = $language;
 
-                return;
+                return $family;
             }
 
             $tree = $row !== null ? $row->getCurrentContent() : $canonical->getCurrentContent();
@@ -177,10 +187,15 @@ class ContentTranslationApplier
             }
 
             if ($appliedChanges === []) {
-                return;
+                return $family;
             }
 
-            $targetContent = $row ?? $this->createTranslationRow($space, $canonical, $language, $owner);
+            $targetContent = $row;
+
+            if ($targetContent === null) {
+                $targetContent = $this->createTranslationRow($space, $canonical, $language, $owner);
+                $family->push($targetContent);
+            }
 
             $this->persist($space, $targetContent, $language, $tree, $mode, $owner);
 
@@ -208,6 +223,8 @@ class ContentTranslationApplier
                 'message' => $e->getMessage(),
             ];
         }
+
+        return $family;
     }
 
     private function resolveCanonical(string $contentId): ?Content
