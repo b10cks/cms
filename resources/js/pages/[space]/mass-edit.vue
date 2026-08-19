@@ -263,33 +263,42 @@ const discardEdits = () => {
 }
 
 // Edits survive paging on purpose — a save covers every page that was touched. Dropping
-// a field is different: its cells disappear for good while still being saved, so make
-// that explicit and offer a way back out.
+// a field or a language is different: those cells disappear for good while their edits
+// are still written on the next save, so make that explicit and offer a way back out.
 const { alert } = useAlertDialog()
-let revertingFieldChange = false
 
-watch(selectedFieldKeys, async (next, previous) => {
-  if (revertingFieldChange) {
-    revertingFieldChange = false
-    return
-  }
+const guardHiddenEdits = (selection: Ref<string[]>, warningKey: string) => {
+  let reverting = false
 
-  const removed = previous.filter((key) => !next.includes(key))
-  if (removed.length === 0 || edits.value.size === 0) return
-
-  const confirmed = await alert.confirm(
-    t('labels.massEdit.fieldRemovalWarning', { count: edits.value.size }) as string,
-    {
-      title: t('labels.massEdit.fieldRemovalTitle') as string,
-      confirmLabel: t('labels.massEdit.fieldRemovalConfirm') as string,
+  return async (next: string[], previous: string[]) => {
+    if (reverting) {
+      reverting = false
+      return
     }
-  )
 
-  if (!confirmed) {
-    revertingFieldChange = true
-    selectedFieldKeys.value = [...previous]
+    const removed = previous.filter((value) => !next.includes(value))
+    if (removed.length === 0 || edits.value.size === 0) return
+
+    const confirmed = await alert.confirm(
+      t(warningKey, { count: edits.value.size }) as string,
+      {
+        title: t('labels.massEdit.hiddenEditsTitle') as string,
+        confirmLabel: t('labels.massEdit.hiddenEditsConfirm') as string,
+      }
+    )
+
+    if (!confirmed) {
+      reverting = true
+      selection.value = [...previous]
+    }
   }
-})
+}
+
+watch(selectedFieldKeys, guardHiddenEdits(selectedFieldKeys, 'labels.massEdit.fieldRemovalWarning'))
+watch(
+  selectedLanguages,
+  guardHiddenEdits(selectedLanguages, 'labels.massEdit.languageRemovalWarning')
+)
 
 // Keyboard: move between rows within the same language column; Escape reverts a cell.
 const handleCellKeydown = (event: KeyboardEvent, row: GridRow, language: string) => {

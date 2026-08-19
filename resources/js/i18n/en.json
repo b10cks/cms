@@ -4026,10 +4026,11 @@
       "notTranslatableHint": "This field is not translatable — edit it in the source language.",
       "fieldsPlaceholder": "Select fields…",
       "translateTruncated": "Too many contents to translate in one run — narrow the filters and repeat.",
-      "fieldRemovalTitle": "Remove field?",
       "fieldRemovalWarning": "You have {count} unsaved change(s). Removing a field hides its cells, but they are still saved on the next save. Discard first if you do not want them.",
-      "fieldRemovalConfirm": "Remove anyway",
-      "saving": "Saving… {saved}/{total}"
+      "saving": "Saving… {saved}/{total}",
+      "hiddenEditsTitle": "Hide unsaved changes?",
+      "hiddenEditsConfirm": "Hide anyway",
+      "languageRemovalWarning": "You have {count} unsaved change(s). Removing a language hides its cells, but they are still saved on the next save. Discard first if you do not want them."
     }
   },
   "notifications": {
