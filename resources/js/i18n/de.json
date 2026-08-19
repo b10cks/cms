@@ -4042,7 +4042,8 @@
       "translateTruncated": "Zu viele Inhalte für einen Durchlauf — Filter eingrenzen und wiederholen.",
       "fieldRemovalTitle": "Feld entfernen?",
       "fieldRemovalWarning": "Du hast {count} ungespeicherte Änderung(en). Ein entferntes Feld blendet seine Zellen aus, sie werden beim nächsten Speichern trotzdem geschrieben. Vorher verwerfen, wenn du das nicht willst.",
-      "fieldRemovalConfirm": "Trotzdem entfernen"
+      "fieldRemovalConfirm": "Trotzdem entfernen",
+      "saving": "Speichern… {saved}/{total}"
     }
   },
   "notifications": {

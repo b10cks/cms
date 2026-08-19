@@ -60,4 +60,17 @@ export interface MassEditSavePayload {
   create_missing?: boolean
 }
 
-export type MassEditSaveResult = ContentTranslationImportResult
+/**
+ * The applier reports failures per content, and per language when it got that far.
+ * Wider than the shared `ImportError`, which only carries a generic `id`.
+ */
+export interface MassEditSaveError {
+  content_id?: string
+  language?: string
+  id?: string
+  message: string
+}
+
+export interface MassEditSaveResult extends Omit<ContentTranslationImportResult, 'errors'> {
+  errors: MassEditSaveError[]
+}

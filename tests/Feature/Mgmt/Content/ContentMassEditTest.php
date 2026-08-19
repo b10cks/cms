@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Mgmt\Content;
 
+use App\Http\Requests\Content\MassEditSaveRequest;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
@@ -670,6 +671,24 @@ class ContentMassEditTest extends TestCase
 
         $this->assertSame('Home', $content->fresh()->getCurrentContent()['title']);
         $this->assertSame('Zuhause', $translation->fresh()->getCurrentContent()['title']);
+    }
+
+    #[Test]
+    public function save_rejects_more_documents_than_one_request_can_carry(): void
+    {
+        $this->actingAs($this->owner);
+
+        $documents = array_map(
+            static fn (int $index): array => [
+                'content_id' => (string) Str::ulid(),
+                'targets' => ['de' => ['title' => "Value {$index}"]],
+            ],
+            range(0, MassEditSaveRequest::MAX_DOCUMENTS),
+        );
+
+        $this->patchJson(route('mgmt.contents.mass-edit.save', ['space' => $this->space->id]), [
+            'documents' => $documents,
+        ])->assertStatus(422)->assertJsonValidationErrors('documents');
     }
 
     #[Test]

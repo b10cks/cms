@@ -2,7 +2,12 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
-import type { MassEditDocument, MassEditRowsParams, MassEditSavePayload } from '~/types/mass-edit'
+import type {
+  MassEditDocument,
+  MassEditRowsParams,
+  MassEditSavePayload,
+  MassEditSaveResult,
+} from '~/types/mass-edit'
 
 import { queryKeys } from './useQueryClient'
 
@@ -65,11 +70,77 @@ export function useMassEdit(spaceId: MaybeRef<string>) {
   }
 
   /**
-   * Save a delta of edited cells (draft or publish).
+   * Contents per save request. Each (content, language) pair writes a content version
+   * server side, so one request has to stay well inside an HTTP timeout. The endpoint
+   * rejects anything above 100.
+   */
+  const SAVE_CHUNK_SIZE = 25
+
+  /** Progress of a chunked save, for the button label. Null while idle. */
+  const saveProgress = ref<{ saved: number; total: number } | null>(null)
+
+  const emptyResult = (): MassEditSaveResult => ({
+    successes: [],
+    changes: [],
+    ignored_fields: [],
+    errors: [],
+    deleted: [],
+    summary: { total_success: 0, total_changes: 0, total_errors: 0, total_deleted: 0 },
+  })
+
+  /**
+   * Save a delta of edited cells (draft or publish), in chunks.
+   *
+   * A chunk that fails is recorded as an error against its contents rather than
+   * aborting the run, so one bad content cannot strand the other 4000. The merged
+   * result names every content that made it, which is what the caller uses to decide
+   * which edits it may drop.
    */
   const useMassEditSaveMutation = () => {
     return useMutation({
-      mutationFn: async (payload: MassEditSavePayload) => spaceAPI.value.massEdit.save(payload),
+      mutationFn: async (payload: MassEditSavePayload): Promise<MassEditSaveResult> => {
+        const chunks: MassEditSavePayload['documents'][] = []
+        for (let i = 0; i < payload.documents.length; i += SAVE_CHUNK_SIZE) {
+          chunks.push(payload.documents.slice(i, i + SAVE_CHUNK_SIZE))
+        }
+
+        const merged = emptyResult()
+        saveProgress.value = { saved: 0, total: payload.documents.length }
+
+        try {
+          for (const documents of chunks) {
+            try {
+              const result = await spaceAPI.value.massEdit.save({ ...payload, documents })
+              merged.successes.push(...result.successes)
+              merged.changes.push(...result.changes)
+              merged.ignored_fields.push(...result.ignored_fields)
+              merged.errors.push(...result.errors)
+            } catch (error) {
+              const message = error instanceof Error ? error.message : String(error)
+              merged.errors.push(
+                ...documents.map((document) => ({ content_id: document.content_id, message }))
+              )
+            }
+
+            saveProgress.value = {
+              saved: (saveProgress.value?.saved ?? 0) + documents.length,
+              total: payload.documents.length,
+            }
+          }
+        } finally {
+          saveProgress.value = null
+        }
+
+        merged.ignored_fields = [...new Set(merged.ignored_fields)]
+        merged.summary = {
+          total_success: merged.successes.length,
+          total_changes: merged.changes.length,
+          total_errors: merged.errors.length,
+          total_deleted: 0,
+        }
+
+        return merged
+      },
       onSuccess: (result) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.massEdit(spaceId).all() })
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
@@ -102,5 +173,6 @@ export function useMassEdit(spaceId: MaybeRef<string>) {
     useMassEditRowsQuery,
     useMassEditSaveMutation,
     fetchAllRows,
+    saveProgress,
   }
 }

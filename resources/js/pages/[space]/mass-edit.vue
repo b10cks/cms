@@ -32,7 +32,12 @@ import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { Textarea } from '~/components/ui/textarea'
 import { useMassEdit } from '~/composables/useMassEdit'
 import { stripAiCodeFences } from '~/lib/aiJson'
-import type { MassEditDocument, MassEditRowsParams, MassEditUnit } from '~/types/mass-edit'
+import type {
+  MassEditDocument,
+  MassEditRowsParams,
+  MassEditSaveResult,
+  MassEditUnit,
+} from '~/types/mass-edit'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -80,8 +85,13 @@ watch([selectedFieldKeys, selectedLanguages, filters], () => {
 })
 
 // Data
-const { useMassEditFieldsQuery, useMassEditRowsQuery, useMassEditSaveMutation, fetchAllRows } =
-  useMassEdit(spaceId)
+const {
+  useMassEditFieldsQuery,
+  useMassEditRowsQuery,
+  useMassEditSaveMutation,
+  fetchAllRows,
+  saveProgress,
+} = useMassEdit(spaceId)
 
 const { data: availableFields, isLoading: isLoadingFields } = useMassEditFieldsQuery()
 
@@ -326,15 +336,49 @@ const buildDocumentsPayload = () => {
   return [...byContent.entries()].map(([content_id, targets]) => ({ content_id, targets }))
 }
 
+/**
+ * Drop the edits that landed and keep the ones that did not, so a partial failure
+ * stays visible and fixable instead of silently vanishing from the grid.
+ */
+const clearSavedEdits = (result: MassEditSaveResult) => {
+  const failedContents = new Set<string>()
+  const failedCells = new Set<string>()
+
+  for (const error of result.errors) {
+    const contentId = error.content_id ?? error.id
+    if (!contentId) continue
+
+    if (error.language) {
+      failedCells.add(`${contentId}:${error.language}`)
+    } else {
+      failedContents.add(contentId)
+    }
+  }
+
+  const unsaved = new Map<string, string>()
+  for (const [key, value] of edits.value) {
+    const [contentId, language] = key.split(':')
+    if (failedContents.has(contentId) || failedCells.has(`${contentId}:${language}`)) {
+      unsaved.set(key, value)
+    }
+  }
+
+  edits.value = unsaved
+}
+
 const handleSave = async (mode: 'draft' | 'publish' = 'draft') => {
   if (dirtyCount.value === 0) return
 
-  await saveMutation.mutateAsync({
-    documents: buildDocumentsPayload(),
-    mode,
-    create_missing: true,
-  })
-  edits.value.clear()
+  try {
+    const result = await saveMutation.mutateAsync({
+      documents: buildDocumentsPayload(),
+      mode,
+      create_missing: true,
+    })
+    clearSavedEdits(result)
+  } catch {
+    // The mutation already reported it; edits stay so the save can be retried.
+  }
 }
 
 // AI translation of changed/missing cells with streaming
@@ -585,7 +629,11 @@ const exportFilters = computed(() => ({
               :loading="saveMutation.isPending.value"
             >
               <Icon name="lucide:save" />
-              {{ $t('labels.massEdit.save', dirtyCount) }}
+              {{
+                saveProgress
+                  ? $t('labels.massEdit.saving', saveProgress)
+                  : $t('labels.massEdit.save', dirtyCount)
+              }}
               <template #menu>
                 <DropdownMenuItem @select="handleSave('publish')">
                   <Icon name="lucide:rocket" />
