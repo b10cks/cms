@@ -11566,6 +11566,9 @@
                                     },
                                     "create_missing": {
                                         "type": "boolean"
+                                    },
+                                    "grid": {
+                                        "type": "boolean"
                                     }
                                 },
                                 "required": [
@@ -11811,7 +11814,14 @@
                                                     "type": "string"
                                                 },
                                                 "targets": {
-                                                    "type": "array"
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        }
+                                                    }
                                                 }
                                             },
                                             "required": [

@@ -57,17 +57,18 @@ Rows are grouped per entry: the first row of each entry carries its name and ful
 
 **Your edits survive paging.** Move to page 4, edit there, come back — everything is still pending, and one save writes all of it. The counter in the **Save** button always shows the true number of open changes, not just the ones on screen. **Discard** throws them all away.
 
-Changing the field selection while you have unsaved edits is the one case the app asks about: dropping a field hides its cells but does _not_ drop the pending changes, so you're offered the choice to discard first.
+Narrowing the selection while you have unsaved edits is the one case the app asks about: dropping a field or a language hides its cells but does _not_ drop the pending changes, so you're offered the choice to discard first.
 
 ## Saving
 
 - **Save** stores everything as drafts — nothing goes live, exactly like saving in the editor.
 - **Save & publish** (in the button's menu) saves and publishes the affected entries in one go.
 
-Two details worth knowing:
+Three details worth knowing:
 
 - **Missing translations are created for you.** Typing into a language column of an entry that has no version in that language yet creates one.
 - **Clearing a cell means clearing the value.** An emptied cell is saved as empty, not skipped — that's how you undo a wrong translation from here.
+- **Large saves are sent in batches.** Each entry and language writes its own version, so the grid splits a big save into chunks and shows `saved / total` as it goes. Entries that fail keep their amber outline and stay editable; everything that landed is cleared. Nothing is lost to a timeout halfway through.
 
 Every write goes through the normal content pipeline: versions are created, history and audit logs record who changed what, and validation applies as usual. If some entries fail, the result tells you how many saved and how many errored.
 
@@ -91,7 +92,11 @@ The header buttons hand the same selection to the translation exchange formats �
 - **Export** respects your fields, languages, and filters: what you exported is what you were looking at, including rows whose cells are still empty (that's usually the point — the translator needs to see the gaps).
 - **Import** applies a returned file back, as drafts for review or published immediately, optionally creating language versions that don't exist yet. A summary shows exactly what changed.
 
-This is the same import/export used from the content editor, so an agency workflow started here can be finished there and vice versa.
+A file exported from Mass Edit round-trips: it has **one column per language including the source**, so editing the source column and importing works, and a cell you blank out is imported as a deliberate clear. That's the grid's own shape, and it's why the export you take from here differs slightly from the one in the content editor, which ships a read-only `source` column for translators.
+
+One exception: **XLIFF** models the source as read-only by design, so an edited source will not come back through it. Use CSV, Excel, JSON or YAML when you want to edit source text outside the app.
+
+Otherwise this is the same import/export used from the content editor, so an agency workflow started here can be finished there and vice versa.
 
 ## When to use what
 
@@ -108,4 +113,4 @@ This is the same import/export used from the content editor, so an agency workfl
 - Only **canonical entries** are listed — one row group per piece of content, with its languages as columns. You never edit a translation "as its own page" here.
 - Entries whose content type doesn't have any of the selected fields simply aren't listed.
 - Rows are ordered stably, so paging never skips or repeats an entry.
-- Everything you do here is scriptable too — the grid runs on the `mass-edit/fields`, `mass-edit/rows` and `contents/export` endpoints of the [Management API](../api/management-api.md).
+- Everything you do here is scriptable too — the grid runs on the `mass-edit/fields`, `mass-edit/rows` and `contents/export` endpoints of the [Management API](../api/management-api.md). A `PATCH mass-edit/rows` call takes at most 100 entries; send more in batches.
