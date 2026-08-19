@@ -13,9 +13,9 @@ class ExcelContentDataDriver extends BaseContentDataDriver
 {
     use WritesXlsxDownload;
 
-    public function export(Space $space, array $documents): Response
+    public function export(Space $space, array $documents, bool $gridMode = false): Response
     {
-        ['headings' => $headings, 'rows' => $rows] = $this->flatten($documents);
+        ['headings' => $headings, 'rows' => $rows] = $this->flatten($documents, $gridMode);
 
         $orderedRows = array_map(
             static fn (array $row): array => array_map(static fn (string $header): string => (string) ($row[$header] ?? ''), $headings),

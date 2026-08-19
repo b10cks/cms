@@ -225,10 +225,13 @@ export class Contents extends BaseResource<
 
   /**
    * Import content translations from a file, as a draft or published.
+   *
+   * `grid` marks a file exported from the mass-edit grid: it carries the source
+   * language as its own column and treats blank cells as deliberate clears.
    */
   public async importTranslations(
     file: File,
-    options: { mode: ContentTranslationImportMode; createMissing: boolean }
+    options: { mode: ContentTranslationImportMode; createMissing: boolean; grid?: boolean }
   ): Promise<ContentTranslationImportResult> {
     const data = await requestImportJson<
       ContentTranslationImportResult | { data: ContentTranslationImportResult }
@@ -239,6 +242,7 @@ export class Contents extends BaseResource<
       extraFields: {
         import_mode: options.mode,
         create_missing: options.createMissing ? '1' : '0',
+        grid: options.grid ? '1' : '0',
       },
     })
 

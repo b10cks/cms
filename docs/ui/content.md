@@ -119,3 +119,5 @@ If your space has multiple languages, switch the editor into **localization mode
 - Each language publishes **independently** — German can go live days after English.
 
 For agencies and external translators, **Export translations** produces XLIFF, CSV, Excel, JSON, or YAML files; **Import translations** applies them back — as drafts for review, or published immediately, optionally creating language versions that didn't exist yet. An import summary shows exactly what changed. Background: [Internationalization](../concepts/internationalization.md).
+
+> **Tip:** translating the _same field_ across many pages — or hunting down every missing meta description — is a job for [Mass Edit](mass-edit.md): one grid, one column per language, AI translation and export/import for the whole selection at once.

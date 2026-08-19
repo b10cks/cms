@@ -170,6 +170,7 @@ declare global {
   const useInvites: typeof import('./resources/js/composables/useInvites').useInvites
   const useInvoices: typeof import('./resources/js/composables/useInvoices').useInvoices
   const useLink: typeof import('vue-router').useLink
+  const useMassEdit: typeof import('./resources/js/composables/useMassEdit').useMassEdit
   const useMigrations: typeof import('./resources/js/composables/useMigrations').useMigrations
   const useModel: typeof import('vue').useModel
   const useNotificationPresentation: typeof import('./resources/js/composables/useNotificationPresentation').useNotificationPresentation
@@ -486,6 +487,7 @@ declare module 'vue' {
     readonly useInvites: UnwrapRef<typeof import('./resources/js/composables/useInvites')['useInvites']>
     readonly useInvoices: UnwrapRef<typeof import('./resources/js/composables/useInvoices')['useInvoices']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
+    readonly useMassEdit: UnwrapRef<typeof import('./resources/js/composables/useMassEdit')['useMassEdit']>
     readonly useMigrations: UnwrapRef<typeof import('./resources/js/composables/useMigrations')['useMigrations']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly useNotificationPresentation: UnwrapRef<typeof import('./resources/js/composables/useNotificationPresentation')['useNotificationPresentation']>

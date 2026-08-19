@@ -436,10 +436,12 @@ export function useContent(spaceId: MaybeRef<string>) {
         file: File
         mode: ContentTranslationImportMode
         createMissing: boolean
+        grid?: boolean
       }) => {
         return await spaceAPI.value.contents.importTranslations(variables.file, {
           mode: variables.mode,
           createMissing: variables.createMissing,
+          grid: variables.grid,
         })
       },
       onSuccess: () => {

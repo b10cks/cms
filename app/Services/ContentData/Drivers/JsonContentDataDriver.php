@@ -10,10 +10,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class JsonContentDataDriver extends BaseContentDataDriver
 {
-    public function export(Space $space, array $documents): Response
+    public function export(Space $space, array $documents, bool $gridMode = false): Response
     {
         $filename = $this->generateFilename($space, 'json');
-        $payload = $this->toStructured($space, $documents);
+        $payload = $this->toStructured($space, $documents, $gridMode);
 
         return new StreamedResponse(function () use ($payload): void {
             echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

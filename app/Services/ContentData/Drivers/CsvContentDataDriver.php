@@ -12,9 +12,9 @@ class CsvContentDataDriver extends BaseContentDataDriver
 {
     use WritesCsvDownload;
 
-    public function export(Space $space, array $documents): Response
+    public function export(Space $space, array $documents, bool $gridMode = false): Response
     {
-        ['headings' => $headings, 'rows' => $rows] = $this->flatten($documents);
+        ['headings' => $headings, 'rows' => $rows] = $this->flatten($documents, $gridMode);
         $filename = $this->generateFilename($space, 'csv');
 
         $orderedRows = (function () use ($rows, $headings): \Generator {

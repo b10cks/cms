@@ -12,8 +12,11 @@ interface ContentDataDriver extends ImportExportDriver
 {
     /**
      * @param  array<int, TranslationDocument>  $documents
+     * @param  bool  $gridMode  Write a mass-edit grid file: one column per language
+     *                          including the source, instead of a read-only `source`
+     *                          column. Such a file can be edited and imported back.
      */
-    public function export(Space $space, array $documents): Response;
+    public function export(Space $space, array $documents, bool $gridMode = false): Response;
 
     /**
      * Parse an uploaded file into a normalized list of documents to apply.

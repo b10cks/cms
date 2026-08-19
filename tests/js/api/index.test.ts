@@ -169,6 +169,7 @@ describe('forSpace', () => {
       'fieldPlugins',
       'icons',
       'invoices',
+      'massEdit',
       'members',
       'migrations',
       'people',

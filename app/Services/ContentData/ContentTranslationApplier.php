@@ -12,6 +12,7 @@ use App\Models\Space\Content;
 use App\Services\Content\ContentI18nService;
 use App\Services\Content\RichText\ProseMirrorHtmlConverter;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -43,11 +44,12 @@ class ContentTranslationApplier
         private readonly CreateContent $createContent,
         private readonly UpdateContent $updateContent,
         private readonly PublishContent $publishContent,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array<int, array{content_id: string, targets: array<string, array<string, string>>}>  $documents
+     * @param  bool  $allowSourceEdits  Also apply values for the default language (written onto the canonical row).
+     * @param  bool  $applyEmpty  Treat empty strings as intentional clears instead of "no value provided".
      */
     public function apply(
         Space $space,
@@ -55,6 +57,8 @@ class ContentTranslationApplier
         ContentTranslationImportMode $mode,
         bool $createMissing,
         Authenticatable $owner,
+        bool $allowSourceEdits = false,
+        bool $applyEmpty = false,
     ): ImportResult {
         $this->successes = [];
         $this->changes = [];
@@ -81,11 +85,16 @@ class ContentTranslationApplier
             }
 
             $rootSchema = $canonical->block?->schema?->toArray() ?? [];
+            // Resolved once per document: applyLanguage used to refetch the whole
+            // family for every language column of the same content.
+            $family = $this->i18n->getFamily($canonical);
 
             foreach ($targets as $language => $values) {
                 $language = (string) $language;
 
-                if ($language === $defaultLanguage || ! \in_array($language, $enabledLanguages, true)) {
+                $isSourceLanguage = $language === $defaultLanguage;
+
+                if (($isSourceLanguage && ! $allowSourceEdits) || ! \in_array($language, $enabledLanguages, true)) {
                     $this->ignoredFields[] = $language;
 
                     continue;
@@ -95,7 +104,7 @@ class ContentTranslationApplier
                     continue;
                 }
 
-                $this->applyLanguage($space, $canonical, $rootSchema, $language, $values, $mode, $createMissing, $owner);
+                $family = $this->applyLanguage($space, $canonical, $family, $rootSchema, $language, $values, $mode, $createMissing, $owner, $applyEmpty, $isSourceLanguage);
             }
         }
 
@@ -103,32 +112,40 @@ class ContentTranslationApplier
     }
 
     /**
+     * Apply one language column of one document. Returns the family, extended with a
+     * translation row when this call had to create one, so the caller can reuse it for
+     * the document's remaining languages.
+     *
+     * @param  Collection<int, Content>  $family
      * @param  array<string, mixed>  $rootSchema
      * @param  array<string, string>  $values
+     * @return Collection<int, Content>
      */
     private function applyLanguage(
         Space $space,
         Content $canonical,
+        Collection $family,
         array $rootSchema,
         string $language,
         array $values,
         ContentTranslationImportMode $mode,
         bool $createMissing,
         Authenticatable $owner,
-    ): void {
+        bool $applyEmpty = false,
+        bool $isSourceLanguage = false,
+    ): Collection {
         try {
-            $family = $this->i18n->getFamily($canonical);
             /** @var Content|null $row */
             $row = $family->firstWhere('language_iso', $language);
 
             if ($row === null && ! $createMissing) {
                 $this->ignoredFields[] = $language;
 
-                return;
+                return $family;
             }
 
             $tree = $row !== null ? $row->getCurrentContent() : $canonical->getCurrentContent();
-            $unitMap = $this->extractor->collectUnits($tree, $rootSchema);
+            $unitMap = $this->extractor->collectUnits($tree, $rootSchema, includeNonTranslatable: true);
 
             $appliedChanges = [];
             foreach ($values as $id => $value) {
@@ -140,7 +157,21 @@ class ContentTranslationApplier
                     continue;
                 }
 
-                if (! \is_string($value) || $value === '') {
+                // Non-translatable fields only exist on the source row — the overlay
+                // merge always takes them from the base, so target-language writes
+                // would be dead data.
+                if (! ($unitMap[$id]['translatable'] ?? true) && ! $isSourceLanguage) {
+                    $this->ignoredFields[] = $id;
+
+                    continue;
+                }
+
+                // ConvertEmptyStringsToNull turns submitted clears into null.
+                if ($applyEmpty && $value === null) {
+                    $value = '';
+                }
+
+                if (! \is_string($value) || ($value === '' && ! $applyEmpty)) {
                     continue;
                 }
 
@@ -156,10 +187,15 @@ class ContentTranslationApplier
             }
 
             if ($appliedChanges === []) {
-                return;
+                return $family;
             }
 
-            $targetContent = $row ?? $this->createTranslationRow($space, $canonical, $language, $owner);
+            $targetContent = $row;
+
+            if ($targetContent === null) {
+                $targetContent = $this->createTranslationRow($space, $canonical, $language, $owner);
+                $family->push($targetContent);
+            }
 
             $this->persist($space, $targetContent, $language, $tree, $mode, $owner);
 
@@ -187,6 +223,8 @@ class ContentTranslationApplier
                 'message' => $e->getMessage(),
             ];
         }
+
+        return $family;
     }
 
     private function resolveCanonical(string $contentId): ?Content
@@ -217,6 +255,8 @@ class ContentTranslationApplier
         ];
 
         if ($mode === ContentTranslationImportMode::PUBLISH) {
+            // Publish mass-assigns leftover data keys onto the model; `force` is not fillable.
+            unset($data['force']);
             $this->publishContent->execute($data, $content, $space, $owner);
 
             return;
@@ -231,7 +271,7 @@ class ContentTranslationApplier
         string $language,
         Authenticatable $owner,
     ): Content {
-        $content = new Content();
+        $content = new Content;
 
         $this->createContent->execute([
             'name' => $canonical->name,

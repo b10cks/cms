@@ -173,6 +173,11 @@ export const spaceNavigationItems: NavigationAccessItem[] = [
     routeName: 'space-content-index',
   },
   {
+    label: 'labels.navigation.massEdit',
+    icon: 'lucide:table-properties',
+    routeName: 'space-mass-edit',
+  },
+  {
     label: 'labels.navigation.blocks',
     icon: 'lucide:blocks',
     routeName: 'space-blocks-index',
@@ -247,6 +252,7 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'space-content-contentId': { abilities: 'content.view' },
   'space-content-contentId-localization': { abilities: 'content.view' },
   'space-content-contentId-versions': { abilities: 'content.history.view' },
+  'space-mass-edit': { abilities: 'content.view' },
   'space-canvas': { abilities: { allOf: ['content.view', 'blocks.view'] } },
   'space-assets-index': { abilities: 'assets.view' },
   'space-icons-index': { abilities: 'icons.view' },

@@ -19,7 +19,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class XliffContentDataDriver extends BaseContentDataDriver
 {
-    public function export(Space $space, array $documents): Response
+    /**
+     * XLIFF models the source as read-only `<source>`, so `$gridMode` changes nothing
+     * here: an edited source column cannot be expressed in this format and will not
+     * round-trip. Use CSV, Excel, JSON or YAML for a full grid round trip.
+     */
+    public function export(Space $space, array $documents, bool $gridMode = false): Response
     {
         $filename = $this->generateFilename($space, 'xlf');
 
@@ -105,13 +110,14 @@ class XliffContentDataDriver extends BaseContentDataDriver
                 }
 
                 $target = $transUnit->getElementsByTagName('target')->item(0);
-                $value = $target ? $target->textContent : '';
 
-                if ($value === '') {
+                // A missing <target> means "not provided"; a present but empty one is
+                // a deliberate clear, which the applier honours on a grid import.
+                if ($target === null) {
                     continue;
                 }
 
-                $documents[$contentId]['targets'][$language][$unitId] = $value;
+                $documents[$contentId]['targets'][$language][$unitId] = $target->textContent;
             }
         }
 

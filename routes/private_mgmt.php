@@ -45,6 +45,7 @@ use App\Http\Controllers\Mgmt\Content\ContentController;
 use App\Http\Controllers\Mgmt\Content\ContentCreateAndPublishController;
 use App\Http\Controllers\Mgmt\Content\ContentDataExportController;
 use App\Http\Controllers\Mgmt\Content\ContentDataImportController;
+use App\Http\Controllers\Mgmt\Content\ContentMassEditController;
 use App\Http\Controllers\Mgmt\Content\ContentMenuController;
 use App\Http\Controllers\Mgmt\Content\ContentPublishController;
 use App\Http\Controllers\Mgmt\Content\ContentScheduleController;
@@ -382,6 +383,13 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
         ->name('contents.data.export');
     Route::post('contents/import', ContentDataImportController::class)
         ->name('contents.data.import');
+
+    Route::get('mass-edit/fields', [ContentMassEditController::class, 'fields'])
+        ->name('contents.mass-edit.fields');
+    Route::get('mass-edit/rows', [ContentMassEditController::class, 'rows'])
+        ->name('contents.mass-edit.rows');
+    Route::patch('mass-edit/rows', [ContentMassEditController::class, 'save'])
+        ->name('contents.mass-edit.save');
 
     // Additional content actions
     // Create-and-publish for entries that do not exist yet (e.g. a language

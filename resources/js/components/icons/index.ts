@@ -18,6 +18,7 @@ import ScrollTextIcon from './ScrollTextIcon.vue'
 import SettingsIcon from './SettingsIcon.vue'
 import ShapesIcon from './ShapesIcon.vue'
 import SplitIcon from './SplitIcon.vue'
+import TablePropertiesIcon from './TablePropertiesIcon.vue'
 import WaypointsIcon from './WaypointsIcon.vue'
 import WrenchIcon from './WrenchIcon.vue'
 
@@ -31,6 +32,7 @@ export const animatedIcons: Record<string, Component> = {
   'lucide:compass': CompassIcon,
   'lucide:network': NetworkIcon,
   'lucide:feather': FeatherIcon,
+  'lucide:table-properties': TablePropertiesIcon,
   'lucide:blocks': BlocksIcon,
   'lucide:images': ImagesIcon,
   'lucide:shapes': ShapesIcon,
@@ -68,6 +70,7 @@ export {
   SettingsIcon,
   ShapesIcon,
   SplitIcon,
+  TablePropertiesIcon,
   WaypointsIcon,
   WrenchIcon,
 }

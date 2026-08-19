@@ -51,7 +51,10 @@ Standard REST verbs apply (`GET` list/show, `POST` create, `PATCH` update, `DELE
 | `POST …/contents/{content}/move` | Re-parent/reorder |
 | `POST …/contents/bulk-create` | Create many entries at once |
 | `POST …/contents/tree-operations` | Apply staged tree changes (the Canvas's apply) |
-| `POST …/contents/import` / `export` | Content import/export |
+| `POST …/contents/import` / `export` | Content import/export (`export` takes `fields` and `languages` comma lists, and `grid=1` for the Mass Edit selection) |
+| `GET …/mass-edit/fields` | Translatable fields aggregated across all block schemas, incl. nested blocks |
+| `GET …/mass-edit/rows` | Paginated translation units for the selected `fields` / `languages`, filterable |
+| `PATCH …/mass-edit/rows` | Write a delta of edited cells, keyed by unit id ([Mass Edit](../ui/mass-edit.md)) |
 | Versions: `…/versions`, `POST …/versions/{version}/restore`, `POST …/versions/assign` | History, restore, assign to release |
 
 ### Releases

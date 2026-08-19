@@ -11,10 +11,10 @@ use Symfony\Component\Yaml\Yaml;
 
 class YamlContentDataDriver extends BaseContentDataDriver
 {
-    public function export(Space $space, array $documents): Response
+    public function export(Space $space, array $documents, bool $gridMode = false): Response
     {
         $filename = $this->generateFilename($space, 'yaml');
-        $payload = Yaml::dump($this->toStructured($space, $documents), 6, 2, Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK);
+        $payload = Yaml::dump($this->toStructured($space, $documents, $gridMode), 6, 2, Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK);
 
         return new StreamedResponse(function () use ($payload): void {
             echo $payload;

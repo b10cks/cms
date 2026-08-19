@@ -88,6 +88,11 @@ export const queryKeys = {
   blockTemplates: nestedEntityKeys('blocks', 'templates'),
   blockVersions: nestedEntityKeys('blocks', 'versions'),
   contents: spaceEntityKeys('contents'),
+  massEdit: (spaceId: MaybeRef<string>) => ({
+    all: () => ['spaces', spaceId, 'mass-edit'] as const,
+    fields: () => [...queryKeys.massEdit(spaceId).all(), 'fields'] as const,
+    rows: (params: object = {}) => [...queryKeys.massEdit(spaceId).all(), 'rows', params] as const,
+  }),
   contentVersions: nestedEntityKeys('contents', 'history'),
   comments: nestedEntityKeys('contents', 'comments'),
   contentMenu: (spaceId: MaybeRef<string>) => ({

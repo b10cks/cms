@@ -101,6 +101,7 @@ Route::get('/{space}/automations/actions', AppController::class)->name('space-au
 Route::get('/{space}/automations/automations', AppController::class)->name('space-automations-automations');
 Route::get('/{space}/automations/executions', AppController::class)->name('space-automations-executions');
 Route::get('/{space}/redirects', AppController::class)->name('space-redirects');
+Route::get('/{space}/mass-edit', AppController::class)->name('space-mass-edit');
 Route::get('/{space}/settings', AppController::class)->name('space-settings');
 Route::get('/{space}/settings/configuration', AppController::class)->name('space-settings-configuration');
 Route::get('/{space}/settings/ai', AppController::class)->name('space-settings-ai');
