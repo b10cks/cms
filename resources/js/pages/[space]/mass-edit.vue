@@ -46,6 +46,7 @@ const spaceId = computed(() => route.params.space as string)
 const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: spaceId.value })))
 const canManageContent = computed(() => access.hasAbility('content.manage'))
+const canPublishContent = computed(() => access.hasAbility('content.publish'))
 
 const { useSpaceQuery } = useSpaces()
 const { data: space } = useSpaceQuery(spaceId)
@@ -625,7 +626,7 @@ const exportFilters = computed(() => ({
               variant="primary"
               :primary-action="() => handleSave('draft')"
               :disabled="dirtyCount === 0"
-              :has-menu="true"
+              :has-menu="canPublishContent"
               :loading="saveMutation.isPending.value"
             >
               <Icon name="lucide:save" />
