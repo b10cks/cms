@@ -36,6 +36,7 @@ class ContentDataImportController extends Controller
                 $mode,
                 $request->shouldCreateMissing(),
                 $user,
+                gridMode: $request->isGridImport(),
             );
 
             return response()->json($result->toArray());

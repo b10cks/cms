@@ -7,9 +7,14 @@ import type {
 } from '~/types/content-translations'
 import type { ImportDialogLabels, ImportDialogMode } from '~/types/import-export'
 
-const props = defineProps<{
-  spaceId: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    spaceId: string
+    /** The file came from a mass-edit grid export, so it may edit the source language and clear cells. */
+    grid?: boolean
+  }>(),
+  { grid: false }
+)
 
 const open = defineModel<boolean>('open', { default: false })
 
@@ -56,7 +61,7 @@ const submit = (
   file: File,
   mode: ContentTranslationImportMode
 ): Promise<ContentTranslationImportResult> =>
-  importMutation.mutateAsync({ file, mode, createMissing: createMissing.value })
+  importMutation.mutateAsync({ file, mode, createMissing: createMissing.value, grid: props.grid })
 </script>
 
 <template>

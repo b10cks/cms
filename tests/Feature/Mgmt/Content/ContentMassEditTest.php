@@ -8,6 +8,7 @@ use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -590,6 +591,88 @@ class ContentMassEditTest extends TestCase
     }
 
     #[Test]
+    public function grid_export_round_trips_source_edits_and_cleared_cells(): void
+    {
+        $this->actingAs($this->owner);
+
+        $content = $this->createContent('home', content: ['title' => 'Home']);
+        $this->createContent('home-de', i18nParent: $content, languageIso: 'de', content: ['title' => 'Zuhause']);
+
+        $csv = $this->postJson(route('mgmt.contents.data.export', ['space' => $this->space->id]), [
+            'as' => 'csv',
+            'fields' => 'title',
+            'grid' => 1,
+        ]);
+        $csv->assertOk();
+
+        $lines = explode("\n", trim($csv->streamedContent()));
+        $header = str_getcsv($lines[0]);
+
+        // A grid file has one column per language and no read-only `source` column.
+        $this->assertContains('en', $header, 'Grid export must carry the source language as a column.');
+        $this->assertContains('de', $header);
+        $this->assertNotContains('source', $header);
+
+        $rows = array_map(static fn (string $line): array => array_combine($header, str_getcsv($line)), \array_slice($lines, 1));
+        $titleRow = collect($rows)->firstWhere('field', 'title');
+        $this->assertSame('Home', $titleRow['en']);
+        $this->assertSame('Zuhause', $titleRow['de']);
+
+        // Edit the source, clear the translation, import it back as a grid file.
+        $titleRow['en'] = 'Home edited';
+        $titleRow['de'] = '';
+
+        $response = $this->post(route('mgmt.contents.data.import', ['space' => $this->space->id]), [
+            'file' => $this->csvUpload($header, [$titleRow]),
+            'import_mode' => 'draft',
+            'grid' => '1',
+        ]);
+        $response->assertOk();
+
+        $this->assertSame(
+            'Home edited',
+            $content->fresh()->getCurrentContent()['title'],
+            'A grid import must write the source language onto the canonical row.',
+        );
+        $this->assertSame(
+            '',
+            Content::query()->where('slug', 'home-de')->sole()->fresh()->getCurrentContent()['title'],
+            'A blank cell in a grid import must clear the translation.',
+        );
+    }
+
+    #[Test]
+    public function classic_import_still_ignores_source_edits_and_blank_cells(): void
+    {
+        $this->actingAs($this->owner);
+
+        $content = $this->createContent('home', content: ['title' => 'Home']);
+        $translation = $this->createContent('home-de', i18nParent: $content, languageIso: 'de', content: ['title' => 'Zuhause']);
+
+        $header = ['content_id', 'content_name', 'slug', 'full_slug', 'unit_id', 'type', 'field', 'source', 'en', 'de'];
+        $row = [
+            'content_id' => $content->id,
+            'content_name' => 'Home',
+            'slug' => 'home',
+            'full_slug' => '/home',
+            'unit_id' => 'title',
+            'type' => 'text',
+            'field' => 'title',
+            'source' => 'ignored',
+            'en' => 'Home edited',
+            'de' => '',
+        ];
+
+        $this->post(route('mgmt.contents.data.import', ['space' => $this->space->id]), [
+            'file' => $this->csvUpload($header, [$row]),
+            'import_mode' => 'draft',
+        ])->assertOk();
+
+        $this->assertSame('Home', $content->fresh()->getCurrentContent()['title']);
+        $this->assertSame('Zuhause', $translation->fresh()->getCurrentContent()['title']);
+    }
+
+    #[Test]
     public function field_discovery_resolves_unrestricted_nesting_without_walking_every_path(): void
     {
         $this->actingAs($this->owner);
@@ -630,6 +713,29 @@ class ContentMassEditTest extends TestCase
             $this->assertNotNull($field, "Nested field text_{$index} must be reachable.");
             $this->assertContains($root->slug, array_column($field['blocks'], 'slug'));
         }
+    }
+
+    /**
+     * @param  array<int, string>  $header
+     * @param  array<int, array<string, string>>  $rows
+     */
+    private function csvUpload(array $header, array $rows): UploadedFile
+    {
+        $handle = fopen('php://temp', 'r+');
+        fputcsv($handle, $header);
+
+        foreach ($rows as $row) {
+            fputcsv($handle, array_map(static fn (string $column): string => (string) ($row[$column] ?? ''), $header));
+        }
+
+        rewind($handle);
+        $csv = stream_get_contents($handle);
+        fclose($handle);
+
+        $path = tempnam(sys_get_temp_dir(), 'massedit').'.csv';
+        file_put_contents($path, $csv);
+
+        return new UploadedFile($path, 'mass-edit.csv', 'text/csv', null, true);
     }
 
     private function createContent(

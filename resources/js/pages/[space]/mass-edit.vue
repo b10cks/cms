@@ -793,5 +793,6 @@ const exportFilters = computed(() => ({
   <ImportContentTranslationsDialog
     v-model:open="showImportDialog"
     :space-id="spaceId"
+    grid
   />
 </template>

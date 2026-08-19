@@ -77,9 +77,14 @@ class ContentDataImportExportService extends ImportExportService
             includeNonTranslatable: $gridMode,
         );
 
-        return $driver->export($space, $documents);
+        return $driver->export($space, $documents, $gridMode);
     }
 
+    /**
+     * @param  bool  $gridMode  The file came from a mass-edit grid export, so it carries
+     *                          source-language values and non-translatable fields, and an
+     *                          empty cell means "clear this" rather than "not provided".
+     */
     public function importContents(
         Space $space,
         UploadedFile $file,
@@ -87,6 +92,7 @@ class ContentDataImportExportService extends ImportExportService
         ContentTranslationImportMode $mode,
         bool $createMissing,
         Authenticatable $owner,
+        bool $gridMode = false,
     ): ImportResult {
         $driver = $this->getDriver($format);
 
@@ -94,6 +100,14 @@ class ContentDataImportExportService extends ImportExportService
 
         $documents = $driver->parse($file);
 
-        return $this->applier->apply($space, $documents, $mode, $createMissing, $owner);
+        return $this->applier->apply(
+            $space,
+            $documents,
+            $mode,
+            $createMissing,
+            $owner,
+            allowSourceEdits: $gridMode,
+            applyEmpty: $gridMode,
+        );
     }
 }

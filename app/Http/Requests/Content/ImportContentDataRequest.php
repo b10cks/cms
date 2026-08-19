@@ -20,6 +20,7 @@ class ImportContentDataRequest extends FormRequest
             'file' => ['required', 'file', 'max:102400'],
             'import_mode' => ['sometimes', Rule::enum(ContentTranslationImportMode::class)],
             'create_missing' => ['sometimes', 'boolean'],
+            'grid' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -48,5 +49,15 @@ class ImportContentDataRequest extends FormRequest
     public function shouldCreateMissing(): bool
     {
         return $this->boolean('create_missing');
+    }
+
+    /**
+     * A file exported from the mass-edit grid carries the source column and
+     * non-translatable fields. Importing it without this flag would silently drop
+     * exactly those cells, so the round trip has to say which shape it is.
+     */
+    public function isGridImport(): bool
+    {
+        return $this->boolean('grid');
     }
 }
