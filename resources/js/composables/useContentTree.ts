@@ -144,6 +144,14 @@ export function useContentTree(
       return false
     }
 
+    // Replace the item in place so it keeps its slot in the parent. Keys absent
+    // from updatedItem must disappear — a merge (Object.assign alone) can never
+    // express a removal, which stranded out-of-schema deletes on focused items.
+    for (const key of Object.keys(result.item)) {
+      if (!(key in updatedItem)) {
+        delete result.item[key]
+      }
+    }
     Object.assign(result.item, updatedItem)
     return true
   }

@@ -177,35 +177,54 @@ describe('buildBreadcrumbs', () => {
 })
 
 describe('updateItem', () => {
-  it('merges the patch into the live tree and reports success', () => {
+  it('writes the update into the live tree and reports success', () => {
     const content = root()
     const { updateItem } = useContentTree(content, {} as ContentBlock)
 
-    expect(updateItem('hero', { headline: 'Updated' } as unknown as ContentTreeItem)).toBe(true)
+    expect(
+      updateItem('hero', { id: 'hero', block: 'hero', headline: 'Updated' } as ContentTreeItem)
+    ).toBe(true)
     expect((content.body as ContentTreeItem[])[0].headline).toBe('Updated')
   })
 
-  it('merges rather than replaces, keeping untouched keys', () => {
+  it('replaces in place, keeping the node identity for its parent slot', () => {
     const content = root()
+    const original = (content.body as ContentTreeItem[])[0]
 
     useContentTree(content, {} as ContentBlock).updateItem('hero', {
+      id: 'hero',
+      block: 'hero',
       subline: 'New',
-    } as unknown as ContentTreeItem)
+    } as ContentTreeItem)
 
-    expect((content.body as ContentTreeItem[])[0]).toMatchObject({
+    expect((content.body as ContentTreeItem[])[0]).toBe(original)
+    expect(original).toEqual({ id: 'hero', block: 'hero', subline: 'New' })
+  })
+
+  // Removals are the point of replace semantics: the editor's out-of-schema
+  // cleanup deletes keys and routes the full item through here. A merge
+  // (Object.assign alone) cannot drop a key, so focused items kept them.
+  it('drops keys that are absent from the update', () => {
+    const content = root()
+    ;(content.body as ContentTreeItem[])[0].legacy = 'stale'
+
+    useContentTree(content, {} as ContentBlock).updateItem('hero', {
       id: 'hero',
       block: 'hero',
       headline: 'Hi',
-      subline: 'New',
-    })
+    } as ContentTreeItem)
+
+    expect((content.body as ContentTreeItem[])[0]).not.toHaveProperty('legacy')
   })
 
   it('updates a deeply nested item in place', () => {
     const content = root()
 
     useContentTree(content, {} as ContentBlock).updateItem('deep', {
+      id: 'deep',
+      block: 'note',
       text: 'Note',
-    } as unknown as ContentTreeItem)
+    } as ContentTreeItem)
 
     const section = (content.body as ContentTreeItem[])[1]
 
