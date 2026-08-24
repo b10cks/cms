@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.24-3a0a1af4] — 2026-8-24
+
+- ⬆️ Bump versions
+- 🚸 Dismiss password-manager overlays on login
+- 🐛 Drop removed keys when a focused item is updated
+
 ## [v2026.8.19-61b6c9e1] — 2026-8-19
 
 - 📝 Document the grid round trip and batched saves
