@@ -44,6 +44,19 @@ watch(requiresTwoFactor, (value) => {
   twoFactorDialogOpen.value = value
 })
 
+/**
+ * Password-manager inline menus close on focusout. Submitting navigates away, so an
+ * autofilled field would unmount while focused and leave the menu floating over the
+ * dashboard. Blur first.
+ */
+const handleSubmit = () => {
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur()
+  }
+
+  return login(formData.value)
+}
+
 const handleVerify = async (code: string): Promise<boolean> => {
   if (isSocialTwoFactor.value) {
     return await verifySocialTwoFactorAndLogin(code)
@@ -121,7 +134,7 @@ onMounted(() => {
     </div>
     <form
       class="grid gap-6"
-      @submit.prevent="login(formData)"
+      @submit.prevent="handleSubmit"
     >
       <Alert
         v-if="sessionExpired && !requiresTwoFactor"

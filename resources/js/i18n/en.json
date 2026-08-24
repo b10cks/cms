@@ -2664,7 +2664,9 @@
         "backupCodeDescription": "Enter a backup code from your list",
         "button": "Verify",
         "backupLabel": "Backup code",
-        "backupPlaceholder": "Enter your backup code"
+        "backupPlaceholder": "Enter your backup code",
+        "invalidLength": "Enter the 6-digit code from your app, or an 8-character backup code.",
+        "failed": "That code didn't work. Try the next one from your app."
       },
       "backupCodes": {
         "title": "Backup Codes",

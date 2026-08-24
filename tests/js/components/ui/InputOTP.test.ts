@@ -272,16 +272,27 @@ describe('disabled', () => {
 })
 
 describe('completion event', () => {
-  it('never reaches the parent — the code being full emits nothing observable', async () => {
-    // vue-input-otp gates @complete behind a watchEffect on its previous-value
-    // ref that does not re-run under jsdom, so no consumer can rely on it.
-    // Nothing in the app listens for it today.
+  // OtpField forwards this so the 2FA dialog can verify a password-manager fill
+  // without a second click. See TwoFactorVerifyDialog.
+  it('reaches the parent with the full code once the last slot is filled', async () => {
     const wrapper = mountOtp()
 
     await type(wrapper, '123')
-    await type(wrapper, '1234')
-    await nextTick()
 
     expect(wrapper.emitted('complete')).toBeUndefined()
+
+    await type(wrapper, '1234')
+
+    expect(wrapper.emitted('complete')).toEqual([['1234']])
+  })
+
+  it('emits again after the code is corrected', async () => {
+    const wrapper = mountOtp()
+
+    await type(wrapper, '1234')
+    await type(wrapper, '123')
+    await type(wrapper, '1235')
+
+    expect(wrapper.emitted('complete')).toEqual([['1234'], ['1235']])
   })
 })

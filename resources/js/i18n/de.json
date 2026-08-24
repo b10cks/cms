@@ -2678,7 +2678,9 @@
         "backupCodeDescription": "Gib einen Backup-Code aus deiner Liste ein",
         "button": "Überprüfen",
         "backupLabel": "Sicherungscode",
-        "backupPlaceholder": "Geben Sie Ihren Sicherungscode ein"
+        "backupPlaceholder": "Geben Sie Ihren Sicherungscode ein",
+        "invalidLength": "Gib den 6-stelligen Code aus deiner App oder einen 8-stelligen Backup-Code ein.",
+        "failed": "Der Code hat nicht funktioniert. Probiere den nächsten aus deiner App."
       },
       "backupCodes": {
         "title": "Backup-Codes",

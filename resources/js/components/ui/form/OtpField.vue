@@ -30,6 +30,7 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   (e: 'update:modelValue', payload: string | number): void
+  (e: 'complete', payload: string): void
 }>()
 
 const modelValue = useVModel(props, 'modelValue', emits, {
@@ -54,6 +55,19 @@ const inputProps = computed(() => {
 
   return { ...rest, class: props.inputClass }
 })
+
+const wrapper = ref<HTMLElement | null>(null)
+
+/** The hidden input backing the slots; the visible boxes are plain divs. */
+const input = () => wrapper.value?.querySelector('input')
+
+/** Focus the field, e.g. to let the user retype a rejected code. */
+const focus = () => input()?.focus()
+
+/** Drop focus so password-manager inline menus close before the field unmounts. */
+const blur = () => input()?.blur()
+
+defineExpose({ focus, blur })
 </script>
 
 <template>
@@ -68,12 +82,16 @@ const inputProps = computed(() => {
     :class="props.class"
   >
     <template #default="{ id, hasError }">
-      <div class="flex justify-center">
+      <div
+        ref="wrapper"
+        class="flex justify-center"
+      >
         <InputOTP
           :maxlength="maxlength || 6"
           :id="id"
           :class="{ 'border-red-500': hasError }"
           v-model="modelValue"
+          @complete="emits('complete', $event)"
         >
           <InputOTPGroup>
             <InputOTPSlot
