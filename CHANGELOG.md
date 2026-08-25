@@ -3,6 +3,18 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.25-a7f7adbf] — 2026-8-25
+
+- 📝 Add a best practices guide on designing blocks with atomic design
+- 📝 Rewrite the user guide for a non-technical audience
+- 📝 Document field plugins, team SSO, and the missing env keys
+- 🐛 Make generated schemas independent of parse order
+- 🐛 Keep tall dialogs inside the viewport
+- ⬆️ Bump versions
+- 📝 Note the invitation language in the space people docs
+- 🐛 Give generated list endpoints and enums a real schema
+- ✨ Let inviters pick the language of an invitation
+
 ## [v2026.8.24-3a0a1af4] — 2026-8-24
 
 - ⬆️ Bump versions
