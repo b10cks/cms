@@ -74,8 +74,10 @@ class TypeInferencer
 
             // Handle enum values
             if (str_starts_with($rule, 'in:')) {
-                $values = explode(',', substr($rule, 3));
-                $schema['enum'] = array_map('trim', $values);
+                $values = $this->parseInRuleValues($rule);
+                if ($values !== []) {
+                    $schema['enum'] = $values;
+                }
             }
 
             // Handle specific formats
@@ -115,6 +117,21 @@ class TypeInferencer
     /**
      * Infer OpenAPI type from field name
      */
+    /**
+     * Values of an `in:` rule. Rule::in() renders them quoted ("cs","de"),
+     * the plain string form (in:cs,de) does not.
+     */
+    public function parseInRuleValues(string $rule): array
+    {
+        return array_values(array_filter(
+            array_map(
+                static fn ($value) => str_replace('""', '"', trim(trim($value), '"')),
+                explode(',', substr($rule, 3))
+            ),
+            static fn ($value) => $value !== ''
+        ));
+    }
+
     public function inferFromFieldName(string $fieldName): array
     {
         // ID fields

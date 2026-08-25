@@ -322,7 +322,7 @@ class FormRequestParser
     protected function applyStringRuleMetadata(array &$schema, string $rule): void
     {
         if (str_starts_with($rule, 'in:')) {
-            $values = array_values(array_filter(explode(',', substr($rule, 3)), static fn ($value) => $value !== ''));
+            $values = $this->typeInferencer->parseInRuleValues($rule);
             if (! empty($values)) {
                 $schema['enum'] = $values;
             }

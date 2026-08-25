@@ -579,7 +579,46 @@ class OpenApiGenerator
             }
         }
 
+        return $this->withReferencedSchemas($filtered, $allSchemas);
+    }
+
+    /**
+     * Pull in schemas the kept ones reference themselves, so an alias like
+     * ContentVersionResource -> ContentVersionListResource does not leave a
+     * dangling $ref.
+     */
+    protected function withReferencedSchemas(array $filtered, array $allSchemas): array
+    {
+        do {
+            $added = false;
+
+            foreach ($filtered as $schema) {
+                foreach ($this->collectSchemaRefs($schema) as $schemaName) {
+                    if (!isset($filtered[$schemaName]) && isset($allSchemas[$schemaName])) {
+                        $filtered[$schemaName] = $allSchemas[$schemaName];
+                        $added = true;
+                    }
+                }
+            }
+        } while ($added);
+
         return $filtered;
+    }
+
+    /**
+     * Names of every component schema referenced anywhere inside a schema
+     */
+    protected function collectSchemaRefs(array $schema): array
+    {
+        $names = [];
+
+        array_walk_recursive($schema, function ($value, $key) use (&$names) {
+            if ($key === '$ref' && is_string($value) && preg_match('#^\#/components/schemas/(.+)$#', $value, $matches)) {
+                $names[] = $matches[1];
+            }
+        });
+
+        return $names;
     }
 
     /**

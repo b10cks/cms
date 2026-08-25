@@ -7,6 +7,7 @@ use App\Services\Documentation\Parsers\FormRequestParser;
 use App\Services\Documentation\Parsers\ResourceParser;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\JsonResponse;
@@ -475,7 +476,7 @@ class RouteAnalyzer
             }
 
             // Check for ResourceCollection
-            if (is_string($returnTypeName) && class_exists($returnTypeName) && is_subclass_of($returnTypeName, ResourceCollection::class)) {
+            if (is_string($returnTypeName) && class_exists($returnTypeName) && $this->isResourceCollection($returnTypeName)) {
                 $docBlock = $reflection->getDocComment() ?: '';
 
                 // Prefer explicit method-level @response annotations for concrete collection schemas
@@ -486,6 +487,11 @@ class RouteAnalyzer
 
                 if ($annotatedCollectionClass) {
                     $schema = $this->resourceParser->parse($annotatedCollectionClass);
+                } elseif ($this->isGenericResourceCollection($returnTypeName)) {
+                    // A controller typed as the framework's own collection class
+                    // says nothing about its items; describe it as a paginated
+                    // envelope around the resource it actually collects.
+                    $schema = $this->parseResourceCollectionWithDetection($returnTypeName, $collectedResource);
                 } else {
                     // Parse the concrete collection schema first
                     $schema = $this->resourceParser->parse($returnTypeName);
@@ -553,6 +559,26 @@ class RouteAnalyzer
     }
 
     /**
+     * Whether a return type is any kind of resource collection, including the
+     * framework's own ResourceCollection / AnonymousResourceCollection.
+     */
+    protected function isResourceCollection(string $class): bool
+    {
+        return $class === ResourceCollection::class
+            || is_subclass_of($class, ResourceCollection::class);
+    }
+
+    /**
+     * Whether a return type is a framework collection class rather than a
+     * project one that describes its own payload.
+     */
+    protected function isGenericResourceCollection(string $class): bool
+    {
+        return $class === ResourceCollection::class
+            || $class === AnonymousResourceCollection::class;
+    }
+
+    /**
      * Parse ResourceCollection and detect collected resource type
      */
     protected function parseResourceCollectionWithDetection(string $collectionClass, ?string $collectedResource): array
@@ -595,34 +621,10 @@ class RouteAnalyzer
             // Then try to find Resource::collection() pattern
             // Pattern: SomeResource::collection() or new SomeResourceCollection()
             if (preg_match('/([A-Za-z\\\]+Resource)::collection\s*\(/', $methodCode, $matches)) {
-                $resourceClass = trim($matches[1]);
+                $resolved = $this->resolveResourceClass(trim($matches[1]), $controller);
 
-                // Try to resolve the class name
-                if (class_exists($resourceClass)) {
-                    return $resourceClass;
-                }
-
-                // Try with App\Http\Resources namespace
-                if (class_exists('App\\Http\\Resources\\' . $resourceClass)) {
-                    return 'App\\Http\\Resources\\' . $resourceClass;
-                }
-
-                // Try with controller namespace
-                $controllerNamespace = substr($controller, 0, strrpos($controller, '\\'));
-                $appNamespace = substr($controllerNamespace, 0, strrpos($controllerNamespace, '\\'));
-                $resourceNs = $appNamespace . '\\Resources';
-
-                if (class_exists($resourceNs . '\\' . $resourceClass)) {
-                    return $resourceNs . '\\' . $resourceClass;
-                }
-
-                // Try Api or Management subdirectories
-                if (class_exists($resourceNs . '\\Api\\' . $resourceClass)) {
-                    return $resourceNs . '\\Api\\' . $resourceClass;
-                }
-
-                if (class_exists($resourceNs . '\\Management\\' . $resourceClass)) {
-                    return $resourceNs . '\\Management\\' . $resourceClass;
+                if ($resolved) {
+                    return $resolved;
                 }
             }
 
@@ -711,13 +713,48 @@ class RouteAnalyzer
     }
 
     /**
-     * Resolve resource class name with namespace fallbacks
+     * The class a controller imports under a given short name, if any
      */
-    protected function resolveResourceClass(string $resourceClass): ?string
+    protected function resolveImportedClass(string $controller, string $shortName): ?string
+    {
+        try {
+            $filename = (new ReflectionClass($controller))->getFileName();
+
+            if (!$filename || !file_exists($filename)) {
+                return null;
+            }
+
+            $pattern = '/^use\s+([A-Za-z0-9_\\\\]+\\\\' . preg_quote(class_basename($shortName), '/') . ');/m';
+
+            if (preg_match($pattern, file_get_contents($filename), $matches) && class_exists($matches[1])) {
+                return $matches[1];
+            }
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve resource class name with namespace fallbacks. Controller code
+     * names resources unqualified, and the same short name can live in more
+     * than one resource namespace, so the controller's own use statement
+     * decides when one is available.
+     */
+    protected function resolveResourceClass(string $resourceClass, ?string $controller = null): ?string
     {
         // Already fully qualified
         if (class_exists($resourceClass)) {
             return $resourceClass;
+        }
+
+        if ($controller) {
+            $imported = $this->resolveImportedClass($controller, $resourceClass);
+
+            if ($imported) {
+                return $imported;
+            }
         }
 
         // Try with App\Http\Resources namespace
