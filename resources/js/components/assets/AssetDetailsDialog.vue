@@ -650,7 +650,8 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
   >
     <DialogContent
       v-if="asset && assetCopy"
-      class="max-w-11/12! h-[90dvh] grid-rows-[auto_minmax(0,1fr)_auto]"
+      class="max-w-11/12! grid! h-[90dvh] grid-rows-[auto_minmax(0,1fr)_auto] gap-4"
+      :scroll-body="false"
     >
       <DialogHeader class="min-w-0 pr-8">
         <p

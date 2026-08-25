@@ -172,7 +172,10 @@ const openPicker = () => {
       v-model:open="pickerOpen"
       :modal="true"
     >
-      <DialogContent class="flex h-[80dvh] flex-col gap-4 !max-w-3xl">
+      <DialogContent
+        class="flex h-[80dvh] flex-col gap-4 !max-w-3xl"
+        :scroll-body="false"
+      >
         <DialogHeader class="shrink-0">
           <DialogTitle>{{ t('labels.icons.field.selectTitle') }}</DialogTitle>
         </DialogHeader>

@@ -338,7 +338,7 @@ watch(
     @update:open="updateOpenState"
   >
     <DialogContent
-      class="max-h-[90svh] overflow-y-auto sm:max-w-4xl"
+      class="sm:max-w-4xl"
       submit-shortcut
       @submit="!isLoading && handleSubmit()"
     >

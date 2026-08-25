@@ -94,7 +94,7 @@ watch(open, (isOpen) => {
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="max-h-[85svh] sm:max-w-lg">
+    <DialogContent class="sm:max-w-lg">
       <DialogHeaderCombined
         :title="$t('labels.assets.move.title', { count: items.length })"
         :description="$t('labels.assets.move.description')"

@@ -3,7 +3,7 @@
     :open="open"
     @update:open="$emit('update:open', $event)"
   >
-    <DialogContent class="max-h-[80vh] max-w-3xl">
+    <DialogContent class="max-w-3xl">
       <DialogHeader>
         <DialogTitle>{{ title }}</DialogTitle>
       </DialogHeader>

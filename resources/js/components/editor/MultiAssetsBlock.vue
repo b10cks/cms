@@ -342,7 +342,10 @@ const handleFolderChange = (folderId: string | null) => {
         }
       "
     >
-      <DialogContent class="!flex h-[90dvh] flex-col !max-w-[90dvw] p-0">
+      <DialogContent
+        class="h-[90dvh] gap-4 !max-w-[90dvw] p-0"
+        :scroll-body="false"
+      >
         <DialogHeader>
           <DialogTitle>
             {{

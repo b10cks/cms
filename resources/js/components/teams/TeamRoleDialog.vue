@@ -217,7 +217,7 @@ const handleOpenChange = (value: boolean) => {
     @update:open="handleOpenChange"
   >
     <DialogContent class="sm:max-w-3xl">
-      <div class="flex max-h-[90vh] flex-col">
+      <div class="flex flex-col">
         <DialogHeader class="space-y-3">
           <div class="flex items-center justify-between gap-4">
             <div class="space-y-1">

@@ -317,7 +317,7 @@ const handleSubmit = async () => {
         :description="$t('labels.assetCollections.dialogDescription')"
       />
 
-      <div class="flex max-h-[70vh] flex-col gap-6 overflow-y-auto px-1">
+      <div class="flex flex-col gap-6">
         <IconNameField
           v-model="iconNameValue"
           :label="$t('labels.assetCollections.fieldLabels.name')"

@@ -200,7 +200,7 @@ const handleSubmit = async () => {
           :description="$t('labels.assetShares.dialogDescription')"
         />
 
-        <div class="flex max-h-[70vh] flex-col gap-4 overflow-y-auto px-1">
+        <div class="flex flex-col gap-4">
           <div
             v-if="sourceType"
             class="flex items-center gap-2 rounded-md bg-surface px-3 py-2 text-sm text-muted"

@@ -216,7 +216,10 @@ const handleAssetDetailsUpdate = (asset: AssetResource) => {
       v-model:open="showAssetPicker"
       :modal="true"
     >
-      <DialogContent class="h-[90dvh] !max-w-[90dvw] p-0">
+      <DialogContent
+        class="h-[90dvh] gap-4 !max-w-[90dvw] p-0"
+        :scroll-body="false"
+      >
         <DialogHeader>
           <DialogTitle>{{ $t('labels.assets.selectAsset') }}</DialogTitle>
         </DialogHeader>

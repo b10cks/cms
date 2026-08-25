@@ -51,7 +51,7 @@ useShortcut({
         :description="$t('shortcuts.description')"
       />
 
-      <div class="grid max-h-[65vh] gap-5 overflow-y-auto py-2">
+      <div class="grid gap-5 py-2">
         <p
           v-if="sections.length === 0"
           class="text-sm text-muted"

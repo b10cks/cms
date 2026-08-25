@@ -231,7 +231,10 @@ const handleCellKeyDown = (event: KeyboardEvent, rowIndex: number, columnIndex: 
     :open="open"
     @update:open="emit('update:open', $event)"
   >
-    <DialogContent class="h-[90dvh] !max-w-[90dvw] p-0">
+    <DialogContent
+      class="h-[90dvh] !max-w-[90dvw] p-0"
+      :scroll-body="false"
+    >
       <div class="flex h-full min-h-0 flex-col">
         <DialogHeader class="border-b border-border px-6 py-4">
           <div class="flex items-start justify-between gap-4">
