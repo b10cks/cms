@@ -8,11 +8,19 @@ import { defineConfig } from 'vitepress'
  */
 function nav(prefix = ''): DefaultTheme.NavItem[] {
   return [
-    { text: 'Guide', link: `${prefix}/getting-started/introduction`, activeMatch: `^${prefix}/(getting-started|guides)/` },
+    {
+      text: 'Guide',
+      link: `${prefix}/getting-started/introduction`,
+      activeMatch: `^${prefix}/(getting-started|guides)/`,
+    },
     { text: 'Concepts', link: `${prefix}/concepts/spaces`, activeMatch: `^${prefix}/concepts/` },
     { text: 'User Guide', link: `${prefix}/ui/dashboard`, activeMatch: `^${prefix}/ui/` },
     { text: 'API', link: `${prefix}/api/overview`, activeMatch: `^${prefix}/api/` },
-    { text: 'Self-hosting', link: `${prefix}/self-hosting/`, activeMatch: `^${prefix}/self-hosting/` },
+    {
+      text: 'Self-hosting',
+      link: `${prefix}/self-hosting/`,
+      activeMatch: `^${prefix}/self-hosting/`,
+    },
   ]
 }
 
@@ -47,6 +55,10 @@ function guideSidebar(prefix = ''): DefaultTheme.SidebarItem[] {
         { text: 'Rendering Rich Text', link: `${prefix}/guides/rich-text` },
         { text: 'Live Preview & Visual Editing', link: `${prefix}/guides/live-preview` },
       ]),
+    },
+    {
+      text: 'Best practices',
+      items: sorted([{ text: 'Atomic Design Principles', link: `${prefix}/guides/atomic-design` }]),
     },
     {
       text: 'Tooling',
@@ -224,8 +236,21 @@ export default defineConfig({
     pageData.frontmatter.head.push(
       ['link', { rel: 'canonical', href: canonical }],
       ['meta', { property: 'og:url', content: canonical }],
-      ['meta', { property: 'og:title', content: pageData.title ? `${pageData.title} | b10cks Docs` : 'b10cks Docs' }],
-      ['meta', { property: 'og:description', content: pageData.description || 'Documentation for b10cks – the opinionated headless CMS' }],
+      [
+        'meta',
+        {
+          property: 'og:title',
+          content: pageData.title ? `${pageData.title} | b10cks Docs` : 'b10cks Docs',
+        },
+      ],
+      [
+        'meta',
+        {
+          property: 'og:description',
+          content:
+            pageData.description || 'Documentation for b10cks – the opinionated headless CMS',
+        },
+      ]
     )
   },
 

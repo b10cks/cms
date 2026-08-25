@@ -53,6 +53,10 @@ Build a frontend on top of b10cks:
 - [Live preview & visual editing](guides/live-preview.md) — how the preview bridge works, and wiring it into your app
 - [Querying content](guides/querying-content.md) — filters, sorting, pagination, search, and the sitemap endpoint
 
+Best practices:
+
+- [Designing blocks with atomic design](guides/atomic-design.md) — atoms, molecules and organisms as block tags, and the restrictions that keep the library from sprawling
+
 Tooling around the CMS:
 
 - [CLI](guides/cli.md) — terminal workflows and TypeScript type generation from block schemas
