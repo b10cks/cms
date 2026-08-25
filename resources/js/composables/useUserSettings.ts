@@ -3,7 +3,7 @@ import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { LocaleCode } from '~/plugins/i18n'
-import { setLocale } from '~/plugins/i18n'
+import { detectBrowserLocale, setLocale } from '~/plugins/i18n'
 import type { User } from '~/types/users'
 
 type UserSettings = {
@@ -11,8 +11,10 @@ type UserSettings = {
   extendedSidebar: boolean
 }
 
+// The browser's language is the best guess until the user has an opinion of their
+// own — a saved account setting and the cached settings below both outrank it.
 const defaultSettings: UserSettings = {
-  languageIso: 'en',
+  languageIso: detectBrowserLocale(),
   extendedSidebar: true,
 }
 
@@ -57,14 +59,11 @@ const assignSettings = (nextSettings?: Partial<User['settings']> | null) => {
   state.languageIso = nextSettings.languageIso ?? defaultSettings.languageIso
   state.extendedSidebar = nextSettings.extendedSidebar ?? defaultSettings.extendedSidebar
 
-  setLocale(state.languageIso as 'en' | 'de')
+  setLocale(state.languageIso as LocaleCode)
 }
 
 export function useUserSettings() {
   const { user, setUser } = useAuth()
-  // The plugin's composable also keeps <html lang> in step; the module-level
-  // `setLocale` only switches the messages.
-  const { setLocale: setDocumentLocale } = useI18n()
 
   const persistSetting = async <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
     const currentUser = user.value
@@ -90,7 +89,7 @@ export function useUserSettings() {
     })
 
     if (key === 'languageIso') {
-      setDocumentLocale(value as LocaleCode)
+      setLocale(value as LocaleCode)
     }
 
     meta.pendingCount += 1
@@ -111,7 +110,7 @@ export function useUserSettings() {
       })
 
       if (key === 'languageIso') {
-        setDocumentLocale(previousSettings.languageIso as LocaleCode)
+        setLocale(previousSettings.languageIso as LocaleCode)
       }
 
       toast.error(error?.message || 'Failed to update user settings')
@@ -122,7 +121,7 @@ export function useUserSettings() {
   }
 
   if (!initialized) {
-    setLocale(state.languageIso as 'en' | 'de')
+    setLocale(state.languageIso as LocaleCode)
     assignSettings(user.value?.settings)
 
     stopWatchers = [

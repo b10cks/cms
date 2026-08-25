@@ -22,6 +22,7 @@ declare global {
   const customRef: typeof import('vue').customRef
   const defineAsyncComponent: typeof import('vue').defineAsyncComponent
   const defineComponent: typeof import('vue').defineComponent
+  const detectBrowserLocale: typeof import('./resources/js/plugins/i18n').detectBrowserLocale
   const effectScope: typeof import('vue').effectScope
   const ensureAuthorizationContext: typeof import('./resources/js/composables/useAuthorization').ensureAuthorizationContext
   const ensureSelectedTeamAccess: typeof import('./resources/js/composables/useAuthorization').ensureSelectedTeamAccess
@@ -339,6 +340,7 @@ declare module 'vue' {
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
+    readonly detectBrowserLocale: UnwrapRef<typeof import('./resources/js/plugins/i18n')['detectBrowserLocale']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly ensureAuthorizationContext: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['ensureAuthorizationContext']>
     readonly ensureSelectedTeamAccess: UnwrapRef<typeof import('./resources/js/composables/useAuthorization')['ensureSelectedTeamAccess']>
