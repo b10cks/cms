@@ -493,7 +493,7 @@
         "declineFailed": "Einladung konnte nicht abgelehnt werden: {error}"
       },
       "page": {
-        "title": "Einer Einladung beitreten",
+        "title": "Du bist zu b10cks eingeladen",
         "loading": "Lädt...",
         "invalidOrExpired": "Ungültige oder abgelaufene Einladung",
         "invalidOrExpiredDesc": "Die Einladung, die du versuchst zu verwenden, ist nicht mehr gültig.",
@@ -501,17 +501,21 @@
         "expiredDesc": "Bitte kontaktiere den Einladenden, um eine neue Einladung zu erhalten.",
         "alreadyAccepted": "Einladung bereits angenommen",
         "alreadyAcceptedDesc": "Du hast diese Einladung bereits angenommen.",
-        "fromInviter": "{name} hat dich eingeladen.",
-        "invitedToJoin": "Du wurdest eingeladen zu",
         "acceptingButton": "Wird angenommen...",
         "acceptButton": "Einladung annehmen",
         "declineButton": "Ablehnen",
-        "resourceSpace": "dem Space \"{name}\"",
-        "resourceTeam": "dem Team \"{name}\"",
-        "resourceFallback": "dieser Ressource",
         "inviterFallback": "Jemand",
         "declined": "Einladung abgelehnt",
-        "declinedDesc": "Du hast diese Einladung abgelehnt. Bitte den Einladenden um eine neue, falls du deine Meinung änderst."
+        "declinedDesc": "Du hast diese Einladung abgelehnt. Bitte den Einladenden um eine neue, falls du deine Meinung änderst.",
+        "heading": "{name} beitreten",
+        "headingFallback": "Du wurdest eingeladen",
+        "introSignup": "Erstelle dein b10cks-Konto, um die Einladung anzunehmen und loszulegen.",
+        "introAccept": "Nimm die Einladung an, um loszulegen.",
+        "invitedYou": "{name} hat dich eingeladen",
+        "invitedAsRole": "Eingeladen als {role}",
+        "signupButton": "Konto erstellen",
+        "loginHint": "Du hast schon ein b10cks-Konto? [Melde dich an]({url}), um anzunehmen.",
+        "backToDashboard": "Zurück zu deinen Spaces"
       }
     },
     "preview": {

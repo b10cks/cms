@@ -484,7 +484,7 @@
         "declineFailed": "Failed to decline invitation: {error}"
       },
       "page": {
-        "title": "Join an Invite",
+        "title": "You're invited to b10cks",
         "loading": "Loading...",
         "invalidOrExpired": "Invalid or expired invite",
         "invalidOrExpiredDesc": "The invite you're trying to use is no longer valid.",
@@ -492,17 +492,21 @@
         "expiredDesc": "Please contact the inviter to send you a new invite.",
         "alreadyAccepted": "Invite already accepted",
         "alreadyAcceptedDesc": "You've already accepted this invite.",
-        "fromInviter": "{name} invited you.",
-        "invitedToJoin": "You've been invited to join",
         "acceptingButton": "Accepting...",
         "acceptButton": "Accept Invite",
         "declineButton": "Decline",
-        "resourceSpace": "the space \"{name}\"",
-        "resourceTeam": "the team \"{name}\"",
-        "resourceFallback": "this resource",
         "inviterFallback": "Someone",
         "declined": "Invite declined",
-        "declinedDesc": "You have declined this invitation. Ask the inviter for a new one if you change your mind."
+        "declinedDesc": "You have declined this invitation. Ask the inviter for a new one if you change your mind.",
+        "heading": "Join {name}",
+        "headingFallback": "You've been invited",
+        "introSignup": "Create your b10cks account to accept the invitation and start collaborating.",
+        "introAccept": "Accept the invitation to start collaborating.",
+        "invitedYou": "{name} invited you",
+        "invitedAsRole": "Invited as {role}",
+        "signupButton": "Create your account",
+        "loginHint": "Already have a b10cks account? [Log in]({url}) to accept.",
+        "backToDashboard": "Back to your spaces"
       }
     },
     "preview": {
