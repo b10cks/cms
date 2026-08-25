@@ -445,11 +445,7 @@ const handleBulkDelete = async () => {
                     v-if="person.state === 'pending' && person.expires_at"
                     :tooltip="formatDateTime(person.expires_at)"
                   >
-                    {{
-                      $t('labels.invites.tooltip.expiresInDays', {
-                        count: expiresInDays(person.expires_at),
-                      })
-                    }}
+                    {{ $t('labels.invites.tooltip.expiresInDays', expiresInDays(person.expires_at)) }}
                   </SimpleTooltip>
                   <SimpleTooltip
                     v-else-if="person.invited_at"
