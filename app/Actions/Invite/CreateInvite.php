@@ -67,7 +67,7 @@ class CreateInvite
             'expires_at' => $data['expires_at'],
         ]);
 
-        $this->sendNotification($invite->loadMissing(['roleDefinition', 'team', 'space', 'inviter']));
+        $this->sendNotification($invite->loadMissing(['roleDefinition', 'team', 'space', 'inviter', 'invitee']));
 
         return $invite;
     }

@@ -57,6 +57,8 @@ class ResendInvite
 
     private function sendNotification(Invite $invite): void
     {
+        $invite->loadMissing(['space', 'team', 'inviter', 'invitee']);
+
         if ($invite->space_id) {
             $notification = new InviteToSpaceNotification($invite, $invite->space, $invite->inviter);
         } elseif ($invite->team_id) {

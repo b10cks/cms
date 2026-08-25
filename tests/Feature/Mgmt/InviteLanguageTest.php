@@ -62,6 +62,34 @@ class InviteLanguageTest extends TestCase
     }
 
     #[Test]
+    public function a_registered_invitee_is_mailed_in_their_own_language(): void
+    {
+        Notification::fake();
+        $owner = User::factory()->create();
+        $team = Team::factory()->create();
+        $this->assignTeamRole($team, $owner, 'owner');
+        $invitee = User::factory()->create([
+            'email' => 'schon-da@example.com',
+            'settings' => ['languageIso' => 'ja'],
+        ]);
+
+        $this->actingAs($owner)
+            ->postJson(route('mgmt.teams.invites.store', $team), [
+                'email' => $invitee->email,
+                'role' => 'member',
+                'language' => 'de',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.language', 'de');
+
+        Notification::assertSentTo(
+            $invitee,
+            InviteToTeamNotification::class,
+            fn ($notification) => $notification->locale === 'ja',
+        );
+    }
+
+    #[Test]
     public function an_unsupported_language_is_rejected(): void
     {
         Notification::fake();

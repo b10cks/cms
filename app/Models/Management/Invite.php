@@ -148,12 +148,16 @@ class Invite extends GlobalModel
     }
 
     /**
-     * Locale of the invitation mail. The inviter picks it; rows created
-     * before the column existed fall back to the app language.
+     * Locale of the invitation mail. An invitee who already has an account
+     * reads it in their own language; for a bare address the inviter's pick
+     * is all we have, and rows created before the column existed fall back
+     * to the app language.
      */
     public function notificationLocale(): string
     {
-        return $this->language ?? config('app.fallback_locale');
+        return $this->invitee?->preferredLocale()
+            ?? $this->language
+            ?? config('app.fallback_locale');
     }
 
     public function getRoleAttribute(): ?string
