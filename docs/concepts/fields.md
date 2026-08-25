@@ -384,6 +384,8 @@ Renders a **field plugin** registered in the space — your own editor UI, loade
 - The plugin bundle is either uploaded code (up to 1.5 MB) or, in dev mode, served from a loopback dev URL. It talks to the editor over a message bridge and stores whatever JSON value it produces — your frontend receives that value as-is.
 - Translatable (each language gets its own value), NOT indexable.
 
+Writing one is a short job — the bundle contract, the message bridge, and the sandbox's limits are in the [field plugins guide](../guides/field-plugins.md).
+
 ---
 
 ## What your frontend receives

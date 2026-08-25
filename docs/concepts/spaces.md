@@ -42,7 +42,7 @@ Both behaviours apply to trashed and permanently deleted entries alike — under
 
 ## Team and roles
 
-Access to a space is granted per user with space-scoped roles, or inherited through a **team** that owns the space. People management (invites, roles) lives in **Settings → People**; see the [user guide](../ui/settings.md#people--roles).
+Access to a space is granted per user with space-scoped roles, or inherited through a **team** that owns the space. People management (invites, roles) lives in **Settings → People**; see the [user guide](../ui/settings.md#people).
 
 ## Space lifecycle
 

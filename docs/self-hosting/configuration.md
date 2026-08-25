@@ -56,6 +56,33 @@ APP_ENV=production
 APP_DEBUG=false
 ```
 
+## Sign-in
+
+```bash
+AUTH_2FA_GRACE_PERIOD=30       # minutes a verified 2FA session stays verified
+
+# Optional social login (both providers are off unless configured)
+GOOGLE_CLIENT_ID=…
+GOOGLE_CLIENT_SECRET=…
+GOOGLE_REDIRECT_URI=https://cms.example.com/auth/v1/social/google/callback
+GITHUB_CLIENT_ID=…
+GITHUB_CLIENT_SECRET=…
+GITHUB_REDIRECT_URI=https://cms.example.com/auth/v1/social/github/callback
+```
+
+SAML single sign-on needs no `.env` entries — it is configured per team in the app ([Teams → Single sign-on](../ui/account.md#single-sign-on-saml)).
+
+## Management API access
+
+```bash
+# Origins allowed to make credentialed cross-origin calls to /mgmt/* and
+# /auth/v1/*. Comma-separated; defaults to APP_FRONTEND_URL and APP_URL.
+# Never '*' — these routes carry the admin's session cookie.
+MGMT_ALLOWED_ORIGINS=https://cms.example.com
+
+MGMT_RATE_LIMIT=1000           # management API requests per minute
+```
+
 ## Reverse proxy & trusted hosts
 
 Required when the instance runs behind a load balancer, CDN, or any reverse proxy.
@@ -87,7 +114,7 @@ DB_USERNAME=…
 DB_PASSWORD=…
 ```
 
-Each space can optionally run in its **own isolated database** — the management database stores users, teams, spaces, and billing, while space databases hold content. With the **standard** install profile, provisioning requires credentials allowed to create databases and users; see [Spaces](../concepts/spaces.md#isolated-databases).
+Each space can optionally run in its **own isolated database** — the management database stores users, teams, spaces, and billing, while space databases hold content. With the **standard** install profile, provisioning requires credentials allowed to create databases and users; see [Spaces](../concepts/spaces.md#isolation-model).
 
 With the **shared** install profile no administrative privileges are needed: spaces live in the main database behind a per-space table prefix (`sp<hash>_…`), or — with `B10CKS_SPACE_DB_DRIVER=sqlite` — in one SQLite file per space under `storage/app/spaces/`.
 
@@ -165,6 +192,15 @@ The delivery routes are unauthenticated and each in-flight transfer occupies a P
 
 Video and other non-image assets are streamed with byte-range support, which is what makes seeking work and is a hard requirement for playback in Safari. If you terminate TLS or proxy in front of the origin, make sure the proxy forwards `Range` and does not buffer whole responses — nginx needs `proxy_buffering off` (or a large `proxy_max_temp_file_size`) on the delivery location for large media.
 
+Video posters and duration/dimension probing shell out to ffmpeg. Point these at your binaries if they are not on the default path:
+
+```bash
+FFMPEG_PATH=/usr/bin/ffmpeg
+FFPROBE_PATH=/usr/bin/ffprobe
+```
+
+Without a working ffmpeg, video uploads still work — they just get no generated poster frames, and editors have to upload a [custom poster](../ui/assets.md#posters-and-thumbnails).
+
 ## Delivery performance (optional)
 
 ```bash
@@ -188,6 +224,35 @@ TRANSFERS_DISK_DRIVER=local    # or s3 (default)
 
 Asset download packages and backups are written to the transfers disk. `local` keeps them under `storage/app/transfers` and serves downloads through short-lived signed application URLs — no S3 required.
 
+Defaults for [asset packages and public shares](../concepts/assets.md#sharing--downloads); all optional:
+
+```bash
+ASSET_PACKAGE_EXPIRY_DAYS=7            # how long a built zip stays before it is pruned
+ASSET_PACKAGE_URL_TTL_MINUTES=15       # lifetime of a single issued download URL
+ASSET_PACKAGE_MAX_SIZE_MB=10240        # ceiling on a package's summed source size (0 = unlimited)
+ASSET_PACKAGE_FAILED_BUILD_COOLDOWN_MINUTES=10  # wait before retrying a failed build
+ASSET_SHARE_ACCESS_TOKEN_TTL_MINUTES=60 # lifetime of the token issued by unlocking a share
+ASSET_SHARE_EVENT_RETENTION_DAYS=365    # how long share access events are kept
+```
+
+A package build copies the source files locally and zips them alongside, so local disk needs roughly twice `ASSET_PACKAGE_MAX_SIZE_MB` while a build runs.
+
+### Metered downloads through CloudFront (optional)
+
+Large share downloads can be served by CloudFront instead of the origin, with signed URLs and download metering from the distribution's access logs:
+
+```bash
+CLOUDFRONT_DOWNLOAD_BASE_URL=https://dl.example.com   # /dl/* behavior fronting the transfers bucket
+CLOUDFRONT_SIGNING_KEY_PAIR_ID=…
+CLOUDFRONT_SIGNING_PRIVATE_KEY=…       # PEM contents or a path to a .pem file
+CLOUDFRONT_LOG_BUCKET=…                # access logs ingested for download counts
+CLOUDFRONT_LOG_PREFIX=
+CLOUDFRONT_DISTRIBUTION_ID=…           # used for cache invalidation
+USAGE_HOURLY_RETENTION_DAYS=180        # how long hourly usage rows are kept
+```
+
+Without these, downloads fall back to presigned S3 URLs (or signed application URLs on a local transfers disk).
+
 ## Search
 
 ```bash
@@ -197,11 +262,23 @@ OPENSEARCH_USERNAME=…
 OPENSEARCH_PASSWORD=…
 ```
 
-The driver is chosen **per space** in its settings; after switching, trigger a reindex from the space settings.
+The driver is chosen **per space** through the space's `search_driver` setting (Management API or the MCP/CLI tooling; there is no switch in the admin UI). After switching, reindex the space:
+
+```bash
+php artisan search:reindex {space_id}
+```
+
+The Management API exposes the same operation as `POST /mgmt/v1/spaces/{space}/search/reindex`.
 
 ## Mail
 
 Standard Laravel mail configuration (`MAIL_*`) — used for invites, notifications, and password resets.
+
+```bash
+NOTIFICATIONS_MAIL_DELAY_MINUTES=5
+```
+
+In-app notifications are delivered instantly. The email fallback is queued with this delay and dropped if the recipient has already read the notification in the app by the time the job runs — so email stays for what actually needs it.
 
 ## AI (optional)
 
@@ -214,7 +291,25 @@ OPENROUTER_API_KEY=…           # empty disables AI features
 #OPENROUTER_MANAGEMENT_KEY=…
 ```
 
+```bash
+# Provider selection — OpenRouter is the default and the only one with
+# per-space key provisioning. The others are single-key drivers.
+AI_DEFAULT_DRIVER=openrouter   # openrouter | openai | bedrock
+OPENROUTER_ENABLED=true
+#OPENAI_ENABLED=true
+#OPENAI_API_KEY=…
+#BEDROCK_ENABLED=true          # uses the AWS_* credentials
+```
+
 AI features (generation, translation, meta tags, asset classification) are opt-in and configured per space in **Settings → AI**. In `single` mode there is no per-space spend metering — usage counts against your one key.
+
+## Data API usage tracking (optional)
+
+```bash
+TRACK_TOKEN_USAGE=false        # record per-token request counts and timings
+```
+
+Off by default: every delivery request writes an execution row and updates aggregates, which is real write load on a busy instance. Turn it on when you want per-token usage statistics in **Settings → Access tokens**.
 
 ## Billing (optional)
 

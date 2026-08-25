@@ -31,11 +31,14 @@ Most resources are space-scoped:
 /mgmt/v1/spaces/{space}/data-sources     # data sources (+ /entries)
 /mgmt/v1/spaces/{space}/redirects        # redirects
 /mgmt/v1/spaces/{space}/releases         # releases
+/mgmt/v1/spaces/{space}/icons            # icon registry
+/mgmt/v1/spaces/{space}/field-plugins    # field plugins
 /mgmt/v1/spaces/{space}/automations      # automations (+ actions, executions)
 /mgmt/v1/spaces/{space}/backups          # backups
 /mgmt/v1/spaces/{space}/migrations       # space migrations
 /mgmt/v1/spaces/{space}/…                # settings, tokens, members, invites, audit-logs, usage
-/mgmt/v1/teams …                         # teams, members, invites
+/mgmt/v1/teams …                         # teams, members, invites, SAML provider,
+                                         # space blueprints, custom space roles
 /mgmt/v1/user …                          # profile, security, personal tokens, notifications
 ```
 

@@ -27,7 +27,7 @@ A deleted (soft-deleted) release does not delete the content versions in it — 
 
 ## Releases vs. scheduled publishing
 
-Scheduling a *single entry* needs no release — versions support `scheduled_at` directly ([Versions & publishing](versions-and-publishing.md#publishing)). Reach for a release when **multiple entries** must change state together, or when you want a named, reviewable bundle for a launch.
+Scheduling a *single entry* needs no release — versions support `scheduled_at` directly ([Versions & publishing](versions-and-publishing.md#going-live)). Reach for a release when **multiple entries** must change state together, or when you want a named, reviewable bundle for a launch.
 
 ## Related
 

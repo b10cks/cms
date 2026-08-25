@@ -25,7 +25,7 @@ Two URL-related settings decouple site URLs from CMS languages:
 - The **canonical entry** holds the full content in the default language.
 - A **translation** is a linked entry (`i18n_parent_id` → canonical) for one target language, with its own slug, name, version history, and publish state.
 
-Which fields a translation can override is controlled by the block schema: only fields marked **translatable** ([Fields](../concepts/fields.md#common-settings)) get per-language values. At delivery time the resolver **overlays** the translation onto the canonical version:
+Which fields a translation can override is controlled by the block schema: only fields marked **translatable** ([Fields](../concepts/fields.md#settings-every-field-has)) get per-language values. At delivery time the resolver **overlays** the translation onto the canonical version:
 
 - translatable fields → the translation's value, falling back to the canonical value when the translation leaves them empty
 - non-translatable fields (layout choices, assets, nested structure, numbers, …) → always the canonical value

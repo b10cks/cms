@@ -36,7 +36,7 @@ A production deployment runs three long-lived processes plus the scheduler:
 | WebSockets (Reverb) | Real-time collaboration, presence, notifications (optional) |
 | Scheduler (cron) | Recurring maintenance: usage rollups, subscription sync, cleanup |
 
-Alongside those, an instance uses a **management database** (users, teams, spaces, billing) and per-space content storage — optionally one **isolated database per space** for hard project isolation (see [Spaces](../concepts/spaces.md#isolated-databases)).
+Alongside those, an instance uses a **management database** (users, teams, spaces, billing) and per-space content storage — optionally one **isolated database per space** for hard project isolation (see [Spaces](../concepts/spaces.md#isolation-model)).
 
 ## Single team or platform?
 
