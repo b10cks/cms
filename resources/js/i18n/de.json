@@ -409,7 +409,9 @@
         "expires": "Einladung läuft ab in",
         "expiresDays": "{days} Tage",
         "role": "Einladen als",
-        "rolePlaceholder": "Wähle eine Rolle für den Mitarbeiter"
+        "rolePlaceholder": "Wähle eine Rolle für den Mitarbeiter",
+        "language": "Sprache der Einladung",
+        "languagePlaceholder": "Sprache der Einladungs-E-Mail wählen"
       },
       "status": {
         "pending": "Ausstehend",

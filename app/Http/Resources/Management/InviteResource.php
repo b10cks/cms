@@ -21,6 +21,7 @@ class InviteResource extends JsonResource
             'invited_by' => $this->invited_by,
             'email' => $this->email,
             'role' => $this->role,
+            'language' => $this->language,
             'message' => $this->message,
             'status' => $this->getStatus(),
             'inviter' => $this->whenLoaded('inviter', fn () => new SimpleUserResource($this->inviter)),

@@ -24,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property string $role_id
  * @property string|null $message
  * @property string $email
+ * @property string|null $language
  * @property string $role
  * @property string $token
  * @property Carbon $expires_at
@@ -50,6 +51,7 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invite whereExpiresAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invite whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invite whereInvitedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Invite whereLanguage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invite whereMessage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invite whereRole($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invite whereSpaceId($value)
@@ -143,6 +145,15 @@ class Invite extends GlobalModel
     public function isDeclined(): bool
     {
         return $this->declined_at !== null;
+    }
+
+    /**
+     * Locale of the invitation mail. The inviter picks it; rows created
+     * before the column existed fall back to the app language.
+     */
+    public function notificationLocale(): string
+    {
+        return $this->language ?? config('app.fallback_locale');
     }
 
     public function getRoleAttribute(): ?string

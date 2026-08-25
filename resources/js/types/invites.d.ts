@@ -34,6 +34,7 @@ export interface InviteResource {
   invited_by: string
   email: string
   role: InviteRole
+  language: string
   message: string | null
   status: InviteStatus
   expires_at: string
@@ -54,6 +55,7 @@ export interface PublicInviteResource {
   inviter: SimpleUser
   email_hash: string
   role: InviteRole
+  language: string
   message: string | null
   expires_at: string
   status: InviteStatus
@@ -62,6 +64,7 @@ export interface PublicInviteResource {
 export interface CreateInvitePayload {
   email: string
   role: InviteRole
+  language?: string
   message?: string | null
   expires_in_days?: number
 }

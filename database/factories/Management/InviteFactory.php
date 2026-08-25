@@ -22,6 +22,7 @@ class InviteFactory extends Factory
             'space_id' => Space::factory(),
             'invited_by' => User::factory(),
             'email' => fake()->safeEmail(),
+            'language' => 'en',
             'role_id' => function (array $attributes) {
                 $roleKey = fake()->randomElement(['admin', 'member']);
 

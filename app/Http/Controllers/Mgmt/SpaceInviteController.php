@@ -42,6 +42,7 @@ class SpaceInviteController extends Controller
                     'role' => $request->input('role'),
                     'space_id' => $space->id,
                     'message' => $request->input('message'),
+                    'language' => $request->input('language'),
                     'expires_at' => $request->getExpiresAt(),
                 ],
                 auth()->user()

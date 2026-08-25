@@ -61,6 +61,7 @@ class CreateInvite
             'invitee_id' => $inviteeId,
             'role_id' => $role->id,
             'email' => $data['email'],
+            'language' => $data['language'] ?? app()->getLocale(),
             'token' => Str::random(32),
             'message' => $data['message'] ?? null,
             'expires_at' => $data['expires_at'],
@@ -83,6 +84,8 @@ class CreateInvite
 
         // Registered invitees get the notification in-app, with a read-gated
         // email fallback. Invites to addresses without an account are mailed.
+        $notification->locale($invite->notificationLocale());
+
         if ($invite->invitee_id && ($invitee = $invite->invitee)) {
             $invitee->notify($notification);
         } else {

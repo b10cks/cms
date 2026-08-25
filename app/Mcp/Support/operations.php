@@ -189,7 +189,7 @@ return [
         'uri' => '/mgmt/v1/spaces/{spaceId}/invites',
     ],
     'spaces.createInvite' => [
-        'description' => 'Invite a user to a space.',
+        'description' => 'Invite a user to a space. Payload fields: email (required), role, language, message.',
         'required' => ['spaceId', 'payload'],
         'accepts' => ['spaceId', 'payload'],
         'method' => 'POST',
@@ -1866,7 +1866,7 @@ return [
         'uri' => '/mgmt/v1/teams/{teamId}/invites',
     ],
     'teams.createInvite' => [
-        'description' => 'Invite someone to a team. Payload fields: email (required), role, message.',
+        'description' => 'Invite someone to a team. Payload fields: email (required), role, language, message.',
         'required' => ['teamId', 'payload'],
         'accepts' => ['teamId', 'payload'],
         'method' => 'POST',

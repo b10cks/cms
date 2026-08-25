@@ -7,7 +7,7 @@ import type { RoleCatalogEntry } from '~/types/authorization'
 import type { CreateInvitePayload } from '~/types/invites'
 
 const open = defineModel<boolean>('open')
-const { t } = useI18n()
+const { t, locale, locales } = useI18n()
 
 const props = defineProps<{
   spaceId?: string
@@ -20,12 +20,15 @@ const { useCreateSpaceInviteMutation, useCreateTeamInviteMutation } = useInvites
 const createSpaceInviteMutation = useCreateSpaceInviteMutation()
 const createTeamInviteMutation = useCreateTeamInviteMutation()
 
-const formData = ref<CreateInvitePayload>({
+const emptyForm = (): CreateInvitePayload => ({
   email: '',
   role: 'member',
+  language: locale.value,
   message: '',
   expires_in_days: 7,
 })
+
+const formData = ref<CreateInvitePayload>(emptyForm())
 
 const isLoading = computed(() => {
   return props.resourceType === 'space'
@@ -37,12 +40,7 @@ const handleSendInvite = async () => {
   const mutationOptions = {
     onSuccess: () => {
       open.value = false
-      formData.value = {
-        email: '',
-        role: 'member',
-        message: '',
-        expires_in_days: 7,
-      }
+      formData.value = emptyForm()
     },
   }
   if (props.resourceType === 'space' && props.spaceId) {
@@ -57,6 +55,11 @@ const handleSendInvite = async () => {
     )
   }
 }
+
+const languageOptions = locales.map((entry) => ({
+  label: `${entry.flag} ${entry.name}`,
+  value: entry.code,
+}))
 
 const roleOptions = computed(() =>
   (props.availableRoles || []).map((role) => ({
@@ -96,6 +99,15 @@ const roleOptions = computed(() =>
           :placeholder="$t('labels.invites.fields.rolePlaceholder')"
           v-model="formData.role"
           :options="roleOptions"
+          required
+        />
+
+        <SelectField
+          name="language"
+          :label="$t('labels.invites.fields.language')"
+          :placeholder="$t('labels.invites.fields.languagePlaceholder')"
+          v-model="formData.language"
+          :options="languageOptions"
           required
         />
 

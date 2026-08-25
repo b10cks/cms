@@ -61,6 +61,7 @@ class StoreInviteRequest extends FormRequest
                     }),
             ],
             'role' => $roleRules,
+            'language' => ['sometimes', 'string', Rule::in(config('app.locales'))],
             'message' => 'nullable|string|max:1000',
             'expires_in_days' => 'nullable|integer|min:1|max:90',
         ];
@@ -70,6 +71,11 @@ class StoreInviteRequest extends FormRequest
     {
         if (! $this->filled('expires_in_days')) {
             $this->merge(['expires_in_days' => 7]);
+        }
+
+        // Fall back to the language the inviter is working in.
+        if (! $this->filled('language')) {
+            $this->merge(['language' => app()->getLocale()]);
         }
 
         if (is_string($this->input('email'))) {
@@ -85,6 +91,7 @@ class StoreInviteRequest extends FormRequest
             'email.unique' => 'A pending invitation already exists for this email address.',
             'role.required' => 'The role is required.',
             'role.in' => 'The selected role is invalid for this invite.',
+            'language.in' => 'The selected language is not supported.',
             'message.max' => 'The message may not be greater than 1000 characters.',
             'expires_in_days.min' => 'The invitation must expire in at least 1 day.',
             'expires_in_days.max' => 'The invitation may not expire in more than 90 days.',

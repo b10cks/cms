@@ -58,13 +58,14 @@ class ResendInvite
     private function sendNotification(Invite $invite): void
     {
         if ($invite->space_id) {
-            $space = $invite->space;
-            Notification::route('mail', $invite->email)
-                ->notify(new InviteToSpaceNotification($invite, $space, $invite->inviter));
+            $notification = new InviteToSpaceNotification($invite, $invite->space, $invite->inviter);
         } elseif ($invite->team_id) {
-            $team = $invite->team;
-            Notification::route('mail', $invite->email)
-                ->notify(new InviteToTeamNotification($invite, $team, $invite->inviter));
+            $notification = new InviteToTeamNotification($invite, $invite->team, $invite->inviter);
+        } else {
+            return;
         }
+
+        Notification::route('mail', $invite->email)
+            ->notify($notification->locale($invite->notificationLocale()));
     }
 }

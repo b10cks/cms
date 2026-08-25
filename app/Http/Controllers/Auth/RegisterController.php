@@ -41,7 +41,9 @@ class RegisterController extends Controller
                 'firstname' => $request->input('firstname'),
                 'lastname' => $request->input('lastname'),
                 'password' => Hash::make($request->input('password')),
-                'language_iso' => app()->getLocale(),
+                // A signup coming from an invite inherits the language the
+                // invitation was written in.
+                'language_iso' => $invite?->language ?? app()->getLocale(),
                 'source' => $invite ? 'invite' : 'manual',
                 'email_verified_at' => ($invite && strtolower($invite->email) === strtolower($request->input('email'))) ? now() : null,
             ];

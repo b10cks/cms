@@ -42,6 +42,7 @@ class TeamInviteController extends Controller
                     'role' => $request->input('role'),
                     'team_id' => $team->id,
                     'message' => $request->input('message'),
+                    'language' => $request->input('language'),
                     'expires_at' => $request->getExpiresAt(),
                 ],
                 auth()->user()

@@ -25,6 +25,7 @@ class PublicInviteResource extends JsonResource
             'inviter' => $this->whenLoaded('inviter', fn () => new SimpleUserResource($this->inviter)),
             'email_hash' => hash('sha256', $this->email),
             'role' => $this->role,
+            'language' => $this->language,
             'message' => $this->message,
             'expires_at' => $this->expires_at?->toIso8601String(),
             'status' => $this->getStatus(),
