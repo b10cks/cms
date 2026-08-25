@@ -3,6 +3,16 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.25-1571e931] — 2026-8-25
+
+- ⬆️ Bump versions
+- 🌐 Pick the initial language from the browser
+- 🐛 Show the singular when an invite expires tomorrow
+- 🚸 Lead invited users to sign up, not log in
+- ✨ Mail an invite in the invitee's own language
+- 🐛 Localize the relative dates in translated mails
+- 🌐 Translate the notification mails into every supported language
+
 ## [v2026.8.25-a7f7adbf] — 2026-8-25
 
 - 📝 Add a best practices guide on designing blocks with atomic design
