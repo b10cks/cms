@@ -12,35 +12,57 @@ use ReflectionClass;
 
 class ResourceParser
 {
-    protected array $parsedResources = [];
+    /** Resources currently being parsed, to break reference cycles */
+    protected array $parsing = [];
+
+    /** Finished schemas, so a resource parses the same however often it is asked for */
+    protected array $parsedSchemas = [];
 
     /**
      * Parse a JsonResource class to extract response schema
      */
     public function parse(string $resourceClass): array
     {
-        // Prevent circular parsing
-        if (isset($this->parsedResources[$resourceClass])) {
+        // A resource reached again while it is still being parsed is a cycle
+        // and becomes a $ref. One that already finished is returned in full,
+        // so a schema never depends on how often it was asked for before.
+        if (isset($this->parsing[$resourceClass])) {
             return ['$ref' => "#/components/schemas/{$this->getSchemaName($resourceClass)}"];
+        }
+
+        if (isset($this->parsedSchemas[$resourceClass])) {
+            return $this->parsedSchemas[$resourceClass];
         }
 
         if (!class_exists($resourceClass)) {
             return ['type' => 'object'];
         }
 
-        // Check if it's a ResourceCollection
-        if (is_subclass_of($resourceClass, ResourceCollection::class)) {
-            return $this->parseConcreteResourceCollection($resourceClass);
-        }
-
-        // Check if it's a JsonResource
-        if (!is_subclass_of($resourceClass, JsonResource::class)) {
-            return ['type' => 'object'];
-        }
+        $this->parsing[$resourceClass] = true;
 
         try {
-            $this->parsedResources[$resourceClass] = true;
+            // Check if it's a ResourceCollection
+            if (is_subclass_of($resourceClass, ResourceCollection::class)) {
+                return $this->parsedSchemas[$resourceClass] = $this->parseConcreteResourceCollection($resourceClass);
+            }
 
+            // Check if it's a JsonResource
+            if (!is_subclass_of($resourceClass, JsonResource::class)) {
+                return ['type' => 'object'];
+            }
+
+            return $this->parsedSchemas[$resourceClass] = $this->buildResourceSchema($resourceClass);
+        } finally {
+            unset($this->parsing[$resourceClass]);
+        }
+    }
+
+    /**
+     * Build the schema of a JsonResource from its toArray() method
+     */
+    protected function buildResourceSchema(string $resourceClass): array
+    {
+        try {
             $reflection = new ReflectionClass($resourceClass);
             $filename = $reflection->getFileName();
 
@@ -119,8 +141,6 @@ class ResourceParser
     protected function parseConcreteResourceCollection(string $resourceClass): array
     {
         try {
-            $this->parsedResources[$resourceClass] = true;
-
             $reflection = new ReflectionClass($resourceClass);
             $filename = $reflection->getFileName();
 
@@ -678,7 +698,8 @@ class ResourceParser
      */
     public function clearCache(): void
     {
-        $this->parsedResources = [];
+        $this->parsing = [];
+        $this->parsedSchemas = [];
     }
 }
 

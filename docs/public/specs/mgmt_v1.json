@@ -16203,7 +16203,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ContentVersionListResource"
+                                    "$ref": "#/components/schemas/ContentVersionResource"
                                 }
                             }
                         }
@@ -17640,7 +17640,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ReleaseResource"
+                                    "$ref": "#/components/schemas/ReleaseDetailResource"
                                 }
                             }
                         }
@@ -22141,7 +22141,45 @@
                 }
             },
             "ContentVersionResource": {
-                "$ref": "#/components/schemas/ContentVersionListResource"
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "external_id": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "parent_id": {
+                        "type": "string"
+                    },
+                    "release_id": {
+                        "type": "string"
+                    },
+                    "release": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "author": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "publisher": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "published_at": {
+                        "nullable": true
+                    },
+                    "scheduled_at": {
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "nullable": true
+                    }
+                }
             },
             "DataSourceResource": {
                 "type": "object",
@@ -22311,7 +22349,45 @@
                 }
             },
             "ReleaseDetailResource": {
-                "$ref": "#/components/schemas/ReleaseResource"
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "external_id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "settings": {
+                        "nullable": true
+                    },
+                    "owner_id": {
+                        "type": "string"
+                    },
+                    "publish_at": {
+                        "nullable": true
+                    },
+                    "committed_at": {
+                        "nullable": true
+                    },
+                    "published_at": {
+                        "nullable": true
+                    },
+                    "versions_count": {
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "nullable": true
+                    }
+                }
             },
             "AutomationActionResource": {
                 "type": "object",
