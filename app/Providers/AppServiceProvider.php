@@ -5,6 +5,9 @@ namespace App\Providers;
 use App\Models\Space\Comment;
 use App\Observers\Space\CommentObserver;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Events\LocaleUpdated;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use PostHog\PostHog;
@@ -30,6 +33,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Model::shouldBeStrict(! $this->app->isProduction());
+
+        // Laravel localizes translation strings but not Carbon, so relative
+        // dates in a translated mail ("expires in 7 days") would stay English.
+        Event::listen(LocaleUpdated::class, fn (LocaleUpdated $event) => Carbon::setLocale($event->locale));
 
         $this->warnAboutUntrustedProxies();
 
