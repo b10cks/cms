@@ -26,7 +26,7 @@ Understand the building blocks of b10cks:
 
 - [Spaces](concepts/spaces.md) — isolated content environments with their own database, team, and settings
 - [Blocks](concepts/blocks.md) — content types: schema, block types, folders, tags, templates, and versioning
-- [Fields](concepts/fields.md) — all 19 field types, validation, and conditional fields
+- [Fields](concepts/fields.md) — all 21 field types, validation, and conditional fields
 - [Content](concepts/content.md) — the content tree, slugs, and the editing model
 - [Versions & publishing](concepts/versions-and-publishing.md) — drafts, version history, scheduled and selective publishing
 - [Releases](concepts/releases.md) — grouping versions and publishing them atomically
@@ -58,27 +58,28 @@ Tooling around the CMS:
 - [CLI](guides/cli.md) — terminal workflows and TypeScript type generation from block schemas
 - [Management client](guides/management-client.md) — the typed `@b10cks/mgmt-client` for scripting the Management API
 - [MCP server](guides/mcp-server.md) — let AI assistants (Claude, Cursor, …) manage your spaces
+- [Field plugins](guides/field-plugins.md) — build your own field editor UI in a sandboxed iframe
 
 ## Using the app (user guide)
 
-Documentation for every part of the admin UI:
+These pages assume no technical background. They explain each screen, define the words as they come up, and say why a setting exists before saying where it is.
 
-- [Dashboard & navigation](ui/dashboard.md)
-- [Content](ui/content.md) — content tree, editor, and content settings
-- [Mass Edit](ui/mass-edit.md) — spreadsheet-style bulk editing of single fields across many entries, per language
-- [Visual editor (Canvas)](ui/canvas.md)
-- [Block library](ui/blocks.md)
-- [Asset manager](ui/assets.md)
-- [Data sources](ui/data-sources.md)
-- [Icons](ui/icons.md)
-- [Redirects](ui/redirects.md)
-- [Releases](ui/releases.md)
-- [Automations](ui/automations.md)
-- [Audit logs](ui/audit-logs.md)
-- [Space settings](ui/settings.md) — access tokens, people & roles, configuration, AI, backups, migrations, subscription, usage
-- [Subscription & billing](ui/subscription.md) — plans, quotas, usage, invoices, and the subscription lifecycle
-- [Agency billing](ui/agency-billing.md) — build a space for a client, let the client pay via a payment request
-- [Account, teams & spaces](ui/account.md)
+- [Finding your way around](ui/dashboard.md) — signing in, what every menu item does, and the shortcuts worth learning first
+- [Content](ui/content.md) — the page tree, the editor, drafts and publishing, version history, comments, translating
+- [Mass Edit](ui/mass-edit.md) — one field across hundreds of pages, in a table with a column per language
+- [Canvas](ui/canvas.md) — plan and restructure whole sections on a whiteboard, then apply the plan in one click
+- [Block library](ui/blocks.md) — what a block is, how to design one, and what its fields can do
+- [Asset manager](ui/assets.md) — uploading, organizing, describing, and sharing images and files
+- [Data sets](ui/data-sources.md) — the reusable lists behind your dropdowns
+- [Icons](ui/icons.md) — your own icon set
+- [Redirects](ui/redirects.md) — sending visitors from an old address to the new one
+- [Releases](ui/releases.md) — changes across many pages, going live together at one moment
+- [Automations](ui/automations.md) — "when this happens, do that" rules
+- [Audit log](ui/audit-logs.md) — who changed what, and when
+- [Space settings](ui/settings.md) — access tokens, people and roles, languages, media rules, plugins, AI, backups, migrations
+- [Subscription and billing](ui/subscription.md) — plans, allowances, usage, invoices, and what each status means
+- [Agency billing](ui/agency-billing.md) — build a space for a client, then let the client pay for it
+- [Account, teams, and spaces](ui/account.md) — your profile and security, team roles, company login, and space blueprints
 
 ## Self-hosting
 

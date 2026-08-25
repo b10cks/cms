@@ -1,31 +1,37 @@
 ---
-description: "Reviewing who changed what and when across the space."
+description: "The audit log: who changed what and when, and how to filter it down to the one answer you need."
 ---
 
-# Audit Log
+# Audit log
 
-The **Audit Log** is the space's memory: who did what, to which item, when. When someone asks "who unpublished the pricing page?", the answer is a filter away.
+The **audit log** is the space's memory. It records who did what, to which item, at what time. When somebody asks "who unpublished the pricing page on Friday?", the answer is one filter away instead of a round of guessing.
 
-## What is logged
+Nobody reads this page daily. It matters on the day something unexpected happened, and on the day an auditor asks.
 
-Operations across all space resources:
+::: tip Highlight
+The log covers everything in the space, not only pages: files, tags, data sets, redirects, releases, and comments included. Both people and automatic processes are recorded, so "did somebody do that or did an automation?" is a filter rather than a theory.
+:::
 
-- **Content** — created, updated, deleted, published, unpublished, scheduled, moved, restored, version selected
-- **Content versions**, **blocks**, **block versions/templates/folders/tags**
-- **Assets** and their folders/tags
-- **Data sources** and entries
-- **Redirects**, **releases** (including committed/canceled)
-- **Comments** — created, resolved/unresolved, reactions
+## What is recorded
 
-Each event stores the time, the actor (user or system), the operation, and the affected item with its type.
+Actions across everything in the space:
+
+- **Content**: created, changed, deleted, published, unpublished, scheduled, moved, restored, and switched to a different version
+- **Versions of content**, **blocks**, and their versions, templates, folders, and tags
+- **Files** and their folders and tags
+- **Data sets** and their entries
+- **Redirects** and **releases**, including releases that were committed or cancelled
+- **Comments**: written, resolved, reopened, and reacted to
+
+Every record holds the time, who did it (a person or an automatic process), what they did, and which item it happened to.
 
 ## Filtering
 
-The log is filterable by:
+Filters can be combined, which is what makes the log useful:
 
-- **Actor type / actor** — humans vs. system processes, or a specific user
-- **Operation** — e.g. only publishes
-- **Item type / item name** — e.g. only redirects, or one specific entry
-- **Date range**
+- **Who**: people or automatic processes, or one specific person
+- **What**: one kind of action, for example only publications
+- **Which item**: one type of item, for example only redirects, or one specific page by name
+- **When**: a date range
 
-Combine filters to answer precise questions — "all deletions by anyone in the last week", "everything that happened to `pricing` this month".
+Combining two or three of them answers precise questions: "everything anyone deleted last week", or "everything that happened to the pricing page this month".

@@ -52,7 +52,7 @@ A **collection**, a **folder**, or an ad-hoc **selection** can be published as a
 - **Packages** — downloading the whole set builds a **package** (a server-side zip) on demand; per-file downloads can be allowed or disallowed per share. Expired packages are pruned automatically and rebuilt on the next request.
 - **Metering** — views and downloads are counted per share.
 
-Links are managed per collection (**Manage shares**) or centrally under **Settings → Shares**. See the [asset manager guide](../ui/assets.md#sharing-assets).
+Links are managed per collection (**Manage shares**) or centrally under **Settings → Shares**. See the [asset manager guide](../ui/assets.md#sharing-files-with-people-outside-your-team).
 
 ## Delivery
 

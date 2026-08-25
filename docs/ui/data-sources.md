@@ -1,40 +1,138 @@
 ---
-description: "Managing data sources and their entries: dimensions, translation, and import/export."
+description: "Data sets in depth: what they are for, when to use one instead of content, simple and structured entries, dimensions, translation, and how to feed dropdowns and your website from them."
 ---
 
-# Data Sources
+# Data sets
 
-**Data sets** hold the lists your content relies on — categories, countries, departments, opening hours. Manage a list once here, and every dropdown that uses it stays in sync everywhere; developers can read the same lists through the API. Background: [Data sources](../concepts/data-sources.md).
+**Data sets** hold the lists your project relies on but which are not pages: categories, countries, departments, opening hours, shirt sizes, shipping rates, office locations, feature flags.
 
-## Creating a data source
+## Why they exist
 
-A data source has:
+Without data sets, a list like "our twelve product categories" ends up typed into four places. Once in a dropdown a developer hardcoded into a content type. Once in the website's own code for the filter bar. Once in a spreadsheet somebody maintains. Once in the footer, by hand.
 
-- **Name** and **technical name (slug)** — the slug is the API identifier (`/datasources/{slug}/entries`); a copy-endpoint shortcut is on the list
-- **Description**
-- **Dimensions** — additional value axes per entry (e.g. languages, regions). Mark dimensions as **translatable** to unlock AI translation of entries
-- **Cache duration** — per-source TTL for the Data API (0 disables caching)
-- **API availability** — whether the source is exposed via the Data API at all (disabled sources remain usable inside the CMS, e.g. for option fields)
+Then a category is renamed, three of the four are updated, and the fourth quietly disagrees for a year.
 
-## Managing entries
+A data set makes that list a single thing that exists once:
 
-Each entry is a **key → value** pair, plus one value per dimension. Two editing modes:
+- **Dropdowns in the editor read from it.** Add a category here and it appears in every field that uses this list, immediately, without anybody editing a content type.
+- **Your website reads from it too**, through the same list, so the filter bar and the editor can no longer drift apart.
+- **Everyone who may edit content can maintain it.** No deployment, no developer, no ticket.
 
-- **Single edit** — form-based, one entry at a time
-- **Grid edit** — spreadsheet-style editing of all entries and dimensions at once, with auto-save (values can span multiple lines)
+::: tip Highlight
+The same list feeds the editing interface and the live website. That is the part most systems miss: they let you define dropdown options, but those options stay locked inside the CMS, so the website still hardcodes its own copy.
+:::
 
-Entries can be searched (by key or value), paginated, activated/deactivated, and deleted.
+## When to use a data set, and when not to
 
-### AI translation
+| Your case | Use |
+| --- | --- |
+| A list of short values people pick from: categories, countries, statuses | **Data set** |
+| Labels or snippets your website shows but nobody should have to redeploy to change | **Data set** |
+| Something with its own page, its own address, its own images and text | **Content** ([Content guide](content.md)) |
+| A handful of options that will never be used anywhere else | A plain option list on the field itself |
 
-With translatable dimensions and AI enabled, **Translate missing entries** fills the gaps for a dimension in one batch, with progress reporting.
+The rough rule: if it needs a URL, it is content. If it is a value people choose or a label your site prints, it is a data set.
 
-## Import & export
+## Creating a data set
 
-- **Export** — download all entries as JSON, CSV, Excel, or YAML.
-- **Import** — upload a file to create or update entries in bulk, with a choice of import mode (add vs. update behavior) and a summary of created/changed/skipped rows.
+**Name** is what people read in the app. **Technical name**, also called the slug, is what your website uses to fetch the list. It may contain lowercase letters, numbers, and hyphens. The list view has a button that copies the ready-made address to your clipboard, so a developer can be handed the exact endpoint without spelling anything out.
 
-## Usage
+**Description** answers "what is this for and who owns it" for the colleague who finds it in two years.
 
-- **Option/Options fields** (and option table columns) can use a data source as their choice list — see [Fields](../concepts/fields.md#option-single-choice).
-- Frontends query entries via `GET /api/v1/datasources/{slug}/entries` — see [Data sources](../concepts/data-sources.md#data-api).
+### Entry values: simple or structured
+
+This is the most consequential choice, and you can change it later.
+
+**Simple text.** Each entry is a key and a single text value. Perfect for flat lists:
+
+| Key | Value |
+| --- | --- |
+| `de` | Germany |
+| `at` | Austria |
+| `ch` | Switzerland |
+
+**Structured fields.** Each entry carries several typed fields that you define. The same country list can then hold everything the website actually needs:
+
+| Key | name | callingCode | vatRate | inEu |
+| --- | --- | --- | --- | --- |
+| `de` | Germany | +49 | 19 | yes |
+| `ch` | Switzerland | +41 | 7.7 | no |
+
+You define this structure as a list of fields, each with a name, a key, a type, and whether it is required. The available types are **text**, **textarea**, **number**, **boolean**, **date**, **single option**, and **multiple options**. For the two option types you also supply the choices, written as `value:Label` pairs.
+
+Structured entries are what turn a data set from a dropdown list into a small database your website can render properly: a location list with address, opening hours, and coordinates, or a pricing table with a value per tier.
+
+::: warning Switching back to simple text
+If a data set already has structured fields and you save it as simple text, the structure is removed. Existing entries keep their data, but it is shown as raw text from then on. Going the other way, adding a structure to a list that was simple, is safe: existing plain values stay valid and editable, and the editor shows you what the previous plain value was.
+:::
+
+### Dimensions
+
+**Dimensions** add a second axis. Each entry keeps its default value plus one value per dimension. Languages are the most common use, regions the second:
+
+| Key | Default | `de` | `fr` |
+| --- | --- | --- | --- |
+| `greeting` | Hello | Hallo | Bonjour |
+| `cta` | Learn more | Mehr erfahren | En savoir plus |
+
+Your website asks for the dimension it needs and gets the matching value, falling back to the default whenever a dimension has nothing. One list, many markets, no duplication.
+
+**Are dimensions translatable** tells b10cks that your dimensions are languages rather than something else, such as customer tiers. Switching it on unlocks AI translation for the set. You also pick a **default dimension locale**, which is the dimension AI treats as the source it translates from.
+
+### Cache duration
+
+How long, in seconds, your website may reuse a copy of this list before asking b10cks again. Higher means faster pages and fewer requests. Lower means changes show up sooner. Zero switches reuse off, and every request goes to b10cks.
+
+For lists that change a few times a year, such as countries, a long duration is free performance. For something editors adjust during the day, keep it short.
+
+### Availability for the API
+
+Whether the list is published to your website at all. A set that is switched off still works fully inside b10cks, including as the source of dropdown options. Use it for internal lists that have no business being public, and for a list still being prepared.
+
+## Filling in entries
+
+Every entry has a **key**, a **value** (or the structured fields you defined), and a value per dimension if the set has any. The key is the stable technical name your website matches against, such as `de`. It should never change once your site relies on it. The value is what people read.
+
+Two ways to edit, switched with a toggle:
+
+- **Single edit** gives you a form for one entry at a time, with proper inputs for each type of structured field. Good for careful work and for long values.
+- **Grid edit** gives you a spreadsheet of all entries and all dimensions at once, saving automatically as you type. Good for filling in a hundred rows in one sitting. Values can span several lines.
+
+Entries can be searched by key or value, paged through, and deleted. Each one can also be switched **inactive**, which keeps it in the list but removes it from the choices people can pick. That is how you retire a category without breaking the pages that already reference it.
+
+### Translating with AI
+
+If dimensions are marked translatable and AI is available in your space, **Translate missing entries** fills the gaps for a whole dimension in one batch, translating from your default dimension and reporting progress as it goes. It only fills what is missing, so translations you refined by hand are left alone.
+
+## Import and export
+
+**Export** downloads every entry as JSON, CSV, Excel, or YAML. CSV and Excel open in any spreadsheet program, which is the practical way to hand a list to somebody who does not use b10cks.
+
+**Import** uploads a file to create or update many entries at once. You choose how existing entries should be treated, and afterwards a summary lists what was created, changed, and skipped.
+
+The obvious workflow: export, send the file to whoever owns the list, import what comes back.
+
+## Using a data set
+
+### In dropdown fields
+
+When your team defines an **Option** or **Options** field on a block, or an option column inside a table field, they can set its source to a data set instead of typing choices into the field. The field then shows your entries as the available choices, and the stored value is the entry's key.
+
+Maintain the list once here, and every field pointing at it stays correct. Adding a category is a one-minute job for an editor rather than a schema change. See [Fields](../concepts/fields.md#option).
+
+### In your website
+
+Your developers fetch the entries directly:
+
+```
+GET /api/v1/datasources/{slug}/entries?token=…
+GET /api/v1/datasources/{slug}/entries?token=…&dimension=de
+```
+
+Entries come back with their key, value, and last-changed time. Adding `dimension` returns the value for that dimension, falling back to the default. For a set with structured fields the value is an object with your fields in it. Responses honour the cache duration you set, and paging is supported for long lists. The details are in [Data sources](../concepts/data-sources.md#data-api).
+
+## Good to know
+
+- Renaming a **name** is cosmetic. Changing a **key** or a **slug** breaks whatever refers to it, so treat both as permanent once something uses them.
+- Deleting a data set deletes all its entries and cannot be undone. Fields pointing at it lose their choices.
+- Entry changes appear in the [audit log](audit-logs.md) like everything else, so a list that mysteriously changed has an author.

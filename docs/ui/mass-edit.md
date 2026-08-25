@@ -1,116 +1,120 @@
 ---
-description: 'Edit one field across hundreds of entries at once: a spreadsheet-style grid with language columns, filters, AI translation, and export/import.'
+description: "Change one field across hundreds of pages at once in a spreadsheet-style table, with a column per language, filters, AI translation, and export for agencies."
 ---
 
 # Mass Edit
 
-Some jobs don't fit the page editor. Rewriting every meta description in the space, filling in the German title for 200 products, finding all the entries where the teaser is still empty — opening each page one by one is the wrong tool.
+Some jobs simply don't fit the page editor. Rewriting every search-engine description in the space. Filling in the German title for 200 products. Finding all the pages where the teaser text is still empty. Opening each page one at a time is the wrong tool for that.
 
-**Mass Edit** turns that work into a spreadsheet: you pick the fields you care about, and every entry that has them shows up as rows in an editable grid, with one column per language.
+**Mass Edit** turns that work into a table. You choose which fields you care about, and every page that has those fields appears as rows you can type into, with one column per language.
 
-You'll find it in the space sidebar under **Mass Edit**. Anyone who can view content can open it; editing and saving needs content editing rights, and _Save & publish_ needs publishing rights.
+You find it in the menu on the left under **Mass Edit**. Anybody who may view content can open it. Typing and saving needs permission to edit content, and *Save and publish* needs permission to publish.
 
-## The three-step setup
+## Setting up the table in three steps
 
-The grid stays empty until you tell it what to load.
+The table stays empty until you tell it what to load. That is deliberate: a space can hold thousands of pages, and loading all of them blindly would help nobody.
 
-1. **Pick fields.** The field selector lists every text-carrying field in your space, gathered from all your content types — including fields that only ever appear _inside_ nested blocks. Fields are listed by their label with the technical key next to it, so `title` in a hero block and `title` on a page are the same column.
-2. **Pick languages.** All space languages are selected by default; drop the ones you don't need to keep the grid narrow. The source language is always shown first and marked **Source**.
-3. **Narrow it down** with the search filter (optional, but the difference between 40 rows and 4,000).
+1. **Choose the fields.** The field selector lists every field in your space that can hold text, collected from all your content types, including fields that only ever appear inside page sections. Each field is shown with its label and its technical name next to it, so a `title` in a hero section and a `title` on a page end up as the same column.
+2. **Choose the languages.** All languages of the space are selected to begin with. Remove the ones you don't need so the table stays narrow enough to read. The original language always comes first and is marked **Source**.
+3. **Narrow the list** with the filters. This step is optional, but it is the difference between 40 rows and 4,000.
 
-### Which fields show up
+### Which fields you can pick
 
-Fields appear when their type can hold translatable content: **text, textarea, markdown, rich text, number, date, meta, and table**. Assets, references, options, booleans and link fields aren't editable here — they're structure, not prose.
+A field shows up when its type can actually hold translatable text: **text, longer text, markdown, rich text, number, date, meta, and table**. Images, references, dropdowns, switches, and links are not editable here, because they describe structure rather than wording.
 
-Two flavours of field end up in the list:
+Two kinds of field end up in the list:
 
-- **Translatable fields** — editable in every language column.
-- **Fields marked _source only_** — supported types that your content type does _not_ mark as translatable. They're useful to see and edit, but only in the source column; the language columns show a lock, because a non-translatable field always delivers the canonical value anyway ([Internationalization](../concepts/internationalization.md)).
+- **Translatable fields**, which you can edit in every language column.
+- **Fields marked "source only"**, which are of a supported type but which your content type does not translate. You can see and edit them in the source column, while the language columns show a small lock. That is not a restriction b10cks invents: a field that isn't translatable always delivers the original value to every language anyway ([Internationalization](../concepts/internationalization.md)).
 
-Some fields expand into several rows, because that's how they're actually translated:
+Some fields become more than one row, because that is genuinely how they get translated:
 
-| Field type    | What you get in the grid                                                  |
-| ------------- | ------------------------------------------------------------------------- |
-| **Meta**      | One row each for title, description, OG title, OG description             |
-| **Table**     | One row per text cell                                                     |
-| **Rich text** | One row holding the formatted text as HTML — tags stay, so keep them intact |
+| Field type | What appears in the table |
+| --- | --- |
+| **Meta** | One row each for the title, the description, and the two social-media variants |
+| **Table** | One row per text cell |
+| **Rich text** | One row holding the formatted text as HTML. The tags belong to the text, so leave them intact and translate around them. |
 
 ## Filtering
 
-The filter bar works like everywhere else in the app — pick a field, an operator, a value:
+The filter bar works like everywhere else in the app. Pick something to filter on, pick how to compare it, type a value.
 
-- **Name, slug, full slug** — contains, starts with, ends with, equals
-- **Content type** and **status** (published / draft)
-- **Created at / updated at** — before, after
-- **The value of any selected field** — contains, starts with, ends with, equals, plus **is empty** and **is not empty**
+- **Name, slug, full slug**: contains, starts with, ends with, is exactly
+- **Content type** and **status** (published or draft)
+- **Created or last changed**: before, after
+- **The value of any selected field**: contains, starts with, ends with, is exactly, plus **is empty** and **is not empty**
 
-That last one is the workhorse: select `meta`, filter _Meta title is empty_, and you have your entire to-do list on one screen.
+That last pair does most of the heavy lifting. Select the meta field, filter for *meta title is empty*, and your entire to-do list is on one screen.
 
-## Editing in the grid
+## Typing in the table
 
-Rows are grouped per entry: the first row of each entry carries its name and full slug, and every row names the field it belongs to (nested block fields show their path, so you can tell the hero headline from the teaser headline).
+Rows are grouped per page. The first row of each group carries the page's name and full address, and every row says which field it belongs to. Fields from nested sections show their path, so you can tell the hero headline from the teaser headline.
 
-- **Edited cells get an amber outline** so you can see your own trail across a long grid.
-- **Escape** reverts the cell you're in back to its stored value.
-- **↑ / ↓** jump to the same column in the row above or below once the cursor reaches the start or end of the text — you can tab down a whole column without touching the mouse.
-- Cells grow with their content and can be dragged taller.
+- **Cells you changed get an amber outline**, so your own trail stays visible in a long table.
+- **<kbd>Escape</kbd>** puts the cell you are in back to its saved value.
+- **<kbd>↑</kbd> and <kbd>↓</kbd>** jump to the same column one row up or down once the cursor is at the start or end of the text, so a whole column can be worked through without the mouse.
+- Cells grow with their content, and you can drag them taller.
 
-**Your edits survive paging.** Move to page 4, edit there, come back — everything is still pending, and one save writes all of it. The counter in the **Save** button always shows the true number of open changes, not just the ones on screen. **Discard** throws them all away.
+::: tip Highlight
+Your unsaved edits survive paging, filtering, and AI translation runs. You can work through 400 rows across ten pages, review everything, and commit it all with one Save. Nothing is written until you decide it is.
+:::
 
-Narrowing the selection while you have unsaved edits is the one case the app asks about: dropping a field or a language hides its cells but does _not_ drop the pending changes, so you're offered the choice to discard first.
+**Your changes survive paging.** Go to page 4, type there, come back to page 1, and everything is still waiting. One save writes all of it. The number on the **Save** button always shows how many changes are actually open, not just the ones currently on screen. **Discard** throws all of them away.
+
+There is one situation where the app interrupts you: removing a field or a language while you have unsaved changes hides those cells but does not throw the changes away, so you are asked whether you want to discard them first.
 
 ## Saving
 
-- **Save** stores everything as drafts — nothing goes live, exactly like saving in the editor.
-- **Save & publish** (in the button's menu) saves and publishes the affected entries in one go.
+- **Save** stores everything as drafts. Nothing goes live, exactly like saving in the page editor.
+- **Save and publish**, in the button's menu, saves and immediately publishes the affected pages.
 
-Three details worth knowing:
+Three things are worth knowing:
 
-- **Missing translations are created for you.** Typing into a language column of an entry that has no version in that language yet creates one.
-- **Clearing a cell means clearing the value.** An emptied cell is saved as empty, not skipped — that's how you undo a wrong translation from here.
-- **Large saves are sent in batches.** Each entry and language writes its own version, so the grid splits a big save into chunks and shows `saved / total` as it goes. Entries that fail keep their amber outline and stay editable; everything that landed is cleared. Nothing is lost to a timeout halfway through.
+- **Missing translations are created for you.** Typing into a language column for a page that has no version in that language yet creates that version.
+- **Emptying a cell means emptying the value.** A cleared cell is saved as empty rather than skipped, which is how you remove a wrong translation from here.
+- **Big saves are sent in portions.** Every page and language writes its own version, so a large save is split into chunks and shows its progress as `saved / total`. Pages that fail keep their amber outline and stay editable, while everything that went through is cleared. A slow connection can no longer lose half your work.
 
-Every write goes through the normal content pipeline: versions are created, history and audit logs record who changed what, and validation applies as usual. If some entries fail, the result tells you how many saved and how many errored.
+Everything written here goes through the same machinery as normal editing: versions are created, the history and the audit log record who changed what, and validation applies as usual. If some pages fail, the result tells you how many were saved and how many had errors.
 
 ## Translating with AI
 
-With an AI configuration set up for the space (**Settings → AI**), **Translate with AI** fills the language columns for you. Use the button's menu to pick a different configuration than the default.
+If your space has AI configured under **Settings → AI**, the **Translate with AI** button fills the language columns for you. The button's menu lets you pick a different AI configuration than the default one.
 
 What it does:
 
-- Works on **the whole current selection**, not just the visible page — fields, languages, and filters define the job.
-- Translates cells that are **empty**, or whose **source you just edited** in this session (the existing translation is stale). Cells you've already translated are left alone.
-- Skips _source only_ fields.
-- Streams results into the grid as they arrive, in batches, with a live `applied / total` counter.
+- It works on **your whole current selection**, not just the visible page of the table. Your fields, languages, and filters define the job.
+- It translates cells that are **empty**, and cells whose **source text you just changed** in this session, because the existing translation is now out of date. Translations you already have are left alone.
+- It skips fields marked source only.
+- Results stream into the table as they arrive, in batches, with a live counter.
 
-Translations land as **pending edits** — nothing is written until you press Save, so you get to review and fix first. If the selection is too large for one run, you'll be told to narrow the filters and repeat.
+Translations arrive as **unsaved changes**, exactly like something you typed yourself. Nothing is written until you press Save, so you get to read and correct first. If your selection is too large for one run, the app tells you to narrow the filters and repeat.
 
 ## Export and import
 
-The header buttons hand the same selection to the translation exchange formats — **XLIFF, CSV, Excel, JSON, or YAML**:
+The buttons in the header hand the same selection to the common exchange formats: **XLIFF, CSV, Excel, JSON, or YAML**. XLIFF is what professional translation tools expect. CSV and Excel open in any spreadsheet program. JSON and YAML are for developers.
 
-- **Export** respects your fields, languages, and filters: what you exported is what you were looking at, including rows whose cells are still empty (that's usually the point — the translator needs to see the gaps).
-- **Import** applies a returned file back, as drafts for review or published immediately, optionally creating language versions that don't exist yet. A summary shows exactly what changed.
+- **Export** respects your fields, languages, and filters, so what you get is what you were looking at. Rows whose cells are still empty are included on purpose, because the gaps are usually the whole point of sending the file.
+- **Import** applies a returned file. Choose whether the content arrives as drafts for review or is published straight away, and whether missing languages should be created. A summary shows exactly what changed.
 
-A file exported from Mass Edit round-trips: it has **one column per language including the source**, so editing the source column and importing works, and a cell you blank out is imported as a deliberate clear. That's the grid's own shape, and it's why the export you take from here differs slightly from the one in the content editor, which ships a read-only `source` column for translators.
+A file exported from Mass Edit can travel back and forth. It has one column per language **including the source**, so an agency can edit the original text as well, and a cell somebody blanks out is imported as a deliberate clearing. This differs slightly from the export in the page editor, which gives translators a read-only source column.
 
-One exception: **XLIFF** models the source as read-only by design, so an edited source will not come back through it. Use CSV, Excel, JSON or YAML when you want to edit source text outside the app.
+One exception: **XLIFF treats the source text as read-only by design**, so changes an agency makes to the original will not come back through it. Use CSV, Excel, JSON, or YAML when the source text should be editable outside the app.
 
-Otherwise this is the same import/export used from the content editor, so an agency workflow started here can be finished there and vice versa.
+Apart from that it is the same import and export as in the page editor, so a job started here can be finished there and the other way around.
 
-## When to use what
+## Which tool for which job
 
-| Situation                                                             | Best tool                                        |
-| --------------------------------------------------------------------- | ------------------------------------------------ |
-| Writing or restructuring one page                                     | [Content editor](content.md)                     |
-| Translating one page carefully, in context                            | Editor in [localization mode](content.md#translating-content) |
-| The same field across many pages — SEO sweeps, missing translations   | **Mass Edit**                                    |
-| Handing work to an external agency                                    | Export from Mass Edit, import when it comes back |
-| Moving or restructuring many pages                                    | [Canvas](canvas.md)                              |
+| What you are doing | Best tool |
+| --- | --- |
+| Writing or restructuring one page | [Content editor](content.md) |
+| Translating one page carefully, in context | The editor in [localization mode](content.md#translating-content) |
+| The same field across many pages, such as SEO sweeps or missing translations | **Mass Edit** |
+| Handing work to an external agency | Export from Mass Edit, import when it comes back |
+| Moving or restructuring many pages | [Canvas](canvas.md) |
 
 ## Good to know
 
-- Only **canonical entries** are listed — one row group per piece of content, with its languages as columns. You never edit a translation "as its own page" here.
-- Entries whose content type doesn't have any of the selected fields simply aren't listed.
-- Rows are ordered stably, so paging never skips or repeats an entry.
-- Everything you do here is scriptable too — the grid runs on the `mass-edit/fields`, `mass-edit/rows` and `contents/export` endpoints of the [Management API](../api/management-api.md). A `PATCH mass-edit/rows` call takes at most 100 entries; send more in batches.
+- Only **original entries** are listed, one row group per piece of content with its languages as columns. You never edit a translation here as if it were a page of its own.
+- Pages whose content type has none of the selected fields simply don't appear.
+- The row order is stable, so paging never skips or repeats a page.
+- Everything here can be scripted as well. The table runs on the `mass-edit/fields`, `mass-edit/rows`, and `contents/export` endpoints of the [Management API](../api/management-api.md), and a single write call takes at most 100 entries.

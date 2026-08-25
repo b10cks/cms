@@ -1,65 +1,67 @@
 ---
-description: "How plans, quotas, billing intervals, and the subscription lifecycle work — and where to see usage, history, and invoices."
+description: "Plans, allowances, billing intervals, what happens when a payment fails, and where to find usage history and invoices."
 ---
 
-# Subscription & Billing
+# Subscription and billing
 
-Every space has its own subscription. The plan determines the space's monthly allowances; payment is handled by our billing partner LemonSqueezy. Everything described here lives under **Settings → Subscription** and **Settings → Usage** and requires billing permissions (see [Roles](#roles--permissions)).
+Every space has its own subscription, and the plan decides the space's monthly allowances. Payment is handled by LemonSqueezy, the billing provider behind b10cks, which is also who sends your invoices and stores your payment method.
 
-## Plans & quotas
+Everything on this page lives under **Settings → Subscription** and **Settings → Usage**, and needs billing permissions, which are explained [further down](#who-may-see-and-change-billing).
 
-A plan carries a set of **soft quotas** — monthly allowances that are monitored but never hard-enforced:
+## Plans and allowances
 
-| Quota | Meaning |
+A plan comes with a set of monthly allowances. They are watched, and you are told when you approach them, but with one exception they are not enforced.
+
+| Allowance | What it counts |
 | --- | --- |
-| **Traffic** | Delivery and asset egress per calendar month, including asset package downloads. |
-| **Storage** | Total asset storage footprint (point-in-time, not monthly). |
-| **AI credit** | The monthly AI spend cap in USD for the space's AI key. This is the one limit that is inherently enforced — AI requests stop when the credit is used up. |
+| **Traffic** | Everything your website and its visitors download from b10cks in a calendar month, including files people download through share links |
+| **Storage** | How much space your uploaded files occupy right now. This one is a snapshot, not a monthly total. |
+| **AI credit** | How much may be spent on AI in a month, in US dollars. This is the one limit that genuinely stops: when the credit is used up, AI requests stop until the next period. |
 
-**API requests are unlimited on every plan.** Request counts still show up in the space dashboard as analytics, but they are not metered or billed.
+**API requests are unlimited on every plan.** You will see request counts on the space dashboard, but purely as information. They are neither limited nor billed.
 
-Quotas are *soft*: nothing gets blocked when you exceed traffic or storage. Instead, everyone with billing visibility is notified when a metric crosses **80%** and **100%** of its allowance (at most once per threshold per month). Sustained overuse may require moving to a plan that fits.
+Traffic and storage are **soft** allowances. Nothing gets switched off when you go over. Instead, everybody with billing visibility is notified when a number passes **80 percent** and again at **100 percent**, at most once per threshold per month. If you exceed an allowance month after month, you will be asked to move to a plan that fits.
 
-Allowances reset with the calendar month, regardless of your billing interval.
+Allowances reset with the calendar month, no matter which billing interval you chose.
 
-## Billing intervals
+## Monthly or yearly
 
-Plans are priced monthly; many also offer a **yearly** price at a discount. Pick the interval in the plan dialog when subscribing. Quota allowances stay monthly either way — a yearly subscription doesn't grant a year's worth of traffic up front.
+Plans are priced per month, and most also offer a discounted yearly price. You pick the interval when subscribing. Allowances stay monthly either way: a yearly subscription does not hand you a year's worth of traffic on day one.
 
-## The subscription lifecycle
+## What the status means
 
-| Status | Meaning |
+| Status | What it means for you |
 | --- | --- |
-| **Active / On trial** | The plan's entitlements apply. |
-| **Pending** | A checkout was started but not completed. Use **Retry payment** to resume it. |
-| **Past due** | A renewal payment failed and is being retried (dunning). Your access continues; update your payment method via **Manage billing**. |
-| **Cancelled** | You cancelled, but access continues until the end of the paid period. You can **Resume** any time before it ends. |
-| **Unpaid / Expired** | The subscription lapsed. The space automatically falls back to the Free plan so it keeps working with Free-tier allowances. |
+| **Active** or **On trial** | Everything the plan includes is available |
+| **Pending** | A checkout was started but never finished. **Retry payment** picks it up again. |
+| **Past due** | A renewal payment failed and is being retried automatically. Your access continues in the meantime. Update your payment method under **Manage billing**. |
+| **Cancelled** | You cancelled, and access continues until the end of the period you already paid for. **Resume** any time before then. |
+| **Unpaid** or **Expired** | The subscription lapsed. The space automatically falls back to the Free plan and keeps working with Free allowances. |
 
-Cancelling never cuts you off mid-period: the plan stays fully active until the period you paid for ends, then the space moves to the Free plan automatically.
+Cancelling never cuts you off in the middle of a paid period. The plan stays fully active until that period ends, then the space moves to the Free plan on its own. Nothing is deleted.
 
-## Usage & history
+## Usage and history
 
 **Settings → Usage** shows:
 
-- **Live usage** against the current plan's quotas.
-- A **traffic trend chart** for the selected billing period.
-- **Billing period history** — one entry per period, with the usage that accrued in it. Periods close on renewal, plan change, or cancellation.
-- **Invoices**, fetched from LemonSqueezy, with download links. The **Manage billing** button opens the LemonSqueezy customer portal for payment methods and receipts.
+- **Current usage** against your plan's allowances.
+- A **traffic chart** for the selected billing period.
+- **The history**, one entry per billing period with the usage that accumulated in it. A period closes when the subscription renews, when the plan changes, or when it is cancelled.
+- **Invoices**, fetched from LemonSqueezy, with download links. **Manage billing** opens LemonSqueezy's own portal for payment methods and receipts.
 
-## Roles & permissions
+## Who may see and change billing
 
-Two space abilities control access: `space.billing.view` (see plan, usage, invoices — also who receives usage alerts) and `space.billing.manage` (subscribe, change plan, cancel, request payments).
+Two permissions control this. One allows *seeing* the plan, the usage, and the invoices, and also determines who receives the usage alerts. The other allows *acting*: subscribing, changing the plan, cancelling, and sending payment requests.
 
 - **Owner** and **Admin** have both.
-- The dedicated **Billing** role has *only* these two — it can see and manage billing but nothing else in the space. It exists so a finance contact (for example on the client side of an [agency setup](agency-billing.md)) can own payment without any content access.
+- The separate **Billing** role has *only* these two and nothing else. Somebody with it can look after payment without being able to see or change a single page. That exists so a finance contact, often on the client's side in an [agency setup](agency-billing.md), can own the payment relationship without getting access to the content.
 
 ## Custom plans
 
-Besides the public plans, negotiated **custom plans** exist — agency or subsidized deals with their own pricing and quotas. A custom plan never shows up in the public plan list; once it has been granted to your space, it appears in the plan dialog (and the [payment request](agency-billing.md) picker) like any other plan, and you subscribe to it the same way.
+Besides the public plans there are negotiated **custom plans**, for example an agency deal or a subsidized rate with its own quotas. A custom plan never appears in the public list. Once it has been granted to your space it shows up in your plan dialog like any other, and you subscribe to it the same way.
 
-If you think your space qualifies for a custom deal, talk to your platform operator or agency. Running your own instance? Creating and granting custom plans is covered in [Self-hosting → Plans & pricing](../self-hosting/plans-and-pricing.md#custom-plans).
+If you think your space qualifies, talk to your platform operator or your agency. Running your own installation? Creating and granting custom plans is covered in [Plans and pricing](../self-hosting/plans-and-pricing.md#custom-plans).
 
-## Paying for someone else's space — or having someone else pay
+## When somebody else should pay
 
-If the person who builds the space is not the person who should pay for it, use a **payment request**: pick the plan and invite a billing contact to complete the checkout, making them the billing owner. See [Agency Billing](agency-billing.md).
+If the people building the space are not the people who should pay for it, use a **payment request**: you pick the plan, and the person who completes the checkout becomes the billing owner. See [Agency billing](agency-billing.md).

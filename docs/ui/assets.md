@@ -1,104 +1,133 @@
 ---
-description: 'The asset manager: uploading, organizing, collections, metadata, and sharing.'
+description: "The media library: uploading files, organizing them in folders, tags and collections, filling in image details, and sharing files with people outside your team."
 ---
 
-# Asset Manager
+# Asset manager
 
-**Assets** is your media library — every image, video, document, and file your project uses, in one place. If you can use the file manager on your computer, you already know how to use it: folders, multi-select, cut and paste, keyboard navigation. Background concepts: [Assets](../concepts/assets.md) and [Image service](../concepts/image-service.md).
+**Assets** is your media library: every image, video, document, and file your project uses, in one place. The word "asset" simply means one uploaded file plus everything b10cks knows about it, such as its description, its tags, and where it is used.
+
+If you can work the file manager on your own computer, you can work this one. There are folders, you can select several files at once, you can cut and paste, and the keyboard does what you expect. The background is described in [Assets](../concepts/assets.md) and [Image service](../concepts/image-service.md).
 
 ## Browsing and finding files
 
-- **Two views** — a thumbnail grid for visual browsing, a list for dense scanning. The folder tree, tag list, and collections sit in the sidebar.
-- **Select like in a file manager** — click; <kbd>Shift</kbd>-click for a range; <kbd>⌘/Ctrl</kbd>-click to add or remove one; _select all_, including everything matching your current filter across pages.
-- **Keyboard first, if you like** — arrows move, <kbd>Enter</kbd> opens, typing a name jumps to the first match, cut/paste moves files between folders. Press <kbd>?</kbd> anytime for the shortcut overview.
-- **Filter** by file type (image, video, audio, document…), tags, folder, rights status, or license expiry — and combine filters ("images tagged _hero_ whose license expires before March").
+**Two ways to look at the library.** A grid of thumbnails for browsing by eye, and a list for scanning a lot of files quickly. The folders, tags, and collections live in the sidebar.
 
-## Folders — and their rules
+**Selecting files** works like on your computer: click one to select it, hold <kbd>Shift</kbd> and click another to select everything in between, hold <kbd>⌘</kbd> on a Mac or <kbd>Ctrl</kbd> on Windows and click to add or remove single files. *Select all* takes everything that matches your current filter, including the files on the following pages, not just the ones you can see.
 
-Folders organize the library like on disk: create, rename, move, nest. Two things make them more than boxes:
+**The keyboard works too**, if you prefer it. Arrow keys move the selection, <kbd>Enter</kbd> opens a file, typing a name jumps to the first match, and cut and paste moves files between folders. Press <kbd>?</kbd> at any time for the list of shortcuts.
 
-- **Deleting a folder** never silently deletes files — the app guards against removing folders that still have content.
-- **Folder metadata rules** — each folder can decide which information files inside it must carry. Open a folder's settings to:
-  - **require or relax inherited fields** — make alt text mandatory in `Website images`, optional in `Internal drafts`
-  - **switch fields off** where they don't apply
-  - **add folder-only fields** — a `photographer` field that exists just inside `Press photos`
+**Filtering** narrows the library by file type (image, video, audio, document and so on), by tag, by folder, by rights status, or by licence expiry. Filters combine, so "images tagged *hero* whose licence expires before March" is a single view.
 
-  Child folders inherit these rules automatically, so one setting covers a whole branch. Uploads into the folder ask for exactly what that folder demands. ([Concept](../concepts/assets.md#per-folder-metadata-rules))
+## Folders, and the rules they can carry
+
+Folders organize the library the way they do on a hard disk: create them, rename them, move them, nest them inside each other. Two things make them more than boxes.
+
+**Deleting a folder never quietly deletes files.** b10cks stops you from removing a folder that still has content in it.
+
+**Each folder can decide what information its files must carry.** Open a folder's settings and you can:
+
+- make an inherited field **required or optional**, so alt text is mandatory in `Website images` but optional in `Internal drafts`,
+- **switch fields off** where they make no sense,
+- and **add fields that exist only here**, such as a `photographer` field inside `Press photos`.
+
+Folders inside a folder inherit these rules automatically, so one setting covers a whole branch. When you upload into a folder, b10cks asks for exactly what that folder demands and nothing else. The [concept page](../concepts/assets.md#per-folder-metadata-rules) has the details.
+
+> **What is alt text?** A short description of what an image shows. Screen readers read it out to people who cannot see the image, and search engines use it too. "Two people shaking hands in an office" is useful. "image1.jpg" is not.
 
 ## Tags
 
-Tags cut across folders — an image lives in _one_ folder but can carry many tags (`hero`, `2026`, `campaign-spring`). Each tag has a name, a color, and an icon, so tag chips stay recognizable. Deleting a tag never touches the assets; it just removes the label. Use **Bulk tag** to add or remove tags on a whole selection at once.
+Tags cut across folders. A file lives in exactly one folder but can carry as many tags as you like, for example `hero`, `2026`, and `campaign-spring`. Each tag has a name, a colour, and an icon, which keeps them recognizable at a glance.
+
+Deleting a tag never touches the files. It only removes the label. Use **Bulk tag** to add and remove tags on a whole selection in one dialog.
 
 ## Collections
 
-Collections sit below folders and tags in the sidebar, but group assets _across_ folders — the same file can appear in several collections. Create one with the **+** on the collection list. Each has a name, icon, and color; open one and its assets fill the grid with the collection's name in the breadcrumb. Two kinds ([concept](../concepts/assets.md#collections)):
+Collections sit below folders and tags in the sidebar and gather files **across** folders. The same file can be in several collections at once. Create one with the **+** next to the collection list, give it a name, an icon, and a colour, then open it to see its files fill the grid. There are two kinds ([concept](../concepts/assets.md#collections)):
 
-- **Manual** — curate by hand: drag assets onto the collection, or use **Add to collection** from an asset's menu or the selection bar. _Remove from collection_ takes an asset out again without deleting the file.
-- **Smart** — instead of adding files you define rules: pick a field (filename, tags, size, folder, orientation, rights status, dates …), an operator, and a value, and match **all** or **any** conditions. The collection fills itself and stays current as assets change.
+- **Manual collections** are curated by hand. Drag files onto the collection, or use **Add to collection** from a file's menu or the selection bar. *Remove from collection* takes a file back out without deleting it.
+- **Smart collections** fill themselves and stay correct without maintenance. This is the one to reach for when a collection describes a rule rather than a hand-picked set, such as "everything tagged campaign-spring whose licence has not expired". Instead of adding files you write rules: pick a property such as filename, tags, size, folder, orientation, rights status, or a date, choose how to compare it, and give a value. Say whether **all** rules must match or **any** of them. The collection then stays current on its own as files change.
 
-> **Remove vs. delete** — inside a collection, _Remove from collection_ only unlinks the asset from that collection; _Delete from library_ permanently removes the asset everywhere it's used. The menu labels and the confirmation dialog spell out the difference so the two are never confused.
+> **Remove is not delete.** Inside a collection, *Remove from collection* only takes the file out of that one collection. *Delete from library* removes the file everywhere it is used, permanently. The menu labels and the confirmation dialog spell out which is which, so the two can't be confused in a hurry.
 
 ## Uploading
 
-Drag files anywhere into the library (or click _Browse files_). Before the upload finishes, the details dialog walks you through what your space needs:
+Drag files anywhere into the library, or click *Browse files*. While the upload runs, a dialog walks you through what your space needs to know about them.
 
-- **Required information is collected now** — if alt text is mandatory here, you're asked for it upfront rather than chased later. A counter shows which files still miss required details.
-- **Duplicate detection** — if a file looks identical to something already in the library, b10cks offers to **use the existing asset** instead of storing a second copy (or upload anyway, your call).
-- Images get their **colors and dimensions** read automatically; videos get preview thumbnails, one of which doubles as the [poster frame](../concepts/image-service.md#poster-frames).
-- Metadata fields can be filled per language where your space is multilingual.
+- **Required information is collected right away.** If alt text is mandatory here, you are asked for it now instead of being chased for it next week. A counter shows how many files still miss something.
+- **Duplicates are noticed.** If a file looks identical to one already in the library, b10cks offers to use the existing file instead of storing a second copy. Uploading anyway remains your choice.
+- **Images are measured automatically**, including their dimensions and their main colours. Videos get preview images grabbed from the footage, and one of them becomes the still picture shown before the video plays.
+- If your space has several languages, translatable information can be filled in per language.
 
-## The asset detail view
+## Looking at one file
 
-Open any asset for the full picture — and use the arrow buttons to step through the folder without closing the view.
+Open any file for the full picture. The arrow buttons step through the folder without closing the view.
 
-### Details & metadata
+### Details and description
 
-Filename, alt text, title, description, and any custom fields your space (or this folder) defines — with per-language values for translatable fields. An _unsaved changes_ hint keeps you from navigating away mid-edit.
+Filename, alt text, title, description, and any custom fields your space or this folder defines, with a value per language where that applies. If you start typing and then try to navigate away, b10cks reminds you about the unsaved change.
 
 ### Focus point
 
-Click the image to set its **focus point** — the spot that must stay visible when the website crops the image to different shapes (wide header, square card, tall banner). One image, every format, face always in frame. ([How cropping works](../concepts/image-service.md#crop-modes))
+::: tip Highlight
+One image, every crop, the subject always in frame. Instead of uploading a wide version, a square version, and a tall version of the same photo, you mark the spot that must stay visible and let every format cut around it.
+:::
 
-### Posters & thumbnails
+Click the image to set its **focus point**: the spot that must remain visible whenever the website crops the image into a different shape. A wide header, a square card, and a tall banner all cut the picture differently, and the focus point is what keeps the face in the frame instead of the elbow. [How cropping works](../concepts/image-service.md#crop-modes).
 
-Videos show the frames grabbed at upload; click one to jump the player to that moment. If none of them is the still you want to lead with, **Upload poster** shows an image of your choosing instead — a designed title card, a frame from elsewhere in the shoot, anything. The uploaded image becomes what the [poster URL](../concepts/image-service.md#poster-frames) serves, so every frontend using it updates without re-linking. **Remove poster** brings the generated frames back.
+### Posters and thumbnails
 
-Every other non-image file — PDFs, archives, audio, anything that would otherwise show a file icon — takes a custom thumbnail the same way: **Upload thumbnail** in the detail view, and the image appears wherever the asset is shown (library grid and list, content editor, public shares) and at the asset's poster URL.
+A **poster** is the still image shown before a video starts playing. Videos show the frames b10cks grabbed during upload, and clicking one jumps the player to that moment. If none of them is the shot you want, **Upload poster** replaces them with an image of your choosing: a designed title card, a frame from another take, anything. Every website using the video picks up the new poster automatically, with no re-linking. **Remove poster** brings the automatically grabbed frames back.
 
-### Colors & accessibility
+Every other kind of file that isn't an image, such as PDFs, archives, and audio, can be given a thumbnail the same way with **Upload thumbnail**. That image then appears wherever the file is shown: in the library, in the content editor, and on public share pages.
 
-The extracted color palette with, per color: contrast ratios against black and white, and the recommended overlay (light or dark text) — so design decisions about text-on-image are informed, not guessed. Click any color to copy it.
+### Colours and readability
 
-### Rights & licensing
+::: tip Highlight
+b10cks tells you whether white or black text will actually be readable on an image, with real contrast numbers rather than a designer's guess. That is an accessibility decision most systems leave you to make by eye.
+:::
 
-Copyright holder, license type (proprietary, CC0, CC BY, …), usage restrictions, and expiry date. Assets show their rights status (_unrestricted / restricted / expired_) as a visible indicator — informational, so workflows aren't blocked, but nobody can say they didn't see it. Filter the library by rights status or upcoming expiry to audit before a campaign.
+For images, b10cks extracts the main colours and shows, for each one, how well black and white text would read on it, plus which of the two it recommends. That turns "will white text work on this photo" from a guess into a fact. Click any colour to copy its value.
 
-### Linked content
+### Rights and licensing
 
-Every page using this asset, with its draft/published state — so before you replace or delete an image, you know exactly what it would touch.
+Who holds the copyright, which licence applies, what restrictions come with it, and when it expires. Each file shows its rights status as *unrestricted*, *restricted*, or *expired*. The status is informational and never blocks anybody's work, but nobody can claim they didn't see it. You can filter the whole library by rights status or by upcoming expiry, which makes a pre-campaign audit a two-minute job.
 
-### Version history
+### Where this file is used
 
-**Replace media** swaps the file while keeping the asset's identity — every page using it gets the new file automatically, no re-linking. The previous file is kept as a version; restoring an old version is itself versioned, so even the undo can be undone.
+::: tip Highlight
+Before you replace or delete anything, you can see every page that uses it. No searching, no guessing, no discovering the answer on the live site.
+:::
+
+A list of every page that uses this file, with its draft or published state. Check it before replacing or deleting anything, and you know exactly what you are about to affect.
+
+### File history
+
+**Replace media** swaps the file itself while keeping its identity, so every page using it gets the new file automatically and nobody has to re-link anything. The previous file is kept as an earlier version. Restoring an old version is itself recorded as a version, so even undoing can be undone.
 
 ### Quick actions
 
-Copy the file's URL, open it in a new window, download it, duplicate the asset, or delete it (with a confirmation — and a stronger one if it's still linked somewhere).
+Copy the file's web address, open it in a new tab, download it, duplicate it, or delete it. Deleting always asks first, and asks more insistently when the file is still used somewhere.
 
-## Working with many assets at once
+## Working on many files at once
 
-Select multiple assets and the selection bar offers the bulk moves: **move to folder** (with folder search), **bulk tag** (add and remove in one dialog), **add to collection**, **share**, **download**, **export**, and **delete**. In a manual collection it also offers **remove from collection**. Mixed selections of folders and files drag together.
+Select several files and the selection bar offers the bulk operations: **move to folder** (with a search box for finding the target), **bulk tag**, **add to collection**, **share**, **download**, **export**, and **delete**. Inside a manual collection it also offers **remove from collection**. Folders and files can be dragged together in a mixed selection.
 
-## Sharing assets
+## Sharing files with people outside your team
 
-Publish a **collection**, a **folder**, or a **selection** as a public download link — recipients open it with no b10cks account ([concept](../concepts/assets.md#sharing--downloads)).
+::: tip Highlight
+Sending files to a photographer, a printer, or a journalist does not need a third-party file-sharing service, an export, or an account for the recipient. Publish a link straight from the library, optionally with a password, an expiry date, and a download limit, and revoke it the second it has served its purpose.
+:::
 
-- **Create & manage** — from a collection's menu choose **Manage shares** to list its links, create new ones, copy or open them, and edit, revoke, or delete existing ones. Every link is also listed under **Settings → Shares**.
-- **Protect** — set an optional password, an expiry date, and a maximum number of downloads; allow or block single-file downloads.
-- **What recipients see** — a clean page with thumbnail previews and a **Download all** (a server-built zip), plus per-file downloads when enabled. Revoking a link cuts off access immediately.
+You can publish a **collection**, a **folder**, or a **selection of files** as a public download link. Whoever receives it needs no b10cks account and no password unless you set one ([concept](../concepts/assets.md#sharing--downloads)).
 
-## Import & export
+**Creating and managing links.** From a collection's menu choose **Manage shares** to see its links, create new ones, copy or open them, and edit, revoke, or delete existing ones. Every link in the space is also listed under **Settings → Shares**, which is the place to review and clean up.
 
-**Export** writes the metadata of your assets (or a selection) to JSON, CSV, Excel, XLIFF, or YAML. **Import** applies an edited file back and reports, row by row, what succeeded, what changed, and what failed.
+**Protecting a link.** Optionally set a password, an expiry date, and a maximum number of downloads, and decide whether recipients may download single files or only everything at once.
 
-Round-trip through a spreadsheet for mass cleanups — fixing hundreds of alt texts, standardizing titles — or send the XLIFF to a translation agency and import the translated metadata back.
+**What recipients see.** A clean page with preview thumbnails and a **Download all** button, which hands them a zip file that b10cks builds on the server. Individual file downloads appear when you allowed them. Revoking a link cuts off access immediately, even for people who already have it open.
+
+## Import and export
+
+**Export** writes the information about your files, not the files themselves, into a spreadsheet or exchange file: JSON, CSV, Excel, XLIFF, or YAML. **Import** reads an edited file back in and reports row by row what was created, what changed, and what failed.
+
+This is how large clean-ups get done in an afternoon. Fix several hundred alt texts in a spreadsheet, or send the XLIFF file to a translation agency and import the translated descriptions when they come back.
