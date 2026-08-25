@@ -42,6 +42,8 @@ Manage who has access to the space:
 - **Members** — everyone with access, with role assignment, filtering, and (bulk) removal.
 - **Pending invites** — outstanding invitations; resend or revoke.
 
+An invitation is sent in the language picked when it was created, and an account that signs up through it starts in that language.
+
 Roles are space-scoped; spaces owned by a team also inherit team-level access ([Account, teams & spaces](account.md)).
 
 ## AI
