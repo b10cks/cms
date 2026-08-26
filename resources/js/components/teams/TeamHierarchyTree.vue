@@ -1,18 +1,15 @@
 <script setup lang="ts">
 import type { TreeItemToggleEvent } from 'reka-ui'
 import { TreeItem, TreeRoot } from 'reka-ui'
+import { RouterLink } from 'vue-router'
 
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import type { TeamHierarchyItem } from '~/types/teams'
 
-const props = defineProps<{
+defineProps<{
   selectedTeamId?: string
   title?: string
-}>()
-
-const emit = defineEmits<{
-  select: [teamId: string]
 }>()
 
 const { useTeamHierarchyQuery } = useTeams()
@@ -33,9 +30,7 @@ const getKey = (item: TeamHierarchyItem): string => {
   return item.id
 }
 
-const handleSelect = (teamId: string) => {
-  emit('select', teamId)
-}
+const teamRoute = (teamId: string) => ({ name: 'team', params: { team: teamId } })
 
 const handleToggle = (e: TreeItemToggleEvent<TeamHierarchyItem>) => {
   if (e.detail.originalEvent instanceof PointerEvent) {
@@ -91,13 +86,14 @@ const toggleExpanded = (teamId: string) => {
         :key="item._id"
         :style="{ 'padding-left': `${item.level - 0.5}rem` }"
         v-bind="item.bind"
+        :as="RouterLink"
+        :to="teamRoute(item.value.id)"
         :class="[
           'group relative my-0.5 flex items-center gap-2 rounded-md py-1 pr-2 pl-0 outline-none',
           'transition-colors duration-200 hover:bg-border',
           'cursor-pointer',
           item.value.id === selectedTeamId ? 'bg-border text-primary' : '',
         ]"
-        @select="handleSelect(item.value.id)"
         @toggle="handleToggle"
       >
         <button

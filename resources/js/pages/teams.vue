@@ -4,15 +4,13 @@ import TeamHierarchyTree from '~/components/teams/TeamHierarchyTree.vue'
 import TeamSelector from '~/components/TeamSelector.vue'
 
 const { t } = useI18n()
-const router = useRouter()
+const route = useRoute()
 
 useSeoMeta({
   title: computed(() => t('labels.teams.pageTitle')),
 })
 
-const handleHierarchySelect = (teamId: string) => {
-  router.push({ name: 'team', params: { team: teamId } })
-}
+const activeTeamId = computed(() => route.params.team as string | undefined)
 </script>
 
 <template>
@@ -25,7 +23,7 @@ const handleHierarchySelect = (teamId: string) => {
     <aside class="w-sm shrink-0 border-r border-border bg-surface">
       <TeamHierarchyTree
         :title="$t('labels.teams.hierarchyTitle')"
-        @select="handleHierarchySelect"
+        :selected-team-id="activeTeamId"
       />
     </aside>
     <main class="content-grid mx-auto">

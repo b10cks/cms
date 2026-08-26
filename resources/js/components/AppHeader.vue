@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Ref } from 'vue'
+import { RouterLink } from 'vue-router'
 
 import Logo from '~/assets/logo.svg'
 import Icon from '~/components/Icon.vue'
@@ -28,35 +29,16 @@ const access = useAccessControl(
 )
 const canCreateSpace = computed(() => access.canAccessRoute('spaces-new'))
 
-const router = useRouter()
 const route = useRoute()
 const commandOpen = inject<Ref<boolean>>('commandOpen')
 
-const selectedSpaceId = computed({
-  get: () => route.params?.space as string | undefined,
-  set: (space: string) => {
-    router.push({
-      name: 'space',
-      params: {
-        space,
-      },
-    })
-  },
-})
+const selectedSpaceId = computed(() => route.params?.space as string | undefined)
 
 const selectedSpace = computed(() => {
   return spaces.value?.find((space) => space.id === selectedSpaceId.value) ?? null
 })
 
-const toDashboard = () => {
-  router.push('/')
-}
-
-const toSpaceDashboard = () => {
-  if (selectedSpaceId.value) {
-    router.push(`/${selectedSpaceId.value}`)
-  }
-}
+const spaceRoute = (space: string) => ({ name: 'space', params: { space } })
 
 const openQuickActions = () => {
   if (typeof commandOpen === 'object' && commandOpen !== null) {
@@ -64,23 +46,9 @@ const openQuickActions = () => {
   }
 }
 
-const openAccountSettings = () => {
-  router.push({ name: 'account-settings-index' })
-}
-
-const switchSpace = (spaceId: string) => {
-  selectedSpaceId.value = spaceId
-}
-
-const createNewSpace = () => {
-  router.push('/spaces/new')
-}
-
 const logout = () => {
   useAuth().logout()
 }
-
-const isSpaceSelected = computed(() => !!selectedSpace.value)
 </script>
 
 <template>
@@ -106,8 +74,10 @@ const isSpaceSelected = computed(() => !!selectedSpace.value)
           align="start"
         >
           <DropdownMenuGroup>
-            <DropdownMenuItem @select="toDashboard">
-              {{ $t('actions.toDashboard') }}
+            <DropdownMenuItem as-child>
+              <RouterLink to="/">
+                {{ $t('actions.toDashboard') }}
+              </RouterLink>
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
@@ -137,10 +107,12 @@ const isSpaceSelected = computed(() => !!selectedSpace.value)
               />
             </DropdownMenuLabel>
             <DropdownMenuItem
-              v-if="isSpaceSelected"
-              @select="toSpaceDashboard"
+              v-if="selectedSpaceId"
+              as-child
             >
-              Space Dashboard
+              <RouterLink :to="spaceRoute(selectedSpaceId)">
+                Space Dashboard
+              </RouterLink>
             </DropdownMenuItem>
             <DropdownMenuItem @select="openQuickActions">
               {{ $t('actions.quickActions') }}
@@ -157,47 +129,53 @@ const isSpaceSelected = computed(() => !!selectedSpace.value)
                 <DropdownMenuItem
                   v-for="space in spaces"
                   :key="space.id"
+                  as-child
                   :class="[
                     'w-full cursor-pointer',
                     space.id === selectedSpaceId ? 'bg-accent text-accent-foreground' : '',
                   ]"
-                  @select="switchSpace(space.id)"
                 >
-                  <NuxtImg
-                    v-if="space.icon"
-                    :src="space.icon"
-                    :alt="space.name"
-                    :width="20"
-                    :height="20"
-                    class="size-5 rounded-sm object-cover"
-                  />
-                  <Icon
-                    v-else
-                    name="lucide:cuboid"
-                    class="text-muted"
-                  />
-                  <span class="truncate">{{ space.name }}</span>
-                  <SpaceBadge
-                    v-if="space.badge"
-                    :badge="space.badge"
-                    size="2xs"
-                  />
+                  <RouterLink :to="spaceRoute(space.id)">
+                    <NuxtImg
+                      v-if="space.icon"
+                      :src="space.icon"
+                      :alt="space.name"
+                      :width="20"
+                      :height="20"
+                      class="size-5 rounded-sm object-cover"
+                    />
+                    <Icon
+                      v-else
+                      name="lucide:cuboid"
+                      class="text-muted"
+                    />
+                    <span class="truncate">{{ space.name }}</span>
+                    <SpaceBadge
+                      v-if="space.badge"
+                      :badge="space.badge"
+                      size="2xs"
+                    />
+                  </RouterLink>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   v-if="canCreateSpace"
-                  @select="createNewSpace"
+                  as-child
                 >
-                  <Icon name="lucide:plus" />
-                  {{ $t('actions.spaces.add') }}
+                  <RouterLink to="/spaces/new">
+                    <Icon name="lucide:plus" />
+                    {{ $t('actions.spaces.add') }}
+                  </RouterLink>
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem @click="openAccountSettings()">
-              {{ $t('actions.user.account') }}
+            <DropdownMenuItem as-child>
+              <RouterLink :to="{ name: 'account-settings-index' }">
+                {{ $t('actions.user.account') }}
+              </RouterLink>
             </DropdownMenuItem>
             <DropdownMenuItem @select="logout()">
               {{ $t('actions.logout') }}
