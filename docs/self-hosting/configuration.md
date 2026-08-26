@@ -56,6 +56,8 @@ APP_ENV=production
 APP_DEBUG=false
 ```
 
+The scheme in `APP_URL` decides the scheme every generated URL gets — assets, redirects, signed links, mail. Put `https://` there as soon as anything terminates TLS in front of the app, even when the app itself is reached over plain HTTP inside the network. Leave it `http://` for a local stack that speaks plain HTTP end to end, which is what the Docker default does.
+
 ## Sign-in
 
 ```bash

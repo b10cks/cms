@@ -16,13 +16,21 @@ class AppServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
+     *
+     * APP_URL, not APP_ENV, decides the scheme generated URLs get. The
+     * self-hosted Docker stack runs APP_ENV=production over plain HTTP on
+     * localhost, so keying this on the environment pointed every asset URL at
+     * an https port nothing listens on. Behind a TLS terminating proxy the
+     * operator sets an https APP_URL and the forcing still applies, which also
+     * covers an unset TRUSTED_PROXIES, where X-Forwarded-Proto is not believed.
+     *
+     * Proxy trust itself is configured in config/trustedproxy.php and applied
+     * by the TrustProxies middleware; setting it here has no effect, since
+     * that middleware resets it on every request.
      */
     public function register(): void
     {
-        if (app()->environment('production')) {
-            // Proxy trust is configured in config/trustedproxy.php and applied
-            // by the TrustProxies middleware; setting it here has no effect,
-            // since that middleware resets it on every request.
+        if (str_starts_with(strtolower((string) config('app.url')), 'https://')) {
             \URL::forceScheme('https');
         }
     }
