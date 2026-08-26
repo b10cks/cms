@@ -11,9 +11,11 @@ use App\Models\User;
 use App\Services\Content\Serial\SerialFieldConfig;
 use App\Services\Search\SearchService;
 use App\Services\Slug\Slugger;
+use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class ContentTreeOperationService
@@ -36,11 +38,11 @@ class ContentTreeOperationService
         Space $space,
         Authenticatable|User|null $owner,
     ): array {
-        return (new Content)->getConnection()->transaction(function () use ($parent, $attributes, $space, $owner): array {
-            $defaultLanguage = $space->settings->getDefaultLanguage();
-            $parentFamily = $parent ? $this->contentI18nService->getFamily($parent)->keyBy('language_iso') : collect();
-            $canonicalParent = $parent ? $parentFamily->get($defaultLanguage) ?? $parent : null;
+        $defaultLanguage = $space->settings->getDefaultLanguage();
+        $parentFamily = $parent ? $this->contentI18nService->getFamily($parent)->keyBy('language_iso') : collect();
+        $canonicalParent = $parent ? $parentFamily->get($defaultLanguage) ?? $parent : null;
 
+        $create = function () use ($attributes, $canonicalParent, $defaultLanguage, $space, $owner): array {
             $canonical = new Content;
             $this->createContent->execute(
                 [
@@ -66,7 +68,14 @@ class ContentTreeOperationService
                 'created' => [$canonical->fresh()],
                 'warnings' => [],
             ];
-        });
+        };
+
+        return $this->withSiblingSlugLock(
+            $space,
+            $canonicalParent?->id,
+            $defaultLanguage,
+            fn (): array => (new Content)->getConnection()->transaction($create),
+        );
     }
 
     public function moveItems(
@@ -221,7 +230,7 @@ class ContentTreeOperationService
     ): array {
         $connection = (new Content)->getConnection();
 
-        return $connection->transaction(function () use ($connection, $orderedIds, $parentId, $afterId, $space, $owner, $position): array {
+        $duplicate = function () use ($connection, $orderedIds, $parentId, $afterId, $space, $owner, $position): array {
             // Callers pass an already root-resolved selection (the controller
             // resolves it once for authorization) — no need to resolve again.
             $normalizedIds = $orderedIds;
@@ -273,7 +282,14 @@ class ContentTreeOperationService
                 'created' => $createdRoots->map(fn (Content $content) => $content->fresh())->all(),
                 'warnings' => [],
             ];
-        });
+        };
+
+        return $this->withSiblingSlugLock(
+            $space,
+            $parentId,
+            $space->settings->getDefaultLanguage(),
+            fn (): array => $connection->transaction($duplicate),
+        );
     }
 
     public function updateBlock(
@@ -419,6 +435,32 @@ class ContentTreeOperationService
         }
 
         return $content;
+    }
+
+    /**
+     * Serialize sibling slug allocation for one parent and language.
+     *
+     * A unique slug is picked by reading the siblings and then inserting, so
+     * two overlapping requests can both see the same name as free and write it
+     * twice. Holding the lock across the whole transaction makes that
+     * read-then-write pair atomic; the second request sees the first entry and
+     * falls back to "slug-2".
+     *
+     * @template TReturn
+     *
+     * @param  Closure(): TReturn  $callback
+     * @return TReturn
+     */
+    protected function withSiblingSlugLock(
+        Space $space,
+        ?string $parentId,
+        string $languageIso,
+        Closure $callback,
+    ): mixed {
+        return Cache::lock(
+            sprintf('content-slug:%s:%s:%s', $space->id, $parentId ?? 'root', $languageIso),
+            30,
+        )->block(15, $callback);
     }
 
     protected function makeUniqueSlug(
