@@ -1902,8 +1902,8 @@
                                     },
                                     "type": {
                                         "type": "string",
-                                        "maxLength": 50,
                                         "enum": [
+                                            "personal",
                                             "partner",
                                             "reseller",
                                             "affiliate"
@@ -2029,8 +2029,8 @@
                                     },
                                     "type": {
                                         "type": "string",
-                                        "maxLength": 50,
                                         "enum": [
+                                            "personal",
                                             "partner",
                                             "reseller",
                                             "affiliate"
@@ -2144,7 +2144,7 @@
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "description": "Single value or range (format: value1...value2)"
+                            "description": "Supports: value, range (value1...value2), operators (>=value, >value, <=value, <value, <>value)"
                         },
                         "description": "Filter by creation date (supports operators and ranges)"
                     },
@@ -2154,7 +2154,7 @@
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "description": "Single value or range (format: value1...value2)"
+                            "description": "Supports: value, range (value1...value2), operators (>=value, >value, <=value, <value, <>value)"
                         },
                         "description": "Filter by update date (supports operators and ranges)"
                     },
@@ -3790,7 +3790,7 @@
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "description": "Single value or range (format: value1...value2)"
+                            "description": "Supports: value, range (value1...value2), operators (>=value, >value, <=value, <value, <>value)"
                         },
                         "description": "Filter by creation date (supports operators and ranges)"
                     },
@@ -3800,7 +3800,7 @@
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "description": "Single value or range (format: value1...value2)"
+                            "description": "Supports: value, range (value1...value2), operators (>=value, >value, <=value, <value, <>value)"
                         },
                         "description": "Filter by update date (supports operators and ranges)"
                     },
@@ -20692,6 +20692,9 @@
                     "membership_origin": {
                         "nullable": true
                     },
+                    "inherited_from": {
+                        "nullable": true
+                    },
                     "space_memberships": {
                         "nullable": true
                     },
@@ -20763,6 +20766,9 @@
                         "nullable": true
                     },
                     "membership_origin": {
+                        "nullable": true
+                    },
+                    "inherited_from": {
                         "nullable": true
                     },
                     "can_assign_team_role": {
