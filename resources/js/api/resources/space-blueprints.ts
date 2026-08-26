@@ -24,6 +24,7 @@ export interface CreateSpaceBlueprintPayload {
   settings?: Record<string, unknown> | null
   source_space_id?: string | null
   tables?: string[]
+  /** Chooses the endpoint: a team blueprint, or a system one when null. */
   team_id?: string | null
 }
 
@@ -51,7 +52,8 @@ export interface SpaceBlueprintResource {
     avatar?: string | null
   } | null
   settings?: Record<string, unknown> | null
-  data?: Record<string, unknown> | null
+  /** The snapshotted source-space rows, keyed by table. */
+  snapshot?: Record<string, unknown> | null
   created_at: string
   updated_at: string
 }

@@ -20,7 +20,10 @@ class SpaceBlueprintResource extends JsonResource
             'color' => $this->color,
             'description' => $this->description,
             'settings' => $this->settings ?? [],
-            'data' => $this->data ?? [],
+            // Named `snapshot`, not `data`: a top-level `data` key makes
+            // Laravel treat the payload as already wrapped, so the response
+            // would come back without its `data` envelope.
+            'snapshot' => $this->data ?? [],
             'team_id' => $this->team_id,
             'team' => $this->whenLoaded('team', fn() => new TeamResource($this->team)),
             'created_by' => $this->whenLoaded('creator', fn() => new SimpleUserResource($this->creator)),
