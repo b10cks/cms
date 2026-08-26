@@ -140,7 +140,7 @@ class MgmtCallTool extends Tool
      * The sub-request is built with Request::create() and carries no cookies,
      * so a session-authenticated caller has no bearer token of their own. They
      * must still act as themselves: falling back to the configured MCP token
-     * would run their 268 available operations as that token's owner, across
+     * would run every operation available to them as that token's owner, across
      * every space it can reach. The shared token stays confined to the stdio
      * transport, which has no user to act as.
      *

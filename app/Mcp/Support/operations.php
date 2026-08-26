@@ -1791,6 +1791,36 @@ return [
         'method' => 'GET',
         'uri' => '/mgmt/v1/space-blueprints',
     ],
+    'system.createSpaceBlueprint' => [
+        'description' => 'Create a system space blueprint, owned by no team and offered to every user. '
+            .'Root only. Payload fields: name (required), icon, color, description, settings, '
+            .'source_space_id, tables.',
+        'required' => ['payload'],
+        'accepts' => ['payload'],
+        'method' => 'POST',
+        'uri' => '/mgmt/v1/space-blueprints',
+    ],
+    'system.getSpaceBlueprint' => [
+        'description' => 'Get a system space blueprint by ID.',
+        'required' => ['id'],
+        'accepts' => ['id', 'blueprintId'],
+        'method' => 'GET',
+        'uri' => '/mgmt/v1/space-blueprints/{blueprintId}',
+    ],
+    'system.updateSpaceBlueprint' => [
+        'description' => 'Update a system space blueprint. Root only.',
+        'required' => ['id', 'payload'],
+        'accepts' => ['id', 'blueprintId', 'payload'],
+        'method' => 'PATCH',
+        'uri' => '/mgmt/v1/space-blueprints/{blueprintId}',
+    ],
+    'system.deleteSpaceBlueprint' => [
+        'description' => 'Delete a system space blueprint. Root only.',
+        'required' => ['id'],
+        'accepts' => ['id', 'blueprintId'],
+        'method' => 'DELETE',
+        'uri' => '/mgmt/v1/space-blueprints/{blueprintId}',
+    ],
     'system.getInvite' => [
         'description' => 'Read a public invite by ID, without authenticating.',
         'required' => ['id'],
@@ -1915,7 +1945,8 @@ return [
         'uri' => '/mgmt/v1/teams/{teamId}/blueprints',
     ],
     'teams.createBlueprint' => [
-        'description' => 'Create a space blueprint. Payload fields: name (required), icon, color, description, settings, data.',
+        'description' => 'Create a space blueprint owned by the team. Payload fields: name (required), icon, '
+            .'color, description, settings, source_space_id, tables.',
         'required' => ['teamId', 'payload'],
         'accepts' => ['teamId', 'payload'],
         'method' => 'POST',

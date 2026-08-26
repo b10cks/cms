@@ -95,6 +95,7 @@ use App\Http\Controllers\Mgmt\SpaceSearchController;
 use App\Http\Controllers\Mgmt\SpaceStatsController;
 use App\Http\Controllers\Mgmt\SpaceSubscriptionController;
 use App\Http\Controllers\Mgmt\SpaceTokenController;
+use App\Http\Controllers\Mgmt\SystemSpaceBlueprintController;
 use App\Http\Controllers\Mgmt\TeamAvatarController;
 use App\Http\Controllers\Mgmt\TeamController;
 use App\Http\Controllers\Mgmt\TeamHierarchyController;
@@ -195,6 +196,17 @@ Route::apiResource('teams', TeamController::class);
 
 Route::get('space-blueprints', AvailableSpaceBlueprintController::class)
     ->name('space-blueprints');
+
+// Blueprints without a team. Everyone may start a space from one; only root
+// may create or change one.
+Route::post('space-blueprints', [SystemSpaceBlueprintController::class, 'store'])
+    ->name('space-blueprints.store');
+Route::get('space-blueprints/{blueprint}', [SystemSpaceBlueprintController::class, 'show'])
+    ->name('space-blueprints.show');
+Route::match(['put', 'patch'], 'space-blueprints/{blueprint}', [SystemSpaceBlueprintController::class, 'update'])
+    ->name('space-blueprints.update');
+Route::delete('space-blueprints/{blueprint}', [SystemSpaceBlueprintController::class, 'destroy'])
+    ->name('space-blueprints.destroy');
 
 Route::group(['prefix' => 'teams/{team}'], function () {
     Route::post('avatar', [TeamAvatarController::class, 'store'])->name('teams.avatar.store');

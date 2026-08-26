@@ -29,10 +29,10 @@ class CreateSpaceBlueprint
     ];
 
     /**
-     * The caller is responsible for authorizing both the team and the source
-     * space.
+     * A null team creates a system blueprint, available to every user. The
+     * caller is responsible for authorizing both the team and the source space.
      */
-    public function execute(array $data, Team $team, User $creator, ?Space $sourceSpace = null): SpaceBlueprint
+    public function execute(array $data, ?Team $team, User $creator, ?Space $sourceSpace = null): SpaceBlueprint
     {
         $tables = $data['tables'] ?? [];
         $settings = $data['settings'] ?? [];
@@ -51,7 +51,7 @@ class CreateSpaceBlueprint
             'description' => $data['description'] ?? null,
             'settings' => $settings ?: null,
             'data' => $blueprintData ?: null,
-            'team_id' => $team->id,
+            'team_id' => $team?->id,
             'created_by_id' => $creator->id,
         ]);
     }
