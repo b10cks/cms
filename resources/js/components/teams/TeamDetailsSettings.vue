@@ -13,10 +13,10 @@ import {
   CardTitle,
 } from '~/components/ui/card'
 import TeamSelectField, { type TeamSelectOption } from '~/components/teams/TeamSelectField.vue'
-import { FormField, SelectField, TextField } from '~/components/ui/form'
+import TeamTypeField from '~/components/teams/TeamTypeField.vue'
+import { FormField, TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
 import { useFileUpload } from '~/composables/useFileUpload'
-import { useTeamTypes } from '~/composables/useTeamTypes'
 import { flattenNestedTeams } from '~/lib/team-hierarchy'
 import type { TeamHierarchyItem, TeamResource, UpdateTeamPayload } from '~/types/teams'
 
@@ -32,7 +32,6 @@ const props = withDefaults(
 )
 
 const { t } = useI18n()
-const { teamTypeOptions } = useTeamTypes()
 const { useUpdateTeamMutation, useDeleteTeamAvatarMutation, invalidateTeam } = useTeams()
 
 const updateMutation = useUpdateTeamMutation()
@@ -41,7 +40,7 @@ const deleteAvatarMutation = useDeleteTeamAvatarMutation()
 const formData = ref<UpdateTeamPayload>({
   name: '',
   description: '',
-  type: 'partner',
+  type: null,
   parent_id: null,
   icon: null,
   color: null,
@@ -208,12 +207,10 @@ const handleRemoveAvatar = () => {
         :rows="3"
       />
 
-      <SelectField
+      <TeamTypeField
         v-model="formData.type"
         name="team-type"
-        :label="$t('labels.teams.fields.type')"
-        :placeholder="$t('labels.teams.fields.typePlaceholder')"
-        :options="teamTypeOptions"
+        :editable="isRoot"
       />
 
       <TeamSelectField

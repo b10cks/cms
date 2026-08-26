@@ -71,7 +71,7 @@ export interface TeamResource {
   avatar?: string | null
   color?: string | null
   description?: string | null
-  type: string
+  type?: string | null
   parent_id?: string | null
   parent?: TeamParent
   children?: TeamChild[]
@@ -95,7 +95,7 @@ export interface CreateTeamPayload {
   icon?: string | null
   color?: string | null
   description?: string | null
-  type: string
+  type?: string | null
   parent_id?: string | null
   settings?: TeamSettings
 }
@@ -105,7 +105,7 @@ export interface UpdateTeamPayload {
   icon?: string | null
   color?: string | null
   description?: string | null
-  type?: string
+  type?: string | null
   parent_id?: string | null
   settings?: TeamSettings
 }
@@ -117,7 +117,7 @@ export interface TeamHierarchyItem {
   avatar?: string | null
   color?: string | null
   description?: string | null
-  type: string
+  type?: string | null
   parent_id?: string | null
   parent?: TeamParent
   children: TeamHierarchyItem[]

@@ -303,4 +303,110 @@ class TeamControllerTest extends TestCase
             'avatar' => UploadedFile::fake()->create('avatar.pdf', 100, 'application/pdf'),
         ])->assertUnprocessable();
     }
+
+    #[Test]
+    public function root_can_create_a_team_with_a_type(): void
+    {
+        $root = User::factory()->create(['is_root' => true]);
+
+        $this->actingAs($root)->postJson(route('mgmt.teams.store'), [
+            'name' => 'Typed',
+            'type' => 'reseller',
+        ])->assertSuccessful();
+
+        $this->assertDatabaseHas('teams', ['name' => 'Typed', 'type' => 'reseller']);
+    }
+
+    #[Test]
+    public function a_team_can_be_created_without_a_type(): void
+    {
+        $user = User::factory()->create();
+        $parent = Team::factory()->create();
+        $this->assignTeamRole($parent, $user, 'owner');
+
+        $this->actingAs($user)->postJson(route('mgmt.teams.store'), [
+            'name' => 'Untyped',
+            'parent_id' => $parent->id,
+            'type' => null,
+        ])->assertSuccessful();
+
+        $this->assertDatabaseHas('teams', ['name' => 'Untyped', 'type' => null]);
+    }
+
+    #[Test]
+    public function non_root_cannot_create_a_team_with_a_type(): void
+    {
+        $user = User::factory()->create();
+        $parent = Team::factory()->create();
+        $this->assignTeamRole($parent, $user, 'owner');
+
+        $this->actingAs($user)->postJson(route('mgmt.teams.store'), [
+            'name' => 'Sneaky type',
+            'parent_id' => $parent->id,
+            'type' => 'partner',
+        ])->assertUnprocessable()->assertJsonValidationErrors('type');
+
+        $this->assertDatabaseMissing('teams', ['name' => 'Sneaky type']);
+    }
+
+    #[Test]
+    public function an_unknown_type_is_rejected(): void
+    {
+        $root = User::factory()->create(['is_root' => true]);
+
+        $this->actingAs($root)->postJson(route('mgmt.teams.store'), [
+            'name' => 'Ghost',
+            'type' => 'ghost',
+        ])->assertUnprocessable()->assertJsonValidationErrors('type');
+    }
+
+    #[Test]
+    public function root_can_change_and_clear_the_team_type(): void
+    {
+        $root = User::factory()->create(['is_root' => true]);
+        $team = Team::factory()->create(['type' => 'partner']);
+
+        $this->actingAs($root)->patchJson(route('mgmt.teams.update', $team), [
+            'type' => 'affiliate',
+        ])->assertSuccessful();
+        $this->assertSame('affiliate', $team->fresh()->type);
+
+        $this->actingAs($root)->patchJson(route('mgmt.teams.update', $team), [
+            'type' => null,
+        ])->assertSuccessful();
+        $this->assertNull($team->fresh()->type);
+    }
+
+    #[Test]
+    public function an_owner_cannot_change_or_clear_the_team_type(): void
+    {
+        $user = User::factory()->create();
+        $team = Team::factory()->create(['type' => 'partner']);
+        $this->assignTeamRole($team, $user, 'owner');
+
+        $this->actingAs($user)->patchJson(route('mgmt.teams.update', $team), [
+            'type' => 'reseller',
+        ])->assertUnprocessable()->assertJsonValidationErrors('type');
+
+        $this->actingAs($user)->patchJson(route('mgmt.teams.update', $team), [
+            'type' => null,
+        ])->assertUnprocessable()->assertJsonValidationErrors('type');
+
+        $this->assertSame('partner', $team->fresh()->type);
+    }
+
+    #[Test]
+    public function an_owner_may_save_other_fields_while_echoing_the_current_type(): void
+    {
+        $user = User::factory()->create();
+        $team = Team::factory()->create(['type' => 'partner']);
+        $this->assignTeamRole($team, $user, 'owner');
+
+        $this->actingAs($user)->patchJson(route('mgmt.teams.update', $team), [
+            'name' => 'Renamed',
+            'type' => 'partner',
+        ])->assertSuccessful();
+
+        $this->assertSame('Renamed', $team->fresh()->name);
+    }
 }

@@ -8,6 +8,7 @@
 // biome-ignore lint: disable
 export {}
 declare global {
+  const ASSIGNABLE_TEAM_TYPE_KEYS: typeof import('./resources/js/composables/useTeamTypes').ASSIGNABLE_TEAM_TYPE_KEYS
   const AlertDialogProvider: typeof import('./resources/js/composables/useAlertDialog').AlertDialogProvider
   const EffectScope: typeof import('vue').EffectScope
   const GLOBAL_TEAM_QUERY_PARAMS: typeof import('./resources/js/composables/useGlobalTeam').GLOBAL_TEAM_QUERY_PARAMS
@@ -326,6 +327,7 @@ import { UnwrapRef } from 'vue'
 declare module 'vue' {
   interface GlobalComponents {}
   interface ComponentCustomProperties {
+    readonly ASSIGNABLE_TEAM_TYPE_KEYS: UnwrapRef<typeof import('./resources/js/composables/useTeamTypes')['ASSIGNABLE_TEAM_TYPE_KEYS']>
     readonly AlertDialogProvider: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['AlertDialogProvider']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly GLOBAL_TEAM_QUERY_PARAMS: UnwrapRef<typeof import('./resources/js/composables/useGlobalTeam')['GLOBAL_TEAM_QUERY_PARAMS']>

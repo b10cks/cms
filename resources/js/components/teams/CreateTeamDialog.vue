@@ -9,9 +9,9 @@ import {
   DialogTrigger,
 } from '~/components/ui/dialog'
 import TeamSelectField, { type TeamSelectOption } from '~/components/teams/TeamSelectField.vue'
-import { SelectField, TextField } from '~/components/ui/form'
+import TeamTypeField from '~/components/teams/TeamTypeField.vue'
+import { TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
-import { useTeamTypes } from '~/composables/useTeamTypes'
 import { flattenNestedTeams } from '~/lib/team-hierarchy'
 import type { CreateTeamPayload, TeamHierarchyItem } from '~/types/teams'
 
@@ -30,7 +30,6 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const { teamTypeOptions } = useTeamTypes()
 
 const open = ref(false)
 const isSubmitting = ref(false)
@@ -38,7 +37,7 @@ const isSubmitting = ref(false)
 const createDefaults = (): CreateTeamPayload => ({
   name: '',
   description: '',
-  type: 'partner',
+  type: null,
   parent_id: null,
   icon: null,
   color: null,
@@ -122,12 +121,11 @@ const handleOpenChange = (value: boolean) => {
           :rows="3"
         />
 
-        <SelectField
+        <TeamTypeField
+          v-if="isRoot"
           v-model="formData.type"
           name="type"
-          :label="$t('labels.teams.fields.type')"
-          :placeholder="$t('labels.teams.fields.typePlaceholder')"
-          :options="teamTypeOptions"
+          editable
         />
 
         <TeamSelectField

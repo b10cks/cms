@@ -2819,6 +2819,7 @@
         }
       },
       "types": {
+        "personal": "Personal",
         "partner": "Partner",
         "reseller": "Reseller",
         "affiliate": "Affiliate"
@@ -2830,6 +2831,7 @@
         "descriptionPlaceholder": "What's this team for?",
         "type": "Team Type",
         "typePlaceholder": "Select a type",
+        "typeRootOnly": "Only a root user can change the team type.",
         "parent": "Parent Team",
         "parentPlaceholder": "Select a parent team",
         "color": "Team Color",

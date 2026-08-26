@@ -78,6 +78,14 @@ class Team extends GlobalModel
     use HasUlids;
     use SoftDeletes;
 
+    /**
+     * Every value the `type` column may hold; `null` (no type) is always
+     * allowed. `personal` is stamped on the team a new user gets in
+     * {@see \App\Actions\User\CreateUser}, so it is valid but never offered
+     * in the picker.
+     */
+    public const TYPES = ['personal', 'partner', 'reseller', 'affiliate'];
+
     protected $table = 'teams';
 
     protected ?string $broadcastResource = TeamResource::class;
