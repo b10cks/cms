@@ -6,8 +6,11 @@ import {
   type RouteLocationNormalized,
 } from 'vue-router'
 
-import { useAlertDialog } from '~/composables/useAlertDialog'
+import { type DialogAction, useAlertDialog } from '~/composables/useAlertDialog'
 import { useI18n } from '~/plugins/i18n'
+
+/** What the leave prompt came back with. */
+type LeaveChoice = 'stay' | 'discard' | 'save'
 
 /**
  * Keeps an editor's unsaved changes from being dropped silently: confirms
@@ -21,6 +24,11 @@ export interface UnsavedChangesGuardOptions {
   isDirty: Ref<boolean>
   /** Run when the user confirms leaving with unsaved changes. */
   onDiscardChanges?: () => void
+  /**
+   * Adds a "save and leave" option to the prompt. Resolve `false` when the save
+   * failed — the navigation is then cancelled rather than dropping the edits.
+   */
+  onSave?: () => Promise<boolean> | boolean
   /**
    * Language shown when `?lang` is absent. Lets a page's own normalization
    * (`?lang=de` → no `lang` once `de` became the default) pass as the same
@@ -48,6 +56,44 @@ export function useUnsavedChangesGuard(options: UnsavedChangesGuardOptions): voi
   const { alert } = useAlertDialog()
   const { isDirty } = options
 
+  async function promptLeave(): Promise<LeaveChoice> {
+    const canSave = !!options.onSave
+    // Dismissing the dialog (Escape, overlay) means "I did not decide" — the
+    // safe reading of that is to stay put, so nothing but a button moves this.
+    let choice: LeaveChoice = 'stay'
+
+    const actions: DialogAction[] = [
+      { type: 'cancel', label: t('labels.unsavedChanges.stay') },
+      {
+        type: 'destructive',
+        label: t('labels.unsavedChanges.discard'),
+        click: () => {
+          choice = 'discard'
+        },
+      },
+    ]
+
+    if (canSave) {
+      actions.push({
+        type: 'primary',
+        label: t('labels.unsavedChanges.save'),
+        click: () => {
+          choice = 'save'
+        },
+      })
+    }
+
+    await alert.dialog({
+      title: t('labels.unsavedChanges.title'),
+      message: canSave
+        ? t('labels.unsavedChanges.messageWithSave')
+        : t('labels.unsavedChanges.message'),
+      actions,
+    })
+
+    return choice
+  }
+
   async function guardLeave(
     to: RouteLocationNormalized,
     from: RouteLocationNormalized,
@@ -64,22 +110,23 @@ export function useUnsavedChangesGuard(options: UnsavedChangesGuardOptions): voi
       return next()
     }
 
-    if (isDirty.value) {
-      const answer = await alert.confirm(
-        t(
-          'labels.contents.unsavedChanges',
-          'You have unsaved changes. Are you sure you want to leave?'
-        )
-      )
-      if (answer) {
-        options.onDiscardChanges?.()
-        next()
-      } else {
-        next(false)
-      }
-    } else {
-      next()
+    if (!isDirty.value) {
+      return next()
     }
+
+    const choice = await promptLeave()
+
+    if (choice === 'stay') {
+      return next(false)
+    }
+
+    if (choice === 'save') {
+      const saved = await options.onSave?.()
+      return next(saved ? undefined : false)
+    }
+
+    options.onDiscardChanges?.()
+    next()
   }
 
   onBeforeRouteUpdate(guardLeave)

@@ -4053,6 +4053,14 @@
       "hiddenEditsTitle": "Ungespeicherte Änderungen ausblenden?",
       "hiddenEditsConfirm": "Trotzdem ausblenden",
       "languageRemovalWarning": "Du hast {count} ungespeicherte Änderung(en). Das Entfernen einer Sprache blendet ihre Zellen aus, sie werden beim nächsten Speichern trotzdem geschrieben. Verwirf sie vorher, wenn du das nicht willst."
+    },
+    "unsavedChanges": {
+      "title": "Ungespeicherte Änderungen",
+      "message": "Du hast ungespeicherte Änderungen. Wenn du jetzt gehst, gehen sie verloren.",
+      "messageWithSave": "Du hast ungespeicherte Änderungen. Vor dem Verlassen speichern?",
+      "stay": "Weiter bearbeiten",
+      "discard": "Änderungen verwerfen",
+      "save": "Speichern und verlassen"
     }
   },
   "notifications": {

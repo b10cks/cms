@@ -20,14 +20,26 @@ vi.mock('vue-router', async () => {
   }
 })
 
-const confirm = vi.fn(async () => true)
+type DialogOptions = import('~/composables/useAlertDialog').DialogOptions
+
+/** Which button the fake user presses; `stay` also covers dismissing the dialog. */
+let answer: 'stay' | 'discard' | 'save' = 'discard'
+
+const actionTypeFor = { stay: 'cancel', discard: 'destructive', save: 'primary' } as const
+
+const dialog = vi.fn(async (options: DialogOptions) => {
+  const action = options.actions.find((candidate) => candidate.type === actionTypeFor[answer])
+  action?.click?.()
+
+  return action?.type ?? 'closed'
+})
 
 vi.mock('~/composables/useAlertDialog', async () => {
   const actual = await vi.importActual<typeof import('~/composables/useAlertDialog')>(
     '~/composables/useAlertDialog'
   )
 
-  return { ...actual, useAlertDialog: () => ({ ...actual.useAlertDialog(), alert: { confirm } }) }
+  return { ...actual, useAlertDialog: () => ({ ...actual.useAlertDialog(), alert: { dialog } }) }
 })
 
 const { useUnsavedChangesGuard } = await import('~/lib/unsavedChangesGuard')
@@ -44,14 +56,23 @@ const navigate = (from: RouteLocationNormalized, to: RouteLocationNormalized) =>
 
 let wrappers: VueWrapper[] = []
 
-const setup = (dirty = true, defaultLanguage?: string) => {
+const setup = (
+  dirty = true,
+  defaultLanguage?: string,
+  onSave?: () => Promise<boolean> | boolean
+) => {
   const isDirty = ref(dirty)
   const onDiscardChanges = vi.fn()
 
   const wrapper = mount(
     defineComponent({
       setup() {
-        useUnsavedChangesGuard({ isDirty, onDiscardChanges, defaultLanguage: ref(defaultLanguage) })
+        useUnsavedChangesGuard({
+          isDirty,
+          onDiscardChanges,
+          onSave,
+          defaultLanguage: ref(defaultLanguage),
+        })
         return () => h('div')
       },
     })
@@ -64,8 +85,8 @@ const setup = (dirty = true, defaultLanguage?: string) => {
 beforeEach(() => {
   leaveGuards.length = 0
   updateGuards.length = 0
-  confirm.mockReset()
-  confirm.mockResolvedValue(true)
+  dialog.mockClear()
+  answer = 'discard'
 })
 
 afterEach(() => {
@@ -83,7 +104,7 @@ describe('useUnsavedChangesGuard', () => {
     )
     await result
 
-    expect(confirm).toHaveBeenCalledTimes(1)
+    expect(dialog).toHaveBeenCalledTimes(1)
     expect(onDiscardChanges).toHaveBeenCalledTimes(1)
     expect(next).toHaveBeenCalledWith()
   })
@@ -97,7 +118,7 @@ describe('useUnsavedChangesGuard', () => {
     )
     await result
 
-    expect(confirm).not.toHaveBeenCalled()
+    expect(dialog).not.toHaveBeenCalled()
     expect(onDiscardChanges).not.toHaveBeenCalled()
     expect(next).toHaveBeenCalledWith()
   })
@@ -111,7 +132,7 @@ describe('useUnsavedChangesGuard', () => {
     )
     await result
 
-    expect(confirm).not.toHaveBeenCalled()
+    expect(dialog).not.toHaveBeenCalled()
     expect(onDiscardChanges).not.toHaveBeenCalled()
     expect(next).toHaveBeenCalledWith()
   })
@@ -130,7 +151,7 @@ describe('useUnsavedChangesGuard', () => {
   })
 
   it('stays on the current language when the user cancels', async () => {
-    confirm.mockResolvedValue(false)
+    answer = 'stay'
     const { onDiscardChanges } = setup()
 
     const { next, result } = navigate(
@@ -141,5 +162,55 @@ describe('useUnsavedChangesGuard', () => {
 
     expect(onDiscardChanges).not.toHaveBeenCalled()
     expect(next).toHaveBeenCalledWith(false)
+  })
+
+  it('offers saving only when the page can save, and leaves once it succeeded', async () => {
+    answer = 'save'
+    const onSave = vi.fn(async () => true)
+    const { onDiscardChanges } = setup(true, undefined, onSave)
+
+    const { next, result } = navigate(
+      route('/spaces/s/content/c'),
+      route('/spaces/s/content/c', { lang: 'de' })
+    )
+    await result
+
+    expect(dialog.mock.calls[0][0].actions.map((action) => action.type)).toEqual([
+      'cancel',
+      'destructive',
+      'primary',
+    ])
+    expect(onSave).toHaveBeenCalledTimes(1)
+    expect(onDiscardChanges).not.toHaveBeenCalled()
+    expect(next).toHaveBeenCalledWith(undefined)
+  })
+
+  it('keeps the user on the page when the save fails', async () => {
+    answer = 'save'
+    const onSave = vi.fn(async () => false)
+    setup(true, undefined, onSave)
+
+    const { next, result } = navigate(
+      route('/spaces/s/content/c'),
+      route('/spaces/s/content/c', { lang: 'de' })
+    )
+    await result
+
+    expect(next).toHaveBeenCalledWith(false)
+  })
+
+  it('leaves saving out of the prompt when the page cannot save', async () => {
+    setup()
+
+    const { result } = navigate(
+      route('/spaces/s/content/c'),
+      route('/spaces/s/content/c', { lang: 'de' })
+    )
+    await result
+
+    expect(dialog.mock.calls[0][0].actions.map((action) => action.type)).toEqual([
+      'cancel',
+      'destructive',
+    ])
   })
 })

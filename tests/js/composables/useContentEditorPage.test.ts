@@ -31,14 +31,26 @@ vi.mock('vue-router', async () => {
   }
 })
 
-const confirm = vi.fn(async () => true)
+type DialogOptions = import('~/composables/useAlertDialog').DialogOptions
+
+/** Which button the fake user presses in the unsaved-changes prompt. */
+let answer: 'stay' | 'discard' = 'discard'
+
+const dialog = vi.fn(async (options: DialogOptions) => {
+  const action = options.actions.find(
+    (candidate) => candidate.type === (answer === 'stay' ? 'cancel' : 'destructive')
+  )
+  action?.click?.()
+
+  return action?.type ?? 'closed'
+})
 
 vi.mock('~/composables/useAlertDialog', async () => {
   const actual = await vi.importActual<typeof import('~/composables/useAlertDialog')>(
     '~/composables/useAlertDialog'
   )
 
-  return { ...actual, useAlertDialog: () => ({ ...actual.useAlertDialog(), alert: { confirm } }) }
+  return { ...actual, useAlertDialog: () => ({ ...actual.useAlertDialog(), alert: { dialog } }) }
 })
 
 const { useContentEditorPage } = await import('~/composables/useContentEditorPage')
@@ -157,8 +169,8 @@ const navigate = (
 beforeEach(async () => {
   leaveGuards.length = 0
   updateGuards.length = 0
-  confirm.mockClear()
-  confirm.mockResolvedValue(true)
+  dialog.mockClear()
+  answer = 'discard'
   router = createTestRouter()
   await router.push('/content/content-1')
 })
@@ -264,7 +276,7 @@ describe('unsaved-changes guards', () => {
     const { next, result } = navigate(leaveGuards[0], { path: '/a' }, { path: '/b' })
     await result
 
-    expect(confirm).not.toHaveBeenCalled()
+    expect(dialog).not.toHaveBeenCalled()
     expect(next).toHaveBeenCalledWith()
   })
 
@@ -276,7 +288,7 @@ describe('unsaved-changes guards', () => {
     await result
 
     // Same-path UI query/hash changes are not a leave; `lang` is handled separately.
-    expect(confirm).not.toHaveBeenCalled()
+    expect(dialog).not.toHaveBeenCalled()
     expect(next).toHaveBeenCalledWith()
   })
 
@@ -287,7 +299,7 @@ describe('unsaved-changes guards', () => {
     const { next, result } = navigate(leaveGuards[0], { path: '/a' }, { path: '/b' })
     await result
 
-    expect(confirm).toHaveBeenCalledTimes(1)
+    expect(dialog).toHaveBeenCalledTimes(1)
     expect(onDiscardChanges).toHaveBeenCalledTimes(1)
     expect(next).toHaveBeenCalledWith()
   })
@@ -295,7 +307,7 @@ describe('unsaved-changes guards', () => {
   it('cancels the navigation and keeps the edits when the user declines', async () => {
     const { content, onDiscardChanges } = setupPage()
 
-    confirm.mockResolvedValue(false)
+    answer = 'stay'
     content.value = contentResource({ name: 'Renamed' })
     const { next, result } = navigate(leaveGuards[0], { path: '/a' }, { path: '/b' })
     await result
@@ -311,9 +323,15 @@ describe('unsaved-changes guards', () => {
     const { result } = navigate(leaveGuards[0], { path: '/a' }, { path: '/b' })
     await result
 
-    expect(confirm).toHaveBeenCalledWith(
-      'You have unsaved changes. Are you sure you want to leave?'
-    )
+    // The content editor passes no `onSave`, so the prompt is the two-button one.
+    expect(dialog).toHaveBeenCalledWith({
+      title: 'Unsaved changes',
+      message: 'You have unsaved changes. Leaving now discards them.',
+      actions: [
+        expect.objectContaining({ type: 'cancel', label: 'Keep editing' }),
+        expect.objectContaining({ type: 'destructive', label: 'Discard changes' }),
+      ],
+    })
   })
 
   it('guards a route update the same way it guards a leave', async () => {

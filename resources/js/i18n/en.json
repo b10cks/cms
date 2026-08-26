@@ -4039,6 +4039,14 @@
       "hiddenEditsTitle": "Hide unsaved changes?",
       "hiddenEditsConfirm": "Hide anyway",
       "languageRemovalWarning": "You have {count} unsaved change(s). Removing a language hides its cells, but they are still saved on the next save. Discard first if you do not want them."
+    },
+    "unsavedChanges": {
+      "title": "Unsaved changes",
+      "message": "You have unsaved changes. Leaving now discards them.",
+      "messageWithSave": "You have unsaved changes. Save them before you leave?",
+      "stay": "Keep editing",
+      "discard": "Discard changes",
+      "save": "Save and leave"
     }
   },
   "notifications": {
