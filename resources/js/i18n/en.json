@@ -1829,6 +1829,7 @@
       "createDescription": "Save a reusable space blueprint and assign it to a team.",
       "createFromSourceDescription": "Create a reusable blueprint from an existing space.",
       "sourceSpaceRequired": "A source space is required to create a blueprint.",
+      "noTeamAvailable": "You need admin or owner rights on a team to create a blueprint.",
       "system": "System",
       "noDescription": "No description provided.",
       "emptyOptionTitle": "Start without a blueprint",

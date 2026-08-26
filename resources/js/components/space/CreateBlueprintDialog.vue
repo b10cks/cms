@@ -2,10 +2,10 @@
 import { computed, reactive, watch } from 'vue'
 
 import type { CreateSpaceBlueprintPayload } from '~/api/resources/space-blueprints'
+import TeamSelectField from '~/components/teams/TeamSelectField.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
-import { CheckboxField, SelectField, TextField } from '~/components/ui/form'
-import type { SelectOption } from '~/components/ui/form/SelectField.vue'
+import { CheckboxField, TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
 import { useSpaceBlueprints } from '~/composables/useSpaceBlueprints'
 import { useTeams } from '~/composables/useTeams'
@@ -26,9 +26,13 @@ const props = withDefaults(
 const { t } = useI18n()
 const { useTeamsQuery } = useTeams()
 const { useCreateSpaceBlueprintMutation } = useSpaceBlueprints()
+const { useAccessControl } = useAuthorization()
 
+const access = useAccessControl()
 const { data: teamsResponse } = useTeamsQuery(computed(() => ({ per_page: 100 })))
 const { mutateAsync: createBlueprint, isPending } = useCreateSpaceBlueprintMutation()
+
+const isRootUser = computed(() => access.authorization.value?.is_root ?? false)
 
 const SNAPSHOT_TABLES = [
   'blocks',
@@ -42,22 +46,21 @@ const SNAPSHOT_TABLES = [
 
 type SnapshotTable = (typeof SNAPSHOT_TABLES)[number]
 
-const SYSTEM_BLUEPRINT_VALUE = '__system__'
-
 const form = reactive<
   Record<SnapshotTable, boolean> & {
     name: string
     icon: string
     color: string
     description: string
-    team_id: string
+    /** null is the system-wide blueprint, which only root may create. */
+    team_id: string | null
   }
 >({
   name: '',
   icon: '',
   color: '',
   description: '',
-  team_id: '',
+  team_id: null,
   blocks: true,
   block_folders: true,
   block_tags: true,
@@ -67,21 +70,28 @@ const form = reactive<
   block_templates: true,
 })
 
-const teamOptions = computed<SelectOption<string>[]>(() => {
-  const teams = teamsResponse.value?.data ?? []
+const availableTeams = computed(() =>
+  (teamsResponse.value?.data ?? []).filter((team) => team.can_create_blueprint)
+)
 
-  return [
-    {
-      value: SYSTEM_BLUEPRINT_VALUE,
-      label: t('labels.spaceBlueprints.fields.systemTeam') as string,
-    },
-    ...teams
-      .filter((team) => team.can_create_space)
-      .map((team) => ({
-        value: team.id,
-        label: team.name,
-      })),
-  ]
+// A blueprint without a team is offered to every user on the instance, so only
+// root may create one.
+const noTeamOption = computed(() =>
+  isRootUser.value
+    ? { label: t('labels.spaceBlueprints.fields.systemTeam') as string, icon: 'globe' }
+    : null
+)
+
+const defaultTeamId = computed<string | null>(() => {
+  const preferred = [props.teamId, props.sourceSpace?.team_id].find(
+    (teamId) => !!teamId && availableTeams.value.some((team) => team.id === teamId)
+  )
+
+  if (preferred) {
+    return preferred
+  }
+
+  return isRootUser.value ? null : (availableTeams.value[0]?.id ?? null)
 })
 
 const selectedTables = computed<SnapshotTable[]>(() =>
@@ -89,23 +99,22 @@ const selectedTables = computed<SnapshotTable[]>(() =>
 )
 
 const hasSourceSpace = computed(() => !!props.sourceSpace?.id)
-const isSystemBlueprint = computed(() => form.team_id === SYSTEM_BLUEPRINT_VALUE)
-const isValid = computed(() => !!form.name.trim() && hasSourceSpace.value)
+const isSystemBlueprint = computed(() => form.team_id === null && isRootUser.value)
+const hasTeamChoice = computed(() => teamOptionCount.value > 0)
+const isValid = computed(
+  () => !!form.name.trim() && hasSourceSpace.value && (!!form.team_id || isSystemBlueprint.value)
+)
 
-const resolvedTeamId = computed<string | null>(() => {
-  if (!form.team_id || form.team_id === SYSTEM_BLUEPRINT_VALUE) {
-    return null
-  }
-
-  return form.team_id
-})
+const teamOptionCount = computed(
+  () => availableTeams.value.length + (noTeamOption.value ? 1 : 0)
+)
 
 const resetForm = () => {
   form.name = props.sourceSpace?.name ? `${props.sourceSpace.name} Blueprint` : ''
   form.icon = props.sourceSpace?.icon ?? ''
   form.color = props.sourceSpace?.color ?? ''
   form.description = ''
-  form.team_id = props.teamId ?? props.sourceSpace?.team_id ?? SYSTEM_BLUEPRINT_VALUE
+  form.team_id = defaultTeamId.value
   form.blocks = true
   form.block_folders = true
   form.block_tags = true
@@ -122,7 +131,7 @@ const buildPayload = (): CreateSpaceBlueprintPayload => ({
   description: form.description.trim() || null,
   source_space_id: props.sourceSpace?.id ?? null,
   tables: selectedTables.value,
-  team_id: resolvedTeamId.value,
+  team_id: form.team_id,
 })
 
 const handleSubmit = async () => {
@@ -137,22 +146,26 @@ const handleSubmit = async () => {
 }
 
 watch(
-  () => props.teamId,
-  (teamId) => {
-    if (
-      !props.sourceSpace?.team_id ||
-      form.team_id === props.sourceSpace.team_id ||
-      !form.team_id
-    ) {
-      form.team_id = teamId ?? props.sourceSpace?.team_id ?? SYSTEM_BLUEPRINT_VALUE
-    }
-  }
-)
-
-watch(
   () => props.sourceSpace,
   () => {
     resetForm()
+  },
+  { immediate: true }
+)
+
+// Teams arrive after the first render, so re-apply the default until the
+// selection names an option the user is actually allowed to pick.
+watch(
+  [availableTeams, defaultTeamId],
+  () => {
+    const isSelectable =
+      form.team_id === null
+        ? !!noTeamOption.value
+        : availableTeams.value.some((team) => team.id === form.team_id)
+
+    if (!isSelectable) {
+      form.team_id = defaultTeamId.value
+    }
   },
   { immediate: true }
 )
@@ -246,14 +259,23 @@ const snapshotOptions = computed(() => [
           "
         />
 
-        <SelectField
+        <TeamSelectField
+          v-if="hasTeamChoice"
           v-model="form.team_id"
           name="team_id"
+          :teams="availableTeams"
+          :no-team-option="noTeamOption"
           :label="$t('labels.spaceBlueprints.fields.team')"
           :description="$t('labels.spaceBlueprints.fields.teamDescription')"
           :placeholder="$t('labels.spaceBlueprints.fields.teamPlaceholder')"
-          :options="teamOptions"
         />
+
+        <div
+          v-else
+          class="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-muted-foreground"
+        >
+          {{ $t('labels.spaceBlueprints.noTeamAvailable') }}
+        </div>
 
         <div
           v-if="isSystemBlueprint"

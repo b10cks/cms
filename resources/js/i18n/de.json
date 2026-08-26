@@ -1843,6 +1843,7 @@
       "emptyOptionTitle": "Ohne Blueprint starten",
       "emptyOptionDescription": "Erstelle den Space von Grund auf, ohne ein Blueprint anzuwenden.",
       "sourceSpaceRequired": "Zum Erstellen eines Blueprints muss ein Quell-Space ausgewählt werden.",
+      "noTeamAvailable": "Zum Erstellen eines Blueprints brauchst du Admin- oder Owner-Rechte in einem Team.",
       "fields": {
         "name": "Blueprint-Name",
         "team": "Team",
