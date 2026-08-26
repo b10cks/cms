@@ -256,7 +256,8 @@ describe('useCreateSpaceBlueprintMutation', () => {
 
     await result.mutateAsync({ payload: { name: 'Marketing', team_id: 'team-1' } })
 
-    expect(createForTeam).toHaveBeenCalledWith('team-1', { name: 'Marketing', team_id: 'team-1' })
+    // The team travels in the path, so it is stripped from the body.
+    expect(createForTeam).toHaveBeenCalledWith('team-1', { name: 'Marketing' })
     expect(create).not.toHaveBeenCalled()
   })
 
@@ -266,7 +267,7 @@ describe('useCreateSpaceBlueprintMutation', () => {
 
     await result.mutateAsync({ payload: { name: 'Marketing', team_id: null } })
 
-    expect(create).toHaveBeenCalledTimes(1)
+    expect(create).toHaveBeenCalledWith({ name: 'Marketing' })
   })
 
   it('invalidates every blueprint list on success', async () => {

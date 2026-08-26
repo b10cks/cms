@@ -113,10 +113,11 @@ export function useSpaceBlueprints() {
       }: {
         payload: CreateSpaceBlueprintPayload
       }): Promise<SpaceBlueprintResource> => {
-        const teamId = payload.team_id ?? null
+        // The team lives in the path, so it never travels in the body.
+        const { team_id: teamId, ...body } = payload
         const response = teamId
-          ? await api.spaceBlueprints.createForTeam(teamId, payload)
-          : await api.spaceBlueprints.create(payload)
+          ? await api.spaceBlueprints.createForTeam(teamId, body)
+          : await api.spaceBlueprints.create(body)
 
         return response.data
       },
