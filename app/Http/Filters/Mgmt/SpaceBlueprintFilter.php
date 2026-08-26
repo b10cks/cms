@@ -2,9 +2,9 @@
 
 namespace App\Http\Filters\Mgmt;
 
-use CodersCantina\Filter\ExtendedFilter;
+use CodersCantina\Filter\AdvancedFilter;
 
-class SpaceBlueprintFilter extends ExtendedFilter
+class SpaceBlueprintFilter extends AdvancedFilter
 {
     protected array $sortableColumns = ['name', 'created_at', 'updated_at'];
 
@@ -25,11 +25,11 @@ class SpaceBlueprintFilter extends ExtendedFilter
 
     public function created_at($value): void
     {
-        $this->applyRangeFilter('created_at', $value);
+        $this->applyAdvancedDateFilter('created_at', $value);
     }
 
     public function updated_at($value): void
     {
-        $this->applyRangeFilter('updated_at', $value);
+        $this->applyAdvancedDateFilter('updated_at', $value);
     }
 }
