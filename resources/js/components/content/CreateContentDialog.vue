@@ -79,8 +79,12 @@ const blockLookup = computed<Record<string, Pick<BlockResource, 'slug' | 'schema
   createContentDefaultsBlockLookup(blocks.value?.data || [])
 )
 
+const isSubmitting = ref(false)
+
 const handleCreate = async (editContent: CreateContentPayload) => {
-  if (!editContent.block_id) {
+  // Creating an entry can take a while (serials, defaults, a large tree); the
+  // guard keeps a second click from creating a second entry.
+  if (!editContent.block_id || isSubmitting.value) {
     return
   }
 
@@ -103,7 +107,14 @@ const handleCreate = async (editContent: CreateContentPayload) => {
     )
   }
 
-  await props.onSubmit?.(payload)
+  isSubmitting.value = true
+
+  try {
+    await props.onSubmit?.(payload)
+  } finally {
+    isSubmitting.value = false
+  }
+
   open.value = false
   resetForm()
 }
@@ -452,7 +463,13 @@ watch(open, (isOpen, wasOpen) => {
           <Button
             variant="primary"
             type="submit"
-            :disabled="isLoadingParentRestrictions || !possibleBlocks.length || !content.block_id"
+            :loading="isSubmitting"
+            :disabled="
+              isSubmitting ||
+              isLoadingParentRestrictions ||
+              !possibleBlocks.length ||
+              !content.block_id
+            "
           >
             {{ $t('actions.create') }}
           </Button>

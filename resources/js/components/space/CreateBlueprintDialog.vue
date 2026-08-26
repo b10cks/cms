@@ -296,6 +296,7 @@ const snapshotOptions = computed(() => [
           <Button
             type="submit"
             variant="primary"
+            :loading="isPending"
             :disabled="!isValid || isPending"
           >
             {{ $t('actions.create') }}

@@ -13,7 +13,7 @@ const props = defineProps<{
 }>()
 
 const { useCreateBlockMutation } = useBlocks(props.spaceId)
-const { mutateAsync: createBlock } = useCreateBlockMutation()
+const { mutateAsync: createBlock, isPending } = useCreateBlockMutation()
 
 const emit = defineEmits<{
   (e: 'created', block: BlockResource): void
@@ -37,6 +37,10 @@ const editableBlock = computed<BlockResource>(() => ({
 }))
 
 const handleCreate = async (editBlock: BlockResource) => {
+  if (isPending.value) {
+    return
+  }
+
   const block = await createBlock(editBlock)
   emit('created', block)
   open.value = false
@@ -63,6 +67,7 @@ const handleCreate = async (editBlock: BlockResource) => {
           </Button>
           <Button
             variant="primary"
+            :loading="isPending"
             @click="handleCreate(editBlock)"
           >
             {{ $t('actions.create') }}
