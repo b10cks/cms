@@ -7,8 +7,19 @@ export function getEligibleChildContentBlocks(blocks: BlockResource[] | null | u
   return (blocks || []).filter((block) => CHILD_CONTENT_BLOCK_TYPES.includes(block.type))
 }
 
-export function getRootCreateContentBlocks(blocks: BlockResource[] | null | undefined) {
-  return (blocks || []).filter((block) => ROOT_CONTENT_BLOCK_TYPES.includes(block.type))
+export function getRootCreateContentBlocks(
+  blocks: BlockResource[] | null | undefined,
+  takenSingleBlockIds?: ReadonlySet<string>
+) {
+  return (blocks || []).filter((block) => {
+    if (!ROOT_CONTENT_BLOCK_TYPES.includes(block.type)) {
+      return false
+    }
+
+    // A single block stands for exactly one entry, so once that entry exists
+    // the block is no longer something you can create.
+    return !(block.type === 'single' && takenSingleBlockIds?.has(block.id))
+  })
 }
 
 export function resolveAllowedChildContentBlocks(
@@ -46,12 +57,13 @@ export function resolveCreateContentBlocks(options: {
   blocks: BlockResource[] | null | undefined
   parentSettings?: Partial<ContentSettings> | null
   isChild: boolean
+  takenSingleBlockIds?: ReadonlySet<string>
 }) {
   if (options.isChild) {
     return resolveAllowedChildContentBlocks(options.blocks, options.parentSettings)
   }
 
-  return getRootCreateContentBlocks(options.blocks)
+  return getRootCreateContentBlocks(options.blocks, options.takenSingleBlockIds)
 }
 
 export function resolvePreferredCreateContentBlock(options: {

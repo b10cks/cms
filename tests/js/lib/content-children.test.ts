@@ -56,6 +56,12 @@ describe('getRootCreateContentBlocks', () => {
       'settings',
     ])
   })
+
+  it('drops single blocks that already have an entry', () => {
+    expect(
+      getRootCreateContentBlocks(blocks, new Set(['id-single'])).map((entry) => entry.slug)
+    ).toEqual(['page', 'universal'])
+  })
 })
 
 describe('resolveAllowedChildContentBlocks', () => {

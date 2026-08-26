@@ -841,8 +841,18 @@ const executeDelete = async (context: ContentTreeActionContext) => {
   selectedItemIds.value = []
 }
 
+// A single block exists once per tree, so copying or cutting one can only ever
+// produce something that cannot be placed.
+const containsSingleItem = (ids: string[]) =>
+  ids.some((id) => data.value?.[id]?.type === 'single')
+
+const canCopyOrCutSelection = (context: ContentTreeActionContext) =>
+  canManageContent.value &&
+  context.resolved_ids.length > 0 &&
+  !containsSingleItem(context.resolved_ids)
+
 const copyToClipboard = async (context: ContentTreeActionContext) => {
-  if (context.resolved_ids.length === 0) {
+  if (!canCopyOrCutSelection(context)) {
     return
   }
 
@@ -852,7 +862,7 @@ const copyToClipboard = async (context: ContentTreeActionContext) => {
 }
 
 const cutToClipboard = async (context: ContentTreeActionContext) => {
-  if (context.resolved_ids.length === 0) {
+  if (!canCopyOrCutSelection(context)) {
     return
   }
 
@@ -1104,14 +1114,14 @@ const buildItemMenuActions = (item: FlatContentMenuItem): ContentTreeMenuAction[
       label: t('labels.contentTree.actions.copy') as string,
       icon: 'copy',
       separatorBefore: true,
-      disabled: !canManageContent.value || context.resolved_ids.length === 0,
+      disabled: !canCopyOrCutSelection(context),
       onSelect: () => copyToClipboard(context),
     },
     {
       id: 'cut',
       label: t('labels.contentTree.actions.cut') as string,
       icon: 'scissors',
-      disabled: !canManageContent.value || context.resolved_ids.length === 0,
+      disabled: !canCopyOrCutSelection(context),
       onSelect: () => cutToClipboard(context),
     },
     {

@@ -43,6 +43,8 @@ const { data: space } = useSpaceQuery(props.spaceId)
 const { useBlocksQuery } = useBlocks(props.spaceId)
 const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 const { useContentQuery, useSerialPreviewQuery } = useContent(props.spaceId)
+const { useContentMenuQuery } = useContentMenu(props.spaceId)
+const { data: contentMenu } = useContentMenuQuery(computed(() => !!open.value))
 // Same slug rules the content wizard uses, so both creation paths agree.
 // New entries are created in the space's default language, which is what
 // decides whether "Über" becomes "ueber" or "uber".
@@ -129,11 +131,23 @@ const resetForm = () => {
   slugMode.value = 'auto'
 }
 
+// Single blocks exist once per tree, so the ones already placed drop out of
+// the picker instead of failing server-side validation on submit.
+const takenSingleBlockIds = computed(
+  () =>
+    new Set(
+      Object.values(contentMenu.value || {})
+        .filter((item) => item.type === 'single')
+        .map((item) => item.block_id)
+    )
+)
+
 const possibleBlocks = computed(() => {
   return resolveCreateContentBlocks({
     blocks: blocks.value?.data,
     parentSettings: canonicalParentSettings.value,
     isChild: !!props.parentId,
+    takenSingleBlockIds: takenSingleBlockIds.value,
   })
 })
 
