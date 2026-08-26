@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Management;
 
+use App\Models\Management\SpaceBlueprint;
 use App\Models\Management\Team;
 use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\Request;
@@ -54,6 +55,9 @@ class TeamResource extends JsonResource
                 : false,
             'can_create_child' => $user
                 ? $authorization->canInTeam($user, $this->resource, 'team.children.manage')
+                : false,
+            'can_create_blueprint' => $user
+                ? $user->can('create', [SpaceBlueprint::class, $this->resource])
                 : false,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

@@ -6,19 +6,22 @@ use App\Http\Controllers\Controller;
 use App\Http\Filters\Mgmt\SpaceBlueprintFilter;
 use App\Http\Resources\Management\SpaceBlueprintListResource;
 use App\Models\Management\SpaceBlueprint;
+use App\Services\Auth\AuthorizationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Facades\DB;
 
 class AvailableSpaceBlueprintController extends Controller
 {
-    public function __invoke(Request $request): ResourceCollection
+    /**
+     * List every blueprint the caller may start a space from.
+     *
+     * That is the system blueprints plus the ones owned by a team the caller
+     * can reach, directly or through an ancestor team.
+     */
+    public function __invoke(Request $request, AuthorizationService $authorization): ResourceCollection
     {
-        $teamIds = DB::table('team_user')
-            ->join('roles', 'roles.id', '=', 'team_user.role_id')
-            ->where('team_user.user_id', $request->user()->id)
-            ->whereIn('roles.key', ['member', 'admin', 'owner'])
-            ->pluck('team_user.team_id');
+        $user = $request->user();
+        $teamIds = $authorization->accessibleTeamIds($user);
 
         $blueprints = SpaceBlueprint::filter(SpaceBlueprintFilter::fromRequest($request))
             ->where(function ($query) use ($teamIds) {
@@ -26,7 +29,7 @@ class AvailableSpaceBlueprintController extends Controller
                     ->orWhereIn('team_id', $teamIds);
             })
             ->with(['creator', 'team'])
-            ->paginate($request->get('per_page', 20));
+            ->paginate($this->perPage($request));
 
         return SpaceBlueprintListResource::collection($blueprints);
     }

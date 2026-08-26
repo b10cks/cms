@@ -85,6 +85,7 @@ export interface TeamResource {
   can_delete: boolean
   can_manage_members: boolean
   can_create_child: boolean
+  can_create_blueprint: boolean
   created_at: string
   updated_at: string
 }
@@ -129,6 +130,7 @@ export interface TeamHierarchyItem {
   can_delete?: boolean
   can_manage_members?: boolean
   can_create_child?: boolean
+  can_create_blueprint?: boolean
 }
 
 export interface TeamUserResource {
