@@ -2104,8 +2104,8 @@
         },
         "/mgmt/v1/space-blueprints": {
             "get": {
-                "summary": "List space blueprints",
-                "description": "",
+                "summary": "List every blueprint the caller may start a space from",
+                "description": "List every blueprint the caller may start a space from.\n\nThat is the system blueprints plus the ones owned by a team the caller\ncan reach, directly or through an ancestor team.",
                 "tags": [
                     "Space Blueprints"
                 ],
@@ -2261,6 +2261,233 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create a blueprint that belongs to no team",
+                "description": "Create a blueprint that belongs to no team.\n\nRoot only: the result is offered to every user on the instance.",
+                "tags": [
+                    "Space Blueprints"
+                ],
+                "operationId": "post_space_blueprints",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 100
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "nullable": true
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "maxLength": 7,
+                                        "pattern": "^#[a-fA-F0-9]{6}$",
+                                        "nullable": true
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "settings": {
+                                        "type": "array",
+                                        "nullable": true
+                                    },
+                                    "source_space_id": {
+                                        "type": "string",
+                                        "maxLength": 26,
+                                        "nullable": true
+                                    },
+                                    "tables": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "enum": [
+                                                "blocks",
+                                                "block_folders",
+                                                "block_tags",
+                                                "asset_folders",
+                                                "asset_tags",
+                                                "data_sources",
+                                                "block_templates"
+                                            ]
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "name"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SpaceBlueprintResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/space-blueprints/{blueprint}": {
+            "get": {
+                "summary": "Get a single blueprint that belongs to no team",
+                "description": "Get a single blueprint that belongs to no team.",
+                "tags": [
+                    "Space Blueprints"
+                ],
+                "operationId": "get_space_blueprints_by_blueprint",
+                "parameters": [
+                    {
+                        "name": "blueprint",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The blueprint identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SpaceBlueprintResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "summary": "Update a blueprint that belongs to no team",
+                "description": "Update a blueprint that belongs to no team. Root only.",
+                "tags": [
+                    "Space Blueprints"
+                ],
+                "operationId": "put_space_blueprints_by_blueprint",
+                "parameters": [
+                    {
+                        "name": "blueprint",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The blueprint identifier"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 100
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "nullable": true
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "maxLength": 7,
+                                        "pattern": "^#[a-fA-F0-9]{6}$",
+                                        "nullable": true
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "settings": {
+                                        "type": "array",
+                                        "nullable": true
+                                    }
+                                },
+                                "required": [
+                                    "name"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SpaceBlueprintResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete a blueprint that belongs to no team",
+                "description": "Delete a blueprint that belongs to no team. Root only.",
+                "tags": [
+                    "Space Blueprints"
+                ],
+                "operationId": "delete_space_blueprints_by_blueprint",
+                "parameters": [
+                    {
+                        "name": "blueprint",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The blueprint identifier"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Resource deleted successfully"
                     }
                 },
                 "security": [
@@ -3520,6 +3747,16 @@
                 ],
                 "operationId": "get_teams_by_team_blueprints",
                 "parameters": [
+                    {
+                        "name": "team",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The team identifier"
+                    },
                     {
                         "name": "name",
                         "in": "query",
@@ -20328,6 +20565,9 @@
                     "can_create_child": {
                         "type": "string"
                     },
+                    "can_create_blueprint": {
+                        "type": "string"
+                    },
                     "created_at": {
                         "nullable": true
                     },
@@ -20353,6 +20593,49 @@
                     },
                     "description": {
                         "type": "string"
+                    },
+                    "team_id": {
+                        "type": "string"
+                    },
+                    "team": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "created_by": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "nullable": true
+                    }
+                }
+            },
+            "SpaceBlueprintResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "icon": {
+                        "type": "string"
+                    },
+                    "color": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "settings": {
+                        "nullable": true
+                    },
+                    "snapshot": {
+                        "nullable": true
                     },
                     "team_id": {
                         "type": "string"
@@ -20501,49 +20784,6 @@
                         "type": "string"
                     },
                     "created_at": {
-                        "nullable": true
-                    }
-                }
-            },
-            "SpaceBlueprintResource": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "icon": {
-                        "type": "string"
-                    },
-                    "color": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "settings": {
-                        "nullable": true
-                    },
-                    "data": {
-                        "nullable": true
-                    },
-                    "team_id": {
-                        "type": "string"
-                    },
-                    "team": {
-                        "type": "object",
-                        "nullable": true
-                    },
-                    "created_by": {
-                        "type": "object",
-                        "nullable": true
-                    },
-                    "created_at": {
-                        "nullable": true
-                    },
-                    "updated_at": {
                         "nullable": true
                     }
                 }
