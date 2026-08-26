@@ -3749,7 +3749,12 @@
         "iconifyError": "Iconify ist nicht erreichbar. Bitte erneut versuchen.",
         "searchAllHint": "Tippe, um die gesamte Iconify-Bibliothek zu durchsuchen.",
         "loadMore": "Mehr laden",
-        "showingCount": "{shown} von {total} werden angezeigt"
+        "showingCount": "{shown} von {total} werden angezeigt",
+        "emptyTitle": "Keine Icons zur Auswahl",
+        "emptyRegistry": "Dieses Feld erlaubt nur Icons aus der Bibliothek dieses Space, und dort wurde noch nichts hochgeladen.",
+        "emptySources": "Dieser Space hat noch keine Icons, und dieses Feld erlaubt keine Iconify-Collections.",
+        "emptyAction": "Icon-Bibliothek öffnen",
+        "emptyHint": "Richte zuerst eine Icon-Quelle für dieses Feld ein"
       },
       "tagsEmpty": "Keine Tags gefunden",
       "tagsCreate": "'{tag}' erstellen",

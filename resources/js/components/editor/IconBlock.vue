@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
+import { RouterLink } from 'vue-router'
+
 import Icon from '~/components/Icon.vue'
 import IconGrid from '~/components/icons/IconGrid.vue'
 import IconifyPicker from '~/components/icons/IconifyPicker.vue'
 import IconPreview from '~/components/icons/IconPreview.vue'
+import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { Label } from '~/components/ui/form'
+import { Spinner } from '~/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { splitIconName } from '~/lib/iconify'
 import { api } from '~/api'
@@ -33,12 +37,29 @@ watch(
 )
 
 const hasValue = computed(() => !!localValue.value)
-const allowIconify = computed(
-  () => props.item.source === 'all' || props.item.source === 'collections'
+
+const allowedCollections = computed(() => (props.item.allowed_collections ?? []).filter(Boolean))
+
+// An Iconify tab is only worth showing when the field actually resolves to a library:
+// `collections` with an empty allow-list would otherwise silently browse all of Iconify.
+const hasIconify = computed(
+  () =>
+    props.item.source === 'all' ||
+    (props.item.source === 'collections' && allowedCollections.value.length > 0)
 )
 const iconifySource = computed<'all' | 'collections'>(() =>
   props.item.source === 'collections' ? 'collections' : 'all'
 )
+
+// One-row probe telling us whether this space uploaded any icons of its own. The query key is
+// shared, so a form with many icon fields still issues a single request.
+const { useIconsQuery } = useIcons(computed(() => props.spaceId))
+const registryProbe = useIconsQuery(() => ({ per_page: 1 }))
+const hasRegistry = computed(() => (registryProbe.data.value?.meta.total ?? 0) > 0)
+const sourcesPending = computed(() => registryProbe.isPending.value)
+const hasBothSources = computed(() => hasRegistry.value && hasIconify.value)
+const hasAnySource = computed(() => hasRegistry.value || hasIconify.value)
+const sourceKnownEmpty = computed(() => !sourcesPending.value && !hasAnySource.value)
 
 const isRegistry = computed(() => localValue.value?.startsWith('b10cks:') ?? false)
 const registryKey = computed(() =>
@@ -62,6 +83,14 @@ const registryIcon = computed<IconResource | null>(() => registryIconQuery.data.
 
 const pickerOpen = ref(false)
 const activeTab = ref<'registry' | 'iconify'>('registry')
+
+watchEffect(() => {
+  if (activeTab.value === 'registry' && !hasRegistry.value && hasIconify.value) {
+    activeTab.value = 'iconify'
+  } else if (activeTab.value === 'iconify' && !hasIconify.value && hasRegistry.value) {
+    activeTab.value = 'registry'
+  }
+})
 
 const setValue = (value: string | null) => {
   localValue.value = value
@@ -88,7 +117,7 @@ const clear = () => setValue(null)
 
 const openPicker = () => {
   if (props.readOnly) return
-  activeTab.value = 'registry'
+  activeTab.value = hasRegistry.value ? 'registry' : 'iconify'
   pickerOpen.value = true
 }
 </script>
@@ -117,8 +146,12 @@ const openPicker = () => {
         size="24"
         class="mx-auto mb-3 text-muted"
       />
-      <p class="mb-1 text-sm font-semibold text-primary">{{ t('labels.icons.field.add') }}</p>
-      <p class="text-xs text-muted">{{ t('labels.icons.field.addHint') }}</p>
+      <p class="mb-1 text-sm font-semibold text-primary">
+        {{ sourceKnownEmpty ? t('labels.icons.field.emptyTitle') : t('labels.icons.field.add') }}
+      </p>
+      <p class="text-xs text-muted">
+        {{ sourceKnownEmpty ? t('labels.icons.field.emptyHint') : t('labels.icons.field.addHint') }}
+      </p>
     </div>
     <div
       v-else-if="localValue"
@@ -180,18 +213,28 @@ const openPicker = () => {
           <DialogTitle>{{ t('labels.icons.field.selectTitle') }}</DialogTitle>
         </DialogHeader>
 
+        <div
+          v-if="sourcesPending"
+          class="flex min-h-0 flex-1 items-center justify-center text-muted"
+        >
+          <Spinner />
+        </div>
+
         <Tabs
-          v-if="allowIconify"
+          v-else-if="hasAnySource"
           v-model="activeTab"
-          default-value="registry"
           class="flex min-h-0 flex-1 flex-col"
         >
-          <TabsList class="mb-3 w-fit shrink-0">
+          <TabsList
+            v-if="hasBothSources"
+            class="mb-3 w-fit shrink-0"
+          >
             <TabsTrigger value="registry">{{ t('labels.icons.field.tabRegistry') }}</TabsTrigger>
             <TabsTrigger value="iconify">{{ t('labels.icons.field.tabIconify') }}</TabsTrigger>
           </TabsList>
 
           <TabsContent
+            v-if="hasRegistry"
             value="registry"
             class="min-h-0 flex-1 data-[state=inactive]:hidden"
           >
@@ -203,12 +246,13 @@ const openPicker = () => {
           </TabsContent>
 
           <TabsContent
+            v-if="hasIconify"
             value="iconify"
             class="min-h-0 flex-1 data-[state=inactive]:hidden"
           >
             <IconifyPicker
               :source="iconifySource"
-              :allowed-collections="item.allowed_collections || []"
+              :allowed-collections="allowedCollections"
               @select="handleIconifySelect"
             />
           </TabsContent>
@@ -216,13 +260,31 @@ const openPicker = () => {
 
         <div
           v-else
-          class="min-h-0 flex-1"
+          class="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 text-center"
         >
-          <IconGrid
-            :space-id="spaceId"
-            mode="select"
-            @icon-select="handleRegistrySelect"
+          <Icon
+            name="lucide:shapes"
+            size="32"
+            class="text-muted"
           />
+          <div class="space-y-1">
+            <p class="font-semibold text-primary">{{ t('labels.icons.field.emptyTitle') }}</p>
+            <p class="max-w-md text-sm text-muted">
+              {{
+                item.source === 'registry'
+                  ? t('labels.icons.field.emptyRegistry')
+                  : t('labels.icons.field.emptySources')
+              }}
+            </p>
+          </div>
+          <Button
+            :as="RouterLink"
+            variant="outline"
+            size="sm"
+            :to="{ name: 'space-icons-index', params: { space: spaceId } }"
+          >
+            {{ t('labels.icons.field.emptyAction') }}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

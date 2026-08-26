@@ -3735,7 +3735,12 @@
         "iconifyError": "Could not reach Iconify. Please try again.",
         "searchAllHint": "Type to search the full Iconify library.",
         "loadMore": "Load more",
-        "showingCount": "Showing {shown} of {total}"
+        "showingCount": "Showing {shown} of {total}",
+        "emptyTitle": "No icons to pick from",
+        "emptyRegistry": "This field only accepts icons from this space's library, and nothing has been uploaded yet.",
+        "emptySources": "This space has no icons yet, and this field allows no Iconify collections.",
+        "emptyAction": "Open icon library",
+        "emptyHint": "Set up an icon source for this field first"
       },
       "tagsEmpty": "No tags found",
       "tagsCreate": "Create '{tag}'",
