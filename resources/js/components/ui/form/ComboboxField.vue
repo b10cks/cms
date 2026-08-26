@@ -118,6 +118,11 @@ const defaultFilterFn = (
   return !option.disabled
 }
 
+/**
+ * The single source of truth for what the list shows — the root runs with
+ * `ignore-filter`, because reka's own filter only ever sees an item's rendered
+ * label and would swallow matches a custom `filterFn` makes on the value.
+ */
 const filteredOptions = computed(() => {
   const filterFn = props.filterFn || defaultFilterFn
   return props.options.filter((option) => filterFn(option, searchValue.value, selectedValues.value))
@@ -195,6 +200,8 @@ const emptyTextComputed = computed(() => {
       <Combobox
         :model-value="multiple ? selectedValues : modelValue"
         :disabled="disabled || readonly"
+        open-on-click
+        ignore-filter
         :class="[comboboxClass, { 'opacity-50': disabled || readonly }]"
       >
         <ComboboxAnchor as-child>
