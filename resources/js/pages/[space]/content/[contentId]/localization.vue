@@ -25,6 +25,7 @@ import {
   resolveContentRouteName,
   withContentLanguageQuery,
 } from '~/lib/content-i18n'
+import { isSameJsonValue } from '~/lib/contentEditorState'
 import {
   applyLocalizedFieldValue,
   getLocalizedFieldValue,
@@ -743,6 +744,12 @@ provide('prepareMutationPayload', (payload: ContentResource): ContentResource =>
   // Updating after a reset: send the previewed automatic value.
   return automaticSlug.value ? { ...payload, slug: automaticSlug.value } : payload
 })
+// A translation whose fields were not touched must not branch a version off a
+// metadata-only save (name, slug); both sides are the localized draft payload.
+provide(
+  'isContentPayloadDirty',
+  () => !isSameJsonValue(translatableContent.value?.content, persistedContent.value?.content)
+)
 provide('resetDirtyState', () => {
   if (translatableContent.value) {
     syncPersistedContent(translatableContent.value)

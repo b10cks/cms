@@ -69,7 +69,11 @@ class UpdateContent
             $data['language_iso'] ?? $content->language_iso,
         );
 
-        $submission = array_key_exists('content', $data)
+        // A write that carries no `content` key changes metadata only: name,
+        // slug, settings, placement. Those live on the row, not on a version,
+        // so such a save must never branch a draft off the published version.
+        $contentSubmitted = array_key_exists('content', $data);
+        $submission = $contentSubmitted
             ? (is_array($data['content'] ?? null) ? $data['content'] : [])
             : $content->getCurrentContent();
 
@@ -105,7 +109,7 @@ class UpdateContent
 
         $indexedColumnsChanged = false;
 
-        $content->getConnection()->transaction(function () use ($data, $content, $space, $owner, $validatedContent, $clientParentVersionId, $targetParent, &$indexedColumnsChanged) {
+        $content->getConnection()->transaction(function () use ($data, $content, $space, $owner, $validatedContent, $contentSubmitted, $clientParentVersionId, $targetParent, &$indexedColumnsChanged) {
             $locked = Content::query()->lockForUpdate()->findOrFail($content->id);
             $content->current_version_id = $locked->current_version_id;
             $content->load('current_version');
@@ -140,7 +144,14 @@ class UpdateContent
             }
             $content->fill($data);
 
-            if ($content->current_version?->content != $contentData) {
+            // Re-validating the stored payload can move it (a field hidden by a
+            // condition since the last save gets pruned), so an unsubmitted
+            // payload must not be compared at all. Only what a client sent can
+            // branch a version.
+            $shouldVersion = $content->current_version === null
+                || ($contentSubmitted && $content->current_version->content != $contentData);
+
+            if ($shouldVersion) {
                 $version = ContentVersion::createWithContentContext([
                     'message' => $message,
                     'content_id' => $content->id,

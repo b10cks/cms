@@ -6,6 +6,7 @@ import {
   createSnapshotDirtyTracker,
   createVersionConflictState,
   hasServerVersionDrifted,
+  isSameJsonValue,
   type VersionConflictState,
 } from '~/lib/contentEditorState'
 
@@ -203,5 +204,32 @@ describe('createVersionConflictState', () => {
     serverVersionId.value = 'v9'
     await nextTick()
     expect(state.editingFromVersionId.value).toBe('v9')
+  })
+})
+
+describe('isSameJsonValue', () => {
+  it('ignores key order but not key presence', () => {
+    expect(isSameJsonValue({ a: 1, b: 2 }, { b: 2, a: 1 })).toBe(true)
+    // The editor hydrates missing schema fields with their empty value; that
+    // must still read as a difference against the stored payload.
+    expect(isSameJsonValue({ a: 1 }, { a: 1, note: '' })).toBe(false)
+  })
+
+  it('compares nested blocks item by item', () => {
+    const left = { body: [{ id: '1', block: 'teaser', headline: 'Hi' }] }
+
+    expect(isSameJsonValue(left, { body: [{ id: '1', block: 'teaser', headline: 'Hi' }] })).toBe(
+      true
+    )
+    expect(isSameJsonValue(left, { body: [{ id: '1', block: 'teaser', headline: 'Ho' }] })).toBe(
+      false
+    )
+    expect(isSameJsonValue(left, { body: [] })).toBe(false)
+  })
+
+  it('keeps null, empty string and zero apart', () => {
+    expect(isSameJsonValue({ a: null }, { a: '' })).toBe(false)
+    expect(isSameJsonValue({ a: 0 }, { a: false })).toBe(false)
+    expect(isSameJsonValue(undefined, null)).toBe(false)
   })
 })

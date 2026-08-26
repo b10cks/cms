@@ -125,3 +125,33 @@ export function createVersionConflictState(sources: VersionConflictSources): Ver
     },
   }
 }
+
+/**
+ * Structural equality for JSON-shaped values: key order does not matter, but
+ * key presence does. Used to tell a real payload edit from a document that only
+ * looks different because the editor hydrated schema defaults into it.
+ */
+export function isSameJsonValue(left: unknown, right: unknown): boolean {
+  if (left === right) return true
+  if (left == null || right == null || typeof left !== typeof right) return left === right
+  if (typeof left !== 'object') return Object.is(left, right)
+
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
+      return false
+    }
+
+    return left.every((item, index) => isSameJsonValue(item, right[index]))
+  }
+
+  const leftRecord = left as Record<string, unknown>
+  const rightRecord = right as Record<string, unknown>
+  const leftKeys = Object.keys(leftRecord)
+  if (leftKeys.length !== Object.keys(rightRecord).length) return false
+
+  return leftKeys.every(
+    (key) =>
+      Object.prototype.hasOwnProperty.call(rightRecord, key) &&
+      isSameJsonValue(leftRecord[key], rightRecord[key])
+  )
+}

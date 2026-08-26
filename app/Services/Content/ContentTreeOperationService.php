@@ -307,6 +307,10 @@ class ContentTreeOperationService
                 $this->updateContent->execute(
                     [
                         'block_id' => $blockId,
+                        // Submitted on purpose: the new block's schema prunes
+                        // whatever it does not know, and that reshaped payload
+                        // belongs in a version of its own.
+                        'content' => $familyItem->getCurrentContent(),
                     ],
                     $familyItem,
                     $space,

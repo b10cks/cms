@@ -37,7 +37,7 @@ import {
   resolveContentRouteName,
   withContentLanguageQuery,
 } from '~/lib/content-i18n'
-import { createVersionConflictState } from '~/lib/contentEditorState'
+import { createVersionConflictState, isSameJsonValue } from '~/lib/contentEditorState'
 import { queryKeys } from '~/composables/useQueryClient'
 import type { ContentResource } from '~/types/contents'
 import type { FieldUpdateEvent } from '~/utils/preview-bridge'
@@ -326,30 +326,6 @@ const showAi = ref(false)
 
 const cloneContent = (value: ContentResource): ContentResource => JSON.parse(JSON.stringify(value))
 
-const isSameJsonValue = (left: unknown, right: unknown): boolean => {
-  if (left === right) return true
-  if (left == null || right == null || typeof left !== typeof right) return left === right
-  if (typeof left !== 'object') return Object.is(left, right)
-
-  if (Array.isArray(left) || Array.isArray(right)) {
-    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
-      return false
-    }
-
-    return left.every((item, index) => isSameJsonValue(item, right[index]))
-  }
-
-  const leftRecord = left as Record<string, unknown>
-  const rightRecord = right as Record<string, unknown>
-  const leftKeys = Object.keys(leftRecord)
-  if (leftKeys.length !== Object.keys(rightRecord).length) return false
-
-  return leftKeys.every(
-    (key) =>
-      Object.prototype.hasOwnProperty.call(rightRecord, key) &&
-      isSameJsonValue(leftRecord[key], rightRecord[key])
-  )
-}
 const hydrationBlockLookup = computed<
   Record<string, Pick<BlockResource, 'slug' | 'schema' | 'name'>>
 >(() => {
@@ -485,7 +461,15 @@ watchDebounced(
 
     const wasDirty = isDirty.value
     content.value.content = sanitized
-    if (!wasDirty) markSaved()
+    if (!wasDirty) {
+      markSaved()
+      // Pruning an untouched document is not a user edit, so the baseline
+      // moves with it. Otherwise a metadata-only save would still look like a
+      // payload change and write a draft version for it.
+      if (persistedContent.value) {
+        persistedContent.value.content = JSON.parse(JSON.stringify(sanitized))
+      }
+    }
   },
   { deep: true, debounce: 300 }
 )
@@ -719,6 +703,12 @@ provide('updateHoverItem', (id: string) => {
   }
 })
 provide('resetDirtyState', resetDirtyState)
+// Both sides are hydrated with schema defaults, so a field the entry never
+// stored compares equal here and a metadata-only save can drop the payload.
+provide(
+  'isContentPayloadDirty',
+  () => !isSameJsonValue(content.value?.content, persistedContent.value?.content)
+)
 provide('editingFromVersionId', versionConflict.editingFromVersionId)
 provide('serverVersionDrifted', versionConflict.hasDrifted)
 provide('serverCurrentVersion', computed(() => currentContentSource.value?.current_version))

@@ -100,6 +100,12 @@ const revealValidationState = inject<(() => Promise<void>) | undefined>(
   'revealValidationState',
   undefined
 )
+// Whether the user actually edited the content payload, as opposed to the
+// metadata around it. Absent (or true) keeps the payload in the request.
+const isContentPayloadDirty = inject<(() => boolean) | undefined>(
+  'isContentPayloadDirty',
+  undefined
+)
 // Pages can adjust the persist payload right before it is sent — the
 // localization page drops the slug while it is in "auto" mode so the server
 // composes it from the block's slug pattern.
@@ -218,6 +224,14 @@ const mutationPayload = computed(() => {
     content: sanitizeContentForSubmit?.() || props.content.content,
     parent_version_id: editingFromVersionId?.value ?? undefined,
   })
+
+  // An untouched payload is omitted rather than sent unchanged: name, slug and
+  // settings live on the row, so a metadata-only save must not branch a draft
+  // version off the published one. Only for an entry that already exists,
+  // since creating always needs the payload.
+  if (props.content.id && isContentPayloadDirty?.() === false) {
+    delete (payload as Partial<ContentResource>).content
+  }
 
   return prepareMutationPayload ? prepareMutationPayload(payload) : payload
 })

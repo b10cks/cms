@@ -88,6 +88,74 @@ class ContentPublishingVersioningTest extends TestCase
     }
 
     #[Test]
+    public function metadata_only_update_keeps_the_published_version_current(): void
+    {
+        $this->actingAs($this->owner);
+
+        $content = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+        );
+        $publishedVersionId = $content->current_version_id;
+
+        $this->patchJson(route('mgmt.contents.update', [
+            'space' => $this->space->id,
+            'content' => $content->id,
+        ]), [
+            'name' => 'Renamed page',
+            'settings' => ['disablePreview' => true],
+        ])->assertOk();
+
+        $content->refresh();
+
+        $this->assertSame(1, $content->versions()->count());
+        $this->assertSame($publishedVersionId, $content->current_version_id);
+        $this->assertSame($publishedVersionId, $content->published_version_id);
+        $this->assertSame('Renamed page', $content->name);
+        $this->assertTrue($content->settings->disablePreview);
+    }
+
+    #[Test]
+    public function metadata_only_update_does_not_version_a_payload_the_schema_would_prune(): void
+    {
+        $this->actingAs($this->owner);
+
+        $content = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary', 'note' => 'Kept'],
+        );
+        $publishedVersionId = $content->current_version_id;
+
+        // `note` is hidden for the stored payload, so re-validating it would
+        // drop the key. A metadata-only save must not turn that into a draft.
+        $this->pageBlock->update([
+            'schema' => [
+                'summary' => ['type' => 'text', 'name' => 'Summary', 'required' => true],
+                'note' => [
+                    'type' => 'text',
+                    'name' => 'Note',
+                    'conditions' => [
+                        'mode' => 'all',
+                        'rules' => [['field' => 'summary', 'operator' => 'equals', 'value' => 'Other summary']],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->patchJson(route('mgmt.contents.update', [
+            'space' => $this->space->id,
+            'content' => $content->id,
+        ]), [
+            'settings' => ['disablePreview' => true],
+        ])->assertOk();
+
+        $content->refresh()->load('current_version');
+
+        $this->assertSame(1, $content->versions()->count());
+        $this->assertSame($publishedVersionId, $content->current_version_id);
+        $this->assertSame($publishedVersionId, $content->published_version_id);
+        $this->assertSame(['summary' => 'Published summary', 'note' => 'Kept'], $content->current_version->content);
+    }
+
+    #[Test]
     public function publish_without_content_reuses_the_current_draft_version(): void
     {
         $this->actingAs($this->owner);
