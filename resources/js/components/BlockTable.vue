@@ -163,6 +163,10 @@ const openDuplicateDialog = (block: BlockResource) => {
   showDuplicateBlockDialog.value = true
 }
 
+const handleBlockCreated = (block: BlockResource) => {
+  router.push(buildBlockRoute(block.id))
+}
+
 const handleDuplicateCreated = (block: BlockResource) => {
   duplicateSourceBlock.value = null
   router.push(buildBlockRoute(block.id))
@@ -372,6 +376,7 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
       v-model:open="showCreateBlockDialog"
       :space-id="spaceId"
       :folder-id="folder"
+      @created="handleBlockCreated"
     />
 
     <CreateBlockDialog
