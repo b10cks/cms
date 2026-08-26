@@ -3,6 +3,39 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.26-1e7a3bf6] — 2026-8-26
+
+- 📝 Regenerate the management API spec
+- ✨ Show roles inherited from a parent team
+- 🚸 Keep the create button locked until a parent is picked
+- 🔒 Let only a root user set the team type
+- 📝 Regenerate the management API spec
+- 🚸 Show the team hierarchy in every parent picker
+- 🚸 Offer the system blueprint only to root
+- ♻️ Extract a shared hierarchical team selector
+- ✅ Cover the blueprint create flow
+- 🐛 Filter blueprint lists by operator dates
+- 🐛 Stop sending the team in the blueprint create body
+- 🐛 Wrap single blueprint responses in the data envelope again
+- 🐛 Keep space-specific settings out of a blueprint
+- ✨ Add the API for blueprints without a team
+- 🐛 Let a blueprint snapshot a space from another team
+- 🔒 Authorize the blueprint a new space is created from
+- 🐛 Resolve blueprint permissions through the team hierarchy
+- 🚸 Open header and team navigation in a new tab
+- ✨ Duplicate a content entry in place
+- 🚸 Keep single blocks out of reach once they exist
+- 🐛 Stop two overlapping creates from taking the same slug
+- 🚸 Lock the create button while the entry is being created
+- ⬆️ Bump versions
+- 🐛 Stop a saved block from counting as unsaved
+- 🚸 Offer keep editing, discard or save when leaving unsaved changes
+- 🚸 Open a new block instead of returning to the overview
+- 🚸 Open the combobox list on click
+- 🚸 Remove a field's asset without confirming first
+- 🐛 Derive the URL scheme from APP_URL, not APP_ENV
+- Bump actions/attest-build-provenance from 4.1.1 to 4.2.2
+
 ## [v2026.8.25-1571e931] — 2026-8-25
 
 - ⬆️ Bump versions
