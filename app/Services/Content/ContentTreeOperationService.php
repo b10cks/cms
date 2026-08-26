@@ -245,7 +245,9 @@ class ContentTreeOperationService
                 : null;
             $after = $afterId ? Content::query()->whereNull('deleted_at')->findOrFail($afterId) : null;
 
-            $this->ensureAfterTargetIsCompatible(collect(), $targetParent?->id, $after, $normalizedIds);
+            // The sources stay where they are, so anchoring a copy after its own
+            // original is exactly what "duplicate in place" means.
+            $this->ensureAfterTargetIsCompatible(collect(), $targetParent?->id, $after);
 
             $createdRoots = collect();
 

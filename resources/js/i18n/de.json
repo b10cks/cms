@@ -1065,6 +1065,7 @@
         "newSubItem": "Neues Unterelement",
         "copy": "Kopieren",
         "cut": "Ausschneiden",
+        "duplicate": "Duplizieren",
         "pasteIn": "Einfügen in",
         "pasteAfter": "Einfügen nach",
         "delete": "Löschen",

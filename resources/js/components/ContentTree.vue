@@ -841,18 +841,18 @@ const executeDelete = async (context: ContentTreeActionContext) => {
   selectedItemIds.value = []
 }
 
-// A single block exists once per tree, so copying or cutting one can only ever
-// produce something that cannot be placed.
+// A single block exists once per tree, so copying, cutting or duplicating one
+// can only ever produce something that cannot be placed.
 const containsSingleItem = (ids: string[]) =>
   ids.some((id) => data.value?.[id]?.type === 'single')
 
-const canCopyOrCutSelection = (context: ContentTreeActionContext) =>
+const canCopyCutOrDuplicate = (context: ContentTreeActionContext) =>
   canManageContent.value &&
   context.resolved_ids.length > 0 &&
   !containsSingleItem(context.resolved_ids)
 
 const copyToClipboard = async (context: ContentTreeActionContext) => {
-  if (!canCopyOrCutSelection(context)) {
+  if (!canCopyCutOrDuplicate(context)) {
     return
   }
 
@@ -862,7 +862,7 @@ const copyToClipboard = async (context: ContentTreeActionContext) => {
 }
 
 const cutToClipboard = async (context: ContentTreeActionContext) => {
-  if (!canCopyOrCutSelection(context)) {
+  if (!canCopyCutOrDuplicate(context)) {
     return
   }
 
@@ -960,6 +960,35 @@ const pasteClipboard = async (target: FlatContentMenuItem | null, mode: 'in' | '
     await clearClipboard()
     activeClipboardItem.value = null
   }
+}
+
+/**
+ * Copy the selection in place: every entry lands right after its original,
+ * under the very same parent.
+ */
+const duplicateItems = async (context: ContentTreeActionContext) => {
+  if (!canCopyCutOrDuplicate(context)) {
+    return
+  }
+
+  // A selection can span parents, and one duplicate operation carries a single
+  // destination — hence one operation per parent, anchored on that group's last
+  // entry so the copies keep the source order.
+  const groups = new Map<string | null, string[]>()
+
+  for (const id of context.resolved_ids) {
+    const parentId = data.value?.[id]?.pid ?? null
+    groups.set(parentId, [...(groups.get(parentId) || []), id])
+  }
+
+  await executeTreeOperations(
+    [...groups].map(([parentId, ids]) => ({
+      type: 'duplicate',
+      ids,
+      parent_id: parentId,
+      after_id: ids[ids.length - 1],
+    }))
+  )
 }
 
 const openRename = async (itemId: string) => {
@@ -1114,15 +1143,22 @@ const buildItemMenuActions = (item: FlatContentMenuItem): ContentTreeMenuAction[
       label: t('labels.contentTree.actions.copy') as string,
       icon: 'copy',
       separatorBefore: true,
-      disabled: !canCopyOrCutSelection(context),
+      disabled: !canCopyCutOrDuplicate(context),
       onSelect: () => copyToClipboard(context),
     },
     {
       id: 'cut',
       label: t('labels.contentTree.actions.cut') as string,
       icon: 'scissors',
-      disabled: !canCopyOrCutSelection(context),
+      disabled: !canCopyCutOrDuplicate(context),
       onSelect: () => cutToClipboard(context),
+    },
+    {
+      id: 'duplicate',
+      label: t('labels.contentTree.actions.duplicate') as string,
+      icon: 'copy-plus',
+      disabled: !canCopyCutOrDuplicate(context),
+      onSelect: () => duplicateItems(context),
     },
     {
       id: 'paste-in',
