@@ -7,7 +7,6 @@ import NuxtImg from '~/components/NuxtImg.vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import Label from '~/components/ui/form/Label.vue'
 import { ScrollArea } from '~/components/ui/scroll-area'
-import { useAlertDialog } from '~/composables/useAlertDialog'
 import useSpaceSettings from '~/composables/useSpaceSettings'
 
 const props = defineProps<{
@@ -21,7 +20,6 @@ const emit = defineEmits<{
   'update:modelValue': [value: AssetValue | null]
 }>()
 
-const { alert } = useAlertDialog()
 const { settings } = useSpaceSettings(props.spaceId)
 const { $t } = useI18n()
 const { getFileIcon, getFileType } = useFileUtils()
@@ -83,17 +81,11 @@ const handleAssetEdit = () => {
   showAssetDetails.value = true
 }
 
-const handleAssetDelete = async () => {
-  const confirmed = await alert.confirm($t('messages.assets.confirmDelete'), {
-    title: $t('labels.assets.deleteAsset'),
-    confirmLabel: $t('actions.delete'),
-    cancelLabel: $t('actions.cancel'),
-  })
-
-  if (confirmed) {
-    localValue.value = null
-    updateValue()
-  }
+// Clearing the field only stages a change; the entry still has to be saved,
+// so a confirmation here would ask twice for the same decision.
+const handleAssetRemove = () => {
+  localValue.value = null
+  updateValue()
 }
 
 const handleAssetDetailsUpdate = (asset: AssetResource) => {
@@ -201,9 +193,9 @@ const handleAssetDetailsUpdate = (asset: AssetResource) => {
           <button
             v-if="!props.readOnly"
             class="flex transform cursor-pointer items-center hover:text-red-500"
-            :aria-label="$t('actions.assets.delete')"
-            :title="$t('actions.assets.delete')"
-            @click.stop="handleAssetDelete"
+            :aria-label="$t('actions.assets.remove')"
+            :title="$t('actions.assets.remove')"
+            @click.stop="handleAssetRemove"
           >
             <Icon name="lucide:trash-2" />
           </button>
