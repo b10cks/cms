@@ -3,6 +3,10 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.26-876f2e0b] — 2026-8-26
+
+- 🐛 Write avatars and icons to the disk they are served from
+
 ## [v2026.8.26-1e7a3bf6] — 2026-8-26
 
 - 📝 Regenerate the management API spec
