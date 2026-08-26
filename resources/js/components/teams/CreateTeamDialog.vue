@@ -8,9 +8,11 @@ import {
   DialogHeaderCombined,
   DialogTrigger,
 } from '~/components/ui/dialog'
+import TeamSelectField, { type TeamSelectOption } from '~/components/teams/TeamSelectField.vue'
 import { SelectField, TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
 import { useTeamTypes } from '~/composables/useTeamTypes'
+import { flattenNestedTeams } from '~/lib/team-hierarchy'
 import type { CreateTeamPayload, TeamHierarchyItem } from '~/types/teams'
 
 const props = withDefaults(
@@ -45,29 +47,19 @@ const createDefaults = (): CreateTeamPayload => ({
 
 const formData = ref<CreateTeamPayload>(createDefaults())
 
-// Only teams the user may add children to are offered as parents. The
-// top-level ("No parent") option is reserved for root.
-const parentOptions = computed(() => {
-  const options: { value: string | null; label: string }[] = []
+// The whole tree is shown for context; teams the user may not add children to
+// are listed but not selectable. The top-level ("No parent") option is
+// reserved for root.
+const parentTeams = computed<TeamSelectOption[]>(() =>
+  flattenNestedTeams(props.hierarchy).map((team) => ({
+    ...team,
+    disabled: !team.can_create_child,
+  }))
+)
 
-  if (props.isRoot) {
-    options.push({ value: null, label: t('labels.teams.noParent') })
-  }
-
-  const flattenHierarchy = (items: TeamHierarchyItem[], prefix = '') => {
-    for (const item of items) {
-      if (item.can_create_child) {
-        options.push({ value: item.id, label: prefix + item.name })
-      }
-      if (item.children?.length) {
-        flattenHierarchy(item.children, `${prefix}  `)
-      }
-    }
-  }
-
-  flattenHierarchy(props.hierarchy)
-  return options
-})
+const noParentOption = computed(() =>
+  props.isRoot ? { label: t('labels.teams.noParent') as string, icon: 'circle-slash' } : null
+)
 
 const handleSubmit = async () => {
   if (!formData.value.name.trim()) return
@@ -138,13 +130,13 @@ const handleOpenChange = (value: boolean) => {
           :options="teamTypeOptions"
         />
 
-        <SelectField
-          v-if="parentOptions.length > 0"
+        <TeamSelectField
           v-model="formData.parent_id"
           name="parent"
+          :teams="parentTeams"
+          :no-team-option="noParentOption"
           :label="$t('labels.teams.fields.parent')"
           :placeholder="$t('labels.teams.fields.parentPlaceholder')"
-          :options="parentOptions"
         />
 
         <DialogFooter>

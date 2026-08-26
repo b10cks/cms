@@ -12,10 +12,12 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card'
+import TeamSelectField, { type TeamSelectOption } from '~/components/teams/TeamSelectField.vue'
 import { FormField, SelectField, TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
 import { useFileUpload } from '~/composables/useFileUpload'
 import { useTeamTypes } from '~/composables/useTeamTypes'
+import { flattenNestedTeams } from '~/lib/team-hierarchy'
 import type { TeamHierarchyItem, TeamResource, UpdateTeamPayload } from '~/types/teams'
 
 const props = withDefaults(
@@ -60,31 +62,20 @@ watch(
   { immediate: true }
 )
 
-// Valid re-parent destinations: teams the user may add children to, excluding
-// the team itself and its descendants (skipping its subtree during the walk).
+// Valid re-parent destinations: the tree minus the team itself and its
+// descendants, since a team cannot move under its own child. Teams the user
+// may not add children to are shown for context but not selectable.
 // "No parent" (top level) is reserved for root.
-const parentOptions = computed(() => {
-  const options: { value: string | null; label: string }[] = []
+const parentTeams = computed<TeamSelectOption[]>(() =>
+  flattenNestedTeams(props.hierarchy, props.team.id).map((team) => ({
+    ...team,
+    disabled: !team.can_create_child,
+  }))
+)
 
-  if (props.isRoot) {
-    options.push({ value: null, label: t('labels.teams.noParent') })
-  }
-
-  const flattenHierarchy = (items: TeamHierarchyItem[], prefix = '') => {
-    for (const item of items) {
-      if (item.id === props.team.id) continue
-      if (item.can_create_child) {
-        options.push({ value: item.id, label: prefix + item.name })
-      }
-      if (item.children?.length) {
-        flattenHierarchy(item.children, `${prefix}  `)
-      }
-    }
-  }
-
-  flattenHierarchy(props.hierarchy)
-  return options
-})
+const noParentOption = computed(() =>
+  props.isRoot ? { label: t('labels.teams.noParent') as string, icon: 'circle-slash' } : null
+)
 
 const handleSave = () => {
   if (!formData.value.name?.trim()) return
@@ -225,13 +216,13 @@ const handleRemoveAvatar = () => {
         :options="teamTypeOptions"
       />
 
-      <SelectField
-        v-if="parentOptions.length > 0"
+      <TeamSelectField
         v-model="formData.parent_id"
         name="team-parent"
+        :teams="parentTeams"
+        :no-team-option="noParentOption"
         :label="$t('labels.teams.fields.parent')"
         :placeholder="$t('labels.teams.fields.parentPlaceholder')"
-        :options="parentOptions"
       />
     </CardContent>
     <CardFooter>
