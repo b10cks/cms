@@ -3,21 +3,33 @@
 namespace App\Services\Image;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 class ImageUploadService
 {
     /**
-     * Avatars and icons are public by nature and are served as `/storage/...`.
+     * The disk avatars and icons live on.
      *
-     * They therefore belong on the disk that is meant to be reachable over
-     * HTTP. Writing them to the default disk put them in `storage/app/private`
-     * alongside every tenant's assets and backups, which only worked if the
-     * `public/storage` symlink pointed at that private root — exposing the
-     * whole disk to anyone who knew a path.
+     * These files are delivered by ilum's `/{storage}/…` grammar, and its
+     * literal `storage` segment reads the application's *default* disk (see
+     * `IlumSourceResolver::resolveDefaultDisk`). Writing them anywhere else
+     * stores them where nothing ever looks them up: on SaaS the default disk
+     * is s3, so a hardcoded `public` wrote every new avatar to one container's
+     * ephemeral filesystem while delivery kept asking s3 for it.
+     *
+     * They are never served off the `public/storage` symlink — that link does
+     * not exist in the runtime image — so the disk's own visibility is what
+     * keeps them private, not the path they sit under.
      */
-    private const DISK = 'public';
+    private function disk(): FilesystemAdapter
+    {
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk();
+
+        return $disk;
+    }
 
     /**
      * Upload image for a model and return the file path.
@@ -32,7 +44,7 @@ class ImageUploadService
     {
         $filename = $model->getRouteKey() . '_' . time() . '.' . $this->extensionFor($file);
 
-        $path = Storage::disk(self::DISK)->putFileAs(
+        $path = $this->disk()->putFileAs(
             $directory,
             $file,
             $filename
@@ -83,7 +95,7 @@ class ImageUploadService
      */
     protected function deleteExistingFile(Model $model, string $attribute): void
     {
-        $disk = Storage::disk(self::DISK);
+        $disk = $this->disk();
 
         if ($model->{$attribute} && $disk->exists($model->{$attribute})) {
             $disk->delete($model->{$attribute});

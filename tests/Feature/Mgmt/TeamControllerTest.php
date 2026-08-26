@@ -251,7 +251,9 @@ class TeamControllerTest extends TestCase
     #[Test]
     public function owner_can_upload_and_remove_a_team_avatar(): void
     {
-        Storage::fake('public');
+        // The uploader writes to the disk ilum delivers from, which is the
+        // application default — not a disk this test may name outright.
+        Storage::fake(config('filesystems.default'));
 
         $user = User::factory()->create();
         $team = Team::factory()->create();
@@ -264,14 +266,14 @@ class TeamControllerTest extends TestCase
         $response->assertSuccessful();
         $path = $team->fresh()->avatar;
         $this->assertNotNull($path);
-        Storage::disk('public')->assertExists($path);
+        Storage::disk()->assertExists($path);
         $this->assertSame("/storage/{$path}", $response->json('data.avatar'));
 
         $this->actingAs($user)->deleteJson(route('mgmt.teams.avatar.destroy', $team))
             ->assertSuccessful();
 
         $this->assertNull($team->fresh()->avatar);
-        Storage::disk('public')->assertMissing($path);
+        Storage::disk()->assertMissing($path);
     }
 
     #[Test]

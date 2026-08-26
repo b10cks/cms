@@ -20,7 +20,7 @@ class AvatarUploadTest extends TestCase
     #[Test]
     public function the_stored_extension_comes_from_the_file_and_not_its_name(): void
     {
-        Storage::fake('public');
+        Storage::fake(config('filesystems.default'));
         $user = User::factory()->create()->fresh();
 
         // Real PNG bytes under a .jpg name. A faked upload reports its type
@@ -41,13 +41,13 @@ class AvatarUploadTest extends TestCase
 
         $this->assertNotNull($stored);
         $this->assertStringEndsWith('.png', $stored);
-        Storage::disk('public')->assertExists($stored);
+        Storage::disk()->assertExists($stored);
     }
 
     #[Test]
     public function an_html_file_is_rejected_outright(): void
     {
-        Storage::fake('public');
+        Storage::fake(config('filesystems.default'));
         $user = User::factory()->create()->fresh();
 
         $this->actingAs($user)
@@ -63,14 +63,17 @@ class AvatarUploadTest extends TestCase
     }
 
     /**
-     * The private disk holds every tenant's assets and backups and must never
-     * be the one reachable over HTTP.
+     * Upload and delivery have to name the same disk. They drifted once — the
+     * uploader was pinned to `public` while ilum kept reading the default disk
+     * — and every new avatar 404'd in production while the old ones, still on
+     * the default disk, kept working. Asserting a disk by name cannot catch
+     * that, because the test default is not the production default; only a
+     * round trip through the delivery route can.
      */
     #[Test]
-    public function avatars_are_written_to_the_public_disk(): void
+    public function an_uploaded_avatar_is_reachable_through_the_delivery_route(): void
     {
-        Storage::fake('public');
-        Storage::fake('local');
+        Storage::fake(config('filesystems.default'));
         $user = User::factory()->create()->fresh();
 
         $this->actingAs($user)
@@ -81,7 +84,7 @@ class AvatarUploadTest extends TestCase
 
         $stored = $user->fresh()->avatar;
 
-        Storage::disk('public')->assertExists($stored);
-        Storage::disk('local')->assertMissing($stored);
+        $this->assertNotNull($stored);
+        $this->get('/ilum/storage/'.$stored)->assertSuccessful();
     }
 }
