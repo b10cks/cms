@@ -13,6 +13,7 @@ use App\Http\Requests\Space\UpdateSpaceRequest;
 use App\Http\Resources\Management\SpaceResource;
 use App\Models\Management\Plan;
 use App\Models\Management\Space;
+use App\Models\Management\SpaceBlueprint;
 use App\Models\Management\Subscription;
 use App\Models\Management\Team;
 use App\Services\Auth\AuthorizationService;
@@ -63,6 +64,12 @@ class SpaceController extends Controller
         if (!empty($validated['team_id'])) {
             $team = Team::query()->findOrFail($validated['team_id']);
             abort_unless($authorizationService->canInTeam(auth()->user(), $team, 'team.spaces.create'), 403);
+        }
+
+        // A blueprint carries another space's blocks, data sources and
+        // settings, so applying one is a read of the team that owns it.
+        if (!empty($validated['blueprint_id'])) {
+            $this->authorize('view', SpaceBlueprint::findOrFail($validated['blueprint_id']));
         }
         $planId = $validated['plan_id'] ?? null;
         $interval = $validated['billing_interval'] ?? 'month';
