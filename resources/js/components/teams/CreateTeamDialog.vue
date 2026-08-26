@@ -60,8 +60,13 @@ const noParentOption = computed(() =>
   props.isRoot ? { label: t('labels.teams.noParent') as string, icon: 'circle-slash' } : null
 )
 
+// Only root may create a top-level team, so everyone else has to pick a parent.
+const isComplete = computed(
+  () => !!formData.value.name.trim() && (props.isRoot || !!formData.value.parent_id)
+)
+
 const handleSubmit = async () => {
-  if (!formData.value.name.trim()) return
+  if (!isComplete.value) return
 
   isSubmitting.value = true
   try {
@@ -148,7 +153,7 @@ const handleOpenChange = (value: boolean) => {
           <Button
             type="submit"
             :loading="isSubmitting"
-            :disabled="!formData.name.trim()"
+            :disabled="!isComplete"
           >
             {{ $t('labels.teams.createButton') }}
           </Button>
