@@ -21,6 +21,14 @@ trait ResolvesBlueprintSourceSpace
         $sourceSpace = Space::findOrFail($request->input('source_space_id'));
         $this->authorize('view', $sourceSpace);
 
+        // A space that never finished provisioning has no database to read the
+        // snapshot from, so say that instead of failing on the connection.
+        abort_if(
+            in_array($sourceSpace->state, ['draft', 'error'], true),
+            422,
+            __('validation.blueprint.source_space_not_ready'),
+        );
+
         return $sourceSpace;
     }
 }

@@ -28,25 +28,18 @@ class CreateSpaceBlueprint
         'block_templates' => BlockTemplate::class,
     ];
 
+    /**
+     * The caller is responsible for authorizing both the team and the source
+     * space.
+     */
     public function execute(array $data, Team $team, User $creator, ?Space $sourceSpace = null): SpaceBlueprint
     {
         $tables = $data['tables'] ?? [];
         $settings = $data['settings'] ?? [];
-        $sourceSpaceId = $data['source_space_id'] ?? null;
-
-        unset($data['tables'], $data['source_space_id']);
-
-        if (!$sourceSpace && !empty($sourceSpaceId)) {
-            $sourceSpace = Space::find($sourceSpaceId);
-        }
 
         $blueprintData = [];
 
         if ($sourceSpace) {
-            if ($sourceSpace->team_id !== $team->id) {
-                abort(422, __('validation.blueprint.source_space_team_mismatch'));
-            }
-
             $settings = array_replace_recursive($sourceSpace->settings->toArray(), $settings);
             $blueprintData = $this->collectData($sourceSpace, $tables);
         }

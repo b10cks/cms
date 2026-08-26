@@ -20,7 +20,7 @@ return [
         'name_required' => 'A blueprint name is required.',
         'color_invalid' => 'The color must be a valid hex color code (e.g., #FF5733).',
         'source_space_invalid' => 'The selected source space could not be found.',
-        'source_space_team_mismatch' => 'The source space must belong to the selected team.',
+        'source_space_not_ready' => 'The selected source space is not ready to be copied yet.',
         'tables_invalid' => 'One or more selected tables are not supported for blueprints.',
         'invalid' => 'The selected blueprint is not available.',
         'delete_failed' => 'An error occurred while deleting the space blueprint.',

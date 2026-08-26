@@ -30,7 +30,12 @@ class StoreSpaceBlueprintRequest extends FormRequest
             'color' => ['nullable', 'string', 'max:7', 'regex:/^#[a-fA-F0-9]{6}$/'],
             'description' => 'nullable|string',
             'settings' => 'nullable|array',
-            'source_space_id' => 'nullable|string|max:26|exists:spaces,id',
+            'source_space_id' => [
+                'nullable',
+                'string',
+                'max:26',
+                Rule::exists('spaces', 'id')->whereNull('deleted_at'),
+            ],
             'tables' => 'nullable|array',
             'tables.*' => ['distinct', Rule::in(self::TABLES)],
         ];
