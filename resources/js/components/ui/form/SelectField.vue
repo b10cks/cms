@@ -85,6 +85,8 @@ const getOptionByValue = (value: T | undefined): SelectOption<T> | undefined => 
   })
 }
 
+const selectedOption = computed(() => getOptionByValue(modelValue.value))
+
 const emptyTextComputed = computed(() => {
   return props.emptyText || 'common.no_results'
 })
@@ -131,7 +133,12 @@ const handleClear = () => {
             :class="{ 'border-red-500': hasError }"
           >
             <SelectValue :placeholder="$t(String(placeholder || 'common.select'))">
-              {{ getOptionByValue(modelValue)?.label || '' }}
+              <slot
+                name="value"
+                :option="selectedOption"
+              >
+                {{ selectedOption?.label || '' }}
+              </slot>
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -143,7 +150,12 @@ const handleClear = () => {
                   :value="getOptionValue(option)"
                   :disabled="option.disabled"
                 >
-                  {{ getDisplayValue(option) }}
+                  <slot
+                    name="item"
+                    :option="option"
+                  >
+                    {{ getDisplayValue(option) }}
+                  </slot>
                 </SelectItem>
               </template>
               <template v-else>
