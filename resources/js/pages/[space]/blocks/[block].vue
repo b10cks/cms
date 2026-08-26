@@ -28,7 +28,7 @@ const canManageBlocks = computed(() => access.hasAbility('blocks.manage'))
 const { useBlockQuery, useUpdateBlockMutation } = useBlocks(spaceId)
 const { isLoading, data: block } = useBlockQuery(blockId)
 
-const { mutate: updateBlock, isPending: isSaving } = useUpdateBlockMutation()
+const { mutateAsync: updateBlock, isPending: isSaving } = useUpdateBlockMutation()
 
 const overviewRoute = computed(() => ({
   name: 'space-blocks-index' as const,
@@ -44,14 +44,23 @@ const showTemplatesSheet = ref(false)
 const showVersionsSheet = ref(false)
 const showDuplicateBlockDialog = ref(false)
 
-const submit = async (b: BlockResource) => {
-  updateBlock({
-    id: b.id,
-    payload: { ...b },
-  })
-}
-
 const blockEdit = useTemplateRef<InstanceType<typeof BlockEdit>>('blockEdit')
+
+/**
+ * Resolves whether the block reached the server. The editor is re-seeded from
+ * the response because the backend rewrites `schema` and `settings` on write —
+ * comparing against what was sent would leave the page dirty forever.
+ */
+const submit = async (b: BlockResource): Promise<boolean> => {
+  try {
+    const saved = await updateBlock({ id: b.id, payload: { ...b } })
+    blockEdit.value?.reset(saved)
+    return true
+  } catch {
+    // The mutation already surfaced the failure as a toast.
+    return false
+  }
+}
 
 /**
  * Only the fields the block editor actually writes, normalised the same way
@@ -81,16 +90,16 @@ const savedBlock = computed(() => editableSnapshot(block.value))
 
 const { isDirty } = createSnapshotDirtyTracker(editedBlock, savedBlock)
 
-useUnsavedChangesGuard({ isDirty })
+const saveEditedBlock = async (): Promise<boolean> => {
+  const edited = blockEdit.value?.editableBlock
+  return edited ? submit(edited) : false
+}
+
+useUnsavedChangesGuard({ isDirty, onSave: saveEditedBlock })
 
 useSaveShortcut({
   canSave: () => canManageBlocks.value && isDirty.value && !isSaving.value,
-  save: () => {
-    const edited = blockEdit.value?.editableBlock
-    if (edited) {
-      return submit(edited)
-    }
-  },
+  save: saveEditedBlock,
 })
 
 const handleDuplicateCreated = (createdBlock: BlockResource) => {

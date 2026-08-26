@@ -24,12 +24,14 @@ const props = withDefaults(
   }
 )
 
-const editableBlock = ref<BlockResource>({
-  ...props.block,
-  type: props.block.type || 'nestable',
-  icon: props.block.icon || 'block',
-  color: props.block.color,
+const seedBlock = (source: BlockResource): BlockResource => ({
+  ...source,
+  type: source.type || 'nestable',
+  icon: source.icon || 'block',
+  color: source.color,
 })
+
+const editableBlock = ref<BlockResource>(seedBlock(props.block))
 
 const { useBlockTagsQuery } = useBlockTags(props.spaceId)
 const { data: blockTags } = useBlockTagsQuery({ per_page: 500 })
@@ -82,9 +84,18 @@ const handleTypeChange = (type: 'root' | 'nestable' | 'single' | 'universal') =>
   }
 }
 
+/**
+ * Re-seeds the editor from a server response. The backend rewrites `schema`
+ * and `settings` on write, so a saved block never serialises identically to
+ * what was sent — without this the page stays dirty for the rest of the session.
+ */
+const reset = (source: BlockResource) => {
+  editableBlock.value = seedBlock(source)
+}
+
 // Lets the hosting page track the edited model (dirty state, save shortcut)
 // without threading it back out through the default slot.
-defineExpose({ editableBlock })
+defineExpose({ editableBlock, reset })
 </script>
 
 <template>
