@@ -34,7 +34,9 @@ interface PersonResource {
   state: PersonState
   can_assign_role: boolean
   can_remove: boolean
-  membership_origin: 'team' | 'space' | null
+  membership_origin: 'team' | 'space' | 'inherited' | null
+  /** The ancestor team an inherited role comes from. */
+  inherited_from: { id: string; name: string } | null
   space_memberships: PersonSpaceMembership[]
   joined_at: string | null
   invited_at: string | null

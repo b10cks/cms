@@ -2885,7 +2885,7 @@
     "teamMembers": {
       "title": "Team Members",
       "description": "Everyone who has already accepted their invitation appears here.",
-      "helper": "This list also includes space-only collaborators from spaces in this team. The member count above still reflects direct team memberships only.",
+      "helper": "This list also includes members inheriting a role from a parent team and space-only collaborators from spaces in this team. The member count above still reflects direct team memberships only.",
       "add": "Add Member",
       "addTitle": "Add Team Member",
       "addDescription": "Add an existing user to this team",
@@ -2923,6 +2923,7 @@
       },
       "assignRole": "Assign team role",
       "spaceOnly": "Space-only",
+      "inherited": "Inherited",
       "sourceSpaces": "From spaces",
       "removeConfirm": {
         "title": "Remove Member",

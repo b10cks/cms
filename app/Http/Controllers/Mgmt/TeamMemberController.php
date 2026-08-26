@@ -37,10 +37,21 @@ class TeamMemberController extends Controller
     {
         $this->authorize('manageMembers', $team);
 
-        if (! $this->directory->findMember($team, $user->id)) {
+        $member = $this->directory->findMember($team, $user->id);
+
+        if (! $member) {
             return response()->json([
                 'message' => 'User is not visible in this team.',
             ], 404);
+        }
+
+        // A role inherited from a parent team is managed where it is granted.
+        // Giving someone extra authority in this team is the separate, explicit
+        // "add member" action.
+        if ($member->membership_origin === 'inherited') {
+            return response()->json([
+                'message' => 'This role is inherited from a parent team. Change it there.',
+            ], 422);
         }
 
         $request->validate([

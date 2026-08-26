@@ -54,6 +54,11 @@ export interface TeamSamlProviderResponse {
   defaults: Omit<TeamSamlProviderPayload, 'sp_private_key'> & { links: TeamSamlLinks }
 }
 
+export interface TeamAncestor {
+  id: string
+  name: string
+}
+
 export interface TeamParent {
   id: string
   name: string
@@ -143,7 +148,9 @@ export interface TeamUserResource {
     avatar?: string | null
   }
   role: string | null
-  membership_origin: 'team' | 'space'
+  membership_origin: 'team' | 'space' | 'inherited'
+  /** The ancestor team an inherited role comes from. */
+  inherited_from: TeamAncestor | null
   can_assign_team_role: boolean
   can_remove: boolean
   space_memberships: Array<{

@@ -32,6 +32,7 @@ class TeamMemberListResource extends JsonResource
             'initials' => $this->initials,
             'role' => $this->role_key ?? null,
             'membership_origin' => $this->membership_origin ?? 'team',
+            'inherited_from' => $this->inherited_from ?? null,
             'can_assign_team_role' => (bool) ($this->can_assign_team_role ?? true),
             'can_remove' => (bool) ($this->can_remove ?? true),
             'space_memberships' => $this->space_memberships ?? [],

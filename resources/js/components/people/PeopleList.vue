@@ -348,9 +348,23 @@ const handleBulkDelete = async () => {
                       </template>
                     </div>
                     <div
+                      v-if="resourceType === 'team' && person.membership_origin === 'inherited'"
+                      class="mt-1 flex flex-wrap items-center gap-1"
+                    >
+                      <Badge
+                        variant="secondary"
+                        size="sm"
+                      >
+                        {{ $t('labels.teamMembers.inherited') }}
+                      </Badge>
+                      <span class="text-muted-foreground text-xs">
+                        {{ person.inherited_from?.name }}
+                      </span>
+                    </div>
+                    <div
                       v-if="
                         resourceType === 'team' &&
-                        person.membership_origin === 'space' &&
+                        person.membership_origin !== 'team' &&
                         person.space_memberships.length > 0
                       "
                       class="mt-1 flex flex-wrap items-center gap-1"
@@ -359,7 +373,11 @@ const handleBulkDelete = async () => {
                         variant="secondary"
                         size="sm"
                       >
-                        {{ $t('labels.teamMembers.spaceOnly') }}
+                        {{
+                          person.membership_origin === 'space'
+                            ? $t('labels.teamMembers.spaceOnly')
+                            : $t('labels.teamMembers.sourceSpaces')
+                        }}
                       </Badge>
                       <span class="text-muted-foreground text-xs">
                         {{

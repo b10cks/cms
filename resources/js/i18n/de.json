@@ -2899,7 +2899,7 @@
     "teamMembers": {
       "title": "Team-Mitglieder",
       "description": "Hier erscheinen alle Personen, die ihre Einladung bereits angenommen haben.",
-      "helper": "Diese Liste enthält auch Personen, die nur über Spaces in diesem Team eingebunden sind. Die Mitgliederzahl oben zählt weiterhin nur direkte Team-Mitgliedschaften.",
+      "helper": "Diese Liste enthält auch Mitglieder, die eine Rolle von einem übergeordneten Team erben, sowie Mitarbeitende, die nur zu einem Space dieses Teams gehören. Die Mitgliederzahl oben zählt weiterhin nur direkte Teammitgliedschaften.",
       "add": "Mitglied hinzufügen",
       "addTitle": "Team-Mitglied hinzufügen",
       "addDescription": "Füge einen bestehenden Benutzer diesem Team hinzu",
@@ -2937,6 +2937,7 @@
       },
       "assignRole": "Team-Rolle vergeben",
       "spaceOnly": "Nur im Space",
+      "inherited": "Vererbt",
       "sourceSpaces": "Aus Spaces",
       "removeConfirm": {
         "title": "Mitglied entfernen",

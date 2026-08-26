@@ -23,6 +23,7 @@ class PersonResource extends JsonResource
             'can_assign_role' => $person['can_assign_role'],
             'can_remove' => $person['can_remove'],
             'membership_origin' => $person['membership_origin'],
+            'inherited_from' => $person['inherited_from'],
             'space_memberships' => $person['space_memberships'],
             'joined_at' => $person['joined_at'],
             'invited_at' => $person['invited_at'],

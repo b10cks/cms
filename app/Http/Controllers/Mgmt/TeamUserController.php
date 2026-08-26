@@ -65,6 +65,13 @@ class TeamUserController extends Controller
             'role' => 'nullable|string|max:50',
         ]);
 
+        // A role inherited from a parent team is managed where it is granted.
+        if ($this->directory->findMember($team, $userId)?->membership_origin === 'inherited') {
+            return response()->json([
+                'message' => 'This role is inherited from a parent team. Change it there.',
+            ], 422);
+        }
+
         $this->guard->ensureCanManageTeamMember($request->user(), $team, $userId);
         if ($request->role) {
             $this->guard->ensureCanAssignTeamRole($request->user(), $team, $request->role);

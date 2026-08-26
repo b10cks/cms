@@ -8,6 +8,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class TeamMemberDirectoryService
 {
@@ -15,7 +16,7 @@ class TeamMemberDirectoryService
     {
         $members = $this->membersForTeam($team)
             ->when($params['role'] ?? null, fn (Collection $collection, string $role) => $collection
-                ->filter(fn (User $member) => $member->membership_origin === 'team' && $member->role_key === $this->parseFilterValue($role)['value']))
+                ->filter(fn (User $member) => $member->role_key === $this->parseFilterValue($role)['value']))
             ->when($params['name'] ?? null, fn (Collection $collection, string $name) => $collection
                 ->filter(fn (User $member) => $this->matchesTextFilter(
                     "{$member->firstname} {$member->lastname}",
@@ -85,10 +86,18 @@ class TeamMemberDirectoryService
     }
 
     /**
+     * Everyone who can act in this team: direct members, members inheriting a
+     * role from an ancestor team, and collaborators who only hold a role in one
+     * of the team's spaces. Only the direct ones are editable here.
+     *
      * @return Collection<int, User>
      */
     private function membersForTeam(Team $team): Collection
     {
+        $spaceMembershipRows = $this->spaceMembershipRows($team);
+        $spaceMembershipsByUser = $spaceMembershipRows
+            ->map(fn (Collection $group) => $this->normalizeSpaceMemberships($group));
+
         $directMembers = User::query()
             ->withTrashed()
             ->join('team_user', 'team_user.user_id', '=', 'users.id')
@@ -100,13 +109,127 @@ class TeamMemberDirectoryService
                 $member->setAttribute('membership_origin', 'team');
                 $member->setAttribute('can_assign_team_role', true);
                 $member->setAttribute('can_remove', true);
+                $member->setAttribute('inherited_from', null);
                 $member->setAttribute('space_memberships', []);
 
                 return $member;
             })
             ->keyBy('id');
 
-        $spaceMembershipRows = User::query()
+        $inheritedMembers = $this->inheritedMembers($team)
+            ->reject(fn (User $member) => $directMembers->has($member->id))
+            ->map(function (User $member) use ($spaceMembershipsByUser) {
+                $member->setAttribute('membership_origin', 'inherited');
+                $member->setAttribute('can_assign_team_role', false);
+                $member->setAttribute('can_remove', false);
+                $member->setAttribute('inherited_from', [
+                    'id' => $member->inherited_team_id,
+                    'name' => $member->inherited_team_name,
+                ]);
+                $member->setAttribute('space_memberships', $spaceMembershipsByUser->get($member->id, []));
+
+                return $member;
+            })
+            ->keyBy('id');
+
+        $spaceOnlyMembers = $spaceMembershipRows
+            ->reject(fn (Collection $group, string $userId) => $directMembers->has($userId) || $inheritedMembers->has($userId))
+            ->map(function (Collection $group, string $userId) use ($spaceMembershipsByUser) {
+                /** @var User $member */
+                $member = $group->first();
+
+                $member->setAttribute('role_key', null);
+                $member->setAttribute('joined_at', $group
+                    ->min(fn (User $row) => Carbon::parse($row->source_joined_at)->toIso8601String()));
+                $member->setAttribute('membership_origin', 'space');
+                $member->setAttribute('can_assign_team_role', true);
+                $member->setAttribute('can_remove', false);
+                $member->setAttribute('inherited_from', null);
+                $member->setAttribute('space_memberships', $spaceMembershipsByUser->get($userId, []));
+
+                return $member;
+            });
+
+        return $directMembers
+            ->values()
+            ->merge($inheritedMembers->values())
+            ->merge($spaceOnlyMembers->values());
+    }
+
+    /**
+     * Team roles cascade downward, so a member of an ancestor team holds that
+     * role here too without a row in this team's pivot. Each user is reduced to
+     * the strongest role they hold up the chain, ties going to the nearest
+     * ancestor.
+     *
+     * @return Collection<int, User>
+     */
+    private function inheritedMembers(Team $team): Collection
+    {
+        $ancestorIds = $this->ancestorTeamIds($team);
+
+        if ($ancestorIds === []) {
+            return collect();
+        }
+
+        $distance = array_flip($ancestorIds);
+
+        return User::query()
+            ->withTrashed()
+            ->join('team_user', 'team_user.user_id', '=', 'users.id')
+            ->join('teams', 'teams.id', '=', 'team_user.team_id')
+            ->leftJoin('roles', 'roles.id', '=', 'team_user.role_id')
+            ->whereIn('team_user.team_id', $ancestorIds)
+            ->select(
+                'users.*',
+                'roles.key as role_key',
+                'roles.level as role_level',
+                'teams.id as inherited_team_id',
+                'teams.name as inherited_team_name',
+                'team_user.created_at as joined_at',
+            )
+            ->get()
+            ->groupBy('id')
+            ->map(fn (Collection $group) => $group
+                ->sort(fn (User $left, User $right) => [(int) $right->role_level, $distance[$left->inherited_team_id]]
+                    <=> [(int) $left->role_level, $distance[$right->inherited_team_id]])
+                ->first())
+            ->values();
+    }
+
+    /**
+     * Ancestor team ids, nearest parent first. Guards against a cycle in
+     * `parent_id` rather than spinning forever on corrupt data.
+     *
+     * @return array<int, string>
+     */
+    private function ancestorTeamIds(Team $team): array
+    {
+        $teamsById = DB::table('teams')
+            ->select('id', 'parent_id')
+            ->whereNull('deleted_at')
+            ->get()
+            ->keyBy('id');
+
+        $ids = [];
+        $current = $team->parent_id;
+
+        while ($current !== null && $teamsById->has($current) && ! in_array($current, $ids, true)) {
+            $ids[] = $current;
+            $current = $teamsById->get($current)->parent_id;
+        }
+
+        return $ids;
+    }
+
+    /**
+     * Space membership rows for the team's spaces, grouped by user id.
+     *
+     * @return Collection<string, Collection<int, User>>
+     */
+    private function spaceMembershipRows(Team $team): Collection
+    {
+        return User::query()
             ->withTrashed()
             ->join('space_user', 'space_user.user_id', '=', 'users.id')
             ->join('spaces', 'spaces.id', '=', 'space_user.space_id')
@@ -122,40 +245,26 @@ class TeamMemberDirectoryService
             ->orderBy('spaces.name')
             ->get()
             ->groupBy('id');
+    }
 
-        $spaceOnlyMembers = $spaceMembershipRows
-            ->reject(fn (Collection $group, string $userId) => $directMembers->has($userId))
-            ->map(function (Collection $group) {
-                /** @var User $member */
-                $member = $group->first();
-
-                $spaceMemberships = $group
-                    ->map(fn (User $row) => [
-                        'space' => [
-                            'id' => $row->source_space_id,
-                            'name' => $row->source_space_name,
-                        ],
-                        'role' => $row->source_space_role_key,
-                        'joined_at' => Carbon::parse($row->source_joined_at)->toIso8601String(),
-                    ])
-                    ->sortBy(fn (array $membership) => mb_strtolower((string) $membership['space']['name']))
-                    ->values()
-                    ->all();
-
-                $member->setAttribute('role_key', null);
-                $member->setAttribute('joined_at', $group
-                    ->min(fn (User $row) => Carbon::parse($row->source_joined_at)->toIso8601String()));
-                $member->setAttribute('membership_origin', 'space');
-                $member->setAttribute('can_assign_team_role', true);
-                $member->setAttribute('can_remove', false);
-                $member->setAttribute('space_memberships', $spaceMemberships);
-
-                return $member;
-            });
-
-        return $directMembers
+    /**
+     * @param  Collection<int, User>  $group
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeSpaceMemberships(Collection $group): array
+    {
+        return $group
+            ->map(fn (User $row) => [
+                'space' => [
+                    'id' => $row->source_space_id,
+                    'name' => $row->source_space_name,
+                ],
+                'role' => $row->source_space_role_key,
+                'joined_at' => Carbon::parse($row->source_joined_at)->toIso8601String(),
+            ])
+            ->sortBy(fn (array $membership) => mb_strtolower((string) $membership['space']['name']))
             ->values()
-            ->merge($spaceOnlyMembers->values());
+            ->all();
     }
 
     /**
