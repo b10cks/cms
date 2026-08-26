@@ -29,6 +29,17 @@ class CreateSpaceBlueprint
     ];
 
     /**
+     * Settings that describe one particular space rather than the shape of a
+     * space. Carrying them over would point every new space at the source's
+     * preview hosts and hide its onboarding guide.
+     */
+    private const NON_PORTABLE_SETTINGS = [
+        'environments',
+        'default_environment',
+        'onboarding_dismissed_at',
+    ];
+
+    /**
      * A null team creates a system blueprint, available to every user. The
      * caller is responsible for authorizing both the team and the source space.
      */
@@ -40,7 +51,7 @@ class CreateSpaceBlueprint
         $blueprintData = [];
 
         if ($sourceSpace) {
-            $settings = array_replace_recursive($sourceSpace->settings->toArray(), $settings);
+            $settings = array_replace_recursive($this->portableSettings($sourceSpace), $settings);
             $blueprintData = $this->collectData($sourceSpace, $tables);
         }
 
@@ -54,6 +65,17 @@ class CreateSpaceBlueprint
             'team_id' => $team?->id,
             'created_by_id' => $creator->id,
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function portableSettings(Space $sourceSpace): array
+    {
+        return array_diff_key(
+            $sourceSpace->settings->toArray(),
+            array_flip(self::NON_PORTABLE_SETTINGS),
+        );
     }
 
     private function collectData(Space $sourceSpace, array $tables): array
