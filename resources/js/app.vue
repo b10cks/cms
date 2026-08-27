@@ -5,8 +5,10 @@ import { RouterView } from 'vue-router'
 import { Toaster } from 'vue-sonner'
 
 import { AlertDialogProvider } from '@/composables/useAlertDialog'
+import UploadBatchPanel from '~/components/assets/UploadBatchPanel.vue'
 import Command from '~/components/Command.vue'
 import KeyboardShortcutsDialog from '~/components/KeyboardShortcutsDialog.vue'
+import { useAssetUploadBatch } from '~/composables/useAssetUploadBatch'
 import { useUrlNotifications } from '~/composables/useUrlNotifications'
 import DefaultLayout from '~/layouts/default.vue'
 import ShareLayout from '~/layouts/share.vue'
@@ -20,7 +22,20 @@ const commandOpen = ref(false)
 provide('commandOpen', commandOpen)
 
 const route = useRoute()
-const { isAuthenticated } = useAuth()
+const { isAuthenticated, user } = useAuth()
+const { reset: resetUploadBatch } = useAssetUploadBatch()
+
+// The batch is module-scope state that outlives every route, so the session
+// ending has to take it with it. Otherwise the next account on this browser
+// sees the previous one's filenames and can retry their uploads.
+watch(
+  () => user.value?.id ?? null,
+  (id, previousId) => {
+    if (previousId && id !== previousId) {
+      resetUploadBatch()
+    }
+  }
+)
 
 const layoutMap: Record<string, Component> = {
   default: DefaultLayout,
@@ -47,6 +62,7 @@ const currentLayout = computed(() => {
       </component>
     </AlertDialogProvider>
     <Toaster rich-colors />
+    <UploadBatchPanel v-if="isAuthenticated" />
     <Command />
     <KeyboardShortcutsDialog />
   </div>

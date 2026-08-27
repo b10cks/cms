@@ -116,11 +116,15 @@ export function useAssets(spaceId: MaybeRef<string>) {
    * existing asset in the space, the request is not silently accepted -
    * the caller gets a `{ status: 'duplicate' }` outcome back and can decide
    * to re-call with `{ force: true }` to upload anyway.
+   *
+   * `silent` is for batch uploads: no toast, no per-upload list invalidation
+   * (the batch invalidates once when it settles), and failures are thrown so
+   * the batch can record the server message per file.
    */
   const uploadAsset = async (
     payload: UploadAssetPayload,
     onProgress?: (progress: number) => void,
-    options: { force?: boolean } = {}
+    options: { force?: boolean; silent?: boolean; signal?: AbortSignal } = {}
   ): Promise<UploadAssetOutcome | null> => {
     try {
       await apiClient.ensureCsrfCookie()
@@ -148,6 +152,7 @@ export function useAssets(spaceId: MaybeRef<string>) {
         formData,
         {
           onProgress,
+          signal: options.signal,
           fallbackMessage: (status, statusText) =>
             `Upload failed with status ${status}: ${statusText}`,
         }
@@ -157,7 +162,9 @@ export function useAssets(spaceId: MaybeRef<string>) {
         return null
       }
 
-      debouncedInvalidateQueries()
+      if (!options.silent) {
+        debouncedInvalidateQueries()
+      }
 
       return { status: 'success', asset: response.data }
     } catch (err) {
@@ -167,6 +174,10 @@ export function useAssets(spaceId: MaybeRef<string>) {
 
       if (duplicate) {
         return duplicate
+      }
+
+      if (options.silent) {
+        throw err
       }
 
       console.error(err)
