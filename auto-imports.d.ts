@@ -114,6 +114,7 @@ declare global {
   const useAssetSelection: typeof import('./resources/js/composables/useAssetSelection').useAssetSelection
   const useAssetShares: typeof import('./resources/js/composables/useAssetShares').useAssetShares
   const useAssetTags: typeof import('./resources/js/composables/useAssetTags').useAssetTags
+  const useAssetUploadBatch: typeof import('./resources/js/composables/useAssetUploadBatch').useAssetUploadBatch
   const useAssetVersions: typeof import('./resources/js/composables/useAssetVersions').useAssetVersions
   const useAssets: typeof import('./resources/js/composables/useAssets').useAssets
   const useAttrs: typeof import('vue').useAttrs
@@ -260,6 +261,9 @@ declare global {
   // @ts-ignore
   export type { AssetSelectionEntry, AssetSelectionModifiers } from './resources/js/composables/useAssetSelection'
   import('./resources/js/composables/useAssetSelection')
+  // @ts-ignore
+  export type { BatchItemStatus, BatchUploadItem, StagedUploadFile, BatchUploadFn, BatchEnqueueDeps } from './resources/js/composables/useAssetUploadBatch'
+  import('./resources/js/composables/useAssetUploadBatch')
   // @ts-ignore
   export type { UploadAssetOutcome } from './resources/js/composables/useAssets'
   import('./resources/js/composables/useAssets')
@@ -433,6 +437,7 @@ declare module 'vue' {
     readonly useAssetSelection: UnwrapRef<typeof import('./resources/js/composables/useAssetSelection')['useAssetSelection']>
     readonly useAssetShares: UnwrapRef<typeof import('./resources/js/composables/useAssetShares')['useAssetShares']>
     readonly useAssetTags: UnwrapRef<typeof import('./resources/js/composables/useAssetTags')['useAssetTags']>
+    readonly useAssetUploadBatch: UnwrapRef<typeof import('./resources/js/composables/useAssetUploadBatch')['useAssetUploadBatch']>
     readonly useAssetVersions: UnwrapRef<typeof import('./resources/js/composables/useAssetVersions')['useAssetVersions']>
     readonly useAssets: UnwrapRef<typeof import('./resources/js/composables/useAssets')['useAssets']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
