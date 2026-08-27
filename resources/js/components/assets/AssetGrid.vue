@@ -33,6 +33,12 @@ import SortSelect from '~/components/ui/SortSelect.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type { AssetSelectionEntry } from '~/composables/useAssetSelection'
 import { getAssetManagerDragItems, type AssetManagerDragItem } from '~/lib/assets/assetDragAndDrop'
+import {
+  readDroppedTree,
+  snapshotDropEntries,
+  type DropSnapshot,
+  type DroppedTree,
+} from '~/lib/dropped-tree'
 import { downloadAssetFiles } from '~/lib/assets/downloadAssets'
 import { isEditableTarget } from '~/lib/shortcuts'
 import type { AssetShareSource } from '~/types/asset-distribution'
@@ -123,7 +129,7 @@ const isManualCollectionView = computed(
 )
 
 const showUploadDialog = ref(false)
-const droppedFiles = ref<File[]>([])
+const droppedTree = ref<DroppedTree | null>(null)
 const folderDialogOpen = ref(false)
 const dialogParentFolderId = ref<string | null>(null)
 const editingFolder = ref<AssetFolderResource | null>(null)
@@ -1474,15 +1480,54 @@ const handleDocumentDragLeave = (event: DragEvent) => {
   }
 }
 
+const ingestDroppedTree = async (snapshot: DropSnapshot) => {
+  let tree: DroppedTree
+
+  try {
+    tree = await readDroppedTree(snapshot)
+  } catch (error) {
+    toast.error(
+      String(
+        t('messages.assets.dropReadFailed', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        })
+      )
+    )
+    return
+  }
+
+  if (tree.directories.length && !canManageFolders.value) {
+    toast.error(String(t('messages.assets.folderDropDenied')))
+    return
+  }
+
+  if (!tree.files.length && !tree.directories.length) {
+    return
+  }
+
+  droppedTree.value = tree
+  showUploadDialog.value = true
+}
+
 const handleDocumentDrop = (event: DragEvent) => {
-  if (!event.dataTransfer?.files?.length) {
+  if (!event.dataTransfer?.types.includes('Files')) {
     return
   }
 
   event.preventDefault()
   document.body.classList.remove('drag-over')
-  droppedFiles.value = Array.from(event.dataTransfer.files)
-  showUploadDialog.value = true
+
+  // The DataTransfer is gone once the handler returns, so the entries are
+  // captured synchronously and traversed afterwards.
+  void ingestDroppedTree(snapshotDropEntries(event.dataTransfer)).catch((error: unknown) => {
+    toast.error(
+      String(
+        t('messages.assets.dropReadFailed', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        })
+      )
+    )
+  })
 }
 
 watch([folderId, tagId, collectionId], () => {
@@ -1969,11 +2014,12 @@ onUnmounted(() => {
       v-model:open="showUploadDialog"
       :folder-id="activeFolderId || undefined"
       :space-id="spaceId"
-      :initial-files="droppedFiles"
+      :initial-tree="droppedTree"
+      :allow-folder-upload="canManageFolders"
       @update:open="
         (open) => {
           if (!open) {
-            droppedFiles = []
+            droppedTree = null
           }
         }
       "

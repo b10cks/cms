@@ -1101,6 +1101,7 @@ onUnmounted(() => {
       v-model:open="showUploadDialog"
       :folder-id="folderId || undefined"
       :space-id="spaceId"
+      :allow-folder-upload="canManageFolders"
     />
 
     <CreateFolderDialog

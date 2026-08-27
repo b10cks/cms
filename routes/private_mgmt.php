@@ -61,6 +61,7 @@ use App\Http\Controllers\Mgmt\DataEntryDataExportController;
 use App\Http\Controllers\Mgmt\DataEntryDataImportController;
 use App\Http\Controllers\Mgmt\DataEntryTranslationStreamController;
 use App\Http\Controllers\Mgmt\DataSourceController;
+use App\Http\Controllers\Mgmt\EnsureAssetFolderPathsController;
 use App\Http\Controllers\Mgmt\FieldPluginController;
 use App\Http\Controllers\Mgmt\IconController;
 use App\Http\Controllers\Mgmt\IconDataImportController;
@@ -322,6 +323,8 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
     Route::get('stats', SpaceStatsController::class);
 
     Route::apiResource('asset-folders', AssetFolderController::class);
+    Route::post('asset-folders/ensure-paths', EnsureAssetFolderPathsController::class)
+        ->name('asset-folders.ensure-paths');
     Route::apiResource('asset-tags', AssetTagController::class)->parameters([
         'asset-tags' => 'tag',
     ]);
