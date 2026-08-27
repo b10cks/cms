@@ -3,6 +3,19 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.8.27-0ccd6dda] — 2026-8-27
+
+- ⬆️ Bump versions
+- 🔧 Regenerate the auto-import declarations
+- ✨ Drag a folder tree into the asset library
+- ✨ Add a tree view for staged uploads
+- ✨ Upload a batch of assets in the background
+- ✨ Read a dropped folder tree out of the browser
+- ✨ Materialize a whole folder path in one request
+- 🔒 Bound string length even when the value is blank
+- 🚸 Offer only the icon sources a field really has
+- 🐛 Stop a settings-only save from creating a draft version
+
 ## [v2026.8.26-876f2e0b] — 2026-8-26
 
 - 🐛 Write avatars and icons to the disk they are served from
