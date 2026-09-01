@@ -11,7 +11,6 @@ use App\Http\Middleware\EnsureEmailIsVerified;
 use App\Http\Middleware\EnsureRevision;
 use App\Http\Middleware\EnsureSpaceMembership;
 use App\Http\Middleware\HandleManagementCors;
-use App\Http\Middleware\MicroCacheDataApi;
 use App\Http\Middleware\PreventDuringImpersonation;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
@@ -118,7 +117,6 @@ class Kernel extends HttpKernel
         'auth.data' => AuthenticateDataApi::class,
         'cache.data' => CacheDataApi::class,
         'cache.headers' => SetCacheHeaders::class,
-        'cache.micro' => MicroCacheDataApi::class,
         'can' => Authorize::class,
         'guest' => RedirectIfAuthenticated::class,
         'not-impersonating' => PreventDuringImpersonation::class,

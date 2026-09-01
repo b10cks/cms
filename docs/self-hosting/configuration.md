@@ -206,13 +206,6 @@ Without a working ffmpeg, video uploads still work — they just get no generate
 ## Delivery performance (optional)
 
 ```bash
-# Origin micro-cache TTL in seconds for the heavy delivery endpoints
-# (content listing/detail, search, sitemap). Collapses the CDN-miss stampede
-# after a publish: each unique URL is computed once per TTL window. Keys
-# include the token and space revision, so entries are isolated per space and
-# invalidate on publish. Disabled by default.
-DATA_API_MICRO_CACHE_TTL=5
-
 # Requests per minute per IP against the public image transformation
 # endpoint. Each distinct transformation forces a fresh decode at the origin.
 IMAGE_RATE_LIMIT=600

@@ -12,27 +12,25 @@ use App\Http\Controllers\Api\RedirectLookupController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SpaceController;
 
-Route::get('contents', [ContentController::class, 'index'])->middleware(['revision', 'cache.data', 'cache.micro'])->name(
+Route::get('contents', [ContentController::class, 'index'])->middleware(['revision', 'cache.data'])->name(
     'contents.index',
 );
-Route::get('search', SearchController::class)->middleware(['cache.data:60,60', 'cache.micro'])->name('contents.search');
+Route::get('search', SearchController::class)->middleware(['cache.data:60,60'])->name('contents.search');
 Route::get('sitemap', ContentSitemapController::class)->middleware([
     'revision',
     'cache.data',
-    'cache.micro',
 ])->name('sitemap');
 Route::get('sitemaps/{sitemap}', [ContentSitemapController::class, 'show'])->middleware([
     'revision',
     'cache.data',
-    'cache.micro',
 ])->name('sitemaps.show');
 // Own prefix, so the catch-all below never competes with it.
 Route::get('breadcrumbs/{slug}', ContentBreadcrumbController::class)
-    ->middleware(['revision', 'cache.data', 'cache.micro'])
+    ->middleware(['revision', 'cache.data'])
     ->where('slug', '.*')
     ->name('contents.breadcrumb');
 Route::get('contents/{slug}', [ContentController::class, 'show'])
-    ->middleware(['revision', 'cache.data', 'cache.micro'])
+    ->middleware(['revision', 'cache.data'])
     ->where('slug', '.*')
     ->name('contents.show');
 
