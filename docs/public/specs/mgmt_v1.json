@@ -10698,6 +10698,38 @@
                 ]
             }
         },
+        "/mgmt/v1/spaces/{space}/asset-folders/ensure-paths": {
+            "post": {
+                "summary": "Mirrors a dropped folder tree into asset folders: every requested path is",
+                "description": "Mirrors a dropped folder tree into asset folders: every requested path is\nresolved to a folder id, creating missing folders along the way.",
+                "tags": [
+                    "Asset Folders"
+                ],
+                "operationId": "post_spaces_by_space_asset_folders_ensure_paths",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/spaces/{space}/asset-tags": {
             "get": {
                 "summary": "List asset tags",
