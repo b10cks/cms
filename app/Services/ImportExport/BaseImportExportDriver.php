@@ -13,11 +13,17 @@ abstract class BaseImportExportDriver
     use BuildsExportFilename;
 
     protected array $successes = [];
+
     protected array $changes = [];
+
     protected array $ignoredFields = [];
+
     protected array $errors = [];
 
-    abstract public function parseFile(UploadedFile $file): array;
+    /**
+     * @return iterable<int, array<string, mixed>>
+     */
+    abstract public function parseFile(UploadedFile $file): iterable;
 
     abstract public function getFormat(): string;
 

@@ -6,7 +6,6 @@ use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use App\Services\ImportExport\WritesCsvDownload;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\Response;
 
 class CsvAssetDataDriver extends BaseAssetDataDriver
@@ -15,7 +14,7 @@ class CsvAssetDataDriver extends BaseAssetDataDriver
 
     public function export(
         Space $space,
-        Collection $assets,
+        iterable $assets,
         array $assetFields,
         array $languages
     ): Response {
@@ -34,19 +33,32 @@ class CsvAssetDataDriver extends BaseAssetDataDriver
         return $this->csvDownload($headers, $rows, $filename);
     }
 
-    public function parseFile(UploadedFile $file): array
+    public function parseFile(UploadedFile $file): iterable
     {
-        $rows = [];
         $handle = fopen($file->getRealPath(), 'r');
-        $headers = fgetcsv($handle);
-
-        while (($row = fgetcsv($handle)) !== false) {
-            $rows[] = array_combine($headers, $row);
+        if ($handle === false) {
+            throw new \RuntimeException('Unable to read CSV file');
         }
 
-        fclose($handle);
+        $headers = fgetcsv($handle, escape: '');
 
-        return $rows;
+        if (! \is_array($headers)) {
+            fclose($handle);
+
+            return;
+        }
+
+        try {
+            while (($row = fgetcsv($handle, escape: '')) !== false) {
+                $combined = array_combine($headers, $row);
+
+                if ($combined !== false) {
+                    yield $combined;
+                }
+            }
+        } finally {
+            fclose($handle);
+        }
     }
 
     public function validate(
@@ -70,8 +82,12 @@ class CsvAssetDataDriver extends BaseAssetDataDriver
             return $errors;
         }
 
-        $headers = fgetcsv($handle);
+        $headers = fgetcsv($handle, escape: '');
         fclose($handle);
+
+        if (! \is_array($headers)) {
+            return ['CSV file is empty'];
+        }
 
         if (! \in_array('id', $headers) && ! \in_array('filename', $headers)) {
             $errors[] = 'CSV must contain either "id" or "filename" column for asset identification';

@@ -10,7 +10,6 @@ use App\Services\Asset\AssetMetadataFieldResolver;
 use App\Services\AssetData\DataMapper;
 use App\Services\ImportExport\BaseImportExportDriver;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,12 +19,11 @@ abstract class BaseAssetDataDriver extends BaseImportExportDriver implements Ass
     public function __construct(
         protected readonly DataMapper $mapper,
         protected readonly AssetMetadataFieldResolver $fieldResolver,
-    ) {
-    }
+    ) {}
 
     abstract public function export(
         Space $space,
-        Collection $assets,
+        iterable $assets,
         array $assetFields,
         array $languages
     ): Response;
@@ -39,23 +37,24 @@ abstract class BaseAssetDataDriver extends BaseImportExportDriver implements Ass
         $this->resetState();
 
         try {
-            $rows = $this->parseFile($file);
-
-            if (empty($rows)) {
-                return new ImportResult([], [], [], [['message' => 'File is empty']]);
-            }
-
             $validFieldKeys = array_column($assetFields, 'key');
             $validLanguageCodes = array_column($languages, 'code');
+            $hasRows = false;
 
-            $this->ignoredFields = $this->detectIgnoredFields(
-                array_key_first($rows) ? array_keys($rows[0]) : [],
-                $validFieldKeys,
-                $validLanguageCodes
-            );
-
-            foreach ($rows as $rowNumber => $rowData) {
+            foreach ($this->parseFile($file) as $rowNumber => $rowData) {
+                if (! $hasRows) {
+                    $this->ignoredFields = $this->detectIgnoredFields(
+                        array_keys($rowData),
+                        $validFieldKeys,
+                        $validLanguageCodes
+                    );
+                    $hasRows = true;
+                }
                 $this->importRow($space, $rowNumber, $rowData, $assetFields, $languages);
+            }
+
+            if (! $hasRows) {
+                return new ImportResult([], [], [], [['message' => 'File is empty']]);
             }
         } catch (\Throwable $e) {
             Log::error('File import parsing error', [
@@ -63,7 +62,7 @@ abstract class BaseAssetDataDriver extends BaseImportExportDriver implements Ass
                 'error' => $e->getMessage(),
             ]);
 
-            return new ImportResult([], [], [], [['message' => 'Failed to parse file: ' . $e->getMessage()]]);
+            return new ImportResult([], [], [], [['message' => 'Failed to parse file: '.$e->getMessage()]]);
         }
 
         return $this->buildResult();
@@ -88,7 +87,7 @@ abstract class BaseAssetDataDriver extends BaseImportExportDriver implements Ass
 
             $asset = $this->findAsset($space, $rowData);
 
-            if (!$asset) {
+            if (! $asset) {
                 $this->errors[] = [
                     'row' => $rowNumber + 1,
                     'id' => $rowData['id'] ?? $rowData['filename'],
@@ -108,7 +107,7 @@ abstract class BaseAssetDataDriver extends BaseImportExportDriver implements Ass
                 ...$this->detectIgnoredFields(
                     array_keys(array_filter(
                         $rowData,
-                        fn(mixed $value): bool => $value !== null && $value !== ''
+                        fn (mixed $value): bool => $value !== null && $value !== ''
                     )),
                     array_column($effectiveFields, 'key'),
                     $validLanguageCodes
@@ -131,7 +130,7 @@ abstract class BaseAssetDataDriver extends BaseImportExportDriver implements Ass
 
             $changeDetails = $this->detectChanges($oldData, $newData);
 
-            if (!empty($changeDetails)) {
+            if (! empty($changeDetails)) {
                 $this->changes[] = [
                     'id' => $asset->id,
                     'filename' => $asset->filename,
@@ -161,11 +160,11 @@ abstract class BaseAssetDataDriver extends BaseImportExportDriver implements Ass
     {
         $query = Asset::query();
 
-        if (!empty($rowData['id'])) {
+        if (! empty($rowData['id'])) {
             return $query->where('id', $rowData['id'])->first();
         }
 
-        if (!empty($rowData['filename'])) {
+        if (! empty($rowData['filename'])) {
             return $query->where('filename', $rowData['filename'])->first();
         }
 
@@ -188,13 +187,13 @@ abstract class BaseAssetDataDriver extends BaseImportExportDriver implements Ass
             if (str_contains($header, '_')) {
                 [$fieldKey, $langCode] = explode('_', $header, 2);
 
-                if (!in_array($fieldKey, $validFieldKeys)) {
+                if (! in_array($fieldKey, $validFieldKeys)) {
                     $ignored[] = $header;
-                } elseif (!in_array($langCode, $validLanguageCodes)) {
+                } elseif (! in_array($langCode, $validLanguageCodes)) {
                     $ignored[] = $header;
                 }
             } else {
-                if (!in_array($header, $validFieldKeys)) {
+                if (! in_array($header, $validFieldKeys)) {
                     $ignored[] = $header;
                 }
             }
@@ -211,7 +210,7 @@ abstract class BaseAssetDataDriver extends BaseImportExportDriver implements Ass
         $newFields = $newData['fields'] ?? [];
 
         foreach ($newFields as $lang => $fields) {
-            if (!is_array($fields)) {
+            if (! is_array($fields)) {
                 continue;
             }
 

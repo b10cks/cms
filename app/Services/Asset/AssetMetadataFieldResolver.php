@@ -7,7 +7,6 @@ use App\Models\Settings;
 use App\Models\Space\Asset;
 use App\Models\Space\AssetFolder;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class AssetMetadataFieldResolver
@@ -66,12 +65,12 @@ class AssetMetadataFieldResolver
         }
 
         return array_values(array_map(
-            fn(array $field): array => Arr::only($field, ['key', 'label', 'required']),
-            array_filter($resolvedFields, fn(array $field): bool => $field['enabled'] === true)
+            fn (array $field): array => Arr::only($field, ['key', 'label', 'required']),
+            array_filter($resolvedFields, fn (array $field): bool => $field['enabled'] === true)
         ));
     }
 
-    public function getUnionFieldsForAssets(Space $space, Collection $assets): array
+    public function getUnionFieldsForAssets(Space $space, iterable $assets): array
     {
         $fields = [];
 
@@ -93,7 +92,7 @@ class AssetMetadataFieldResolver
         $allowedLanguages = array_merge(
             ['_default'],
             array_values(array_filter(array_map(
-                fn(array $language): ?string => $language['code'] ?? null,
+                fn (array $language): ?string => $language['code'] ?? null,
                 $space->settings->languages ?? []
             )))
         );
@@ -101,13 +100,13 @@ class AssetMetadataFieldResolver
         $sanitized = [];
 
         foreach ($fieldData as $languageCode => $values) {
-            if (!\in_array($languageCode, $allowedLanguages, true) || !\is_array($values)) {
+            if (! \in_array($languageCode, $allowedLanguages, true) || ! \is_array($values)) {
                 continue;
             }
 
             $filteredValues = array_filter(
                 Arr::only($values, $allowedFieldKeys),
-                fn(mixed $value): bool => $value !== null && $value !== ''
+                fn (mixed $value): bool => $value !== null && $value !== ''
             );
 
             if ($filteredValues !== []) {
@@ -132,7 +131,7 @@ class AssetMetadataFieldResolver
 
         foreach ($settingsArray['field_overrides'] ?? [] as $override) {
             $fieldKey = data_get($override, 'key');
-            if (!\is_string($fieldKey) || !isset($resolvedFields[$fieldKey])) {
+            if (! \is_string($fieldKey) || ! isset($resolvedFields[$fieldKey])) {
                 continue;
             }
 
@@ -164,7 +163,7 @@ class AssetMetadataFieldResolver
         while ($currentFolder instanceof AssetFolder) {
             array_unshift($lineage, $currentFolder);
 
-            if (!$currentFolder->parent_id) {
+            if (! $currentFolder->parent_id) {
                 break;
             }
 

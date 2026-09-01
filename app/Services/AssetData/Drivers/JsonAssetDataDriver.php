@@ -5,7 +5,6 @@ namespace App\Services\AssetData\Drivers;
 use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -13,26 +12,37 @@ class JsonAssetDataDriver extends BaseAssetDataDriver
 {
     public function export(
         Space $space,
-        Collection $assets,
+        iterable $assets,
         array $assetFields,
         array $languages
     ): Response {
         $filename = $this->generateFilename($space, 'json');
 
         return new StreamedResponse(function () use ($assets, $assetFields, $languages, $space) {
-            $data = [
-                'space_id' => $space->id,
-                'exported_at' => now()->toIso8601String(),
-                'asset_fields' => $assetFields,
-                'languages' => $languages,
-                'assets' => $assets->map(function ($asset) use ($space, $languages) {
-                    $rowFields = $this->fieldResolver->getEffectiveFieldsForAsset($space, $asset);
+            $encode = static fn (mixed $value): string => json_encode(
+                $value,
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR,
+            );
 
-                    return $this->mapper->flattenAsset($asset, $rowFields, $languages);
-                })->values(),
-            ];
+            echo "{\n";
+            echo '    "space_id": '.$encode($space->id).",\n";
+            echo '    "exported_at": '.$encode(now()->toIso8601String()).",\n";
+            echo '    "asset_fields": '.preg_replace('/^/m', '    ', $encode($assetFields)).",\n";
+            echo '    "languages": '.preg_replace('/^/m', '    ', $encode($languages)).",\n";
+            echo '    "assets": [';
 
-            echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            $first = true;
+            foreach ($assets as $asset) {
+                $rowFields = $this->fieldResolver->getEffectiveFieldsForAsset($space, $asset);
+                $row = $this->mapper->flattenAsset($asset, $rowFields, $languages);
+                $encoded = $encode($row);
+
+                echo $first ? "\n" : ",\n";
+                echo preg_replace('/^/m', '        ', $encoded);
+                $first = false;
+            }
+
+            echo $first ? "]\n}" : "\n    ]\n}";
         }, 200, [
             'Content-Type' => 'application/json',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
@@ -45,14 +55,14 @@ class JsonAssetDataDriver extends BaseAssetDataDriver
         $data = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \RuntimeException('Invalid JSON format: ' . json_last_error_msg());
+            throw new \RuntimeException('Invalid JSON format: '.json_last_error_msg());
         }
 
-        if (!is_array($data) || !isset($data['assets'])) {
+        if (! is_array($data) || ! isset($data['assets'])) {
             throw new \RuntimeException('JSON must contain an "assets" array');
         }
 
-        if (!is_array($data['assets'])) {
+        if (! is_array($data['assets'])) {
             throw new \RuntimeException('"assets" must be an array');
         }
 
@@ -77,32 +87,32 @@ class JsonAssetDataDriver extends BaseAssetDataDriver
             $data = json_decode($content, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                $errors[] = 'Invalid JSON format: ' . json_last_error_msg();
+                $errors[] = 'Invalid JSON format: '.json_last_error_msg();
 
                 return $errors;
             }
 
-            if (!is_array($data) || !isset($data['assets'])) {
+            if (! is_array($data) || ! isset($data['assets'])) {
                 $errors[] = 'JSON must contain an "assets" array';
 
                 return $errors;
             }
 
-            if (!is_array($data['assets'])) {
+            if (! is_array($data['assets'])) {
                 $errors[] = '"assets" must be an array';
 
                 return $errors;
             }
 
-            if (!empty($data['assets'])) {
+            if (! empty($data['assets'])) {
                 $firstAsset = $data['assets'][0];
 
-                if (!isset($firstAsset['id']) && !isset($firstAsset['filename'])) {
+                if (! isset($firstAsset['id']) && ! isset($firstAsset['filename'])) {
                     $errors[] = 'Assets must contain either "id" or "filename" column for asset identification';
                 }
             }
         } catch (\Throwable $e) {
-            $errors[] = 'Unable to read JSON file: ' . $e->getMessage();
+            $errors[] = 'Unable to read JSON file: '.$e->getMessage();
         }
 
         return $errors;

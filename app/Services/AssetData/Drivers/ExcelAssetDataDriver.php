@@ -6,7 +6,6 @@ use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use App\Services\ImportExport\WritesXlsxDownload;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -16,18 +15,20 @@ class ExcelAssetDataDriver extends BaseAssetDataDriver
 
     public function export(
         Space $space,
-        Collection $assets,
+        iterable $assets,
         array $assetFields,
         array $languages
     ): Response {
         $headers = $this->mapper->getColumnHeaders($assetFields, $languages);
 
-        $rows = $assets->map(function ($asset) use ($space, $languages, $headers) {
-            $rowFields = $this->fieldResolver->getEffectiveFieldsForAsset($space, $asset);
-            $row = $this->mapper->flattenAsset($asset, $rowFields, $languages);
+        $rows = (function () use ($space, $assets, $languages, $headers): \Generator {
+            foreach ($assets as $asset) {
+                $rowFields = $this->fieldResolver->getEffectiveFieldsForAsset($space, $asset);
+                $row = $this->mapper->flattenAsset($asset, $rowFields, $languages);
 
-            return array_map(fn ($header) => $row[$header] ?? '', $headers);
-        });
+                yield array_map(fn ($header) => $row[$header] ?? '', $headers);
+            }
+        })();
 
         return $this->xlsxDownload($headers, $rows, $this->generateFilename($space, 'xlsx'));
     }
@@ -51,7 +52,7 @@ class ExcelAssetDataDriver extends BaseAssetDataDriver
                 $rows[] = array_combine($headers, $allRows[$i] ?? []);
             }
         } catch (\Throwable $e) {
-            throw new \RuntimeException('Failed to parse Excel file: ' . $e->getMessage());
+            throw new \RuntimeException('Failed to parse Excel file: '.$e->getMessage());
         }
 
         return $rows;
@@ -65,7 +66,7 @@ class ExcelAssetDataDriver extends BaseAssetDataDriver
         $errors = [];
 
         $extension = strtolower($file->getClientOriginalExtension());
-        if (!in_array($extension, ['xlsx', 'xls', 'csv'])) {
+        if (! in_array($extension, ['xlsx', 'xls', 'csv'])) {
             $errors[] = 'File must be an Excel file (xlsx, xls) or CSV';
 
             return $errors;
@@ -84,11 +85,11 @@ class ExcelAssetDataDriver extends BaseAssetDataDriver
 
             $headers = array_map('trim', $rows[0] ?? []);
 
-            if (!in_array('id', $headers) && !in_array('filename', $headers)) {
+            if (! in_array('id', $headers) && ! in_array('filename', $headers)) {
                 $errors[] = 'Excel must contain either "id" or "filename" column for asset identification';
             }
         } catch (\Throwable $e) {
-            $errors[] = 'Unable to read Excel file: ' . $e->getMessage();
+            $errors[] = 'Unable to read Excel file: '.$e->getMessage();
         }
 
         return $errors;

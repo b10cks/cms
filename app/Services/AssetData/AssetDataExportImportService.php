@@ -5,7 +5,6 @@ namespace App\Services\AssetData;
 use App\Contracts\AssetData\AssetDataDriver;
 use App\DTOs\ImportExport\ImportResult;
 use App\Enums\ImportExportFormat;
-use App\Http\Filters\Mgmt\AssetFilter;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Services\Asset\AssetMetadataFieldResolver;
@@ -57,8 +56,8 @@ class AssetDataExportImportService extends ImportExportService
             $query->filter($filter);
         }
 
-        $assets = $query->get();
-        $assetFields = $this->fieldResolver->getUnionFieldsForAssets($space, $assets);
+        $assetFields = $this->fieldResolver->getUnionFieldsForAssets($space, (clone $query)->lazy(200));
+        $assets = $query->lazy(200);
 
         return $driver->export($space, $assets, $assetFields, $languages);
     }
