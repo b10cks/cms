@@ -6,8 +6,12 @@ use App\Models\Management\Space;
 use App\Services\Auth\AuthorizationService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Throwable;
 
 class Controller extends BaseController
 {
@@ -31,5 +35,30 @@ class Controller extends BaseController
         $value = (int) $request->input('per_page', $default);
 
         return max(1, min($value, $max));
+    }
+
+    /**
+     * Log an unexpected failure with a support-safe identifier without exposing
+     * exception details to the client.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    protected function internalServerError(
+        Throwable $exception,
+        string $message,
+        array $context = [],
+    ): JsonResponse {
+        $errorId = (string) Str::uuid();
+
+        Log::error($message, [
+            ...$context,
+            'error_id' => $errorId,
+            'exception' => $exception,
+        ]);
+
+        return response()->json([
+            'message' => $message,
+            'error_id' => $errorId,
+        ], 500);
     }
 }

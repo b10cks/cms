@@ -8,7 +8,6 @@ use App\Http\Filters\Mgmt\AssetFilter;
 use App\Http\Requests\Asset\ExportAssetDataRequest;
 use App\Models\Management\Space;
 use App\Services\AssetData\AssetDataExportImportService;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class AssetDataExportController extends Controller
@@ -26,14 +25,10 @@ class AssetDataExportController extends Controller
 
             return $service->exportAssets($space, $format, $filter);
         } catch (\Throwable $e) {
-            Log::error('Asset data export failed', [
+            return $this->internalServerError($e, 'Failed to export asset data.', [
                 'space_id' => $space->id,
                 'format' => $request->input('as'),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
-
-            abort(500, 'Failed to export asset data: ' . $e->getMessage());
         }
     }
 }

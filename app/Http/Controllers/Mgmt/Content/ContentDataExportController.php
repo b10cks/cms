@@ -9,7 +9,6 @@ use App\Http\Filters\Mgmt\ContentMassEditFilter;
 use App\Http\Requests\Content\ExportContentDataRequest;
 use App\Models\Management\Space;
 use App\Services\ContentData\ContentDataImportExportService;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class ContentDataExportController extends Controller
@@ -38,14 +37,10 @@ class ContentDataExportController extends Controller
                 gridMode: $request->boolean('grid'),
             );
         } catch (\Throwable $e) {
-            Log::error('Content translation export failed', [
+            return $this->internalServerError($e, 'Failed to export content translations.', [
                 'space_id' => $space->id,
                 'format' => $request->input('as'),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
-
-            abort(500, 'Failed to export content translations: '.$e->getMessage());
         }
     }
 }

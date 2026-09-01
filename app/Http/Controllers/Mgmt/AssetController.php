@@ -170,12 +170,9 @@ class AssetController extends Controller
 
             return new AssetResource($asset->load('folder'));
         } catch (\Exception $e) {
-            Log::error('Failed to replace asset file', [
+            return $this->internalServerError($e, 'Failed to replace asset file.', [
                 'asset_id' => $asset->id,
-                'error' => $e->getMessage(),
             ]);
-
-            return response()->json(['message' => 'Failed to replace asset file: '.$e->getMessage()], 500);
         }
     }
 
@@ -205,12 +202,9 @@ class AssetController extends Controller
 
             return new AssetResource($asset->load('folder'));
         } catch (\Exception $e) {
-            Log::error('Failed to upload asset poster', [
+            return $this->internalServerError($e, 'Failed to upload asset poster.', [
                 'asset_id' => $asset->id,
-                'error' => $e->getMessage(),
             ]);
-
-            return response()->json(['message' => 'Failed to upload poster: '.$e->getMessage()], 500);
         }
     }
 
@@ -241,12 +235,9 @@ class AssetController extends Controller
 
             return new AssetResource($asset->load('folder'));
         } catch (\Exception $e) {
-            Log::error('Failed to remove asset poster', [
+            return $this->internalServerError($e, 'Failed to remove asset poster.', [
                 'asset_id' => $asset->id,
-                'error' => $e->getMessage(),
             ]);
-
-            return response()->json(['message' => 'Failed to remove poster: '.$e->getMessage()], 500);
         }
     }
 

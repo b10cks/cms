@@ -9,7 +9,6 @@ use App\Models\Management\Space;
 use App\Models\Space\DataEntry;
 use App\Models\Space\DataSource;
 use App\Services\DataEntryData\DataEntryDataImportExportService;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class DataEntryDataExportController extends Controller
@@ -27,15 +26,11 @@ class DataEntryDataExportController extends Controller
 
             return $service->exportEntries($space, $dataSource, $format);
         } catch (\Throwable $e) {
-            Log::error('Data entry export failed', [
+            return $this->internalServerError($e, 'Failed to export data entries.', [
                 'space_id' => $space->id,
                 'data_source_id' => $dataSource->id,
                 'format' => $request->input('as'),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
-
-            abort(500, 'Failed to export data entries: ' . $e->getMessage());
         }
     }
 }

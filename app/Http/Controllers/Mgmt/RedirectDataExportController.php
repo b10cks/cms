@@ -9,7 +9,6 @@ use App\Http\Requests\Redirect\ExportRedirectDataRequest;
 use App\Models\Management\Space;
 use App\Models\Space\Redirect;
 use App\Services\RedirectData\RedirectDataImportExportService;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class RedirectDataExportController extends Controller
@@ -27,14 +26,10 @@ class RedirectDataExportController extends Controller
 
             return $service->exportRedirects($space, $format, $filter);
         } catch (\Throwable $e) {
-            Log::error('Redirect export failed', [
+            return $this->internalServerError($e, 'Failed to export redirects.', [
                 'space_id' => $space->id,
                 'format' => $request->input('as'),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
-
-            abort(500, 'Failed to export redirects: ' . $e->getMessage());
         }
     }
 }
