@@ -109,35 +109,81 @@ class CreateBackup extends QueuedJob
             return;
         }
 
-        $command = [
-            config('database.dumper.command'),
-            '--host=' . $config['host'],
-            '--port=' . \intval($config['port']),
-            '--user=' . $config['username'],
-            '--password=' . $config['password'],
-            ...config('database.dumper.options'),
-            $config['database'],
-            // Shared-profile connections live in the main database behind a
-            // table prefix — restrict the dump to this space's tables, never
-            // the whole database (which holds management data and every other
-            // space).
-            ...$this->prefixedTables($connection, $config),
-        ];
+        $credentialsFile = $this->createDatabaseCredentialsFile($config);
 
-        // Redirect the dump's stdout straight to the file at the OS level so the
-        // (potentially very large) SQL never has to be buffered in PHP memory.
-        $shellCommand = implode(' ', array_map('escapeshellarg', $command))
-            . ' > ' . escapeshellarg($dumpFile);
+        try {
+            $command = [
+                config('database.dumper.command'),
+                // MySQL requires defaults-file options to precede every other option.
+                '--defaults-extra-file='.$credentialsFile,
+                ...config('database.dumper.options'),
+                $config['database'],
+                // Shared-profile connections live in the main database behind a
+                // table prefix — restrict the dump to this space's tables, never
+                // the whole database (which holds management data and every other
+                // space).
+                ...$this->prefixedTables($connection, $config),
+            ];
 
-        $process = Process::fromShellCommandline($shellCommand);
-        $process->setTimeout(300);
-        $process->run();
+            // Redirect the dump's stdout straight to the file at the OS level so the
+            // (potentially very large) SQL never has to be buffered in PHP memory.
+            $shellCommand = implode(' ', array_map('escapeshellarg', $command))
+                .' > '.escapeshellarg($dumpFile);
 
-        if (!$process->isSuccessful()) {
-            throw new \Exception('Database dump failed: ' . $process->getErrorOutput());
+            $process = Process::fromShellCommandline($shellCommand);
+            $process->setTimeout(300);
+            $process->run();
+
+            if (! $process->isSuccessful()) {
+                throw new \Exception('Database dump failed: '.$process->getErrorOutput());
+            }
+        } finally {
+            File::delete($credentialsFile);
         }
 
         $this->backup->updateProgress(10);
+    }
+
+    /**
+     * Put database credentials in a mode-0600 option file so they never appear
+     * in the dumper's process arguments.
+     */
+    protected function createDatabaseCredentialsFile(array $config): string
+    {
+        $path = tempnam($this->tempPath, '.database-credentials-');
+        if ($path === false) {
+            throw new \RuntimeException('Unable to create database credentials file');
+        }
+
+        if (! chmod($path, 0600)) {
+            File::delete($path);
+
+            throw new \RuntimeException('Unable to protect database credentials file');
+        }
+
+        $contents = "[client]\n";
+        foreach (['host', 'port', 'username', 'password'] as $key) {
+            $option = $key === 'username' ? 'user' : $key;
+            $value = $this->escapeDatabaseOptionValue((string) ($config[$key] ?? ''));
+            $contents .= "{$option}=\"{$value}\"\n";
+        }
+
+        if (File::put($path, $contents) === false) {
+            File::delete($path);
+
+            throw new \RuntimeException('Unable to write database credentials file');
+        }
+
+        return $path;
+    }
+
+    protected function escapeDatabaseOptionValue(string $value): string
+    {
+        return str_replace(
+            ['\\', '"', "\n", "\r", "\t"],
+            ['\\\\', '\\"', '\\n', '\\r', '\\t'],
+            $value,
+        );
     }
 
     /**
