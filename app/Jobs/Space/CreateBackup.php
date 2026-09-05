@@ -6,11 +6,13 @@ use App\Jobs\QueuedJob;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceBackup;
 use App\Notifications\Management\BackupReadyNotification;
+use App\Services\Storage\StorageService;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Process;
 use ZipArchive;
 
@@ -19,6 +21,7 @@ class CreateBackup extends QueuedJob
     public $timeout = 1800;
 
     private string $tempPath;
+
     private string $backupId;
 
     public function __construct(
@@ -51,7 +54,7 @@ class CreateBackup extends QueuedJob
             $this->createTempDirectory();
 
             $connection = $this->space->defaultConnection()->first();
-            if (!$connection) {
+            if (! $connection) {
                 throw new \Exception('No default database connection found for space');
             }
 
@@ -97,16 +100,7 @@ class CreateBackup extends QueuedJob
         }
 
         if (! \function_exists('proc_open')) {
-            \Log::warning('Skipping database dump: proc_open is disabled on this host', [
-                'space' => $this->space->id,
-            ]);
-            File::put(
-                "{$this->tempPath}/data/DATABASE_DUMP_SKIPPED.txt",
-                "The database dump was skipped because this host does not allow spawning processes (proc_open).\n"
-            );
-            $this->backup->updateProgress(10);
-
-            return;
+            throw new \RuntimeException('Unable to create database dump: proc_open is disabled');
         }
 
         $credentialsFile = $this->createDatabaseCredentialsFile($config);
@@ -202,9 +196,9 @@ class CreateBackup extends QueuedJob
         }
 
         $pdo = $connection->getConnection()->getPdo();
-        $like = str_replace(['\\', '_', '%'], ['\\\\', '\\_', '\\%'], $prefix) . '%';
+        $like = str_replace(['\\', '_', '%'], ['\\\\', '\\_', '\\%'], $prefix).'%';
         $tables = array_column(
-            $pdo->query('SHOW TABLES LIKE ' . $pdo->quote($like))->fetchAll(\PDO::FETCH_NUM),
+            $pdo->query('SHOW TABLES LIKE '.$pdo->quote($like))->fetchAll(\PDO::FETCH_NUM),
             0
         );
 
@@ -217,7 +211,7 @@ class CreateBackup extends QueuedJob
 
     protected function backupAssets(): void
     {
-        $storageService = app(\App\Services\Storage\StorageService::class);
+        $storageService = app(StorageService::class);
         $filesystem = $storageService->getDefaultStorage($this->space);
 
         $allFiles = $filesystem->allFiles("/{$this->space->id}");
@@ -225,6 +219,7 @@ class CreateBackup extends QueuedJob
 
         if ($totalFiles === 0) {
             $this->backup->updateProgress(100);
+
             return;
         }
 
@@ -232,48 +227,45 @@ class CreateBackup extends QueuedJob
         $assetsPath = "{$this->tempPath}/assets";
 
         foreach ($allFiles as $file) {
+            $targetPath = "{$assetsPath}/{$file}";
+            File::makeDirectory(dirname($targetPath), 0755, true, true);
+
+            // Stream the source file to disk instead of loading it fully
+            // into memory — assets can be large videos.
+            $source = $filesystem->readStream($file);
+            if ($source === null || $source === false) {
+                throw new \RuntimeException("Unable to read source file: {$file}");
+            }
+
+            $target = null;
             try {
-                $targetPath = "{$assetsPath}/{$file}";
-                File::makeDirectory(dirname($targetPath), 0755, true, true);
-
-                // Stream the source file to disk instead of loading it fully
-                // into memory — assets can be large videos.
-                $source = $filesystem->readStream($file);
-                if ($source === null || $source === false) {
-                    throw new \RuntimeException("Unable to read source file: {$file}");
-                }
-
                 $target = fopen($targetPath, 'w');
                 if ($target === false) {
-                    if (\is_resource($source)) {
-                        fclose($source);
-                    }
                     throw new \RuntimeException("Unable to open backup target: {$targetPath}");
                 }
 
-                stream_copy_to_stream($source, $target);
-                fclose($target);
+                if (stream_copy_to_stream($source, $target) === false) {
+                    throw new \RuntimeException("Unable to copy source file: {$file}");
+                }
+            } finally {
+                if (\is_resource($target)) {
+                    fclose($target);
+                }
                 if (\is_resource($source)) {
                     fclose($source);
                 }
-
-                $processedFiles++;
-                $progress = 10 + (int) (($processedFiles / $totalFiles) * 90);
-                $this->backup->updateProgress($progress);
-
-            } catch (\Exception $e) {
-                Log::warning("Failed to backup file: {$file}", [
-                    'backup_id' => $this->backupId,
-                    'error' => $e->getMessage(),
-                ]);
             }
+
+            $processedFiles++;
+            $progress = 10 + (int) (($processedFiles / $totalFiles) * 90);
+            $this->backup->updateProgress($progress);
         }
     }
 
     protected function createZipArchive(): string
     {
         $zipPath = storage_path("app/backups/{$this->backupId}.zip");
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
 
         $flags = ZipArchive::CREATE | ZipArchive::OVERWRITE;
 
@@ -305,7 +297,7 @@ class CreateBackup extends QueuedJob
 
         foreach ($iterator as $file) {
             $filePath = $file->getPathname();
-            $relativePath = $zipPath . '/' . substr($filePath, strlen($path) + 1);
+            $relativePath = $zipPath.'/'.substr($filePath, strlen($path) + 1);
 
             if ($file->isDir()) {
                 $zip->addEmptyDir($relativePath);
@@ -342,7 +334,7 @@ class CreateBackup extends QueuedJob
         foreach ($recipients as $email) {
             try {
 
-                \Illuminate\Support\Facades\Notification::route('mail', $email)
+                Notification::route('mail', $email)
                     ->notify(new BackupReadyNotification(
                         $this->backup,
                         $this->space,
@@ -350,7 +342,7 @@ class CreateBackup extends QueuedJob
                     ));
 
             } catch (\Exception $e) {
-                Log::error("Failed to send backup notification", [
+                Log::error('Failed to send backup notification', [
                     'backup_id' => $this->backupId,
                     'email' => $email,
                     'error' => $e->getMessage(),
@@ -370,7 +362,7 @@ class CreateBackup extends QueuedJob
                 File::deleteDirectory($this->tempPath);
             }
         } catch (\Exception $e) {
-            Log::warning("Failed to cleanup backup temp files", [
+            Log::warning('Failed to cleanup backup temp files', [
                 'backup_id' => $this->backupId,
                 'error' => $e->getMessage(),
             ]);
@@ -392,8 +384,8 @@ class CreateBackup extends QueuedJob
     public function tags(): array
     {
         return [
-            'backup:' . $this->backupId,
-            'space:' . $this->space->id,
+            'backup:'.$this->backupId,
+            'space:'.$this->space->id,
             'backup-creation',
         ];
     }
