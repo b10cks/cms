@@ -3,12 +3,14 @@
 namespace App\Services\Database;
 
 use App\Models\Management\Space;
-use Illuminate\Database\ConnectionInterface;
+use App\Support\SpaceContext;
 use Illuminate\Database\ConnectionResolverInterface;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 
 class SpaceModelResolver implements ConnectionResolverInterface
 {
-    protected array $cache = [];
+    protected ?string $activeConnectionId = null;
 
     public function connection($name = null)
     {
@@ -27,18 +29,23 @@ class SpaceModelResolver implements ConnectionResolverInterface
         // context (jobs, delivery API) or aborts.
         $space = request()->route('space');
         if (! $space instanceof Space) {
-            $space = \App\Support\SpaceContext::current();
+            $space = SpaceContext::current();
         }
-        abort_unless(!!$space, 404, 'Space not found');
+        abort_unless((bool) $space, 404, 'Space not found');
 
-        $id = $space->id;
-        if (!isset($this->cache[$id])) {
-            $connection = $space->defaultConnection[0] ?? null;
-            abort_unless(!!$connection, 404, 'Connection not found');
-            $this->cache[$id] = app(ConnectionFactory::class)->make($connection);
+        $connection = $space->defaultConnection[0] ?? null;
+        abort_unless((bool) $connection, 404, 'Connection not found');
+
+        if ($this->activeConnectionId !== null && $this->activeConnectionId !== $connection->id) {
+            DB::purge($this->activeConnectionId);
+            $connections = Config::get('database.connections', []);
+            unset($connections[$this->activeConnectionId]);
+            Config::set('database.connections', $connections);
         }
 
-        return $this->cache[$id];
+        $this->activeConnectionId = $connection->id;
+
+        return app(ConnectionFactory::class)->make($connection);
     }
 
     public function getConnectionName()
@@ -46,8 +53,5 @@ class SpaceModelResolver implements ConnectionResolverInterface
         return $this->getDefaultConnection()?->getName();
     }
 
-    public function setDefaultConnection($name)
-    {
-
-    }
+    public function setDefaultConnection($name) {}
 }
