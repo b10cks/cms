@@ -81,6 +81,7 @@ class FieldPluginSandboxTest extends TestCase
 
         $csp = $response->headers->get('Content-Security-Policy');
         $this->assertStringContainsString("default-src 'none'", $csp);
+        $this->assertStringContainsString('sandbox allow-scripts', $csp);
         $this->assertStringContainsString('frame-ancestors', $csp);
         $this->assertStringContainsString("form-action 'none'", $csp);
 

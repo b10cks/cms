@@ -38,6 +38,7 @@ class FieldPluginSandboxController extends Controller
             ->view('field-plugin-shell', ['plugin' => $plugin])
             ->header('Content-Security-Policy', implode('; ', [
                 "default-src 'none'",
+                'sandbox allow-scripts',
                 "script-src 'unsafe-inline'",
                 "style-src 'unsafe-inline'",
                 'img-src data: https:',
