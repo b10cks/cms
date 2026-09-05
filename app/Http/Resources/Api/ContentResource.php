@@ -213,6 +213,10 @@ class ContentResource extends JsonResource
         );
 
         $this->preloadResolvedRelationRows($resolvedRelations);
+        app(LinkHandler::class)->preloadLocalizedLinks(
+            $resolvedRelations->flatMap(fn (ResolvedContent $relation) => $relation->effectiveLinks),
+            $versionScope === 'published',
+        );
 
         $nestedRequest = clone $request;
         $nestedRequest->attributes->set(

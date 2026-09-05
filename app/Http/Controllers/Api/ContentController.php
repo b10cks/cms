@@ -11,6 +11,7 @@ use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\Space\Redirect;
 use App\Services\Content\ContentI18nResolver;
+use App\Services\Content\LinkHandler;
 use App\Services\Content\LocalizedContentSlugService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -74,7 +75,7 @@ class ContentController extends Controller
 
         $requestedLanguage = $request->input('language') ?? $request->input('language_iso') ?? $space->settings->getDefaultLanguage();
 
-        $resolvedItems = $resolver->resolveMany(
+        $resolvedContent = $resolver->resolveMany(
             $space,
             $paginator->getCollection()->map(
                 fn (Content $content): array => [
@@ -83,7 +84,14 @@ class ContentController extends Controller
                 ]
             ),
             $versionScope,
-        )->map(fn ($resolved) => new ContentResource($resolved));
+        );
+
+        app(LinkHandler::class)->preloadLocalizedLinks(
+            $resolvedContent->flatMap(fn ($resolved) => $resolved->effectiveLinks),
+            $vid === 'published',
+        );
+
+        $resolvedItems = $resolvedContent->map(fn ($resolved) => new ContentResource($resolved));
 
         $resolvedPaginator = new LengthAwarePaginator(
             $resolvedItems,
@@ -227,5 +235,4 @@ class ContentController extends Controller
 
         return new ContentResource($resolved);
     }
-
 }

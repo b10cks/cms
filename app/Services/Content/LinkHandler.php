@@ -79,6 +79,23 @@ class LinkHandler
         });
     }
 
+    /**
+     * Prime localized link families for a batch of resources before Laravel
+     * serializes them one at a time.
+     */
+    public function preloadLocalizedLinks(Collection $links, bool $publishedOnly = true): void
+    {
+        $canonicalIds = $links
+            ->filter(fn (mixed $link): bool => $link instanceof Content)
+            ->map(fn (Content $link): string => $link->i18n_parent_id ?: $link->id)
+            ->unique()
+            ->values();
+
+        if ($canonicalIds->isNotEmpty()) {
+            $this->familiesFor($canonicalIds, $publishedOnly);
+        }
+    }
+
     private function resolveLocalizedLinks(
         Collection $links,
         ?string $languageIso,

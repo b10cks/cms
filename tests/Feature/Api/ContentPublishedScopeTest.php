@@ -9,6 +9,7 @@ use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
+use App\Services\Content\LinkHandler;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -334,6 +335,29 @@ class ContentPublishedScopeTest extends TestCase
     {
         $this->getJson($this->indexUrl(['per_page' => -1]))
             ->assertUnprocessable();
+    }
+
+    #[Test]
+    public function unique_links_across_relations_are_loaded_in_one_batch(): void
+    {
+        $related = [];
+        for ($i = 0; $i < 9; $i++) {
+            $target = $this->createPublishedContent("unique-target-{$i}", ['title' => "Target {$i}"]);
+            $related[] = $this->createPublishedContent("unique-related-{$i}", [
+                'title' => "Related {$i}",
+                'cta' => ['type' => 'internal', 'content' => $target->id],
+            ])->id;
+        }
+
+        $small = $this->createPublishedContent('unique-small', ['related' => array_slice($related, 0, 3)]);
+        $large = $this->createPublishedContent('unique-large', ['related' => $related]);
+
+        app()->forgetInstance(LinkHandler::class);
+        $withThree = $this->countQueries($small->slug, 3);
+        app()->forgetInstance(LinkHandler::class);
+        $withNine = $this->countQueries($large->slug, 9);
+
+        $this->assertSame($withThree, $withNine);
     }
 
     private function countQueries(string $slug, int $expectedRelations): int
