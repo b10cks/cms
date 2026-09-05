@@ -6,6 +6,7 @@ use App\Jobs\Content\PublishScheduledContentJob;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
+use App\Services\Search\SearchService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\Test;
@@ -18,7 +19,7 @@ class PublishScheduledContentJobTest extends TestCase
     use SpaceTestingTrait;
 
     #[Test]
-    public function itPublishesScheduledContent()
+    public function it_publishes_scheduled_content()
     {
         $space = Space::factory()->create();
         $this->setUpSpaceTesting($space);
@@ -40,10 +41,8 @@ class PublishScheduledContentJobTest extends TestCase
     }
 
     #[Test]
-    public function itSkipsIfAlreadyPublished()
+    public function it_retries_indexing_if_publication_already_committed(): void
     {
-        Log::spy();
-
         $space = Space::factory()->create();
         $this->setUpSpaceTesting($space);
 
@@ -55,22 +54,21 @@ class PublishScheduledContentJobTest extends TestCase
                 'published_at' => now(),
             ]);
 
+        $search = \Mockery::mock(SearchService::class);
+        $search->shouldReceive('indexContent')
+            ->once()
+            ->withArgs(fn (Content $indexed, Space $indexedSpace): bool => $indexed->is($content) && $indexedSpace->is($space));
+        app()->instance(SearchService::class, $search);
+
         $job = new PublishScheduledContentJob($space->id, $version->id);
         $job->handle();
 
-        Log::shouldHaveReceived('info')
-            ->withArgs(function ($message) {
-                return str_contains($message, 'already published');
-            })
-            ->once();
-
         $version->refresh();
-        // published_at should not change
         $this->assertNotNull($version->published_at);
     }
 
     #[Test]
-    public function itSkipsIfSpaceNotFound()
+    public function it_skips_if_space_not_found()
     {
         Log::spy();
 
@@ -85,7 +83,7 @@ class PublishScheduledContentJobTest extends TestCase
     }
 
     #[Test]
-    public function itSkipsIfVersionNotFound()
+    public function it_skips_if_version_not_found()
     {
         Log::spy();
 
@@ -103,7 +101,7 @@ class PublishScheduledContentJobTest extends TestCase
     }
 
     #[Test]
-    public function itSkipsIfContentModelNotFound()
+    public function it_skips_if_content_model_not_found()
     {
         Log::spy();
 
@@ -128,7 +126,7 @@ class PublishScheduledContentJobTest extends TestCase
     }
 
     #[Test]
-    public function itRequeuesIfScheduleTimeNotYetMet()
+    public function it_requeues_if_schedule_time_not_yet_met()
     {
         $space = Space::factory()->create();
         $this->setUpSpaceTesting($space);
@@ -151,7 +149,7 @@ class PublishScheduledContentJobTest extends TestCase
     }
 
     #[Test]
-    public function itIncludesTags()
+    public function it_includes_tags()
     {
         $spaceId = 'space-123';
         $versionId = 'version-456';
@@ -160,12 +158,12 @@ class PublishScheduledContentJobTest extends TestCase
 
         $tags = $job->tags();
         $this->assertContains('content-publishing', $tags);
-        $this->assertContains('space:' . $spaceId, $tags);
-        $this->assertContains('content-version:' . $versionId, $tags);
+        $this->assertContains('space:'.$spaceId, $tags);
+        $this->assertContains('content-version:'.$versionId, $tags);
     }
 
     #[Test]
-    public function itHasCorrectTimeout()
+    public function it_has_correct_timeout()
     {
         $job = new PublishScheduledContentJob('space-id', 'version-id');
         $this->assertEquals(300, $job->timeout);

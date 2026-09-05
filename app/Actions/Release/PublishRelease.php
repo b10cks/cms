@@ -13,17 +13,26 @@ class PublishRelease
 {
     public function __construct(
         protected SearchService $searchService
-    ) {
-    }
+    ) {}
 
     public function execute(Release $release, Space $space, Authenticatable|User|null $owner): void
     {
-        if ($release->published_at !== null || $release->committed_at === null) {
+        if ($release->committed_at === null) {
+            return;
+        }
+
+        if ($release->published_at !== null) {
+            $publishedVersionIds = $release->versions()->pluck('id');
+
+            Content::query()
+                ->whereIn('published_version_id', $publishedVersionIds)
+                ->each(fn (Content $content) => $this->searchService->indexContent($content, $space));
+
             return;
         }
 
         $contents = [];
-        $release->getConnection()->transaction(function () use ($release, $space, $owner, &$contents) {
+        $release->getConnection()->transaction(function () use ($release, $owner, &$contents) {
             // Assigned directly, as ReleaseCommitController does for committed_at:
             // published_at is cast but deliberately not fillable, so update() drops
             // it outright once strict mode is off in production.
@@ -57,7 +66,7 @@ class PublishRelease
             foreach ($versions as $version) {
                 $content = $contentsById->get($version->content_id);
 
-                if (!$content) {
+                if (! $content) {
                     continue;
                 }
 

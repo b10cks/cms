@@ -22,29 +22,23 @@ class PublishScheduledReleaseJob extends QueuedJob
     protected function execute(): void
     {
         $space = Space::find($this->spaceId);
-        if (!$space) {
+        if (! $space) {
             Log::warning('Space not found for scheduled release job', [
                 'space_id' => $this->spaceId,
             ]);
+
             return;
         }
 
         app()->offsetSet('currentSpace', $space);
 
         $release = Release::find($this->releaseId);
-        if (!$release) {
+        if (! $release) {
             Log::warning('Release not found for scheduled release job', [
                 'release_id' => $this->releaseId,
                 'space_id' => $this->spaceId,
             ]);
-            return;
-        }
 
-        if ($release->published_at !== null) {
-            Log::info('Release already published, skipping', [
-                'release_id' => $this->releaseId,
-                'space_id' => $this->spaceId,
-            ]);
             return;
         }
 
@@ -53,6 +47,7 @@ class PublishScheduledReleaseJob extends QueuedJob
                 'release_id' => $this->releaseId,
                 'space_id' => $this->spaceId,
             ]);
+
             return;
         }
 
@@ -96,8 +91,8 @@ class PublishScheduledReleaseJob extends QueuedJob
     {
         return [
             'release-publishing',
-            'space:' . $this->spaceId,
-            'release:' . $this->releaseId,
+            'space:'.$this->spaceId,
+            'release:'.$this->releaseId,
         ];
     }
 }

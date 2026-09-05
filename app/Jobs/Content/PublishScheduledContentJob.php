@@ -22,29 +22,23 @@ class PublishScheduledContentJob extends QueuedJob
     protected function execute(): void
     {
         $space = Space::find($this->spaceId);
-        if (!$space) {
+        if (! $space) {
             Log::warning('Space not found for scheduled content job', [
                 'space_id' => $this->spaceId,
             ]);
+
             return;
         }
 
         app()->offsetSet('currentSpace', $space);
 
         $version = ContentVersion::find($this->contentVersionId);
-        if (!$version) {
+        if (! $version) {
             Log::warning('Content version not found for scheduled content job', [
                 'content_version_id' => $this->contentVersionId,
                 'space_id' => $this->spaceId,
             ]);
-            return;
-        }
 
-        if ($version->published_at !== null) {
-            Log::info('Content version already published, skipping', [
-                'content_version_id' => $this->contentVersionId,
-                'space_id' => $this->spaceId,
-            ]);
             return;
         }
 
@@ -66,11 +60,12 @@ class PublishScheduledContentJob extends QueuedJob
         }
 
         $content = $version->contentModel;
-        if (!$content) {
+        if (! $content) {
             Log::warning('Content model not found for version', [
                 'content_version_id' => $this->contentVersionId,
                 'space_id' => $this->spaceId,
             ]);
+
             return;
         }
 
@@ -98,8 +93,8 @@ class PublishScheduledContentJob extends QueuedJob
     {
         return [
             'content-publishing',
-            'space:' . $this->spaceId,
-            'content-version:' . $this->contentVersionId,
+            'space:'.$this->spaceId,
+            'content-version:'.$this->contentVersionId,
         ];
     }
 }

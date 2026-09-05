@@ -7,6 +7,7 @@ use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\Space\Release;
+use App\Services\Search\SearchService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\Test;
@@ -19,7 +20,7 @@ class PublishScheduledReleaseJobTest extends TestCase
     use SpaceTestingTrait;
 
     #[Test]
-    public function itPublishesScheduledRelease()
+    public function it_publishes_scheduled_release()
     {
         $space = Space::factory()->create();
         $this->setUpSpaceTesting($space);
@@ -50,10 +51,8 @@ class PublishScheduledReleaseJobTest extends TestCase
     }
 
     #[Test]
-    public function itSkipsIfAlreadyPublished()
+    public function it_retries_indexing_if_release_publication_already_committed(): void
     {
-        Log::spy();
-
         $space = Space::factory()->create();
         $this->setUpSpaceTesting($space);
 
@@ -64,21 +63,32 @@ class PublishScheduledReleaseJobTest extends TestCase
                 'committed_at' => now()->subHour(),
             ]);
 
+        $content = Content::factory()->create();
+        $version = ContentVersion::factory()->create([
+            'content_id' => $content->id,
+            'release_id' => $release->id,
+            'published_at' => now(),
+        ]);
+        $content->forceFill([
+            'published_at' => now(),
+            'published_version_id' => $version->id,
+        ])->save();
+
+        $search = \Mockery::mock(SearchService::class);
+        $search->shouldReceive('indexContent')
+            ->once()
+            ->withArgs(fn (Content $indexed, Space $indexedSpace): bool => $indexed->is($content) && $indexedSpace->is($space));
+        app()->instance(SearchService::class, $search);
+
         $job = new PublishScheduledReleaseJob($space->id, $release->id);
         $job->handle();
-
-        Log::shouldHaveReceived('info')
-            ->withArgs(function ($message) {
-                return str_contains($message, 'already published');
-            })
-            ->once();
 
         $release->refresh();
         $this->assertNotNull($release->published_at);
     }
 
     #[Test]
-    public function itSkipsIfNotCommitted()
+    public function it_skips_if_not_committed()
     {
         Log::spy();
 
@@ -106,7 +116,7 @@ class PublishScheduledReleaseJobTest extends TestCase
     }
 
     #[Test]
-    public function itSkipsIfSpaceNotFound()
+    public function it_skips_if_space_not_found()
     {
         Log::spy();
 
@@ -121,7 +131,7 @@ class PublishScheduledReleaseJobTest extends TestCase
     }
 
     #[Test]
-    public function itSkipsIfReleaseNotFound()
+    public function it_skips_if_release_not_found()
     {
         Log::spy();
 
@@ -139,7 +149,7 @@ class PublishScheduledReleaseJobTest extends TestCase
     }
 
     #[Test]
-    public function itRequeuesIfPublishTimeNotYetMet()
+    public function it_requeues_if_publish_time_not_yet_met()
     {
         $space = Space::factory()->create();
         $this->setUpSpaceTesting($space);
@@ -160,7 +170,7 @@ class PublishScheduledReleaseJobTest extends TestCase
     }
 
     #[Test]
-    public function itIncludesTags()
+    public function it_includes_tags()
     {
         $spaceId = 'space-123';
         $releaseId = 'release-456';
@@ -169,12 +179,12 @@ class PublishScheduledReleaseJobTest extends TestCase
 
         $tags = $job->tags();
         $this->assertContains('release-publishing', $tags);
-        $this->assertContains('space:' . $spaceId, $tags);
-        $this->assertContains('release:' . $releaseId, $tags);
+        $this->assertContains('space:'.$spaceId, $tags);
+        $this->assertContains('release:'.$releaseId, $tags);
     }
 
     #[Test]
-    public function itHasCorrectTimeout()
+    public function it_has_correct_timeout()
     {
         $job = new PublishScheduledReleaseJob('space-id', 'release-id');
         $this->assertEquals(300, $job->timeout);

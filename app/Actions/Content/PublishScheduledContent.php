@@ -16,12 +16,13 @@ class PublishScheduledContent
     public function __construct(
         protected SearchService $searchService,
         protected ContentSchemaValidator $contentSchemaValidator,
-    ) {
-    }
+    ) {}
 
     public function execute(ContentVersion $version, Content $content, Space $space, Authenticatable|User|null $owner): void
     {
         if ($version->published_at !== null) {
+            $this->searchService->indexContent($content, $space);
+
             return;
         }
 
