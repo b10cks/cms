@@ -37,7 +37,7 @@ class DataEntryDeliveryTest extends TestCase
 
     private function entriesUrl(DataSource $source, array $query = []): string
     {
-        return '/api/v1/datasources/' . $source->slug . '/entries?' . http_build_query(
+        return '/api/v1/datasources/'.$source->slug.'/entries?'.http_build_query(
             $query + ['token' => $this->token->token]
         );
     }
@@ -136,5 +136,14 @@ class DataEntryDeliveryTest extends TestCase
         $this->getJson($this->entriesUrl($source))
             ->assertOk()
             ->assertJsonPath('data.0.value', 'plain legacy value');
+    }
+
+    #[Test]
+    public function it_rejects_a_non_positive_page_size(): void
+    {
+        $source = DataSource::factory()->create(['slug' => 'invalid-page-size']);
+
+        $this->getJson($this->entriesUrl($source, ['per_page' => -1]))
+            ->assertUnprocessable();
     }
 }

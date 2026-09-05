@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\DataSourceResource;
 use App\Models\Space\DataSource;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-class DataSourceController
+class DataSourceController extends Controller
 {
     /**
      * List the data sources of the space that are marked as available for the API.
@@ -18,14 +19,10 @@ class DataSourceController
         $entries = DataSource::query()
             ->where('is_active', true)
             //            ->filter(DataSourceFilter::fromRequest(request()))
-            ->paginate(min(request()->per_page ?? 20, 500));
+            ->paginate($this->perPage(request(), 20, 500));
 
         return DataSourceResource::collection($entries);
     }
 
-    public function show(DataSource $source)
-    {
-
-    }
-
+    public function show(DataSource $source) {}
 }

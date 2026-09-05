@@ -32,9 +32,16 @@ class Controller extends BaseController
      */
     protected function perPage(Request $request, int $default = 20, int $max = 100): int
     {
-        $value = (int) $request->input('per_page', $default);
+        $value = $request->input('per_page', $default);
 
-        return max(1, min($value, $max));
+        abort_unless(
+            (\is_int($value) || (\is_string($value) && preg_match('/^[1-9]\d*$/', $value) === 1))
+                && (int) $value > 0,
+            422,
+            'Parameter "per_page" must be a positive integer.',
+        );
+
+        return min((int) $value, $max);
     }
 
     /**

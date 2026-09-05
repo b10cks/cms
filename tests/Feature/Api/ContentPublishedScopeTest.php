@@ -329,6 +329,13 @@ class ContentPublishedScopeTest extends TestCase
             ->assertForbidden();
     }
 
+    #[Test]
+    public function a_non_positive_page_size_is_rejected(): void
+    {
+        $this->getJson($this->indexUrl(['per_page' => -1]))
+            ->assertUnprocessable();
+    }
+
     private function countQueries(string $slug, int $expectedRelations): int
     {
         DB::flushQueryLog();

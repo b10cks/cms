@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Api\Concerns\ResolvesDeliveryContent;
+use App\Http\Controllers\Controller;
 use App\Http\Filters\Api\ContentFilter;
 use App\Http\Resources\Api\ContentResource;
 use App\Http\Resources\Api\ContentResourceCollection;
@@ -16,7 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class ContentController
+class ContentController extends Controller
 {
     use ResolvesDeliveryContent;
 
@@ -66,7 +67,7 @@ class ContentController
 
         $this->applyConfiguredChildOrdering($query, $request);
 
-        $paginator = $query->paginate(min($request->per_page ?? 20, 500));
+        $paginator = $query->paginate($this->perPage($request, 20, 500));
         $resolver = app(ContentI18nResolver::class);
         $space = app('currentSpace');
         $versionScope = $vid === 'draft' ? 'current' : $vid;
