@@ -318,6 +318,17 @@ class ContentPublishedScopeTest extends TestCase
         $this->getJson($this->showUrl('home', ['vid' => 'draft']))->assertOk();
     }
 
+    #[Test]
+    public function a_json_body_cannot_bypass_the_preview_ability(): void
+    {
+        $home = $this->createPublishedContent('body-preview', ['title' => 'Published']);
+        $this->saveDraft($home, ['title' => 'Draft']);
+        $this->token->update(['abilities' => ['contents:read']]);
+
+        $this->json('GET', $this->showUrl($home->slug), ['vid' => 'draft'])
+            ->assertForbidden();
+    }
+
     private function countQueries(string $slug, int $expectedRelations): int
     {
         DB::flushQueryLog();

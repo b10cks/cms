@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\Web\SetupController;
+use App\Http\Middleware\AuthenticateDataApi;
 use App\Support\EditionGate;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
@@ -36,7 +38,16 @@ class RouteServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(600)->by($request->bearerToken() ?: $request->ip());
+            $tokenId = $request->attributes->get(AuthenticateDataApi::TOKEN_ID_ATTRIBUTE);
+
+            if ($tokenId === null) {
+                return Limit::perMinute(600)->by("api|ip|{$request->ip()}");
+            }
+
+            return [
+                Limit::perMinute(600)->by("api|token|{$tokenId}"),
+                Limit::perMinute(1200)->by("api|ip|{$request->ip()}"),
+            ];
         });
 
         RateLimiter::for('login', function (Request $request) {
@@ -123,7 +134,7 @@ class RouteServiceProvider extends ServiceProvider
             // explicitly enabled and self-disarms after a successful run.
             // Deliberately outside the 'web' group: session/cookie encryption
             // would require the very APP_KEY this endpoint generates.
-            Route::get('/setup', \App\Http\Controllers\Web\SetupController::class)->name('setup');
+            Route::get('/setup', SetupController::class)->name('setup');
 
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));

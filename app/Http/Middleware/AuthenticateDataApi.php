@@ -13,6 +13,8 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class AuthenticateDataApi
 {
+    public const string TOKEN_ID_ATTRIBUTE = 'data_api.token_id';
+
     /**
      * Delivery surface (path segment after api/v1) → ability resource.
      * Search, sitemaps and breadcrumbs all read content, so they share
@@ -45,6 +47,7 @@ class AuthenticateDataApi
         $usageService = app(abstract: TokenUsageService::class);
         $token = $this->validateToken($plainTextToken, $usageService);
         $this->authorizeRequest($request, $token);
+        $request->attributes->set(self::TOKEN_ID_ATTRIBUTE, $token->id);
         app()->offsetSet('currentSpace', $token->space);
 
         $execution = $usageService->startExecution($token, $start);
@@ -81,7 +84,7 @@ class AuthenticateDataApi
 
         // Anything but the published scope exposes unreleased versions and
         // needs the dedicated preview grant.
-        if ($request->query('vid', 'published') !== 'published'
+        if ($request->input('vid', 'published') !== 'published'
             && ! $token->hasAbility($resource ?? '*', 'preview')) {
             throw new AccessDeniedHttpException('Token lacks preview access to unpublished versions');
         }
