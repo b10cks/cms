@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.9.7-c1a4f481] — 2026-9-7
+
+- 👷 Smoke check the delivery API after deploy and roll back on failure
+- 🐛 Resolve the delivery slug service space lazily
+
 ## [v2026.9.7-513f02b0] — 2026-9-7
 
 - ⬆️ Bump versions
