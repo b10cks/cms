@@ -72,9 +72,10 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    # must leave room for a worst-case docs build (2 × 5 min timeout)
+    # must leave room for a worst-case docs build (2 × 5 min timeout) and a
+    # worst-case rollback (3 min smoke retries + 10 min services-stable wait)
     # on top of the normal ~10 min pipeline
-    timeout-minutes: 30
+    timeout-minutes: 40
 
     steps:
       - name: Checkout code
@@ -193,10 +194,18 @@ jobs:
           provenance: false
 
       - name: Download current task definition
+        id: current-task-def
+        # This runs before the new revision is registered, so taskDefinitionArn
+        # here is the revision production is serving right now. It is captured as
+        # an output because it is the rollback target and it cannot be recovered
+        # later: after the deploy the family's newest revision is the broken one,
+        # and "newest minus one" is wrong whenever a revision was registered but
+        # never deployed.
         run: |
           aws ecs describe-task-definition \
             --task-definition ${{ env.ECS_TASK_DEFINITION }} \
             --query taskDefinition > task-definition.json
+          echo "previous-arn=$(jq -r '.taskDefinitionArn' task-definition.json)" >> $GITHUB_OUTPUT
 
       - name: Update task definition with new image
         id: task-def
@@ -262,6 +271,108 @@ jobs:
           wait-for-service-stability: true
           wait-for-minutes: 10
 
+      # wait-for-service-stability only proves the ECS health check answers. That
+      # route touches no controller, no space and no token, so a deploy where
+      # every delivery request 500s still counts as stable (v2026.9.7-513f02b0).
+      # This step exercises the real thing: token auth, space binding, controller
+      # construction, query, resource serialisation.
+      - name: Smoke check delivery API
+        id: smoke
+        timeout-minutes: 5
+        env:
+          SMOKE_TOKEN: ${{ secrets.SMOKE_TEST_TOKEN }}
+          API_HOST: ${{ secrets.SMOKE_TEST_API_HOST || 'api.b10cks.com' }}
+        run: |
+          set -euo pipefail
+
+          # A skipped check that renders green is worse than no check, so an
+          # unset token is a hard failure, not a soft skip.
+          if [ -z "${SMOKE_TOKEN}" ]; then
+            echo "::error::SMOKE_TEST_TOKEN is not set. Add a delivery token (blx_…) as a repository secret; the smoke check cannot verify this deploy without one."
+            exit 1
+          fi
+
+          # Defeating the CDN: the delivery API sits behind CloudFront and a
+          # cached 200 would hide a dead origin. We pin a unique `rv`. That is the
+          # app's own revision parameter (EnsureRevision accepts any value and
+          # only redirects when it is absent), and the whole caching scheme is
+          # built on rv being part of the CloudFront cache key, so it is
+          # guaranteed to be forwarded and to miss. A random cache-buster param
+          # could be dropped by the cache policy's query-string allow list, and
+          # CloudFront ignores a `Cache-Control: no-cache` request header.
+          # Documented for exactly this use in docs/concepts/access-tokens.md.
+          #
+          # rv also varies per attempt: CloudFront caches 5xx responses for a
+          # short window by default, so a retry on a fixed rv could replay the
+          # failure we are trying to let settle.
+          attempt=1
+          max_attempts=5
+          delay=15
+
+          while true; do
+            rv="${GITHUB_RUN_ID}${GITHUB_RUN_ATTEMPT}$(date +%s)"
+            status=0
+            code=$(curl -sS -o response.json -w '%{http_code}' \
+              --connect-timeout 5 --max-time 20 \
+              -H 'accept: application/json' \
+              "https://${API_HOST}/api/v1/contents?per_page=1&rv=${rv}&token=${SMOKE_TOKEN}") || status=$?
+
+            if [ "${status}" -ne 0 ]; then
+              # curl exits non-zero on connection refused, DNS failure and timeout.
+              # Without capturing it, `set -e` would abort before the retry loop.
+              reason="curl exit ${status} (connection error or timeout)"
+            elif [ "${code}" != "200" ]; then
+              reason="HTTP ${code}"
+            elif ! jq -e '(.data | type) == "array" and .rv != null' response.json >/dev/null 2>&1; then
+              # A 200 carrying an error envelope, an empty body or an HTML error
+              # page must fail. `.rv` comes from the bound space, which is the
+              # thing that was null in the outage.
+              reason="unexpected body: $(head -c 300 response.json | tr -d '\n')"
+            else
+              echo "::notice::Delivery API healthy on attempt ${attempt} ($(jq '.data | length' response.json) item(s), rv $(jq -r '.rv' response.json))"
+              exit 0
+            fi
+
+            echo "::warning::Smoke check attempt ${attempt}/${max_attempts} failed: ${reason}"
+
+            if [ "${attempt}" -ge "${max_attempts}" ]; then
+              echo "::error::Delivery API smoke check failed after ${max_attempts} attempts: ${reason}"
+              exit 1
+            fi
+
+            attempt=$((attempt + 1))
+            sleep "${delay}"
+          done
+
+      # Only the CMS service rolls back. It is the one the smoke check covers.
+      # Reverb is deployed after the check (see below), so a failed check leaves
+      # it untouched on the previous image rather than needing its own rollback.
+      - name: Roll back CMS service to previous task definition
+        id: rollback
+        if: failure() && steps.smoke.outcome == 'failure'
+        env:
+          PREVIOUS_TASK_DEF: ${{ steps.current-task-def.outputs.previous-arn }}
+        run: |
+          set -euo pipefail
+
+          echo "::error::Rolling ${{ env.ECS_SERVICE }} back to ${PREVIOUS_TASK_DEF}"
+
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE }} \
+            --task-definition "${PREVIOUS_TASK_DEF}" \
+            --force-new-deployment >/dev/null
+
+          # Wait, so the run does not report "rolled back" while the old tasks are
+          # still starting. Bounded by the waiter itself: 40 polls, 15s apart.
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }}
+
+          echo "::notice::Rollback complete — ${{ env.ECS_SERVICE }} is stable on ${PREVIOUS_TASK_DEF}"
+
+      # After the smoke check: if the CMS rolls back, Reverb must not be left
+      # running the image that was just rejected.
       - name: Deploy Reverb service to Amazon ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@c465972ecbd160473f22e683363b422a5412a3de # v2.6.3
         with:
@@ -272,6 +383,9 @@ jobs:
 
       - name: Get commits since last release
         id: commits
+        # Also on failure: the Discord embed reads "Changes since <tag>" and a
+        # rolled-back deploy is exactly when knowing what shipped matters.
+        if: always()
         run: |
           # Get the previous tag
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
@@ -293,7 +407,20 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          if [ "${{ job.status }}" == "success" ]; then
+          # A rollback is not a generic red failure: the tag is not live, but
+          # production is. It gets its own colour and wording so nobody has to
+          # open the run to find out which of the two happened.
+          ROLLBACK="${{ steps.rollback.outcome }}"
+          NOTE=""
+          if [ "$ROLLBACK" == "success" ]; then
+            COLOR="15105570"  # Orange
+            STATUS="↩️ Deployment Rolled Back"
+            NOTE="\n\n**The delivery API smoke check failed after deploy.** ${{ env.ECS_SERVICE }} was rolled back to the previous task definition and is stable. This version is NOT live.\n${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          elif [ "$ROLLBACK" == "failure" ]; then
+            COLOR="10038562"  # Dark red
+            STATUS="🚨 Rollback Failed — Check Production Now"
+            NOTE="\n\n**The smoke check failed and the automatic rollback did not complete.** The delivery API may still be down. Inspect the ${{ env.ECS_SERVICE }} service in ECS.\n${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          elif [ "${{ job.status }}" == "success" ]; then
             COLOR="3066993"  # Green
             STATUS="✅ Deployment Successful"
           else
@@ -303,7 +430,7 @@ jobs:
 
           # Use jq to properly escape the commits for JSON
           COMMITS=$(echo "${{ steps.commits.outputs.commits }}" | base64 --decode)
-          DESCRIPTION=$(echo -e "**Project:** https://github.com/b10cks/cms\n**Version:** \`${{ steps.version.outputs.version }}\`\n\n**Changes since ${{ steps.commits.outputs.previous_tag }}:**\n${COMMITS}")
+          DESCRIPTION=$(echo -e "**Project:** https://github.com/b10cks/cms\n**Version:** \`${{ steps.version.outputs.version }}\`${NOTE}\n\n**Changes since ${{ steps.commits.outputs.previous_tag }}:**\n${COMMITS}")
 
           # Truncate if too long (Discord has a 4096 char limit for description)
           if [ ${#DESCRIPTION} -gt 3800 ]; then
