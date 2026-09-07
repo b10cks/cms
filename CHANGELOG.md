@@ -3,6 +3,24 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.9.7-513f02b0] — 2026-9-7
+
+- ⬆️ Bump versions
+- ⚡ Batch localized link lookups across delivered content
+- 🐛 Reject invalid delivery pagination before querying
+- 🐛 Honor inherited permissions in realtime channels
+- ⚡ Release tenant connections when workers switch spaces
+- 🐛 Retry search indexing after publication commits
+- 🐛 Fail backups when database dumps or asset copies fail
+- 🔒 Sandbox field plugins when opened directly
+- 🔒 Enforce delivery authorization and throttle authenticated tokens
+- 🔒 Keep database passwords out of backup processes
+- 🔥 Remove the ineffective delivery micro-cache
+- ⚡ Stream asset data transfers in bounded chunks
+- 🔒 Keep internal failures out of API responses
+- Bump docker/setup-buildx-action from 4.2.0 to 4.3.0
+- Bump aws-actions/amazon-ecr-login from 2.1.6 to 2.1.7
+
 ## [v2026.9.1-b6eb0ce5] — 2026-9-1
 
 - 💡 Update mgmt api docs
