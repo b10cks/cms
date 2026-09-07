@@ -5,14 +5,36 @@ namespace App\Services\Content;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Support\SpaceContext;
+use RuntimeException;
 
 class LocalizedContentSlugService extends ContentSlugService
 {
-    protected Space $space;
+    protected ?Space $space;
 
     public function __construct(?Space $space = null)
     {
-        $this->space = $space ?? request('space') ?? SpaceContext::current();
+        $this->space = $space;
+    }
+
+    /**
+     * The space whose locale settings shape the slugs.
+     *
+     * Resolved on first use, never in the constructor: Laravel builds
+     * controllers while gathering their middleware, so anything resolved from
+     * the container at construction time runs before the middleware that binds
+     * the space.
+     */
+    protected function space(): Space
+    {
+        $space = $this->space ??= request('space') ?? SpaceContext::current();
+
+        if (! $space instanceof Space) {
+            throw new RuntimeException(
+                'LocalizedContentSlugService needs a space. Pass one explicitly or run inside SpaceContext::enter().',
+            );
+        }
+
+        return $space;
     }
 
     public function updateFullSlug(Content $content): ?string
@@ -67,7 +89,7 @@ class LocalizedContentSlugService extends ContentSlugService
 
     public function applyLocalizationStrategy(string $basePath, string $languageIso): string
     {
-        $segment = $this->space->settings->getLocaleSegment($languageIso);
+        $segment = $this->space()->settings->getLocaleSegment($languageIso);
 
         if ($segment !== '') {
             return "/{$segment}{$basePath}";
@@ -83,9 +105,9 @@ class LocalizedContentSlugService extends ContentSlugService
 
     protected function stripLocaleFromPath(string $path): string
     {
-        $segments = $this->space->settings->getEnabledLanguages();
+        $segments = $this->space()->settings->getEnabledLanguages();
 
-        foreach ($this->space->settings->getSiteLocales() as $locale) {
+        foreach ($this->space()->settings->getSiteLocales() as $locale) {
             $segments[] = trim((string) $locale['segment'], '/');
         }
 
@@ -102,12 +124,12 @@ class LocalizedContentSlugService extends ContentSlugService
 
         $variations['current'] = $basePath;
         $variations['always_prepend'] = "/{$content->language_iso}{$basePath}";
-        $variations['prepend_translations'] = $content->language_iso !== $this->space->settings->getDefaultLanguage()
+        $variations['prepend_translations'] = $content->language_iso !== $this->space()->settings->getDefaultLanguage()
             ? "/{$content->language_iso}{$basePath}"
             : $basePath;
         $variations['never'] = $basePath;
 
-        foreach ($this->space->settings->getSegmentsForLanguage($content->language_iso) as $index => $segment) {
+        foreach ($this->space()->settings->getSegmentsForLanguage($content->language_iso) as $index => $segment) {
             $variations["segment_{$index}"] = "/{$segment}{$basePath}";
         }
 

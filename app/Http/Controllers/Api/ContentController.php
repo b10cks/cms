@@ -12,7 +12,6 @@ use App\Models\Space\Content;
 use App\Models\Space\Redirect;
 use App\Services\Content\ContentI18nResolver;
 use App\Services\Content\LinkHandler;
-use App\Services\Content\LocalizedContentSlugService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -21,13 +20,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class ContentController extends Controller
 {
     use ResolvesDeliveryContent;
-
-    protected LocalizedContentSlugService $slugService;
-
-    public function __construct(LocalizedContentSlugService $slugService)
-    {
-        $this->slugService = $slugService;
-    }
 
     /**
      * List content entries of the space, filtered, sorted, localized, and paginated.
