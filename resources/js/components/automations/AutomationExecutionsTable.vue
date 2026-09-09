@@ -170,7 +170,7 @@ const handleFiltersUpdate = (value: Record<string, unknown>) => {
       </div>
     </div>
 
-    <div class="overflow-hidden rounded-md border border-input">
+    <div class="overflow-hidden rounded-md border border-border">
       <Table>
         <TableHeader>
           <TableRow>

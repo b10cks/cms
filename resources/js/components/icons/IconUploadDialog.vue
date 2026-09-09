@@ -233,7 +233,7 @@ watch(open, (value) => {
         :aria-label="t('labels.icons.dropHint')"
         :class="[
           'cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors',
-          isDragging ? 'border-primary bg-primary/5' : 'border-input hover:border-primary',
+          isDragging ? 'border-primary bg-primary/5' : 'border-border-strong hover:border-primary',
         ]"
         @click="fileInput?.click()"
         @keydown.enter.prevent="fileInput?.click()"
@@ -267,11 +267,11 @@ watch(open, (value) => {
           <div
             v-for="item in queue"
             :key="item.id"
-            class="flex items-start gap-3 rounded-lg border border-input bg-surface p-2"
+            class="flex items-start gap-3 rounded-lg border border-border bg-surface p-2"
           >
             <div class="flex shrink-0 flex-col items-center gap-0.5">
               <div
-                class="flex size-12 items-center justify-center rounded border border-input bg-background text-primary"
+                class="flex size-12 items-center justify-center rounded border border-border bg-background text-primary"
               >
                 <IconPreview
                   :body="item.body"

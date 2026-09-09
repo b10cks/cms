@@ -594,7 +594,7 @@ onBeforeUnmount(() => {
     class="relative w-full"
   >
     <div
-      class="flex min-h-9 flex-wrap items-center gap-2 rounded-md bg-input py-1 pr-2 pl-2 text-primary shadow-sm transition-colors placeholder:text-muted focus-within:ring-1 focus-within:ring-ring focus-within:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+      class="flex min-h-9 flex-wrap items-center gap-2 rounded-md border border-input-border bg-input py-1 pr-2 pl-2 text-primary shadow-sm transition-colors placeholder:text-muted focus-within:ring-1 focus-within:ring-ring focus-within:outline-none disabled:cursor-not-allowed disabled:opacity-50"
     >
       <!-- Applied Filters as Badges; the one being edited is represented by the pending badge -->
       <template

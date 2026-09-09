@@ -223,7 +223,7 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
 
         <div
           ref="tableRef"
-          class="overflow-hidden rounded-md border border-input"
+          class="overflow-hidden rounded-md border border-border"
         >
           <Table>
             <TableHeader>

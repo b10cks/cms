@@ -209,7 +209,7 @@ const handleBulkDelete = async () => {
       </div>
     </div>
 
-    <div class="rounded-lg border border-input">
+    <div class="rounded-lg border border-border">
       <Table>
         <TableHeader>
           <TableRow>

@@ -396,7 +396,7 @@ watch(
         <div
           v-for="(style, index) in listStyles"
           :key="index"
-          class="flex flex-col gap-2 rounded border border-input bg-surface p-3"
+          class="flex flex-col gap-2 rounded border border-border bg-surface p-3"
         >
           <div class="flex items-end gap-2">
             <InputField
@@ -449,7 +449,7 @@ watch(
 
       <div
         v-if="showAddListStyleForm"
-        class="flex flex-col gap-2 rounded border border-input bg-surface p-3"
+        class="flex flex-col gap-2 rounded border border-border bg-surface p-3"
       >
         <InputField
           v-model="newListStyle.name"

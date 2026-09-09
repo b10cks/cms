@@ -11,7 +11,10 @@ const props = defineProps<{
 <template>
   <tfoot
     :class="
-      cn('border-t border-t-border bg-muted/20 font-medium [&>tr]:last:border-b-0', props.class)
+      cn(
+        'border-t border-t-border-strong bg-muted-background font-medium [&>tr]:last:border-b-0 [&>tr:hover]:bg-transparent',
+        props.class
+      )
     "
   >
     <slot />

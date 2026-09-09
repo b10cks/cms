@@ -351,7 +351,7 @@ defineExpose({
 
     <div
       ref="tableRef"
-      class="overflow-hidden rounded-md border border-input"
+      class="overflow-hidden rounded-md border border-border"
     >
       <Table>
         <TableHeader>

@@ -13,8 +13,8 @@ export const cardVariants = cva('', {
   variants: {
     variant: {
       none: 'pb-12',
-      default: 'rounded-xl p-6 bg-card text-card-foreground shadow-soft',
-      surface: 'rounded-xl p-6 bg-surface shadow-soft',
+      default: 'rounded-xl p-6 border border-border bg-card text-card-foreground shadow-soft-sm',
+      surface: 'rounded-xl p-6 border border-border bg-surface shadow-soft-sm',
       outline: 'rounded-xl p-6 border border-border',
       accent: 'rounded-xl p-6 bg-accent text-white shadow-soft',
       warning: 'rounded-xl p-6 bg-warning-background/20 text-warning shadow-sm',

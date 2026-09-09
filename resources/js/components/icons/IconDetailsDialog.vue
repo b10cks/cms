@@ -140,7 +140,7 @@ const remove = async () => {
       </DialogHeader>
 
       <!-- Preview area -->
-      <div class="overflow-hidden rounded-lg border border-input">
+      <div class="overflow-hidden rounded-lg border border-border">
         <div class="flex gap-4 p-4">
           <!-- Main preview on selected background -->
           <div
@@ -169,7 +169,7 @@ const remove = async () => {
                   :class="[
                     'size-5 rounded border-2 transition-colors cursor-pointer',
                     cls,
-                    previewBg === bg ? 'border-primary' : 'border-input hover:border-muted',
+                    previewBg === bg ? 'border-primary' : 'border-border hover:border-muted',
                     bg === 'checkered' ? 'checkerboard checkerboard-sm' : '',
                   ]"
                   @click="previewBg = bg as PreviewBg"
@@ -190,7 +190,7 @@ const remove = async () => {
                     'flex size-7 items-center justify-center rounded border-2 transition-colors cursor-pointer',
                     BG_CLASSES[previewBg],
                     swatch.color,
-                    selectedColor === swatch.color ? 'border-primary' : 'border-input hover:border-muted',
+                    selectedColor === swatch.color ? 'border-primary' : 'border-border hover:border-muted',
                   ]"
                   @click="selectedColor = selectedColor === swatch.color ? null : swatch.color"
                 >
@@ -217,7 +217,7 @@ const remove = async () => {
       </div>
 
       <!-- SVG editing group -->
-      <div class="overflow-hidden rounded-lg border border-input">
+      <div class="overflow-hidden rounded-lg border border-border">
         <div class="flex items-center justify-between px-3 py-2">
           <button
             type="button"
@@ -244,7 +244,7 @@ const remove = async () => {
         <Transition name="slide-down">
           <div
             v-if="svgEditorOpen"
-            class="grid gap-3 border-t border-input p-3"
+            class="grid gap-3 border-t border-border p-3"
           >
             <div class="grid gap-1">
               <Label :label="t('labels.icons.svgSource')" />
@@ -252,7 +252,7 @@ const remove = async () => {
                 v-model="form.body"
                 rows="8"
                 spellcheck="false"
-                class="w-full resize-y rounded-md border border-input bg-background px-3 py-2 font-mono text-sm text-primary focus:outline-none focus:ring-2 focus:ring-ring"
+                class="w-full resize-y rounded-md border border-input-border bg-background px-3 py-2 font-mono text-sm text-primary focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
             <div class="grid grid-cols-2 gap-3">

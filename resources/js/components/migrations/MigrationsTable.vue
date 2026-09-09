@@ -101,7 +101,7 @@ const handleDelete = async (migration: MigrationResource) => {
 
 <template>
   <div class="space-y-2">
-    <div class="overflow-hidden rounded-md border border-input">
+    <div class="overflow-hidden rounded-md border border-border">
       <Table>
         <TableHeader>
           <TableRow>

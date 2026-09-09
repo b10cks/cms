@@ -125,7 +125,7 @@ const handleClick = (icon: IconResource) => {
           :key="icon.id"
           type="button"
           :title="`${icon.name} (${icon.key}) — ${icon.width}×${icon.height}`"
-          class="group flex flex-col items-center justify-center gap-2 cursor-pointer rounded-lg border border-input bg-surface p-2 pb-2.5 text-primary transition-colors hover:border-primary hover:bg-surface/80"
+          class="group flex flex-col items-center justify-center gap-2 cursor-pointer rounded-lg border border-border bg-card p-2 pb-2.5 text-primary shadow-soft-sm transition-all hover:border-border-strong hover:shadow-soft"
           style="min-height: 96px"
           @click="handleClick(icon)"
         >

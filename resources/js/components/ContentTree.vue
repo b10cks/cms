@@ -38,13 +38,13 @@ import { normalizeLanguageIso } from '~/lib/content-i18n'
 import { fuzzyMatch, prepareFuzzyQuery, prepareFuzzyTarget } from '~/lib/fuzzy-match'
 import { buildPreviewUrl } from '~/lib/preview-url'
 import { isEditableTarget } from '~/lib/shortcuts'
-import { automationAppliesToBlock } from '~/utils/automations'
 import type {
   ContentTreeActionContext,
   ContentTreeClipboardItem,
   ContentTreeOperationPayload,
   CreateContentPayload,
 } from '~/types/contents'
+import { automationAppliesToBlock } from '~/utils/automations'
 
 type Edge = 'top' | 'bottom' | 'left'
 type MenuOwnerId = string | 'root'
@@ -543,7 +543,7 @@ function setContentTreeDragPreview({
       preview.style.borderRadius = '10px'
       preview.style.border = '1px solid var(--popover-border)'
       preview.style.background = 'var(--popover)'
-      preview.style.boxShadow = 'var(--shadow-soft-sm, 0 4px 12px rgb(0 0 0 / 0.15))'
+      preview.style.boxShadow = 'var(--shadow-soft, 0 4px 12px rgb(0 0 0 / 0.15))'
       preview.style.color = 'var(--popover-foreground)'
       preview.style.fontSize = '12px'
       preview.style.fontWeight = '600'
@@ -843,8 +843,7 @@ const executeDelete = async (context: ContentTreeActionContext) => {
 
 // A single block exists once per tree, so copying, cutting or duplicating one
 // can only ever produce something that cannot be placed.
-const containsSingleItem = (ids: string[]) =>
-  ids.some((id) => data.value?.[id]?.type === 'single')
+const containsSingleItem = (ids: string[]) => ids.some((id) => data.value?.[id]?.type === 'single')
 
 const canCopyCutOrDuplicate = (context: ContentTreeActionContext) =>
   canManageContent.value &&

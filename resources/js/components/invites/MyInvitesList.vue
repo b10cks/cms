@@ -79,7 +79,7 @@ const handleDecline = async (invite: InviteResource) => {
 
 <template>
   <div class="space-y-2">
-    <div class="rounded-lg border border-input">
+    <div class="rounded-lg border border-border">
       <Table>
         <TableHeader>
           <TableRow>

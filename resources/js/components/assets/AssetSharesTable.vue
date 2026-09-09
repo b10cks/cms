@@ -114,7 +114,7 @@ const handleDelete = async (share: AssetShareResource) => {
 
 <template>
   <div class="space-y-2">
-    <div class="overflow-hidden rounded-md border border-input">
+    <div class="overflow-hidden rounded-md border border-border">
       <Table>
         <TableHeader>
           <TableRow>

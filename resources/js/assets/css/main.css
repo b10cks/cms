@@ -20,8 +20,11 @@
   --color-blue-900: oklch(38.84% 0.094 245.39);
   --color-blue-950: oklch(30.91% 0.071 243.7);
 
+  --color-gray-25: oklch(97.8% 0.003 274);
   --color-gray-50: oklch(95.82% 0.004 271.37);
+  --color-gray-75: oklch(93.75% 0.006 275);
   --color-gray-100: oklch(91.68% 0.008 278.63);
+  --color-gray-125: oklch(89.62% 0.009 279);
   --color-gray-150: oklch(87.56% 0.01 279.37);
   --color-gray-200: oklch(82.89% 0.012 279);
   --color-gray-250: oklch(78.21% 0.017 279.73);
@@ -52,21 +55,27 @@
   --checkerboard-dark: var(--color-gray-200);
   --checkerboard-size: 20px;
 
-  /* Elevation ladder (light): surface (canvas) < background (panel) < card/popover.
+  /* Elevation ladder (light): frame < surface (canvas) < background (panel) < card/popover.
      Depth convention:
+       frame       bg-sidebar, two grid steps below the canvas
        L0 canvas   bg-surface, no shadow
        L1 panel    bg-background
-       L2 card     bg-card shadow-soft
+       L2 card     bg-card border-border shadow-soft-sm
        L3 popover  bg-popover border-popover-border shadow-soft-lg
-       L4 modal    bg-background shadow-soft-lg over bg-overlay scrim */
-  --surface: var(--color-gray-100);
-  --background: var(--color-gray-50);
-  --elevated: var(--color-gray-150);
+       L4 modal    bg-background shadow-soft-lg over bg-overlay scrim
+
+     Light depth comes from a tinted canvas, a hairline around every boxed
+     block and a small shadow that settles it. Hairlines are one grid step
+     off the surface they sit on; the old gray-200 border was a rule, not a
+     hairline, and the loudest thing on a white card. */
+  --surface: var(--color-gray-50);
+  --background: var(--color-gray-25);
+  --elevated: var(--color-gray-100);
   --foreground: var(--color-gray-700);
 
   --primary: var(--color-gray-900);
   --primary-foreground: var(--color-gray-50);
-  --secondary: var(--color-gray-150);
+  --secondary: var(--color-gray-100);
   --secondary-foreground: var(--color-gray-800);
 
   --card: var(--color-white);
@@ -76,34 +85,34 @@
   --accent-foreground: var(--color-white);
   /* --muted is a TEXT color (app-wide convention); --muted-background is the surface pair */
   --muted: var(--color-gray-600);
-  --muted-background: var(--color-gray-150);
+  --muted-background: var(--color-gray-75);
 
   --input: var(--color-white);
-  --input-border: var(--color-gray-200);
+  --input-border: var(--color-gray-150);
 
-  --border: var(--color-gray-200);
-  --border-strong: var(--color-gray-250);
+  --border: var(--color-gray-125);
+  --border-strong: var(--color-gray-200);
   --ring: var(--color-blue-500);
   --popover: var(--color-white);
   --popover-foreground: var(--color-gray-700);
-  --popover-border: var(--color-gray-200);
+  --popover-border: var(--color-gray-100);
 
   --overlay: oklch(20.63% 0.008 277.83 / 0.45);
 
   --sidebar: var(--color-gray-100);
   --sidebar-foreground: var(--color-gray-700);
   --sidebar-muted: var(--color-gray-600);
-  --sidebar-accent: var(--color-gray-200);
+  --sidebar-accent: var(--color-gray-150);
   --sidebar-accent-foreground: var(--color-gray-900);
-  --sidebar-border: var(--color-gray-200);
+  --sidebar-border: var(--color-gray-150);
   --sidebar-ring: var(--color-blue-500);
 
-  --tree-hover: var(--color-gray-200);
+  --tree-hover: var(--color-gray-100);
   --tree-selected: oklch(66.71% 0.161 245.54 / 0.18);
   --tree-selected-border: oklch(66.71% 0.161 245.54 / 0.45);
   --tree-selected-foreground: var(--color-gray-900);
   --tree-drop: oklch(66.71% 0.161 245.54 / 0.15);
-  --tree-guide: var(--color-gray-250);
+  --tree-guide: var(--color-gray-200);
 
   --destructive: var(--color-red-600);
   --destructive-foreground: var(--color-red-800);
@@ -280,9 +289,9 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --shadow-soft-sm:
-    0px 2px 4px rgba(3, 7, 18, 0.02), 0px 7px 15px rgba(3, 7, 18, 0.04),
-    0px 16px 33px rgba(3, 7, 18, 0.06);
+  /* What sits under a card: two tight layers, felt more than seen, so the
+     hairline stays the edge and the shadow only settles it. */
+  --shadow-soft-sm: 0px 1px 2px rgba(3, 7, 18, 0.04), 0px 2px 6px rgba(3, 7, 18, 0.05);
   --shadow-soft:
     0px 1px 1px rgba(3, 7, 18, 0.01), 0px 3px 5px rgba(3, 7, 18, 0.02),
     0px 6px 12px rgba(3, 7, 18, 0.04), 0px 10px 21px rgba(3, 7, 18, 0.05),
@@ -626,7 +635,6 @@
 .fade-leave-to {
   opacity: 0;
 }
-
 
 .slide-down-enter-active,
 .slide-down-leave-active {

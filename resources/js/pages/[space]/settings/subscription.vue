@@ -630,7 +630,7 @@ const payProposal = () => {
         <h3 class="text-sm font-semibold text-primary">
           {{ $t('labels.subscriptions.history') }}
         </h3>
-        <div class="overflow-hidden rounded-md border border-input">
+        <div class="overflow-hidden rounded-md border border-border">
           <Table>
             <TableHeader>
               <TableRow>

@@ -645,7 +645,7 @@ watch(
       </div>
     </div>
 
-    <div class="tab-content rounded-lg border border-input p-2">
+    <div class="tab-content rounded-lg border border-border p-2">
       <div
         v-for="(page, pageIndex) in localEditor"
         v-show="activeTab === pageIndex"

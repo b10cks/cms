@@ -227,9 +227,9 @@ watchEffect((onCleanup) => {
       <div
         ref="rootElement"
         v-bind="$attrs"
-        class="group relative rounded-lg bg-background p-1 shadow-lg transition-all select-none hover:bg-input focus:bg-input focus:outline-2 focus:outline-blue-300"
+        class="group relative rounded-lg border border-border bg-card p-1 shadow-soft-sm transition-all select-none hover:border-border-strong hover:shadow-soft focus:outline-2 focus:outline-accent"
         :class="{
-          'outline-2 outline-accent': selected,
+          'border-accent bg-accent/10 outline-2 outline-accent': selected,
           'opacity-50': cut,
         }"
         :aria-selected="selected"

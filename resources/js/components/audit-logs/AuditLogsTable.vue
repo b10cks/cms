@@ -248,7 +248,7 @@ function buildItemRoute(row: AuditLogResource): object | null {
       />
     </div>
 
-    <div class="overflow-hidden rounded-md border border-input">
+    <div class="overflow-hidden rounded-md border border-border">
       <Table>
         <TableHeader>
           <TableRow>

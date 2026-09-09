@@ -174,7 +174,7 @@ const nameOf = (full: string) => splitIconName(full).name
             :key="name"
             type="button"
             :title="name"
-            class="group flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-input bg-surface p-1.5 text-primary transition-colors hover:border-primary hover:bg-surface/80"
+            class="group flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-border bg-card p-1.5 text-primary shadow-soft-sm transition-all hover:border-border-strong hover:shadow-soft"
             @click="emit('select', name)"
           >
             <Icon

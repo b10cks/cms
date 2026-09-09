@@ -153,11 +153,11 @@ watchEffect((onCleanup) => {
       <div
         ref="rootElement"
         v-bind="$attrs"
-        class="group relative flex cursor-pointer items-center gap-2 rounded-md bg-background p-3 transition-all duration-200 select-none focus:bg-input focus:outline-2 focus:outline-offset-2 focus:outline-blue-300"
+        class="group relative flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card p-3 shadow-soft-sm transition-all duration-200 select-none hover:border-border-strong hover:shadow-soft focus:outline-2 focus:outline-offset-2 focus:outline-accent"
         :class="{
-          'outline-2 outline-accent': selected,
+          'border-accent bg-accent/10 outline-2 outline-accent': selected,
           'opacity-50': cut,
-          'bg-input/70 ring-1 ring-border': isDraggedOver,
+          'border-accent bg-accent/15 ring-1 ring-accent': isDraggedOver,
         }"
         :aria-label="folder.name"
         :aria-selected="selected"
@@ -181,7 +181,9 @@ watchEffect((onCleanup) => {
         />
 
         <div class="flex flex-1 items-center gap-3">
-          <div class="flex h-12 w-12 items-center justify-center rounded-md bg-surface p-2 shadow">
+          <div
+            class="flex h-12 w-12 items-center justify-center rounded-md bg-muted-background p-2"
+          >
             <Icon
               :name="`lucide:${folder.icon}`"
               :style="{ color: folder.color || 'inherit' }"

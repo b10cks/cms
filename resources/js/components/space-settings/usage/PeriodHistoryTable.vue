@@ -61,7 +61,7 @@ function reasonVariant(period: SubscriptionPeriod) {
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-md border border-input">
+  <div class="overflow-hidden rounded-md border border-border">
     <Table>
       <TableHeader>
         <TableRow>

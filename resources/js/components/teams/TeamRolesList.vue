@@ -217,7 +217,7 @@ const handleSortChange = (value: { column: string; direction: 'asc' | 'desc' }) 
       />
     </div>
 
-    <div class="rounded-lg border border-input">
+    <div class="rounded-lg border border-border">
       <Table>
         <TableHeader>
           <TableRow>
