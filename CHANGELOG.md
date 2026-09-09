@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.9.9-5020be28] — 2026-9-9
+
+- ⬆️ Bump versions
+- 💄 Improve design tokens and their usages with focus on light mode
+
 ## [v2026.9.7-c1a4f481] — 2026-9-7
 
 - 👷 Smoke check the delivery API after deploy and roll back on failure
