@@ -3,6 +3,14 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.9.15-f292d40b] — 2026-9-15
+
+- 💄 Expand newly added items in the blocks field
+- 💄 Show unsaved changes next to the block save button
+- 🐛 Clear the block editor's unsaved state after saving
+- 🐛 Keep the preview in sync with nested collaborator edits
+- ⬆️ Bump versions
+
 ## [v2026.9.9-5020be28] — 2026-9-9
 
 - ⬆️ Bump versions
