@@ -82,7 +82,12 @@ export function useBlocks(spaceId: MaybeRef<string>) {
         return response.data
       },
       onSuccess: (data) => {
-        // Invalidate the blocks list and the specific block detail
+        // Seed the detail from the response so an open editor's baseline is the
+        // saved block right away, not after the refetch. The update response has
+        // no `templates_count`, so keep the cached one.
+        queryClient.setQueryData<BlockResource>(queryKeys.blocks(spaceId).detail(data.id), (old) =>
+          old ? { ...old, ...data } : data
+        )
         queryClient.invalidateQueries({ queryKey: queryKeys.blocks(spaceId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.blocks(spaceId).detail(data.id) })
         queryClient.invalidateQueries({

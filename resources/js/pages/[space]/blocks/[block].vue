@@ -65,19 +65,20 @@ const submit = async (b: BlockResource): Promise<boolean> => {
 /**
  * Only the fields the block editor actually writes, normalised the same way
  * `BlockEdit` seeds them — so a freshly loaded block is never reported dirty
- * and server-side bookkeeping (`updated_at`, counters) never is either.
+ * and server-side bookkeeping (`updated_at`, counters) never is either. Cleared
+ * text is `''` locally but stored as null, so both count as empty.
  */
 const editableSnapshot = (source: BlockResource | null | undefined) =>
   source
     ? {
         name: source.name,
         slug: source.slug,
-        description: source.description,
+        description: source.description || null,
         type: source.type || 'nestable',
         icon: source.icon || 'block',
         color: source.color,
         tags: source.tags,
-        preview_template: source.preview_template,
+        preview_template: source.preview_template || null,
         preview_file: source.preview_file,
         settings: source.settings,
         schema: source.schema,

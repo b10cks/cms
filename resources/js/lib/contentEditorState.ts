@@ -35,6 +35,21 @@ export function createEditVersionDirtyTracker(source: Ref<unknown>): DirtyTracke
 }
 
 /**
+ * JSON with object keys sorted. Key order carries no meaning in a document, and
+ * MySQL JSON columns reorder keys on write, so a save response and the refetch
+ * after it would otherwise never compare equal.
+ */
+export function canonicalJson(value: unknown): string {
+  return JSON.stringify(value, (_key, nested: unknown) =>
+    nested && typeof nested === 'object' && !Array.isArray(nested)
+      ? Object.fromEntries(
+          Object.entries(nested).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        )
+      : nested
+  )
+}
+
+/**
  * Dirty tracking by comparing the edited document against the persisted
  * baseline. Undoing an edit by hand makes the document clean again, which is
  * what the localization editor (a handful of fields) wants; `markSaved` is a
@@ -46,8 +61,8 @@ export function createSnapshotDirtyTracker(
 ): DirtyTracker {
   // Lazy per side: each snapshot is recomputed only when its own document
   // changed and `isDirty` is actually read — never eagerly per reactive set.
-  const currentSnapshot = computed(() => JSON.stringify(current.value))
-  const baselineSnapshot = computed(() => JSON.stringify(baseline.value))
+  const currentSnapshot = computed(() => canonicalJson(current.value))
+  const baselineSnapshot = computed(() => canonicalJson(baseline.value))
 
   return {
     isDirty: computed(() => {

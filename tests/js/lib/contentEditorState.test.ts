@@ -98,6 +98,17 @@ describe('createSnapshotDirtyTracker', () => {
     expect(tracker.isDirty.value).toBe(false)
   })
 
+  it('ignores object key order, which MySQL JSON columns do not preserve', () => {
+    const current = ref({ schema: { title: { type: 'text', name: 'Title' } }, pages: ['a', 'b'] })
+    const baseline = ref({ pages: ['a', 'b'], schema: { title: { name: 'Title', type: 'text' } } })
+    const tracker = run(() => createSnapshotDirtyTracker(current, baseline))
+
+    expect(tracker.isDirty.value).toBe(false)
+
+    current.value.pages = ['b', 'a']
+    expect(tracker.isDirty.value).toBe(true)
+  })
+
   it('goes clean when the baseline is replaced with the edited document', () => {
     const current = ref({ title: 'Hi' })
     const baseline = ref({ title: 'Hello' })
