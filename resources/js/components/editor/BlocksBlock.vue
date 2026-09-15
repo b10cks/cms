@@ -187,6 +187,7 @@ const insertItem = (item: Record<string, unknown>, index: number = -1) => {
   const insertIndex = index === -1 ? updatedItems.length : index
 
   updatedItems.splice(insertIndex, 0, item)
+  openItems.value = [...openItems.value, getItemAccordionValue(item, insertIndex)]
 
   emitBlockOperation({ type: 'add', index: insertIndex, items: [item] }, previousItems)
   emit('update:modelValue', updatedItems)
