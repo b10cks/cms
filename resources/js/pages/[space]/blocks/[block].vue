@@ -216,12 +216,20 @@ const handleDuplicateCreated = (createdBlock: BlockResource) => {
           show-schema
           @submit="submit"
         >
-          <div class="flex">
+          <div
+            v-if="canManageBlocks"
+            class="flex items-center justify-end gap-3"
+          >
+            <span
+              v-if="isDirty && !isSaving"
+              class="text-sm text-muted-foreground"
+            >
+              {{ $t('labels.unsavedChanges.title') }}
+            </span>
             <Button
-              v-if="canManageBlocks"
               type="button"
               variant="primary"
-              class="ml-auto"
+              :disabled="!isDirty || isSaving"
               :loading="isSaving"
               @click="submit(editBlock)"
             >
