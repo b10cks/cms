@@ -489,7 +489,12 @@ export function useContentLiveCollaboration(
     if (!target) return
 
     target[field] = nextValue
-    syncPreviewItem?.({ ...target })
+    // Push the whole tree, like local edits do: a block-scoped push is dropped by
+    // sites that cannot address the block by id and is never kept for replay.
+    syncPreviewItem?.({
+      id: content.value.id,
+      ...(content.value.content as Record<string, unknown>),
+    })
   }
 
   const syncLocalDraftIndex = () => {
