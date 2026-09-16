@@ -27,6 +27,7 @@ import {
     createContentDefaultsBlockLookup,
     hydrateContentWithSchema,
 } from '~/composables/useSchemaDefaults'
+import { resolveItemBlock } from '~/lib/blockItemTitle'
 
 import EditorComponent from './EditorComponent.vue'
 
@@ -79,18 +80,8 @@ const submitValidationAttempted = inject<Ref<boolean> | undefined>(
   undefined
 )
 
-const getBlockForContent = (content: Record<string, unknown>) =>
-  blocks.value?.data?.find((entry) => entry.slug === (content.block as string))
-
 const getBlockHeaderBlock = (content: Record<string, unknown>) =>
-  (getBlockForContent(content) || {
-    id: '',
-    slug: String(content.block || ''),
-    name: String(content.block || ''),
-    icon: null,
-    color: null,
-    preview_template: null,
-  }) as BlockResource
+  resolveItemBlock(blocks.value?.data, content)
 
 const emitBlockOperation = (
   operation: ContentBlockOperationPayload,
@@ -374,7 +365,7 @@ const pasteItems = async (event?: ClipboardEvent | null, insertIndex?: number) =
 }
 
 const handleTemplateTrigger = (content: Record<string, unknown>) => {
-  const block = getBlockForContent(content)
+  const block = getBlockHeaderBlock(content)
   if (!block?.id) return
 
   emit('createTemplate', block.id, content)
