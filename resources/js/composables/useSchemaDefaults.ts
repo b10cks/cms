@@ -1,4 +1,5 @@
 import { normalizeSchemaType } from '~/composables/useContentSchemaState'
+import { isRichTextDoc } from '~/lib/richtext'
 import { ensureTableValue } from '~/lib/tableField'
 
 type BlockLookup = Record<string, Pick<BlockResource, 'slug' | 'schema'>>
@@ -52,6 +53,12 @@ export const resolveFieldInitialValue = (field: SchemaType): unknown => {
     return ensureTableValue(field as TableSchema, defaultValue)
   }
 
+  // Only a real document is a usable richtext default. Anything else, like the
+  // `[]` PHP makes of an empty `{}`, would open the editor as a corrupt document.
+  if (type === 'richtext') {
+    return isRichTextDoc(defaultValue) ? cloneDefaultValue(defaultValue) : {}
+  }
+
   if (defaultValue !== undefined && defaultValue !== null) {
     return cloneDefaultValue(defaultValue)
   }
@@ -90,7 +97,6 @@ export const resolveFieldInitialValue = (field: SchemaType): unknown => {
     case 'asset':
     case 'link':
       return null
-    case 'richtext':
     case 'meta':
       return {}
     default:

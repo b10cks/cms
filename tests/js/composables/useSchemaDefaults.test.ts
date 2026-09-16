@@ -101,6 +101,19 @@ describe('resolveFieldInitialValue', () => {
     })
   })
 
+  describe('richtext fields', () => {
+    it('keeps a document default', () => {
+      const doc = { type: 'doc', content: [{ type: 'paragraph', content: [] }] }
+
+      expect(resolveFieldInitialValue(field('richtext', { default: doc }))).toEqual(doc)
+    })
+
+    // PHP decodes an empty `{}` default into `[]`, which the editor cannot load.
+    it.each([[[]], [{ foo: 1 }], ['text']])('ignores a %o default that is not a document', (value) => {
+      expect(resolveFieldInitialValue(field('richtext', { default: value }))).toEqual({})
+    })
+  })
+
   describe('date fields', () => {
     beforeEach(() => {
       vi.useFakeTimers()
