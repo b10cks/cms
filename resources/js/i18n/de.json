@@ -3711,7 +3711,9 @@
       "paramKey": "Schlüssel",
       "paramValue": "Wert",
       "paramKeyPlaceholder": "z. B. utm_source",
-      "paramValuePlaceholder": "z. B. newsletter"
+      "paramValuePlaceholder": "z. B. newsletter",
+      "anchorMissing": "Dieses Element existiert auf der Seite nicht mehr.",
+      "linkToPage": "Auf Seite verlinken"
     },
     "common": {
       "is": "ist",
@@ -3828,12 +3830,7 @@
       "name": "Name",
       "type": "Typ",
       "pageElements": "Seitenelemente",
-      "elements": {
-        "header": "Kopfzeile",
-        "mainContent": "Hauptinhalt",
-        "sidebar": "Seitenleiste",
-        "footer": "Fußzeile"
-      }
+      "noPageElements": "Diese Seite hat keine Elemente zum Verlinken."
     },
     "accessDenied": {
       "from": "Zugriff verweigert"

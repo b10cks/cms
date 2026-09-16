@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 
 import ContentPicker from '~/components/editor/ContentPicker.vue'
+import InternalLinkTarget from '~/components/editor/InternalLinkTarget.vue'
 import { ArrayInputField, FormField, InputField, TextField } from '~/components/ui/form'
 import {
   Select,
@@ -320,34 +321,15 @@ const getSelectedContentName = () => {
         name="content"
         :label="t('labels.link.content')"
       >
-        <div class="flex gap-2">
-          <button
-            type="button"
-            class="flex min-h-[2.5rem] flex-1 items-center rounded-md border border-input-border bg-input px-3 py-2"
-            :disabled="disabled"
-            @click="showInternalPicker = true"
-          >
-            <span
-              v-if="localValue.content"
-              class="text-input-foreground flex items-center gap-1 truncate text-sm font-semibold"
-            >
-              {{ getSelectedContentName() }}
-              <template v-if="localValue.anchor">
-                <span>#{{ localValue.anchor }}</span>
-              </template>
-            </span>
-            <span
-              v-else
-              class="text-muted-foreground text-sm"
-            >
-              {{ t('labels.link.noContentSelected') }}
-            </span>
-            <Icon
-              name="lucide:search"
-              class="ml-auto"
-            />
-          </button>
-        </div>
+        <InternalLinkTarget
+          :space-id="spaceId"
+          :content="localValue.content"
+          :anchor="localValue.anchor"
+          :content-name="getSelectedContentName()"
+          :disabled="disabled"
+          @pick="showInternalPicker = true"
+          @clear-anchor="selectContent(localValue.content)"
+        />
       </FormField>
       <FormField
         name="target"

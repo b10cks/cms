@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 
 import ContentPicker from '~/components/editor/ContentPicker.vue'
+import InternalLinkTarget from '~/components/editor/InternalLinkTarget.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import {
@@ -212,33 +213,14 @@ const submit = () => {
               name="link-content"
               :label="t('labels.link.content')"
             >
-              <button
-                type="button"
-                class="text-input-foreground flex min-h-[2.5rem] w-full items-center gap-2 rounded-md border border-input-border bg-input px-3 py-2 text-sm"
-                @click="showPicker = true"
-              >
-                <span
-                  v-if="content"
-                  class="flex items-center gap-1 truncate font-semibold"
-                >
-                  {{ selectedContentName }}
-                  <span
-                    v-if="anchor"
-                    class="text-muted-foreground"
-                    >#{{ anchor }}</span
-                  >
-                </span>
-                <span
-                  v-else
-                  class="text-muted-foreground"
-                >
-                  {{ t('labels.link.noContentSelected') }}
-                </span>
-                <Icon
-                  name="lucide:search"
-                  class="ml-auto"
-                />
-              </button>
+              <InternalLinkTarget
+                :space-id="spaceId"
+                :content="content"
+                :anchor="anchor"
+                :content-name="selectedContentName"
+                @pick="showPicker = true"
+                @clear-anchor="anchor = undefined"
+              />
             </FormField>
           </TabsContent>
         </Tabs>

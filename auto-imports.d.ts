@@ -132,6 +132,7 @@ declare global {
   const useBlocks: typeof import('./resources/js/composables/useBlocks').useBlocks
   const useComments: typeof import('./resources/js/composables/useComments').useComments
   const useContent: typeof import('./resources/js/composables/useContent').useContent
+  const useContentAnchors: typeof import('./resources/js/composables/useContentAnchors').useContentAnchors
   const useContentCanvasCommands: typeof import('./resources/js/composables/useContentCanvasCommands').useContentCanvasCommands
   const useContentEditorPage: typeof import('./resources/js/composables/useContentEditorPage').useContentEditorPage
   const useContentJson: typeof import('./resources/js/composables/useContentJson').useContentJson
@@ -267,6 +268,9 @@ declare global {
   // @ts-ignore
   export type { UploadAssetOutcome } from './resources/js/composables/useAssets'
   import('./resources/js/composables/useAssets')
+  // @ts-ignore
+  export type { ContentAnchor } from './resources/js/composables/useContentAnchors'
+  import('./resources/js/composables/useContentAnchors')
   // @ts-ignore
   export type { ContentCanvasCommand, ContentCanvasHistoryEntry } from './resources/js/composables/useContentCanvasCommands'
   import('./resources/js/composables/useContentCanvasCommands')
@@ -455,6 +459,7 @@ declare module 'vue' {
     readonly useBlocks: UnwrapRef<typeof import('./resources/js/composables/useBlocks')['useBlocks']>
     readonly useComments: UnwrapRef<typeof import('./resources/js/composables/useComments')['useComments']>
     readonly useContent: UnwrapRef<typeof import('./resources/js/composables/useContent')['useContent']>
+    readonly useContentAnchors: UnwrapRef<typeof import('./resources/js/composables/useContentAnchors')['useContentAnchors']>
     readonly useContentCanvasCommands: UnwrapRef<typeof import('./resources/js/composables/useContentCanvasCommands')['useContentCanvasCommands']>
     readonly useContentEditorPage: UnwrapRef<typeof import('./resources/js/composables/useContentEditorPage')['useContentEditorPage']>
     readonly useContentJson: UnwrapRef<typeof import('./resources/js/composables/useContentJson')['useContentJson']>

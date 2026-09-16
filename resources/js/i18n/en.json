@@ -3697,7 +3697,9 @@
       "paramKey": "Key",
       "paramValue": "Value",
       "paramKeyPlaceholder": "e.g. utm_source",
-      "paramValuePlaceholder": "e.g. newsletter"
+      "paramValuePlaceholder": "e.g. newsletter",
+      "anchorMissing": "This element no longer exists on the page.",
+      "linkToPage": "Link to page"
     },
     "common": {
       "is": "is",
@@ -3814,12 +3816,7 @@
       "name": "Name",
       "type": "Type",
       "pageElements": "Page Elements",
-      "elements": {
-        "header": "Header",
-        "mainContent": "Main Content",
-        "sidebar": "Sidebar",
-        "footer": "Footer"
-      }
+      "noPageElements": "This page has no elements to link to."
     },
     "accessDenied": {
       "from": "Access denied"

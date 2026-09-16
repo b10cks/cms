@@ -85,6 +85,7 @@ declare global {
   const useBlocks: typeof import('./composables/useBlocks').useBlocks
   const useComments: typeof import('./composables/useComments').useComments
   const useContent: typeof import('./composables/useContent').useContent
+  const useContentAnchors: typeof import('./composables/useContentAnchors').useContentAnchors
   const useContentMenu: typeof import('./composables/useContentMenu').useContentMenu
   const useContentMenuPresence: typeof import('./composables/useContentMenuPresence').useContentMenuPresence
   const useContentPresence: typeof import('./composables/usePresence').useContentPresence
@@ -290,6 +291,7 @@ declare module 'vue' {
     readonly useBlocks: UnwrapRef<(typeof import('./composables/useBlocks'))['useBlocks']>
     readonly useComments: UnwrapRef<(typeof import('./composables/useComments'))['useComments']>
     readonly useContent: UnwrapRef<(typeof import('./composables/useContent'))['useContent']>
+    readonly useContentAnchors: UnwrapRef<(typeof import('./composables/useContentAnchors'))['useContentAnchors']>
     readonly useContentMenu: UnwrapRef<
       (typeof import('./composables/useContentMenu'))['useContentMenu']
     >
