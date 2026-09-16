@@ -20,6 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
+import { createEmptyRichTextDoc, toRichTextDoc } from '~/lib/richtext'
 
 import { InternalLink } from './extensions/InternalLink'
 import { ListStyle } from './extensions/ListStyle'
@@ -78,14 +79,6 @@ const isBroken = ref(false)
 // Identity of the doc we last emitted, so the modelValue watcher can skip the
 // round-trip of our own edit instead of re-diffing the whole document.
 let lastEmittedValue: Record<string, unknown> | null = null
-
-const emptyDoc = { type: 'doc', content: [{ type: 'paragraph', content: [] }] }
-
-const isValidDoc = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' &&
-  value !== null &&
-  !Array.isArray(value) &&
-  (value as Record<string, unknown>).type === 'doc'
 
 const headingLevelNumber = (level: HeadingLevel): Level => Number(level.charAt(1)) as Level
 
@@ -168,7 +161,7 @@ const buildExtensions = (): AnyExtension[] => {
 }
 
 const editor = useEditor({
-  content: props.modelValue,
+  content: toRichTextDoc(props.modelValue) ?? props.modelValue,
   editable: !props.disabled,
   extensions: buildExtensions(),
   editorProps: {
@@ -294,11 +287,12 @@ watch(
 const resetDocument = () => {
   if (!editor.value) return
   isApplyingExternalContent.value = true
+  const emptyDoc = createEmptyRichTextDoc()
   editor.value.commands.setContent(emptyDoc)
   isBroken.value = false
   nextTick(() => {
     isApplyingExternalContent.value = false
-    emit('update:modelValue', emptyDoc as Record<string, unknown>)
+    emit('update:modelValue', emptyDoc)
   })
 }
 
@@ -319,7 +313,8 @@ watch(
     // this exact document, so there is nothing to apply and nothing to diff.
     if (newValue === lastEmittedValue) return
 
-    if (!isValidDoc(newValue)) {
+    const doc = toRichTextDoc(newValue)
+    if (!doc) {
       isBroken.value = true
       return
     }
@@ -327,7 +322,7 @@ watch(
     // A doc the schema can't parse (e.g. a mark whose feature is now disabled)
     // is still applied below — leniently, by tiptap — so the editor never keeps
     // emitting the previous document over the incoming one.
-    const incoming = parseIncomingDoc(newValue)
+    const incoming = parseIncomingDoc(doc)
     if (incoming && editor.value.state.doc.eq(incoming)) {
       isBroken.value = false
       return
@@ -335,7 +330,7 @@ watch(
 
     isApplyingExternalContent.value = true
     try {
-      editor.value.commands.setContent(newValue)
+      editor.value.commands.setContent(doc)
       isBroken.value = incoming === null
     } catch {
       isBroken.value = true
