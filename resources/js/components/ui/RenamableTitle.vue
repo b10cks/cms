@@ -2,6 +2,8 @@
 import { onClickOutside } from '@vueuse/core'
 import type { HTMLAttributes } from 'vue'
 
+import HighlightedText from '~/components/ui/HighlightedText.vue'
+
 const props = withDefaults(
   defineProps<{
     name: string
@@ -102,30 +104,6 @@ function handleKeyDown(event: KeyboardEvent) {
   }
 }
 
-// Contiguous runs of highlighted / plain characters, so matched characters can
-// be emphasized without one span per character.
-const highlightSegments = computed(() => {
-  if (!props.highlight?.length || !props.name) {
-    return null
-  }
-
-  const hits = new Set(props.highlight)
-  const segments: { text: string; hit: boolean }[] = []
-
-  for (let index = 0; index < props.name.length; index++) {
-    const hit = hits.has(index)
-    const last = segments[segments.length - 1]
-
-    if (last && last.hit === hit) {
-      last.text += props.name[index]
-    } else {
-      segments.push({ text: props.name[index], hit })
-    }
-  }
-
-  return segments
-})
-
 watch(
   () => props.name,
   (newValue) => {
@@ -164,13 +142,11 @@ defineExpose({
     @keydown.enter.stop.prevent="startEdit"
     @keydown.space.stop.prevent="startEdit"
   >
-    <template v-if="highlightSegments">
-      <span
-        v-for="(segment, index) in highlightSegments"
-        :key="index"
-        :class="segment.hit ? 'font-bold text-info' : ''"
-      >{{ segment.text }}</span>
-    </template>
+    <HighlightedText
+      v-if="highlight?.length && name"
+      :text="name"
+      :highlight="highlight"
+    />
     <slot
       v-else
       :value="name"
