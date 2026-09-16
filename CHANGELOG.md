@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.9.16-b7c94a2b] — 2026-9-16
+
+- ⬆️ Bump versions
+- 🐛 Ignore richtext schema defaults that are not a document
+- 🐛 Load empty richtext values as an empty document
+
 ## [v2026.9.15-f292d40b] — 2026-9-15
 
 - 💄 Expand newly added items in the blocks field
