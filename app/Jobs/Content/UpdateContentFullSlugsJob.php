@@ -56,7 +56,7 @@ class UpdateContentFullSlugsJob implements ShouldQueue
             $content = Content::query()->find($this->contentId);
 
             if (!$content) {
-                Log::warning("Unable to propagate full slugs because content {$this->contentId} no longer exists");
+                Log::info("Unable to propagate full slugs because content {$this->contentId} no longer exists");
 
                 return;
             }

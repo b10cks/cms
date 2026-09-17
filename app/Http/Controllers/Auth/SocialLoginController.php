@@ -151,7 +151,8 @@ class SocialLoginController extends AuthController
         } catch (\Throwable $exception) {
             Log::warning('Social login failed', [
                 'provider' => $provider,
-                'error' => $exception->getMessage(),
+                'exception' => $exception::class,
+                'error' => Str::limit($exception->getMessage(), 500),
             ]);
         }
 
