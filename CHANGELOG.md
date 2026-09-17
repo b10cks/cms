@@ -3,6 +3,22 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.9.17-b4c3aa25] — 2026-9-17
+
+- ⬆️ Bump versions
+- ⏪ Run the scheduler with schedule:work again
+- 🔧 Add production error alarms for b10cks
+- 🔇 Quiet admin API, supervisord and scheduler log noise
+- 🔊 Log why a social login failed and quiet a benign slug race
+- 🐛 Answer a duplicate registration race with a 422
+- 🐛 Insert uploaded assets once, with their path
+- 🐛 Transform oversized animations as a still first frame
+- 🐛 Size broadcast payloads the way Reverb receives them
+- 🐛 Answer non-ASCII delivery lookups with a 404
+- ✨ Link internal links to blocks on a page
+- ♻️ Extract search match highlighting into HighlightedText
+- ♻️ Share block item titles outside the blocks editor
+
 ## [v2026.9.16-b7c94a2b] — 2026-9-16
 
 - ⬆️ Bump versions
