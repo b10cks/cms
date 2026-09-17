@@ -114,6 +114,26 @@ class BroadcastPayloadTest extends TestCase
     }
 
     /**
+     * Reverb's cap is on the HTTP request, where the payload travels JSON
+     * encoded a second time. Slashes double their escaping at each level, so
+     * this payload fits a single encoding yet overflows the wire.
+     */
+    #[Test]
+    public function space_model_changed_measures_the_double_encoded_request(): void
+    {
+        $block = Block::factory()->create(['description' => str_repeat('/', 3_000)]);
+        $this->assertLessThan(8_500, \strlen(json_encode(BlockResource::make($block))));
+
+        $payload = (new SpaceModelChanged($this->space, 'blocks', 'updated', $block))->broadcastWith();
+        $this->assertArrayNotHasKey('data', $payload);
+
+        config(['reverb.servers.reverb.max_request_size' => 64_000]);
+
+        $payload = (new SpaceModelChanged($this->space, 'blocks', 'updated', $block))->broadcastWith();
+        $this->assertArrayHasKey('data', $payload);
+    }
+
+    /**
      * broadcast(...)->toOthers() is a silent no-op unless the event uses
      * InteractsWithSockets — without it every save self-echoes and the
      * initiating client refetches its own caches.

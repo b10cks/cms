@@ -18,10 +18,11 @@ class SpaceModelChanged implements ShouldBroadcast
     use SerializesModels;
 
     /**
-     * Reverb rejects messages above max_message_size (10KB by default);
-     * leave headroom for the pusher envelope around the payload.
+     * Room left in Reverb's `max_request_size` for what the body measurement
+     * doesn't see: the request line with its auth query string, the headers
+     * and the `socket_id` of toOthers().
      */
-    protected const MAX_DATA_BYTES = 8_500;
+    protected const REQUEST_OVERHEAD_BYTES = 1_000;
 
     private string $modelKey;
 
@@ -43,14 +44,19 @@ class SpaceModelChanged implements ShouldBroadcast
         $this->modelBaseClass = class_basename($model);
         $this->context = method_exists($model, 'broadcastContext') ? $model->broadcastContext() : [];
         $this->data = $this->action === 'deleted' ? null : $this->resolveData($model);
+
+        if ($this->data !== null && $this->requestBodyBytes() > $this->maxRequestBodyBytes()) {
+            $this->data = null;
+        }
     }
 
     /**
      * Slim resource payload so listeners can patch their caches in place
      * instead of refetching. Resolved eagerly — the space connection is gone
      * once the event hits a queue worker. Null when no management resource
-     * exists for the model, it fails to build, or it would push the message
-     * over Reverb's size cap; the frontend then falls back to invalidation.
+     * exists for the model or it fails to build. The constructor also drops it
+     * when it would push the request over Reverb's size cap. Either way the
+     * frontend falls back to invalidation.
      *
      * @return array<string, mixed>|null
      */
@@ -70,14 +76,31 @@ class SpaceModelChanged implements ShouldBroadcast
         }
 
         try {
-            $data = $this->resolveBroadcastPayload($resourceClass::make($model));
-
-            return \strlen(json_encode($data, JSON_THROW_ON_ERROR)) > self::MAX_DATA_BYTES
-                ? null
-                : $data;
+            return $this->resolveBroadcastPayload($resourceClass::make($model));
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Size of the body the Pusher client POSTs to Reverb. The payload is JSON
+     * encoded, then encoded again as a string inside the body, which escapes
+     * every quote and turns non-ASCII into `\uXXXX`. Reverb answers an
+     * oversized request with 413, the broadcast job fails, and the event
+     * reaches nobody, not even as an id-only invalidation.
+     */
+    private function requestBodyBytes(): int
+    {
+        return \strlen(json_encode([
+            'name' => $this->broadcastAs(),
+            'data' => json_encode($this->broadcastWith(), JSON_THROW_ON_ERROR),
+            'channels' => array_map(fn (PrivateChannel $channel): string => $channel->name, $this->broadcastOn()),
+        ], JSON_THROW_ON_ERROR));
+    }
+
+    private function maxRequestBodyBytes(): int
+    {
+        return (int) config('reverb.servers.reverb.max_request_size', 10_000) - self::REQUEST_OVERHEAD_BYTES;
     }
 
     public function broadcastOn(): array
