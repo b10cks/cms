@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 /**
  * 
@@ -82,7 +83,20 @@ class DataSource extends SpaceModel
         'is_active' => 'boolean',
     ];
 
-    public function hasShape(): bool
+    /**
+     * `slug` is an ASCII column. MySQL refuses to compare a non-ASCII value
+     * against it (error 3988), so such a delivery path is a 404 without a query.
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        if (\is_string($value) && ! Str::isAscii($value)) {
+            return null;
+        }
+
+        return parent::resolveRouteBinding($value, $field);
+    }
+
+        public function hasShape(): bool
     {
         return !empty($this->shape);
     }

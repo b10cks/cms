@@ -4,6 +4,7 @@ namespace App\Http\Filters\Api;
 
 use App\Models\Space\Block;
 use CodersCantina\Filter\AdvancedFilter;
+use Illuminate\Support\Str;
 
 /**
  * Public content filters for the Data API.
@@ -141,6 +142,10 @@ class ContentFilter extends AdvancedFilter
             return;
         }
 
+        if ($this->matchesNothingUnlessAscii($value)) {
+            return;
+        }
+
         $this->builder->where('contents.language_iso', $value);
     }
 
@@ -159,6 +164,10 @@ class ContentFilter extends AdvancedFilter
     public function language_iso($value)
     {
         if (filter_var($this->filters['include_fallback'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+            return;
+        }
+
+        if ($this->matchesNothingUnlessAscii($value)) {
             return;
         }
 
@@ -181,6 +190,10 @@ class ContentFilter extends AdvancedFilter
      */
     public function content_type($value)
     {
+        if ($this->matchesNothingUnlessAscii($value)) {
+            return;
+        }
+
         $this->builder->whereIn('contents.block_id', Block::query()->where('slug', $value)->select('id'));
     }
 
@@ -321,6 +334,10 @@ class ContentFilter extends AdvancedFilter
             return;
         }
 
+        if ($this->matchesNothingUnlessAscii($requestedLanguage)) {
+            return;
+        }
+
         $this->builder->where(function ($query) use ($requestedLanguage) {
             $query->where('contents.language_iso', $requestedLanguage)
                 ->orWhere(function ($q) use ($requestedLanguage) {
@@ -334,5 +351,21 @@ class ContentFilter extends AdvancedFilter
                         });
                 });
         });
+    }
+
+    /**
+     * `language_iso` and `blocks.slug` are ASCII columns. MySQL refuses to
+     * compare a non-ASCII parameter against them (error 3988) instead of
+     * matching nothing, so such a value empties the result up front.
+     */
+    private function matchesNothingUnlessAscii(mixed $value): bool
+    {
+        if (! \is_string($value) || Str::isAscii($value)) {
+            return false;
+        }
+
+        $this->builder->whereRaw('1 = 0');
+
+        return true;
     }
 }

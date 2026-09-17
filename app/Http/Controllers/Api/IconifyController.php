@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 /**
  * Iconify-compatible icon API for a space's icon registry.
@@ -106,7 +107,8 @@ class IconifyController
         $query = Icon::query();
         if ($term !== '') {
             $query->where(function ($builder) use ($term) {
-                $builder->where('key', 'LIKE', "%{$term}%")
+                // `key` is an ASCII column; MySQL errors (3988) on a non-ASCII term.
+                $builder->when(Str::isAscii($term), fn ($q) => $q->orWhere('key', 'LIKE', "%{$term}%"))
                     ->orWhere('name', 'LIKE', "%{$term}%")
                     ->orWhere('description', 'LIKE', "%{$term}%");
             });
@@ -142,7 +144,7 @@ class IconifyController
     {
         $this->abortIfUnknownPrefix($prefix);
 
-        $icon = Icon::query()->where('key', $name)->first();
+        $icon = Str::isAscii($name) ? Icon::query()->where('key', $name)->first() : null;
         abort_unless($icon !== null, 404);
 
         $color  = is_string($request->query('color')) ? $request->query('color') : null;
@@ -276,7 +278,7 @@ class IconifyController
     {
         $this->abortIfUnknownPrefix($prefix);
 
-        $icon = Icon::query()->where('key', $name)->first();
+        $icon = Str::isAscii($name) ? Icon::query()->where('key', $name)->first() : null;
         abort_unless($icon !== null, 404);
 
         return $this->cssResponse(collect([$icon]), $request);
@@ -561,9 +563,10 @@ class IconifyController
             return null;
         }
 
+        // Icon keys are ASCII; a non-ASCII key can't exist and MySQL errors (3988) comparing one.
         return collect(explode(',', $icons))
             ->map(fn ($k) => trim($k))
-            ->filter()
+            ->filter(fn ($k) => $k !== '' && Str::isAscii($k))
             ->unique()
             ->values()
             ->all();

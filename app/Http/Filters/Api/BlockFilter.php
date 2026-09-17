@@ -3,6 +3,7 @@
 namespace App\Http\Filters\Api;
 
 use CodersCantina\Filter\AdvancedFilter;
+use Illuminate\Support\Str;
 
 class BlockFilter extends AdvancedFilter
 {
@@ -15,6 +16,13 @@ class BlockFilter extends AdvancedFilter
 
     public function slug($value)
     {
+        // `slug` is an ASCII column; MySQL errors (3988) on non-ASCII input instead of matching nothing.
+        if (is_string($value) && ! Str::isAscii($value)) {
+            $this->builder->whereRaw('1 = 0');
+
+            return;
+        }
+
         $this->builder->where('slug', 'LIKE', "%{$value}%");
     }
 

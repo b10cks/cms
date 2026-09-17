@@ -76,10 +76,18 @@ trait ResolvesDeliveryContent
      * entry is gone from delivery whether it is addressed directly or as a
      * breadcrumb level.
      *
+     * Slugs are ASCII-only columns. MySQL refuses to compare a non-ASCII
+     * parameter against them (error 3988) instead of finding no row, so such a
+     * path is answered as not found without asking the database.
+     *
      * @param  array<int, string>  $with  Relations to eager load on the candidates.
      */
     protected function findFamilyCandidate(string $slug, string $language, Space $space, array $with = []): ?Content
     {
+        if (! Str::isAscii($slug)) {
+            return null;
+        }
+
         $candidates = Content::query()
             ->select(Content::deliveryColumns())
             ->where('full_slug', '/'.ltrim($slug, '/'))
