@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Management\Invite;
 use App\Notifications\User\VerifyEmailNotification;
 use App\Support\EditionGate;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -81,6 +82,16 @@ class RegisterController extends Controller
             ], 201);
         } catch (ValidationException $e) {
             throw $e;
+        } catch (UniqueConstraintViolationException $e) {
+            // Two signups for one address can both pass the `unique` rule; the
+            // loser gets the same answer the rule would have given it.
+            if (! str_contains($e->getMessage(), 'email')) {
+                throw $e;
+            }
+
+            throw ValidationException::withMessages([
+                'email' => $request->messages()['email.unique'],
+            ]);
         } catch (\Exception $e) {
             Log::error('Registration failed', [
                 'email' => $request->input('email'),
