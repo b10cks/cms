@@ -68,7 +68,10 @@ class AssetService
             $asset->mime_type = $mimeType;
             $asset->size = $size;
 
-            $asset->save();
+            // The id is part of the storage path, so it is minted up front and
+            // the row is inserted once, complete. Saving first used to broadcast
+            // a `created` event for an asset with no path (and no URL).
+            $asset->id = $asset->newUniqueId();
 
             $relativePath = "{$space->id}/{$asset->id}/{$sanitizedFilename}.{$extension}";
             $asset->path = $relativePath;
@@ -88,7 +91,7 @@ class AssetService
                 $duplicate = $this->findDuplicateByChecksum($asset->checksum, $asset->id);
 
                 if ($duplicate) {
-                    $this->discardUnsavedAsset($asset, $filesystem);
+                    $this->discardUnsavedFiles($asset, $filesystem);
 
                     throw new DuplicateAssetException($duplicate);
                 }
@@ -162,10 +165,10 @@ class AssetService
     }
 
     /**
-     * Clean up a freshly created asset (row + written files) that turned out
-     * to be a duplicate and was not force-uploaded.
+     * Clean up the files written for an upload that turned out to be a
+     * duplicate and was not force-uploaded. Its row was never inserted.
      */
-    private function discardUnsavedAsset(Asset $asset, Filesystem $filesystem): void
+    private function discardUnsavedFiles(Asset $asset, Filesystem $filesystem): void
     {
         try {
             if ($asset->path && $filesystem->fileExists($asset->path)) {
@@ -183,8 +186,6 @@ class AssetService
                 'error' => $e->getMessage(),
             ]);
         }
-
-        $asset->forceDelete();
     }
 
     /**
