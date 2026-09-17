@@ -44,28 +44,36 @@ class ImageTransformationManager extends Manager
     }
 
     /**
-     * Whether the source image's pixel count is within the configured cap.
-     * Returns true when the dimensions can't be read (unknown format) so the
-     * driver can still attempt formats getimagesize doesn't understand.
+     * Guard against decompression bombs: a tiny compressed file can declare
+     * dimensions that blow up memory when decoded. getimagesize only reads the
+     * header, so this is cheap.
+     *
+     * Returns null when even a single frame is over the cap, true when only the
+     * first frame fits (a long animation decodes every frame into memory), and
+     * false when the whole source can be decoded. Unknown dimensions pass, so
+     * the driver can still try formats getimagesize doesn't understand.
      */
-    private function sourceWithinPixelLimit(string $tempFile): bool
+    private function firstFrameOnly(string $tempFile): ?bool
     {
         $maxPixels = (int) $this->config->get('ilum.max_source_pixels', 100_000_000);
 
         if ($maxPixels <= 0) {
-            return true;
+            return false;
         }
 
         $info = @getimagesize($tempFile);
 
         if ($info === false || ! isset($info[0], $info[1])) {
-            return true;
+            return false;
         }
 
-        // getimagesize reports a single frame, but animated sources are decoded
-        // with every frame in memory, so a small GIF/WebP with thousands of
-        // frames would otherwise walk straight past this cap.
-        return ($info[0] * $info[1] * $this->frameCount($tempFile)) <= $maxPixels;
+        $framePixels = $info[0] * $info[1];
+
+        if ($framePixels > $maxPixels) {
+            return null;
+        }
+
+        return $framePixels * $this->frameCount($tempFile) > $maxPixels;
     }
 
     /**
@@ -112,10 +120,9 @@ class ImageTransformationManager extends Manager
                 return null;
             }
 
-            // Guard against decompression bombs: a tiny compressed file can
-            // declare enormous dimensions that blow up memory when decoded.
-            // getimagesize only reads the header, so this is cheap.
-            if (! $this->sourceWithinPixelLimit($tempFile)) {
+            $firstFrameOnly = $this->firstFrameOnly($tempFile);
+
+            if ($firstFrameOnly === null) {
                 Log::warning('Rejected oversized source image (possible decompression bomb)', [
                     'path' => $fullPath,
                 ]);
@@ -124,7 +131,9 @@ class ImageTransformationManager extends Manager
                 return null;
             }
 
-            $image = $driver->loadFromFile($tempFile);
+            // An animation too long to decode whole is still a legitimate image:
+            // deliver its first frame instead of failing on every request.
+            $image = $driver->loadFromFile($tempFile, $firstFrameOnly);
             $outputFormat = $this->determineOutputFormat($transformation->format, $driver, $image);
             $processedImage = $this->applyOperation($image, $transformation);
             $options = $this->getFormatOptions($outputFormat, $transformation->quality);

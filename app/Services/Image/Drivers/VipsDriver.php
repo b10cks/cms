@@ -14,9 +14,9 @@ class VipsDriver implements ImageDriverInterface
      * per their EXIF orientation; multi-page (animated) loads are not, as
      * autorot would treat the joined frame strip as one image.
      */
-    public function loadFromFile(string $path): ImageInterface
+    public function loadFromFile(string $path, bool $firstFrameOnly = false): ImageInterface
     {
-        $vipsImage = $this->shouldLoadAllPages($path)
+        $vipsImage = ! $firstFrameOnly && $this->shouldLoadAllPages($path)
             ? VipsImageLib::newFromFile($path, ['n' => -1])
             : VipsImageLib::newFromFile($path)->autorot();
 

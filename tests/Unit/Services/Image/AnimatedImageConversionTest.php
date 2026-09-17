@@ -50,7 +50,7 @@ class AnimatedImageConversionTest extends TestCase
     {
         return new class implements ImageDriverInterface
         {
-            public function loadFromFile(string $path): ImageInterface
+            public function loadFromFile(string $path, bool $firstFrameOnly = false): ImageInterface
             {
                 throw new \BadMethodCallException();
             }

@@ -12,10 +12,10 @@ class ImagickDriver implements ImageDriverInterface
     /**
      * Load an image from a file path
      */
-    public function loadFromFile(string $path): ImageInterface
+    public function loadFromFile(string $path, bool $firstFrameOnly = false): ImageInterface
     {
         $imagick = new Imagick();
-        $imagick->readImage($path);
+        $imagick->readImage($firstFrameOnly ? $path.'[0]' : $path);
         return new ImagickImage($this->autoOrient($imagick));
     }
 

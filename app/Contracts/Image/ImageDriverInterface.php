@@ -4,7 +4,10 @@ namespace App\Contracts\Image;
 
 interface ImageDriverInterface
 {
-    public function loadFromFile(string $path): ImageInterface;
+    /**
+     * @param  bool  $firstFrameOnly  Decode a multi-frame source as a still of its first frame.
+     */
+    public function loadFromFile(string $path, bool $firstFrameOnly = false): ImageInterface;
 
     public function loadFromBuffer($buffer): ImageInterface;
 
