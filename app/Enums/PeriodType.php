@@ -23,32 +23,24 @@ enum PeriodType: string
     public function toCarbonPeriod(): string
     {
         return match ($this) {
-            self::DAILY => 'day',
             self::WEEKLY => 'week',
             self::MONTHLY => 'month',
             self::YEARLY => 'year',
-            default => null,
+            default => 'day',
         };
     }
 
+    /**
+     * Bucket key format. Weeks are ISO-8601: `o` is the week-numbering year,
+     * so 2027-01-01 lands in 2026-53 rather than 2027-53.
+     */
     public function toCarbonFormat(): string
     {
         return match ($this) {
-            self::DAILY => 'Y-m-d',
-            self::WEEKLY => 'Y-W',
+            self::WEEKLY => 'o-W',
             self::MONTHLY => 'Y-m',
             self::YEARLY => 'Y',
-            default => null,
-        };
-    }
-    public function toMysqlDateFormat(): string
-    {
-        return match ($this) {
-            self::DAILY => '%Y-%m-%d',
-            self::WEEKLY => '%Y-%u',
-            self::MONTHLY => '%Y-%m',
-            self::YEARLY => '%Y',
-            default => '%Y-%m-%d',
+            default => 'Y-m-d',
         };
     }
 }

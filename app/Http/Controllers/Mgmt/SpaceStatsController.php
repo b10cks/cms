@@ -20,6 +20,7 @@ class SpaceStatsController extends Controller
     {
         $this->statsService = $statsService;
     }
+
     /**
      * Get dashboard statistics for a space
      */
@@ -38,67 +39,6 @@ class SpaceStatsController extends Controller
             'end_date' => $endDate,
             'include_activity' => Gate::allows('viewAny', [AuditLog::class, $space]),
         ]);
-
-        return response()->json($stats);
-    }
-
-    /**
-     * Get content-specific statistics
-     */
-    public function content(Space $space, Request $request): JsonResponse
-    {
-        $this->authorize('view', $space);
-
-        $startDate = $this->parseDate($request->input('start_date'), Carbon::now()->subDays(30));
-        $endDate = $this->parseDate($request->input('end_date'), Carbon::now());
-
-        $stats = $this->statsService->getContentStats($space, $startDate, $endDate);
-
-        return response()->json($stats);
-    }
-
-    /**
-     * Get user activity statistics
-     */
-    public function userActivity(Space $space, Request $request): JsonResponse
-    {
-        $this->authorize('view', $space);
-
-        $startDate = $this->parseDate($request->input('start_date'), Carbon::now()->subDays(30));
-        $endDate = $this->parseDate($request->input('end_date'), Carbon::now());
-
-        $stats = $this->statsService->getUserActivityStats($space, $startDate, $endDate);
-
-        return response()->json($stats);
-    }
-
-    /**
-     * Get system performance statistics
-     */
-    public function system(Space $space, Request $request): JsonResponse
-    {
-        $this->authorize('view', $space);
-
-        $startDate = $this->parseDate($request->input('start_date'), Carbon::now()->subDays(30));
-        $endDate = $this->parseDate($request->input('end_date'), Carbon::now());
-
-        $stats = $this->statsService->getSystemStats($space, $startDate, $endDate);
-
-        return response()->json($stats);
-    }
-
-    /**
-     * Get trend statistics over time
-     */
-    public function trends(Space $space, Request $request): JsonResponse
-    {
-        $this->authorize('view', $space);
-
-        $periodType = $this->getPeriodType($request->input('period', 'daily'));
-        $startDate = $this->parseDate($request->input('start_date'), Carbon::now()->subDays(30));
-        $endDate = $this->parseDate($request->input('end_date'), Carbon::now());
-
-        $stats = $this->statsService->getTrendStats($space, $periodType, $startDate, $endDate);
 
         return response()->json($stats);
     }
