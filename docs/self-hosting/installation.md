@@ -85,8 +85,11 @@ composer install --no-dev
 bun install
 bun run build
 cp .env.example .env
+# set B10CKS_EDITION=self-hosted, APP_ENV=production, APP_DEBUG=false and your database credentials
 php artisan b10cks:setup
 ```
+
+`.env.example` is the development template, so it leaves the edition unset and debugging on. `b10cks:setup` refuses to run until `B10CKS_EDITION` is set.
 
 Serve `public/` with your web server of choice, then work through the [configuration reference](configuration.md).
 
