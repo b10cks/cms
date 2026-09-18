@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useQueryClient } from '@tanstack/vue-query'
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
 
@@ -20,9 +21,11 @@ import {
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { FormField, InputField } from '~/components/ui/form'
 import { useFileUpload } from '~/composables/useFileUpload'
+import { queryKeys } from '~/composables/useQueryClient'
 
 const route = useRoute()
 const { t } = useI18n()
+const queryClient = useQueryClient()
 const spaceId = route.params.space as string
 
 const { useUpdateSpaceMutation, useSpaceQuery } = useSpaces()
@@ -34,55 +37,38 @@ useSeoMeta({
 })
 
 const spaceName = ref('')
-const spaceIcon = ref<string | null>(null)
 const iconInputRef = ref<HTMLInputElement | null>(null)
 const uploadProgress = ref(0)
-const { upload, isUploading: fileUploadIsUploading, error } = useFileUpload()
+const { upload, isUploading: fileUploadIsUploading } = useFileUpload()
 
-// Set initial values when space data is loaded
+// Keyed on the name alone, so an icon upload refreshing the space keeps an unsaved name edit
 watch(
-  () => space.value,
-  (newSpace) => {
-    if (newSpace) {
-      spaceName.value = newSpace.name
-      spaceIcon.value = newSpace.icon || null
+  () => space.value?.name,
+  (name) => {
+    if (name !== undefined) {
+      spaceName.value = name
     }
   },
   { immediate: true }
 )
 
-const handleSave = async () => {
-  try {
-    await updateSpace({
-      id: spaceId,
-      payload: {
-        name: spaceName.value,
-      },
-    })
-    toast.success('Space settings saved successfully')
-  } catch (_) {
-    toast.error('Failed to save space settings')
-  }
-}
-
-// Update space icon locally after upload
-const updateSpaceIcon = (url: string) => {
-  if (space.value) {
-    spaceIcon.value = url
-  }
-}
+/** The mutation toasts success and failure. */
+const handleSave = () => updateSpace({ id: spaceId, payload: { name: spaceName.value } })
 
 const handleIconFile = async (file: File) => {
   if (!file) return
   uploadProgress.value = 0
   try {
-    const response = await upload(file, {
+    const response = await upload<ApiResponse<SpaceResource>>(file, {
       url: `/mgmt/v1/spaces/${spaceId}/icon`,
       fieldName: 'icon',
       onProgress: (p) => (uploadProgress.value = p),
     })
     if (response?.data?.icon) {
-      updateSpaceIcon(response.data.icon)
+      // The endpoint returns the fresh space: seed the detail cache for the preview
+      // and refetch the lists that feed the header, switcher and dashboard.
+      queryClient.setQueryData(queryKeys.spaces.detail(spaceId), response.data)
+      queryClient.invalidateQueries({ queryKey: queryKeys.spaces.lists() })
       toast.success('Icon uploaded successfully')
     } else {
       toast.error('Upload succeeded but no icon returned')
@@ -153,7 +139,7 @@ const onDragOverIcon = (e: DragEvent) => {
                 @dragover="onDragOverIcon"
               >
                 <div
-                  v-if="space?.icon"
+                  v-if="space.icon"
                   role="button"
                   tabindex="0"
                   :aria-label="$t('labels.settings.space.uploadIcon')"
@@ -163,7 +149,7 @@ const onDragOverIcon = (e: DragEvent) => {
                   @keydown.space.prevent="handleUploadIcon"
                 >
                   <NuxtImg
-                    :src="spaceIcon ?? ''"
+                    :src="space.icon"
                     alt="Space icon"
                     class="h-14 w-14"
                   />
