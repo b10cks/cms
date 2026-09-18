@@ -2,9 +2,12 @@
 
 use App\Enums\Edition;
 
-// Self-hosted installs rarely have S3, so their transfers disk defaults to
-// local. Read from env directly: config('edition') may not be loaded yet.
-$transfersDriver = env('TRANSFERS_DISK_DRIVER', env('B10CKS_EDITION') === Edition::SELF_HOSTED->value ? 'local' : 's3');
+// Preserve S3 for installs with a configured transfers bucket: existing backup
+// and package records store paths without a disk. New self-hosted installs
+// without a bucket default to local. Config files may load in any order.
+$transfersDriver = env('TRANSFERS_DISK_DRIVER',
+    env('B10CKS_EDITION') === Edition::SELF_HOSTED->value && ! env('AWS_TRANSFERS_BUCKET') ? 'local' : 's3'
+);
 
 return [
 

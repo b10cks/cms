@@ -127,6 +127,8 @@ On the shared profile the scheduler also drains the queue, so the single cron li
 
 ## Upgrades
 
+Self-hosted installs keep S3 transfers when `AWS_TRANSFERS_BUCKET` is configured. Without a bucket, transfers default to local storage. `TRANSFERS_DISK_DRIVER` overrides that choice. Keep the existing disk and bucket settings when upgrading: backup and asset package records store file paths, so switching disks requires moving the files too.
+
 ### Docker Compose
 
 Set `B10CKS_IMAGE_TAG` in your `.env` to the new [release tag](https://github.com/b10cks/cms/releases), then:

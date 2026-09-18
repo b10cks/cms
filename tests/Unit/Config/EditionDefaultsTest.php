@@ -10,7 +10,7 @@ use Tests\TestCase;
  */
 class EditionDefaultsTest extends TestCase
 {
-    private const KEYS = ['B10CKS_EDITION', 'TRANSFERS_DISK_DRIVER', 'AI_MODE'];
+    private const KEYS = ['B10CKS_EDITION', 'TRANSFERS_DISK_DRIVER', 'AWS_TRANSFERS_BUCKET', 'AI_MODE'];
 
     /** @var array<string, string|false> */
     private array $saved = [];
@@ -68,6 +68,34 @@ class EditionDefaultsTest extends TestCase
         $this->assertSame('s3', $transfers['driver']);
         $this->assertSame('', $transfers['root']);
         $this->assertSame('space', $this->loadConfig('ai')['mode']);
+    }
+
+    public function test_self_hosted_keeps_existing_transfers_on_s3_when_a_bucket_is_configured(): void
+    {
+        $this->withEnv([
+            'B10CKS_EDITION' => 'self-hosted',
+            'AWS_TRANSFERS_BUCKET' => 'existing-transfers',
+        ]);
+
+        $transfers = $this->loadConfig('filesystems')['disks']['transfers'];
+
+        $this->assertSame('s3', $transfers['driver']);
+        $this->assertSame('', $transfers['root']);
+        $this->assertSame('existing-transfers', $transfers['bucket']);
+    }
+
+    public function test_explicit_local_driver_wins_over_a_configured_bucket(): void
+    {
+        $this->withEnv([
+            'B10CKS_EDITION' => 'self-hosted',
+            'AWS_TRANSFERS_BUCKET' => 'existing-transfers',
+            'TRANSFERS_DISK_DRIVER' => 'local',
+        ]);
+
+        $transfers = $this->loadConfig('filesystems')['disks']['transfers'];
+
+        $this->assertSame('local', $transfers['driver']);
+        $this->assertSame(storage_path('app/transfers'), $transfers['root']);
     }
 
     /** @param array<string, string|null> $values Unlisted keys are unset. */
