@@ -12,7 +12,7 @@ All configuration happens through the standard Laravel `.env` file. This page co
 B10CKS_EDITION=self-hosted     # saas (default) | self-hosted
 ```
 
-`self-hosted` turns off the SaaS billing surface: the subscription UI and LemonSqueezy webhooks disappear, billing/metering cron jobs stop, `b10cks:setup` seeds a single unlimited plan, and outgoing mail drops the b10cks.com footer. Individual features can be overridden with `B10CKS_FEATURE_BILLING` / `B10CKS_FEATURE_AI`.
+`self-hosted` turns off the SaaS billing surface: the subscription UI and LemonSqueezy webhooks disappear, billing/metering cron jobs stop, `b10cks:setup` seeds a single unlimited plan, and outgoing mail drops the b10cks.com footer. It also changes two defaults: backups and asset packages are stored on local disk, and AI uses one shared key. Set `TRANSFERS_DISK_DRIVER` or `AI_MODE` to override either. Individual features can be overridden with `B10CKS_FEATURE_BILLING` / `B10CKS_FEATURE_AI`.
 
 ```bash
 # Optional mail-footer imprint (rendered when company is set)
@@ -214,7 +214,7 @@ IMAGE_RATE_LIMIT=600
 ## Transfers (packages & backups)
 
 ```bash
-TRANSFERS_DISK_DRIVER=local    # or s3 (default)
+TRANSFERS_DISK_DRIVER=local    # self-hosted default; s3 is the saas default
 ```
 
 Asset download packages and backups are written to the transfers disk. `local` keeps them under `storage/app/transfers` and serves downloads through short-lived signed application URLs — no S3 required.
@@ -278,7 +278,7 @@ In-app notifications are delivered instantly. The email fallback is queued with 
 ## AI (optional)
 
 ```bash
-AI_MODE=single                 # self-hosted default: one platform key for all spaces
+AI_MODE=single                 # self-hosted default; space is the saas default
 OPENROUTER_API_KEY=…           # empty disables AI features
 
 # SaaS-style per-space keys instead (needs an OpenRouter provisioning key):
