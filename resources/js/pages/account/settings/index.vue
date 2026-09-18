@@ -28,7 +28,7 @@ const { upload, isUploading: fileUploadIsUploading } = useFileUpload()
 
 // Keyed on the names alone, so an avatar upload refreshing the user keeps unsaved name edits
 watch(
-  () => [user.value?.firstname, user.value?.lastname] as const,
+  [() => user.value?.firstname, () => user.value?.lastname],
   ([first, last]) => {
     if (first !== undefined) firstname.value = first
     if (last !== undefined) lastname.value = last
