@@ -17,10 +17,6 @@ export interface ChangePasswordPayload {
   new_password: string
 }
 
-export interface UploadAvatarResponse {
-  avatar: string
-}
-
 export interface UserSocialLinkProvider {
   provider: string
   label: string
@@ -54,20 +50,5 @@ export class Users extends BaseResource<User, never, UpdateUserPayload, never> {
 
   public async unlinkSocialProvider(provider: string): Promise<void> {
     return this.client.delete(`${this.basePath}/me/social-links/${provider}`)
-  }
-
-  public async uploadAvatar(file: File): Promise<ApiResponse<UploadAvatarResponse>> {
-    const formData = new FormData()
-    formData.append('avatar', file)
-
-    return this.client.post<ApiResponse<UploadAvatarResponse>>(
-      `${this.basePath}/me/avatar`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    )
   }
 }
