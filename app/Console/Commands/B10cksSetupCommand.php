@@ -28,6 +28,8 @@ class B10cksSetupCommand extends Command
 
     public function handle(): int
     {
+        $this->assertEditionChosen();
+
         $profile = $this->profileResolver->resolve($this->option('profile'));
 
         $this->assertProfileSupported($profile);
@@ -54,6 +56,23 @@ class B10cksSetupCommand extends Command
         ));
 
         return self::SUCCESS;
+    }
+
+    /**
+     * A manual install copies the development .env.example, which leaves the
+     * edition unset and would silently install as SaaS: billing UI on, no
+     * unlimited plan, S3 transfers and metered per-space AI keys.
+     */
+    private function assertEditionChosen(): void
+    {
+        if (config('edition.edition') !== null) {
+            return;
+        }
+
+        throw new RuntimeException(
+            'B10CKS_EDITION is not set. Add B10CKS_EDITION=self-hosted to .env for your own '
+            .'installation (or B10CKS_EDITION=saas for the hosted service) and rerun setup.'
+        );
     }
 
     /**

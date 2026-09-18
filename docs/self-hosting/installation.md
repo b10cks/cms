@@ -85,8 +85,11 @@ composer install --no-dev
 bun install
 bun run build
 cp .env.example .env
+# set B10CKS_EDITION=self-hosted, APP_ENV=production, APP_DEBUG=false and your database credentials
 php artisan b10cks:setup
 ```
+
+`.env.example` is the development template, so it leaves the edition unset and debugging on. `b10cks:setup` refuses to run until `B10CKS_EDITION` is set.
 
 Serve `public/` with your web server of choice, then work through the [configuration reference](configuration.md).
 
@@ -123,6 +126,8 @@ Plus the Laravel scheduler in cron:
 On the shared profile the scheduler also drains the queue, so the single cron line is genuinely all a webhost needs.
 
 ## Upgrades
+
+Self-hosted installs keep S3 transfers when `AWS_TRANSFERS_BUCKET` is configured. Without a bucket, transfers default to local storage. `TRANSFERS_DISK_DRIVER` overrides that choice. Keep the existing disk and bucket settings when upgrading: backup and asset package records store file paths, so switching disks requires moving the files too.
 
 ### Docker Compose
 

@@ -44,7 +44,10 @@ class UpdateSpaceRequest extends FormRequest
                 'regex:/^[a-z0-9\-]+$/',
                 Rule::unique('spaces', 'slug')->ignore($space),
             ],
-            'icon' => 'sometimes|nullable|string|max:50',
+            // No `icon`: it is a storage path that only SpaceIconController
+            // writes. The next upload deletes whatever path it holds from the
+            // default disk, so accepting it here let any space admin point it
+            // at someone else's file.
             'color' => 'sometimes|nullable|string|max:7|regex:/^#[a-fA-F0-9]{6}$/',
             'badge' => 'sometimes|nullable|string|max:50',
             'description' => 'sometimes|nullable|string',

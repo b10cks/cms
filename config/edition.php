@@ -11,9 +11,12 @@ return [
     | billing surface (LemonSqueezy webhooks, subscription UI, usage/AI-key
     | reconciliation crons) and expects a single unlimited plan.
     |
+    | Unset behaves as "saas" at runtime (see EditionGate), but b10cks:setup
+    | refuses to install until it is chosen explicitly.
+    |
     */
 
-    'edition' => env('B10CKS_EDITION', 'saas'),
+    'edition' => env('B10CKS_EDITION'),
 
     /*
     |--------------------------------------------------------------------------

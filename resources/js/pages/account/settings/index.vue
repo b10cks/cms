@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { toast } from 'vue-sonner'
+
 import Icon from '~/components/Icon.vue'
 import NuxtImg from '~/components/NuxtImg.vue'
 import { Button } from '~/components/ui/button'
@@ -6,12 +8,12 @@ import { Card, CardContent, CardFooter, CardHeaderCombined } from '~/components/
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { FormField, InputField, SelectField } from '~/components/ui/form'
 import { useFileUpload } from '~/composables/useFileUpload'
+import type { User } from '~/types/users'
 
-const { useUserQuery, useUpdateUserMutation, useUploadAvatarMutation } = useUser()
+const { useUserQuery, useUpdateUserMutation, cacheUser } = useUser()
 const { t, locales } = useI18n()
 const { data: user } = useUserQuery()
 const { mutate: updateUser, isPending: isUpdating } = useUpdateUserMutation()
-const { mutate: uploadAvatar, isPending: isUploadingAvatar } = useUploadAvatarMutation()
 const { settings } = useUserSettings()
 
 useSeoMeta({
@@ -20,19 +22,16 @@ useSeoMeta({
 
 const firstname = ref('')
 const lastname = ref('')
-const avatar = ref<string | null>(null)
 const avatarInputRef = ref<HTMLInputElement | null>(null)
 const uploadProgress = ref(0)
 const { upload, isUploading: fileUploadIsUploading } = useFileUpload()
 
+// Keyed on the names alone, so an avatar upload refreshing the user keeps unsaved name edits
 watch(
-  () => user.value,
-  (newUser) => {
-    if (newUser) {
-      firstname.value = newUser.firstname
-      lastname.value = newUser.lastname
-      avatar.value = newUser.avatar || null
-    }
+  [() => user.value?.firstname, () => user.value?.lastname],
+  ([first, last]) => {
+    if (first !== undefined) firstname.value = first
+    if (last !== undefined) lastname.value = last
   },
   { immediate: true }
 )
@@ -53,16 +52,20 @@ const handleAvatarFile = async (file: File) => {
   if (!file) return
   uploadProgress.value = 0
   try {
-    const response = await upload(file, {
+    const response = await upload<ApiResponse<User>>(file, {
       url: '/mgmt/v1/users/me/avatar',
       fieldName: 'avatar',
       onProgress: (p) => (uploadProgress.value = p),
     })
-    if (response?.data?.avatar) {
-      avatar.value = response.data.avatar
-    }
-  } catch {
-    // Error handled by useFileUpload
+    // The endpoint returns the full user, so the header and menus update without a refetch
+    cacheUser(response.data)
+    toast.success(t('labels.account.profile.toast.avatarUploaded'))
+  } catch (e) {
+    toast.error(
+      t('labels.account.profile.toast.avatarUploadFailed', {
+        error: e instanceof Error ? e.message : 'Unknown error',
+      })
+    )
   }
 }
 
@@ -114,7 +117,7 @@ const onDragOverAvatar = (e: DragEvent) => {
               @dragover="onDragOverAvatar"
             >
               <div
-                v-if="avatar"
+                v-if="user.avatar"
                 role="button"
                 tabindex="0"
                 :aria-label="$t('labels.account.profile.uploadAvatar')"
@@ -124,7 +127,7 @@ const onDragOverAvatar = (e: DragEvent) => {
                 @keydown.space.prevent="handleUploadAvatar"
               >
                 <NuxtImg
-                  :src="avatar"
+                  :src="user.avatar"
                   alt="Avatar"
                   class="h-full w-full object-cover"
                 />

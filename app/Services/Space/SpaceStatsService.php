@@ -17,6 +17,7 @@ use App\Models\Space\Redirect;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -550,156 +551,98 @@ class SpaceStatsService
      */
     public function getTrendStats(Space $space, PeriodType $periodType, Carbon $startDate, Carbon $endDate): array
     {
-        $interval = match ($periodType) {
-            PeriodType::DAILY => 'day',
-            PeriodType::WEEKLY => 'week',
-            PeriodType::MONTHLY => 'month',
-            PeriodType::YEARLY => 'year',
-            default => 'day'
-        };
+        $periods = $this->generatePeriods($startDate, $endDate, $periodType);
+        $count = ['count' => 'COUNT(*)'];
 
-        $periods = $this->generatePeriods($startDate, $endDate, $interval);
-
-        $contentTrend = $this->getTrendData(Content::class, 'created_at', $periods, $periodType);
-        $editingTrend = $this->getTrendData(ContentVersion::class, 'created_at', $periods, $periodType);
-        $publishingTrend = $this->getTrendData(ContentVersion::class, 'published_at', $periods, $periodType);
-        $assetTrend = $this->getAssetTrendData(Asset::class, 'created_at', $periods, $periodType);
-        $redirectTrend = $this->getTrendData(Redirect::class, 'created_at', $periods, $periodType);
-        $dataEntryTrend = $this->getTrendData(DataEntry::class, 'created_at', $periods, $periodType);
-        $apiTrend = $this->getApiUsageTrend($space, $periods, $periodType);
-        $trafficTrend = $this->getTrafficUsageTrend($space, $periods, $periodType);
+        $bucket = fn (Builder $query, string $dateField, array $sums) => $this->bucketByPeriod($query, $dateField, $sums, $periods, $periodType, $endDate);
+        $counts = fn (array $buckets) => array_map(fn (array $bucket) => $bucket['count'], $buckets);
 
         return [
             'periods' => $periods,
-            'content_creation' => $contentTrend,
-            'content_editing' => $editingTrend,
-            'content_publishing' => $publishingTrend,
-            'asset_uploads' => $assetTrend,
-            'redirect_creation' => $redirectTrend,
-            'data_entry_creation' => $dataEntryTrend,
-            'api_usage' => $apiTrend,
-            'traffic_usage' => $trafficTrend,
+            'content_creation' => $counts($bucket(Content::query(), 'created_at', $count)),
+            'content_editing' => $counts($bucket(ContentVersion::query(), 'created_at', $count)),
+            'content_publishing' => $counts($bucket(ContentVersion::query(), 'published_at', $count)),
+            'asset_uploads' => $bucket(Asset::query(), 'created_at', ['count' => 'COUNT(*)', 'total_size' => 'SUM(size)']),
+            'redirect_creation' => $counts($bucket(Redirect::query(), 'created_at', $count)),
+            'data_entry_creation' => $counts($bucket(DataEntry::query(), 'created_at', $count)),
+            'api_usage' => $counts($bucket(
+                SpaceApiHitHourly::where('space_id', $space->id), 'hour_timestamp', ['count' => 'SUM(hit_count)'],
+            )),
+            'traffic_usage' => $bucket(
+                SpaceTrafficUsageHourly::where('space_id', $space->id),
+                'hour_timestamp',
+                ['total_bytes' => 'SUM(total_bytes)', 'request_count' => 'SUM(request_count)'],
+            ),
         ];
     }
 
     /**
-     * Generate period array based on interval
+     * Period start dates (Y-m-d), aligned to the start of each day, ISO week,
+     * month or year so every bucket in the range gets exactly one entry.
+     *
+     * @return list<string>
      */
-    private function generatePeriods(Carbon $startDate, Carbon $endDate, string $interval): array
+    private function generatePeriods(Carbon $startDate, Carbon $endDate, PeriodType $periodType): array
     {
-        $periods = [];
-        $current = clone $startDate;
+        $unit = $periodType->toCarbonPeriod();
+        $current = $unit === 'week'
+            ? $startDate->copy()->startOfWeek(CarbonInterface::MONDAY)
+            : $startDate->copy()->startOf($unit);
 
+        $periods = [];
         while ($current <= $endDate) {
             $periods[] = $current->format('Y-m-d');
-            $current->add(1, $interval);
+            $current->add(1, $unit);
         }
 
         return $periods;
     }
 
     /**
-     * Get trend data for a model's date field
+     * Aggregate rows per period. SQL groups by DATE(), which MySQL and SQLite
+     * both support; folding days into ISO weeks, months or years happens here.
+     *
+     * @param  array<string, string>  $sums  alias => SQL aggregate
+     * @param  list<string>  $periods
+     * @return array<string, array<string, int>> period => alias => total
      */
-    private function getTrendData(string $model, string $dateField, array $periods, PeriodType $periodType): array
+    private function bucketByPeriod(Builder $query, string $dateField, array $sums, array $periods, PeriodType $periodType, Carbon $endDate): array
     {
-        $data = $model::selectRaw("DATE_FORMAT($dateField, ?) as period, COUNT(*) as count", [$periodType->toMysqlDateFormat()])
-            ->whereNotNull($dateField)
-            ->groupBy('period')
-            ->pluck('count', 'period')
-            ->toArray();
-
-        $result = [];
-        foreach ($periods as $period) {
-            $formattedPeriod = Carbon::parse($period)->format($periodType->toCarbonFormat());
-            $result[$period] = $data[$formattedPeriod] ?? 0;
+        if ($periods === []) {
+            return [];
         }
 
-        return $result;
-    }
-
-    private function getAssetTrendData(string $model, string $dateField, array $periods, PeriodType $periodType): array
-    {
-        $data = $model::selectRaw("DATE_FORMAT($dateField, ?) as period, COUNT(*) as count, SUM(size) as size", [$periodType->toMysqlDateFormat()])
-            ->whereNotNull($dateField)
-            ->groupBy('period')
-            ->get('count', 'size', 'period')
-            ->mapWithKeys(function ($item) {
-                return [
-                    $item->period => [
-                        'count' => (int) $item->count,
-                        'total_size' => (int) $item->size,
-                    ],
-                ];
-            })
-            ->toArray();
-
-        $result = [];
+        $format = $periodType->toCarbonFormat();
+        $periodByKey = [];
         foreach ($periods as $period) {
-            $formattedPeriod = Carbon::parse($period)->format($periodType->toCarbonFormat());
-            $result[$period] = $data[$formattedPeriod] ?? [
-                'count' => 0,
-                'total_size' => 0,
-            ];
+            $periodByKey[Carbon::parse($period)->format($format)] = $period;
         }
 
-        return $result;
-    }
+        $buckets = array_fill_keys($periods, array_fill_keys(array_keys($sums), 0));
+        $aggregates = implode(', ', array_map(
+            fn (string $alias, string $expression) => "$expression as $alias",
+            array_keys($sums),
+            $sums,
+        ));
 
-    /**
-     * Get API usage trend for a space
-     */
-    private function getApiUsageTrend(Space $space, array $periods, PeriodType $periodType): array
-    {
-        $data = SpaceApiHitHourly::where('space_id', $space->id)
-            ->selectRaw('DATE_FORMAT(hour_timestamp, ?) as period, SUM(hit_count) as count', [$periodType->toMysqlDateFormat()])
-            ->groupBy('period')
-            ->pluck('count', 'period')
-            ->toArray();
+        $rows = $query
+            ->selectRaw("DATE($dateField) as bucket_day, $aggregates")
+            ->whereBetween($dateField, [Carbon::parse($periods[0]), $endDate])
+            ->groupBy('bucket_day')
+            ->toBase()
+            ->get();
 
-        $result = [];
-        foreach ($periods as $period) {
-            $formattedPeriod = Carbon::parse($period)->format($periodType->toCarbonFormat());
-            $result[$period] = (int) ($data[$formattedPeriod] ?? 0);
+        foreach ($rows as $row) {
+            $period = $periodByKey[Carbon::parse($row->bucket_day)->format($format)] ?? null;
+            if ($period === null) {
+                continue;
+            }
+            foreach (array_keys($sums) as $alias) {
+                $buckets[$period][$alias] += (int) $row->$alias;
+            }
         }
 
-        return $result;
-    }
-
-    /**
-     * Get traffic usage trend from SpaceTrafficUsageHourly
-     */
-    private function getTrafficUsageTrend(Space $space, array $periods, PeriodType $periodType): array
-    {
-        $data = SpaceTrafficUsageHourly::where('space_id', $space->id)
-            ->selectRaw(
-                'DATE_FORMAT(hour_timestamp, ?) as period,
-                SUM(total_bytes) as total_bytes,
-                SUM(request_count) as request_count',
-                [$periodType->toMysqlDateFormat()]
-            )
-            ->groupBy('period')
-            ->get()
-            ->mapWithKeys(function ($item) {
-                return [
-                    $item->period => [
-                        'total_bytes' => (int) $item->total_bytes,
-                        'request_count' => (int) $item->request_count,
-                    ],
-                ];
-            })
-            ->toArray();
-
-        $result = [];
-        foreach ($periods as $period) {
-            $formattedPeriod = Carbon::parse($period)->format($periodType->toCarbonFormat());
-            $result[$period] = $data[$formattedPeriod] ?? [
-                'total_bytes' => 0,
-                'request_count' => 0,
-            ];
-        }
-
-        return $result;
+        return $buckets;
     }
 
     /**
