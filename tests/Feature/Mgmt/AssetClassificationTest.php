@@ -315,6 +315,45 @@ class AssetClassificationTest extends TestCase
     }
 
     #[Test]
+    public function classification_rejects_oversized_source_pixels_before_decoding(): void
+    {
+        $this->mockRegistry(supportsVision: true);
+        config()->set('ilum.max_source_pixels', 5_000);
+
+        $asset = $this->createAsset(['metadata' => ['width' => 2000, 'height' => 2000]]);
+        $this->storeImage($asset);
+
+        $this->partialMock(AiStreamService::class, function ($mock) {
+            $mock->shouldNotReceive('generateWithMessages');
+        });
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Source image exceeds the configured pixel limit.');
+
+        (new ClassifyAssetJob($this->space, $asset->id, ['_default']))->handle();
+    }
+
+    #[Test]
+    public function classification_streams_a_source_that_needs_conversion(): void
+    {
+        $this->mockRegistry(supportsVision: true);
+        $asset = $this->createAsset(['metadata' => ['width' => 2000, 'height' => 2000]]);
+        $this->storeImage($asset);
+
+        $this->partialMock(AiStreamService::class, function ($mock) {
+            $mock->shouldReceive('generateWithMessages')
+                ->once()
+                ->withArgs(fn (Space $space, array $messages): bool => $messages[1]['content'][1]['mime_type'] === 'image/webp'
+                    && str_starts_with(base64_decode($messages[1]['content'][1]['data']), 'RIFF'))
+                ->andReturn(json_encode(['_default.alt' => 'A small image']));
+        });
+
+        (new ClassifyAssetJob($this->space, $asset->id, ['_default']))->handle();
+
+        $this->assertSame('A small image', $asset->fresh()->data['fields']['_default']['alt']);
+    }
+
+    #[Test]
     public function overwrite_regenerates_filled_fields(): void
     {
         Queue::fake();

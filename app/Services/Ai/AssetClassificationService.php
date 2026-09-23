@@ -597,27 +597,57 @@ class AssetClassificationService
     private function imagePart(Asset $asset): array
     {
         $asset->loadMissing('storage');
-        $binary = $this->storageService->getStorage($asset->storage)->get($asset->path);
-
-        if (! \is_string($binary) || $binary === '') {
-            throw new \RuntimeException("Asset file {$asset->path} could not be read.");
-        }
+        $disk = $this->storageService->getStorage($asset->storage);
 
         $width = (int) ($asset->metadata['width'] ?? 0);
         $height = (int) ($asset->metadata['height'] ?? 0);
         $fitsNatively = \in_array($asset->mime_type, self::NATIVE_MIME_TYPES, true)
-            && \strlen($binary) <= self::MAX_ORIGINAL_BYTES
             && $width > 0 && $width <= self::MAX_EDGE
             && $height > 0 && $height <= self::MAX_EDGE;
 
-        if ($fitsNatively) {
-            return ['mime_type' => $asset->mime_type, 'data' => $binary];
+        if ($fitsNatively && $disk->size($asset->path) <= self::MAX_ORIGINAL_BYTES) {
+            $binary = $disk->get($asset->path);
+
+            if (! \is_string($binary) || $binary === '') {
+                throw new \RuntimeException("Asset file {$asset->path} could not be read.");
+            }
+
+            if (\strlen($binary) <= self::MAX_ORIGINAL_BYTES) {
+                return ['mime_type' => $asset->mime_type, 'data' => $binary];
+            }
         }
 
         $tempFile = tempnam(sys_get_temp_dir(), 'classify-');
 
+        if ($tempFile === false) {
+            throw new \RuntimeException('Could not create a temporary file for classification.');
+        }
+
         try {
-            file_put_contents($tempFile, $binary);
+            $source = $disk->readStream($asset->path);
+            $target = fopen($tempFile, 'wb');
+
+            try {
+                if (! \is_resource($source) || ! \is_resource($target)) {
+                    throw new \RuntimeException("Asset file {$asset->path} could not be read.");
+                }
+
+                if (stream_copy_to_stream($source, $target) === false) {
+                    throw new \RuntimeException("Asset file {$asset->path} could not be copied.");
+                }
+            } finally {
+                if (\is_resource($source)) {
+                    fclose($source);
+                }
+
+                if (\is_resource($target)) {
+                    fclose($target);
+                }
+            }
+
+            if ($this->images->exceedsSourcePixelLimit($tempFile)) {
+                throw new \RuntimeException('Source image exceeds the configured pixel limit.');
+            }
 
             $image = $this->images->driver()->loadFromFile($tempFile, firstFrameOnly: true);
 
