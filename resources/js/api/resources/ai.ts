@@ -31,11 +31,25 @@ export interface ClassifyAssetsPayload {
   config_id?: string | null
   /** Regenerate every allowed field instead of filling empty ones */
   overwrite?: boolean
+  alt_context?: string
+  decorative?: boolean
+  high_detail?: boolean
 }
 
 export interface ClassifyAssetsResult {
+  run_id: string
   queued: number
   skipped: number
+}
+
+export interface ClassifyAssetsProgress {
+  run_id: string
+  queued: number
+  pending: number
+  updated: number
+  skipped: number
+  failed: number
+  complete: boolean
 }
 
 export interface SpaceAiConfig {
@@ -103,6 +117,12 @@ export class Ai {
     return this.client.post<{ data: ClassifyAssetsResult }>(
       `/mgmt/v1/ai/assets/classify?spaceId=${this.spaceId}`,
       payload
+    )
+  }
+
+  public async getClassificationRun(runId: string): Promise<{ data: ClassifyAssetsProgress }> {
+    return this.client.get<{ data: ClassifyAssetsProgress }>(
+      `/mgmt/v1/ai/assets/classify/${runId}?spaceId=${this.spaceId}`
     )
   }
 }

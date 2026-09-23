@@ -3,16 +3,19 @@
 namespace Tests\Feature\Mgmt;
 
 use App\Jobs\Space\ClassifyAssetJob;
+use App\Models\Management\AssetClassificationRun;
 use App\Models\Management\Space;
 use App\Models\Management\Storage;
 use App\Models\Space\Asset;
 use App\Models\Space\AssetTag;
 use App\Models\User;
 use App\Services\Ai\AiStreamService;
+use App\Services\Ai\AssetClassificationService;
 use App\Services\Ai\Dto\AiModelDto;
 use App\Services\Ai\Exceptions\AiServiceException;
 use App\Services\Ai\ModelRegistry;
 use App\Services\Storage\StorageService;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
@@ -157,8 +160,162 @@ class AssetClassificationTest extends TestCase
 
         $this->assertSame(0, $job->tries);
         $this->assertSame(3, $job->maxExceptions);
-        $this->assertSame(604800, $job->uniqueFor);
+        $this->assertNotInstanceOf(ShouldBeUnique::class, $job);
+        $this->assertCount(2, $job->middleware());
         $this->assertNull(app('queue')->connection('sync')->getJobExpiration($job));
+    }
+
+    #[Test]
+    public function repeated_requests_are_accepted_and_report_worker_progress(): void
+    {
+        Queue::fake();
+        $this->mockRegistry(supportsVision: true);
+        $asset = $this->createAsset(['metadata' => ['width' => 100, 'height' => 100]]);
+        $this->storeImage($asset);
+        $url = "/mgmt/v1/ai/assets/classify?spaceId={$this->space->id}";
+        $payload = ['scope' => 'selection', 'asset_ids' => [$asset->id]];
+
+        $first = $this->postJson($url, $payload)->assertOk()->assertJsonPath('data.queued', 1);
+        $second = $this->postJson($url, [...$payload, 'overwrite' => true])->assertOk()->assertJsonPath('data.queued', 1);
+        Queue::assertPushed(ClassifyAssetJob::class, 2);
+
+        $runId = $first->json('data.run_id');
+        $this->getJson("/mgmt/v1/ai/assets/classify/{$runId}?spaceId={$this->space->id}")
+            ->assertOk()->assertJsonPath('data.pending', 1)->assertJsonPath('data.complete', false);
+
+        $this->partialMock(AiStreamService::class, function ($mock) {
+            $mock->shouldReceive('generateWithMessages')->twice()
+                ->andReturn(
+                    json_encode(['_default.alt' => 'A red square']),
+                    json_encode(['_default.alt' => 'A blue square']),
+                );
+        });
+
+        $jobs = Queue::pushed(ClassifyAssetJob::class);
+        $jobs[0]->handle();
+        $jobs[1]->handle();
+
+        $this->getJson("/mgmt/v1/ai/assets/classify/{$runId}?spaceId={$this->space->id}")
+            ->assertOk()->assertJsonPath('data.pending', 0)
+            ->assertJsonPath('data.updated', 1)->assertJsonPath('data.complete', true);
+        $this->assertSame(1, AssetClassificationRun::query()->findOrFail($second->json('data.run_id'))->updated);
+    }
+
+    #[Test]
+    public function a_run_is_visible_only_in_its_space(): void
+    {
+        Queue::fake();
+        $this->mockRegistry(supportsVision: true);
+        $asset = $this->createAsset();
+        $runId = $this->postJson("/mgmt/v1/ai/assets/classify?spaceId={$this->space->id}", [
+            'scope' => 'selection', 'asset_ids' => [$asset->id],
+        ])->assertOk()->json('data.run_id');
+        $other = Space::factory()->create();
+        $this->assignSpaceRole($other, $this->user, 'owner');
+
+        $this->getJson("/mgmt/v1/ai/assets/classify/{$runId}?spaceId={$other->id}")->assertNotFound();
+    }
+
+    #[Test]
+    public function final_job_failures_appear_in_run_progress(): void
+    {
+        Queue::fake();
+        $this->mockRegistry(supportsVision: true);
+        $asset = $this->createAsset();
+        $runId = $this->postJson("/mgmt/v1/ai/assets/classify?spaceId={$this->space->id}", [
+            'scope' => 'selection', 'asset_ids' => [$asset->id],
+        ])->assertOk()->json('data.run_id');
+
+        Queue::pushed(ClassifyAssetJob::class)[0]->failed(new \RuntimeException('provider failed'));
+
+        $this->getJson("/mgmt/v1/ai/assets/classify/{$runId}?spaceId={$this->space->id}")
+            ->assertOk()->assertJsonPath('data.pending', 0)
+            ->assertJsonPath('data.failed', 1)->assertJsonPath('data.complete', true);
+    }
+
+    #[Test]
+    public function decorative_classification_clears_existing_alt_without_overwriting_other_fields(): void
+    {
+        $this->mockRegistry(supportsVision: true);
+        $asset = $this->createAsset([
+            'data' => ['fields' => ['_default' => ['title' => 'Keep', 'alt' => 'Old alt', 'description' => 'Keep description']]],
+            'metadata' => ['width' => 100, 'height' => 100],
+        ]);
+        $this->storeImage($asset);
+        $this->partialMock(AiStreamService::class, function ($mock) {
+            $mock->shouldReceive('generateWithMessages')->once()
+                ->withArgs(fn (Space $space, array $messages): bool => str_contains($messages[0]['content'], 'decorative'))
+                ->andReturn(json_encode(['_default.alt' => 'Model ignored instruction']));
+        });
+
+        $this->postJson("/mgmt/v1/ai/assets/classify?spaceId={$this->space->id}", [
+            'scope' => 'selection', 'asset_ids' => [$asset->id], 'languages' => ['_default'], 'decorative' => true,
+        ])->assertOk();
+
+        $fresh = $asset->fresh();
+        $this->assertSame('', $fresh->data['fields']['_default']['alt']);
+        $this->assertSame('Keep', $fresh->data['fields']['_default']['title']);
+        $this->assertSame(['_default.alt'], $fresh->metadata['ai_classification']['fields']);
+    }
+
+    #[Test]
+    public function placement_context_regenerates_only_alt_when_other_fields_are_full(): void
+    {
+        $this->mockRegistry(supportsVision: true);
+        $asset = $this->createAsset([
+            'data' => ['fields' => ['_default' => ['title' => 'Keep', 'alt' => 'Old alt', 'description' => 'Keep description']]],
+            'metadata' => ['width' => 100, 'height' => 100],
+        ]);
+        $this->storeImage($asset);
+        $this->partialMock(AiStreamService::class, function ($mock) {
+            $mock->shouldReceive('generateWithMessages')->once()
+                ->withArgs(fn (Space $space, array $messages): bool => str_contains($messages[0]['content'], 'summer collection'))
+                ->andReturn(json_encode(['_default.alt' => 'Explore the summer collection']));
+        });
+
+        $this->postJson("/mgmt/v1/ai/assets/classify?spaceId={$this->space->id}", [
+            'scope' => 'selection', 'asset_ids' => [$asset->id], 'languages' => ['_default'],
+            'alt_context' => 'Linked banner for the summer collection',
+        ])->assertOk()->assertJsonPath('data.queued', 1);
+
+        $fields = $asset->fresh()->data['fields']['_default'];
+        $this->assertSame('Explore the summer collection', $fields['alt']);
+        $this->assertSame('Keep', $fields['title']);
+        $this->assertSame('Keep description', $fields['description']);
+    }
+
+    #[Test]
+    public function field_validation_rejects_copy_over_its_field_limit(): void
+    {
+        $service = app(AssetClassificationService::class);
+        $result = $service->parseResponse(json_encode([
+            '_default.title' => str_repeat('T', 71),
+            '_default.alt' => 'A red square',
+            '_default.description' => str_repeat('D', 401),
+            '_default.keywords' => 'one, two',
+        ]), ['_default.title', '_default.alt', '_default.description', '_default.keywords']);
+
+        $this->assertSame(['_default' => ['alt' => 'A red square']], $result['fields']);
+    }
+
+    #[Test]
+    public function high_detail_sends_a_larger_native_image_for_small_text(): void
+    {
+        $this->mockRegistry(supportsVision: true);
+        $asset = $this->createAsset(['metadata' => ['width' => 1500, 'height' => 800]]);
+        app(StorageService::class)->getStorage($this->storage)
+            ->put($asset->path, UploadedFile::fake()->image('chart.jpg', 1500, 800)->getContent());
+
+        $this->partialMock(AiStreamService::class, function ($mock) {
+            $mock->shouldReceive('generateWithMessages')->once()
+                ->withArgs(fn (Space $space, array $messages): bool => $messages[1]['content'][1]['mime_type'] === 'image/jpeg'
+                    && getimagesizefromstring(base64_decode($messages[1]['content'][1]['data']))[0] === 1500)
+                ->andReturn(json_encode(['_default.alt' => 'A chart']));
+        });
+
+        (new ClassifyAssetJob($this->space, $asset->id, ['_default'], null, false, null, null, false, true))->handle();
+
+        $this->assertSame('A chart', $asset->fresh()->data['fields']['_default']['alt']);
     }
 
     #[Test]

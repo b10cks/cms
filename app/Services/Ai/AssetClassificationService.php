@@ -3,6 +3,7 @@
 namespace App\Services\Ai;
 
 use App\Jobs\Space\ClassifyAssetJob;
+use App\Models\Management\AssetClassificationRun;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceAiConfig;
 use App\Models\Space\Asset;
@@ -33,13 +34,14 @@ class AssetClassificationService
     /** Longest edge sent to the model; anything larger is downscaled. */
     private const MAX_EDGE = 1024;
 
+    private const HIGH_DETAIL_EDGE = 2048;
+
     /** Originals up to this size in a natively supported format go through untouched. */
     private const MAX_ORIGINAL_BYTES = 2_000_000;
 
     private const NATIVE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-    /** Model output is editorial copy; anything longer is noise, not a caption. */
-    private const MAX_VALUE_LENGTH = 1000;
+    private const FIELD_MAX_LENGTHS = ['alt' => 125, 'alt_text' => 125, 'title' => 70, 'name' => 70, 'description' => 400, 'caption' => 400];
 
     /** Taxonomy size the prompt carries; larger spaces get the most used tags. */
     private const MAX_TAGS_IN_PROMPT = 200;
@@ -133,7 +135,7 @@ class AssetClassificationService
      *
      * @param  Builder<Asset>  $query
      * @param  array<int, string>|null  $languages  null = every space language
-     * @return array{queued: int, skipped: int}
+     * @return array{run_id: string, queued: int, skipped: int}
      */
     public function queue(
         Space $space,
@@ -141,28 +143,38 @@ class AssetClassificationService
         ?array $languages = null,
         ?string $configId = null,
         bool $overwrite = false,
+        ?string $altContext = null,
+        bool $decorative = false,
+        bool $highDetail = false,
     ): array {
         $languages ??= $this->availableLanguages($space);
         $queued = 0;
         $skipped = 0;
+        $run = AssetClassificationRun::query()->create(['space_id' => $space->id]);
 
-        $query
-            ->where('mime_type', 'like', 'image/%')
-            ->orderBy('id')
-            ->chunkById(200, function ($assets) use ($space, $languages, $configId, $overwrite, &$queued, &$skipped): void {
-                foreach ($assets as $asset) {
-                    if (! $this->needsClassification($space, $asset, $languages, $overwrite)) {
-                        $skipped++;
+        try {
+            $query
+                ->where('mime_type', 'like', 'image/%')
+                ->orderBy('id')
+                ->chunkById(200, function ($assets) use ($space, $languages, $configId, $overwrite, $altContext, $decorative, $highDetail, $run, &$queued, &$skipped): void {
+                    foreach ($assets as $asset) {
+                        if (! $this->needsClassification($space, $asset, $languages, $overwrite, $decorative, $altContext)) {
+                            $skipped++;
 
-                        continue;
+                            continue;
+                        }
+
+                        // Count before dispatch: a sync worker can finish immediately.
+                        $run->increment('queued');
+                        ClassifyAssetJob::dispatch($space, $asset->id, $languages, $configId, $overwrite, $run->id, $altContext, $decorative, $highDetail);
+                        $queued++;
                     }
+                });
+        } finally {
+            $run->update(['enqueuing' => false]);
+        }
 
-                    ClassifyAssetJob::dispatch($space, $asset->id, $languages, $configId, $overwrite);
-                    $queued++;
-                }
-            });
-
-        return ['queued' => $queued, 'skipped' => $skipped];
+        return ['run_id' => $run->id, 'queued' => $queued, 'skipped' => $skipped];
     }
 
     /**
@@ -199,6 +211,9 @@ class AssetClassificationService
         array $languages,
         SpaceAiConfig $config,
         bool $overwrite = false,
+        ?string $altContext = null,
+        bool $decorative = false,
+        bool $highDetail = false,
     ): string {
         if (! $this->isClassifiable($asset->mime_type)) {
             return 'skipped';
@@ -208,6 +223,14 @@ class AssetClassificationService
         $targetKeys = $overwrite
             ? $this->allTargetKeys($fieldKeys, $languages)
             : $this->emptyTargetKeys($space, $asset, $languages, $fieldKeys);
+        $forceAlt = $decorative || ($altContext !== null && trim($altContext) !== '');
+
+        if ($forceAlt) {
+            foreach ($this->allTargetKeys(array_intersect($fieldKeys, ['alt', 'alt_text']), $languages) as $key) {
+                $targetKeys[] = $key;
+            }
+            $targetKeys = array_values(array_unique($targetKeys));
+        }
         $tagsByName = $this->suggestsTags($space) ? $this->tagTaxonomy() : [];
 
         if ($targetKeys === [] && ($tagsByName === [] || ! $this->wantsTags($asset, $overwrite))) {
@@ -217,12 +240,14 @@ class AssetClassificationService
         $messages = $this->buildMessages(
             $space,
             $asset,
-            $this->imagePart($asset),
+            $this->imagePart($asset, $highDetail),
             $languages,
             $fieldKeys,
             $targetKeys,
             array_keys($tagsByName),
             $config,
+            $altContext,
+            $decorative,
         );
 
         $raw = $this->ai->generateWithMessages($space, $messages, [], $config);
@@ -231,7 +256,11 @@ class AssetClassificationService
             throw AiServiceException::noResult();
         }
 
-        $result = $this->parseResponse($raw, $targetKeys, $tagsByName);
+        if (! \is_array(JsonExtractor::decode($raw))) {
+            throw AiServiceException::noResult();
+        }
+
+        $result = $this->parseResponse($raw, $targetKeys, $tagsByName, $decorative);
 
         if ($result['fields'] === [] && $result['tags'] === []) {
             Log::info('Asset classification produced no usable values', [
@@ -250,6 +279,7 @@ class AssetClassificationService
             $currentData,
             $result['fields'],
             $overwrite,
+            $forceAlt,
         );
         $written = [];
 
@@ -293,7 +323,7 @@ class AssetClassificationService
      * @param  array<string, string>  $tagsByName  lower-cased tag name => tag id
      * @return array{fields: array<string, array<string, string>>, tags: array<int, string>}
      */
-    public function parseResponse(string $content, array $targetKeys, array $tagsByName = []): array
+    public function parseResponse(string $content, array $targetKeys, array $tagsByName = [], bool $decorative = false): array
     {
         $decoded = JsonExtractor::decode($content);
 
@@ -305,18 +335,49 @@ class AssetClassificationService
         $fields = [];
 
         foreach ($decoded as $flatKey => $value) {
-            if (! \is_string($flatKey) || ! isset($allowed[$flatKey]) || ! \is_scalar($value)) {
+            if (! \is_string($flatKey) || ! isset($allowed[$flatKey]) || ! \is_string($value)) {
                 continue;
             }
 
             $text = trim((string) $value);
 
+            [$language, $field] = explode('.', $flatKey, 2);
+
+            if ($decorative && \in_array($field, ['alt', 'alt_text'], true)) {
+                $fields[$language][$field] = '';
+
+                continue;
+            }
+
             if ($text === '') {
                 continue;
             }
 
-            [$language, $field] = explode('.', $flatKey, 2);
-            $fields[$language][$field] = mb_substr($text, 0, self::MAX_VALUE_LENGTH);
+            $limit = self::FIELD_MAX_LENGTHS[$field] ?? 1000;
+
+            if (mb_strlen($text) > $limit) {
+                continue;
+            }
+
+            if ($field === 'keywords') {
+                $terms = array_filter(array_map('trim', explode(',', $text)));
+
+                if (count($terms) < 5 || count($terms) > 10 || count($terms) !== count(array_unique($terms))) {
+                    continue;
+                }
+            }
+
+            $fields[$language][$field] = $text;
+        }
+
+        if ($decorative) {
+            foreach ($targetKeys as $flatKey) {
+                [$language, $field] = explode('.', $flatKey, 2);
+
+                if (\in_array($field, ['alt', 'alt_text'], true)) {
+                    $fields[$language][$field] = '';
+                }
+            }
         }
 
         $tags = [];
@@ -346,7 +407,7 @@ class AssetClassificationService
      * @param  array<string, array<string, string>>  $classification
      * @return array<string, mixed>
      */
-    public function mergeFields(array $currentData, array $classification, bool $overwrite = false): array
+    public function mergeFields(array $currentData, array $classification, bool $overwrite = false, bool $forceAlt = false): array
     {
         $fields = \is_array($currentData['fields'] ?? null) ? $currentData['fields'] : [];
 
@@ -354,7 +415,7 @@ class AssetClassificationService
             $languageValues = \is_array($fields[$language] ?? null) ? $fields[$language] : [];
 
             foreach ($values as $fieldKey => $value) {
-                if ($overwrite || $this->isEmptyValue($languageValues[$fieldKey] ?? null)) {
+                if ($overwrite || ($forceAlt && \in_array($fieldKey, ['alt', 'alt_text'], true)) || $this->isEmptyValue($languageValues[$fieldKey] ?? null)) {
                     $languageValues[$fieldKey] = $value;
                 }
             }
@@ -372,8 +433,13 @@ class AssetClassificationService
      *
      * @param  array<int, string>  $languages
      */
-    public function needsClassification(Space $space, Asset $asset, array $languages, bool $overwrite = false): bool
+    public function needsClassification(Space $space, Asset $asset, array $languages, bool $overwrite = false, bool $decorative = false, ?string $altContext = null): bool
     {
+        if (($decorative || ($altContext !== null && trim($altContext) !== ''))
+            && array_intersect($this->allowedFieldKeys($space, $asset), ['alt', 'alt_text']) !== []) {
+            return true;
+        }
+
         if ($overwrite) {
             return $this->allowedFieldKeys($space, $asset) !== [] || $this->suggestsTags($space);
         }
@@ -498,9 +564,11 @@ class AssetClassificationService
         array $targetKeys,
         array $tagNames,
         SpaceAiConfig $config,
+        ?string $altContext = null,
+        bool $decorative = false,
     ): array {
         $languageNames = array_intersect_key($this->languageNames($space), array_flip($languages));
-        $systemPrompt = (new SystemPromptBuilder($config))->forAssetClassification($languages, $fields, $languageNames, $tagNames);
+        $systemPrompt = (new SystemPromptBuilder($config))->forAssetClassification($languages, $fields, $languageNames, $tagNames, $altContext, $decorative);
 
         $instructions = [
             'Generate editorial metadata for this image.',
@@ -599,16 +667,17 @@ class AssetClassificationService
      *
      * @throws \RuntimeException
      */
-    private function imagePart(Asset $asset): array
+    private function imagePart(Asset $asset, bool $highDetail = false): array
     {
         $asset->loadMissing('storage');
         $disk = $this->storageService->getStorage($asset->storage);
 
         $width = (int) ($asset->metadata['width'] ?? 0);
         $height = (int) ($asset->metadata['height'] ?? 0);
+        $maxEdge = $highDetail ? self::HIGH_DETAIL_EDGE : self::MAX_EDGE;
         $fitsNatively = \in_array($asset->mime_type, self::NATIVE_MIME_TYPES, true)
-            && $width > 0 && $width <= self::MAX_EDGE
-            && $height > 0 && $height <= self::MAX_EDGE;
+            && $width > 0 && $width <= $maxEdge
+            && $height > 0 && $height <= $maxEdge;
 
         if ($fitsNatively && $disk->size($asset->path) <= self::MAX_ORIGINAL_BYTES) {
             $binary = $disk->get($asset->path);
@@ -656,8 +725,8 @@ class AssetClassificationService
 
             $image = $this->images->driver()->loadFromFile($tempFile, firstFrameOnly: true);
 
-            if ($image->getWidth() > self::MAX_EDGE || $image->getHeight() > self::MAX_EDGE) {
-                $image = $image->resize(self::MAX_EDGE, self::MAX_EDGE);
+            if ($image->getWidth() > $maxEdge || $image->getHeight() > $maxEdge) {
+                $image = $image->resize($maxEdge, $maxEdge);
             }
 
             return ['mime_type' => 'image/webp', 'data' => $image->toBuffer('webp', ['quality' => 85])];

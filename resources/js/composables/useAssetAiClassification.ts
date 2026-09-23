@@ -6,8 +6,8 @@ import type { ClassifyAssetsPayload, ClassifyAssetsResult } from '~/api/resource
 
 /**
  * AI asset classification: queues background jobs that fill empty metadata
- * fields from what a vision model sees. Results arrive through the asset
- * broadcasts, so nothing here polls or refetches.
+ * fields from what a vision model sees. Asset broadcasts update open grids;
+ * polling the run gives editors a count of completed and failed work.
  */
 export function useAssetAiClassification(spaceId: MaybeRefOrGetter<string>) {
   const { t } = useI18n()
@@ -18,6 +18,33 @@ export function useAssetAiClassification(spaceId: MaybeRefOrGetter<string>) {
   const isAvailable = computed(() => space.value?.settings.ai?.enabled !== false)
 
   const isImage = (asset: Pick<AssetResource, 'mime_type'>) => asset.mime_type.startsWith('image/')
+  const timers = new Set<ReturnType<typeof setTimeout>>()
+
+  onScopeDispose(() => {
+    for (const timer of timers) clearTimeout(timer)
+  })
+
+  const watchRun = async (runId: string) => {
+    try {
+      const { data } = await api.forSpace(toValue(spaceId)).ai.getClassificationRun(runId)
+      const message = t('messages.assets.classifyProgress', { ...data })
+
+      if (data.complete) {
+        if (data.failed > 0) toast.warning(message, { id: runId })
+        else toast.success(message, { id: runId })
+        return
+      }
+
+      toast.loading(message, { id: runId })
+      const timer = setTimeout(() => {
+        timers.delete(timer)
+        void watchRun(runId)
+      }, 2000)
+      timers.add(timer)
+    } catch {
+      toast.error(t('messages.assets.classifyProgressUnavailable'), { id: runId })
+    }
+  }
 
   const useClassifyAssetsMutation = () =>
     useMutation({
@@ -25,9 +52,10 @@ export function useAssetAiClassification(spaceId: MaybeRefOrGetter<string>) {
         const response = await api.forSpace(toValue(spaceId)).ai.classifyAssets(payload)
         return response.data
       },
-      onSuccess: ({ queued }) => {
+      onSuccess: ({ queued, run_id }) => {
         if (queued > 0) {
           toast.success(t('messages.assets.classifyQueued', { queued }, queued))
+          void watchRun(run_id)
         } else {
           toast.info(t('messages.assets.classifyNothing'))
         }

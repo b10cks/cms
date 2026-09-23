@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mgmt\Ai;
 
 use App\Http\Controllers\Controller;
+use App\Models\Management\AssetClassificationRun;
 use App\Models\Space\Asset;
 use App\Models\Traits\SpaceFromQuery;
 use App\Services\Ai\AssetClassificationService;
@@ -29,7 +30,15 @@ class AssetClassificationController extends Controller
             'languages.*' => ['string'],
             'config_id' => ['sometimes', 'nullable', 'string'],
             'overwrite' => ['sometimes', 'boolean'],
+            'alt_context' => ['sometimes', 'nullable', 'string', 'max:1000'],
+            'decorative' => ['sometimes', 'boolean'],
+            'high_detail' => ['sometimes', 'boolean'],
         ]);
+
+        if (($validated['scope'] !== 'selection' || count($validated['asset_ids'] ?? []) !== 1)
+            && (! empty($validated['alt_context']) || ! empty($validated['decorative']) || ! empty($validated['high_detail']))) {
+            return response()->json(['message' => 'Image-specific options require one selected asset.'], 422);
+        }
 
         $space = $this->getSpaceFromQuery();
         $this->authorizeSpaceAbility($space, 'assets.manage');
@@ -65,11 +74,25 @@ class AssetClassificationController extends Controller
                 $languages,
                 $config->id,
                 (bool) ($validated['overwrite'] ?? false),
+                $validated['alt_context'] ?? null,
+                (bool) ($validated['decorative'] ?? false),
+                (bool) ($validated['high_detail'] ?? false),
             );
         } finally {
             $restore();
         }
 
         return response()->json(['data' => $result]);
+    }
+
+    public function show(string $runId): JsonResponse
+    {
+        $space = $this->getSpaceFromQuery();
+        $this->authorizeSpaceAbility($space, 'assets.manage');
+        $run = AssetClassificationRun::query()
+            ->where('space_id', $space->id)
+            ->findOrFail($runId);
+
+        return response()->json(['data' => $run->progress()]);
     }
 }

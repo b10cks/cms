@@ -783,6 +783,13 @@
         "noImages": "None of the selected assets is an image.",
         "overwrite": "Replace existing values",
         "overwriteHint": "Regenerates every AI-fillable field, including ones editors wrote. Off by default: only empty fields are filled.",
+        "altContext": "Where will this image appear?",
+        "altContextHint": "Optional. Helps the model suggest alt text for this use. Review it before publishing; other uses may need different alt text.",
+        "altContextPlaceholder": "For example: linked banner for the summer collection",
+        "decorative": "Decorative in this use",
+        "decorativeHint": "Suggests an empty alt value. Choose this only when nearby content already conveys the image's meaning.",
+        "highDetail": "Read small text and charts",
+        "highDetailHint": "Sends a larger image to the model. This may cost more and take longer.",
         "hint": "Runs in the background. Fields fill in as each image completes."
       },
       "selection": {
@@ -5037,6 +5044,8 @@
       "bulkTagSuccess": "Tags updated on {count} asset | Tags updated on {count} assets",
       "bulkTagPartial": "Tags updated on {succeeded} assets, {failed} failed",
       "classifyQueued": "Queued {queued} image for classification | Queued {queued} images for classification",
+      "classifyProgress": "{updated} updated, {pending} pending, {skipped} skipped, {failed} failed",
+      "classifyProgressUnavailable": "Could not check classification progress",
       "classifyNothing": "Nothing to classify: every eligible field already has a value.",
       "classifyFailed": "Could not start classification"
     },

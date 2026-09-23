@@ -3,13 +3,14 @@
 namespace App\Jobs\Space;
 
 use App\Jobs\QueuedJob;
+use App\Models\Management\AssetClassificationRun;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Services\Ai\AssetClassificationService;
 use App\Services\Ai\Exceptions\AiServiceException;
 use App\Support\SpaceContext;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Queue\Middleware\RateLimited;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -17,12 +18,10 @@ use Illuminate\Support\Facades\Log;
  * metadata fields. Carries the asset id, not the model: the asset lives in the
  * space database, which is only resolvable once `currentSpace` is bound.
  *
- * Unique per asset so a mass run and an upload hook cannot queue the same
- * asset twice; the lock clears when the job finishes. Mass runs are paced per
- * space by the `asset-classification` rate limiter so a 2000-image library
- * does not hit the provider's request limits all at once.
+ * Requests for the same asset stay queued and run one at a time. Mass runs
+ * are paced per space by the asset-classification rate limiter.
  */
-class ClassifyAssetJob extends QueuedJob implements ShouldBeUnique
+class ClassifyAssetJob extends QueuedJob
 {
     public $tries = 0;
 
@@ -32,9 +31,6 @@ class ClassifyAssetJob extends QueuedJob implements ShouldBeUnique
 
     /** Fits under the default worker's 60s timeout with a margin for the retry. */
     public $timeout = 55;
-
-    /** Throttled jobs may wait over a day when the per-space limit is low. */
-    public $uniqueFor = 604800;
 
     /**
      * @param  array<int, string>  $languages  language keys to fill (`_default`, `de`, ...)
@@ -46,16 +42,20 @@ class ClassifyAssetJob extends QueuedJob implements ShouldBeUnique
         public array $languages,
         public ?string $configId = null,
         public bool $overwrite = false,
+        public ?string $runId = null,
+        public ?string $altContext = null,
+        public bool $decorative = false,
+        public bool $highDetail = false,
     ) {}
-
-    public function uniqueId(): string
-    {
-        return $this->assetId;
-    }
 
     public function middleware(): array
     {
-        return [new RateLimited('asset-classification')];
+        return [
+            new RateLimited('asset-classification'),
+            (new WithoutOverlapping("{$this->space->id}:{$this->assetId}"))
+                ->releaseAfter(30)
+                ->expireAfter(120),
+        ];
     }
 
     protected function execute(): void
@@ -66,6 +66,8 @@ class ClassifyAssetJob extends QueuedJob implements ShouldBeUnique
             $asset = Asset::query()->with('folder')->find($this->assetId);
 
             if (! $asset) {
+                $this->record('skipped');
+
                 return;
             }
 
@@ -73,7 +75,8 @@ class ClassifyAssetJob extends QueuedJob implements ShouldBeUnique
 
             try {
                 $config = $service->resolveVisionConfig($this->space, $this->configId);
-                $service->classify($this->space, $asset, $this->languages, $config, $this->overwrite);
+                $outcome = $service->classify($this->space, $asset, $this->languages, $config, $this->overwrite, $this->altContext, $this->decorative, $this->highDetail);
+                $this->record($outcome);
             } catch (AiServiceException $e) {
                 if (! \in_array($e->reason, [
                     AiServiceException::REASON_NOT_CONFIGURED,
@@ -89,6 +92,7 @@ class ClassifyAssetJob extends QueuedJob implements ShouldBeUnique
                     'reason' => $e->reason,
                     'error' => $e->getMessage(),
                 ]);
+                $this->record('failed');
             }
         } finally {
             $restore();
@@ -97,11 +101,19 @@ class ClassifyAssetJob extends QueuedJob implements ShouldBeUnique
 
     protected function handleFailure(\Throwable $e): void
     {
+        $this->record('failed');
         Log::error('Asset classification failed', [
             'space_id' => $this->space->id,
             'asset_id' => $this->assetId,
             'error' => $e->getMessage(),
         ]);
+    }
+
+    private function record(string $outcome): void
+    {
+        if ($this->runId !== null) {
+            AssetClassificationRun::query()->find($this->runId)?->record($outcome);
+        }
     }
 
     public function tags(): array
