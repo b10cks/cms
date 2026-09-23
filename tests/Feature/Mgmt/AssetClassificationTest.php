@@ -151,6 +151,17 @@ class AssetClassificationTest extends TestCase
     }
 
     #[Test]
+    public function rate_limited_jobs_have_time_to_finish_a_large_library(): void
+    {
+        $job = new ClassifyAssetJob($this->space, 'asset-id', ['_default']);
+
+        $this->assertSame(0, $job->tries);
+        $this->assertSame(3, $job->maxExceptions);
+        $this->assertSame(604800, $job->uniqueFor);
+        $this->assertNull(app('queue')->connection('sync')->getJobExpiration($job));
+    }
+
+    #[Test]
     public function it_rejects_configs_without_vision_support(): void
     {
         Queue::fake();
@@ -380,6 +391,40 @@ class AssetClassificationTest extends TestCase
         (new ClassifyAssetJob($this->space, $asset->id, ['_default']))->handle();
 
         $this->assertNull($asset->fresh()->data['fields'] ?? null);
+    }
+
+    #[Test]
+    public function the_job_retries_a_temporary_provider_failure(): void
+    {
+        $this->mockRegistry(supportsVision: true);
+        $asset = $this->createAsset(['metadata' => ['width' => 100, 'height' => 100]]);
+        $this->storeImage($asset);
+
+        $this->partialMock(AiStreamService::class, function ($mock) {
+            $mock->shouldReceive('generateWithMessages')->once()->andThrow(AiServiceException::providerUnavailable());
+        });
+
+        $this->expectException(AiServiceException::class);
+        $this->expectExceptionMessage('currently unavailable');
+
+        (new ClassifyAssetJob($this->space, $asset->id, ['_default']))->handle();
+    }
+
+    #[Test]
+    public function the_job_retries_when_the_provider_returns_no_result(): void
+    {
+        $this->mockRegistry(supportsVision: true);
+        $asset = $this->createAsset(['metadata' => ['width' => 100, 'height' => 100]]);
+        $this->storeImage($asset);
+
+        $this->partialMock(AiStreamService::class, function ($mock) {
+            $mock->shouldReceive('generateWithMessages')->once()->andReturn(null);
+        });
+
+        $this->expectException(AiServiceException::class);
+        $this->expectExceptionMessage('did not return a usable result');
+
+        (new ClassifyAssetJob($this->space, $asset->id, ['_default']))->handle();
     }
 
     private function storeImage(Asset $asset): void

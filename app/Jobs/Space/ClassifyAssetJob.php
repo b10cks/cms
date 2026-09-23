@@ -24,11 +24,7 @@ use Illuminate\Support\Facades\Log;
  */
 class ClassifyAssetJob extends QueuedJob implements ShouldBeUnique
 {
-    /**
-     * Rate-limited releases count as attempts, so the ceiling is high and the
-     * real failure budget lives in maxExceptions.
-     */
-    public $tries = 25;
+    public $tries = 0;
 
     public $maxExceptions = 3;
 
@@ -37,7 +33,8 @@ class ClassifyAssetJob extends QueuedJob implements ShouldBeUnique
     /** Fits under the default worker's 60s timeout with a margin for the retry. */
     public $timeout = 55;
 
-    public $uniqueFor = 900;
+    /** Throttled jobs may wait over a day when the per-space limit is low. */
+    public $uniqueFor = 604800;
 
     /**
      * @param  array<int, string>  $languages  language keys to fill (`_default`, `de`, ...)
@@ -78,8 +75,14 @@ class ClassifyAssetJob extends QueuedJob implements ShouldBeUnique
                 $config = $service->resolveVisionConfig($this->space, $this->configId);
                 $service->classify($this->space, $asset, $this->languages, $config, $this->overwrite);
             } catch (AiServiceException $e) {
-                // Not transient (plan, key, config): retrying would only repeat
-                // the warning per asset of a mass run.
+                if (! \in_array($e->reason, [
+                    AiServiceException::REASON_NOT_CONFIGURED,
+                    AiServiceException::REASON_PLAN_EXCLUDED,
+                    AssetClassificationService::REASON_MODEL_NOT_VISION,
+                ], true)) {
+                    throw $e;
+                }
+
                 Log::warning('Asset classification unavailable for space', [
                     'space_id' => $this->space->id,
                     'asset_id' => $this->assetId,
