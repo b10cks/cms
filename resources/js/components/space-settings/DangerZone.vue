@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { toast } from 'vue-sonner'
 
-import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
 import {
@@ -23,25 +21,25 @@ const props = defineProps<{
 
 const router = useRouter()
 const { useDeleteSpaceMutation } = useSpaces()
-const { mutate: deleteSpace, isPending: isDeleting } = useDeleteSpaceMutation()
+const { mutateAsync: deleteSpace, isPending: isDeleting } = useDeleteSpaceMutation()
 
 const isOpen = ref(false)
 const confirmText = ref('')
+const isConfirmed = computed(() => confirmText.value === props.space.name)
 
+/** The mutation toasts success and failure; this only closes and leaves on success. */
 const confirmDelete = async () => {
-  if (confirmText.value !== 'delete my space') return
+  if (!isConfirmed.value) return
 
   try {
     await deleteSpace(props.space.id)
-    toast.success('Space deleted successfully')
-    isOpen.value = false
-    confirmText.value = ''
-
-    // Redirect to home page after deletion
-    router.push('/')
-  } catch (_) {
-    toast.error('Failed to delete space')
+  } catch {
+    return
   }
+
+  isOpen.value = false
+  confirmText.value = ''
+  await router.push('/')
 }
 </script>
 
@@ -82,7 +80,7 @@ const confirmDelete = async () => {
             <Button
               variant="destructive"
               :loading="isDeleting"
-              :disabled="confirmText !== space.name"
+              :disabled="!isConfirmed"
               @click="confirmDelete"
             >
               {{

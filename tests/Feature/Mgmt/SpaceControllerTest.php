@@ -87,7 +87,6 @@ class SpaceControllerTest extends TestCase
         $spaceData = [
             'name' => 'Test Space',
             'slug' => 'test-space',
-            'icon' => 'building',
             'color' => '#FF5733',
             'description' => 'A test space',
             'settings' => [
@@ -155,7 +154,6 @@ class SpaceControllerTest extends TestCase
 
         $response = $this->postJson(route('mgmt.spaces.store'), [
             // Missing required fields
-            'icon' => 'building',
         ]);
 
         $response->assertStatus(422);

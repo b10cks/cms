@@ -72,7 +72,7 @@ Route::group(['prefix' => '2fa'], function () {
 
     Route::get('status', TwoFactorStatusController::class)
         ->middleware(['auth:sanctum', 'stateful'])
-        ->name('2fa.verify');
+        ->name('2fa.status');
 
     // Everything that changes which second factors work has to prove the
     // session belongs to the account owner, not merely that a session exists:

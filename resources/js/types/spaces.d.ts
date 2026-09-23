@@ -80,7 +80,7 @@ interface SpaceResource {
   state: string
   name: string
   slug: string
-  icon: string
+  icon: string | null
   color: string
   badge?: string | null
   description: string
@@ -97,7 +97,6 @@ interface CreateSpacePayload {
   name: string
   slug: string
   team_id?: string | null
-  icon?: string | null
   color?: string | null
   badge?: string | null
   description?: string | null
@@ -109,7 +108,6 @@ interface CreateSpacePayload {
 interface UpdateSpacePayload {
   name?: string
   slug?: string
-  icon?: string | null
   color?: string | null
   badge?: string | null
   description?: string | null
