@@ -315,6 +315,36 @@ class AssetClassificationTest extends TestCase
     }
 
     #[Test]
+    public function provenance_only_records_values_written_after_an_editor_update(): void
+    {
+        $this->mockRegistry(supportsVision: true);
+        $asset = $this->createAsset(['metadata' => [
+            'width' => 100,
+            'height' => 100,
+            'ai_classification' => ['fields' => ['_default.title']],
+        ]]);
+        $this->storeImage($asset);
+
+        $this->partialMock(AiStreamService::class, function ($mock) use ($asset) {
+            $mock->shouldReceive('generateWithMessages')->once()->andReturnUsing(function () use ($asset): string {
+                $asset->update(['data' => ['fields' => ['_default' => ['title' => 'Editor title']]]]);
+
+                return json_encode([
+                    '_default.title' => 'AI title',
+                    '_default.alt' => 'AI alt',
+                ]);
+            });
+        });
+
+        (new ClassifyAssetJob($this->space, $asset->id, ['_default']))->handle();
+
+        $fresh = $asset->fresh();
+        $this->assertSame('Editor title', $fresh->data['fields']['_default']['title']);
+        $this->assertSame('AI alt', $fresh->data['fields']['_default']['alt']);
+        $this->assertSame(['_default.alt'], $fresh->metadata['ai_classification']['fields']);
+    }
+
+    #[Test]
     public function classification_rejects_oversized_source_pixels_before_decoding(): void
     {
         $this->mockRegistry(supportsVision: true);

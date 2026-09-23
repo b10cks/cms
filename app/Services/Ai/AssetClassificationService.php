@@ -245,11 +245,26 @@ class AssetClassificationService
         // Re-read so an edit saved while the model was thinking wins over the
         // generated text unless the editor explicitly asked to overwrite.
         $asset->refresh();
-        $asset->data = $this->mergeFields(
-            \is_array($asset->data) ? $asset->data : [],
+        $currentData = \is_array($asset->data) ? $asset->data : [];
+        $mergedData = $this->mergeFields(
+            $currentData,
             $result['fields'],
             $overwrite,
         );
+        $written = [];
+
+        foreach ($result['fields'] as $language => $values) {
+            foreach ($values as $field => $value) {
+                $before = $currentData['fields'][$language][$field] ?? null;
+                $after = $mergedData['fields'][$language][$field] ?? null;
+
+                if ($before !== $value && $after === $value) {
+                    $written[] = "{$language}.{$field}";
+                }
+            }
+        }
+
+        $asset->data = $mergedData;
 
         if ($result['tags'] !== []) {
             $asset->tags = array_values(array_unique([...($asset->tags ?? []), ...$result['tags']]));
@@ -262,7 +277,8 @@ class AssetClassificationService
         $asset->metadata = $this->withProvenance(
             \is_array($asset->metadata) ? $asset->metadata : [],
             $config,
-            $result,
+            $written,
+            $result['tags'],
         );
         $asset->save();
 
@@ -558,28 +574,17 @@ class AssetClassificationService
      * can tell generated copy from authored copy.
      *
      * @param  array<string, mixed>  $metadata
-     * @param  array{fields: array<string, array<string, string>>, tags: array<int, string>}  $result
+     * @param  array<int, string>  $written
+     * @param  array<int, string>  $tags
      * @return array<string, mixed>
      */
-    private function withProvenance(array $metadata, SpaceAiConfig $config, array $result): array
+    private function withProvenance(array $metadata, SpaceAiConfig $config, array $written, array $tags): array
     {
-        $written = [];
-
-        foreach ($result['fields'] as $language => $values) {
-            foreach (array_keys($values) as $field) {
-                $written[] = "{$language}.{$field}";
-            }
-        }
-
-        $previous = \is_array($metadata['ai_classification']['fields'] ?? null)
-            ? $metadata['ai_classification']['fields']
-            : [];
-
         $metadata['ai_classification'] = [
             'at' => now()->toIso8601String(),
             'model' => "{$config->driver}:{$config->model}",
-            'fields' => array_values(array_unique([...$previous, ...$written])),
-            'tags' => $result['tags'],
+            'fields' => $written,
+            'tags' => $tags,
         ];
 
         return $metadata;
