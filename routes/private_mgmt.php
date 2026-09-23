@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Mgmt\Ai\AiModelsController;
+use App\Http\Controllers\Mgmt\Ai\AssetClassificationController;
 use App\Http\Controllers\Mgmt\Ai\AvailableModelsController;
 use App\Http\Controllers\Mgmt\Ai\ContentInteractionStreamController;
 use App\Http\Controllers\Mgmt\Ai\ContentTreeInteractionStreamController;
@@ -190,6 +191,8 @@ Route::group(['prefix' => 'ai'], function () {
         ->name('ai.content-interaction.stream');
     Route::post('content-tree-interaction/stream', ContentTreeInteractionStreamController::class)
         ->name('ai.content-tree-interaction.stream');
+    Route::post('assets/classify', AssetClassificationController::class)
+        ->name('ai.assets.classify');
 });
 
 Route::get('teams/hierarchy', TeamHierarchyController::class)->name('teams.hierarchy');
