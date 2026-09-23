@@ -208,6 +208,7 @@ const emptyTextComputed = computed(() => {
           <TagsInput
             v-if="multiple"
             :model-value="(selectedValues as AcceptableInputValue[])"
+            :display-value="(value) => getOptionByValue(value as T)?.label || String(value)"
             :disabled="disabled || readonly"
             :class="{ 'border-red-500': hasError, 'pl-2': selectedValues.length > 0 }"
           >
