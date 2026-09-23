@@ -155,6 +155,15 @@ class ModelRegistry
         return null;
     }
 
+    public function findModelForConfig(?string $driver, ?string $model): ?AiModelDto
+    {
+        if (!$driver || !$model) {
+            return null;
+        }
+
+        return $this->findModel("{$driver}:{$model}");
+    }
+
     public function getSpaceFavourites(Space $space): array
     {
         return $space->settings->ai['favourites'] ?? [];
