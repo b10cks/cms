@@ -149,6 +149,7 @@ return [
         'ru',
         'sk',
         'sv',
+        'tr',
         'uk',
     ],
 

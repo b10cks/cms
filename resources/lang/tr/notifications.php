@@ -1,0 +1,118 @@
+<?php
+
+return [
+    'inviteSpace' => [
+        'subject' => ':space alanına davet edildiniz',
+        'intro' => '<strong>:inviter</strong>, sizi <strong>:space</strong> alanında işbirliği yapmaya davet etti.',
+        'start' => 'Daveti kabul etmek ve başlamak için aşağıdaki düğmeye tıklayın.',
+        'action' => 'Daveti Kabul Et',
+        'outro' => 'Bu davet :expires tarihinde sona erecek.',
+    ],
+    'inviteTeam' => [
+        'subject' => ':team takımına davet edildiniz',
+        'intro' => '<strong>:inviter</strong>, sizi <strong>:team</strong> takımına katılmaya davet etti.',
+        'start' => 'Daveti kabul etmek ve başlamak için aşağıdaki düğmeye tıklayın.',
+        'action' => 'Daveti Kabul Et',
+        'outro' => 'Bu davet :expires tarihinde sona erecek.',
+
+    ],
+    'commentMention' => [
+        'subject' => ':author sizi bir yorumda belirtti',
+        'intro' => '<strong>:author</strong>, sizi <strong>:content</strong> hakkındaki bir yorumda belirtti.',
+        'action' => 'Yorumu Görüntüle',
+    ],
+    'commentReply' => [
+        'subject' => ':author yorumunuza yanıt verdi',
+        'intro' => '<strong>:author</strong>, <strong>:content</strong> hakkındaki yorumunuza yanıt verdi.',
+        'action' => 'Yanıtı Görüntüle',
+    ],
+    'oneTimeToken' => [
+        'subject' => 'Tek kullanımlık oturum açma kodunuz: :code',
+        'greeting' => 'Merhaba',
+        'intro' => 'Tek kullanımlık oturum açma kodunuz aşağıdadır. Bu kod 10 dakika içinde geçersiz olacaktır.',
+        'outro' => 'Bu kodu siz istemediyseniz, bu e-postayı güvenle yok sayabilirsiniz.',
+    ],
+    'verifyEmail' => [
+        'subject' => 'E-posta adresinizi doğrulayın',
+        'greeting' => 'Merhaba :name,',
+        'intro' => 'Lütfen e-posta adresinizi doğrulamak için aşağıdaki düğmeye tıklayın.',
+        'action' => 'E-posta Adresini Doğrula',
+        'outro' => 'Hesap oluşturmadıysanız, başka bir işlem gerekmez.',
+    ],
+    'twoFactorEnabled' => [
+        'subject' => 'İki faktörlü kimlik doğrulama etkinleştirildi',
+        'greeting' => 'Merhaba :name,',
+        'intro' => 'Hesabınız için iki faktörlü kimlik doğrulama etkinleştirildi.',
+        'outro' => 'İki faktörlü kimlik doğrulamayı siz etkinleştirmediyseniz, lütfen hemen destekle iletişime geçin.',
+    ],
+    'twoFactorDisabled' => [
+        'subject' => 'İki faktörlü kimlik doğrulama devre dışı bırakıldı',
+        'greeting' => 'Merhaba :name,',
+        'intro' => 'Hesabınız için iki faktörlü kimlik doğrulama devre dışı bırakıldı.',
+        'outro' => 'İki faktörlü kimlik doğrulamayı siz devre dışı bırakmadıysanız, lütfen hemen destekle iletişime geçin.',
+    ],
+    'twoFactorBackupCodesRegenerated' => [
+        'subject' => 'İki faktörlü kimlik doğrulama yedek kodları yeniden oluşturuldu',
+        'greeting' => 'Merhaba :name,',
+        'intro' => 'İki faktörlü kimlik doğrulama yedek kodlarınız yeniden oluşturuldu.',
+        'outro' => 'Yedek kodları siz yeniden oluşturmadıysanız, lütfen hemen destekle iletişime geçin.',
+    ],
+    'usageWarning' => [
+        'subject' => ':space, :metric sınırına yaklaşıyor',
+        'intro' => ':space alanınız aylık :metric kotasının <strong>%:percentage</strong>\'sini kullandı.',
+        'detail' => 'Kullanılan: :used / :limit. Hiçbir şey engellenmedi — bu, sınıra ulaşmadan önce harekete geçmeniz için bir uyarıdır.',
+        'action' => 'Kullanımı ve planları inceleyin',
+        'outro' => 'Bu kullanımın devam etmesini bekliyorsanız, planınızı yükseltmeyi düşünün.',
+    ],
+    'usageExceeded' => [
+        'subject' => ':space, :metric sınırını aştı',
+        'intro' => ':space alanınız aylık :metric kotasının <strong>%:percentage</strong>\'sini kullandı.',
+        'detail' => 'Kullanılan: :used / :limit. Hizmetiniz şu anda kesintisiz devam ediyor, ancak lütfen kullanımınıza uygun bir plana yükseltin.',
+        'action' => 'Planı yükselt',
+        'outro' => 'Sürekli aşırı kullanım, daha yüksek bir plana geçmeyi gerektirebilir.',
+    ],
+    'usageMetrics' => [
+        'storage' => 'depolama',
+        'traffic' => 'trafik',
+        'ai' => 'AI kredisi',
+    ],
+    'billingIntervals' => [
+        'month' => 'ay',
+        'year' => 'yıl',
+    ],
+    'paymentRequested' => [
+        'subject' => ':space için ödeme istendi',
+        'intro' => '<strong>:requester</strong>, sizden <strong>:space</strong> alanının aboneliğini üstlenmenizi istiyor.',
+        'detail' => 'Önerilen plan: :plan — €:price / :interval. Faturalandırma sahibi siz olacaksınız ve tüm faturaları alacaksınız.',
+        'action' => 'İncele ve Öde',
+        'outro' => 'Bu plan uygun değilse, abonelik sayfasından farklı bir plan seçebilirsiniz.',
+        'inviteMessage' => ':requester, sizden ":space" için aboneliği üstlenmenizi istiyor (plan: :plan). Katıldıktan sonra ödemeyi tamamlamak için alanın abonelik ayarlarını açın.',
+    ],
+    'greeting' => 'Merhaba,',
+    'salutation' => "İçeriğiniz yapılandırılmış kalsın ve bloklarınız asla 404 hatası vermesin,\nb10cks ekibi",
+    'footerCopyright' => 'Coder\'s Cantina. Tüm hakları saklıdır.',
+    'footer' => 'b10cks; modüler bloklar, ücret duvarı olmadan ve kullanım tabanlı basit fiyatlandırma ile açık kaynaklı bir headless CMS\'dir. Tüm özellikler, her zaman. Daha fazlasını öğrenmek için [www.b10cks.com](https://www.b10cks.com) adresini ziyaret edin.',
+    'footerImprint' => 'Bu bildirimi [b10cks.com](https://app.b10cks.com) adresindeki hesabınız nedeniyle alıyorsunuz. İşleten: Coder\'s Cantina e.U., 1020 Viyana, Avusturya.',
+    'subCopy' => 'Düğmeye tıklayamıyorsanız, aşağıdaki URL\'yi kopyalayıp tarayıcınıza yapıştırın.',
+    'inviterFallback' => 'bir işbirlikçi',
+    'teamFallback' => 'Takım',
+    'backupReady' => [
+        'subject' => ':space için yedeğiniz hazır',
+        'intro' => ':space alanı için <strong>":name"</strong> adlı yedeğiniz başarıyla oluşturuldu ve indirilmeye hazır.',
+        'passwordNotice' => '<strong>Not:</strong> Bu yedek parola korumalıdır. Dosyaları çıkarmak için yedek oluşturucunun verdiği parolaya ihtiyacınız olacak.',
+        'action' => 'Yedeği İndir',
+        'expires' => 'Bu indirme bağlantısı :expires tarihinde sona erecek.',
+    ],
+    'passwordReset' => [
+        'subject' => 'Şifrenizi sıfırlayın',
+        'intro' => 'Bu e-postayı, hesabınız için bir şifre sıfırlama isteği aldığımız için alıyorsunuz.',
+        'action' => 'Şifreyi Sıfırla',
+        'expireNote' => 'Bu şifre sıfırlama bağlantısı :count dakika içinde geçersiz olacaktır.',
+        'note' => 'Şifre sıfırlama isteğinde bulunmadıysanız, başka bir işlem gerekmez.',
+    ],
+    'passwordChanged' => [
+        'subject' => 'Şifreniz değiştirildi',
+        'intro' => 'Hesap şifreniz <strong>:date</strong> tarihinde <strong>:ip</strong> adresinden <strong>:browser</strong> kullanılarak değiştirildi.',
+        'note' => 'Bu değişikliği siz yapmadıysanız, lütfen <a href=":resetUrl">şifrenizi hemen sıfırlayın</a>.',
+    ],
+];

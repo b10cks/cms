@@ -4,20 +4,27 @@ import { createI18n } from 'vue-i18n'
 
 import de from '~/i18n/de.json'
 import en from '~/i18n/en.json'
+import tr from '~/i18n/tr.json'
+import ru from '~/i18n/ru.json'
+import fr from '~/i18n/fr.json'
+import es from '~/i18n/es.json'
 
 export type MessageSchema = typeof en
 
 export const locales = [
   { code: 'de', name: 'Deutsch', iso: 'de', flag: '🇦🇹' },
   { code: 'en', name: 'English', iso: 'en', flag: '🇺🇸' },
+  { code: 'tr', name: 'Türkçe', iso: 'tr', flag: '🇹🇷' },
+  { code: 'ru', name: 'Русский', iso: 'ru', flag: '🇷🇺' },
+  { code: 'fr', name: 'Français', iso: 'fr', flag: '🇫🇷' },
+  { code: 'es', name: 'Español', iso: 'es', flag: '🇪🇸' }
 ] as const
 
 export type LocaleCode = (typeof locales)[number]['code']
 
 const FALLBACK_LOCALE: LocaleCode = 'en'
 
-const isSupportedLocale = (code: string): code is LocaleCode =>
-  locales.some((locale) => locale.code === code)
+const isSupportedLocale = (code: string): code is LocaleCode => locales.some((locale) => locale.code === code)
 
 /**
  * First supported language the browser asks for, region ignored — the client-side
@@ -44,10 +51,21 @@ export const i18n = createI18n<[MessageSchema], LocaleCode>({
   messages: {
     en,
     de,
-  },
+    tr,
+    ru,
+    fr,
+    es
+  }
 })
 
-const composer = i18n.global as unknown as Composer<{ en: MessageSchema; de: MessageSchema }>
+const composer = i18n.global as unknown as Composer<{
+  en: MessageSchema
+  de: MessageSchema
+  tr: MessageSchema
+  ru: MessageSchema
+  fr: MessageSchema
+  es: MessageSchema
+}>
 
 /**
  * Blade renders <html lang> from the server's own negotiation, so every locale
@@ -74,7 +92,7 @@ export function useI18n() {
     locale: composer.locale,
     locales,
     setLocale,
-    getLocale: () => composer.locale.value,
+    getLocale: () => composer.locale.value
   }
 }
 
