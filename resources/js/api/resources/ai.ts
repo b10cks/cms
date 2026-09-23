@@ -24,6 +24,20 @@ export interface MentionItem {
   label: string
 }
 
+export interface ClassifyAssetsPayload {
+  scope: 'selection' | 'all'
+  asset_ids?: string[]
+  languages?: string[]
+  config_id?: string | null
+  /** Regenerate every allowed field instead of filling empty ones */
+  overwrite?: boolean
+}
+
+export interface ClassifyAssetsResult {
+  queued: number
+  skipped: number
+}
+
 export interface SpaceAiConfig {
   id: string
   name: string
@@ -83,5 +97,12 @@ export class Ai {
 
   public async deleteAiConfig(configId: string): Promise<void> {
     return this.client.delete(`/mgmt/v1/spaces/${this.spaceId}/ai-configs/${configId}`)
+  }
+
+  public async classifyAssets(payload: ClassifyAssetsPayload): Promise<{ data: ClassifyAssetsResult }> {
+    return this.client.post<{ data: ClassifyAssetsResult }>(
+      `/mgmt/v1/ai/assets/classify?spaceId=${this.spaceId}`,
+      payload
+    )
   }
 }

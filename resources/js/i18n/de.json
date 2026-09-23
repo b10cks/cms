@@ -783,6 +783,17 @@
         "addLabel": "Tags hinzufügen",
         "removeLabel": "Tags entfernen"
       },
+      "aiClassify": {
+        "title": "{count} Bild mit KI klassifizieren | {count} Bilder mit KI klassifizieren",
+        "titleAll": "Alle Bilder mit KI klassifizieren",
+        "description": "Ein Vision-Modell füllt die leeren Metadaten-Felder der ausgewählten Bilder. Bestehende Werte bleiben unverändert.",
+        "descriptionAll": "Ein Vision-Modell füllt die leeren Metadaten-Felder aller Bilder in dieser Bibliothek. Bestehende Werte bleiben unverändert.",
+        "languages": "Sprachen",
+        "noImages": "Keines der ausgewählten Assets ist ein Bild.",
+        "overwrite": "Bestehende Werte ersetzen",
+        "overwriteHint": "Erzeugt alle KI-Felder neu, auch von Redakteuren geschriebene. Standardmäßig aus: nur leere Felder werden gefüllt.",
+        "hint": "Läuft im Hintergrund. Die Felder füllen sich, sobald ein Bild fertig ist."
+      },
       "selection": {
         "toolbar": "Auswahlaktionen",
         "onOtherPages": "({count} auf anderen Seiten)",
@@ -2395,6 +2406,18 @@
       "assetLibrary": {
         "title": "Asset-Bibliothek",
         "description": "Konfiguriere Metadaten-Felder für deine Asset-Bibliothek.",
+        "ai": {
+          "title": "KI-Klassifizierung",
+          "description": "Lass ein Vision-Modell leere Metadaten-Felder von Bildern ausfüllen.",
+          "autoOnUpload": "Neue Uploads automatisch klassifizieren",
+          "autoOnUploadHint": "Läuft nach jedem Bild-Upload mit der Standard-KI-Konfiguration und füllt nur leere Felder.",
+          "suggestTags": "Passende Tags zuweisen",
+          "suggestTagsHint": "Das Modell darf bis zu fünf Tags aus deinen vorhandenen Asset-Tags wählen. Neue Tags legt es nie an.",
+          "allowedFields": "Felder, die die KI ausfüllen darf",
+          "allowedFieldsHint": "Ordner-Einstellungen können diese Liste weiter einschränken.",
+          "classifyExisting": "Vorhandene Bilder klassifizieren",
+          "requiresVision": "Benötigt eine Standard-KI-Konfiguration mit einem bildfähigen Modell."
+        },
         "addMetadataField": "Metadaten-Feld hinzufügen",
         "fieldKey": "Feld-Schlüssel",
         "fieldLabel": "Feld-Label",
@@ -4316,6 +4339,8 @@
       "download": "Herunterladen",
       "copyUrl": "URL kopieren",
       "applyTags": "Tags anwenden",
+      "classify": "Mit KI klassifizieren…",
+      "startClassification": "Klassifizierung starten",
       "retryFailed": "Fehlgeschlagene wiederholen",
       "cancelUpload": "Upload abbrechen",
       "addSelected": "{count} ausgewählte hinzufügen",
@@ -5026,7 +5051,10 @@
       "pasteSuccess": "{count} Element verschoben | {count} Elemente verschoben",
       "selectAllTruncated": "Die ersten {count} von {total} passenden Assets ausgewählt",
       "bulkTagSuccess": "Tags bei {count} Asset aktualisiert | Tags bei {count} Assets aktualisiert",
-      "bulkTagPartial": "Tags bei {succeeded} Assets aktualisiert, {failed} fehlgeschlagen"
+      "bulkTagPartial": "Tags bei {succeeded} Assets aktualisiert, {failed} fehlgeschlagen",
+      "classifyQueued": "{queued} Bild zur Klassifizierung eingereiht | {queued} Bilder zur Klassifizierung eingereiht",
+      "classifyNothing": "Nichts zu klassifizieren: alle passenden Felder haben bereits einen Wert.",
+      "classifyFailed": "Klassifizierung konnte nicht gestartet werden"
     },
     "references": {
       "duplicateReference": "Dieser Inhalt wurde bereits zu den Referenzen hinzugefügt.",
@@ -5111,6 +5139,7 @@
       "cut": "Ausgewählte Medien ausschneiden",
       "paste": "Ausgeschnittene Medien hier einfügen",
       "delete": "Ausgewählte Medien löschen",
+      "classify": "Ausgewählte Medien mit KI klassifizieren",
       "help": "Diese Kürzelliste anzeigen"
     },
     "table": {

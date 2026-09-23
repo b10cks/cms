@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { deepClone } from '@vue/devtools-shared'
 
+import AssetAiClassifyDialog from '~/components/assets/AssetAiClassifyDialog.vue'
+import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import {
   Card,
@@ -10,10 +12,12 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card'
+import { ComboboxField, Label } from '~/components/ui/form'
 import SettingsTable, {
   type ColumnDefinition,
   type TableItem,
 } from '~/components/ui/settings-table.vue'
+import { Switch } from '~/components/ui/switch'
 
 const { useUpdateSpaceMutation } = useSpaces()
 const { mutate: updateSpace } = useUpdateSpaceMutation()
@@ -23,7 +27,23 @@ const { useAccessControl } = useAuthorization()
 const props = defineProps<{ space: SpaceResource }>()
 const access = useAccessControl(computed(() => ({ space_id: props.space.id })))
 const canUpdateSpace = computed(() => access.hasAbility('space.update'))
+const canManageAssets = computed(() => access.hasAbility('assets.manage'))
 const assetFields = ref(deepClone(props.space.settings.asset_fields ?? []))
+
+const aiEnabled = computed(() => props.space.settings.ai?.enabled !== false)
+const classification = props.space.settings.ai?.asset_classification
+const autoOnUpload = ref(classification?.auto_on_upload ?? false)
+const suggestTags = ref(classification?.suggest_tags ?? false)
+const allowedFields = ref<string[]>(
+  (classification?.allowed_fields ?? ['title', 'alt', 'description']).filter((key) =>
+    assetFields.value.some((field) => field.key === key)
+  )
+)
+const classifyAllOpen = ref(false)
+
+const allowedFieldOptions = computed(() =>
+  assetFields.value.map((field) => ({ value: field.key, label: field.label || field.key }))
+)
 const newItemTemplate = {
   key: '',
   label: '',
@@ -94,6 +114,14 @@ const saveSettings = async () => {
       settings: {
         ...props.space.settings,
         asset_fields: assetFields.value,
+        ai: {
+          ...props.space.settings.ai,
+          asset_classification: {
+            auto_on_upload: autoOnUpload.value,
+            suggest_tags: suggestTags.value,
+            allowed_fields: allowedFields.value,
+          },
+        },
       },
     },
   })
@@ -130,6 +158,85 @@ const saveSettings = async () => {
           :remove-button-label="$t('actions.remove')"
           @add="addField"
           @remove="removeField"
+        />
+      </div>
+
+      <div
+        v-if="aiEnabled"
+        class="space-y-4 border-t border-border pt-6"
+      >
+        <div>
+          <h4 class="text-sm font-medium">{{ $t('labels.settings.assetLibrary.ai.title') }}</h4>
+          <p class="text-xs text-muted">{{ $t('labels.settings.assetLibrary.ai.description') }}</p>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center space-x-2">
+            <Switch
+              id="ai-auto-on-upload"
+              v-model="autoOnUpload"
+              :disabled="!canUpdateSpace"
+            />
+            <Label
+              for="ai-auto-on-upload"
+              class="text-sm font-medium"
+              :label="$t('labels.settings.assetLibrary.ai.autoOnUpload')"
+            />
+          </div>
+          <p class="text-xs text-muted">
+            {{ $t('labels.settings.assetLibrary.ai.autoOnUploadHint') }}
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center space-x-2">
+            <Switch
+              id="ai-suggest-tags"
+              v-model="suggestTags"
+              :disabled="!canUpdateSpace"
+            />
+            <Label
+              for="ai-suggest-tags"
+              class="text-sm font-medium"
+              :label="$t('labels.settings.assetLibrary.ai.suggestTags')"
+            />
+          </div>
+          <p class="text-xs text-muted">
+            {{ $t('labels.settings.assetLibrary.ai.suggestTagsHint') }}
+          </p>
+        </div>
+
+        <ComboboxField
+          v-model="allowedFields"
+          name="ai_allowed_fields"
+          :label="$t('labels.settings.assetLibrary.ai.allowedFields')"
+          :description="$t('labels.settings.assetLibrary.ai.allowedFieldsHint')"
+          :options="allowedFieldOptions"
+          :disabled="!canUpdateSpace"
+          multiple
+        />
+
+        <div
+          v-if="canManageAssets"
+          class="space-y-2"
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            @click="classifyAllOpen = true"
+          >
+            <Icon name="lucide:sparkles" />
+            {{ $t('labels.settings.assetLibrary.ai.classifyExisting') }}
+          </Button>
+          <p class="text-xs text-muted">
+            {{ $t('labels.settings.assetLibrary.ai.requiresVision') }}
+          </p>
+        </div>
+
+        <AssetAiClassifyDialog
+          v-model:open="classifyAllOpen"
+          :space-id="space.id"
+          scope="all"
         />
       </div>
     </CardContent>

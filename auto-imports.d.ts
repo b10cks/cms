@@ -105,6 +105,7 @@ declare global {
   const useAiUsage: typeof import('./resources/js/composables/useAiModels').useAiUsage
   const useAlertDialog: typeof import('./resources/js/composables/useAlertDialog').useAlertDialog
   const useApiClient: typeof import('./resources/js/composables/useApiClient').useApiClient
+  const useAssetAiClassification: typeof import('./resources/js/composables/useAssetAiClassification').useAssetAiClassification
   const useAssetBulkOperations: typeof import('./resources/js/composables/useAssetBulkOperations').useAssetBulkOperations
   const useAssetCollections: typeof import('./resources/js/composables/useAssetCollections').useAssetCollections
   const useAssetFolders: typeof import('./resources/js/composables/useAssetFolders').useAssetFolders
