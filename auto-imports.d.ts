@@ -305,6 +305,9 @@ declare global {
   export type { IconifyCollectionOption } from './resources/js/composables/useIconifyCollections'
   import('./resources/js/composables/useIconifyCollections')
   // @ts-ignore
+  export type { NotificationTone } from './resources/js/composables/useNotificationPresentation'
+  import('./resources/js/composables/useNotificationPresentation')
+  // @ts-ignore
   export type { PresenceUser, PresenceState, UsePresenceOptions } from './resources/js/composables/usePresence'
   import('./resources/js/composables/usePresence')
   // @ts-ignore

@@ -23,7 +23,7 @@ vi.mock('~/lib/runtime-config', async () => {
 
 const { useNotificationPresentation } = await import('~/composables/useNotificationPresentation')
 
-const { iconFor, titleFor, bodyFor, routeFor } = useNotificationPresentation()
+const { iconFor, toneFor, titleFor, bodyFor, routeFor } = useNotificationPresentation()
 
 const notification = (type: string, data: NotificationData = {}): NotificationResource =>
   ({ id: 'n1', type, data, read_at: null, created_at: '2026-03-15T12:00:00Z' }) as NotificationResource
@@ -218,5 +218,18 @@ describe('routeFor', () => {
 
   it('has no target for an unknown type', () => {
     expect(routeFor(notification('something.else', { space: { id: 's1', name: 'Acme' } }))).toBeNull()
+  })
+})
+
+describe('toneFor', () => {
+  it.each([
+    ['comment.mention', 'info'],
+    ['invite.team', 'success'],
+    ['usage.warning', 'warning'],
+    ['usage.exceeded', 'destructive'],
+    ['billing.payment_requested', 'warning'],
+    ['something.else', 'neutral'],
+  ])('colours %s as %s', (type, tone) => {
+    expect(toneFor(notification(type))).toBe(tone)
   })
 })

@@ -4083,6 +4083,7 @@
     "tooltip": "Notifications",
     "empty": "You're all caught up",
     "markAllRead": "Mark all as read",
+    "unreadCount": "{count} unread",
     "toast": {
       "actionFailed": "Something went wrong. Please try again."
     },

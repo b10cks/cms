@@ -4097,6 +4097,7 @@
     "tooltip": "Benachrichtigungen",
     "empty": "Alles erledigt",
     "markAllRead": "Alle als gelesen markieren",
+    "unreadCount": "{count} ungelesen",
     "toast": {
       "actionFailed": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
     },
