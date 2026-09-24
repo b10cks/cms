@@ -29,7 +29,7 @@ const delegatedProps = computed(() => {
   >
     <ScrollAreaViewport
       :as-child="true"
-      class="h-full w-full rounded-[inherit]"
+      class="h-full max-h-[inherit] w-full rounded-[inherit]"
     >
       <slot />
     </ScrollAreaViewport>
