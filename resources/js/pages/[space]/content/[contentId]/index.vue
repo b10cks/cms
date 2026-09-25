@@ -19,26 +19,30 @@ import { Badge, type BadgeVariants } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { SimpleTooltip } from '~/components/ui/tooltip'
-import {
-  createContentDefaultsBlockLookup,
-  hydrateContentWithSchema,
-} from '~/composables/useSchemaDefaults'
 import { useContentEditorPage } from '~/composables/useContentEditorPage'
 import {
   useContentLiveCollaboration,
   type ContentCommitAction,
 } from '~/composables/useContentLiveCollaboration'
 import { useContentSchemaState } from '~/composables/useContentSchemaState'
-import type { ContentTreeItem } from '~/composables/useContentTree'
 import { useGlobalClipboard } from '~/composables/useGlobalClipboard'
+import { queryKeys } from '~/composables/useQueryClient'
+import {
+  createContentDefaultsBlockLookup,
+  hydrateContentWithSchema,
+} from '~/composables/useSchemaDefaults'
 import {
   buildMissingLanguageDraft,
   resolveContentLanguage,
   resolveContentRouteName,
   withContentLanguageQuery,
 } from '~/lib/content-i18n'
-import { createVersionConflictState, isSameJsonValue } from '~/lib/contentEditorState'
-import { queryKeys } from '~/composables/useQueryClient'
+import {
+  buildEditorContentTree,
+  createVersionConflictState,
+  isSameJsonValue,
+  useEditorContentModel,
+} from '~/lib/contentEditorState'
 import type { ContentResource } from '~/types/contents'
 import type { FieldUpdateEvent } from '~/utils/preview-bridge'
 
@@ -256,14 +260,13 @@ const currentContentSource = computed<ContentResource | null>(() => {
   return null
 })
 
-const editorContentTree = ref<ContentTreeItem | null>(null)
-
-// Guards for the two tree<->content sync watchers below. The paired flags cancel a
-// write's echo in the opposite direction; suppressTreeSync hard-disables both while
-// we rewrite both trees wholesale (load / discard / persist).
-let contentWriteFromTree = false
-let treeWriteFromContent = false
+// Loading and discarding replace both views together; ignore the content watcher
+// until the new editor tree is installed.
 let suppressTreeSync = false
+const { tree: editorContentTree, model: editorContentModel } = useEditorContentModel(
+  content,
+  () => suppressTreeSync
+)
 
 const versionConflict = createVersionConflictState({
   contentId: computed(() => currentContentSource.value?.id),
@@ -271,42 +274,6 @@ const versionConflict = createVersionConflictState({
   persistedVersionId: computed(() => persistedContent.value?.current_version_id),
 })
 
-const buildEditorContentTree = (value: ContentResource | null): ContentTreeItem | null => {
-  if (!value) return null
-
-  return {
-    id: value.id,
-    block: value.block?.slug || '',
-    ...JSON.parse(JSON.stringify((value.content || {}) as Record<string, unknown>)),
-  } as ContentTreeItem
-}
-
-const stripEditorContentTree = (value: ContentTreeItem | null): Record<string, unknown> => {
-  if (!value) return {}
-
-  const {
-    id: _id,
-    block: _block,
-    ...contentFields
-  } = JSON.parse(JSON.stringify(value)) as ContentTreeItem
-
-  return contentFields as Record<string, unknown>
-}
-
-const editorContentModel = computed<ContentTreeItem>({
-  get: () =>
-    editorContentTree.value ||
-    ({
-      id: content.value?.id || '',
-      block: content.value?.block?.slug || '',
-    } as ContentTreeItem),
-  set: (value) => {
-    if (!content.value) return
-
-    editorContentTree.value = value
-    content.value.content = stripEditorContentTree(value)
-  },
-})
 const validation = useContentSchemaState({
   content,
   blocks,
@@ -407,42 +374,6 @@ watch(
     }
   },
   { immediate: true }
-)
-
-// editorContentTree -> content.content: the editor mutates the tree in place as the
-// user types; mirror those edits into the canonical content. The paired guard drops
-// the echo when the change actually originated from a content -> tree rebuild.
-watch(
-  editorContentTree,
-  (nextTree) => {
-    if (!content.value || !nextTree || suppressTreeSync) return
-    if (treeWriteFromContent) {
-      treeWriteFromContent = false
-      return
-    }
-
-    contentWriteFromTree = true
-    content.value.content = stripEditorContentTree(nextTree)
-  },
-  { deep: true }
-)
-
-// content.content -> editorContentTree: remote collaboration, AI, preview edits and
-// schema pruning all write into content.value.content; rebuild the editor tree so
-// those changes show up in the form. Guarded so a local edit's write-back is ignored.
-watch(
-  () => content.value?.content,
-  (nextContent) => {
-    if (!content.value || !nextContent || suppressTreeSync) return
-    if (contentWriteFromTree) {
-      contentWriteFromTree = false
-      return
-    }
-
-    treeWriteFromContent = true
-    editorContentTree.value = buildEditorContentTree(content.value)
-  },
-  { deep: true }
 )
 
 // Schema pruning (dropping values of hidden conditional fields) walks the whole
@@ -711,7 +642,10 @@ provide(
 )
 provide('editingFromVersionId', versionConflict.editingFromVersionId)
 provide('serverVersionDrifted', versionConflict.hasDrifted)
-provide('serverCurrentVersion', computed(() => currentContentSource.value?.current_version))
+provide(
+  'serverCurrentVersion',
+  computed(() => currentContentSource.value?.current_version)
+)
 
 const reloadServerContent = () => {
   versionConflict.reset()
