@@ -5,6 +5,7 @@ import AssetBlock from '~/components/editor/AssetBlock.vue'
 import BlocksBlock from '~/components/editor/BlocksBlock.vue'
 import BooleanBlock from '~/components/editor/BooleanBlock.vue'
 import DateBlock from '~/components/editor/DateBlockEditor.vue'
+import EditorLoadError from '~/components/editor/EditorLoadError.vue'
 import GeoBlock from '~/components/editor/GeoBlock.vue'
 import IconBlock from '~/components/editor/IconBlock.vue'
 import LinkBlock from '~/components/editor/LinkBlock.vue'
@@ -33,8 +34,14 @@ import FieldComments from '../comments/FieldComments.vue'
 const editors = {
   text: TextBlock,
   textarea: TextareaBlock,
-  markdown: defineAsyncComponent(() => import('~/components/editor/MarkdownBlock.vue')),
-  richtext: defineAsyncComponent(() => import('~/components/editor/RichTextBlock.vue')),
+  markdown: defineAsyncComponent({
+    loader: () => import('~/components/editor/MarkdownBlock.vue'),
+    errorComponent: EditorLoadError,
+  }),
+  richtext: defineAsyncComponent({
+    loader: () => import('~/components/editor/RichTextBlock.vue'),
+    errorComponent: EditorLoadError,
+  }),
   option: OptionBlock,
   options: OptionsBlock,
   link: LinkBlock,

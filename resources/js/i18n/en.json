@@ -4562,6 +4562,9 @@
       "willMove": "{count} item will be moved | {count} items will be moved",
       "creatingItems": "Creating {count} item... | Creating {count} items...",
       "movingItems": "Moving {count} item... | Moving {count} items..."
+    },
+    "fieldEditor": {
+      "loadFailed": "This editor could not load, likely after an update. Reload the page to edit this field."
     }
   },
   "alertDialog": {

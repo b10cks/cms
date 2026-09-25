@@ -4578,6 +4578,9 @@
       "default": "Default",
       "loading": "Loading configurations...",
       "noConfigs": "No configurations available"
+    },
+    "fieldEditor": {
+      "loadFailed": "Dieser Editor konnte nicht geladen werden, vermutlich nach einem Update. Lade die Seite neu, um das Feld zu bearbeiten."
     }
   },
   "alertDialog": {
