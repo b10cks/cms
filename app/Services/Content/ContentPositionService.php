@@ -139,8 +139,9 @@ class ContentPositionService
             $placeholders = implode(', ', array_fill(0, $chunk->count(), '?'));
             $caseSql = implode(' ', $cases);
 
+            // The ELSE column gives PostgreSQL an integer type for the bound CASE results.
             $connection->update(
-                "UPDATE {$table} SET {$parent} = ?, {$positionColumn} = CASE {$id} {$caseSql} END, {$updatedAt} = ? WHERE {$id} IN ({$placeholders}) AND {$deletedAt} IS NULL",
+                "UPDATE {$table} SET {$parent} = ?, {$positionColumn} = CASE {$id} {$caseSql} ELSE {$positionColumn} END, {$updatedAt} = ? WHERE {$id} IN ({$placeholders}) AND {$deletedAt} IS NULL",
                 $bindings,
             );
 
