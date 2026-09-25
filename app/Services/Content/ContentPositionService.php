@@ -116,34 +116,20 @@ class ContentPositionService
 
         $connection = (new Content)->getConnection();
         $grammar = $connection->getQueryGrammar();
-        $table = $grammar->wrapTable((new Content)->getTable());
-        $id = $grammar->wrap('id');
-        $parent = $grammar->wrap('parent_id');
-        $positionColumn = $grammar->wrap('position');
-        $updatedAt = $grammar->wrap('updated_at');
-        $deletedAt = $grammar->wrap('deleted_at');
 
-        // Bound the parameter count for SQLite as well as server databases.
+        // One UPDATE per chunk. Ids are escaped and positions are integer literals,
+        // so the CASE stays integer-typed on PostgreSQL.
         foreach ($changed->chunk(200) as $chunk) {
-            $cases = [];
-            $bindings = [$parentId];
+            $cases = $chunk
+                ->map(fn (Content $content, int $index): string => 'WHEN '.$connection->escape($content->id).' THEN '.$index)
+                ->implode(' ');
 
-            foreach ($chunk as $index => $content) {
-                $cases[] = 'WHEN ? THEN ?';
-                $bindings[] = $content->id;
-                $bindings[] = $index;
-            }
-
-            $bindings[] = now();
-            array_push($bindings, ...$chunk->pluck('id')->all());
-            $placeholders = implode(', ', array_fill(0, $chunk->count(), '?'));
-            $caseSql = implode(' ', $cases);
-
-            // The ELSE column gives PostgreSQL an integer type for the bound CASE results.
-            $connection->update(
-                "UPDATE {$table} SET {$parent} = ?, {$positionColumn} = CASE {$id} {$caseSql} ELSE {$positionColumn} END, {$updatedAt} = ? WHERE {$id} IN ({$placeholders}) AND {$deletedAt} IS NULL",
-                $bindings,
-            );
+            Content::query()
+                ->whereKey($chunk->pluck('id'))
+                ->update([
+                    'parent_id' => $parentId,
+                    'position' => $connection->raw("CASE {$grammar->wrap('id')} {$cases} ELSE {$grammar->wrap('position')} END"),
+                ]);
 
             foreach ($chunk as $index => $content) {
                 $content->parent_id = $parentId;
