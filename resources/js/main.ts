@@ -41,5 +41,7 @@ app.mount('#app')
 
 if (isClient) {
   installEcho(app)
-  installPosthog(app)
+  void installPosthog(app).catch((error: unknown) => {
+    console.error('[PostHog] Failed to initialize:', error)
+  })
 }

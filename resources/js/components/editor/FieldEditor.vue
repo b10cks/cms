@@ -1,23 +1,21 @@
 <script setup lang="ts">
-import type { Component } from 'vue'
+import { defineAsyncComponent, type Component } from 'vue'
 
 import AssetBlock from '~/components/editor/AssetBlock.vue'
 import BlocksBlock from '~/components/editor/BlocksBlock.vue'
-import IconBlock from '~/components/editor/IconBlock.vue'
 import BooleanBlock from '~/components/editor/BooleanBlock.vue'
 import DateBlock from '~/components/editor/DateBlockEditor.vue'
 import GeoBlock from '~/components/editor/GeoBlock.vue'
-import PluginBlock from '~/components/editor/PluginBlock.vue'
-import PriceBlock from '~/components/editor/PriceBlock.vue'
+import IconBlock from '~/components/editor/IconBlock.vue'
 import LinkBlock from '~/components/editor/LinkBlock.vue'
-import MarkdownBlock from '~/components/editor/MarkdownBlock.vue'
 import MetaBlock from '~/components/editor/MetaBlock.vue'
 import MultiAssetsBlock from '~/components/editor/MultiAssetsBlock.vue'
 import NumberBlock from '~/components/editor/NumberBlock.vue'
 import OptionBlock from '~/components/editor/OptionBlock.vue'
 import OptionsBlock from '~/components/editor/OptionsBlock.vue'
+import PluginBlock from '~/components/editor/PluginBlock.vue'
+import PriceBlock from '~/components/editor/PriceBlock.vue'
 import ReferenceBlock from '~/components/editor/ReferenceBlock.vue'
-import RichTextBlock from '~/components/editor/RichTextBlock.vue'
 import SerialBlock from '~/components/editor/SerialBlock.vue'
 import TableBlock from '~/components/editor/TableBlock.vue'
 import TextareaBlock from '~/components/editor/TextareaBlock.vue'
@@ -35,8 +33,8 @@ import FieldComments from '../comments/FieldComments.vue'
 const editors = {
   text: TextBlock,
   textarea: TextareaBlock,
-  markdown: MarkdownBlock,
-  richtext: RichTextBlock,
+  markdown: defineAsyncComponent(() => import('~/components/editor/MarkdownBlock.vue')),
+  richtext: defineAsyncComponent(() => import('~/components/editor/RichTextBlock.vue')),
   option: OptionBlock,
   options: OptionsBlock,
   link: LinkBlock,
