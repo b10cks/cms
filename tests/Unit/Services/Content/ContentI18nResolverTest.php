@@ -54,7 +54,7 @@ class ContentI18nResolverTest extends TestCase
     }
 
     #[Test]
-    public function callers_can_skip_relation_hydration_without_changing_content_or_links(): void
+    public function relations_are_only_hydrated_when_requested_without_changing_content_or_links(): void
     {
         $target = $this->createPublishedContent('en', 'target', ['title' => 'Target']);
         $page = $this->createPublishedContent('en', 'page', ['title' => 'Page']);
@@ -65,7 +65,7 @@ class ContentI18nResolverTest extends TestCase
         $connection = $page->getConnection();
 
         foreach (['published', 'current', $page->published_version_id] as $scope) {
-            $resolve = function (bool $loadRelations) use ($page, $scope, $connection): array {
+            $resolve = function (bool $withRelations) use ($page, $scope, $connection): array {
                 $connection->flushQueryLog();
                 $connection->enableQueryLog();
 
@@ -74,7 +74,7 @@ class ContentI18nResolverTest extends TestCase
                         $this->space,
                         collect([$page->fresh()]),
                         $scope,
-                        $loadRelations,
+                        $withRelations,
                     )->first();
 
                     return [$result, count($connection->getQueryLog())];

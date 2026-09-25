@@ -62,7 +62,7 @@ class AssetHandler
                 $id = $src['id'] ?? null;
                 $asset = is_string($id) || is_int($id) ? $assets->get($id) : null;
                 if ($asset) {
-                    $assetTranslationFields = $content->i18n_parent
+                    $assetTranslationFields = $content->i18n_parent_id !== null
                         ? data_get($asset, "data.fields.{$content->language_iso}", [])
                         : [];
                     $assetFields = $assetTranslationFields + data_get($asset, 'data.fields._default', []);

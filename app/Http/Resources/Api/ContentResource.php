@@ -101,6 +101,7 @@ class ContentResource extends JsonResource
             $content,
             $language,
             $versionScope === 'draft' ? 'current' : $versionScope,
+            withRelations: $this->shouldResolveRelations($request),
         );
     }
 
@@ -216,6 +217,12 @@ class ContentResource extends JsonResource
             return [];
         }
 
+        $nestedRequest = clone $request;
+        $nestedRequest->attributes->set(
+            self::RELATION_RESOLUTION_DEPTH_ATTRIBUTE,
+            $this->relationResolutionDepth($request) + 1,
+        );
+
         $versionScope = $request->input('vid', 'published');
         $resolvedRelations = app(ContentI18nResolver::class)->resolveMany(
             app('currentSpace'),
@@ -226,18 +233,13 @@ class ContentResource extends JsonResource
                 ]
             ),
             $versionScope === 'draft' ? 'current' : $versionScope,
+            withRelations: $this->shouldResolveRelations($nestedRequest),
         );
 
         $this->preloadResolvedRelationRows($resolvedRelations);
         app(LinkHandler::class)->preloadLocalizedLinks(
             $resolvedRelations->flatMap(fn (ResolvedContent $relation) => $relation->effectiveLinks),
             $versionScope === 'published',
-        );
-
-        $nestedRequest = clone $request;
-        $nestedRequest->attributes->set(
-            self::RELATION_RESOLUTION_DEPTH_ATTRIBUTE,
-            $this->relationResolutionDepth($request) + 1,
         );
 
         return $resolvedRelations

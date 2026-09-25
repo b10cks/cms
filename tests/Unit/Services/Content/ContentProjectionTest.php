@@ -96,7 +96,6 @@ class ContentProjectionTest extends TestCase
         ]));
         $row = new Content(['language_iso' => 'en']);
         $row->setRelation('block', new Block(['slug' => 'page']));
-        $row->setRelation('i18n_parent', null);
         $resolved = new ResolvedContent(
             canonicalContent: $row,
             familyContents: collect([$row]),

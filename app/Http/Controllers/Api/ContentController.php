@@ -45,7 +45,7 @@ class ContentController extends Controller
                 'content_versions.asset_ids',
                 'content_versions.link_ids',
             ])
-            ->with(['i18n_parent', 'block']);
+            ->with('block');
 
         $vid = $this->versionScope($request, allowVersionId: false);
         if ($vid === 'published') {
@@ -76,7 +76,6 @@ class ContentController extends Controller
                 ]
             ),
             $versionScope,
-            loadRelations: false,
         );
 
         app(LinkHandler::class)->preloadLocalizedLinks(
@@ -188,12 +187,7 @@ class ContentController extends Controller
             ], $redirect->status_code);
         }
 
-        $candidate = $this->findFamilyCandidate($slug, $language, $space, [
-            'block',
-            'i18n_parent',
-            'i18n_children',
-            'i18n_siblings',
-        ]);
+        $candidate = $this->findFamilyCandidate($slug, $language, $space, ['block']);
         abort_if(! $candidate, 404);
 
         $versionScope = $this->versionScope($request);
@@ -204,17 +198,12 @@ class ContentController extends Controller
             abort_if(! $candidate->published_at || ! $candidate->published_version_id, 404);
         }
 
-        $candidate->loadMissing([
-            'block',
-            'i18n_parent',
-            'i18n_children',
-            'i18n_siblings',
-        ]);
         $resolved = app(ContentI18nResolver::class)->resolve(
             $space,
             $candidate,
             $language,
             $versionScope === 'draft' ? 'current' : $versionScope,
+            withRelations: $request->boolean('resolve_relations'),
         );
 
         if (
