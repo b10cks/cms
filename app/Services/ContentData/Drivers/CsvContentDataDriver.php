@@ -28,40 +28,44 @@ class CsvContentDataDriver extends BaseContentDataDriver
         })();
         $first = $documents->current();
         $headings = $this->tabularHeadings($first === null ? [] : [$first], $gridMode);
-        $rows = (function () use ($documents, $gridMode, $headings, $first): \Generator {
+        $rows = (function () use ($documents, $gridMode, $first): \Generator {
             if ($first === null) {
                 return;
             }
 
             foreach ($documents as $document) {
-                foreach ($this->tabularRows([$document], $gridMode) as $row) {
-                    yield array_map(
-                        static fn (string $heading): string => (string) ($row[$heading] ?? ''),
-                        $headings,
-                    );
-                }
+                yield from $this->tabularRows([$document], $gridMode);
             }
         })();
 
-        return $this->csvDownload($headings, $rows, $this->generateFilename($space, 'csv'), spool: true);
+        return $this->csvDownload($headings, $this->orderedRows($rows, $headings), $this->generateFilename($space, 'csv'), spool: true);
     }
 
+    /** Headings are the union of every document's languages. */
     public function export(Space $space, array $documents, bool $gridMode = false): Response
     {
         $headings = $this->tabularHeadings($documents, $gridMode);
-        $rows = $this->tabularRows($documents, $gridMode);
-        $filename = $this->generateFilename($space, 'csv');
 
-        $orderedRows = (function () use ($rows, $headings): \Generator {
-            foreach ($rows as $row) {
-                yield array_map(
-                    static fn (string $header): string => (string) ($row[$header] ?? ''),
-                    $headings,
-                );
-            }
-        })();
+        return $this->csvDownload(
+            $headings,
+            $this->orderedRows($this->tabularRows($documents, $gridMode), $headings),
+            $this->generateFilename($space, 'csv'),
+        );
+    }
 
-        return $this->csvDownload($headings, $orderedRows, $filename);
+    /**
+     * @param  iterable<array<string, string>>  $rows
+     * @param  array<int, string>  $headings
+     * @return \Generator<int, array<int, string>>
+     */
+    private function orderedRows(iterable $rows, array $headings): \Generator
+    {
+        foreach ($rows as $row) {
+            yield array_map(
+                static fn (string $heading): string => (string) ($row[$heading] ?? ''),
+                $headings,
+            );
+        }
     }
 
     public function parse(UploadedFile $file): array
