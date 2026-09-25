@@ -91,7 +91,7 @@ class ContentPositionService
             ->orderBy('position')
             ->orderBy('name')
             ->orderBy('id')
-            ->get();
+            ->get(['id', 'parent_id', 'position']);
 
         $insertIndex = $siblings->count();
 
@@ -110,22 +110,45 @@ class ContentPositionService
             ->concat($siblings->slice($insertIndex))
             ->values();
 
-        $ordered->each(function (Content $content, int $index) use ($parentId): void {
-            if ($content->parent_id === $parentId && (int) $content->position === $index) {
-                return;
+        $changed = $ordered->filter(
+            fn (Content $content, int $index): bool => $content->parent_id !== $parentId || (int) $content->position !== $index
+        );
+
+        $connection = (new Content)->getConnection();
+        $grammar = $connection->getQueryGrammar();
+        $table = $grammar->wrapTable((new Content)->getTable());
+        $id = $grammar->wrap('id');
+        $parent = $grammar->wrap('parent_id');
+        $positionColumn = $grammar->wrap('position');
+        $updatedAt = $grammar->wrap('updated_at');
+        $deletedAt = $grammar->wrap('deleted_at');
+
+        // Bound the parameter count for SQLite as well as server databases.
+        foreach ($changed->chunk(200) as $chunk) {
+            $cases = [];
+            $bindings = [$parentId];
+
+            foreach ($chunk as $index => $content) {
+                $cases[] = 'WHEN ? THEN ?';
+                $bindings[] = $content->id;
+                $bindings[] = $index;
             }
 
-            Content::query()
-                ->whereKey($content->id)
-                ->update([
-                    'parent_id' => $parentId,
-                    'position' => $index,
-                    'updated_at' => now(),
-                ]);
+            $bindings[] = now();
+            array_push($bindings, ...$chunk->pluck('id')->all());
+            $placeholders = implode(', ', array_fill(0, $chunk->count(), '?'));
+            $caseSql = implode(' ', $cases);
 
-            $content->parent_id = $parentId;
-            $content->position = $index;
-        });
+            $connection->update(
+                "UPDATE {$table} SET {$parent} = ?, {$positionColumn} = CASE {$id} {$caseSql} END, {$updatedAt} = ? WHERE {$id} IN ({$placeholders}) AND {$deletedAt} IS NULL",
+                $bindings,
+            );
+
+            foreach ($chunk as $index => $content) {
+                $content->parent_id = $parentId;
+                $content->position = $index;
+            }
+        }
     }
 
     private function baseQuery(?string $parentId, string $languageIso): Builder
