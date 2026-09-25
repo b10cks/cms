@@ -1,9 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 
-import type { ContentResource } from '~/types/contents'
-
 import { queryKeys } from '~/composables/useQueryClient'
+import type { ContentResource } from '~/types/contents'
 
 import { withSetup, type Harness } from '../support/harness'
 
@@ -92,6 +91,28 @@ afterEach(() => {
 })
 
 describe('useContentsQuery', () => {
+  it('aborts the old request when filters change', async () => {
+    const params = ref({ block_id: 'first' })
+    contents.index.mockImplementation(
+      (_params: unknown, options: { signal: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          options.signal.addEventListener('abort', () =>
+            reject(new DOMException('Aborted', 'AbortError'))
+          )
+        })
+    )
+
+    const { unmount } = withSetup(() => useContent(SPACE).useContentsQuery(params))
+    await vi.waitFor(() => expect(contents.index).toHaveBeenCalledTimes(1))
+    const firstSignal = contents.index.mock.calls[0][1].signal as AbortSignal
+
+    params.value = { block_id: 'second' }
+    await vi.waitFor(() => expect(contents.index).toHaveBeenCalledTimes(2))
+    expect(firstSignal.aborted).toBe(true)
+
+    unmount()
+  })
+
   it('caches the whole response envelope under the list key', async () => {
     const response = { data: [content()], meta: { total: 1 } }
     contents.index.mockResolvedValue(response)
@@ -101,7 +122,7 @@ describe('useContentsQuery', () => {
     await vi.waitFor(() =>
       expect(queryClient.getQueryData(queryKeys.contents(SPACE).list({}))).toEqual(response)
     )
-    expect(contents.index).toHaveBeenCalledWith({})
+    expect(contents.index).toHaveBeenCalledWith({}, { signal: expect.any(AbortSignal) })
     queryClient.clear()
   })
 
@@ -114,7 +135,7 @@ describe('useContentsQuery', () => {
     await vi.waitFor(() =>
       expect(queryClient.getQueryData(queryKeys.contents(SPACE).list(params))).toEqual({ data: [] })
     )
-    expect(contents.index).toHaveBeenCalledWith(params)
+    expect(contents.index).toHaveBeenCalledWith(params, { signal: expect.any(AbortSignal) })
     queryClient.clear()
   })
 })
@@ -181,7 +202,12 @@ describe('useContentChildrenQuery', () => {
 
     // ContentFilter dispatches on top-level query keys — a `filter` wrapper is
     // ignored, so the request used to return the whole unfiltered list.
-    await vi.waitFor(() => expect(contents.index).toHaveBeenCalledWith({ parent_id: 'parent-1' }))
+    await vi.waitFor(() =>
+      expect(contents.index).toHaveBeenCalledWith(
+        { parent_id: 'parent-1' },
+        { signal: expect.any(AbortSignal) }
+      )
+    )
     // And the key is those same params, so useContentsQuery asking for the same
     // rows shares one cache entry instead of drifting apart under two.
     await vi.waitFor(() =>
@@ -199,7 +225,12 @@ describe('useContentChildrenQuery', () => {
 
     // A real null is dropped from the query string; `'null'` is what
     // ContentFilter::parent_id() turns into whereNull.
-    await vi.waitFor(() => expect(contents.index).toHaveBeenCalledWith({ parent_id: 'null' }))
+    await vi.waitFor(() =>
+      expect(contents.index).toHaveBeenCalledWith(
+        { parent_id: 'null' },
+        { signal: expect.any(AbortSignal) }
+      )
+    )
     queryClient.clear()
   })
 })
@@ -420,6 +451,30 @@ describe('invalidateContentFamily', () => {
 })
 
 describe('useUpdateContentMutation', () => {
+  it('uses a complete save response for the detail and refreshes related entries', async () => {
+    const saved = content({
+      id: 'de',
+      content: { title: 'Saved' },
+      raw_content: { title: 'Saved' },
+      current_version_id: 'version-2',
+      i18n_canonical_id: 'en',
+    })
+    contents.update.mockResolvedValue({ data: saved })
+    harness = withSetup(mountContent, {
+      seed: [[queryKeys.contents(SPACE).detail('de'), content({ id: 'de' })]],
+    })
+    const invalidate = spyInvalidate()
+
+    await harness.result.update.mutateAsync({ id: 'de', payload: {} })
+
+    expect(harness.queryClient.getQueryData(queryKeys.contents(SPACE).detail('de'))).toEqual(saved)
+    expect(invalidatedKeys(invalidate)).not.toContainEqual(queryKeys.contents(SPACE).detail('de'))
+    expect(invalidatedKeys(invalidate)).toContainEqual(queryKeys.contents(SPACE).detail('en'))
+    expect(invalidatedKeys(invalidate)).toContainEqual(
+      queryKeys.contentVersions(SPACE, 'de').lists()
+    )
+  })
+
   it('reports the updated name', async () => {
     contents.update.mockResolvedValue({ data: content({ name: 'Home' }) })
 
@@ -448,8 +503,18 @@ describe('useUpdateContentMutation', () => {
 
 describe('publish, schedule and unpublish', () => {
   const cases = [
-    ['publish', 'publish', 'Content "Home" published successfully', 'Failed to publish content: nope'],
-    ['schedule', 'schedule', 'Content "Home" scheduled successfully', 'Failed to schedule content: nope'],
+    [
+      'publish',
+      'publish',
+      'Content "Home" published successfully',
+      'Failed to publish content: nope',
+    ],
+    [
+      'schedule',
+      'schedule',
+      'Content "Home" scheduled successfully',
+      'Failed to schedule content: nope',
+    ],
     [
       'unpublish',
       'unpublish',

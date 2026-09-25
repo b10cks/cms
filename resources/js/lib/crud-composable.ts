@@ -12,8 +12,12 @@ import { toastError, type Translate } from './toast-error'
  * structurally so a resource with extra endpoints still satisfies it.
  */
 export interface CrudApiResource<TResource, TListResponse, TParams, TCreate, TUpdate> {
-  index: (params?: TParams) => Promise<TListResponse>
-  get: (id: string) => Promise<{ data: TResource }>
+  index: (params?: TParams, options?: { signal?: AbortSignal }) => Promise<TListResponse>
+  get: (
+    id: string,
+    query?: TParams,
+    options?: { signal?: AbortSignal }
+  ) => Promise<{ data: TResource }>
   create: (payload: TCreate) => Promise<{ data: TResource }>
   update: (id: string, payload: TUpdate) => Promise<{ data: TResource }>
   delete: (id: string) => Promise<unknown>
@@ -39,7 +43,9 @@ export interface CrudComposableConfig<
   /** i18n namespace — messages live under `composables.<i18nKey>.{create,update,delete}{Success,Error}`. */
   i18nKey: string
   keys: (spaceId: string) => EntityKeys
-  resource: (spaceId: string) => CrudApiResource<TResource, TListResponse, TParams, TCreate, TUpdate>
+  resource: (
+    spaceId: string
+  ) => CrudApiResource<TResource, TListResponse, TParams, TCreate, TUpdate>
   /** Merged *under* the caller's params, so a caller can always override the default sort. */
   defaultParams?: TParams
   /**
@@ -147,21 +153,19 @@ export function createCrudComposable<
     ) =>
       useQuery({
         queryKey: computed(() => keys.value.list(toValue(params))),
-        queryFn: async () =>
-          selectList(await resource.value.index({ ...config.defaultParams, ...toValue(params) })),
-        enabled: computed(
-          () => (listGate === 'none' || !!spaceId.value) && !!toValue(enabled)
-        ),
+        queryFn: async ({ signal }) =>
+          selectList(
+            await resource.value.index({ ...config.defaultParams, ...toValue(params) }, { signal })
+          ),
+        enabled: computed(() => (listGate === 'none' || !!spaceId.value) && !!toValue(enabled)),
         placeholderData: keepPreviousData,
       })
 
-    const useDetailQuery = (
-      id: MaybeRefOrGetter<string>,
-      enabled: MaybeRef<boolean> = true
-    ) =>
+    const useDetailQuery = (id: MaybeRefOrGetter<string>, enabled: MaybeRef<boolean> = true) =>
       useQuery({
         queryKey: computed(() => keys.value.detail(toValue(id))),
-        queryFn: async () => (await resource.value.get(toValue(id))).data,
+        queryFn: async ({ signal }) =>
+          (await resource.value.get(toValue(id), undefined, { signal })).data,
         enabled: computed(
           () =>
             (detailGate === 'none' || !!spaceId.value) &&
