@@ -2,6 +2,7 @@
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 
 import Icon from '~/components/Icon.vue'
+import { contentPickerItems } from '~/lib/content-picker-items'
 
 const props = defineProps<{
   modelValue?: string | null
@@ -25,36 +26,7 @@ const inputRef = ref<HTMLInputElement | null>(null)
 const listRef = ref<HTMLElement | null>(null)
 const containerRef = ref<HTMLElement | null>(null)
 
-// Build depth-first flat list with computed level
-const flatItems = computed(() => {
-  if (!contentMenu.value) return []
-
-  const menuData = contentMenu.value
-  const result: Array<FlatContentMenuItem & { level: number }> = []
-
-  const addItem = (item: FlatContentMenuItem, level: number) => {
-    result.push({ ...item, level })
-    Object.values(menuData)
-      .filter((i) => i.pid === item.id)
-      .sort(sort)
-      .forEach((child) => addItem(child, level + 1))
-  }
-
-  const sort = (a: FlatContentMenuItem, b: FlatContentMenuItem) =>
-    (a.position ?? 0) - (b.position ?? 0) ||
-    (a.name || '').localeCompare(b.name || '') ||
-    a.id.localeCompare(b.id)
-
-  const roots = Object.values(menuData)
-    .filter((i) => !i.pid && i.type !== 'single')
-    .sort(sort)
-  const singles = Object.values(menuData)
-    .filter((i) => !i.pid && i.type === 'single')
-    .sort(sort)
-
-  ;[...roots, ...singles].forEach((item) => addItem(item, 0))
-  return result
-})
+const flatItems = computed(() => (contentMenu.value ? contentPickerItems(contentMenu.value) : []))
 
 const filteredItems = computed(() => {
   const q = search.value.trim().toLowerCase()
@@ -76,9 +48,12 @@ watch(open, async (isOpen) => {
   }
 })
 
-watch(filteredItems, () => {
-  highlightedIndex.value = 0
-})
+watch(
+  () => (open.value ? filteredItems.value : null),
+  () => {
+    highlightedIndex.value = 0
+  }
+)
 
 const scrollToHighlighted = () => {
   nextTick(() => {
