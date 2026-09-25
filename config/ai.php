@@ -10,6 +10,10 @@ return [
 
     'default' => env('AI_DEFAULT_DRIVER', 'openrouter'),
 
+    // Asset classification jobs per space per minute; keeps mass runs under
+    // the provider's request limits.
+    'asset_classification_per_minute' => (int) env('AI_ASSET_CLASSIFICATION_PER_MINUTE', 30),
+
     'drivers' => [
         'openai' => [
             'enabled' => env('OPENAI_ENABLED', false),

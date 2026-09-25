@@ -83,6 +83,32 @@ class AssetMetadataFieldResolver
         return array_values($fields);
     }
 
+    public function getEffectiveClassificationFieldsForFolder(
+        Space $space,
+        AssetFolder|string|null $folder = null
+    ): array {
+        $effectiveFields = $this->getEffectiveFieldsForFolder($space, $folder);
+        $allowedKeys = $this->resolveClassificationAllowedKeys($space, $folder);
+
+        if ($allowedKeys === []) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            $effectiveFields,
+            fn(array $field): bool => \in_array($field['key'], $allowedKeys, true)
+        ));
+    }
+
+    public function getEffectiveClassificationFieldsForAsset(Space $space, Asset $asset): array
+    {
+        if ($asset->relationLoaded('folder')) {
+            return $this->getEffectiveClassificationFieldsForFolder($space, $asset->folder);
+        }
+
+        return $this->getEffectiveClassificationFieldsForFolder($space, $asset->folder_id);
+    }
+
     public function sanitizeFieldData(
         Space $space,
         AssetFolder|string|null $folder,
@@ -200,5 +226,49 @@ class AssetMetadataFieldResolver
             'label' => (string) data_get($field, 'label', Str::headline($key)),
             'required' => (bool) data_get($field, 'required', false),
         ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function resolveClassificationAllowedKeys(
+        Space $space,
+        AssetFolder|string|null $folder = null
+    ): array {
+        $allowedKeys = $this->normalizeFieldKeyList(
+            data_get(
+                $space->settings->toArray(),
+                'ai.asset_classification.allowed_fields',
+                ['title', 'alt', 'description']
+            )
+        );
+
+        foreach ($this->getFolderLineage($folder) as $lineageFolder) {
+            $override = data_get(
+                $lineageFolder->settings?->toArray() ?? [],
+                'classification_allowed_fields'
+            );
+
+            if ($override !== null) {
+                $allowedKeys = $this->normalizeFieldKeyList($override);
+            }
+        }
+
+        return $allowedKeys;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function normalizeFieldKeyList(mixed $keys): array
+    {
+        if (!\is_array($keys)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(
+            static fn(mixed $key): ?string => \is_string($key) && trim($key) !== '' ? trim($key) : null,
+            $keys
+        ))));
     }
 }

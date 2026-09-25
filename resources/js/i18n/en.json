@@ -774,6 +774,24 @@
         "addLabel": "Add tags",
         "removeLabel": "Remove tags"
       },
+      "aiClassify": {
+        "title": "Classify {count} image with AI | Classify {count} images with AI",
+        "titleAll": "Classify all images with AI",
+        "description": "A vision model fills the empty metadata fields of the selected images. Existing values stay untouched.",
+        "descriptionAll": "A vision model fills the empty metadata fields of every image in this library. Existing values stay untouched.",
+        "languages": "Languages",
+        "noImages": "None of the selected assets is an image.",
+        "overwrite": "Replace existing values",
+        "overwriteHint": "Regenerates every AI-fillable field, including ones editors wrote. Off by default: only empty fields are filled.",
+        "altContext": "Where will this image appear?",
+        "altContextHint": "Optional. Helps the model suggest alt text for this use. Review it before publishing; other uses may need different alt text.",
+        "altContextPlaceholder": "For example: linked banner for the summer collection",
+        "decorative": "Decorative in this use",
+        "decorativeHint": "Suggests an empty alt value. Choose this only when nearby content already conveys the image's meaning.",
+        "highDetail": "Read small text and charts",
+        "highDetailHint": "Sends a larger image to the model. This may cost more and take longer.",
+        "hint": "Runs in the background. Fields fill in as each image completes."
+      },
       "selection": {
         "toolbar": "Selection actions",
         "onOtherPages": "({count} on other pages)",
@@ -2392,6 +2410,18 @@
         "fieldLabelPlaceholder": "e.g., Alt Text",
         "required": "Required",
         "requiredHint": "Required fields apply to the default language only. Translated values remain optional.",
+        "ai": {
+          "title": "AI classification",
+          "description": "Let a vision model fill empty metadata fields for images.",
+          "autoOnUpload": "Classify new uploads automatically",
+          "autoOnUploadHint": "Runs after each image upload with the default AI configuration and only fills empty fields.",
+          "suggestTags": "Assign matching tags",
+          "suggestTagsHint": "The model may pick up to five tags from your existing asset tags. It never creates new ones.",
+          "allowedFields": "Fields AI may fill",
+          "allowedFieldsHint": "Folder settings can narrow this list further.",
+          "classifyExisting": "Classify existing images",
+          "requiresVision": "Needs a default AI configuration with a vision-capable model."
+        },
         "addField": "Add Field",
         "metadataFields": "Metadata Fields",
         "key": "Key",
@@ -4308,6 +4338,8 @@
       "download": "Download",
       "copyUrl": "Copy URL",
       "applyTags": "Apply tags",
+      "classify": "Classify with AI…",
+      "startClassification": "Start classification",
       "retryFailed": "Retry failed",
       "cancelUpload": "Cancel upload",
       "addSelected": "Add {count} selected",
@@ -5011,7 +5043,12 @@
       "pasteSuccess": "{count} item moved | {count} items moved",
       "selectAllTruncated": "Selected the first {count} of {total} matching assets",
       "bulkTagSuccess": "Tags updated on {count} asset | Tags updated on {count} assets",
-      "bulkTagPartial": "Tags updated on {succeeded} assets, {failed} failed"
+      "bulkTagPartial": "Tags updated on {succeeded} assets, {failed} failed",
+      "classifyQueued": "Queued {queued} image for classification | Queued {queued} images for classification",
+      "classifyProgress": "{updated} updated, {pending} pending, {skipped} skipped, {failed} failed",
+      "classifyProgressUnavailable": "Could not check classification progress",
+      "classifyNothing": "Nothing to classify: every eligible field already has a value.",
+      "classifyFailed": "Could not start classification"
     },
     "references": {
       "duplicateReference": "This content has already been added to the references.",
@@ -5096,6 +5133,7 @@
       "cut": "Cut the selected assets",
       "paste": "Paste the cut assets here",
       "delete": "Delete the selected assets",
+      "classify": "Classify the selected assets with AI",
       "help": "Show this shortcut list"
     },
     "table": {

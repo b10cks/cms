@@ -152,6 +152,88 @@ abstract class BaseAiDriver implements AiDriverInterface
         return $this->findModelDto($modelId)?->supportsTools ?? $this->toolsSupportedByDefault;
     }
 
+    protected function supportsVision(string $modelId): bool
+    {
+        return $this->findModelDto($modelId)?->supportsVision ?? false;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $messages
+     *
+     * @throws \InvalidArgumentException when the messages carry image parts the model cannot process
+     */
+    protected function ensureVisionSupportForMessages(string $modelId, array $messages): void
+    {
+        if (! $this->messagesContainImages($messages)) {
+            return;
+        }
+
+        if (! $this->supportsVision($modelId)) {
+            throw new \InvalidArgumentException("Model '{$this->name}:{$modelId}' does not support vision inputs.");
+        }
+    }
+
+    /**
+     * Convert our provider-neutral content parts (`text`, `image` with raw
+     * base64 data) into the OpenAI-compatible chat shape. String content and
+     * already-normalized parts pass through untouched, so the method is safe
+     * to run again on messages replayed for tool-call follow-ups.
+     *
+     * @param  array<int, array<string, mixed>>  $messages
+     * @return array<int, array<string, mixed>>
+     *
+     * @throws \InvalidArgumentException when image parts target a non-vision model
+     */
+    protected function normalizeOpenAiMessages(string $modelId, array $messages): array
+    {
+        $this->ensureVisionSupportForMessages($modelId, $messages);
+
+        return array_map(function (array $message): array {
+            if (! \is_array($message['content'] ?? null)) {
+                return $message;
+            }
+
+            $message['content'] = array_values(array_filter(array_map(fn (array $part): ?array => match ($part['type'] ?? null) {
+                'text' => [
+                    'type' => 'text',
+                    'text' => (string) ($part['text'] ?? ''),
+                ],
+                'image' => [
+                    'type' => 'image_url',
+                    'image_url' => [
+                        'url' => 'data:'.($part['mime_type'] ?? 'application/octet-stream').';base64,'.($part['data'] ?? ''),
+                    ],
+                ],
+                'image_url' => $part,
+                default => null,
+            }, $message['content'])));
+
+            return $message;
+        }, $messages);
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $messages
+     */
+    protected function messagesContainImages(array $messages): bool
+    {
+        foreach ($messages as $message) {
+            $content = $message['content'] ?? null;
+
+            if (! \is_array($content)) {
+                continue;
+            }
+
+            foreach ($content as $part) {
+                if (($part['type'] ?? null) === 'image') {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     protected function emitStatus(string $message): StreamEvent
     {
         return StreamEvent::status($message);
@@ -199,6 +281,7 @@ abstract class BaseAiDriver implements AiDriverInterface
     {
         $model = $this->findModelDto($modelId);
         $reasoning = $this->shouldShapeForReasoning($modelId, $model);
+        $messages = $this->normalizeOpenAiMessages($modelId, $messages);
 
         // Prompt caching on this (OpenAI-compatible) path is automatic: OpenAI
         // caches identical prompt prefixes ≥1024 tokens, and OpenRouter applies

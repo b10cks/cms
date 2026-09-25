@@ -11,6 +11,7 @@ class AssetFolderSettings extends Settings
     protected array $defaults = [
         'field_overrides' => [],
         'additional_fields' => [],
+        'classification_allowed_fields' => null,
     ];
 
     public static function validationRules(bool $partial = false): array
@@ -27,6 +28,8 @@ class AssetFolderSettings extends Settings
             'additional_fields.*.key' => ['required', 'string', 'max:100'],
             'additional_fields.*.label' => ['required', 'string', 'max:100'],
             'additional_fields.*.required' => ['required', 'boolean'],
+            'classification_allowed_fields' => $topLevelArrayRule,
+            'classification_allowed_fields.*' => ['string', 'max:100'],
         ];
     }
 
@@ -76,6 +79,11 @@ class AssetFolderSettings extends Settings
             'additional_fields.*.required' => [
                 'description' => 'Whether the additional field is required.',
                 'example' => false,
+            ],
+            'classification_allowed_fields' => [
+                'description' => 'Optional override for which asset fields AI classification may fill in this folder subtree. Null inherits, empty disables all.',
+                'nullable' => true,
+                'example' => ['alt', 'description'],
             ],
         ];
     }

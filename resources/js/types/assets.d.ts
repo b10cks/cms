@@ -7,6 +7,8 @@ interface AssetFieldOverride {
 interface AssetFolderSettings {
   field_overrides?: AssetFieldOverride[]
   additional_fields?: SpaceAssetField[]
+  /** Narrows the space's AI-fillable fields for this subtree; null inherits, [] disables */
+  classification_allowed_fields?: string[] | null
 }
 
 interface AssetFolderFieldState extends SpaceAssetField {

@@ -16,6 +16,7 @@ const props = withDefaults(
     canAddToCollection?: boolean
     canRemoveFromCollection?: boolean
     canShare?: boolean
+    canClassify?: boolean
   }>(),
   {
     folderCount: 0,
@@ -28,6 +29,7 @@ const props = withDefaults(
     canAddToCollection: false,
     canRemoveFromCollection: false,
     canShare: false,
+    canClassify: false,
   }
 )
 
@@ -37,6 +39,7 @@ const emit = defineEmits<{
   addToCollection: []
   removeFromCollection: []
   share: []
+  classify: []
   download: []
   delete: []
   clear: []
@@ -127,6 +130,15 @@ const selectionCount = computed(() => props.assetCount + props.folderCount)
       >
         <Icon name="lucide:share-2" />
         {{ $t('actions.assets.share') }}
+      </Button>
+      <Button
+        v-if="canClassify && assetCount > 0"
+        variant="ghost"
+        size="sm"
+        @click="emit('classify')"
+      >
+        <Icon name="lucide:sparkles" />
+        {{ $t('actions.assets.classify') }}
       </Button>
       <Button
         v-if="canDownload && assetCount > 0"
