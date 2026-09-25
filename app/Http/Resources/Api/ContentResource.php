@@ -101,6 +101,7 @@ class ContentResource extends JsonResource
             $content,
             $language,
             $versionScope === 'draft' ? 'current' : $versionScope,
+            withRelations: $this->shouldResolveRelations($request),
         );
     }
 
@@ -111,11 +112,33 @@ class ContentResource extends JsonResource
             return new \stdClass;
         }
 
+        $take = $request->has('take')
+            ? ContentFieldSelector::parsePaths($request->input('take', ''))
+            : [];
+        $except = ! $request->has('take') && $request->has('except')
+            ? ContentFieldSelector::parsePaths($request->input('except', ''))
+            : [];
+
+        // Keep whole selected branches until links, assets and hidden blocks
+        // are resolved. Root-level typed nodes can inject sibling fields, and
+        // numeric root keys are reindexed when the block slug is appended.
+        if (! array_key_exists('type', $content) && ! array_any(array_keys($content), static fn ($key): bool => is_int($key))) {
+            if ($take !== []) {
+                $roots = array_map(static fn (string $path): string => explode('.', $path, 2)[0], $take);
+                $content = array_intersect_key($content, array_flip($roots));
+            } elseif ($except !== []) {
+                $roots = array_filter($except, static fn (string $path): bool => ! str_contains($path, '.'));
+                $content = array_diff_key($content, array_flip($roots));
+            }
+        }
+
         if (app('currentSpace')->settings->shouldFilterHiddenBlocks()) {
             $content = $this->removeHiddenBlocks($content);
         }
 
-        $this->injectData($resolved, $content, $request);
+        if (array_key_exists('type', $content) || array_any($content, static fn ($value): bool => is_array($value))) {
+            $this->injectData($resolved, $content, $request);
+        }
 
         $result = [
             ...$content,
@@ -125,16 +148,10 @@ class ContentResource extends JsonResource
                 ?->slug,
         ];
 
-        if ($request->has('take')) {
-            $paths = ContentFieldSelector::parsePaths($request->input('take', ''));
-            if (! empty($paths)) {
-                $result = ContentFieldSelector::take($result, $paths);
-            }
-        } elseif ($request->has('except')) {
-            $paths = ContentFieldSelector::parsePaths($request->input('except', ''));
-            if (! empty($paths)) {
-                $result = ContentFieldSelector::except($result, $paths);
-            }
+        if ($take !== []) {
+            $result = ContentFieldSelector::take($result, $take);
+        } elseif ($except !== []) {
+            $result = ContentFieldSelector::except($result, $except);
         }
 
         return $result;
@@ -200,6 +217,12 @@ class ContentResource extends JsonResource
             return [];
         }
 
+        $nestedRequest = clone $request;
+        $nestedRequest->attributes->set(
+            self::RELATION_RESOLUTION_DEPTH_ATTRIBUTE,
+            $this->relationResolutionDepth($request) + 1,
+        );
+
         $versionScope = $request->input('vid', 'published');
         $resolvedRelations = app(ContentI18nResolver::class)->resolveMany(
             app('currentSpace'),
@@ -210,18 +233,13 @@ class ContentResource extends JsonResource
                 ]
             ),
             $versionScope === 'draft' ? 'current' : $versionScope,
+            withRelations: $this->shouldResolveRelations($nestedRequest),
         );
 
         $this->preloadResolvedRelationRows($resolvedRelations);
         app(LinkHandler::class)->preloadLocalizedLinks(
             $resolvedRelations->flatMap(fn (ResolvedContent $relation) => $relation->effectiveLinks),
             $versionScope === 'published',
-        );
-
-        $nestedRequest = clone $request;
-        $nestedRequest->attributes->set(
-            self::RELATION_RESOLUTION_DEPTH_ATTRIBUTE,
-            $this->relationResolutionDepth($request) + 1,
         );
 
         return $resolvedRelations

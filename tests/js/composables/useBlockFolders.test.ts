@@ -76,7 +76,7 @@ describe('useBlockFoldersQuery', () => {
     const query = withSetup(() => useBlockFolders(SPACE).useBlockFoldersQuery()).result
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '+name' })
+    expect(index).toHaveBeenCalledWith({ sort: '+name' }, { signal: expect.any(AbortSignal) })
     expect(query.data.value).toEqual([folder('f1')])
   })
 
@@ -84,7 +84,7 @@ describe('useBlockFoldersQuery', () => {
     withSetup(() => useBlockFolders(SPACE).useBlockFoldersQuery({ sort: '-name' }))
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '-name' })
+    expect(index).toHaveBeenCalledWith({ sort: '-name' }, { signal: expect.any(AbortSignal) })
   })
 
   it('caches under the filter-scoped list key', async () => {
@@ -128,7 +128,7 @@ describe('useBlockFolderQuery', () => {
     await flush()
 
     expect(query.data.value).toEqual(folder('f1'))
-    expect(get).toHaveBeenCalledWith('f1')
+    expect(get).toHaveBeenCalledWith('f1', undefined, { signal: expect.any(AbortSignal) })
   })
 
   it('stays idle without an id', async () => {

@@ -86,7 +86,10 @@ describe('list query', () => {
     withSetup(() => useCrud(SPACE).useListQuery({ page: 2 }))
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '+name', page: 2 })
+    expect(index).toHaveBeenCalledWith(
+      { sort: '+name', page: 2 },
+      { signal: expect.any(AbortSignal) }
+    )
   })
 
   it('lets the caller override the default sort', async () => {
@@ -94,7 +97,7 @@ describe('list query', () => {
     withSetup(() => useCrud(SPACE).useListQuery({ sort: '-created_at' }))
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '-created_at' })
+    expect(index).toHaveBeenCalledWith({ sort: '-created_at' }, { signal: expect.any(AbortSignal) })
   })
 
   it('waits for a space id by default', async () => {
@@ -160,7 +163,7 @@ describe('detail query', () => {
     harness = withSetup(() => useCrud(SPACE).useDetailQuery('w1'))
     await flush()
 
-    expect(get).toHaveBeenCalledWith('w1')
+    expect(get).toHaveBeenCalledWith('w1', undefined, { signal: expect.any(AbortSignal) })
     expect((harness.result as { data: { value: unknown } }).data.value).toEqual({
       id: 'w1',
       name: 'One',
@@ -221,9 +224,7 @@ describe('create mutation', () => {
 
     expect(create).toHaveBeenCalledWith({ name: 'One' })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: keys(SPACE).lists() })
-    expect(success).toHaveBeenCalledWith(
-      'composables.widgets.createSuccess|{"name":"One"}'
-    )
+    expect(success).toHaveBeenCalledWith('composables.widgets.createSuccess|{"name":"One"}')
   })
 
   it('toasts without interpolation when the entity declares no toastValues', async () => {
@@ -300,9 +301,7 @@ describe('update mutation', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: keys(SPACE).lists() })
     // Keyed off the *response*, so a server-side id change still invalidates.
     expect(invalidate).toHaveBeenCalledWith({ queryKey: keys(SPACE).detail('w1') })
-    expect(success).toHaveBeenCalledWith(
-      'composables.widgets.updateSuccess|{"name":"Renamed"}'
-    )
+    expect(success).toHaveBeenCalledWith('composables.widgets.updateSuccess|{"name":"Renamed"}')
   })
 
   it('invalidates lists, then the record, then the cross-entity keys', async () => {
@@ -327,7 +326,13 @@ describe('update mutation', () => {
   it('maps a non-standard variable shape onto { id, payload }', async () => {
     const useCrud = createCrudComposable({
       ...baseConfig(),
-      updateVariables: ({ folderId, payload }: { folderId: string; payload: { name: string } }) => ({
+      updateVariables: ({
+        folderId,
+        payload,
+      }: {
+        folderId: string
+        payload: { name: string }
+      }) => ({
         id: folderId,
         payload,
       }),

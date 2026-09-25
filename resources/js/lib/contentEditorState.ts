@@ -1,5 +1,68 @@
 import { computed, ref, watch, type ComputedRef, type Ref } from 'vue'
 
+import type { ContentTreeItem } from '~/composables/useContentTree'
+import type { ContentResource } from '~/types/contents'
+
+/** The editor's root identity wraps the live payload; nested values stay shared. */
+export function buildEditorContentTree(value: ContentResource): ContentTreeItem {
+  return {
+    id: value.id,
+    block: value.block?.slug || '',
+    ...value.content,
+  } as ContentTreeItem
+}
+
+/** Remove root identity without copying nested blocks on each field edit. */
+export function stripEditorContentTree(value: ContentTreeItem): Record<string, unknown> {
+  const { id: _id, block: _block, ...fields } = value
+  return fields
+}
+
+function editorFieldsMatchContent(
+  tree: ContentTreeItem,
+  content: Record<string, unknown>
+): boolean {
+  const fieldKeys = Object.keys(tree).filter((key) => key !== 'id' && key !== 'block')
+  const contentKeys = Object.keys(content)
+  return (
+    fieldKeys.length === contentKeys.length &&
+    fieldKeys.every((key) => Object.hasOwn(content, key) && tree[key] === content[key])
+  )
+}
+
+/** Keep the editor root and API payload in sync while sharing live nested blocks. */
+export function useEditorContentModel(
+  content: Ref<ContentResource | null>,
+  isSyncSuppressed: () => boolean
+) {
+  const tree = ref<ContentTreeItem | null>(null)
+  const model = computed<ContentTreeItem>({
+    get: () =>
+      tree.value ||
+      ({
+        id: content.value?.id || '',
+        block: content.value?.block?.slug || '',
+      } as ContentTreeItem),
+    set: (value) => {
+      if (!content.value) return
+
+      tree.value = value
+      content.value.content = stripEditorContentTree(value)
+    },
+  })
+
+  watch(
+    () => content.value?.content,
+    (nextContent) => {
+      if (!content.value || !nextContent || isSyncSuppressed()) return
+      if (tree.value && editorFieldsMatchContent(tree.value, nextContent)) return
+      tree.value = buildEditorContentTree(content.value)
+    }
+  )
+
+  return { tree, model }
+}
+
 /**
  * Dirty tracking and version-conflict state for the content editor pages.
  *
@@ -42,9 +105,7 @@ export function createEditVersionDirtyTracker(source: Ref<unknown>): DirtyTracke
 export function canonicalJson(value: unknown): string {
   return JSON.stringify(value, (_key, nested: unknown) =>
     nested && typeof nested === 'object' && !Array.isArray(nested)
-      ? Object.fromEntries(
-          Object.entries(nested).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-        )
+      ? Object.fromEntries(Object.entries(nested).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
       : nested
   )
 }
@@ -84,7 +145,9 @@ export function hasServerVersionDrifted(
   serverVersionId: string | null | undefined
 ): boolean {
   return (
-    editingFromVersionId != null && serverVersionId != null && serverVersionId !== editingFromVersionId
+    editingFromVersionId != null &&
+    serverVersionId != null &&
+    serverVersionId !== editingFromVersionId
   )
 }
 

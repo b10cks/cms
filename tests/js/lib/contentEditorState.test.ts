@@ -1,14 +1,17 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { effectScope, nextTick, ref, type EffectScope } from 'vue'
+import { effectScope, nextTick, ref, toRaw, type EffectScope } from 'vue'
 
 import {
+  buildEditorContentTree,
   createEditVersionDirtyTracker,
   createSnapshotDirtyTracker,
   createVersionConflictState,
   hasServerVersionDrifted,
   isSameJsonValue,
+  useEditorContentModel,
   type VersionConflictState,
 } from '~/lib/contentEditorState'
+import type { ContentResource } from '~/types/contents'
 
 // The trackers register watchers; without a scope they outlive their test and
 // keep firing against refs a later test still mutates.
@@ -22,6 +25,81 @@ const run = <T>(factory: () => T): T => {
 afterEach(() => {
   scope?.stop()
   scope = undefined
+})
+
+describe('useEditorContentModel', () => {
+  const resource = (payload: Record<string, unknown>): ContentResource =>
+    ({ id: 'content-1', block: { slug: 'page' }, content: payload }) as ContentResource
+
+  it('writes nested typing into live content without copying the document or its baseline', async () => {
+    const persisted = resource({ body: [{ id: 'block-1', block: 'text', title: 'Hello' }] })
+    const content = ref<ContentResource | null>(structuredClone(persisted))
+    const { tree, model, dirty } = run(() => ({
+      ...useEditorContentModel(content, () => false),
+      dirty: createEditVersionDirtyTracker(content),
+    }))
+
+    tree.value = buildEditorContentTree(content.value!)
+    dirty.markSaved()
+    const originalPayload = content.value!.content
+    const block = (model.value.body as Array<{ title: string }>)[0]
+    expect(block).toBe((content.value!.content.body as Array<{ title: string }>)[0])
+    expect(block).not.toBe((persisted.content.body as Array<{ title: string }>)[0])
+
+    block.title = 'Hello there'
+    await nextTick()
+
+    expect((content.value!.content.body as Array<{ title: string }>)[0].title).toBe('Hello there')
+    expect(content.value!.content).toBe(originalPayload)
+    expect((persisted.content.body as Array<{ title: string }>)[0].title).toBe('Hello')
+    expect(dirty.isDirty.value).toBe(true)
+  })
+
+  it('keeps a local root update and rebuilds after an external root replacement', async () => {
+    const content = ref<ContentResource | null>(resource({ title: 'Hello' }))
+    const { tree, model } = run(() => useEditorContentModel(content, () => false))
+    tree.value = buildEditorContentTree(content.value!)
+
+    const updatedTree = { ...model.value, title: 'Local' }
+    model.value = updatedTree
+    await nextTick()
+    expect(toRaw(tree.value)).toBe(updatedTree)
+    expect(content.value!.content.title).toBe('Local')
+
+    content.value!.content = { title: 'Remote' }
+    await nextTick()
+    expect(model.value.title).toBe('Remote')
+    expect(model.value.id).toBe('content-1')
+  })
+
+  it('shows a collaborator edit to a nested block without rebuilding the root', async () => {
+    const content = ref<ContentResource | null>(
+      resource({ body: [{ id: 'block-1', title: 'Hello' }] })
+    )
+    const { tree, model } = run(() => useEditorContentModel(content, () => false))
+    tree.value = buildEditorContentTree(content.value!)
+    const root = toRaw(tree.value)
+
+    ;(content.value!.content.body as Array<{ title: string }>)[0].title = 'Remote'
+    await nextTick()
+
+    expect((model.value.body as Array<{ title: string }>)[0].title).toBe('Remote')
+    expect(toRaw(tree.value)).toBe(root)
+  })
+
+  it('restores a separate saved baseline on discard', () => {
+    const persisted = resource({ body: [{ id: 'block-1', title: 'Saved' }] })
+    const content = ref<ContentResource | null>(structuredClone(persisted))
+    const { tree, model } = run(() => useEditorContentModel(content, () => true))
+    tree.value = buildEditorContentTree(content.value!)
+    ;(model.value.body as Array<{ title: string }>)[0].title = 'Draft'
+
+    content.value = structuredClone(persisted)
+    tree.value = buildEditorContentTree(content.value)
+
+    expect((model.value.body as Array<{ title: string }>)[0].title).toBe('Saved')
+    expect((persisted.content.body as Array<{ title: string }>)[0].title).toBe('Saved')
+  })
 })
 
 describe('createEditVersionDirtyTracker', () => {

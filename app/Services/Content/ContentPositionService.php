@@ -91,7 +91,7 @@ class ContentPositionService
             ->orderBy('position')
             ->orderBy('name')
             ->orderBy('id')
-            ->get();
+            ->get(['id', 'parent_id', 'position']);
 
         $insertIndex = $siblings->count();
 
@@ -110,22 +110,32 @@ class ContentPositionService
             ->concat($siblings->slice($insertIndex))
             ->values();
 
-        $ordered->each(function (Content $content, int $index) use ($parentId): void {
-            if ($content->parent_id === $parentId && (int) $content->position === $index) {
-                return;
-            }
+        $changed = $ordered->filter(
+            fn (Content $content, int $index): bool => $content->parent_id !== $parentId || (int) $content->position !== $index
+        );
+
+        $connection = (new Content)->getConnection();
+        $grammar = $connection->getQueryGrammar();
+
+        // One UPDATE per chunk. Ids are escaped and positions are integer literals,
+        // so the CASE stays integer-typed on PostgreSQL.
+        foreach ($changed->chunk(200) as $chunk) {
+            $cases = $chunk
+                ->map(fn (Content $content, int $index): string => 'WHEN '.$connection->escape($content->id).' THEN '.$index)
+                ->implode(' ');
 
             Content::query()
-                ->whereKey($content->id)
+                ->whereKey($chunk->pluck('id'))
                 ->update([
                     'parent_id' => $parentId,
-                    'position' => $index,
-                    'updated_at' => now(),
+                    'position' => $connection->raw("CASE {$grammar->wrap('id')} {$cases} ELSE {$grammar->wrap('position')} END"),
                 ]);
 
-            $content->parent_id = $parentId;
-            $content->position = $index;
-        });
+            foreach ($chunk as $index => $content) {
+                $content->parent_id = $parentId;
+                $content->position = $index;
+            }
+        }
     }
 
     private function baseQuery(?string $parentId, string $languageIso): Builder

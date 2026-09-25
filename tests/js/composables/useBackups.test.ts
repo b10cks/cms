@@ -71,14 +71,14 @@ describe('useBackupsQuery', () => {
     withSetup(() => useBackups(SPACE).useBackupsQuery())
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '-created_at' })
+    expect(index).toHaveBeenCalledWith({ sort: '-created_at' }, { signal: expect.any(AbortSignal) })
   })
 
   it('lets the caller params override the default sort', async () => {
     withSetup(() => useBackups(SPACE).useBackupsQuery({ sort: '+name' }))
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '+name' })
+    expect(index).toHaveBeenCalledWith({ sort: '+name' }, { signal: expect.any(AbortSignal) })
   })
 
   it('scopes the API client to the space', async () => {
@@ -142,7 +142,7 @@ describe('useBackupQuery', () => {
     await flush()
 
     expect(query.data.value).toEqual({ id: 'b1', name: 'Nightly', state: 'done' })
-    expect(get).toHaveBeenCalledWith('b1')
+    expect(get).toHaveBeenCalledWith('b1', undefined, { signal: expect.any(AbortSignal) })
   })
 
   it('stays idle without an id', async () => {

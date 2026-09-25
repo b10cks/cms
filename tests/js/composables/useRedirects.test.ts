@@ -98,7 +98,7 @@ describe('useRedirectsQuery', () => {
     withSetup(() => useRedirects(SPACE).useRedirectsQuery())
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '+source' })
+    expect(index).toHaveBeenCalledWith({ sort: '+source' }, { signal: expect.any(AbortSignal) })
     expect(forSpace).toHaveBeenCalledWith(SPACE)
   })
 
@@ -106,7 +106,7 @@ describe('useRedirectsQuery', () => {
     withSetup(() => useRedirects(SPACE).useRedirectsQuery({ sort: '-hits' }))
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '-hits' })
+    expect(index).toHaveBeenCalledWith({ sort: '-hits' }, { signal: expect.any(AbortSignal) })
   })
 
   it('keeps the whole paginated envelope, not just data', async () => {
@@ -163,7 +163,7 @@ describe('useRedirectQuery', () => {
     await flush()
 
     expect(query.data.value).toEqual({ id: 'r1', source: '/old' })
-    expect(get).toHaveBeenCalledWith('r1')
+    expect(get).toHaveBeenCalledWith('r1', undefined, { signal: expect.any(AbortSignal) })
   })
 
   it('stays idle without an id', async () => {
