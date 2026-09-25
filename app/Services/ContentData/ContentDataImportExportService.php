@@ -65,9 +65,11 @@ class ContentDataImportExportService extends ImportExportService
 
         if ($gridMode && $fieldKeys !== null) {
             $query->whereIn('block_id', $this->extractor->blockIdsWithFields($fieldKeys));
-            // Same order the grid pages in, so export rows line up with what was on screen.
-            $query->orderBy('id');
         }
+
+        // Tie-break any user sort like the grid does, so export rows line up with
+        // what was on screen and batched pages never repeat or skip tied rows.
+        $query->orderBy($query->qualifyColumn('id'));
 
         if ($driver instanceof CsvContentDataDriver) {
             $batches = (function () use ($query, $space, $fieldKeys, $languages, $gridMode): \Generator {
