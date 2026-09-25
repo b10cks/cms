@@ -87,7 +87,10 @@ describe('useAssetFoldersQuery', () => {
     )
     // The sort reaches the API but not the key, so the plain `{}` key is what
     // every other composable seeds and reads.
-    expect(assetFolders.index).toHaveBeenCalledWith({ sort: '+name' })
+    expect(assetFolders.index).toHaveBeenCalledWith(
+      { sort: '+name' },
+      { signal: expect.any(AbortSignal) }
+    )
     queryClient.clear()
   })
 
@@ -103,7 +106,10 @@ describe('useAssetFoldersQuery', () => {
         queryClient.getQueryData(queryKeys.assetFolders(SPACE).list({ parent_id: 'a' }))
       ).toEqual([])
     )
-    expect(assetFolders.index).toHaveBeenCalledWith({ sort: '+name', parent_id: 'a' })
+    expect(assetFolders.index).toHaveBeenCalledWith(
+      { sort: '+name', parent_id: 'a' },
+      { signal: expect.any(AbortSignal) }
+    )
     queryClient.clear()
   })
 
@@ -114,7 +120,12 @@ describe('useAssetFoldersQuery', () => {
       useAssetFolders(SPACE).useAssetFoldersQuery({ sort: '-name' })
     )
 
-    await vi.waitFor(() => expect(assetFolders.index).toHaveBeenCalledWith({ sort: '-name' }))
+    await vi.waitFor(() =>
+      expect(assetFolders.index).toHaveBeenCalledWith(
+        { sort: '-name' },
+        { signal: expect.any(AbortSignal) }
+      )
+    )
     queryClient.clear()
   })
 })
