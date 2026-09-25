@@ -54,14 +54,31 @@ abstract class BaseContentDataDriver implements ContentDataDriver
      */
     protected function flatten(array $documents, bool $gridMode = false): array
     {
+        return [
+            'headings' => $this->tabularHeadings($documents, $gridMode),
+            'rows' => iterator_to_array($this->tabularRows($documents, $gridMode), false),
+        ];
+    }
+
+    /** @param array<int, TranslationDocument> $documents */
+    protected function tabularHeadings(array $documents, bool $gridMode): array
+    {
         $sourceLanguage = $gridMode ? $this->collectSourceLanguage($documents) : null;
         $languages = $this->collectLanguages($documents);
 
-        $headings = $sourceLanguage !== null
+        return $sourceLanguage !== null
             ? [...self::GRID_COLUMNS, $sourceLanguage, ...$languages]
             : [...self::RESERVED_COLUMNS, ...$languages];
+    }
 
-        $rows = [];
+    /**
+     * @param  array<int, TranslationDocument>  $documents
+     * @return \Generator<int, array<string, string>>
+     */
+    protected function tabularRows(array $documents, bool $gridMode): \Generator
+    {
+        $sourceLanguage = $gridMode ? $this->collectSourceLanguage($documents) : null;
+        $languages = $this->collectLanguages($documents);
 
         foreach ($documents as $document) {
             foreach ($document->units as $unit) {
@@ -85,11 +102,9 @@ abstract class BaseContentDataDriver implements ContentDataDriver
                     $row[$language] = $unit->targets[$language] ?? '';
                 }
 
-                $rows[] = $row;
+                yield $row;
             }
         }
-
-        return ['headings' => $headings, 'rows' => $rows];
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Services\ContentData\Drivers;
 
+use App\DTOs\ContentData\TranslationDocument;
 use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use App\Services\ImportExport\WritesCsvDownload;
@@ -12,9 +13,43 @@ class CsvContentDataDriver extends BaseContentDataDriver
 {
     use WritesCsvDownload;
 
+    /**
+     * Export extractor batches, which share the space's source and target languages.
+     * Consume them before returning so database reads keep their request's tenant.
+     *
+     * @param  iterable<int, array<int, TranslationDocument>>  $batches
+     */
+    public function exportBatches(Space $space, iterable $batches, bool $gridMode = false): Response
+    {
+        $documents = (static function () use ($batches): \Generator {
+            foreach ($batches as $batch) {
+                yield from $batch;
+            }
+        })();
+        $first = $documents->current();
+        $headings = $this->tabularHeadings($first === null ? [] : [$first], $gridMode);
+        $rows = (function () use ($documents, $gridMode, $headings, $first): \Generator {
+            if ($first === null) {
+                return;
+            }
+
+            foreach ($documents as $document) {
+                foreach ($this->tabularRows([$document], $gridMode) as $row) {
+                    yield array_map(
+                        static fn (string $heading): string => (string) ($row[$heading] ?? ''),
+                        $headings,
+                    );
+                }
+            }
+        })();
+
+        return $this->csvDownload($headings, $rows, $this->generateFilename($space, 'csv'), spool: true);
+    }
+
     public function export(Space $space, array $documents, bool $gridMode = false): Response
     {
-        ['headings' => $headings, 'rows' => $rows] = $this->flatten($documents, $gridMode);
+        $headings = $this->tabularHeadings($documents, $gridMode);
+        $rows = $this->tabularRows($documents, $gridMode);
         $filename = $this->generateFilename($space, 'csv');
 
         $orderedRows = (function () use ($rows, $headings): \Generator {

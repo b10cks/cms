@@ -24,19 +24,50 @@ trait WritesCsvDownload
      *                                                         than buffering
      *                                                         the export.
      */
-    protected function csvDownload(array $headings, iterable $rows, string $filename): Response
+    protected function csvDownload(array $headings, iterable $rows, string $filename, bool $spool = false): Response
     {
-        return new StreamedResponse(function () use ($headings, $rows): void {
-            $handle = fopen('php://output', 'w');
-
-            fputcsv($handle, SpreadsheetValue::escapeRow($headings));
+        $write = static function ($handle) use ($headings, $rows): void {
+            fputcsv($handle, SpreadsheetValue::escapeRow($headings), escape: '\\');
 
             foreach ($rows as $row) {
-                fputcsv($handle, SpreadsheetValue::escapeRow(array_values($row)));
+                fputcsv($handle, SpreadsheetValue::escapeRow(array_values($row)), escape: '\\');
             }
 
-            fclose($handle);
-        }, 200, [
+        };
+
+        if ($spool) {
+            $handle = fopen('php://temp/maxmemory:2097152', 'w+');
+            if ($handle === false) {
+                throw new \RuntimeException('Unable to open CSV export spool.');
+            }
+
+            try {
+                $write($handle);
+                rewind($handle);
+            } catch (\Throwable $exception) {
+                fclose($handle);
+                throw $exception;
+            }
+
+            $stream = static function () use ($handle): void {
+                try {
+                    fpassthru($handle);
+                } finally {
+                    fclose($handle);
+                }
+            };
+        } else {
+            $stream = static function () use ($write): void {
+                $handle = fopen('php://output', 'w');
+                try {
+                    $write($handle);
+                } finally {
+                    fclose($handle);
+                }
+            };
+        }
+
+        return new StreamedResponse($stream, 200, [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
