@@ -45,7 +45,7 @@ class ContentController extends Controller
                 'content_versions.asset_ids',
                 'content_versions.link_ids',
             ])
-            ->with(['i18n_parent.block', 'i18n_children.block', 'i18n_siblings.block', 'block']);
+            ->with(['i18n_parent', 'block']);
 
         $vid = $this->versionScope($request, allowVersionId: false);
         if ($vid === 'published') {
@@ -76,6 +76,7 @@ class ContentController extends Controller
                 ]
             ),
             $versionScope,
+            loadRelations: false,
         );
 
         app(LinkHandler::class)->preloadLocalizedLinks(

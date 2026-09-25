@@ -25,6 +25,8 @@ class AssetHandler
 
     public function updateContentAssets(array $data, Collection $assets): array
     {
+        $assets = $assets->reverse()->keyBy('id');
+
         return $this->replaceMatching(
             $data,
             [
@@ -32,7 +34,8 @@ class AssetHandler
             ],
             function ($src) use ($assets) {
                 /** @var Asset $asset */
-                $asset = $assets->firstWhere('id', $src['id'] ?? null);
+                $id = $src['id'] ?? null;
+                $asset = is_string($id) || is_int($id) ? $assets->get($id) : null;
 
                 return $asset ? \Arr::only($asset->append(['full_path'])->toArray(), [
                     'id',
@@ -48,13 +51,16 @@ class AssetHandler
 
     public function replaceContentAssets(Content|ContentResource $content, $data, Collection $assets): array
     {
+        $assets = $assets->reverse()->keyBy('id');
+
         return $this->replaceMatching(
             $data,
             [
                 'type' => 'asset',
             ],
             function ($src) use ($assets, $content) {
-                $asset = $assets->firstWhere('id', $src['id'] ?? null);
+                $id = $src['id'] ?? null;
+                $asset = is_string($id) || is_int($id) ? $assets->get($id) : null;
                 if ($asset) {
                     $assetTranslationFields = $content->i18n_parent
                         ? data_get($asset, "data.fields.{$content->language_iso}", [])
