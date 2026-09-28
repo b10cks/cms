@@ -774,6 +774,24 @@
         "addLabel": "Ajouter des étiquettes",
         "removeLabel": "Retirer des étiquettes"
       },
+      "aiClassify": {
+        "title": "Classer {count} image avec l’IA | Classer {count} images avec l’IA",
+        "titleAll": "Classer toutes les images avec l’IA",
+        "description": "Un modèle de vision remplit les champs de métadonnées vides des images sélectionnées. Les valeurs existantes sont conservées.",
+        "descriptionAll": "Un modèle de vision remplit les champs de métadonnées vides de toutes les images de cette bibliothèque. Les valeurs existantes sont conservées.",
+        "languages": "Langues",
+        "noImages": "Aucune des ressources sélectionnées n’est une image.",
+        "overwrite": "Remplacer les valeurs existantes",
+        "overwriteHint": "Régénère tous les champs que l’IA peut remplir, y compris ceux rédigés par les éditeurs. Désactivé par défaut : seuls les champs vides sont remplis.",
+        "altContext": "Où cette image apparaîtra-t-elle ?",
+        "altContextHint": "Facultatif. Aide le modèle à proposer un texte alternatif pour cet usage. Vérifiez-le avant publication ; d’autres usages peuvent nécessiter un texte alternatif différent.",
+        "altContextPlaceholder": "Par exemple : une bannière avec un lien vers la collection d’été",
+        "decorative": "Décorative dans ce contexte",
+        "decorativeHint": "Propose un texte alternatif vide. Choisissez cette option uniquement si le contenu environnant transmet déjà le sens de l’image.",
+        "highDetail": "Lire les petits caractères et les graphiques",
+        "highDetailHint": "Envoie une image plus grande au modèle. Cela peut coûter plus cher et prendre plus de temps.",
+        "hint": "S’exécute en arrière-plan. Les champs se remplissent à mesure que chaque image est traitée."
+      },
       "selection": {
         "toolbar": "Actions de sélection",
         "onOtherPages": "({count} sur d'autres pages)",
@@ -2392,6 +2410,18 @@
         "fieldLabelPlaceholder": "ex. Texte alternatif",
         "required": "Requis",
         "requiredHint": "Les champs obligatoires s'appliquent uniquement à la langue par défaut. Les valeurs traduites restent facultatives.",
+        "ai": {
+          "title": "Classification par IA",
+          "description": "Laissez un modèle de vision remplir les champs de métadonnées vides des images.",
+          "autoOnUpload": "Classer automatiquement les nouveaux imports",
+          "autoOnUploadHint": "S’exécute après chaque import d’image avec la configuration IA par défaut et remplit uniquement les champs vides.",
+          "suggestTags": "Attribuer les étiquettes correspondantes",
+          "suggestTagsHint": "Le modèle peut choisir jusqu’à cinq étiquettes parmi celles de vos ressources existantes. Il n’en crée jamais de nouvelles.",
+          "allowedFields": "Champs que l’IA peut remplir",
+          "allowedFieldsHint": "Les paramètres des dossiers peuvent restreindre davantage cette liste.",
+          "classifyExisting": "Classer les images existantes",
+          "requiresVision": "Nécessite une configuration IA par défaut avec un modèle capable d’analyser des images."
+        },
         "addField": "Ajouter un champ",
         "metadataFields": "Champs de métadonnées",
         "key": "Clé",
@@ -4083,6 +4113,7 @@
     "tooltip": "Notifications",
     "empty": "Vous êtes à jour",
     "markAllRead": "Tout marquer comme lu",
+    "unreadCount": "{count} non lues",
     "toast": {
       "actionFailed": "Une erreur s'est produite. Veuillez réessayer."
     },
@@ -4307,6 +4338,8 @@
       "download": "Télécharger",
       "copyUrl": "Copier l'URL",
       "applyTags": "Appliquer les étiquettes",
+      "classify": "Classer avec l’IA…",
+      "startClassification": "Lancer la classification",
       "retryFailed": "Réessayer les échecs",
       "cancelUpload": "Annuler le téléversement",
       "addSelected": "Ajouter {count} sélectionnés",
@@ -4561,6 +4594,9 @@
       "willMove": "{count} élément sera déplacé | {count} éléments seront déplacés",
       "creatingItems": "Création de {count} élément… | Création de {count} éléments…",
       "movingItems": "Déplacement de {count} élément… | Déplacement de {count} éléments…"
+    },
+    "fieldEditor": {
+      "loadFailed": "Cet éditeur n’a pas pu se charger, probablement après une mise à jour. Rechargez la page pour modifier ce champ."
     }
   },
   "alertDialog": {
@@ -5010,7 +5046,12 @@
       "pasteSuccess": "{count} élément déplacé | {count} éléments déplacés",
       "selectAllTruncated": "Sélection des {count} premiers actifs correspondants sur {total}",
       "bulkTagSuccess": "Étiquettes mises à jour sur {count} actif | Étiquettes mises à jour sur {count} actifs",
-      "bulkTagPartial": "Étiquettes mises à jour sur {succeeded} actifs, {failed} en échec"
+      "bulkTagPartial": "Étiquettes mises à jour sur {succeeded} actifs, {failed} en échec",
+      "classifyQueued": "{queued} image en attente de classification | {queued} images en attente de classification",
+      "classifyProgress": "{updated} mises à jour, {pending} en attente, {skipped} ignorées, {failed} en échec",
+      "classifyProgressUnavailable": "Impossible de vérifier la progression de la classification",
+      "classifyNothing": "Rien à classer : tous les champs admissibles ont déjà une valeur.",
+      "classifyFailed": "Impossible de lancer la classification"
     },
     "references": {
       "duplicateReference": "Ce contenu a déjà été ajouté aux références.",
@@ -5095,6 +5136,7 @@
       "cut": "Couper les actifs sélectionnés",
       "paste": "Coller les actifs coupés ici",
       "delete": "Supprimer les actifs sélectionnés",
+      "classify": "Classer les ressources sélectionnées avec l’IA",
       "help": "Afficher cette liste de raccourcis"
     },
     "table": {

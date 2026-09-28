@@ -774,6 +774,24 @@
         "addLabel": "Añadir etiquetas",
         "removeLabel": "Quitar etiquetas"
       },
+      "aiClassify": {
+        "title": "Clasificar {count} imagen con IA | Clasificar {count} imágenes con IA",
+        "titleAll": "Clasificar todas las imágenes con IA",
+        "description": "Un modelo de visión rellena los campos de metadatos vacíos de las imágenes seleccionadas. Los valores existentes se conservan.",
+        "descriptionAll": "Un modelo de visión rellena los campos de metadatos vacíos de todas las imágenes de esta biblioteca. Los valores existentes se conservan.",
+        "languages": "Idiomas",
+        "noImages": "Ninguno de los activos seleccionados es una imagen.",
+        "overwrite": "Reemplazar los valores existentes",
+        "overwriteHint": "Vuelve a generar todos los campos que puede rellenar la IA, incluidos los escritos por los editores. Desactivado por defecto: solo se rellenan los campos vacíos.",
+        "altContext": "¿Dónde aparecerá esta imagen?",
+        "altContextHint": "Opcional. Ayuda al modelo a sugerir un texto alternativo para este uso. Revíselo antes de publicar; otros usos pueden requerir un texto alternativo diferente.",
+        "altContextPlaceholder": "Por ejemplo: un banner con enlace para la colección de verano",
+        "decorative": "Decorativa en este contexto",
+        "decorativeHint": "Sugiere un texto alternativo vacío. Seleccione esta opción solo si el contenido cercano ya transmite el significado de la imagen.",
+        "highDetail": "Leer texto pequeño y gráficos",
+        "highDetailHint": "Envía una imagen más grande al modelo. Puede costar más y tardar más tiempo.",
+        "hint": "Se ejecuta en segundo plano. Los campos se rellenan a medida que se completa cada imagen."
+      },
       "selection": {
         "toolbar": "Acciones de selección",
         "onOtherPages": "({count} en otras páginas)",
@@ -2392,6 +2410,18 @@
         "fieldLabelPlaceholder": "ej. Texto Alt",
         "required": "Requerido",
         "requiredHint": "Los campos requeridos aplican solo al idioma predeterminado. Los valores traducidos siguen siendo opcionales.",
+        "ai": {
+          "title": "Clasificación con IA",
+          "description": "Permita que un modelo de visión rellene los campos de metadatos vacíos de las imágenes.",
+          "autoOnUpload": "Clasificar automáticamente las nuevas cargas",
+          "autoOnUploadHint": "Se ejecuta después de cargar cada imagen con la configuración de IA predeterminada y solo rellena los campos vacíos.",
+          "suggestTags": "Asignar etiquetas coincidentes",
+          "suggestTagsHint": "El modelo puede elegir hasta cinco etiquetas de entre las etiquetas de activos existentes. Nunca crea etiquetas nuevas.",
+          "allowedFields": "Campos que puede rellenar la IA",
+          "allowedFieldsHint": "La configuración de las carpetas puede restringir aún más esta lista.",
+          "classifyExisting": "Clasificar imágenes existentes",
+          "requiresVision": "Requiere una configuración de IA predeterminada con un modelo capaz de analizar imágenes."
+        },
         "addField": "Añadir Campo",
         "metadataFields": "Campos de Metadatos",
         "key": "Clave",
@@ -4083,6 +4113,7 @@
     "tooltip": "Notificaciones",
     "empty": "Está al día",
     "markAllRead": "Marcar todas como leídas",
+    "unreadCount": "{count} sin leer",
     "toast": {
       "actionFailed": "Algo salió mal. Por favor, inténtelo de nuevo."
     },
@@ -4307,6 +4338,8 @@
       "download": "Descargar",
       "copyUrl": "Copiar URL",
       "applyTags": "Aplicar etiquetas",
+      "classify": "Clasificar con IA…",
+      "startClassification": "Iniciar clasificación",
       "retryFailed": "Reintentar fallidos",
       "cancelUpload": "Cancelar subida",
       "addSelected": "Añadir {count} seleccionados",
@@ -4561,6 +4594,9 @@
       "willMove": "{count} elemento será movido | {count} elementos serán movidos",
       "creatingItems": "Creando {count} elemento... | Creando {count} elementos...",
       "movingItems": "Moviendo {count} elemento... | Moviendo {count} elementos..."
+    },
+    "fieldEditor": {
+      "loadFailed": "No se pudo cargar este editor, probablemente tras una actualización. Recargue la página para editar este campo."
     }
   },
   "alertDialog": {
@@ -5010,7 +5046,12 @@
       "pasteSuccess": "{count} elemento movido | {count} elementos movidos",
       "selectAllTruncated": "Seleccionados los primeros {count} de {total} activos coincidentes",
       "bulkTagSuccess": "Etiquetas actualizadas en {count} activo | Etiquetas actualizadas en {count} activos",
-      "bulkTagPartial": "Etiquetas actualizadas en {succeeded} activos, {failed} fallaron"
+      "bulkTagPartial": "Etiquetas actualizadas en {succeeded} activos, {failed} fallaron",
+      "classifyQueued": "{queued} imagen en cola para clasificar | {queued} imágenes en cola para clasificar",
+      "classifyProgress": "{updated} actualizadas, {pending} pendientes, {skipped} omitidas, {failed} fallidas",
+      "classifyProgressUnavailable": "No se pudo consultar el progreso de la clasificación",
+      "classifyNothing": "No hay nada que clasificar: todos los campos aptos ya tienen un valor.",
+      "classifyFailed": "No se pudo iniciar la clasificación"
     },
     "references": {
       "duplicateReference": "Este contenido ya ha sido añadido a las referencias.",
@@ -5095,6 +5136,7 @@
       "cut": "Cortar los activos seleccionados",
       "paste": "Pegar los activos cortados aquí",
       "delete": "Eliminar los activos seleccionados",
+      "classify": "Clasificar los activos seleccionados con IA",
       "help": "Mostrar esta lista de atajos"
     },
     "table": {

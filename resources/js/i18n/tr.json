@@ -774,6 +774,24 @@
         "addLabel": "Etiket ekle",
         "removeLabel": "Etiket kaldır"
       },
+      "aiClassify": {
+        "title": "{count} görseli yapay zekâ ile sınıflandır",
+        "titleAll": "Tüm görselleri yapay zekâ ile sınıflandır",
+        "description": "Bir görsel analiz modeli, seçili görsellerin boş meta veri alanlarını doldurur. Mevcut değerler korunur.",
+        "descriptionAll": "Bir görsel analiz modeli, bu kütüphanedeki tüm görsellerin boş meta veri alanlarını doldurur. Mevcut değerler korunur.",
+        "languages": "Diller",
+        "noImages": "Seçili varlıkların hiçbiri görsel değil.",
+        "overwrite": "Mevcut değerleri değiştir",
+        "overwriteHint": "Editörlerin yazdıkları dahil, yapay zekânın doldurabildiği tüm alanları yeniden oluşturur. Varsayılan olarak kapalıdır: yalnızca boş alanlar doldurulur.",
+        "altContext": "Bu görsel nerede görünecek?",
+        "altContextHint": "İsteğe bağlı. Modelin bu kullanım için alternatif metin önermesine yardımcı olur. Yayımlamadan önce gözden geçirin; diğer kullanımlar farklı bir alternatif metin gerektirebilir.",
+        "altContextPlaceholder": "Örneğin: yaz koleksiyonuna bağlantı veren bir banner",
+        "decorative": "Bu kullanımda dekoratif",
+        "decorativeHint": "Boş bir alternatif metin önerir. Bu seçeneği yalnızca yakındaki içerik görselin anlamını zaten aktarıyorsa seçin.",
+        "highDetail": "Küçük metinleri ve grafikleri oku",
+        "highDetailHint": "Modele daha büyük bir görsel gönderir. Bu, maliyeti ve işlem süresini artırabilir.",
+        "hint": "Arka planda çalışır. Her görselin işlenmesi tamamlandıkça alanlar doldurulur."
+      },
       "selection": {
         "toolbar": "Seçim işlemleri",
         "onOtherPages": "(diğer sayfalarda {count})",
@@ -2392,6 +2410,18 @@
         "fieldLabelPlaceholder": "örn., Alt Metin",
         "required": "Gerekli",
         "requiredHint": "Gerekli alanlar yalnızca varsayılan dil için uygulanır. Çevrilen değerler isteğe bağlı kalır.",
+        "ai": {
+          "title": "Yapay zekâ ile sınıflandırma",
+          "description": "Bir görsel analiz modelinin görsellerin boş meta veri alanlarını doldurmasına izin verin.",
+          "autoOnUpload": "Yeni yüklemeleri otomatik olarak sınıflandır",
+          "autoOnUploadHint": "Her görsel yüklemesinden sonra varsayılan yapay zekâ yapılandırmasıyla çalışır ve yalnızca boş alanları doldurur.",
+          "suggestTags": "Eşleşen etiketleri ata",
+          "suggestTagsHint": "Model, mevcut varlık etiketlerinizden en fazla beşini seçebilir. Asla yeni etiket oluşturmaz.",
+          "allowedFields": "Yapay zekânın doldurabileceği alanlar",
+          "allowedFieldsHint": "Klasör ayarları bu listeyi daha da daraltabilir.",
+          "classifyExisting": "Mevcut görselleri sınıflandır",
+          "requiresVision": "Görselleri analiz edebilen bir modele sahip varsayılan yapay zekâ yapılandırması gerektirir."
+        },
         "addField": "Alan Ekle",
         "metadataFields": "Üst Veri Alanları",
         "key": "Anahtar",
@@ -4083,6 +4113,7 @@
     "tooltip": "Bildirimler",
     "empty": "Tüm bildirimleri okudunuz",
     "markAllRead": "Tümünü okundu olarak işaretle",
+    "unreadCount": "{count} okunmamış",
     "toast": {
       "actionFailed": "Bir sorun oluştu. Lütfen tekrar deneyin."
     },
@@ -4307,6 +4338,8 @@
       "download": "İndir",
       "copyUrl": "URL'yi kopyala",
       "applyTags": "Etiketleri uygula",
+      "classify": "Yapay zekâ ile sınıflandır…",
+      "startClassification": "Sınıflandırmayı başlat",
       "retryFailed": "Başarısızları yeniden dene",
       "cancelUpload": "Yüklemeyi iptal et",
       "addSelected": "Seçilen {count} adet ekle",
@@ -4561,6 +4594,9 @@
       "willMove": "{count} öğe taşınacak | {count} öğe taşınacak",
       "creatingItems": "{count} öğe oluşturuluyor… | {count} öğe oluşturuluyor…",
       "movingItems": "{count} öğe taşınıyor… | {count} öğe taşınıyor…"
+    },
+    "fieldEditor": {
+      "loadFailed": "Bu editör yüklenemedi, muhtemelen bir güncellemeden sonra. Bu alanı düzenlemek için sayfayı yeniden yükleyin."
     }
   },
   "alertDialog": {
@@ -5010,7 +5046,12 @@
       "pasteSuccess": "{count} öğe taşındı | {count} öğe taşındı",
       "selectAllTruncated": "Eşleşen {total} varlığın ilk {count} tanesi seçildi",
       "bulkTagSuccess": "{count} varlıkta etiketler güncellendi | {count} varlıkta etiketler güncellendi",
-      "bulkTagPartial": "Etiketler {succeeded} varlıkta güncellendi, {failed} tanesi başarısız oldu"
+      "bulkTagPartial": "Etiketler {succeeded} varlıkta güncellendi, {failed} tanesi başarısız oldu",
+      "classifyQueued": "{queued} görsel sınıflandırma için sıraya alındı",
+      "classifyProgress": "{updated} güncellendi, {pending} bekliyor, {skipped} atlandı, {failed} başarısız",
+      "classifyProgressUnavailable": "Sınıflandırma ilerlemesi kontrol edilemedi",
+      "classifyNothing": "Sınıflandırılacak bir şey yok: uygun alanların tümünde zaten bir değer var.",
+      "classifyFailed": "Sınıflandırma başlatılamadı"
     },
     "references": {
       "duplicateReference": "Bu içerik zaten başvurulara eklenmiş.",
@@ -5095,6 +5136,7 @@
       "cut": "Seçilen varlıkları kes",
       "paste": "Kesilen varlıkları buraya yapıştır",
       "delete": "Seçilen varlıkları sil",
+      "classify": "Seçili varlıkları yapay zekâ ile sınıflandır",
       "help": "Bu kısayol listesini göster"
     },
     "table": {
