@@ -4499,7 +4499,7 @@
       "draftContent": "Arborescence du brouillon",
       "blocks": "Blocs",
       "noResults": "Aucune correspondance trouvée",
-      "hint": "Saisissez @ pour mentionner du contenu ou des blocs",
+      "hint": "Saisissez {'@'} pour mentionner du contenu ou des blocs",
       "suggestions": "Suggestions de mentions"
     },
     "aiSettings": {

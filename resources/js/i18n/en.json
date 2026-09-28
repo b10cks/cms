@@ -4499,7 +4499,7 @@
       "draftContent": "Draft tree",
       "blocks": "Blocks",
       "noResults": "No matches found",
-      "hint": "Type @ to mention content or blocks",
+      "hint": "Type {'@'} to mention content or blocks",
       "suggestions": "Mention suggestions"
     },
     "aiSettings": {

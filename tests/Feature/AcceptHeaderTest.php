@@ -9,6 +9,26 @@ use Tests\TestCase;
 class AcceptHeaderTest extends TestCase
 {
     #[Test]
+    #[DataProvider('translatedLocaleDataProvider')]
+    public function itUsesConfiguredTranslations(string $locale, string $message): void
+    {
+        $this->getJson('mgmt/v1/health', ['accept-language' => $locale]);
+
+        $this->assertSame($locale, app()->getLocale());
+        $this->assertSame($message, __('auth.password'));
+    }
+
+    public static function translatedLocaleDataProvider(): array
+    {
+        return [
+            'Spanish' => ['es', 'La contraseña facilitada es incorrecta.'],
+            'French' => ['fr', 'Le mot de passe fourni est incorrect.'],
+            'Russian' => ['ru', 'Введённый пароль неверен.'],
+            'Turkish' => ['tr', 'Girilen şifre hatalı.'],
+        ];
+    }
+
+    #[Test]
     #[DataProvider('localeDataProvider')]
     public function itSetsLocales($supported, $accept, $expected)
     {

@@ -4499,7 +4499,7 @@
       "draftContent": "Árbol de borradores",
       "blocks": "Bloques",
       "noResults": "No se encontraron coincidencias",
-      "hint": "Escriba @ para mencionar contenido o bloques",
+      "hint": "Escriba {'@'} para mencionar contenido o bloques",
       "suggestions": "Sugerencias de mención"
     },
     "aiSettings": {

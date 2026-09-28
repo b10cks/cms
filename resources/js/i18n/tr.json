@@ -4499,7 +4499,7 @@
       "draftContent": "Taslak ağacı",
       "blocks": "Bloklar",
       "noResults": "Eşleşme bulunamadı",
-      "hint": "İçerik veya bloklardan bahsetmek için @ yazın",
+      "hint": "İçerik veya bloklardan bahsetmek için {'@'} yazın",
       "suggestions": "Bahsetme önerileri"
     },
     "aiSettings": {
