@@ -44,14 +44,17 @@ class AssetClassificationServiceTest extends TestCase
     }
 
     #[Test]
-    public function it_truncates_runaway_values(): void
+    public function it_keeps_values_at_the_field_limit_and_rejects_longer_values(): void
     {
         $parsed = $this->service->parseResponse(
-            json_encode(['_default.description' => str_repeat('a', 1500)]),
-            ['_default.description'],
+            json_encode([
+                '_default.description' => str_repeat('a', 400),
+                'de.description' => str_repeat('b', 401),
+            ]),
+            ['_default.description', 'de.description'],
         );
 
-        $this->assertSame(1000, mb_strlen($parsed['fields']['_default']['description']));
+        $this->assertSame(['_default' => ['description' => str_repeat('a', 400)]], $parsed['fields']);
     }
 
     #[Test]
