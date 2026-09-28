@@ -3,6 +3,46 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.9.28-e65d78eb] — 2026-9-28
+
+- ✅ Align asset classification test with field limits
+- 🥅 Recover from stale chunks after a deploy
+- ♻️ Batch position updates through the query builder
+- ♻️ Share CSV row ordering between whole and batched exports
+- 🐛 Keep batched CSV exports from repeating or skipping tied rows
+- ⚡ Hydrate content relations only when a request resolves them
+- ✅ Expect cancellation signals in CRUD query tests
+- 🐛 Keep batched content positions integer-typed on PostgreSQL
+- ⚡ Bound CSV export memory with batched extraction
+- ⚡ Batch sibling position updates
+- ⚡ Skip unused work in content delivery
+- ⚡ Load rich editors and analytics only when needed
+- ⚡ Cancel stale reads and reuse complete content saves
+- ⚡ Stop copying the full content tree on nested edits
+- ⚡ Index content picker items once per menu version
+- ⬆️ Bump versions
+- 💄 Rework the notifications overlay
+- 🐛 Let a max-height ScrollArea scroll instead of clipping
+- ✨ Track and improve AI asset classification runs
+- 🐛 Record only metadata fields AI actually writes
+- 🐛 Guard classification image conversion and stream large sources
+- 🐛 Keep throttled asset jobs alive and retry temporary AI failures
+- 🐛 Show option labels on multi-select combobox chips
+- ✨ Offer AI classification in the asset library
+- ✨ Classify assets with a vision model in the background
+- ✨ Let AI drivers carry image parts
+- ⬆️ Bump versions
+- 🐛 Keep configured S3 transfers on self-hosted upgrades
+- 🐛 Preserve unsaved names when uploading an avatar
+- 🐛 Show an uploaded avatar everywhere without a reload
+- 🔧 Refuse to install without an explicit edition
+- 🔧 Default self-hosted transfers to local disk and AI to one key
+- 🐛 Bucket space stats trends on SQLite space databases
+- 🐛 Name the 2FA status route 2fa.status
+- 🐛 Delete a space once its name is typed
+- 🐛 Show an uploaded space icon without a reload
+- 🐛 Store space icon paths that fit the column
+
 ## [v2026.9.17-b4c3aa25] — 2026-9-17
 
 - ⬆️ Bump versions
