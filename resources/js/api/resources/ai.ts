@@ -24,6 +24,34 @@ export interface MentionItem {
   label: string
 }
 
+export interface ClassifyAssetsPayload {
+  scope: 'selection' | 'all'
+  asset_ids?: string[]
+  languages?: string[]
+  config_id?: string | null
+  /** Regenerate every allowed field instead of filling empty ones */
+  overwrite?: boolean
+  alt_context?: string
+  decorative?: boolean
+  high_detail?: boolean
+}
+
+export interface ClassifyAssetsResult {
+  run_id: string
+  queued: number
+  skipped: number
+}
+
+export interface ClassifyAssetsProgress {
+  run_id: string
+  queued: number
+  pending: number
+  updated: number
+  skipped: number
+  failed: number
+  complete: boolean
+}
+
 export interface SpaceAiConfig {
   id: string
   name: string
@@ -83,5 +111,18 @@ export class Ai {
 
   public async deleteAiConfig(configId: string): Promise<void> {
     return this.client.delete(`/mgmt/v1/spaces/${this.spaceId}/ai-configs/${configId}`)
+  }
+
+  public async classifyAssets(payload: ClassifyAssetsPayload): Promise<{ data: ClassifyAssetsResult }> {
+    return this.client.post<{ data: ClassifyAssetsResult }>(
+      `/mgmt/v1/ai/assets/classify?spaceId=${this.spaceId}`,
+      payload
+    )
+  }
+
+  public async getClassificationRun(runId: string): Promise<{ data: ClassifyAssetsProgress }> {
+    return this.client.get<{ data: ClassifyAssetsProgress }>(
+      `/mgmt/v1/ai/assets/classify/${runId}?spaceId=${this.spaceId}`
+    )
   }
 }

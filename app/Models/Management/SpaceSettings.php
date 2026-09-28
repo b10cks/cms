@@ -37,6 +37,13 @@ class SpaceSettings extends Settings
         'filter_hidden_blocks' => false,
         'content_sorting' => false,
         'serial_gaps' => 'preserve',
+        'ai' => [
+            'asset_classification' => [
+                'auto_on_upload' => false,
+                'suggest_tags' => false,
+                'allowed_fields' => ['title', 'alt', 'description'],
+            ],
+        ],
         'onboarding_dismissed_at' => null,
         'sitemap' => [
             'types' => [],
@@ -213,6 +220,26 @@ class SpaceSettings extends Settings
             ],
             'ai.favourites.*' => [
                 'string',
+            ],
+            'ai.asset_classification' => [
+                'nullable',
+                'array',
+            ],
+            'ai.asset_classification.auto_on_upload' => [
+                'nullable',
+                'boolean',
+            ],
+            'ai.asset_classification.suggest_tags' => [
+                'nullable',
+                'boolean',
+            ],
+            'ai.asset_classification.allowed_fields' => [
+                'nullable',
+                'array',
+            ],
+            'ai.asset_classification.allowed_fields.*' => [
+                'string',
+                'max:100',
             ],
             'sitemap' => [
                 ...$sometimes,
@@ -407,6 +434,18 @@ class SpaceSettings extends Settings
             ],
             'ai.favourites.*' => [
                 'description' => 'AI model identifier.',
+            ],
+            'ai.asset_classification.auto_on_upload' => [
+                'description' => 'Whether uploaded images are queued for AI classification using the default AI configuration.',
+                'example' => false,
+            ],
+            'ai.asset_classification.suggest_tags' => [
+                'description' => 'Whether AI classification may assign matching tags from the space taxonomy.',
+                'example' => false,
+            ],
+            'ai.asset_classification.allowed_fields' => [
+                'description' => 'Asset field keys that AI classification may fill. Folders can narrow this via classification_allowed_fields.',
+                'example' => ['title', 'alt', 'description'],
             ],
             'sitemap' => [
                 'description' => 'Sitemap extraction rules for public Data API endpoints.',

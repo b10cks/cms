@@ -49,6 +49,22 @@ interface SpaceNamedSitemap {
   types: SpaceSitemapType[]
 }
 
+interface SpaceAssetClassificationSettings {
+  /** Queue every uploaded image for classification with the default AI config */
+  auto_on_upload?: boolean
+  /** Let classification assign matching tags from the space taxonomy */
+  suggest_tags?: boolean
+  /** Asset field keys AI may fill; folders can narrow the list */
+  allowed_fields?: string[]
+}
+
+interface SpaceAiPreferences {
+  enabled?: boolean
+  model?: string | null
+  favourites?: string[]
+  asset_classification?: SpaceAssetClassificationSettings
+}
+
 interface SpaceSettings {
   visual_editor?: boolean
   default_block?: string
@@ -67,6 +83,7 @@ interface SpaceSettings {
   onboarding_dismissed_at?: string | null
   sitemap?: SpaceSitemapSettings
   sitemaps?: SpaceNamedSitemap[]
+  ai?: SpaceAiPreferences
 }
 
 interface SpacePlanSummary {

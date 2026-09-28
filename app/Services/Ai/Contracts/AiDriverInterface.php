@@ -21,6 +21,13 @@ interface AiDriverInterface
 
     public function registerTools(array $tools): self;
 
+    /**
+     * Message content may be a plain string or an array of provider-neutral
+     * parts (`text`, `image` with base64 data); drivers translate the parts
+     * into their provider's wire format.
+     *
+     * @param  array<int, array<string, mixed>>  $messages
+     */
     public function stream(
         string $modelId,
         array $messages,

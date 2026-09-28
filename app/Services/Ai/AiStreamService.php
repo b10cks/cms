@@ -90,6 +90,27 @@ class AiStreamService
     ): Generator {
         $aiConfig ??= $space->defaultAiConfig;
 
+        $systemPrompt = (new SystemPromptBuilder($aiConfig))->withConfiguredPrompt($systemPrompt);
+
+        yield from $this->streamWithMessages(
+            $space,
+            [
+                ['role' => 'system', 'content' => $systemPrompt],
+                ['role' => 'user', 'content' => $userPrompt],
+            ],
+            $options,
+            $aiConfig,
+        );
+    }
+
+    public function streamWithMessages(
+        Space $space,
+        array $messages,
+        array $options = [],
+        $aiConfig = null,
+    ): Generator {
+        $aiConfig ??= $space->defaultAiConfig;
+
         try {
             [$driver, $modelIdentifier] = $this->resolveSpaceDriver($space, $aiConfig);
         } catch (AiServiceException $e) {
@@ -97,13 +118,6 @@ class AiStreamService
 
             return;
         }
-
-        $systemPrompt = (new SystemPromptBuilder($aiConfig))->withConfiguredPrompt($systemPrompt);
-
-        $messages = [
-            ['role' => 'system', 'content' => $systemPrompt],
-            ['role' => 'user', 'content' => $userPrompt],
-        ];
 
         yield from $driver->stream(
             $modelIdentifier,
@@ -122,17 +136,31 @@ class AiStreamService
     ): ?string {
         $aiConfig ??= $space->defaultAiConfig;
 
+        $systemPrompt = (new SystemPromptBuilder($aiConfig))->withConfiguredPrompt($systemPrompt);
+
+        return $this->generateWithMessages(
+            $space,
+            [
+                ['role' => 'system', 'content' => $systemPrompt],
+                ['role' => 'user', 'content' => $userPrompt],
+            ],
+            $options,
+            $aiConfig,
+        );
+    }
+
+    public function generateWithMessages(
+        Space $space,
+        array $messages,
+        array $options = [],
+        $aiConfig = null,
+    ): ?string {
+        $aiConfig ??= $space->defaultAiConfig;
+
         // Availability problems (plan/provisioning/provider) surface as a thrown
         // AiServiceException so callers can return a precise HTTP error. A null
         // return is reserved for "ran but produced nothing usable".
         [$driver, $modelIdentifier] = $this->resolveSpaceDriver($space, $aiConfig);
-
-        $systemPrompt = (new SystemPromptBuilder($aiConfig))->withConfiguredPrompt($systemPrompt);
-
-        $messages = [
-            ['role' => 'system', 'content' => $systemPrompt],
-            ['role' => 'user', 'content' => $userPrompt],
-        ];
 
         $fullContent = '';
 

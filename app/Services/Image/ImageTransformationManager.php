@@ -55,25 +55,33 @@ class ImageTransformationManager extends Manager
      */
     private function firstFrameOnly(string $tempFile): ?bool
     {
+        if ($this->exceedsSourcePixelLimit($tempFile)) {
+            return null;
+        }
+
+        $maxPixels = (int) $this->config->get('ilum.max_source_pixels', 100_000_000);
+        $info = @getimagesize($tempFile);
+
+        if ($maxPixels <= 0 || $info === false || ! isset($info[0], $info[1])) {
+            return false;
+        }
+
+        $framePixels = $info[0] * $info[1];
+
+        return $framePixels * $this->frameCount($tempFile) > $maxPixels;
+    }
+
+    public function exceedsSourcePixelLimit(string $path): bool
+    {
         $maxPixels = (int) $this->config->get('ilum.max_source_pixels', 100_000_000);
 
         if ($maxPixels <= 0) {
             return false;
         }
 
-        $info = @getimagesize($tempFile);
+        $info = @getimagesize($path);
 
-        if ($info === false || ! isset($info[0], $info[1])) {
-            return false;
-        }
-
-        $framePixels = $info[0] * $info[1];
-
-        if ($framePixels > $maxPixels) {
-            return null;
-        }
-
-        return $framePixels * $this->frameCount($tempFile) > $maxPixels;
+        return $info !== false && isset($info[0], $info[1]) && $maxPixels < $info[0] * $info[1];
     }
 
     /**
