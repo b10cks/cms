@@ -1,4 +1,4 @@
-import type { ApiClient } from '../client'
+import type { ApiClient, RequestOptions } from '../client'
 
 export abstract class BaseResource<
   T,
@@ -29,15 +29,27 @@ export abstract class BaseResource<
     return endpoint ? `${this.basePath}/${endpoint}` : this.basePath
   }
 
-  public async index(query: QueryParams = {} as QueryParams): Promise<ApiCollectionResponse<T>> {
+  public async index(
+    query: QueryParams = {} as QueryParams,
+    options: Pick<RequestOptions, 'signal'> = {}
+  ): Promise<ApiCollectionResponse<T>> {
     return this.client.get<ApiCollectionResponse<T>>(
       this.basePath,
-      query as Record<string, unknown>
+      query as Record<string, unknown>,
+      options
     )
   }
 
-  public async get(id: string, query: QueryParams = {} as QueryParams): Promise<ApiResponse<T>> {
-    return this.client.get<ApiResponse<T>>(this.idPath(id), query as Record<string, unknown>)
+  public async get(
+    id: string,
+    query: QueryParams = {} as QueryParams,
+    options: Pick<RequestOptions, 'signal'> = {}
+  ): Promise<ApiResponse<T>> {
+    return this.client.get<ApiResponse<T>>(
+      this.idPath(id),
+      query as Record<string, unknown>,
+      options
+    )
   }
 
   public async create(payload: CreatePayload): Promise<CreateResponse> {

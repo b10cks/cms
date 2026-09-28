@@ -73,7 +73,7 @@ describe('useDataSourcesQuery', () => {
     withSetup(() => useDataSources(SPACE).useDataSourcesQuery())
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '+name' })
+    expect(index).toHaveBeenCalledWith({ sort: '+name' }, { signal: expect.any(AbortSignal) })
     expect(forSpace).toHaveBeenCalledWith(SPACE)
   })
 
@@ -81,7 +81,7 @@ describe('useDataSourcesQuery', () => {
     withSetup(() => useDataSources(SPACE).useDataSourcesQuery({ sort: '-name' }))
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '-name' })
+    expect(index).toHaveBeenCalledWith({ sort: '-name' }, { signal: expect.any(AbortSignal) })
   })
 
   it('keeps the whole paginated envelope, not just data', async () => {
@@ -153,7 +153,7 @@ describe('useDataSourceQuery', () => {
     await flush()
 
     expect(query.data.value).toEqual({ id: 'ds1', name: 'Countries' })
-    expect(get).toHaveBeenCalledWith('ds1')
+    expect(get).toHaveBeenCalledWith('ds1', undefined, { signal: expect.any(AbortSignal) })
   })
 
   it('stays idle without an id', async () => {

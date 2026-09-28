@@ -19,6 +19,7 @@ addCollection(lucideIcons)
 addCollection(flagIcons)
 addCollection(brandIcons)
 import { isClient } from '~/lib/env'
+import { reloadOnStaleChunks } from '~/lib/staleChunks'
 import { installAuthHandler } from '~/plugins/auth'
 import { installEcho } from '~/plugins/echo'
 import { installI18n } from '~/plugins/i18n'
@@ -40,6 +41,9 @@ app.use(router)
 app.mount('#app')
 
 if (isClient) {
+  reloadOnStaleChunks()
   installEcho(app)
-  installPosthog(app)
+  void installPosthog(app).catch((error: unknown) => {
+    console.error('[PostHog] Failed to initialize:', error)
+  })
 }

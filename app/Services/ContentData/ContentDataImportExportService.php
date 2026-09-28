@@ -16,6 +16,7 @@ use App\Services\ContentData\Drivers\YamlContentDataDriver;
 use App\Services\ImportExport\ImportExportService;
 use CodersCantina\Filter\Filter;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -64,8 +65,27 @@ class ContentDataImportExportService extends ImportExportService
 
         if ($gridMode && $fieldKeys !== null) {
             $query->whereIn('block_id', $this->extractor->blockIdsWithFields($fieldKeys));
-            // Same order the grid pages in, so export rows line up with what was on screen.
-            $query->orderBy('id');
+        }
+
+        // Tie-break any user sort like the grid does, so export rows line up with
+        // what was on screen and batched pages never repeat or skip tied rows.
+        $query->orderBy($query->qualifyColumn('id'));
+
+        if ($driver instanceof CsvContentDataDriver) {
+            $batches = (function () use ($query, $space, $fieldKeys, $languages, $gridMode): \Generator {
+                foreach ($query->lazy(100)->chunk(100) as $contents) {
+                    yield $this->extractor->extractForContents(
+                        $space,
+                        new Collection($contents->all()),
+                        $fieldKeys,
+                        $languages,
+                        includeEmptyUnits: $gridMode,
+                        includeNonTranslatable: $gridMode,
+                    );
+                }
+            })();
+
+            return $driver->exportBatches($space, $batches, $gridMode);
         }
 
         $documents = $this->extractor->extractForContents(

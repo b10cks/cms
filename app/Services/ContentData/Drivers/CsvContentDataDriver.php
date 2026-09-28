@@ -2,6 +2,7 @@
 
 namespace App\Services\ContentData\Drivers;
 
+use App\DTOs\ContentData\TranslationDocument;
 use App\Enums\ImportExportFormat;
 use App\Models\Management\Space;
 use App\Services\ImportExport\WritesCsvDownload;
@@ -12,21 +13,59 @@ class CsvContentDataDriver extends BaseContentDataDriver
 {
     use WritesCsvDownload;
 
-    public function export(Space $space, array $documents, bool $gridMode = false): Response
+    /**
+     * Export extractor batches, which share the space's source and target languages.
+     * Consume them before returning so database reads keep their request's tenant.
+     *
+     * @param  iterable<int, array<int, TranslationDocument>>  $batches
+     */
+    public function exportBatches(Space $space, iterable $batches, bool $gridMode = false): Response
     {
-        ['headings' => $headings, 'rows' => $rows] = $this->flatten($documents, $gridMode);
-        $filename = $this->generateFilename($space, 'csv');
+        $documents = (static function () use ($batches): \Generator {
+            foreach ($batches as $batch) {
+                yield from $batch;
+            }
+        })();
+        $first = $documents->current();
+        $headings = $this->tabularHeadings($first === null ? [] : [$first], $gridMode);
+        $rows = (function () use ($documents, $gridMode, $first): \Generator {
+            if ($first === null) {
+                return;
+            }
 
-        $orderedRows = (function () use ($rows, $headings): \Generator {
-            foreach ($rows as $row) {
-                yield array_map(
-                    static fn (string $header): string => (string) ($row[$header] ?? ''),
-                    $headings,
-                );
+            foreach ($documents as $document) {
+                yield from $this->tabularRows([$document], $gridMode);
             }
         })();
 
-        return $this->csvDownload($headings, $orderedRows, $filename);
+        return $this->csvDownload($headings, $this->orderedRows($rows, $headings), $this->generateFilename($space, 'csv'), spool: true);
+    }
+
+    /** Headings are the union of every document's languages. */
+    public function export(Space $space, array $documents, bool $gridMode = false): Response
+    {
+        $headings = $this->tabularHeadings($documents, $gridMode);
+
+        return $this->csvDownload(
+            $headings,
+            $this->orderedRows($this->tabularRows($documents, $gridMode), $headings),
+            $this->generateFilename($space, 'csv'),
+        );
+    }
+
+    /**
+     * @param  iterable<array<string, string>>  $rows
+     * @param  array<int, string>  $headings
+     * @return \Generator<int, array<int, string>>
+     */
+    private function orderedRows(iterable $rows, array $headings): \Generator
+    {
+        foreach ($rows as $row) {
+            yield array_map(
+                static fn (string $heading): string => (string) ($row[$heading] ?? ''),
+                $headings,
+            );
+        }
     }
 
     public function parse(UploadedFile $file): array

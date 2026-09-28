@@ -59,7 +59,7 @@ describe('useAssetTagsQuery', () => {
     mount(() => inSpace().useAssetTagsQuery())
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '+name' })
+    expect(index).toHaveBeenCalledWith({ sort: '+name' }, { signal: expect.any(AbortSignal) })
     expect(forSpace).toHaveBeenCalledWith(SPACE)
   })
 
@@ -67,7 +67,7 @@ describe('useAssetTagsQuery', () => {
     mount(() => inSpace().useAssetTagsQuery({ sort: '-created_at' }))
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '-created_at' })
+    expect(index).toHaveBeenCalledWith({ sort: '-created_at' }, { signal: expect.any(AbortSignal) })
   })
 
   it('caches under the filter-scoped list key', async () => {
@@ -110,7 +110,7 @@ describe('useAssetTagQuery', () => {
     const query = mount(() => inSpace().useAssetTagQuery('t1')).result
     await flush()
 
-    expect(get).toHaveBeenCalledWith('t1')
+    expect(get).toHaveBeenCalledWith('t1', undefined, { signal: expect.any(AbortSignal) })
     expect(query.data.value).toEqual({ id: 't1', name: 'Hero' })
   })
 
@@ -129,7 +129,7 @@ describe('useAssetTagQuery', () => {
     mount(() => inSpace().useAssetTagQuery(''))
     await flush()
 
-    expect(get).toHaveBeenCalledWith('')
+    expect(get).toHaveBeenCalledWith('', undefined, { signal: expect.any(AbortSignal) })
   })
 })
 

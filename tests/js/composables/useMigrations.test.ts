@@ -59,14 +59,20 @@ describe('useMigrationsQuery', () => {
     withSetup(() => useMigrations(SPACE).useMigrationsQuery())
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: 'created_at', order: 'desc' })
+    expect(index).toHaveBeenCalledWith(
+      { sort: 'created_at', order: 'desc' },
+      { signal: expect.any(AbortSignal) }
+    )
   })
 
   it('lets caller params override the default order', async () => {
     withSetup(() => useMigrations(SPACE).useMigrationsQuery({ order: 'asc' }))
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: 'created_at', order: 'asc' })
+    expect(index).toHaveBeenCalledWith(
+      { sort: 'created_at', order: 'asc' },
+      { signal: expect.any(AbortSignal) }
+    )
   })
 
   it('returns the whole envelope so the table can page', async () => {
@@ -113,7 +119,7 @@ describe('useMigrationQuery', () => {
     await flush()
 
     expect(local.result.data.value).toEqual({ id: 'm1', state: 'done' })
-    expect(get).toHaveBeenCalledWith('m1')
+    expect(get).toHaveBeenCalledWith('m1', undefined, { signal: expect.any(AbortSignal) })
     local.unmount()
   })
 

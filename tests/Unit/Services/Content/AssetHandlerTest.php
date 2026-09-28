@@ -11,6 +11,56 @@ use Tests\TestCase;
 class AssetHandlerTest extends TestCase
 {
     #[Test]
+    public function repeated_assets_keep_the_first_duplicate_and_leave_missing_assets_unchanged(): void
+    {
+        $first = new class extends Asset
+        {
+            public function getUrl(): ?string
+            {
+                return 'https://cdn.example.com/'.$this->filename;
+            }
+        };
+        $first->forceFill(['id' => 'asset-01', 'filename' => 'first', 'metadata' => []]);
+        $duplicate = clone $first;
+        $duplicate->filename = 'second';
+        $node = ['type' => 'asset', 'id' => 'asset-01'];
+        $missing = ['type' => 'asset', 'id' => 'missing'];
+        $payload = ['images' => [$node, $missing, $node]];
+        $assets = collect([$first, $duplicate]);
+        $content = new Content;
+        $handler = new AssetHandler;
+
+        foreach ([$handler->updateContentAssets($payload, $assets), $handler->replaceContentAssets($content, $payload, $assets)] as $result) {
+            $this->assertSame('first', $result['images'][0]['filename']);
+            $this->assertSame($missing, $result['images'][1]);
+            $this->assertSame($result['images'][0], $result['images'][2]);
+        }
+    }
+
+    #[Test]
+    public function translated_content_gets_its_language_fields_without_loading_the_parent(): void
+    {
+        $asset = new class extends Asset
+        {
+            public function getUrl(): ?string
+            {
+                return null;
+            }
+        };
+        $asset->forceFill(['id' => 'asset-01', 'metadata' => [], 'data' => ['fields' => [
+            '_default' => ['alt' => 'Default', 'title' => 'Title'],
+            'de' => ['alt' => 'Deutsch'],
+        ]]]);
+        $content = (new Content)->forceFill(['language_iso' => 'de', 'i18n_parent_id' => 'canonical-01']);
+
+        $payload = (new AssetHandler)->replaceContentAssets($content, ['type' => 'asset', 'id' => 'asset-01'], collect([$asset]));
+
+        $this->assertSame('Deutsch', $payload['data']['alt']);
+        $this->assertSame('Title', $payload['data']['title']);
+        $this->assertFalse($content->relationLoaded('i18n_parent'));
+    }
+
+    #[Test]
     public function it_extracts_assets_from_a_root_level_asset_payload(): void
     {
         $handler = new AssetHandler;
@@ -84,7 +134,7 @@ class AssetHandlerTest extends TestCase
         ]);
 
         $content = new Content;
-        $content->forceFill(['language_iso' => 'en', 'i18n_parent' => null]);
+        $content->forceFill(['language_iso' => 'en', 'i18n_parent_id' => null]);
 
         $payload = $handler->replaceContentAssets($content, [
             'type' => 'asset',

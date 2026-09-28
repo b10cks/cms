@@ -79,6 +79,14 @@ afterEach(() => {
 })
 
 describe('URL building', () => {
+  it('passes an abort signal to fetch for cancellable reads', async () => {
+    const controller = new AbortController()
+
+    await client().get('/mgmt/v1/spaces', {}, { signal: controller.signal })
+
+    expect(lastCall().init.signal).toBe(controller.signal)
+  })
+
   it('prefixes a relative endpoint with the base URL', async () => {
     await client().get('/mgmt/v1/spaces')
 
@@ -650,10 +658,13 @@ describe('419 CSRF retry', () => {
   })
 
   it('re-reads the cookie for the retry rather than reusing the stale header', async () => {
-    enqueue(() => {
-      document.cookie = 'XSRF-TOKEN=fresh-token'
-      return expired()
-    }, () => json({ data: 'ok' }))
+    enqueue(
+      () => {
+        document.cookie = 'XSRF-TOKEN=fresh-token'
+        return expired()
+      },
+      () => json({ data: 'ok' })
+    )
 
     await client().post('/things', { a: 1 })
 
@@ -739,7 +750,10 @@ describe('auth handler', () => {
     const c = client()
 
     c.setAuthHandler(auth)
-    enqueue(() => json({}, { status: 401 }), () => json({ data: 'ok' }))
+    enqueue(
+      () => json({}, { status: 401 }),
+      () => json({ data: 'ok' })
+    )
 
     expect(await c.get('/users/me')).toEqual({ data: 'ok' })
     expect(apiCalls()).toHaveLength(2)
@@ -750,7 +764,10 @@ describe('auth handler', () => {
     const c = client()
 
     c.setAuthHandler(auth)
-    enqueue(() => json({}, { status: 401 }), () => json({}, { status: 401 }))
+    enqueue(
+      () => json({}, { status: 401 }),
+      () => json({}, { status: 401 })
+    )
 
     await expect(c.get('/users/me')).rejects.toMatchObject({ status: 401 })
     expect(auth.handleUnauthorized).toHaveBeenCalledTimes(1)
