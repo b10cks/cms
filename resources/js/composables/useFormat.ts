@@ -1,10 +1,15 @@
 import dayjs from 'dayjs'
 import 'dayjs/locale/de'
+import 'dayjs/locale/es'
+import 'dayjs/locale/fr'
+import 'dayjs/locale/ru'
+import 'dayjs/locale/tr'
 import Calendar from 'dayjs/plugin/calendar'
 import LocalizedFormat from 'dayjs/plugin/localizedFormat'
 import RelativeTime from 'dayjs/plugin/relativeTime'
 import UpdateLocale from 'dayjs/plugin/updateLocale'
 
+import type { LocaleCode } from '~/plugins/i18n'
 import { getLocale } from '~/plugins/i18n'
 
 dayjs.extend(LocalizedFormat)
@@ -16,13 +21,45 @@ dayjs.extend(UpdateLocale)
 // declared here — once per locale at module load. Writing them inside
 // useFormat() stamped the English strings onto whichever locale happened to be
 // active, which is global state shared with every other dayjs consumer.
-const CALENDAR_FORMATS: Record<string, Record<string, string>> = {
+const CALENDAR_FORMATS: Record<LocaleCode, Record<string, string>> = {
   en: {
     lastDay: '[Yesterday at] LT',
     sameDay: '[Today at] LT',
     nextDay: '[Tomorrow at] LT',
     lastWeek: '[Last] dddd [at] LT',
     nextWeek: 'dddd [at] LT',
+    sameElse: 'LL',
+  },
+  es: {
+    lastDay: '[Ayer a las] LT',
+    sameDay: '[Hoy a las] LT',
+    nextDay: '[Mañana a las] LT',
+    lastWeek: '[El pasado] dddd [a las] LT',
+    nextWeek: 'dddd [a las] LT',
+    sameElse: 'LL',
+  },
+  fr: {
+    lastDay: '[Hier à] LT',
+    sameDay: "[Aujourd'hui à] LT",
+    nextDay: '[Demain à] LT',
+    lastWeek: 'dddd [dernier à] LT',
+    nextWeek: 'dddd [à] LT',
+    sameElse: 'LL',
+  },
+  ru: {
+    lastDay: '[Вчера в] LT',
+    sameDay: '[Сегодня в] LT',
+    nextDay: '[Завтра в] LT',
+    lastWeek: 'dddd[, на прошлой неделе в] LT',
+    nextWeek: 'dddd [в] LT',
+    sameElse: 'LL',
+  },
+  tr: {
+    lastDay: '[Dün saat] LT',
+    sameDay: '[Bugün saat] LT',
+    nextDay: '[Yarın saat] LT',
+    lastWeek: '[Geçen] dddd [saat] LT',
+    nextWeek: 'dddd [saat] LT',
     sameElse: 'LL',
   },
   de: {

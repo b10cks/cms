@@ -9,13 +9,8 @@ type TrafficUnit = Parameters<Format['formatTrafficSize']>[1]
 
 // Local-time constructor: every date assertion below must hold in any timezone,
 // so fixtures are built in the runner's zone rather than parsed from UTC ISO.
-const local = (
-  year: number,
-  month: number,
-  day: number,
-  hour = 0,
-  minute = 0
-) => new Date(year, month, day, hour, minute, 0, 0)
+const local = (year: number, month: number, day: number, hour = 0, minute = 0) =>
+  new Date(year, month, day, hour, minute, 0, 0)
 
 // Sunday, 15 March 2026, 12:00 local.
 const NOW = local(2026, 2, 15, 12, 0)
@@ -345,4 +340,22 @@ describe('locale', () => {
 
     expect(format.formatCalendarTime(local(2026, 2, 14, 9, 5))).toBe('Gestern um 09:05')
   })
+})
+
+describe('new locales', () => {
+  it.each([
+    ['es', 'marzo', 'hace 2 días', 'Ayer a las 9:05'],
+    ['fr', 'mars', 'il y a 2 jours', 'Hier à 09:05'],
+    ['ru', 'марта', '2 дня назад', 'Вчера в 9:05'],
+    ['tr', 'Mart', '2 gün önce', 'Dün saat 09:05'],
+  ] as const)(
+    'localizes dates, relative time and calendar labels in %s',
+    (locale, month, relative, calendar) => {
+      setLocale(locale)
+
+      expect(format.formatDateTime(local(2026, 2, 15, 15, 30))).toContain(month)
+      expect(format.formatRelativeTime(local(2026, 2, 13, 12))).toBe(relative)
+      expect(format.formatCalendarTime(local(2026, 2, 14, 9, 5))).toBe(calendar)
+    }
+  )
 })
