@@ -1580,6 +1580,57 @@
                 ]
             }
         },
+        "/mgmt/v1/ai/assets/classify": {
+            "post": {
+                "summary": "Queue AI classification for a selection of assets or the whole library",
+                "description": "Queue AI classification for a selection of assets or the whole library.\nResults land asynchronously; the asset broadcasts patch open grids live.",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "post_ai_assets_classify",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/ai/assets/classify/{runId}": {
+            "get": {
+                "summary": "Get a single classify",
+                "description": "",
+                "tags": [
+                    "Ai"
+                ],
+                "operationId": "get_ai_assets_classify_by_runId",
+                "parameters": [
+                    {
+                        "name": "runId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The runId identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/teams/hierarchy": {
             "get": {
                 "summary": "Get team hierarchy starting from specified parent (or root if null),",
@@ -3374,6 +3425,7 @@
                                             "ru",
                                             "sk",
                                             "sv",
+                                            "tr",
                                             "uk"
                                         ]
                                     },
@@ -5091,6 +5143,30 @@
                                                             "items": {
                                                                 "type": "string"
                                                             }
+                                                        },
+                                                        "asset_classification": {
+                                                            "type": "array",
+                                                            "properties": [],
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "auto_on_upload": {
+                                                                        "type": "boolean",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "suggest_tags": {
+                                                                        "type": "boolean",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "allowed_fields": {
+                                                                        "type": "array",
+                                                                        "items": {
+                                                                            "type": "string",
+                                                                            "maxLength": 100
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -5837,6 +5913,30 @@
                                                             "items": {
                                                                 "type": "string"
                                                             }
+                                                        },
+                                                        "asset_classification": {
+                                                            "type": "array",
+                                                            "properties": [],
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "auto_on_upload": {
+                                                                        "type": "boolean",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "suggest_tags": {
+                                                                        "type": "boolean",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "allowed_fields": {
+                                                                        "type": "array",
+                                                                        "items": {
+                                                                            "type": "string",
+                                                                            "maxLength": 100
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -6361,6 +6461,7 @@
                                             "ru",
                                             "sk",
                                             "sv",
+                                            "tr",
                                             "uk"
                                         ]
                                     },
