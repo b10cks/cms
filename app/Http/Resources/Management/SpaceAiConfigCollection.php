@@ -7,6 +7,8 @@ use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class SpaceAiConfigCollection extends ResourceCollection
 {
+    public $collects = SpaceAiConfigResource::class;
+
     public function toArray(Request $request): array
     {
         return [

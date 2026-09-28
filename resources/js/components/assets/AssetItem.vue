@@ -51,6 +51,7 @@ export interface AssetItemProps {
   resolvedTags?: AssetTagResource[]
   canAddToCollection?: boolean
   canRemoveFromCollection?: boolean
+  canClassify?: boolean
 }
 
 const props = withDefaults(defineProps<AssetItemProps>(), {
@@ -68,6 +69,7 @@ const props = withDefaults(defineProps<AssetItemProps>(), {
   resolvedTags: () => [],
   canAddToCollection: false,
   canRemoveFromCollection: false,
+  canClassify: false,
 })
 
 const emit = defineEmits<{
@@ -79,12 +81,14 @@ const emit = defineEmits<{
   tag: [asset: AssetResource]
   'add-to-collection': [asset: AssetResource]
   'remove-from-collection': [asset: AssetResource]
+  classify: [asset: AssetResource]
   download: [asset: AssetResource]
   'copy-url': [asset: AssetResource]
   'context-menu': [asset: AssetResource]
 }>()
 
 const isSelectMode = computed(() => props.mode === 'select')
+const isClassifiable = computed(() => props.canClassify && props.asset.mime_type.startsWith('image/'))
 const isManageMode = computed(() => props.mode === 'manage')
 const enableDragAndDrop = computed(() => props.draggable && isManageMode.value)
 // The checkbox is shown whenever multi-selection is active (manage or the
@@ -402,6 +406,13 @@ watchEffect((onCleanup) => {
                 <span>{{ $t('actions.assets.tag') }}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
+                v-if="canEdit && isClassifiable"
+                @select="emit('classify', asset)"
+              >
+                <Icon name="lucide:sparkles" />
+                <span>{{ $t('actions.assets.classify') }}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 v-if="canAddToCollection"
                 @select="emit('add-to-collection', asset)"
               >
@@ -469,6 +480,13 @@ watchEffect((onCleanup) => {
       >
         <Icon name="lucide:tags" />
         <span>{{ $t('actions.assets.tag') }}</span>
+      </ContextMenuItem>
+      <ContextMenuItem
+        v-if="canEdit && isClassifiable"
+        @select="emit('classify', asset)"
+      >
+        <Icon name="lucide:sparkles" />
+        <span>{{ $t('actions.assets.classify') }}</span>
       </ContextMenuItem>
       <ContextMenuItem
         v-if="canAddToCollection"

@@ -69,7 +69,7 @@ describe('useFieldPluginsQuery', () => {
     mount(() => inSpace().useFieldPluginsQuery())
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '+name' })
+    expect(index).toHaveBeenCalledWith({ sort: '+name' }, { signal: expect.any(AbortSignal) })
     expect(forSpace).toHaveBeenCalledWith(SPACE)
   })
 
@@ -77,14 +77,17 @@ describe('useFieldPluginsQuery', () => {
     mount(() => inSpace().useFieldPluginsQuery({ sort: '-created_at' }))
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '-created_at' })
+    expect(index).toHaveBeenCalledWith({ sort: '-created_at' }, { signal: expect.any(AbortSignal) })
   })
 
   it('forwards an is_active filter alongside the sort', async () => {
     mount(() => inSpace().useFieldPluginsQuery({ is_active: true }))
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '+name', is_active: true })
+    expect(index).toHaveBeenCalledWith(
+      { sort: '+name', is_active: true },
+      { signal: expect.any(AbortSignal) }
+    )
   })
 
   it('keeps the whole paginated envelope, not just data', async () => {
@@ -143,7 +146,7 @@ describe('useFieldPluginQuery', () => {
     const query = mount(() => inSpace().useFieldPluginQuery('fp1')).result
     await flush()
 
-    expect(get).toHaveBeenCalledWith('fp1')
+    expect(get).toHaveBeenCalledWith('fp1', undefined, { signal: expect.any(AbortSignal) })
     expect(query.data.value?.handle).toBe('colour-picker')
   })
 

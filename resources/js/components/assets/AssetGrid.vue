@@ -5,6 +5,7 @@ import { toast } from 'vue-sonner'
 import type { AssetsQueryParams } from '~/api/resources/assets'
 import AssetsIcon from '~/assets/images/assets.svg?component'
 import AddToCollectionDialog from '~/components/assets/AddToCollectionDialog.vue'
+import AssetAiClassifyDialog from '~/components/assets/AssetAiClassifyDialog.vue'
 import AssetDetailsDialog from '~/components/assets/AssetDetailsDialog.vue'
 import AssetFolder from '~/components/assets/AssetFolder.vue'
 import AssetItem from '~/components/assets/AssetItem.vue'
@@ -32,6 +33,7 @@ import { Skeleton } from '~/components/ui/skeleton'
 import SortSelect from '~/components/ui/SortSelect.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type { AssetSelectionEntry } from '~/composables/useAssetSelection'
+import { useAssetAiClassification } from '~/composables/useAssetAiClassification'
 import { getAssetManagerDragItems, type AssetManagerDragItem } from '~/lib/assets/assetDragAndDrop'
 import {
   readDroppedTree,
@@ -92,6 +94,7 @@ const { getBreadcrumbs, getChildrenOfFolder } = useFolderStructure()
 const { canMoveItems, moveItemsToFolder } = useAssetLibraryMoves(props.spaceId)
 const { getMissingRequiredFields, isCompliant } = useAssetRequirements(props.spaceId)
 const { bulkDeleteAssets, fetchAllMatchingAssets } = useAssetBulkOperations(props.spaceId)
+const { isAvailable: aiClassificationAvailable } = useAssetAiClassification(props.spaceId)
 const { mutateAsync: updateAsset } = useUpdateAssetMutation()
 const { mutateAsync: deleteAsset } = useDeleteAssetMutation()
 const { mutateAsync: deleteFolder } = useDeleteAssetFolderMutation()
@@ -100,6 +103,7 @@ const canManageAssets = computed(() => access.hasAbility('assets.manage'))
 const canManageFolders = computed(() => access.hasAbility('asset_folders.manage'))
 const canManageCollections = computed(() => access.hasAbility('asset_collections.manage'))
 const canShareAssets = computed(() => access.hasAbility('asset_shares.manage'))
+const canClassifyAssets = computed(() => canManageAssets.value && aiClassificationAvailable.value)
 const { downloadSelectionAsPackage } = useAssetPackages(props.spaceId)
 
 const isManage = computed(() => props.mode === 'manage')
@@ -153,6 +157,8 @@ const moveDialogOpen = ref(false)
 const moveDialogItems = ref<AssetManagerDragItem[]>([])
 const bulkTagOpen = ref(false)
 const bulkTagAssets = ref<AssetResource[]>([])
+const classifyOpen = ref(false)
+const classifyAssets = ref<AssetResource[]>([])
 const addToCollectionOpen = ref(false)
 const addToCollectionAssetIds = ref<string[]>([])
 const shareDialogOpen = ref(false)
@@ -411,6 +417,7 @@ const assetItemProps = computed(() => {
     showCheckbox: selectionEnabled.value,
     canEdit: canManageAssets.value,
     canDelete: canManageAssets.value,
+    canClassify: canClassifyAssets.value,
   }
 })
 
@@ -616,6 +623,15 @@ const openBulkTagDialog = (assetsToTag: AssetResource[]) => {
   bulkTagOpen.value = true
 }
 
+const openClassifyDialog = (assetsToClassify: AssetResource[]) => {
+  if (!assetsToClassify.length) {
+    return
+  }
+
+  classifyAssets.value = assetsToClassify
+  classifyOpen.value = true
+}
+
 const openAddToCollectionDialog = (assetsToAdd: AssetResource[]) => {
   if (!assetsToAdd.length) {
     return
@@ -702,6 +718,10 @@ const handleAssetMove = (asset: AssetResource) => {
 
 const handleAssetTag = (asset: AssetResource) => {
   openBulkTagDialog(assetsForAction(asset))
+}
+
+const handleAssetClassify = (asset: AssetResource) => {
+  openClassifyDialog(assetsForAction(asset))
 }
 
 const handleAssetDownload = (asset: AssetResource) => {
@@ -1025,6 +1045,7 @@ const anyDialogOpen = () => {
     folderDialogOpen.value ||
     moveDialogOpen.value ||
     bulkTagOpen.value ||
+    classifyOpen.value ||
     document.querySelector('[role="dialog"], [role="alertdialog"], [role="menu"]')
   )
 }
@@ -1144,6 +1165,20 @@ const assetShortcuts: Array<[string, () => string]> = [
 for (const [keys, description] of assetShortcuts) {
   useShortcut({ keys, scope: 'assets', description, handler: null })
 }
+
+useShortcut({
+  keys: 'shift+mod+i',
+  scope: 'assets',
+  description: () => t('shortcuts.assets.classify'),
+  handler: (event) => {
+    if (!isManage.value || !canClassifyAssets.value || !selectedAssets.value.size || anyDialogOpen()) {
+      return
+    }
+
+    event.preventDefault()
+    openClassifyDialog(Array.from(selectedAssets.value.values()))
+  },
+})
 
 const handleWindowKeydown = (event: KeyboardEvent) => {
   if (!selectionEnabled.value || isEditableTarget(event.target)) {
@@ -1922,6 +1957,7 @@ onUnmounted(() => {
                   @delete="handleAssetDelete"
                   @move="handleAssetMove"
                   @tag="handleAssetTag"
+                  @classify="handleAssetClassify"
                   @add-to-collection="handleAssetAddToCollection"
                   @remove-from-collection="handleAssetRemoveFromCollection"
                   @download="handleAssetDownload"
@@ -1998,8 +2034,10 @@ onUnmounted(() => {
       :can-add-to-collection="canManageCollections"
       :can-remove-from-collection="canManageCollections && isManualCollectionView"
       :can-share="canShareAssets"
+      :can-classify="canClassifyAssets"
       @move="openMoveDialog(getSelectedDragItems())"
       @tag="openBulkTagDialog(Array.from(selectedAssets.values()))"
+      @classify="openClassifyDialog(Array.from(selectedAssets.values()))"
       @add-to-collection="openAddToCollectionDialog(Array.from(selectedAssets.values()))"
       @remove-from-collection="handleRemoveFromCollection(Array.from(selectedAssets.values()))"
       @share="openShareDialog(Array.from(selectedAssets.values()))"
@@ -2046,6 +2084,13 @@ onUnmounted(() => {
       v-model:open="bulkTagOpen"
       :space-id="spaceId"
       :assets="bulkTagAssets"
+    />
+
+    <AssetAiClassifyDialog
+      v-if="mode === 'manage' && canClassifyAssets"
+      v-model:open="classifyOpen"
+      :space-id="spaceId"
+      :assets="classifyAssets"
     />
 
     <AddToCollectionDialog

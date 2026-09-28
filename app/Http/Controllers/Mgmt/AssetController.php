@@ -13,6 +13,7 @@ use App\Http\Resources\Management\AssetResource;
 use App\Models\Management\Space;
 use App\Models\Space\Asset;
 use App\Models\Space\AssetFolder;
+use App\Services\Ai\AssetClassificationService;
 use App\Services\Asset\AssetUsageService;
 use App\Services\Storage\AssetService;
 use Illuminate\Http\JsonResponse;
@@ -46,7 +47,8 @@ class AssetController extends Controller
     public function store(
         Space $space,
         StoreAssetRequest $request,
-        AssetService $assetService
+        AssetService $assetService,
+        AssetClassificationService $classification
     ): AssetResource|JsonResponse {
         $this->authorizeSpace($space, 'assets.manage');
         $validated = $request->validated();
@@ -73,6 +75,8 @@ class AssetController extends Controller
                 $asset->tags = $validated['tags'] ?? [];
                 $asset->save();
             }
+
+            $classification->queueUpload($space, $asset);
 
             return new AssetResource($asset->load('folder'));
         } catch (DuplicateAssetException $e) {

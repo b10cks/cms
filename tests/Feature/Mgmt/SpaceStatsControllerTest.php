@@ -29,7 +29,6 @@ class SpaceStatsControllerTest extends TestCase
     {
         $space = Space::factory()->create();
         $this->setUpSpaceTesting($space);
-        $this->registerSqliteDateFormat();
 
         $viewer = User::factory()->create();
         $oldUser = User::factory()->create();
@@ -118,25 +117,39 @@ class SpaceStatsControllerTest extends TestCase
         $response->assertJsonPath('user_activity.new_users', 1);
     }
 
-    /**
-     * The stats service groups by MySQL's DATE_FORMAT(), which SQLite lacks.
-     * Register it as a user-defined function so the queries run in tests.
-     */
-    private function registerSqliteDateFormat(): void
+    #[Test]
+    public function weekly_trends_fold_days_into_iso_weeks_across_the_year_boundary(): void
     {
-        DB::connection()->getPdo()->sqliteCreateFunction(
-            'DATE_FORMAT',
-            static function (?string $value, string $format): ?string {
-                if ($value === null) {
-                    return null;
-                }
+        Carbon::setTestNow('2027-01-06 12:00:00');
 
-                return date(
-                    strtr($format, ['%Y' => 'Y', '%m' => 'm', '%d' => 'd', '%u' => 'W', '%H' => 'H', '%i' => 'i', '%s' => 's']),
-                    strtotime($value),
-                );
-            },
-            2,
-        );
+        $space = Space::factory()->create();
+        $this->setUpSpaceTesting($space);
+
+        $viewer = User::factory()->create();
+        $this->assignSpaceRole($space, $viewer, 'admin');
+
+        $block = Block::factory()->create();
+
+        // 2026-12-28 .. 2027-01-03 is ISO week 2026-W53; 2027-01-04 opens 2027-W01.
+        foreach (['2026-12-28 09:00:00', '2026-12-31 23:00:00', '2027-01-01 01:00:00', '2027-01-04 10:00:00'] as $i => $createdAt) {
+            Content::factory()->create([
+                'block_id' => $block->id,
+                'slug' => "entry-$i",
+                'full_slug' => "/entry-$i",
+                'created_at' => $createdAt,
+            ]);
+        }
+
+        $this->actingAs($viewer);
+
+        $response = $this->getJson("/mgmt/v1/spaces/{$space->id}/stats?".http_build_query([
+            'period' => 'weekly',
+            'start_date' => '2026-12-30',
+            'end_date' => '2027-01-05',
+        ]));
+
+        $response->assertOk();
+        $response->assertJsonPath('trends.periods', ['2026-12-28', '2027-01-04']);
+        $response->assertJsonPath('trends.content_creation', ['2026-12-28' => 3, '2027-01-04' => 1]);
     }
 }

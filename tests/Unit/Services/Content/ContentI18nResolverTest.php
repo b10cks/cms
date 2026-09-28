@@ -54,6 +54,48 @@ class ContentI18nResolverTest extends TestCase
     }
 
     #[Test]
+    public function relations_are_only_hydrated_when_requested_without_changing_content_or_links(): void
+    {
+        $target = $this->createPublishedContent('en', 'target', ['title' => 'Target']);
+        $page = $this->createPublishedContent('en', 'page', ['title' => 'Page']);
+        $page->published_version->forceFill([
+            'relation_ids' => [$target->id],
+            'link_ids' => [$target->id],
+        ])->saveQuietly();
+        $connection = $page->getConnection();
+
+        foreach (['published', 'current', $page->published_version_id] as $scope) {
+            $resolve = function (bool $withRelations) use ($page, $scope, $connection): array {
+                $connection->flushQueryLog();
+                $connection->enableQueryLog();
+
+                try {
+                    $result = app(ContentI18nResolver::class)->resolveMany(
+                        $this->space,
+                        collect([$page->fresh()]),
+                        $scope,
+                        $withRelations,
+                    )->first();
+
+                    return [$result, count($connection->getQueryLog())];
+                } finally {
+                    $connection->disableQueryLog();
+                }
+            };
+
+            [$full, $fullQueries] = $resolve(true);
+            [$limited, $limitedQueries] = $resolve(false);
+
+            $this->assertSame([$target->id], $full->effectiveRelations->pluck('id')->all());
+            $this->assertTrue($limited->effectiveRelations->isEmpty());
+            $this->assertFalse($limited->targetVersion->relationLoaded('relations'));
+            $this->assertSame($full->effectiveContent, $limited->effectiveContent);
+            $this->assertSame($full->effectiveLinks->pluck('id')->all(), $limited->effectiveLinks->pluck('id')->all());
+            $this->assertSame($fullQueries - 1, $limitedQueries);
+        }
+    }
+
+    #[Test]
     public function overlay_resolution_merges_the_available_fallback_chain(): void
     {
         $canonical = $this->createPublishedContent('en', 'home', ['title' => 'English title']);

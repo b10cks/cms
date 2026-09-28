@@ -7,6 +7,7 @@ import type { AssetsQueryParams } from '~/api/resources/assets'
 import AssetComplianceIndicator from '~/components/assets/AssetComplianceIndicator.vue'
 import AddToCollectionDialog from '~/components/assets/AddToCollectionDialog.vue'
 import AssetSelectionBar from '~/components/assets/AssetSelectionBar.vue'
+import AssetAiClassifyDialog from '~/components/assets/AssetAiClassifyDialog.vue'
 import BulkTagDialog from '~/components/assets/BulkTagDialog.vue'
 import CreateAssetShareDialog from '~/components/assets/CreateAssetShareDialog.vue'
 import CreateFolderDialog from '~/components/assets/CreateFolderDialog.vue'
@@ -40,6 +41,7 @@ import {
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type { AssetSelectionEntry } from '~/composables/useAssetSelection'
+import { useAssetAiClassification } from '~/composables/useAssetAiClassification'
 import type { AssetManagerDragItem } from '~/lib/assets/assetDragAndDrop'
 import { downloadAssetFiles } from '~/lib/assets/downloadAssets'
 import type { AssetShareSource } from '~/types/asset-distribution'
@@ -91,6 +93,7 @@ const {
 } = useAssetRequirements(props.spaceId)
 const { getBreadcrumbs } = useFolderStructure()
 const { bulkDeleteAssets, fetchAllMatchingAssets } = useAssetBulkOperations(props.spaceId)
+const { isAvailable: aiClassificationAvailable } = useAssetAiClassification(props.spaceId)
 const { mutateAsync: updateAsset } = useUpdateAssetMutation()
 const { mutateAsync: deleteAsset } = useDeleteAssetMutation()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
@@ -103,6 +106,7 @@ const collectionId = defineModel<string | null>('collectionId', { default: null 
 
 const canManageCollections = computed(() => access.hasAbility('asset_collections.manage'))
 const canShareAssets = computed(() => access.hasAbility('asset_shares.manage'))
+const canClassifyAssets = computed(() => canManageAssets.value && aiClassificationAvailable.value)
 const { downloadSelectionAsPackage } = useAssetPackages(props.spaceId)
 const { useAssetCollectionQuery, useRemoveAssetsFromCollectionMutation } = useAssetCollections(
   props.spaceId
@@ -134,6 +138,8 @@ const moveDialogOpen = ref(false)
 const moveDialogItems = ref<AssetManagerDragItem[]>([])
 const bulkTagOpen = ref(false)
 const bulkTagAssets = ref<AssetResource[]>([])
+const classifyOpen = ref(false)
+const classifyAssets = ref<AssetResource[]>([])
 const addToCollectionOpen = ref(false)
 const addToCollectionAssetIds = ref<string[]>([])
 const shareDialogOpen = ref(false)
@@ -301,6 +307,13 @@ const openBulkTagDialog = () => {
   if (selected.length) {
     bulkTagAssets.value = selected
     bulkTagOpen.value = true
+  }
+}
+
+const openClassifyDialog = (assetsToClassify: AssetResource[]) => {
+  if (assetsToClassify.length) {
+    classifyAssets.value = assetsToClassify
+    classifyOpen.value = true
   }
 }
 
@@ -1073,6 +1086,17 @@ onUnmounted(() => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      v-if="canClassifyAssets && asset.mime_type.startsWith('image/')"
+                      @click="openClassifyDialog([asset])"
+                    >
+                      <Icon
+                        name="lucide:sparkles"
+                        size="1rem"
+                        class="mr-2"
+                      />
+                      {{ $t('actions.assets.classify') }}
+                    </DropdownMenuItem>
                     <DropdownMenuItem @click="handleAssetDelete(asset)">
                       <Icon
                         name="lucide:trash-2"
@@ -1122,8 +1146,10 @@ onUnmounted(() => {
       :can-add-to-collection="canManageCollections"
       :can-remove-from-collection="canManageCollections && isManualCollectionView"
       :can-share="canShareAssets"
+      :can-classify="canClassifyAssets"
       @move="openMoveDialog"
       @tag="openBulkTagDialog"
+      @classify="openClassifyDialog(Array.from(selectedAssets.values()))"
       @add-to-collection="openAddToCollectionDialog"
       @remove-from-collection="handleRemoveFromCollection"
       @share="openShareDialog"
@@ -1146,6 +1172,13 @@ onUnmounted(() => {
       v-model:open="bulkTagOpen"
       :space-id="spaceId"
       :assets="bulkTagAssets"
+    />
+
+    <AssetAiClassifyDialog
+      v-if="isManageMode && canClassifyAssets"
+      v-model:open="classifyOpen"
+      :space-id="spaceId"
+      :assets="classifyAssets"
     />
 
     <AddToCollectionDialog

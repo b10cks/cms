@@ -4686,11 +4686,6 @@
                                         "maxLength": 50,
                                         "pattern": "^[a-z0-9\\-]+$"
                                     },
-                                    "icon": {
-                                        "type": "string",
-                                        "maxLength": 50,
-                                        "nullable": true
-                                    },
                                     "team_id": {
                                         "type": "string",
                                         "maxLength": 26,
@@ -4898,11 +4893,6 @@
                                         "type": "string",
                                         "maxLength": 50,
                                         "pattern": "^[a-z0-9\\-]+$"
-                                    },
-                                    "icon": {
-                                        "type": "string",
-                                        "maxLength": 50,
-                                        "nullable": true
                                     },
                                     "color": {
                                         "type": "string",

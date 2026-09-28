@@ -70,6 +70,25 @@ class ContentPublishedScopeTest extends TestCase
     }
 
     #[Test]
+    public function listings_keep_localized_content_and_translation_metadata(): void
+    {
+        $english = $this->createPublishedContent('page', ['title' => 'English']);
+        $german = $this->createPublishedContent('seite', ['title' => 'Deutsch'], 'de', $english->id);
+
+        foreach ([[$english, 'en'], [$german, 'de']] as [$content, $language]) {
+            $single = $this->getJson($this->showUrl($content->slug, ['language' => $language]))
+                ->assertOk()->json('data');
+            $listing = $this->getJson($this->indexUrl(['language' => $language]))
+                ->assertOk()->json('data');
+            $listed = collect($listing)->firstWhere('id', $content->id);
+
+            $this->assertNotNull($listed);
+            $this->assertSame($single['content'], $listed['content']);
+            $this->assertSame($single['translations'], $listed['translations']);
+        }
+    }
+
+    #[Test]
     public function an_unpublished_relation_is_not_expanded(): void
     {
         $secret = $this->createPublishedContent('secret-launch', ['title' => 'Secret launch']);

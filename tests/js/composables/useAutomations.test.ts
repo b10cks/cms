@@ -75,7 +75,7 @@ describe('useAutomationsQuery', () => {
     withSetup(() => useAutomations(SPACE).useAutomationsQuery())
     await flush()
 
-    expect(index).toHaveBeenCalledWith({})
+    expect(index).toHaveBeenCalledWith({}, { signal: expect.any(AbortSignal) })
     expect(forSpace).toHaveBeenCalledWith(SPACE)
   })
 
@@ -85,7 +85,10 @@ describe('useAutomationsQuery', () => {
     )
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ trigger_type: 'on_update', is_active: true })
+    expect(index).toHaveBeenCalledWith(
+      { trigger_type: 'on_update', is_active: true },
+      { signal: expect.any(AbortSignal) }
+    )
   })
 
   it('keeps the whole paginated envelope, not just data', async () => {
@@ -135,7 +138,7 @@ describe('useAutomationQuery', () => {
     await flush()
 
     expect(query.data.value).toEqual({ id: 'a1', name: 'Purge cache' })
-    expect(get).toHaveBeenCalledWith('a1')
+    expect(get).toHaveBeenCalledWith('a1', undefined, { signal: expect.any(AbortSignal) })
   })
 
   it('stays idle without an id', async () => {

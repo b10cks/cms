@@ -7,6 +7,7 @@ use App\Services\Setup\InstallProfileResolver;
 use App\Services\Setup\InstallState;
 use Illuminate\Filesystem\Filesystem;
 use PHPUnit\Framework\Attributes\Test;
+use RuntimeException;
 use Tests\TestCase;
 
 class B10cksSetupCommandTest extends TestCase
@@ -79,6 +80,24 @@ class B10cksSetupCommandTest extends TestCase
 
             public function warn($string, $verbosity = null): void {}
         };
+    }
+
+    #[Test]
+    public function setup_refuses_to_install_without_an_explicit_edition(): void
+    {
+        config(['edition.edition' => null]);
+
+        $command = $this->makeCommand('standard');
+
+        try {
+            $command->handle();
+            $this->fail('Setup ran without an edition.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('B10CKS_EDITION', $exception->getMessage());
+        }
+
+        $this->assertSame([], $command->recordedCalls);
+        $this->assertFileDoesNotExist($this->statePath);
     }
 
     #[Test]

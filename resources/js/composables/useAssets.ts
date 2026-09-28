@@ -54,17 +54,14 @@ export function useAssets(spaceId: MaybeRef<string>) {
           ? queryKeys.assetCollections(spaceId).assetsList(collection, rest)
           : queryKeys.assets(spaceId).list(rest)
       }),
-      queryFn: async () => {
+      queryFn: async ({ signal }) => {
         const { collection, ...rest } = toValue(params)
 
         if (collection) {
-          return await spaceAPI.value.assetCollections.getAssets(collection, rest)
+          return await spaceAPI.value.assetCollections.getAssets(collection, rest, { signal })
         }
 
-        return await spaceAPI.value.assets.index({
-          sort: '+created_at',
-          ...rest,
-        })
+        return await spaceAPI.value.assets.index({ sort: '+created_at', ...rest }, { signal })
       },
       placeholderData: keepPreviousData,
     })
@@ -73,10 +70,10 @@ export function useAssets(spaceId: MaybeRef<string>) {
   const useAssetQuery = (id: MaybeRef<string>, enabled: MaybeRef<boolean> = true) => {
     return useQuery({
       queryKey: computed(() => queryKeys.assets(spaceId).detail(id)),
-      queryFn: async () => {
+      queryFn: async ({ signal }) => {
         // The show endpoint returns the asset without a `data` envelope;
         // `response.data` would resolve to the asset's own `data` attribute.
-        const response = await spaceAPI.value.assets.get(toValue(id))
+        const response = await spaceAPI.value.assets.get(toValue(id), {}, { signal })
         return ('id' in response ? response : response.data) as AssetResource
       },
       enabled: computed(() => Boolean(toValue(id)) && toValue(enabled)),
@@ -254,9 +251,7 @@ export function useAssets(spaceId: MaybeRef<string>) {
       onSuccess: (data) => {
         if (!data) {
           // An empty response is not a success we can report on.
-          toast.error(
-            t('composables.assets.replaceError', { error: 'Unknown error' }) as string
-          )
+          toast.error(t('composables.assets.replaceError', { error: 'Unknown error' }) as string)
           return
         }
 
@@ -308,7 +303,9 @@ export function useAssets(spaceId: MaybeRef<string>) {
 
         if (!asset) {
           // An empty response is not a success we can report on.
-          toast.error(t('composables.assets.posterRemoveError', { error: 'Unknown error' }) as string)
+          toast.error(
+            t('composables.assets.posterRemoveError', { error: 'Unknown error' }) as string
+          )
           return
         }
 
@@ -318,7 +315,9 @@ export function useAssets(spaceId: MaybeRef<string>) {
       },
       onError: (err: Error) => {
         toast.error(
-          t('composables.assets.posterRemoveError', { error: err.message || 'Unknown error' }) as string
+          t('composables.assets.posterRemoveError', {
+            error: err.message || 'Unknown error',
+          }) as string
         )
       },
     })

@@ -5,7 +5,6 @@ import type { User } from '~/types/users'
 const getMe = vi.fn()
 const updateMe = vi.fn()
 const changePassword = vi.fn()
-const uploadAvatar = vi.fn()
 const socialLinks = vi.fn()
 const unlinkSocialProvider = vi.fn()
 
@@ -14,7 +13,7 @@ const toastError = vi.fn()
 
 vi.mock('~/api', () => ({
   api: {
-    users: { getMe, updateMe, changePassword, uploadAvatar, socialLinks, unlinkSocialProvider },
+    users: { getMe, updateMe, changePassword, socialLinks, unlinkSocialProvider },
     client: { request: vi.fn(), post: vi.fn(), ensureCsrfCookie: vi.fn() },
   },
 }))
@@ -244,133 +243,6 @@ describe('useChangePasswordMutation', () => {
 
     await expect(mutation.mutateAsync(payload)).rejects.toThrow()
     expect(toastError).toHaveBeenCalledWith('Failed to change password: Unknown error')
-  })
-})
-
-describe('useUploadAvatarMutation', () => {
-  const file = () => new File(['bytes'], 'avatar.png', { type: 'image/png' })
-
-  it('hands the raw File to the resource, which builds the multipart body', async () => {
-    uploadAvatar.mockResolvedValue({ data: { avatar: 'https://cdn.b10cks.test/a.png' } })
-
-    const mutation = mountUser((instance) => instance.useUploadAvatarMutation()).result
-    const picked = file()
-
-    const result = await mutation.mutateAsync(picked)
-
-    expect(uploadAvatar).toHaveBeenCalledWith(picked)
-    expect(result).toEqual({ avatar: 'https://cdn.b10cks.test/a.png' })
-  })
-
-  it('invalidates the profile and confirms', async () => {
-    uploadAvatar.mockResolvedValue({ data: { avatar: 'a.png' } })
-
-    const mounted = mountUser((instance) => instance.useUploadAvatarMutation())
-    const invalidate = vi.spyOn(mounted.queryClient, 'invalidateQueries')
-
-    await mounted.result.mutateAsync(file())
-
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.users.me() })
-    expect(toastSuccess).toHaveBeenCalledWith('Profile picture updated successfully')
-  })
-
-  it('adopts the refetched profile into the auth session when the query is mounted', async () => {
-    uploadAvatar.mockResolvedValue({ data: { avatar: 'a.png' } })
-    getMe.mockResolvedValueOnce({ data: user() })
-    getMe.mockResolvedValueOnce({ data: user({ avatar: 'a.png' } as Partial<User>) })
-
-    const mounted = mountUser((instance) => ({
-      query: instance.useUserQuery(),
-      mutation: instance.useUploadAvatarMutation(),
-    }))
-    await vi.waitUntil(() => mounted.result.query.data.value !== undefined)
-
-    await mounted.result.mutation.mutateAsync(file())
-
-    expect(getMe).toHaveBeenCalledTimes(2)
-    expect(useAuth().user.value).toEqual(user({ avatar: 'a.png' } as Partial<User>))
-  })
-
-  it('applies the uploaded avatar when nothing is observing the query', async () => {
-    // `invalidateQueries` only refetches *active* observers, so with no mounted
-    // `useUserQuery` a read-back would return the pre-upload entry. The
-    // response's own `avatar` is what gets written to the cache and the session.
-    uploadAvatar.mockResolvedValue({ data: { avatar: 'new.png' } })
-
-    const mounted = mountUser((instance) => instance.useUploadAvatarMutation(), [
-      [queryKeys.users.me(), user({ avatar: 'old.png' } as Partial<User>)],
-    ])
-
-    await mounted.result.mutateAsync(file())
-
-    expect(getMe).not.toHaveBeenCalled()
-    expect(mounted.queryClient.getQueryData(queryKeys.users.me())).toEqual(
-      user({ avatar: 'new.png' } as Partial<User>)
-    )
-    expect(useAuth().user.value).toEqual(user({ avatar: 'new.png' } as Partial<User>))
-  })
-
-  it('patches the live session user when the cache is empty', async () => {
-    uploadAvatar.mockResolvedValue({ data: { avatar: 'new.png' } })
-    useAuth().setUser(user({ avatar: 'old.png' } as Partial<User>))
-
-    const mutation = mountUser((instance) => instance.useUploadAvatarMutation()).result
-    await mutation.mutateAsync(file())
-
-    expect(getMe).not.toHaveBeenCalled()
-    expect(useAuth().user.value).toEqual(user({ avatar: 'new.png' } as Partial<User>))
-  })
-
-  it('leaves the session alone when there is no profile to patch at all', async () => {
-    uploadAvatar.mockResolvedValue({ data: { avatar: 'a.png' } })
-
-    const mutation = mountUser((instance) => instance.useUploadAvatarMutation()).result
-    await mutation.mutateAsync(file())
-
-    expect(useAuth().user.value).toBeNull()
-    expect(toastSuccess).toHaveBeenCalledWith('Profile picture updated successfully')
-  })
-
-  it('drags the token list and the social links along, which nest under users.me', async () => {
-    // The avatar upload still has to refetch the profile, and
-    // `personalAccessTokens.all()` is ['users','me','tokens'] while
-    // `users.socialLinks()` is ['users','me','social-links'] — both are
-    // prefix-matched by an invalidation of ['users','me']. The key shape, not
-    // this composable, is what needs fixing.
-    uploadAvatar.mockResolvedValue({ data: { avatar: 'a.png' } })
-
-    const tokenList = queryKeys.personalAccessTokens.list()
-    const mounted = mountUser((instance) => instance.useUploadAvatarMutation(), [
-      [tokenList, { data: [{ id: 'token-1' }] }],
-      [queryKeys.users.socialLinks(), []],
-    ])
-
-    await mounted.result.mutateAsync(file())
-
-    expect(mounted.queryClient.getQueryState(tokenList)?.isInvalidated).toBe(true)
-    expect(mounted.queryClient.getQueryState(queryKeys.users.socialLinks())?.isInvalidated).toBe(
-      true
-    )
-  })
-
-  it('reports a rejected upload', async () => {
-    uploadAvatar.mockRejectedValue(new Error('The file is too large.'))
-
-    const mutation = mountUser((instance) => instance.useUploadAvatarMutation()).result
-
-    await expect(mutation.mutateAsync(file())).rejects.toThrow()
-    expect(toastError).toHaveBeenCalledWith(
-      'Failed to upload profile picture: The file is too large.'
-    )
-  })
-
-  it('falls back to "Unknown error" for a message-less rejection', async () => {
-    uploadAvatar.mockRejectedValue(new Error(''))
-
-    const mutation = mountUser((instance) => instance.useUploadAvatarMutation()).result
-
-    await expect(mutation.mutateAsync(file())).rejects.toThrow()
-    expect(toastError).toHaveBeenCalledWith('Failed to upload profile picture: Unknown error')
   })
 })
 

@@ -11,7 +11,18 @@ import { queryKeys } from './useQueryClient'
 export function useUser() {
   const { t } = useI18n()
   const queryClient = useQueryClient()
-  const { user, setUser } = useAuth()
+  const { setUser } = useAuth()
+
+  /**
+   * Seed the auth state and the `users.me` cache with a user the server just
+   * returned. Invalidating instead would fire a redundant `GET /users/me` and,
+   * because the key is a prefix of the token and social-link keys, refetch
+   * those too.
+   */
+  const cacheUser = (data: User) => {
+    setUser(data)
+    queryClient.setQueryData<User>(queryKeys.users.me(), data)
+  }
 
   const useUserQuery = () => {
     return useQuery({
@@ -30,12 +41,7 @@ export function useUser() {
         return response.data
       },
       onSuccess: (data) => {
-        // The PATCH already returned the updated user, so seeding the cache is
-        // enough — invalidating it here would fire a redundant `GET /users/me`
-        // and, because the key is a prefix of the token and social-link keys,
-        // refetch those too.
-        setUser(data)
-        queryClient.setQueryData<User>(queryKeys.users.me(), data)
+        cacheUser(data)
         toast.success(t('labels.account.profile.toast.updated') as string)
       },
       onError: (error: Error) => {
@@ -59,37 +65,6 @@ export function useUser() {
       onError: (error: Error) => {
         toast.error(
           t('labels.account.security.toast.passwordChangeFailed', {
-            error: error.message || 'Unknown error',
-          }) as string
-        )
-      },
-    })
-  }
-
-  const useUploadAvatarMutation = () => {
-    return useMutation<{ avatar: string }, Error, File>({
-      mutationFn: async (file: File) => {
-        const response = await api.users.uploadAvatar(file)
-        return response.data
-      },
-      onSuccess: async (data) => {
-        // The upload response carries the new avatar. Reading the cache back
-        // after `invalidateQueries` is not enough: it only refetches *active*
-        // observers, so on a screen without a mounted `useUserQuery` the
-        // read-back hands back the pre-upload entry and re-seats the old avatar.
-        queryClient.setQueryData<User>(queryKeys.users.me(), (previous) =>
-          previous ? { ...previous, avatar: data.avatar } : previous
-        )
-        const current = queryClient.getQueryData<User>(queryKeys.users.me()) ?? user.value
-        if (current) {
-          setUser({ ...current, avatar: data.avatar })
-        }
-        await queryClient.invalidateQueries({ queryKey: queryKeys.users.me() })
-        toast.success(t('labels.account.profile.toast.avatarUploaded') as string)
-      },
-      onError: (error: Error) => {
-        toast.error(
-          t('labels.account.profile.toast.avatarUploadFailed', {
             error: error.message || 'Unknown error',
           }) as string
         )
@@ -130,7 +105,7 @@ export function useUser() {
     useUserQuery,
     useUpdateUserMutation,
     useChangePasswordMutation,
-    useUploadAvatarMutation,
+    cacheUser,
     useSocialLinksQuery,
     useUnlinkSocialProviderMutation,
   }

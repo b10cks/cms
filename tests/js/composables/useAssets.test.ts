@@ -168,7 +168,10 @@ describe('useAssetsQuery', () => {
     )
     // The sort reaches the API but never the key, so `{}` and
     // `{ sort: '+created_at' }` are two cache entries for one request.
-    expect(assets.index).toHaveBeenCalledWith({ sort: '+created_at' })
+    expect(assets.index).toHaveBeenCalledWith(
+      { sort: '+created_at' },
+      { signal: expect.any(AbortSignal) }
+    )
     queryClient.clear()
   })
 
@@ -177,7 +180,12 @@ describe('useAssetsQuery', () => {
 
     const { queryClient } = withSetup(() => useAssets(SPACE).useAssetsQuery({ sort: '-filename' }))
 
-    await vi.waitFor(() => expect(assets.index).toHaveBeenCalledWith({ sort: '-filename' }))
+    await vi.waitFor(() =>
+      expect(assets.index).toHaveBeenCalledWith(
+        { sort: '-filename' },
+        { signal: expect.any(AbortSignal) }
+      )
+    )
     queryClient.clear()
   })
 
@@ -189,7 +197,11 @@ describe('useAssetsQuery', () => {
     )
 
     await vi.waitFor(() =>
-      expect(assetCollections.getAssets).toHaveBeenCalledWith('col-1', { page: 2 })
+      expect(assetCollections.getAssets).toHaveBeenCalledWith(
+        'col-1',
+        { page: 2 },
+        { signal: expect.any(AbortSignal) }
+      )
     )
     // Served by the collection endpoint, so cached in the collection namespace:
     // that is what a collection mutation invalidates, and an asset-list
@@ -251,9 +263,7 @@ describe('useAssetLinkedContentsQuery', () => {
   it('keys per page and defaults to ten per page', async () => {
     assets.getLinkedContents.mockResolvedValue({ data: [], meta: { total: 0 } })
 
-    const { queryClient } = withSetup(() =>
-      useAssets(SPACE).useAssetLinkedContentsQuery('a1', 2)
-    )
+    const { queryClient } = withSetup(() => useAssets(SPACE).useAssetLinkedContentsQuery('a1', 2))
 
     await vi.waitFor(() =>
       expect(
@@ -765,10 +775,7 @@ describe('uploadAsset', () => {
 
   it('reports progress as a rounded percentage', async () => {
     const onProgress = vi.fn()
-    const promise = mutations().uploadAsset(
-      { file: new File(['x'], 'x.png') } as never,
-      onProgress
-    )
+    const promise = mutations().uploadAsset({ file: new File(['x'], 'x.png') } as never, onProgress)
     const xhr = await nextXhr()
     const [[, handler]] = xhr.upload.addEventListener.mock.calls as [
       [string, (event: ProgressEvent) => void],
@@ -789,7 +796,10 @@ describe('uploadAsset', () => {
   it('uploads without an xsrf cookie rather than refusing to try', async () => {
     document.cookie = 'XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 GMT'
 
-    const { xhr } = await uploadWith({ file: new File(['x'], 'x.png') } as never, ok({ data: asset() }))
+    const { xhr } = await uploadWith(
+      { file: new File(['x'], 'x.png') } as never,
+      ok({ data: asset() })
+    )
 
     expect(xhr.headers).toEqual({ accept: 'application/json' })
   })

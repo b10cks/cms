@@ -29,7 +29,7 @@ class CreateSpaceRequest extends FormRequest
         return [
             'name' => 'required|string|max:100',
             'slug' => 'required|string|max:50|regex:/^[a-z0-9\-]+$/|unique:spaces,slug,NULL,id,team_id,'.$this->input('team_id'),
-            'icon' => 'nullable|string|max:50',
+            // No `icon`: it is an upload path only SpaceIconController writes.
             'team_id' => 'nullable|string|max:26',
             'color' => 'nullable|string|max:7|regex:/^#[a-fA-F0-9]{6}$/',
             'badge' => 'nullable|string|max:50',

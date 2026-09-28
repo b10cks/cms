@@ -23,11 +23,13 @@ export class AssetCollections extends BaseResource<
 
   public async getAssets(
     collectionId: string,
-    params: AssetsQueryParams = {}
+    params: AssetsQueryParams = {},
+    options: { signal?: AbortSignal } = {}
   ): Promise<ApiCollectionResponse<AssetResource>> {
     return this.client.get<ApiCollectionResponse<AssetResource>>(
       `${this.basePath}/${collectionId}/assets`,
-      params as Record<string, unknown>
+      params as Record<string, unknown>,
+      options
     )
   }
 

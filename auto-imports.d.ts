@@ -105,6 +105,7 @@ declare global {
   const useAiUsage: typeof import('./resources/js/composables/useAiModels').useAiUsage
   const useAlertDialog: typeof import('./resources/js/composables/useAlertDialog').useAlertDialog
   const useApiClient: typeof import('./resources/js/composables/useApiClient').useApiClient
+  const useAssetAiClassification: typeof import('./resources/js/composables/useAssetAiClassification').useAssetAiClassification
   const useAssetBulkOperations: typeof import('./resources/js/composables/useAssetBulkOperations').useAssetBulkOperations
   const useAssetCollections: typeof import('./resources/js/composables/useAssetCollections').useAssetCollections
   const useAssetFolders: typeof import('./resources/js/composables/useAssetFolders').useAssetFolders
@@ -304,6 +305,9 @@ declare global {
   // @ts-ignore
   export type { IconifyCollectionOption } from './resources/js/composables/useIconifyCollections'
   import('./resources/js/composables/useIconifyCollections')
+  // @ts-ignore
+  export type { NotificationTone } from './resources/js/composables/useNotificationPresentation'
+  import('./resources/js/composables/useNotificationPresentation')
   // @ts-ignore
   export type { PresenceUser, PresenceState, UsePresenceOptions } from './resources/js/composables/usePresence'
   import('./resources/js/composables/usePresence')

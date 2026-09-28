@@ -1,5 +1,14 @@
 <?php
 
+use App\Enums\Edition;
+
+// Preserve S3 for installs with a configured transfers bucket: existing backup
+// and package records store paths without a disk. New self-hosted installs
+// without a bucket default to local. Config files may load in any order.
+$transfersDriver = env('TRANSFERS_DISK_DRIVER',
+    env('B10CKS_EDITION') === Edition::SELF_HOSTED->value && ! env('AWS_TRANSFERS_BUCKET') ? 'local' : 's3'
+);
+
 return [
 
     /*
@@ -66,12 +75,12 @@ return [
         ],
 
         'transfers' => [
-            // "local" (self-hosted without S3) stores under storage/app/transfers
-            // and serves via the signed transfers.download route.
-            'driver' => env('TRANSFERS_DISK_DRIVER', 's3'),
-            // Only meaningful for the local driver — on s3 a 'root' would
+            // "local" stores under storage/app/transfers and serves via the
+            // signed transfers.download route.
+            'driver' => $transfersDriver,
+            // Only meaningful for the local driver. On s3 a 'root' would
             // silently prefix every object key.
-            'root' => env('TRANSFERS_DISK_DRIVER') === 'local' ? storage_path('app/transfers') : '',
+            'root' => $transfersDriver === 'local' ? storage_path('app/transfers') : '',
             'key' => env('AWS_TRANSFERS_ACCESS_KEY_ID', env('AWS_ACCESS_KEY_ID')),
             'secret' => env('AWS_TRANSFERS_SECRET_ACCESS_KEY', env('AWS_SECRET_ACCESS_KEY')),
             'region' => env('AWS_TRANSFERS_DEFAULT_REGION', env('AWS_DEFAULT_REGION')),

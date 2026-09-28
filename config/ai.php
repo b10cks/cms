@@ -1,9 +1,18 @@
 <?php
 
+use App\Enums\Edition;
+
 return [
-    'mode' => env('AI_MODE', 'space'),
+    // "space" provisions a metered OpenRouter key per space (SaaS). "single"
+    // shares the platform key across all spaces, the self-hosted default.
+    // Read the edition from env directly: config('edition') may not be loaded yet.
+    'mode' => env('AI_MODE', env('B10CKS_EDITION') === Edition::SELF_HOSTED->value ? 'single' : 'space'),
 
     'default' => env('AI_DEFAULT_DRIVER', 'openrouter'),
+
+    // Asset classification jobs per space per minute; keeps mass runs under
+    // the provider's request limits.
+    'asset_classification_per_minute' => (int) env('AI_ASSET_CLASSIFICATION_PER_MINUTE', 30),
 
     'drivers' => [
         'openai' => [

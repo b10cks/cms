@@ -68,7 +68,7 @@ describe('useAutomationActionsQuery', () => {
     withSetup(() => useAutomationActions(SPACE).useAutomationActionsQuery())
     await flush()
 
-    expect(index).toHaveBeenCalledWith({})
+    expect(index).toHaveBeenCalledWith({}, { signal: expect.any(AbortSignal) })
     expect(forSpace).toHaveBeenCalledWith(SPACE)
   })
 
@@ -76,7 +76,7 @@ describe('useAutomationActionsQuery', () => {
     withSetup(() => useAutomationActions(SPACE).useAutomationActionsQuery({ type: 'webhook' }))
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ type: 'webhook' })
+    expect(index).toHaveBeenCalledWith({ type: 'webhook' }, { signal: expect.any(AbortSignal) })
   })
 
   it('keeps the whole paginated envelope, not just data', async () => {
@@ -129,7 +129,7 @@ describe('useAutomationActionQuery', () => {
     await flush()
 
     expect(query.data.value).toEqual({ id: 'act1', name: 'Ping', type: 'webhook' })
-    expect(get).toHaveBeenCalledWith('act1')
+    expect(get).toHaveBeenCalledWith('act1', undefined, { signal: expect.any(AbortSignal) })
   })
 
   it('stays idle without an id', async () => {

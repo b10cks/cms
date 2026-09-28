@@ -21,7 +21,13 @@ export function useContent(spaceId: MaybeRef<string>) {
   const queryClient = useQueryClient()
   const spaceAPI = computed(() => api.forSpace(toValue(spaceId)))
 
-  const invalidateContentFamily = (content: ContentResource) => {
+  const hasFullDetail = (content: ContentResource) =>
+    content.content !== undefined &&
+    content.raw_content !== undefined &&
+    content.current_version_id !== undefined &&
+    Array.isArray(content.language_versions)
+
+  const invalidateContentFamily = (content: ContentResource, reuseDetail = false) => {
     const familyContentIds = new Set<string>()
 
     if (content.id) {
@@ -41,9 +47,12 @@ export function useContent(spaceId: MaybeRef<string>) {
     })
 
     familyContentIds.forEach((contentId) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.contents(spaceId).detail(contentId),
-      })
+      const detailKey = queryKeys.contents(spaceId).detail(contentId)
+      if (reuseDetail && contentId === content.id) {
+        queryClient.setQueryData(detailKey, content)
+      } else {
+        queryClient.invalidateQueries({ queryKey: detailKey })
+      }
       queryClient.invalidateQueries({
         queryKey: queryKeys.contentVersions(spaceId, contentId).lists(),
       })
@@ -53,8 +62,8 @@ export function useContent(spaceId: MaybeRef<string>) {
   const useContentsQuery = (params: MaybeRef<ContentsQueryParams> = {}) => {
     return useQuery({
       queryKey: computed(() => queryKeys.contents(spaceId).list(params)),
-      queryFn: async () => {
-        const response = await spaceAPI.value.contents.index(toValue(params))
+      queryFn: async ({ signal }) => {
+        const response = await spaceAPI.value.contents.index(toValue(params), { signal })
         return response
       },
       placeholderData: keepPreviousData,
@@ -67,13 +76,13 @@ export function useContent(spaceId: MaybeRef<string>) {
 
     return useQuery({
       queryKey: computed(() => queryKeys.contents(spaceId).detail(resolvedId.value)),
-      queryFn: async () => {
+      queryFn: async ({ signal }) => {
         const contentId = toValue(id)
         if (!contentId) {
           throw new Error('Content ID is required')
         }
 
-        const response = await spaceAPI.value.contents.get(contentId)
+        const response = await spaceAPI.value.contents.get(contentId, {}, { signal })
         return response.data
       },
       enabled: computed(() => !!toValue(id)),
@@ -91,8 +100,8 @@ export function useContent(spaceId: MaybeRef<string>) {
 
     return useQuery({
       queryKey: computed(() => queryKeys.contents(spaceId).list(params.value)),
-      queryFn: async () => {
-        return await spaceAPI.value.contents.index(params.value)
+      queryFn: async ({ signal }) => {
+        return await spaceAPI.value.contents.index(params.value, { signal })
       },
     })
   }
@@ -126,10 +135,17 @@ export function useContent(spaceId: MaybeRef<string>) {
         const response = await spaceAPI.value.contents.update(id, payload)
         return response.data
       },
-      onSuccess: (data) => {
+      onSuccess: async (data, variables) => {
+        const reuseDetail = data.id === variables.id && hasFullDetail(data)
+        if (reuseDetail) {
+          await queryClient.cancelQueries({
+            queryKey: queryKeys.contents(spaceId).detail(data.id),
+            exact: true,
+          })
+        }
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
         queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
-        invalidateContentFamily(data)
+        invalidateContentFamily(data, reuseDetail)
 
         toast.success(t('composables.content.updateSuccess', { name: data.name }) as string)
       },

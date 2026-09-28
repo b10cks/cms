@@ -21,6 +21,7 @@ class ContentI18nResolver
         Content $content,
         string $targetLanguage,
         string $versionScope = 'published',
+        bool $withRelations = false,
     ): ResolvedContent {
         return $this->resolveMany(
             $space,
@@ -31,13 +32,19 @@ class ContentI18nResolver
                 ],
             ]),
             $versionScope,
+            $withRelations,
         )->first();
     }
 
+    /**
+     * Relations are only hydrated with `$withRelations`; otherwise
+     * `effectiveRelations` is empty. Only delivery relation resolution reads them.
+     */
     public function resolveMany(
         Space $space,
         Collection $items,
         string $versionScope = 'published',
+        bool $withRelations = false,
     ): Collection {
         if ($items->isEmpty()) {
             return collect();
@@ -71,9 +78,9 @@ class ContentI18nResolver
                 $canonicalId => $this->resolveEffectiveModeForCanonical($space, $canonical),
             ]
         );
-        $versionsByContentId = $this->resolveVersionsForFamilies($familiesByCanonicalId, $versionScope);
+        $versionsByContentId = $this->resolveVersionsForFamilies($familiesByCanonicalId, $versionScope, $withRelations);
 
-        return $normalizedItems->map(function (array $item) use ($space, $canonicalsById, $familiesByCanonicalId, $effectiveModesByCanonicalId, $versionsByContentId): ResolvedContent {
+        return $normalizedItems->map(function (array $item) use ($space, $canonicalsById, $familiesByCanonicalId, $effectiveModesByCanonicalId, $versionsByContentId, $withRelations): ResolvedContent {
             /** @var Content $content */
             $content = $item['content'];
             $requestedLanguage = \in_array($item['target_language'], $space->settings->getEnabledLanguages(), true)
@@ -185,9 +192,11 @@ class ContentI18nResolver
                 effectiveLinks: $effectiveMode === 'overlay'
                 ? $this->mergeCollectionChain($fallbackChain, 'links', $targetVersion?->links)
                 : collect($targetVersion?->links ?? []),
-                effectiveRelations: $effectiveMode === 'overlay'
-                ? $this->mergeCollectionChain($fallbackChain, 'relations', $targetVersion?->relations)
-                : collect($targetVersion?->relations ?? []),
+                effectiveRelations: match (true) {
+                    ! $withRelations => collect(),
+                    $effectiveMode === 'overlay' => $this->mergeCollectionChain($fallbackChain, 'relations', $targetVersion?->relations),
+                    default => collect($targetVersion?->relations ?? []),
+                },
             );
         })->values();
     }
@@ -349,19 +358,19 @@ class ContentI18nResolver
      *
      * @return array<string, \Closure>
      */
-    private static function publishedOnlyContentRelations(): array
+    private static function publishedOnlyContentRelations(bool $withRelations): array
     {
         $published = fn ($query) => $query->published();
 
         return [
             'published_version.links' => $published,
-            'published_version.relations' => $published,
+            ...($withRelations ? ['published_version.relations' => $published] : []),
         ];
     }
 
-    private function resolveVersionsForFamilies(Collection $familiesByCanonicalId, string $versionScope): Collection
+    private function resolveVersionsForFamilies(Collection $familiesByCanonicalId, string $versionScope, bool $withRelations): Collection
     {
-        $familyContents = new \Illuminate\Database\Eloquent\Collection(
+        $familyContents = new EloquentCollection(
             $familiesByCanonicalId
                 ->flatMap(fn (Collection $family): Collection => $family)
                 ->keyBy('id')
@@ -375,7 +384,7 @@ class ContentI18nResolver
         if ($versionScope === 'published') {
             $familyContents->load([
                 'published_version.assets',
-                ...self::publishedOnlyContentRelations(),
+                ...self::publishedOnlyContentRelations($withRelations),
             ]);
 
             return $familyContents->mapWithKeys(
@@ -387,7 +396,7 @@ class ContentI18nResolver
             $familyContents->load([
                 'current_version.assets',
                 'current_version.links',
-                'current_version.relations',
+                ...($withRelations ? ['current_version.relations'] : []),
             ]);
 
             return $familyContents->mapWithKeys(
@@ -398,7 +407,7 @@ class ContentI18nResolver
         $result = ContentVersion::query()
             ->whereIn('content_id', $familyContents->modelKeys())
             ->where('id', $versionScope)
-            ->with(['assets', 'links', 'relations'])
+            ->with(['assets', 'links', ...($withRelations ? ['relations'] : [])])
             ->get()
             ->keyBy('content_id');
 
@@ -406,7 +415,7 @@ class ContentI18nResolver
         if ($missingContents->isNotEmpty()) {
             $missingContents->load([
                 'published_version.assets',
-                ...self::publishedOnlyContentRelations(),
+                ...self::publishedOnlyContentRelations($withRelations),
             ]);
             foreach ($missingContents as $content) {
                 if ($content->published_version) {

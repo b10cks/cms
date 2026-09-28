@@ -70,6 +70,8 @@ class BedrockDriver extends BaseAiDriver
             'accept' => 'application/json',
         ];
 
+        $this->ensureVisionSupportForMessages($modelId, $messages);
+
         ['system' => $systemPrompt, 'messages' => $converted] = $this->convertMessages($messages);
 
         $body = [
@@ -211,7 +213,7 @@ class BedrockDriver extends BaseAiDriver
 
         foreach ($messages as $message) {
             if ($message['role'] === 'system') {
-                $systemPrompt .= ($systemPrompt ? "\n\n" : '').$message['content'];
+                $systemPrompt .= ($systemPrompt ? "\n\n" : '').$this->stringifyContent($message['content']);
 
                 continue;
             }
@@ -220,22 +222,69 @@ class BedrockDriver extends BaseAiDriver
                 continue;
             }
 
-            if ($message['role'] === 'user') {
+            if ($message['role'] === 'user' || $message['role'] === 'assistant') {
                 $converted[] = [
-                    'role' => 'user',
-                    'content' => $message['content'],
-                ];
-            }
-
-            if ($message['role'] === 'assistant') {
-                $converted[] = [
-                    'role' => 'assistant',
-                    'content' => $message['content'],
+                    'role' => $message['role'],
+                    'content' => $this->convertContentBlocks($message['content'] ?? ''),
                 ];
             }
         }
 
         return ['system' => $systemPrompt, 'messages' => $converted];
+    }
+
+    /**
+     * Anthropic carries the system prompt as a plain string, so multi-part
+     * system content collapses to its text parts.
+     */
+    private function stringifyContent(mixed $content): string
+    {
+        if (\is_string($content)) {
+            return $content;
+        }
+
+        if (! \is_array($content)) {
+            return '';
+        }
+
+        return trim(implode("\n", array_values(array_filter(array_map(
+            fn (array $part): ?string => ($part['type'] ?? null) === 'text' ? (string) ($part['text'] ?? '') : null,
+            $content,
+        )))));
+    }
+
+    /**
+     * Convert our provider-neutral content parts into Anthropic content
+     * blocks. String content stays a string (the API accepts both shapes).
+     *
+     * @return string|array<int, array<string, mixed>>
+     */
+    private function convertContentBlocks(mixed $content): string|array
+    {
+        if (\is_string($content)) {
+            return $content;
+        }
+
+        if (! \is_array($content)) {
+            return '';
+        }
+
+        return array_values(array_filter(array_map(fn (array $part): ?array => match ($part['type'] ?? null) {
+            'text' => [
+                'type' => 'text',
+                'text' => (string) ($part['text'] ?? ''),
+            ],
+            'image' => [
+                'type' => 'image',
+                'source' => [
+                    'type' => 'base64',
+                    'media_type' => (string) ($part['mime_type'] ?? 'application/octet-stream'),
+                    'data' => (string) ($part['data'] ?? ''),
+                ],
+            ],
+            'tool_use', 'tool_result' => $part,
+            default => null,
+        }, $content)));
     }
 
     protected function convertTools(array $tools): array

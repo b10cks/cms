@@ -26,6 +26,19 @@ const TYPE_ICON_MAP: Record<string, string> = {
 
 const typeKey = (type: string): string => TYPE_KEY_MAP[type] ?? 'unknown'
 
+export type NotificationTone = 'neutral' | 'info' | 'success' | 'warning' | 'destructive'
+
+// Colours the icon by urgency so a quota breach reads differently from a mention.
+const TYPE_TONE_MAP: Record<string, NotificationTone> = {
+  commentMention: 'info',
+  commentReply: 'info',
+  inviteToSpace: 'success',
+  inviteToTeam: 'success',
+  usageWarning: 'warning',
+  usageExceeded: 'destructive',
+  paymentRequested: 'warning',
+}
+
 // The metrics that have a message under `notifications.metrics`; anything else
 // would render its raw i18n key mid-sentence.
 const KNOWN_METRICS = ['storage', 'traffic', 'ai']
@@ -39,6 +52,9 @@ export function useNotificationPresentation() {
   const { t } = useI18n()
 
   const iconFor = (n: NotificationResource): string => TYPE_ICON_MAP[typeKey(n.type)]
+
+  const toneFor = (n: NotificationResource): NotificationTone =>
+    TYPE_TONE_MAP[typeKey(n.type)] ?? 'neutral'
 
   const metricLabel = (d: NotificationData): string => {
     if (!d.metric) return ''
@@ -117,5 +133,5 @@ export function useNotificationPresentation() {
     return null
   }
 
-  return { iconFor, titleFor, bodyFor, routeFor }
+  return { iconFor, toneFor, titleFor, bodyFor, routeFor }
 }

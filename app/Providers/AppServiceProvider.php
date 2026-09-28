@@ -9,6 +9,9 @@ use Illuminate\Foundation\Events\LocaleUpdated;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Cache\RateLimiting\Limit;
+use App\Jobs\Space\ClassifyAssetJob;
 use Illuminate\Support\ServiceProvider;
 use PostHog\PostHog;
 
@@ -41,6 +44,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Model::shouldBeStrict(! $this->app->isProduction());
+
+        // Paces mass asset classification per space so a large library does
+        // not burst the AI provider's request limits; throttled jobs are
+        // released and picked up again.
+        RateLimiter::for('asset-classification', fn (ClassifyAssetJob $job) => Limit::perMinute(
+            (int) config('ai.asset_classification_per_minute', 30)
+        )->by($job->space->id));
 
         // Laravel localizes translation strings but not Carbon, so relative
         // dates in a translated mail ("expires in 7 days") would stay English.

@@ -61,7 +61,7 @@ describe('useIconsQuery', () => {
     mount(() => inSpace().useIconsQuery())
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '+key' })
+    expect(index).toHaveBeenCalledWith({ sort: '+key' }, { signal: expect.any(AbortSignal) })
     expect(forSpace).toHaveBeenCalledWith(SPACE)
   })
 
@@ -69,14 +69,17 @@ describe('useIconsQuery', () => {
     mount(() => inSpace().useIconsQuery({ sort: '-created_at' }))
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '-created_at' })
+    expect(index).toHaveBeenCalledWith({ sort: '-created_at' }, { signal: expect.any(AbortSignal) })
   })
 
   it('forwards a tag filter alongside the sort', async () => {
     mount(() => inSpace().useIconsQuery({ tags: ['ui', 'brand'] }))
     await flush()
 
-    expect(index).toHaveBeenCalledWith({ sort: '+key', tags: ['ui', 'brand'] })
+    expect(index).toHaveBeenCalledWith(
+      { sort: '+key', tags: ['ui', 'brand'] },
+      { signal: expect.any(AbortSignal) }
+    )
   })
 
   it('keeps the whole paginated envelope, not just data', async () => {
@@ -128,7 +131,7 @@ describe('useIconQuery', () => {
     const query = mount(() => inSpace().useIconQuery('i1')).result
     await flush()
 
-    expect(get).toHaveBeenCalledWith('i1')
+    expect(get).toHaveBeenCalledWith('i1', undefined, { signal: expect.any(AbortSignal) })
     expect(query.data.value).toEqual({ id: 'i1', key: 'star' })
   })
 
@@ -138,7 +141,7 @@ describe('useIconQuery', () => {
     mount(() => inSpace().useIconQuery(''))
     await flush()
 
-    expect(get).toHaveBeenCalledWith('')
+    expect(get).toHaveBeenCalledWith('', undefined, { signal: expect.any(AbortSignal) })
   })
 })
 
