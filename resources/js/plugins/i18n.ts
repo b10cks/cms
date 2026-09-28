@@ -4,17 +4,26 @@ import { createI18n } from 'vue-i18n'
 
 import de from '~/i18n/de.json'
 import en from '~/i18n/en.json'
+import es from '~/i18n/es.json'
+import fr from '~/i18n/fr.json'
+import ru from '~/i18n/ru.json'
+import tr from '~/i18n/tr.json'
 
 export type MessageSchema = typeof en
 
 export const locales = [
   { code: 'de', name: 'Deutsch', iso: 'de', flag: '🇦🇹' },
   { code: 'en', name: 'English', iso: 'en', flag: '🇺🇸' },
+  { code: 'tr', name: 'Türkçe', iso: 'tr', flag: '🇹🇷' },
+  { code: 'ru', name: 'Русский', iso: 'ru', flag: '🇷🇺' },
+  { code: 'fr', name: 'Français', iso: 'fr', flag: '🇫🇷' },
+  { code: 'es', name: 'Español', iso: 'es', flag: '🇪🇸' },
 ] as const
 
 export type LocaleCode = (typeof locales)[number]['code']
 
 const FALLBACK_LOCALE: LocaleCode = 'en'
+const russianPluralRules = new Intl.PluralRules('ru')
 
 const isSupportedLocale = (code: string): code is LocaleCode =>
   locales.some((locale) => locale.code === code)
@@ -41,13 +50,34 @@ export const i18n = createI18n<[MessageSchema], LocaleCode>({
   legacy: false,
   locale: detectBrowserLocale(),
   fallbackLocale: FALLBACK_LOCALE,
+  pluralRules: {
+    ru: (choice, choicesLength, defaultRule) => {
+      if (choicesLength < 3) return defaultRule!(choice, choicesLength)
+      if (choicesLength === 4 && choice === 0) return 0
+
+      const category = russianPluralRules.select(choice)
+      const index = category === 'one' ? 0 : category === 'few' ? 1 : 2
+      return choicesLength === 4 ? index + 1 : index
+    },
+  },
   messages: {
     en,
     de,
+    tr,
+    ru,
+    fr,
+    es,
   },
 })
 
-const composer = i18n.global as unknown as Composer<{ en: MessageSchema; de: MessageSchema }>
+const composer = i18n.global as unknown as Composer<{
+  en: MessageSchema
+  de: MessageSchema
+  tr: MessageSchema
+  ru: MessageSchema
+  fr: MessageSchema
+  es: MessageSchema
+}>
 
 /**
  * Blade renders <html lang> from the server's own negotiation, so every locale

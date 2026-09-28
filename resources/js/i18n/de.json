@@ -4568,7 +4568,7 @@
       "draftContent": "Entwurfsbaum",
       "blocks": "Blöcke",
       "noResults": "Keine Treffer gefunden",
-      "hint": "Tippe @ um Inhalte oder Blöcke zu erwähnen",
+      "hint": "Tippe {'@'} um Inhalte oder Blöcke zu erwähnen",
       "suggestions": "Mention suggestions"
     },
     "aiSettings": {

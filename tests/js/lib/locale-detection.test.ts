@@ -17,13 +17,23 @@ describe('detectBrowserLocale', () => {
     expect(detectBrowserLocale()).toBe('de')
   })
 
+  it.each([
+    ['es-MX', 'es'],
+    ['fr-CA', 'fr'],
+    ['ru-RU', 'ru'],
+    ['tr-TR', 'tr'],
+  ])('recognizes %s as %s', (tag, locale) => {
+    withLanguages([tag, 'en-US'])
+    expect(detectBrowserLocale()).toBe(locale)
+  })
+
   it('skips languages it has no messages for', () => {
-    withLanguages(['fr-FR', 'nl', 'de'])
+    withLanguages(['ja-JP', 'nl', 'de'])
     expect(detectBrowserLocale()).toBe('de')
   })
 
   it('falls back to English when nothing matches', () => {
-    withLanguages(['fr-FR', 'ja'])
+    withLanguages(['nl-NL', 'ja'])
     expect(detectBrowserLocale()).toBe('en')
   })
 
