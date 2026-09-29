@@ -4107,7 +4107,8 @@
       "copied": "Değer panoya kopyalandı"
     },
     "preview": {
-      "copied": "Bağlantı panoya kopyalandı"
+      "copied": "Bağlantı panoya kopyalandı",
+      "blockRejected": "Bu blok oraya yerleştirilemez."
     },
     "title": "Bildirimler",
     "tooltip": "Bildirimler",

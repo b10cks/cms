@@ -4121,7 +4121,8 @@
       "copied": "Wert in Zwischenablage kopiert"
     },
     "preview": {
-      "copied": "Link in Zwischenablage kopiert"
+      "copied": "Link in Zwischenablage kopiert",
+      "blockRejected": "Dieser Block kann dort nicht platziert werden."
     },
     "title": "Benachrichtigungen",
     "tooltip": "Benachrichtigungen",
