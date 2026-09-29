@@ -1,8 +1,10 @@
-import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import { defineConfig } from 'vitest/config'
+
+const sourceDir = fileURLToPath(new URL('./resources/js', import.meta.url))
 
 // Deliberately not `mergeConfig(viteConfig, …)`: the app config pulls in the
 // Laravel, Tailwind and PWA plugins, which need a running dev server / build
@@ -29,8 +31,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '~': resolve(__dirname, 'resources/js'),
-      '@': resolve(__dirname, 'resources/js'),
+      '~': sourceDir,
+      '@': sourceDir,
     },
   },
   test: {

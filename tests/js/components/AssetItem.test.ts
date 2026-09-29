@@ -9,7 +9,7 @@ const getInitialData = vi.fn()
 // The grid tile registers itself as draggable on mount. Capturing the config
 // lets the test assert the payload the drop targets will actually receive,
 // without simulating a native drag.
-vi.mock('@atlaskit/pragmatic-drag-and-drop/element/adapter', () => ({
+vi.mock('@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter', () => ({
   draggable: (config: Record<string, unknown>) => {
     getInitialData(config)
     return () => {}

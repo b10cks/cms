@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
+import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter'
 import type { FlattenedItem } from 'reka-ui'
 import { TreeItem } from 'reka-ui'
 import type { LocationQueryRaw } from 'vue-router'

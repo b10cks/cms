@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
-import { draggable as makeDraggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
+import { combine } from '@atlaskit/pragmatic-drag-and-drop/utils/combine'
+import { draggable as makeDraggable } from '@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter'
 
 import AssetComplianceIndicator from '~/components/assets/AssetComplianceIndicator.vue'
 import Icon from '~/components/Icon.vue'

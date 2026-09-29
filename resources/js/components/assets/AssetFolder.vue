@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine'
 import {
   draggable as makeDraggable,
   dropTargetForElements,
-} from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
+} from '@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter'
+import { combine } from '@atlaskit/pragmatic-drag-and-drop/utils/combine'
 
 import Icon from '~/components/Icon.vue'
 import { Checkbox } from '~/components/ui/checkbox'

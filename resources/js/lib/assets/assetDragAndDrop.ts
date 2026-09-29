@@ -1,6 +1,6 @@
-import type { ElementEventPayloadMap } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
-import { pointerOutsideOfPreview } from '@atlaskit/pragmatic-drag-and-drop/element/pointer-outside-of-preview'
-import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview'
+import type { ElementEventPayloadMap } from '@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter'
+import { pointerOutsideOfPreview } from '@atlaskit/pragmatic-drag-and-drop/utils/pointer-outside-of-preview'
+import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/utils/set-custom-native-drag-preview'
 
 export type AssetManagerDragItemType = 'asset' | 'folder'
 
