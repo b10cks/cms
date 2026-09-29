@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { CommentResource } from '~/types/comments'
-
 import { PreviewBridge, type PreviewBridgeOptions } from '~/utils/preview-bridge'
 
 const postToIframe = vi.fn()
@@ -18,8 +17,10 @@ const iframe = (contentWindow: Window | null = fakeContentWindow) =>
   ({ contentWindow }) as unknown as HTMLIFrameElement
 
 /** Deliver a message as the browser would, so the bridge's own listener runs. */
-const deliver = (data: unknown, { origin = 'https://site.test', source = fakeContentWindow } = {}) =>
-  window.dispatchEvent(new MessageEvent('message', { data, origin, source }))
+const deliver = (
+  data: unknown,
+  { origin = 'https://site.test', source = fakeContentWindow } = {}
+) => window.dispatchEvent(new MessageEvent('message', { data, origin, source }))
 
 let bridges: PreviewBridge[] = []
 
@@ -74,7 +75,9 @@ describe('outbound messages', () => {
   })
 
   it('defaults the target origin to the first allowed origin', () => {
-    createBridge({ allowedOrigins: ['https://site.test', 'https://staging.test'] }).updateHover(null)
+    createBridge({ allowedOrigins: ['https://site.test', 'https://staging.test'] }).updateHover(
+      null
+    )
 
     expect(postToIframe).toHaveBeenCalledWith(expect.anything(), 'https://site.test')
   })
@@ -111,7 +114,8 @@ describe('outbound messages', () => {
 })
 
 describe('updateComments', () => {
-  const comment = (id: string, position: unknown) => ({ id, position }) as unknown as CommentResource
+  const comment = (id: string, position: unknown) =>
+    ({ id, position }) as unknown as CommentResource
 
   it('forwards only comments anchored to a position', () => {
     createBridge().updateComments([
@@ -209,7 +213,11 @@ describe('inbound message trust', () => {
   it('drops a message with no source at all', () => {
     createBridge().on('COMMENT_CLICK', listener)
 
-    deliver({ type: 'COMMENT_CLICK', payload: {} }, { source: null as unknown as Window })
+    deliver(
+      { type: 'COMMENT_CLICK', payload: { commentId: 'c1' } },
+
+      { source: null as unknown as Window }
+    )
 
     expect(listener).not.toHaveBeenCalled()
   })
@@ -217,7 +225,11 @@ describe('inbound message trust', () => {
   it('drops every message when the iframe has no content window', () => {
     createBridge({}, iframe(null)).on('COMMENT_CLICK', listener)
 
-    deliver({ type: 'COMMENT_CLICK', payload: {} }, { source: null as unknown as Window })
+    deliver(
+      { type: 'COMMENT_CLICK', payload: { commentId: 'c1' } },
+
+      { source: null as unknown as Window }
+    )
 
     expect(listener).not.toHaveBeenCalled()
   })
@@ -225,7 +237,11 @@ describe('inbound message trust', () => {
   it('accepts a message from an allowed origin', () => {
     createBridge({ allowedOrigins: ['https://site.test'] }).on('COMMENT_CLICK', listener)
 
-    deliver({ type: 'COMMENT_CLICK', payload: { commentId: 'c1' } }, { origin: 'https://site.test' })
+    deliver(
+      { type: 'COMMENT_CLICK', payload: { commentId: 'c1' } },
+
+      { origin: 'https://site.test' }
+    )
 
     expect(listener).toHaveBeenCalledTimes(1)
   })
@@ -233,7 +249,11 @@ describe('inbound message trust', () => {
   it('drops a message from an origin that is not configured', () => {
     createBridge({ allowedOrigins: ['https://site.test'] }).on('COMMENT_CLICK', listener)
 
-    deliver({ type: 'COMMENT_CLICK', payload: {} }, { origin: 'https://evil.test' })
+    deliver(
+      { type: 'COMMENT_CLICK', payload: { commentId: 'c1' } },
+
+      { origin: 'https://evil.test' }
+    )
 
     expect(listener).not.toHaveBeenCalled()
   })
@@ -241,7 +261,11 @@ describe('inbound message trust', () => {
   it('matches origins exactly, not by prefix', () => {
     createBridge({ allowedOrigins: ['https://site.test'] }).on('COMMENT_CLICK', listener)
 
-    deliver({ type: 'COMMENT_CLICK', payload: {} }, { origin: 'https://site.test.evil.test' })
+    deliver(
+      { type: 'COMMENT_CLICK', payload: { commentId: 'c1' } },
+
+      { origin: 'https://site.test.evil.test' }
+    )
 
     expect(listener).not.toHaveBeenCalled()
   })
@@ -249,7 +273,11 @@ describe('inbound message trust', () => {
   it('accepts any origin when none are configured', () => {
     createBridge().on('COMMENT_CLICK', listener)
 
-    deliver({ type: 'COMMENT_CLICK', payload: {} }, { origin: 'https://anywhere.test' })
+    deliver(
+      { type: 'COMMENT_CLICK', payload: { commentId: 'c1' } },
+
+      { origin: 'https://anywhere.test' }
+    )
 
     expect(listener).toHaveBeenCalledTimes(1)
   })
@@ -423,7 +451,7 @@ describe('bridge isolation', () => {
     createBridge().on('COMMENT_CLICK', first)
     createBridge({}, iframe(otherWindow)).on('COMMENT_CLICK', second)
 
-    deliver({ type: 'COMMENT_CLICK', payload: {} }, { source: otherWindow })
+    deliver({ type: 'COMMENT_CLICK', payload: { commentId: 'c1' } }, { source: otherWindow })
 
     expect(first).not.toHaveBeenCalled()
     expect(second).toHaveBeenCalledTimes(1)
@@ -436,8 +464,151 @@ describe('bridge isolation', () => {
     createBridge().on('COMMENT_CLICK', listener)
     doomed.destroy()
 
-    deliver({ type: 'COMMENT_CLICK', payload: {} })
+    deliver({ type: 'COMMENT_CLICK', payload: { commentId: 'c1' } })
 
     expect(listener).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('protocol negotiation', () => {
+  const announce = (payload?: unknown) => deliver({ type: 'B10CKS_BRIDGE_READY', payload })
+
+  it('treats an announcement without payload as protocol 0', () => {
+    const bridge = createBridge({}, iframe(), false)
+
+    announce()
+
+    expect(bridge.protocol).toBe(0)
+  })
+
+  it('keeps the announced protocol when the load fallback fires', () => {
+    const bridge = createBridge({}, iframe(), false)
+
+    announce({ protocol: 1 })
+    bridge.markReady()
+
+    expect(bridge.protocol).toBe(1)
+  })
+
+  it('drops to protocol 0 when a navigated document never announces', () => {
+    const bridge = createBridge({}, iframe(), false)
+
+    announce({ protocol: 3 })
+    bridge.markReady()
+    // The iframe navigated to a site on an SDK that predates the announcement.
+    bridge.markReady()
+
+    expect(bridge.protocol).toBe(0)
+  })
+
+  it('follows a re-announcement with another protocol', () => {
+    const bridge = createBridge({}, iframe(), false)
+
+    announce({ protocol: 3 })
+    announce()
+
+    expect(bridge.protocol).toBe(0)
+  })
+
+  it('replays the tree to a patched preview, so a navigated document gets the whole page', () => {
+    const tree = { id: 'entry-1', block: 'page', title: 'Home' }
+    const bridge = createBridge({ rootId: () => 'entry-1' }, iframe(), false)
+    announce({ protocol: 1 })
+
+    bridge.pushChange([tree], [{ path: ['title'], value: 'Home' }])
+    postToIframe.mockClear()
+    announce({ protocol: 1 })
+
+    expect(postToIframe.mock.calls).toEqual([
+      [{ type: 'CONTENT_UPDATE', payload: { content: tree } }, '*'],
+    ])
+  })
+
+  it('sends hidden blocks only when they changed', () => {
+    const bridge = createBridge({}, iframe(), false)
+    announce({ protocol: 2 })
+
+    bridge.updateHiddenBlocks(['hero-1'])
+    bridge.updateHiddenBlocks(['hero-1'])
+    bridge.updateHiddenBlocks([])
+
+    expect(postToIframe.mock.calls.map(([message]) => message.payload.ids)).toEqual([
+      ['hero-1'],
+      [],
+    ])
+  })
+})
+
+/**
+ * What each preview receives for the same editor actions. Protocol 0 must see
+ * exactly what the released editor sent it.
+ */
+describe('compatibility matrix', () => {
+  const announce = (payload?: unknown) => deliver({ type: 'B10CKS_BRIDGE_READY', payload })
+  const tree = { id: 'entry-1', block: 'page', body: [{ id: 'hero-1', block: 'hero' }] }
+  const patch = { itemId: 'hero-1', path: ['headline'], value: 'Hello' }
+  const fieldConfig = { itemId: 'hero-1', path: ['body'], richtext: {} }
+
+  /** Types of the messages `action` posts to the preview, in order. */
+  const sent = (action: () => void) => {
+    postToIframe.mockClear()
+    action()
+    return postToIframe.mock.calls.map(([message]) => message.type)
+  }
+
+  it.each([
+    {
+      preview: 'no announcement',
+      connect: (bridge: PreviewBridge) => bridge.markReady(),
+      replay: ['CONTENT_UPDATE', 'SELECT_UPDATE'],
+      fieldEdit: 'CONTENT_UPDATE',
+      live: [],
+    },
+    {
+      preview: 'protocol 0',
+      connect: () => announce(),
+      replay: ['CONTENT_UPDATE', 'SELECT_UPDATE'],
+      fieldEdit: 'CONTENT_UPDATE',
+      live: [],
+    },
+    {
+      preview: 'protocol 1',
+      connect: () => announce({ protocol: 1 }),
+      replay: ['CONTENT_UPDATE', 'SELECT_UPDATE', 'BLOCK_LABELS'],
+      fieldEdit: 'CONTENT_PATCH',
+      live: ['BLOCK_LABELS'],
+    },
+    {
+      preview: 'protocol 2',
+      connect: () => announce({ protocol: 2 }),
+      replay: ['CONTENT_UPDATE', 'SELECT_UPDATE', 'BLOCK_LABELS', 'HIDDEN_BLOCKS'],
+      fieldEdit: 'CONTENT_PATCH',
+      live: ['BLOCK_LABELS', 'HIDDEN_BLOCKS'],
+    },
+    {
+      preview: 'protocol 3',
+      connect: () => announce({ protocol: 3 }),
+      replay: ['CONTENT_UPDATE', 'SELECT_UPDATE', 'BLOCK_LABELS', 'HIDDEN_BLOCKS'],
+      fieldEdit: 'CONTENT_PATCH',
+      live: ['BLOCK_LABELS', 'HIDDEN_BLOCKS', 'FIELD_CONFIG'],
+    },
+  ])('$preview', ({ connect, replay, fieldEdit, live }) => {
+    const bridge = createBridge({ rootId: () => 'entry-1' }, iframe(), false)
+    bridge.updateContent(tree)
+    bridge.updateSelectedItem('hero-1')
+    bridge.updateBlockLabels({ hero: 'Hero' })
+    bridge.updateHiddenBlocks(['hero-1'])
+
+    expect(sent(() => connect(bridge))).toEqual(replay)
+    expect(sent(() => bridge.pushChange([tree], [patch]))).toEqual([fieldEdit])
+    // Structural changes (block actions, moves) carry no patches.
+    expect(sent(() => bridge.pushChange([tree]))).toEqual(['CONTENT_UPDATE'])
+    expect(
+      sent(() => {
+        bridge.updateBlockLabels({ hero: 'Hero banner' })
+        bridge.updateHiddenBlocks([])
+        bridge.sendFieldConfig(fieldConfig)
+      })
+    ).toEqual(live)
   })
 })
