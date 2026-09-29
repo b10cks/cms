@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import type { AnyExtension } from '@tiptap/core'
 import type { Level } from '@tiptap/extension-heading'
-import { Table } from '@tiptap/extension-table'
-import { TableCell } from '@tiptap/extension-table-cell'
-import { TableHeader } from '@tiptap/extension-table-header'
-import { TableRow } from '@tiptap/extension-table-row'
-import { DOMParser as ProseMirrorDOMParser } from '@tiptap/pm/model'
-import { StarterKit } from '@tiptap/starter-kit'
+import {
+  DOMParser as ProseMirrorDOMParser,
+  type Node as ProseMirrorNode,
+  type Schema,
+} from '@tiptap/pm/model'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
 
 import LinkDialog from '~/components/editor/LinkDialog.vue'
@@ -22,11 +20,9 @@ import {
 } from '~/components/ui/dropdown-menu'
 import { createEmptyRichTextDoc, toRichTextDoc } from '~/lib/richtext'
 
-import { InternalLink } from './extensions/InternalLink'
-import { ListStyle } from './extensions/ListStyle'
+import { applyDocument, isSameContent } from './extensions/applyDocument'
 import { transformPastedHtml } from './extensions/pasteCleanup'
-import { PlaceholderToken } from './extensions/PlaceholderToken'
-import { TextClass } from './extensions/TextClass'
+import { createRichTextExtensions, isRichTextFeatureEnabled } from './extensions/richTextExtensions'
 
 interface HtmlClass {
   name: string
@@ -63,7 +59,8 @@ const props = withDefaults(
 
 // A feature is on unless the field config explicitly disables it, so existing
 // fields (no `features` map) keep every button.
-const isEnabled = (feature: RichTextFeature): boolean => props.features?.[feature] !== false
+const isEnabled = (feature: RichTextFeature): boolean =>
+  isRichTextFeatureEnabled(props.features, feature)
 
 const emit = defineEmits<{
   'update:modelValue': [value: Record<string, unknown>]
@@ -79,6 +76,10 @@ const isBroken = ref(false)
 // Identity of the doc we last emitted, so the modelValue watcher can skip the
 // round-trip of our own edit instead of re-diffing the whole document.
 let lastEmittedValue: Record<string, unknown> | null = null
+// The document the form holds, as the editor last emitted or received it. An
+// update whose content matches it (e.g. only a trailing paragraph added by
+// Tiptap on the first click) is not an edit and is not emitted.
+let knownDoc: ProseMirrorNode | null = null
 
 const headingLevelNumber = (level: HeadingLevel): Level => Number(level.charAt(1)) as Level
 
@@ -111,65 +112,19 @@ const headingDisplayLabel = computed(() => {
   return getHeadingLabel(currentHeading.value)
 })
 
-// Disabling a feature drops its extension (not just its button) so the node/mark
-// can't slip in via paste or input rules either.
-const buildExtensions = (): AnyExtension[] => {
-  const starterKitConfig: Record<string, unknown> = {
-    heading: isEnabled('heading') ? { levels: [1, 2, 3, 4, 5, 6] } : false,
-    link: isEnabled('link') ? { openOnClick: false, autolink: true } : false,
-  }
-  const toggleable: RichTextFeature[] = [
-    'bold',
-    'italic',
-    'underline',
-    'strike',
-    'code',
-    'bulletList',
-    'orderedList',
-    'blockquote',
-    'codeBlock',
-    'horizontalRule',
-  ]
-  for (const feature of toggleable) {
-    if (!isEnabled(feature)) starterKitConfig[feature] = false
-  }
-
-  const extensions: AnyExtension[] = [
-    StarterKit.configure(starterKitConfig),
-    TextClass,
-    PlaceholderToken,
-  ]
-
-  if (isEnabled('internalLink')) extensions.push(InternalLink)
-  if (isEnabled('bulletList') || isEnabled('orderedList')) extensions.push(ListStyle)
-  if (isEnabled('table')) {
-    extensions.push(
-      Table.configure({
-        resizable: true,
-        handleWidth: 4,
-        cellMinWidth: 50,
-        lastColumnResizable: true,
-        allowTableNodeSelection: true,
-      }),
-      TableRow,
-      TableHeader,
-      TableCell
-    )
-  }
-
-  return extensions
-}
-
 const editor = useEditor({
   content: toRichTextDoc(props.modelValue) ?? props.modelValue,
   editable: !props.disabled,
-  extensions: buildExtensions(),
+  extensions: createRichTextExtensions(props.features),
   editorProps: {
     // Sanitize Word/Office HTML on paste; other sources pass through untouched.
     transformPastedHTML: (html: string) => transformPastedHtml(html),
   },
   onUpdate: ({ editor: currentEditor }) => {
     if (isApplyingExternalContent.value) return
+    knownDoc ??= parseDoc(currentEditor.schema, toRichTextDoc(props.modelValue))
+    if (knownDoc && isSameContent(currentEditor.state.doc, knownDoc)) return
+    knownDoc = currentEditor.state.doc
     const json = currentEditor.getJSON()
     lastEmittedValue = json
     emit('update:modelValue', json)
@@ -296,13 +251,17 @@ const resetDocument = () => {
   })
 }
 
-const parseIncomingDoc = (value: Record<string, unknown>) => {
+function parseDoc(schema: Schema, value: Record<string, unknown> | null): ProseMirrorNode | null {
+  if (!value) return null
   try {
-    return editor.value?.schema.nodeFromJSON(value) ?? null
+    return schema.nodeFromJSON(value)
   } catch {
     return null
   }
 }
+
+const parseIncomingDoc = (value: Record<string, unknown>) =>
+  editor.value ? parseDoc(editor.value.schema, value) : null
 
 watch(
   () => props.modelValue,
@@ -323,14 +282,18 @@ watch(
     // is still applied below — leniently, by tiptap — so the editor never keeps
     // emitting the previous document over the incoming one.
     const incoming = parseIncomingDoc(doc)
-    if (incoming && editor.value.state.doc.eq(incoming)) {
+    knownDoc = incoming
+    if (incoming && isSameContent(editor.value.state.doc, incoming)) {
       isBroken.value = false
       return
     }
 
     isApplyingExternalContent.value = true
     try {
-      editor.value.commands.setContent(doc)
+      // A parsed doc replaces only what changed, so a focused editor keeps its
+      // cursor while edits stream in (e.g. from the preview).
+      if (incoming) applyDocument(editor.value, incoming)
+      else editor.value.commands.setContent(doc)
       isBroken.value = incoming === null
     } catch {
       isBroken.value = true
@@ -813,6 +776,7 @@ onBeforeUnmount(() => {
       :editor="editor"
       :tabindex="props.disabled ? -1 : undefined"
       class="rounded border border-input-border bg-input shadow-sm"
+      data-validation-target="true"
     />
 
     <LinkDialog

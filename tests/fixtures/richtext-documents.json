@@ -1,0 +1,542 @@
+{
+  "$comment": "Rich text documents, shared byte-identical by the CMS (tests/fixtures/richtext-documents.json) and the SDK (packages/client/src/__fixtures__/richtext-documents.json). `documents` covers every node, mark and attribute the CMS rich text editor supports, in the exact form its Tiptap editor stores; both editors must load and return each one unchanged, and the SDK renderer must handle all of them. `rejected` lists documents a field's schema can't hold, which the preview must leave to the CMS instead of editing them. Change both copies together.",
+  "documents": [
+    {
+      "name": "paragraphs, headings and hard breaks",
+      "document": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "heading",
+            "attrs": {
+              "level": 1
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "Title"
+              }
+            ]
+          },
+          {
+            "type": "heading",
+            "attrs": {
+              "level": 6
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "Small"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Line one"
+              },
+              {
+                "type": "hardBreak"
+              },
+              {
+                "type": "text",
+                "text": "Line two"
+              }
+            ]
+          },
+          {
+            "type": "paragraph"
+          }
+        ]
+      }
+    },
+    {
+      "name": "marks",
+      "document": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "marks": [
+                  {
+                    "type": "bold"
+                  }
+                ],
+                "text": "bold"
+              },
+              {
+                "type": "text",
+                "text": " "
+              },
+              {
+                "type": "text",
+                "marks": [
+                  {
+                    "type": "italic"
+                  }
+                ],
+                "text": "italic"
+              },
+              {
+                "type": "text",
+                "text": " "
+              },
+              {
+                "type": "text",
+                "marks": [
+                  {
+                    "type": "underline"
+                  }
+                ],
+                "text": "underline"
+              },
+              {
+                "type": "text",
+                "text": " "
+              },
+              {
+                "type": "text",
+                "marks": [
+                  {
+                    "type": "strike"
+                  }
+                ],
+                "text": "strike"
+              },
+              {
+                "type": "text",
+                "text": " "
+              },
+              {
+                "type": "text",
+                "marks": [
+                  {
+                    "type": "code"
+                  }
+                ],
+                "text": "code"
+              },
+              {
+                "type": "text",
+                "text": " "
+              },
+              {
+                "type": "text",
+                "marks": [
+                  {
+                    "type": "textClass",
+                    "attrs": {
+                      "class": "text-brand"
+                    }
+                  },
+                  {
+                    "type": "bold"
+                  },
+                  {
+                    "type": "italic"
+                  }
+                ],
+                "text": "combined"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "links",
+      "document": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "https://example.com",
+                      "target": "_blank",
+                      "rel": "noopener noreferrer nofollow",
+                      "class": null,
+                      "title": null
+                    }
+                  }
+                ],
+                "text": "external"
+              },
+              {
+                "type": "text",
+                "text": " and "
+              },
+              {
+                "type": "text",
+                "marks": [
+                  {
+                    "type": "internalLink",
+                    "attrs": {
+                      "content": "01HZX5V3K8Q2W4E6R8T0Y2U4I6",
+                      "anchor": "pricing",
+                      "target": null,
+                      "rel": null
+                    }
+                  }
+                ],
+                "text": "internal"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "lists, quotes and code",
+      "document": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "bulletList",
+            "attrs": {
+              "className": "list-check"
+            },
+            "content": [
+              {
+                "type": "listItem",
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "One"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "bulletList",
+                    "attrs": {
+                      "className": null
+                    },
+                    "content": [
+                      {
+                        "type": "listItem",
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "Nested"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "orderedList",
+            "attrs": {
+              "className": null,
+              "start": 3,
+              "type": null
+            },
+            "content": [
+              {
+                "type": "listItem",
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "Three"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "blockquote",
+            "content": [
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Quoted"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "codeBlock",
+            "attrs": {
+              "language": "ts"
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "const a = 1"
+              }
+            ]
+          },
+          {
+            "type": "horizontalRule"
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Hello "
+              },
+              {
+                "type": "placeholderToken",
+                "attrs": {
+                  "key": "firstName",
+                  "label": "{firstName}"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "table",
+      "document": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "table",
+            "content": [
+              {
+                "type": "tableRow",
+                "content": [
+                  {
+                    "type": "tableHeader",
+                    "attrs": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "colwidth": null,
+                      "align": null
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "Plan"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "tableHeader",
+                    "attrs": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "colwidth": [120],
+                      "align": null
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "Price"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "tableRow",
+                "content": [
+                  {
+                    "type": "tableCell",
+                    "attrs": {
+                      "colspan": 2,
+                      "rowspan": 1,
+                      "colwidth": null,
+                      "align": null
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "Free"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "paragraph"
+          }
+        ]
+      }
+    }
+  ],
+  "rejected": [
+    {
+      "name": "unknown node",
+      "config": {},
+      "document": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "image",
+            "attrs": {
+              "src": "https://example.com/a.png"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "mark of a disabled feature",
+      "config": {
+        "features": {
+          "bold": false
+        }
+      },
+      "document": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "marks": [
+                  {
+                    "type": "bold"
+                  }
+                ],
+                "text": "bold"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "node of a disabled feature",
+      "config": {
+        "features": {
+          "table": false
+        }
+      },
+      "document": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "table",
+            "content": [
+              {
+                "type": "tableRow",
+                "content": [
+                  {
+                    "type": "tableHeader",
+                    "attrs": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "colwidth": null,
+                      "align": null
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "Plan"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "tableHeader",
+                    "attrs": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "colwidth": [120],
+                      "align": null
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "Price"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "tableRow",
+                "content": [
+                  {
+                    "type": "tableCell",
+                    "attrs": {
+                      "colspan": 2,
+                      "rowspan": 1,
+                      "colwidth": null,
+                      "align": null
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "Free"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "paragraph"
+          }
+        ]
+      }
+    }
+  ]
+}

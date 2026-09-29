@@ -4107,7 +4107,8 @@
       "copied": "Value copied to clipboard"
     },
     "preview": {
-      "copied": "Link copied to clipboard"
+      "copied": "Link copied to clipboard",
+      "blockRejected": "This block can't go there."
     },
     "title": "Notifications",
     "tooltip": "Notifications",

@@ -11,6 +11,7 @@ import {
 } from '~/components/ui/command'
 import IconName from '~/components/ui/IconName.vue'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
+import { isBlockAllowed } from '~/lib/blockTreeEdits'
 
 const emit = defineEmits<{
   (e: 'select', payload: { blockSlug: string; template: BlockTemplate | null }): void
@@ -24,7 +25,8 @@ const props = defineProps<{
   canMutate?: boolean
 }>()
 
-const isOpen = ref(false)
+/** Controllable so the preview's "insert block" action can open the picker. */
+const isOpen = defineModel<boolean>('open', { default: false })
 const templatesBlock = ref<BlockResource | null>(null)
 
 const { useBlocksQuery } = useBlocks(props.spaceId)
@@ -36,40 +38,9 @@ const { useBlockTemplatesQuery } = useBlockTemplates(
 )
 const { data: templates } = useBlockTemplatesQuery()
 
-const activeBlockWhitelist = computed(() =>
-  (props.item.block_whitelist || []).filter((slug): slug is string => Boolean(slug))
+const possibleBlocks = computed(
+  () => blocks.value?.data.filter((block) => isBlockAllowed(props.item, block)) || []
 )
-
-const activeTagWhitelist = computed(() =>
-  (props.item.tag_whitelist || []).filter((tag): tag is string => Boolean(tag))
-)
-
-const possibleBlocks = computed(() => {
-  return (
-    blocks.value?.data.filter((block: BlockResource) => {
-      const isValidType = ['nestable', 'universal'].includes(block.type)
-      const blockAllowlistActive = activeBlockWhitelist.value.length > 0
-      const tagAllowlistActive = activeTagWhitelist.value.length > 0
-      const hasExplicitAllowlists = blockAllowlistActive || tagAllowlistActive
-      const restrictionEnabled =
-        props.item.restrict_blocks || props.item.restrict_tags || hasExplicitAllowlists
-      const matchesBlockWhitelist = activeBlockWhitelist.value.includes(block.slug)
-      const matchesTagWhitelist = Boolean(
-        block.tags?.some((tag) => activeTagWhitelist.value.includes(tag))
-      )
-
-      if (!isValidType) {
-        return false
-      }
-
-      if (!restrictionEnabled || !hasExplicitAllowlists) {
-        return true
-      }
-
-      return matchesBlockWhitelist || matchesTagWhitelist
-    }) || []
-  )
-})
 
 const select = (payload: { blockSlug: string; template: BlockTemplate | null }) => {
   emit('select', payload)
@@ -85,13 +56,17 @@ const pickBlock = (block: BlockResource) => {
   select({ blockSlug: block.slug, template: null })
 }
 
-const handleOpen = (newIsOpen: boolean) => {
-  templatesBlock.value = null
+const trigger = useTemplateRef<HTMLButtonElement>('trigger')
 
-  if (newIsOpen && possibleBlocks.value.length === 1) {
+watch(isOpen, (open) => {
+  templatesBlock.value = null
+  // Opened from the preview, the trigger may be scrolled out of the form.
+  if (open) trigger.value?.scrollIntoView({ block: 'nearest' })
+
+  if (open && possibleBlocks.value.length === 1) {
     select({ blockSlug: possibleBlocks.value[0].slug, template: null })
   }
-}
+})
 
 const handleInputKeydown = (event: KeyboardEvent) => {
   const input = event.target as HTMLInputElement
@@ -136,13 +111,13 @@ watch([isOpen, templatesBlock], () => {
   <Popover
     v-if="props.canMutate !== false"
     v-model:open="isOpen"
-    @update:open="handleOpen"
   >
     <div class="flex opacity-0 transition-opacity hover:opacity-100">
       <div class="absolute inset-x-0 -mt-3 border-t-2 border-accent pt-4" />
       <div class="absolute inset-x-0 z-10 mx-auto -mt-6 flex transform justify-center gap-2">
         <PopoverTrigger as-child>
           <button
+            ref="trigger"
             class="flex size-6 cursor-pointer items-center justify-center rounded-full bg-accent text-accent-foreground"
             :aria-label="$t('actions.blocks.add')"
           >

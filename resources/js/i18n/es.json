@@ -4107,7 +4107,8 @@
       "copied": "Valor copiado al portapapeles"
     },
     "preview": {
-      "copied": "Enlace copiado al portapapeles"
+      "copied": "Enlace copiado al portapapeles",
+      "blockRejected": "Este bloque no se puede colocar ahí."
     },
     "title": "Notificaciones",
     "tooltip": "Notificaciones",
