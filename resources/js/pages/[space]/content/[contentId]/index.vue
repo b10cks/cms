@@ -4,6 +4,7 @@ import { watchDebounced } from '@vueuse/core'
 import { useRouteQuery } from '@vueuse/router'
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
 import { TransitionGroup } from 'vue'
+import { toast } from 'vue-sonner'
 
 import BlockTemplateCreateDialog from '~/components/blocks/BlockTemplateCreateDialog.vue'
 import CommentsSidebar from '~/components/comments/CommentsSidebar.vue'
@@ -23,14 +24,32 @@ import { useContentEditorPage } from '~/composables/useContentEditorPage'
 import {
   useContentLiveCollaboration,
   type ContentCommitAction,
+  type ContentFieldUpdatePayload,
 } from '~/composables/useContentLiveCollaboration'
-import { useContentSchemaState } from '~/composables/useContentSchemaState'
+import {
+  normalizeSchemaField,
+  resolveItemLimits,
+  useContentSchemaState,
+} from '~/composables/useContentSchemaState'
+import type { ContentTreeItem } from '~/composables/useContentTree'
 import { useGlobalClipboard } from '~/composables/useGlobalClipboard'
 import { queryKeys } from '~/composables/useQueryClient'
 import {
   createContentDefaultsBlockLookup,
   hydrateContentWithSchema,
 } from '~/composables/useSchemaDefaults'
+import {
+  findBlock,
+  findBlockPath,
+  isBlockAllowed,
+  planBlockAction,
+  planBlockMove,
+  planFieldUpdate,
+  resolveFieldTarget,
+  type BlockListRules,
+  type BlockPickerRequest,
+  type BlockPlan,
+} from '~/lib/blockTreeEdits'
 import {
   buildMissingLanguageDraft,
   resolveContentLanguage,
@@ -43,8 +62,14 @@ import {
   isSameJsonValue,
   useEditorContentModel,
 } from '~/lib/contentEditorState'
+import { focusField } from '~/lib/fieldFocus'
 import type { ContentResource } from '~/types/contents'
-import type { FieldUpdateEvent } from '~/utils/preview-bridge'
+import type {
+  BlockActionEvent,
+  BlockMoveEvent,
+  FieldSelectEvent,
+  FieldUpdateEvent,
+} from '~/utils/preview-bridge'
 
 const { t } = useI18n()
 const queryClient = useQueryClient()
@@ -279,7 +304,7 @@ const validation = useContentSchemaState({
   blocks,
 })
 provideValidationState(validation)
-const { clearServerErrors, resetValidationState, sanitizedContent } = validation
+const { clearServerErrors, markFieldDirty, resetValidationState, sanitizedContent } = validation
 
 const { useCommentsQuery } = useComments(
   spaceId,
@@ -510,9 +535,7 @@ const isVisualEditorAvailable = computed(() => {
 })
 
 const updatePreviewItem = (item: Record<string, unknown>) => {
-  if (previewRef.value) {
-    ;(previewRef.value as any).updateItem({ ...item })
-  }
+  previewRef.value?.updateItem({ ...item })
 }
 
 const {
@@ -550,50 +573,164 @@ const commitPersistedContent = (
   broadcastPersistedContent(nextContent, action)
 }
 
-const findNestedObjectById = (data: unknown, id: string): Record<string, unknown> | null => {
-  if (typeof data !== 'object' || data === null) return null
+/**
+ * FIELD_UPDATE: an edit made in the preview, inline text or in-place rich
+ * text. Applied like the form's own edit: it updates the form (a focused rich
+ * text editor keeps its cursor), marks the field dirty and goes to
+ * collaborators. It is not echoed back on any protocol: the preview already
+ * shows it, and re-rendering the text under an inline caret would move it.
+ */
+const updateField = (update: FieldUpdateEvent) => {
+  if (!canManageContent.value) return
 
-  if (Array.isArray(data)) {
-    for (const item of data) {
-      const result = findNestedObjectById(item, id)
-      if (result) return result
-    }
-    return null
-  }
+  const root = editorContentModel.value
+  const path = update.path ?? (update.field ? [update.field] : [])
+  const edit = planFieldUpdate(root, update.itemId, path, update.value)
+  if (!edit) return
 
-  const obj = data as Record<string, unknown>
-  if (obj.id === id) return obj
-
-  for (const key in obj) {
-    if (Object.hasOwn(obj, key) && typeof obj[key] === 'object' && obj[key] !== null) {
-      const result = findNestedObjectById(obj[key], id)
-      if (result) return result
-    }
-  }
-
-  return null
+  edit.block[edit.field] = edit.next
+  editorContentModel.value = { ...root }
+  markFieldDirty(`content.${edit.fieldPath.join('.')}`)
+  queueFieldUpdate({
+    itemId: edit.block.id,
+    field: edit.field,
+    previousValue: edit.previous,
+    value: edit.next,
+  })
 }
 
-const updateField = (update: FieldUpdateEvent) => {
-  if (!content.value?.content) return
+/** Field edits go to collaborators, and to the preview as a patch of just that field. */
+const handleFieldUpdate = (payload: ContentFieldUpdatePayload) => {
+  queueFieldUpdate(payload)
+  // Root fields are patched relative to the root, which a site may render without its id.
+  const itemId = payload.itemId === content.value?.id ? undefined : payload.itemId
+  previewRef.value?.patchItem({ itemId, path: [payload.field], value: payload.value })
+}
 
-  // Newer site SDKs address fields by path; only flat (top-of-block) paths map
-  // onto the (itemId, field) content model used here.
-  const field = update.field ?? (update.path?.length === 1 ? String(update.path[0]) : null)
-  if (!field) return
+const editorRef = useTemplateRef('editorRef')
+const newBlockId = useUlid()
+const blockPickerRequest = ref<BlockPickerRequest | null>(null)
+const blocksBySlug = computed(() => new Map(blocks.value.map((block) => [block.slug, block])))
 
-  if (update.itemId === content.value.id) {
-    content.value.content = {
-      ...(content.value.content as Record<string, unknown>),
-      [field]: update.value,
-    }
+/** Schema rules of the blocks field `parent[field]`. */
+const blockListRules = (parent: ContentTreeItem, field: string): BlockListRules | null => {
+  const schema = hydrationBlockLookup.value[parent.block]?.schema?.[field]
+  if (!schema) return null
+
+  const normalized = normalizeSchemaField(field, schema)
+  if (normalized.type !== 'blocks') return null
+
+  return {
+    ...resolveItemLimits(normalized),
+    accepts: (slug) => {
+      const block = blocksBySlug.value.get(slug)
+      return !!block && isBlockAllowed(schema as BlocksSchema, block)
+    },
+  }
+}
+
+/** Select block `itemId` (the root shows as no selection) and wait for its form. */
+const selectBlock = async (itemId: string | null) => {
+  blockPickerRequest.value = null
+  mode.value = 'edit'
+  const hash = itemId && itemId !== content.value?.id ? `#${itemId}` : ''
+  if (route.hash !== hash) await router.replace({ ...route, hash })
+  await nextTick()
+}
+
+/**
+ * Let the preview edit a rich text field in place when the user may edit it
+ * and the preview picked the field itself, not something inside its value.
+ */
+const offerRichTextEditing = ({ itemId, path }: FieldSelectEvent) => {
+  if (!canManageContent.value) return
+
+  const root = editorContentModel.value
+  const target = resolveFieldTarget(root, itemId, path)
+  const blockPath = target && findBlockPath(root, target.itemId)
+  if (!target?.field || !blockPath || target.fieldPath.length !== blockPath.length + 1) return
+
+  const block = findBlock(root, target.itemId)
+  const schema = block && hydrationBlockLookup.value[block.block]?.schema?.[target.field]
+  if (!schema || normalizeSchemaField(target.field, schema).type !== 'richtext') return
+
+  const { features, heading_levels: headingLevels } = schema as RichTextSchema
+  previewRef.value?.sendFieldConfig({ itemId, path, richtext: { features, headingLevels } })
+}
+
+/** FIELD_SELECT: open the block and focus the field the preview points at. */
+const selectField = async ({ itemId, path }: FieldSelectEvent) => {
+  const target = resolveFieldTarget(editorContentModel.value, itemId, path)
+  if (!target) return
+  offerRichTextEditing({ itemId, path })
+
+  await selectBlock(target.itemId)
+  if (target.field) {
+    editorRef.value?.showField(target.field)
+    await nextTick()
+  }
+  focusField(`content.${target.fieldPath.join('.')}`)
+}
+
+/**
+ * Apply a structural edit requested by the preview the way BlocksBlock applies
+ * its own: replace the lists, tell collaborators, push the tree to the preview.
+ */
+const applyBlockPlan = async (plan: BlockPlan | null) => {
+  if (!plan) return
+
+  if (plan.kind === 'rejected') {
+    toast.error(t('notifications.preview.blockRejected'))
     return
   }
 
-  const target = findNestedObjectById(content.value.content, update.itemId)
-  if (target) {
-    target[field] = update.value
+  const root = editorContentModel.value
+
+  if (plan.kind === 'pick') {
+    const { parent, field, index } = plan.slot
+    const path = findBlockPath(root, parent.id)
+    if (!path) return
+
+    await selectBlock(parent.id)
+    editorRef.value?.showField(field)
+    blockPickerRequest.value = { path: [...path, field].join('.'), index }
+    return
   }
+
+  for (const { parent, field, next } of plan.edits) parent[field] = next
+  // Sync the API payload from the tree, as the editor's own v-model does.
+  editorContentModel.value = { ...root }
+
+  for (const { parent, field, previous, operation } of plan.edits) {
+    broadcastBlockOperation({ ...operation, parentId: parent.id, field, previousValue: previous })
+    const path = findBlockPath(editorContentModel.value, parent.id)
+    if (path) markFieldDirty(`content.${[...path, field].join('.')}`)
+  }
+  updatePreviewItem(editorContentModel.value)
+
+  const selected = selectedItemId.value
+  if (plan.select) {
+    await selectBlock(plan.select)
+  } else if (selected && !findBlockPath(editorContentModel.value, selected)) {
+    // The selected block was deleted, or was inside the deleted one.
+    await selectBlock(plan.edits[0].parent.id)
+  }
+}
+
+const runBlockAction = ({ itemId, action }: BlockActionEvent) => {
+  if (!canManageContent.value) return
+
+  applyBlockPlan(
+    planBlockAction(editorContentModel.value, itemId, action, blockListRules, newBlockId)
+  )
+}
+
+const moveBlock = ({ itemId, targetId, position }: BlockMoveEvent) => {
+  if (!canManageContent.value) return
+
+  applyBlockPlan(
+    planBlockMove(editorContentModel.value, itemId, targetId, position, blockListRules)
+  )
 }
 
 const template = reactive({
@@ -628,11 +765,10 @@ provide('getSubtreeCollaborators', getSubtreeCollaborators)
 provide('getAggregatedCollaboratorsForField', getAggregatedCollaboratorsForField)
 provide('getDraftOwners', getDraftOwners)
 provide('updatePreviewItem', updatePreviewItem)
-provide('updateHoverItem', (id: string) => {
-  if (previewRef.value) {
-    ;(previewRef.value as any).updateHover(id)
-  }
+provide('updateHoverItem', (id: string | null) => {
+  previewRef.value?.updateHover(id)
 })
+provide('blockPickerRequest', blockPickerRequest)
 provide('resetDirtyState', resetDirtyState)
 // Both sides are hydrated with schema defaults, so a field the entry never
 // stored compares equal here and a metadata-only save can drop the payload.
@@ -674,6 +810,9 @@ provide('reloadServerContent', reloadServerContent)
     :space-id="spaceId"
     @select-item="(itemId) => (selectedItemId = itemId)"
     @update-field="updateField"
+    @select-field="selectField"
+    @block-action="runBlockAction"
+    @block-move="moveBlock"
   />
   <TabsRoot
     v-model="mode"
@@ -695,6 +834,7 @@ provide('reloadServerContent', reloadServerContent)
       >
         <EditorComponent
           v-if="content.block"
+          ref="editorRef"
           v-model="editorContentModel"
           :root-id="content.id"
           :block-id="content.block.id"
@@ -704,7 +844,7 @@ provide('reloadServerContent', reloadServerContent)
           :item-id="selectedItemId"
           @navigate="handleNavigate"
           @create-template="handleTemplateTrigger"
-          @field-update="queueFieldUpdate"
+          @field-update="handleFieldUpdate"
           @field-focus="updateFieldFocus"
           @block-operation="broadcastBlockOperation"
         />
