@@ -693,6 +693,7 @@ const applyBlockPlan = async (plan: BlockPlan | null) => {
 
     await selectBlock(parent.id)
     editorRef.value?.showField(field)
+    await nextTick()
     blockPickerRequest.value = { path: [...path, field].join('.'), index }
     return
   }
