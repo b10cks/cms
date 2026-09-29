@@ -1,3 +1,5 @@
+import type { TiptapEditorHTMLElement } from '@tiptap/core'
+import { TextSelection } from '@tiptap/pm/state'
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it } from 'vitest'
 
@@ -65,5 +67,52 @@ describe('TiptapEditor broken document banner', () => {
     await wrapper.setProps({ modelValue: { foo: 'bar' } })
 
     expect(isShowingBrokenBanner(wrapper)).toBe(true)
+  })
+})
+
+describe('TiptapEditor outside edits', () => {
+  it('keeps the cursor while an edit from elsewhere arrives, without emitting it', async () => {
+    const wrapper = await mountEditor(paragraphDoc('Hello world'))
+    const view = (wrapper.find('.ProseMirror').element as TiptapEditorHTMLElement).editor?.view
+    if (!view) throw new Error('No editor view')
+    // After "Hello".
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 6)))
+
+    await wrapper.setProps({ modelValue: paragraphDoc('Oh, Hello world') })
+
+    expect(view.state.doc.textContent).toBe('Oh, Hello world')
+    expect(view.state.selection.from).toBe(10)
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+  })
+})
+
+describe('TiptapEditor trailing paragraph', () => {
+  const listDoc = {
+    type: 'doc',
+    content: [
+      {
+        type: 'bulletList',
+        content: [
+          {
+            type: 'listItem',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Point' }] }],
+          },
+        ],
+      },
+    ],
+  }
+
+  it('does not emit when clicking in only adds the trailing paragraph', async () => {
+    const wrapper = await mountEditor(listDoc)
+    const view = (wrapper.find('.ProseMirror').element as TiptapEditorHTMLElement).editor?.view
+    if (!view) throw new Error('No editor view')
+
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 4)))
+
+    expect(view.state.doc.lastChild?.type.name).toBe('paragraph')
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+
+    view.dispatch(view.state.tr.insertText('!', 8))
+    expect(wrapper.emitted('update:modelValue')).toHaveLength(1)
   })
 })
