@@ -97,6 +97,17 @@ describe('planFieldUpdate', () => {
     })
   })
 
+  it('preserves an array when inline text targets it, while allowing a deep edit', () => {
+    const root = tree()
+    root.actions = [{ label: 'First' }, { label: 'Second' }]
+
+    expect(planFieldUpdate(root, 'entry-1', ['actions'], 'Changed')).toBeNull()
+    expect(planFieldUpdate(root, 'entry-1', ['actions', 0, 'label'], 'Changed')?.next).toEqual([
+      { label: 'Changed' },
+      { label: 'Second' },
+    ])
+  })
+
   it('skips values that are already there and paths without a field', () => {
     expect(planFieldUpdate(tree(), 'hero-1', ['headline'], 'Hi')).toBeNull()
     expect(planFieldUpdate(tree(), 'nope', ['headline'], 'Hey')).toBeNull()

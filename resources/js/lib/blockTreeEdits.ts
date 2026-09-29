@@ -194,6 +194,15 @@ export function planFieldUpdate(
   if (!target?.field || !blockPath || !block) return null
 
   const previous = block[target.field]
+  // Inline text cannot replace a structured list. The preview must send a
+  // path into the list, or select the field in the editor.
+  if (
+    Array.isArray(previous) &&
+    target.fieldPath.length === blockPath.length + 1 &&
+    !Array.isArray(value)
+  ) {
+    return null
+  }
   const next = setAt(previous, target.fieldPath.slice(blockPath.length + 1), value)
   if (isSameJsonValue(previous, next)) return null
 
