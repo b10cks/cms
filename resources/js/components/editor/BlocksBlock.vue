@@ -22,6 +22,7 @@ import type {
     ContentFieldUpdatePayload,
 } from '~/composables/useContentLiveCollaboration'
 import type { ContentTreeItem } from '~/composables/useContentTree'
+import type { BlockPickerRequest } from '~/lib/blockTreeEdits'
 import {
     createBlockItemWithDefaults,
     createContentDefaultsBlockLookup,
@@ -79,6 +80,29 @@ const submitValidationAttempted = inject<Ref<boolean> | undefined>(
   'submitValidationAttempted',
   undefined
 )
+
+/**
+ * The preview asked to insert a block into this list: open the picker at that
+ * position. Keyed by the list's path from the content root.
+ */
+const blockPickerRequest = inject<Ref<BlockPickerRequest | null>>('blockPickerRequest', ref(null))
+const openPickerIndex = ref<number | null>(null)
+
+watch(
+  blockPickerRequest,
+  (request) => {
+    if (!request || request.path !== (props.pathPrefix || []).join('.')) return
+
+    openPickerIndex.value = request.index
+    blockPickerRequest.value = null
+  },
+  { immediate: true }
+)
+
+const setPickerOpen = (index: number, open: boolean) => {
+  if (open) openPickerIndex.value = index
+  else if (openPickerIndex.value === index) openPickerIndex.value = null
+}
 
 const getBlockHeaderBlock = (content: Record<string, unknown>) =>
   resolveItemBlock(blocks.value?.data, content)
@@ -576,10 +600,12 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
         >
           <AccordionHeader class="group relative">
             <AddDropdown
+              :open="openPickerIndex === i"
               :item="item"
               :space-id="spaceId"
               :can-mutate="!props.readOnly"
               :has-clipboard-item="hasClipboardItem"
+              @update:open="(open: boolean) => setPickerOpen(i, open)"
               @paste="() => pasteItems(null, i)"
               @select="
                 ({ blockSlug, template }: { blockSlug: string; template: BlockTemplate | null }) =>
@@ -722,10 +748,12 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
           </AccordionContent>
         </AccordionItem>
         <AddDropdown
+          :open="openPickerIndex === blockItems.length"
           :item="item"
           :space-id="spaceId"
           :can-mutate="!props.readOnly"
           :has-clipboard-item="hasClipboardItem"
+          @update:open="(open: boolean) => setPickerOpen(blockItems.length, open)"
           @paste="pasteItems"
           @select="
             ({ blockSlug, template }: { blockSlug: string; template: BlockTemplate | null }) =>

@@ -1,0 +1,401 @@
+{
+  "$comment": "Preview bridge protocol, shared byte-identical by the CMS (tests/fixtures/bridge-protocol.json) and the SDK (packages/client/src/__fixtures__/bridge-protocol.json). Both test suites assert their bridge sends and accepts exactly these messages. Change both copies together. `since` is the protocol version a message was introduced in; editors must not send newer messages to older previews. `invalid` lists payloads the receiving side must drop.",
+  "protocol": 3,
+  "ready": {
+    "type": "B10CKS_BRIDGE_READY",
+    "payload": {
+      "protocol": 3
+    }
+  },
+  "messages": [
+    {
+      "type": "CONTENT_UPDATE",
+      "direction": "editor-to-preview",
+      "since": 0,
+      "examples": [
+        {
+          "content": {
+            "id": "entry-1",
+            "block": "page",
+            "body": [
+              {
+                "id": "hero-1",
+                "block": "hero_section",
+                "headline": "Hello"
+              }
+            ]
+          }
+        },
+        {
+          "content": {
+            "id": "hero-1",
+            "block": "hero_section",
+            "headline": "Hello"
+          }
+        }
+      ],
+      "invalid": [
+        {},
+        {
+          "content": "hero"
+        }
+      ]
+    },
+    {
+      "type": "CONTENT_PATCH",
+      "direction": "editor-to-preview",
+      "since": 1,
+      "examples": [
+        {
+          "itemId": "hero-1",
+          "path": ["headline"],
+          "value": "Hello world"
+        },
+        {
+          "path": ["title"],
+          "value": "Home"
+        },
+        {
+          "itemId": "list-1",
+          "path": ["items", 2, "title"],
+          "value": null
+        }
+      ],
+      "invalid": [
+        {
+          "path": "headline",
+          "value": "Hi"
+        },
+        {
+          "itemId": "hero-1",
+          "path": ["items", -1],
+          "value": "Hi"
+        },
+        {
+          "itemId": "hero-1",
+          "path": ["headline"]
+        }
+      ]
+    },
+    {
+      "type": "SELECT_UPDATE",
+      "direction": "editor-to-preview",
+      "since": 0,
+      "examples": [
+        {
+          "selectedItem": "hero-1"
+        },
+        {
+          "selectedItem": null
+        }
+      ],
+      "invalid": [
+        {},
+        {
+          "selectedItem": 42
+        }
+      ]
+    },
+    {
+      "type": "HOVER_UPDATE",
+      "direction": "editor-to-preview",
+      "since": 0,
+      "examples": [
+        {
+          "selectedItem": "hero-1"
+        },
+        {
+          "selectedItem": null
+        }
+      ],
+      "invalid": [
+        {
+          "selectedItem": 42
+        }
+      ]
+    },
+    {
+      "type": "BLOCK_LABELS",
+      "direction": "editor-to-preview",
+      "since": 1,
+      "examples": [
+        {
+          "labels": {
+            "hero_section": "Hero banner",
+            "page": "Page"
+          }
+        }
+      ],
+      "invalid": [
+        {
+          "labels": ["Hero"]
+        },
+        {
+          "labels": {
+            "hero_section": 1
+          }
+        }
+      ]
+    },
+    {
+      "type": "FIELD_CONFIG",
+      "direction": "editor-to-preview",
+      "since": 3,
+      "examples": [
+        {
+          "itemId": "hero-1",
+          "path": ["body"],
+          "richtext": {}
+        },
+        {
+          "itemId": "list-1",
+          "path": ["items", 2, "text"],
+          "richtext": {
+            "features": {
+              "table": false,
+              "codeBlock": false
+            },
+            "headingLevels": ["h2", "h3", "p"]
+          }
+        }
+      ],
+      "invalid": [
+        {
+          "itemId": "hero-1",
+          "path": ["body"]
+        },
+        {
+          "itemId": "",
+          "path": ["body"],
+          "richtext": {}
+        },
+        {
+          "itemId": "hero-1",
+          "path": ["body"],
+          "richtext": {
+            "features": {
+              "bold": "no"
+            }
+          }
+        },
+        {
+          "itemId": "hero-1",
+          "path": ["body"],
+          "richtext": {
+            "headingLevels": ["h7"]
+          }
+        }
+      ]
+    },
+    {
+      "type": "HIDDEN_BLOCKS",
+      "direction": "editor-to-preview",
+      "since": 2,
+      "examples": [
+        {
+          "ids": ["hero-1", "card-3"]
+        },
+        {
+          "ids": []
+        }
+      ],
+      "invalid": [
+        {},
+        {
+          "ids": "hero-1"
+        },
+        {
+          "ids": ["hero-1", 42]
+        }
+      ]
+    },
+    {
+      "type": "SELECT_UPDATE",
+      "direction": "preview-to-editor",
+      "since": 0,
+      "examples": [
+        {
+          "selectedItem": "hero-1"
+        }
+      ],
+      "invalid": [
+        {},
+        {
+          "selectedItem": 42
+        }
+      ]
+    },
+    {
+      "type": "FIELD_UPDATE",
+      "direction": "preview-to-editor",
+      "since": 0,
+      "examples": [
+        {
+          "itemId": "hero-1",
+          "path": ["headline"],
+          "value": "Hello world"
+        },
+        {
+          "itemId": "hero-1",
+          "field": "headline",
+          "value": "Hello world"
+        },
+        {
+          "itemId": "hero-1",
+          "path": ["body"],
+          "value": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "marks": [
+                      {
+                        "type": "bold"
+                      }
+                    ],
+                    "text": "Hello"
+                  },
+                  {
+                    "type": "text",
+                    "text": " world"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "invalid": [
+        {
+          "itemId": "hero-1",
+          "path": ["headline"]
+        },
+        {
+          "itemId": "hero-1",
+          "value": "Hello world"
+        },
+        {
+          "itemId": "hero-1",
+          "path": [-1],
+          "value": "Hello world"
+        }
+      ]
+    },
+    {
+      "type": "FIELD_SELECT",
+      "direction": "preview-to-editor",
+      "since": 0,
+      "examples": [
+        {
+          "itemId": "hero-1",
+          "path": ["body"]
+        },
+        {
+          "itemId": "list-1",
+          "path": ["items", 2, "title"]
+        }
+      ],
+      "invalid": [
+        {
+          "itemId": "hero-1"
+        },
+        {
+          "itemId": "hero-1",
+          "path": "body"
+        },
+        {
+          "itemId": "",
+          "path": ["body"]
+        }
+      ]
+    },
+    {
+      "type": "BLOCK_ACTION",
+      "direction": "preview-to-editor",
+      "since": 1,
+      "examples": [
+        {
+          "itemId": "hero-1",
+          "action": "move-up"
+        },
+        {
+          "itemId": "hero-1",
+          "action": "move-down"
+        },
+        {
+          "itemId": "hero-1",
+          "action": "duplicate"
+        },
+        {
+          "itemId": "hero-1",
+          "action": "delete"
+        },
+        {
+          "itemId": "hero-1",
+          "action": "insert-before"
+        },
+        {
+          "itemId": "hero-1",
+          "action": "insert-after"
+        },
+        {
+          "itemId": "hero-1",
+          "action": "hide"
+        },
+        {
+          "itemId": "hero-1",
+          "action": "show"
+        }
+      ],
+      "invalid": [
+        {
+          "itemId": "hero-1",
+          "action": "explode"
+        },
+        {
+          "itemId": "hero-1",
+          "action": "toggle-hidden"
+        },
+        {
+          "action": "delete"
+        }
+      ]
+    },
+    {
+      "type": "BLOCK_MOVE",
+      "direction": "preview-to-editor",
+      "since": 1,
+      "examples": [
+        {
+          "itemId": "hero-1",
+          "targetId": "teaser-2",
+          "position": "before"
+        },
+        {
+          "itemId": "hero-1",
+          "targetId": "teaser-2",
+          "position": "after"
+        }
+      ],
+      "invalid": [
+        {
+          "itemId": "hero-1",
+          "targetId": "teaser-2",
+          "position": "inside"
+        },
+        {
+          "itemId": "hero-1",
+          "targetId": "hero-1",
+          "position": "before"
+        },
+        {
+          "itemId": "hero-1",
+          "position": "after"
+        }
+      ]
+    }
+  ]
+}

@@ -4107,7 +4107,8 @@
       "copied": "Valeur copiée dans le presse-papiers"
     },
     "preview": {
-      "copied": "Lien copié dans le presse-papiers"
+      "copied": "Lien copié dans le presse-papiers",
+      "blockRejected": "Ce bloc ne peut pas être placé ici."
     },
     "title": "Notifications",
     "tooltip": "Notifications",

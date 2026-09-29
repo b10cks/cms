@@ -4,8 +4,6 @@ import { toast } from 'vue-sonner'
 
 import Icon from '~/components/Icon.vue'
 import Markdown from '~/components/Markdown.vue'
-import { isSafeFrameUrl } from '~/lib/sanitize'
-import { buildPreviewUrl, resolveLocaleSegments } from '~/lib/preview-url'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,12 +13,20 @@ import {
 } from '~/components/ui/dropdown-menu'
 import { PulseDot } from '~/components/ui/pulse-dot'
 import { SimpleTooltip } from '~/components/ui/tooltip'
+import { findHiddenBlockIds } from '~/lib/blockTreeEdits'
+import { buildPreviewUrl, resolveLocaleSegments } from '~/lib/preview-url'
+import { isSafeFrameUrl } from '~/lib/sanitize'
 import type { CommentResource } from '~/types/comments'
 import { ContentResource } from '~/types/contents'
 import type {
+  BlockActionEvent,
+  BlockMoveEvent,
   CommentClickEvent,
   CommentCreateEvent,
   CommentUpdateEvent,
+  ContentPatchEvent,
+  FieldConfigEvent,
+  FieldSelectEvent,
   FieldUpdateEvent,
 } from '~/utils/preview-bridge'
 import { PreviewBridge } from '~/utils/preview-bridge'
@@ -40,10 +46,15 @@ const props = defineProps<{
 const { useSpaceQuery } = useSpaces()
 const { data: currentSpace } = useSpaceQuery(props.spaceId) as { data: Ref<SpaceResource | null> }
 const { settings } = useSpaceSettings(props.spaceId)
+const { useBlocksQuery } = useBlocks(props.spaceId)
+const { data: blocksResponse } = useBlocksQuery({ per_page: 1000 })
 
 const emit = defineEmits<{
   (e: 'selectItem', itemId: string | null): void
   (e: 'updateField', payload: FieldUpdateEvent): void
+  (e: 'selectField', payload: FieldSelectEvent): void
+  (e: 'blockAction', payload: BlockActionEvent): void
+  (e: 'blockMove', payload: BlockMoveEvent): void
   (e: 'commentClick', payload: CommentClickEvent): void
   (e: 'commentCreate', payload: CommentCreateEvent): void
   (e: 'commentUpdate', payload: CommentUpdateEvent): void
@@ -162,6 +173,15 @@ watch(
     bridge.on('FIELD_UPDATE', (payload) => {
       emit('updateField', payload)
     })
+    bridge.on('FIELD_SELECT', (payload) => {
+      emit('selectField', payload)
+    })
+    bridge.on('BLOCK_ACTION', (payload) => {
+      emit('blockAction', payload)
+    })
+    bridge.on('BLOCK_MOVE', (payload) => {
+      emit('blockMove', payload)
+    })
     bridge.on('COMMENT_CLICK', (payload) => {
       emit('commentClick', payload)
     })
@@ -194,6 +214,28 @@ watchEffect(() => {
   }
 })
 
+// Lets the preview label a selected block "Hero banner" instead of `hero_section`.
+watchEffect(() => {
+  const blocks = blocksResponse.value?.data
+  if (blocks) {
+    previewBridge.value?.updateBlockLabels(
+      Object.fromEntries(blocks.map((block) => [block.slug, block.name || block.slug]))
+    )
+  }
+})
+
+/** Lets the preview dim hidden blocks. The bridge only sends when the set changed. */
+const syncHiddenBlocks = () => {
+  const fields = injectedContent.value?.content
+  if (fields) previewBridge.value?.updateHiddenBlocks(findHiddenBlockIds(fields))
+}
+
+// Covers loading and replacing the content; edits are covered by queueChange,
+// as nested edits mutate the tree in place.
+watch([previewBridge, () => injectedContent.value?.content], syncHiddenBlocks, {
+  immediate: true,
+})
+
 watchEffect(() => {
   if (props.comments) {
     previewBridge.value?.updateComments(props.comments)
@@ -222,8 +264,38 @@ const refresh = () => {
   iframeKey.value = Math.random().toString(36).substring(2, 9)
 }
 
+/**
+ * Content changes of the current tick. A field edit arrives twice within one
+ * tick, as the updated tree and as a field patch; the bridge sends whichever
+ * the preview understands.
+ */
+let pendingChange: { contents: Record<string, unknown>[]; patches: ContentPatchEvent[] } | null =
+  null
+
+const queueChange = () => {
+  if (!pendingChange) {
+    pendingChange = { contents: [], patches: [] }
+    queueMicrotask(() => {
+      const change = pendingChange
+      pendingChange = null
+      if (change) previewBridge.value?.pushChange(change.contents, change.patches)
+      syncHiddenBlocks()
+    })
+  }
+  return pendingChange
+}
+
+// Also strips Vue proxies, which postMessage cannot clone.
+const cloneJson = <T>(value: T): T => JSON.parse(JSON.stringify(value))
+
 const updateItem = (item: Record<string, unknown>) => {
-  previewBridge.value?.updateContent(JSON.parse(JSON.stringify(item)))
+  queueChange().contents.push(cloneJson(item))
+}
+const patchItem = (patch: ContentPatchEvent) => {
+  queueChange().patches.push(cloneJson(patch))
+}
+const sendFieldConfig = (event: FieldConfigEvent) => {
+  previewBridge.value?.sendFieldConfig(cloneJson(event))
 }
 const updateHover = (itemId: string | null) => {
   previewBridge.value?.updateHover(itemId)
@@ -243,6 +315,8 @@ const copyLink = () => {
 defineExpose({
   refresh,
   updateItem,
+  patchItem,
+  sendFieldConfig,
   updateHover,
 })
 

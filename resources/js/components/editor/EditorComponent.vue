@@ -160,6 +160,19 @@ const breadcrumbs = computed((): Breadcrumb[] =>
 )
 const id = computed((): string => props.itemId || rootBlock?.slug || '')
 const currentPages = computed<EditorPage[]>(() => currentBlock.value?.editor ?? [])
+const pageValue = (index: number) => `${id.value}-page-${index}`
+const activePage = ref(pageValue(0))
+watch(id, () => {
+  activePage.value = pageValue(0)
+})
+
+/** Switch to the editor page (tab) holding `fieldKey` of the current block. */
+const showField = (fieldKey: string): void => {
+  const index = currentPages.value.findIndex((page) => page?.items?.includes(fieldKey))
+  if (index !== -1) activePage.value = pageValue(index)
+}
+
+defineExpose({ showField })
 const currentBlockSchema = computed<Record<string, SchemaType>>(
   () => (currentBlock.value?.schema || {}) as Record<string, SchemaType>
 )
@@ -379,7 +392,7 @@ const removeAllOutOfSchemaKeys = (): void => {
     </div>
     <TabsRoot
       :key="`${id}-tabs`"
-      :default-value="`${id}-page-0`"
+      v-model="activePage"
     >
       <TabsList
         v-if="currentPages.length > 1"

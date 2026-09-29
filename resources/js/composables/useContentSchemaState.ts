@@ -2,6 +2,7 @@ import { watchDebounced } from '@vueuse/core'
 import type { Ref } from 'vue'
 import { isProxy, toRaw } from 'vue'
 
+import { focusField } from '~/lib/fieldFocus'
 import { ensureTableValue, getTableColumns, normalizeSchemaTypeName } from '~/lib/tableField'
 import type { ContentResource } from '~/types/contents'
 
@@ -204,6 +205,19 @@ export const normalizeSchemaField = (key: string, field: SchemaType | Record<str
       : schemaField.default,
   }
 }
+
+const toLimit = (value: unknown): number | null =>
+  value === null || value === undefined || value === '' ? null : Number(value)
+
+/** Item count limits of a list field (blocks, options, assets, references). */
+export const resolveItemLimits = (field: {
+  min?: unknown
+  max?: unknown
+  validation?: FieldValidation | null
+}) => ({
+  min: toLimit(field.validation?.min_items ?? field.validation?.min ?? field.min),
+  max: toLimit(field.validation?.max_items ?? field.validation?.max ?? field.max),
+})
 
 export const normalizeSchema = (schema?: Record<string, SchemaType> | null) => {
   return Object.fromEntries(
@@ -698,16 +712,7 @@ const validateScope = (
       if (!Array.isArray(value)) {
         pushError(path, `${field.name || key} must be a list.`)
       } else {
-        const rawMinItems = validation.min_items ?? validation.min ?? field.min
-        const rawMaxItems = validation.max_items ?? validation.max ?? field.max
-        const minItems =
-          rawMinItems === null || rawMinItems === undefined || rawMinItems === ''
-            ? null
-            : Number(rawMinItems)
-        const maxItems =
-          rawMaxItems === null || rawMaxItems === undefined || rawMaxItems === ''
-            ? null
-            : Number(rawMaxItems)
+        const { min: minItems, max: maxItems } = resolveItemLimits(field)
 
         if (minItems !== null && value.length < minItems) {
           pushError(path, `${field.name || key} must contain at least ${minItems} items.`)
@@ -919,47 +924,7 @@ export const useContentSchemaState = ({
 
     await revealValidationState()
 
-    const getFieldContainer = (fieldPath: string) => {
-      let currentPath = fieldPath
-
-      while (currentPath) {
-        const escapedPath =
-          typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
-            ? CSS.escape(currentPath)
-            : currentPath
-        const container = document.querySelector<HTMLElement>(`[data-field-path="${escapedPath}"]`)
-
-        if (container) {
-          return container
-        }
-
-        const separatorIndex = currentPath.lastIndexOf('.')
-        if (separatorIndex === -1) {
-          break
-        }
-
-        currentPath = currentPath.slice(0, separatorIndex)
-      }
-
-      return null
-    }
-
-    const container = getFieldContainer(path)
-    if (!container) return
-
-    container.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-    })
-
-    const focusableSelector =
-      'input:not([tabindex="-1"]), textarea:not([tabindex="-1"]), select:not([tabindex="-1"]), button:not([tabindex="-1"]), [contenteditable="true"], [tabindex]:not([tabindex="-1"])'
-    const validationTarget = container.querySelector<HTMLElement>('[data-validation-target="true"]')
-    const focusable =
-      (validationTarget?.matches(focusableSelector) ? validationTarget : null) ||
-      validationTarget?.querySelector<HTMLElement>(focusableSelector) ||
-      container.querySelector<HTMLElement>(focusableSelector)
-    focusable?.focus()
+    focusField(path)
   }
 
   const resetValidationState = () => {
