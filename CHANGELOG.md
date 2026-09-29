@@ -3,6 +3,27 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.9.29-7660b783] — 2026-9-29
+
+- ⬆️ Bump Composer dependencies
+- ⬆️ Bump remaining Bun dependencies
+- ⬆️ Upgrade drag and drop, VueUse and Vitest
+- ✨ Wire preview field edits, field select, and block actions into the content page
+- ✨ Keep the rich text editor in step with edits from the preview
+- ✨ Run block actions, moves, and hide/show requested from the preview
+- ✨ Speak every preview bridge protocol version the site SDKs announce
+- 💡 Update docs
+- 🌐 Translate new asset classification and editor messages
+- 🐛 Complete locale messages and select Russian plurals correctly
+- 🐛 Localize dates for Spanish, French, Russian and Turkish
+- Bump docker/setup-buildx-action from 4.3.0 to 4.4.1
+- Bump docker/build-push-action from 7.3.0 to 7.4.0
+- Bump aws-actions/configure-aws-credentials from 6.2.3 to 6.3.0
+- Bump docker/setup-qemu-action from 4.2.0 to 4.4.0
+- feat(i18n): register new locales in plugin and backend config
+- feat(i18n): add es, fr, ru, tr locale payloads
+- Bump softprops/action-gh-release from 3.0.2 to 3.0.3
+
 ## [v2026.9.28-e65d78eb] — 2026-9-28
 
 - ✅ Align asset classification test with field limits
