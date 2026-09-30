@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.9.30-beb517ac] — 2026-9-30
+
+- ⬆️ Bump versions
+- 🐛 Open preview block picker after the field renders
+- 🐛 Preserve block arrays during inline preview edits
+
 ## [v2026.9.29-7660b783] — 2026-9-29
 
 - ⬆️ Bump Composer dependencies
