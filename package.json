@@ -57,7 +57,7 @@
     "laravel-echo": "^2.5.0",
     "leaflet": "^1.9.4",
     "marked": "^18.0.14",
-    "posthog-js": "^1.434.17",
+    "posthog-js": "^1.435.1",
     "pusher-js": "^8.6.0",
     "qrcode": "^1.5.4",
     "reka-ui": "^2.10.5",
