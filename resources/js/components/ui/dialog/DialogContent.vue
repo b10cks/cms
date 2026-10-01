@@ -47,6 +47,10 @@ const delegatedProps = computed(() => {
 
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
 
+// The overlay centers the content as a grid, not via a fixed box with translate(-50%):
+// Chrome resolves sticky header/footer offsets against the untransformed position, which
+// pushed the footer of tall `scrollBody: false` dialogs into the middle of the content.
+
 // Only set once the portal has actually mounted the content, so a closed
 // dialog never claims the chord.
 const contentRef = ref<ComponentPublicInstance | null>(null)
@@ -69,31 +73,32 @@ if (props.submitShortcut) {
 <template>
   <DialogPortal>
     <DialogOverlay
-      class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-overlay backdrop-blur-xs"
-    />
-    <DialogContent
-      ref="contentRef"
-      v-bind="forwarded"
-      :class="
-        cn(
-          'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95  fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col bg-background p-6 shadow-soft-lg duration-200 sm:rounded-lg',
-          props.class
-        )
-      "
+      class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 grid place-items-center bg-overlay backdrop-blur-xs"
     >
-      <div
-        v-if="props.scrollBody"
-        :class="cn('-mx-1 grid min-h-0 flex-1 gap-4 overflow-y-auto px-1', props.bodyClass)"
+      <DialogContent
+        ref="contentRef"
+        v-bind="forwarded"
+        :class="
+          cn(
+            'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 relative flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col bg-background p-6 shadow-soft-lg duration-200 sm:rounded-lg',
+            props.class
+          )
+        "
       >
-        <slot />
-      </div>
-      <slot v-else />
-      <DialogClose
-        class="absolute top-4 right-4 z-20 flex cursor-pointer items-center rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted"
-      >
-        <Icon name="lucide:x" />
-        <span class="sr-only">Close</span>
-      </DialogClose>
-    </DialogContent>
+        <div
+          v-if="props.scrollBody"
+          :class="cn('-mx-1 grid min-h-0 flex-1 gap-4 overflow-y-auto px-1', props.bodyClass)"
+        >
+          <slot />
+        </div>
+        <slot v-else />
+        <DialogClose
+          class="absolute top-4 right-4 z-20 flex cursor-pointer items-center rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted"
+        >
+          <Icon name="lucide:x" />
+          <span class="sr-only">Close</span>
+        </DialogClose>
+      </DialogContent>
+    </DialogOverlay>
   </DialogPortal>
 </template>
