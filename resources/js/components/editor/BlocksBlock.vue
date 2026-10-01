@@ -9,6 +9,7 @@ import {
 } from 'reka-ui'
 
 import AddDropdown from '~/components/editor/AddDropdown.vue'
+import BlockItemMenu from '~/components/editor/BlockItemMenu.vue'
 import BlockHeader from '~/components/editor/BlockHeader.vue'
 import Icon from '~/components/Icon.vue'
 import { AvatarList } from '~/components/ui/avatar'
@@ -22,13 +23,16 @@ import type {
     ContentFieldUpdatePayload,
 } from '~/composables/useContentLiveCollaboration'
 import type { ContentTreeItem } from '~/composables/useContentTree'
-import type { BlockPickerRequest } from '~/lib/blockTreeEdits'
+import { type BlockPickerRequest, isBlockAllowed } from '~/lib/blockTreeEdits'
 import {
     createBlockItemWithDefaults,
     createContentDefaultsBlockLookup,
     hydrateContentWithSchema,
+    switchBlockItemType,
 } from '~/composables/useSchemaDefaults'
 import { resolveItemBlock } from '~/lib/blockItemTitle'
+import { buildContentPath, buildPreviewUrl } from '~/lib/preview-url'
+import type { ContentResource } from '~/types/contents'
 
 import EditorComponent from './EditorComponent.vue'
 
@@ -48,6 +52,35 @@ const { data: blocks } = useBlocksQuery({ per_page: 1000 })
 const ulid = useUlid()
 const route = useRoute()
 const router = useRouter()
+
+const { useAbility } = useAuthorization()
+const canManageBlocks = useAbility('blocks.manage', { space_id: props.spaceId })
+
+const { useSpaceQuery } = useSpaces()
+const { data: currentSpace } = useSpaceQuery(props.spaceId)
+const { settings } = useSpaceSettings(props.spaceId)
+const editedContent = inject<Ref<ContentResource | null>>('content', ref(null))
+
+/** Where the edited content lives on the site; item links append `#<item id>`. */
+const pageLinks = computed(() => {
+  const page = editedContent.value
+  const spaceSettings = currentSpace.value?.settings
+  const environment =
+    (settings.value.content.environment as SpaceEnvironment | null) ??
+    spaceSettings?.environments?.find((entry) => entry.name === spaceSettings.default_environment)
+  const segment = settings.value.content.siteLocale
+
+  return {
+    url: buildPreviewUrl(
+      environment?.url,
+      spaceSettings,
+      page?.language_iso,
+      page?.full_slug,
+      segment
+    ),
+    path: buildContentPath(spaceSettings, page?.language_iso, page?.full_slug, segment),
+  }
+})
 
 const {
   copyItem: globalCopyItem,
@@ -194,6 +227,9 @@ const blocksBySlug = computed(() =>
 )
 const blockLookup = computed<Record<string, Pick<BlockResource, 'slug' | 'schema'>>>(() =>
   createContentDefaultsBlockLookup(blocks.value?.data || [])
+)
+const allowedBlocks = computed(() =>
+  (blocks.value?.data || []).filter((block) => isBlockAllowed(props.item, block))
 )
 
 const insertItem = (item: Record<string, unknown>, index: number = -1) => {
@@ -429,6 +465,24 @@ const toggleHidden = (index: number) => {
   blockItems.value = updatedItems
 }
 
+const switchItemType = (index: number, slug: string) => {
+  const block = blocksBySlug.value[slug]
+  if (!block) return
+
+  const previousItems = [...blockItems.value]
+  const item = previousItems[index]
+  const updatedItems = [...previousItems]
+  updatedItems[index] = switchBlockItemType(
+    item,
+    blocksBySlug.value[String(item.block)],
+    block,
+    blocksBySlug.value
+  )
+
+  emitBlockOperation({ type: 'replace', items: updatedItems }, previousItems)
+  blockItems.value = updatedItems
+}
+
 const navigateToItem = (itemId: string) => {
   router.push({
     ...route,
@@ -637,7 +691,9 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                 :block="getBlockHeaderBlock(content)"
               />
               <div class="ml-auto flex items-center gap-2">
-                <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100">
+                <div
+                  class="flex items-center gap-2 opacity-0 group-hover:opacity-100 has-[[data-state=open]]:opacity-100"
+                >
                   <button
                     v-if="!props.readOnly"
                     type="button"
@@ -655,16 +711,6 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                     @click.stop="toggleHidden(i)"
                   >
                     <Icon :name="content.hidden ? 'lucide:eye-off' : 'lucide:eye'" />
-                  </button>
-                  <button
-                    v-if="!props.readOnly && content.id"
-                    type="button"
-                    :aria-label="$t('actions.blocks.tooltips.createTemplate')"
-                    :title="$t('actions.blocks.tooltips.createTemplate')"
-                    class="flex transform cursor-pointer items-center hover:text-primary"
-                    @click.stop="handleTemplateTrigger(content)"
-                  >
-                    <Icon name="lucide:notepad-text-dashed" />
                   </button>
                   <button
                     v-if="content.id"
@@ -706,6 +752,18 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                   >
                     <Icon name="lucide:trash-2" />
                   </button>
+                  <BlockItemMenu
+                    :space-id="spaceId"
+                    :item-id="content.id as string | undefined"
+                    :block="getBlockHeaderBlock(content)"
+                    :allowed-blocks="allowedBlocks"
+                    :page-url="pageLinks.url"
+                    :page-path="pageLinks.path"
+                    :can-manage-block="canManageBlocks"
+                    :read-only="props.readOnly"
+                    @switch-type="(slug: string) => switchItemType(i, slug)"
+                    @create-template="handleTemplateTrigger(content)"
+                  />
                 </div>
               </div>
             </AccordionTrigger>
@@ -727,7 +785,7 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
                 @focusout.stop
               >
                 <EditorComponent
-                  :key="(content.id as string) || i"
+                  :key="`${content.id || i}:${content.block}`"
                   :model-value="content as ContentTreeItem"
                   :block-slug="content.block as string"
                   :read-only="props.readOnly"

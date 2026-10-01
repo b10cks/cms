@@ -154,3 +154,36 @@ export const createBlockItemWithDefaults = (
     ...hydrateContentWithSchema(block.schema, {}, blockLookup),
   }
 }
+
+/**
+ * Turn a block item into an item of another block, keeping its id and
+ * visibility. A value carries over when both blocks declare the field under the
+ * same key and type; every other field of the target starts from its default.
+ */
+export const switchBlockItemType = (
+  item: ContentScope,
+  from: Pick<BlockResource, 'schema'> | null | undefined,
+  to: Pick<BlockResource, 'slug' | 'schema'>,
+  blockLookup: BlockLookup = {}
+) => {
+  const carried = Object.fromEntries(
+    Object.entries(to.schema || {})
+      .filter(([key, field]) => {
+        const previous = from?.schema?.[key]
+
+        return (
+          Object.prototype.hasOwnProperty.call(item, key) &&
+          previous !== undefined &&
+          normalizeSchemaType(previous.type) === normalizeSchemaType(field.type)
+        )
+      })
+      .map(([key]) => [key, item[key]])
+  )
+
+  return {
+    id: item.id,
+    block: to.slug,
+    ...(item.hidden ? { hidden: true } : {}),
+    ...hydrateContentWithSchema(to.schema, carried, blockLookup),
+  }
+}

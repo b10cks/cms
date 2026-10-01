@@ -4383,8 +4383,15 @@
         "editTable": "Modifier le tableau",
         "deleteColumn": "Supprimer la colonne"
       },
+      "item": {
+        "switchType": "Changer le type de bloc",
+        "copyId": "Copier l'ID",
+        "copyAbsoluteLink": "Copier le lien absolu",
+        "copyRelativeLink": "Copier le lien relatif",
+        "createTemplate": "Créer un modèle",
+        "manageBlock": "Gérer le bloc"
+      },
       "tooltips": {
-        "createTemplate": "Créer un modèle à partir de ce bloc",
         "editNested": "Modifier le contenu imbriqué",
         "hide": "Masquer le bloc",
         "show": "Afficher le bloc",

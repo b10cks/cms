@@ -58,8 +58,27 @@ export function resolveLocaleSegment(
 }
 
 /**
- * Build the preview/live URL for a piece of content: the environment base URL,
- * the resolved locale segment and the content's full slug.
+ * Site-relative path of a piece of content: the resolved locale segment and
+ * the content's full slug.
+ *
+ * Returns `null` when the inputs are insufficient to build a path.
+ */
+export function buildContentPath(
+  settings: SpaceSettings | null | undefined,
+  languageIso: string | null | undefined,
+  fullSlug: string | null | undefined,
+  preferredSegment?: string | null
+): string | null {
+  if (!languageIso || !fullSlug) return null
+
+  const segment = resolveLocaleSegment(languageIso, settings, preferredSegment)
+
+  return `${segment ? `/${segment}` : ''}${fullSlug}`
+}
+
+/**
+ * Build the preview/live URL for a piece of content: the environment base URL
+ * followed by its site-relative path.
  *
  * Returns `null` when the inputs are insufficient to build a URL.
  */
@@ -70,16 +89,13 @@ export function buildPreviewUrl(
   fullSlug: string | null | undefined,
   preferredSegment?: string | null
 ): string | null {
-  if (!baseUrl || !languageIso || !fullSlug) return null
+  const path = buildContentPath(settings, languageIso, fullSlug, preferredSegment)
+  if (!baseUrl || !path) return null
 
   // The base URL is space-configured, and the result is used as an iframe src
   // and passed to window.open. Rejecting anything that isn't http(s) here
   // means every consumer inherits the check rather than remembering it.
   if (!isSafeFrameUrl(baseUrl)) return null
 
-  const segment = resolveLocaleSegment(languageIso, settings, preferredSegment)
-  const base = baseUrl.replace(/\/$/, '')
-  const prefix = segment ? `/${segment}` : ''
-
-  return `${base}${prefix}${fullSlug}`
+  return `${baseUrl.replace(/\/$/, '')}${path}`
 }

@@ -4392,8 +4392,15 @@
         "editTable": "Tabelle bearbeiten",
         "deleteColumn": "Spalte löschen"
       },
+      "item": {
+        "switchType": "Blocktyp wechseln",
+        "copyId": "ID kopieren",
+        "copyAbsoluteLink": "Absoluten Link kopieren",
+        "copyRelativeLink": "Relativen Link kopieren",
+        "createTemplate": "Vorlage erstellen",
+        "manageBlock": "Block verwalten"
+      },
       "tooltips": {
-        "createTemplate": "Vorlage aus diesem Block erstellen",
         "editNested": "Verschachtelten Content bearbeiten",
         "hide": "Block ausblenden",
         "show": "Block einblenden",

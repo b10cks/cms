@@ -5,6 +5,7 @@ import {
   createContentDefaultsBlockLookup,
   hydrateContentWithSchema,
   resolveFieldInitialValue,
+  switchBlockItemType,
 } from '~/composables/useSchemaDefaults'
 
 const field = (type: string, extra: Record<string, unknown> = {}) =>
@@ -359,5 +360,33 @@ describe('createBlockItemWithDefaults', () => {
     )
 
     expect((item as Record<string, unknown>).items).toEqual([{ block: 'card', title: '' }])
+  })
+})
+
+describe('switchBlockItemType', () => {
+  it('keeps id, visibility and same-typed fields, and defaults the rest', () => {
+    const switched = switchBlockItemType(
+      { id: 'item-1', block: 'hero', hidden: true, title: 'Hello', count: 'three', legacy: 'x' },
+      { schema: { title: field('text'), count: field('text'), legacy: field('text') } },
+      { slug: 'teaser', schema: { title: field('text'), count: field('number'), cta: field('text') } }
+    )
+
+    expect(switched).toEqual({
+      id: 'item-1',
+      block: 'teaser',
+      hidden: true,
+      title: 'Hello',
+      count: 0,
+      cta: '',
+    })
+  })
+
+  it('carries nothing over when the previous block is unknown', () => {
+    const switched = switchBlockItemType({ id: 'item-1', block: 'gone', title: 'Hello' }, null, {
+      slug: 'teaser',
+      schema: { title: field('text') },
+    })
+
+    expect(switched).toEqual({ id: 'item-1', block: 'teaser', title: '' })
   })
 })

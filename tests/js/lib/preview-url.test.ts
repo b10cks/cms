@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildPreviewUrl, resolveLocaleSegment, resolveLocaleSegments } from '~/lib/preview-url'
+import {
+  buildContentPath,
+  buildPreviewUrl,
+  resolveLocaleSegment,
+  resolveLocaleSegments,
+} from '~/lib/preview-url'
 
 const settings = (overrides: Partial<SpaceSettings> = {}): SpaceSettings =>
   ({ default_language: 'en', ...overrides }) as SpaceSettings
@@ -76,6 +81,20 @@ describe('resolveLocaleSegment', () => {
   it('falls back to the first segment for an invalid preference', () => {
     expect(resolveLocaleSegment('de', config, 'fr-fr')).toBe('at-de')
     expect(resolveLocaleSegment('de', config, null)).toBe('at-de')
+  })
+})
+
+describe('buildContentPath', () => {
+  const config = settings({ slug_strategy: 'prepend_translations' } as Partial<SpaceSettings>)
+
+  it('prefixes the slug with the locale segment', () => {
+    expect(buildContentPath(config, 'de', '/about')).toBe('/de/about')
+    expect(buildContentPath(config, 'en', '/about')).toBe('/about')
+  })
+
+  it('returns null without a language or slug', () => {
+    expect(buildContentPath(config, null, '/about')).toBeNull()
+    expect(buildContentPath(config, 'de', null)).toBeNull()
   })
 })
 

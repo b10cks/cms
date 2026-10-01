@@ -4383,8 +4383,15 @@
         "editTable": "Edit Table",
         "deleteColumn": "Delete Column"
       },
+      "item": {
+        "switchType": "Switch block type",
+        "copyId": "Copy ID",
+        "copyAbsoluteLink": "Copy absolute link",
+        "copyRelativeLink": "Copy relative link",
+        "createTemplate": "Create template",
+        "manageBlock": "Manage block"
+      },
       "tooltips": {
-        "createTemplate": "Create Template from this block",
         "editNested": "Edit nested content",
         "hide": "Hide block",
         "show": "Show block",

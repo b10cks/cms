@@ -4383,8 +4383,15 @@
         "editTable": "Editar Tabla",
         "deleteColumn": "Eliminar Columna"
       },
+      "item": {
+        "switchType": "Cambiar tipo de bloque",
+        "copyId": "Copiar ID",
+        "copyAbsoluteLink": "Copiar enlace absoluto",
+        "copyRelativeLink": "Copiar enlace relativo",
+        "createTemplate": "Crear plantilla",
+        "manageBlock": "Gestionar bloque"
+      },
       "tooltips": {
-        "createTemplate": "Crear Plantilla a partir de este bloque",
         "editNested": "Editar contenido anidado",
         "hide": "Ocultar bloque",
         "show": "Mostrar bloque",

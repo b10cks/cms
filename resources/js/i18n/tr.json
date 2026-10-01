@@ -4383,8 +4383,15 @@
         "editTable": "Tabloyu Düzenle",
         "deleteColumn": "Sütun Sil"
       },
+      "item": {
+        "switchType": "Blok türünü değiştir",
+        "copyId": "ID'yi kopyala",
+        "copyAbsoluteLink": "Mutlak bağlantıyı kopyala",
+        "copyRelativeLink": "Göreli bağlantıyı kopyala",
+        "createTemplate": "Şablon oluştur",
+        "manageBlock": "Bloğu yönet"
+      },
       "tooltips": {
-        "createTemplate": "Bu bloktan Şablon oluştur",
         "editNested": "İç içe içeriği düzenle",
         "hide": "Blok gizle",
         "show": "Blok göster",
