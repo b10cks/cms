@@ -3,6 +3,12 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.10.1-484a50c4] — 2026-10-1
+
+- ⬆️ Bump versions
+- 🔧 Regenerate the auto-import declarations
+- ✨ Add a more-actions menu to block items in the editor
+
 ## [v2026.9.30-beb517ac] — 2026-9-30
 
 - ⬆️ Bump versions
