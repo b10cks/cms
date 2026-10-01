@@ -695,9 +695,9 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
       <div
         class="grid gap-6 py-4 md:grid-cols-12 md:grid-rows-[minmax(0,1fr)] min-h-0 overflow-y-auto md:overflow-hidden"
       >
-        <div class="flex min-h-0 flex-col gap-3 md:col-span-8">
+        <div class="flex flex-col gap-3 md:col-span-8 md:min-h-0">
           <div
-            class="flex min-h-0 flex-1 flex-col items-center justify-center-safe overflow-y-auto rounded-xl bg-surface p-4 [container-type:size]"
+            class="flex h-[50svh] min-h-0 shrink-0 flex-col items-center justify-center-safe overflow-y-auto rounded-xl bg-surface p-4 [container-type:size] md:h-auto md:flex-1"
           >
             <div
               v-if="getFileType(asset.mime_type) === 'image'"
@@ -980,7 +980,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
             </template>
           </div>
         </div>
-        <div class="flex flex-col gap-4 md:col-span-4 min-h-0 min-w-0">
+        <div class="flex min-w-0 flex-col gap-4 md:col-span-4 md:min-h-0">
           <InputField
             v-model="assetCopy.filename"
             name="filename"
