@@ -81,11 +81,13 @@ declare global {
   const ref: typeof import('vue').ref
   const resolveComponent: typeof import('vue').resolveComponent
   const resolveFieldInitialValue: typeof import('./resources/js/composables/useSchemaDefaults').resolveFieldInitialValue
+  const resolveItemLimits: typeof import('./resources/js/composables/useContentSchemaState').resolveItemLimits
   const setAlertDialogDefaultLabels: typeof import('./resources/js/composables/useAlertDialog').setAlertDialogDefaultLabels
   const setLocale: typeof import('./resources/js/plugins/i18n').setLocale
   const shallowReactive: typeof import('vue').shallowReactive
   const shallowReadonly: typeof import('vue').shallowReadonly
   const shallowRef: typeof import('vue').shallowRef
+  const switchBlockItemType: typeof import('./resources/js/composables/useSchemaDefaults').switchBlockItemType
   const toRaw: typeof import('vue').toRaw
   const toRef: typeof import('vue').toRef
   const toRefs: typeof import('vue').toRefs
@@ -412,11 +414,13 @@ declare module 'vue' {
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveFieldInitialValue: UnwrapRef<typeof import('./resources/js/composables/useSchemaDefaults')['resolveFieldInitialValue']>
+    readonly resolveItemLimits: UnwrapRef<typeof import('./resources/js/composables/useContentSchemaState')['resolveItemLimits']>
     readonly setAlertDialogDefaultLabels: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['setAlertDialogDefaultLabels']>
     readonly setLocale: UnwrapRef<typeof import('./resources/js/plugins/i18n')['setLocale']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
+    readonly switchBlockItemType: UnwrapRef<typeof import('./resources/js/composables/useSchemaDefaults')['switchBlockItemType']>
     readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
     readonly toRef: UnwrapRef<typeof import('vue')['toRef']>
     readonly toRefs: UnwrapRef<typeof import('vue')['toRefs']>
@@ -436,6 +440,7 @@ declare module 'vue' {
     readonly useAiUsage: UnwrapRef<typeof import('./resources/js/composables/useAiModels')['useAiUsage']>
     readonly useAlertDialog: UnwrapRef<typeof import('./resources/js/composables/useAlertDialog')['useAlertDialog']>
     readonly useApiClient: UnwrapRef<typeof import('./resources/js/composables/useApiClient')['useApiClient']>
+    readonly useAssetAiClassification: UnwrapRef<typeof import('./resources/js/composables/useAssetAiClassification')['useAssetAiClassification']>
     readonly useAssetBulkOperations: UnwrapRef<typeof import('./resources/js/composables/useAssetBulkOperations')['useAssetBulkOperations']>
     readonly useAssetCollections: UnwrapRef<typeof import('./resources/js/composables/useAssetCollections')['useAssetCollections']>
     readonly useAssetFolders: UnwrapRef<typeof import('./resources/js/composables/useAssetFolders')['useAssetFolders']>
