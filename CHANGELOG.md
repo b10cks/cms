@@ -3,6 +3,15 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.10.2-07318a6d] — 2026-10-2
+
+- ✨ Override an asset's focus point per content usage
+- 🐛 Save and close the asset dialog from content fields
+- 🐛 Keep the geo map below open dialogs
+- ⬆️ Bump versions
+- 💄 Fix the asset details layout on small screens
+- 🐛 Keep dialog footers at the bottom in Chrome
+
 ## [v2026.10.1-484a50c4] — 2026-10-1
 
 - ⬆️ Bump versions
