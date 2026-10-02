@@ -607,6 +607,18 @@
         "discard": "Discard"
       },
       "removeFocusPoint": "Remove Focus Point",
+      "usageFocus": {
+        "title": "Focus point in this content",
+        "own": "This content uses its own focus point.",
+        "default": "Uses the asset's default focus point, shown dimmed.",
+        "none": "No focus point set.",
+        "ownAction": "Drag on the image to adjust it.",
+        "defaultAction": "Click on the image to set a different one for this content.",
+        "noneAction": "Click on the image to set one for this content.",
+        "dimensions": "Dimensions",
+        "libraryHint": "Name, tags, metadata and the default focus point are edited in the asset library."
+      },
+      "resetFocusPoint": "Reset to Default Focus Point",
       "fileTypes": {
         "image": "Image",
         "document": "Document",

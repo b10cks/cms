@@ -60,7 +60,7 @@ const tagOptions = computed(() =>
     color: tag.color,
   }))
 )
-const { useAssetLinkedContentsQuery } = useAssets(props.spaceId)
+const { useAssetLinkedContentsQuery, useAssetQuery } = useAssets(props.spaceId)
 const { getBreadcrumbs } = useFolderStructure()
 const { getFileType } = useFileUtils()
 const {
@@ -283,7 +283,11 @@ watch(
   (newAsset) => {
     if (newAsset) {
       assetCopy.value = deepClone(newAsset)
-      originalSnapshot = editableSnapshot(newAsset)
+      // An empty PHP array round-trips as `[]`; keys set on it vanish on save.
+      if (!assetCopy.value.data || Array.isArray(assetCopy.value.data)) {
+        assetCopy.value.data = {}
+      }
+      originalSnapshot = editableSnapshot(assetCopy.value)
       selectedPanel.value = 'details'
       selectedLanguage.value = '_default'
       linkedContentsPage.value = 1
@@ -385,7 +389,7 @@ const colorA11y = computed(() => props.asset?.metadata?.a11y)
 // focus-point overlay). The panel is a size container, so 100cqh is its exact
 // content height — the image can never overflow it.
 const previewImageStyle = computed(() => {
-  const metadata = assetCopy.value?.metadata
+  const metadata = previewMetadata.value
   const width = Number(metadata?.width)
   const height = Number(metadata?.height)
   const ratio = Number(metadata?.aspectRatio) || (width && height ? width / height : 0)
@@ -474,15 +478,42 @@ const openAssetInNewWindow = () => {
   window.open(assetCopy.value.url, '_blank', 'noopener,noreferrer')
 }
 
+// In reduced mode the dialog edits an asset's usage within content: its focus
+// overrides the library focus, which stays visible as the default.
+const { data: libraryAsset } = useAssetQuery(
+  computed(() => props.asset?.id ?? ''),
+  computed(() => props.mode === 'reduced')
+)
+const defaultFocus = computed(() =>
+  props.mode === 'reduced' ? (libraryAsset.value?.data?.focus ?? null) : null
+)
+const ownFocus = computed(() => assetCopy.value?.data?.focus ?? null)
+const displayedFocus = computed(() => ownFocus.value ?? defaultFocus.value)
+const focusState = computed(() => {
+  if (ownFocus.value) return 'own'
+  return defaultFocus.value ? 'default' : 'none'
+})
+const focusButtonLabel = computed(() => {
+  if (!ownFocus.value) return t('labels.assets.setFocusPoint')
+  return defaultFocus.value
+    ? t('labels.assets.resetFocusPoint')
+    : t('labels.assets.removeFocusPoint')
+})
+// Within content any click on the image sets the usage focus; the library view
+// only allows dragging an existing point so a stray click can't add one.
+const canPlaceFocus = computed(
+  () => !props.readOnly && (props.mode === 'reduced' || Boolean(displayedFocus.value))
+)
+// Content values carry no dimensions or thumbnails, so usages preview from the library asset.
+const previewMetadata = computed(() => libraryAsset.value?.metadata ?? assetCopy.value?.metadata)
+
 const toggleFocusPoint = () => {
   if (!assetCopy.value) return
-  if (assetCopy.value.data?.focus) {
-    assetCopy.value.data.focus = undefined
+  if (ownFocus.value) {
+    // Dropping the key (not nulling it) lets delivery fall back to the library focus.
+    delete assetCopy.value.data.focus
   } else {
-    if (!assetCopy.value.data) {
-      assetCopy.value.data = {}
-    }
-    assetCopy.value.data.focus = { x: 50, y: 50 }
+    assetCopy.value.data.focus = { ...(defaultFocus.value ?? { x: 50, y: 50 }) }
   }
 }
 
@@ -718,11 +749,12 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                   class="checkerboard block w-full object-contain"
                 />
                 <div
-                  v-if="assetCopy.data?.focus"
+                  v-if="displayedFocus"
                   class="pointer-events-none absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 transform mix-blend-difference"
+                  :class="{ 'opacity-50': !ownFocus }"
                   :style="{
-                    left: `${assetCopy.data?.focus?.x}%`,
-                    top: `${assetCopy.data?.focus?.y}%`,
+                    left: `${displayedFocus.x}%`,
+                    top: `${displayedFocus.y}%`,
                   }"
                   aria-hidden="true"
                 >
@@ -733,7 +765,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                   />
                 </div>
                 <div
-                  v-if="!props.readOnly && assetCopy.data?.focus"
+                  v-if="canPlaceFocus"
                   class="absolute inset-0 cursor-crosshair"
                   @mousedown="startDragging"
                 />
@@ -748,9 +780,9 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                 controls
                 :src="asset.url ?? undefined"
                 :poster="
-                  assetCopy.metadata?.thumbnails?.[0]?.full_path
+                  previewMetadata?.thumbnails?.[0]?.full_path
                     ? buildIlumUrl(
-                        assetCopy.metadata.thumbnails[0].full_path,
+                        previewMetadata.thumbnails[0].full_path,
                         { width: 1200, crop: 'fit', quality: 75 },
                         ilumBaseUrl
                       )
@@ -759,11 +791,11 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
                 class="max-h-[calc(60svh)] w-full rounded-lg object-contain"
               />
               <div
-                v-if="assetCopy.metadata?.thumbnails?.length"
+                v-if="previewMetadata?.thumbnails?.length"
                 class="flex gap-2 overflow-x-auto pb-1"
               >
                 <button
-                  v-for="thumb in assetCopy.metadata.thumbnails"
+                  v-for="thumb in previewMetadata.thumbnails"
                   :key="thumb.position"
                   type="button"
                   class="group relative shrink-0 overflow-hidden rounded"
@@ -789,8 +821,8 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
               class="flex w-full flex-col items-center gap-4 py-8"
             >
               <NuxtImg
-                v-if="assetCopy.metadata?.thumbnails?.[0]?.full_path"
-                :src="assetCopy.metadata.thumbnails[0].full_path"
+                v-if="previewMetadata?.thumbnails?.[0]?.full_path"
+                :src="previewMetadata.thumbnails[0].full_path"
                 :alt="asset.filename"
                 :width="480"
                 :height="270"
@@ -824,8 +856,8 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
               class="flex h-75 w-full flex-col items-center justify-center gap-4"
             >
               <NuxtImg
-                v-if="assetCopy.metadata?.thumbnails?.[0]?.full_path"
-                :src="assetCopy.metadata.thumbnails[0].full_path"
+                v-if="previewMetadata?.thumbnails?.[0]?.full_path"
+                :src="previewMetadata.thumbnails[0].full_path"
                 :alt="asset.filename"
                 :width="480"
                 :height="270"
@@ -844,7 +876,7 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
             </div>
           </div>
           <div
-            v-if="!props.readOnly && supportsPoster"
+            v-if="!props.readOnly && mode === 'normal' && supportsPoster"
             class="flex w-full shrink-0 flex-wrap items-center gap-2"
           >
             <input
@@ -944,19 +976,15 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
               />
             </Button>
             <Button
-              v-if="!props.readOnly && getFileType(asset.mime_type) === 'image'"
+              v-if="!props.readOnly && mode === 'normal' && getFileType(asset.mime_type) === 'image'"
               variant="outline"
               class="flex items-center gap-2"
               @click="toggleFocusPoint"
             >
-              <Icon :name="assetCopy.data?.focus ? 'lucide:x' : 'lucide:crosshair'" />
-              <span>{{
-                assetCopy.data?.focus
-                  ? $t('labels.assets.removeFocusPoint')
-                  : $t('labels.assets.setFocusPoint')
-              }}</span>
+              <Icon :name="ownFocus ? 'lucide:x' : 'lucide:crosshair'" />
+              <span>{{ focusButtonLabel }}</span>
             </Button>
-            <template v-if="!props.readOnly">
+            <template v-if="!props.readOnly && mode === 'normal'">
               <input
                 ref="replaceFileInput"
                 type="file"
@@ -980,7 +1008,54 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
             </template>
           </div>
         </div>
-        <div class="flex min-w-0 flex-col gap-4 md:col-span-4 md:min-h-0">
+        <div
+          v-if="mode === 'reduced'"
+          class="flex min-w-0 flex-col gap-4 md:col-span-4 md:min-h-0"
+        >
+          <section
+            v-if="getFileType(asset.mime_type) === 'image'"
+            class="space-y-2 rounded-lg bg-surface p-3 text-sm"
+          >
+            <h3 class="flex items-center gap-2 font-semibold">
+              <Icon name="lucide:crosshair" />
+              {{ $t('labels.assets.usageFocus.title') }}
+            </h3>
+            <p>{{ $t(`labels.assets.usageFocus.${focusState}`) }}</p>
+            <p
+              v-if="!props.readOnly"
+              class="text-muted"
+            >
+              {{ $t(`labels.assets.usageFocus.${focusState}Action`) }}
+            </p>
+            <Button
+              v-if="!props.readOnly && ownFocus"
+              variant="outline"
+              size="sm"
+              class="flex items-center gap-2"
+              @click="toggleFocusPoint"
+            >
+              <Icon :name="defaultFocus ? 'lucide:rotate-ccw' : 'lucide:x'" />
+              <span>{{ focusButtonLabel }}</span>
+            </Button>
+          </section>
+
+          <dl class="grid grid-cols-[1fr_2fr] gap-x-4 gap-y-2 rounded-lg bg-surface p-3 text-sm">
+            <dt class="font-semibold">{{ $t('labels.assets.fields.type') }}:</dt>
+            <dd class="truncate">{{ asset.mime_type || $t('labels.assets.unknown') }}</dd>
+            <dt class="font-semibold">{{ $t('labels.assets.size') }}:</dt>
+            <dd class="truncate">{{ formatFileSize(asset.size) }}</dd>
+            <template v-if="previewMetadata?.width && previewMetadata?.height">
+              <dt class="font-semibold">{{ $t('labels.assets.usageFocus.dimensions') }}:</dt>
+              <dd class="truncate">{{ previewMetadata.width }} × {{ previewMetadata.height }} px</dd>
+            </template>
+          </dl>
+
+          <p class="text-xs text-muted">{{ $t('labels.assets.usageFocus.libraryHint') }}</p>
+        </div>
+        <div
+          v-else
+          class="flex min-w-0 flex-col gap-4 md:col-span-4 md:min-h-0"
+        >
           <InputField
             v-model="assetCopy.filename"
             name="filename"
@@ -1018,7 +1093,6 @@ const restoreVersionWithConfirm = async (version: AssetVersionResource) => {
           </ComboboxField>
 
           <Tabs
-            v-if="mode === 'normal'"
             class="flex min-h-0 flex-1 flex-col"
             :model-value="selectedPanel"
             @update:model-value="

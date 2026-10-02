@@ -607,6 +607,18 @@
         "discard": "At"
       },
       "removeFocusPoint": "Odak Noktasını Kaldır",
+      "usageFocus": {
+        "title": "Bu içerikteki odak noktası",
+        "own": "Bu içerik kendi odak noktasını kullanıyor.",
+        "default": "Varlığın varsayılan odak noktası kullanılıyor, soluk gösterilir.",
+        "none": "Odak noktası ayarlanmadı.",
+        "ownAction": "Ayarlamak için görselin üzerinde sürükleyin.",
+        "defaultAction": "Bu içerik için farklı bir nokta ayarlamak üzere görsele tıklayın.",
+        "noneAction": "Bu içerik için bir nokta ayarlamak üzere görsele tıklayın.",
+        "dimensions": "Boyutlar",
+        "libraryHint": "Ad, etiketler, meta veriler ve varsayılan odak noktası varlık kütüphanesinde düzenlenir."
+      },
+      "resetFocusPoint": "Varsayılan Odak Noktasına Sıfırla",
       "fileTypes": {
         "image": "Resim",
         "document": "Belge",

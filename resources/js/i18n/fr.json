@@ -607,6 +607,18 @@
         "discard": "Abandonner"
       },
       "removeFocusPoint": "Retirer le point de mise au point",
+      "usageFocus": {
+        "title": "Point de mise au point dans ce contenu",
+        "own": "Ce contenu utilise son propre point de mise au point.",
+        "default": "Utilise le point de mise au point par défaut de l'asset, affiché en transparence.",
+        "none": "Aucun point de mise au point défini.",
+        "ownAction": "Faites glisser sur l'image pour l'ajuster.",
+        "defaultAction": "Cliquez sur l'image pour en définir un autre pour ce contenu.",
+        "noneAction": "Cliquez sur l'image pour en définir un pour ce contenu.",
+        "dimensions": "Dimensions",
+        "libraryHint": "Le nom, les tags, les métadonnées et le point de mise au point par défaut se modifient dans la médiathèque."
+      },
+      "resetFocusPoint": "Rétablir le point de mise au point par défaut",
       "fileTypes": {
         "image": "Image",
         "document": "Document",

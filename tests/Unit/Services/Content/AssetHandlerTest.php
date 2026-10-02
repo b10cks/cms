@@ -61,6 +61,27 @@ class AssetHandlerTest extends TestCase
     }
 
     #[Test]
+    public function a_usage_focus_overrides_the_library_focus_which_stays_the_default(): void
+    {
+        $asset = new class extends Asset
+        {
+            public function getUrl(): ?string
+            {
+                return null;
+            }
+        };
+        $asset->forceFill(['id' => 'asset-01', 'metadata' => [], 'data' => ['focus' => ['x' => 10, 'y' => 20]]]);
+        $handler = new AssetHandler;
+        $content = new Content;
+
+        $overridden = $handler->replaceContentAssets($content, ['type' => 'asset', 'id' => 'asset-01', 'data' => ['focus' => ['x' => 70, 'y' => 80]]], collect([$asset]));
+        $inherited = $handler->replaceContentAssets($content, ['type' => 'asset', 'id' => 'asset-01', 'data' => []], collect([$asset]));
+
+        $this->assertSame(['x' => 70, 'y' => 80], $overridden['data']['focus']);
+        $this->assertSame(['x' => 10, 'y' => 20], $inherited['data']['focus']);
+    }
+
+    #[Test]
     public function it_extracts_assets_from_a_root_level_asset_payload(): void
     {
         $handler = new AssetHandler;

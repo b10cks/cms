@@ -602,6 +602,18 @@
       "noAssetsWithTag": "Keine Assets passen zum ausgewählten Tag.",
       "setFocusPoint": "Fokuspunkt setzen",
       "removeFocusPoint": "Fokuspunkt entfernen",
+      "usageFocus": {
+        "title": "Fokuspunkt in diesem Inhalt",
+        "own": "Dieser Inhalt verwendet einen eigenen Fokuspunkt.",
+        "default": "Verwendet den Standard-Fokuspunkt des Assets, abgeblendet dargestellt.",
+        "none": "Kein Fokuspunkt gesetzt.",
+        "ownAction": "Ziehe auf dem Bild, um ihn anzupassen.",
+        "defaultAction": "Klicke auf das Bild, um für diesen Inhalt einen anderen zu setzen.",
+        "noneAction": "Klicke auf das Bild, um für diesen Inhalt einen zu setzen.",
+        "dimensions": "Abmessungen",
+        "libraryHint": "Name, Tags, Metadaten und der Standard-Fokuspunkt werden in der Asset-Bibliothek bearbeitet."
+      },
+      "resetFocusPoint": "Standard-Fokuspunkt verwenden",
       "openInNewWindow": "In neuem Fenster öffnen",
       "copyUrl": "URL kopieren",
       "downloadFile": "Herunterladen",

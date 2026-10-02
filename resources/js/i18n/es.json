@@ -607,6 +607,18 @@
         "discard": "Descartar"
       },
       "removeFocusPoint": "Quitar punto de enfoque",
+      "usageFocus": {
+        "title": "Punto de enfoque en este contenido",
+        "own": "Este contenido usa su propio punto de enfoque.",
+        "default": "Usa el punto de enfoque predeterminado del recurso, mostrado atenuado.",
+        "none": "No hay punto de enfoque definido.",
+        "ownAction": "Arrastra sobre la imagen para ajustarlo.",
+        "defaultAction": "Haz clic en la imagen para definir otro para este contenido.",
+        "noneAction": "Haz clic en la imagen para definir uno para este contenido.",
+        "dimensions": "Dimensiones",
+        "libraryHint": "El nombre, las etiquetas, los metadatos y el punto de enfoque predeterminado se editan en la biblioteca de recursos."
+      },
+      "resetFocusPoint": "Restablecer punto de enfoque predeterminado",
       "fileTypes": {
         "image": "Imagen",
         "document": "Documento",
