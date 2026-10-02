@@ -191,7 +191,7 @@ onBeforeUnmount(() => {
     <div
       v-if="showMap"
       ref="mapEl"
-      class="h-64 w-full overflow-hidden rounded-lg border border-input bg-surface"
+      class="isolate h-64 w-full overflow-hidden rounded-lg border border-input bg-surface"
     />
 
     <div class="grid grid-cols-2 gap-3">
