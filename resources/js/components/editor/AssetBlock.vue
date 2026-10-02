@@ -90,6 +90,8 @@ const handleAssetRemove = () => {
 
 const handleAssetDetailsUpdate = (asset: AssetResource) => {
   localValue.value = asset as unknown as AssetValue
+  updateValue()
+  showAssetDetails.value = false
 }
 </script>
 

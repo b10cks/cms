@@ -192,6 +192,7 @@ const editingAssetResource = computed(() => editingAsset.value as unknown as Ass
 
 const handleAssetDetailsDialogUpdate = (asset: AssetResource) => {
   handleAssetDetailsUpdate(asset as unknown as AssetValue)
+  closeAssetDetails()
 }
 
 const handleFolderChange = (folderId: string | null) => {
