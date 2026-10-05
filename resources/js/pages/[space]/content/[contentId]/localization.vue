@@ -176,25 +176,18 @@ const sourceChainIds = computed(() =>
     .filter((contentId): contentId is string => !!contentId)
 )
 const { data: sourceChainContents } = useQuery({
-  queryKey: computed(() => ['localization-source-chain', spaceId.value, sourceChainIds.value]),
-  queryFn: async () => {
-    if (sourceChainIds.value.length === 0) {
-      return []
-    }
-
-    const contents = await Promise.all(
-      sourceChainIds.value.map(async (contentId) => {
+  queryKey: computed(
+    () => ['localization-source-chain', spaceId.value, sourceChainIds.value] as const
+  ),
+  // Read the ids from the key, not the live computed: a language switch changes
+  // them mid-fetch and would cache an empty chain under the old key.
+  queryFn: async ({ queryKey: [, , contentIds] }) =>
+    Promise.all(
+      contentIds.map(async (contentId) => {
         const response = await spaceAPI.value.contents.get(contentId)
         return response.data
       })
-    )
-
-    const contentsById = new Map(contents.map((content) => [content.id, content] as const))
-
-    return sourceChainIds.value
-      .map((contentId) => contentsById.get(contentId))
-      .filter((content): content is ContentResource => !!content)
-  },
+    ),
 })
 
 /**
