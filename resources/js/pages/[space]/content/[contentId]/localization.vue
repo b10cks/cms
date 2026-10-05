@@ -66,6 +66,43 @@ const canonicalContent = computed(() => {
   }
 })
 
+// Declared before anything that reads them: with blocks already cached, the
+// schema state below evaluates the merged source payload during setup.
+const { useBlocksQuery } = useBlocks(spaceId)
+const { data: blocks } = useBlocksQuery({ per_page: 1000 })
+const blockList = computed(() => blocks.value?.data || [])
+
+const block = computed(() => {
+  if (!canonicalContent.value || !blocks.value) return null
+
+  const blockId = canonicalContent.value.block?.id || canonicalContent.value.block_id
+  return blocks.value.data.find((blockItem) => blockItem.id === blockId) || null
+})
+
+const blockSchemaCache = ref(new Map())
+
+watch(
+  blocks,
+  (newBlocks) => {
+    if (!newBlocks) return
+
+    blockSchemaCache.value.clear()
+
+    newBlocks.data.forEach((blockItem) => {
+      blockSchemaCache.value.set(blockItem.slug, {
+        id: blockItem.id,
+        name: blockItem.name,
+        schema: blockItem.schema,
+      })
+    })
+  },
+  { immediate: true }
+)
+
+const getBlockSchemaFn = (blockSlug: string) => {
+  return blockSchemaCache.value.get(blockSlug)
+}
+
 const translatableContent = ref<ContentResource | null>(null)
 const persistedContent = ref<ContentResource | null>(null)
 
@@ -447,9 +484,6 @@ watch(
   { immediate: true }
 )
 
-const { useBlocksQuery } = useBlocks(spaceId)
-const { data: blocks } = useBlocksQuery({ per_page: 1000 })
-const blockList = computed(() => blocks.value?.data || [])
 const validation = useContentSchemaState({
   content: translatableContent,
   blocks: blockList,
@@ -458,13 +492,6 @@ const validation = useContentSchemaState({
 })
 provideValidationState(validation)
 const { clearServerErrors, resetValidationState } = validation
-
-const block = computed(() => {
-  if (!canonicalContent.value || !blocks.value) return null
-
-  const blockId = canonicalContent.value.block?.id || canonicalContent.value.block_id
-  return blocks.value.data.find((blockItem) => blockItem.id === blockId) || null
-})
 
 // Debounced so typing a name doesn't fire a preview request per keystroke.
 const debouncedTranslationName = refDebounced(
@@ -535,26 +562,6 @@ const handleTranslatedName = (name: string) => {
   }
 }
 
-const blockSchemaCache = ref(new Map())
-
-watch(
-  blocks,
-  (newBlocks) => {
-    if (!newBlocks) return
-
-    blockSchemaCache.value.clear()
-
-    newBlocks.data.forEach((blockItem) => {
-      blockSchemaCache.value.set(blockItem.slug, {
-        id: blockItem.id,
-        name: blockItem.name,
-        schema: blockItem.schema,
-      })
-    })
-  },
-  { immediate: true }
-)
-
 const isLoading = computed(
   () =>
     !canonicalContent.value ||
@@ -588,10 +595,6 @@ const toggleEditorPanel = () => {
       editorPanel.value.collapse()
     }
   }
-}
-
-const getBlockSchemaFn = (blockSlug: string) => {
-  return blockSchemaCache.value.get(blockSlug)
 }
 
 // Live collaboration: translations may not be persisted yet (no content id), so
