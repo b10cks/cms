@@ -146,10 +146,11 @@ const teardownBridge = () => {
   isConnected.value = false
 }
 
-// One bridge per iframe element: refresh and environment/locale switches
-// remount the iframe (via iframeKey), which recreates the bridge with the
-// then-current target origin. Stacking a second bridge onto the same iframe
-// would duplicate every incoming event.
+// One bridge per iframe element: refresh, environment/locale switches and
+// switching to another content remount the iframe (via its key), which
+// recreates the bridge with the then-current target origin and an empty replay
+// state, so a page never gets the previous page's tree. Stacking a second
+// bridge onto the same iframe would duplicate every incoming event.
 watch(
   iframeRef,
   (iframe) => {
@@ -500,7 +501,7 @@ const handleMouseMove = (event: MouseEvent) => {
         <iframe
           v-if="baseSrc && src"
           ref="iframeRef"
-          :key="iframeKey"
+          :key="`${iframeKey}-${contentId}`"
           :src="src"
           :title="fullSlug"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-top-navigation-by-user-activation"
