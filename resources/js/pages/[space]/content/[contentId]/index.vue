@@ -436,6 +436,8 @@ const discardLocalContentChanges = () => {
     content.value = cloneContent(persistedContent.value)
     editorContentTree.value = buildEditorContentTree(content.value)
     markSaved()
+    // The preview still renders the discarded edits; hand it the restored tree.
+    updatePreviewItem(content.value.content)
     nextTick(() => {
       suppressTreeSync = false
     })
