@@ -3,6 +3,15 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.10.7-c0df92e4] — 2026-10-7
+
+- ⬆️ Bump versions
+- 🐛 Show discarded changes as reverted in the live preview
+- 🐛 Stop the live preview showing the previous page after a switch
+- 🐛 Keep translations from loading forever after a language switch
+- 🐛 Stop the translation editor crashing on repeated language switches
+- ⬆️ Bump versions
+
 ## [v2026.10.2-07318a6d] — 2026-10-2
 
 - ✨ Override an asset's focus point per content usage
