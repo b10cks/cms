@@ -3,6 +3,15 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.10.7-6581fcf3] — 2026-10-7
+
+- ✨ Stream content translation imports with live progress
+- 🐛 Stop AI streams closing output buffers they did not open
+- 💡 Regenerate docs
+- ⬆️ Bump versions
+- ✨ Publish and unpublish the whole tree selection from the context menu
+- ✨ Publish, unpublish and release several entries in one request
+
 ## [v2026.10.7-c8b1d139] — 2026-10-7
 
 - 📌 Pin vue-tsc to 3.3.11 to keep typecheck green
