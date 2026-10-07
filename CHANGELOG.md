@@ -3,6 +3,11 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.10.7-c8b1d139] — 2026-10-7
+
+- 📌 Pin vue-tsc to 3.3.11 to keep typecheck green
+- Bump actions/setup-node from 4.4.0 to 7.0.0 (#55)
+
 ## [v2026.10.7-c0df92e4] — 2026-10-7
 
 - ⬆️ Bump versions
