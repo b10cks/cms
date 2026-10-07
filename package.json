@@ -93,7 +93,7 @@
     "vitepress": "^1.6.4",
     "vitepress-openapi": "^0.2.5",
     "vitest": "^5.0.3",
-    "vue-tsc": "^3.3.12"
+    "vue-tsc": "3.3.11"
   },
   "lint-staged": {
     "*.{js,json,md,jsx,ts,tsx,vue,yaml}": "oxlint --fix"
