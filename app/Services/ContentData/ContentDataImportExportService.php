@@ -101,9 +101,14 @@ class ContentDataImportExportService extends ImportExportService
     }
 
     /**
+     * Validate and parse the file now, apply it lazily: a broken file throws before
+     * any response starts, while the writes run as the returned generator is
+     * iterated. Yields `{processed, total}` per document and returns the result.
+     *
      * @param  bool  $gridMode  The file came from a mass-edit grid export, so it carries
      *                          source-language values and non-translatable fields, and an
      *                          empty cell means "clear this" rather than "not provided".
+     * @return \Generator<int, array{processed: int, total: int}, mixed, ImportResult>
      */
     public function importContents(
         Space $space,
@@ -113,14 +118,14 @@ class ContentDataImportExportService extends ImportExportService
         bool $createMissing,
         Authenticatable $owner,
         bool $gridMode = false,
-    ): ImportResult {
+    ): \Generator {
         $driver = $this->getDriver($format);
 
         $this->ensureImportIsValid(fn (): array => $driver->validate($file));
 
         $documents = $driver->parse($file);
 
-        return $this->applier->apply(
+        return $this->applier->applyIncrementally(
             $space,
             $documents,
             $mode,

@@ -1,4 +1,4 @@
-import { requestExportBlob, requestImportJson } from '~/lib/import-export'
+import { requestExportBlob, requestImportStream } from '~/lib/import-export'
 import type {
   ContentBulkPublishResult,
   ContentResource,
@@ -13,6 +13,7 @@ import type {
   ContentTranslationImportMode,
   ContentTranslationImportResult,
 } from '~/types/content-translations'
+import type { ImportProgress } from '~/types/import-export'
 
 type ForceableContentPayload = UpdateContentPayload & {
   force?: boolean
@@ -250,18 +251,22 @@ export class Contents extends BaseResource<
   }
 
   /**
-   * Import content translations from a file, as a draft or published.
+   * Import content translations from a file, as a draft or published. Streams
+   * progress, since a large file takes longer than a plain request may run.
    *
    * `grid` marks a file exported from the mass-edit grid: it carries the source
    * language as its own column and treats blank cells as deliberate clears.
    */
   public async importTranslations(
     file: File,
-    options: { mode: ContentTranslationImportMode; createMissing: boolean; grid?: boolean }
+    options: {
+      mode: ContentTranslationImportMode
+      createMissing: boolean
+      grid?: boolean
+      onProgress?: (progress: ImportProgress) => void
+    }
   ): Promise<ContentTranslationImportResult> {
-    const data = await requestImportJson<
-      ContentTranslationImportResult | { data: ContentTranslationImportResult }
-    >({
+    return requestImportStream<ContentTranslationImportResult>({
       client: this.client,
       endpoint: `${this.basePath}/import`,
       file,
@@ -270,8 +275,7 @@ export class Contents extends BaseResource<
         create_missing: options.createMissing ? '1' : '0',
         grid: options.grid ? '1' : '0',
       },
+      onProgress: options.onProgress,
     })
-
-    return 'data' in data ? data.data : data
   }
 }

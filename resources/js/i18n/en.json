@@ -1088,7 +1088,8 @@
         "changeCount": "{count} field(s)",
         "ignoredFields": "Ignored",
         "errorsTitle": "Errors",
-        "importError": "Import failed"
+        "importError": "Import failed",
+        "progress": "{processed} of {total} entries imported"
       }
     },
     "contentTree": {

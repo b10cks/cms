@@ -1097,7 +1097,8 @@
         "changeCount": "{count} Feld(er)",
         "ignoredFields": "Ignoriert",
         "errorsTitle": "Fehler",
-        "importError": "Import fehlgeschlagen"
+        "importError": "Import fehlgeschlagen",
+        "progress": "{processed} von {total} Einträgen importiert"
       }
     },
     "contentTree": {

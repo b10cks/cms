@@ -1088,7 +1088,8 @@
         "changeCount": "{count} champ(s)",
         "ignoredFields": "Ignorés",
         "errorsTitle": "Erreurs",
-        "importError": "Échec de l'importation"
+        "importError": "Échec de l'importation",
+        "progress": "{processed} sur {total} entrées importées"
       }
     },
     "contentTree": {

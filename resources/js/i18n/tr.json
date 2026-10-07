@@ -1088,7 +1088,8 @@
         "changeCount": "{count} alan",
         "ignoredFields": "Yoksayılan",
         "errorsTitle": "Hatalar",
-        "importError": "İçe aktarma başarısız"
+        "importError": "İçe aktarma başarısız",
+        "progress": "{total} girdiden {processed} tanesi içe aktarıldı"
       }
     },
     "contentTree": {

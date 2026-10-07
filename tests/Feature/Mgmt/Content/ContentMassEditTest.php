@@ -674,6 +674,48 @@ class ContentMassEditTest extends TestCase
     }
 
     #[Test]
+    public function import_streams_progress_per_document_and_ends_with_the_result(): void
+    {
+        $this->actingAs($this->owner);
+
+        $first = $this->createContent('home', content: ['title' => 'Home']);
+        $second = $this->createContent('about', content: ['title' => 'About']);
+
+        $header = ['content_id', 'unit_id', 'type', 'field', 'source', 'de'];
+        $rows = [
+            ['content_id' => $first->id, 'unit_id' => 'title', 'type' => 'text', 'field' => 'title', 'de' => 'Zuhause'],
+            ['content_id' => $second->id, 'unit_id' => 'title', 'type' => 'text', 'field' => 'title', 'de' => 'Über uns'],
+        ];
+
+        $response = $this->post(route('mgmt.contents.data.import', ['space' => $this->space->id]), [
+            'file' => $this->csvUpload($header, $rows),
+            'import_mode' => 'draft',
+            'create_missing' => '1',
+        ], ['Accept' => 'text/event-stream']);
+        $response->assertOk();
+        $this->assertStringContainsString('text/event-stream', (string) $response->headers->get('Content-Type'));
+
+        $events = array_map(
+            static fn (string $line): array => json_decode(substr($line, 6), true, 512, JSON_THROW_ON_ERROR),
+            array_values(array_filter(explode("\n", $response->streamedContent()), static fn (string $line): bool => str_starts_with($line, 'data: '))),
+        );
+
+        $progress = array_map(
+            static fn (array $event): array => json_decode($event['message'], true, 512, JSON_THROW_ON_ERROR),
+            array_filter($events, static fn (array $event): bool => $event['type'] === 'status'),
+        );
+        $this->assertSame([['processed' => 1, 'total' => 2], ['processed' => 2, 'total' => 2]], array_values($progress));
+
+        $done = end($events);
+        $this->assertSame('done', $done['type']);
+        $this->assertSame(2, $done['data']['summary']['total_changes']);
+        $this->assertSame(
+            'Über uns',
+            Content::query()->where('i18n_parent_id', $second->id)->where('language_iso', 'de')->sole()->getCurrentContent()['title'],
+        );
+    }
+
+    #[Test]
     public function save_rejects_more_documents_than_one_request_can_carry(): void
     {
         $this->actingAs($this->owner);

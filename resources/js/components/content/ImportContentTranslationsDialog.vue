@@ -5,7 +5,7 @@ import type {
   ContentTranslationImportMode,
   ContentTranslationImportResult,
 } from '~/types/content-translations'
-import type { ImportDialogLabels, ImportDialogMode } from '~/types/import-export'
+import type { ImportDialogLabels, ImportDialogMode, ImportProgress } from '~/types/import-export'
 
 const props = withDefaults(
   defineProps<{
@@ -23,6 +23,7 @@ const { useImportContentTranslationsMutation } = useContent(props.spaceId)
 const importMutation = useImportContentTranslationsMutation()
 
 const createMissing = ref(false)
+const progress = ref<ImportProgress | null>(null)
 
 const labels = computed<ImportDialogLabels>(() => ({
   title: t('labels.contents.translationImport.title'),
@@ -57,11 +58,24 @@ const modes = computed<ImportDialogMode<ContentTranslationImportMode>[]>(() => [
   },
 ])
 
-const submit = (
+const submit = async (
   file: File,
   mode: ContentTranslationImportMode
-): Promise<ContentTranslationImportResult> =>
-  importMutation.mutateAsync({ file, mode, createMissing: createMissing.value, grid: props.grid })
+): Promise<ContentTranslationImportResult> => {
+  progress.value = null
+
+  try {
+    return await importMutation.mutateAsync({
+      file,
+      mode,
+      createMissing: createMissing.value,
+      grid: props.grid,
+      onProgress: (value) => (progress.value = value),
+    })
+  } finally {
+    progress.value = null
+  }
+}
 </script>
 
 <template>
@@ -72,6 +86,11 @@ const submit = (
     :modes="modes"
     :submit="submit"
     :pending="importMutation.isPending.value"
+    :progress="progress"
+    :progress-label="
+      ({ processed, total }) =>
+        t('labels.contents.translationImport.progress', { processed, total })
+    "
     :item-key="(entry) => `${entry.content_id}:${entry.language}`"
     :change-count="
       (entry) =>

@@ -8,6 +8,7 @@ import {
   getImportExportExtension,
   requestExportBlob,
   requestImportJson,
+  requestImportStream,
 } from '~/lib/import-export'
 
 const ensureCsrfCookie = vi.fn(async () => {})
@@ -214,6 +215,53 @@ describe('requestImportJson', () => {
     fetchMock.mockResolvedValue(new Response('nope', { status: 500, statusText: 'Server Error' }))
 
     await expect(importJson()).rejects.toThrow('Import failed with status 500: Server Error')
+  })
+})
+
+describe('requestImportStream', () => {
+  const file = new File(['id,name\n1,A'], 'rows.csv', { type: 'text/csv' })
+
+  const sseResponse = (...events: unknown[]) =>
+    new Response(events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join(''), {
+      headers: { 'content-type': 'text/event-stream' },
+    })
+
+  const importStream = (onProgress = vi.fn()) =>
+    requestImportStream<{ imported: number }>({
+      client: client(),
+      endpoint: '/imports',
+      file,
+      onProgress,
+    })
+
+  it('reports progress and resolves with the done payload', async () => {
+    fetchMock.mockResolvedValue(
+      sseResponse(
+        { type: 'status', message: JSON.stringify({ processed: 1, total: 2 }) },
+        { type: 'status', message: JSON.stringify({ processed: 2, total: 2 }) },
+        { type: 'done', content: '', data: { imported: 2 } }
+      )
+    )
+    const onProgress = vi.fn()
+
+    expect(await importStream(onProgress)).toEqual({ imported: 2 })
+    expect(onProgress.mock.calls).toEqual([
+      [{ processed: 1, total: 2 }],
+      [{ processed: 2, total: 2 }],
+    ])
+    expect(lastRequest().headers.Accept).toBe('text/event-stream')
+  })
+
+  it('rejects with the message of an error event', async () => {
+    fetchMock.mockResolvedValue(sseResponse({ type: 'error', message: 'Reference: abc' }))
+
+    await expect(importStream()).rejects.toThrow('Reference: abc')
+  })
+
+  it('rejects with the API message when the request fails before streaming', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ message: 'Unsupported column' }, { status: 422 }))
+
+    await expect(importStream()).rejects.toThrow('Unsupported column')
   })
 })
 

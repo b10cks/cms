@@ -1088,7 +1088,8 @@
         "changeCount": "{count} полей",
         "ignoredFields": "Пропущено",
         "errorsTitle": "Ошибки",
-        "importError": "Импорт не удался"
+        "importError": "Импорт не удался",
+        "progress": "Импортировано {processed} из {total} записей"
       }
     },
     "contentTree": {

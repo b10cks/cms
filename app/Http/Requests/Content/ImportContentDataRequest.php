@@ -60,4 +60,10 @@ class ImportContentDataRequest extends FormRequest
     {
         return $this->boolean('grid');
     }
+
+    /** Stream progress as server-sent events instead of one JSON response at the end. */
+    public function wantsEventStream(): bool
+    {
+        return str_contains((string) $this->header('Accept'), 'text/event-stream');
+    }
 }

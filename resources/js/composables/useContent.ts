@@ -14,6 +14,7 @@ import type {
   CreateContentPayload,
   UpdateContentPayload,
 } from '~/types/contents'
+import type { ImportProgress } from '~/types/import-export'
 
 import { queryKeys } from './useQueryClient'
 
@@ -522,11 +523,13 @@ export function useContent(spaceId: MaybeRef<string>) {
         mode: ContentTranslationImportMode
         createMissing: boolean
         grid?: boolean
+        onProgress?: (progress: ImportProgress) => void
       }) => {
         return await spaceAPI.value.contents.importTranslations(variables.file, {
           mode: variables.mode,
           createMissing: variables.createMissing,
           grid: variables.grid,
+          onProgress: variables.onProgress,
         })
       },
       onSuccess: () => {

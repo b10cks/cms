@@ -28,10 +28,12 @@ class AiSseStream
     /**
      * @param  Closure(): Generator<StreamEvent>  $events  Factory that yields the AI stream events.
      * @param  array<string, mixed>  $logContext  Extra context attached to error logs.
+     * @param  bool  $stopOnDisconnect  Stop consuming once the browser goes away. Off for
+     *                                  work that must not stop half-applied, like imports.
      */
-    public static function response(Closure $events, array $logContext = []): StreamedResponse
+    public static function response(Closure $events, array $logContext = [], bool $stopOnDisconnect = true): StreamedResponse
     {
-        return new StreamedResponse(function () use ($events, $logContext) {
+        return new StreamedResponse(function () use ($events, $logContext, $stopOnDisconnect) {
             @ignore_user_abort(true);
             @set_time_limit(0);
 
@@ -57,7 +59,7 @@ class AiSseStream
 
             try {
                 foreach ($events() as $event) {
-                    if (connection_aborted()) {
+                    if ($stopOnDisconnect && connection_aborted()) {
                         break;
                     }
 
@@ -68,7 +70,7 @@ class AiSseStream
                     $write($event->toJsonLine()."\n\n");
                     $lastActivity = time();
 
-                    if (connection_aborted()) {
+                    if ($stopOnDisconnect && connection_aborted()) {
                         break;
                     }
 

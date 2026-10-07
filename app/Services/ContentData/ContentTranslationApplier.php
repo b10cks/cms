@@ -60,6 +60,32 @@ class ContentTranslationApplier
         bool $allowSourceEdits = false,
         bool $applyEmpty = false,
     ): ImportResult {
+        $run = $this->applyIncrementally($space, $documents, $mode, $createMissing, $owner, $allowSourceEdits, $applyEmpty);
+
+        foreach ($run as $_) {
+            // Drain: progress only matters to streaming callers.
+        }
+
+        return $run->getReturn();
+    }
+
+    /**
+     * Same as {@see apply()}, yielding progress after every document so a large
+     * import can report back while it runs. Runs lazily: nothing is written until
+     * the generator is iterated.
+     *
+     * @param  array<int, array{content_id: string, targets: array<string, array<string, string>>}>  $documents
+     * @return \Generator<int, array{processed: int, total: int}, mixed, ImportResult>
+     */
+    public function applyIncrementally(
+        Space $space,
+        array $documents,
+        ContentTranslationImportMode $mode,
+        bool $createMissing,
+        Authenticatable $owner,
+        bool $allowSourceEdits = false,
+        bool $applyEmpty = false,
+    ): \Generator {
         $this->successes = [];
         $this->changes = [];
         $this->ignoredFields = [];
@@ -67,48 +93,87 @@ class ContentTranslationApplier
 
         $enabledLanguages = $space->settings->getEnabledLanguages();
         $defaultLanguage = $space->settings->getDefaultLanguage();
+        $total = \count($documents);
 
-        foreach ($documents as $document) {
+        // Two queries for the whole file instead of two per document.
+        $contentIds = array_values(array_filter(array_map(
+            static fn (array $document): string => (string) ($document['content_id'] ?? ''),
+            $documents,
+        )));
+        $canonicals = $this->loadCanonicals($contentIds);
+        $families = $this->loadFamilies($canonicals->keys()->all());
+
+        foreach (array_values($documents) as $index => $document) {
             $contentId = (string) ($document['content_id'] ?? '');
             $targets = $document['targets'] ?? [];
 
-            if ($contentId === '' || $targets === []) {
-                continue;
+            if ($contentId !== '' && $targets !== []) {
+                $this->applyDocument(
+                    $space,
+                    $contentId,
+                    $canonicals->get($contentId),
+                    $families->get($contentId, new Collection),
+                    $targets,
+                    $enabledLanguages,
+                    $defaultLanguage,
+                    $mode,
+                    $createMissing,
+                    $owner,
+                    $allowSourceEdits,
+                    $applyEmpty,
+                );
             }
 
-            $canonical = $this->resolveCanonical($contentId);
-
-            if ($canonical === null) {
-                $this->errors[] = ['content_id' => $contentId, 'message' => 'Content not found or not a canonical document'];
-
-                continue;
-            }
-
-            $rootSchema = $canonical->block?->schema?->toArray() ?? [];
-            // Resolved once per document: applyLanguage used to refetch the whole
-            // family for every language column of the same content.
-            $family = $this->i18n->getFamily($canonical);
-
-            foreach ($targets as $language => $values) {
-                $language = (string) $language;
-
-                $isSourceLanguage = $language === $defaultLanguage;
-
-                if (($isSourceLanguage && ! $allowSourceEdits) || ! \in_array($language, $enabledLanguages, true)) {
-                    $this->ignoredFields[] = $language;
-
-                    continue;
-                }
-
-                if (! \is_array($values) || $values === []) {
-                    continue;
-                }
-
-                $family = $this->applyLanguage($space, $canonical, $family, $rootSchema, $language, $values, $mode, $createMissing, $owner, $applyEmpty, $isSourceLanguage);
-            }
+            yield ['processed' => $index + 1, 'total' => $total];
         }
 
         return new ImportResult($this->successes, $this->changes, $this->ignoredFields, $this->errors);
+    }
+
+    /**
+     * @param  Collection<int, Content>  $family
+     * @param  array<string, mixed>  $targets
+     * @param  array<int, string>  $enabledLanguages
+     */
+    private function applyDocument(
+        Space $space,
+        string $contentId,
+        ?Content $canonical,
+        Collection $family,
+        array $targets,
+        array $enabledLanguages,
+        string $defaultLanguage,
+        ContentTranslationImportMode $mode,
+        bool $createMissing,
+        Authenticatable $owner,
+        bool $allowSourceEdits,
+        bool $applyEmpty,
+    ): void {
+        if ($canonical === null) {
+            $this->errors[] = ['content_id' => $contentId, 'message' => 'Content not found or not a canonical document'];
+
+            return;
+        }
+
+        $rootSchema = $canonical->block?->schema?->toArray() ?? [];
+
+        foreach ($targets as $language => $values) {
+            $language = (string) $language;
+
+            $isSourceLanguage = $language === $defaultLanguage;
+
+            if (($isSourceLanguage && ! $allowSourceEdits) || ! \in_array($language, $enabledLanguages, true)) {
+                $this->ignoredFields[] = $language;
+
+                continue;
+            }
+
+            if (! \is_array($values) || $values === []) {
+                continue;
+            }
+
+            $family = $this->applyLanguage($space, $canonical, $family, $rootSchema, $language, $values, $mode, $createMissing, $owner, $applyEmpty, $isSourceLanguage);
+        }
     }
 
     /**
@@ -227,13 +292,40 @@ class ContentTranslationApplier
         return $family;
     }
 
-    private function resolveCanonical(string $contentId): ?Content
+    /**
+     * @param  array<int, string>  $contentIds
+     * @return Collection<string, Content>
+     */
+    private function loadCanonicals(array $contentIds): Collection
     {
         return Content::query()
             ->with('block')
             ->whereNull('i18n_parent_id')
-            ->whereKey($contentId)
-            ->first();
+            ->whereKey($contentIds)
+            ->get()
+            ->keyBy('id');
+    }
+
+    /**
+     * Every document's language family, keyed by canonical id. Mirrors
+     * {@see ContentI18nService::getFamily()}: separate instances from the
+     * canonicals, so writes to the source row never leak into the tree a new
+     * translation is cloned from.
+     *
+     * @param  array<int, string>  $canonicalIds
+     * @return Collection<string, Collection<int, Content>>
+     */
+    private function loadFamilies(array $canonicalIds): Collection
+    {
+        if ($canonicalIds === []) {
+            return new Collection;
+        }
+
+        return Content::query()
+            ->where(fn ($query) => $query->whereIn('id', $canonicalIds)->orWhereIn('i18n_parent_id', $canonicalIds))
+            ->whereNull('deleted_at')
+            ->get()
+            ->groupBy(static fn (Content $content): string => $content->i18n_parent_id ?? $content->id);
     }
 
     /**

@@ -12,6 +12,12 @@ export interface ImportSummary {
   total_errors: number
 }
 
+/** Documents applied so far, streamed by long-running imports. */
+export interface ImportProgress {
+  processed: number
+  total: number
+}
+
 /**
  * Shape every feature import result shares, as consumed by the generic
  * `ImportDialog`. `deleted` and `ignored_fields` are optional because not

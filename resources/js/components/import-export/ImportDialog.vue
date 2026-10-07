@@ -9,12 +9,14 @@ import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import FileDropZone from '~/components/ui/FileDropZone.vue'
+import { Progress } from '~/components/ui/progress'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import type {
   ImportDialogLabels,
   ImportDialogMode,
   ImportDialogResult,
   ImportError,
+  ImportProgress,
 } from '~/types/import-export'
 
 const props = withDefaults(
@@ -25,6 +27,9 @@ const props = withDefaults(
     /** Runs the feature mutation; its resolved value drives the summary step. */
     submit: (file: File, mode: TMode) => Promise<ImportDialogResult<TItem, TDeleted>>
     pending: boolean
+    /** Live progress of a streaming import, shown while it runs. */
+    progress?: ImportProgress | null
+    progressLabel?: (progress: ImportProgress) => string
     /** Strategy tiles. Omit for importers that take no mode. */
     modes?: ImportDialogMode<TMode>[]
     itemKey: (item: TItem) => string
@@ -37,6 +42,8 @@ const props = withDefaults(
     contentClass?: string
   }>(),
   {
+    progress: null,
+    progressLabel: (progress: ImportProgress) => `${progress.processed} / ${progress.total}`,
     modes: undefined,
     deletedLabel: undefined,
     deletedVariant: 'list',
@@ -63,6 +70,11 @@ const expanded = ref<Set<string>>(new Set())
 
 const showSummary = computed(() => importResult.value !== null)
 const activeMode = computed(() => props.modes?.find((mode) => mode.value === importMode.value))
+const progressPercent = computed(() =>
+  props.progress && props.progress.total > 0
+    ? (props.progress.processed / props.progress.total) * 100
+    : 0
+)
 
 const handleImport = async () => {
   if (!selectedFile.value) {
@@ -164,6 +176,14 @@ const toggleExpanded = (key: string) => {
           </div>
 
           <slot name="options" />
+
+          <div
+            v-if="pending && progress"
+            class="space-y-1.5"
+          >
+            <Progress :model-value="progressPercent" />
+            <p class="text-xs tabular-nums text-muted-foreground">{{ progressLabel(progress) }}</p>
+          </div>
 
           <div
             v-if="errorMessage"
