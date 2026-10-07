@@ -35,7 +35,10 @@ class AiSseStream
             @ignore_user_abort(true);
             @set_time_limit(0);
 
-            if (ob_get_level() === 0) {
+            // Only a buffer this stream opened is its to close at the end.
+            $ownsBuffer = ob_get_level() === 0;
+
+            if ($ownsBuffer) {
                 ob_start();
             }
 
@@ -93,7 +96,7 @@ class AiSseStream
                 }
             }
 
-            if (ob_get_level() > 0) {
+            if ($ownsBuffer) {
                 ob_end_flush();
             }
         }, 200, [
