@@ -1098,6 +1098,11 @@
         "publish": "Publish",
         "publishWithMessage": "Publish with Message",
         "schedule": "Schedule",
+        "publishMany": "Publish {count} entry | Publish {count} entries",
+        "publishWithChildren": "Publish with sub-items ({count})",
+        "unpublish": "Unpublish",
+        "unpublishMany": "Unpublish {count} entry | Unpublish {count} entries",
+        "addToRelease": "Add to release",
         "rename": "Rename",
         "newSubItem": "New sub item",
         "copy": "Copy",
@@ -1112,7 +1117,11 @@
       "confirmations": {
         "deleteTitle": "Delete content",
         "deleteSingle": "Delete this content item and its subtree?",
-        "deleteMany": "Delete {count} selected content trees?"
+        "deleteMany": "Delete {count} selected content trees?",
+        "publishTitle": "Publish content",
+        "publishWithChildren": "Publish {count} entry, including sub-items? | Publish {count} entries, including sub-items?",
+        "unpublishTitle": "Unpublish content",
+        "unpublish": "Take this entry offline? It disappears from the delivery API until it is published again. | Take {count} entries offline? They disappear from the delivery API until they are published again."
       },
       "drag": {
         "multiple": "{count} pages"
@@ -1137,7 +1146,9 @@
       },
       "status": {
         "draft": "Draft",
-        "pendingChanges": "Unpublished changes"
+        "pendingChanges": "Unpublished changes",
+        "filter": "Show only entries with unpublished changes",
+        "nothingPending": "Everything is published."
       }
     },
     "comments": {
@@ -4805,7 +4816,13 @@
       "moveError": "Failed to move content: {error}",
       "translationExportError": "Failed to export content translations: {error}",
       "translationImportSuccess": "Content translations imported successfully",
-      "translationImportError": "Failed to import content translations: {error}"
+      "translationImportError": "Failed to import content translations: {error}",
+      "bulk": {
+        "publishSuccess": "{count} entry published | {count} entries published",
+        "publishFailed": "{count} of {total} entries could not be published. \"{name}\": {error} | {count} of {total} entries could not be published. \"{name}\": {error}",
+        "unpublishSuccess": "{count} entry unpublished | {count} entries unpublished",
+        "unpublishFailed": "{count} of {total} entries could not be unpublished. \"{name}\": {error} | {count} of {total} entries could not be unpublished. \"{name}\": {error}"
+      }
     },
     "contentVersions": {
       "setCurrentSuccess": "Version set as current successfully",
@@ -5125,6 +5142,7 @@
       "open": "Open the focused entry",
       "rename": "Rename the focused entry",
       "delete": "Delete the focused entry",
+      "publish": "Publish the focused entry or the selection",
       "copy": "Copy the focused entry",
       "cut": "Cut the focused entry",
       "paste": "Paste into the focused entry",

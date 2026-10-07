@@ -2,13 +2,11 @@
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeaderCombined } from '~/components/ui/dialog'
 import { DateTimeFormField, InputField } from '~/components/ui/form'
-import type { ContentResource } from '~/types/contents'
 
 type PublishType = 'now' | 'schedule'
 
 const props = defineProps<{
   open: boolean
-  content: ContentResource
   loading?: boolean
   publishType: PublishType
 }>()

@@ -1,5 +1,6 @@
 import { requestExportBlob, requestImportJson } from '~/lib/import-export'
 import type {
+  ContentBulkPublishResult,
   ContentResource,
   ContentSerialPreview,
   ContentTreeOperationPayload,
@@ -93,6 +94,31 @@ export class Contents extends BaseResource<
   ): Promise<ApiResponse<ContentResource>> {
     return this.client.post<ApiResponse<ContentResource>>(
       `${this.basePath}/${contentId}/unpublish`,
+      payload
+    )
+  }
+
+  /**
+   * Publish several content items. Each one succeeds or fails on its own.
+   */
+  public async bulkPublish(payload: {
+    ids: string[]
+    message?: string
+  }): Promise<ApiResponse<ContentBulkPublishResult>> {
+    return this.client.post<ApiResponse<ContentBulkPublishResult>>(
+      `${this.basePath}/bulk-publish`,
+      payload
+    )
+  }
+
+  /**
+   * Unpublish several content items. Each one succeeds or fails on its own.
+   */
+  public async bulkUnpublish(payload: {
+    ids: string[]
+  }): Promise<ApiResponse<ContentBulkPublishResult>> {
+    return this.client.post<ApiResponse<ContentBulkPublishResult>>(
+      `${this.basePath}/bulk-unpublish`,
       payload
     )
   }

@@ -14,6 +14,8 @@ const contents = {
   publish: vi.fn(),
   schedule: vi.fn(),
   unpublish: vi.fn(),
+  bulkPublish: vi.fn(),
+  bulkUnpublish: vi.fn(),
   duplicate: vi.fn(),
   delete: vi.fn(),
   bulkCreate: vi.fn(),
@@ -57,6 +59,8 @@ const mountContent = () => {
     publish: composable.usePublishContentMutation(),
     schedule: composable.useScheduleContentMutation(),
     unpublish: composable.useUnpublishContentMutation(),
+    bulkPublish: composable.useBulkPublishContentMutation(),
+    bulkUnpublish: composable.useBulkUnpublishContentMutation(),
     duplicate: composable.useDuplicateContentMutation(),
     remove: composable.useDeleteContentMutation(),
     bulkCreate: composable.useBulkCreateContentMutation(),
@@ -560,6 +564,49 @@ describe('publish, schedule and unpublish', () => {
 
     await expect(mutations()[name].mutateAsync({ id: 'c1', payload: {} })).rejects.toThrow('nope')
     expect(failure).toHaveBeenCalledWith(error)
+  })
+})
+
+describe('bulk publish and unpublish', () => {
+  it('refreshes only the entries that went through and counts them', async () => {
+    contents.bulkPublish.mockResolvedValue({
+      data: { succeeded: ['c1', 'c2'], failed: [] },
+    })
+    const { bulkPublish } = mutations()
+    const invalidate = spyInvalidate()
+
+    await bulkPublish.mutateAsync({ ids: ['c1', 'c2'], message: 'Batch' })
+
+    expect(contents.bulkPublish).toHaveBeenCalledWith({ ids: ['c1', 'c2'], message: 'Batch' })
+    expect(invalidatedKeys(invalidate)).toEqual([
+      queryKeys.contents(SPACE).lists(),
+      queryKeys.contentMenu(SPACE).all(),
+      queryKeys.contents(SPACE).detail('c1'),
+      queryKeys.contentVersions(SPACE, 'c1').lists(),
+      queryKeys.contents(SPACE).detail('c2'),
+      queryKeys.contentVersions(SPACE, 'c2').lists(),
+    ])
+    expect(success).toHaveBeenCalledWith('2 entries published')
+  })
+
+  it('reports the first failure with how many entries it affected', async () => {
+    contents.bulkUnpublish.mockResolvedValue({
+      data: {
+        succeeded: ['c1'],
+        failed: [
+          { id: 'c2', name: 'About', message: 'locked' },
+          { id: 'c3', name: null, message: 'missing' },
+        ],
+      },
+    })
+
+    await mutations().bulkUnpublish.mutateAsync(['c1', 'c2', 'c3'])
+
+    expect(contents.bulkUnpublish).toHaveBeenCalledWith({ ids: ['c1', 'c2', 'c3'] })
+    expect(success).not.toHaveBeenCalled()
+    expect(failure).toHaveBeenCalledWith(
+      '2 of 3 entries could not be unpublished. "About": locked'
+    )
   })
 })
 

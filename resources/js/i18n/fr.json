@@ -1098,6 +1098,11 @@
         "publish": "Publier",
         "publishWithMessage": "Publier avec un message",
         "schedule": "Planifier",
+        "publishMany": "Publier {count} entrée | Publier {count} entrées",
+        "publishWithChildren": "Publier avec les sous-éléments ({count})",
+        "unpublish": "Dépublier",
+        "unpublishMany": "Dépublier {count} entrée | Dépublier {count} entrées",
+        "addToRelease": "Ajouter à une release",
         "rename": "Renommer",
         "newSubItem": "Nouvel élément subordonné",
         "copy": "Copier",
@@ -1112,7 +1117,11 @@
       "confirmations": {
         "deleteTitle": "Supprimer le contenu",
         "deleteSingle": "Supprimer cet élément de contenu et son sous-arbre ?",
-        "deleteMany": "Supprimer {count} arborescences de contenu sélectionnées ?"
+        "deleteMany": "Supprimer {count} arborescences de contenu sélectionnées ?",
+        "publishTitle": "Publier le contenu",
+        "publishWithChildren": "Publier {count} entrée, sous-éléments compris ? | Publier {count} entrées, sous-éléments compris ?",
+        "unpublishTitle": "Dépublier le contenu",
+        "unpublish": "Mettre cette entrée hors ligne ? Elle disparaît de la Delivery API jusqu’à sa prochaine publication. | Mettre {count} entrées hors ligne ? Elles disparaissent de la Delivery API jusqu’à leur prochaine publication."
       },
       "drag": {
         "multiple": "{count} pages"
@@ -1137,7 +1146,9 @@
       },
       "status": {
         "draft": "Brouillon",
-        "pendingChanges": "Modifications non publiées"
+        "pendingChanges": "Modifications non publiées",
+        "filter": "Afficher uniquement les entrées avec des modifications non publiées",
+        "nothingPending": "Tout est publié."
       }
     },
     "comments": {
@@ -4805,7 +4816,13 @@
       "moveError": "Échec du déplacement du contenu : {error}",
       "translationExportError": "Échec de l'exportation des traductions du contenu : {error}",
       "translationImportSuccess": "Traductions du contenu importées avec succès",
-      "translationImportError": "Échec de l'importation des traductions du contenu : {error}"
+      "translationImportError": "Échec de l'importation des traductions du contenu : {error}",
+      "bulk": {
+        "publishSuccess": "{count} entrée publiée | {count} entrées publiées",
+        "publishFailed": "{count} entrée sur {total} n’a pas pu être publiée. « {name} » : {error} | {count} entrées sur {total} n’ont pas pu être publiées. « {name} » : {error}",
+        "unpublishSuccess": "{count} entrée dépubliée | {count} entrées dépubliées",
+        "unpublishFailed": "{count} entrée sur {total} n’a pas pu être dépubliée. « {name} » : {error} | {count} entrées sur {total} n’ont pas pu être dépubliées. « {name} » : {error}"
+      }
     },
     "contentVersions": {
       "setCurrentSuccess": "Version définie comme actuelle avec succès",
@@ -5125,6 +5142,7 @@
       "open": "Ouvrir l'entrée ciblée",
       "rename": "Renommer l'entrée ciblée",
       "delete": "Supprimer l'entrée ciblée",
+      "publish": "Publier l’entrée sélectionnée ou la sélection",
       "copy": "Copier l'entrée ciblée",
       "cut": "Couper l'entrée ciblée",
       "paste": "Coller dans l'entrée ciblée",

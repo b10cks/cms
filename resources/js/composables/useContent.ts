@@ -8,6 +8,7 @@ import type {
   ContentTranslationImportMode,
 } from '~/types/content-translations'
 import type {
+  ContentBulkPublishResult,
   ContentResource,
   ContentTreeOperationPayload,
   CreateContentPayload,
@@ -242,6 +243,74 @@ export function useContent(spaceId: MaybeRef<string>) {
 
         toast.success(t('composables.content.unpublishSuccess', { name: data.name }) as string)
       },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.content.unpublishError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
+  // A batch reports once: a count when every entry went through, otherwise the
+  // first failure's reason alongside how many were affected.
+  const settleBulkPublish = (result: ContentBulkPublishResult, mode: 'publish' | 'unpublish') => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
+    queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
+    result.succeeded.forEach((contentId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).detail(contentId) })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contentVersions(spaceId, contentId).lists(),
+      })
+    })
+
+    const [firstFailure] = result.failed
+    if (!firstFailure) {
+      const count = result.succeeded.length
+      toast.success(t(`composables.content.bulk.${mode}Success`, { count }, count) as string)
+      return
+    }
+
+    const count = result.failed.length
+    toast.error(
+      t(
+        `composables.content.bulk.${mode}Failed`,
+        {
+          count,
+          total: count + result.succeeded.length,
+          name: firstFailure.name ?? firstFailure.id,
+          error: firstFailure.message,
+        },
+        count
+      ) as string
+    )
+  }
+
+  const useBulkPublishContentMutation = () => {
+    return useMutation({
+      mutationFn: async (payload: { ids: string[]; message?: string }) => {
+        const response = await spaceAPI.value.contents.bulkPublish(payload)
+        return response.data
+      },
+      onSuccess: (result) => settleBulkPublish(result, 'publish'),
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.content.publishError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
+  const useBulkUnpublishContentMutation = () => {
+    return useMutation({
+      mutationFn: async (ids: string[]) => {
+        const response = await spaceAPI.value.contents.bulkUnpublish({ ids })
+        return response.data
+      },
+      onSuccess: (result) => settleBulkPublish(result, 'unpublish'),
       onError: (error: Error) => {
         toast.error(
           t('composables.content.unpublishError', {
@@ -491,6 +560,8 @@ export function useContent(spaceId: MaybeRef<string>) {
     useCreateAndPublishContentMutation,
     useScheduleContentMutation,
     useUnpublishContentMutation,
+    useBulkPublishContentMutation,
+    useBulkUnpublishContentMutation,
     useDuplicateContentMutation,
     useDeleteContentMutation,
     useBulkCreateContentMutation,

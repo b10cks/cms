@@ -16,6 +16,7 @@ const releases = {
   publish: vi.fn(),
   delete: vi.fn(),
   assignVersions: vi.fn(),
+  assignContents: vi.fn(),
   removeVersions: vi.fn(),
 }
 
@@ -53,6 +54,7 @@ const mountReleases = () => {
     publish: composable.usePublishReleaseMutation(),
     remove: composable.useDeleteReleaseMutation(),
     assign: composable.useAssignVersionsMutation(),
+    assignContents: composable.useAssignContentsMutation(),
     unassign: composable.useRemoveVersionsMutation(),
   }
 }
@@ -329,6 +331,23 @@ describe('useAssignVersionsMutation', () => {
       mutations().assign.mutateAsync({ releaseId: 'r1', payload: { version_ids: [] } })
     ).rejects.toThrow('already committed')
     expect(failure).toHaveBeenCalledWith('Failed to assign versions: already committed')
+  })
+})
+
+describe('useAssignContentsMutation', () => {
+  it('counts the drafts the server assigned, not the entries sent', async () => {
+    releases.assignContents.mockResolvedValue({ data: release(), meta: { assigned: 1 } })
+    const { assignContents } = mutations()
+    const invalidate = spyInvalidate()
+
+    await assignContents.mutateAsync({ releaseId: 'r1', contentIds: ['c1', 'c2'] })
+
+    expect(releases.assignContents).toHaveBeenCalledWith('r1', ['c1', 'c2'])
+    expect(invalidatedKeys(invalidate)).toEqual([
+      queryKeys.releases(SPACE).lists(),
+      queryKeys.releases(SPACE).detail('r1'),
+    ])
+    expect(success).toHaveBeenCalledWith('1 version(s) added to release "Spring launch"')
   })
 })
 

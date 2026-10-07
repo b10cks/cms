@@ -50,6 +50,20 @@ export class Releases extends BaseResource<
     )
   }
 
+  /**
+   * Add each entry's current draft to the release. `meta.assigned` counts the
+   * drafts that qualified, which can be fewer than the entries sent.
+   */
+  public async assignContents(
+    id: string,
+    contentIds: string[]
+  ): Promise<ApiResponse<ReleaseDetail> & { meta: { assigned: number } }> {
+    return this.client.post<ApiResponse<ReleaseDetail> & { meta: { assigned: number } }>(
+      `${this.basePath}/${id}/versions/assign`,
+      { content_ids: contentIds }
+    )
+  }
+
   public async removeVersions(
     id: string,
     payload: AssignVersionsRequest

@@ -94,12 +94,14 @@ const { useContentMenuQuery, getChildren, getRootItems } = useContentMenu(props.
 const {
   useTreeOperationsMutation,
   useUpdateContentMutation,
-  usePublishContentMutation,
+  useBulkPublishContentMutation,
+  useBulkUnpublishContentMutation,
   useScheduleContentMutation,
 } = useContent(props.spaceId)
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageContent = computed(() => access.hasAbility('content.manage'))
 const canPublishContent = computed(() => access.hasAbility('content.publish'))
+const canManageReleases = computed(() => access.hasAbility('releases.manage'))
 // automations.trigger also implies listing automations (policy viewAny), so
 // gating discovery and the submenu on it alone is safe.
 const canTriggerAutomations = computed(() => access.hasAbility('automations.trigger'))
@@ -133,7 +135,8 @@ const {
 } = useContentTreeClipboard()
 const { mutateAsync: runTreeOperations } = useTreeOperationsMutation()
 const { mutate: updateContent } = useUpdateContentMutation()
-const { mutateAsync: publishContent, isPending: isPublishing } = usePublishContentMutation()
+const { mutateAsync: bulkPublish, isPending: isPublishing } = useBulkPublishContentMutation()
+const { mutateAsync: bulkUnpublish, isPending: isUnpublishing } = useBulkUnpublishContentMutation()
 const { mutateAsync: scheduleContent, isPending: isScheduling } = useScheduleContentMutation()
 
 const { useAutomationsQuery, useTriggerAutomationMutation } = useAutomations(props.spaceId)
@@ -184,7 +187,7 @@ const showCreateDialog = ref(false)
 const createParentId = ref<string | null>(null)
 const publishDialogOpen = ref(false)
 const publishDialogType = ref<'now' | 'schedule'>('now')
-const publishDialogItem = ref<FlatContentMenuItem | null>(null)
+const publishDialogIds = ref<string[]>([])
 const activeDropTargetId = ref<string | null>(null)
 const activeDropEdge = ref<Edge | null>(null)
 const rootDropMode = ref<'root' | null>(null)
@@ -195,6 +198,17 @@ const activeClipboardItem = ref<ContentTreeClipboardItem | null>(null)
 const activeMenuAnchor = ref<HTMLElement | null>(null)
 const activeMenuTrigger = ref<HTMLElement | null>(null)
 let lastDragEndedAt = 0
+
+const { useReleasesQuery, useAssignContentsMutation, getReleaseState } = useReleases(props.spaceId)
+// Only the context menu lists releases, so they load the first time it opens.
+const { data: releasesData } = useReleasesQuery(
+  {},
+  computed(() => canManageReleases.value && openMenuId.value !== null)
+)
+const { mutateAsync: assignContents, isPending: isAssigningRelease } = useAssignContentsMutation()
+const draftReleases = computed(() =>
+  (releasesData.value?.data || []).filter((release) => getReleaseState(release) === 'draft')
+)
 
 const treeContainerRef = ref<HTMLElement | null>(null)
 const rootDropZoneRef = ref<HTMLElement | null>(null)
@@ -1005,43 +1019,200 @@ const openEdit = async (itemId: string) => {
   await router.push(buildLink(itemId))
 }
 
-const isPublishingAction = computed(() => isPublishing.value || isScheduling.value)
+const isPublishingAction = computed(
+  () =>
+    isPublishing.value || isUnpublishing.value || isScheduling.value || isAssigningRelease.value
+)
 
 // There is something to publish when the draft differs from the published
 // version, or when the entry is offline and can be put back live as it stands.
 const hasPendingChanges = (item: FlatContentMenuItem) => item.drf || !item.pat
 
-const executePublish = async (item: FlatContentMenuItem) => {
-  await publishContent({ id: item.id, payload: {} })
+/**
+ * Entries a publishing action applies to, in tree order: the whole selection
+ * when the target is part of it, otherwise the target alone. Unlike delete or
+ * move, children are not covered by their parent, so every selected entry
+ * counts, plus all descendants when asked for.
+ */
+const resolvePublishTargets = (targetId: string, withDescendants = false) => {
+  const context = resolveMenuContext(targetId)
+  const baseIds = context.uses_selection ? context.selected_ids : [targetId]
+  const ids = new Set(baseIds)
+
+  if (withDescendants) {
+    for (const id of baseIds) {
+      descendantIdsMap.value.get(id)?.forEach((descendantId) => ids.add(descendantId))
+    }
+  }
+
+  return [...ids]
+    .sort((a, b) => (itemIndexMap.value.get(a) ?? 0) - (itemIndexMap.value.get(b) ?? 0))
+    .flatMap((id) => data.value?.[id] ?? [])
 }
 
-const openPublishWithMessage = (item: FlatContentMenuItem) => {
-  publishDialogItem.value = item
-  publishDialogType.value = 'now'
+const toIds = (items: FlatContentMenuItem[]) => items.map((item) => item.id)
+
+const executePublish = async (items: FlatContentMenuItem[]) => {
+  if (items.length === 0) return
+
+  await bulkPublish({ ids: toIds(items) })
+}
+
+const executePublishWithChildren = async (items: FlatContentMenuItem[]) => {
+  const count = items.length
+  const confirmed = await alert.confirm(
+    t('labels.contentTree.confirmations.publishWithChildren', { count }, count) as string,
+    {
+      title: t('labels.contentTree.confirmations.publishTitle') as string,
+      confirmLabel: t('labels.contentTree.actions.publish') as string,
+    }
+  )
+
+  if (confirmed) {
+    await executePublish(items)
+  }
+}
+
+const executeUnpublish = async (items: FlatContentMenuItem[]) => {
+  const count = items.length
+  if (count === 0) return
+
+  const confirmed = await alert.confirm(
+    t('labels.contentTree.confirmations.unpublish', { count }, count) as string,
+    {
+      title: t('labels.contentTree.confirmations.unpublishTitle') as string,
+      confirmLabel: t('labels.contentTree.actions.unpublish') as string,
+      variant: 'destructive',
+    }
+  )
+
+  if (confirmed) {
+    await bulkUnpublish(toIds(items))
+  }
+}
+
+const openPublishDialog = (items: FlatContentMenuItem[], type: 'now' | 'schedule') => {
+  publishDialogIds.value = toIds(items)
+  publishDialogType.value = type
   publishDialogOpen.value = true
 }
 
-const openSchedulePublish = (item: FlatContentMenuItem) => {
-  publishDialogItem.value = item
-  publishDialogType.value = 'schedule'
-  publishDialogOpen.value = true
-}
-
-const handlePublishDialog = async (payload: { message?: string; published_at?: string | null }) => {
-  if (!publishDialogItem.value) return
-  await publishContent({ id: publishDialogItem.value.id, payload })
+const closePublishDialog = () => {
   publishDialogOpen.value = false
-  publishDialogItem.value = null
+  publishDialogIds.value = []
+}
+
+const handlePublishDialog = async (payload: { message?: string }) => {
+  await bulkPublish({ ids: publishDialogIds.value, message: payload.message })
+  closePublishDialog()
 }
 
 const handleScheduleDialog = async (payload: {
   message?: string
   scheduled_at?: string | null
 }) => {
-  if (!publishDialogItem.value) return
-  await scheduleContent({ id: publishDialogItem.value.id, payload })
-  publishDialogOpen.value = false
-  publishDialogItem.value = null
+  const [id] = publishDialogIds.value
+  if (!id) return
+
+  await scheduleContent({ id, payload })
+  closePublishDialog()
+}
+
+const buildPublishActions = (item: FlatContentMenuItem): ContentTreeMenuAction[] => {
+  const targets = resolvePublishTargets(item.id)
+  const publishable = targets.filter(hasPendingChanges)
+  const live = targets.filter((target) => !!target.pat)
+  const releasable = targets.filter((target) => target.drf)
+  const subtree = resolvePublishTargets(item.id, true).filter(hasPendingChanges)
+  const hasChildren = targets.some(
+    (target) => (descendantIdsMap.value.get(target.id)?.size ?? 0) > 0
+  )
+  const isMulti = targets.length > 1
+  const unavailable = !canPublishContent.value || isPublishingAction.value
+  // With a selection, the label says how many entries the action reaches.
+  const countedLabel = (action: string, count: number) =>
+    (isMulti && count > 0
+      ? t(`labels.contentTree.actions.${action}Many`, { count }, count)
+      : t(`labels.contentTree.actions.${action}`)) as string
+
+  const actions: ContentTreeMenuAction[] = [
+    {
+      id: 'publish',
+      label: countedLabel('publish', publishable.length),
+      icon: 'send',
+      separatorBefore: true,
+      disabled: unavailable || publishable.length === 0,
+      onSelect: () => executePublish(publishable),
+    },
+    {
+      id: 'publish-with-message',
+      label: t('labels.contentTree.actions.publishWithMessage') as string,
+      icon: 'message-square-share',
+      disabled: unavailable || publishable.length === 0,
+      onSelect: () => openPublishDialog(publishable, 'now'),
+    },
+  ]
+
+  if (hasChildren) {
+    actions.push({
+      id: 'publish-with-children',
+      label: t(
+        'labels.contentTree.actions.publishWithChildren',
+        { count: subtree.length },
+        subtree.length
+      ) as string,
+      icon: 'list-tree',
+      disabled: unavailable || subtree.length === 0,
+      onSelect: () => executePublishWithChildren(subtree),
+    })
+  }
+
+  // A schedule belongs to one entry; a selection is timed through a release.
+  actions.push({
+    id: 'schedule',
+    label: t('labels.contentTree.actions.schedule') as string,
+    icon: 'clock-fading',
+    disabled: unavailable || isMulti || publishable.length === 0,
+    onSelect: () => openPublishDialog(publishable, 'schedule'),
+  })
+
+  if (canManageReleases.value) {
+    actions.push({
+      id: 'add-to-release',
+      label: t('labels.contentTree.actions.addToRelease') as string,
+      icon: 'tag',
+      disabled: isPublishingAction.value || releasable.length === 0,
+      children:
+        draftReleases.value.length > 0
+          ? draftReleases.value.map((release) => ({
+              id: `release-${release.id}`,
+              label: release.name,
+              icon: 'plus',
+              onSelect: async () => {
+                await assignContents({ releaseId: release.id, contentIds: toIds(releasable) })
+              },
+            }))
+          : [
+              {
+                id: 'no-draft-releases',
+                label: t('actions.content.noDraftReleases') as string,
+                icon: 'tag',
+                disabled: true,
+              },
+            ],
+    })
+  }
+
+  actions.push({
+    id: 'unpublish',
+    label: countedLabel('unpublish', live.length),
+    icon: 'cloud-off',
+    destructive: true,
+    disabled: unavailable || live.length === 0,
+    onSelect: () => executeUnpublish(live),
+  })
+
+  return actions
 }
 
 const buildItemAutomationActions = (item: FlatContentMenuItem): ContentTreeMenuAction[] => {
@@ -1102,28 +1273,7 @@ const buildItemMenuActions = (item: FlatContentMenuItem): ContentTreeMenuAction[
       icon: 'pencil',
       onSelect: () => openEdit(item.id),
     },
-    {
-      id: 'publish',
-      label: t('labels.contentTree.actions.publish') as string,
-      icon: 'send',
-      separatorBefore: true,
-      disabled: !canPublishContent.value || isPublishingAction.value || !hasPendingChanges(item),
-      onSelect: () => executePublish(item),
-    },
-    {
-      id: 'publish-with-message',
-      label: t('labels.contentTree.actions.publishWithMessage') as string,
-      icon: 'message-square-share',
-      disabled: !canPublishContent.value || isPublishingAction.value || !hasPendingChanges(item),
-      onSelect: () => openPublishWithMessage(item),
-    },
-    {
-      id: 'schedule',
-      label: t('labels.contentTree.actions.schedule') as string,
-      icon: 'clock-fading',
-      disabled: !canPublishContent.value || isPublishingAction.value || !hasPendingChanges(item),
-      onSelect: () => openSchedulePublish(item),
-    },
+    ...buildPublishActions(item),
     ...buildItemAutomationActions(item),
     {
       id: 'rename',
@@ -1888,9 +2038,27 @@ type ContentSearchMatch = {
   indices: number[]
 }
 
-// Names are normalized once per tree change, not once per keystroke.
+// --- Status filter: narrow the tree to entries with something to publish ---
+
+const statusFilterActive = ref(false)
+const pendingItems = computed(() => flatItems.value.filter(hasPendingChanges))
+
+const toggleStatusFilter = () => {
+  statusFilterActive.value = !statusFilterActive.value
+
+  // Like closing the search: keep the selected row visible in the full tree.
+  if (!statusFilterActive.value && selectedItemId.value) {
+    revealAncestors(selectedItemId.value)
+  }
+}
+
+// Names are normalized once per tree change, not once per keystroke. With the
+// status filter on, search only looks among pending entries.
 const searchTargets = computed(() =>
-  flatItems.value.map((item) => ({ item, target: prepareFuzzyTarget(item.name) }))
+  (statusFilterActive.value ? pendingItems.value : flatItems.value).map((item) => ({
+    item,
+    target: prepareFuzzyTarget(item.name),
+  }))
 )
 
 // All fuzzy matches in tree order, so ↑/↓ walks the tree visually instead of
@@ -1912,14 +2080,25 @@ const searchMatches = computed<ContentSearchMatch[]>(() => {
   return matches
 })
 
-// While a query is active the tree is filtered down to the matches plus the
-// ancestor chain ("root line") needed to show them in context.
+// While a query or the status filter is active the tree is filtered down to
+// the matching entries plus the ancestor chain ("root line") needed to show
+// them in context.
 const searchFilterActive = computed(() => searchOpen.value && searchQuery.value.trim().length > 0)
 
-const searchAncestorIds = computed(() => {
+const filterMatchIds = computed<string[] | null>(() => {
+  if (searchFilterActive.value) {
+    return searchMatches.value.map((match) => match.item.id)
+  }
+
+  return statusFilterActive.value ? pendingItems.value.map((item) => item.id) : null
+})
+
+const treeFilterActive = computed(() => filterMatchIds.value !== null)
+
+const filterAncestorIds = computed(() => {
   const ancestors = new Set<string>()
-  for (const match of searchMatches.value) {
-    let parentId = parentIdMap.value.get(match.item.id) ?? null
+  for (const id of filterMatchIds.value ?? []) {
+    let parentId = parentIdMap.value.get(id) ?? null
     while (parentId && !ancestors.has(parentId)) {
       ancestors.add(parentId)
       parentId = parentIdMap.value.get(parentId) ?? null
@@ -1929,21 +2108,16 @@ const searchAncestorIds = computed(() => {
   return ancestors
 })
 
-const searchVisibleIds = computed<Set<string> | null>(() => {
-  if (!searchFilterActive.value) {
+const filterVisibleIds = computed<Set<string> | null>(() => {
+  if (!filterMatchIds.value) {
     return null
   }
 
-  const visible = new Set(searchAncestorIds.value)
-  for (const match of searchMatches.value) {
-    visible.add(match.item.id)
-  }
-
-  return visible
+  return new Set([...filterAncestorIds.value, ...filterMatchIds.value])
 })
 
 const visibleRootItems = computed(() => {
-  const visible = searchVisibleIds.value
+  const visible = filterVisibleIds.value
   if (!visible) {
     return rootItems.value
   }
@@ -1954,7 +2128,7 @@ const visibleRootItems = computed(() => {
 // Filtered child lists, computed once per query instead of on every
 // getVisibleChildren call during render.
 const visibleChildrenMap = computed<Map<string, FlatContentMenuItem[]> | null>(() => {
-  const visible = searchVisibleIds.value
+  const visible = filterVisibleIds.value
   if (!visible) {
     return null
   }
@@ -1986,7 +2160,7 @@ const searchExpandedOverride = ref<string[] | null>(null)
 
 const treeExpanded = computed<string[]>({
   get: () => {
-    if (!searchFilterActive.value) {
+    if (!treeFilterActive.value) {
       return settings.value.content.expanded || []
     }
 
@@ -1994,10 +2168,10 @@ const treeExpanded = computed<string[]>({
       return searchExpandedOverride.value
     }
 
-    return Array.from(searchAncestorIds.value)
+    return Array.from(filterAncestorIds.value)
   },
   set: (value) => {
-    if (searchFilterActive.value) {
+    if (treeFilterActive.value) {
       searchExpandedOverride.value = value
     } else {
       settings.value.content.expanded = value
@@ -2005,7 +2179,7 @@ const treeExpanded = computed<string[]>({
   },
 })
 
-watch(searchQuery, () => {
+watch([searchQuery, statusFilterActive], () => {
   searchExpandedOverride.value = null
 })
 
@@ -2295,6 +2469,15 @@ const handleItemKeydown = (event: KeyboardEvent, item: FlatContentMenuItem) => {
     return
   }
 
+  if (meta && event.shiftKey && event.key.toLowerCase() === 'p') {
+    event.preventDefault()
+    event.stopPropagation()
+    if (canPublishContent.value && !isPublishingAction.value) {
+      void executePublish(resolvePublishTargets(item.id).filter(hasPendingChanges))
+    }
+    return
+  }
+
   if ((event.key === 'Delete' || (event.key === 'Backspace' && meta)) && canManageContent.value) {
     event.preventDefault()
     void executeDelete(resolveMenuContext(item.id))
@@ -2348,6 +2531,7 @@ const treeShortcuts: Array<[string, () => string]> = [
   ['mod+x', () => t('shortcuts.contentTree.cut')],
   ['mod+v', () => t('shortcuts.contentTree.paste')],
   ['delete', () => t('shortcuts.contentTree.delete')],
+  ['shift+mod+p', () => t('shortcuts.contentTree.publish')],
   ['shift+F10', () => t('shortcuts.contentTree.contextMenu')],
   ['A-Z', () => t('shortcuts.contentTree.search')],
 ]
@@ -2371,6 +2555,7 @@ onBeforeUnmount(() => {
 <template>
   <aside
     ref="treeContainerRef"
+    data-content-tree
     class="relative flex h-full min-h-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground"
     @keydown.capture="handleTreeKeydownCapture"
   >
@@ -2424,6 +2609,20 @@ onBeforeUnmount(() => {
         </button>
 
         <div class="ml-auto flex items-center gap-1">
+          <Button
+            v-if="pendingItems.length > 0 || statusFilterActive"
+            variant="ghost"
+            size="xs"
+            :aria-label="$t('labels.contentTree.status.filter')"
+            :title="$t('labels.contentTree.status.filter')"
+            :aria-pressed="statusFilterActive"
+            :class="statusFilterActive ? 'bg-secondary text-primary' : 'text-muted'"
+            @click.stop="toggleStatusFilter()"
+          >
+            <Icon name="lucide:circle-dashed" />
+            <span class="tabular-nums">{{ pendingItems.length }}</span>
+          </Button>
+
           <Button
             variant="ghost"
             size="toolbar"
@@ -2551,6 +2750,13 @@ onBeforeUnmount(() => {
           {{ error }}
         </div>
 
+        <div
+          v-else-if="statusFilterActive && pendingItems.length === 0"
+          class="px-2 py-4 text-sm text-muted"
+        >
+          {{ $t('labels.contentTree.status.nothingPending') }}
+        </div>
+
         <TreeItem
           v-for="item in flattenItems"
           :ref="setItemElement(item.value)"
@@ -2609,7 +2815,7 @@ onBeforeUnmount(() => {
 
           <button
             v-if="
-              searchVisibleIds ? getVisibleChildren(item.value).length > 0 : item.value.children
+              filterVisibleIds ? getVisibleChildren(item.value).length > 0 : item.value.children
             "
             class="z-10 h-4 w-3 cursor-pointer"
             :aria-label="$t('actions.toggleExpand')"
@@ -2769,9 +2975,7 @@ onBeforeUnmount(() => {
       :on-submit="handleCreateSubmit"
     />
     <PublishDialog
-      v-if="publishDialogItem"
       :open="publishDialogOpen"
-      :content="publishDialogItem as any"
       :loading="isPublishingAction"
       :publish-type="publishDialogType"
       @update:open="publishDialogOpen = $event"

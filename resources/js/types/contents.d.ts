@@ -86,6 +86,12 @@ export interface ContentTreeOperationResult {
   warnings: ContentTreeOperationWarning[]
 }
 
+/** Per-entry outcome of a bulk publish or unpublish, in request order. */
+export interface ContentBulkPublishResult {
+  succeeded: string[]
+  failed: { id: string; name: string | null; message: string }[]
+}
+
 export interface ContentSerialPreview {
   /**
    * Generated field values the entry would receive, keyed by field key.

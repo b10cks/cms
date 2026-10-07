@@ -220,6 +220,38 @@ export function useReleases(spaceId: MaybeRef<string>) {
     })
   }
 
+  const useAssignContentsMutation = () => {
+    return useMutation({
+      mutationFn: async ({
+        releaseId,
+        contentIds,
+      }: {
+        releaseId: string
+        contentIds: string[]
+      }) => {
+        return await spaceAPI.value.releases.assignContents(releaseId, contentIds)
+      },
+      onSuccess: ({ data, meta }) => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.releases(spaceId).lists() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.releases(spaceId).detail(data.id) })
+
+        toast.success(
+          t('composables.releases.assignVersionsSuccess', {
+            count: meta.assigned,
+            name: data.name,
+          }) as string
+        )
+      },
+      onError: (error: Error) => {
+        toast.error(
+          t('composables.releases.assignVersionsError', {
+            error: error.message || 'Unknown error',
+          }) as string
+        )
+      },
+    })
+  }
+
   const useRemoveVersionsMutation = () => {
     return useMutation({
       mutationFn: async ({
@@ -287,6 +319,7 @@ export function useReleases(spaceId: MaybeRef<string>) {
     usePublishReleaseMutation,
     useDeleteReleaseMutation,
     useAssignVersionsMutation,
+    useAssignContentsMutation,
     useRemoveVersionsMutation,
   }
 }

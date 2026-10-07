@@ -512,6 +512,8 @@ useShortcut({
   scope: 'content-editor',
   description: () => t('shortcuts.contentEditor.publish'),
   allowInInput: true,
+  // A focused content tree row takes the key to publish its own selection.
+  enabled: () => !document.activeElement?.closest('[data-content-tree]'),
   handler: () => {
     if (!canPublishNow()) return
 
@@ -860,7 +862,6 @@ const handleConfirmAssign = (versionIds: string[]) => {
     </SplitButton>
     <PublishDialog
       :open="publishDialogOpen"
-      :content="content"
       :loading="isPublishing || isScheduling"
       :publish-type="publishType"
       @update:open="publishDialogOpen = $event"

@@ -1098,6 +1098,11 @@
         "publish": "Publicar",
         "publishWithMessage": "Publicar con mensaje",
         "schedule": "Programar",
+        "publishMany": "Publicar {count} entrada | Publicar {count} entradas",
+        "publishWithChildren": "Publicar con subelementos ({count})",
+        "unpublish": "Despublicar",
+        "unpublishMany": "Despublicar {count} entrada | Despublicar {count} entradas",
+        "addToRelease": "Añadir a release",
         "rename": "Renombrar",
         "newSubItem": "Nuevo elemento subordinado",
         "copy": "Copiar",
@@ -1112,7 +1117,11 @@
       "confirmations": {
         "deleteTitle": "Eliminar contenido",
         "deleteSingle": "¿Eliminar este elemento de contenido y su subárbol?",
-        "deleteMany": "¿Eliminar {count} árboles de contenido seleccionados?"
+        "deleteMany": "¿Eliminar {count} árboles de contenido seleccionados?",
+        "publishTitle": "Publicar contenido",
+        "publishWithChildren": "¿Publicar {count} entrada, incluidos los subelementos? | ¿Publicar {count} entradas, incluidos los subelementos?",
+        "unpublishTitle": "Despublicar contenido",
+        "unpublish": "¿Desconectar esta entrada? Desaparece de la Delivery API hasta que se vuelva a publicar. | ¿Desconectar {count} entradas? Desaparecen de la Delivery API hasta que se vuelvan a publicar."
       },
       "drag": {
         "multiple": "{count} páginas"
@@ -1137,7 +1146,9 @@
       },
       "status": {
         "draft": "Borrador",
-        "pendingChanges": "Cambios sin publicar"
+        "pendingChanges": "Cambios sin publicar",
+        "filter": "Mostrar solo entradas con cambios sin publicar",
+        "nothingPending": "Todo está publicado."
       }
     },
     "comments": {
@@ -4805,7 +4816,13 @@
       "moveError": "Error al mover el contenido: {error}",
       "translationExportError": "Error al exportar las traducciones de contenido: {error}",
       "translationImportSuccess": "Traducciones de contenido importadas correctamente",
-      "translationImportError": "Error al importar las traducciones de contenido: {error}"
+      "translationImportError": "Error al importar las traducciones de contenido: {error}",
+      "bulk": {
+        "publishSuccess": "{count} entrada publicada | {count} entradas publicadas",
+        "publishFailed": "No se pudo publicar {count} de {total} entradas. \"{name}\": {error} | No se pudieron publicar {count} de {total} entradas. \"{name}\": {error}",
+        "unpublishSuccess": "{count} entrada despublicada | {count} entradas despublicadas",
+        "unpublishFailed": "No se pudo despublicar {count} de {total} entradas. \"{name}\": {error} | No se pudieron despublicar {count} de {total} entradas. \"{name}\": {error}"
+      }
     },
     "contentVersions": {
       "setCurrentSuccess": "Versión establecida como actual correctamente",
@@ -5125,6 +5142,7 @@
       "open": "Abrir la entrada enfocada",
       "rename": "Renombrar la entrada enfocada",
       "delete": "Eliminar la entrada enfocada",
+      "publish": "Publicar la entrada enfocada o la selección",
       "copy": "Copiar la entrada enfocada",
       "cut": "Cortar la entrada enfocada",
       "paste": "Pegar en la entrada enfocada",

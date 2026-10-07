@@ -1098,6 +1098,11 @@
         "publish": "Yayınla",
         "publishWithMessage": "Mesajla Yayınla",
         "schedule": "Planla",
+        "publishMany": "{count} girdiyi yayınla | {count} girdiyi yayınla",
+        "publishWithChildren": "Alt öğelerle yayınla ({count})",
+        "unpublish": "Yayından kaldır",
+        "unpublishMany": "{count} girdiyi yayından kaldır | {count} girdiyi yayından kaldır",
+        "addToRelease": "Sürüme ekle",
         "rename": "Yeniden Adlandır",
         "newSubItem": "Yeni alt öğe",
         "copy": "Kopyala",
@@ -1112,7 +1117,11 @@
       "confirmations": {
         "deleteTitle": "İçeriği sil",
         "deleteSingle": "Bu içerik öğesini ve alt ağacını silinsin mi?",
-        "deleteMany": "Seçilen {count} içerik ağacı silinsin mi?"
+        "deleteMany": "Seçilen {count} içerik ağacı silinsin mi?",
+        "publishTitle": "İçeriği yayınla",
+        "publishWithChildren": "Alt öğeler dahil {count} girdi yayınlansın mı? | Alt öğeler dahil {count} girdi yayınlansın mı?",
+        "unpublishTitle": "İçeriği yayından kaldır",
+        "unpublish": "Bu girdi çevrimdışı alınsın mı? Yeniden yayınlanana kadar Delivery API’den kaybolur. | {count} girdi çevrimdışı alınsın mı? Yeniden yayınlanana kadar Delivery API’den kaybolurlar."
       },
       "drag": {
         "multiple": "{count} sayfa"
@@ -1137,7 +1146,9 @@
       },
       "status": {
         "draft": "Taslak",
-        "pendingChanges": "Yayınlanmamış değişiklikler"
+        "pendingChanges": "Yayınlanmamış değişiklikler",
+        "filter": "Yalnızca yayınlanmamış değişiklikleri olan girdileri göster",
+        "nothingPending": "Her şey yayında."
       }
     },
     "comments": {
@@ -4805,7 +4816,13 @@
       "moveError": "İçerik taşınamadı: {error}",
       "translationExportError": "İçerik çevirileri dışa aktarılamadı: {error}",
       "translationImportSuccess": "İçerik çevirileri başarıyla içe aktarıldı",
-      "translationImportError": "İçerik çevirileri içe aktarılamadı: {error}"
+      "translationImportError": "İçerik çevirileri içe aktarılamadı: {error}",
+      "bulk": {
+        "publishSuccess": "{count} girdi yayınlandı | {count} girdi yayınlandı",
+        "publishFailed": "{total} girdiden {count} tanesi yayınlanamadı. \"{name}\": {error} | {total} girdiden {count} tanesi yayınlanamadı. \"{name}\": {error}",
+        "unpublishSuccess": "{count} girdi yayından kaldırıldı | {count} girdi yayından kaldırıldı",
+        "unpublishFailed": "{total} girdiden {count} tanesi yayından kaldırılamadı. \"{name}\": {error} | {total} girdiden {count} tanesi yayından kaldırılamadı. \"{name}\": {error}"
+      }
     },
     "contentVersions": {
       "setCurrentSuccess": "Sürüm başarıyla mevcut olarak ayarlandı",
@@ -5125,6 +5142,7 @@
       "open": "Odaklanan girdiyi aç",
       "rename": "Odaklanan girdiyi yeniden adlandır",
       "delete": "Odaklanan girdiyi sil",
+      "publish": "Odaklanan girdiyi veya seçimi yayınla",
       "copy": "Odaklanan girdiyi kopyala",
       "cut": "Odaklanan girdiyi kes",
       "paste": "Odaklanan girdinin içine yapıştır",

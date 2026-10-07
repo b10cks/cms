@@ -1107,6 +1107,11 @@
         "publish": "Veröffentlichen",
         "publishWithMessage": "Mit Nachricht veröffentlichen",
         "schedule": "Zeitgesteuert veröffentlichen",
+        "publishMany": "{count} Eintrag veröffentlichen | {count} Einträge veröffentlichen",
+        "publishWithChildren": "Mit Unterelementen veröffentlichen ({count})",
+        "unpublish": "Veröffentlichung zurückziehen",
+        "unpublishMany": "{count} Eintrag zurückziehen | {count} Einträge zurückziehen",
+        "addToRelease": "Zu Release hinzufügen",
         "rename": "Umbenennen",
         "newSubItem": "Neues Unterelement",
         "copy": "Kopieren",
@@ -1121,7 +1126,11 @@
       "confirmations": {
         "deleteTitle": "Inhalt löschen",
         "deleteSingle": "Diesen Inhaltseintrag mit seinem Teilbaum löschen?",
-        "deleteMany": "{count} ausgewählte Inhaltsbäume löschen?"
+        "deleteMany": "{count} ausgewählte Inhaltsbäume löschen?",
+        "publishTitle": "Inhalt veröffentlichen",
+        "publishWithChildren": "{count} Eintrag inklusive Unterelementen veröffentlichen? | {count} Einträge inklusive Unterelementen veröffentlichen?",
+        "unpublishTitle": "Veröffentlichung zurückziehen",
+        "unpublish": "Diesen Eintrag offline nehmen? Er verschwindet aus der Delivery API, bis er erneut veröffentlicht wird. | {count} Einträge offline nehmen? Sie verschwinden aus der Delivery API, bis sie erneut veröffentlicht werden."
       },
       "drag": {
         "multiple": "{count} Seiten"
@@ -1146,7 +1155,9 @@
       },
       "status": {
         "draft": "Entwurf",
-        "pendingChanges": "Unveröffentlichte Änderungen"
+        "pendingChanges": "Unveröffentlichte Änderungen",
+        "filter": "Nur Einträge mit unveröffentlichten Änderungen anzeigen",
+        "nothingPending": "Alles ist veröffentlicht."
       }
     },
     "comments": {
@@ -4821,7 +4832,13 @@
       "moveError": "Fehler beim Verschieben des Inhalts: {error}",
       "translationExportError": "Fehler beim Exportieren der Inhaltsübersetzungen: {error}",
       "translationImportSuccess": "Inhaltsübersetzungen erfolgreich importiert",
-      "translationImportError": "Fehler beim Importieren der Inhaltsübersetzungen: {error}"
+      "translationImportError": "Fehler beim Importieren der Inhaltsübersetzungen: {error}",
+      "bulk": {
+        "publishSuccess": "{count} Eintrag veröffentlicht | {count} Einträge veröffentlicht",
+        "publishFailed": "{count} von {total} Einträgen konnte nicht veröffentlicht werden. „{name}“: {error} | {count} von {total} Einträgen konnten nicht veröffentlicht werden. „{name}“: {error}",
+        "unpublishSuccess": "{count} Eintrag zurückgezogen | {count} Einträge zurückgezogen",
+        "unpublishFailed": "{count} von {total} Einträgen konnte nicht zurückgezogen werden. „{name}“: {error} | {count} von {total} Einträgen konnten nicht zurückgezogen werden. „{name}“: {error}"
+      }
     },
     "contentVersions": {
       "setCurrentSuccess": "Version erfolgreich als aktuell festgelegt",
@@ -5141,6 +5158,7 @@
       "open": "Fokussierten Eintrag öffnen",
       "rename": "Fokussierten Eintrag umbenennen",
       "delete": "Fokussierten Eintrag löschen",
+      "publish": "Fokussierten Eintrag oder die Auswahl veröffentlichen",
       "copy": "Fokussierten Eintrag kopieren",
       "cut": "Fokussierten Eintrag ausschneiden",
       "paste": "In den fokussierten Eintrag einfügen",
