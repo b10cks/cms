@@ -15299,6 +15299,70 @@
                 ]
             }
         },
+        "/mgmt/v1/spaces/{space}/contents/bulk-publish": {
+            "post": {
+                "summary": "Create bulk publish",
+                "description": "",
+                "tags": [
+                    "Contents"
+                ],
+                "operationId": "post_spaces_by_space_contents_bulk_publish",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/contents/bulk-unpublish": {
+            "post": {
+                "summary": "Create bulk unpublish",
+                "description": "",
+                "tags": [
+                    "Contents"
+                ],
+                "operationId": "post_spaces_by_space_contents_bulk_unpublish",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/mgmt/v1/spaces/{space}/contents/{content}/publish": {
             "post": {
                 "summary": "Create publish",
@@ -18368,11 +18432,14 @@
                                         "items": {
                                             "type": "string"
                                         }
+                                    },
+                                    "content_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
                                     }
-                                },
-                                "required": [
-                                    "version_ids"
-                                ]
+                                }
                             }
                         }
                     }
@@ -18438,11 +18505,14 @@
                                         "items": {
                                             "type": "string"
                                         }
+                                    },
+                                    "content_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
                                     }
-                                },
-                                "required": [
-                                    "version_ids"
-                                ]
+                                }
                             }
                         }
                     }
