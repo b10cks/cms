@@ -14,8 +14,11 @@ class AssignContentVersionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'version_ids' => 'required|array',
+            'version_ids' => 'required_without:content_ids|array',
             'version_ids.*' => 'required|string',
+            // Entries instead of versions: each contributes its current draft.
+            'content_ids' => 'required_without:version_ids|array|max:500',
+            'content_ids.*' => 'required|string',
         ];
     }
 }
