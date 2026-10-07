@@ -54,10 +54,10 @@
     "dayjs": "^1.11.23",
     "diff": "^9.0.0",
     "dompurify": "^3.4.16",
-    "laravel-echo": "^2.5.0",
+    "laravel-echo": "^2.6.1",
     "leaflet": "^1.9.4",
     "marked": "^18.1.0",
-    "posthog-js": "^1.437.0",
+    "posthog-js": "^1.438.2",
     "pusher-js": "^8.6.0",
     "qrcode": "^1.5.4",
     "reka-ui": "^2.11.0",
@@ -66,7 +66,7 @@
     "vue-chartjs": "^5.3.4",
     "vue-i18n": "^11.4.13",
     "vue-input-otp": "^0.4.0",
-    "vue-router": "^5.3.1",
+    "vue-router": "^5.4.0",
     "vue-sonner": "^2.0.9"
   },
   "devDependencies": {
