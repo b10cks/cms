@@ -7,6 +7,7 @@ use App\Contracts\Image\ImageInterface;
 use App\Services\Image\Drivers\ImagickDriver;
 use App\Services\Image\Drivers\VipsDriver;
 use App\Services\Image\Dto\ImageTransformation;
+use App\Support\ExecutionTime;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Manager;
@@ -14,6 +15,9 @@ use Jcupitt\Vips\Image as VipsImageLib;
 
 class ImageTransformationManager extends Manager
 {
+    /** Large sources take a while to decode; the request limit is 59 seconds. */
+    private const MAX_PROCESSING_SECONDS = 300;
+
     public function __construct($app)
     {
         parent::__construct($app);
@@ -120,8 +124,27 @@ class ImageTransformationManager extends Manager
                 return null;
             }
 
-            set_time_limit(0);
+            return ExecutionTime::extend(self::MAX_PROCESSING_SECONDS, fn (): ?array => $this->transform($fullPath, $disk, $transformation));
+        } catch (\Throwable $e) {
+            Log::error("Image processing error: {$e->getMessage()}", [
+                'path' => $fullPath,
+                'operation' => $transformation->operation,
+                'params' => $transformation->params,
+                'driver' => $this->getDefaultDriver(),
+            ]);
 
+            return null;
+        }
+    }
+
+    /**
+     * @return array{data: string, format: string, mime: mixed}|null
+     */
+    private function transform(string $fullPath, FilesystemAdapter $disk, ImageTransformation $transformation): ?array
+    {
+        $tempFile = null;
+
+        try {
             $driver = $this->driver();
             $tempFile = $this->copySourceToTemporaryFile($disk, $fullPath);
             if ($tempFile === null) {
@@ -134,7 +157,6 @@ class ImageTransformationManager extends Manager
                 Log::warning('Rejected oversized source image (possible decompression bomb)', [
                     'path' => $fullPath,
                 ]);
-                unlink($tempFile);
 
                 return null;
             }
@@ -147,29 +169,15 @@ class ImageTransformationManager extends Manager
             $options = $this->getFormatOptions($outputFormat, $transformation->quality);
             $buffer = $processedImage->toBuffer($outputFormat, $options);
 
-            if (file_exists($tempFile)) {
-                unlink($tempFile);
-            }
-
             return [
                 'data' => $buffer,
                 'format' => $outputFormat,
                 'mime' => $this->config->get("ilum.formats.{$outputFormat}.mime"),
             ];
-        } catch (\Throwable $e) {
-            Log::error("Image processing error: {$e->getMessage()}", [
-                'path' => $fullPath,
-                'operation' => $transformation->operation,
-                'params' => $transformation->params,
-                'driver' => $this->getDefaultDriver(),
-            ]);
-
-            // Clean up temp file if it exists
-            if (isset($tempFile) && file_exists($tempFile)) {
+        } finally {
+            if ($tempFile !== null && file_exists($tempFile)) {
                 unlink($tempFile);
             }
-
-            return null;
         }
     }
 

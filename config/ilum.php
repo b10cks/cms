@@ -74,7 +74,8 @@ return [
 
         // Ceiling on a single transfer. Long enough for a large file over a
         // slow connection, short enough that a stalled client eventually
-        // releases its worker. 0 disables the limit.
+        // releases its worker. 0 or less falls back to 900: under FrankenPHP
+        // 0 does not lift the 59 second request limit (see App\Support\ExecutionTime).
         'max_seconds' => (int) env('IMAGE_STREAM_MAX_SECONDS', 900),
     ],
 

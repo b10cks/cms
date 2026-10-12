@@ -184,7 +184,7 @@ IMAGE_CACHE_IMMUTABLE=true         # mark transformed images immutable
 IMAGE_CACHE_PASSTHROUGH_IMMUTABLE=false  # untransformed files stay revalidatable
 IMAGE_CACHE_POSTER_DURATION=3600   # TTL for poster URLs without a `v` pin
 IMAGE_STREAM_CHUNK_SIZE=1048576    # bytes per chunk when streaming media
-IMAGE_STREAM_MAX_SECONDS=900       # ceiling on a single transfer (0 = no limit)
+IMAGE_STREAM_MAX_SECONDS=900       # ceiling on a single transfer (must be positive, 0 falls back to 900)
 IMAGE_RATE_LIMIT=600               # delivery requests per minute per IP
 ```
 

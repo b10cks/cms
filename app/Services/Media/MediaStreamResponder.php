@@ -3,6 +3,7 @@
 namespace App\Services\Media;
 
 use App\Services\Media\Dto\StoredFile;
+use App\Support\ExecutionTime;
 use Illuminate\Filesystem\AwsS3V3Adapter;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\Request;
@@ -344,9 +345,21 @@ class MediaStreamResponder
     {
         // A large transfer over a slow connection legitimately outlives the
         // default limit, but an unbounded one lets a stalled client pin a
-        // worker forever.
-        set_time_limit(max(0, (int) config('ilum.stream.max_seconds', 900)));
+        // worker forever. 0 used to mean "no limit", which FrankenPHP cannot
+        // honour, so it falls back to the default instead.
+        $seconds = (int) config('ilum.stream.max_seconds', 900);
 
+        ExecutionTime::extend(
+            $seconds > 0 ? $seconds : 900,
+            fn () => $this->copyToClient($stream, $path, $length),
+        );
+    }
+
+    /**
+     * @param  resource  $stream
+     */
+    private function copyToClient($stream, string $path, ?int $length): void
+    {
         $chunkSize = max(8192, (int) config('ilum.stream.chunk_size', 1_048_576));
         $remaining = $length;
         $aborted = false;
