@@ -1637,9 +1637,24 @@ const handleDragStart = (nodeId: string, event: DragEvent) => {
   }
 }
 
-const handleDragOverNode = ({ nodeId }: { nodeId: string; event: DragEvent }) => {
+// A single block exists once and only at the root, so it can neither be copied
+// nor dropped into another node. Refusing the drag-over keeps the target unlit
+// and the drop from firing at all.
+const isDraggingSingle = () =>
+  draggingNodeIds.value.some((nodeId) => treeApi.getNode(nodeId)?.blockType === 'single')
+
+const refuseDrop = (event: DragEvent) => {
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'none'
+  }
+
+  dropTargetId.value = null
+  rootDropActive.value = false
+}
+
+const handleDragOverNode = ({ nodeId, event }: { nodeId: string; event: DragEvent }) => {
   if (nodeId === CONTENT_WIZARD_ROOT_ID) {
-    handleDragOverRoot()
+    handleDragOverRoot(event)
     return
   }
 
@@ -1647,12 +1662,22 @@ const handleDragOverNode = ({ nodeId }: { nodeId: string; event: DragEvent }) =>
     return
   }
 
+  if (isDraggingSingle()) {
+    refuseDrop(event)
+    return
+  }
+
   dropTargetId.value = nodeId
   rootDropActive.value = false
 }
 
-const handleDragOverRoot = () => {
+const handleDragOverRoot = (event: DragEvent) => {
   if (!draggingNodeIds.value.length) {
+    return
+  }
+
+  if (isCopyDrop(event) && isDraggingSingle()) {
+    refuseDrop(event)
     return
   }
 

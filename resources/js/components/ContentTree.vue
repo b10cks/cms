@@ -492,7 +492,8 @@ function getContentTreeDragItems(
 function computeDropEdge(
   element: HTMLElement,
   input: { clientY: number },
-  item: FlatContentMenuItem
+  item: FlatContentMenuItem,
+  dragItems: ContentTreeDragItem[]
 ): Edge {
   // Sorting disabled for the row's folder: only reparenting (nesting) is
   // permitted, never reordering.
@@ -502,7 +503,7 @@ function computeDropEdge(
 
   const rect = element.getBoundingClientRect()
   const ratio = rect.height > 0 ? (input.clientY - rect.top) / rect.height : 0.5
-  const isContainer = item.type !== 'single'
+  const isContainer = item.type !== 'single' && canNest(dragItems.map(({ id }) => id))
 
   if (isContainer) {
     if (ratio <= 0.3) {
@@ -861,6 +862,9 @@ const executeDelete = async (context: ContentTreeActionContext) => {
 // A single block exists once per tree, so copying, cutting or duplicating one
 // can only ever produce something that cannot be placed.
 const containsSingleItem = (ids: string[]) => ids.some((id) => data.value?.[id]?.type === 'single')
+
+// Single blocks only live at the root, so they never nest into another entry.
+const canNest = (draggedIds: string[]) => !containsSingleItem(draggedIds)
 
 const canCopyCutOrDuplicate = (context: ContentTreeActionContext) =>
   canManageContent.value &&
@@ -1568,7 +1572,7 @@ const resolveDrop = (targetId: string, edge: Edge, draggedIds: string[]): DropRe
   const moving = new Set(draggedIds)
   const targetLevel = levelMap.value.get(targetId) ?? 1
   const targetParentId = target.pid ?? null
-  const isContainer = target.type !== 'single'
+  const isContainer = target.type !== 'single' && canNest(draggedIds)
 
   const siblingsOf = (parentId: string | null): string[] =>
     (childIdMap.value.get(parentId) || []).filter((id) => !moving.has(id))
@@ -1653,6 +1657,21 @@ const resolveDrop = (targetId: string, edge: Edge, draggedIds: string[]): DropRe
   // edge === 'bottom' always reorders after the row (same parent), so items can be
   // moved past an expanded container without being captured as its child.
   return reorderAfter()
+}
+
+// The edge-aware counterpart of `canDropItemsOnTarget`: a drop that would land
+// single blocks below the root is refused outright.
+const canDropItemsAt = (dragItems: ContentTreeDragItem[], targetId: string, edge: Edge | null) => {
+  if (!canDropItemsOnTarget(dragItems, targetId)) {
+    return false
+  }
+
+  const draggedIds = getNormalizedIds(dragItems.map(({ id }) => id))
+  if (!edge || canNest(draggedIds)) {
+    return true
+  }
+
+  return resolveDrop(targetId, edge, draggedIds)?.parentId === null
 }
 
 const currentDragIds = computed(() => getNormalizedIds(dragSelectionSnapshot.value ?? []))
@@ -1846,17 +1865,17 @@ const registerItemInteractions = (item: FlatContentMenuItem, element: HTMLElemen
         const dragItems = getContentTreeDragItems(source.data)
         return canDropItemsOnTarget(dragItems, item.id)
       },
-      getData: ({ input }) => ({
+      getData: ({ input, source }) => ({
         id: item.id,
         kind: CONTENT_TREE_DRAG_KIND,
-        closestEdge: computeDropEdge(element, input, item),
+        closestEdge: computeDropEdge(element, input, item, getContentTreeDragItems(source.data)),
       }),
       getIsSticky: () => true,
       onDragEnter: ({ self, source }) => {
         const dragItems = getContentTreeDragItems(source.data)
         const closestEdge = extractClosestEdge(self.data)
 
-        if (!canDropItemsOnTarget(dragItems, item.id)) {
+        if (!canDropItemsAt(dragItems, item.id, closestEdge)) {
           activeDropTargetId.value = null
           activeDropEdge.value = null
           return
@@ -1877,7 +1896,7 @@ const registerItemInteractions = (item: FlatContentMenuItem, element: HTMLElemen
         const dragItems = getContentTreeDragItems(source.data)
         const closestEdge = extractClosestEdge(self.data)
 
-        if (!canDropItemsOnTarget(dragItems, item.id)) {
+        if (!canDropItemsAt(dragItems, item.id, closestEdge)) {
           if (activeDropTargetId.value === item.id) {
             activeDropTargetId.value = null
             activeDropEdge.value = null
@@ -1912,8 +1931,13 @@ const registerItemInteractions = (item: FlatContentMenuItem, element: HTMLElemen
       },
       onDrop: async ({ source, self }) => {
         const dragItems = getContentTreeDragItems(source.data)
+        // Read the edge from the drop event's own payload — it is authoritative
+        // for this drop. The reactive `activeDropEdge` can be cleared by an
+        // onDragLeave race, and its 'bottom' fallback would silently turn an
+        // intended "move before" (top) into a "move after".
+        const edge = extractClosestEdge(self.data) ?? activeDropEdge.value ?? 'bottom'
 
-        if (!canDropItemsOnTarget(dragItems, item.id)) {
+        if (!canDropItemsAt(dragItems, item.id, edge)) {
           if (!isSelfDrop(dragItems, item.id)) {
             toast.error(t('labels.contentTree.errors.invalidMove') as string)
           }
@@ -1921,11 +1945,6 @@ const registerItemInteractions = (item: FlatContentMenuItem, element: HTMLElemen
           return
         }
 
-        // Read the edge from the drop event's own payload — it is authoritative
-        // for this drop. The reactive `activeDropEdge` can be cleared by an
-        // onDragLeave race, and its 'bottom' fallback would silently turn an
-        // intended "move before" (top) into a "move after".
-        const edge = extractClosestEdge(self.data) ?? activeDropEdge.value ?? 'bottom'
         await moveDraggedItemsToTarget(dragItems, item.id, edge)
       },
     })
