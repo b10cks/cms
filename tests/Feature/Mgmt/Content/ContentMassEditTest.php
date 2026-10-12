@@ -2,14 +2,17 @@
 
 namespace Tests\Feature\Mgmt\Content;
 
+use App\Events\Space\ContentsChanged;
 use App\Http\Requests\Content\MassEditSaveRequest;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
+use Illuminate\Broadcasting\BroadcastEvent;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -713,6 +716,31 @@ class ContentMassEditTest extends TestCase
             'Über uns',
             Content::query()->where('i18n_parent_id', $second->id)->where('language_iso', 'de')->sole()->getCurrentContent()['title'],
         );
+    }
+
+    #[Test]
+    public function import_broadcasts_one_summary_instead_of_an_update_per_row(): void
+    {
+        $this->actingAs($this->owner);
+
+        $first = $this->createContent('home', content: ['title' => 'Home']);
+        $second = $this->createContent('about', content: ['title' => 'About']);
+        Queue::fake();
+
+        $header = ['content_id', 'unit_id', 'type', 'field', 'source', 'de'];
+        $rows = [
+            ['content_id' => $first->id, 'unit_id' => 'title', 'type' => 'text', 'field' => 'title', 'de' => 'Zuhause'],
+            ['content_id' => $second->id, 'unit_id' => 'title', 'type' => 'text', 'field' => 'title', 'de' => 'Über uns'],
+        ];
+
+        $this->post(route('mgmt.contents.data.import', ['space' => $this->space->id]), [
+            'file' => $this->csvUpload($header, $rows),
+            'import_mode' => 'publish',
+            'create_missing' => '1',
+        ])->assertOk();
+
+        Queue::assertPushed(BroadcastEvent::class, 1);
+        Queue::assertPushed(BroadcastEvent::class, static fn (BroadcastEvent $job): bool => $job->event instanceof ContentsChanged);
     }
 
     #[Test]

@@ -5,6 +5,7 @@ namespace App\Models\Space;
 use App\Database\HasManyFromArray;
 use App\Database\HasManyFromArrayTrait;
 use App\Events\Space\ContentDeleted;
+use App\Events\Space\ContentsChanged;
 use App\Events\Space\ContentUpdated;
 use App\Jobs\Content\UpdateContentFullSlugsJob;
 use App\Models\Traits\HasPurifiedAttributes;
@@ -153,6 +154,31 @@ class Content extends SpaceModel
         return array_map(static fn (string $column): string => $prefix.$column, self::DELIVERY_FIELDSET);
     }
 
+    /** True while a bulk write runs with the per-row `content:updated` broadcasts muted. */
+    protected static bool $broadcastsMuted = false;
+
+    /**
+     * Run a bulk write without a `content:updated` broadcast per saved row. Building
+     * each payload costs several queries and a queued job, and every broadcast makes
+     * other clients refetch their lists. The caller broadcasts one
+     * {@see ContentsChanged} afterwards.
+     *
+     * @template TReturn
+     *
+     * @param  callable(): TReturn  $callback
+     * @return TReturn
+     */
+    public static function withoutBroadcasts(callable $callback): mixed
+    {
+        static::$broadcastsMuted = true;
+
+        try {
+            return $callback();
+        } finally {
+            static::$broadcastsMuted = false;
+        }
+    }
+
     protected static function boot()
     {
         parent::boot();
@@ -191,7 +217,7 @@ class Content extends SpaceModel
             }
 
             self::scheduleContentMenuInvalidation();
-            if ($space) {
+            if ($space && ! static::$broadcastsMuted) {
                 broadcast(new ContentUpdated($content, $space))->toOthers();
             }
         });

@@ -676,6 +676,20 @@ describe('content:updated broadcasts', () => {
   })
 })
 
+describe('content:changed broadcasts', () => {
+  it('refetches every content cache and the menu after a bulk write', () => {
+    const space = nextSpace()
+    const instance = setup(space, [[queryKeys.contentMenu(space).all(), menu(item('a'))]])
+    const invalidate = vi.spyOn(instance.queryClient, 'invalidateQueries')
+
+    fake.channels[0].listeners.get('.content:changed')?.({})
+
+    expect(
+      (invalidate.mock.calls as Array<[{ queryKey: unknown[] }]>).map(([options]) => options.queryKey)
+    ).toEqual([queryKeys.contents(space).all(), queryKeys.contentMenu(space).all()])
+  })
+})
+
 describe('content:deleted broadcasts', () => {
   const broadcast = (payload: Record<string, unknown>) =>
     fake.channels[0].listeners.get('.content:deleted')?.(payload)

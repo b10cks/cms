@@ -7,6 +7,7 @@ use App\Actions\Content\PublishContent;
 use App\Actions\Content\UpdateContent;
 use App\DTOs\ImportExport\ImportResult;
 use App\Enums\ContentTranslationImportMode;
+use App\Events\Space\ContentsChanged;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Services\Content\ContentI18nService;
@@ -108,7 +109,8 @@ class ContentTranslationApplier
             $targets = $document['targets'] ?? [];
 
             if ($contentId !== '' && $targets !== []) {
-                $this->applyDocument(
+                // Muted per document, never across a yield: the flag is static.
+                Content::withoutBroadcasts(fn () => $this->applyDocument(
                     $space,
                     $contentId,
                     $canonicals->get($contentId),
@@ -121,10 +123,14 @@ class ContentTranslationApplier
                     $owner,
                     $allowSourceEdits,
                     $applyEmpty,
-                );
+                ));
             }
 
             yield ['processed' => $index + 1, 'total' => $total];
+        }
+
+        if ($this->changes !== []) {
+            broadcast(new ContentsChanged($space->id))->toOthers();
         }
 
         return new ImportResult($this->successes, $this->changes, $this->ignoredFields, $this->errors);

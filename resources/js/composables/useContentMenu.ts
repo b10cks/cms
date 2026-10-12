@@ -264,6 +264,12 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
             })
           }
         )
+        // A bulk write (translation import) mutes the per-row events above and
+        // sends this one instead, so everything content-shaped refetches.
+        .listen('.content:changed', () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.contents(id).all() })
+          queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(id).all() })
+        })
         // Children are deleted per-model (deepest first) on the backend, so
         // every node in a deleted subtree arrives as its own event — removing
         // just the broadcast id is enough.
