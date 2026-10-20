@@ -47,7 +47,7 @@ Preview to editor:
 
 The editor answers block actions and moves with `CONTENT_UPDATE`, plus `SELECT_UPDATE` when the selection changes (a duplicate gets selected) and `HIDDEN_BLOCKS` when visibility changes. It applies them like its own form does: users without edit permission can't run them, and it rejects anything the schema forbids (a block the target field doesn't allow, a move into the block's own children, going over or under the field's item limits) with a notice in the editor. The editor ignores malformed messages.
 
-Hiding in the preview only dims a block, so it stays selectable. Whether a hidden block reaches the preview at all is up to the Data API and your site, as in production: with the space setting that filters hidden blocks, or a site that skips blocks with `hidden: true`, it simply isn't there.
+The editor sends content changes in the shape the Data API delivers: asset fields come with their url, metadata, alt text and focus, and with the space setting that filters hidden blocks, hidden blocks are left out. So a block hidden there disappears from the preview, as it does on the site. Otherwise hiding only dims it and it stays selectable, unless your site skips blocks with `hidden: true` itself.
 
 ## Rich text in the preview
 
