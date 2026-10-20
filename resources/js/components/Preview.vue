@@ -15,6 +15,7 @@ import { PulseDot } from '~/components/ui/pulse-dot'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { findHiddenBlockIds } from '~/lib/blockTreeEdits'
 import { buildPreviewUrl, resolveLocaleSegments } from '~/lib/preview-url'
+import { toDeliveredContent } from '~/lib/previewDelivery'
 import { isSafeFrameUrl } from '~/lib/sanitize'
 import type { CommentResource } from '~/types/comments'
 import { ContentResource } from '~/types/contents'
@@ -200,12 +201,25 @@ watch(
   { flush: 'post' }
 )
 
+/**
+ * Push content changes in the shape the Data API delivers, so the preview
+ * shows what the site will: the editor's tree still holds what delivery
+ * strips.
+ */
+const pushDelivered = (contents: Record<string, unknown>[], patches: ContentPatchEvent[] = []) => {
+  const options = { filterHiddenBlocks: currentSpace.value?.settings.filter_hidden_blocks ?? false }
+  previewBridge.value?.pushChange(
+    contents.map((content) => toDeliveredContent(content, options)),
+    patches.map((patch) => ({ ...patch, value: toDeliveredContent(patch.value, options) }))
+  )
+}
+
 // The bridge buffers these until the preview announces it is ready and
 // replays them after every in-iframe navigation, so sending "too early" here
 // is safe.
 watchEffect(() => {
-  if (props.content) {
-    previewBridge.value?.updateContent(props.content)
+  if (props.content && previewBridge.value) {
+    pushDelivered([props.content])
   }
 })
 
@@ -225,7 +239,10 @@ watchEffect(() => {
   }
 })
 
-/** Lets the preview dim hidden blocks. The bridge only sends when the set changed. */
+/**
+ * Lets the preview dim hidden blocks, in spaces whose Data API keeps them.
+ * The bridge only sends when the set changed.
+ */
 const syncHiddenBlocks = () => {
   const fields = injectedContent.value?.content
   if (fields) previewBridge.value?.updateHiddenBlocks(findHiddenBlockIds(fields))
@@ -279,7 +296,7 @@ const queueChange = () => {
     queueMicrotask(() => {
       const change = pendingChange
       pendingChange = null
-      if (change) previewBridge.value?.pushChange(change.contents, change.patches)
+      if (change) pushDelivered(change.contents, change.patches)
       syncHiddenBlocks()
     })
   }
