@@ -15,7 +15,7 @@ import { PulseDot } from '~/components/ui/pulse-dot'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { findHiddenBlockIds } from '~/lib/blockTreeEdits'
 import { buildPreviewUrl, resolveLocaleSegments } from '~/lib/preview-url'
-import { toDeliveredContent } from '~/lib/previewDelivery'
+import { collectAssetIds, toDeliveredContent } from '~/lib/previewDelivery'
 import { isSafeFrameUrl } from '~/lib/sanitize'
 import type { CommentResource } from '~/types/comments'
 import { ContentResource } from '~/types/contents'
@@ -48,6 +48,7 @@ const { useSpaceQuery } = useSpaces()
 const { data: currentSpace } = useSpaceQuery(props.spaceId) as { data: Ref<SpaceResource | null> }
 const { settings } = useSpaceSettings(props.spaceId)
 const { useBlocksQuery } = useBlocks(props.spaceId)
+const { fetchAsset } = useAssets(props.spaceId)
 const { data: blocksResponse } = useBlocksQuery({ per_page: 1000 })
 
 const emit = defineEmits<{
@@ -201,17 +202,43 @@ watch(
   { flush: 'post' }
 )
 
+// Also strips Vue proxies, which postMessage cannot clone.
+const cloneJson = <T>(value: T): T => JSON.parse(JSON.stringify(value))
+
+/** Library assets `values` reference, by id. One that fails to load stays as stored. */
+const loadAssets = async (values: unknown[]): Promise<Map<string, AssetResource>> => {
+  const ids = new Set<string>()
+  values.forEach((value) => collectAssetIds(value, ids))
+  const assets = await Promise.all([...ids].map((id) => fetchAsset(id).catch(() => null)))
+
+  return new Map(
+    assets
+      .filter((asset) => asset !== null)
+      .map((asset): [string, AssetResource] => [asset.id, asset])
+  )
+}
+
+/** Pushes wait for their assets in turn, so a later edit never lands before an earlier one. */
+let pendingPush = Promise.resolve()
+
 /**
  * Push content changes in the shape the Data API delivers, so the preview
- * shows what the site will: the editor's tree still holds what delivery
- * strips.
+ * shows what the site will: the editor's tree stores assets as bare
+ * references and still holds what delivery strips.
  */
 const pushDelivered = (contents: Record<string, unknown>[], patches: ContentPatchEvent[] = []) => {
-  const options = { filterHiddenBlocks: currentSpace.value?.settings.filter_hidden_blocks ?? false }
-  previewBridge.value?.pushChange(
-    contents.map((content) => toDeliveredContent(content, options)),
-    patches.map((patch) => ({ ...patch, value: toDeliveredContent(patch.value, options) }))
-  )
+  const filterHiddenBlocks = currentSpace.value?.settings.filter_hidden_blocks ?? false
+  const entry = injectedContent.value
+  const translationLanguage = entry?.i18n_parent_id ? entry.language_iso : null
+
+  pendingPush = pendingPush.then(async () => {
+    const assets = await loadAssets([...contents, ...patches.map((patch) => patch.value)])
+    const options = { filterHiddenBlocks, assets, translationLanguage }
+    previewBridge.value?.pushChange(
+      contents.map((content) => toDeliveredContent(content, options)),
+      patches.map((patch) => ({ ...patch, value: toDeliveredContent(patch.value, options) }))
+    )
+  })
 }
 
 // The bridge buffers these until the preview announces it is ready and
@@ -219,7 +246,7 @@ const pushDelivered = (contents: Record<string, unknown>[], patches: ContentPatc
 // is safe.
 watchEffect(() => {
   if (props.content && previewBridge.value) {
-    pushDelivered([props.content])
+    pushDelivered([cloneJson(props.content)])
   }
 })
 
@@ -302,9 +329,6 @@ const queueChange = () => {
   }
   return pendingChange
 }
-
-// Also strips Vue proxies, which postMessage cannot clone.
-const cloneJson = <T>(value: T): T => JSON.parse(JSON.stringify(value))
 
 const updateItem = (item: Record<string, unknown>) => {
   queueChange().contents.push(cloneJson(item))
