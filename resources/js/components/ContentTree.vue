@@ -193,6 +193,9 @@ const activeDropEdge = ref<Edge | null>(null)
 const rootDropMode = ref<'root' | null>(null)
 const isDragging = ref(false)
 const dragSelectionSnapshot = ref<string[] | null>(null)
+// Ids travelling in the active drag. The selection snapshot is consumed at
+// drag start, so the live drop feedback reads from here instead.
+const draggingItemIds = ref<string[]>([])
 const openMenuId = ref<MenuOwnerId | null>(null)
 const activeClipboardItem = ref<ContentTreeClipboardItem | null>(null)
 const activeMenuAnchor = ref<HTMLElement | null>(null)
@@ -446,6 +449,7 @@ const finishDragState = () => {
 
   isDragging.value = false
   dragSelectionSnapshot.value = null
+  draggingItemIds.value = []
   clearDropState()
 }
 
@@ -1674,7 +1678,7 @@ const canDropItemsAt = (dragItems: ContentTreeDragItem[], targetId: string, edge
   return resolveDrop(targetId, edge, draggedIds)?.parentId === null
 }
 
-const currentDragIds = computed(() => getNormalizedIds(dragSelectionSnapshot.value ?? []))
+const currentDragIds = computed(() => getNormalizedIds(draggingItemIds.value))
 
 const dropResolution = computed<DropResolution | null>(() => {
   const targetId = activeDropTargetId.value
@@ -1841,6 +1845,7 @@ const registerItemInteractions = (item: FlatContentMenuItem, element: HTMLElemen
           getInitialData: () => {
             const dragItems = getSelectedDragItemsFor(item.id)
             dragSelectionSnapshot.value = dragItems.map((dragItem) => dragItem.id)
+            draggingItemIds.value = dragItems.map((dragItem) => dragItem.id)
             return createContentTreeDragData(dragItems, item.id)
           },
           onGenerateDragPreview: ({ nativeSetDragImage }) => {

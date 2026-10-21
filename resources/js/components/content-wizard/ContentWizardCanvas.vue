@@ -402,7 +402,13 @@ const openNodeAddMenu = (
   return true
 }
 
+// A node card that already handled the drag-over owns the drop effect: the
+// page may have set it to 'none' to refuse the drop, which must not be undone.
 const handleCanvasDragOver = (event: DragEvent) => {
+  if (event.defaultPrevented) {
+    return
+  }
+
   if (event.dataTransfer) {
     event.dataTransfer.dropEffect = event.altKey || event.ctrlKey || event.metaKey ? 'copy' : 'move'
   }
