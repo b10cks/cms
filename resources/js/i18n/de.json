@@ -104,8 +104,6 @@
       "backToDataSources": "Zurück zu allen Datenquellen",
       "copySlugTooltip": "API-Endpunkt in Zwischenablage kopieren",
       "dataEntries": "Einträge",
-      "loading": "Lädt deine Daten...",
-      "loadingEntries": "Rufe Einträge ab...",
       "noEntries": "Noch keine Einträge. Erstelle einen zum Starten.",
       "searchEntriesPlaceholder": "Suche nach Schlüssel oder Wert...",
       "perPage": "Pro Seite",
@@ -528,7 +526,6 @@
     },
     "contentVersions": {
       "title": "Versionsverlauf",
-      "loading": "Lädt Versionen...",
       "noVersions": "Keine Versionen gefunden",
       "selectVersion": "Wähle eine Version, um Details anzuzeigen",
       "noMessage": "Keine Nachricht",
@@ -1774,7 +1771,6 @@
       "description": "Speichere Block-Konfigurationen als Vorlagen, um die Erstellung zu beschleunigen.",
       "createTitle": "Erstelle eine Vorlage",
       "manageTitle": "Block-Vorlagen",
-      "loading": "Lädt Vorlagen...",
       "noTemplates": "Noch keine Vorlagen. Erstelle eine aus einem existierenden Block.",
       "fields": {
         "name": "Vorlagenname",
@@ -1793,7 +1789,6 @@
     "blockVersions": {
       "title": "Block-Versionen",
       "description": "Verfolge und stelle vorherige Block-Versionen wieder her.",
-      "loading": "Lädt Versionen...",
       "noVersions": "Noch keine Versionsverlauf.",
       "selectVersion": "Wähle eine Version, um zu sehen, was sich geändert hat.",
       "restoreTooltip": "Diese Version wiederherstellen",

@@ -95,8 +95,6 @@
       "backToDataSources": "Retour à toutes les sources de données",
       "copySlugTooltip": "Copier le point de terminaison API dans le presse-papiers",
       "dataEntries": "Entrées",
-      "loading": "Chargement de vos données...",
-      "loadingEntries": "Récupération des entrées...",
       "noEntries": "Aucune entrée pour l'instant. Créez-en une pour commencer.",
       "searchEntriesPlaceholder": "Rechercher par clé ou valeur...",
       "perPage": "Par page",
@@ -519,7 +517,6 @@
     },
     "contentVersions": {
       "title": "Historique des versions",
-      "loading": "Chargement des versions...",
       "noVersions": "Aucune version trouvée",
       "selectVersion": "Sélectionnez une version pour voir les détails",
       "noMessage": "Aucun message",
@@ -1765,7 +1762,6 @@
       "description": "Enregistrez les configurations de blocs sous forme de modèles pour accélérer la création.",
       "createTitle": "Créer un modèle",
       "manageTitle": "Modèles de blocs",
-      "loading": "Chargement des modèles…",
       "noTemplates": "Aucun modèle pour le moment. Créez-en un à partir d'un bloc existant.",
       "fields": {
         "name": "Nom du modèle",
@@ -1784,7 +1780,6 @@
     "blockVersions": {
       "title": "Versions de blocs",
       "description": "Suivez et restaurez les versions précédentes des blocs.",
-      "loading": "Chargement des versions…",
       "noVersions": "Aucun historique de version pour le moment.",
       "selectVersion": "Choisissez une version pour voir ce qui a changé.",
       "restoreTooltip": "Restaurer cette version",

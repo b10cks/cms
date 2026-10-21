@@ -95,8 +95,6 @@
       "backToDataSources": "Back to all data sources",
       "copySlugTooltip": "Copy API endpoint to clipboard",
       "dataEntries": "Entries",
-      "loading": "Loading your data...",
-      "loadingEntries": "Fetching entries...",
       "noEntries": "No entries yet. Create one to get started.",
       "searchEntriesPlaceholder": "Search by key or value...",
       "perPage": "Per page",
@@ -519,7 +517,6 @@
     },
     "contentVersions": {
       "title": "Version History",
-      "loading": "Loading versions...",
       "noVersions": "No versions found",
       "selectVersion": "Select a version to view details",
       "noMessage": "No message",
@@ -1765,7 +1762,6 @@
       "description": "Save block configurations as templates to speed up creation.",
       "createTitle": "Create a template",
       "manageTitle": "Block Templates",
-      "loading": "Loading templates...",
       "noTemplates": "No templates yet. Create one from an existing block.",
       "fields": {
         "name": "Template Name",
@@ -1784,7 +1780,6 @@
     "blockVersions": {
       "title": "Block Versions",
       "description": "Track and restore previous block versions.",
-      "loading": "Loading versions...",
       "noVersions": "No version history yet.",
       "selectVersion": "Pick a version to see what changed.",
       "restoreTooltip": "Restore this version",
