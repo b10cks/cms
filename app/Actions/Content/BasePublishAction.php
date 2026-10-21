@@ -34,10 +34,18 @@ abstract class BasePublishAction
         return compact('contentData', 'message', 'publishedAt');
     }
 
+    /**
+     * Saves only when the request changed a column: a clean save still fires
+     * the saved hook, which broadcasts the pre-publish state. Callers have
+     * already loaded current_version through lockContentForUpdate().
+     */
     protected function updateContent(array $data, Content $content): void
     {
-        $content->update($data);
-        $content->load('current_version');
+        $content->fill($data);
+
+        if ($content->isDirty()) {
+            $content->save();
+        }
     }
 
     protected function resolveRequestedContent(array $data, Content $content): array

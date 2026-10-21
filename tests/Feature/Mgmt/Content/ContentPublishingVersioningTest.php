@@ -5,6 +5,7 @@ namespace Tests\Feature\Mgmt\Content;
 use App\Actions\Content\BasePublishAction;
 use App\Actions\Content\PublishContent;
 use App\Actions\Content\UpdateContent;
+use App\Events\Space\ContentUpdated;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
@@ -15,6 +16,7 @@ use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -597,6 +599,48 @@ class ContentPublishingVersioningTest extends TestCase
         $this->assertFalse($this->space->fresh()->settings->visual_editor);
         $this->assertNotNull($staleSpace->content_updated_at);
         $this->assertFalse($staleSpace->isDirty('content_updated_at'));
+    }
+
+    #[Test]
+    public function publishing_a_draft_runs_nineteen_queries_and_broadcasts_once(): void
+    {
+        $content = Content::query()->findOrFail($this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+            currentContent: ['summary' => 'Draft summary'],
+        )->id);
+
+        $broadcasts = 0;
+        Event::listen(ContentUpdated::class, function () use (&$broadcasts): void {
+            $broadcasts++;
+        });
+        DB::enableQueryLog();
+
+        app(PublishContent::class)->execute([], $content, $this->space, $this->owner);
+
+        // Was 26 with two broadcasts: a clean save, repeated version loads and the space settings write.
+        $this->assertCount(19, DB::getQueryLog());
+        $this->assertSame(1, $broadcasts);
+    }
+
+    #[Test]
+    public function saving_a_draft_runs_thirty_queries(): void
+    {
+        $this->actingAs($this->owner);
+
+        $content = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+        );
+        DB::enableQueryLog();
+
+        $this->patchJson(route('mgmt.contents.update', [
+            'space' => $this->space->id,
+            'content' => $content->id,
+        ]), [
+            'content' => ['summary' => 'New draft'],
+        ])->assertOk();
+
+        // Was 34: i18n validation twice, a version preload and a block reload in the broadcast.
+        $this->assertCount(30, DB::getQueryLog());
     }
 
     private function createVersionedContent(

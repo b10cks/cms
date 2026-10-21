@@ -43,9 +43,12 @@ class UpdateContent
         }
     }
 
-    public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner)
+    /**
+     * @param  bool  $i18nValidated  the caller already ran ContentI18nValidator on $data, as UpsertContentRequest does
+     */
+    public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner, bool $i18nValidated = false)
     {
-        if (! (bool) data_get($data, 'force', false)) {
+        if (! $i18nValidated && ! (bool) data_get($data, 'force', false)) {
             $errors = $this->validator->validate($space, $data, $content);
             if ($errors !== []) {
                 throw ValidationException::withMessages($errors);
@@ -104,7 +107,6 @@ class UpdateContent
             ]);
         }
 
-        $content->loadMissing('current_version');
         $clientParentVersionId = data_get($data, 'parent_version_id');
 
         $indexedColumnsChanged = false;

@@ -25,7 +25,6 @@ class PublishContent extends BasePublishAction
     public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner): void
     {
         $this->executeWithoutIndex($data, $content, $space, $owner);
-        $this->loadPublishedVersion($content);
         $this->indexContent($content, $space);
     }
 
