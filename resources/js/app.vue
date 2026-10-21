@@ -16,7 +16,16 @@ import ShareLayout from '~/layouts/share.vue'
 import StartLayout from '~/layouts/start.vue'
 import UnauthenticatedLayout from '~/layouts/unauthenticated.vue'
 
-useDark()
+const isDark = useDark()
+// The browser bar follows the in-app theme, not the system one. The colours
+// live on the meta in app.blade.php, next to the matching --surface values.
+const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+watchEffect(() => {
+  const color = isDark.value ? themeColor?.dataset.dark : themeColor?.dataset.light
+  if (themeColor && color) {
+    themeColor.content = color
+  }
+})
 useUrlNotifications()
 const commandOpen = ref(false)
 
