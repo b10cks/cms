@@ -802,6 +802,7 @@ const openViewTarget = async (item: FlatContentMenuItem) => {
 const executeTreeOperations = async (operations: ContentTreeOperationPayload[]) => {
   await runTreeOperations({
     operations,
+    allowsManualSort,
   })
 }
 
