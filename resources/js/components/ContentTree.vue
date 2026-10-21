@@ -1483,8 +1483,9 @@ const handleItemNavigate = (event: MouseEvent, id: string) => {
   }
 
   // The click has resolved against the filtered list, so it is now safe to
-  // tear the filter down (see handleSearchBlur).
-  if (searchOpen.value) {
+  // tear the filter down (see handleSearchBlur). The status filter keeps the
+  // search open so pending entries can be worked through one by one.
+  if (searchOpen.value && !statusFilterActive.value) {
     closeSearch()
   }
 }
@@ -2068,6 +2069,7 @@ type ContentSearchMatch = {
 }
 
 // --- Status filter: narrow the tree to entries with something to publish ---
+// Lives in the search panel and is cleared when the search closes.
 
 const statusFilterActive = ref(false)
 const pendingItems = computed(() => flatItems.value.filter(hasPendingChanges))
@@ -2396,6 +2398,7 @@ const closeSearch = (focusTree = true) => {
 
   searchOpen.value = false
   searchQuery.value = ''
+  statusFilterActive.value = false
   activeMatchIndex.value = 0
   searchExpandedOverride.value = null
 
@@ -2451,6 +2454,10 @@ const handleSearchBlur = (event: FocusEvent) => {
   // tree mid-click, landing the click on the wrong row. Let the row's click
   // handler close the search once the correct item has been resolved.
   if (next instanceof HTMLElement && next.closest('[data-content-id]')) {
+    return
+  }
+
+  if (statusFilterActive.value) {
     return
   }
 
@@ -2687,20 +2694,6 @@ onBeforeUnmount(() => {
 
         <div class="ml-auto flex items-center gap-1">
           <Button
-            v-if="pendingItems.length > 0 || statusFilterActive"
-            variant="ghost"
-            size="xs"
-            :aria-label="$t('labels.contentTree.status.filter')"
-            :title="$t('labels.contentTree.status.filter')"
-            :aria-pressed="statusFilterActive"
-            :class="statusFilterActive ? 'bg-secondary text-primary' : 'text-muted'"
-            @click.stop="toggleStatusFilter()"
-          >
-            <Icon name="lucide:circle-dashed" />
-            <span class="tabular-nums">{{ pendingItems.length }}</span>
-          </Button>
-
-          <Button
             variant="ghost"
             size="toolbar"
             :aria-label="$t('labels.contentTree.search.open')"
@@ -2780,6 +2773,21 @@ onBeforeUnmount(() => {
           >
             {{ searchCounterText }}
           </span>
+          <Button
+            v-if="pendingItems.length > 0 || statusFilterActive"
+            variant="ghost"
+            size="xs"
+            class="shrink-0"
+            :aria-label="$t('labels.contentTree.status.filter')"
+            :title="$t('labels.contentTree.status.filter')"
+            :aria-pressed="statusFilterActive"
+            :class="statusFilterActive ? 'bg-secondary text-primary' : 'text-muted'"
+            @pointerdown.prevent
+            @click="toggleStatusFilter()"
+          >
+            <Icon name="lucide:circle-dashed" />
+            <span class="tabular-nums">{{ pendingItems.length }}</span>
+          </Button>
           <Button
             variant="ghost"
             size="toolbar"
