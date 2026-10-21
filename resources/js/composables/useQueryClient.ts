@@ -29,6 +29,7 @@ export const queryKeys = {
     const keys = spaceEntityKeys('asset-collections')(spaceId)
     return {
       ...keys,
+      assetsLists: () => [...keys.all(), 'assets'] as const,
       assets: (id: MaybeRef<string>) => [...keys.all(), 'assets', id] as const,
       assetsList: (id: MaybeRef<string>, filters: unknown = {}) =>
         [...keys.all(), 'assets', id, filters] as const,

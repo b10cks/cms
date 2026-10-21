@@ -19,6 +19,7 @@ import AiContentInteraction from '~/components/ui/AiContentInteraction.vue'
 import { Badge, type BadgeVariants } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { ScrollArea } from '~/components/ui/scroll-area'
+import { Skeleton } from '~/components/ui/skeleton'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { useContentEditorPage } from '~/composables/useContentEditorPage'
 import {
@@ -916,8 +917,24 @@ provide('reloadServerContent', reloadServerContent)
     </ScrollArea>
     <div
       v-else
-      class="grow"
-    />
+      aria-busy="true"
+      :class="['grow bg-background', showPreview ? 'border-l border-border' : '']"
+    >
+      <div :class="['space-y-6 p-4', showPreview ? '' : 'mx-auto max-w-4xl']">
+        <div class="flex items-center gap-3">
+          <Skeleton class="size-8 rounded-md" />
+          <Skeleton class="h-6 w-56" />
+        </div>
+        <div
+          v-for="row in 4"
+          :key="row"
+          class="space-y-2"
+        >
+          <Skeleton class="h-3.5 w-28" />
+          <Skeleton :class="row === 3 ? 'h-24 w-full' : 'h-9 w-full'" />
+        </div>
+      </div>
+    </div>
     <TabsList
       :class="[
         'flex h-full flex-col shrink-0 border-l border-l-border select-none transition-[width,padding] duration-200 ease-butter',

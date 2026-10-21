@@ -77,15 +77,19 @@ const handleStart = async () => {
   open.value = false
 }
 
-watch(open, (isOpen) => {
-  if (isOpen) {
-    languages.value = languageOptions.value.map((option) => option.value)
-    overwrite.value = false
-    altContext.value = ''
-    decorative.value = false
-    highDetail.value = false
-  }
-})
+watch(
+  open,
+  (isOpen) => {
+    if (isOpen) {
+      languages.value = languageOptions.value.map((option) => option.value)
+      overwrite.value = false
+      altContext.value = ''
+      decorative.value = false
+      highDetail.value = false
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
