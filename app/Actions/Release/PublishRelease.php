@@ -48,6 +48,15 @@ class PublishRelease
                 return;
             }
 
+            // Content rows first, in id order, then the versions: the same lock
+            // order as every other publish path, see Content::lockForPublish().
+            $contentsById = Content::query()
+                ->whereIn('id', $versions->pluck('content_id')->unique())
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
             // One set-based UPDATE instead of a model save per version. The
             // per-version saving hooks only recompute asset/link/relation ids
             // from an unchanged payload, so nothing load-bearing is skipped.
@@ -57,11 +66,6 @@ class PublishRelease
                     'published_at' => $now,
                     'published_by_id' => $owner?->id,
                 ]);
-
-            $contentsById = Content::query()
-                ->whereIn('id', $versions->pluck('content_id')->unique())
-                ->get()
-                ->keyBy('id');
 
             foreach ($versions as $version) {
                 $content = $contentsById->get($version->content_id);

@@ -142,9 +142,7 @@ abstract class BasePublishAction
      */
     protected function lockContentForUpdate(Content $content): void
     {
-        $locked = Content::query()->lockForUpdate()->findOrFail($content->id);
-        $content->setRawAttributes($locked->getAttributes(), true);
-        $content->load('current_version');
+        $content->lockForPublish()->load('current_version');
     }
 
     /**

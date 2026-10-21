@@ -24,6 +24,8 @@ class PublishReleaseContentVersion
 
         $success = false;
         $content->getConnection()->transaction(function () use ($version, $content, $space, $owner, &$success) {
+            $content->lockForPublish();
+
             $version->update([
                 'published_at' => now(),
                 'published_by_id' => $owner?->id,
