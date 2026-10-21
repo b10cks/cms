@@ -33,8 +33,10 @@ const metricDefs: {
   { key: 'ai', label: 'labels.plans.quotas.aiCredit', unit: 'usd' },
 ]
 
+const { formatDate: formatDisplayDate } = useFormat()
+
 function formatDate(value: string | null): string {
-  return value ? new Date(value).toLocaleDateString() : '—'
+  return value ? formatDisplayDate(value) : '—'
 }
 
 function metricVariant(metric: PeriodUsageMetric): 'default' | 'warning' | 'destructive' {

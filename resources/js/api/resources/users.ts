@@ -7,10 +7,7 @@ export interface UpdateUserPayload {
   lastname?: string
 }
 
-export interface UpdateUserSettingsPayload {
-  languageIso?: string
-  extendedSidebar?: boolean
-}
+export type UpdateUserSettingsPayload = NonNullable<User['settings']>
 
 export interface ChangePasswordPayload {
   old_password: string

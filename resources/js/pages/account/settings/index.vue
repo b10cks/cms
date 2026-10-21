@@ -6,8 +6,16 @@ import NuxtImg from '~/components/NuxtImg.vue'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeaderCombined } from '~/components/ui/card'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
-import { FormField, InputField, SelectField } from '~/components/ui/form'
+import { ComboboxField, FormField, InputField, SelectField } from '~/components/ui/form'
 import { useFileUpload } from '~/composables/useFileUpload'
+import type { Clock, DateOrder } from '~/lib/display-formats'
+import {
+  browserTimeZone,
+  CLOCKS,
+  DATE_ORDERS,
+  displayFormats,
+  supportedTimeZones,
+} from '~/lib/display-formats'
 import type { User } from '~/types/users'
 
 const { useUserQuery, useUpdateUserMutation, cacheUser } = useUser()
@@ -15,6 +23,7 @@ const { t, locales } = useI18n()
 const { data: user } = useUserQuery()
 const { mutate: updateUser, isPending: isUpdating } = useUpdateUserMutation()
 const { settings } = useUserSettings()
+const { formatDate, formatTime, formatDateTime } = useFormat()
 
 useSeoMeta({
   title: computed(() => t('labels.account.profile.title')),
@@ -46,6 +55,51 @@ const handleSave = async () => {
 const onLanguageChange = (value: string) => {
   if (value === settings.languageIso) return
   settings.languageIso = value
+}
+
+// Each option previews today as it would read with that one choice applied.
+const now = Date.now()
+const followLanguage = (example: string) =>
+  t('labels.account.settings.followLanguage', { example })
+
+const dateOrderOptions = computed((): Array<{ value: DateOrder; label: string }> => [
+  {
+    value: 'auto',
+    label: followLanguage(formatDate(now, { ...displayFormats, dateOrder: 'auto' })),
+  },
+  ...DATE_ORDERS.map((dateOrder) => ({
+    value: dateOrder,
+    label: t(`labels.account.settings.dateOrders.${dateOrder}`, {
+      example: formatDate(now, { ...displayFormats, dateOrder }),
+    }),
+  })),
+])
+
+const CLOCK_LABELS = { '24h': 'h24', '12h': 'h12' } as const
+
+const clockOptions = computed((): Array<{ value: Clock; label: string }> => [
+  {
+    value: 'auto',
+    label: followLanguage(formatTime(now, { ...displayFormats, clock: 'auto' })),
+  },
+  ...CLOCKS.map((clock) => ({
+    value: clock,
+    label: t(`labels.account.settings.clocks.${CLOCK_LABELS[clock]}`, {
+      example: formatTime(now, { ...displayFormats, clock }),
+    }),
+  })),
+])
+
+const timeZoneOptions = computed(() => [
+  {
+    value: 'auto',
+    label: t('labels.account.settings.browserTimeZone', { zone: browserTimeZone() }),
+  },
+  ...supportedTimeZones().map((zone) => ({ value: zone, label: zone.replaceAll('_', ' ') })),
+])
+
+const onTimeZoneChange = (value: string | string[]) => {
+  if (typeof value === 'string') settings.timeZone = value
 }
 
 const handleAvatarFile = async (file: File) => {
@@ -246,6 +300,47 @@ const onDragOverAvatar = (e: DragEvent) => {
             :model-value="settings.languageIso"
             @update:model-value="onLanguageChange"
             :options="locales.map((locale) => ({ label: locale.name, value: locale.code }))"
+          />
+        </CardContent>
+      </Card>
+      <Card
+        v-if="user"
+        variant="none"
+      >
+        <CardHeaderCombined
+          :title="$t('labels.account.settings.displayFormats')"
+          :description="
+            $t('labels.account.settings.displayFormatsDescription', {
+              example: formatDateTime(now),
+            })
+          "
+        />
+        <CardContent class="grid gap-6">
+          <SelectField
+            :label="$t('labels.account.settings.dateOrder')"
+            name="date-order"
+            :description="$t('labels.account.settings.dateOrderDescription')"
+            :model-value="settings.dateOrder"
+            :options="dateOrderOptions"
+            @update:model-value="(value) => (settings.dateOrder = value)"
+          />
+          <SelectField
+            :label="$t('labels.account.settings.clock')"
+            name="clock"
+            :description="$t('labels.account.settings.clockDescription')"
+            :model-value="settings.clock"
+            :options="clockOptions"
+            @update:model-value="(value) => (settings.clock = value)"
+          />
+          <ComboboxField
+            :label="$t('labels.account.settings.timeZone')"
+            name="time-zone"
+            :description="$t('labels.account.settings.timeZoneDescription')"
+            placeholder="labels.account.settings.searchTimeZone"
+            :model-value="settings.timeZone"
+            :options="timeZoneOptions"
+            searchable
+            @update:model-value="onTimeZoneChange"
           />
         </CardContent>
       </Card>

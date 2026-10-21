@@ -10,6 +10,7 @@ const props = defineProps<{
 
 const { t } = useI18n()
 const { formatUnit } = useUsageFormatters()
+const { formatDate } = useFormat()
 
 const rows = computed(() => {
   const u = props.usage
@@ -102,7 +103,7 @@ const rows = computed(() => {
       >
         {{
           $t('labels.plans.usageResets', {
-            date: new Date(usage.period.resets_at).toLocaleDateString(),
+            date: formatDate(usage.period.resets_at),
           })
         }}
       </p>

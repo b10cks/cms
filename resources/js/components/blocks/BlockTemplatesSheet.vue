@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import dayjs from 'dayjs'
 
 import ImagePickerField from '~/components/assets/ImagePickerField.vue'
 import Icon from '~/components/Icon.vue'
@@ -30,6 +29,7 @@ const { mutate: updateTemplate, isPending: isUpdating } = useUpdateBlockTemplate
 const { mutate: deleteTemplate, isPending: isDeleting } = useDeleteBlockTemplateMutation()
 
 const { alert } = useAlertDialog()
+const { formatDateTime } = useFormat()
 
 const editingTemplate = ref<BlockTemplate | null>(null)
 const editForm = ref<{
@@ -87,10 +87,6 @@ const handleDelete = async (template: BlockTemplate) => {
       deleteTemplate(template.id)
     },
   })
-}
-
-const formatDate = (date: string) => {
-  return dayjs(date).format('MMM D, YYYY HH:mm')
 }
 
 watch(open, (isOpen) => {
@@ -266,7 +262,7 @@ watch(open, (isOpen) => {
                 <span v-if="template.created_by">{{ template.created_by.name }}</span>
                 <span v-else>{{ $t('labels.system') }}</span>
                 <span>•</span>
-                <span>{{ formatDate(template.created_at) }}</span>
+                <span>{{ formatDateTime(template.created_at) }}</span>
               </div>
             </div>
           </div>

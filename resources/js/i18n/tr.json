@@ -2698,7 +2698,27 @@
         "localizationDescription": "Dil tercihinizi yönetin.",
         "language": "Dil",
         "languageDescription": "Arayüz için tercih ettiğiniz dili seçin.",
-        "selectLanguage": "Dil seç"
+        "selectLanguage": "Dil seç",
+        "displayFormats": "Görüntüleme biçimleri",
+        "displayFormatsDescription": "Tarih ve saatlerin arayüz dilinden bağımsız olarak nasıl gösterileceğini seç. Şimdi: {example}",
+        "dateOrder": "Tarih sırası",
+        "dateOrderDescription": "Tarihlerde gün, ay ve yılın sırası.",
+        "clock": "Saat",
+        "clockDescription": "Günün saatlerinin nasıl yazılacağı.",
+        "timeZone": "Saat dilimi",
+        "timeZoneDescription": "Tarih ve saatler bu saat diliminde gösterilir.",
+        "searchTimeZone": "Saat dilimi ara",
+        "followLanguage": "Dile göre ({example})",
+        "browserTimeZone": "Tarayıcı saat dilimi ({zone})",
+        "dateOrders": {
+          "dmy": "Gün, ay, yıl ({example})",
+          "mdy": "Ay, gün, yıl ({example})",
+          "ymd": "Yıl, ay, gün ({example})"
+        },
+        "clocks": {
+          "h24": "24 saat ({example})",
+          "h12": "12 saat ({example})"
+        }
       }
     },
     "twoFactor": {

@@ -2698,7 +2698,27 @@
         "localizationDescription": "Gérez votre préférence de langue.",
         "language": "Langue",
         "languageDescription": "Sélectionnez votre langue préférée pour l'interface.",
-        "selectLanguage": "Sélectionner une langue"
+        "selectLanguage": "Sélectionner une langue",
+        "displayFormats": "Formats d'affichage",
+        "displayFormatsDescription": "Choisissez l'affichage des dates et des heures, indépendamment de la langue de l'interface. Maintenant : {example}",
+        "dateOrder": "Ordre de la date",
+        "dateOrderDescription": "L'ordre du jour, du mois et de l'année dans les dates.",
+        "clock": "Horloge",
+        "clockDescription": "Comment les heures sont écrites.",
+        "timeZone": "Fuseau horaire",
+        "timeZoneDescription": "Les dates et heures sont affichées dans ce fuseau horaire.",
+        "searchTimeZone": "Rechercher un fuseau horaire",
+        "followLanguage": "Selon la langue ({example})",
+        "browserTimeZone": "Fuseau horaire du navigateur ({zone})",
+        "dateOrders": {
+          "dmy": "Jour, mois, année ({example})",
+          "mdy": "Mois, jour, année ({example})",
+          "ymd": "Année, mois, jour ({example})"
+        },
+        "clocks": {
+          "h24": "24 heures ({example})",
+          "h12": "12 heures ({example})"
+        }
       }
     },
     "twoFactor": {

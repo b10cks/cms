@@ -23,6 +23,8 @@ const emit = defineEmits<{
   assign: [versionIds: string[]]
 }>()
 
+const { formatDate } = useFormat()
+
 const handleAssign = () => {
   if (props.currentVersion) {
     emit('assign', [props.currentVersion.id])
@@ -89,11 +91,7 @@ const handleOpenChange = (newOpen: boolean) => {
           </div>
           <p class="mt-2 text-xs text-muted">
             {{
-              new Date(currentVersion.created_at).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })
+              formatDate(currentVersion.created_at)
             }}
           </p>
         </div>

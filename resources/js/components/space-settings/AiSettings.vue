@@ -26,6 +26,7 @@ const props = defineProps<{ space: SpaceResource }>()
 
 const { t } = useI18n()
 const { alert } = useAlertDialog()
+const { formatDate } = useFormat()
 const { useUpdateSpaceMutation } = useSpaces()
 const { mutate: updateSpace, isPending: isUpdating } = useUpdateSpaceMutation()
 const { useAccessControl } = useAuthorization()
@@ -78,11 +79,7 @@ const formatAmount = (value: number | null): string => {
 
 const resetDate = computed(() => {
   if (!aiUsage.value?.resets_at) return null
-  try {
-    return new Date(aiUsage.value.resets_at).toLocaleDateString()
-  } catch {
-    return null
-  }
+  return formatDate(aiUsage.value.resets_at)
 })
 
 const refreshUsage = () => {
