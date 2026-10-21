@@ -3,6 +3,41 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.10.21-a1134c00] — 2026-10-21
+
+- 🔧 regenerate auto-imports for the VersionGroup type
+- 🐛 gate the asset dialogs, not the buttons that open them
+- ⚡️ return the changed menu rows from tree operations
+- 💄 browser theme-color follows the in-app theme
+- ⚡️ keep tiptap out of the startup bundle
+- 🐛 eager load version assets for the content list
+- 💄 use the destructive token for the rich text error border
+- ♿️ label ArrayInputField as a group instead of a dangling for
+- 🔥 remove unused calendar date formatter from ReleaseCard
+- 💄 format dashboard trend chart labels with the chosen date order
+- 🐛 group version lists by day in the display time zone
+- 💄 replace spinner-only loading blocks with shaped skeletons
+- 🔥 drop unused loading strings
+- 💄 show comment skeletons until field comments load
+- ⚡️ mount asset list dialogs on first open
+- ⚡️ show navigation progress and load route chunks during auth checks
+- 💄 paint the dark theme before the bundle loads
+- ⚡️ load only the active locale before mount
+- ⚡️ patch the content menu from writes instead of refetching it
+- ⚡️ Patch comment and asset caches optimistically instead of refetching
+- ⚡️ Add editor loading skeleton and hover prefetch for blocks and data sources
+- ⚡️ Mount asset dialogs on first open and load details and upload lazily
+- 🐛 Route usage, subscription and release dates through useFormat
+- ✨ Choose date order, clock and time zone on the account page
+- ♿️ translate icon-only close and remove labels
+- ♿️ link field hints and errors to their inputs
+- ✨ rename asset folders with F2 and expand them on drag hover
+- ✨ keep a rename open when saving it fails
+- 🐛 show loading rows instead of the empty state in asset list and data source entries
+- 💄 show row skeletons instead of a spinner in version and template lists
+- 💄 keep the live usage card in place while usage loads
+- 💄 hold the comment list's shape while it loads
+
 ## [v2026.10.21-57eecde4] — 2026-10-21
 
 - ✅ Use a void action in the automation trigger cache test
