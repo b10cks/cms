@@ -602,7 +602,7 @@ class ContentPublishingVersioningTest extends TestCase
     }
 
     #[Test]
-    public function publishing_a_draft_runs_nineteen_queries_and_broadcasts_once(): void
+    public function publishing_a_draft_runs_seventeen_queries_and_broadcasts_once(): void
     {
         $content = Content::query()->findOrFail($this->createVersionedContent(
             publishedContent: ['summary' => 'Published summary'],
@@ -617,13 +617,14 @@ class ContentPublishingVersioningTest extends TestCase
 
         app(PublishContent::class)->execute([], $content, $this->space, $this->owner);
 
-        // Was 26 with two broadcasts: a clean save, repeated version loads and the space settings write.
-        $this->assertCount(19, DB::getQueryLog());
+        // Was 26 with two broadcasts: a clean save, repeated version loads, the space
+        // settings write and two automation lookups for a space without automations.
+        $this->assertCount(17, DB::getQueryLog());
         $this->assertSame(1, $broadcasts);
     }
 
     #[Test]
-    public function saving_a_draft_runs_thirty_queries(): void
+    public function saving_a_draft_runs_twenty_eight_queries(): void
     {
         $this->actingAs($this->owner);
 
@@ -639,8 +640,9 @@ class ContentPublishingVersioningTest extends TestCase
             'content' => ['summary' => 'New draft'],
         ])->assertOk();
 
-        // Was 34: i18n validation twice, a version preload and a block reload in the broadcast.
-        $this->assertCount(30, DB::getQueryLog());
+        // Was 34: i18n validation twice, a version preload, a block reload in the
+        // broadcast and two automation lookups for a space without automations.
+        $this->assertCount(28, DB::getQueryLog());
     }
 
     private function createVersionedContent(
