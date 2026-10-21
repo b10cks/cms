@@ -187,9 +187,34 @@ const accordionContainer = ref<HTMLElement | null>(null)
 const selectedIndexes = ref<number[]>([])
 const openItems = ref<string[]>([])
 
+// Only the grip starts a drag, so text inside an item can still be selected.
+// Sortable leaves `draggable="false"` on a dropped item, which is why the
+// handle must not be the `draggable` attribute itself. Fallback mode draws
+// the clone and placeholder ourselves instead of the browser's snapshot.
 ;(useSortable as any)(accordionContainer, blockItems, {
-  handle: '[draggable]',
+  handle: '[data-block-handle]',
+  draggable: '[data-block-item]',
+  forceFallback: true,
+  fallbackOnBody: true,
+  fallbackTolerance: 4,
+  animation: 150,
+  ghostClass: 'blocks-sortable-ghost',
+  dragClass: 'blocks-sortable-drag',
+  chosenClass: 'blocks-sortable-chosen',
+  onEnd: () => {
+    lastSortEndedAt = Date.now()
+  },
 })
+
+// Releasing a drag fires a click on the header under the pointer, which would
+// toggle that item open. Swallow the click that directly follows a sort.
+let lastSortEndedAt = 0
+const suppressClickAfterSort = (event: MouseEvent) => {
+  if (Date.now() - lastSortEndedAt < 300) {
+    event.stopPropagation()
+    event.preventDefault()
+  }
+}
 
 /**
  * Alt+Up/Down on a focused block header. Writes through the same `blockItems`
@@ -640,11 +665,13 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
         v-model="openItems"
         type="multiple"
         class="relative pt-2"
+        @click.capture="suppressClickAfterSort"
       >
         <AccordionItem
           v-for="(content, i) in blockItems"
           :key="(content.id as string) || i"
           :value="getItemAccordionValue(content, i)"
+          data-block-item
           :class="[
             'relative mb-2 min-w-0 rounded-lg border bg-background p-2 transition-colors',
             hasVisibleItemError(i) ? 'border-destructive/40 bg-destructive/5' : 'border-border',
@@ -841,3 +868,22 @@ const getItemRingStyle = (content: Record<string, unknown>, index: number) => {
     </div>
   </div>
 </template>
+
+<style>
+/* Placeholder left in the list while an item is dragged. */
+.blocks-sortable-ghost {
+  border-style: dashed;
+  border-color: var(--color-ring);
+  background-color: var(--color-tree-drop);
+}
+
+.blocks-sortable-ghost > * {
+  visibility: hidden;
+}
+
+/* The clone that follows the pointer. */
+.blocks-sortable-drag {
+  box-shadow: var(--shadow-soft-lg);
+  cursor: grabbing;
+}
+</style>
