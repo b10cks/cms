@@ -631,20 +631,24 @@ describe('bulk publish and unpublish', () => {
     )
   })
 
-  it('follows the active run when the space is already busy', async () => {
-    contents.bulkPublish.mockRejectedValue(
+  it('follows the active run as another run and rejects the one that did not start', async () => {
+    contents.bulkUnpublish.mockRejectedValue(
       Object.assign(new Error('Another bulk publish is still running'), {
         status: 409,
         data: { data: { run: 'run-1' } },
       })
     )
-    contents.bulkPublishRun.mockResolvedValue(run({ succeeded: ['c9'] }))
+    contents.bulkPublishRun.mockResolvedValue(run({ action: 'publish', succeeded: ['c9'] }))
 
-    await mutations().bulkPublish.mutateAsync({ ids: ['c1'] })
+    await expect(mutations().bulkUnpublish.mutateAsync(['c1'])).rejects.toThrow(
+      'another bulk run was active, so this one did not start'
+    )
 
     expect(contents.bulkPublishRun).toHaveBeenCalledWith('run-1')
-    expect(failure).not.toHaveBeenCalled()
-    expect(success).toHaveBeenCalledWith('1 entry published')
+    expect(success).toHaveBeenCalledWith('Another run published 1 entry')
+    expect(failure).toHaveBeenCalledWith(
+      expect.stringMatching(/^Failed to unpublish content: another bulk run was active/)
+    )
   })
 
   it('polls a queued run with a progress toast until it completes', async () => {

@@ -4825,7 +4825,16 @@
         "unpublishFailed": "{total} girdiden {count} tanesi yayından kaldırılamadı. \"{name}\": {error} | {total} girdiden {count} tanesi yayından kaldırılamadı. \"{name}\": {error}",
         "publishProgress": "Girdiler yayınlanıyor… %{progress}",
         "unpublishProgress": "Girdiler yayından kaldırılıyor… %{progress}",
-        "indexFailed": "{count} girdi değişti ancak aramada güncellenemedi. Düzeltmek için alanı yeniden dizinleyin. | {count} girdi değişti ancak aramada güncellenemedi. Düzeltmek için alanı yeniden dizinleyin."
+        "indexFailed": "{count} girdi değişti ancak aramada güncellenemedi. Düzeltmek için alanı yeniden dizinleyin. | {count} girdi değişti ancak aramada güncellenemedi. Düzeltmek için alanı yeniden dizinleyin.",
+        "notStarted": "başka bir toplu işlem etkindi, bu yüzden bu işlem başlamadı. O bittiğinde tekrar deneyin.",
+        "other": {
+          "publishProgress": "Başka bir işlem girdileri yayınlıyor… %{progress}",
+          "unpublishProgress": "Başka bir işlem girdileri yayından kaldırıyor… %{progress}",
+          "publishSuccess": "Başka bir işlem {count} girdi yayınladı | Başka bir işlem {count} girdi yayınladı",
+          "unpublishSuccess": "Başka bir işlem {count} girdiyi yayından kaldırdı | Başka bir işlem {count} girdiyi yayından kaldırdı",
+          "publishFailed": "Başka bir işlem {total} girdiden {count} tanesini yayınlayamadı. \"{name}\": {error} | Başka bir işlem {total} girdiden {count} tanesini yayınlayamadı. \"{name}\": {error}",
+          "unpublishFailed": "Başka bir işlem {total} girdiden {count} tanesini yayından kaldıramadı. \"{name}\": {error} | Başka bir işlem {total} girdiden {count} tanesini yayından kaldıramadı. \"{name}\": {error}"
+        }
       }
     },
     "contentVersions": {

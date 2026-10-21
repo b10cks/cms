@@ -4825,7 +4825,16 @@
         "unpublishFailed": "{count} of {total} entries could not be unpublished. \"{name}\": {error} | {count} of {total} entries could not be unpublished. \"{name}\": {error}",
         "publishProgress": "Publishing entries… {progress}%",
         "unpublishProgress": "Unpublishing entries… {progress}%",
-        "indexFailed": "{count} entry changed but could not be updated in search. Reindex the space to fix it. | {count} entries changed but could not be updated in search. Reindex the space to fix it."
+        "indexFailed": "{count} entry changed but could not be updated in search. Reindex the space to fix it. | {count} entries changed but could not be updated in search. Reindex the space to fix it.",
+        "notStarted": "another bulk run was active, so this one did not start. Try again when it is done.",
+        "other": {
+          "publishProgress": "Another run is publishing entries… {progress}%",
+          "unpublishProgress": "Another run is unpublishing entries… {progress}%",
+          "publishSuccess": "Another run published {count} entry | Another run published {count} entries",
+          "unpublishSuccess": "Another run unpublished {count} entry | Another run unpublished {count} entries",
+          "publishFailed": "Another run could not publish {count} of {total} entries. \"{name}\": {error} | Another run could not publish {count} of {total} entries. \"{name}\": {error}",
+          "unpublishFailed": "Another run could not unpublish {count} of {total} entries. \"{name}\": {error} | Another run could not unpublish {count} of {total} entries. \"{name}\": {error}"
+        }
       }
     },
     "contentVersions": {

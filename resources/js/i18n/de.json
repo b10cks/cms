@@ -4841,7 +4841,16 @@
         "unpublishFailed": "{count} von {total} Einträgen konnte nicht zurückgezogen werden. „{name}“: {error} | {count} von {total} Einträgen konnten nicht zurückgezogen werden. „{name}“: {error}",
         "publishProgress": "Einträge werden veröffentlicht… {progress}%",
         "unpublishProgress": "Einträge werden zurückgezogen… {progress}%",
-        "indexFailed": "{count} Eintrag wurde geändert, aber nicht in der Suche aktualisiert. Indiziere den Space neu, um das zu beheben. | {count} Einträge wurden geändert, aber nicht in der Suche aktualisiert. Indiziere den Space neu, um das zu beheben."
+        "indexFailed": "{count} Eintrag wurde geändert, aber nicht in der Suche aktualisiert. Indiziere den Space neu, um das zu beheben. | {count} Einträge wurden geändert, aber nicht in der Suche aktualisiert. Indiziere den Space neu, um das zu beheben.",
+        "notStarted": "ein anderer Sammellauf war aktiv, daher wurde dieser nicht gestartet. Versuche es erneut, wenn er fertig ist.",
+        "other": {
+          "publishProgress": "Ein anderer Lauf veröffentlicht Einträge… {progress}%",
+          "unpublishProgress": "Ein anderer Lauf zieht Einträge zurück… {progress}%",
+          "publishSuccess": "Ein anderer Lauf hat {count} Eintrag veröffentlicht | Ein anderer Lauf hat {count} Einträge veröffentlicht",
+          "unpublishSuccess": "Ein anderer Lauf hat {count} Eintrag zurückgezogen | Ein anderer Lauf hat {count} Einträge zurückgezogen",
+          "publishFailed": "Ein anderer Lauf konnte {count} von {total} Einträgen nicht veröffentlichen. „{name}“: {error} | Ein anderer Lauf konnte {count} von {total} Einträgen nicht veröffentlichen. „{name}“: {error}",
+          "unpublishFailed": "Ein anderer Lauf konnte {count} von {total} Einträgen nicht zurückziehen. „{name}“: {error} | Ein anderer Lauf konnte {count} von {total} Einträgen nicht zurückziehen. „{name}“: {error}"
+        }
       }
     },
     "contentVersions": {

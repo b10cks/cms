@@ -27,6 +27,10 @@ const BULK_RUN_MAX_POLLS = 900
 const isBulkRunActive = (run: ContentBulkPublishRun) =>
   run.state === 'queued' || run.state === 'running'
 
+// A followed run was started by someone else and is phrased as "another run".
+const bulkKey = (mode: BulkPublishMode, followed: boolean) =>
+  followed ? `composables.content.bulk.other.${mode}` : `composables.content.bulk.${mode}`
+
 export function useContent(spaceId: MaybeRef<string>) {
   const { t } = useI18n()
   const queryClient = useQueryClient()
@@ -266,7 +270,8 @@ export function useContent(spaceId: MaybeRef<string>) {
   // Polled like asset package builds; a run of 500 entries takes minutes.
   const waitForBulkRun = async (
     run: ContentBulkPublishRun,
-    mode: BulkPublishMode
+    mode: BulkPublishMode,
+    followed = false
   ): Promise<ContentBulkPublishRun> => {
     let current = run
     let toastId: string | number | undefined
@@ -275,7 +280,7 @@ export function useContent(spaceId: MaybeRef<string>) {
       if (attempt >= BULK_RUN_MAX_POLLS) throw new Error('Bulk run timed out')
 
       toastId = toast.loading(
-        t(`composables.content.bulk.${mode}Progress`, { progress: current.progress }) as string,
+        t(`${bulkKey(mode, followed)}Progress`, { progress: current.progress }) as string,
         toastId === undefined ? undefined : { id: toastId }
       )
       await new Promise((resolve) => setTimeout(resolve, BULK_RUN_POLL_INTERVAL))
@@ -288,8 +293,9 @@ export function useContent(spaceId: MaybeRef<string>) {
     return current
   }
 
-  // Another run holds the space: follow it instead of failing, the user wants
-  // to see the batch finish either way.
+  // Another run holds the space: show it to the end under its own action and
+  // numbers, then reject, since the requested run never started. Whether the
+  // followed run failed is its starter's concern.
   const startBulkRun = async (
     start: () => Promise<{ data: ContentBulkPublishRun }>,
     mode: BulkPublishMode
@@ -303,8 +309,11 @@ export function useContent(spaceId: MaybeRef<string>) {
       const activeRunId = status === 409 ? data?.data?.run : undefined
       if (!activeRunId) throw error
 
-      const active = await spaceAPI.value.contents.bulkPublishRun(activeRunId)
-      return waitForBulkRun(active.data, active.data.action)
+      const { data: active } = await spaceAPI.value.contents.bulkPublishRun(activeRunId)
+      try {
+        settleBulkPublish(await waitForBulkRun(active, active.action, true), active.action, true)
+      } catch {}
+      throw new Error(t('composables.content.bulk.notStarted') as string)
     }
 
     return waitForBulkRun(started, mode)
@@ -318,7 +327,11 @@ export function useContent(spaceId: MaybeRef<string>) {
   // A batch reports once: a count when every entry went through, otherwise the
   // first failure's reason alongside how many were affected. Search misses get
   // their own warning, those entries did change.
-  const settleBulkPublish = (result: ContentBulkPublishRun, mode: BulkPublishMode) => {
+  const settleBulkPublish = (
+    result: ContentBulkPublishRun,
+    mode: BulkPublishMode,
+    followed = false
+  ) => {
     invalidateContentLists()
     result.succeeded.forEach((contentId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).detail(contentId) })
@@ -337,14 +350,14 @@ export function useContent(spaceId: MaybeRef<string>) {
     const [firstFailure] = result.failed
     if (!firstFailure) {
       const count = result.succeeded.length
-      toast.success(t(`composables.content.bulk.${mode}Success`, { count }, count) as string)
+      toast.success(t(`${bulkKey(mode, followed)}Success`, { count }, count) as string)
       return
     }
 
     const count = result.failed.length
     toast.error(
       t(
-        `composables.content.bulk.${mode}Failed`,
+        `${bulkKey(mode, followed)}Failed`,
         {
           count,
           total: count + result.succeeded.length,

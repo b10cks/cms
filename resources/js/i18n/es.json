@@ -4825,7 +4825,16 @@
         "unpublishFailed": "No se pudo despublicar {count} de {total} entradas. \"{name}\": {error} | No se pudieron despublicar {count} de {total} entradas. \"{name}\": {error}",
         "publishProgress": "Publicando entradas… {progress}%",
         "unpublishProgress": "Despublicando entradas… {progress}%",
-        "indexFailed": "{count} entrada cambió pero no se pudo actualizar en la búsqueda. Reindexa el espacio para corregirlo. | {count} entradas cambiaron pero no se pudieron actualizar en la búsqueda. Reindexa el espacio para corregirlo."
+        "indexFailed": "{count} entrada cambió pero no se pudo actualizar en la búsqueda. Reindexa el espacio para corregirlo. | {count} entradas cambiaron pero no se pudieron actualizar en la búsqueda. Reindexa el espacio para corregirlo.",
+        "notStarted": "había otra ejecución masiva activa, así que esta no se inició. Inténtalo de nuevo cuando termine.",
+        "other": {
+          "publishProgress": "Otra ejecución está publicando entradas… {progress}%",
+          "unpublishProgress": "Otra ejecución está despublicando entradas… {progress}%",
+          "publishSuccess": "Otra ejecución publicó {count} entrada | Otra ejecución publicó {count} entradas",
+          "unpublishSuccess": "Otra ejecución despublicó {count} entrada | Otra ejecución despublicó {count} entradas",
+          "publishFailed": "Otra ejecución no pudo publicar {count} de {total} entradas. \"{name}\": {error} | Otra ejecución no pudo publicar {count} de {total} entradas. \"{name}\": {error}",
+          "unpublishFailed": "Otra ejecución no pudo despublicar {count} de {total} entradas. \"{name}\": {error} | Otra ejecución no pudo despublicar {count} de {total} entradas. \"{name}\": {error}"
+        }
       }
     },
     "contentVersions": {
