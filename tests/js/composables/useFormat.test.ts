@@ -401,3 +401,27 @@ describe('display formats', () => {
     expect(format.formatDate(date)).toBe('Mar 15, 2026')
   })
 })
+
+describe('versionGroup', () => {
+  const zone = (timeZone: string) => ({ ...defaultDisplayFormats, timeZone })
+
+  it('buckets a timestamp near midnight by the display zone, not the browser zone', () => {
+    const now = '2026-03-15T12:00:00Z'
+    const nearMidnight = '2026-03-14T23:30:00Z'
+
+    expect(format.versionGroup(nearMidnight, now, zone('UTC'))).toBe('yesterday')
+    expect(format.versionGroup(nearMidnight, now, zone('Asia/Tokyo'))).toBe('today')
+    expect(format.versionGroup(nearMidnight, now, zone('America/Los_Angeles'))).toBe('yesterday')
+  })
+
+  it('walks from today back to older', () => {
+    const now = '2026-03-18T12:00:00Z'
+    const utc = zone('UTC')
+
+    expect(format.versionGroup('2026-03-18T00:00:00Z', now, utc)).toBe('today')
+    expect(format.versionGroup('2026-03-17T23:59:00Z', now, utc)).toBe('yesterday')
+    expect(format.versionGroup('2026-03-16T09:00:00Z', now, utc)).toBe('thisWeek')
+    expect(format.versionGroup('2026-03-10T09:00:00Z', now, utc)).toBe('lastWeek')
+    expect(format.versionGroup('2026-02-01T09:00:00Z', now, utc)).toBe('older')
+  })
+})

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import dayjs from 'dayjs'
 import { RadioGroupItem, RadioGroupRoot } from 'reka-ui'
 import type { Ref } from 'vue'
 import { RouterLink } from 'vue-router'
@@ -27,8 +26,13 @@ import type {
 
 const { $t } = useI18n()
 
-const { formatDateTime, formatRelativeTime, formatCalendarTime, formatDateTimeDynamically } =
-  useFormat()
+const {
+  formatDateTime,
+  formatRelativeTime,
+  formatCalendarTime,
+  formatDateTimeDynamically,
+  versionGroup,
+} = useFormat()
 const { user } = useAuth()
 const route = useRoute()
 const router = useRouter()
@@ -135,25 +139,8 @@ const groupedVersions = computed(() => {
     older: [],
   }
 
-  const now = dayjs()
-  const yesterday = now.subtract(1, 'day').startOf('day')
-  const startOfWeek = now.startOf('week')
-  const startOfLastWeek = startOfWeek.subtract(1, 'week')
-
   filtered.forEach((version) => {
-    const versionDate = dayjs(version.created_at)
-
-    if (versionDate.isAfter(now.startOf('day'))) {
-      groups.today.push(version)
-    } else if (versionDate.isAfter(yesterday)) {
-      groups.yesterday.push(version)
-    } else if (versionDate.isAfter(startOfWeek)) {
-      groups.thisWeek.push(version)
-    } else if (versionDate.isAfter(startOfLastWeek)) {
-      groups.lastWeek.push(version)
-    } else {
-      groups.older.push(version)
-    }
+    groups[versionGroup(version.created_at)].push(version)
   })
 
   // Remove empty groups
