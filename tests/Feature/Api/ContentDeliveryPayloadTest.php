@@ -12,6 +12,7 @@ use App\Models\Space\ContentVersion;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -41,6 +42,12 @@ class ContentDeliveryPayloadTest extends TestCase
         parent::setUp();
 
         Carbon::setTestNow('2026-10-01 12:00:00');
+
+        // The snapshot carries absolute URLs; pin the root so the local .env
+        // and CI's .env.example (http vs https) produce the same output.
+        config()->set('app.url', 'https://b10cks.test');
+        URL::forceRootUrl('https://b10cks.test');
+        URL::forceScheme('https');
 
         $this->space = Space::factory()->withLive()->create([
             'id' => '01k60000000000000000000001',
