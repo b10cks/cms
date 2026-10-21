@@ -66,7 +66,10 @@ class AutomationEngine implements AutomationEngineInterface
         return Cache::remember(
             self::activeTriggersCacheKey($spaceId),
             now()->addHour(),
+            // Read from the primary: right after a save forgets the key, the
+            // replica may still lag and an empty set would stick for an hour.
             fn (): array => Automation::query()
+                ->useWritePdo()
                 ->where('space_id', $spaceId)
                 ->where('is_active', true)
                 ->distinct()
