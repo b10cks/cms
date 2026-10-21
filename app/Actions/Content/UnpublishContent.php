@@ -5,6 +5,8 @@ namespace App\Actions\Content;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use App\Services\Search\SearchService;
+use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Support\Facades\Log;
 
 class UnpublishContent
 {
@@ -16,7 +18,17 @@ class UnpublishContent
     public function execute(Content $content, Space $space): void
     {
         $this->executeWithoutIndex($content, $space);
-        $this->searchService->removeContent($content, $space);
+
+        // Already unpublished; see PublishContent::indexContent().
+        try {
+            $this->searchService->removeContent($content, $space);
+        } catch (GuzzleException $e) {
+            Log::warning('Unpublished content but could not remove it from the index', [
+                'content_id' => $content->id,
+                'space_id' => $space->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

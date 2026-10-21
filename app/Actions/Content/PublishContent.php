@@ -10,7 +10,9 @@ use App\Services\Content\Serial\ContentSerialAssigner;
 use App\Services\Content\Serial\SerialCollisionException;
 use App\Services\Search\SearchService;
 use Carbon\Carbon;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class PublishContent extends BasePublishAction
@@ -126,6 +128,16 @@ class PublishContent extends BasePublishAction
 
     private function indexContent(Content $content, Space $space): void
     {
-        $this->searchService->indexContent($content, $space);
+        // The publish is committed by now; an unreachable search backend must
+        // not turn it into an error response. Other exceptions are bugs.
+        try {
+            $this->searchService->indexContent($content, $space);
+        } catch (GuzzleException $e) {
+            Log::warning('Published content but could not index it', [
+                'content_id' => $content->id,
+                'space_id' => $space->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

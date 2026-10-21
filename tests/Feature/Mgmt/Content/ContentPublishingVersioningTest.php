@@ -11,12 +11,17 @@ use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
+use App\Services\Search\SearchService;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Psr7\Request;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
+use Mockery;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -185,6 +190,29 @@ class ContentPublishingVersioningTest extends TestCase
         $this->assertSame($draftVersionId, $content->published_version_id);
         $this->assertSame(['summary' => 'Draft summary'], $content->published_version->content);
         $this->assertNotNull($content->current_version->published_at);
+    }
+
+    #[Test]
+    public function publish_succeeds_and_logs_when_the_search_index_is_unreachable(): void
+    {
+        $this->actingAs($this->owner);
+        Log::spy();
+        $content = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+            currentContent: ['summary' => 'Draft summary'],
+        );
+        $search = Mockery::mock(SearchService::class);
+        $search->shouldReceive('indexContent')->once()->andThrow(new ConnectException('down', new Request('PUT', 'x')));
+        app()->instance(SearchService::class, $search);
+
+        $this->postJson(route('mgmt.contents.publish', [
+            'space' => $this->space->id,
+            'content' => $content->id,
+        ]), [])->assertOk();
+
+        Log::shouldHaveReceived('warning')->once()->withArgs(
+            fn (string $message, array $context) => $context['content_id'] === $content->id && $context['space_id'] === $this->space->id
+        );
     }
 
     #[Test]
