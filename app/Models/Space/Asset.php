@@ -120,7 +120,7 @@ class Asset extends SpaceModel
 
     protected function filename(): Attribute
     {
-        return $this->makePurifiedAttribute('removeAll');
+        return $this->makeWritePurifiedAttribute('removeAll');
     }
 
     public function storage(): BelongsTo
