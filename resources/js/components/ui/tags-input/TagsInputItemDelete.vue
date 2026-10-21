@@ -21,6 +21,7 @@ const forwardedProps = useForwardProps(delegatedProps)
 <template>
   <TagsInputItemDelete
     v-bind="forwardedProps"
+    :aria-label="$t('actions.remove')"
     :class="
       cn('mr-1 flex cursor-pointer rounded bg-transparent hover:text-destructive', props.class)
     "

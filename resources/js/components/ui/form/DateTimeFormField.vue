@@ -122,11 +122,13 @@ const inputProps = computed(() => {
     :error="error"
     :class="props.class"
   >
-    <template #default="{ id: fieldId, hasError }">
+    <template #default="{ id: fieldId, 'aria-describedby': describedBy, 'aria-invalid': invalid }">
       <Input
         :id="fieldId"
         v-model="dateTimeInputValue"
-        :class="[{ 'border-red-500': hasError }, props.inputClass]"
+        :class="props.inputClass"
+        :aria-describedby="describedBy"
+        :aria-invalid="invalid"
         :min="minDateTime"
         :max="maxDateTime"
         :placeholder="placeholder || 'Select date and time'"

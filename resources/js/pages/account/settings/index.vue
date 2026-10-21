@@ -216,7 +216,6 @@ const onDragOverAvatar = (e: DragEvent) => {
             name="email"
             :model-value="user.email"
             readonly
-            :description="$t('labels.account.profile.emailReadonly')"
           >
             <template #append>
               <span

@@ -3,7 +3,9 @@ import { useVModel } from '@vueuse/core'
 import type { HTMLAttributes } from 'vue'
 
 import { Checkbox } from '~/components/ui/checkbox'
+import FieldMessages from '~/components/ui/form/FieldMessages.vue'
 import { TooltipIcon } from '~/components/ui/tooltip'
+import { useFieldA11y } from '~/composables/useFieldA11y'
 
 const props = defineProps<{
   // FormField props
@@ -11,7 +13,7 @@ const props = defineProps<{
   label?: unknown
   required?: boolean
   tooltip?: unknown
-  description?: unknown
+  description?: string
   error?: string | null
   class?: HTMLAttributes['class']
 
@@ -34,10 +36,7 @@ const modelValue = useVModel(props, 'modelValue', emits, {
   defaultValue: props.defaultValue,
 })
 
-const uniqueId = computed(
-  () => props.id || `${props.name}-${Math.random().toString(36).substring(2, 9)}`
-)
-const hasError = computed(() => !!props.error)
+const { fieldId: uniqueId, hasError, describedBy, invalid } = useFieldA11y(props)
 </script>
 
 <template>
@@ -46,8 +45,10 @@ const hasError = computed(() => !!props.error)
       <Checkbox
         :id="uniqueId"
         v-model="modelValue"
-        :class="['relative z-10 cursor-pointer', hasError && 'border border-destructive']"
+        class="relative z-10 cursor-pointer"
         :name="name"
+        :aria-describedby="describedBy"
+        :aria-invalid="invalid"
       />
       <div class="flex items-center gap-2">
         <label
@@ -63,17 +64,10 @@ const hasError = computed(() => !!props.error)
         </TooltipIcon>
       </div>
     </div>
-    <p
-      v-if="hasError"
-      class="mt-1 text-sm leading-tight whitespace-pre-line text-destructive"
-    >
-      {{ error }}
-    </p>
-    <p
-      v-if="description"
-      class="text-sm text-text-muted"
-    >
-      {{ description }}
-    </p>
+    <FieldMessages
+      :id="uniqueId"
+      :error="error"
+      :description="description"
+    />
   </div>
 </template>
