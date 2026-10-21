@@ -6,6 +6,7 @@ use App\Models\Management\Space;
 use App\Models\Settings;
 use App\Models\Space\Asset;
 use App\Models\Space\AssetFolder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
@@ -179,7 +180,7 @@ class AssetMetadataFieldResolver
         if ($folder instanceof AssetFolder) {
             $currentFolder = $folder;
         } elseif (\is_string($folder) && $folder !== '') {
-            $currentFolder = $this->getFolderMap()[$folder] ?? null;
+            $currentFolder = $this->findFolder($folder);
         } else {
             $currentFolder = null;
         }
@@ -193,10 +194,43 @@ class AssetMetadataFieldResolver
                 break;
             }
 
-            $currentFolder = $this->getFolderMap()[$currentFolder->parent_id] ?? null;
+            $currentFolder = $this->findFolder($currentFolder->parent_id);
         }
 
         return $lineage;
+    }
+
+    /**
+     * Seeds the folder map with folders the caller already fetched, so lineage
+     * lookups skip the full folder query when every parent is in the set.
+     *
+     * @param  iterable<AssetFolder>  $folders
+     */
+    public function rememberFolders(iterable $folders): static
+    {
+        foreach ($folders as $folder) {
+            $this->folderMap[$folder->id] ??= $folder;
+        }
+
+        return $this;
+    }
+
+    /** Shares one resolver, and so one folder map, across a request's resources. */
+    public static function forRequest(Request $request): self
+    {
+        $resolver = $request->attributes->get(self::class);
+
+        if (! $resolver instanceof self) {
+            $resolver = app(self::class);
+            $request->attributes->set(self::class, $resolver);
+        }
+
+        return $resolver;
+    }
+
+    private function findFolder(string $id): ?AssetFolder
+    {
+        return $this->folderMap[$id] ?? $this->getFolderMap()[$id] ?? null;
     }
 
     /**
@@ -208,7 +242,7 @@ class AssetMetadataFieldResolver
             return $this->folderMap;
         }
 
-        $this->folderMap = AssetFolder::query()
+        $this->folderMap += AssetFolder::query()
             ->get(['id', 'parent_id', 'settings'])
             ->keyBy('id')
             ->all();
