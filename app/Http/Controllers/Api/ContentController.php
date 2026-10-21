@@ -38,13 +38,7 @@ class ContentController extends Controller
         );
 
         $query = Content::filter(ContentFilter::fromRequest($request))
-            ->select([
-                ...Content::deliveryColumns('contents.'),
-                'content_versions.content',
-                'content_versions.relation_ids',
-                'content_versions.asset_ids',
-                'content_versions.link_ids',
-            ])
+            ->select(Content::deliveryColumns('contents.'))
             ->with('block');
 
         $vid = $this->versionScope($request, allowVersionId: false);
