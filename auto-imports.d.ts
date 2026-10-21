@@ -304,6 +304,9 @@ declare global {
   export type { UploadTask } from './resources/js/composables/useFileUpload'
   import('./resources/js/composables/useFileUpload')
   // @ts-ignore
+  export type { VersionGroup } from './resources/js/composables/useFormat'
+  import('./resources/js/composables/useFormat')
+  // @ts-ignore
   export type { ClipboardSingleItem, ClipboardMultipleItems, ClipboardItem } from './resources/js/composables/useGlobalClipboard'
   import('./resources/js/composables/useGlobalClipboard')
   // @ts-ignore
