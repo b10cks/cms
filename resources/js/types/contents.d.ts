@@ -86,10 +86,27 @@ export interface ContentTreeOperationResult {
   warnings: ContentTreeOperationWarning[]
 }
 
-/** Per-entry outcome of a bulk publish or unpublish, in request order. */
-export interface ContentBulkPublishResult {
+export interface ContentBulkPublishFailure {
+  id: string
+  name: string | null
+  message: string
+}
+
+/**
+ * A queued bulk publish or unpublish. The per-entry outcome fills in as the
+ * run progresses, in request order. `index_failed` entries did change, only
+ * the search index missed them.
+ */
+export interface ContentBulkPublishRun {
+  id: string
+  action: 'publish' | 'unpublish'
+  state: 'queued' | 'running' | 'completed' | 'failed'
+  progress: number
+  total: number
   succeeded: string[]
-  failed: { id: string; name: string | null; message: string }[]
+  failed: ContentBulkPublishFailure[]
+  index_failed: ContentBulkPublishFailure[]
+  error: string | null
 }
 
 export interface ContentSerialPreview {

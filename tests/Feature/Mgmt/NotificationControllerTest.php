@@ -126,4 +126,13 @@ class NotificationControllerTest extends TestCase
         // The other user's notification is untouched.
         $this->assertNotNull($this->other->notifications()->find($id));
     }
+
+    #[Test]
+    public function it_clamps_an_oversized_per_page(): void
+    {
+        $response = $this->getJson('/mgmt/v1/users/me/notifications?per_page=100000');
+
+        $response->assertOk();
+        $response->assertJsonPath('meta.per_page', 100);
+    }
 }

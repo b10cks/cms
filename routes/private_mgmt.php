@@ -421,6 +421,8 @@ Route::group(['prefix' => 'spaces/{space}', 'middleware' => 'space.member'], fun
         ->name('contents.bulk-publish');
     Route::post('contents/bulk-unpublish', [ContentBulkPublishController::class, 'unpublish'])
         ->name('contents.bulk-unpublish');
+    Route::get('contents/bulk-publish/{run}', [ContentBulkPublishController::class, 'show'])
+        ->name('contents.bulk-publish.show');
     Route::post('contents/{content}/publish', ContentPublishController::class)
         ->name('contents.publish');
     Route::post('contents/{content}/unpublish', ContentUnpublishController::class)

@@ -23,6 +23,7 @@ use App\Models\Space\FieldPlugin;
 use App\Models\Space\Redirect;
 use App\Models\Space\Release;
 use App\Policies\AuditLogPolicy;
+use App\Services\Auth\AuthorizationService;
 use App\Policies\BlockPolicy;
 use App\Policies\BlockTemplatePolicy;
 use App\Policies\BlockVersionPolicy;
@@ -74,6 +75,14 @@ class AuthServiceProvider extends ServiceProvider
         Space::class => SpacePolicy::class,
         SpaceBlueprint::class => SpaceBlueprintPolicy::class,
     ];
+
+    public function register(): void
+    {
+        parent::register();
+
+        // Scoped so Octane drops the per-request graph memo between requests.
+        $this->app->scoped(AuthorizationService::class);
+    }
 
     /**
      * Register any authentication / authorization services.

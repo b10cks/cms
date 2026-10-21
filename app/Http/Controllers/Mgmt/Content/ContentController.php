@@ -96,7 +96,7 @@ class ContentController extends Controller
             if (($data['translations'] ?? []) !== []) {
                 $content = $familyAction->execute($data, $content, $space, $request->user());
             } else {
-                $action->execute($data, $content, $space, $request->user());
+                $action->execute($data, $content, $space, $request->user(), i18nValidated: true);
             }
         } catch (ContentVersionConflictException $e) {
             $e->currentVersion->loadMissing('createdBy', 'parent');

@@ -6,6 +6,7 @@ use App\Actions\Content\TransformContentToSearchable;
 use App\Contracts\Search\SearchDriverInterface;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class MySqlSearchDriver implements SearchDriverInterface
@@ -44,6 +45,24 @@ class MySqlSearchDriver implements SearchDriverInterface
             }
             throw $e;
         }
+    }
+
+    public function syncContents(Collection $contents, Space $space): array
+    {
+        $failed = [];
+
+        foreach ($contents as $content) {
+            try {
+                $content->published_at
+                    ? $this->indexContent($content, $space)
+                    : $this->removeContent($content, $space);
+            } catch (\Throwable $e) {
+                report($e);
+                $failed[$content->id] = $e->getMessage();
+            }
+        }
+
+        return $failed;
     }
 
     public function createIndex(Space $space): void

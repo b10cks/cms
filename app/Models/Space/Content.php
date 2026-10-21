@@ -348,6 +348,22 @@ class Content extends SpaceModel
         return $this->current_version?->content ?? [];
     }
 
+    /**
+     * Re-reads this row FOR UPDATE and adopts it as the model's committed state.
+     *
+     * Every publish path locks the content row before it touches the content's
+     * versions. Keeping that order everywhere is what prevents a deadlock
+     * between a publish that locks content then versions and a release or
+     * scheduled publish that used to lock the version first.
+     */
+    public function lockForPublish(): static
+    {
+        $locked = static::query()->lockForUpdate()->findOrFail($this->getKey());
+        $this->setRawAttributes($locked->getAttributes(), true);
+
+        return $this;
+    }
+
     public function setPublishedAt($date): void
     {
         $this->published_at = $date;

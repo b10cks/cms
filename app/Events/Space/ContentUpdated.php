@@ -35,7 +35,11 @@ class ContentUpdated implements ShouldBroadcast
     {
         $this->space = $space;
 
-        $content->load(['block:id,type,icon,color', 'i18n_children']);
+        // Reuse relations the save path already loaded, unless the block moved.
+        if ($content->relationLoaded('block') && $content->block?->id !== $content->block_id) {
+            $content->unsetRelation('block');
+        }
+        $content->loadMissing(['block:id,type,icon,color', 'i18n_children']);
         $content->loadCount(['children']);
 
         $this->payload = $this->resolveBroadcastPayload(ContentMenuResource::make($content)) + [

@@ -2,8 +2,10 @@
 
 namespace App\Jobs\Content;
 
+use App\Events\Space\ContentsChanged;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
+use App\Models\Space\Redirect;
 use App\Services\Content\LocalizedContentSlugService;
 use App\Support\SpaceContext;
 use Illuminate\Bus\Queueable;
@@ -22,6 +24,12 @@ class UpdateContentFullSlugsJob implements ShouldQueue
 
     public $tries = 3;
 
+    /**
+     * A folder rename walks every descendant; the default 60 s kills it
+     * halfway on large trees. Runs on the `heavy` worker (--timeout=900).
+     */
+    public $timeout = 600;
+
     public $contentId;
 
     public $space;
@@ -37,6 +45,7 @@ class UpdateContentFullSlugsJob implements ShouldQueue
     {
         $this->contentId = $content->id;
         $this->space = $space;
+        $this->onQueue('heavy');
     }
 
     /**
@@ -61,7 +70,16 @@ class UpdateContentFullSlugsJob implements ShouldQueue
                 return;
             }
 
-            $stats = $slugService->processContentChildren($content, true);
+            // Each descendant save would broadcast ContentUpdated, and each
+            // redirect its own event; mute both and send one summary each.
+            $stats = Content::withoutBroadcasts(
+                fn () => Redirect::withoutBroadcasts(fn () => $slugService->processContentChildren($content, true))
+            );
+
+            if ($stats['updated'] > 0) {
+                broadcast(new ContentsChanged($this->space->id))->toOthers();
+                Redirect::broadcastBulkChange($this->space);
+            }
 
             Log::info(
                 "Processed children for content {$this->contentId}: {$stats['updated']} updated, {$stats['redirects_created']} redirects created, {$stats['errors']} errors"

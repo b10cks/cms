@@ -187,4 +187,15 @@ class AssetVersionTest extends TestCase
 
         $response->assertStatus(404);
     }
+
+    #[Test]
+    public function asset_versions_clamp_an_oversized_per_page(): void
+    {
+        $asset = $this->createAssetWithContent('v0 content');
+
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}/versions?per_page=100000");
+
+        $response->assertOk();
+        $response->assertJsonPath('meta.per_page', 100);
+    }
 }

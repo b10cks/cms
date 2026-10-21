@@ -9,6 +9,7 @@ use App\Services\Automation\Contracts\TriggerHandler;
 use App\Services\Automation\Enums\ActionType;
 use App\Services\Automation\Enums\TriggerType;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class AutomationEngine implements AutomationEngineInterface
 {
@@ -49,8 +50,43 @@ class AutomationEngine implements AutomationEngineInterface
         });
     }
 
+    public static function activeTriggersCacheKey(string $spaceId): string
+    {
+        return "automation:active-triggers:{$spaceId}";
+    }
+
+    /**
+     * Trigger types with at least one active automation in the space.
+     * Cached in the shared store; Automation model events forget it.
+     *
+     * @return array<int, string>
+     */
+    public function activeTriggerTypes(string $spaceId): array
+    {
+        return Cache::remember(
+            self::activeTriggersCacheKey($spaceId),
+            now()->addHour(),
+            // Read from the primary: right after a save forgets the key, the
+            // replica may still lag and an empty set would stick for an hour.
+            fn (): array => Automation::query()
+                ->useWritePdo()
+                ->where('space_id', $spaceId)
+                ->where('is_active', true)
+                ->distinct()
+                ->pluck('trigger_type')
+                ->map(fn (mixed $type): string => $type instanceof TriggerType ? $type->value : (string) $type)
+                ->all(),
+        );
+    }
+
     public function processTrigger(TriggerType $triggerType, array $context = []): void
     {
+        $spaceId = data_get($context, 'space.id') ?? data_get($context, 'space_id');
+
+        if ($spaceId && ! \in_array($triggerType->value, $this->activeTriggerTypes($spaceId), true)) {
+            return;
+        }
+
         $automations = Automation::query()
             ->with('action')
             ->where('is_active', true)

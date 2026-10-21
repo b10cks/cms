@@ -21,7 +21,7 @@ class DeleteContent
             $this->deleteChildren($content, $space);
             $this->searchService->removeContent($content, $space);
             $content->delete();
-            $space->touch('content_updated_at');
+            $space->touchContentUpdatedAt();
         });
     }
 

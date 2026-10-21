@@ -4,6 +4,8 @@ namespace Tests\Unit\Providers;
 
 use App\Http\Middleware\AuthenticateDataApi;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Routing\Middleware\ThrottleRequestsWithRedis;
 use Illuminate\Support\Facades\RateLimiter;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -32,5 +34,15 @@ class RouteServiceProviderTest extends TestCase
         $limit = RateLimiter::limiter('api')($request);
 
         $this->assertSame('api|ip|192.0.2.11', $limit->key);
+    }
+
+    #[Test]
+    public function throttling_uses_the_redis_limiter_only_when_the_cache_is_redis(): void
+    {
+        config(['cache.default' => 'redis']);
+        $this->assertInstanceOf(ThrottleRequestsWithRedis::class, app(ThrottleRequests::class));
+
+        config(['cache.default' => 'array']);
+        $this->assertNotInstanceOf(ThrottleRequestsWithRedis::class, app(ThrottleRequests::class));
     }
 }

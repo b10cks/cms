@@ -8,6 +8,8 @@ use App\Support\EditionGate;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Routing\Middleware\ThrottleRequestsWithRedis;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 
@@ -27,6 +29,12 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // The Redis limiter does one EVAL per limit instead of 5 to 10 cache
+        // round trips. Self-hosted file/database cache stores keep the plain one.
+        $this->app->bind(ThrottleRequests::class, fn ($app) => config('cache.default') === 'redis'
+            ? $app->make(ThrottleRequestsWithRedis::class)
+            : new ThrottleRequests($app->make(\Illuminate\Cache\RateLimiter::class)));
+
         RateLimiter::for('mgmt', function (Request $request) {
             // MCP sub-requests are already throttled via the outer /mcp/v1 request.
             if ($request->attributes->get('mcp-internal')) {

@@ -43,9 +43,12 @@ class UpdateContent
         }
     }
 
-    public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner)
+    /**
+     * @param  bool  $i18nValidated  the caller already ran ContentI18nValidator on $data, as UpsertContentRequest does
+     */
+    public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner, bool $i18nValidated = false)
     {
-        if (! (bool) data_get($data, 'force', false)) {
+        if (! $i18nValidated && ! (bool) data_get($data, 'force', false)) {
             $errors = $this->validator->validate($space, $data, $content);
             if ($errors !== []) {
                 throw ValidationException::withMessages($errors);
@@ -104,14 +107,15 @@ class UpdateContent
             ]);
         }
 
-        $content->loadMissing('current_version');
         $clientParentVersionId = data_get($data, 'parent_version_id');
 
         $indexedColumnsChanged = false;
 
         $content->getConnection()->transaction(function () use ($data, $content, $space, $owner, $validatedContent, $contentSubmitted, $clientParentVersionId, $targetParent, &$indexedColumnsChanged) {
+            // Adopting the whole committed row also resets what a rolled-back
+            // attempt left on the model, so a deadlock retry starts clean.
             $locked = Content::query()->lockForUpdate()->findOrFail($content->id);
-            $content->current_version_id = $locked->current_version_id;
+            $content->setRawAttributes($locked->getAttributes(), true);
             $content->load('current_version');
 
             // Omitted parent_version_id stays last-write-wins for older clients.
@@ -174,8 +178,8 @@ class UpdateContent
                 );
             }
 
-            $space->touch('content_updated_at');
-        });
+            $space->touchContentUpdatedAt();
+        }, BasePublishAction::TRANSACTION_ATTEMPTS);
 
         // A draft save leaves `published_at` alone — the entry stays live on the
         // published version it already had, so it must not be dropped from the

@@ -15301,8 +15301,8 @@
         },
         "/mgmt/v1/spaces/{space}/contents/bulk-publish": {
             "post": {
-                "summary": "Create bulk publish",
-                "description": "",
+                "summary": "Queues a bulk publish",
+                "description": "Queues a bulk publish\n\nStarts a run that publishes each entry on its own and returns it with\nstatus 202. Poll the run until `state` is `completed` or `failed`;\n`succeeded`, `failed` and `index_failed` (published, but not in search)\nfill in as it goes. Only one run per space at a time, a second one gets 409\nwith the active run in `data.run` to follow instead.",
                 "tags": [
                     "Contents"
                 ],
@@ -15333,8 +15333,8 @@
         },
         "/mgmt/v1/spaces/{space}/contents/bulk-unpublish": {
             "post": {
-                "summary": "Create bulk unpublish",
-                "description": "",
+                "summary": "Queues a bulk unpublish",
+                "description": "Queues a bulk unpublish\n\nSame run as bulk publish, taking each entry offline.",
                 "tags": [
                     "Contents"
                 ],
@@ -15349,6 +15349,47 @@
                             "format": "uuid"
                         },
                         "description": "The space identifier"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mgmt/v1/spaces/{space}/contents/bulk-publish/{run}": {
+            "get": {
+                "summary": "Shows a bulk publish run",
+                "description": "Shows a bulk publish run\n\nProgress and per-entry outcome of a bulk publish or unpublish run. Runs\nstay readable for a day.",
+                "tags": [
+                    "Contents"
+                ],
+                "operationId": "get_spaces_by_space_contents_bulk_publish_by_run",
+                "parameters": [
+                    {
+                        "name": "space",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "The space identifier"
+                    },
+                    {
+                        "name": "run",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The run identifier"
                     }
                 ],
                 "responses": {

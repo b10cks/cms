@@ -34,6 +34,8 @@ class PublishScheduledContent
 
         $success = false;
         $content->getConnection()->transaction(function () use ($version, $content, $space, $owner, &$success) {
+            $content->lockForPublish();
+
             $version->update([
                 'published_at' => now(),
                 'published_by_id' => $owner?->id,
@@ -43,7 +45,7 @@ class PublishScheduledContent
             $content->published_version_id = $version->id;
 
             $content->save();
-            $space->touch('content_updated_at');
+            $space->touchContentUpdatedAt();
             $success = true;
         });
 

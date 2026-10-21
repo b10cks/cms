@@ -7,6 +7,7 @@ use App\Contracts\Search\SearchDriverInterface;
 use App\Models\Management\Space;
 use App\Models\Space\Content;
 use GuzzleHttp\Client;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class OpenSearchDriver implements SearchDriverInterface
@@ -33,21 +34,12 @@ class OpenSearchDriver implements SearchDriverInterface
             return;
         }
 
-        $searchableText = $this->transformer->execute($content, $space);
+        $document = $this->document($content, $space);
         $indexName = $this->getIndexName($space);
 
         try {
             $this->client->put("{$indexName}/_doc/{$content->id}", [
-                'json' => [
-                    'id' => $content->id,
-                    'name' => $content->name,
-                    'slug' => $content->slug,
-                    'full_slug' => $content->full_slug,
-                    'language_iso' => $content->language_iso,
-                    'block_id' => $content->block_id,
-                    'published_at' => $content->published_at?->toIso8601String(),
-                    'searchable_content' => $searchableText,
-                ]
+                'json' => $document,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to index content in OpenSearch', [
@@ -57,6 +49,93 @@ class OpenSearchDriver implements SearchDriverInterface
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * One `_bulk` request for the whole collection: index actions for
+     * published entries, delete actions for the rest. A missing document on
+     * delete is not a failure.
+     */
+    public function syncContents(Collection $contents, Space $space): array
+    {
+        $indexName = $this->getIndexName($space);
+        $failed = [];
+        $lines = [];
+        $sentIds = [];
+
+        foreach ($contents as $content) {
+            if (! $content->published_at) {
+                $lines[] = json_encode(['delete' => ['_id' => $content->id]]);
+                $sentIds[] = $content->id;
+
+                continue;
+            }
+
+            try {
+                $document = json_encode($this->document($content, $space), JSON_THROW_ON_ERROR);
+            } catch (\Throwable $e) {
+                report($e);
+                $failed[$content->id] = $e->getMessage();
+
+                continue;
+            }
+
+            $lines[] = json_encode(['index' => ['_id' => $content->id]]);
+            $lines[] = $document;
+            $sentIds[] = $content->id;
+        }
+
+        if ($sentIds === []) {
+            return $failed;
+        }
+
+        try {
+            $response = $this->client->post("{$indexName}/_bulk", [
+                'headers' => ['Content-Type' => 'application/x-ndjson'],
+                'body' => implode("\n", $lines)."\n",
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to bulk index content in OpenSearch', [
+                'space_id' => $space->id,
+                'count' => count($sentIds),
+                'error' => $e->getMessage(),
+            ]);
+
+            return $failed + array_fill_keys($sentIds, $e->getMessage());
+        }
+
+        $body = json_decode($response->getBody()->getContents(), true);
+
+        foreach ($body['items'] ?? [] as $item) {
+            $operation = array_key_first($item);
+            $result = $item[$operation];
+            $status = (int) ($result['status'] ?? 500);
+
+            if ($status < 300 || ($operation === 'delete' && $status === 404)) {
+                continue;
+            }
+
+            $failed[(string) $result['_id']] = (string) ($result['error']['reason'] ?? "OpenSearch status {$status}");
+        }
+
+        return $failed;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function document(Content $content, Space $space): array
+    {
+        return [
+            'id' => $content->id,
+            'name' => $content->name,
+            'slug' => $content->slug,
+            'full_slug' => $content->full_slug,
+            'language_iso' => $content->language_iso,
+            'block_id' => $content->block_id,
+            'published_at' => $content->published_at?->toIso8601String(),
+            'searchable_content' => $this->transformer->execute($content, $space),
+        ];
     }
 
     public function removeContent(Content $content, Space $space): void

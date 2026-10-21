@@ -2,14 +2,22 @@
 
 namespace Tests\Feature\Mgmt\Content;
 
+use App\Events\Space\ContentsChanged;
+use App\Events\Space\ContentUpdated;
+use App\Jobs\Content\BulkPublishContentJob;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\Space\Release;
 use App\Models\User;
+use App\Services\Content\ContentBulkPublishRun;
+use App\Services\Search\SearchService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -48,18 +56,39 @@ class ContentBulkPublishTest extends TestCase
     }
 
     #[Test]
-    public function bulk_publish_publishes_each_entry_and_reports_the_ones_that_fail(): void
+    public function bulk_publish_returns_a_run_at_once_and_queues_the_job(): void
+    {
+        Queue::fake();
+        $this->actingAs($this->owner);
+        $entry = $this->createEntry(draft: ['summary' => 'New']);
+
+        $response = $this->postJson(route('mgmt.contents.bulk-publish', ['space' => $this->space->id]), [
+            'ids' => [$entry->id],
+        ])->assertAccepted()->assertJsonPath('data.state', 'queued')->assertJsonPath('data.total', 1);
+
+        $runId = $response->json('data.id');
+        Queue::assertPushedOn('heavy', BulkPublishContentJob::class, fn (BulkPublishContentJob $job) => $job->runId === $runId);
+        $this->assertNull($entry->refresh()->published_at);
+
+        $this->getJson(route('mgmt.contents.bulk-publish.show', ['space' => $this->space->id, 'run' => $runId]))
+            ->assertOk()
+            ->assertJsonPath('data.id', $runId);
+    }
+
+    #[Test]
+    public function the_run_publishes_each_entry_reports_failures_and_broadcasts_once(): void
     {
         $this->actingAs($this->owner);
 
         $draft = $this->createEntry(draft: ['summary' => 'New']);
         $pending = $this->createEntry(published: ['summary' => 'Live'], draft: ['summary' => 'Edited']);
         $invalid = $this->createEntry(draft: ['summary' => '']);
+        Event::fake([ContentsChanged::class, ContentUpdated::class]);
 
         $response = $this->postJson(route('mgmt.contents.bulk-publish', ['space' => $this->space->id]), [
             'ids' => [$draft->id, $pending->id, $invalid->id, 'missing'],
             'message' => 'Batch',
-        ])->assertOk();
+        ])->assertAccepted()->assertJsonPath('data.state', 'completed');
 
         $this->assertSame([$draft->id, $pending->id], $response->json('data.succeeded'));
         $this->assertSame([$invalid->id, 'missing'], array_column($response->json('data.failed'), 'id'));
@@ -69,6 +98,103 @@ class ContentBulkPublishTest extends TestCase
         $this->assertSame('Batch', $pending->published_version->message);
         $this->assertNotNull($draft->refresh()->published_at);
         $this->assertNull($invalid->refresh()->published_at);
+
+        Event::assertNotDispatched(ContentUpdated::class);
+        Event::assertDispatchedTimes(ContentsChanged::class, 1);
+    }
+
+    #[Test]
+    public function an_indexing_failure_is_reported_apart_from_the_publish(): void
+    {
+        $this->actingAs($this->owner);
+        $entry = $this->createEntry(draft: ['summary' => 'New']);
+
+        $search = \Mockery::mock(SearchService::class);
+        $search->shouldReceive('syncContents')
+            ->once()
+            ->withArgs(fn (Collection $contents) => $contents->pluck('id')->all() === [$entry->id])
+            ->andReturn([$entry->id => 'OpenSearch is down']);
+        app()->instance(SearchService::class, $search);
+
+        $this->postJson(route('mgmt.contents.bulk-publish', ['space' => $this->space->id]), ['ids' => [$entry->id]])
+            ->assertAccepted()
+            ->assertJsonPath('data.succeeded', [$entry->id])
+            ->assertJsonPath('data.failed', [])
+            ->assertJsonPath('data.index_failed.0.message', 'OpenSearch is down');
+
+        $this->assertNotNull($entry->refresh()->published_at);
+    }
+
+    #[Test]
+    public function a_second_run_is_rejected_while_one_is_active(): void
+    {
+        Queue::fake();
+        $this->actingAs($this->owner);
+        $entry = $this->createEntry(draft: ['summary' => 'New']);
+        $active = ContentBulkPublishRun::lock($this->space);
+        $this->assertTrue($active->get());
+        ContentBulkPublishRun::markActive($this->space->id, 'run-1');
+
+        $this->postJson(route('mgmt.contents.bulk-unpublish', ['space' => $this->space->id]), ['ids' => [$entry->id]])
+            ->assertStatus(409)
+            ->assertJsonPath('data.run', 'run-1');
+
+        Queue::assertNotPushed(BulkPublishContentJob::class);
+        $active->release();
+    }
+
+    #[Test]
+    public function the_job_takes_its_own_lease_when_the_queued_lock_expired(): void
+    {
+        $entry = $this->createEntry(draft: ['summary' => 'New']);
+        $run = ContentBulkPublishRun::start($this->space, 'publish', 1);
+
+        (new BulkPublishContentJob($this->space, $this->owner, $run->id(), 'expired-owner', 'publish', [$entry->id]))->handle();
+
+        $this->assertSame('completed', ContentBulkPublishRun::find($this->space->id, $run->id())->toArray()['state']);
+        $this->assertNotNull($entry->refresh()->published_at);
+        $this->assertNull(ContentBulkPublishRun::activeRunId($this->space->id));
+        $this->assertTrue(ContentBulkPublishRun::lock($this->space)->get());
+    }
+
+    #[Test]
+    public function a_job_whose_lock_another_run_took_fails_without_publishing(): void
+    {
+        $entry = $this->createEntry(draft: ['summary' => 'New']);
+        $run = ContentBulkPublishRun::start($this->space, 'publish', 1);
+        $this->assertTrue(ContentBulkPublishRun::lock($this->space)->get());
+        ContentBulkPublishRun::markActive($this->space->id, 'other-run');
+
+        (new BulkPublishContentJob($this->space, $this->owner, $run->id(), 'expired-owner', 'publish', [$entry->id]))->handle();
+
+        $state = ContentBulkPublishRun::find($this->space->id, $run->id())->toArray();
+        $this->assertSame('failed', $state['state']);
+        $this->assertStringStartsWith('Superseded', $state['error']);
+        $this->assertNull($entry->refresh()->published_at);
+        $this->assertSame('other-run', ContentBulkPublishRun::activeRunId($this->space->id));
+        $this->assertFalse(ContentBulkPublishRun::lock($this->space)->get());
+    }
+
+    #[Test]
+    public function releasing_a_run_leaves_another_active_run_alone(): void
+    {
+        ContentBulkPublishRun::markActive($this->space->id, 'run-b');
+
+        ContentBulkPublishRun::releaseLock($this->space->id, 'run-a', 'run-a');
+
+        $this->assertSame('run-b', ContentBulkPublishRun::activeRunId($this->space->id));
+    }
+
+    #[Test]
+    public function a_failed_run_still_broadcasts_the_summary(): void
+    {
+        Event::fake([ContentsChanged::class]);
+        $run = ContentBulkPublishRun::start($this->space, 'publish', 1);
+
+        (new BulkPublishContentJob($this->space, $this->owner, $run->id(), 'owner', 'publish', ['id']))->failed(new \RuntimeException('Timed out'));
+
+        $this->assertSame('failed', ContentBulkPublishRun::find($this->space->id, $run->id())->toArray()['state']);
+        Event::assertDispatchedTimes(ContentsChanged::class, 1);
     }
 
     #[Test]
@@ -81,7 +207,7 @@ class ContentBulkPublishTest extends TestCase
 
         $this->postJson(route('mgmt.contents.bulk-unpublish', ['space' => $this->space->id]), [
             'ids' => [$first->id, $second->id],
-        ])->assertOk()->assertJsonPath('data.failed', []);
+        ])->assertAccepted()->assertJsonPath('data.failed', []);
 
         $this->assertNull($first->refresh()->published_at);
         $this->assertNull($second->refresh()->published_at);

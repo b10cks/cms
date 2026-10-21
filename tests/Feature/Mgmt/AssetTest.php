@@ -883,6 +883,19 @@ class AssetTest extends TestCase
         $this->assertEmpty(array_intersect($firstPageIds, $secondPageIds));
     }
 
+    #[Test]
+    public function linked_contents_endpoint_clamps_an_oversized_per_page(): void
+    {
+        $asset = Asset::factory()->create([
+            'storage_id' => $this->storage->id,
+        ]);
+
+        $response = $this->getJson("/mgmt/v1/spaces/{$this->space->id}/assets/{$asset->id}/linked-contents?per_page=100000");
+
+        $response->assertOk();
+        $response->assertJsonPath('meta.per_page', 100);
+    }
+
     private function createContentWithVersions(
         array $currentAssetIds = [],
         ?array $publishedAssetIds = null,
