@@ -4,6 +4,8 @@ namespace Tests\Feature\Services\ImportExport;
 
 use App\DTOs\ImportExport\ImportResult;
 use App\Enums\RedirectImportMode;
+use App\Events\Space\SpaceModelChanged;
+use App\Events\Space\SpaceModelsChanged;
 use App\Models\Management\Space;
 use App\Models\Space\Redirect;
 use App\Services\DataEntryData\Drivers\CsvDataEntryDataDriver;
@@ -13,6 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
 use ReflectionMethod;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -291,6 +294,27 @@ class RecordImportDriverTest extends TestCase
             'A data entry with this key already exists',
             $this->duplicateKeyMessage(app(CsvDataEntryDataDriver::class))
         );
+    }
+
+    #[Test]
+    public function a_redirect_file_import_sends_one_broadcast_instead_of_one_per_row(): void
+    {
+        Event::fake([SpaceModelChanged::class, SpaceModelsChanged::class]);
+
+        $csv = "source,target,status_code\n";
+        foreach (range(1, 50) as $i) {
+            $csv .= "/old-{$i},/new-{$i},301\n";
+        }
+
+        $result = app(CsvRedirectDataDriver::class)->import(
+            $this->space,
+            UploadedFile::fake()->createWithContent('redirects.csv', $csv),
+        );
+
+        $this->assertCount(50, $result->successes);
+        $this->assertSame(50, Redirect::query()->count());
+        Event::assertNotDispatched(SpaceModelChanged::class);
+        Event::assertDispatchedTimes(SpaceModelsChanged::class, 1);
     }
 
     private function duplicateKeyMessage(RecordImportDriver $driver): string

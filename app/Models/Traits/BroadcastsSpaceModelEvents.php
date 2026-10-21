@@ -3,8 +3,11 @@
 namespace App\Models\Traits;
 
 use App\Events\Space\SpaceModelChanged;
+use App\Events\Space\SpaceModelsChanged;
+use App\Models\Management\Space;
 use App\Support\SpaceContext;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 trait BroadcastsSpaceModelEvents
 {
@@ -33,6 +36,18 @@ trait BroadcastsSpaceModelEvents
         } finally {
             static::$broadcastsMuted = false;
         }
+    }
+
+    /**
+     * The single event that replaces the muted per-row broadcasts.
+     */
+    public static function broadcastBulkChange(Space $space): void
+    {
+        broadcast(new SpaceModelsChanged(
+            $space->id,
+            (new static)->spaceChannel,
+            Str::snake(class_basename(static::class)),
+        ))->toOthers();
     }
 
     protected static function bootBroadcastsSpaceModelEvents(): void

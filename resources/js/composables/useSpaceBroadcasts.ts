@@ -180,6 +180,11 @@ export function useSpaceBroadcasts(spaceId: MaybeRef<string | null>) {
           ...extra
         )
       })
+      // Bulk operations mute the per-row events above and send this one.
+      .listen(`.${model}:bulk_changed`, (payload: SpaceModelBroadcast) => {
+        const keys = keysFor(payload)
+        invalidate(keys.lists(), ...(keys.extra?.() ?? []))
+      })
       .listen(`.${model}:deleted`, (payload: SpaceModelBroadcast) => {
         const keys = keysFor(payload)
         removeFromQueries([keys.lists()], payload?.id)
