@@ -10,7 +10,7 @@ import { TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetHeaderCombined } from '~/components/ui/sheet'
-import { Spinner } from '~/components/ui/spinner'
+import { Skeleton } from '~/components/ui/skeleton'
 
 const open = defineModel<boolean>('open')
 const { $t } = useI18n()
@@ -109,10 +109,17 @@ watch(open, (isOpen) => {
       <SheetHeaderCombined :title="$t('labels.blockTemplates.manageTitle')" />
       <div
         v-if="isLoading"
-        class="flex h-32 items-center justify-center"
+        class="grid gap-4"
+        aria-hidden="true"
       >
-        <Spinner class="mr-2 size-6" />
-        <span>{{ $t('labels.blockTemplates.loading') }}</span>
+        <div
+          v-for="i in 3"
+          :key="i"
+          class="space-y-2 rounded-lg border p-4"
+        >
+          <Skeleton class="h-5 w-1/3" />
+          <Skeleton class="h-4 w-2/3" />
+        </div>
       </div>
 
       <div
