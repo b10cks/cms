@@ -14927,8 +14927,8 @@
         },
         "/mgmt/v1/spaces/{space}/contents/import": {
             "post": {
-                "summary": "Create import",
-                "description": "",
+                "summary": "Imports content translations",
+                "description": "Imports content translations. Clients sending `Accept: text/event-stream` get\nper-document progress and no time limit, which large files need: a single JSON\nresponse dies at the PHP execution limit long before a few hundred entries\nfinish publishing.",
                 "tags": [
                     "Contents"
                 ],
