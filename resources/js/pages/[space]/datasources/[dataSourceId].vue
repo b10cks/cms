@@ -17,6 +17,7 @@ import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { Input } from '~/components/ui/input'
 import { Progress } from '~/components/ui/progress'
 import SortSelect from '~/components/ui/SortSelect.vue'
+import { Skeleton } from '~/components/ui/skeleton'
 import { Spinner } from '~/components/ui/spinner'
 import { Switch } from '~/components/ui/switch'
 import {
@@ -591,10 +592,23 @@ const handleTranslateMissingDimensions = async () => {
 
       <div
         v-if="isLoadingDataSource"
-        class="flex items-center justify-center gap-2 py-12"
+        class="space-y-4"
+        aria-hidden="true"
       >
-        <Spinner />
-        {{ $t('labels.datasets.loading') }}
+        <div class="flex items-center justify-between gap-4">
+          <Skeleton class="h-9 w-56" />
+          <div class="flex items-center gap-2">
+            <Skeleton class="h-9 w-64" />
+            <Skeleton class="h-9 w-32" />
+          </div>
+        </div>
+        <div class="overflow-hidden rounded-md border border-border">
+          <Table>
+            <TableBody>
+              <TableLoadingRow :colspan="4" />
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <div

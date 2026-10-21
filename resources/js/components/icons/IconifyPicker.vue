@@ -4,7 +4,7 @@ import { refDebounced } from '@vueuse/core'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { InputField } from '~/components/ui/form'
-import { Spinner } from '~/components/ui/spinner'
+import { Skeleton } from '~/components/ui/skeleton'
 import { fetchIconifyCollection, searchIconifyIcons, splitIconName } from '~/lib/iconify'
 
 const props = defineProps<{
@@ -137,9 +137,14 @@ const nameOf = (full: string) => splitIconName(full).name
     <div class="min-h-0 flex-1 overflow-y-auto pr-1">
       <div
         v-if="loading"
-        class="flex h-32 items-center justify-center text-muted"
+        class="grid grid-cols-[repeat(auto-fill,minmax(72px,1fr))] gap-2"
+        aria-hidden="true"
       >
-        <Spinner />
+        <Skeleton
+          v-for="i in 12"
+          :key="i"
+          class="aspect-square rounded-lg"
+        />
       </div>
 
       <div

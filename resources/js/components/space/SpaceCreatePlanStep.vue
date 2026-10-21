@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from '~/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group'
-import { Spinner } from '~/components/ui/spinner'
+import { Skeleton } from '~/components/ui/skeleton'
 
 const props = defineProps<{
   plans?: PlanResource[] | null
@@ -101,10 +101,14 @@ const handleCardClick = (plan: PlanResource) => {
 
     <div
       v-if="plansLoading"
-      class="flex items-center justify-center py-12 text-muted"
+      class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+      aria-hidden="true"
     >
-      <Spinner class="mr-2" />
-      {{ $t('labels.loading') }}
+      <Skeleton
+        v-for="i in 3"
+        :key="i"
+        class="h-96 rounded-xl"
+      />
     </div>
 
     <RadioGroup
