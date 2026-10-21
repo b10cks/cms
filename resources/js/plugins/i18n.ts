@@ -2,12 +2,7 @@ import type { App } from 'vue'
 import type { Composer } from 'vue-i18n'
 import { createI18n } from 'vue-i18n'
 
-import de from '~/i18n/de.json'
 import en from '~/i18n/en.json'
-import es from '~/i18n/es.json'
-import fr from '~/i18n/fr.json'
-import ru from '~/i18n/ru.json'
-import tr from '~/i18n/tr.json'
 
 export type MessageSchema = typeof en
 
@@ -46,9 +41,10 @@ export function detectBrowserLocale(): LocaleCode {
   return FALLBACK_LOCALE
 }
 
-export const i18n = createI18n<[MessageSchema], LocaleCode>({
+export const i18n = createI18n({
   legacy: false,
-  locale: detectBrowserLocale(),
+  // Starts on the bundled fallback; installI18n switches once the active catalog is in.
+  locale: FALLBACK_LOCALE,
   fallbackLocale: FALLBACK_LOCALE,
   pluralRules: {
     ru: (choice, choicesLength, defaultRule) => {
@@ -60,14 +56,9 @@ export const i18n = createI18n<[MessageSchema], LocaleCode>({
       return choicesLength === 4 ? index + 1 : index
     },
   },
-  messages: {
-    en,
-    de,
-    tr,
-    ru,
-    fr,
-    es,
-  },
+  // Only the fallback ships in the entry chunk. Every other catalog is its own
+  // chunk, loaded by setLocale before it switches.
+  messages: { en },
 })
 
 const composer = i18n.global as unknown as Composer<{
@@ -79,11 +70,46 @@ const composer = i18n.global as unknown as Composer<{
   es: MessageSchema
 }>
 
+// Each catalog is ~200 KB raw. The record keeps the loaders in step with `locales`.
+const catalogLoaders: Record<Exclude<LocaleCode, 'en'>, () => Promise<{ default: MessageSchema }>> = {
+  de: () => import('~/i18n/de.json'),
+  tr: () => import('~/i18n/tr.json'),
+  ru: () => import('~/i18n/ru.json'),
+  fr: () => import('~/i18n/fr.json'),
+  es: () => import('~/i18n/es.json'),
+}
+
+const pendingCatalogs = new Map<LocaleCode, Promise<void>>([['en', Promise.resolve()]])
+const isCatalogReady = (locale: LocaleCode) => composer.availableLocales.includes(locale)
+
+/** Fetches a catalog once and registers it with the composer. */
+export function loadLocaleMessages(locale: LocaleCode): Promise<void> {
+  let pending = pendingCatalogs.get(locale)
+
+  if (!pending) {
+    pending = catalogLoaders[locale as Exclude<LocaleCode, 'en'>]().then(
+      ({ default: messages }) => {
+        composer.setLocaleMessage(locale, messages)
+      },
+      (error: unknown) => {
+        // Forget the failure so a later switch can retry the chunk.
+        pendingCatalogs.delete(locale)
+        throw error
+      }
+    )
+    pendingCatalogs.set(locale, pending)
+  }
+
+  return pending
+}
+
+let requestedLocale: LocaleCode | undefined
+
 /**
  * Blade renders <html lang> from the server's own negotiation, so every locale
  * change has to carry the document along or the two drift apart.
  */
-export function setLocale(locale: LocaleCode) {
+function applyLocale(locale: LocaleCode) {
   composer.locale.value = locale
 
   if (typeof document !== 'undefined') {
@@ -91,9 +117,51 @@ export function setLocale(locale: LocaleCode) {
   }
 }
 
-export function installI18n(app: App) {
+/**
+ * Switches synchronously when the catalog is already loaded. Otherwise the
+ * current locale stays until the catalog arrives, so no raw keys or fallback
+ * copy flash. The last call wins, a slower earlier load never overrides it.
+ * A failed load keeps the current locale and never rejects.
+ */
+export function setLocale(locale: LocaleCode): Promise<void> {
+  requestedLocale = locale
+
+  if (isCatalogReady(locale)) {
+    applyLocale(locale)
+    return Promise.resolve()
+  }
+
+  return loadLocaleMessages(locale).then(
+    () => {
+      if (requestedLocale === locale) applyLocale(locale)
+    },
+    (error: unknown) => {
+      console.error(`[i18n] Failed to load the "${locale}" messages:`, error)
+    }
+  )
+}
+
+/**
+ * The locale the first paint should use: the cached user setting (same
+ * `user-settings` key useUserSettings writes), else the browser's language.
+ */
+function initialLocale(): LocaleCode {
+  try {
+    const stored: unknown = JSON.parse(window.localStorage.getItem('user-settings') || '{}')
+    const languageIso =
+      stored && typeof stored === 'object' && 'languageIso' in stored ? stored.languageIso : undefined
+    if (typeof languageIso === 'string' && isSupportedLocale(languageIso)) return languageIso
+  } catch {
+    /** unreadable storage falls through to the browser */
+  }
+
+  return detectBrowserLocale()
+}
+
+/** Resolves once the initial catalog is loaded. Await it before mounting. */
+export function installI18n(app: App): Promise<void> {
   app.use(i18n)
-  setLocale(composer.locale.value as LocaleCode)
+  return setLocale(initialLocale())
 }
 
 export function useI18n() {

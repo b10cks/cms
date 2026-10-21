@@ -29,7 +29,9 @@ import { router } from '~/router'
 
 const app = createApp(App)
 
-installI18n(app)
+// Starts the active locale's catalog download; the router's first navigation runs
+// alongside it, and mount waits for it so no fallback copy flashes.
+const localeReady = installI18n(app)
 installVueQuery(app)
 
 // Must run before the router mounts: the first navigation guard already hits the
@@ -38,6 +40,7 @@ installAuthHandler()
 
 app.use(router)
 
+await localeReady
 app.mount('#app')
 
 if (isClient) {

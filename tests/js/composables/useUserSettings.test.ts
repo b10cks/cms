@@ -68,6 +68,7 @@ const load = async (
 
   const { useAuth } = await import('~/composables/useAuth')
   const i18n = await import('~/plugins/i18n')
+  await Promise.all(i18n.locales.map(({ code }) => i18n.loadLocaleMessages(code)))
   i18n.setLocale('en')
 
   const auth = useAuth()
