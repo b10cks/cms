@@ -56,18 +56,22 @@ const toDateTimeLocal = (iso: string | null | undefined): string => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
-watch(open, (isOpen) => {
-  if (!isOpen) return
-  createdShare.value = null
-  name.value = props.share?.name ?? ''
-  description.value = props.share?.description ?? ''
-  password.value = ''
-  clearPassword.value = false
-  expiresAt.value = toDateTimeLocal(props.share?.expires_at)
-  downloadLimit.value =
-    props.share?.download_limit != null ? String(props.share.download_limit) : ''
-  allowIndividualDownloads.value = props.share?.allow_individual_downloads ?? true
-})
+watch(
+  open,
+  (isOpen) => {
+    if (!isOpen) return
+    createdShare.value = null
+    name.value = props.share?.name ?? ''
+    description.value = props.share?.description ?? ''
+    password.value = ''
+    clearPassword.value = false
+    expiresAt.value = toDateTimeLocal(props.share?.expires_at)
+    downloadLimit.value =
+      props.share?.download_limit != null ? String(props.share.download_limit) : ''
+    allowIndividualDownloads.value = props.share?.allow_individual_downloads ?? true
+  },
+  { immediate: true }
+)
 
 const sourceType = computed<AssetShareSourceType | null>(
   () => props.share?.source_type ?? props.source?.source_type ?? null
