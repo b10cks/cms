@@ -1,0 +1,921 @@
+{
+    "index_en": {
+        "data": [
+            {
+                "id": "01k60000000000000000000004",
+                "name": "Linked Page",
+                "slug": "linked-page",
+                "block": "page",
+                "external_id": "01k60000000000000000000004",
+                "parent_id": null,
+                "position": 1,
+                "full_slug": "/linked-page",
+                "content": {
+                    "title": "Linked page",
+                    "block": "page"
+                },
+                "cache": {
+                    "ttl": null,
+                    "tags": []
+                },
+                "language_iso": "en",
+                "translations": [
+                    {
+                        "id": "01k60000000000000000000005",
+                        "name": "Verlinkte Seite",
+                        "slug": "verlinkte-seite",
+                        "full_slug": "/verlinkte-seite",
+                        "position": 1,
+                        "language_iso": "de",
+                        "published_at": "2026-10-01T12:00:00+00:00",
+                        "created_at": "2026-10-01T12:00:00+00:00",
+                        "updated_at": "2026-10-01T12:00:00+00:00"
+                    }
+                ],
+                "published_at": "2026-10-01T12:00:00+00:00",
+                "first_published_at": null,
+                "created_at": "2026-10-01T12:00:00+00:00",
+                "updated_at": "2026-10-01T12:00:00+00:00"
+            },
+            {
+                "id": "01k60000000000000000000006",
+                "name": "Related Page",
+                "slug": "related-page",
+                "block": "page",
+                "external_id": "01k60000000000000000000006",
+                "parent_id": null,
+                "position": 2,
+                "full_slug": "/related-page",
+                "content": {
+                    "title": "Related",
+                    "block": "page"
+                },
+                "cache": {
+                    "ttl": null,
+                    "tags": []
+                },
+                "language_iso": "en",
+                "translations": [],
+                "published_at": "2026-10-01T12:00:00+00:00",
+                "first_published_at": null,
+                "created_at": "2026-10-01T12:00:00+00:00",
+                "updated_at": "2026-10-01T12:00:00+00:00"
+            },
+            {
+                "id": "01k60000000000000000000007",
+                "name": "Home",
+                "slug": "home",
+                "block": "page",
+                "external_id": "01k60000000000000000000007",
+                "parent_id": null,
+                "position": 3,
+                "full_slug": "/home",
+                "content": {
+                    "title": "Home",
+                    "image": {
+                        "url": "https://b10cks.test/ilum/01k60000000000000000000002/01k60000000000000000000001/01k60000000000000000000003/hero.jpg",
+                        "data": {
+                            "alt": "Hero",
+                            "focus": null
+                        },
+                        "full_path": "01k60000000000000000000002/01k60000000000000000000001/01k60000000000000000000003/hero.jpg",
+                        "filename": "hero",
+                        "extension": "jpg",
+                        "mime_type": "image/jpeg",
+                        "size": 1234,
+                        "metadata": {
+                            "width": 800,
+                            "height": 600
+                        },
+                        "type": "asset",
+                        "id": "01k60000000000000000000003"
+                    },
+                    "cta": {
+                        "url": "/linked-page",
+                        "title": "Linked Page",
+                        "type": "internal",
+                        "content": "01k60000000000000000000004"
+                    },
+                    "body": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "internalLink",
+                                        "attrs": {
+                                            "url": "/linked-page",
+                                            "title": "Linked Page",
+                                            "content": "01k60000000000000000000004"
+                                        },
+                                        "content": [
+                                            {
+                                                "type": "text",
+                                                "text": "Read more"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "related": [
+                        "01k60000000000000000000006"
+                    ],
+                    "block": "page"
+                },
+                "cache": {
+                    "ttl": null,
+                    "tags": []
+                },
+                "language_iso": "en",
+                "translations": [
+                    {
+                        "id": "01k60000000000000000000008",
+                        "name": "Startseite",
+                        "slug": "startseite",
+                        "full_slug": "/startseite",
+                        "position": 3,
+                        "language_iso": "de",
+                        "published_at": "2026-10-01T12:00:00+00:00",
+                        "created_at": "2026-10-01T12:00:00+00:00",
+                        "updated_at": "2026-10-01T12:00:00+00:00"
+                    }
+                ],
+                "published_at": "2026-10-01T12:00:00+00:00",
+                "first_published_at": null,
+                "created_at": "2026-10-01T12:00:00+00:00",
+                "updated_at": "2026-10-01T12:00:00+00:00"
+            },
+            {
+                "id": "01k60000000000000000000009",
+                "name": "Plain",
+                "slug": "plain",
+                "block": "page",
+                "external_id": "01k60000000000000000000009",
+                "parent_id": null,
+                "position": 4,
+                "full_slug": "/plain",
+                "content": {
+                    "title": "Plain",
+                    "block": "page"
+                },
+                "cache": {
+                    "ttl": null,
+                    "tags": []
+                },
+                "language_iso": "en",
+                "translations": [],
+                "published_at": "2026-10-01T12:00:00+00:00",
+                "first_published_at": null,
+                "created_at": "2026-10-01T12:00:00+00:00",
+                "updated_at": "2026-10-01T12:00:00+00:00"
+            }
+        ],
+        "links": {
+            "first": "https://b10cks.test/api/v1/contents?token=delivery-payload-token&rv=1790856000&sort=position&language=en&page=1",
+            "last": "https://b10cks.test/api/v1/contents?token=delivery-payload-token&rv=1790856000&sort=position&language=en&page=1",
+            "prev": null,
+            "next": null
+        },
+        "meta": {
+            "current_page": 1,
+            "from": 1,
+            "last_page": 1,
+            "links": [
+                {
+                    "url": null,
+                    "label": "&laquo; Previous",
+                    "page": null,
+                    "active": false
+                },
+                {
+                    "url": "https://b10cks.test/api/v1/contents?token=delivery-payload-token&rv=1790856000&sort=position&language=en&page=1",
+                    "label": "1",
+                    "page": 1,
+                    "active": true
+                },
+                {
+                    "url": null,
+                    "label": "Next &raquo;",
+                    "page": null,
+                    "active": false
+                }
+            ],
+            "path": "https://b10cks.test/api/v1/contents",
+            "per_page": 20,
+            "to": 4,
+            "total": 4
+        },
+        "rv": 1790856000
+    },
+    "index_de_fallback": {
+        "data": [
+            {
+                "id": "01k60000000000000000000005",
+                "name": "Verlinkte Seite",
+                "slug": "verlinkte-seite",
+                "block": "page",
+                "external_id": "01k60000000000000000000005",
+                "parent_id": null,
+                "position": 1,
+                "full_slug": "/verlinkte-seite",
+                "content": {
+                    "title": "Verlinkte Seite",
+                    "block": "page"
+                },
+                "cache": {
+                    "ttl": null,
+                    "tags": []
+                },
+                "language_iso": "de",
+                "translations": [
+                    {
+                        "id": "01k60000000000000000000004",
+                        "name": "Linked Page",
+                        "slug": "linked-page",
+                        "full_slug": "/linked-page",
+                        "position": 1,
+                        "language_iso": "en",
+                        "published_at": "2026-10-01T12:00:00+00:00",
+                        "created_at": "2026-10-01T12:00:00+00:00",
+                        "updated_at": "2026-10-01T12:00:00+00:00"
+                    }
+                ],
+                "published_at": "2026-10-01T12:00:00+00:00",
+                "first_published_at": null,
+                "created_at": "2026-10-01T12:00:00+00:00",
+                "updated_at": "2026-10-01T12:00:00+00:00"
+            },
+            {
+                "id": "01k60000000000000000000006",
+                "name": "Related Page",
+                "slug": "related-page",
+                "block": "page",
+                "external_id": "01k60000000000000000000006",
+                "parent_id": null,
+                "position": 2,
+                "full_slug": "/related-page",
+                "content": {
+                    "title": "Related",
+                    "block": "page"
+                },
+                "cache": {
+                    "ttl": null,
+                    "tags": []
+                },
+                "language_iso": "de",
+                "translations": [],
+                "published_at": "2026-10-01T12:00:00+00:00",
+                "first_published_at": null,
+                "created_at": "2026-10-01T12:00:00+00:00",
+                "updated_at": "2026-10-01T12:00:00+00:00"
+            },
+            {
+                "id": "01k60000000000000000000008",
+                "name": "Startseite",
+                "slug": "startseite",
+                "block": "page",
+                "external_id": "01k60000000000000000000008",
+                "parent_id": null,
+                "position": 3,
+                "full_slug": "/startseite",
+                "content": {
+                    "title": "Startseite",
+                    "image": {
+                        "url": "https://b10cks.test/ilum/01k60000000000000000000002/01k60000000000000000000001/01k60000000000000000000003/hero.jpg",
+                        "data": {
+                            "alt": "Held",
+                            "focus": null
+                        },
+                        "full_path": "01k60000000000000000000002/01k60000000000000000000001/01k60000000000000000000003/hero.jpg",
+                        "filename": "hero",
+                        "extension": "jpg",
+                        "mime_type": "image/jpeg",
+                        "size": 1234,
+                        "metadata": {
+                            "width": 800,
+                            "height": 600
+                        },
+                        "type": "asset",
+                        "id": "01k60000000000000000000003"
+                    },
+                    "cta": {
+                        "url": "/verlinkte-seite",
+                        "title": "Verlinkte Seite",
+                        "type": "internal",
+                        "content": "01k60000000000000000000004"
+                    },
+                    "body": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "internalLink",
+                                        "attrs": {
+                                            "url": "/verlinkte-seite",
+                                            "title": "Verlinkte Seite",
+                                            "content": "01k60000000000000000000004"
+                                        },
+                                        "content": [
+                                            {
+                                                "type": "text",
+                                                "text": "Read more"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "related": [
+                        "01k60000000000000000000006"
+                    ],
+                    "block": "page"
+                },
+                "cache": {
+                    "ttl": null,
+                    "tags": []
+                },
+                "language_iso": "de",
+                "translations": [
+                    {
+                        "id": "01k60000000000000000000007",
+                        "name": "Home",
+                        "slug": "home",
+                        "full_slug": "/home",
+                        "position": 3,
+                        "language_iso": "en",
+                        "published_at": "2026-10-01T12:00:00+00:00",
+                        "created_at": "2026-10-01T12:00:00+00:00",
+                        "updated_at": "2026-10-01T12:00:00+00:00"
+                    }
+                ],
+                "published_at": "2026-10-01T12:00:00+00:00",
+                "first_published_at": null,
+                "created_at": "2026-10-01T12:00:00+00:00",
+                "updated_at": "2026-10-01T12:00:00+00:00"
+            },
+            {
+                "id": "01k60000000000000000000009",
+                "name": "Plain",
+                "slug": "plain",
+                "block": "page",
+                "external_id": "01k60000000000000000000009",
+                "parent_id": null,
+                "position": 4,
+                "full_slug": "/plain",
+                "content": {
+                    "title": "Plain",
+                    "block": "page"
+                },
+                "cache": {
+                    "ttl": null,
+                    "tags": []
+                },
+                "language_iso": "de",
+                "translations": [],
+                "published_at": "2026-10-01T12:00:00+00:00",
+                "first_published_at": null,
+                "created_at": "2026-10-01T12:00:00+00:00",
+                "updated_at": "2026-10-01T12:00:00+00:00"
+            }
+        ],
+        "links": {
+            "first": "https://b10cks.test/api/v1/contents?token=delivery-payload-token&rv=1790856000&sort=position&language=de&include_fallback=1&page=1",
+            "last": "https://b10cks.test/api/v1/contents?token=delivery-payload-token&rv=1790856000&sort=position&language=de&include_fallback=1&page=1",
+            "prev": null,
+            "next": null
+        },
+        "meta": {
+            "current_page": 1,
+            "from": 1,
+            "last_page": 1,
+            "links": [
+                {
+                    "url": null,
+                    "label": "&laquo; Previous",
+                    "page": null,
+                    "active": false
+                },
+                {
+                    "url": "https://b10cks.test/api/v1/contents?token=delivery-payload-token&rv=1790856000&sort=position&language=de&include_fallback=1&page=1",
+                    "label": "1",
+                    "page": 1,
+                    "active": true
+                },
+                {
+                    "url": null,
+                    "label": "Next &raquo;",
+                    "page": null,
+                    "active": false
+                }
+            ],
+            "path": "https://b10cks.test/api/v1/contents",
+            "per_page": 20,
+            "to": 4,
+            "total": 4
+        },
+        "rv": 1790856000
+    },
+    "index_de_draft_fallback": {
+        "data": [
+            {
+                "id": "01k60000000000000000000005",
+                "name": "Verlinkte Seite",
+                "slug": "verlinkte-seite",
+                "block": "page",
+                "external_id": "01k60000000000000000000005",
+                "parent_id": null,
+                "position": 1,
+                "full_slug": "/verlinkte-seite",
+                "content": {
+                    "title": "Verlinkte Seite",
+                    "block": "page"
+                },
+                "cache": {
+                    "ttl": null,
+                    "tags": []
+                },
+                "language_iso": "de",
+                "translations": [
+                    {
+                        "id": "01k60000000000000000000004",
+                        "name": "Linked Page",
+                        "slug": "linked-page",
+                        "full_slug": "/linked-page",
+                        "position": 1,
+                        "language_iso": "en",
+                        "published_at": "2026-10-01T12:00:00+00:00",
+                        "created_at": "2026-10-01T12:00:00+00:00",
+                        "updated_at": "2026-10-01T12:00:00+00:00"
+                    }
+                ],
+                "published_at": "2026-10-01T12:00:00+00:00",
+                "first_published_at": null,
+                "created_at": "2026-10-01T12:00:00+00:00",
+                "updated_at": "2026-10-01T12:00:00+00:00"
+            },
+            {
+                "id": "01k60000000000000000000006",
+                "name": "Related Page",
+                "slug": "related-page",
+                "block": "page",
+                "external_id": "01k60000000000000000000006",
+                "parent_id": null,
+                "position": 2,
+                "full_slug": "/related-page",
+                "content": {
+                    "title": "Related",
+                    "block": "page"
+                },
+                "cache": {
+                    "ttl": null,
+                    "tags": []
+                },
+                "language_iso": "de",
+                "translations": [],
+                "published_at": "2026-10-01T12:00:00+00:00",
+                "first_published_at": null,
+                "created_at": "2026-10-01T12:00:00+00:00",
+                "updated_at": "2026-10-01T12:00:00+00:00"
+            },
+            {
+                "id": "01k60000000000000000000008",
+                "name": "Startseite",
+                "slug": "startseite",
+                "block": "page",
+                "external_id": "01k60000000000000000000008",
+                "parent_id": null,
+                "position": 3,
+                "full_slug": "/startseite",
+                "content": {
+                    "title": "Startseite",
+                    "image": {
+                        "url": "https://b10cks.test/ilum/01k60000000000000000000002/01k60000000000000000000001/01k60000000000000000000003/hero.jpg",
+                        "data": {
+                            "alt": "Held",
+                            "focus": null
+                        },
+                        "full_path": "01k60000000000000000000002/01k60000000000000000000001/01k60000000000000000000003/hero.jpg",
+                        "filename": "hero",
+                        "extension": "jpg",
+                        "mime_type": "image/jpeg",
+                        "size": 1234,
+                        "metadata": {
+                            "width": 800,
+                            "height": 600
+                        },
+                        "type": "asset",
+                        "id": "01k60000000000000000000003"
+                    },
+                    "cta": {
+                        "url": "/verlinkte-seite",
+                        "title": "Verlinkte Seite",
+                        "type": "internal",
+                        "content": "01k60000000000000000000004"
+                    },
+                    "body": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "internalLink",
+                                        "attrs": {
+                                            "url": "/verlinkte-seite",
+                                            "title": "Verlinkte Seite",
+                                            "content": "01k60000000000000000000004"
+                                        },
+                                        "content": [
+                                            {
+                                                "type": "text",
+                                                "text": "Read more"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "related": [
+                        "01k60000000000000000000006"
+                    ],
+                    "block": "page"
+                },
+                "cache": {
+                    "ttl": null,
+                    "tags": []
+                },
+                "language_iso": "de",
+                "translations": [
+                    {
+                        "id": "01k60000000000000000000007",
+                        "name": "Home",
+                        "slug": "home",
+                        "full_slug": "/home",
+                        "position": 3,
+                        "language_iso": "en",
+                        "published_at": "2026-10-01T12:00:00+00:00",
+                        "created_at": "2026-10-01T12:00:00+00:00",
+                        "updated_at": "2026-10-01T12:00:00+00:00"
+                    }
+                ],
+                "published_at": "2026-10-01T12:00:00+00:00",
+                "first_published_at": null,
+                "created_at": "2026-10-01T12:00:00+00:00",
+                "updated_at": "2026-10-01T12:00:00+00:00"
+            },
+            {
+                "id": "01k60000000000000000000009",
+                "name": "Plain",
+                "slug": "plain",
+                "block": "page",
+                "external_id": "01k60000000000000000000009",
+                "parent_id": null,
+                "position": 4,
+                "full_slug": "/plain",
+                "content": {
+                    "title": "Plain draft",
+                    "block": "page"
+                },
+                "cache": {
+                    "ttl": null,
+                    "tags": []
+                },
+                "language_iso": "de",
+                "translations": [],
+                "published_at": "2026-10-01T12:00:00+00:00",
+                "first_published_at": null,
+                "created_at": "2026-10-01T12:00:00+00:00",
+                "updated_at": "2026-10-01T12:00:00+00:00"
+            }
+        ],
+        "links": {
+            "first": "https://b10cks.test/api/v1/contents?token=delivery-payload-token&rv=1790856000&sort=position&language=de&include_fallback=1&vid=draft&page=1",
+            "last": "https://b10cks.test/api/v1/contents?token=delivery-payload-token&rv=1790856000&sort=position&language=de&include_fallback=1&vid=draft&page=1",
+            "prev": null,
+            "next": null
+        },
+        "meta": {
+            "current_page": 1,
+            "from": 1,
+            "last_page": 1,
+            "links": [
+                {
+                    "url": null,
+                    "label": "&laquo; Previous",
+                    "page": null,
+                    "active": false
+                },
+                {
+                    "url": "https://b10cks.test/api/v1/contents?token=delivery-payload-token&rv=1790856000&sort=position&language=de&include_fallback=1&vid=draft&page=1",
+                    "label": "1",
+                    "page": 1,
+                    "active": true
+                },
+                {
+                    "url": null,
+                    "label": "Next &raquo;",
+                    "page": null,
+                    "active": false
+                }
+            ],
+            "path": "https://b10cks.test/api/v1/contents",
+            "per_page": 20,
+            "to": 4,
+            "total": 4
+        },
+        "rv": 1790856000
+    },
+    "show_home": {
+        "data": {
+            "id": "01k60000000000000000000007",
+            "name": "Home",
+            "slug": "home",
+            "block": "page",
+            "external_id": "01k60000000000000000000007",
+            "parent_id": null,
+            "position": 3,
+            "full_slug": "/home",
+            "content": {
+                "title": "Home",
+                "image": {
+                    "url": "https://b10cks.test/ilum/01k60000000000000000000002/01k60000000000000000000001/01k60000000000000000000003/hero.jpg",
+                    "data": {
+                        "alt": "Hero",
+                        "focus": null
+                    },
+                    "full_path": "01k60000000000000000000002/01k60000000000000000000001/01k60000000000000000000003/hero.jpg",
+                    "filename": "hero",
+                    "extension": "jpg",
+                    "mime_type": "image/jpeg",
+                    "size": 1234,
+                    "metadata": {
+                        "width": 800,
+                        "height": 600
+                    },
+                    "type": "asset",
+                    "id": "01k60000000000000000000003"
+                },
+                "cta": {
+                    "url": "/linked-page",
+                    "title": "Linked Page",
+                    "type": "internal",
+                    "content": "01k60000000000000000000004"
+                },
+                "body": {
+                    "type": "doc",
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {
+                                    "type": "internalLink",
+                                    "attrs": {
+                                        "url": "/linked-page",
+                                        "title": "Linked Page",
+                                        "content": "01k60000000000000000000004"
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "Read more"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "related": [
+                    "01k60000000000000000000006"
+                ],
+                "block": "page"
+            },
+            "cache": {
+                "ttl": null,
+                "tags": []
+            },
+            "relations": [
+                {
+                    "id": "01k60000000000000000000006",
+                    "name": "Related Page",
+                    "slug": "related-page",
+                    "block": "page",
+                    "external_id": "01k60000000000000000000006",
+                    "parent_id": null,
+                    "position": 2,
+                    "full_slug": "/related-page",
+                    "content": {
+                        "title": "Related",
+                        "block": "page"
+                    },
+                    "cache": {
+                        "ttl": null,
+                        "tags": []
+                    },
+                    "language_iso": "en",
+                    "translations": [],
+                    "published_at": "2026-10-01T12:00:00+00:00",
+                    "first_published_at": null,
+                    "created_at": "2026-10-01T12:00:00+00:00",
+                    "updated_at": "2026-10-01T12:00:00+00:00"
+                }
+            ],
+            "language_iso": "en",
+            "translations": [
+                {
+                    "id": "01k60000000000000000000008",
+                    "name": "Startseite",
+                    "slug": "startseite",
+                    "full_slug": "/startseite",
+                    "position": 3,
+                    "language_iso": "de",
+                    "published_at": "2026-10-01T12:00:00+00:00",
+                    "created_at": "2026-10-01T12:00:00+00:00",
+                    "updated_at": "2026-10-01T12:00:00+00:00"
+                }
+            ],
+            "published_at": "2026-10-01T12:00:00+00:00",
+            "first_published_at": null,
+            "created_at": "2026-10-01T12:00:00+00:00",
+            "updated_at": "2026-10-01T12:00:00+00:00"
+        },
+        "rv": 1790856000
+    },
+    "show_home_de": {
+        "data": {
+            "id": "01k60000000000000000000008",
+            "name": "Startseite",
+            "slug": "startseite",
+            "block": "page",
+            "external_id": "01k60000000000000000000008",
+            "parent_id": null,
+            "position": 3,
+            "full_slug": "/startseite",
+            "content": {
+                "title": "Startseite",
+                "image": {
+                    "url": "https://b10cks.test/ilum/01k60000000000000000000002/01k60000000000000000000001/01k60000000000000000000003/hero.jpg",
+                    "data": {
+                        "alt": "Held",
+                        "focus": null
+                    },
+                    "full_path": "01k60000000000000000000002/01k60000000000000000000001/01k60000000000000000000003/hero.jpg",
+                    "filename": "hero",
+                    "extension": "jpg",
+                    "mime_type": "image/jpeg",
+                    "size": 1234,
+                    "metadata": {
+                        "width": 800,
+                        "height": 600
+                    },
+                    "type": "asset",
+                    "id": "01k60000000000000000000003"
+                },
+                "cta": {
+                    "url": "/verlinkte-seite",
+                    "title": "Verlinkte Seite",
+                    "type": "internal",
+                    "content": "01k60000000000000000000004"
+                },
+                "body": {
+                    "type": "doc",
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {
+                                    "type": "internalLink",
+                                    "attrs": {
+                                        "url": "/verlinkte-seite",
+                                        "title": "Verlinkte Seite",
+                                        "content": "01k60000000000000000000004"
+                                    },
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "Read more"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "related": [
+                    "01k60000000000000000000006"
+                ],
+                "block": "page"
+            },
+            "cache": {
+                "ttl": null,
+                "tags": []
+            },
+            "relations": [
+                {
+                    "id": "01k60000000000000000000006",
+                    "name": "Related Page",
+                    "slug": "related-page",
+                    "block": "page",
+                    "external_id": "01k60000000000000000000006",
+                    "parent_id": null,
+                    "position": 2,
+                    "full_slug": "/related-page",
+                    "content": {
+                        "title": "Related",
+                        "block": "page"
+                    },
+                    "cache": {
+                        "ttl": null,
+                        "tags": []
+                    },
+                    "language_iso": "de",
+                    "translations": [],
+                    "published_at": "2026-10-01T12:00:00+00:00",
+                    "first_published_at": null,
+                    "created_at": "2026-10-01T12:00:00+00:00",
+                    "updated_at": "2026-10-01T12:00:00+00:00"
+                }
+            ],
+            "language_iso": "de",
+            "translations": [
+                {
+                    "id": "01k60000000000000000000007",
+                    "name": "Home",
+                    "slug": "home",
+                    "full_slug": "/home",
+                    "position": 3,
+                    "language_iso": "en",
+                    "published_at": "2026-10-01T12:00:00+00:00",
+                    "created_at": "2026-10-01T12:00:00+00:00",
+                    "updated_at": "2026-10-01T12:00:00+00:00"
+                }
+            ],
+            "published_at": "2026-10-01T12:00:00+00:00",
+            "first_published_at": null,
+            "created_at": "2026-10-01T12:00:00+00:00",
+            "updated_at": "2026-10-01T12:00:00+00:00"
+        },
+        "rv": 1790856000
+    },
+    "show_plain": {
+        "data": {
+            "id": "01k60000000000000000000009",
+            "name": "Plain",
+            "slug": "plain",
+            "block": "page",
+            "external_id": "01k60000000000000000000009",
+            "parent_id": null,
+            "position": 4,
+            "full_slug": "/plain",
+            "content": {
+                "title": "Plain",
+                "block": "page"
+            },
+            "cache": {
+                "ttl": null,
+                "tags": []
+            },
+            "language_iso": "en",
+            "translations": [],
+            "published_at": "2026-10-01T12:00:00+00:00",
+            "first_published_at": null,
+            "created_at": "2026-10-01T12:00:00+00:00",
+            "updated_at": "2026-10-01T12:00:00+00:00"
+        },
+        "rv": 1790856000
+    },
+    "show_plain_draft": {
+        "data": {
+            "id": "01k60000000000000000000009",
+            "name": "Plain",
+            "slug": "plain",
+            "block": "page",
+            "external_id": "01k60000000000000000000009",
+            "parent_id": null,
+            "position": 4,
+            "full_slug": "/plain",
+            "content": {
+                "title": "Plain draft",
+                "block": "page"
+            },
+            "cache": {
+                "ttl": null,
+                "tags": []
+            },
+            "language_iso": "en",
+            "translations": [],
+            "published_at": "2026-10-01T12:00:00+00:00",
+            "first_published_at": null,
+            "created_at": "2026-10-01T12:00:00+00:00",
+            "updated_at": "2026-10-01T12:00:00+00:00"
+        },
+        "rv": 1790856000
+    }
+}
