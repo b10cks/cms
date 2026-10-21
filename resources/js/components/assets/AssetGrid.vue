@@ -1736,7 +1736,7 @@ onUnmounted(() => {
 
       <div class="flex items-center gap-2">
         <Button
-          v-if="allowUpload && canManageAssets && uploadDialogMounted"
+          v-if="allowUpload && canManageAssets"
           variant="primary"
           @click="showUploadDialog = true"
         >
@@ -1744,7 +1744,7 @@ onUnmounted(() => {
           {{ $t('actions.assets.upload') }}
         </Button>
         <Button
-          v-if="allowFolderCreation && canManageFolders && folderDialogMounted"
+          v-if="allowFolderCreation && canManageFolders"
           @click="openCreateFolderDialog()"
         >
           <Icon name="lucide:folder-plus" />
@@ -2060,7 +2060,7 @@ onUnmounted(() => {
     />
 
     <UploadDialog
-      v-if="allowUpload && canManageAssets"
+      v-if="allowUpload && canManageAssets && uploadDialogMounted"
       v-model:open="showUploadDialog"
       :folder-id="activeFolderId || undefined"
       :space-id="spaceId"
@@ -2076,7 +2076,7 @@ onUnmounted(() => {
     />
 
     <CreateFolderDialog
-      v-if="allowFolderCreation && canManageFolders"
+      v-if="allowFolderCreation && canManageFolders && folderDialogMounted"
       v-model:open="folderDialogOpen"
       :folder="editingFolder"
       :parent-folder-id="dialogParentFolderId"
