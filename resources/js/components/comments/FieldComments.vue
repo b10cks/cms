@@ -21,6 +21,7 @@ const contentVersionId = inject<Ref<string | undefined>>('contentVersionId', ref
 const isOpen = ref(false)
 const newCommentBody = ref('')
 const comments = inject<Ref<CommentResource[]>>('comments', ref([]))
+const isLoadingComments = inject<Ref<boolean>>('commentsLoading', ref(false))
 
 const {
   useCreateCommentMutation,
@@ -152,8 +153,14 @@ const handleRemoveReaction = (commentId: string, emoji: string) => {
 
         <ScrollArea class="h-96">
           <div class="flex h-full w-full flex-1 flex-col">
+            <CommentsList
+              v-if="isLoadingComments"
+              :comments="[]"
+              is-loading
+              class="mx-2"
+            />
             <div
-              v-if="fieldComments.length === 0"
+              v-else-if="fieldComments.length === 0"
               class="flex items-start gap-2 py-3 text-muted"
             >
               <Icon

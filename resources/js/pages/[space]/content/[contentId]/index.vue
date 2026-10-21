@@ -311,7 +311,7 @@ const { useCommentsQuery } = useComments(
   spaceId,
   computed(() => content.value?.id || null)
 )
-const { data: comments } = useCommentsQuery()
+const { data: comments, isLoading: isLoadingComments } = useCommentsQuery()
 
 const aiInteractionRef = useTemplateRef('aiInteractionRef')
 
@@ -761,6 +761,7 @@ provide(
   computed(() => content.value?.current_version_id)
 )
 provide('comments', comments)
+provide('commentsLoading', isLoadingComments)
 provide('broadcastCommentUpdate', broadcastCommentUpdate)
 provide('commitPersistedContent', commitPersistedContent)
 provide('discardOwnDrafts', discardOwnDrafts)
