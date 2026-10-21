@@ -12,6 +12,12 @@ use Illuminate\Database\Eloquent\Model;
 abstract class SpaceModel extends Model
 {
     /**
+     * The grammar default for every supported space driver (MySQL, Postgres,
+     * SQLite). Set here so datetime casts skip the connection lookup.
+     */
+    protected $dateFormat = 'Y-m-d H:i:s';
+
+    /**
      * @var array<string, mixed>|null
      */
     protected ?array $automationBeforeSnapshot = null;

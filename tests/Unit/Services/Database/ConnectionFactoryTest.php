@@ -47,24 +47,39 @@ class ConnectionFactoryTest extends TestCase
     }
 
     #[Test]
-    public function it_purges_existing_connections_before_creating_new_ones(): void
+    public function it_keeps_the_open_connection_when_the_config_is_unchanged(): void
     {
-        // Arrange
-        $connection = SpaceConnection::factory()->create();
+        $connection = SpaceConnection::factory()->mysql()->create();
         $config = ['driver' => 'mysql', 'database' => 'test_db'];
 
-        $this->resolver->method('resolve')
-            ->with($connection)
-            ->willReturn($config);
+        $this->resolver->method('resolve')->willReturn($config);
 
-        // Create initial connection
-        $this->factory->make($connection);
+        $first = $this->factory->make($connection);
 
-        // Act - Create another connection with same ID
-        $result = $this->factory->make($connection);
+        // Octane starts each request from a fresh copy of the boot config.
+        Config::offsetUnset("database.connections.{$connection->id}");
 
-        // Assert
-        $this->assertInstanceOf(Connection::class, $result);
+        $second = $this->factory->make($connection);
+
+        $this->assertSame($first, $second);
         $this->assertEquals($config, Config::get("database.connections.{$connection->id}"));
+    }
+
+    #[Test]
+    public function it_reconnects_when_the_config_changes(): void
+    {
+        $connection = SpaceConnection::factory()->mysql()->create();
+        $rotated = ['driver' => 'mysql', 'database' => 'test_db', 'password' => 'rotated'];
+
+        $this->resolver->method('resolve')->willReturnOnConsecutiveCalls(
+            ['driver' => 'mysql', 'database' => 'test_db', 'password' => 'old'],
+            $rotated,
+        );
+
+        $first = $this->factory->make($connection);
+        $second = $this->factory->make($connection);
+
+        $this->assertNotSame($first, $second);
+        $this->assertEquals($rotated, Config::get("database.connections.{$connection->id}"));
     }
 }

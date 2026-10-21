@@ -3,14 +3,40 @@
 namespace App\Services\Database;
 
 use App\Models\Management\Space;
+use App\Models\Management\SpaceConnection;
 use App\Support\SpaceContext;
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\ConnectionResolverInterface;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
+use WeakMap;
 
+/**
+ * Connection resolver for every SpaceModel. Warmed under Octane
+ * (config/octane.php), so its state is per worker. It never holds the current
+ * space: that is read from the route or `currentSpace` (flushed per request)
+ * on every call.
+ */
 class SpaceModelResolver implements ConnectionResolverInterface
 {
+    /**
+     * The tenant connection this worker holds open. Switching to another one
+     * releases it, so a worker never piles up idle tenant connections.
+     */
     protected ?string $activeConnectionId = null;
+
+    /**
+     * Resolved connections for the active connection id, keyed by the loaded
+     * SpaceConnection. Eloquent asks for the connection per hydrated row, so
+     * this skips decrypting the config each time, while a freshly loaded
+     * SpaceConnection (next request, rotated credentials) resolves again.
+     *
+     * @var WeakMap<SpaceConnection, ConnectionInterface>
+     */
+    protected WeakMap $resolved;
+
+    public function __construct()
+    {
+        $this->resolved = new WeakMap();
+    }
 
     public function connection($name = null)
     {
@@ -36,16 +62,7 @@ class SpaceModelResolver implements ConnectionResolverInterface
         $connection = $space->defaultConnection[0] ?? null;
         abort_unless((bool) $connection, 404, 'Connection not found');
 
-        if ($this->activeConnectionId !== null && $this->activeConnectionId !== $connection->id) {
-            DB::purge($this->activeConnectionId);
-            $connections = Config::get('database.connections', []);
-            unset($connections[$this->activeConnectionId]);
-            Config::set('database.connections', $connections);
-        }
-
-        $this->activeConnectionId = $connection->id;
-
-        return app(ConnectionFactory::class)->make($connection);
+        return $this->resolved[$connection] ?? $this->resolve($connection);
     }
 
     public function getConnectionName()
@@ -54,4 +71,19 @@ class SpaceModelResolver implements ConnectionResolverInterface
     }
 
     public function setDefaultConnection($name) {}
+
+    private function resolve(SpaceConnection $connection): ConnectionInterface
+    {
+        $factory = app(ConnectionFactory::class);
+
+        if ($this->activeConnectionId !== $connection->id) {
+            if ($this->activeConnectionId !== null) {
+                $factory->release($this->activeConnectionId);
+            }
+            $this->activeConnectionId = $connection->id;
+            $this->resolved = new WeakMap();
+        }
+
+        return $this->resolved[$connection] = $factory->make($connection);
+    }
 }

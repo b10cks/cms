@@ -7,8 +7,20 @@ use Config;
 use DB;
 use Illuminate\Database\ConnectionInterface;
 
+/**
+ * Registers space connections with the database manager. Warmed under Octane
+ * (config/octane.php), so `$registered` outlives the per-request config
+ * sandbox and an unchanged config keeps the worker's open PDO.
+ */
 class ConnectionFactory
 {
+    /**
+     * Configs this worker registered, keyed by connection name.
+     *
+     * @var array<string, array<string, mixed>>
+     */
+    private array $registered = [];
+
     public function __construct(
         private DatabaseConnectionResolver $resolver
     )
@@ -23,18 +35,33 @@ class ConnectionFactory
             $config['database'] = $this->createSqliteDatabase($config['database']);
         }
 
-        // Connection names are unique per SpaceConnection, so when the exact
-        // same config is already registered (long-running workers hitting the
-        // same space repeatedly) re-registering and purging is pure waste.
-        // A changed config (e.g. rotated credentials) still purges as before.
-        $configKey = "database.connections.{$connection->id}";
+        $name = $connection->id;
 
-        if (Config::get($configKey) !== $config) {
-            Config::set($configKey, $config);
-            DB::purge($connection->id);
+        // Octane hands every request a fresh config clone, so the key must be
+        // set again each time; the manager reads it whenever it (re)connects.
+        // Only a config this worker has not seen (first use, rotated
+        // credentials) drops the open connection.
+        Config::set("database.connections.{$name}", $config);
+
+        if (($this->registered[$name] ?? null) !== $config) {
+            DB::purge($name);
+            $this->registered[$name] = $config;
         }
 
-        return DB::connection($connection->id);
+        return DB::connection($name);
+    }
+
+    /**
+     * Close the connection and forget its config.
+     */
+    public function release(string $name): void
+    {
+        DB::purge($name);
+        unset($this->registered[$name]);
+
+        $connections = Config::get('database.connections', []);
+        unset($connections[$name]);
+        Config::set('database.connections', $connections);
     }
 
     private function createSqliteDatabase(string $database): string

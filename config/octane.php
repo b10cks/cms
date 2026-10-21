@@ -1,5 +1,7 @@
 <?php
 
+use App\Services\Database\ConnectionFactory;
+use App\Services\Database\SpaceModelResolver;
 use Laravel\Octane\Contracts\OperationTerminated;
 use Laravel\Octane\Events\RequestHandled;
 use Laravel\Octane\Events\RequestReceived;
@@ -129,6 +131,10 @@ return [
 
     'warm' => [
         ...Octane::defaultServicesToWarm(),
+        // Per-worker tenant connection state. Rebuilt per request, both forget
+        // the open space connection and reconnect on every request.
+        SpaceModelResolver::class,
+        ConnectionFactory::class,
     ],
 
     'flush' => [
