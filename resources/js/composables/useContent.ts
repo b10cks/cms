@@ -3,6 +3,13 @@ import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { ContentsQueryParams } from '~/api/resources/contents'
+import {
+  collectSubtreeIds,
+  type ContentMenu,
+  withMovedItems,
+  withRenamedItem,
+  withSavedContent,
+} from '~/lib/content-menu-cache'
 import type {
   ContentTranslationExportFormat,
   ContentTranslationImportMode,
@@ -10,6 +17,7 @@ import type {
 import type {
   ContentBulkPublishRun,
   ContentResource,
+  ContentTreeMoveOperation,
   ContentTreeOperationPayload,
   CreateContentPayload,
   UpdateContentPayload,
@@ -72,6 +80,42 @@ export function useContent(spaceId: MaybeRef<string>) {
         queryKey: queryKeys.contentVersions(spaceId, contentId).lists(),
       })
     })
+  }
+
+  const menuKey = () => queryKeys.contentMenu(spaceId).all()
+  const isMenuFetching = () => queryClient.isFetching({ queryKey: menuKey() }) > 0
+
+  // Folds a write response into the menu instead of refetching the whole tree.
+  // A fetch already in flight may predate the write, so that one restarts.
+  const syncMenuEntry = (content: ContentResource) => {
+    const menu = queryClient.getQueryData<ContentMenu>(menuKey())
+    const inFlight = isMenuFetching()
+    const patched = menu && !inFlight ? withSavedContent(menu, content) : null
+
+    if (patched) {
+      queryClient.setQueryData(menuKey(), patched)
+    } else if (menu || inFlight) {
+      queryClient.invalidateQueries({ queryKey: menuKey() })
+    }
+  }
+
+  // A write that answers with the whole entry: the detail and the menu entry
+  // take the response, so neither refetches and the open editor syncs once.
+  const applySavedContent = async (data: ContentResource, id: string, refetchMenu = false) => {
+    const reuseDetail = data.id === id && hasFullDetail(data)
+    if (reuseDetail) {
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.contents(spaceId).detail(data.id),
+        exact: true,
+      })
+    }
+    queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
+    if (refetchMenu) {
+      queryClient.invalidateQueries({ queryKey: menuKey() })
+    } else {
+      syncMenuEntry(data)
+    }
+    invalidateContentFamily(data, reuseDetail)
   }
 
   const useContentsQuery = (params: MaybeRef<ContentsQueryParams> = {}) => {
@@ -150,21 +194,42 @@ export function useContent(spaceId: MaybeRef<string>) {
         const response = await spaceAPI.value.contents.update(id, payload)
         return response.data
       },
-      onSuccess: async (data, variables) => {
-        const reuseDetail = data.id === variables.id && hasFullDetail(data)
-        if (reuseDetail) {
-          await queryClient.cancelQueries({
-            queryKey: queryKeys.contents(spaceId).detail(data.id),
-            exact: true,
-          })
+      // A rename shows in the tree right away and rolls back if the save fails.
+      onMutate: async ({ id, payload }) => {
+        const name = payload.name
+        if (name === undefined || !queryClient.getQueryData<ContentMenu>(menuKey())?.[id]) {
+          return undefined
         }
-        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
-        queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
-        invalidateContentFamily(data, reuseDetail)
+
+        // A cancelled fetch never lands, so the menu refetches once settled.
+        const refetchMenu = isMenuFetching()
+        await queryClient.cancelQueries({ queryKey: menuKey() })
+        const menu = queryClient.getQueryData<ContentMenu>(menuKey())
+        const renamed = menu && withRenamedItem(menu, id, name)
+        if (!menu || !renamed) return { refetchMenu }
+
+        queryClient.setQueryData(menuKey(), renamed)
+        return { previousName: menu[id].name, refetchMenu }
+      },
+      onSuccess: async (data, variables, context) => {
+        await applySavedContent(data, variables.id, context?.refetchMenu)
 
         toast.success(t('composables.content.updateSuccess', { name: data.name }) as string)
       },
-      onError: (error: any) => {
+      onError: (error: any, { id, payload }, context) => {
+        if (context?.previousName !== undefined) {
+          // Only undo our own name; a newer write may have landed meanwhile.
+          const menu = queryClient.getQueryData<ContentMenu>(menuKey())
+          const restored =
+            menu && menu[id]?.name === payload.name
+              ? withRenamedItem(menu, id, context.previousName)
+              : null
+          if (restored) queryClient.setQueryData(menuKey(), restored)
+        }
+        if (context?.refetchMenu) {
+          queryClient.invalidateQueries({ queryKey: menuKey() })
+        }
+
         if (error?.status === 409 && error?.data?.conflict) return
         toast.error(
           t('composables.content.updateError', {
@@ -181,10 +246,8 @@ export function useContent(spaceId: MaybeRef<string>) {
         const response = await spaceAPI.value.contents.publish(id, payload)
         return response.data
       },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
-        queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
-        invalidateContentFamily(data)
+      onSuccess: async (data, variables) => {
+        await applySavedContent(data, variables.id)
 
         toast.success(t('composables.content.publishSuccess', { name: data.name }) as string)
       },
@@ -227,10 +290,8 @@ export function useContent(spaceId: MaybeRef<string>) {
         const response = await spaceAPI.value.contents.schedule(id, payload)
         return response.data
       },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
-        queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
-        invalidateContentFamily(data)
+      onSuccess: async (data, variables) => {
+        await applySavedContent(data, variables.id)
 
         toast.success(t('composables.content.scheduleSuccess', { name: data.name }) as string)
       },
@@ -250,10 +311,8 @@ export function useContent(spaceId: MaybeRef<string>) {
         const response = await spaceAPI.value.contents.unpublish(id, payload)
         return response.data
       },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
-        queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
-        invalidateContentFamily(data)
+      onSuccess: async (data, variables) => {
+        await applySavedContent(data, variables.id)
 
         toast.success(t('composables.content.unpublishSuccess', { name: data.name }) as string)
       },
@@ -560,17 +619,87 @@ export function useContent(spaceId: MaybeRef<string>) {
 
   const useTreeOperationsMutation = () => {
     return useMutation({
-      mutationFn: async (payload: { operations: ContentTreeOperationPayload[] }) => {
-        const response = await spaceAPI.value.contents.treeOperations(payload)
+      mutationFn: async ({
+        operations,
+      }: {
+        operations: ContentTreeOperationPayload[]
+        /** Whether a parent keeps manual order, so a move resequences it like the server does. */
+        allowsManualSort?: (parentId: string | null) => boolean
+      }) => {
+        const response = await spaceAPI.value.contents.treeOperations({ operations })
         return response.data
       },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
-        // A batch reparents arbitrary entries, so every open detail is suspect.
-        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).details() })
-        queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
+      // Moves show in the tree right away and roll back if the batch fails.
+      onMutate: async ({ operations, allowsManualSort }) => {
+        const moves = operations.filter(
+          (operation): operation is ContentTreeMoveOperation => operation.type === 'move'
+        )
+        if (moves.length === 0 || !queryClient.getQueryData<ContentMenu>(menuKey())) {
+          return { previous: queryClient.getQueryData<ContentMenu>(menuKey()) }
+        }
+
+        await queryClient.cancelQueries({ queryKey: menuKey() })
+        const previous = queryClient.getQueryData<ContentMenu>(menuKey())
+        if (previous) {
+          queryClient.setQueryData(
+            menuKey(),
+            moves.reduce(
+              (menu, move) =>
+                withMovedItems(menu, move, allowsManualSort?.(move.parent_id ?? null) ?? true),
+              previous
+            )
+          )
+        }
+
+        return { previous }
       },
-      onError: (error: Error) => {
+      onSuccess: (result, { operations }, context) => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
+
+        // The response carries the changed menu rows (server resequencing, new
+        // ids, timestamps). Deletes are not in them, and a fetch already in
+        // flight may predate the batch, so those refetch the menu instead.
+        const cached = queryClient.getQueryData<ContentMenu>(menuKey())
+        if (
+          cached &&
+          result.menu &&
+          !isMenuFetching() &&
+          !operations.some((operation) => operation.type === 'delete')
+        ) {
+          queryClient.setQueryData(menuKey(), { ...cached, ...result.menu })
+        } else {
+          queryClient.invalidateQueries({ queryKey: menuKey() })
+        }
+
+        // Only the moved, deleted or re-blocked entries change: their parent,
+        // slug path or block, and for moves and deletes their whole subtree.
+        const subtreeRoots = operations.flatMap((operation) =>
+          operation.type === 'move' || operation.type === 'delete' ? operation.ids : []
+        )
+        const reblocked = operations.flatMap((operation) =>
+          operation.type === 'update_block' ? [operation.id] : []
+        )
+        if (subtreeRoots.length === 0 && reblocked.length === 0) return
+
+        const menu = context?.previous ?? queryClient.getQueryData<ContentMenu>(menuKey())
+        if (!menu) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).details() })
+          return
+        }
+
+        const touched = collectSubtreeIds(menu, subtreeRoots)
+        for (const id of reblocked) {
+          touched.add(id)
+          menu[id]?.i18n?.forEach((translation) => touched.add(translation.id))
+        }
+        touched.forEach((id) =>
+          queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).detail(id) })
+        )
+      },
+      onError: (error: Error, _variables, context) => {
+        if (context?.previous) queryClient.setQueryData(menuKey(), context.previous)
+        queryClient.invalidateQueries({ queryKey: menuKey() })
+
         toast.error(
           t('composables.content.moveError', {
             error: error.message || 'Unknown error',

@@ -3,7 +3,8 @@ import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
 import type { CommentsQueryParams } from '~/api/resources/comments'
-import type { CreateCommentRequest, UpdateCommentRequest } from '~/types/comments'
+import { addComment, patchComment, removeComment } from '~/lib/commentCache'
+import type { CommentResource, CreateCommentRequest, UpdateCommentRequest } from '~/types/comments'
 
 import { queryKeys } from './useQueryClient'
 
@@ -25,6 +26,35 @@ export function useComments(
     undefined
   )
   const notifyCollaborators = () => broadcastCommentUpdate?.()
+
+  const listsKey = () => queryKeys.comments(spaceId, resolvedContentId.value).lists()
+
+  /** Cancels in-flight list fetches so they cannot overwrite the patch, and returns the lists to roll back to. */
+  const snapshotLists = async () => {
+    await queryClient.cancelQueries({ queryKey: listsKey() })
+    return queryClient.getQueriesData<CommentResource[]>({ queryKey: listsKey() })
+  }
+
+  const restoreLists = (snapshot: Awaited<ReturnType<typeof snapshotLists>>) => {
+    for (const [key, data] of snapshot) queryClient.setQueryData(key, data)
+  }
+
+  const patchLists = (
+    update: (list: CommentResource[], params: CommentsQueryParams | undefined) => CommentResource[]
+  ) => {
+    for (const [key, data] of queryClient.getQueriesData<CommentResource[]>({
+      queryKey: listsKey(),
+    })) {
+      if (data) {
+        queryClient.setQueryData(key, update(data, key.at(-1) as CommentsQueryParams | undefined))
+      }
+    }
+  }
+
+  const resolvedPatch = (isResolved: boolean): Partial<CommentResource> => ({
+    is_resolved: isResolved,
+    resolved_at: isResolved ? new Date().toISOString() : undefined,
+  })
 
   const useCommentsQuery = (params: MaybeRef<CommentsQueryParams> = {}) => {
     return useQuery({
@@ -57,10 +87,8 @@ export function useComments(
         const response = await commentsAPI.value.create(payload)
         return response.data
       },
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.comments(spaceId, resolvedContentId.value).lists(),
-        })
+      onSuccess: (data) => {
+        patchLists((list, params) => addComment(list, data, params))
         notifyCollaborators()
         toast.success(t('composables.comments.addSuccess') as string)
       },
@@ -106,17 +134,20 @@ export function useComments(
         await commentsAPI.value.delete(id)
         return id
       },
+      onMutate: async (id) => {
+        const snapshot = await snapshotLists()
+        patchLists((list) => removeComment(list, id))
+        return { snapshot }
+      },
       onSuccess: (id) => {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.comments(spaceId, resolvedContentId.value).lists(),
-        })
         queryClient.removeQueries({
           queryKey: queryKeys.comments(spaceId, resolvedContentId.value).detail(id),
         })
         notifyCollaborators()
         toast.success(t('composables.comments.deleteSuccess') as string)
       },
-      onError: (error: Error) => {
+      onError: (error: Error, _id, context) => {
+        if (context) restoreLists(context.snapshot)
         toast.error(
           t('composables.comments.deleteError', {
             error: error.message || 'Unknown error',
@@ -132,17 +163,26 @@ export function useComments(
         const response = await commentsAPI.value.resolve(id)
         return response.data
       },
+      onMutate: async (id) => {
+        const snapshot = await snapshotLists()
+        patchLists((list) => patchComment(list, id, resolvedPatch(true)))
+        return { snapshot }
+      },
       onSuccess: (data) => {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.comments(spaceId, resolvedContentId.value).lists(),
-        })
+        patchLists((list) =>
+          patchComment(list, data.id, {
+            is_resolved: data.is_resolved,
+            resolved_at: data.resolved_at,
+          })
+        )
         queryClient.invalidateQueries({
           queryKey: queryKeys.comments(spaceId, resolvedContentId.value).detail(data.id),
         })
         notifyCollaborators()
         toast.success(t('composables.comments.resolveSuccess') as string)
       },
-      onError: (error: Error) => {
+      onError: (error: Error, _id, context) => {
+        if (context) restoreLists(context.snapshot)
         toast.error(
           t('composables.comments.resolveError', {
             error: error.message || 'Unknown error',
@@ -158,17 +198,26 @@ export function useComments(
         const response = await commentsAPI.value.unresolve(id)
         return response.data
       },
+      onMutate: async (id) => {
+        const snapshot = await snapshotLists()
+        patchLists((list) => patchComment(list, id, resolvedPatch(false)))
+        return { snapshot }
+      },
       onSuccess: (data) => {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.comments(spaceId, resolvedContentId.value).lists(),
-        })
+        patchLists((list) =>
+          patchComment(list, data.id, {
+            is_resolved: data.is_resolved,
+            resolved_at: data.resolved_at,
+          })
+        )
         queryClient.invalidateQueries({
           queryKey: queryKeys.comments(spaceId, resolvedContentId.value).detail(data.id),
         })
         notifyCollaborators()
         toast.success(t('composables.comments.unresolveSuccess') as string)
       },
-      onError: (error: Error) => {
+      onError: (error: Error, _id, context) => {
+        if (context) restoreLists(context.snapshot)
         toast.error(
           t('composables.comments.unresolveError', {
             error: error.message || 'Unknown error',

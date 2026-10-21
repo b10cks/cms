@@ -8,6 +8,7 @@ import { AlertDialogProvider } from '@/composables/useAlertDialog'
 import UploadBatchPanel from '~/components/assets/UploadBatchPanel.vue'
 import Command from '~/components/Command.vue'
 import KeyboardShortcutsDialog from '~/components/KeyboardShortcutsDialog.vue'
+import NavigationProgress from '~/components/NavigationProgress.vue'
 import { useAssetUploadBatch } from '~/composables/useAssetUploadBatch'
 import { useUrlNotifications } from '~/composables/useUrlNotifications'
 import DefaultLayout from '~/layouts/default.vue'
@@ -15,7 +16,16 @@ import ShareLayout from '~/layouts/share.vue'
 import StartLayout from '~/layouts/start.vue'
 import UnauthenticatedLayout from '~/layouts/unauthenticated.vue'
 
-useDark()
+const isDark = useDark()
+// The browser bar follows the in-app theme, not the system one. The colours
+// live on the meta in app.blade.php, next to the matching --surface values.
+const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+watchEffect(() => {
+  const color = isDark.value ? themeColor?.dataset.dark : themeColor?.dataset.light
+  if (themeColor && color) {
+    themeColor.content = color
+  }
+})
 useUrlNotifications()
 const commandOpen = ref(false)
 
@@ -56,6 +66,7 @@ const currentLayout = computed(() => {
 
 <template>
   <div>
+    <NavigationProgress />
     <AlertDialogProvider>
       <component :is="currentLayout">
         <RouterView />

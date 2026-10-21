@@ -30,6 +30,7 @@ export function useDataSources(spaceId: MaybeRef<string>) {
     // Queries
     useDataSourcesQuery: crud.useListQuery,
     useDataSourceQuery: crud.useDetailQuery,
+    prefetchDataSource: crud.prefetchDetail,
 
     // Mutations
     useCreateDataSourceMutation: crud.useCreateMutation,

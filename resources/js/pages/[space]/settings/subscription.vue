@@ -88,6 +88,7 @@ const statusVariant = computed(() => {
 })
 
 const { formatUnit } = useUsageFormatters()
+const { formatDate } = useFormat()
 
 // Maps each plan quota to its live consumption for the progress bars. Falls back
 // to quota-only display (no usage) while the usage request is still loading.
@@ -384,7 +385,7 @@ const payProposal = () => {
               ·
               {{
                 $t('labels.subscriptions.proposal.expires', {
-                  date: new Date(proposal.expires_at).toLocaleDateString(),
+                  date: formatDate(proposal.expires_at),
                 })
               }}
             </template>
@@ -484,14 +485,14 @@ const payProposal = () => {
             <template v-if="current.status === 'cancelled' && current.ends_at">
               {{
                 $t('labels.subscriptions.accessUntil', {
-                  date: new Date(current.ends_at).toLocaleDateString(),
+                  date: formatDate(current.ends_at),
                 })
               }}
             </template>
             <template v-else-if="current.renews_at">
               {{
                 $t('labels.subscriptions.renewsAt', {
-                  date: new Date(current.renews_at).toLocaleDateString(),
+                  date: formatDate(current.renews_at),
                 })
               }}
             </template>
@@ -534,7 +535,7 @@ const payProposal = () => {
             >
               {{
                 $t('labels.plans.usageResets', {
-                  date: new Date(usage.period.resets_at).toLocaleDateString(),
+                  date: formatDate(usage.period.resets_at),
                 })
               }}
             </p>
@@ -646,7 +647,7 @@ const payProposal = () => {
               >
                 <TableCell class="font-medium">{{ sub.plan?.name ?? sub.name }}</TableCell>
                 <TableCell class="text-muted">
-                  {{ new Date(sub.created_at).toLocaleDateString() }}
+                  {{ formatDate(sub.created_at) }}
                 </TableCell>
                 <TableCell>
                   <Badge variant="surface">

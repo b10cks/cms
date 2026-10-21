@@ -120,7 +120,7 @@ const handleClear = () => {
     :error="error"
     :class="props.class"
   >
-    <template #default="{ id, hasError }">
+    <template #default="{ id, 'aria-describedby': describedBy, 'aria-invalid': invalid }">
       <div class="flex items-center gap-1">
         <Select
           :model-value="modelValue"
@@ -130,7 +130,8 @@ const handleClear = () => {
         >
           <SelectTrigger
             :id="id"
-            :class="{ 'border-red-500': hasError }"
+            :aria-describedby="describedBy"
+            :aria-invalid="invalid"
           >
             <SelectValue :placeholder="$t(String(placeholder || 'common.select'))">
               <slot

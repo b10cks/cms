@@ -22,13 +22,17 @@ import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { useDataSources } from '~/composables/useDataSources'
+import { useHoverPrefetch } from '~/composables/useHoverPrefetch'
 import type { DataSourceResource } from '~/types/data-sources'
 
 const props = defineProps<{
   spaceId: string
 }>()
 
-const { useDataSourcesQuery, useDeleteDataSourceMutation } = useDataSources(props.spaceId)
+const { useDataSourcesQuery, useDeleteDataSourceMutation, prefetchDataSource } = useDataSources(
+  props.spaceId
+)
+const { start: startPrefetch, cancel: cancelPrefetch } = useHoverPrefetch(prefetchDataSource)
 const { mutate: deleteDataSource } = useDeleteDataSourceMutation()
 
 const emit = defineEmits<{
@@ -199,6 +203,10 @@ const confirmDelete = async () => {
               :key="dataSource.id"
               :data-data-source-id="dataSource.id"
               data-table-row
+              @mouseenter="startPrefetch(dataSource.id)"
+              @mouseleave="cancelPrefetch(dataSource.id)"
+              @focusin="startPrefetch(dataSource.id)"
+              @focusout="cancelPrefetch(dataSource.id)"
               :class="[
                 'focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-ring',
                 { 'bg-background/50': index % 2 === 0 },

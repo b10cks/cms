@@ -95,8 +95,6 @@
       "backToDataSources": "Назад ко всем источникам данных",
       "copySlugTooltip": "Скопировать endpoint API в буфер обмена",
       "dataEntries": "Записи",
-      "loading": "Загрузка ваших данных...",
-      "loadingEntries": "Получение записей...",
       "noEntries": "Пока нет записей. Создайте первую, чтобы начать.",
       "searchEntriesPlaceholder": "Искать по ключу или значению...",
       "perPage": "На странице",
@@ -519,7 +517,6 @@
     },
     "contentVersions": {
       "title": "История версий",
-      "loading": "Загрузка версий...",
       "noVersions": "Версий не найдено",
       "selectVersion": "Выберите версию, чтобы посмотреть подробности",
       "noMessage": "Нет сообщения",
@@ -1765,7 +1762,6 @@
       "description": "Сохраняйте конфигурации блоков как шаблоны, чтобы ускорить создание.",
       "createTitle": "Создать шаблон",
       "manageTitle": "Шаблоны блоков",
-      "loading": "Загрузка шаблонов…",
       "noTemplates": "Шаблонов пока нет. Создайте первый из существующего блока.",
       "fields": {
         "name": "Название шаблона",
@@ -1784,7 +1780,6 @@
     "blockVersions": {
       "title": "Версии блоков",
       "description": "Отслеживайте и восстанавливайте предыдущие версии блоков.",
-      "loading": "Загрузка версий…",
       "noVersions": "Истории версий пока нет.",
       "selectVersion": "Выберите версию, чтобы увидеть изменения.",
       "restoreTooltip": "Восстановить эту версию",
@@ -2698,7 +2693,27 @@
         "localizationDescription": "Управляйте языковыми предпочтениями.",
         "language": "Язык",
         "languageDescription": "Выберите предпочитаемый язык интерфейса.",
-        "selectLanguage": "Выбрать язык"
+        "selectLanguage": "Выбрать язык",
+        "displayFormats": "Форматы отображения",
+        "displayFormatsDescription": "Выберите, как показывать даты и время, независимо от языка интерфейса. Сейчас: {example}",
+        "dateOrder": "Порядок даты",
+        "dateOrderDescription": "Порядок дня, месяца и года в датах.",
+        "clock": "Часы",
+        "clockDescription": "Как записывается время суток.",
+        "timeZone": "Часовой пояс",
+        "timeZoneDescription": "Даты и время показываются в этом часовом поясе.",
+        "searchTimeZone": "Поиск часовых поясов",
+        "followLanguage": "Как в языке ({example})",
+        "browserTimeZone": "Часовой пояс браузера ({zone})",
+        "dateOrders": {
+          "dmy": "День, месяц, год ({example})",
+          "mdy": "Месяц, день, год ({example})",
+          "ymd": "Год, месяц, день ({example})"
+        },
+        "clocks": {
+          "h24": "24-часовой ({example})",
+          "h12": "12-часовой ({example})"
+        }
       }
     },
     "twoFactor": {

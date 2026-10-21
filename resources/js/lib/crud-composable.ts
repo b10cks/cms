@@ -177,6 +177,13 @@ export function createCrudComposable<
           : undefined,
       })
 
+    /** Warms the detail cache with the same key and fetcher as `useDetailQuery`. */
+    const prefetchDetail = (id: string) =>
+      queryClient.prefetchQuery({
+        queryKey: keys.value.detail(id),
+        queryFn: async ({ signal }) => (await resource.value.get(id, undefined, { signal })).data,
+      })
+
     const useCreateMutation = () =>
       useMutation({
         mutationFn: async (payload: TCreate) => (await resource.value.create(payload)).data,
@@ -226,6 +233,7 @@ export function createCrudComposable<
       invalidateLists,
       useListQuery,
       useDetailQuery,
+      prefetchDetail,
       useCreateMutation,
       useUpdateMutation,
       useDeleteMutation,

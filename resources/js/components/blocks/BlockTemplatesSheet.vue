@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import dayjs from 'dayjs'
 
 import ImagePickerField from '~/components/assets/ImagePickerField.vue'
 import Icon from '~/components/Icon.vue'
@@ -10,7 +9,7 @@ import { TextField } from '~/components/ui/form'
 import IconNameField from '~/components/ui/IconNameField.vue'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetHeaderCombined } from '~/components/ui/sheet'
-import { Spinner } from '~/components/ui/spinner'
+import { Skeleton } from '~/components/ui/skeleton'
 
 const open = defineModel<boolean>('open')
 const { $t } = useI18n()
@@ -30,6 +29,7 @@ const { mutate: updateTemplate, isPending: isUpdating } = useUpdateBlockTemplate
 const { mutate: deleteTemplate, isPending: isDeleting } = useDeleteBlockTemplateMutation()
 
 const { alert } = useAlertDialog()
+const { formatDateTime } = useFormat()
 
 const editingTemplate = ref<BlockTemplate | null>(null)
 const editForm = ref<{
@@ -89,10 +89,6 @@ const handleDelete = async (template: BlockTemplate) => {
   })
 }
 
-const formatDate = (date: string) => {
-  return dayjs(date).format('MMM D, YYYY HH:mm')
-}
-
 watch(open, (isOpen) => {
   if (!isOpen) {
     editingTemplate.value = null
@@ -109,10 +105,17 @@ watch(open, (isOpen) => {
       <SheetHeaderCombined :title="$t('labels.blockTemplates.manageTitle')" />
       <div
         v-if="isLoading"
-        class="flex h-32 items-center justify-center"
+        class="grid gap-4"
+        aria-hidden="true"
       >
-        <Spinner class="mr-2 size-6" />
-        <span>{{ $t('labels.blockTemplates.loading') }}</span>
+        <div
+          v-for="i in 3"
+          :key="i"
+          class="space-y-2 rounded-lg border p-4"
+        >
+          <Skeleton class="h-5 w-1/3" />
+          <Skeleton class="h-4 w-2/3" />
+        </div>
       </div>
 
       <div
@@ -259,7 +262,7 @@ watch(open, (isOpen) => {
                 <span v-if="template.created_by">{{ template.created_by.name }}</span>
                 <span v-else>{{ $t('labels.system') }}</span>
                 <span>•</span>
-                <span>{{ formatDate(template.created_at) }}</span>
+                <span>{{ formatDateTime(template.created_at) }}</span>
               </div>
             </div>
           </div>

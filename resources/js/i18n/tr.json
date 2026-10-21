@@ -95,8 +95,6 @@
       "backToDataSources": "Tüm veri kaynaklarına geri dön",
       "copySlugTooltip": "API uç noktasını panoya kopyala",
       "dataEntries": "Girdiler",
-      "loading": "Verileriniz yükleniyor...",
-      "loadingEntries": "Girdiler alınıyor...",
       "noEntries": "Henüz girdi yok. Başlamak için bir tane oluşturun.",
       "searchEntriesPlaceholder": "Anahtar veya değere göre ara...",
       "perPage": "Sayfa başına",
@@ -519,7 +517,6 @@
     },
     "contentVersions": {
       "title": "Sürüm Geçmişi",
-      "loading": "Sürümler yükleniyor...",
       "noVersions": "Sürüm bulunamadı",
       "selectVersion": "Detayları görmek için bir sürüm seçin",
       "noMessage": "Mesaj yok",
@@ -1765,7 +1762,6 @@
       "description": "Oluşturma sürecini hızlandırmak için Blok yapılandırmalarını şablon olarak kaydedin.",
       "createTitle": "Şablon oluştur",
       "manageTitle": "Blok Şablonları",
-      "loading": "Şablonlar yükleniyor...",
       "noTemplates": "Henüz şablon yok. Mevcut bir Bloktan bir tane oluşturun.",
       "fields": {
         "name": "Şablon Adı",
@@ -1784,7 +1780,6 @@
     "blockVersions": {
       "title": "Blok Sürümleri",
       "description": "Önceki Blok sürümlerini izleyin ve geri yükleyin.",
-      "loading": "Sürümler yükleniyor...",
       "noVersions": "Henüz sürüm geçmişi yok.",
       "selectVersion": "Ne değiştiğini görmek için bir sürüm seçin.",
       "restoreTooltip": "Bu sürümü geri yükle",
@@ -2698,7 +2693,27 @@
         "localizationDescription": "Dil tercihinizi yönetin.",
         "language": "Dil",
         "languageDescription": "Arayüz için tercih ettiğiniz dili seçin.",
-        "selectLanguage": "Dil seç"
+        "selectLanguage": "Dil seç",
+        "displayFormats": "Görüntüleme biçimleri",
+        "displayFormatsDescription": "Tarih ve saatlerin arayüz dilinden bağımsız olarak nasıl gösterileceğini seç. Şimdi: {example}",
+        "dateOrder": "Tarih sırası",
+        "dateOrderDescription": "Tarihlerde gün, ay ve yılın sırası.",
+        "clock": "Saat",
+        "clockDescription": "Günün saatlerinin nasıl yazılacağı.",
+        "timeZone": "Saat dilimi",
+        "timeZoneDescription": "Tarih ve saatler bu saat diliminde gösterilir.",
+        "searchTimeZone": "Saat dilimi ara",
+        "followLanguage": "Dile göre ({example})",
+        "browserTimeZone": "Tarayıcı saat dilimi ({zone})",
+        "dateOrders": {
+          "dmy": "Gün, ay, yıl ({example})",
+          "mdy": "Ay, gün, yıl ({example})",
+          "ymd": "Yıl, ay, gün ({example})"
+        },
+        "clocks": {
+          "h24": "24 saat ({example})",
+          "h12": "12 saat ({example})"
+        }
       }
     },
     "twoFactor": {

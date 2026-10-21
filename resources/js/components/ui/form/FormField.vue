@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 
+import FieldMessages from '~/components/ui/form/FieldMessages.vue'
 import Label from '~/components/ui/form/Label.vue'
 import { TooltipIcon } from '~/components/ui/tooltip'
+import { useFieldA11y } from '~/composables/useFieldA11y'
 
 const props = defineProps<{
   id?: string
@@ -16,10 +18,7 @@ const props = defineProps<{
   class?: HTMLAttributes['class']
 }>()
 
-const uniqueId = computed(
-  () => props.id || `${props.name}-${Math.random().toString(36).substring(2, 9)}`
-)
-const hasError = computed(() => !!props.error)
+const { fieldId: uniqueId, hasError, describedBy, invalid } = useFieldA11y(props)
 </script>
 
 <template>
@@ -41,20 +40,15 @@ const hasError = computed(() => !!props.error)
       v-bind="{
         id: uniqueId,
         name: props.name,
+        'aria-describedby': describedBy,
+        'aria-invalid': invalid,
       }"
       :has-error="hasError"
     />
-    <p
-      v-if="hasError"
-      class="mt-1 text-sm leading-tight whitespace-pre-line text-destructive"
-    >
-      {{ error }}
-    </p>
-    <p
-      v-if="description"
-      class="text-sm text-text-muted"
-    >
-      {{ description }}
-    </p>
+    <FieldMessages
+      :id="uniqueId"
+      :error="error"
+      :description="description"
+    />
   </div>
 </template>

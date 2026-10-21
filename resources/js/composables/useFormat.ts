@@ -7,8 +7,12 @@ import 'dayjs/locale/tr'
 import Calendar from 'dayjs/plugin/calendar'
 import LocalizedFormat from 'dayjs/plugin/localizedFormat'
 import RelativeTime from 'dayjs/plugin/relativeTime'
+import Timezone from 'dayjs/plugin/timezone'
 import UpdateLocale from 'dayjs/plugin/updateLocale'
+import Utc from 'dayjs/plugin/utc'
 
+import type { DisplayFormats } from '~/lib/display-formats'
+import { displayFormats } from '~/lib/display-formats'
 import type { LocaleCode } from '~/plugins/i18n'
 import { getLocale } from '~/plugins/i18n'
 
@@ -16,6 +20,8 @@ dayjs.extend(LocalizedFormat)
 dayjs.extend(RelativeTime)
 dayjs.extend(Calendar)
 dayjs.extend(UpdateLocale)
+dayjs.extend(Utc)
+dayjs.extend(Timezone)
 
 // dayjs ships no per-locale `calendar` block, so the relative-day labels are
 // declared here — once per locale at module load. Writing them inside
@@ -76,6 +82,83 @@ for (const [code, calendar] of Object.entries(CALENDAR_FORMATS)) {
   dayjs.updateLocale(code, { calendar })
 }
 
+type LocalizedToken = 'LT' | 'LTS' | 'L' | 'LL' | 'LLL' | 'LLLL'
+
+// dayjs keeps English in the localizedFormat plugin, not on the locale object.
+const ENGLISH_FORMATS: Record<LocalizedToken, string> = {
+  LTS: 'h:mm:ss A',
+  LT: 'h:mm A',
+  L: 'MM/DD/YYYY',
+  LL: 'MMMM D, YYYY',
+  LLL: 'MMMM D, YYYY h:mm A',
+  LLLL: 'dddd, MMMM D, YYYY h:mm A',
+}
+
+const DATE_ORDER_FORMATS: Record<Exclude<DisplayFormats['dateOrder'], 'auto'>, string> = {
+  dmy: 'DD.MM.YYYY',
+  mdy: 'MM/DD/YYYY',
+  ymd: 'YYYY-MM-DD',
+}
+
+// `[...]` is an escaped literal in dayjs formats and must pass through untouched.
+const LOCALIZED_TOKENS = /(\[[^\]]*])|(LTS?|l{1,4}|L{1,4})/g
+const CLOCK_TOKENS = /(\[[^\]]*])|(\s?[aA])|([Hh]{1,2})(:mm(?::ss)?)?/g
+const LITERALS = /\[[^\]]*]/g
+
+// The lowercase `l` tokens are their uppercase twins with short month and day names.
+const shorten = (format: string) =>
+  format.replace(/(\[[^\]]*])|(MMMM|MM|DD|dddd)/g, (_, literal?: string, token?: string) =>
+    literal ? literal : (token ?? '').slice(1)
+  )
+
+/**
+ * Rewrites a dayjs format so it follows the user's date order and clock.
+ * Localized tokens (`L`, `LL`, `LLL`, `LT`, …) are expanded first, so the
+ * order replaces their date part; the clock then applies to every hour token,
+ * including those of fixed formats like `HH:mm`. Fixed date parts stay as asked.
+ */
+function resolveFormat(format: string, locale: string, formats: DisplayFormats): string {
+  if (formats.dateOrder === 'auto' && formats.clock === 'auto') return format
+
+  const own: Record<LocalizedToken, string> = { ...ENGLISH_FORMATS, ...dayjs.Ls[locale]?.formats }
+  const date = formats.dateOrder === 'auto' ? null : DATE_ORDER_FORMATS[formats.dateOrder]
+
+  const expand = (token: LocalizedToken): string => {
+    if (!date || token === 'LT' || token === 'LTS') return own[token]
+    if (token === 'LLL') return `${date} ${own.LT}`
+    if (token === 'LLLL') return `dddd, ${date} ${own.LT}`
+    return date
+  }
+
+  const expanded = format.replace(
+    LOCALIZED_TOKENS,
+    (match, literal: string | undefined, token: string) => {
+      if (literal) return match
+      const upper = token.toUpperCase() as LocalizedToken
+      // A chosen order is numeric already; shortening it would drop the zero padding.
+      return token === upper || date ? expand(upper) : shorten(expand(upper))
+    }
+  )
+
+  if (formats.clock === 'auto') return expanded
+
+  const hasMeridiem = /[aA]/.test(expanded.replace(LITERALS, ''))
+  return expanded.replace(
+    CLOCK_TOKENS,
+    (match, literal?: string, meridiem?: string, _hour?: string, rest = '') => {
+      if (literal) return match
+      if (meridiem) return formats.clock === '12h' ? match : ''
+      return formats.clock === '24h' ? `HH${rest}` : `h${rest}${hasMeridiem ? '' : ' A'}`
+    }
+  )
+}
+
+// A bare calendar day has no zone; shifting it would move it to a neighbouring day.
+const isCalendarDay = (date: string | Date | number) =>
+  typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)
+
+export type VersionGroup = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'older'
+
 const FILE_SIZE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 
 export default function useFormat() {
@@ -83,8 +166,23 @@ export default function useFormat() {
   // to follow the switcher for the rest of its life.
   const locale = computed(() => getLocale())
 
-  function formatDateTime(date: string | Date | number, format: string = 'LLL') {
-    return dayjs(date).locale(locale.value).format(format)
+  // `formats` defaults to the user's choices; the settings page passes others to preview them.
+  function zoned(date: string | Date | number, formats: DisplayFormats) {
+    const parsed = dayjs(date).locale(locale.value)
+    if (formats.timeZone === 'auto' || isCalendarDay(date)) return parsed
+    return parsed.tz(formats.timeZone)
+  }
+
+  function formatDateTime(
+    date: string | Date | number,
+    format: string = 'LLL',
+    formats: DisplayFormats = displayFormats
+  ) {
+    return zoned(date, formats).format(resolveFormat(format, locale.value, formats))
+  }
+
+  function formatDate(date: string | Date | number, formats: DisplayFormats = displayFormats) {
+    return formatDateTime(date, 'll', formats)
   }
 
   function formatRelativeTime(date: string | Date | number) {
@@ -95,8 +193,8 @@ export default function useFormat() {
     return parsed.fromNow()
   }
 
-  function formatTime(date: string | Date | number) {
-    return dayjs(date).locale(locale.value).format('LT')
+  function formatTime(date: string | Date | number, formats: DisplayFormats = displayFormats) {
+    return formatDateTime(date, 'LT', formats)
   }
 
   function formatDateTimeDynamically(date: string | Date | number, relativeCutOff: number = 1) {
@@ -110,24 +208,50 @@ export default function useFormat() {
   }
 
   function formatCalendarTime(date: string | Date | number) {
-    return dayjs(date).locale(locale.value).calendar()
+    const calendar = CALENDAR_FORMATS[locale.value as LocaleCode] ?? CALENDAR_FORMATS.en
+    const resolved = Object.fromEntries(
+      Object.entries(calendar).map(([key, format]) => [
+        key,
+        resolveFormat(format, locale.value, displayFormats),
+      ])
+    )
+    // "Today" is today in the display zone, so the reference moves with it.
+    return zoned(date, displayFormats).calendar(zoned(Date.now(), displayFormats), resolved)
+  }
+
+  /** Which day bucket a timestamp falls in, counted in the display zone. */
+  function versionGroup(
+    date: string | Date | number,
+    now: string | Date | number = Date.now(),
+    formats: DisplayFormats = displayFormats
+  ): VersionGroup {
+    const reference = zoned(now, formats)
+    const startOfToday = reference.startOf('day')
+    const startOfWeek = reference.startOf('week')
+    const moment = zoned(date, formats)
+
+    if (!moment.isBefore(startOfToday)) return 'today'
+    if (!moment.isBefore(startOfToday.subtract(1, 'day'))) return 'yesterday'
+    if (!moment.isBefore(startOfWeek)) return 'thisWeek'
+    if (!moment.isBefore(startOfWeek.subtract(1, 'week'))) return 'lastWeek'
+    return 'older'
   }
 
   function formatVersionTime(
     date: string | Date | number,
-    group: 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'older'
+    group: VersionGroup
   ) {
     switch (group) {
       case 'today':
       case 'yesterday':
-        return dayjs(date).locale(locale.value).format('HH:mm')
+        return formatDateTime(date, 'LT')
       case 'thisWeek':
       case 'lastWeek':
-        return dayjs(date).locale(locale.value).format('ddd HH:mm')
+        return formatDateTime(date, 'ddd LT')
       case 'older':
-        return dayjs(date).locale(locale.value).format('MMM D, YYYY')
+        return formatDateTime(date, 'll')
       default:
-        return dayjs(date).locale(locale.value).format('LLL')
+        return formatDateTime(date)
     }
   }
 
@@ -239,9 +363,11 @@ export default function useFormat() {
 
   return {
     formatDateTime,
+    formatDate,
     formatFileSize,
     formatCurrency,
     formatVersionTime,
+    versionGroup,
     formatTrafficSize,
     formatRelativeTime,
     formatCalendarTime,

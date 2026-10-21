@@ -95,8 +95,6 @@
       "backToDataSources": "Volver a todas las fuentes de datos",
       "copySlugTooltip": "Copiar el punto de conexión de la API al portapapeles",
       "dataEntries": "Entradas",
-      "loading": "Cargando tus datos...",
-      "loadingEntries": "Obteniendo entradas...",
       "noEntries": "Aún no hay entradas. Crea una para empezar.",
       "searchEntriesPlaceholder": "Buscar por clave o valor...",
       "perPage": "Por página",
@@ -519,7 +517,6 @@
     },
     "contentVersions": {
       "title": "Historial de versiones",
-      "loading": "Cargando versiones...",
       "noVersions": "No se han encontrado versiones",
       "selectVersion": "Selecciona una versión para ver los detalles",
       "noMessage": "Sin mensaje",
@@ -1765,7 +1762,6 @@
       "description": "Guarde configuraciones de bloque como plantillas para acelerar la creación.",
       "createTitle": "Crear una plantilla",
       "manageTitle": "Plantillas de Bloque",
-      "loading": "Cargando plantillas...",
       "noTemplates": "Aún no hay plantillas. Cree una a partir de un bloque existente.",
       "fields": {
         "name": "Nombre de la Plantilla",
@@ -1784,7 +1780,6 @@
     "blockVersions": {
       "title": "Versiones de Bloque",
       "description": "Rastree y restaure versiones anteriores de bloques.",
-      "loading": "Cargando versiones...",
       "noVersions": "Aún no hay historial de versiones.",
       "selectVersion": "Elija una versión para ver qué cambió.",
       "restoreTooltip": "Restaurar esta versión",
@@ -2698,7 +2693,27 @@
         "localizationDescription": "Gestione su preferencia de idioma.",
         "language": "Idioma",
         "languageDescription": "Seleccione su idioma preferido para la interfaz.",
-        "selectLanguage": "Seleccionar un idioma"
+        "selectLanguage": "Seleccionar un idioma",
+        "displayFormats": "Formatos de visualización",
+        "displayFormatsDescription": "Elige cómo se muestran las fechas y horas, independientemente del idioma de la interfaz. Ahora: {example}",
+        "dateOrder": "Orden de la fecha",
+        "dateOrderDescription": "El orden de día, mes y año en las fechas.",
+        "clock": "Reloj",
+        "clockDescription": "Cómo se escriben las horas del día.",
+        "timeZone": "Zona horaria",
+        "timeZoneDescription": "Las fechas y horas se muestran en esta zona horaria.",
+        "searchTimeZone": "Buscar zonas horarias",
+        "followLanguage": "Según el idioma ({example})",
+        "browserTimeZone": "Zona horaria del navegador ({zone})",
+        "dateOrders": {
+          "dmy": "Día, mes, año ({example})",
+          "mdy": "Mes, día, año ({example})",
+          "ymd": "Año, mes, día ({example})"
+        },
+        "clocks": {
+          "h24": "24 horas ({example})",
+          "h12": "12 horas ({example})"
+        }
       }
     },
     "twoFactor": {

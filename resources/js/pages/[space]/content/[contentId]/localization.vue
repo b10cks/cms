@@ -12,7 +12,7 @@ import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/components/ui/resizable'
 import { ScrollArea } from '~/components/ui/scroll-area'
-import { Spinner } from '~/components/ui/spinner'
+import { Skeleton } from '~/components/ui/skeleton'
 import { useContentEditorPage } from '~/composables/useContentEditorPage'
 import {
   useContentLiveCollaboration,
@@ -794,11 +794,28 @@ useSeoMeta({
       >
         <div
           v-if="isLoading"
-          class="flex h-full w-full items-center justify-center p-3"
+          class="h-full w-full p-3"
+          aria-hidden="true"
         >
-          <div :class="['w-full text-center', showPreviewPane ? '' : 'mx-auto max-w-4xl']">
-            <Spinner class="mx-auto mb-4 size-8 text-text-muted" />
-            <p class="text-muted">Loading content...</p>
+          <div :class="['grid w-full gap-6', showPreviewPane ? '' : 'mx-auto max-w-4xl']">
+            <div class="grid grid-cols-2 gap-4 rounded-lg bg-surface p-3">
+              <div class="space-y-2">
+                <Skeleton class="h-4 w-32" />
+                <Skeleton class="h-9 w-full" />
+              </div>
+              <div class="space-y-2">
+                <Skeleton class="h-4 w-32" />
+                <Skeleton class="h-9 w-full" />
+              </div>
+            </div>
+            <div
+              v-for="i in 3"
+              :key="i"
+              class="space-y-3 rounded-lg bg-surface p-3"
+            >
+              <Skeleton class="h-4 w-40" />
+              <Skeleton class="h-20 w-full" />
+            </div>
           </div>
         </div>
         <ScrollArea

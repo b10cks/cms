@@ -67,11 +67,12 @@ const inputProps = computed(() => {
     :error="error"
     :class="props.class"
   >
-    <template #default="{ id, hasError }">
+    <template #default="{ id, 'aria-describedby': describedBy, 'aria-invalid': invalid }">
       <Textarea
         :id="id"
         v-model="modelValue"
-        :class="{ 'border-red-500': hasError }"
+        :aria-describedby="describedBy"
+        :aria-invalid="invalid"
         v-bind="{ ...inputProps, ...$attrs }"
       />
     </template>

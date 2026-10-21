@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import dayjs from 'dayjs'
 import { RadioGroupItem, RadioGroupRoot } from 'reka-ui'
 import type { Ref } from 'vue'
 import { RouterLink } from 'vue-router'
@@ -14,7 +13,7 @@ import { Button } from '~/components/ui/button'
 import RenamableTitle from '~/components/ui/RenamableTitle.vue'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/components/ui/resizable'
 import { ScrollArea } from '~/components/ui/scroll-area'
-import { Spinner } from '~/components/ui/spinner'
+import { Skeleton } from '~/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { buildPreviewUrl } from '~/lib/preview-url'
@@ -27,8 +26,13 @@ import type {
 
 const { $t } = useI18n()
 
-const { formatDateTime, formatRelativeTime, formatCalendarTime, formatDateTimeDynamically } =
-  useFormat()
+const {
+  formatDateTime,
+  formatRelativeTime,
+  formatCalendarTime,
+  formatDateTimeDynamically,
+  versionGroup,
+} = useFormat()
 const { user } = useAuth()
 const route = useRoute()
 const router = useRouter()
@@ -89,7 +93,7 @@ const { data: selectedVersionData } = useContentVersionQuery(selectedVersionId)
 
 const { mutate: setCurrentVersion, isPending: isSettingCurrent } = useSetCurrentVersionMutation()
 const { mutate: publishVersion, isPending: isPublishing } = usePublishVersionMutation()
-const { mutate: updateVersion, isPending: isUpdating } = useUpdateVersionMutation()
+const { mutateAsync: updateVersion, isPending: isUpdating } = useUpdateVersionMutation()
 
 const { useRemoveVersionsMutation } = useReleases(props.spaceId)
 const { mutate: removeVersions, isPending: isRemovingVersion } = useRemoveVersionsMutation()
@@ -135,25 +139,8 @@ const groupedVersions = computed(() => {
     older: [],
   }
 
-  const now = dayjs()
-  const yesterday = now.subtract(1, 'day').startOf('day')
-  const startOfWeek = now.startOf('week')
-  const startOfLastWeek = startOfWeek.subtract(1, 'week')
-
   filtered.forEach((version) => {
-    const versionDate = dayjs(version.created_at)
-
-    if (versionDate.isAfter(now.startOf('day'))) {
-      groups.today.push(version)
-    } else if (versionDate.isAfter(yesterday)) {
-      groups.yesterday.push(version)
-    } else if (versionDate.isAfter(startOfWeek)) {
-      groups.thisWeek.push(version)
-    } else if (versionDate.isAfter(startOfLastWeek)) {
-      groups.lastWeek.push(version)
-    } else {
-      groups.older.push(version)
-    }
+    groups[versionGroup(version.created_at)].push(version)
   })
 
   // Remove empty groups
@@ -214,7 +201,7 @@ const handlePublishVersion = (versionId: string) => {
 }
 
 const handleUpdateMessage = (id: string, message: string | null | undefined) => {
-  updateVersion({ id, payload: { message } })
+  return updateVersion({ id, payload: { message } })
 }
 
 // Get group label
@@ -366,10 +353,24 @@ const openVersionJsonInNewTab = (versionId: string) => {
           <ScrollArea class="flex-1 rounded-md bg-surface">
             <div
               v-if="isLoading"
-              class="flex h-32 items-center justify-center"
+              class="p-2"
+              aria-hidden="true"
             >
-              <Spinner class="mr-2 size-6" />
-              <span>{{ $t('labels.contentVersions.loading') }}</span>
+              <div class="px-2 py-1">
+                <Skeleton class="h-4 w-16" />
+              </div>
+              <div
+                v-for="i in 6"
+                :key="i"
+                class="flex items-center rounded-md px-3 py-1"
+              >
+                <Skeleton class="mr-3 size-3 shrink-0 rounded-full" />
+                <Skeleton :class="['h-5', i % 2 ? 'w-1/3' : 'w-1/2']" />
+                <div class="ml-auto flex items-center gap-2">
+                  <Skeleton class="size-6 rounded-full" />
+                  <Skeleton class="h-4 w-24" />
+                </div>
+              </div>
             </div>
 
             <div
@@ -513,7 +514,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
                           :fallback="$t('labels.contentVersions.noMessage')"
                           class="text-left"
                           :disabled="!isMine(version)"
-                          @update="handleUpdateMessage(version.id, $event)"
+                          :save="(message) => handleUpdateMessage(version.id, message)"
                         />
                       </div>
 

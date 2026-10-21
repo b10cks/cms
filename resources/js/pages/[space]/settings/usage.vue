@@ -12,6 +12,7 @@ const StatsLineChart = defineAsyncComponent(() => import('~/components/stats/Sta
 
 const route = useRoute()
 const { t } = useI18n()
+const { formatDate } = useFormat()
 const spaceId = route.params.space as string
 
 const { useUsageHistoryQuery, useUsageTimeseriesQuery } = useUsageHistory(spaceId)
@@ -22,7 +23,7 @@ const { useUsageQuery } = useSpaceUsage(spaceId)
 const { data: periods, isLoading: periodsLoading } = useUsageHistoryQuery()
 const { data: invoices, isLoading: invoicesLoading } = useInvoicesQuery()
 const { data: current } = useCurrentSubscriptionQuery()
-const { data: liveUsage } = useUsageQuery()
+const { data: liveUsage, isLoading: liveUsageLoading } = useUsageQuery()
 
 useSeoMeta({
   title: computed(() => t('labels.usage.history.title')),
@@ -53,10 +54,7 @@ const selectedPeriod = computed(() =>
 
 const chartData = computed(() =>
   (timeseries.value?.points ?? []).map((point) => ({
-    name: new Date(point.date).toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-    }),
+    name: formatDate(point.date),
     value: +(point.value / (1024 * 1024)).toFixed(2),
   }))
 )
@@ -87,6 +85,7 @@ const chartLabel = computed(() => t('labels.usage.history.trafficMb'))
     <!-- Live usage against the current plan quotas -->
     <LiveUsageCard
       :usage="liveUsage"
+      :is-loading="liveUsageLoading"
       class="mb-6"
     />
 

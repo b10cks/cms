@@ -109,7 +109,7 @@ const updateValue = (value: Record<string, unknown>) => {
       <div
         :class="[
           '[&_.ProseMirror]:h-auto [&_.ProseMirror]:max-w-none',
-          props.error && 'rounded border border-red-500/60 p-1',
+          props.error && 'rounded border border-destructive p-1',
           isMachineTranslated && 'rounded ring-1 ring-violet-500',
         ]"
         data-validation-target="true"

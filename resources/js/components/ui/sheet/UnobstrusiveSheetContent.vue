@@ -40,7 +40,7 @@ const emits = defineEmits<DialogContentEmits & { close: [open: boolean] }>()
       <div class="relative flex flex-1">
         <slot />
         <SimpleTooltip
-          :tooltip="'Close sheet'"
+          :tooltip="$t('actions.close')"
           class="absolute left-1 top-1 z-20"
           shortcut="Esc"
         >

@@ -189,9 +189,29 @@ const markLoaded = (asset: PublicShareAsset) => loadedAssetIds.value.add(asset.i
     <!-- Loading -->
     <div
       v-else-if="isLoadingShare"
-      class="flex flex-1 items-center justify-center"
+      class="flex-1"
+      aria-hidden="true"
     >
-      <Spinner class="size-8 text-muted" />
+      <div class="mb-8 flex flex-col gap-3 border-b border-border pb-6">
+        <div class="flex items-center gap-3">
+          <Skeleton class="size-10" />
+          <Skeleton class="h-8 w-56" />
+        </div>
+        <Skeleton class="h-4 w-40" />
+      </div>
+      <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div
+          v-for="n in 8"
+          :key="n"
+          class="flex flex-col overflow-hidden rounded-lg border border-border bg-surface"
+        >
+          <Skeleton class="aspect-square w-full rounded-none" />
+          <div class="flex flex-col gap-1.5 p-3">
+            <Skeleton class="h-4 w-3/4" />
+            <Skeleton class="h-3 w-1/3" />
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Password gate -->

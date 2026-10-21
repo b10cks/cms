@@ -304,6 +304,27 @@ class ContentI18nTest extends TestCase
         $response->assertJsonValidationErrors(['translations.0.language_iso']);
     }
 
+    #[Test]
+    public function content_index_lists_rows_whose_language_is_no_longer_enabled(): void
+    {
+        $this->actingAs($this->owner);
+
+        // 'es' is not a space language, so each row resolves to itself as the
+        // canonical. Two rows, because Eloquent only flags lazy loads on
+        // models that were fetched together with others.
+        $this->createContent(languageIso: 'es', slug: 'inicio', published: true);
+        $this->createContent(languageIso: 'es', slug: 'contacto', published: true);
+
+        $response = $this->getJson(route('mgmt.contents.index', [
+            'space' => $this->space->id,
+            'sort' => '+slug',
+        ]));
+
+        $response->assertOk();
+        $response->assertJsonPath('data.0.content.title', 'Contacto');
+        $response->assertJsonPath('data.1.content.title', 'Inicio');
+    }
+
     private function createContent(
         string $languageIso,
         string $slug,

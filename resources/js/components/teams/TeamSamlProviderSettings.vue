@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent } from '~/components/ui/card'
 import { CheckboxField, InputField, SelectField, TextField } from '~/components/ui/form'
-import { Spinner } from '~/components/ui/spinner'
+import TeamSamlProviderSkeleton from './TeamSamlProviderSkeleton.vue'
 import type { TeamSamlProviderPayload, TeamSamlProviderResource } from '~/types/teams'
 
 const props = defineProps<{
@@ -219,15 +218,7 @@ const handleDelete = async () => {
       </div>
     </div>
 
-    <Card
-      v-if="isLoading"
-      variant="surface"
-    >
-      <CardContent class="flex items-center gap-2 py-6">
-        <Spinner />
-        {{ $t('labels.loading') }}
-      </CardContent>
-    </Card>
+    <TeamSamlProviderSkeleton v-if="isLoading" />
 
     <form
       v-else

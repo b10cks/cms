@@ -1,7 +1,7 @@
 import { config } from '@vue/test-utils'
 import { beforeEach } from 'vitest'
 
-import { i18n } from '~/plugins/i18n'
+import { i18n, loadLocaleMessages, locales } from '~/plugins/i18n'
 
 // `~/lib/runtime-config` reads window.__APP_CONFIG__ once at module load, and
 // several modules read it at *their* module load (access-control builds its
@@ -69,3 +69,8 @@ beforeEach(() => {
 // with them, and asserting on real copy catches a missing key — a stub would
 // happily echo one back.
 config.global.plugins = [i18n]
+
+// The app loads non-English catalogs on demand. Registering them all up front
+// lets tests switch locales synchronously; tests/js/plugins/i18n.test.ts covers
+// the lazy path on a fresh module.
+await Promise.all(locales.map(({ code }) => loadLocaleMessages(code)))

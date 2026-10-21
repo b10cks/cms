@@ -196,7 +196,7 @@ const emptyTextComputed = computed(() => {
     :error="error"
     :class="props.class"
   >
-    <template #default="{ id, hasError }">
+    <template #default="{ id, 'aria-describedby': describedBy, 'aria-invalid': invalid }">
       <Combobox
         :model-value="multiple ? selectedValues : modelValue"
         :disabled="disabled || readonly"
@@ -210,7 +210,8 @@ const emptyTextComputed = computed(() => {
             :model-value="(selectedValues as AcceptableInputValue[])"
             :display-value="(value) => getOptionByValue(value as T)?.label || String(value)"
             :disabled="disabled || readonly"
-            :class="{ 'border-red-500': hasError, 'pl-2': selectedValues.length > 0 }"
+            :class="{ 'pl-2': selectedValues.length > 0 }"
+            :aria-invalid="invalid"
           >
             <TagsInputItem
               v-for="value in selectedValues"
@@ -235,7 +236,11 @@ const emptyTextComputed = computed(() => {
               :disabled="disabled || readonly"
               as-child
             >
-              <TagsInputInput />
+              <TagsInputInput
+                :id="id"
+                :aria-describedby="describedBy"
+                :aria-invalid="invalid"
+              />
             </ComboboxInput>
           </TagsInput>
           <ComboboxInput
@@ -244,7 +249,8 @@ const emptyTextComputed = computed(() => {
             v-model="searchValue"
             :placeholder="$t(String(placeholder || 'common.select'))"
             :disabled="disabled || readonly"
-            :class="{ 'border-red-500': hasError }"
+            :aria-describedby="describedBy"
+            :aria-invalid="invalid"
             :display-value="(value: T) => getOptionByValue(value as T)?.label || String(value)"
           />
         </ComboboxAnchor>

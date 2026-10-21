@@ -159,12 +159,17 @@ export default defineConfig(({ mode }) => {
         output: {
           // Group heavy, rarely-changing vendors into stable chunks so they
           // stay cached across app deploys and aren't duplicated per route.
+          // Groups pull in their dependencies recursively and the higher
+          // priority claims a shared module first. tiptap must claim last, or
+          // its deps (Vue runtime, @floating-ui shared with reka) land in the
+          // tiptap chunk and the startup bundle has to import it.
           advancedChunks: {
             groups: [
+              { name: 'vue', test: /node_modules[\\/](@vue|vue)[\\/]/, priority: 10 },
               { name: 'tiptap', test: /node_modules[\\/](@tiptap|prosemirror-)/ },
               { name: 'charts', test: /node_modules[\\/](chart\.js|vue-chartjs)[\\/]/ },
               { name: 'dnd', test: /node_modules[\\/]@atlaskit[\\/]/ },
-              { name: 'reka', test: /node_modules[\\/]reka-ui[\\/]/ },
+              { name: 'reka', test: /node_modules[\\/]reka-ui[\\/]/, priority: 5 },
             ],
           },
         },

@@ -653,7 +653,13 @@ class ContentTreeOperationService
         return $ids;
     }
 
-    protected function collectCanonicalSubtreeIds(array $ids): array
+    /**
+     * The canonical ids of the given entries and everything below them.
+     *
+     * @param  list<string>  $ids
+     * @return list<string>
+     */
+    public function collectCanonicalSubtreeIds(array $ids): array
     {
         $queue = collect($ids)->unique()->values();
         $seen = [];

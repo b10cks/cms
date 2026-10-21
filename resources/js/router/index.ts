@@ -1,5 +1,10 @@
 import type { RouteRecordRaw } from 'vue-router'
-import { createRouter, createWebHistory } from 'vue-router'
+import {
+  createRouter,
+  createWebHistory,
+  isNavigationFailure,
+  NavigationFailureType,
+} from 'vue-router'
 
 import { useAuth } from '~/composables/useAuth'
 import {
@@ -7,6 +12,8 @@ import {
   ensureSelectedTeamAccess,
 } from '~/composables/useAuthorization'
 import { canAccessRouteByName, getRouteAccessRequirement } from '~/lib/access-control'
+import { finishNavigationProgress, startNavigationProgress } from '~/lib/navigation-progress'
+import { loadRouteComponents } from '~/lib/route-components'
 import { runtimeConfig } from '~/lib/runtime-config'
 
 function buildAccessDeniedRedirect(
@@ -410,6 +417,12 @@ export const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
+  startNavigationProgress()
+
+  // Download the route's chunks while the auth checks below run, not after them.
+  // A failed load is left to the router's own resolve, which reports it.
+  void loadRouteComponents(to.matched).catch(() => {})
+
   const auth = useAuth()
 
   try {
@@ -502,3 +515,11 @@ router.beforeEach(async (to) => {
 
   return true
 })
+
+router.afterEach((_to, _from, failure) => {
+  // A cancelled navigation was replaced by a newer one that is still running.
+  if (isNavigationFailure(failure, NavigationFailureType.cancelled)) return
+  finishNavigationProgress()
+})
+
+router.onError(() => finishNavigationProgress())

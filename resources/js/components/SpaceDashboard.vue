@@ -16,7 +16,7 @@ const StatsActivityHeatmap = defineAsyncComponent(
   () => import('~/components/stats/StatsActivityHeatmap.vue')
 )
 
-const { formatDuration, formatNumber, formatTrafficSize, formatFileSize } = useFormat()
+const { formatDuration, formatNumber, formatTrafficSize, formatFileSize, formatDate } = useFormat()
 const { t } = useI18n()
 
 const props = defineProps<{
@@ -134,7 +134,7 @@ const contentByTypeChartData = computed(() => {
 const trafficUsageChartData = computed(() => {
   if (!stats.value?.trends?.traffic_usage) return []
   return Object.entries(stats.value.trends.traffic_usage).map(([date, data]: [string, any]) => ({
-    name: date,
+    name: formatDate(date),
     value: data.total_bytes / (1024 * 1024),
   }))
 })
@@ -142,7 +142,7 @@ const trafficUsageChartData = computed(() => {
 const apiUsageChartData = computed(() => {
   if (!stats.value?.trends?.api_usage) return []
   return Object.entries(stats.value.trends.api_usage).map(([date, count]) => ({
-    name: date,
+    name: formatDate(date),
     value: count as number,
   }))
 })
@@ -151,7 +151,7 @@ const assetUploadTrendData = computed(() => {
   if (!stats.value?.trends?.asset_uploads) return { labels: [], datasets: [] }
 
   const entries = Object.entries(stats.value.trends.asset_uploads)
-  const labels = entries.map(([date]) => date)
+  const labels = entries.map(([date]) => formatDate(date))
 
   return {
     labels,
@@ -168,10 +168,11 @@ const assetUploadTrendData = computed(() => {
 const contentActivityData = computed(() => {
   if (!stats.value?.trends?.content_creation) return { labels: [], datasets: [] }
 
-  const labels = stats.value.trends.periods || []
-  const creation = labels.map((period: string) => stats.value.trends.content_creation[period] || 0)
-  const editing = labels.map((period: string) => stats.value.trends.content_editing[period] || 0)
-  const publishing = labels.map(
+  const periods: string[] = stats.value.trends.periods || []
+  const labels = periods.map((period) => formatDate(period))
+  const creation = periods.map((period) => stats.value.trends.content_creation[period] || 0)
+  const editing = periods.map((period) => stats.value.trends.content_editing[period] || 0)
+  const publishing = periods.map(
     (period: string) => stats.value.trends.content_publishing[period] || 0
   )
 

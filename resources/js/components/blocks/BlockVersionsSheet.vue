@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import dayjs from 'dayjs'
 import { RadioGroupItem, RadioGroupRoot } from 'reka-ui'
 
 import BlockEdit from '~/components/BlockEdit.vue'
@@ -11,7 +10,7 @@ import RenamableTitle from '~/components/ui/RenamableTitle.vue'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/components/ui/resizable'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetHeaderCombined } from '~/components/ui/sheet'
-import { Spinner } from '~/components/ui/spinner'
+import { Skeleton } from '~/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 
@@ -25,7 +24,7 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageBlockVersions = computed(() => access.hasAbility('block_versions.manage'))
 
-const { formatDateTime, formatDateTimeDynamically } = useFormat()
+const { formatDateTime, formatDateTimeDynamically, versionGroup } = useFormat()
 const { user } = useAuth()
 const { $t } = useI18n()
 
@@ -44,7 +43,7 @@ const { data: versions, isLoading } = useBlockVersionsQuery()
 const selectedVersionQueryId = computed(() => selectedVersionId.value ?? '')
 const { data: selectedVersionData } = useBlockVersionQuery(selectedVersionQueryId)
 
-const { mutate: updateVersion } = useUpdateBlockVersionMutation()
+const { mutateAsync: updateVersion } = useUpdateBlockVersionMutation()
 const { mutate: restoreVersion, isPending: isRestoring } = useRestoreBlockVersionMutation()
 const { mutate: deleteVersion } = useDeleteBlockVersionMutation()
 
@@ -61,25 +60,8 @@ const groupedVersions = computed(() => {
     older: [],
   }
 
-  const now = dayjs()
-  const yesterday = now.subtract(1, 'day').startOf('day')
-  const startOfWeek = now.startOf('week')
-  const startOfLastWeek = startOfWeek.subtract(1, 'week')
-
   versions.value.forEach((version) => {
-    const versionDate = dayjs(version.created_at)
-
-    if (versionDate.isAfter(now.startOf('day'))) {
-      groups.today.push(version)
-    } else if (versionDate.isAfter(yesterday)) {
-      groups.yesterday.push(version)
-    } else if (versionDate.isAfter(startOfWeek)) {
-      groups.thisWeek.push(version)
-    } else if (versionDate.isAfter(startOfLastWeek)) {
-      groups.lastWeek.push(version)
-    } else {
-      groups.older.push(version)
-    }
+    groups[versionGroup(version.created_at)].push(version)
   })
 
   Object.keys(groups).forEach((key) => {
@@ -156,7 +138,7 @@ const handleDelete = async (version: BlockVersion) => {
 }
 
 const handleUpdateMessage = (id: string, message: string | null | undefined) => {
-  updateVersion({ id, payload: { commit_message: message } })
+  return updateVersion({ id, payload: { commit_message: message } })
 }
 
 const getGroupLabel = (groupKey: string) => {
@@ -249,10 +231,24 @@ watch(
             <ScrollArea class="flex-1 rounded-md bg-surface">
               <div
                 v-if="isLoading"
-                class="flex h-32 items-center justify-center"
+                class="p-2"
+                aria-hidden="true"
               >
-                <Spinner />
-                <span>{{ $t('labels.blockVersions.loading') }}</span>
+                <div class="px-2 py-1">
+                  <Skeleton class="h-4 w-16" />
+                </div>
+                <div
+                  v-for="i in 6"
+                  :key="i"
+                  class="flex items-center rounded-md px-3 py-1"
+                >
+                  <Skeleton class="mr-3 size-3 shrink-0 rounded-full" />
+                  <Skeleton :class="['h-5', i % 2 ? 'w-1/3' : 'w-1/2']" />
+                  <div class="ml-auto flex items-center gap-2">
+                    <Skeleton class="size-6 rounded-full" />
+                    <Skeleton class="h-4 w-24" />
+                  </div>
+                </div>
               </div>
 
               <div
@@ -325,7 +321,7 @@ watch(
                             :fallback="$t('labels.blockVersions.noCommitMessage')"
                             class="text-left"
                             :disabled="!canManageBlockVersions || !isMine(version)"
-                            @update="handleUpdateMessage(version.id, $event)"
+                            :save="(message) => handleUpdateMessage(version.id, message)"
                           />
                         </div>
 

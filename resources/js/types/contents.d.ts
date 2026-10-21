@@ -84,6 +84,8 @@ export interface ContentTreeCreatedReference {
 export interface ContentTreeOperationResult {
   created: ContentTreeCreatedReference[]
   warnings: ContentTreeOperationWarning[]
+  /** The menu rows the batch changed, keyed by id. Deleted entries are not listed. */
+  menu?: Record<string, FlatContentMenuItem>
 }
 
 export interface ContentBulkPublishFailure {

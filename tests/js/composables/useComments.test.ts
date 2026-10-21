@@ -185,16 +185,43 @@ describe('useCommentQuery', () => {
 })
 
 describe('useCreateCommentMutation', () => {
-  it('invalidates the comment lists only', async () => {
-    comments.create.mockResolvedValue({ data: comment() })
-    const { create } = mutations()
+  it('appends the server comment to matching cached lists without a refetch', async () => {
+    const all = queryKeys.comments(SPACE, CONTENT).list({})
+    const sameVersion = queryKeys.comments(SPACE, CONTENT).list({ filter: { content_version_id: 'v1' } })
+    const otherVersion = queryKeys.comments(SPACE, CONTENT).list({ filter: { content_version_id: 'v2' } })
+    comments.create.mockResolvedValue({ data: { ...comment('cm2'), content_version_id: 'v1' } })
+
+    harness = withSetup(() => mountComments(), {
+      seed: [
+        [all, [comment()]],
+        [sameVersion, [comment()]],
+        [otherVersion, [comment()]],
+      ],
+    })
     const invalidate = spyInvalidate()
 
-    await create.mutateAsync({ message: 'hi' } as never)
+    await harness.result.create.mutateAsync({ body: 'hi' } as never)
 
-    expect(comments.create).toHaveBeenCalledWith({ message: 'hi' })
-    expect(invalidatedKeys(invalidate)).toEqual([queryKeys.comments(SPACE, CONTENT).lists()])
+    expect(harness.queryClient.getQueryData(all)).toEqual([
+      comment(),
+      { ...comment('cm2'), content_version_id: 'v1' },
+    ])
+    expect(harness.queryClient.getQueryData(sameVersion)).toHaveLength(2)
+    expect(harness.queryClient.getQueryData(otherVersion)).toHaveLength(1)
+    expect(invalidate).not.toHaveBeenCalled()
     expect(success).toHaveBeenCalledWith('Comment added successfully')
+  })
+
+  it('nests a reply under its parent', async () => {
+    const list = queryKeys.comments(SPACE, CONTENT).list({})
+    const reply = { ...comment('cm2'), parent_id: 'cm1' }
+    comments.create.mockResolvedValue({ data: reply })
+
+    harness = withSetup(() => mountComments(), { seed: [[list, [comment()]]] })
+
+    await harness.result.create.mutateAsync({ body: 'hi' } as never)
+
+    expect(harness.queryClient.getQueryData(list)).toEqual([{ ...comment(), replies: [reply] }])
   })
 
   it('reports failure', async () => {
@@ -239,7 +266,7 @@ describe('useUpdateCommentMutation', () => {
 })
 
 describe('useDeleteCommentMutation', () => {
-  it('drops the detail cache and invalidates the lists', async () => {
+  it('drops the detail cache and keeps the lists out of a refetch', async () => {
     comments.delete.mockResolvedValue(undefined)
     const { remove } = mutations()
     const invalidate = spyInvalidate()
@@ -247,11 +274,36 @@ describe('useDeleteCommentMutation', () => {
 
     await remove.mutateAsync('cm1')
 
-    expect(invalidatedKeys(invalidate)).toEqual([queryKeys.comments(SPACE, CONTENT).lists()])
+    expect(invalidate).not.toHaveBeenCalled()
     expect(removeQueries).toHaveBeenCalledWith({
       queryKey: queryKeys.comments(SPACE, CONTENT).detail('cm1'),
     })
     expect(success).toHaveBeenCalledWith('Comment deleted successfully')
+  })
+
+  it('removes the comment from cached lists before the server answers', async () => {
+    const list = queryKeys.comments(SPACE, CONTENT).list({})
+    let finish!: () => void
+    comments.delete.mockReturnValue(new Promise<void>((resolve) => (finish = resolve)))
+
+    harness = withSetup(() => mountComments(), { seed: [[list, [comment(), comment('cm2')]]] })
+
+    const pending = harness.result.remove.mutateAsync('cm1')
+    await vi.waitFor(() => expect(harness?.queryClient.getQueryData(list)).toEqual([comment('cm2')]))
+
+    finish()
+    await pending
+  })
+
+  it('restores the lists when the delete fails', async () => {
+    const list = queryKeys.comments(SPACE, CONTENT).list({})
+    comments.delete.mockRejectedValue(new Error('forbidden'))
+
+    harness = withSetup(() => mountComments(), { seed: [[list, [comment(), comment('cm2')]]] })
+
+    await expect(harness.result.remove.mutateAsync('cm1')).rejects.toThrow('forbidden')
+
+    expect(harness.queryClient.getQueryData(list)).toEqual([comment(), comment('cm2')])
   })
 
   it('really evicts the seeded detail', async () => {
@@ -292,7 +344,7 @@ describe('resolve and unresolve', () => {
     ['unresolve', 'unresolve', 'Comment unresolved', 'Failed to unresolve comment: nope'],
   ] as const
 
-  it.each(cases)('%s invalidates the lists and the comment detail', async (name, endpoint) => {
+  it.each(cases)('%s invalidates only the comment detail', async (name, endpoint) => {
     comments[endpoint].mockResolvedValue({ data: comment() })
     const mutation = mutations()[name]
     const invalidate = spyInvalidate()
@@ -300,10 +352,41 @@ describe('resolve and unresolve', () => {
     await mutation.mutateAsync('cm1')
 
     expect(comments[endpoint]).toHaveBeenCalledWith('cm1')
-    expect(invalidatedKeys(invalidate)).toEqual([
-      queryKeys.comments(SPACE, CONTENT).lists(),
-      queryKeys.comments(SPACE, CONTENT).detail('cm1'),
-    ])
+    expect(invalidatedKeys(invalidate)).toEqual([queryKeys.comments(SPACE, CONTENT).detail('cm1')])
+  })
+
+  it('resolve flips the cached comment at once, replies included, and unresolve flips it back', async () => {
+    const list = queryKeys.comments(SPACE, CONTENT).list({})
+    const seeded = [{ ...comment(), is_resolved: false, replies: [{ ...comment('cm2'), is_resolved: false }] }]
+    let finish!: (value: { data: unknown }) => void
+    comments.resolve.mockReturnValue(new Promise((resolve) => (finish = resolve)))
+    comments.unresolve.mockResolvedValue({ data: { ...comment('cm2'), is_resolved: false } })
+
+    harness = withSetup(() => mountComments(), { seed: [[list, seeded]] })
+    const cached = () =>
+      harness?.queryClient.getQueryData<(typeof seeded)[number][]>(list)?.[0]?.replies?.[0]
+
+    const pending = harness.result.resolve.mutateAsync('cm2')
+    await vi.waitFor(() => expect(cached()?.is_resolved).toBe(true))
+
+    finish({ data: { ...comment('cm2'), is_resolved: true } })
+    await pending
+    expect(cached()?.is_resolved).toBe(true)
+
+    await harness.result.unresolve.mutateAsync('cm2')
+    expect(cached()?.is_resolved).toBe(false)
+  })
+
+  it('resolve rolls back when the server rejects it', async () => {
+    const list = queryKeys.comments(SPACE, CONTENT).list({})
+    const seeded = [{ ...comment(), is_resolved: false }]
+    comments.resolve.mockRejectedValue(new Error('nope'))
+
+    harness = withSetup(() => mountComments(), { seed: [[list, seeded]] })
+
+    await expect(harness.result.resolve.mutateAsync('cm1')).rejects.toThrow('nope')
+
+    expect(harness.queryClient.getQueryData(list)).toEqual(seeded)
   })
 
   it.each(cases)('%s keys the detail off the response, not the argument', async (name, endpoint) => {

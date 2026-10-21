@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import useFormat from '~/composables/useFormat'
+import { applyDisplayFormats, defaultDisplayFormats } from '~/lib/display-formats'
 import { setLocale } from '~/plugins/i18n'
 
 type Format = ReturnType<typeof useFormat>
@@ -26,6 +27,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers()
   setLocale('en')
+  applyDisplayFormats(defaultDisplayFormats)
 })
 
 describe('formatNumber', () => {
@@ -301,10 +303,10 @@ describe('formatVersionTime', () => {
   const date = local(2026, 2, 15, 15, 30)
 
   it.each([
-    ['today' as const, '15:30'],
-    ['yesterday' as const, '15:30'],
-    ['thisWeek' as const, 'Sun 15:30'],
-    ['lastWeek' as const, 'Sun 15:30'],
+    ['today' as const, '3:30 PM'],
+    ['yesterday' as const, '3:30 PM'],
+    ['thisWeek' as const, 'Sun 3:30 PM'],
+    ['lastWeek' as const, 'Sun 3:30 PM'],
     ['older' as const, 'Mar 15, 2026'],
   ])('formats the %s group', (group, expected) => {
     expect(format.formatVersionTime(date, group)).toBe(expected)
@@ -358,4 +360,68 @@ describe('new locales', () => {
       expect(format.formatCalendarTime(local(2026, 2, 14, 9, 5))).toBe(calendar)
     }
   )
+})
+
+describe('display formats', () => {
+  const date = local(2026, 2, 15, 15, 30)
+
+  it('writes dates in the chosen order', () => {
+    applyDisplayFormats({ dateOrder: 'dmy' })
+
+    expect(format.formatDateTime(date)).toBe('15.03.2026 3:30 PM')
+    expect(format.formatDate(date)).toBe('15.03.2026')
+  })
+
+  it('writes times on the chosen clock, fixed formats included', () => {
+    applyDisplayFormats({ clock: '24h' })
+    expect(format.formatTime(date)).toBe('15:30')
+    expect(format.formatCalendarTime(date)).toBe('Today at 15:30')
+
+    setLocale('de')
+    applyDisplayFormats({ clock: '12h' })
+    expect(format.formatDateTime(date, 'HH:mm')).toBe('3:30 PM')
+  })
+
+  it('shows instants in the chosen time zone', () => {
+    applyDisplayFormats({ timeZone: 'Asia/Tokyo', clock: '24h' })
+
+    expect(format.formatTime('2026-03-15T06:30:00Z')).toBe('15:30')
+  })
+
+  it('never shifts a bare calendar day into another zone', () => {
+    applyDisplayFormats({ timeZone: 'Pacific/Kiritimati', dateOrder: 'ymd' })
+
+    expect(format.formatDate('2026-03-15')).toBe('2026-03-15')
+  })
+
+  it('previews other choices without changing the user ones', () => {
+    expect(format.formatDate(date, { ...defaultDisplayFormats, dateOrder: 'ymd' })).toBe(
+      '2026-03-15'
+    )
+    expect(format.formatDate(date)).toBe('Mar 15, 2026')
+  })
+})
+
+describe('versionGroup', () => {
+  const zone = (timeZone: string) => ({ ...defaultDisplayFormats, timeZone })
+
+  it('buckets a timestamp near midnight by the display zone, not the browser zone', () => {
+    const now = '2026-03-15T12:00:00Z'
+    const nearMidnight = '2026-03-14T23:30:00Z'
+
+    expect(format.versionGroup(nearMidnight, now, zone('UTC'))).toBe('yesterday')
+    expect(format.versionGroup(nearMidnight, now, zone('Asia/Tokyo'))).toBe('today')
+    expect(format.versionGroup(nearMidnight, now, zone('America/Los_Angeles'))).toBe('yesterday')
+  })
+
+  it('walks from today back to older', () => {
+    const now = '2026-03-18T12:00:00Z'
+    const utc = zone('UTC')
+
+    expect(format.versionGroup('2026-03-18T00:00:00Z', now, utc)).toBe('today')
+    expect(format.versionGroup('2026-03-17T23:59:00Z', now, utc)).toBe('yesterday')
+    expect(format.versionGroup('2026-03-16T09:00:00Z', now, utc)).toBe('thisWeek')
+    expect(format.versionGroup('2026-03-10T09:00:00Z', now, utc)).toBe('lastWeek')
+    expect(format.versionGroup('2026-02-01T09:00:00Z', now, utc)).toBe('older')
+  })
 })

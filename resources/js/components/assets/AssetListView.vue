@@ -39,11 +39,13 @@ import {
   TableRow,
 } from '~/components/ui/table'
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
+import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type { AssetSelectionEntry } from '~/composables/useAssetSelection'
 import { useAssetAiClassification } from '~/composables/useAssetAiClassification'
 import type { AssetManagerDragItem } from '~/lib/assets/assetDragAndDrop'
 import { downloadAssetFiles } from '~/lib/assets/downloadAssets'
+import { useMountOnFirstOpen } from '~/lib/mountOnFirstOpen'
 import type { AssetShareSource } from '~/types/asset-distribution'
 
 export interface AssetListViewProps {
@@ -146,6 +148,14 @@ const shareDialogOpen = ref(false)
 const shareSource = ref<AssetShareSource | null>(null)
 const isSelectingAllMatching = ref(false)
 
+const uploadDialogMounted = useMountOnFirstOpen(() => showUploadDialog.value)
+const folderDialogMounted = useMountOnFirstOpen(() => folderDialogOpen.value)
+const moveDialogMounted = useMountOnFirstOpen(() => moveDialogOpen.value)
+const bulkTagMounted = useMountOnFirstOpen(() => bulkTagOpen.value)
+const classifyMounted = useMountOnFirstOpen(() => classifyOpen.value)
+const addToCollectionMounted = useMountOnFirstOpen(() => addToCollectionOpen.value)
+const shareDialogMounted = useMountOnFirstOpen(() => shareDialogOpen.value)
+
 const sortOptions = [
   { value: 'created_at', label: String($t('labels.assets.createdAt')) },
   { value: 'updated_at', label: String($t('labels.assets.updatedAt')) },
@@ -195,7 +205,11 @@ const assetQueryParams = computed<AssetsQueryParams & { collection?: string }>((
   }
 })
 
-const { data: assetResponse, refetch: refetchAssets } = useAssetsQuery(assetQueryParams)
+const {
+  data: assetResponse,
+  isLoading: isLoadingAssets,
+  refetch: refetchAssets,
+} = useAssetsQuery(assetQueryParams)
 
 const breadcrumbs = computed(() => {
   if (!folderId.value) {
@@ -778,7 +792,7 @@ onUnmounted(() => {
 
       <div class="flex items-center gap-2">
         <Button
-          v-if="allowUpload && canManageAssets"
+          v-if="allowUpload && canManageAssets && uploadDialogMounted"
           variant="primary"
           @click="showUploadDialog = true"
         >
@@ -786,7 +800,7 @@ onUnmounted(() => {
           {{ $t('actions.assets.upload') }}
         </Button>
         <Button
-          v-if="allowFolderCreation && canManageFolders"
+          v-if="allowFolderCreation && canManageFolders && folderDialogMounted"
           @click="folderDialogOpen = true"
         >
           <Icon name="lucide:folder-plus" />
@@ -915,8 +929,12 @@ onUnmounted(() => {
           </TableRow>
         </TableHeader>
         <TableBody>
+          <TableLoadingRow
+            v-if="isLoadingAssets"
+            :colspan="visibleLanguageTabs.length + (isManageMode && multiSelect ? 4 : 3)"
+          />
           <TableEmptyRow
-            v-if="!assets.length"
+            v-else-if="!assets.length"
             :colspan="visibleLanguageTabs.length + (isManageMode && multiSelect ? 4 : 3)"
             :label="$t('labels.assets.noAssetsFound')"
           >
@@ -1160,7 +1178,7 @@ onUnmounted(() => {
     />
 
     <MoveToFolderDialog
-      v-if="isManageMode && canManageAssets"
+      v-if="isManageMode && canManageAssets && moveDialogMounted"
       v-model:open="moveDialogOpen"
       :space-id="spaceId"
       :items="moveDialogItems"
@@ -1168,28 +1186,28 @@ onUnmounted(() => {
     />
 
     <BulkTagDialog
-      v-if="isManageMode && canManageAssets"
+      v-if="isManageMode && canManageAssets && bulkTagMounted"
       v-model:open="bulkTagOpen"
       :space-id="spaceId"
       :assets="bulkTagAssets"
     />
 
     <AssetAiClassifyDialog
-      v-if="isManageMode && canClassifyAssets"
+      v-if="isManageMode && canClassifyAssets && classifyMounted"
       v-model:open="classifyOpen"
       :space-id="spaceId"
       :assets="classifyAssets"
     />
 
     <AddToCollectionDialog
-      v-if="isManageMode && canManageCollections"
+      v-if="isManageMode && canManageCollections && addToCollectionMounted"
       v-model:open="addToCollectionOpen"
       :space-id="spaceId"
       :asset-ids="addToCollectionAssetIds"
     />
 
     <CreateAssetShareDialog
-      v-if="isManageMode && canShareAssets"
+      v-if="isManageMode && canShareAssets && shareDialogMounted"
       v-model:open="shareDialogOpen"
       :space-id="spaceId"
       :source="shareSource"

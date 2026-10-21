@@ -28,6 +28,15 @@ class ContentResource extends JsonResource
     protected static array $preResolved = [];
 
     /**
+     * Relations the resolved row is rendered from. `current_version.assets`
+     * matters when no family row matches the requested language (e.g. the row's
+     * language was removed from the space, or its canonical was deleted): the
+     * row then resolves to the caller's own instance, which the i18n resolver
+     * never loaded versions for, and injectResolvedData() reads its assets.
+     */
+    private const ROW_RELATIONS = ['block', 'parent', 'current_version.assets', 'published_version'];
+
+    /**
      * Resolve a whole page of contents in one batch instead of once per row.
      *
      * @param  iterable<int, Content>  $contents
@@ -57,7 +66,7 @@ class ContentResource extends JsonResource
                 ->unique('id')
                 ->values()
                 ->all()
-        )->loadMissing(['block', 'parent', 'current_version', 'published_version']);
+        )->loadMissing(self::ROW_RELATIONS);
 
         foreach ($contents as $index => $content) {
             self::$preResolved[$content->id] = [
@@ -86,7 +95,7 @@ class ContentResource extends JsonResource
                     'current',
                 );
             $resolvedRow = $resolved->targetContent ?? $resolved->fallbackContent ?? $resolved->canonicalContent;
-            $resolvedRow->loadMissing(['block', 'parent', 'current_version', 'published_version']);
+            $resolvedRow->loadMissing(self::ROW_RELATIONS);
         }
 
         $canonicalContent = $resolved?->canonicalContent ?? $this->resource;

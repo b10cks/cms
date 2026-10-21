@@ -2,6 +2,7 @@
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 
 import { api } from '~/api'
+import { compareByPosition } from '~/lib/content-menu-cache'
 import { isClient } from '~/lib/env'
 import type { ContentChildSortBy } from '~/types/contents'
 
@@ -40,11 +41,6 @@ export function useContentMenu(spaceId: MaybeRef<string>) {
     if (!menuData) return null
     return menuData[id] || null
   }
-
-  const compareByPosition = (a: FlatContentMenuItem, b: FlatContentMenuItem) =>
-    (a.position ?? 0) - (b.position ?? 0) ||
-    (a.name || '').localeCompare(b.name || '') ||
-    a.id.localeCompare(b.id)
 
   const SORT_DATE_KEYS: Record<
     Exclude<ContentChildSortBy, 'inherit' | 'manual' | 'name'>,

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 
 import { queryKeys } from '~/composables/useQueryClient'
+import type { ContentMenu } from '~/lib/content-menu-cache'
 import type { ContentBulkPublishRun, ContentResource } from '~/types/contents'
 
 import { withSetup, type Harness } from '../support/harness'
@@ -48,6 +49,24 @@ const content = (overrides: Partial<ContentResource> = {}) =>
     language_versions: [],
     ...overrides,
   }) as unknown as ContentResource
+
+const menuItem = (overrides: Partial<FlatContentMenuItem> = {}): FlatContentMenuItem => ({
+  id: 'c1',
+  name: 'Home',
+  slug: 'home',
+  block_id: 'b1',
+  position: 0,
+  type: 'root',
+  color: null,
+  pid: null,
+  children: false,
+  settings: {},
+  i18n: [],
+  pat: null,
+  drf: true,
+  uat: '2026-01-01T00:00:00+00:00',
+  ...overrides,
+})
 
 let harness: Harness<ReturnType<typeof mountContent>> | undefined
 
@@ -406,7 +425,7 @@ describe('invalidateContentFamily', () => {
 
     await update.mutateAsync({ id: 'de', payload: {} })
 
-    expect(invalidatedKeys(invalidate).slice(2)).toEqual([
+    expect(invalidatedKeys(invalidate).slice(1)).toEqual([
       queryKeys.contents(SPACE).detail('de'),
       queryKeys.contentVersions(SPACE, 'de').lists(),
       queryKeys.contents(SPACE).detail('canonical'),
@@ -431,7 +450,7 @@ describe('invalidateContentFamily', () => {
 
     await update.mutateAsync({ id: 'de', payload: {} })
 
-    expect(invalidatedKeys(invalidate)).toHaveLength(4)
+    expect(invalidatedKeys(invalidate)).toHaveLength(3)
   })
 
   it('skips a language version with no content id', async () => {
@@ -443,7 +462,7 @@ describe('invalidateContentFamily', () => {
 
     await update.mutateAsync({ id: 'c1', payload: {} })
 
-    expect(invalidatedKeys(invalidate)).toHaveLength(4)
+    expect(invalidatedKeys(invalidate)).toHaveLength(3)
   })
 
   it('still succeeds when the response omits language_versions', async () => {
@@ -484,6 +503,21 @@ describe('useUpdateContentMutation', () => {
     expect(invalidatedKeys(invalidate)).toContainEqual(
       queryKeys.contentVersions(SPACE, 'de').lists()
     )
+  })
+
+  it('renames the menu entry while saving and restores it when the save fails', async () => {
+    let reject: (error: Error) => void = () => {}
+    contents.update.mockReturnValue(new Promise((_resolve, fail) => (reject = fail)))
+    const menuKey = queryKeys.contentMenu(SPACE).all()
+    harness = withSetup(mountContent, { seed: [[menuKey, { c1: menuItem({ name: 'Old' }) }]] })
+    const menuName = () => harness?.queryClient.getQueryData<ContentMenu>(menuKey)?.c1.name
+
+    const saving = harness.result.update.mutateAsync({ id: 'c1', payload: { name: 'New' } })
+    await vi.waitFor(() => expect(menuName()).toBe('New'))
+
+    reject(new Error('taken'))
+    await expect(saving).rejects.toThrow('taken')
+    expect(menuName()).toBe('Old')
   })
 
   it('reports the updated name', async () => {
@@ -543,7 +577,7 @@ describe('publish, schedule and unpublish', () => {
     expect(contents[endpoint]).toHaveBeenCalledWith('c1', payload)
   })
 
-  it.each(cases)('%s invalidates the lists, the menu and the family', async (name, endpoint) => {
+  it.each(cases)('%s invalidates the lists and the family', async (name, endpoint) => {
     contents[endpoint].mockResolvedValue({ data: content() })
     const mutation = mutations()[name]
     const invalidate = spyInvalidate()
@@ -552,10 +586,44 @@ describe('publish, schedule and unpublish', () => {
 
     expect(invalidatedKeys(invalidate)).toEqual([
       queryKeys.contents(SPACE).lists(),
-      queryKeys.contentMenu(SPACE).all(),
       queryKeys.contents(SPACE).detail('c1'),
       queryKeys.contentVersions(SPACE, 'c1').lists(),
     ])
+  })
+
+  it('publish applies the response to the detail and the menu entry without refetching', async () => {
+    const published = content({
+      slug: 'home',
+      parent_id: null,
+      block_id: 'b1',
+      content: {},
+      raw_content: {},
+      settings: {} as never,
+      current_version_id: 'v2',
+      published_version_id: 'v2',
+      published_at: '2026-10-21T10:00:00+00:00',
+      updated_at: '2026-10-21T10:00:00+00:00',
+    })
+    contents.publish.mockResolvedValue({ data: published })
+    const detailKey = queryKeys.contents(SPACE).detail('c1')
+    const menuKey = queryKeys.contentMenu(SPACE).all()
+    harness = withSetup(mountContent, {
+      seed: [
+        [detailKey, content()],
+        [menuKey, { c1: menuItem() }],
+      ],
+    })
+    const invalidate = spyInvalidate()
+
+    await harness.result.publish.mutateAsync({ id: 'c1', payload: {} })
+
+    expect(harness.queryClient.getQueryData(detailKey)).toEqual(published)
+    expect(harness.queryClient.getQueryData<ContentMenu>(menuKey)?.c1).toMatchObject({
+      pat: '2026-10-21T10:00:00+00:00',
+      drf: false,
+    })
+    expect(invalidatedKeys(invalidate)).not.toContainEqual(detailKey)
+    expect(invalidatedKeys(invalidate)).not.toContainEqual(menuKey)
   })
 
   it.each(cases)('%s reports success', async (name, endpoint, message) => {
@@ -830,7 +898,7 @@ describe('useMoveContentMutation', () => {
 })
 
 describe('useTreeOperationsMutation', () => {
-  it('invalidates the lists, the details and the menu', async () => {
+  it('invalidates the lists and the menu', async () => {
     contents.treeOperations.mockResolvedValue({ data: [] })
     const { tree } = mutations()
     const invalidate = spyInvalidate()
@@ -839,26 +907,68 @@ describe('useTreeOperationsMutation', () => {
 
     expect(invalidatedKeys(invalidate)).toEqual([
       queryKeys.contents(SPACE).lists(),
-      queryKeys.contents(SPACE).details(),
       queryKeys.contentMenu(SPACE).all(),
     ])
   })
 
-  it('refreshes every touched entry detail', async () => {
-    // A batch reparents arbitrary entries, so the details prefix — which
-    // covers the seeded entry — has to go with the lists.
+  it('refreshes only the details of the moved subtree', async () => {
+    // A move changes the parent and slug path of the entry and everything
+    // below it; an unrelated open entry keeps its cache.
     contents.treeOperations.mockResolvedValue({ data: [] })
-    const seeded = queryKeys.contents(SPACE).detail('c1')
+    const detail = (id: string) => queryKeys.contents(SPACE).detail(id)
+    const menu = {
+      c1: menuItem({ id: 'c1', children: true }),
+      c2: menuItem({ id: 'c2', pid: 'c1' }),
+      c3: menuItem({ id: 'c3', position: 1 }),
+    }
 
-    harness = withSetup(mountContent, { seed: [[seeded, content({ id: 'c1' })]] })
-    const invalidate = vi.spyOn(harness.queryClient, 'invalidateQueries')
-
-    await harness.result.tree.mutateAsync({
-      operations: [{ type: 'move', id: 'c1', parent_id: 'p1' }] as never,
+    harness = withSetup(mountContent, {
+      seed: [
+        [queryKeys.contentMenu(SPACE).all(), menu],
+        [detail('c2'), content({ id: 'c2' })],
+        [detail('c3'), content({ id: 'c3' })],
+      ],
     })
 
-    expect(invalidatedKeys(invalidate)).toContainEqual(queryKeys.contents(SPACE).details())
-    expect(harness.queryClient.getQueryState(seeded)?.isInvalidated).toBe(true)
+    await harness.result.tree.mutateAsync({
+      operations: [{ type: 'move', ids: ['c1'], parent_id: 'c3' }],
+    })
+
+    expect(harness.queryClient.getQueryState(detail('c2'))?.isInvalidated).toBe(true)
+    expect(harness.queryClient.getQueryState(detail('c3'))?.isInvalidated).toBe(false)
+  })
+
+  it('applies the returned menu rows instead of refetching the menu', async () => {
+    const menuKey = queryKeys.contentMenu(SPACE).all()
+    const moved = menuItem({ id: 'c2', pid: null, position: 1, uat: 'later' })
+    contents.treeOperations.mockResolvedValue({
+      data: { created: [], warnings: [], menu: { c1: menuItem({ id: 'c1' }), c2: moved } },
+    })
+
+    harness = withSetup(mountContent, {
+      seed: [
+        [
+          menuKey,
+          {
+            c1: menuItem({ id: 'c1', children: true }),
+            c2: menuItem({ id: 'c2', pid: 'c1' }),
+            c3: menuItem({ id: 'c3', position: 2 }),
+          },
+        ],
+      ],
+    })
+    const invalidate = spyInvalidate()
+
+    await harness.result.tree.mutateAsync({
+      operations: [{ type: 'move', ids: ['c2'], parent_id: null, after_id: 'c1' }],
+    })
+
+    expect(harness.queryClient.getQueryData(menuKey)).toEqual({
+      c1: menuItem({ id: 'c1' }),
+      c2: moved,
+      c3: menuItem({ id: 'c3', position: 2 }),
+    })
+    expect(invalidatedKeys(invalidate)).not.toContainEqual(menuKey)
   })
 
   it('reuses the move error copy', async () => {

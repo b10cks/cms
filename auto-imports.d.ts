@@ -49,6 +49,7 @@ declare global {
   const isReadonly: typeof import('vue').isReadonly
   const isRef: typeof import('vue').isRef
   const isShallow: typeof import('vue').isShallow
+  const loadLocaleMessages: typeof import('./resources/js/plugins/i18n').loadLocaleMessages
   const locales: typeof import('./resources/js/plugins/i18n').locales
   const markRaw: typeof import('vue').markRaw
   const nextTick: typeof import('vue').nextTick
@@ -160,6 +161,7 @@ declare global {
   const useDataEntryTranslation: typeof import('./resources/js/composables/useDataEntryTranslation').useDataEntryTranslation
   const useDataSources: typeof import('./resources/js/composables/useDataSources').useDataSources
   const useEcho: typeof import('./resources/js/composables/useEcho').useEcho
+  const useFieldA11y: typeof import('./resources/js/composables/useFieldA11y').useFieldA11y
   const useFieldClipboard: typeof import('./resources/js/composables/useFieldClipboard').useFieldClipboard
   const useFieldOptionChoices: typeof import('./resources/js/composables/useFieldOptionChoices').useFieldOptionChoices
   const useFieldPlugins: typeof import('./resources/js/composables/useFieldPlugins').useFieldPlugins
@@ -302,6 +304,9 @@ declare global {
   export type { UploadTask } from './resources/js/composables/useFileUpload'
   import('./resources/js/composables/useFileUpload')
   // @ts-ignore
+  export type { VersionGroup } from './resources/js/composables/useFormat'
+  import('./resources/js/composables/useFormat')
+  // @ts-ignore
   export type { ClipboardSingleItem, ClipboardMultipleItems, ClipboardItem } from './resources/js/composables/useGlobalClipboard'
   import('./resources/js/composables/useGlobalClipboard')
   // @ts-ignore
@@ -382,6 +387,7 @@ declare module 'vue' {
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
     readonly isShallow: UnwrapRef<typeof import('vue')['isShallow']>
+    readonly loadLocaleMessages: UnwrapRef<typeof import('./resources/js/plugins/i18n')['loadLocaleMessages']>
     readonly locales: UnwrapRef<typeof import('./resources/js/plugins/i18n')['locales']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
     readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
@@ -493,6 +499,7 @@ declare module 'vue' {
     readonly useDataEntryTranslation: UnwrapRef<typeof import('./resources/js/composables/useDataEntryTranslation')['useDataEntryTranslation']>
     readonly useDataSources: UnwrapRef<typeof import('./resources/js/composables/useDataSources')['useDataSources']>
     readonly useEcho: UnwrapRef<typeof import('./resources/js/composables/useEcho')['useEcho']>
+    readonly useFieldA11y: UnwrapRef<typeof import('./resources/js/composables/useFieldA11y')['useFieldA11y']>
     readonly useFieldClipboard: UnwrapRef<typeof import('./resources/js/composables/useFieldClipboard')['useFieldClipboard']>
     readonly useFieldOptionChoices: UnwrapRef<typeof import('./resources/js/composables/useFieldOptionChoices')['useFieldOptionChoices']>
     readonly useFieldPlugins: UnwrapRef<typeof import('./resources/js/composables/useFieldPlugins')['useFieldPlugins']>

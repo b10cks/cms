@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
+import { Skeleton } from '~/components/ui/skeleton'
 import type { CommentResource } from '~/types/comments'
 
 import CommentItem from './CommentItem.vue'
@@ -38,7 +39,27 @@ const repliesByParent = computed(() => {
 <template>
   <div class="space-y-6 py-4">
     <div
-      v-if="comments.length === 0"
+      v-if="isLoading && comments.length === 0"
+      class="space-y-4"
+      aria-hidden="true"
+    >
+      <div
+        v-for="i in 3"
+        :key="i"
+        class="space-y-2"
+      >
+        <div class="flex items-center gap-2">
+          <Skeleton class="size-6 rounded-full" />
+          <Skeleton class="h-4 w-24" />
+          <Skeleton class="h-3 w-12" />
+        </div>
+        <Skeleton class="h-4 w-full" />
+        <Skeleton class="h-4 w-2/3" />
+      </div>
+    </div>
+
+    <div
+      v-else-if="comments.length === 0"
       class="flex items-start gap-2 text-muted"
     >
       <Icon
