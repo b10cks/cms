@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 
-const { useSpacesQuery } = useSpaces()
+const { useSpacesQuery, prefetchSpace } = useSpaces()
 const { data: spaces } = useSpacesQuery({ per_page: 1000 })
 const { selectedTeam } = useGlobalTeam()
 const { useAccessControl } = useAuthorization()
@@ -39,6 +39,13 @@ const selectedSpace = computed(() => {
 })
 
 const spaceRoute = (space: string) => ({ name: 'space', params: { space } })
+
+// Warms what switching needs: the authorization context the router guard awaits
+// (same key via ensureAuthorizationContext) and the space useSpaceQuery reads.
+const { start: startSpacePrefetch, cancel: cancelSpacePrefetch } = useHoverPrefetch(
+  (spaceId: string) =>
+    Promise.all([ensureAuthorizationContext({ space_id: spaceId }), prefetchSpace(spaceId)])
+)
 
 const openQuickActions = () => {
   if (typeof commandOpen === 'object' && commandOpen !== null) {
@@ -135,7 +142,13 @@ const logout = () => {
                     space.id === selectedSpaceId ? 'bg-accent text-accent-foreground' : '',
                   ]"
                 >
-                  <RouterLink :to="spaceRoute(space.id)">
+                  <RouterLink
+                    :to="spaceRoute(space.id)"
+                    @mouseenter="startSpacePrefetch(space.id)"
+                    @mouseleave="cancelSpacePrefetch(space.id)"
+                    @focusin="startSpacePrefetch(space.id)"
+                    @focusout="cancelSpacePrefetch(space.id)"
+                  >
                     <NuxtImg
                       v-if="space.icon"
                       :src="space.icon"

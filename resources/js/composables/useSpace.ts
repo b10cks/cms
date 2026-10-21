@@ -27,6 +27,11 @@ export function useSpaces() {
     })
   }
 
+  const fetchSpace = async (id: string) => {
+    const response = await api.spaces.get(id)
+    return response.data
+  }
+
   const useSpaceQuery = (id: MaybeRefOrGetter<string | null | undefined>) => {
     return useQuery({
       queryKey: computed(() => queryKeys.spaces.detail(toValue(id) || '')),
@@ -37,12 +42,18 @@ export function useSpaces() {
           throw new Error('Space ID is required')
         }
 
-        const response = await api.spaces.get(resolvedId)
-        return response.data
+        return fetchSpace(resolvedId)
       },
       enabled: computed(() => !!toValue(isAuthenticated) && !!toValue(id)),
     })
   }
+
+  /** Warms the cache entry useSpaceQuery reads. Never throws. */
+  const prefetchSpace = (id: string) =>
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.spaces.detail(id),
+      queryFn: () => fetchSpace(id),
+    })
 
   const useCreateSpaceMutation = () => {
     return useMutation({
@@ -133,6 +144,7 @@ export function useSpaces() {
     // Queries
     useSpacesQuery: useSpacesQuery,
     useSpaceQuery: useSpaceQuery,
+    prefetchSpace,
     useCurrentSpaceQuery() {
       const route = useRoute()
       const spaceId = computed(() => (route.params?.space as string) || null)

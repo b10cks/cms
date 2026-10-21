@@ -8,6 +8,7 @@ import { AlertDialogProvider } from '@/composables/useAlertDialog'
 import UploadBatchPanel from '~/components/assets/UploadBatchPanel.vue'
 import Command from '~/components/Command.vue'
 import KeyboardShortcutsDialog from '~/components/KeyboardShortcutsDialog.vue'
+import NavigationProgress from '~/components/NavigationProgress.vue'
 import { useAssetUploadBatch } from '~/composables/useAssetUploadBatch'
 import { useUrlNotifications } from '~/composables/useUrlNotifications'
 import DefaultLayout from '~/layouts/default.vue'
@@ -56,6 +57,7 @@ const currentLayout = computed(() => {
 
 <template>
   <div>
+    <NavigationProgress />
     <AlertDialogProvider>
       <component :is="currentLayout">
         <RouterView />
