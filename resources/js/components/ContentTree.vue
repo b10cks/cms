@@ -1111,9 +1111,12 @@ const closePublishDialog = () => {
   publishDialogIds.value = []
 }
 
+// The run reports progress in a toast and can take minutes, so the dialog
+// closes as soon as it starts.
 const handlePublishDialog = async (payload: { message?: string }) => {
-  await bulkPublish({ ids: publishDialogIds.value, message: payload.message })
+  const ids = publishDialogIds.value
   closePublishDialog()
+  await bulkPublish({ ids, message: payload.message })
 }
 
 const handleScheduleDialog = async (payload: {

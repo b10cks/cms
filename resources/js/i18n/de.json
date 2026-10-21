@@ -4838,7 +4838,10 @@
         "publishSuccess": "{count} Eintrag veröffentlicht | {count} Einträge veröffentlicht",
         "publishFailed": "{count} von {total} Einträgen konnte nicht veröffentlicht werden. „{name}“: {error} | {count} von {total} Einträgen konnten nicht veröffentlicht werden. „{name}“: {error}",
         "unpublishSuccess": "{count} Eintrag zurückgezogen | {count} Einträge zurückgezogen",
-        "unpublishFailed": "{count} von {total} Einträgen konnte nicht zurückgezogen werden. „{name}“: {error} | {count} von {total} Einträgen konnten nicht zurückgezogen werden. „{name}“: {error}"
+        "unpublishFailed": "{count} von {total} Einträgen konnte nicht zurückgezogen werden. „{name}“: {error} | {count} von {total} Einträgen konnten nicht zurückgezogen werden. „{name}“: {error}",
+        "publishProgress": "Einträge werden veröffentlicht… {progress}%",
+        "unpublishProgress": "Einträge werden zurückgezogen… {progress}%",
+        "indexFailed": "{count} Eintrag wurde geändert, aber nicht in der Suche aktualisiert. Indiziere den Space neu, um das zu beheben. | {count} Einträge wurden geändert, aber nicht in der Suche aktualisiert. Indiziere den Space neu, um das zu beheben."
       }
     },
     "contentVersions": {

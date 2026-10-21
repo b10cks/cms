@@ -4822,7 +4822,10 @@
         "publishSuccess": "Опубликована {count} запись | Опубликовано {count} записи | Опубликовано {count} записей",
         "publishFailed": "Не удалось опубликовать {count} из {total}. «{name}»: {error} | Не удалось опубликовать {count} из {total}. «{name}»: {error} | Не удалось опубликовать {count} из {total}. «{name}»: {error}",
         "unpublishSuccess": "Снята с публикации {count} запись | Снято с публикации {count} записи | Снято с публикации {count} записей",
-        "unpublishFailed": "Не удалось снять с публикации {count} из {total}. «{name}»: {error} | Не удалось снять с публикации {count} из {total}. «{name}»: {error} | Не удалось снять с публикации {count} из {total}. «{name}»: {error}"
+        "unpublishFailed": "Не удалось снять с публикации {count} из {total}. «{name}»: {error} | Не удалось снять с публикации {count} из {total}. «{name}»: {error} | Не удалось снять с публикации {count} из {total}. «{name}»: {error}",
+        "publishProgress": "Публикация записей… {progress}%",
+        "unpublishProgress": "Снятие записей с публикации… {progress}%",
+        "indexFailed": "{count} запись изменена, но не обновлена в поиске. Переиндексируйте пространство, чтобы исправить это. | {count} записей изменено, но не обновлено в поиске. Переиндексируйте пространство, чтобы исправить это."
       }
     },
     "contentVersions": {

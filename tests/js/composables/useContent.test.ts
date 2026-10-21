@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 
 import { queryKeys } from '~/composables/useQueryClient'
-import type { ContentResource } from '~/types/contents'
+import type { ContentBulkPublishRun, ContentResource } from '~/types/contents'
 
 import { withSetup, type Harness } from '../support/harness'
 
@@ -16,6 +16,7 @@ const contents = {
   unpublish: vi.fn(),
   bulkPublish: vi.fn(),
   bulkUnpublish: vi.fn(),
+  bulkPublishRun: vi.fn(),
   duplicate: vi.fn(),
   delete: vi.fn(),
   bulkCreate: vi.fn(),
@@ -28,9 +29,12 @@ const contents = {
 
 const success = vi.fn()
 const failure = vi.fn()
+const warning = vi.fn()
+const loading = vi.fn(() => 'toast-1')
+const dismiss = vi.fn()
 
 vi.mock('~/api', () => ({ api: { forSpace: () => ({ contents }) } }))
-vi.mock('vue-sonner', () => ({ toast: { success, error: failure } }))
+vi.mock('vue-sonner', () => ({ toast: { success, error: failure, warning, loading, dismiss } }))
 
 const { useContent } = await import('~/composables/useContent')
 
@@ -87,6 +91,9 @@ beforeEach(() => {
   for (const fn of Object.values(contents)) fn.mockReset()
   success.mockReset()
   failure.mockReset()
+  warning.mockReset()
+  loading.mockClear()
+  dismiss.mockReset()
 })
 
 afterEach(() => {
@@ -568,16 +575,30 @@ describe('publish, schedule and unpublish', () => {
 })
 
 describe('bulk publish and unpublish', () => {
+  const run = (overrides: Partial<ContentBulkPublishRun> = {}): { data: ContentBulkPublishRun } => ({
+    data: {
+      id: 'run-1',
+      action: 'publish',
+      state: 'completed',
+      progress: 100,
+      total: 0,
+      succeeded: [],
+      failed: [],
+      index_failed: [],
+      error: null,
+      ...overrides,
+    },
+  })
+
   it('refreshes only the entries that went through and counts them', async () => {
-    contents.bulkPublish.mockResolvedValue({
-      data: { succeeded: ['c1', 'c2'], failed: [] },
-    })
+    contents.bulkPublish.mockResolvedValue(run({ succeeded: ['c1', 'c2'] }))
     const { bulkPublish } = mutations()
     const invalidate = spyInvalidate()
 
     await bulkPublish.mutateAsync({ ids: ['c1', 'c2'], message: 'Batch' })
 
     expect(contents.bulkPublish).toHaveBeenCalledWith({ ids: ['c1', 'c2'], message: 'Batch' })
+    expect(contents.bulkPublishRun).not.toHaveBeenCalled()
     expect(invalidatedKeys(invalidate)).toEqual([
       queryKeys.contents(SPACE).lists(),
       queryKeys.contentMenu(SPACE).all(),
@@ -590,15 +611,16 @@ describe('bulk publish and unpublish', () => {
   })
 
   it('reports the first failure with how many entries it affected', async () => {
-    contents.bulkUnpublish.mockResolvedValue({
-      data: {
+    contents.bulkUnpublish.mockResolvedValue(
+      run({
+        action: 'unpublish',
         succeeded: ['c1'],
         failed: [
           { id: 'c2', name: 'About', message: 'locked' },
           { id: 'c3', name: null, message: 'missing' },
         ],
-      },
-    })
+      })
+    )
 
     await mutations().bulkUnpublish.mutateAsync(['c1', 'c2', 'c3'])
 
@@ -607,6 +629,46 @@ describe('bulk publish and unpublish', () => {
     expect(failure).toHaveBeenCalledWith(
       '2 of 3 entries could not be unpublished. "About": locked'
     )
+  })
+
+  it('polls a queued run with a progress toast until it completes', async () => {
+    vi.useFakeTimers()
+    contents.bulkPublish.mockResolvedValue(run({ state: 'queued', progress: 0 }))
+    contents.bulkPublishRun
+      .mockResolvedValueOnce(run({ state: 'running', progress: 40 }))
+      .mockResolvedValueOnce(
+        run({
+          succeeded: ['c1'],
+          index_failed: [{ id: 'c1', name: 'Home', message: 'down' }],
+        })
+      )
+
+    try {
+      const pending = mutations().bulkPublish.mutateAsync({ ids: ['c1'] })
+      await vi.runAllTimersAsync()
+      await pending
+    } finally {
+      vi.useRealTimers()
+    }
+
+    expect(contents.bulkPublishRun).toHaveBeenCalledTimes(2)
+    expect(contents.bulkPublishRun).toHaveBeenCalledWith('run-1')
+    expect(loading).toHaveBeenNthCalledWith(1, 'Publishing entries… 0%', undefined)
+    expect(loading).toHaveBeenNthCalledWith(2, 'Publishing entries… 40%', { id: 'toast-1' })
+    expect(dismiss).toHaveBeenCalledWith('toast-1')
+    expect(warning).toHaveBeenCalledWith(
+      '1 entry changed but could not be updated in search. Reindex the space to fix it.'
+    )
+    expect(success).toHaveBeenCalledWith('1 entry published')
+  })
+
+  it('reports a run that failed on the server', async () => {
+    contents.bulkPublish.mockResolvedValue(run({ state: 'failed', error: 'Worker died' }))
+
+    await expect(mutations().bulkPublish.mutateAsync({ ids: ['c1'] })).rejects.toThrow(
+      'Worker died'
+    )
+    expect(failure).toHaveBeenCalledWith(expect.stringContaining('Worker died'))
   })
 })
 

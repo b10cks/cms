@@ -4822,7 +4822,10 @@
         "publishSuccess": "{count} entrada publicada | {count} entradas publicadas",
         "publishFailed": "No se pudo publicar {count} de {total} entradas. \"{name}\": {error} | No se pudieron publicar {count} de {total} entradas. \"{name}\": {error}",
         "unpublishSuccess": "{count} entrada despublicada | {count} entradas despublicadas",
-        "unpublishFailed": "No se pudo despublicar {count} de {total} entradas. \"{name}\": {error} | No se pudieron despublicar {count} de {total} entradas. \"{name}\": {error}"
+        "unpublishFailed": "No se pudo despublicar {count} de {total} entradas. \"{name}\": {error} | No se pudieron despublicar {count} de {total} entradas. \"{name}\": {error}",
+        "publishProgress": "Publicando entradas… {progress}%",
+        "unpublishProgress": "Despublicando entradas… {progress}%",
+        "indexFailed": "{count} entrada cambió pero no se pudo actualizar en la búsqueda. Reindexa el espacio para corregirlo. | {count} entradas cambiaron pero no se pudieron actualizar en la búsqueda. Reindexa el espacio para corregirlo."
       }
     },
     "contentVersions": {

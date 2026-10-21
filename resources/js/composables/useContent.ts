@@ -8,7 +8,7 @@ import type {
   ContentTranslationImportMode,
 } from '~/types/content-translations'
 import type {
-  ContentBulkPublishResult,
+  ContentBulkPublishRun,
   ContentResource,
   ContentTreeOperationPayload,
   CreateContentPayload,
@@ -17,6 +17,15 @@ import type {
 import type { ImportProgress } from '~/types/import-export'
 
 import { queryKeys } from './useQueryClient'
+
+type BulkPublishMode = 'publish' | 'unpublish'
+
+const BULK_RUN_POLL_INTERVAL = 2000
+// Matches the server lock: a run that has not finished by then is gone.
+const BULK_RUN_MAX_POLLS = 900
+
+const isBulkRunActive = (run: ContentBulkPublishRun) =>
+  run.state === 'queued' || run.state === 'running'
 
 export function useContent(spaceId: MaybeRef<string>) {
   const { t } = useI18n()
@@ -254,17 +263,54 @@ export function useContent(spaceId: MaybeRef<string>) {
     })
   }
 
-  // A batch reports once: a count when every entry went through, otherwise the
-  // first failure's reason alongside how many were affected.
-  const settleBulkPublish = (result: ContentBulkPublishResult, mode: 'publish' | 'unpublish') => {
+  // Polled like asset package builds; a run of 500 entries takes minutes.
+  const waitForBulkRun = async (
+    run: ContentBulkPublishRun,
+    mode: BulkPublishMode
+  ): Promise<ContentBulkPublishRun> => {
+    let current = run
+    let toastId: string | number | undefined
+
+    for (let attempt = 0; isBulkRunActive(current); attempt++) {
+      if (attempt >= BULK_RUN_MAX_POLLS) throw new Error('Bulk run timed out')
+
+      toastId = toast.loading(
+        t(`composables.content.bulk.${mode}Progress`, { progress: current.progress }) as string,
+        toastId === undefined ? undefined : { id: toastId }
+      )
+      await new Promise((resolve) => setTimeout(resolve, BULK_RUN_POLL_INTERVAL))
+      current = (await spaceAPI.value.contents.bulkPublishRun(current.id)).data
+    }
+
+    if (toastId !== undefined) toast.dismiss(toastId)
+    if (current.state === 'failed') throw new Error(current.error || 'Bulk run failed')
+
+    return current
+  }
+
+  const invalidateContentLists = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
     queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
+  }
+
+  // A batch reports once: a count when every entry went through, otherwise the
+  // first failure's reason alongside how many were affected. Search misses get
+  // their own warning, those entries did change.
+  const settleBulkPublish = (result: ContentBulkPublishRun, mode: BulkPublishMode) => {
+    invalidateContentLists()
     result.succeeded.forEach((contentId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).detail(contentId) })
       queryClient.invalidateQueries({
         queryKey: queryKeys.contentVersions(spaceId, contentId).lists(),
       })
     })
+
+    const indexFailures = result.index_failed.length
+    if (indexFailures > 0) {
+      toast.warning(
+        t('composables.content.bulk.indexFailed', { count: indexFailures }, indexFailures) as string
+      )
+    }
 
     const [firstFailure] = result.failed
     if (!firstFailure) {
@@ -292,10 +338,11 @@ export function useContent(spaceId: MaybeRef<string>) {
     return useMutation({
       mutationFn: async (payload: { ids: string[]; message?: string }) => {
         const response = await spaceAPI.value.contents.bulkPublish(payload)
-        return response.data
+        return waitForBulkRun(response.data, 'publish')
       },
       onSuccess: (result) => settleBulkPublish(result, 'publish'),
       onError: (error: Error) => {
+        invalidateContentLists()
         toast.error(
           t('composables.content.publishError', {
             error: error.message || 'Unknown error',
@@ -309,10 +356,11 @@ export function useContent(spaceId: MaybeRef<string>) {
     return useMutation({
       mutationFn: async (ids: string[]) => {
         const response = await spaceAPI.value.contents.bulkUnpublish({ ids })
-        return response.data
+        return waitForBulkRun(response.data, 'unpublish')
       },
       onSuccess: (result) => settleBulkPublish(result, 'unpublish'),
       onError: (error: Error) => {
+        invalidateContentLists()
         toast.error(
           t('composables.content.unpublishError', {
             error: error.message || 'Unknown error',

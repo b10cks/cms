@@ -4822,7 +4822,10 @@
         "publishSuccess": "{count} entry published | {count} entries published",
         "publishFailed": "{count} of {total} entries could not be published. \"{name}\": {error} | {count} of {total} entries could not be published. \"{name}\": {error}",
         "unpublishSuccess": "{count} entry unpublished | {count} entries unpublished",
-        "unpublishFailed": "{count} of {total} entries could not be unpublished. \"{name}\": {error} | {count} of {total} entries could not be unpublished. \"{name}\": {error}"
+        "unpublishFailed": "{count} of {total} entries could not be unpublished. \"{name}\": {error} | {count} of {total} entries could not be unpublished. \"{name}\": {error}",
+        "publishProgress": "Publishing entries… {progress}%",
+        "unpublishProgress": "Unpublishing entries… {progress}%",
+        "indexFailed": "{count} entry changed but could not be updated in search. Reindex the space to fix it. | {count} entries changed but could not be updated in search. Reindex the space to fix it."
       }
     },
     "contentVersions": {

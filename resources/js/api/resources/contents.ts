@@ -1,6 +1,6 @@
 import { requestExportBlob, requestImportStream } from '~/lib/import-export'
 import type {
-  ContentBulkPublishResult,
+  ContentBulkPublishRun,
   ContentResource,
   ContentSerialPreview,
   ContentTreeOperationPayload,
@@ -100,27 +100,37 @@ export class Contents extends BaseResource<
   }
 
   /**
-   * Publish several content items. Each one succeeds or fails on its own.
+   * Queue a run that publishes several content items, each on its own.
+   * Rejected with 409 while another run is active in the space.
    */
   public async bulkPublish(payload: {
     ids: string[]
     message?: string
-  }): Promise<ApiResponse<ContentBulkPublishResult>> {
-    return this.client.post<ApiResponse<ContentBulkPublishResult>>(
+  }): Promise<ApiResponse<ContentBulkPublishRun>> {
+    return this.client.post<ApiResponse<ContentBulkPublishRun>>(
       `${this.basePath}/bulk-publish`,
       payload
     )
   }
 
   /**
-   * Unpublish several content items. Each one succeeds or fails on its own.
+   * Queue a run that unpublishes several content items, each on its own.
    */
   public async bulkUnpublish(payload: {
     ids: string[]
-  }): Promise<ApiResponse<ContentBulkPublishResult>> {
-    return this.client.post<ApiResponse<ContentBulkPublishResult>>(
+  }): Promise<ApiResponse<ContentBulkPublishRun>> {
+    return this.client.post<ApiResponse<ContentBulkPublishRun>>(
       `${this.basePath}/bulk-unpublish`,
       payload
+    )
+  }
+
+  /**
+   * Current state of a bulk publish or unpublish run.
+   */
+  public async bulkPublishRun(runId: string): Promise<ApiResponse<ContentBulkPublishRun>> {
+    return this.client.get<ApiResponse<ContentBulkPublishRun>>(
+      `${this.basePath}/bulk-publish/${runId}`
     )
   }
 

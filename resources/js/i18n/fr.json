@@ -4822,7 +4822,10 @@
         "publishSuccess": "{count} entrée publiée | {count} entrées publiées",
         "publishFailed": "{count} entrée sur {total} n’a pas pu être publiée. « {name} » : {error} | {count} entrées sur {total} n’ont pas pu être publiées. « {name} » : {error}",
         "unpublishSuccess": "{count} entrée dépubliée | {count} entrées dépubliées",
-        "unpublishFailed": "{count} entrée sur {total} n’a pas pu être dépubliée. « {name} » : {error} | {count} entrées sur {total} n’ont pas pu être dépubliées. « {name} » : {error}"
+        "unpublishFailed": "{count} entrée sur {total} n’a pas pu être dépubliée. « {name} » : {error} | {count} entrées sur {total} n’ont pas pu être dépubliées. « {name} » : {error}",
+        "publishProgress": "Publication des entrées… {progress}%",
+        "unpublishProgress": "Dépublication des entrées… {progress}%",
+        "indexFailed": "{count} entrée a changé mais n'a pas pu être mise à jour dans la recherche. Réindexez l'espace pour corriger cela. | {count} entrées ont changé mais n'ont pas pu être mises à jour dans la recherche. Réindexez l'espace pour corriger cela."
       }
     },
     "contentVersions": {

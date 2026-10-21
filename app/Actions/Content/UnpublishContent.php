@@ -15,13 +15,21 @@ class UnpublishContent
 
     public function execute(Content $content, Space $space): void
     {
+        $this->executeWithoutIndex($content, $space);
+        $this->searchService->removeContent($content, $space);
+    }
+
+    /**
+     * Unpublish without touching the search index, for bulk paths that sync
+     * the index once per chunk.
+     */
+    public function executeWithoutIndex(Content $content, Space $space): void
+    {
         $content->getConnection()->transaction(function () use ($content, $space) {
             $content->published_at = null;
             $content->save();
 
             $space->touchContentUpdatedAt();
         });
-
-        $this->searchService->removeContent($content, $space);
     }
 }
