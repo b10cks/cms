@@ -6,6 +6,7 @@ use App\Http\Resources\Management\AutomationResource;
 use App\Models\Traits\Auditable;
 use App\Models\Traits\BroadcastsModelEvents;
 use App\Models\Traits\HasPurifiedAttributes;
+use App\Services\Automation\AutomationEngine;
 use App\Services\Automation\Enums\TriggerType;
 use App\Services\Automation\ValueObjects\Trigger;
 use CodersCantina\Filter\Filterable;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 use InvalidArgumentException;
 
 /**
@@ -97,6 +99,17 @@ class Automation extends GlobalModel
         'is_active' => 'boolean',
         'last_triggered_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        $forget = fn (self $automation) => Cache::forget(
+            AutomationEngine::activeTriggersCacheKey($automation->space_id),
+        );
+
+        static::saved($forget);
+        static::deleted($forget);
+        static::restored($forget);
+    }
 
     protected function name(): Attribute
     {
