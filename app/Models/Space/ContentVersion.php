@@ -228,11 +228,13 @@ class ContentVersion extends SpaceModel
 
     public function links(): BelongsToJson
     {
-        return $this->belongsToJson(Content::class, 'link_ids');
+        return $this->belongsToJson(Content::class, 'link_ids')
+            ->select(Content::deliveryColumns());
     }
 
     public function relations(): BelongsToJson
     {
-        return $this->belongsToJson(Content::class, 'relation_ids');
+        return $this->belongsToJson(Content::class, 'relation_ids')
+            ->select(Content::deliveryColumns());
     }
 }
