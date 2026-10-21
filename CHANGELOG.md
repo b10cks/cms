@@ -3,6 +3,44 @@
 All notable changes to b10cks are documented here.
 Commits follow the [Gitmoji](https://gitmoji.dev/) convention.
 
+## [v2026.10.21-57eecde4] — 2026-10-21
+
+- ✅ Use a void action in the automation trigger cache test
+- 🐛 Lock the content row before its versions on every publish path
+- 🐛 Rebuild the automation trigger cache from the primary
+- 🐛 Report a followed bulk run as another run and reject the request
+- 🐛 Broadcast the bulk publish summary when the run fails
+- 🐛 Renew the bulk publish lock when the job starts
+- 🐛 Lock versions when clearing schedules on publish
+- 💡 Regenerate the mgmt spec for the bulk publish 409 body
+- 💡 Keep the docker example on database sessions, point at Redis
+- ⚡ Default the docker example to Redis sessions
+- 🚸 Follow the active run when a bulk publish is rejected with 409
+- 🐛 Keep publish successful when the search index is unreachable
+- 💡 Update mgmt docs
+- ⚡ Run bulk publish as a queued job with progress
+- ⚡ Sync the search index for many entries in one request
+- ✅ Account for the skipped automation lookups in the query-count tests
+- 🐛 Keep policy registration when scoping AuthorizationService
+- ⚡ Send one summary broadcast for bulk imports and slug updates
+- ⚡️ Cut redundant queries and a broadcast from publish and autosave
+- ⚡ Skip the automation lookup when a space has no active triggers
+- 🐛 Stop bulk-publish deadlocks and settings lost updates on content writes
+- ⚡ Reuse tenant DB connections across Octane requests
+- ⚡ Add the missing space DB indexes with a self-healing migration
+- ⚡ Use the Redis rate limiter when the cache is Redis
+- ⚡ Memoize the authorization graph per request
+- 🐛 Clamp per_page on notification and asset sub-resource lists
+- ⚡ Make the Octane worker count configurable
+- 🚸 Move the unpublished filter into the content tree search
+- ✨ Pin ancestor rows to the top of the content tree while scrolling
+- 🐛 Keep the single-block drag refusal in tree and canvas
+- 🐛 Reorder editor blocks only from the grip
+- ⬆️ Bump versions
+- ⚡️ Broadcast one change event per translation import
+- 🐛 Stop long requests dying at 59 seconds under FrankenPHP
+- 🚸 Keep single blocks at the root when dragging
+
 ## [v2026.10.7-6581fcf3] — 2026-10-7
 
 - ✨ Stream content translation imports with live progress
