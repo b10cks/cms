@@ -296,7 +296,37 @@ describe('useAssetLinkedContentsQuery', () => {
 })
 
 describe('useUpdateAssetMutation', () => {
-  it('invalidates the lists and the updated asset detail', async () => {
+  it('patches cached grids and the cached detail from the response without a refetch', async () => {
+    const list = queryKeys.assets(SPACE).list({})
+    const inCollection = queryKeys.assetCollections(SPACE).assetsList('c1', {})
+    const detail = queryKeys.assets(SPACE).detail('a1')
+    const page = (items: AssetResource[]) => ({ data: items, meta: { total: items.length } })
+    assets.update.mockResolvedValue({ data: { ...asset(), filename: 'renamed.png' } })
+
+    harness = withSetup(mountAssets, {
+      seed: [
+        [list, page([asset(), asset('a2')])],
+        [inCollection, page([asset()])],
+        [detail, { ...asset(), size: 5 }],
+      ],
+    })
+    const invalidate = spyInvalidate()
+
+    await harness.result.update.mutateAsync({ id: 'a1', payload: { filename: 'renamed.png' } })
+
+    const { queryClient } = harness
+    expect(queryClient.getQueryData<{ data: AssetResource[] }>(list)?.data[0]?.filename).toBe(
+      'renamed.png'
+    )
+    expect(queryClient.getQueryData<{ data: AssetResource[] }>(inCollection)?.data[0]?.filename).toBe(
+      'renamed.png'
+    )
+    expect(queryClient.getQueryData(detail)).toMatchObject({ filename: 'renamed.png', size: 5 })
+    expect(invalidate).not.toHaveBeenCalled()
+    expect(success).toHaveBeenCalledWith('Asset updated successfully')
+  })
+
+  it('refetches the grids and folder counts after a move instead of patching', async () => {
     assets.update.mockResolvedValue({ data: asset() })
     const { update } = mutations()
     const invalidate = spyInvalidate()
@@ -304,24 +334,8 @@ describe('useUpdateAssetMutation', () => {
     await update.mutateAsync({ id: 'a1', payload: { folder_id: 'f1' } })
 
     expect(assets.update).toHaveBeenCalledWith('a1', { folder_id: 'f1' })
-    expect(invalidatedKeys(invalidate)).toEqual([
-      queryKeys.assets(SPACE).lists(),
-      queryKeys.assets(SPACE).detail('a1'),
-    ])
-    expect(success).toHaveBeenCalledWith('Asset updated successfully')
-  })
-
-  it('keys the invalidation off the response id, not the requested one', async () => {
-    // A rename can return a different id than the caller sent; the cache
-    // follows the response, so the requested key would stay stale.
-    assets.update.mockResolvedValue({ data: asset('server-id') })
-    const { update } = mutations()
-    const invalidate = spyInvalidate()
-
-    await update.mutateAsync({ id: 'a1', payload: {} })
-
-    expect(invalidatedKeys(invalidate)).toContainEqual(queryKeys.assets(SPACE).detail('server-id'))
-    expect(invalidatedKeys(invalidate)).not.toContainEqual(queryKeys.assets(SPACE).detail('a1'))
+    expect(invalidatedKeys(invalidate)).toContainEqual(queryKeys.assets(SPACE).lists())
+    expect(invalidatedKeys(invalidate)).toContainEqual(queryKeys.assetFolders(SPACE).lists())
   })
 
   it('reports failure', async () => {
@@ -338,13 +352,11 @@ describe('useDeleteAssetMutation', () => {
   it('drops the detail and the linked-contents pages', async () => {
     assets.delete.mockResolvedValue(undefined)
     const { remove } = mutations()
-    const invalidate = spyInvalidate()
     const removeQueries = vi.spyOn((harness as Harness<unknown>).queryClient, 'removeQueries')
 
     await remove.mutateAsync({ id: 'a1' })
 
     expect(assets.delete).toHaveBeenCalledWith('a1', { force: false })
-    expect(invalidatedKeys(invalidate)).toEqual([queryKeys.assets(SPACE).lists()])
     // One call: linkedContents is a subtree of the detail key, so removing the
     // detail already takes the pages with it.
     expect(removeQueries).toHaveBeenCalledTimes(1)
@@ -352,6 +364,40 @@ describe('useDeleteAssetMutation', () => {
       queryKey: queryKeys.assets(SPACE).detail('a1'),
     })
     expect(success).toHaveBeenCalledWith('Asset deleted successfully')
+  })
+
+  it('removes the asset from every cached grid before the server answers', async () => {
+    const list = queryKeys.assets(SPACE).list({})
+    const inCollection = queryKeys.assetCollections(SPACE).assetsList('c1', {})
+    const page = { data: [asset(), asset('a2')], meta: { total: 2 } }
+    let finish!: () => void
+    assets.delete.mockReturnValue(new Promise<void>((resolve) => (finish = resolve)))
+
+    harness = withSetup(mountAssets, { seed: [[list, page], [inCollection, page]] })
+
+    const pending = harness.result.remove.mutateAsync({ id: 'a1' })
+    await vi.waitFor(() =>
+      expect(harness?.queryClient.getQueryData(list)).toMatchObject({
+        data: [asset('a2')],
+        meta: { total: 1 },
+      })
+    )
+    expect(harness.queryClient.getQueryData(inCollection)).toMatchObject({ data: [asset('a2')] })
+
+    finish()
+    await pending
+  })
+
+  it('puts the asset back when the delete fails, including the in-use conflict', async () => {
+    const list = queryKeys.assets(SPACE).list({})
+    const page = { data: [asset(), asset('a2')], meta: { total: 2 } }
+    assets.delete.mockRejectedValue(Object.assign(new Error('in use'), { status: 409 }))
+
+    harness = withSetup(mountAssets, { seed: [[list, page]] })
+
+    await expect(harness.result.remove.mutateAsync({ id: 'a1' })).rejects.toThrow('in use')
+
+    expect(harness.queryClient.getQueryData(list)).toEqual(page)
   })
 
   it('really evicts the seeded caches rather than only invalidating them', async () => {

@@ -34,6 +34,8 @@ const asDuplicateOutcome = (err: unknown): UploadAssetOutcome | null => {
   }
 }
 
+type AssetPage = ApiCollectionResponse<AssetResource>
+
 export function useAssets(spaceId: MaybeRef<string>) {
   const { t } = useI18n()
   const queryClient = useQueryClient()
@@ -65,6 +67,23 @@ export function useAssets(spaceId: MaybeRef<string>) {
       },
       placeholderData: keepPreviousData,
     })
+  }
+
+  /** Every paginated asset grid in the cache: the main lists and the per-collection ones. */
+  const assetListFilters = () => [
+    { queryKey: queryKeys.assets(spaceId).lists() },
+    { queryKey: queryKeys.assetCollections(spaceId).assetsLists() },
+  ]
+
+  const patchAssetPages = (update: (page: AssetPage) => AssetPage) => {
+    for (const filters of assetListFilters()) {
+      queryClient.setQueriesData<AssetPage>(filters, (page) => (page ? update(page) : page))
+    }
+  }
+
+  const invalidateLibraryCounts = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.assetFolders(spaceId).lists() })
+    queryClient.invalidateQueries({ queryKey: queryKeys.assetCollections(spaceId).lists() })
   }
 
   const useAssetQuery = (id: MaybeRef<string>, enabled: MaybeRef<boolean> = true) => {
@@ -194,9 +213,23 @@ export function useAssets(spaceId: MaybeRef<string>) {
         const response = await spaceAPI.value.assets.update(id, payload)
         return response.data
       },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
-        queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).detail(data.id) })
+      onSuccess: (data, { id, payload }) => {
+        if (payload.folder_id !== undefined) {
+          // A move changes which grid the asset belongs to, so patching in place would be wrong.
+          queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.assetCollections(spaceId).assetsLists(),
+          })
+          invalidateLibraryCounts()
+        } else {
+          patchAssetPages((page) => ({
+            ...page,
+            data: page.data.map((asset) => (asset.id === id ? { ...asset, ...data } : asset)),
+          }))
+        }
+        queryClient.setQueryData<AssetResource>(queryKeys.assets(spaceId).detail(data.id), (old) =>
+          old ? { ...old, ...data } : old
+        )
         toast.success(t('composables.assets.updateSuccess') as string)
       },
       onError: (error: Error) => {
@@ -215,13 +248,36 @@ export function useAssets(spaceId: MaybeRef<string>) {
         await spaceAPI.value.assets.delete(id, { force })
         return { id }
       },
+      onMutate: async ({ id }) => {
+        await Promise.all(assetListFilters().map((filters) => queryClient.cancelQueries(filters)))
+        const snapshot = assetListFilters().flatMap((filters) =>
+          queryClient.getQueriesData<AssetPage>(filters)
+        )
+        patchAssetPages((page) => {
+          const data = page.data.filter((asset) => asset.id !== id)
+          const removed = page.data.length - data.length
+
+          return {
+            ...page,
+            data,
+            meta: { ...page.meta, total: Math.max(0, page.meta.total - removed) },
+          }
+        })
+        return { snapshot }
+      },
       onSuccess: ({ id }) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.assets(spaceId).lists() })
+        // Active grids already dropped the row; marking them stale only corrects page boundaries on the next visit.
+        for (const filters of assetListFilters()) {
+          queryClient.invalidateQueries({ ...filters, refetchType: 'none' })
+        }
+        invalidateLibraryCounts()
         // linkedContents lives inside the detail subtree, so it goes with it.
         queryClient.removeQueries({ queryKey: queryKeys.assets(spaceId).detail(id) })
         toast.success(t('composables.assets.deleteSuccess') as string)
       },
-      onError: (error: Error & { data?: AssetDeleteConflict; status?: number }) => {
+      onError: (error: Error & { data?: AssetDeleteConflict; status?: number }, _vars, context) => {
+        for (const [key, data] of context?.snapshot ?? []) queryClient.setQueryData(key, data)
+
         if (error.status === 409 && error.data?.code === 'asset_in_use') {
           return
         }
