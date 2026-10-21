@@ -78,9 +78,10 @@ const monthLabels = computed(() =>
   })
 )
 
-// 2024-01-01 is a Monday; the grid rows run Monday..Sunday.
+// 2024-01-01 is a Monday; the grid rows run Monday..Sunday. Calendar-day strings,
+// so the display time zone cannot shift a label onto the neighbouring weekday.
 const weekdayLabels = Array.from({ length: 7 }, (_, index) =>
-  index % 2 === 0 ? formatDateTime(new Date(2024, 0, 1 + index), 'ddd') : ''
+  index % 2 === 0 ? formatDateTime(`2024-01-0${1 + index}`, 'ddd') : ''
 )
 
 const hovered = ref<{ cell: Cell; x: number; y: number } | null>(null)

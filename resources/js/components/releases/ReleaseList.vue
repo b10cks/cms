@@ -7,6 +7,7 @@ import { Badge } from '~/components/ui/badge'
 import type { Release } from '~/types/releases'
 
 const { $t } = useI18n()
+const { formatDateTime } = useFormat()
 
 const spaceId = inject<string>('spaceId') || ''
 const { useReleasesQuery } = useReleases(spaceId)
@@ -81,11 +82,8 @@ const groupedReleases = computed(() => {
     if (!release.publish_at) {
       unscheduled.push(release)
     } else {
-      const date = new Date(release.publish_at)
-      const monthKey = date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-      })
+      // Keyed `YYYY-MM` in the display zone, so keys sort as text and render localized.
+      const monthKey = formatDateTime(release.publish_at, 'YYYY-MM')
 
       if (!byMonth[monthKey]) {
         byMonth[monthKey] = []
@@ -104,11 +102,7 @@ const groupedReleases = computed(() => {
   })
 
   // Sort months in descending order (newest first)
-  const sortedMonths = Object.keys(byMonth).sort((a, b) => {
-    const dateA = new Date(a).getTime()
-    const dateB = new Date(b).getTime()
-    return dateA - dateB
-  })
+  const sortedMonths = Object.keys(byMonth).sort()
 
   // Sort unscheduled by updated_at (newest first)
   unscheduled.sort((a, b) => {
@@ -229,7 +223,9 @@ const handleCancel = (release: Release) => {
         :key="month"
       >
         <div class="mb-4 flex items-center gap-2">
-          <h2 class="text-xl font-semibold text-primary">{{ month }}</h2>
+          <h2 class="text-xl font-semibold text-primary">
+            {{ formatDateTime(`${month}-01`, 'MMMM YYYY') }}
+          </h2>
           <Badge size="sm">{{ releases.length }}</Badge>
         </div>
         <div class="space-y-6">

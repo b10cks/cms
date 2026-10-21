@@ -12,6 +12,7 @@ const StatsLineChart = defineAsyncComponent(() => import('~/components/stats/Sta
 
 const route = useRoute()
 const { t } = useI18n()
+const { formatDate } = useFormat()
 const spaceId = route.params.space as string
 
 const { useUsageHistoryQuery, useUsageTimeseriesQuery } = useUsageHistory(spaceId)
@@ -53,10 +54,7 @@ const selectedPeriod = computed(() =>
 
 const chartData = computed(() =>
   (timeseries.value?.points ?? []).map((point) => ({
-    name: new Date(point.date).toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-    }),
+    name: formatDate(point.date),
     value: +(point.value / (1024 * 1024)).toFixed(2),
   }))
 )

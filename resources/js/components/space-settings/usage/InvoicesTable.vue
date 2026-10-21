@@ -32,8 +32,10 @@ function statusVariant(status: string | null) {
   }
 }
 
+const { formatDate: formatDisplayDate } = useFormat()
+
 function formatDate(value: string | null): string {
-  return value ? new Date(value).toLocaleDateString() : '—'
+  return value ? formatDisplayDate(value) : '—'
 }
 </script>
 
