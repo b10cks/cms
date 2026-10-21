@@ -64,17 +64,29 @@ class AssetTagController extends Controller
             'asset_ids.*' => ['required', 'string'],
         ]);
 
-        foreach ($request->input('asset_ids') as $assetId) {
-            $asset = Asset::find($assetId);
-            if (!$asset) {
-                continue;
+        $changed = Asset::withoutBroadcasts(function () use ($request, $tag): bool {
+            $changed = false;
+
+            foreach ($request->input('asset_ids') as $assetId) {
+                $asset = Asset::find($assetId);
+                if (!$asset) {
+                    continue;
+                }
+                $tags = $asset->tags ?? [];
+                if (!in_array($tag->id, $tags)) {
+                    $tags[] = $tag->id;
+                    $asset->tags = $tags;
+                    $asset->save();
+                    $changed = true;
+                }
             }
-            $tags = $asset->tags ?? [];
-            if (!in_array($tag->id, $tags)) {
-                $tags[] = $tag->id;
-                $asset->tags = $tags;
-                $asset->save();
-            }
+
+            return $changed;
+        });
+
+        if ($changed) {
+            Asset::broadcastBulkChange($space);
+            AssetTag::broadcastBulkChange($space);
         }
 
         return response()->json(null, 204);

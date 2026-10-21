@@ -430,6 +430,27 @@ describe('data source content changes', () => {
   })
 })
 
+describe('bulk model changes', () => {
+  beforeEach(() => setup())
+
+  it('refetches the redirect lists on a bulk change', () => {
+    emit('spaces.space-1.redirects', '.redirect:bulk_changed')
+
+    expect(invalidated()).toEqual([queryKeys.redirects('space-1').lists()])
+  })
+
+  it('refetches assets, their collection lists and tags on a bulk change', () => {
+    emit('spaces.space-1.assets', '.asset:bulk_changed')
+    emit('spaces.space-1.assets', '.asset_tag:bulk_changed')
+
+    expect(invalidated()).toEqual([
+      queryKeys.assets('space-1').lists(),
+      [...queryKeys.assetCollections('space-1').all(), 'assets'],
+      queryKeys.assetTags('space-1').lists(),
+    ])
+  })
+})
+
 describe('block template events', () => {
   beforeEach(() => setup())
 

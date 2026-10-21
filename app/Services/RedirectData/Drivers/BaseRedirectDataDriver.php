@@ -48,6 +48,22 @@ abstract class BaseRedirectDataDriver extends RecordImportDriver implements Redi
         return 'Redirect';
     }
 
+    /**
+     * One broadcast per saved row would flood Reverb and every client on a
+     * large file, so the per-row events are muted and one bulk event follows.
+     */
+    protected function withMutedEvents(callable $callback): void
+    {
+        Redirect::withoutBroadcasts($callback);
+    }
+
+    protected function afterImport(Space $space): void
+    {
+        if ($this->successes !== [] || $this->deleted !== []) {
+            Redirect::broadcastBulkChange($space);
+        }
+    }
+
     protected function newModel(): Model
     {
         return new Redirect();

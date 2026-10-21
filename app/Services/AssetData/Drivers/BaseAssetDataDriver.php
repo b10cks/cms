@@ -41,16 +41,24 @@ abstract class BaseAssetDataDriver extends BaseImportExportDriver implements Ass
             $validLanguageCodes = array_column($languages, 'code');
             $hasRows = false;
 
-            foreach ($this->parseFile($file) as $rowNumber => $rowData) {
-                if (! $hasRows) {
-                    $this->ignoredFields = $this->detectIgnoredFields(
-                        array_keys($rowData),
-                        $validFieldKeys,
-                        $validLanguageCodes
-                    );
-                    $hasRows = true;
+            // One broadcast per saved row would flood Reverb and every client
+            // on a large file, so rows save muted and one bulk event follows.
+            Asset::withoutBroadcasts(function () use ($space, $file, $assetFields, $languages, $validFieldKeys, $validLanguageCodes, &$hasRows): void {
+                foreach ($this->parseFile($file) as $rowNumber => $rowData) {
+                    if (! $hasRows) {
+                        $this->ignoredFields = $this->detectIgnoredFields(
+                            array_keys($rowData),
+                            $validFieldKeys,
+                            $validLanguageCodes
+                        );
+                        $hasRows = true;
+                    }
+                    $this->importRow($space, $rowNumber, $rowData, $assetFields, $languages);
                 }
-                $this->importRow($space, $rowNumber, $rowData, $assetFields, $languages);
+            });
+
+            if ($this->successes !== []) {
+                Asset::broadcastBulkChange($space);
             }
 
             if (! $hasRows) {
