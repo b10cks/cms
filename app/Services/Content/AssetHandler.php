@@ -51,6 +51,10 @@ class AssetHandler
 
     public function replaceContentAssets(Content|ContentResource $content, $data, Collection $assets): array
     {
+        if ($assets->isEmpty()) {
+            return $data;
+        }
+
         $assets = $assets->reverse()->keyBy('id');
 
         return $this->replaceMatching(
