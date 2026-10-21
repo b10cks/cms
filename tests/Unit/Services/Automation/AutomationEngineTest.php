@@ -3,12 +3,12 @@
 namespace Tests\Unit\Services\Automation;
 
 use App\Models\Management\Automation;
+use App\Models\Management\AutomationAction;
 use App\Models\Management\Space;
 use App\Services\Automation\AutomationEngine;
 use App\Services\Automation\Enums\TriggerType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -45,12 +45,17 @@ class AutomationEngineTest extends TestCase
     public function saving_an_automation_invalidates_the_cached_trigger_types(): void
     {
         $space = Space::factory()->create();
-        Http::fake();
         $engine = app(AutomationEngine::class);
 
         $this->assertSame([], $engine->activeTriggerTypes($space->id));
 
-        $automation = Automation::factory()->forSpace($space)->create(['trigger_type' => 'on_insert', 'trigger_config' => []]);
+        // A void action: the trigger below really runs it, and a webhook would
+        // resolve its faker URL through DNS, which fails on CI.
+        $automation = Automation::factory()->forSpace($space)->create([
+            'trigger_type' => 'on_insert',
+            'trigger_config' => [],
+            'action_id' => AutomationAction::factory()->void()->create(['space_id' => $space->id])->id,
+        ]);
         $this->assertSame(['on_insert'], $engine->activeTriggerTypes($space->id));
         $this->assertNotEmpty($this->automationQueries($space));
 
