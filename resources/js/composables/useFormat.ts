@@ -157,6 +157,8 @@ function resolveFormat(format: string, locale: string, formats: DisplayFormats):
 const isCalendarDay = (date: string | Date | number) =>
   typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)
 
+export type VersionGroup = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'older'
+
 const FILE_SIZE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 
 export default function useFormat() {
@@ -217,9 +219,27 @@ export default function useFormat() {
     return zoned(date, displayFormats).calendar(zoned(Date.now(), displayFormats), resolved)
   }
 
+  /** Which day bucket a timestamp falls in, counted in the display zone. */
+  function versionGroup(
+    date: string | Date | number,
+    now: string | Date | number = Date.now(),
+    formats: DisplayFormats = displayFormats
+  ): VersionGroup {
+    const reference = zoned(now, formats)
+    const startOfToday = reference.startOf('day')
+    const startOfWeek = reference.startOf('week')
+    const moment = zoned(date, formats)
+
+    if (!moment.isBefore(startOfToday)) return 'today'
+    if (!moment.isBefore(startOfToday.subtract(1, 'day'))) return 'yesterday'
+    if (!moment.isBefore(startOfWeek)) return 'thisWeek'
+    if (!moment.isBefore(startOfWeek.subtract(1, 'week'))) return 'lastWeek'
+    return 'older'
+  }
+
   function formatVersionTime(
     date: string | Date | number,
-    group: 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'older'
+    group: VersionGroup
   ) {
     switch (group) {
       case 'today':
@@ -347,6 +367,7 @@ export default function useFormat() {
     formatFileSize,
     formatCurrency,
     formatVersionTime,
+    versionGroup,
     formatTrafficSize,
     formatRelativeTime,
     formatCalendarTime,

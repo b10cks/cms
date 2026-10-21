@@ -32,16 +32,6 @@ const isDraft = computed(() => getReleaseState(props.release) === 'draft')
 const isScheduled = computed(() => getReleaseState(props.release) === 'scheduled')
 const isPublished = computed(() => getReleaseState(props.release) === 'published')
 
-const formatCalendarDate = (dateStr: string | null) => {
-  if (!dateStr) return null
-  const date = new Date(dateStr)
-  return {
-    day: date.getDate(),
-    dayName: date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase(),
-    date: date,
-  }
-}
-
 const handleEditClick = () => {
   emit('edit', props.release)
 }

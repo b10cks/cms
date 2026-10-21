@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import dayjs from 'dayjs'
 import { RadioGroupItem, RadioGroupRoot } from 'reka-ui'
 
 import BlockEdit from '~/components/BlockEdit.vue'
@@ -25,7 +24,7 @@ const { useAccessControl } = useAuthorization()
 const access = useAccessControl(computed(() => ({ space_id: props.spaceId })))
 const canManageBlockVersions = computed(() => access.hasAbility('block_versions.manage'))
 
-const { formatDateTime, formatDateTimeDynamically } = useFormat()
+const { formatDateTime, formatDateTimeDynamically, versionGroup } = useFormat()
 const { user } = useAuth()
 const { $t } = useI18n()
 
@@ -61,25 +60,8 @@ const groupedVersions = computed(() => {
     older: [],
   }
 
-  const now = dayjs()
-  const yesterday = now.subtract(1, 'day').startOf('day')
-  const startOfWeek = now.startOf('week')
-  const startOfLastWeek = startOfWeek.subtract(1, 'week')
-
   versions.value.forEach((version) => {
-    const versionDate = dayjs(version.created_at)
-
-    if (versionDate.isAfter(now.startOf('day'))) {
-      groups.today.push(version)
-    } else if (versionDate.isAfter(yesterday)) {
-      groups.yesterday.push(version)
-    } else if (versionDate.isAfter(startOfWeek)) {
-      groups.thisWeek.push(version)
-    } else if (versionDate.isAfter(startOfLastWeek)) {
-      groups.lastWeek.push(version)
-    } else {
-      groups.older.push(version)
-    }
+    groups[versionGroup(version.created_at)].push(version)
   })
 
   Object.keys(groups).forEach((key) => {
