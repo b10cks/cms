@@ -110,10 +110,13 @@ class Token extends GlobalModel
     /**
      * Lookup by the raw delivery secret. These tokens are stored in plaintext
      * so Settings can copy them after creation — unlike hashed Sanctum PATs.
+     *
+     * Loads the space's default connection up front, since every delivery
+     * request needs it to reach the space database.
      */
     public static function findValidToken(string $plainTextToken): ?Token
     {
-        return Token::with(['space'])
+        return Token::with(['space.defaultConnection'])
             ->where('token', $plainTextToken)
             ->whereHas('space', function ($query) {
                 $query->where('state', 'live');
