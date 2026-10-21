@@ -3,7 +3,7 @@ import { computed, reactive } from 'vue'
 
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
-import { FormField } from '~/components/ui/form'
+import { FormField, Label } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import {
   Select,
@@ -227,12 +227,21 @@ const handleKeyPress = (event: KeyboardEvent): void => {
 
 <template>
   <FormField
+    v-slot="{ id, 'aria-describedby': describedBy }"
     :name="name"
-    :label="label"
     :description="description"
-    :required="required"
   >
-    <div class="space-y-4">
+    <div
+      role="group"
+      :aria-labelledby="`${id}-label`"
+      :aria-describedby="describedBy"
+      class="space-y-4"
+    >
+      <Label
+        :id="`${id}-label`"
+        :label="label"
+        :required="required"
+      />
       <Table class="overflow-hidden rounded-md bg-elevated">
         <TableHeader>
           <TableRow>
