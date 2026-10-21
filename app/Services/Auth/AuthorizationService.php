@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\DB;
 
 class AuthorizationService
 {
+    /** @var array<string, array> Graphs resolved during this request, by user id. */
+    private array $graphs = [];
+
     public function __construct(
         private readonly RoleService $roleService,
     ) {}
@@ -78,10 +81,8 @@ class AuthorizationService
             return $this->rootGraph($user);
         }
 
-        $cacheKey = $this->cacheKey($user->id);
-
-        return Cache::remember(
-            $cacheKey,
+        return $this->graphs[$user->id] ??= Cache::remember(
+            $this->cacheKey($user->id),
             now()->addSeconds((int) config('authorization.cache_ttl_seconds', 3600)),
             fn () => $this->buildGraph($user),
         );
@@ -135,7 +136,10 @@ class AuthorizationService
 
     public function invalidateUser(User|string $user): void
     {
-        Cache::forget($this->cacheKey($user instanceof User ? $user->id : $user));
+        $userId = $user instanceof User ? $user->id : $user;
+
+        unset($this->graphs[$userId]);
+        Cache::forget($this->cacheKey($userId));
     }
 
     public function invalidateUsers(iterable $userIds): void
