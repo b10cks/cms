@@ -2,14 +2,19 @@
 
 namespace Tests\Feature\Mgmt\Content;
 
+use App\Actions\Content\BasePublishAction;
 use App\Actions\Content\PublishContent;
+use App\Actions\Content\UpdateContent;
 use App\Models\Management\Space;
 use App\Models\Space\Block;
 use App\Models\Space\Content;
 use App\Models\Space\ContentVersion;
 use App\Models\User;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -526,6 +531,72 @@ class ContentPublishingVersioningTest extends TestCase
         ])->assertStatus(422);
 
         $this->assertSame($before, Content::query()->count());
+    }
+
+    #[Test]
+    public function clearing_scheduled_versions_spares_the_excepted_version_and_published_ones(): void
+    {
+        $content = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+            currentContent: ['summary' => 'Scheduled draft'],
+        );
+        $scheduled = $content->current_version;
+        $scheduled->forceFill(['scheduled_at' => Carbon::parse('2030-01-01 10:00:00')])->save();
+        $excepted = ContentVersion::query()->forceCreate([
+            'content_id' => $content->id,
+            'content' => ['summary' => 'Kept schedule'],
+            'created_by_id' => $this->owner->id,
+            'scheduled_at' => Carbon::parse('2030-02-01 10:00:00'),
+        ]);
+        $published = $content->published_version;
+        $published->forceFill(['scheduled_at' => Carbon::parse('2025-12-31 10:00:00')])->save();
+
+        $action = new class extends BasePublishAction
+        {
+            public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner): void {}
+
+            public function clear(Content $content, ContentVersion $exceptVersion): void
+            {
+                $this->clearScheduledVersions($content, $exceptVersion);
+            }
+        };
+        $action->clear($content, $excepted);
+
+        $this->assertNull($scheduled->refresh()->scheduled_at);
+        $this->assertNotNull($excepted->refresh()->scheduled_at);
+        $this->assertNotNull($published->refresh()->scheduled_at);
+    }
+
+    #[Test]
+    public function content_writes_only_touch_the_space_timestamp(): void
+    {
+        $content = $this->createVersionedContent(
+            publishedContent: ['summary' => 'Published summary'],
+        );
+        $staleSpace = Space::query()->findOrFail($this->space->id);
+        // Reading settings is what used to mark them dirty on the stale instance.
+        $staleSpace->settings;
+
+        $concurrent = Space::query()->findOrFail($this->space->id);
+        $concurrent->settings->apply(['visual_editor' => false]);
+        $concurrent->save();
+
+        $spaceWrites = [];
+        DB::listen(function (QueryExecuted $query) use (&$spaceWrites): void {
+            if (str_starts_with($query->sql, 'update "spaces"')) {
+                $spaceWrites[] = $query->sql;
+            }
+        });
+
+        app(UpdateContent::class)->execute(['name' => 'Renamed'], $content, $staleSpace, $this->owner);
+
+        $this->assertSame(
+            ['update "spaces" set "content_updated_at" = ? where "spaces"."id" = ? and "spaces"."deleted_at" is null'],
+            $spaceWrites,
+        );
+        $this->assertFalse($this->space->fresh()->settings->visual_editor);
+        $this->assertNotNull($staleSpace->content_updated_at);
+        $this->assertFalse($staleSpace->isDirty('content_updated_at'));
     }
 
     private function createVersionedContent(

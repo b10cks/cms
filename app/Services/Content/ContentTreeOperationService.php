@@ -187,7 +187,7 @@ class ContentTreeOperationService
                 }
             }
 
-            $space->touch('content_updated_at');
+            $space->touchContentUpdatedAt();
             $connection->afterCommit(static fn (): mixed => app(ContentMenuCache::class)->invalidate($space->id));
 
             return [
@@ -212,7 +212,7 @@ class ContentTreeOperationService
                 $row->delete();
             }
 
-            $space->touch('content_updated_at');
+            $space->touchContentUpdatedAt();
 
             return [
                 'warnings' => [],
@@ -276,7 +276,7 @@ class ContentTreeOperationService
                 if ($this->contentPositionService->allowsManualSort($space, $targetParent)) {
                     $this->contentPositionService->moveItems($createdRoots, $targetParent?->id, $after?->id, $position);
                 }
-                $space->touch('content_updated_at');
+                $space->touchContentUpdatedAt();
                 $connection->afterCommit(static fn (): mixed => app(ContentMenuCache::class)->invalidate($space->id));
             }
 

@@ -70,7 +70,7 @@ class PublishContent extends BasePublishAction
             $this->processPublish($data, $content, $owner, $validatedContent);
             $this->finalizePublish($content, $space, $publishedAt);
             $success = true;
-        });
+        }, self::TRANSACTION_ATTEMPTS);
 
         if ($success) {
             $this->loadPublishedVersion($content);
@@ -105,7 +105,7 @@ class PublishContent extends BasePublishAction
     {
         $content->setPublishedAt($publishedAt);
         $content->save();
-        $space->touch('content_updated_at');
+        $space->touchContentUpdatedAt();
     }
 
     private function handleNewVersionPublish(

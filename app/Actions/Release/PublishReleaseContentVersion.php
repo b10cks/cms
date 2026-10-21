@@ -33,7 +33,7 @@ class PublishReleaseContentVersion
             $content->published_version_id = $version->id;
             $content->save();
 
-            $space->touch('content_updated_at');
+            $space->touchContentUpdatedAt();
             $success = true;
         });
 

@@ -77,7 +77,7 @@ class RepairSpaceDatabasesCommand extends Command
                     // as much as a schema change), and the delivery cache is
                     // keyed on this timestamp — without the bump the CDN keeps
                     // serving the pre-migration payload for up to a day.
-                    $space->touch('content_updated_at');
+                    $space->touchContentUpdatedAt();
 
                     if ($connection->state !== 'live') {
                         $connection->update(['state' => 'live']);

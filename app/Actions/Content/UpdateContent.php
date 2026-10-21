@@ -110,8 +110,10 @@ class UpdateContent
         $indexedColumnsChanged = false;
 
         $content->getConnection()->transaction(function () use ($data, $content, $space, $owner, $validatedContent, $contentSubmitted, $clientParentVersionId, $targetParent, &$indexedColumnsChanged) {
+            // Adopting the whole committed row also resets what a rolled-back
+            // attempt left on the model, so a deadlock retry starts clean.
             $locked = Content::query()->lockForUpdate()->findOrFail($content->id);
-            $content->current_version_id = $locked->current_version_id;
+            $content->setRawAttributes($locked->getAttributes(), true);
             $content->load('current_version');
 
             // Omitted parent_version_id stays last-write-wins for older clients.
@@ -174,8 +176,8 @@ class UpdateContent
                 );
             }
 
-            $space->touch('content_updated_at');
-        });
+            $space->touchContentUpdatedAt();
+        }, BasePublishAction::TRANSACTION_ATTEMPTS);
 
         // A draft save leaves `published_at` alone — the entry stays live on the
         // published version it already had, so it must not be dropped from the
