@@ -39,6 +39,15 @@ export function useBlocks(spaceId: MaybeRef<string>) {
     })
   }
 
+  const prefetchBlock = (id: string) =>
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.blocks(spaceId).detail(id),
+      queryFn: async () => {
+        const response = await spaceAPI.value.blocks.get(id)
+        return response.data
+      },
+    })
+
   const useBlockBySlugQuery = (slug: MaybeRef<string>) => {
     const { data: blocks, isLoading } = useBlocksQuery()
 
@@ -162,6 +171,7 @@ export function useBlocks(spaceId: MaybeRef<string>) {
     // Queries
     useBlocksQuery,
     useBlockQuery,
+    prefetchBlock,
     useBlockBySlugQuery,
 
     // Filters

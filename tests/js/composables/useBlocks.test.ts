@@ -149,6 +149,19 @@ describe('useBlockQuery', () => {
   })
 })
 
+describe('prefetchBlock', () => {
+  it('fills the key useBlockQuery reads, so the editor opens from cache', async () => {
+    blocks.get.mockResolvedValue({ data: block('b1') })
+    harness = setup()
+
+    await harness.result.prefetchBlock('b1')
+
+    expect(harness.queryClient.getQueryData(queryKeys.blocks(SPACE).detail('b1'))).toEqual(
+      block('b1')
+    )
+  })
+})
+
 describe('useBlockBySlugQuery', () => {
   it('picks the matching block out of the cached list', async () => {
     const { queryClient, result } = withSetup(() => useBlocks(SPACE).useBlockBySlugQuery('hero'), {

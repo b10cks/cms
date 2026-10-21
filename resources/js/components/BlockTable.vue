@@ -23,6 +23,7 @@ import {
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
+import { useHoverPrefetch } from '~/composables/useHoverPrefetch'
 
 const props = defineProps<{
   spaceId: string
@@ -66,7 +67,8 @@ const queryParams = computed(() => ({
   q: searchQuery.value,
 }))
 
-const { useBlocksQuery, useDeleteBlockMutation } = useBlocks(props.spaceId)
+const { useBlocksQuery, useDeleteBlockMutation, prefetchBlock } = useBlocks(props.spaceId)
+const { start: startPrefetch, cancel: cancelPrefetch } = useHoverPrefetch(prefetchBlock)
 const {
   data: blocks,
   isLoading: isLoadingBlocks,
@@ -275,6 +277,10 @@ const typeColor = (type: 'root' | 'nestable' | 'single' | 'universal') => {
                   :key="block.id"
                   :data-block-id="block.id"
                   data-table-row
+                  @mouseenter="startPrefetch(block.id)"
+                  @mouseleave="cancelPrefetch(block.id)"
+                  @focusin="startPrefetch(block.id)"
+                  @focusout="cancelPrefetch(block.id)"
                   class="cursor-pointer hover:bg-accent focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-ring"
                 >
                   <TableCell>
