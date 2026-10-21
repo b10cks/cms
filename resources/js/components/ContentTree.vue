@@ -41,6 +41,7 @@ import { normalizeLanguageIso } from '~/lib/content-i18n'
 import { fuzzyMatch, prepareFuzzyQuery, prepareFuzzyTarget } from '~/lib/fuzzy-match'
 import { buildPreviewUrl } from '~/lib/preview-url'
 import { isEditableTarget } from '~/lib/shortcuts'
+import { useStickyTreeRows } from '~/lib/sticky-tree'
 import type {
   ContentTreeActionContext,
   ContentTreeClipboardItem,
@@ -1958,6 +1959,8 @@ const registerItemInteractions = (item: FlatContentMenuItem, element: HTMLElemen
   itemCleanupMap.set(item.id, cleanup)
 }
 
+const rowElements = new Map<string, HTMLElement>()
+
 const setItemElement = (item: FlatContentMenuItem) => {
   return (value: Element | { $el?: Element } | null) => {
     itemCleanupMap.get(item.id)?.()
@@ -1965,9 +1968,11 @@ const setItemElement = (item: FlatContentMenuItem) => {
 
     const element = resolveElement(value)
     if (!element) {
+      rowElements.delete(item.id)
       return
     }
 
+    rowElements.set(item.id, element)
     registerItemInteractions(item, element)
   }
 }
@@ -2235,6 +2240,52 @@ const searchCounterText = computed(() => {
   }) as string
 })
 
+// Rows in render order, mirroring how TreeRoot flattens the visible tree.
+const renderedRows = computed(() => {
+  const rows: { id: string; level: number; item: FlatContentMenuItem }[] = []
+  const visit = (items: FlatContentMenuItem[], level: number) => {
+    for (const item of items) {
+      rows.push({ id: item.id, level, item })
+      if (expandedSet.value.has(item.id)) {
+        visit(getVisibleChildren(item), level + 1)
+      }
+    }
+  }
+  visit(visibleRootItems.value, 1)
+
+  return rows
+})
+
+const treeRootRef = ref<ComponentPublicInstance | null>(null)
+const treeScroller = computed(
+  () =>
+    resolveElement(treeRootRef.value)?.closest<HTMLElement>('[data-reka-scroll-area-viewport]') ??
+    null
+)
+
+const {
+  stickyRows,
+  slotHeight: stickySlotHeight,
+  revealRow,
+} = useStickyTreeRows({
+  scroller: treeScroller,
+  rows: renderedRows,
+  getRowElement: (id) => rowElements.get(id) ?? null,
+  max: 5,
+})
+
+const handleStickyRowClick = (event: MouseEvent, id: string) => {
+  handleItemNavigate(event, id)
+  revealRow(id)
+}
+
+// Collapsing a pinned row would otherwise leave the user wherever its old
+// subtree scrolled them to.
+const handleStickyRowToggle = (id: string) => {
+  toggleExpanded(id)
+  void nextTick(() => revealRow(id))
+}
+
 const getItemRowElement = (id: string) =>
   treeContainerRef.value?.querySelector<HTMLElement>(`[data-content-id="${CSS.escape(id)}"]`) ??
   null
@@ -2248,6 +2299,7 @@ const focusItemRow = (id: string | null) => {
     const row = getItemRowElement(id)
     row?.focus({ preventScroll: true })
     row?.scrollIntoView({ block: 'nearest' })
+    revealRow(id)
   })
 }
 
@@ -2279,6 +2331,7 @@ const setActiveMatch = (index: number) => {
   selectSingleItem(match.item.id)
   void nextTick(() => {
     getItemRowElement(match.item.id)?.scrollIntoView({ block: 'nearest' })
+    revealRow(match.item.id)
   })
 }
 
@@ -2739,187 +2792,244 @@ onBeforeUnmount(() => {
       </Transition>
     </div>
 
-    <VerticalScrollArea class="min-h-0 w-full flex-1">
-      <TreeRoot
-        v-slot="{ flattenItems }"
-        v-model:expanded="treeExpanded"
-        class="w-full list-none p-2 pt-1 select-none"
-        :class="{ 'pb-8': hasClipboardItem }"
-        :items="visibleRootItems"
-        :get-children="getVisibleChildren"
-        :get-key="({ id }) => id"
-      >
-        <div
-          v-if="isLoading"
-          aria-hidden="true"
+    <div class="relative min-h-0 w-full flex-1">
+      <VerticalScrollArea class="h-full w-full">
+        <TreeRoot
+          ref="treeRootRef"
+          v-slot="{ flattenItems }"
+          v-model:expanded="treeExpanded"
+          class="w-full list-none p-2 pt-1 select-none"
+          :class="{ 'pb-8': hasClipboardItem }"
+          :items="visibleRootItems"
+          :get-children="getVisibleChildren"
+          :get-key="({ id }) => id"
         >
           <div
-            v-for="(row, index) in skeletonRows"
-            :key="index"
-            class="my-0.5 flex h-7 items-center gap-2 py-1 pr-2"
-            :style="{
-              paddingLeft: `${row.indent}rem`,
-              opacity: 1 - index * 0.11,
-            }"
+            v-if="isLoading"
+            aria-hidden="true"
           >
-            <Skeleton class="size-4 shrink-0" />
-            <Skeleton :class="['h-4', row.width]" />
+            <div
+              v-for="(row, index) in skeletonRows"
+              :key="index"
+              class="my-0.5 flex h-7 items-center gap-2 py-1 pr-2"
+              :style="{
+                paddingLeft: `${row.indent}rem`,
+                opacity: 1 - index * 0.11,
+              }"
+            >
+              <Skeleton class="size-4 shrink-0" />
+              <Skeleton :class="['h-4', row.width]" />
+            </div>
           </div>
-        </div>
 
-        <div
-          v-else-if="error"
-          class="px-2 py-4 text-sm text-destructive"
-        >
-          {{ error }}
-        </div>
+          <div
+            v-else-if="error"
+            class="px-2 py-4 text-sm text-destructive"
+          >
+            {{ error }}
+          </div>
 
-        <div
-          v-else-if="statusFilterActive && pendingItems.length === 0"
-          class="px-2 py-4 text-sm text-muted"
-        >
-          {{ $t('labels.contentTree.status.nothingPending') }}
-        </div>
+          <div
+            v-else-if="statusFilterActive && pendingItems.length === 0"
+            class="px-2 py-4 text-sm text-muted"
+          >
+            {{ $t('labels.contentTree.status.nothingPending') }}
+          </div>
 
-        <TreeItem
-          v-for="item in flattenItems"
-          :ref="setItemElement(item.value)"
-          v-slot="{ isExpanded }"
-          :key="item._id"
-          :style="{ 'padding-left': `${item.level - 0.5}rem` }"
-          v-bind="item.bind"
-          :as="RouterLink"
-          :to="buildLink(item.value.id)"
-          :data-content-id="item.value.id"
-          :data-renaming="currentlyEditingId === item.value.id || undefined"
+          <TreeItem
+            v-for="item in flattenItems"
+            :ref="setItemElement(item.value)"
+            v-slot="{ isExpanded }"
+            :key="item._id"
+            :style="{ 'padding-left': `${item.level - 0.5}rem` }"
+            v-bind="item.bind"
+            :as="RouterLink"
+            :to="buildLink(item.value.id)"
+            :data-content-id="item.value.id"
+            :data-renaming="currentlyEditingId === item.value.id || undefined"
+            :class="[
+              'group relative my-0.5 flex items-center gap-2 rounded-md border border-transparent py-1 pr-2 pl-0 outline-none',
+              'transition-colors duration-150 hover:bg-tree-hover',
+              'focus-visible:ring-1 focus-visible:ring-ring',
+              'cursor-pointer font-semibold',
+              item.value.id === selectedItemId ? 'text-tree-selected-foreground' : '',
+              isCutItem(item.value.id) ? 'opacity-50' : '',
+              isItemSelected(item.value.id)
+                ? 'bg-tree-selected border-tree-selected-border text-tree-selected-foreground'
+                : '',
+              dropResolution?.containerRowId === item.value.id
+                ? 'bg-tree-drop ring-1 ring-ring/40'
+                : '',
+            ]"
+            @mouseenter="startDetailPrefetch(item.value.id)"
+            @mouseleave="cancelDetailPrefetch(item.value.id)"
+            @focus="startDetailPrefetch(item.value.id), revealRow(item.value.id)"
+            @blur="cancelDetailPrefetch(item.value.id)"
+            @pointerdown="handleItemPointerDown($event, item.value.id)"
+            @click="handleItemNavigate($event, item.value.id)"
+            @contextmenu="handleItemContextMenu($event, item.value.id)"
+            @keydown="handleItemKeydown($event, item.value)"
+            @toggle="handleToggle"
+          >
+            <span
+              v-if="item.level > 1"
+              aria-hidden="true"
+              class="pointer-events-none absolute -top-0.5 -bottom-0.5 bg-[linear-gradient(to_right,var(--color-tree-guide)_1px,transparent_1px)] bg-[length:1rem_100%] bg-repeat-x"
+              :style="{ left: guideOffset(1), width: `${item.level - 1}rem` }"
+            />
+            <span
+              v-if="dropGuide && isInDropGuideSubtree(item.value.id)"
+              aria-hidden="true"
+              class="pointer-events-none absolute -top-0.5 -bottom-0.5 w-0.5 -translate-x-px bg-info"
+              :style="{ left: guideOffset(dropGuide.level) }"
+            />
+            <DropIndicator
+              v-if="dropResolution && dropResolution.lineRowId === item.value.id"
+              :edge="dropResolution.side"
+              gap="4px"
+              inset="6px"
+              :indent="dropLineIndent(dropResolution.level)"
+              :label="dropResolution.label"
+            />
+
+            <button
+              v-if="
+                filterVisibleIds ? getVisibleChildren(item.value).length > 0 : item.value.children
+              "
+              class="z-10 h-4 w-3 cursor-pointer"
+              :aria-label="$t('actions.toggleExpand')"
+              :aria-expanded="isExpanded"
+              @click.stop.prevent="toggleExpanded(item.value.id)"
+            >
+              <Icon
+                name="lucide:chevron-right"
+                :class="['transition-transform duration-200', isExpanded && 'rotate-90']"
+              />
+            </button>
+            <span
+              v-else
+              class="size-4"
+            />
+
+            <Icon
+              :name="`lucide:${item.value.icon}`"
+              class="shrink-0"
+              :style="{ color: item.value.color }"
+            />
+
+            <RenamableTitle
+              :ref="setTitleRef(item.value.id)"
+              :name="item.value.name"
+              :highlight="searchHighlightMap.get(item.value.id)"
+              :disabled="!canManageContent"
+              class="w-full truncate text-left"
+              @update="handleRename($event, item.value.id)"
+              @edit-start="handleEditStart(item.value.id)"
+              @cancel="handleEditCancel"
+            />
+
+            <div class="ml-auto pl-3 flex items-center gap-2">
+              <AvatarList
+                v-if="getUsersForContent(item.value.id).length > 0"
+                :users="getUsersForContent(item.value.id)"
+                size="sm"
+                :class="[isItemSelected(item.value.id) ? 'mr-4' : 'mr-1  group-hover:mr-4']"
+              />
+              <div
+                v-if="!item.value.pat"
+                class="h-2 w-2 rounded-full bg-text-muted"
+                :title="$t('labels.contentTree.status.draft')"
+              />
+              <SimpleTooltip
+                v-else-if="item.value.drf"
+                :tooltip="`${$t('labels.contentTree.status.pendingChanges')} · ${item.value.pat}`"
+              >
+                <div
+                  class="h-2 w-2 rounded-full bg-text-muted ring-1 ring-success ring-offset-1 ring-offset-background"
+                />
+              </SimpleTooltip>
+              <SimpleTooltip
+                v-else
+                :tooltip="item.value.pat"
+              >
+                <div class="h-2 w-2 rounded-full bg-success" />
+              </SimpleTooltip>
+            </div>
+
+            <div class="absolute right-4">
+              <button
+                type="button"
+                :aria-label="$t('labels.contentTree.actions.more')"
+                :class="[
+                  'cursor-pointer flex items-center rounded-sm p-1 text-muted transition-opacity duration-200 hover:text-primary focus-visible:opacity-100',
+                  isItemSelected(item.value.id) || openMenuId === item.value.id
+                    ? 'opacity-100'
+                    : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
+                ]"
+                @pointerdown.stop.prevent
+                @click.stop.prevent="handleItemMenuTrigger($event, item.value.id)"
+              >
+                <Icon name="lucide:ellipsis-vertical" />
+              </button>
+            </div>
+          </TreeItem>
+        </TreeRoot>
+      </VerticalScrollArea>
+
+      <div
+        v-if="stickyRows.length > 0"
+        aria-hidden="true"
+        data-content-tree-sticky
+        :class="[
+          'absolute top-0 right-2 left-0 z-10 overflow-hidden bg-sidebar px-2 shadow-sm select-none',
+          isDragging && 'pointer-events-none',
+        ]"
+        :style="{ height: `${stickyRows.at(-1)!.top + stickySlotHeight}px` }"
+      >
+        <RouterLink
+          v-for="(row, rowIndex) in stickyRows"
+          :key="row.id"
+          :to="buildLink(row.id)"
+          tabindex="-1"
           :class="[
-            'group relative my-0.5 flex items-center gap-2 rounded-md border border-transparent py-1 pr-2 pl-0 outline-none',
+            'group absolute inset-x-2 flex items-center gap-2 rounded-md border border-transparent bg-sidebar py-1 pr-2 font-semibold',
             'transition-colors duration-150 hover:bg-tree-hover',
-            'focus-visible:ring-1 focus-visible:ring-ring',
-            'cursor-pointer font-semibold',
-            item.value.id === selectedItemId ? 'text-tree-selected-foreground' : '',
-            isCutItem(item.value.id) ? 'opacity-50' : '',
-            isItemSelected(item.value.id)
-              ? 'bg-tree-selected border-tree-selected-border text-tree-selected-foreground'
-              : '',
-            dropResolution?.containerRowId === item.value.id
-              ? 'bg-tree-drop ring-1 ring-ring/40'
-              : '',
+            row.id === selectedItemId ? 'text-tree-selected-foreground' : '',
           ]"
-          @mouseenter="startDetailPrefetch(item.value.id)"
-          @mouseleave="cancelDetailPrefetch(item.value.id)"
-          @focus="startDetailPrefetch(item.value.id)"
-          @blur="cancelDetailPrefetch(item.value.id)"
-          @pointerdown="handleItemPointerDown($event, item.value.id)"
-          @click="handleItemNavigate($event, item.value.id)"
-          @contextmenu="handleItemContextMenu($event, item.value.id)"
-          @keydown="handleItemKeydown($event, item.value)"
-          @toggle="handleToggle"
+          :style="{
+            top: `${row.top}px`,
+            zIndex: stickyRows.length - rowIndex,
+            height: `${stickySlotHeight - 2}px`,
+            paddingLeft: `${row.level - 0.5}rem`,
+          }"
+          @click="handleStickyRowClick($event, row.id)"
+          @contextmenu="handleItemContextMenu($event, row.id)"
         >
           <span
-            v-if="item.level > 1"
-            aria-hidden="true"
+            v-if="row.level > 1"
             class="pointer-events-none absolute -top-0.5 -bottom-0.5 bg-[linear-gradient(to_right,var(--color-tree-guide)_1px,transparent_1px)] bg-[length:1rem_100%] bg-repeat-x"
-            :style="{ left: guideOffset(1), width: `${item.level - 1}rem` }"
+            :style="{ left: guideOffset(1), width: `${row.level - 1}rem` }"
           />
-          <span
-            v-if="dropGuide && isInDropGuideSubtree(item.value.id)"
-            aria-hidden="true"
-            class="pointer-events-none absolute -top-0.5 -bottom-0.5 w-0.5 -translate-x-px bg-info"
-            :style="{ left: guideOffset(dropGuide.level) }"
-          />
-          <DropIndicator
-            v-if="dropResolution && dropResolution.lineRowId === item.value.id"
-            :edge="dropResolution.side"
-            gap="4px"
-            inset="6px"
-            :indent="dropLineIndent(dropResolution.level)"
-            :label="dropResolution.label"
-          />
-
           <button
-            v-if="
-              filterVisibleIds ? getVisibleChildren(item.value).length > 0 : item.value.children
-            "
+            type="button"
+            tabindex="-1"
             class="z-10 h-4 w-3 cursor-pointer"
-            :aria-label="$t('actions.toggleExpand')"
-            :aria-expanded="isExpanded"
-            @click.stop.prevent="toggleExpanded(item.value.id)"
+            @click.stop.prevent="handleStickyRowToggle(row.id)"
           >
             <Icon
               name="lucide:chevron-right"
-              :class="['transition-transform duration-200', isExpanded && 'rotate-90']"
+              class="rotate-90"
             />
           </button>
-          <span
-            v-else
-            class="size-4"
-          />
-
           <Icon
-            :name="`lucide:${item.value.icon}`"
+            :name="`lucide:${row.item.icon}`"
             class="shrink-0"
-            :style="{ color: item.value.color }"
+            :style="{ color: row.item.color }"
           />
-
-          <RenamableTitle
-            :ref="setTitleRef(item.value.id)"
-            :name="item.value.name"
-            :highlight="searchHighlightMap.get(item.value.id)"
-            :disabled="!canManageContent"
-            class="w-full truncate text-left"
-            @update="handleRename($event, item.value.id)"
-            @edit-start="handleEditStart(item.value.id)"
-            @cancel="handleEditCancel"
-          />
-
-          <div class="ml-auto pl-3 flex items-center gap-2">
-            <AvatarList
-              v-if="getUsersForContent(item.value.id).length > 0"
-              :users="getUsersForContent(item.value.id)"
-              size="sm"
-              :class="[isItemSelected(item.value.id) ? 'mr-4' : 'mr-1  group-hover:mr-4']"
-            />
-            <div
-              v-if="!item.value.pat"
-              class="h-2 w-2 rounded-full bg-text-muted"
-              :title="$t('labels.contentTree.status.draft')"
-            />
-            <SimpleTooltip
-              v-else-if="item.value.drf"
-              :tooltip="`${$t('labels.contentTree.status.pendingChanges')} · ${item.value.pat}`"
-            >
-              <div
-                class="h-2 w-2 rounded-full bg-text-muted ring-1 ring-success ring-offset-1 ring-offset-background"
-              />
-            </SimpleTooltip>
-            <SimpleTooltip
-              v-else
-              :tooltip="item.value.pat"
-            >
-              <div class="h-2 w-2 rounded-full bg-success" />
-            </SimpleTooltip>
-          </div>
-
-          <div class="absolute right-4">
-            <button
-              type="button"
-              :aria-label="$t('labels.contentTree.actions.more')"
-              :class="[
-                'cursor-pointer flex items-center rounded-sm p-1 text-muted transition-opacity duration-200 hover:text-primary focus-visible:opacity-100',
-                isItemSelected(item.value.id) || openMenuId === item.value.id
-                  ? 'opacity-100'
-                  : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
-              ]"
-              @pointerdown.stop.prevent
-              @click.stop.prevent="handleItemMenuTrigger($event, item.value.id)"
-            >
-              <Icon name="lucide:ellipsis-vertical" />
-            </button>
-          </div>
-        </TreeItem>
-      </TreeRoot>
-    </VerticalScrollArea>
+          <span class="truncate">{{ row.item.name }}</span>
+        </RouterLink>
+      </div>
+    </div>
 
     <DropdownMenu
       :open="openMenuId !== null"
