@@ -135,7 +135,7 @@ const {
   getClipboardItem,
 } = useContentTreeClipboard()
 const { mutateAsync: runTreeOperations } = useTreeOperationsMutation()
-const { mutate: updateContent } = useUpdateContentMutation()
+const { mutateAsync: updateContent } = useUpdateContentMutation()
 const { mutateAsync: bulkPublish, isPending: isPublishing } = useBulkPublishContentMutation()
 const { mutateAsync: bulkUnpublish, isPending: isUnpublishing } = useBulkUnpublishContentMutation()
 const { mutateAsync: scheduleContent, isPending: isScheduling } = useScheduleContentMutation()
@@ -635,12 +635,8 @@ const closeMenu = () => {
   activeMenuTrigger.value = null
 }
 
-function handleRename(newName: string, contentId: string) {
-  if (contentId && newName) {
-    updateContent({ id: contentId, payload: { name: newName } })
-  }
-
-  currentlyEditingId.value = null
+function renameContent(newName: string, contentId: string) {
+  return updateContent({ id: contentId, payload: { name: newName } })
 }
 
 function handleEditStart(contentId: string) {
@@ -2934,7 +2930,8 @@ onBeforeUnmount(() => {
               :highlight="searchHighlightMap.get(item.value.id)"
               :disabled="!canManageContent"
               class="w-full truncate text-left"
-              @update="handleRename($event, item.value.id)"
+              :save="(name) => renameContent(name, item.value.id)"
+              @update="handleEditCancel"
               @edit-start="handleEditStart(item.value.id)"
               @cancel="handleEditCancel"
             />

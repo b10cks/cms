@@ -23,7 +23,7 @@ const {
   useAssignTagToAssetsMutation,
 } = useAssetTags(props.spaceId)
 const { data: tags } = useAssetTagsQuery({ per_page: 500, sort: '+name' })
-const { mutate: updateTag } = useUpdateAssetTagMutation()
+const { mutateAsync: updateTag } = useUpdateAssetTagMutation()
 const { mutate: deleteTag } = useDeleteAssetTagMutation()
 const { mutate: assignTagToAssets } = useAssignTagToAssetsMutation()
 
@@ -43,8 +43,7 @@ function openEditDialog(tag: AssetTagResource) {
 }
 
 function handleRename(newName: string, tag: AssetTagResource) {
-  if (!newName || newName === tag.name) return
-  updateTag({ id: tag.id, payload: { name: newName, icon: tag.icon, color: tag.color } })
+  return updateTag({ id: tag.id, payload: { name: newName, icon: tag.icon, color: tag.color } })
 }
 
 function handleAssignDrop(tagId: string, assetIds: string[]) {
@@ -104,9 +103,9 @@ async function handleDelete(tag: AssetTagResource) {
         :item="item"
         :selected-tag-id="selectedTagId ?? null"
         :can-manage-tags="canManageTags"
+        :rename="handleRename"
         class="my-0.5"
         @select="selectedTagId = $event"
-        @rename="(name, tag) => handleRename(name, tag)"
         @edit="openEditDialog"
         @delete="handleDelete"
         @assign-drop="handleAssignDrop"

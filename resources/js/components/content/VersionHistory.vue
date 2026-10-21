@@ -89,7 +89,7 @@ const { data: selectedVersionData } = useContentVersionQuery(selectedVersionId)
 
 const { mutate: setCurrentVersion, isPending: isSettingCurrent } = useSetCurrentVersionMutation()
 const { mutate: publishVersion, isPending: isPublishing } = usePublishVersionMutation()
-const { mutate: updateVersion, isPending: isUpdating } = useUpdateVersionMutation()
+const { mutateAsync: updateVersion, isPending: isUpdating } = useUpdateVersionMutation()
 
 const { useRemoveVersionsMutation } = useReleases(props.spaceId)
 const { mutate: removeVersions, isPending: isRemovingVersion } = useRemoveVersionsMutation()
@@ -214,7 +214,7 @@ const handlePublishVersion = (versionId: string) => {
 }
 
 const handleUpdateMessage = (id: string, message: string | null | undefined) => {
-  updateVersion({ id, payload: { message } })
+  return updateVersion({ id, payload: { message } })
 }
 
 // Get group label
@@ -513,7 +513,7 @@ const openVersionJsonInNewTab = (versionId: string) => {
                           :fallback="$t('labels.contentVersions.noMessage')"
                           class="text-left"
                           :disabled="!isMine(version)"
-                          @update="handleUpdateMessage(version.id, $event)"
+                          :save="(message) => handleUpdateMessage(version.id, message)"
                         />
                       </div>
 

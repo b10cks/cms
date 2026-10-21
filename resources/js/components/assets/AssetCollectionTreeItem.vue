@@ -21,11 +21,11 @@ const props = defineProps<{
   selectedCollectionId: string | null
   canManageCollections: boolean
   canShareCollections?: boolean
+  rename: (name: string, collection: AssetCollectionResource) => Promise<unknown>
 }>()
 
 const emit = defineEmits<{
   select: [id: string]
-  rename: [name: string, collection: AssetCollectionResource]
   edit: [collection: AssetCollectionResource]
   manageShares: [collection: AssetCollectionResource]
   delete: [collection: AssetCollectionResource]
@@ -109,7 +109,7 @@ watchEffect((onCleanup) => {
           :name="item.value.name"
           :disabled="!canManageCollections"
           class="min-w-0 flex-1 truncate"
-          @update="$emit('rename', $event, item.value)"
+          :save="(name) => rename(name, item.value)"
         />
         <Icon
           v-if="isSmart"

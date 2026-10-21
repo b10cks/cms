@@ -44,7 +44,7 @@ const { data: versions, isLoading } = useBlockVersionsQuery()
 const selectedVersionQueryId = computed(() => selectedVersionId.value ?? '')
 const { data: selectedVersionData } = useBlockVersionQuery(selectedVersionQueryId)
 
-const { mutate: updateVersion } = useUpdateBlockVersionMutation()
+const { mutateAsync: updateVersion } = useUpdateBlockVersionMutation()
 const { mutate: restoreVersion, isPending: isRestoring } = useRestoreBlockVersionMutation()
 const { mutate: deleteVersion } = useDeleteBlockVersionMutation()
 
@@ -156,7 +156,7 @@ const handleDelete = async (version: BlockVersion) => {
 }
 
 const handleUpdateMessage = (id: string, message: string | null | undefined) => {
-  updateVersion({ id, payload: { commit_message: message } })
+  return updateVersion({ id, payload: { commit_message: message } })
 }
 
 const getGroupLabel = (groupKey: string) => {
@@ -325,7 +325,7 @@ watch(
                             :fallback="$t('labels.blockVersions.noCommitMessage')"
                             class="text-left"
                             :disabled="!canManageBlockVersions || !isMine(version)"
-                            @update="handleUpdateMessage(version.id, $event)"
+                            :save="(message) => handleUpdateMessage(version.id, message)"
                           />
                         </div>
 
