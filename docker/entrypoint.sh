@@ -10,6 +10,11 @@ set -eu
 # behaviour; compose sets 0.0.0.0 so the published port is reachable.
 export OCTANE_HOST="${OCTANE_HOST:-127.0.0.1}"
 
+# Octane worker count per container. Workers mostly wait on I/O (database,
+# Redis, S3), so the right number is set by memory, not CPU. 2 is a safe
+# default for self-hosters; SaaS sets it per task definition.
+export OCTANE_WORKERS="${OCTANE_WORKERS:-2}"
+
 # APP_KEY: prefer the environment; otherwise generate once and persist it on
 # the storage volume (/app is read-only for this user).
 if [ -z "${APP_KEY:-}" ]; then

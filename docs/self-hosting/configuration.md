@@ -209,6 +209,11 @@ Without a working ffmpeg, video uploads still work — they just get no generate
 # Requests per minute per IP against the public image transformation
 # endpoint. Each distinct transformation forces a fresh decode at the origin.
 IMAGE_RATE_LIMIT=600
+
+# Octane worker processes per app container (Docker image only). Workers
+# mostly wait on the database and Redis, so size this by memory: budget
+# roughly 100 MB per worker on top of the base footprint.
+OCTANE_WORKERS=2
 ```
 
 ## Transfers (packages & backups)
