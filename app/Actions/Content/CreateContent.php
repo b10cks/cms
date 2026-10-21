@@ -150,7 +150,7 @@ class CreateContent
             }
 
             if ($touchSpace) {
-                $space->touch('content_updated_at');
+                $space->touchContentUpdatedAt();
             }
         });
     }

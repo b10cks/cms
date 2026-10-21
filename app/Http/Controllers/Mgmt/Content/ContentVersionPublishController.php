@@ -37,7 +37,7 @@ class ContentVersionPublishController extends Controller
         $version->published_at ??= now();
         $version->save();
 
-        $space->touch('content_updated_at');
+        $space->touchContentUpdatedAt();
 
         $content->load('published_version');
         $this->searchService->indexContent($content, $space);

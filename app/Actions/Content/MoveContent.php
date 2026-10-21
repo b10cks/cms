@@ -61,7 +61,7 @@ class MoveContent
                 $this->contentPositionService->moveItemToPosition($content, $parentId, $position);
             }
 
-            $space->touch('content_updated_at');
+            $space->touchContentUpdatedAt();
         });
     }
 

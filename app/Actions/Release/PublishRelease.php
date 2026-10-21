@@ -81,7 +81,7 @@ class PublishRelease
         });
 
         if (\count($contents)) {
-            $space->touch('content_updated_at');
+            $space->touchContentUpdatedAt();
             foreach ($contents as $content) {
                 $this->searchService->indexContent($content, $space);
             }

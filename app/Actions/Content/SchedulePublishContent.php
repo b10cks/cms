@@ -54,21 +54,30 @@ class SchedulePublishContent extends BasePublishAction
             ]);
         }
 
-        $content->getConnection()->transaction(function () use ($data, $content, $space, $owner, $validatedContent) {
+        $scheduledAt = Carbon::parse(data_get($data, 'scheduled_at'));
+
+        $content->getConnection()->transaction(function () use ($data, $content, $owner, $validatedContent, $scheduledAt) {
             $this->lockContentForUpdate($content);
-            $this->processSchedule($data, $content, $owner, $space, $validatedContent);
+            $this->processSchedule($data, $content, $owner, $scheduledAt, $validatedContent);
             $content->save();
-        });
+        }, self::TRANSACTION_ATTEMPTS);
+
+        // After commit, so a retried attempt does not queue a second job.
+        if ($scheduledAt->isFuture()) {
+            PublishScheduledContentJob::dispatch(
+                $space->id,
+                $content->current_version_id,
+            )->delay($scheduledAt);
+        }
     }
 
     private function processSchedule(
         array $data,
         Content $content,
         Authenticatable|User|null $owner,
-        Space $space,
+        Carbon $scheduledAt,
         array $sanitizedContent,
     ): void {
-        $scheduledAt = Carbon::parse(data_get($data, 'scheduled_at'));
         $payload = $this->extractDataFromRequest($data);
         $message = $payload['message'];
         $contentData = $sanitizedContent;
@@ -85,13 +94,6 @@ class SchedulePublishContent extends BasePublishAction
         } else {
             $version = $this->createNewVersion($values, $contentData, $content, $owner);
             $content->current_version_id = $version->id;
-        }
-
-        if ($scheduledAt?->isFuture()) {
-            PublishScheduledContentJob::dispatch(
-                $space->id,
-                $content->current_version_id,
-            )->delay($scheduledAt);
         }
     }
 }

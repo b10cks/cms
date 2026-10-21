@@ -11,6 +11,13 @@ use Illuminate\Contracts\Auth\Authenticatable;
 
 abstract class BasePublishAction
 {
+    /**
+     * Content writes retry on deadlock. Each attempt re-adopts the locked row,
+     * but anything the closure broadcasts or queues directly still goes out
+     * once per attempt.
+     */
+    public const TRANSACTION_ATTEMPTS = 3;
+
     abstract public function execute(array $data, Content $content, Space $space, Authenticatable|User|null $owner): void;
 
     protected function extractDataFromRequest(array &$data): array
@@ -27,10 +34,18 @@ abstract class BasePublishAction
         return compact('contentData', 'message', 'publishedAt');
     }
 
+    /**
+     * Saves only when the request changed a column: a clean save still fires
+     * the saved hook, which broadcasts the pre-publish state. Callers have
+     * already loaded current_version through lockContentForUpdate().
+     */
     protected function updateContent(array $data, Content $content): void
     {
-        $content->update($data);
-        $content->load('current_version');
+        $content->fill($data);
+
+        if ($content->isDirty()) {
+            $content->save();
+        }
     }
 
     protected function resolveRequestedContent(array $data, Content $content): array
@@ -118,40 +133,49 @@ abstract class BasePublishAction
     }
 
     /**
-     * Lock the content row and adopt its version pointers, so the version this
+     * Lock the content row and adopt its committed state, so the version this
      * action branches from is the one committed right now, not the one the
-     * route model resolved before a concurrent update. Call inside the
-     * transaction — a lock taken outside is released immediately.
+     * route model resolved before a concurrent update. Adopting the whole row
+     * also resets what a rolled-back transaction attempt left on the model, so
+     * a deadlock retry starts clean. Call inside the transaction, a lock taken
+     * outside is released immediately.
      */
     protected function lockContentForUpdate(Content $content): void
     {
         $locked = Content::query()->lockForUpdate()->findOrFail($content->id);
-        $content->current_version_id = $locked->current_version_id;
-        $content->published_version_id = $locked->published_version_id;
+        $content->setRawAttributes($locked->getAttributes(), true);
         $content->load('current_version');
     }
 
+    /**
+     * Reads first and updates by primary key. A locking UPDATE on these
+     * conditions picks the (scheduled_at, published_at) index and gap-locks its
+     * tail, which deadlocks two concurrent publishes in one space. The content
+     * row lock from lockContentForUpdate() already serializes writers of this
+     * content, so the unlocked read is safe.
+     */
     protected function clearScheduledVersions(Content $content, ?ContentVersion $exceptVersion = null): void
     {
-        $query = ContentVersion::where('content_id', $content->id)
+        $ids = ContentVersion::query()
+            ->where('content_id', $content->id)
             ->whereNotNull('scheduled_at')
-            ->whereNull('published_at');
+            ->whereNull('published_at')
+            ->when($exceptVersion, fn ($query) => $query->where('id', '!=', $exceptVersion->id))
+            ->pluck('id');
 
-        if ($exceptVersion) {
-            $query->where('id', '!=', $exceptVersion->id);
+        if ($ids->isNotEmpty()) {
+            ContentVersion::query()->whereKey($ids)->update(['scheduled_at' => null]);
         }
-
-        $query->update(['scheduled_at' => null]);
     }
 
-    protected function touchSpace(Space $space, string $column = 'content_updated_at'): void
+    protected function touchSpace(Space $space): void
     {
         try {
-            $space->touch($column);
+            $space->touchContentUpdatedAt();
         } catch (\Exception $e) {
             \Log::error('Failed to touch space', [
                 'space_id' => $space->id,
-                'column' => $column,
+                'column' => 'content_updated_at',
                 'error' => $e->getMessage(),
             ]);
             throw $e;

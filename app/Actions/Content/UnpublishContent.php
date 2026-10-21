@@ -19,7 +19,7 @@ class UnpublishContent
             $content->published_at = null;
             $content->save();
 
-            $space->touch('content_updated_at');
+            $space->touchContentUpdatedAt();
         });
 
         $this->searchService->removeContent($content, $space);

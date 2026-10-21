@@ -61,7 +61,7 @@ class BulkCreateContent
                 ];
             }
 
-            $space->touch('content_updated_at');
+            $space->touchContentUpdatedAt();
         });
 
         return $createdItems;

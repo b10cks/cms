@@ -234,6 +234,21 @@ class Space extends GlobalModel
         return $this->hasMany(Automation::class, 'space_id', 'id');
     }
 
+    /**
+     * Bump content_updated_at with a single-column write. touch() saves the
+     * whole model, and a stale instance would write its loaded settings back
+     * over changes made since.
+     */
+    public function touchContentUpdatedAt(): void
+    {
+        $now = $this->freshTimestamp();
+
+        static::query()->whereKey($this->getKey())->toBase()->update(['content_updated_at' => $now]);
+
+        $this->content_updated_at = $now;
+        $this->syncOriginalAttribute('content_updated_at');
+    }
+
     public function getRvAttribute(): int
     {
         return $this->content_updated_at?->getTimestamp() ?? $this->updated_at?->getTimestamp() ?? 0;
