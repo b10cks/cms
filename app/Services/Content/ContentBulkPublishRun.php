@@ -12,8 +12,8 @@ use Illuminate\Support\Str;
  * poll it while BulkPublishContentJob works through the ids. Runs are
  * short-lived and their outcome is in the audit log, so there is no table.
  *
- * One run per space at a time: the controller takes lock() before dispatching
- * and the job releases it when done.
+ * One run per space at a time: the controller takes lock() before dispatching,
+ * the job swaps it for its own lease() when it starts and releases it when done.
  *
  * @phpstan-type Failure array{id: string, name: string|null, message: string}
  */
@@ -31,8 +31,8 @@ final class ContentBulkPublishRun
     private const TTL_SECONDS = 86400;
 
     /**
-     * Covers queue wait plus the job's 900 s timeout. A worker that dies
-     * without running failed() blocks the space for at most this long.
+     * Covers queue wait until the job takes its own lease(). A worker that
+     * dies without running failed() blocks the space for at most this long.
      */
     public const LOCK_SECONDS = 1800;
 
@@ -63,9 +63,34 @@ final class ContentBulkPublishRun
         return Cache::get(self::activeKey($spaceId));
     }
 
-    public static function releaseLock(string $spaceId, string $owner): void
+    /**
+     * Swaps the controller's lock for one owned by the run that lasts
+     * $seconds from now, since queue wait may have used up the first one.
+     * Returns false when another run took the lock after the first expired.
+     */
+    public static function lease(string $spaceId, string $runId, string $previousOwner, int $seconds): bool
     {
-        Cache::forget(self::activeKey($spaceId));
+        Cache::restoreLock(self::lockKey($spaceId), $previousOwner)->release();
+
+        if (! Cache::lock(self::lockKey($spaceId), $seconds, $runId)->get()) {
+            return false;
+        }
+
+        Cache::put(self::activeKey($spaceId), $runId, $seconds);
+
+        return true;
+    }
+
+    /**
+     * Releases the lock if $owner still holds it and clears the active run if
+     * it is still this one. Either may already belong to a later run.
+     */
+    public static function releaseLock(string $spaceId, string $runId, string $owner): void
+    {
+        if (Cache::get(self::activeKey($spaceId)) === $runId) {
+            Cache::forget(self::activeKey($spaceId));
+        }
+
         Cache::restoreLock(self::lockKey($spaceId), $owner)->release();
     }
 

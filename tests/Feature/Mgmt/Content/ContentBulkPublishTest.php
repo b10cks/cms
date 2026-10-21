@@ -144,6 +144,48 @@ class ContentBulkPublishTest extends TestCase
     }
 
     #[Test]
+    public function the_job_takes_its_own_lease_when_the_queued_lock_expired(): void
+    {
+        $entry = $this->createEntry(draft: ['summary' => 'New']);
+        $run = ContentBulkPublishRun::start($this->space, 'publish', 1);
+
+        (new BulkPublishContentJob($this->space, $this->owner, $run->id(), 'expired-owner', 'publish', [$entry->id]))->handle();
+
+        $this->assertSame('completed', ContentBulkPublishRun::find($this->space->id, $run->id())->toArray()['state']);
+        $this->assertNotNull($entry->refresh()->published_at);
+        $this->assertNull(ContentBulkPublishRun::activeRunId($this->space->id));
+        $this->assertTrue(ContentBulkPublishRun::lock($this->space)->get());
+    }
+
+    #[Test]
+    public function a_job_whose_lock_another_run_took_fails_without_publishing(): void
+    {
+        $entry = $this->createEntry(draft: ['summary' => 'New']);
+        $run = ContentBulkPublishRun::start($this->space, 'publish', 1);
+        $this->assertTrue(ContentBulkPublishRun::lock($this->space)->get());
+        ContentBulkPublishRun::markActive($this->space->id, 'other-run');
+
+        (new BulkPublishContentJob($this->space, $this->owner, $run->id(), 'expired-owner', 'publish', [$entry->id]))->handle();
+
+        $state = ContentBulkPublishRun::find($this->space->id, $run->id())->toArray();
+        $this->assertSame('failed', $state['state']);
+        $this->assertStringStartsWith('Superseded', $state['error']);
+        $this->assertNull($entry->refresh()->published_at);
+        $this->assertSame('other-run', ContentBulkPublishRun::activeRunId($this->space->id));
+        $this->assertFalse(ContentBulkPublishRun::lock($this->space)->get());
+    }
+
+    #[Test]
+    public function releasing_a_run_leaves_another_active_run_alone(): void
+    {
+        ContentBulkPublishRun::markActive($this->space->id, 'run-b');
+
+        ContentBulkPublishRun::releaseLock($this->space->id, 'run-a', 'run-a');
+
+        $this->assertSame('run-b', ContentBulkPublishRun::activeRunId($this->space->id));
+    }
+
+    #[Test]
     public function bulk_unpublish_takes_every_entry_offline(): void
     {
         $this->actingAs($this->owner);

@@ -38,6 +38,9 @@ class BulkPublishContentJob extends QueuedJob
 
     private const CHUNK_SIZE = 25;
 
+    /** Lease beyond $timeout, so the lock outlives the worker killing the job. */
+    private const LEASE_MARGIN_SECONDS = 60;
+
     /** @var list<string> */
     private array $succeeded = [];
 
@@ -68,7 +71,13 @@ class BulkPublishContentJob extends QueuedJob
         $run = ContentBulkPublishRun::find($this->space->id, $this->runId);
 
         if (! $run) {
-            ContentBulkPublishRun::releaseLock($this->space->id, $this->lockOwner);
+            ContentBulkPublishRun::releaseLock($this->space->id, $this->runId, $this->lockOwner);
+
+            return;
+        }
+
+        if (! ContentBulkPublishRun::lease($this->space->id, $this->runId, $this->lockOwner, $this->timeout + self::LEASE_MARGIN_SECONDS)) {
+            $run->markAsFailed('Superseded: the lock expired while this run was queued and another run started.');
 
             return;
         }
@@ -102,7 +111,7 @@ class BulkPublishContentJob extends QueuedJob
             }
 
             $restore();
-            ContentBulkPublishRun::releaseLock($this->space->id, $this->lockOwner);
+            ContentBulkPublishRun::releaseLock($this->space->id, $this->runId, $this->runId);
         }
     }
 
@@ -175,7 +184,10 @@ class BulkPublishContentJob extends QueuedJob
         // Also runs when the worker killed the job on timeout, where
         // execute()'s finally never ran.
         ContentBulkPublishRun::find($this->space->id, $this->runId)?->markAsFailed($e->getMessage());
-        ContentBulkPublishRun::releaseLock($this->space->id, $this->lockOwner);
+        // The lease is owned by the run id; the controller's owner still holds
+        // the lock if the job failed before taking it.
+        ContentBulkPublishRun::releaseLock($this->space->id, $this->runId, $this->runId);
+        ContentBulkPublishRun::releaseLock($this->space->id, $this->runId, $this->lockOwner);
     }
 
     public function tags(): array
