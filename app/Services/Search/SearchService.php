@@ -45,6 +45,19 @@ class SearchService
         $driver->removeContent($content, $space);
     }
 
+    /**
+     * @param  Collection<int, Content>  $contents
+     * @return array<string, string> error message keyed by content id
+     */
+    public function syncContents(Collection $contents, Space $space): array
+    {
+        if ($contents->isEmpty()) {
+            return [];
+        }
+
+        return $this->getDriver($space)->syncContents($contents, $space);
+    }
+
     public function switchDriver(Space $space, SearchDriver $newDriver): void
     {
         $oldDriver = $this->getSearchDriver($space);
