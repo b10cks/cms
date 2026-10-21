@@ -9273,8 +9273,8 @@
         },
         "/mgmt/v1/spaces/{space}/contents/tree-operations": {
             "post": {
-                "summary": "Create tree operations",
-                "description": "",
+                "summary": "Runs a batch of content tree operations",
+                "description": "Runs a batch of content tree operations\n\nOperations run in order, and a later operation can refer to the\n`temp_id` of an earlier `create`. Returns the ids `created` for those\ntemp ids, any `warnings`, and in `menu` the content menu rows the batch\nchanged, keyed by id in the shape of the content menu endpoint: moved,\ncreated, duplicated and re-blocked entries, every sibling under a parent\nthey left or joined, and those parents. Deleted entries are not listed.",
                 "tags": [
                     "Contents"
                 ],
