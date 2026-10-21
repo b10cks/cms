@@ -4,6 +4,7 @@ import SpaceBadge from '~/components/space/SpaceBadge.vue'
 import SpaceDashboard from '~/components/SpaceDashboard.vue'
 import ContentHeader from '~/components/ui/ContentHeader.vue'
 import { SelectField } from '~/components/ui/form'
+import { Skeleton } from '~/components/ui/skeleton'
 
 const { useCurrentSpaceQuery } = useSpaces()
 const { t } = useI18n()
@@ -76,6 +77,23 @@ useSeoMeta({
           :period="period"
           :date-range="dateRange"
         />
+      </div>
+      <div
+        v-else
+        class="flex items-center justify-between gap-4 py-6"
+        aria-hidden="true"
+      >
+        <div class="flex items-center gap-3">
+          <Skeleton class="size-10" />
+          <div class="space-y-2">
+            <Skeleton class="h-6 w-48" />
+            <Skeleton class="h-4 w-32" />
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <Skeleton class="h-9 w-40" />
+          <Skeleton class="h-9 w-32" />
+        </div>
       </div>
     </div>
   </div>

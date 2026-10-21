@@ -8,7 +8,7 @@ import { Badge } from '~/components/ui/badge'
 import { Card, CardDescription, CardTitle } from '~/components/ui/card'
 import IconName from '~/components/ui/IconName.vue'
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group'
-import { Spinner } from '~/components/ui/spinner'
+import { Skeleton } from '~/components/ui/skeleton'
 
 interface BlueprintGroup {
   system: string
@@ -48,10 +48,20 @@ const selectedBlueprintId = computed({
 
     <div
       v-if="blueprintsLoading"
-      class="flex items-center justify-center py-12 text-muted"
+      class="space-y-6"
+      aria-hidden="true"
     >
-      <Spinner class="mr-2" />
-      {{ $t('labels.loading') }}
+      <Skeleton class="h-14 w-full rounded-xl" />
+      <div class="space-y-3">
+        <Skeleton class="h-3 w-24" />
+        <div class="grid gap-3 md:grid-cols-2">
+          <Skeleton
+            v-for="i in 4"
+            :key="i"
+            class="h-14 rounded-xl"
+          />
+        </div>
+      </div>
     </div>
 
     <RadioGroup

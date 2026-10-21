@@ -7,11 +7,12 @@ import TeamDetailsSettings from '~/components/teams/TeamDetailsSettings.vue'
 import TeamRoleDialog from '~/components/teams/TeamRoleDialog.vue'
 import TeamRolesList from '~/components/teams/TeamRolesList.vue'
 import TeamSamlProviderSettings from '~/components/teams/TeamSamlProviderSettings.vue'
+import TeamSamlProviderSkeleton from '~/components/teams/TeamSamlProviderSkeleton.vue'
 import { Avatar } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
-import { Spinner } from '~/components/ui/spinner'
+import { Skeleton } from '~/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { useAuthorization } from '~/composables/useAuthorization'
 import { teamNavigationItems } from '~/lib/access-control'
@@ -245,9 +246,27 @@ const navigateBack = () => {
   <div class="flex flex-col gap-8">
     <div
       v-if="isLoadingTeam"
-      class="py-12 text-center"
+      class="flex flex-col gap-8"
+      aria-hidden="true"
     >
-      <Spinner class="size-8" />
+      <div class="mt-8 flex items-start gap-4">
+        <Skeleton class="mt-1 size-12 rounded-full" />
+        <div class="flex-1 space-y-2">
+          <Skeleton class="h-7 w-56" />
+          <Skeleton class="h-4 w-80 max-w-full" />
+          <div class="flex items-center gap-4 pt-1">
+            <Skeleton class="h-5 w-16" />
+            <Skeleton class="h-4 w-24" />
+            <Skeleton class="h-4 w-24" />
+          </div>
+        </div>
+      </div>
+      <Skeleton class="h-9 w-72 max-w-full" />
+      <div class="space-y-2">
+        <Skeleton class="h-5 w-40" />
+        <Skeleton class="h-4 w-96 max-w-full" />
+      </div>
+      <Skeleton class="h-64 w-full" />
     </div>
 
     <template v-else-if="team">
@@ -402,13 +421,7 @@ const navigateBack = () => {
               @save="handleSaveSamlProvider"
               @delete="handleDeleteSamlProvider"
             />
-            <div
-              v-else
-              class="flex items-center gap-2 py-6"
-            >
-              <Spinner />
-              {{ $t('labels.loading') }}
-            </div>
+            <TeamSamlProviderSkeleton v-else />
           </template>
         </div>
       </div>
