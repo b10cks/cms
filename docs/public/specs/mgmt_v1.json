@@ -101,6 +101,27 @@
                                     },
                                     "extendedSidebar": {
                                         "type": "boolean"
+                                    },
+                                    "dateOrder": {
+                                        "type": "string",
+                                        "enum": [
+                                            "auto",
+                                            "dmy",
+                                            "mdy",
+                                            "ymd"
+                                        ]
+                                    },
+                                    "clock": {
+                                        "type": "string",
+                                        "enum": [
+                                            "auto",
+                                            "24h",
+                                            "12h"
+                                        ]
+                                    },
+                                    "timeZone": {
+                                        "type": "string",
+                                        "maxLength": 64
                                     }
                                 }
                             }

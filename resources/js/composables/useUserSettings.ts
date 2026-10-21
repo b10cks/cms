@@ -2,11 +2,13 @@ import { computed, reactive, watch } from 'vue'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
+import type { DisplayFormats } from '~/lib/display-formats'
+import { applyDisplayFormats, defaultDisplayFormats } from '~/lib/display-formats'
 import type { LocaleCode } from '~/plugins/i18n'
 import { detectBrowserLocale, setLocale } from '~/plugins/i18n'
 import type { User } from '~/types/users'
 
-type UserSettings = {
+type UserSettings = DisplayFormats & {
   languageIso: string
   extendedSidebar: boolean
 }
@@ -16,7 +18,16 @@ type UserSettings = {
 const defaultSettings: UserSettings = {
   languageIso: detectBrowserLocale(),
   extendedSidebar: true,
+  ...defaultDisplayFormats,
 }
+
+const withDefaults = (settings?: Partial<User['settings']> | null): UserSettings => ({
+  languageIso: settings?.languageIso ?? defaultSettings.languageIso,
+  extendedSidebar: settings?.extendedSidebar ?? defaultSettings.extendedSidebar,
+  dateOrder: settings?.dateOrder ?? defaultSettings.dateOrder,
+  clock: settings?.clock ?? defaultSettings.clock,
+  timeZone: settings?.timeZone ?? defaultSettings.timeZone,
+})
 
 // Last-known settings survive reloads so the first paint (sidebar width,
 // locale) matches the user's preference instead of flashing the defaults
@@ -46,18 +57,16 @@ const meta = reactive({
   pendingCount: 0,
 })
 
-const settingsFromState = (): UserSettings => ({
-  languageIso: state.languageIso,
-  extendedSidebar: state.extendedSidebar,
-})
+const settingKeys = Object.keys(defaultSettings) as Array<keyof UserSettings>
+
+const settingsFromState = (): UserSettings => ({ ...state })
 
 const assignSettings = (nextSettings?: Partial<User['settings']> | null) => {
   // No user (yet) — keep the last-known settings instead of resetting to
   // defaults, so nothing jumps while the user request is in flight.
   if (!nextSettings) return
 
-  state.languageIso = nextSettings.languageIso ?? defaultSettings.languageIso
-  state.extendedSidebar = nextSettings.extendedSidebar ?? defaultSettings.extendedSidebar
+  Object.assign(state, withDefaults(nextSettings))
 
   setLocale(state.languageIso as LocaleCode)
 }
@@ -69,10 +78,7 @@ export function useUserSettings() {
     const currentUser = user.value
     if (!currentUser) return
 
-    const previousSettings: UserSettings = {
-      languageIso: currentUser.settings?.languageIso ?? defaultSettings.languageIso,
-      extendedSidebar: currentUser.settings?.extendedSidebar ?? defaultSettings.extendedSidebar,
-    }
+    const previousSettings = withDefaults(currentUser.settings)
 
     if (previousSettings[key] === value) return
 
@@ -150,19 +156,19 @@ export function useUserSettings() {
       ),
 
       watch(
-        () => state.languageIso,
-        (value, oldValue) => {
-          if (!initialized || syncSuspended || value === oldValue) return
-          void persistSetting('languageIso', value)
-        }
+        () => ({ dateOrder: state.dateOrder, clock: state.clock, timeZone: state.timeZone }),
+        applyDisplayFormats,
+        { immediate: true }
       ),
 
-      watch(
-        () => state.extendedSidebar,
-        (value, oldValue) => {
-          if (!initialized || syncSuspended || value === oldValue) return
-          void persistSetting('extendedSidebar', value)
-        }
+      ...settingKeys.map((key) =>
+        watch(
+          () => state[key],
+          (value, oldValue) => {
+            if (!initialized || syncSuspended || value === oldValue) return
+            void persistSetting(key, value)
+          }
+        )
       ),
     ]
 

@@ -1,3 +1,5 @@
+import type { Clock, DateOrder } from '~/lib/display-formats'
+
 export interface User {
   id: string
   firstname: string
@@ -10,5 +12,9 @@ export interface User {
   settings?: {
     languageIso?: string
     extendedSidebar?: boolean
+    dateOrder?: DateOrder
+    clock?: Clock
+    /** `auto` (the browser's zone) or an IANA zone name. */
+    timeZone?: string
   }
 }

@@ -24,6 +24,7 @@ vi.mock('~/plugins/posthog', () => ({
 }))
 
 const STORAGE_KEY = 'user-settings'
+const FORMATS = { dateOrder: 'auto', clock: 'auto', timeZone: 'auto' } as const
 
 // This jsdom build exposes no localStorage; useUserSettings hydrates from it at
 // module load and writes back on every change.
@@ -101,7 +102,7 @@ describe('initial state', () => {
   it('starts from the defaults', async () => {
     const { settings } = await load()
 
-    expect(settings.settings).toEqual({ languageIso: 'en', extendedSidebar: true })
+    expect(settings.settings).toEqual({ languageIso: 'en', extendedSidebar: true, ...FORMATS })
   })
 
   it('hydrates the last-known settings from storage before any user loads', async () => {
@@ -120,7 +121,7 @@ describe('initial state', () => {
   ])('falls back to the defaults for %s in storage', async (_label, stored) => {
     const { settings } = await load({ stored })
 
-    expect(settings.settings).toEqual({ languageIso: 'en', extendedSidebar: true })
+    expect(settings.settings).toEqual({ languageIso: 'en', extendedSidebar: true, ...FORMATS })
   })
 
   it('applies the settings of a user who is already loaded', async () => {
@@ -128,7 +129,7 @@ describe('initial state', () => {
       currentUser: user({ languageIso: 'de', extendedSidebar: false }),
     })
 
-    expect(settings.settings).toEqual({ languageIso: 'de', extendedSidebar: false })
+    expect(settings.settings).toEqual({ languageIso: 'de', extendedSidebar: false, ...FORMATS })
     expect(getI18nLocale()).toBe('de')
   })
 
@@ -144,7 +145,7 @@ describe('initial state', () => {
   it('fills the defaults in for a partial settings payload', async () => {
     const { settings } = await load({ currentUser: user({ extendedSidebar: false }) })
 
-    expect(settings.settings).toEqual({ languageIso: 'en', extendedSidebar: false })
+    expect(settings.settings).toEqual({ languageIso: 'en', extendedSidebar: false, ...FORMATS })
   })
 })
 
@@ -155,7 +156,7 @@ describe('syncing with the signed-in user', () => {
     auth.setUser(user({ languageIso: 'de', extendedSidebar: false }))
     await nextTick()
 
-    expect(settings.settings).toEqual({ languageIso: 'de', extendedSidebar: false })
+    expect(settings.settings).toEqual({ languageIso: 'de', extendedSidebar: false, ...FORMATS })
   })
 
   it('keeps the last-known settings when the user is cleared', async () => {
@@ -169,7 +170,7 @@ describe('syncing with the signed-in user', () => {
     auth.setUser(null)
     await nextTick()
 
-    expect(settings.settings).toEqual({ languageIso: 'de', extendedSidebar: false })
+    expect(settings.settings).toEqual({ languageIso: 'de', extendedSidebar: false, ...FORMATS })
   })
 
   it('caches the settings applied during initialisation', async () => {
@@ -180,6 +181,7 @@ describe('syncing with the signed-in user', () => {
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? 'null')).toEqual({
       languageIso: 'de',
       extendedSidebar: false,
+      ...FORMATS,
     })
   })
 
@@ -192,6 +194,7 @@ describe('syncing with the signed-in user', () => {
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? 'null')).toEqual({
       languageIso: 'de',
       extendedSidebar: false,
+      ...FORMATS,
     })
   })
 
@@ -213,7 +216,7 @@ describe('persisting a change', () => {
     await flush()
 
     expect(updateSettings).toHaveBeenCalledWith({ extendedSidebar: false })
-    expect(auth.user.value?.settings).toEqual({ languageIso: 'en', extendedSidebar: false })
+    expect(auth.user.value?.settings).toEqual({ languageIso: 'en', extendedSidebar: false, ...FORMATS })
   })
 
   it('switches the locale when the language changes', async () => {
@@ -235,6 +238,7 @@ describe('persisting a change', () => {
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? 'null')).toEqual({
       languageIso: 'en',
       extendedSidebar: false,
+      ...FORMATS,
     })
   })
 
@@ -325,7 +329,7 @@ describe('persisting a change', () => {
     expect(updateSettings).toHaveBeenCalledTimes(2)
     expect(updateSettings).toHaveBeenCalledWith({ extendedSidebar: false })
     expect(updateSettings).toHaveBeenCalledWith({ languageIso: 'de' })
-    expect(auth.user.value?.settings).toEqual({ languageIso: 'de', extendedSidebar: false })
+    expect(auth.user.value?.settings).toEqual({ languageIso: 'de', extendedSidebar: false, ...FORMATS })
   })
 
   it('rolls back only the failed key when a sibling change succeeded', async () => {
@@ -347,6 +351,28 @@ describe('persisting a change', () => {
   })
 })
 
+describe('display formats', () => {
+  it('applies a changed format to every date the app writes', async () => {
+    const { settings } = await load({ currentUser: user({ clock: '24h' }) })
+    const { displayFormats } = await import('~/lib/display-formats')
+
+    expect(displayFormats.clock).toBe('24h')
+
+    settings.settings.dateOrder = 'ymd'
+    await flush()
+
+    expect(updateSettings).toHaveBeenCalledWith({ dateOrder: 'ymd' })
+    expect(displayFormats.dateOrder).toBe('ymd')
+  })
+
+  it('falls back to the browser zone for a zone this browser does not know', async () => {
+    await load({ currentUser: user({ timeZone: 'Mars/Olympus_Mons' }) })
+    const { displayFormats } = await import('~/lib/display-formats')
+
+    expect(displayFormats.timeZone).toBe('auto')
+  })
+})
+
 describe('a failed update', () => {
   it('rolls the setting, the user and the locale back', async () => {
     updateSettings.mockRejectedValue(new Error('Network down'))
@@ -360,7 +386,7 @@ describe('a failed update', () => {
 
     expect(settings.languageIso.value).toBe('en')
     expect(getI18nLocale()).toBe('en')
-    expect(auth.user.value?.settings).toEqual({ languageIso: 'en', extendedSidebar: true })
+    expect(auth.user.value?.settings).toEqual({ languageIso: 'en', extendedSidebar: true, ...FORMATS })
     expect(toastError).toHaveBeenCalledWith('Network down')
   })
 
