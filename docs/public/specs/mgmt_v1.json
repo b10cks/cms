@@ -15302,7 +15302,7 @@
         "/mgmt/v1/spaces/{space}/contents/bulk-publish": {
             "post": {
                 "summary": "Queues a bulk publish",
-                "description": "Queues a bulk publish\n\nStarts a run that publishes each entry on its own and returns it with\nstatus 202. Poll the run until `state` is `completed` or `failed`;\n`succeeded`, `failed` and `index_failed` (published, but not in search)\nfill in as it goes. Only one run per space at a time, a second one gets 409.",
+                "description": "Queues a bulk publish\n\nStarts a run that publishes each entry on its own and returns it with\nstatus 202. Poll the run until `state` is `completed` or `failed`;\n`succeeded`, `failed` and `index_failed` (published, but not in search)\nfill in as it goes. Only one run per space at a time, a second one gets 409\nwith the active run in `data.run` to follow instead.",
                 "tags": [
                     "Contents"
                 ],
