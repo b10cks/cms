@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Progress } from '~/components/ui/progress'
+import { Skeleton } from '~/components/ui/skeleton'
 
 const props = defineProps<{
   usage?: SpaceUsage | null
+  isLoading?: boolean
 }>()
 
 const { t } = useI18n()
@@ -41,12 +43,32 @@ const rows = computed(() => {
 </script>
 
 <template>
-  <Card v-if="rows.length">
+  <Card v-if="isLoading || rows.length">
     <CardHeader>
       <CardTitle class="text-base">{{ $t('labels.usage.live') }}</CardTitle>
     </CardHeader>
     <CardContent>
-      <div class="grid gap-4 sm:grid-cols-2">
+      <div
+        v-if="isLoading"
+        class="grid gap-4 sm:grid-cols-2"
+        aria-hidden="true"
+      >
+        <div
+          v-for="i in 3"
+          :key="i"
+          class="space-y-1"
+        >
+          <div class="flex justify-between">
+            <Skeleton class="h-4 w-20" />
+            <Skeleton class="h-4 w-28" />
+          </div>
+          <Skeleton class="h-2 w-full rounded-full" />
+        </div>
+      </div>
+      <div
+        v-else
+        class="grid gap-4 sm:grid-cols-2"
+      >
         <div
           v-for="row in rows"
           :key="row.key"
