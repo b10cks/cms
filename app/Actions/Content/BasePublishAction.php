@@ -148,22 +148,29 @@ abstract class BasePublishAction
     }
 
     /**
-     * Reads first and updates by primary key. A locking UPDATE on these
-     * conditions picks the (scheduled_at, published_at) index and gap-locks its
-     * tail, which deadlocks two concurrent publishes in one space. The content
-     * row lock from lockContentForUpdate() already serializes writers of this
-     * content, so the unlocked read is safe.
+     * Locks every version of this content with content_id as the only SQL
+     * predicate, then filters in PHP and updates by primary key.
+     *
+     * The read has to lock: under REPEATABLE READ a plain read uses the
+     * snapshot from the transaction's first read, so in a family publish it
+     * can miss a schedule committed after that snapshot but before this
+     * content's row lock, and the scheduled job later overwrites the publish.
+     * Putting scheduled_at/published_at in the WHERE would let MySQL pick the
+     * (scheduled_at, published_at) index and gap-lock its tail, which
+     * deadlocks two concurrent publishes in one space.
      */
     protected function clearScheduledVersions(Content $content, ?ContentVersion $exceptVersion = null): void
     {
         $ids = ContentVersion::query()
             ->where('content_id', $content->id)
-            ->whereNotNull('scheduled_at')
-            ->whereNull('published_at')
-            ->when($exceptVersion, fn ($query) => $query->where('id', '!=', $exceptVersion->id))
-            ->pluck('id');
+            ->lockForUpdate()
+            ->get(['id', 'scheduled_at', 'published_at'])
+            ->filter(fn (ContentVersion $version) => $version->scheduled_at !== null
+                && $version->published_at === null
+                && $version->id !== $exceptVersion?->id)
+            ->modelKeys();
 
-        if ($ids->isNotEmpty()) {
+        if ($ids !== []) {
             ContentVersion::query()->whereKey($ids)->update(['scheduled_at' => null]);
         }
     }
