@@ -76,11 +76,11 @@ class AuthServiceProvider extends ServiceProvider
         SpaceBlueprint::class => SpaceBlueprintPolicy::class,
     ];
 
-    /**
-     * Scoped so Octane drops the per-request graph memo between requests.
-     */
     public function register(): void
     {
+        parent::register();
+
+        // Scoped so Octane drops the per-request graph memo between requests.
         $this->app->scoped(AuthorizationService::class);
     }
 
