@@ -7,6 +7,8 @@ use App\Services\Content\Serial\ScopeKeyRemapper;
 use App\Jobs\QueuedJob;
 use App\Models\Management\Space;
 use App\Models\Management\SpaceMigration;
+use App\Models\Space\Asset;
+use App\Models\Space\AssetFolder;
 use App\Services\Database\DatabaseConnectionService;
 use App\Services\Storage\StorageService;
 use Illuminate\Contracts\Filesystem\Filesystem;
@@ -340,7 +342,7 @@ class RunSpaceMigration extends QueuedJob
                 ->where('external_id', $row['id'])
                 ->whereNull('deleted_at')
                 ->first(),
-            fn (array $row) => [
+            fn (array $row) => AssetFolder::purifyRow([
                 'external_id' => $row['id'],
                 'name' => $row['name'],
                 'description' => $row['description'] ?? null,
@@ -350,7 +352,7 @@ class RunSpaceMigration extends QueuedJob
                     ? ($this->assetFolderIdMap[$row['parent_id']] ?? null)
                     : null,
                 'updated_at' => $row['updated_at'],
-            ],
+            ]),
             $this->assetFolderIdMap,
         );
     }
@@ -451,7 +453,7 @@ class RunSpaceMigration extends QueuedJob
                 $this->copyAssetFiles($srcFilesystem, $tgtFilesystem, $row, $targetId, $sourceSpace->id, $targetSpace->id);
             }
 
-            $data = [
+            $data = Asset::purifyRow([
                 'external_id' => $externalId,
                 'filename' => $row['filename'],
                 'extension' => $row['extension'],
@@ -464,7 +466,7 @@ class RunSpaceMigration extends QueuedJob
                 'data' => $row['data'],
                 'tags' => $row['tags'],
                 'updated_at' => $row['updated_at'],
-            ];
+            ]);
 
             if ($existing) {
                 $resolved = $this->resolveConflict($tgt, 'assets', $existing->id, $data, $strategy, $row['updated_at']);
