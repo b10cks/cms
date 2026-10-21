@@ -288,6 +288,28 @@ export function useContent(spaceId: MaybeRef<string>) {
     return current
   }
 
+  // Another run holds the space: follow it instead of failing, the user wants
+  // to see the batch finish either way.
+  const startBulkRun = async (
+    start: () => Promise<{ data: ContentBulkPublishRun }>,
+    mode: BulkPublishMode
+  ): Promise<ContentBulkPublishRun> => {
+    let started: ContentBulkPublishRun
+
+    try {
+      started = (await start()).data
+    } catch (error) {
+      const { status, data } = error as { status?: number; data?: { data?: { run?: string } } }
+      const activeRunId = status === 409 ? data?.data?.run : undefined
+      if (!activeRunId) throw error
+
+      const active = await spaceAPI.value.contents.bulkPublishRun(activeRunId)
+      return waitForBulkRun(active.data, active.data.action)
+    }
+
+    return waitForBulkRun(started, mode)
+  }
+
   const invalidateContentLists = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
     queryClient.invalidateQueries({ queryKey: queryKeys.contentMenu(spaceId).all() })
@@ -337,8 +359,7 @@ export function useContent(spaceId: MaybeRef<string>) {
   const useBulkPublishContentMutation = () => {
     return useMutation({
       mutationFn: async (payload: { ids: string[]; message?: string }) => {
-        const response = await spaceAPI.value.contents.bulkPublish(payload)
-        return waitForBulkRun(response.data, 'publish')
+        return startBulkRun(() => spaceAPI.value.contents.bulkPublish(payload), 'publish')
       },
       onSuccess: (result) => settleBulkPublish(result, 'publish'),
       onError: (error: Error) => {
@@ -355,8 +376,7 @@ export function useContent(spaceId: MaybeRef<string>) {
   const useBulkUnpublishContentMutation = () => {
     return useMutation({
       mutationFn: async (ids: string[]) => {
-        const response = await spaceAPI.value.contents.bulkUnpublish({ ids })
-        return waitForBulkRun(response.data, 'unpublish')
+        return startBulkRun(() => spaceAPI.value.contents.bulkUnpublish({ ids }), 'unpublish')
       },
       onSuccess: (result) => settleBulkPublish(result, 'unpublish'),
       onError: (error: Error) => {

@@ -23,7 +23,8 @@ class ContentBulkPublishController extends Controller
      * Starts a run that publishes each entry on its own and returns it with
      * status 202. Poll the run until `state` is `completed` or `failed`;
      * `succeeded`, `failed` and `index_failed` (published, but not in search)
-     * fill in as it goes. Only one run per space at a time, a second one gets 409.
+     * fill in as it goes. Only one run per space at a time, a second one gets 409
+     * with the active run in `data.run` to follow instead.
      */
     public function publish(Request $request, Space $space): JsonResponse
     {
@@ -85,10 +86,12 @@ class ContentBulkPublishController extends Controller
         if (! $lock->get()) {
             return response()->json([
                 'message' => 'Another bulk publish is still running in this space. Wait for it to finish and try again.',
+                'data' => ['run' => ContentBulkPublishRun::activeRunId($space->id)],
             ], 409);
         }
 
         $run = ContentBulkPublishRun::start($space, $action, count($ids));
+        ContentBulkPublishRun::markActive($space->id, $run->id());
 
         try {
             BulkPublishContentJob::dispatch($space, $request->user(), $run->id(), $lock->owner(), $action, array_values($ids), $message);

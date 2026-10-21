@@ -49,8 +49,23 @@ final class ContentBulkPublishRun
         return Cache::lock(self::lockKey($space->id), self::LOCK_SECONDS);
     }
 
+    /**
+     * Remembers which run holds the lock, so a rejected second request can
+     * tell the client which run to follow.
+     */
+    public static function markActive(string $spaceId, string $runId): void
+    {
+        Cache::put(self::activeKey($spaceId), $runId, self::LOCK_SECONDS);
+    }
+
+    public static function activeRunId(string $spaceId): ?string
+    {
+        return Cache::get(self::activeKey($spaceId));
+    }
+
     public static function releaseLock(string $spaceId, string $owner): void
     {
+        Cache::forget(self::activeKey($spaceId));
         Cache::restoreLock(self::lockKey($spaceId), $owner)->release();
     }
 
@@ -136,6 +151,11 @@ final class ContentBulkPublishRun
     private static function key(string $spaceId, string $id): string
     {
         return "content-bulk-publish:{$spaceId}:run:{$id}";
+    }
+
+    private static function activeKey(string $spaceId): string
+    {
+        return "content-bulk-publish:{$spaceId}:active";
     }
 
     private static function lockKey(string $spaceId): string

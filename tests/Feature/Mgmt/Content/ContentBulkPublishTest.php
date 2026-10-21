@@ -133,9 +133,11 @@ class ContentBulkPublishTest extends TestCase
         $entry = $this->createEntry(draft: ['summary' => 'New']);
         $active = ContentBulkPublishRun::lock($this->space);
         $this->assertTrue($active->get());
+        ContentBulkPublishRun::markActive($this->space->id, 'run-1');
 
         $this->postJson(route('mgmt.contents.bulk-unpublish', ['space' => $this->space->id]), ['ids' => [$entry->id]])
-            ->assertStatus(409);
+            ->assertStatus(409)
+            ->assertJsonPath('data.run', 'run-1');
 
         Queue::assertNotPushed(BulkPublishContentJob::class);
         $active->release();

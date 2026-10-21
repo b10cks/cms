@@ -631,6 +631,22 @@ describe('bulk publish and unpublish', () => {
     )
   })
 
+  it('follows the active run when the space is already busy', async () => {
+    contents.bulkPublish.mockRejectedValue(
+      Object.assign(new Error('Another bulk publish is still running'), {
+        status: 409,
+        data: { data: { run: 'run-1' } },
+      })
+    )
+    contents.bulkPublishRun.mockResolvedValue(run({ succeeded: ['c9'] }))
+
+    await mutations().bulkPublish.mutateAsync({ ids: ['c1'] })
+
+    expect(contents.bulkPublishRun).toHaveBeenCalledWith('run-1')
+    expect(failure).not.toHaveBeenCalled()
+    expect(success).toHaveBeenCalledWith('1 entry published')
+  })
+
   it('polls a queued run with a progress toast until it completes', async () => {
     vi.useFakeTimers()
     contents.bulkPublish.mockResolvedValue(run({ state: 'queued', progress: 0 }))
