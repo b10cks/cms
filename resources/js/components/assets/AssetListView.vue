@@ -39,6 +39,7 @@ import {
   TableRow,
 } from '~/components/ui/table'
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
+import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import type { AssetSelectionEntry } from '~/composables/useAssetSelection'
 import { useAssetAiClassification } from '~/composables/useAssetAiClassification'
@@ -195,7 +196,11 @@ const assetQueryParams = computed<AssetsQueryParams & { collection?: string }>((
   }
 })
 
-const { data: assetResponse, refetch: refetchAssets } = useAssetsQuery(assetQueryParams)
+const {
+  data: assetResponse,
+  isLoading: isLoadingAssets,
+  refetch: refetchAssets,
+} = useAssetsQuery(assetQueryParams)
 
 const breadcrumbs = computed(() => {
   if (!folderId.value) {
@@ -915,8 +920,12 @@ onUnmounted(() => {
           </TableRow>
         </TableHeader>
         <TableBody>
+          <TableLoadingRow
+            v-if="isLoadingAssets"
+            :colspan="visibleLanguageTabs.length + (isManageMode && multiSelect ? 4 : 3)"
+          />
           <TableEmptyRow
-            v-if="!assets.length"
+            v-else-if="!assets.length"
             :colspan="visibleLanguageTabs.length + (isManageMode && multiSelect ? 4 : 3)"
             :label="$t('labels.assets.noAssetsFound')"
           >

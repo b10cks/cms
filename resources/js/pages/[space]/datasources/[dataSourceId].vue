@@ -29,6 +29,7 @@ import {
   TableSortableHead,
 } from '~/components/ui/table'
 import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
+import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Textarea } from '~/components/ui/textarea'
@@ -783,17 +784,10 @@ const handleTranslateMissingDimensions = async () => {
                     </div>
                   </TableCell>
                 </TableRow>
-                <TableRow v-if="isLoadingEntries">
-                  <TableCell
-                    :colspan="4"
-                    class="h-24 text-center"
-                  >
-                    <div class="flex items-center justify-center">
-                      <Spinner class="mr-2 size-6" />
-                      {{ $t('labels.datasets.loadingEntries') }}
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <TableLoadingRow
+                  v-if="isLoadingEntries"
+                  :colspan="4"
+                />
                 <template v-else-if="dataEntriesResponse?.data.length">
                   <TableRow
                     v-for="entry in dataEntriesResponse?.data"

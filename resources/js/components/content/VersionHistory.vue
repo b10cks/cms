@@ -14,7 +14,7 @@ import { Button } from '~/components/ui/button'
 import RenamableTitle from '~/components/ui/RenamableTitle.vue'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '~/components/ui/resizable'
 import { ScrollArea } from '~/components/ui/scroll-area'
-import { Spinner } from '~/components/ui/spinner'
+import { Skeleton } from '~/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { SimpleTooltip } from '~/components/ui/tooltip'
 import { buildPreviewUrl } from '~/lib/preview-url'
@@ -366,10 +366,24 @@ const openVersionJsonInNewTab = (versionId: string) => {
           <ScrollArea class="flex-1 rounded-md bg-surface">
             <div
               v-if="isLoading"
-              class="flex h-32 items-center justify-center"
+              class="p-2"
+              aria-hidden="true"
             >
-              <Spinner class="mr-2 size-6" />
-              <span>{{ $t('labels.contentVersions.loading') }}</span>
+              <div class="px-2 py-1">
+                <Skeleton class="h-4 w-16" />
+              </div>
+              <div
+                v-for="i in 6"
+                :key="i"
+                class="flex items-center rounded-md px-3 py-1"
+              >
+                <Skeleton class="mr-3 size-3 shrink-0 rounded-full" />
+                <Skeleton :class="['h-5', i % 2 ? 'w-1/3' : 'w-1/2']" />
+                <div class="ml-auto flex items-center gap-2">
+                  <Skeleton class="size-6 rounded-full" />
+                  <Skeleton class="h-4 w-24" />
+                </div>
+              </div>
             </div>
 
             <div
