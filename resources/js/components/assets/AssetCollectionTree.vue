@@ -25,7 +25,7 @@ const {
   useAddAssetsToCollectionMutation,
 } = useAssetCollections(props.spaceId)
 const { data: collections } = useAssetCollectionsQuery({ per_page: 500, sort: '+name' })
-const { mutate: updateCollection } = useUpdateAssetCollectionMutation()
+const { mutateAsync: updateCollection } = useUpdateAssetCollectionMutation()
 const { mutate: deleteCollection } = useDeleteAssetCollectionMutation()
 const { mutate: addAssetsToCollection } = useAddAssetsToCollectionMutation()
 
@@ -52,8 +52,7 @@ function openEditDialog(collection: AssetCollectionResource) {
 }
 
 function handleRename(newName: string, collection: AssetCollectionResource) {
-  if (!newName || newName === collection.name) return
-  updateCollection({ id: collection.id, payload: { name: newName } })
+  return updateCollection({ id: collection.id, payload: { name: newName } })
 }
 
 function handleAssignDrop(collectionId: string, assetIds: string[]) {
@@ -114,9 +113,9 @@ async function handleDelete(collection: AssetCollectionResource) {
         :selected-collection-id="selectedCollectionId ?? null"
         :can-manage-collections="canManageCollections"
         :can-share-collections="canShareCollections"
+        :rename="handleRename"
         class="my-0.5"
         @select="selectedCollectionId = $event"
-        @rename="(name, collection) => handleRename(name, collection)"
         @edit="openEditDialog"
         @manage-shares="openSharesSheet"
         @delete="handleDelete"

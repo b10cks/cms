@@ -457,3 +457,38 @@ describe('highlighting', () => {
     expect(wrapper.findAll('span span')).toHaveLength(0)
   })
 })
+
+describe('saving through the save prop', () => {
+  const flush = () => new Promise((resolve) => setTimeout(resolve))
+
+  it('keeps the typed name open and shows the error when the save fails', async () => {
+    const save = vi.fn().mockRejectedValue(new Error('Name already taken'))
+    const wrapper = mountTitle({ save })
+    const input = await startEditing(wrapper)
+
+    await input.setValue('Growth')
+    await input.trigger('keydown', { key: 'Enter' })
+    await flush()
+
+    expect(save).toHaveBeenCalledWith('Growth')
+    expect(wrapper.emitted('update')).toBeUndefined()
+    expect((wrapper.find('input').element as HTMLInputElement).value).toBe('Growth')
+    expect(wrapper.find('input').attributes('aria-invalid')).toBe('true')
+    expect(wrapper.find('[role="alert"]').text()).toBe('Name already taken')
+    expect(wrapper.find('input').attributes('aria-describedby')).toBe(
+      wrapper.find('[role="alert"]').attributes('id')
+    )
+  })
+
+  it('closes and announces the update once the save succeeds', async () => {
+    const wrapper = mountTitle({ save: vi.fn().mockResolvedValue(undefined) })
+    const input = await startEditing(wrapper)
+
+    await input.setValue('Growth')
+    await input.trigger('keydown', { key: 'Enter' })
+    await flush()
+
+    expect(wrapper.emitted('update')).toEqual([['Growth']])
+    expect(wrapper.find('input').exists()).toBe(false)
+  })
+})

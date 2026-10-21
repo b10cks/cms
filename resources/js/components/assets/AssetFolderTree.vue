@@ -5,6 +5,7 @@ import {
 } from '@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter'
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/utils/combine'
 import { TreeItem, type TreeItemToggleEvent, TreeRoot } from 'reka-ui'
+import type { ComponentPublicInstance } from 'vue'
 import type { LocationQueryRaw } from 'vue-router'
 import { RouterLink } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -59,6 +60,53 @@ const activeDropTargetId = ref<string | null>(null)
 const isRootDraggedOver = ref(false)
 const treeContainerRef = ref<HTMLElement | null>(null)
 const folderCleanupMap = new Map<string, () => void>()
+const titleRefMap = new Map<string, { startEdit: () => void }>()
+
+const EXPAND_ON_HOVER_DELAY = 600
+let expandOnHoverTimer: ReturnType<typeof setTimeout> | null = null
+
+const cancelExpandOnHover = () => {
+  if (expandOnHoverTimer) {
+    clearTimeout(expandOnHoverTimer)
+    expandOnHoverTimer = null
+  }
+}
+
+// Opens a collapsed folder once a drag has rested on it, so nested targets
+// are reachable without dropping first.
+const scheduleExpandOnHover = (folder: AssetFolderResource) => {
+  cancelExpandOnHover()
+
+  if (!folder.children_count || settings.value.assets.expanded?.includes(folder.id)) {
+    return
+  }
+
+  expandOnHoverTimer = setTimeout(() => {
+    expandOnHoverTimer = null
+    if (activeDropTargetId.value === folder.id) {
+      toggleExpanded(folder.id)
+    }
+  }, EXPAND_ON_HOVER_DELAY)
+}
+
+const setTitleRef = (folderId: string) => (value: Element | ComponentPublicInstance | null) => {
+  if (value && 'startEdit' in value) {
+    titleRefMap.set(folderId, value as unknown as { startEdit: () => void })
+  } else {
+    titleRefMap.delete(folderId)
+  }
+}
+
+// The row itself must hold focus, so F2 typed into the rename field or a
+// nested button is left alone.
+const handleFolderKeydown = (event: KeyboardEvent, folderId: string) => {
+  if (event.key !== 'F2' || event.target !== event.currentTarget || currentlyEditingId.value) {
+    return
+  }
+
+  event.preventDefault()
+  titleRefMap.get(folderId)?.startEdit()
+}
 
 const resolveElement = (value: Element | { $el?: Element } | null): HTMLElement | null => {
   if (value instanceof HTMLElement) {
@@ -90,15 +138,8 @@ const buildFolderLink = (folderId: string | null) => {
   return { name: route.name ?? undefined, params: { space: route.params.space }, query }
 }
 
-const handleFolderRename = async (newName: string, folderId: string) => {
-  if (!folderId || !newName) {
-    currentlyEditingId.value = null
-    return
-  }
-
-  await updateFolder({ id: folderId, payload: { name: newName } })
-  currentlyEditingId.value = null
-}
+const handleFolderRename = (newName: string, folderId: string) =>
+  updateFolder({ id: folderId, payload: { name: newName } })
 
 const openCreateFolderDialog = (parentId: string | null = null) => {
   editingFolder.value = null
@@ -157,13 +198,16 @@ const registerFolderInteractions = (folder: AssetFolderResource, element: HTMLEl
       getIsSticky: () => true,
       onDragEnter: () => {
         activeDropTargetId.value = folder.id
+        scheduleExpandOnHover(folder)
       },
       onDragLeave: () => {
+        cancelExpandOnHover()
         if (activeDropTargetId.value === folder.id) {
           activeDropTargetId.value = null
         }
       },
       onDrop: async ({ source }) => {
+        cancelExpandOnHover()
         await handleItemsMove(folder.id, source.data)
       },
     })
@@ -219,6 +263,7 @@ watch(treeContainerRef, (element, _, onCleanup) => {
 })
 
 onBeforeUnmount(() => {
+  cancelExpandOnHover()
   folderCleanupMap.forEach((cleanup) => cleanup())
   folderCleanupMap.clear()
 })
@@ -331,6 +376,7 @@ const toggleExpanded = (folderId: string) => {
         "
         @select="selectedFolderId = item.value.id"
         @toggle="handleToggle"
+        @keydown="handleFolderKeydown($event, item.value.id)"
       >
         <div class="flex w-5 items-center">
           <button
@@ -354,9 +400,11 @@ const toggleExpanded = (folderId: string) => {
             class="shrink-0"
           />
           <RenamableTitle
+            :ref="setTitleRef(item.value.id)"
             :name="item.value.name"
             :disabled="!canManageFolders"
-            @update="handleFolderRename($event, item.value.id)"
+            :save="(name) => handleFolderRename(name, item.value.id)"
+            @update="currentlyEditingId = null"
             @edit-start="currentlyEditingId = item.value.id"
             @cancel="currentlyEditingId = null"
           />

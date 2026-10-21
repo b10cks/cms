@@ -20,11 +20,11 @@ const props = defineProps<{
   item: FlattenedItem<AssetTagResource>
   selectedTagId: string | null
   canManageTags: boolean
+  rename: (name: string, tag: AssetTagResource) => Promise<unknown>
 }>()
 
 const emit = defineEmits<{
   select: [id: string]
-  rename: [name: string, tag: AssetTagResource]
   edit: [tag: AssetTagResource]
   delete: [tag: AssetTagResource]
   assignDrop: [tagId: string, assetIds: string[]]
@@ -105,7 +105,7 @@ watchEffect((onCleanup) => {
           :name="item.value.name"
           :disabled="!canManageTags"
           class="min-w-0 flex-1 truncate"
-          @update="$emit('rename', $event, item.value)"
+          :save="(name) => rename(name, item.value)"
         />
       </div>
       <span class="shrink-0 text-sm">
