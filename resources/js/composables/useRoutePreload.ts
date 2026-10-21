@@ -1,5 +1,7 @@
 import type { RouteLocationRaw } from 'vue-router'
 
+import { loadRouteComponents } from '~/lib/route-components'
+
 import { useHoverPrefetch } from './useHoverPrefetch'
 
 /**
@@ -18,23 +20,9 @@ import { useHoverPrefetch } from './useHoverPrefetch'
 export function useRoutePreload(delay = 150) {
   const router = useRouter()
 
-  const loadRouteChunks = (key: string) => {
-    const resolved = router.resolve(key)
-    const loaders: Promise<unknown>[] = []
-
-    for (const record of resolved.matched) {
-      for (const component of Object.values(record.components ?? {})) {
-        // Only lazy route components are functions; eager ones are already loaded.
-        if (typeof component === 'function') {
-          loaders.push((component as () => Promise<unknown>)())
-        }
-      }
-    }
-
-    // Rejections bubble to useHoverPrefetch, which swallows them and clears
-    // the dedupe entry so a failed chunk load can be retried on re-hover.
-    return Promise.all(loaders)
-  }
+  // Rejections bubble to useHoverPrefetch, which swallows them and clears the
+  // dedupe entry so a failed chunk load can be retried on re-hover.
+  const loadRouteChunks = (key: string) => loadRouteComponents(router.resolve(key).matched)
 
   const { start, cancel } = useHoverPrefetch(loadRouteChunks, delay)
 
