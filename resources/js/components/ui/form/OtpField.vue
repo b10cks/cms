@@ -81,7 +81,7 @@ defineExpose({ focus, blur })
     :error="error"
     :class="props.class"
   >
-    <template #default="{ id, hasError }">
+    <template #default="{ id, 'aria-describedby': describedBy, 'aria-invalid': invalid }">
       <div
         ref="wrapper"
         class="flex justify-center"
@@ -89,7 +89,8 @@ defineExpose({ focus, blur })
         <InputOTP
           :maxlength="maxlength || 6"
           :id="id"
-          :class="{ 'border-red-500': hasError }"
+          :aria-describedby="describedBy"
+          :aria-invalid="invalid"
           v-model="modelValue"
           @complete="emits('complete', $event)"
         >
@@ -98,6 +99,7 @@ defineExpose({ focus, blur })
               v-for="i in maxlength"
               :key="i"
               :index="i - 1"
+              :aria-invalid="invalid"
               v-bind="{ ...inputProps, ...$attrs }"
             />
           </InputOTPGroup>
