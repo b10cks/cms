@@ -186,6 +186,18 @@ class ContentBulkPublishTest extends TestCase
     }
 
     #[Test]
+    public function a_failed_run_still_broadcasts_the_summary(): void
+    {
+        Event::fake([ContentsChanged::class]);
+        $run = ContentBulkPublishRun::start($this->space, 'publish', 1);
+
+        (new BulkPublishContentJob($this->space, $this->owner, $run->id(), 'owner', 'publish', ['id']))->failed(new \RuntimeException('Timed out'));
+
+        $this->assertSame('failed', ContentBulkPublishRun::find($this->space->id, $run->id())->toArray()['state']);
+        Event::assertDispatchedTimes(ContentsChanged::class, 1);
+    }
+
+    #[Test]
     public function bulk_unpublish_takes_every_entry_offline(): void
     {
         $this->actingAs($this->owner);

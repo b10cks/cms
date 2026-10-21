@@ -182,8 +182,10 @@ class BulkPublishContentJob extends QueuedJob
         ]);
 
         // Also runs when the worker killed the job on timeout, where
-        // execute()'s finally never ran.
+        // execute()'s finally never ran. This instance does not know what the
+        // killed process committed, so broadcast either way.
         ContentBulkPublishRun::find($this->space->id, $this->runId)?->markAsFailed($e->getMessage());
+        broadcast(new ContentsChanged($this->space->id));
         // The lease is owned by the run id; the controller's owner still holds
         // the lock if the job failed before taking it.
         ContentBulkPublishRun::releaseLock($this->space->id, $this->runId, $this->runId);
