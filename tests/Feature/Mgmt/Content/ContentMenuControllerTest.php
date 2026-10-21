@@ -36,6 +36,7 @@ class ContentMenuControllerTest extends TestCase
         $this->space = Space::withoutEvents(fn () => Space::factory()->withLive()->create([
             'settings' => [
                 'default_language' => 'en',
+                'content_sorting' => true,
             ],
         ]));
 
@@ -128,6 +129,42 @@ class ContentMenuControllerTest extends TestCase
             ->assertJsonPath("data.{$content->id}.color", '#112233');
     }
 
+    #[Test]
+    public function tree_moves_return_the_changed_menu_rows(): void
+    {
+        $this->actingAs($this->owner);
+
+        $folder = $this->createContent('folder', $this->pageBlock);
+        $other = $this->createContent('other', $this->pageBlock);
+        $moved = $this->createContent('moved', $this->pageBlock, parent: $folder);
+        $staying = $this->createContent('staying', $this->pageBlock, parent: $folder);
+        $untouched = $this->createContent('untouched', $this->pageBlock, parent: $other);
+
+        $response = $this->postJson("/mgmt/v1/spaces/{$this->space->id}/contents/tree-operations", [
+            'operations' => [[
+                'type' => 'move',
+                'ids' => [$moved->id],
+                'parent_id' => null,
+                'after_id' => $folder->id,
+            ]],
+        ]);
+
+        $response->assertOk();
+        $rows = $response->json('data.menu');
+        $this->assertEqualsCanonicalizing(
+            [$folder->id, $other->id, $moved->id, $staying->id],
+            array_keys($rows),
+        );
+        $this->assertNull($rows[$moved->id]['pid']);
+        $this->assertSame(1, $rows[$moved->id]['position']);
+        $this->assertSame(2, $rows[$other->id]['position']);
+        $this->assertTrue($rows[$folder->id]['children']);
+
+        $menu = $this->getJson($this->contentMenuUrl())->assertOk()->json('data');
+        $this->assertArrayHasKey($untouched->id, $menu);
+        $this->assertEquals(array_intersect_key($menu, $rows), $rows);
+    }
+
     private function contentMenuUrl(): string
     {
         return "/mgmt/v1/spaces/{$this->space->id}/content-menu";
@@ -147,11 +184,13 @@ class ContentMenuControllerTest extends TestCase
         string $slug,
         Block $block,
         array $settings = [],
+        ?Content $parent = null,
     ): Content {
         $content = new Content();
 
         app(CreateContent::class)->execute([
             'block_id' => $block->id,
+            'parent_id' => $parent?->id,
             'name' => ucfirst($slug),
             'slug' => $slug,
             'language_iso' => 'en',

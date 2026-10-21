@@ -653,8 +653,23 @@ export function useContent(spaceId: MaybeRef<string>) {
 
         return { previous }
       },
-      onSuccess: (_result, { operations }, context) => {
+      onSuccess: (result, { operations }, context) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.contents(spaceId).lists() })
+
+        // The response carries the changed menu rows (server resequencing, new
+        // ids, timestamps). Deletes are not in them, and a fetch already in
+        // flight may predate the batch, so those refetch the menu instead.
+        const cached = queryClient.getQueryData<ContentMenu>(menuKey())
+        if (
+          cached &&
+          result.menu &&
+          !isMenuFetching() &&
+          !operations.some((operation) => operation.type === 'delete')
+        ) {
+          queryClient.setQueryData(menuKey(), { ...cached, ...result.menu })
+        } else {
+          queryClient.invalidateQueries({ queryKey: menuKey() })
+        }
 
         // Only the moved, deleted or re-blocked entries change: their parent,
         // slug path or block, and for moves and deletes their whole subtree.
@@ -683,17 +698,13 @@ export function useContent(spaceId: MaybeRef<string>) {
       },
       onError: (error: Error, _variables, context) => {
         if (context?.previous) queryClient.setQueryData(menuKey(), context.previous)
+        queryClient.invalidateQueries({ queryKey: menuKey() })
 
         toast.error(
           t('composables.content.moveError', {
             error: error.message || 'Unknown error',
           }) as string
         )
-      },
-      // The response carries no menu rows (server resequencing, new ids,
-      // timestamps), so the menu refetches once, after the optimistic patch.
-      onSettled: () => {
-        queryClient.invalidateQueries({ queryKey: menuKey() })
       },
     })
   }

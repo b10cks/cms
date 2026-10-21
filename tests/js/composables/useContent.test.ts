@@ -938,6 +938,39 @@ describe('useTreeOperationsMutation', () => {
     expect(harness.queryClient.getQueryState(detail('c3'))?.isInvalidated).toBe(false)
   })
 
+  it('applies the returned menu rows instead of refetching the menu', async () => {
+    const menuKey = queryKeys.contentMenu(SPACE).all()
+    const moved = menuItem({ id: 'c2', pid: null, position: 1, uat: 'later' })
+    contents.treeOperations.mockResolvedValue({
+      data: { created: [], warnings: [], menu: { c1: menuItem({ id: 'c1' }), c2: moved } },
+    })
+
+    harness = withSetup(mountContent, {
+      seed: [
+        [
+          menuKey,
+          {
+            c1: menuItem({ id: 'c1', children: true }),
+            c2: menuItem({ id: 'c2', pid: 'c1' }),
+            c3: menuItem({ id: 'c3', position: 2 }),
+          },
+        ],
+      ],
+    })
+    const invalidate = spyInvalidate()
+
+    await harness.result.tree.mutateAsync({
+      operations: [{ type: 'move', ids: ['c2'], parent_id: null, after_id: 'c1' }],
+    })
+
+    expect(harness.queryClient.getQueryData(menuKey)).toEqual({
+      c1: menuItem({ id: 'c1' }),
+      c2: moved,
+      c3: menuItem({ id: 'c3', position: 2 }),
+    })
+    expect(invalidatedKeys(invalidate)).not.toContainEqual(menuKey)
+  })
+
   it('reuses the move error copy', async () => {
     contents.treeOperations.mockRejectedValue(new Error('nope'))
 
