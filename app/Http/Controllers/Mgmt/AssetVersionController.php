@@ -26,7 +26,7 @@ class AssetVersionController extends Controller
             ->where('asset_id', $asset->id)
             ->with('createdBy')
             ->orderByDesc('version_number')
-            ->paginate($request->integer('per_page', 20));
+            ->paginate($this->perPage($request));
 
         // The parent asset is already loaded from the route; reuse it instead
         // of triggering a query (or lazy-loading, which is disabled) per version.

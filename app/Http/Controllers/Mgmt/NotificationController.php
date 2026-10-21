@@ -26,7 +26,7 @@ class NotificationController extends Controller
         $notifications = $user->notifications()
             ->when($request->boolean('unread_only'), fn ($q) => $q->whereNull('read_at'))
             ->when($request->filled('type'), fn ($q) => $q->where('type', $request->string('type')))
-            ->paginate($request->integer('per_page', 20));
+            ->paginate($this->perPage($request));
 
         return NotificationResource::collection($notifications);
     }

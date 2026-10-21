@@ -24,7 +24,7 @@ class AssetLinkedContentController extends Controller
             ->getLinkedContentsQuery($asset)
             ->orderBy('name')
             ->orderBy('language_iso')
-            ->paginate($request->integer('per_page', 10));
+            ->paginate($this->perPage($request, 10));
 
         return LinkedAssetContentResource::collection($contents);
     }
