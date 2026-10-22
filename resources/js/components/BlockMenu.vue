@@ -161,9 +161,9 @@ const tabs = computed(() => ({
             :to="buildOverviewRoute({ mode: 'list', folder: null })"
             :class="[
               'group relative my-0.5 flex items-center gap-2 rounded-md py-1 pr-2 pl-2 outline-none',
-              'transition-colors duration-200 hover:bg-input',
+              'transition-colors duration-200 hover:bg-tree-hover',
               'cursor-pointer font-semibold',
-              !currentFolder && currentMode === 'list' ? 'bg-input text-primary' : '',
+              !currentFolder && currentMode === 'list' ? 'bg-tree-selected text-tree-selected-foreground' : '',
             ]"
           >
             <Icon name="lucide:folder" />
@@ -179,9 +179,9 @@ const tabs = computed(() => ({
             :style="{ 'padding-left': `${item.level - 0.5}rem` }"
             :class="[
               'group relative my-0.5 flex items-center gap-2 rounded-md py-1 pr-2 pl-0 outline-none',
-              'transition-colors duration-200 hover:bg-input',
+              'transition-colors duration-200 hover:bg-tree-hover',
               'cursor-pointer font-semibold',
-              item.value.id === currentFolder ? 'bg-input text-primary' : '',
+              item.value.id === currentFolder ? 'bg-tree-selected text-tree-selected-foreground' : '',
             ]"
           >
             <Icon

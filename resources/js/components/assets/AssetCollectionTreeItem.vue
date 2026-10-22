@@ -83,7 +83,6 @@ watchEffect((onCleanup) => {
   <div
     ref="wrapperEl"
     class="relative rounded-md transition-colors"
-    :class="isDraggedOver ? 'ring-2 ring-accent' : ''"
   >
     <TreeItem
       :style="{ 'padding-left': `${item.level - 0.5}rem` }"
@@ -92,13 +91,13 @@ watchEffect((onCleanup) => {
       :to="collectionLink"
       :class="[
         'group flex w-full items-center rounded-md px-2 py-1 outline-none',
-        'cursor-pointer font-semibold transition-colors duration-200 hover:bg-input',
-        item.value.id === selectedCollectionId ? 'bg-input text-primary' : '',
-        isDraggedOver ? 'bg-accent/10' : '',
+        'cursor-pointer font-semibold transition-colors duration-200 hover:bg-tree-hover',
+        item.value.id === selectedCollectionId ? 'bg-tree-selected text-tree-selected-foreground' : '',
+        isDraggedOver ? 'bg-tree-drop ring-1 ring-ring/40' : '',
       ]"
       @select="$emit('select', item.value.id)"
     >
-      <div class="flex flex-1 items-center gap-2">
+      <div class="flex min-w-0 flex-1 items-center gap-2">
         <Icon
           :name="item.value.icon ? `lucide:${item.value.icon}` : 'lucide:layers'"
           :style="{ color: item.value.color || undefined }"
@@ -119,7 +118,7 @@ watchEffect((onCleanup) => {
           aria-hidden="true"
         />
       </div>
-      <span class="shrink-0 text-sm">
+      <span class="shrink-0 pl-2 text-sm tabular-nums">
         {{ item.value.assets_count ?? 0 }}
       </span>
       <DropdownMenu v-if="canManageCollections || canShareCollections">

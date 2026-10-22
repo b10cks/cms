@@ -2863,7 +2863,7 @@ onBeforeUnmount(() => {
               item.value.id === selectedItemId ? 'text-tree-selected-foreground' : '',
               isCutItem(item.value.id) ? 'opacity-50' : '',
               isItemSelected(item.value.id)
-                ? 'bg-tree-selected border-tree-selected-border text-tree-selected-foreground'
+                ? 'bg-tree-selected text-tree-selected-foreground'
                 : '',
               dropResolution?.containerRowId === item.value.id
                 ? 'bg-tree-drop ring-1 ring-ring/40'

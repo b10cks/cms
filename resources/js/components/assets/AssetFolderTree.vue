@@ -319,9 +319,9 @@ const toggleExpanded = (folderId: string) => {
         :to="buildFolderLink(null)"
         :class="[
           'group relative my-0.5 flex w-full items-center gap-2 rounded-md py-1 pr-2 pl-2 outline-none',
-          'cursor-pointer font-semibold transition-colors duration-200 hover:bg-input',
-          !selectedFolderId && !hasActiveTag ? 'bg-input text-primary' : '',
-          isRootDraggedOver ? 'bg-input/70 ring-1 ring-border' : '',
+          'cursor-pointer font-semibold transition-colors duration-200 hover:bg-tree-hover',
+          !selectedFolderId && !hasActiveTag ? 'bg-tree-selected text-tree-selected-foreground' : '',
+          isRootDraggedOver ? 'bg-tree-drop ring-1 ring-ring/40' : '',
         ]"
         @click="
           () => {
@@ -331,7 +331,7 @@ const toggleExpanded = (folderId: string) => {
         "
       >
         <Icon name="lucide:home" />
-        <span>{{ $t('labels.assets.allAssets') }}</span>
+        <span class="truncate">{{ $t('labels.assets.allAssets') }}</span>
       </RouterLink>
 
       <div class="group my-2 flex items-center gap-2 px-2">
@@ -365,9 +365,9 @@ const toggleExpanded = (folderId: string) => {
         :style="{ 'padding-left': `${item.level - 0.5}rem` }"
         :class="[
           'group my-0.5 flex items-center rounded-md px-2 py-1 outline-none',
-          'cursor-pointer font-semibold transition-colors duration-200 hover:bg-input',
-          item.value.id === selectedFolderId ? 'bg-input text-primary' : '',
-          activeDropTargetId === item.value.id ? 'bg-input/70 ring-1 ring-border' : '',
+          'cursor-pointer font-semibold transition-colors duration-200 hover:bg-tree-hover',
+          item.value.id === selectedFolderId ? 'bg-tree-selected text-tree-selected-foreground' : '',
+          activeDropTargetId === item.value.id ? 'bg-tree-drop ring-1 ring-ring/40' : '',
         ]"
         tabindex="0"
         :aria-selected="item.value.id === selectedFolderId"
@@ -391,7 +391,7 @@ const toggleExpanded = (folderId: string) => {
             />
           </button>
         </div>
-        <div class="flex flex-1 items-center gap-2">
+        <div class="flex min-w-0 flex-1 items-center gap-2">
           <Icon
             v-if="item.value.icon"
             :name="`lucide:${item.value.icon}`"
@@ -403,13 +403,14 @@ const toggleExpanded = (folderId: string) => {
             :ref="setTitleRef(item.value.id)"
             :name="item.value.name"
             :disabled="!canManageFolders"
+            class="min-w-0 flex-1 truncate"
             :save="(name) => handleFolderRename(name, item.value.id)"
             @update="currentlyEditingId = null"
             @edit-start="currentlyEditingId = item.value.id"
             @cancel="currentlyEditingId = null"
           />
         </div>
-        <span class="shrink-0 text-sm">
+        <span class="shrink-0 pl-2 text-sm tabular-nums">
           {{ item.value.assets_count ?? 0 }}
         </span>
         <DropdownMenu v-if="canManageFolders">
